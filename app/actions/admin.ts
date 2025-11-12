@@ -18,7 +18,7 @@ export async function createCountry(formData: FormData) {
   const { error } = await supabase.from('countries').insert(data)
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/admin/countries')
@@ -38,7 +38,7 @@ export async function updateCountry(id: string, formData: FormData) {
   const { error } = await supabase.from('countries').update(data).eq('id', id)
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/admin/countries')
@@ -72,7 +72,7 @@ export async function createStyle(formData: FormData) {
   const { error } = await supabase.from('musical_styles').insert(data)
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/admin/styles')
@@ -92,7 +92,7 @@ export async function updateStyle(id: string, formData: FormData) {
   const { error } = await supabase.from('musical_styles').update(data).eq('id', id)
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/admin/styles')
@@ -133,7 +133,7 @@ export async function createCourse(formData: FormData) {
   const { error } = await supabase.from('courses').insert(data)
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/admin/courses')
@@ -160,7 +160,7 @@ export async function updateCourse(id: string, formData: FormData) {
   const { error } = await supabase.from('courses').update(data).eq('id', id)
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/admin/courses')
@@ -199,7 +199,7 @@ export async function createLesson(formData: FormData) {
   const { error } = await supabase.from('lessons').insert(data)
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/admin/lessons')
@@ -224,7 +224,7 @@ export async function updateLesson(id: string, formData: FormData) {
   const { error } = await supabase.from('lessons').update(data).eq('id', id)
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/admin/lessons')
@@ -266,7 +266,7 @@ export async function createExercise(formData: FormData) {
   const { error } = await supabase.from('exercises').insert(data)
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/admin/exercises')
@@ -294,7 +294,7 @@ export async function updateExercise(id: string, formData: FormData) {
   const { error } = await supabase.from('exercises').update(data).eq('id', id)
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/admin/exercises')

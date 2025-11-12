@@ -4,7 +4,7 @@ import Stripe from 'stripe'
 import { Database } from '@/types/database'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-10-29.clover',
 })
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
               stripe_customer_id: customerId,
               stripe_subscription_id: subscriptionId,
               status: subscription.status as 'active' | 'canceled' | 'past_due' | 'incomplete',
-              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+              current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
               cancel_at_period_end: subscription.cancel_at_period_end,
             })
 
@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
           .from('subscriptions')
           .update({
             status: subscription.status as 'active' | 'canceled' | 'past_due' | 'incomplete',
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+            current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
             cancel_at_period_end: subscription.cancel_at_period_end,
           })
           .eq('stripe_subscription_id', subscription.id)
@@ -91,14 +91,14 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice
 
-        if (invoice.subscription) {
+        if ((invoice as any).subscription) {
           // Update subscription status to active if payment succeeded
           const { error } = await supabaseAdmin
             .from('subscriptions')
             .update({
               status: 'active',
             })
-            .eq('stripe_subscription_id', invoice.subscription as string)
+            .eq('stripe_subscription_id', (invoice as any).subscription as string)
 
           if (error) {
             console.error('Error updating subscription status:', error)
@@ -110,14 +110,14 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
 
-        if (invoice.subscription) {
+        if ((invoice as any).subscription) {
           // Update subscription status to past_due if payment failed
           const { error } = await supabaseAdmin
             .from('subscriptions')
             .update({
               status: 'past_due',
             })
-            .eq('stripe_subscription_id', invoice.subscription as string)
+            .eq('stripe_subscription_id', (invoice as any).subscription as string)
 
           if (error) {
             console.error('Error updating subscription status:', error)

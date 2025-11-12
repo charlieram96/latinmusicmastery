@@ -111,7 +111,7 @@ export default async function ExercisePage({ params }: PageProps) {
             exercise={{
               id: exercise.id,
               question: exercise.question,
-              question_type: exercise.question_type,
+              question_type: exercise.question_type as 'multiple_choice' | 'text' | 'audio',
               options: exercise.options as string[] | null,
               correct_answer: exercise.correct_answer,
               explanation: exercise.explanation,
@@ -139,7 +139,7 @@ export default async function ExercisePage({ params }: PageProps) {
                           {attempt.is_correct ? '✓ Correct' : '✗ Incorrect'}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {new Date(attempt.created_at).toLocaleDateString()}
+                          {attempt.created_at ? new Date(attempt.created_at).toLocaleDateString() : 'N/A'}
                         </div>
                       </div>
                       <div className="text-sm text-muted-foreground">

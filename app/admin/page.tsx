@@ -156,7 +156,7 @@ export default async function AdminDashboard() {
                     <div className="text-sm text-muted-foreground">{user.email}</div>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {new Date(user.created_at).toLocaleDateString()}
+                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                   </div>
                 </div>
               ))
