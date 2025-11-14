@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 
 export async function signInWithGoogle() {
   const supabase = await createClient()
+  console.log("NEXT_PUBLIC_APP_URL", process.env.NEXT_PUBLIC_APP_URL);
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
