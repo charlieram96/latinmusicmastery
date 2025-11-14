@@ -51,17 +51,17 @@ export default async function LessonPage({ params }: PageProps) {
     notFound()
   }
 
-  // Check subscription for non-free lessons
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', user.id)
+  // Get user profile to check rank
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('rank, is_admin')
+    .eq('id', user.id)
     .single()
 
-  const hasActiveSubscription = subscription?.status === 'active'
+  const isStudent = profile?.rank === 'student' || profile?.is_admin
 
   // Check if user has access
-  if (!lesson.is_free && !hasActiveSubscription) {
+  if (!lesson.is_free && !isStudent) {
     redirect(`/course/${lesson.course_id}`)
   }
 
@@ -93,7 +93,7 @@ export default async function LessonPage({ params }: PageProps) {
   const nextLesson = currentIndex < (courseLessons?.length || 0) - 1 ? courseLessons?.[currentIndex + 1] : null
 
   // Check if next lesson is accessible
-  const canAccessNext = nextLesson && (nextLesson.is_free || hasActiveSubscription)
+  const canAccessNext = nextLesson && (nextLesson.is_free || isStudent)
 
   // Get exercises for this lesson
   const { data: exercises } = await supabase
@@ -243,7 +243,7 @@ export default async function LessonPage({ params }: PageProps) {
                     const progress = progressMap.get(courseLesson.id)
                     const isCompleted = progress?.completed || false
                     const isCurrent = courseLesson.id === lessonId
-                    const isLocked = !courseLesson.is_free && !hasActiveSubscription
+                    const isLocked = !courseLesson.is_free && !isStudent
 
                     return (
                       <Link

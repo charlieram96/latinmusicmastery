@@ -19,37 +19,64 @@ export async function Header() {
   }
 
   return (
-    <header className="border-b">
+    <header className="absolute top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm border-b border-white/10">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-xl font-bold">
-            Latin Music Mastery
+          <Link href="/" className="flex items-center">
+            <img
+              src="/white-logo.svg"
+              alt="Latin Music Mastery"
+              className="h-8 w-auto"
+            />
           </Link>
 
-          {user && (
-            <nav className="hidden md:flex items-center gap-6">
-              <Link
-                href="/dashboard"
-                className="text-sm font-medium hover:text-primary transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/courses"
-                className="text-sm font-medium hover:text-primary transition-colors"
-              >
-                Courses
-              </Link>
-              {isAdmin && (
+          <nav className="hidden md:flex items-center gap-6">
+            {user ? (
+              <>
                 <Link
-                  href="/admin"
-                  className="text-sm font-medium hover:text-primary transition-colors"
+                  href="/dashboard"
+                  className="text-sm font-medium text-white/90 hover:text-white transition-colors"
                 >
-                  Admin
+                  Dashboard
                 </Link>
-              )}
-            </nav>
-          )}
+                <Link
+                  href="/courses"
+                  className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                >
+                  Courses
+                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                  >
+                    Admin
+                  </Link>
+                )}
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/#pricing"
+                  className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                >
+                  Pricing
+                </Link>
+                <Link
+                  href="/#instructors"
+                  className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                >
+                  Instructors
+                </Link>
+                <Link
+                  href="/#testimonials"
+                  className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                >
+                  Testimonials
+                </Link>
+              </>
+            )}
+          </nav>
         </div>
 
         <div className="flex items-center gap-4">
@@ -57,10 +84,10 @@ export async function Header() {
             <UserNav user={user} isAdmin={isAdmin} />
           ) : (
             <>
-              <Button variant="ghost" asChild>
+              <Button className="bg-white/10 text-white hover:bg-white/20 hover:text-white px-6 py-2 h-auto rounded-full font-semibold backdrop-blur-sm" asChild>
                 <Link href="/login">Login</Link>
               </Button>
-              <Button asChild>
+              <Button className="bg-white text-primary hover:bg-white/90 hover:text-primary px-6 py-2 h-auto rounded-full font-semibold" asChild>
                 <Link href="/signup">Sign Up</Link>
               </Button>
             </>

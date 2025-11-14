@@ -54,14 +54,14 @@ export default async function CoursePage({ params }: PageProps) {
     .eq('course_id', courseId)
     .order('order_index')
 
-  // Get user's subscription
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', user.id)
+  // Get user profile to check rank
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('rank, is_admin')
+    .eq('id', user.id)
     .single()
 
-  const hasActiveSubscription = subscription?.status === 'active'
+  const isStudent = profile?.rank === 'student' || profile?.is_admin
 
   // Get user's progress for this course's lessons
   const lessonIds = lessons?.map(l => l.id) || []
@@ -83,7 +83,7 @@ export default async function CoursePage({ params }: PageProps) {
 
   // Find next lesson to start
   const nextLesson = lessons?.find(lesson =>
-    lesson.is_free || hasActiveSubscription
+    lesson.is_free || isStudent
   )
 
   const style = course.musical_style
@@ -172,8 +172,8 @@ export default async function CoursePage({ params }: PageProps) {
                 {lessons?.map((lesson, index) => {
                   const progress = progressMap.get(lesson.id)
                   const isCompleted = progress?.completed || false
-                  const isLocked = !lesson.is_free && !hasActiveSubscription
-                  const canAccess = lesson.is_free || hasActiveSubscription
+                  const isLocked = !lesson.is_free && !isStudent
+                  const canAccess = lesson.is_free || isStudent
 
                   return (
                     <div
@@ -243,7 +243,7 @@ export default async function CoursePage({ params }: PageProps) {
               )}
             </CardHeader>
             <CardContent className="space-y-4">
-              {!hasActiveSubscription && (
+              {!isStudent && (
                 <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
                   <p className="text-sm text-orange-900 mb-2">
                     Subscribe to unlock all lessons

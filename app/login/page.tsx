@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
@@ -33,6 +34,21 @@ export default function LoginPage() {
             Sign in to Latin Music Mastery
           </CardDescription>
         </CardHeader>
+        <CardContent className="space-y-4 pt-6">
+          <GoogleSignInButton />
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with email
+              </span>
+            </div>
+          </div>
+        </CardContent>
+
         <form action={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (

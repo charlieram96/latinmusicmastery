@@ -16,14 +16,14 @@ export default async function PricingPage() {
     redirect('/login')
   }
 
-  // Get user's subscription
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', user.id)
+  // Get user profile to check rank
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('rank')
+    .eq('id', user.id)
     .single()
 
-  const hasActiveSubscription = subscription?.status === 'active'
+  const isStudent = profile?.rank === 'student'
 
   return (
     <div className="container mx-auto px-4 py-16">
@@ -62,7 +62,7 @@ export default async function PricingPage() {
                 <span>Basic progress tracking</span>
               </div>
             </div>
-            {!hasActiveSubscription && (
+            {!isStudent && (
               <Badge variant="secondary" className="w-full justify-center py-2">
                 Current Plan
               </Badge>
@@ -81,7 +81,7 @@ export default async function PricingPage() {
               Full access to all content
             </CardDescription>
             <div className="mt-4">
-              <span className="text-4xl font-bold">$29</span>
+              <span className="text-4xl font-bold">$39.99</span>
               <span className="text-muted-foreground">/month</span>
             </div>
           </CardHeader>
@@ -117,7 +117,7 @@ export default async function PricingPage() {
               </div>
             </div>
 
-            {hasActiveSubscription ? (
+            {isStudent ? (
               <div className="space-y-2">
                 <Badge variant="default" className="w-full justify-center py-2">
                   Current Plan
