@@ -9,6 +9,7 @@ import { PricingSection } from '@/components/homepage/PricingSection'
 import { EnhancedFooter } from '@/components/homepage/EnhancedFooter'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { PasswordGate } from '@/components/PasswordGate'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -37,9 +38,10 @@ export default async function HomePage() {
     .order('name')
 
   return (
-    <>
-      <Header />
-      <main className="min-h-screen">
+    <PasswordGate>
+      <>
+        <Header />
+        <main className="min-h-screen">
         {/* Hero Section */}
         <AnimatedGradientHero />
 
@@ -119,6 +121,7 @@ export default async function HomePage() {
       {/* Enhanced Footer */}
       <EnhancedFooter />
       </main>
-    </>
+      </>
+    </PasswordGate>
   )
 }
