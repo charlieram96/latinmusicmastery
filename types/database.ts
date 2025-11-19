@@ -55,8 +55,9 @@ export type Database = {
           preview_video_url: string | null
           slug: string
           teacher_bio: string | null
+          teacher_id: string | null
           teacher_image_url: string | null
-          teacher_name: string
+          teacher_name: string | null
           thumbnail_url: string | null
           title: string
           updated_at: string | null
@@ -71,8 +72,9 @@ export type Database = {
           preview_video_url?: string | null
           slug: string
           teacher_bio?: string | null
+          teacher_id?: string | null
           teacher_image_url?: string | null
-          teacher_name: string
+          teacher_name?: string | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string | null
@@ -87,8 +89,9 @@ export type Database = {
           preview_video_url?: string | null
           slug?: string
           teacher_bio?: string | null
+          teacher_id?: string | null
           teacher_image_url?: string | null
-          teacher_name?: string
+          teacher_name?: string | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string | null
@@ -99,6 +102,13 @@ export type Database = {
             columns: ["musical_style_id"]
             isOneToOne: false
             referencedRelation: "musical_styles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courses_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -365,6 +375,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      teachers: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          image_url: string | null
+          instrument: string
+          name: string
+          specialties: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          image_url?: string | null
+          instrument: string
+          name: string
+          specialties?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          image_url?: string | null
+          instrument?: string
+          name?: string
+          specialties?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       user_progress: {
         Row: {

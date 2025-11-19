@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Home, Globe, Music, BookOpen, FileText, Dumbbell, Users } from 'lucide-react'
+import { Home, Globe, Music, BookOpen, FileText, Dumbbell, Users, GraduationCap } from 'lucide-react'
 
 export default async function AdminLayout({
   children,
@@ -30,6 +30,7 @@ export default async function AdminLayout({
     { href: '/admin/countries', label: 'Countries', icon: Globe },
     { href: '/admin/styles', label: 'Musical Styles', icon: Music },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
+    { href: '/admin/teachers', label: 'Teachers', icon: GraduationCap },
     { href: '/admin/lessons', label: 'Lessons', icon: FileText },
     { href: '/admin/exercises', label: 'Exercises', icon: Dumbbell },
     { href: '/admin/users', label: 'Users', icon: Users },

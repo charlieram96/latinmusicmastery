@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { Header } from '@/components/header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -90,17 +91,19 @@ export default async function CoursePage({ params }: PageProps) {
   const country = style.country
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <div className="mb-6 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-primary">Home</Link>
-        {' / '}
-        <Link href={`/courses/${country.slug}/${style.slug}`} className="hover:text-primary">
-          {style.name}
-        </Link>
-        {' / '}
-        <span className="text-foreground">{course.title}</span>
-      </div>
+    <>
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <div className="mb-6 text-sm text-muted-foreground">
+          <Link href="/" className="hover:text-primary">Home</Link>
+          {' / '}
+          <Link href={`/courses/${country.slug}/${style.slug}`} className="hover:text-primary">
+            {style.name}
+          </Link>
+          {' / '}
+          <span className="text-foreground">{course.title}</span>
+        </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Main Content */}
@@ -292,6 +295,7 @@ export default async function CoursePage({ params }: PageProps) {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { Header } from '@/components/header'
 import { AnimatedGradientHero } from '@/components/homepage/AnimatedGradientHero'
 import { InteractiveCourseExplorer } from '@/components/homepage/InteractiveCourseExplorer'
 import { FeatureShowcase } from '@/components/homepage/FeatureShowcase'
@@ -29,10 +30,18 @@ export default async function HomePage() {
     `)
     .order('name')
 
+  // Fetch teachers
+  const { data: teachers } = await supabase
+    .from('teachers')
+    .select('id, name, instrument, bio, image_url, specialties')
+    .order('name')
+
   return (
-    <main className="min-h-screen">
-      {/* Hero Section */}
-      <AnimatedGradientHero />
+    <>
+      <Header />
+      <main className="min-h-screen">
+        {/* Hero Section */}
+        <AnimatedGradientHero />
 
       {/* Demo Video Section */}
       <section className="relative -mt-32 pb-24 md:pb-32">
@@ -67,7 +76,9 @@ export default async function HomePage() {
       <FeatureShowcase />
 
       {/* Instructors */}
-      <InstructorGrid />
+      {teachers && teachers.length > 0 && (
+        <InstructorGrid instructors={teachers} />
+      )}
 
       {/* Testimonials */}
       <TestimonialCarousel />
@@ -107,6 +118,7 @@ export default async function HomePage() {
 
       {/* Enhanced Footer */}
       <EnhancedFooter />
-    </main>
+      </main>
+    </>
   )
 }

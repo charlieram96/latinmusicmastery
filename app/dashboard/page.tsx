@@ -84,7 +84,7 @@ export default async function DashboardPage() {
     .slice(0, 3) || []
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
       {/* Welcome Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Welcome back!</h1>
@@ -138,7 +138,7 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold">Continue Learning</h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {continueLearning.map((progress: any) => {
               const course = progress.lesson.course
               const style = course.musical_style
@@ -185,7 +185,7 @@ export default async function DashboardPage() {
               <Button variant="ghost">View All</Button>
             </Link>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {recommendedCourses.map((course: any) => {
               const style = course.musical_style
               return (
@@ -238,6 +238,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </>
   )
 }

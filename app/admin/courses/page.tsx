@@ -13,6 +13,7 @@ export default async function CoursesPage() {
     .select(`
       *,
       musical_style:musical_styles(name, country:countries(name)),
+      teacher:teachers(id, name, instrument),
       lessons(id)
     `)
     .order('created_at', { ascending: false })
@@ -59,7 +60,7 @@ export default async function CoursesPage() {
                     {course.musical_style.name} • {course.musical_style.country.name}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {course.lessons?.length || 0} lessons • by {course.teacher_name}
+                    {course.lessons?.length || 0} lessons • by {course.teacher?.name || course.teacher_name}
                   </p>
                 </div>
                 <Button asChild variant="outline" size="sm">
