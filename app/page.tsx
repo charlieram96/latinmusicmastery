@@ -9,8 +9,6 @@ import { TestimonialsSection } from '@/components/homepage/TestimonialsSection'
 import { PricingSection } from '@/components/homepage/PricingSection'
 import { FinalCTA } from '@/components/homepage/FinalCTA'
 import { Footer } from '@/components/homepage/Footer'
-import { PasswordGate } from '@/components/PasswordGate'
-
 export default async function HomePage() {
   const supabase = await createClient()
 
@@ -38,10 +36,9 @@ export default async function HomePage() {
     .order('name')
 
   return (
-    <PasswordGate>
-      <>
-        <Header />
-        <main className="min-h-screen">
+    <>
+      <Header />
+      <main className="min-h-screen">
           {/* Hero Section */}
           <ModernHero />
 
@@ -73,7 +70,6 @@ export default async function HomePage() {
           {/* Footer */}
           <Footer />
         </main>
-      </>
-    </PasswordGate>
+    </>
   )
 }
