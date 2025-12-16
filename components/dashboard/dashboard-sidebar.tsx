@@ -1,19 +1,22 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   Home,
   BookOpen,
   Library,
   GraduationCap,
-  TrendingUp,
-  CreditCard,
   Award,
-  HelpCircle,
   Settings,
   Shield,
+  User,
+  Video,
+  Users,
+  CreditCard,
 } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Sidebar,
   SidebarContent,
@@ -24,16 +27,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  SidebarHeader,
+  SidebarSeparator,
 } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 
 interface DashboardSidebarProps {
   isAdmin?: boolean
+  userEmail?: string
+  userName?: string
+  userAvatar?: string
 }
 
-const mainNavItems = [
+// Section 1: Personal
+const personalNavItems = [
   {
-    title: 'Dashboard',
+    title: 'Home',
     href: '/dashboard',
     icon: Home,
   },
@@ -42,6 +51,10 @@ const mainNavItems = [
     href: '/dashboard/my-courses',
     icon: BookOpen,
   },
+]
+
+// Section 2: Discover
+const discoverNavItems = [
   {
     title: 'Browse Courses',
     href: '/dashboard/courses',
@@ -53,49 +66,102 @@ const mainNavItems = [
     icon: GraduationCap,
   },
   {
-    title: 'My Progress',
-    href: '/dashboard/progress',
-    icon: TrendingUp,
-  },
-  {
-    title: 'My Subscription',
-    href: '/dashboard/subscription',
-    icon: CreditCard,
-  },
-  {
     title: 'Achievements',
     href: '/dashboard/achievements',
     icon: Award,
   },
 ]
 
-const bottomNavItems = [
+// Section 3: Connect
+const connectNavItems = [
   {
-    title: 'Help & Support',
-    href: '/dashboard/help',
-    icon: HelpCircle,
+    title: 'Teacher Feedback',
+    href: '/dashboard/feedback',
+    icon: Video,
   },
   {
-    title: 'Settings',
-    href: '/dashboard/settings',
-    icon: Settings,
+    title: 'Community',
+    href: '/dashboard/community',
+    icon: Users,
   },
 ]
 
-export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
+// Section 4: Settings
+const settingsNavItems = [
+  {
+    title: 'Subscription',
+    href: '/dashboard/subscription',
+    icon: CreditCard,
+  },
+]
+
+
+export function DashboardSidebar({
+  isAdmin = false,
+  userEmail = '',
+  userName = '',
+  userAvatar = ''
+}: DashboardSidebarProps) {
   const pathname = usePathname()
 
   return (
-    <Sidebar className="group/sidebar bg-white border-r pt-[50px] w-[55px] hover:w-[220px] transition-[width] duration-300 ease-in-out md:block">
+    <Sidebar collapsible="none" className="fixed inset-y-0 left-0 z-50 !bg-[#141414] border-r w-[241px] hidden md:flex p-[20px] pt-0">
+      {/* Logo */}
+      <SidebarHeader className="h-[55px] flex items-center justify-center mx-[-20px] !bg-[#141414]">
+        <Link href="/dashboard">
+          <Image
+            src="/sidebar-logo.svg"
+            alt="Latin Music Mastery"
+            width={110}
+            height={22}
+            className="h-5 w-auto"
+          />
+        </Link>
+      </SidebarHeader>
+
       <SidebarContent className="gap-0">
-        {/* Main Navigation */}
-        <SidebarGroup className="px-3 py-5">
-          <SidebarGroupLabel className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">
-            Navigation
+        {/* Section 1: Personal */}
+        <SidebarGroup className="px-0 py-4">
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              {personalNavItems.map((item) => {
+                const Icon = item.icon
+                const isActive = item.href === '/dashboard'
+                  ? pathname === '/dashboard'
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`)
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className={cn(
+                        "h-10 px-3 gap-3 font-medium hover:bg-secondary justify-start",
+                        isActive && "bg-secondary text-foreground"
+                      )}
+                    >
+                      <Link href={item.href}>
+                        <Icon className="h-[18px] w-[18px] flex-shrink-0" />
+                        <span className="text-sm">{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className="mx-0 bg-border/50" />
+
+        {/* Section 2: Discover */}
+        <SidebarGroup className="px-0 py-4">
+          <SidebarGroupLabel className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+            Discover
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
-              {mainNavItems.map((item) => {
+              {discoverNavItems.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
 
@@ -105,13 +171,83 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
                       asChild
                       isActive={isActive}
                       className={cn(
-                        "h-9 px-2 gap-3 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 justify-start",
-                        isActive && "bg-gray-100 dark:bg-gray-800 text-foreground"
+                        "h-10 px-3 gap-3 font-medium hover:bg-secondary justify-start",
+                        isActive && "bg-secondary text-foreground"
                       )}
                     >
                       <Link href={item.href}>
                         <Icon className="h-[18px] w-[18px] flex-shrink-0" />
-                        <span className="text-sm opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">{item.title}</span>
+                        <span className="text-sm">{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className="mx-0 bg-border/50" />
+
+        {/* Section 3: Connect */}
+        <SidebarGroup className="px-0 py-4">
+          <SidebarGroupLabel className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+            Connect
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              {connectNavItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className={cn(
+                        "h-10 px-3 gap-3 font-medium hover:bg-secondary justify-start",
+                        isActive && "bg-secondary text-foreground"
+                      )}
+                    >
+                      <Link href={item.href}>
+                        <Icon className="h-[18px] w-[18px] flex-shrink-0" />
+                        <span className="text-sm">{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className="mx-0 bg-border/50" />
+
+        {/* Section 4: Settings */}
+        <SidebarGroup className="px-0 py-4">
+          <SidebarGroupLabel className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+            Settings
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              {settingsNavItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className={cn(
+                        "h-10 px-3 gap-3 font-medium hover:bg-secondary justify-start",
+                        isActive && "bg-secondary text-foreground"
+                      )}
+                    >
+                      <Link href={item.href}>
+                        <Icon className="h-[18px] w-[18px] flex-shrink-0" />
+                        <span className="text-sm">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -123,59 +259,53 @@ export function DashboardSidebar({ isAdmin = false }: DashboardSidebarProps) {
 
         {/* Admin Panel - Only for admins */}
         {isAdmin && (
-          <SidebarGroup className="px-3 py-5 mt-2">
-            <SidebarGroupLabel className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">
-              Administration
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-1">
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname.startsWith('/admin')}
-                    className={cn(
-                      "h-9 px-2 gap-3 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 justify-start",
-                      pathname.startsWith('/admin') && "bg-gray-100 dark:bg-gray-800 text-foreground"
-                    )}
-                  >
-                    <Link href="/admin">
-                      <Shield className="h-[18px] w-[18px] flex-shrink-0" />
-                      <span className="text-sm opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">Admin Panel</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <>
+            <SidebarSeparator className="mx-0 bg-border/50" />
+            <SidebarGroup className="px-0 py-4">
+              <SidebarGroupLabel className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Admin
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-1">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith('/admin')}
+                      className={cn(
+                        "h-10 px-3 gap-3 font-medium hover:bg-secondary justify-start",
+                        pathname.startsWith('/admin') && "bg-secondary text-foreground"
+                      )}
+                    >
+                      <Link href="/admin">
+                        <Shield className="h-[18px] w-[18px] flex-shrink-0" />
+                        <span className="text-sm">Admin Panel</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
         )}
       </SidebarContent>
 
-      {/* Footer Navigation */}
-      <SidebarFooter className="px-3 py-4 border-t">
-        <SidebarMenu className="gap-1">
-          {bottomNavItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-
-            return (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive}
-                  className={cn(
-                    "h-9 px-2 gap-3 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 justify-start",
-                    isActive && "bg-gray-100 dark:bg-gray-800 text-foreground"
-                  )}
-                >
-                  <Link href={item.href}>
-                    <Icon className="h-[18px] w-[18px] flex-shrink-0" />
-                    <span className="text-sm opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )
-          })}
-        </SidebarMenu>
+      {/* Profile Section */}
+      <SidebarFooter className="mt-auto pt-4 mx-[-20px] px-[20px]">
+        <Link
+          href="/dashboard/settings"
+          className="flex items-center gap-3 p-3 rounded-xl bg-[#1c1c1c] hover:bg-[#252525] transition-colors group"
+        >
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={userAvatar} alt={userName || 'User'} />
+            <AvatarFallback className="bg-primary text-white text-sm font-semibold">
+              {userEmail?.split('@')[0].slice(0, 2).toUpperCase() || 'U'}
+            </AvatarFallback>
+          </Avatar>
+          <span className="flex-1 text-sm font-medium truncate">
+            {userName || 'My Account'}
+          </span>
+          <Settings className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+        </Link>
       </SidebarFooter>
     </Sidebar>
   )

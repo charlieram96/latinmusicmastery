@@ -32,8 +32,10 @@ export function UserNav({ user, isAdmin }: UserNavProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary rounded-full">
-          <Avatar>
-            <AvatarFallback>{initials}</AvatarFallback>
+          <Avatar className="h-9 w-9">
+            <AvatarFallback className="bg-primary text-white font-semibold text-sm">
+              {initials}
+            </AvatarFallback>
           </Avatar>
         </button>
       </DropdownMenuTrigger>

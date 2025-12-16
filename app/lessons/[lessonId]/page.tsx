@@ -62,7 +62,7 @@ export default async function LessonPage({ params }: PageProps) {
 
   // Check if user has access
   if (!lesson.is_free && !isStudent) {
-    redirect(`/course/${lesson.course_id}`)
+    redirect(`/dashboard/course/${lesson.course_id}`)
   }
 
   // Get all lessons in this course for navigation
@@ -114,7 +114,7 @@ export default async function LessonPage({ params }: PageProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1 min-w-0">
               <Button asChild variant="ghost" size="sm">
-                <Link href={`/course/${course.id}`}>
+                <Link href={`/dashboard/course/${course.id}`}>
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   Back to Course
                 </Link>
@@ -245,19 +245,8 @@ export default async function LessonPage({ params }: PageProps) {
                     const isCurrent = courseLesson.id === lessonId
                     const isLocked = !courseLesson.is_free && !isStudent
 
-                    return (
-                      <Link
-                        key={courseLesson.id}
-                        href={isLocked ? '#' : `/lessons/${courseLesson.id}`}
-                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                          isCurrent
-                            ? 'bg-primary text-primary-foreground'
-                            : isLocked
-                            ? 'opacity-50 cursor-not-allowed'
-                            : 'hover:bg-muted'
-                        }`}
-                        onClick={(e) => isLocked && e.preventDefault()}
-                      >
+                    const content = (
+                      <>
                         <div className="flex-shrink-0">
                           {isCompleted ? (
                             <CheckCircle2 className="w-4 h-4" />
@@ -268,10 +257,35 @@ export default async function LessonPage({ params }: PageProps) {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className={`text-sm font-medium truncate ${isCurrent ? '' : ''}`}>
+                          <div className="text-sm font-medium truncate">
                             {index + 1}. {courseLesson.title}
                           </div>
                         </div>
+                      </>
+                    )
+
+                    if (isLocked) {
+                      return (
+                        <div
+                          key={courseLesson.id}
+                          className="flex items-center gap-3 p-3 rounded-lg opacity-50 cursor-not-allowed"
+                        >
+                          {content}
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <Link
+                        key={courseLesson.id}
+                        href={`/lessons/${courseLesson.id}`}
+                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                          isCurrent
+                            ? 'bg-primary text-primary-foreground'
+                            : 'hover:bg-muted'
+                        }`}
+                      >
+                        {content}
                       </Link>
                     )
                   })}

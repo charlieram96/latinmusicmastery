@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar'
+import { DashboardLayoutClient } from '@/components/dashboard/dashboard-layout-client'
+import { CourseModeProvider } from '@/contexts/course-mode-context'
 
 export default async function DashboardLayout({
   children,
@@ -18,36 +20,33 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_admin')
+    .select('is_admin, email, full_name')
     .eq('id', user.id)
     .single()
 
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "55px",
-          "--sidebar-width-mobile": "0px",
-        } as React.CSSProperties
-      }
-    >
-      <div className="flex min-h-screen w-full">
-        {/* Sidebar */}
-        <DashboardSidebar isAdmin={profile?.is_admin || false} />
-
-        {/* Main Content Area */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Header */}
-          <DashboardHeader />
-
-          {/* Page Content */}
-          <main className="flex-1 overflow-y-auto pt-[50px]">
-            <div className="container mx-auto p-6 max-w-[1440px]">
-              {children}
-            </div>
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
+    <CourseModeProvider>
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "240px",
+            "--sidebar-width-mobile": "0px",
+          } as React.CSSProperties
+        }
+      >
+        <DashboardLayoutClient
+          sidebar={
+            <DashboardSidebar
+              isAdmin={profile?.is_admin || false}
+              userEmail={user.email || profile?.email || ''}
+              userName={profile?.full_name || ''}
+            />
+          }
+          header={<DashboardHeader />}
+        >
+          {children}
+        </DashboardLayoutClient>
+      </SidebarProvider>
+    </CourseModeProvider>
   )
 }

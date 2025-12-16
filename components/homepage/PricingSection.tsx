@@ -3,38 +3,34 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Check } from 'lucide-react'
 
 const features = [
-  'Access to all Latin music courses',
-  'Interactive Soundslice lessons',
-  'HD video tutorials',
+  'All 150+ video lessons',
+  'Interactive Soundslice integration',
   'Downloadable sheet music & tabs',
-  'Practice exercises & backing tracks',
-  'Progress tracking',
-  'Learn at your own pace',
+  'Progress tracking dashboard',
   'New content added monthly',
   'Cancel anytime',
 ]
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-24 md:py-32 bg-secondary/50">
-      <div className="container mx-auto px-4">
+    <section id="pricing" className="py-24 lg:py-32">
+      <div className="max-w-4xl mx-auto px-6">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="text-center max-w-3xl mx-auto mb-12"
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-3">
-            Simple, Transparent Pricing
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-4 font-heading">
+            Simple, transparent pricing
           </h2>
-          <p className="text-base md:text-lg text-muted-foreground">
-            One plan, unlimited access to everything
+          <p className="text-lg text-white/60">
+            One plan. Unlimited access. No hidden fees.
           </p>
         </motion.div>
 
@@ -42,50 +38,47 @@ export function PricingSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
           viewport={{ once: true }}
-          className="max-w-lg mx-auto"
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="max-w-md mx-auto"
         >
-          <Card className="border-2 border-primary/20 shadow-lg">
-            <CardHeader className="text-center pb-8 pt-8">
-              <CardTitle className="text-2xl mb-2">Monthly Membership</CardTitle>
-              <CardDescription className="text-base">
-                Unlimited access to all courses
-              </CardDescription>
-              <div className="mt-4">
-                <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-5xl font-bold text-primary">$39.99</span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
+          <div className="relative p-8 rounded-3xl bg-card border border-white/10 overflow-hidden">
+            {/* Subtle gradient accent */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-orange-400 to-primary" />
+
+            {/* Price */}
+            <div className="text-center mb-8">
+              <div className="text-sm text-white/50 uppercase tracking-wider mb-2">
+                Monthly Membership
               </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Features List */}
-              <ul className="space-y-3">
-                {features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="flex items-baseline justify-center gap-1">
+                <span className="text-5xl font-bold text-white">$39</span>
+                <span className="text-lg text-white/50">/month</span>
+              </div>
+            </div>
 
-              {/* CTA Button */}
-              <Button
-                className="w-full bg-primary text-white hover:bg-primary/90 hover:text-white px-8 py-3 h-auto rounded-full font-semibold text-base"
-                asChild
-              >
-                <Link href="/signup">
-                  Start Learning Now
-                </Link>
-              </Button>
+            {/* Features */}
+            <ul className="space-y-4 mb-8">
+              {features.map((feature) => (
+                <li key={feature} className="flex items-center gap-3">
+                  <Check className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span className="text-white/80">{feature}</span>
+                </li>
+              ))}
+            </ul>
 
-              {/* Trust Message */}
-              <p className="text-xs text-center text-muted-foreground">
-                No credit card required to start • Cancel anytime • 14-day money-back guarantee
-              </p>
-            </CardContent>
-          </Card>
+            {/* CTA */}
+            <Button
+              className="w-full bg-primary hover:bg-primary/90 text-white py-4 h-auto text-base font-semibold rounded-full"
+              asChild
+            >
+              <Link href="/signup">Start Your Free Trial</Link>
+            </Button>
+
+            <p className="text-center text-xs text-white/40 mt-4">
+              14-day money-back guarantee. No credit card required.
+            </p>
+          </div>
         </motion.div>
       </div>
     </section>

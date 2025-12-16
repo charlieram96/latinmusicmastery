@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { UserNav } from '@/components/user-nav'
+import { HeaderWrapper } from '@/components/header-wrapper'
 
 export async function Header() {
   const supabase = await createClient()
@@ -19,81 +20,88 @@ export async function Header() {
   }
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm border-b border-white/10">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center">
+    <HeaderWrapper>
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <nav className="flex items-center justify-between h-16 lg:h-20">
+          {/* Logo - left */}
+          <Link href="/" className="flex-shrink-0">
             <img
-              src="/white-logo.svg"
+              src="/large-color-logo.svg"
               alt="Latin Music Mastery"
-              className="h-8 w-auto"
+              className="h-7 w-auto"
             />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6">
+          {/* Nav Links - center (hidden mobile) */}
+          <div className="hidden md:flex items-center gap-8">
+            <Link
+              href="/#courses"
+              className="text-sm text-white/70 hover:text-white transition-colors"
+            >
+              Courses
+            </Link>
+            <Link
+              href="/#instructors"
+              className="text-sm text-white/70 hover:text-white transition-colors"
+            >
+              Instructors
+            </Link>
+            <Link
+              href="/#testimonials"
+              className="text-sm text-white/70 hover:text-white transition-colors"
+            >
+              Testimonials
+            </Link>
+            <Link
+              href="/#pricing"
+              className="text-sm text-white/70 hover:text-white transition-colors"
+            >
+              Pricing
+            </Link>
+          </div>
+
+          {/* CTAs - right */}
+          <div className="flex items-center gap-3">
             {user ? (
               <>
-                <Link
-                  href="/dashboard"
-                  className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                <Button
+                  variant="ghost"
+                  className="text-sm text-white/80 hover:text-white hover:bg-white/10"
+                  asChild
                 >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/courses"
-                  className="text-sm font-medium text-white/90 hover:text-white transition-colors"
-                >
-                  Courses
-                </Link>
+                  <Link href="/dashboard">Dashboard</Link>
+                </Button>
                 {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                  <Button
+                    variant="ghost"
+                    className="text-sm text-white/80 hover:text-white hover:bg-white/10"
+                    asChild
                   >
-                    Admin
-                  </Link>
+                    <Link href="/admin">Admin</Link>
+                  </Button>
                 )}
+                <UserNav user={user} isAdmin={isAdmin} />
               </>
             ) : (
               <>
-                <Link
-                  href="/#pricing"
-                  className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                <Button
+                  variant="ghost"
+                  className="text-sm text-white/80 hover:text-white hover:bg-white/10"
+                  asChild
                 >
-                  Pricing
-                </Link>
-                <Link
-                  href="/#instructors"
-                  className="text-sm font-medium text-white/90 hover:text-white transition-colors"
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button
+                  className="bg-primary hover:bg-primary/90 text-white rounded-full px-5 py-2 text-sm font-medium"
+                  asChild
                 >
-                  Instructors
-                </Link>
-                <Link
-                  href="/#testimonials"
-                  className="text-sm font-medium text-white/90 hover:text-white transition-colors"
-                >
-                  Testimonials
-                </Link>
+                  <Link href="/signup">Get Started</Link>
+                </Button>
               </>
             )}
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {user ? (
-            <UserNav user={user} isAdmin={isAdmin} />
-          ) : (
-            <>
-              <Button className="bg-white/10 text-white hover:bg-white/20 hover:text-white px-6 py-2 h-auto rounded-full font-semibold backdrop-blur-sm" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button className="bg-white text-primary hover:bg-white/90 hover:text-primary px-6 py-2 h-auto rounded-full font-semibold" asChild>
-                <Link href="/signup">Sign Up</Link>
-              </Button>
-            </>
-          )}
-        </div>
+          </div>
+        </nav>
       </div>
-    </header>
+    </HeaderWrapper>
   )
 }

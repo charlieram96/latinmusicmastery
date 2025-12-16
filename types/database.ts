@@ -48,7 +48,9 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          difficulty: string | null
           id: string
+          instrument: string | null
           is_published: boolean | null
           musical_style_id: string
           order_index: number | null
@@ -65,7 +67,9 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          difficulty?: string | null
           id?: string
+          instrument?: string | null
           is_published?: boolean | null
           musical_style_id: string
           order_index?: number | null
@@ -82,7 +86,9 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          difficulty?: string | null
           id?: string
+          instrument?: string | null
           is_published?: boolean | null
           musical_style_id?: string
           order_index?: number | null
@@ -204,6 +210,60 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string | null
+          response_message: string | null
+          response_video_url: string | null
+          status: string | null
+          teacher_id: string
+          updated_at: string | null
+          user_id: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          response_message?: string | null
+          response_video_url?: string | null
+          status?: string | null
+          teacher_id: string
+          updated_at?: string | null
+          user_id: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          response_message?: string | null
+          response_video_url?: string | null
+          status?: string | null
+          teacher_id?: string
+          updated_at?: string | null
+          user_id?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_requests_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -411,6 +471,35 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_key: string
+          id: string
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_key: string
+          id?: string
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_key?: string
+          id?: string
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_progress: {
         Row: {
