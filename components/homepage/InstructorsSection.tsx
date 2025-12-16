@@ -39,10 +39,10 @@ export function InstructorsSection({ instructors }: Props) {
           className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12"
         >
           <div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-2 font-heading">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-2 font-heading">
               Learn from the best
             </h2>
-            <p className="text-lg text-white/60 max-w-xl">
+            <p className="text-lg text-muted-foreground max-w-xl">
               World-class musicians with decades of performance and teaching
               experience
             </p>
@@ -79,7 +79,7 @@ export function InstructorsSection({ instructors }: Props) {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                      <span className="text-4xl font-bold text-white/20">
+                      <span className="text-4xl font-bold text-muted-foreground/30">
                         {getInitials(instructor.name)}
                       </span>
                     </div>
@@ -87,7 +87,7 @@ export function InstructorsSection({ instructors }: Props) {
                 </div>
 
                 {/* Info */}
-                <h3 className="text-lg font-semibold text-white">
+                <h3 className="text-lg font-semibold text-foreground">
                   {instructor.name}
                 </h3>
                 <p className="text-sm text-primary">{instructor.instrument}</p>

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { UserNav } from '@/components/user-nav'
 import { HeaderWrapper } from '@/components/header-wrapper'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export async function Header() {
   const supabase = await createClient()
@@ -36,25 +37,25 @@ export async function Header() {
           <div className="hidden md:flex items-center gap-8">
             <Link
               href="/#courses"
-              className="text-sm text-white/70 hover:text-white transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Courses
             </Link>
             <Link
               href="/#instructors"
-              className="text-sm text-white/70 hover:text-white transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Instructors
             </Link>
             <Link
               href="/#testimonials"
-              className="text-sm text-white/70 hover:text-white transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Testimonials
             </Link>
             <Link
               href="/#pricing"
-              className="text-sm text-white/70 hover:text-white transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Pricing
             </Link>
@@ -62,11 +63,12 @@ export async function Header() {
 
           {/* CTAs - right */}
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             {user ? (
               <>
                 <Button
                   variant="ghost"
-                  className="text-sm text-white/80 hover:text-white hover:bg-white/10"
+                  className="text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
                   asChild
                 >
                   <Link href="/dashboard">Dashboard</Link>
@@ -74,7 +76,7 @@ export async function Header() {
                 {isAdmin && (
                   <Button
                     variant="ghost"
-                    className="text-sm text-white/80 hover:text-white hover:bg-white/10"
+                    className="text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
                     asChild
                   >
                     <Link href="/admin">Admin</Link>
@@ -86,7 +88,7 @@ export async function Header() {
               <>
                 <Button
                   variant="ghost"
-                  className="text-sm text-white/80 hover:text-white hover:bg-white/10"
+                  className="text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
                   asChild
                 >
                   <Link href="/login">Login</Link>

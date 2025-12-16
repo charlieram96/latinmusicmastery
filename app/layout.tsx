@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import { PageLoadingProvider } from "@/components/page-loading-overlay";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,9 +29,11 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${montserrat.variable} antialiased font-sans`}
       >
-        <PageLoadingProvider>
-          {children}
-        </PageLoadingProvider>
+        <ThemeProvider>
+          <PageLoadingProvider>
+            {children}
+          </PageLoadingProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

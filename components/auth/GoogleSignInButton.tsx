@@ -22,7 +22,7 @@ export function GoogleSignInButton() {
       type="button"
       onClick={handleSignIn}
       disabled={isLoading}
-      className="w-full bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:text-gray-700 px-8 py-3 h-auto rounded-full font-semibold"
+      className="w-full bg-card text-foreground border-2 border-border hover:bg-muted px-8 py-3 h-auto rounded-full font-semibold"
     >
       {isLoading ? (
         'Loading...'

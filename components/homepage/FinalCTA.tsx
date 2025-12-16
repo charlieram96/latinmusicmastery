@@ -15,13 +15,13 @@ export function FinalCTA() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-6 font-heading">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-6 font-heading">
             Ready to start your
             <br />
             musical journey?
           </h2>
 
-          <p className="text-lg text-white/60 max-w-2xl mx-auto mb-8">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
             Join thousands of musicians mastering authentic Latin American music.
             Start your free trial today.
           </p>

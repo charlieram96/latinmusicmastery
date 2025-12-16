@@ -52,10 +52,10 @@ export function CourseShowcase({ countries }: Props) {
           transition={{ duration: 0.5 }}
           className="max-w-2xl mb-16"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-4 font-heading">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4 font-heading">
             Explore musical traditions
           </h2>
-          <p className="text-lg text-white/60 leading-relaxed">
+          <p className="text-lg text-muted-foreground leading-relaxed">
             From the Caribbean to South America, master the authentic rhythms and
             techniques that define Latin American music.
           </p>
@@ -72,18 +72,18 @@ export function CourseShowcase({ countries }: Props) {
               transition={{ duration: 0.5, delay: i * 0.1 }}
             >
               <Link href={`/courses/${country.slug}`}>
-                <div className="group relative h-full bg-card rounded-2xl border border-white/5 p-6 hover:border-white/10 hover:bg-white/[0.02] transition-all duration-300">
+                <div className="group relative h-full bg-card rounded-2xl border border-border p-6 hover:border-primary/30 hover:bg-muted/50 transition-all duration-300">
                   {/* Country Flag/Emoji */}
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                     <span className="text-2xl">{getCountryEmoji(country.slug)}</span>
                   </div>
 
-                  <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-primary transition-colors">
+                  <h3 className="text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
                     {country.name}
                   </h3>
 
                   {country.description && (
-                    <p className="text-sm text-white/50 mb-4 line-clamp-2">
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                       {country.description}
                     </p>
                   )}
@@ -93,20 +93,20 @@ export function CourseShowcase({ countries }: Props) {
                     {country.musical_styles.slice(0, 3).map((style) => (
                       <span
                         key={style.id}
-                        className="text-xs px-2.5 py-1 rounded-full bg-white/5 text-white/60"
+                        className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground"
                       >
                         {style.name}
                       </span>
                     ))}
                     {country.musical_styles.length > 3 && (
-                      <span className="text-xs px-2.5 py-1 rounded-full bg-white/5 text-white/40">
+                      <span className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground/60">
                         +{country.musical_styles.length - 3}
                       </span>
                     )}
                   </div>
 
                   {/* Hover arrow */}
-                  <ArrowUpRight className="absolute top-6 right-6 w-5 h-5 text-white/20 group-hover:text-primary transition-colors" />
+                  <ArrowUpRight className="absolute top-6 right-6 w-5 h-5 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                 </div>
               </Link>
             </motion.div>

@@ -26,10 +26,19 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-orange-50 to-red-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md border-border">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+          <div className="flex justify-center mb-4">
+            <Link href="/">
+              <img
+                src="/large-color-logo.svg"
+                alt="Latin Music Mastery"
+                className="h-8 w-auto"
+              />
+            </Link>
+          </div>
+          <CardTitle className="text-2xl font-bold text-center text-foreground">Create Account</CardTitle>
           <CardDescription className="text-center">
             Start your journey with Latin Music Mastery
           </CardDescription>
@@ -39,10 +48,10 @@ export default function SignupPage() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
+              <span className="bg-card px-2 text-muted-foreground">
                 Or continue with email
               </span>
             </div>
@@ -52,12 +61,12 @@ export default function SignupPage() {
         <form action={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+              <div className="rounded-md bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-500">
                 {error}
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="full_name">Full Name</Label>
+              <Label htmlFor="full_name" className="text-foreground">Full Name</Label>
               <Input
                 id="full_name"
                 name="full_name"
@@ -68,7 +77,7 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-foreground">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -79,7 +88,7 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-foreground">Password</Label>
               <Input
                 id="password"
                 name="password"
@@ -96,7 +105,7 @@ export default function SignupPage() {
           <CardFooter className="flex flex-col space-y-4">
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-primary hover:bg-primary/90 text-white rounded-full"
               disabled={loading}
             >
               {loading ? 'Creating account...' : 'Create Account'}

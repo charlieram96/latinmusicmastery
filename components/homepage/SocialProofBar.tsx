@@ -11,7 +11,7 @@ const stats = [
 
 export function SocialProofBar() {
   return (
-    <section className="py-16 border-y border-white/5">
+    <section className="py-16 border-y border-border">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0 }}
@@ -20,7 +20,7 @@ export function SocialProofBar() {
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          <p className="text-sm text-white/40 uppercase tracking-wider mb-8">
+          <p className="text-sm text-muted-foreground uppercase tracking-wider mb-8">
             Trusted by musicians worldwide
           </p>
 
@@ -35,10 +35,10 @@ export function SocialProofBar() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="text-center"
               >
-                <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                <div className="text-3xl md:text-4xl font-bold text-foreground mb-1">
                   {stat.value}
                 </div>
-                <div className="text-sm text-white/50">{stat.label}</div>
+                <div className="text-sm text-muted-foreground">{stat.label}</div>
               </motion.div>
             ))}
           </div>

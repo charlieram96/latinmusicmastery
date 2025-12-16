@@ -20,9 +20,9 @@ export function ModernHero() {
         />
         {/* Subtle grid pattern overlay */}
         <div
-          className="absolute inset-0 opacity-[0.02]"
+          className="absolute inset-0 opacity-[0.02] dark:opacity-[0.02]"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M0 0h1v60H0zM60 0v1H0V0z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M0 0h1v60H0zM60 0v1H0V0z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
       </div>
@@ -33,7 +33,7 @@ export function ModernHero() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm text-white/70 mb-8"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border text-sm text-muted-foreground mb-8"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
           Learn authentic Latin rhythms from world-class instructors
@@ -44,7 +44,7 @@ export function ModernHero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1] mb-6 font-heading"
+          className="text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight text-foreground leading-[1.1] mb-6 font-heading"
         >
           Master the rhythms of
           <br />
@@ -56,7 +56,7 @@ export function ModernHero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-10 leading-relaxed"
+          className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
         >
           Learn salsa, bossa nova, tango, and more from world-class instructors.
           Interactive lessons designed for musicians of all levels.
@@ -81,7 +81,7 @@ export function ModernHero() {
 
           <Button
             variant="ghost"
-            className="text-white/70 hover:text-white hover:bg-white/5 !px-8 py-4 h-auto text-base font-medium rounded-full border border-white/10"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted !px-8 py-4 h-auto text-base font-medium rounded-full border border-border"
             asChild
           >
             <Link href="#demo" className="flex items-center justify-center">
@@ -102,9 +102,9 @@ export function ModernHero() {
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center p-2"
+          className="w-6 h-10 rounded-full border-2 border-border flex items-start justify-center p-2"
         >
-          <div className="w-1 h-2 bg-white/40 rounded-full" />
+          <div className="w-1 h-2 bg-muted-foreground/40 rounded-full" />
         </motion.div>
       </motion.div>
     </section>

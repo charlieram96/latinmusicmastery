@@ -4,26 +4,26 @@ import Link from 'next/link'
 
 export function Footer() {
   return (
-    <footer className="py-16 border-t border-white/5">
+    <footer className="py-16 border-t border-border">
       <div className="max-w-7xl mx-auto px-6">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Brand Column */}
           <div className="col-span-2">
             <img src="/large-color-logo.svg" alt="LMM" className="h-8 mb-4" />
-            <p className="text-sm text-white/50 max-w-xs">
+            <p className="text-sm text-muted-foreground max-w-xs">
               Master authentic Latin American music with world-class instructors.
             </p>
           </div>
 
           {/* Product Links */}
           <div>
-            <h4 className="text-sm font-semibold text-white mb-4">Product</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-4">Product</h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   href="/dashboard/courses"
-                  className="text-sm text-white/50 hover:text-white transition"
+                  className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
                   Courses
                 </Link>
@@ -31,7 +31,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/pricing"
-                  className="text-sm text-white/50 hover:text-white transition"
+                  className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
                   Pricing
                 </Link>
@@ -39,7 +39,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/dashboard/teachers"
-                  className="text-sm text-white/50 hover:text-white transition"
+                  className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
                   Instructors
                 </Link>
@@ -49,12 +49,12 @@ export function Footer() {
 
           {/* Company Links */}
           <div>
-            <h4 className="text-sm font-semibold text-white mb-4">Company</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-4">Company</h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   href="/about"
-                  className="text-sm text-white/50 hover:text-white transition"
+                  className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
                   About
                 </Link>
@@ -62,7 +62,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/blog"
-                  className="text-sm text-white/50 hover:text-white transition"
+                  className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
                   Blog
                 </Link>
@@ -70,7 +70,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/contact"
-                  className="text-sm text-white/50 hover:text-white transition"
+                  className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
                   Contact
                 </Link>
@@ -80,12 +80,12 @@ export function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h4 className="text-sm font-semibold text-white mb-4">Legal</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-4">Legal</h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   href="/privacy"
-                  className="text-sm text-white/50 hover:text-white transition"
+                  className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
                   Privacy
                 </Link>
@@ -93,7 +93,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/terms"
-                  className="text-sm text-white/50 hover:text-white transition"
+                  className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
                   Terms
                 </Link>
@@ -103,8 +103,8 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/5">
-          <p className="text-sm text-white/40">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-border">
+          <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Latin Music Mastery. All rights
             reserved.
           </p>
@@ -113,7 +113,7 @@ export function Footer() {
           <div className="flex gap-4">
             <a
               href="#"
-              className="text-white/40 hover:text-white transition"
+              className="text-muted-foreground hover:text-foreground transition"
               aria-label="Twitter"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -122,7 +122,7 @@ export function Footer() {
             </a>
             <a
               href="#"
-              className="text-white/40 hover:text-white transition"
+              className="text-muted-foreground hover:text-foreground transition"
               aria-label="Instagram"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -131,7 +131,7 @@ export function Footer() {
             </a>
             <a
               href="#"
-              className="text-white/40 hover:text-white transition"
+              className="text-muted-foreground hover:text-foreground transition"
               aria-label="YouTube"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

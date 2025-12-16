@@ -26,10 +26,10 @@ export function PricingSection() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-4 font-heading">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4 font-heading">
             Simple, transparent pricing
           </h2>
-          <p className="text-lg text-white/60">
+          <p className="text-lg text-muted-foreground">
             One plan. Unlimited access. No hidden fees.
           </p>
         </motion.div>
@@ -42,18 +42,18 @@ export function PricingSection() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="max-w-md mx-auto"
         >
-          <div className="relative p-8 rounded-3xl bg-card border border-white/10 overflow-hidden">
+          <div className="relative p-8 rounded-3xl bg-card border border-border overflow-hidden">
             {/* Subtle gradient accent */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-orange-400 to-primary" />
 
             {/* Price */}
             <div className="text-center mb-8">
-              <div className="text-sm text-white/50 uppercase tracking-wider mb-2">
+              <div className="text-sm text-muted-foreground uppercase tracking-wider mb-2">
                 Monthly Membership
               </div>
               <div className="flex items-baseline justify-center gap-1">
-                <span className="text-5xl font-bold text-white">$39</span>
-                <span className="text-lg text-white/50">/month</span>
+                <span className="text-5xl font-bold text-foreground">$39</span>
+                <span className="text-lg text-muted-foreground">/month</span>
               </div>
             </div>
 
@@ -62,7 +62,7 @@ export function PricingSection() {
               {features.map((feature) => (
                 <li key={feature} className="flex items-center gap-3">
                   <Check className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span className="text-white/80">{feature}</span>
+                  <span className="text-foreground/80">{feature}</span>
                 </li>
               ))}
             </ul>
@@ -75,7 +75,7 @@ export function PricingSection() {
               <Link href="/signup">Start Your Free Trial</Link>
             </Button>
 
-            <p className="text-center text-xs text-white/40 mt-4">
+            <p className="text-center text-xs text-muted-foreground mt-4">
               14-day money-back guarantee. No credit card required.
             </p>
           </div>

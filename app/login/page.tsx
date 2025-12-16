@@ -26,7 +26,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Left Side - Image with Text Overlay */}
+      {/* Left Side - Image with Text Overlay (always dark themed) */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         {/* Background Image */}
         <div
@@ -36,7 +36,7 @@ export default function LoginPage() {
           }}
         />
         {/* Dark Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/70 to-primary/30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-black/70 to-primary/30" />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
@@ -88,7 +88,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
+      {/* Right Side - Login Form (theme-aware) */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md space-y-8">
           {/* Mobile Logo */}
@@ -104,8 +104,8 @@ export default function LoginPage() {
 
           {/* Header */}
           <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-bold font-heading text-white">Welcome back</h2>
-            <p className="mt-2 text-white/60">
+            <h2 className="text-3xl font-bold font-heading text-foreground">Welcome back</h2>
+            <p className="mt-2 text-muted-foreground">
               Sign in to continue your musical journey
             </p>
           </div>
@@ -116,10 +116,10 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-white/10" />
+              <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-4 text-white/40">
+              <span className="bg-background px-4 text-muted-foreground">
                 Or continue with email
               </span>
             </div>
@@ -128,13 +128,13 @@ export default function LoginPage() {
           {/* Form */}
           <form action={handleSubmit} className="space-y-6">
             {error && (
-              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-400">
+              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-500">
                 {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-white/80">Email</Label>
+              <Label htmlFor="email" className="text-foreground">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -142,13 +142,13 @@ export default function LoginPage() {
                 placeholder="you@example.com"
                 required
                 disabled={loading}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary focus:ring-primary"
+                className="bg-background border-input text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-white/80">Password</Label>
+                <Label htmlFor="password" className="text-foreground">Password</Label>
                 <Link
                   href="/forgot-password"
                   className="text-sm text-primary hover:text-primary/80 transition-colors"
@@ -162,7 +162,7 @@ export default function LoginPage() {
                 type="password"
                 required
                 disabled={loading}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-primary focus:ring-primary"
+                className="bg-background border-input text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
               />
             </div>
 
@@ -176,7 +176,7 @@ export default function LoginPage() {
           </form>
 
           {/* Sign Up Link */}
-          <p className="text-center text-white/60">
+          <p className="text-center text-muted-foreground">
             Don't have an account?{' '}
             <Link href="/signup" className="text-primary hover:text-primary/80 font-medium transition-colors">
               Sign up for free

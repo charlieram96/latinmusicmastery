@@ -5,13 +5,42 @@
 @tailwind utilities;
 
 @layer base {
+  /* Light theme (default) */
   :root {
-    /* Dark theme color palette */
+    --background: 0 0% 100%; /* white */
+    --foreground: 0 0% 9%; /* near black */
+    --card: 0 0% 100%; /* white */
+    --card-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    --primary: 28 90% 50%; /* Orange */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 28 90% 50%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 28 90% 50%;
+    --radius: 0.5rem;
+    --chart-1: 28 90% 50%;
+    --chart-2: 35 90% 45%;
+    --chart-3: 24 100% 45%;
+    --chart-4: 280 75% 60%;
+    --chart-5: 340 75% 50%;
+  }
+
+  /* Dark theme */
+  .dark {
     --background: 0 0% 8%; /* #141414 */
     --foreground: 0 0% 93%; /* #ededed */
     --card: 0 0% 11%; /* #1c1c1c */
-    --card-foreground: 0 0% 93%; /* #ededed */
-    --popover: 0 0% 11%; /* #1c1c1c */
+    --card-foreground: 0 0% 93%;
+    --popover: 0 0% 11%;
     --popover-foreground: 0 0% 93%;
     --primary: 28 90% 57%; /* Orange #F48C2E */
     --primary-foreground: 0 0% 98%;
@@ -19,14 +48,13 @@
     --secondary-foreground: 0 0% 93%;
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 65%;
-    --accent: 28 90% 57%; /* Orange #F48C2E */
+    --accent: 28 90% 57%;
     --accent-foreground: 0 0% 93%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 28 90% 57%;
-    --radius: 0.5rem;
     --chart-1: 28 90% 57%;
     --chart-2: 35 90% 50%;
     --chart-3: 24 100% 50%;
@@ -82,8 +110,19 @@
 }
 
 :root {
+  --sidebar: #f8f8f8;
+  --sidebar-foreground: hsl(0 0% 9%);
+  --sidebar-primary: hsl(28 90% 50%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(0 0% 96%);
+  --sidebar-accent-foreground: hsl(0 0% 9%);
+  --sidebar-border: hsl(0 0% 90%);
+  --sidebar-ring: hsl(28 90% 50%);
+}
+
+.dark {
   --sidebar: #141414;
-  --sidebar-foreground: hsl(0 0% 93%); /* #ededed */
+  --sidebar-foreground: hsl(0 0% 93%);
   --sidebar-primary: hsl(28 90% 57%);
   --sidebar-primary-foreground: hsl(0 0% 98%);
   --sidebar-accent: hsl(0 0% 15%);

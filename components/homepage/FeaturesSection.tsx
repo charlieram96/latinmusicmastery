@@ -51,7 +51,7 @@ const features: Feature[] = [
 
 export function FeaturesSection() {
   return (
-    <section className="py-24 lg:py-32 bg-[#0f0f0f]">
+    <section className="py-24 lg:py-32 bg-muted/50">
       <div className="max-w-7xl mx-auto px-6">
         {/* Section Header - Centered */}
         <motion.div
@@ -61,10 +61,10 @@ export function FeaturesSection() {
           transition={{ duration: 0.5 }}
           className="text-center max-w-3xl mx-auto mb-16"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-4 font-heading">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4 font-heading">
             Everything you need to excel
           </h2>
-          <p className="text-lg text-white/60">
+          <p className="text-lg text-muted-foreground">
             A complete learning platform built for serious musicians
           </p>
         </motion.div>
@@ -78,18 +78,18 @@ export function FeaturesSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="p-6 rounded-2xl bg-card border border-white/5"
+              className="p-6 rounded-2xl bg-card border border-border"
             >
               {/* Icon */}
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                 <feature.icon className="w-5 h-5 text-primary" />
               </div>
 
-              <h3 className="text-lg font-semibold text-white mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
                 {feature.title}
               </h3>
 
-              <p className="text-sm text-white/50 leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {feature.description}
               </p>
             </motion.div>
