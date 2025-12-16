@@ -110,11 +110,11 @@ export function DashboardSidebar({
       <SidebarHeader className="h-[55px] flex items-center justify-center mx-[-20px] bg-sidebar">
         <Link href="/dashboard">
           <Image
-            src="/sidebar-logo.svg"
+            src="/large-color-logo.svg"
             alt="Latin Music Mastery"
-            width={110}
-            height={22}
-            className="h-5 w-auto"
+            width={150}
+            height={30}
+            className="h-[30px] w-auto mt-[5px]"
           />
         </Link>
       </SidebarHeader>
