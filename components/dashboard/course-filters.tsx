@@ -18,7 +18,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Search, Filter, X, Grid3X3, List, ChevronDown } from 'lucide-react'
+import { Search, Filter, X, Grid3X3, List, ChevronDown } from 'lucide-react' 
 
 interface FilterOptions {
   teachers: { id: string; name: string }[]
