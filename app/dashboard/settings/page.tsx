@@ -20,6 +20,7 @@ import {
   Globe,
   Trash2,
 } from 'lucide-react'
+import { ThemePreference } from '@/components/settings/theme-preference'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -198,6 +199,8 @@ export default async function SettingsPage() {
               </SelectContent>
             </Select>
           </div>
+
+          <ThemePreference />
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">

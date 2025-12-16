@@ -105,9 +105,9 @@ export function DashboardSidebar({
   const pathname = usePathname()
 
   return (
-    <Sidebar collapsible="none" className="fixed inset-y-0 left-0 z-50 !bg-[#141414] border-r w-[241px] hidden md:flex p-[20px] pt-0">
+    <Sidebar collapsible="none" className="fixed inset-y-0 left-0 z-50 bg-sidebar border-r w-[241px] hidden md:flex p-[20px] pt-0">
       {/* Logo */}
-      <SidebarHeader className="h-[55px] flex items-center justify-center mx-[-20px] !bg-[#141414]">
+      <SidebarHeader className="h-[55px] flex items-center justify-center mx-[-20px] bg-sidebar">
         <Link href="/dashboard">
           <Image
             src="/sidebar-logo.svg"
@@ -293,7 +293,7 @@ export function DashboardSidebar({
       <SidebarFooter className="mt-auto pt-4 mx-[-20px] px-[20px]">
         <Link
           href="/dashboard/settings"
-          className="flex items-center gap-3 p-3 rounded-xl bg-[#1c1c1c] hover:bg-[#252525] transition-colors group"
+          className="flex items-center gap-3 p-3 rounded-xl bg-card hover:bg-secondary transition-colors group"
         >
           <Avatar className="h-9 w-9">
             <AvatarImage src={userAvatar} alt={userName || 'User'} />

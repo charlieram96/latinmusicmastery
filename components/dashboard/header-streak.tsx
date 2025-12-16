@@ -22,11 +22,11 @@ export function HeaderStreakClient({ streak }: HeaderStreakClientProps) {
           <div
             className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-sm font-medium transition-colors ${
               hasStreak
-                ? 'text-[#F48C2E] bg-[#F48C2E]/10'
+                ? 'text-primary bg-primary/10'
                 : 'text-muted-foreground bg-muted/50'
             }`}
           >
-            <Flame className={`h-4 w-4 ${hasStreak ? 'fill-[#F48C2E]' : ''}`} />
+            <Flame className={`h-4 w-4 ${hasStreak ? 'fill-primary' : ''}`} />
             <span>{streak}</span>
           </div>
         </TooltipTrigger>
