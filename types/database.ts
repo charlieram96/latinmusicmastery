@@ -447,6 +447,7 @@ export type Database = {
           name: string
           specialties: string[] | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           bio?: string | null
@@ -458,6 +459,7 @@ export type Database = {
           name: string
           specialties?: string[] | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           bio?: string | null
@@ -469,8 +471,17 @@ export type Database = {
           name?: string
           specialties?: string[] | null
           updated_at?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "teachers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_achievements: {
         Row: {

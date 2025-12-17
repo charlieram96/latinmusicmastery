@@ -24,6 +24,15 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single()
 
+  // Check if user is a teacher
+  const { data: teacherProfile } = await supabase
+    .from('teachers')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  const isTeacher = !!teacherProfile
+
   return (
     <CourseModeProvider>
       <SidebarProvider
@@ -38,6 +47,7 @@ export default async function DashboardLayout({
           sidebar={
             <DashboardSidebar
               isAdmin={profile?.is_admin || false}
+              isTeacher={isTeacher}
               userEmail={user.email || profile?.email || ''}
               userName={profile?.full_name || ''}
             />

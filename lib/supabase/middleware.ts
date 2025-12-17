@@ -45,6 +45,19 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  // Protect teacher routes - check if user has a linked teacher profile
+  if (request.nextUrl.pathname.startsWith('/teacher') && user) {
+    const { data: teacherProfile } = await supabase
+      .from('teachers')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!teacherProfile) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  }
+
   // Redirect to dashboard if authenticated user tries to access auth pages
   if (
     request.nextUrl.pathname.startsWith('/login') ||
@@ -58,7 +71,8 @@ export async function updateSession(request: NextRequest) {
   // Redirect to login if unauthenticated user tries to access protected routes
   if (
     (request.nextUrl.pathname.startsWith('/dashboard') ||
-      request.nextUrl.pathname.startsWith('/admin')) &&
+      request.nextUrl.pathname.startsWith('/admin') ||
+      request.nextUrl.pathname.startsWith('/teacher')) &&
     !user
   ) {
     return NextResponse.redirect(new URL('/login', request.url))

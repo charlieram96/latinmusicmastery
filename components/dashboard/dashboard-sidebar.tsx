@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils'
 
 interface DashboardSidebarProps {
   isAdmin?: boolean
+  isTeacher?: boolean
   userEmail?: string
   userName?: string
   userAvatar?: string
@@ -98,6 +99,7 @@ const settingsNavItems = [
 
 export function DashboardSidebar({
   isAdmin = false,
+  isTeacher = false,
   userEmail = '',
   userName = '',
   userAvatar = ''
@@ -256,6 +258,37 @@ export function DashboardSidebar({
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Teacher Portal - Only for teachers */}
+        {isTeacher && (
+          <>
+            <SidebarSeparator className="mx-0 bg-border/50" />
+            <SidebarGroup className="px-0 py-4">
+              <SidebarGroupLabel className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Teacher
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-1">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith('/teacher')}
+                      className={cn(
+                        "h-10 px-3 gap-3 font-medium hover:bg-secondary justify-start",
+                        pathname.startsWith('/teacher') && "bg-secondary text-foreground"
+                      )}
+                    >
+                      <Link href="/teacher">
+                        <GraduationCap className="h-[18px] w-[18px] flex-shrink-0" />
+                        <span className="text-sm">Teacher Portal</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
 
         {/* Admin Panel - Only for admins */}
         {isAdmin && (

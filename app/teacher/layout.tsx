@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Home, Globe, Music, BookOpen, FileText, Dumbbell, Users, GraduationCap, BarChart3, MessageSquare } from 'lucide-react'
+import { Home, MessageSquare, User, ArrowLeft } from 'lucide-react'
 
-export default async function AdminLayout({
+export default async function TeacherLayout({
   children,
 }: {
   children: React.ReactNode
@@ -15,27 +15,21 @@ export default async function AdminLayout({
     redirect('/login')
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
+  // Check if user is a teacher
+  const { data: teacher } = await supabase
+    .from('teachers')
+    .select('id, name')
+    .eq('user_id', user.id)
     .single()
 
-  if (!profile?.is_admin) {
+  if (!teacher) {
     redirect('/dashboard')
   }
 
   const navItems = [
-    { href: '/admin', label: 'Dashboard', icon: Home },
-    { href: '/admin/users', label: 'Users', icon: Users },
-    { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/admin/feedback', label: 'Feedback', icon: MessageSquare },
-    { href: '/admin/countries', label: 'Countries', icon: Globe },
-    { href: '/admin/styles', label: 'Musical Styles', icon: Music },
-    { href: '/admin/courses', label: 'Courses', icon: BookOpen },
-    { href: '/admin/teachers', label: 'Teachers', icon: GraduationCap },
-    { href: '/admin/lessons', label: 'Lessons', icon: FileText },
-    { href: '/admin/exercises', label: 'Exercises', icon: Dumbbell },
+    { href: '/teacher', label: 'Dashboard', icon: Home },
+    { href: '/teacher/feedback', label: 'Feedback Requests', icon: MessageSquare },
+    { href: '/teacher/profile', label: 'My Profile', icon: User },
   ]
 
   return (
@@ -44,7 +38,8 @@ export default async function AdminLayout({
       <aside className="w-64 border-r bg-card">
         <div className="sticky top-0 flex flex-col h-screen">
           <div className="p-6 border-b">
-            <h2 className="text-lg font-bold">Admin Panel</h2>
+            <h2 className="text-lg font-bold">Teacher Portal</h2>
+            <p className="text-sm text-muted-foreground mt-1">{teacher.name}</p>
           </div>
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
@@ -66,7 +61,8 @@ export default async function AdminLayout({
               href="/dashboard"
               className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
             >
-              ← Back to Dashboard
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
             </Link>
           </div>
         </div>
