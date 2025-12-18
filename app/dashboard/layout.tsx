@@ -4,7 +4,6 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar'
 import { DashboardLayoutClient } from '@/components/dashboard/dashboard-layout-client'
-import { CourseModeProvider } from '@/contexts/course-mode-context'
 
 export default async function DashboardLayout({
   children,
@@ -34,29 +33,27 @@ export default async function DashboardLayout({
   const isTeacher = !!teacherProfile
 
   return (
-    <CourseModeProvider>
-      <SidebarProvider
-        style={
-          {
-            "--sidebar-width": "240px",
-            "--sidebar-width-mobile": "0px",
-          } as React.CSSProperties
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "240px",
+          "--sidebar-width-mobile": "0px",
+        } as React.CSSProperties
+      }
+    >
+      <DashboardLayoutClient
+        sidebar={
+          <DashboardSidebar
+            isAdmin={profile?.is_admin || false}
+            isTeacher={isTeacher}
+            userEmail={user.email || profile?.email || ''}
+            userName={profile?.full_name || ''}
+          />
         }
+        header={<DashboardHeader />}
       >
-        <DashboardLayoutClient
-          sidebar={
-            <DashboardSidebar
-              isAdmin={profile?.is_admin || false}
-              isTeacher={isTeacher}
-              userEmail={user.email || profile?.email || ''}
-              userName={profile?.full_name || ''}
-            />
-          }
-          header={<DashboardHeader />}
-        >
-          {children}
-        </DashboardLayoutClient>
-      </SidebarProvider>
-    </CourseModeProvider>
+        {children}
+      </DashboardLayoutClient>
+    </SidebarProvider>
   )
 }

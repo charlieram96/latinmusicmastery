@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import { PageLoadingProvider } from "@/components/page-loading-overlay";
 import { ThemeProvider } from "@/components/theme-provider";
+import { CourseModeProvider } from "@/contexts/course-mode-context";
 import "./globals.css";
 
 const inter = Inter({
@@ -30,9 +31,11 @@ export default function RootLayout({
         className={`${inter.variable} ${montserrat.variable} antialiased font-sans`}
       >
         <ThemeProvider>
-          <PageLoadingProvider>
-            {children}
-          </PageLoadingProvider>
+          <CourseModeProvider>
+            <PageLoadingProvider>
+              {children}
+            </PageLoadingProvider>
+          </CourseModeProvider>
         </ThemeProvider>
       </body>
     </html>

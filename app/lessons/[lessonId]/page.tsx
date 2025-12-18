@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowRight, CheckCircle2, PlayCircle, Lock } from 'lucide-react'
 import { LessonCompleteButton } from '@/components/lesson-complete-button'
+import { CourseModeActivator } from '@/components/dashboard/course-mode-activator'
 
 interface PageProps {
   params: Promise<{
@@ -107,8 +108,10 @@ export default async function LessonPage({ params }: PageProps) {
   const country = style.country
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Navigation */}
+    <>
+      <CourseModeActivator />
+      <div className="min-h-screen bg-background">
+        {/* Top Navigation */}
       <div className="border-b bg-background sticky top-0 z-10">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -295,6 +298,7 @@ export default async function LessonPage({ params }: PageProps) {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

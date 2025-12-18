@@ -31,52 +31,77 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
     redirect('/login')
   }
 
-  // Get user's progress on lessons with course lesson counts
+  // Get user's course enrollments
+  const { data: enrollments } = await supabase
+    .from('course_enrollments')
+    .select(`
+      *,
+      course:courses(
+        *,
+        lessons(id),
+        musical_style:musical_styles(
+          name,
+          country:countries(name)
+        ),
+        teacher:teachers(name, image_url)
+      )
+    `)
+    .eq('user_id', user.id)
+
+  // Get user's progress on lessons
   const { data: userProgress } = await supabase
     .from('user_progress')
     .select(`
       *,
       lesson:lessons(
-        *,
-        course:courses(
-          *,
-          lessons(id),
-          musical_style:musical_styles(
-            name,
-            country:countries(name)
-          ),
-          teacher:teachers(name, image_url)
-        )
+        id,
+        course_id
       )
     `)
     .eq('user_id', user.id)
 
-  // Group lessons by course
+  // Create a map of progress by course
+  const courseProgressMap = new Map<string, { completedLessons: number; lastProgressUpdate: string; nextLessonId: string | null }>()
+  userProgress?.forEach((progress: any) => {
+    const courseId = progress.lesson?.course_id
+    if (!courseId) return
+
+    const existing = courseProgressMap.get(courseId) || {
+      completedLessons: 0,
+      lastProgressUpdate: progress.updated_at,
+      nextLessonId: null
+    }
+
+    if (progress.completed) {
+      existing.completedLessons++
+    } else if (!existing.nextLessonId) {
+      existing.nextLessonId = progress.lesson_id
+    }
+
+    if (new Date(progress.updated_at) > new Date(existing.lastProgressUpdate)) {
+      existing.lastProgressUpdate = progress.updated_at
+    }
+
+    courseProgressMap.set(courseId, existing)
+  })
+
+  // Group by course from enrollments
   const coursesMap = new Map()
 
-  userProgress?.forEach((progress: any) => {
-    const course = progress.lesson.course
-    if (!coursesMap.has(course.id)) {
-      coursesMap.set(course.id, {
-        ...course,
-        totalLessons: course.lessons?.length || 0,
-        completedLessons: 0,
-        lastAccessed: progress.updated_at,
-        nextLessonId: null,
-      })
-    }
+  enrollments?.forEach((enrollment: any) => {
+    const course = enrollment.course
+    if (!course) return
 
-    const courseData = coursesMap.get(course.id)
-    if (progress.completed) {
-      courseData.completedLessons++
-    } else if (!courseData.nextLessonId) {
-      courseData.nextLessonId = progress.lesson_id
-    }
+    const progress = courseProgressMap.get(course.id)
 
-    // Update last accessed time
-    if (new Date(progress.updated_at) > new Date(courseData.lastAccessed)) {
-      courseData.lastAccessed = progress.updated_at
-    }
+    coursesMap.set(course.id, {
+      ...course,
+      totalLessons: course.lessons?.length || 0,
+      completedLessons: progress?.completedLessons || 0,
+      lastAccessed: enrollment.last_accessed_at || enrollment.enrolled_at,
+      nextLessonId: progress?.nextLessonId || null,
+      enrolledAt: enrollment.enrolled_at,
+    })
   })
 
   let enrolledCourses = Array.from(coursesMap.values())
@@ -147,14 +172,14 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
 
             return (
               <Link key={course.id} href={`/dashboard/course/${course.slug || course.id}`} className="group">
-                <Card className="overflow-hidden h-full hover:bg-secondary/30 transition-colors">
+                <Card className="overflow-hidden h-full hover:shadow-lg transition-shadow p-0 gap-0">
                   {/* Thumbnail with Progress Ring Overlay */}
-                  <div className="relative aspect-video bg-muted">
+                  <div className="relative aspect-video bg-muted overflow-hidden">
                     {course.thumbnail_url ? (
                       <img
                         src={course.thumbnail_url}
                         alt={course.title}
-                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                        className="object-cover w-full h-full transform group-hover:scale-110 transition-transform duration-500 ease-out"
                       />
                     ) : (
                       <div className="w-full h-full bg-primary/10 flex items-center justify-center">
@@ -216,7 +241,8 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
                     </div>
                   </div>
 
-                  <CardContent className="p-4">
+                  {/* Content */}
+                  <div className="p-4 flex flex-col flex-1">
                     {/* Style & Country */}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                       <Badge variant="outline" className="text-xs">
@@ -226,42 +252,60 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
                     </div>
 
                     {/* Title */}
-                    <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                    <h3 className="font-semibold text-base mb-3 line-clamp-2 group-hover:text-primary transition-colors">
                       {course.title}
                     </h3>
 
+                    {/* Teacher */}
+                    {course.teacher && (
+                      <div className="flex items-center gap-2 mb-4">
+                        {course.teacher.image_url ? (
+                          <img
+                            src={course.teacher.image_url}
+                            alt={course.teacher.name}
+                            className="h-6 w-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                            <GraduationCap className="h-3 w-3 text-primary" />
+                          </div>
+                        )}
+                        <span className="text-sm text-muted-foreground">{course.teacher.name}</span>
+                      </div>
+                    )}
+
                     {/* Progress Bar */}
-                    <div className="mb-3">
-                      <Progress value={progressPercent} className="h-1.5" />
-                      <p className="text-xs text-muted-foreground mt-1.5">
-                        {course.completedLessons} of {course.totalLessons} lessons completed
-                      </p>
+                    <div className="mt-auto">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                        <span>{course.completedLessons} of {course.totalLessons} lessons</span>
+                        <span className="font-medium">{progressPercent}%</span>
+                      </div>
+                      <Progress value={progressPercent} className="h-2" />
                     </div>
 
-                    {/* Teacher & Continue Button */}
-                    <div className="flex items-center justify-between">
-                      {course.teacher && (
-                        <div className="flex items-center gap-2">
-                          {course.teacher.image_url ? (
-                            <img
-                              src={course.teacher.image_url}
-                              alt={course.teacher.name}
-                              className="h-6 w-6 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
-                              <GraduationCap className="h-3 w-3 text-primary" />
-                            </div>
-                          )}
-                          <span className="text-xs text-muted-foreground">{course.teacher.name}</span>
-                        </div>
+                    {/* Action Button */}
+                    <Button
+                      className="w-full mt-4 gap-2"
+                      variant={isCompleted ? 'outline' : 'default'}
+                    >
+                      {isCompleted ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4" />
+                          Review Course
+                        </>
+                      ) : progressPercent > 0 ? (
+                        <>
+                          <Play className="h-4 w-4" />
+                          Continue Learning
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4" />
+                          Begin Course
+                        </>
                       )}
-                      <Button size="sm" variant="ghost" className="gap-1 text-xs h-7">
-                        {isCompleted ? 'Review' : 'Continue'}
-                        <ArrowRight className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </CardContent>
+                    </Button>
+                  </div>
                 </Card>
               </Link>
             )
