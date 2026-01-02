@@ -83,7 +83,8 @@ export function StartLearningCard({ courses }: StartLearningCardProps) {
         <Link href={`/dashboard/course/${course.slug}`}>
           <div
             className={`
-              w-[244px] h-[135px] rounded-xl overflow-hidden bg-muted relative
+              w-[160px] h-[90px] sm:w-[200px] sm:h-[112px] md:w-[244px] md:h-[135px]
+              rounded-lg sm:rounded-xl overflow-hidden bg-muted relative
               transition-all duration-300 ease-out cursor-pointer
               ${isHovered ? 'shadow-2xl shadow-black/40 z-50' : 'z-0'}
             `}
@@ -97,7 +98,7 @@ export function StartLearningCard({ courses }: StartLearningCardProps) {
               />
             ) : (
               <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                <BookOpen className="h-8 w-8 text-primary/50" />
+                <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary/50" />
               </div>
             )}
 
@@ -111,43 +112,43 @@ export function StartLearningCard({ courses }: StartLearningCardProps) {
 
             {/* Content Overlay */}
             <div className={`
-              absolute inset-0 p-3 flex flex-col
+              absolute inset-0 p-2 sm:p-3 flex flex-col
               ${textPosition === 'top' ? 'justify-start' : 'justify-end'}
               transition-all duration-300 ease-out
               ${isHovered ? 'opacity-100 translate-y-0' : `opacity-0 ${textPosition === 'top' ? '-translate-y-4' : 'translate-y-4'}`}
             `}>
               {/* Badges Row */}
-              <div className="flex flex-wrap gap-1.5 mb-2">
+              <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-1 sm:mb-2">
                 {course.musical_style?.name && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-white/10 text-white border-white/30 backdrop-blur-sm">
-                    <Music className="w-2.5 h-2.5 mr-1" />
+                  <Badge variant="outline" className="text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-4 sm:h-5 bg-white/10 text-white border-white/30 backdrop-blur-sm">
+                    <Music className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5 sm:mr-1" />
                     {course.musical_style.name}
                   </Badge>
                 )}
                 {course.difficulty && (
-                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 backdrop-blur-sm ${getDifficultyColor(course.difficulty)}`}>
+                  <Badge variant="outline" className={`text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0 h-4 sm:h-5 backdrop-blur-sm ${getDifficultyColor(course.difficulty)}`}>
                     {course.difficulty}
                   </Badge>
                 )}
               </div>
 
               {/* Title */}
-              <h4 className="font-semibold text-sm text-white leading-tight line-clamp-2 mb-1">
+              <h4 className="font-semibold text-xs sm:text-sm text-white leading-tight line-clamp-2 mb-0.5 sm:mb-1">
                 {course.title}
               </h4>
 
-              {/* Teacher */}
+              {/* Teacher - hidden on mobile */}
               {course.teacher?.name && (
-                <p className="text-[11px] text-white/70 flex items-center gap-1">
+                <p className="hidden sm:flex text-[11px] text-white/70 items-center gap-1">
                   <Users className="w-3 h-3" />
                   {course.teacher.name}
                 </p>
               )}
 
               {/* Play indicator */}
-              <div className={`absolute ${textPosition === 'top' ? 'bottom-3' : 'top-3'} right-3`}>
-                <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-                  <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+              <div className={`absolute ${textPosition === 'top' ? 'bottom-2 sm:bottom-3' : 'top-2 sm:top-3'} right-2 sm:right-3`}>
+                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                  <Play className="w-3 h-3 sm:w-4 sm:h-4 text-white fill-white ml-0.5" />
                 </div>
               </div>
             </div>
@@ -158,12 +159,12 @@ export function StartLearningCard({ courses }: StartLearningCardProps) {
   }
 
   return (
-    <Card className="relative overflow-hidden border-0 bg-gradient-to-b from-card to-muted/30 h-[380px]">
+    <Card className="relative overflow-hidden border-0 bg-gradient-to-b from-card to-muted/30 h-[280px] sm:h-[320px] md:h-[380px]">
       {/* Animated Course Boxes */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Row 1 - moves left, cut off at top */}
         <div
-          className="flex gap-3 absolute -top-[38px] animate-marquee-left"
+          className="flex gap-2 sm:gap-3 absolute -top-[25px] sm:-top-[30px] md:-top-[38px] animate-marquee-left"
           style={{ width: 'max-content' }}
         >
           {displayCourses.map((course, index) => (
@@ -178,7 +179,7 @@ export function StartLearningCard({ courses }: StartLearningCardProps) {
 
         {/* Row 2 - moves right */}
         <div
-          className="flex gap-3 absolute top-[109px] animate-marquee-right"
+          className="flex gap-2 sm:gap-3 absolute top-[73px] sm:top-[90px] md:top-[109px] animate-marquee-right"
           style={{ width: 'max-content' }}
         >
           {row2Courses.map((course, index) => (
@@ -193,7 +194,7 @@ export function StartLearningCard({ courses }: StartLearningCardProps) {
 
         {/* Row 3 - moves left, cut off at bottom */}
         <div
-          className="flex gap-3 absolute top-[256px] animate-marquee-left-slow"
+          className="flex gap-2 sm:gap-3 absolute top-[171px] sm:top-[210px] md:top-[256px] animate-marquee-left-slow"
           style={{ width: 'max-content' }}
         >
           {row3Courses.map((course, index) => (
@@ -208,15 +209,15 @@ export function StartLearningCard({ courses }: StartLearningCardProps) {
       </div>
 
       {/* Gradient Overlay for Text Contrast */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-card via-card/60 to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-20 sm:h-24 bg-gradient-to-t from-card via-card/60 to-transparent pointer-events-none" />
 
       {/* Text Content at Bottom */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center justify-between">
+      <div className="absolute bottom-0 left-0 right-0 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
         <div>
-          <h3 className="text-lg font-bold">Start Your Journey</h3>
-          <p className="text-sm text-muted-foreground">Explore expert-led Latin music courses</p>
+          <h3 className="text-base sm:text-lg font-bold">Start Your Journey</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">Explore expert-led Latin music courses</p>
         </div>
-        <Button asChild>
+        <Button asChild size="sm" className="w-full sm:w-auto">
           <Link href="/dashboard/courses">
             Browse Courses
             <ArrowRight className="h-4 w-4 ml-2" />

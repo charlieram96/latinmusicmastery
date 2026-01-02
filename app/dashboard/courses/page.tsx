@@ -144,9 +144,9 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
   return (
     <>
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold font-heading mb-2">Browse Courses</h1>
-        <p className="text-muted-foreground">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold font-heading mb-1 sm:mb-2">Browse Courses</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Explore all available courses and start learning today
         </p>
       </div>
@@ -165,7 +165,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
       {/* Courses */}
       {filteredCourses.length > 0 ? (
         view === 'grid' ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredCourses.map((course: any) => {
               const progress = courseProgressMap.get(course.id)
               const hasStarted = progress?.started || false
@@ -254,7 +254,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
           </div>
         ) : (
           /* List View */
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {filteredCourses.map((course: any) => {
               const progress = courseProgressMap.get(course.id)
               const hasStarted = progress?.started || false
@@ -262,7 +262,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
               return (
                 <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow group p-0 gap-0">
                   <div className="flex flex-col sm:flex-row">
-                    <Link href={`/dashboard/course/${course.slug || course.id}`} className="sm:w-72 sm:h-44 aspect-video sm:aspect-auto bg-muted flex-shrink-0 relative overflow-hidden">
+                    <Link href={`/dashboard/course/${course.slug || course.id}`} className="sm:w-56 md:w-72 sm:h-36 md:h-44 aspect-video sm:aspect-auto bg-muted flex-shrink-0 relative overflow-hidden">
                       {course.thumbnail_url ? (
                         <img
                           src={course.thumbnail_url}
@@ -275,7 +275,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
                         </div>
                       )}
                     </Link>
-                    <div className="flex-1 p-5 flex flex-col">
+                    <div className="flex-1 p-4 sm:p-5 flex flex-col">
                       <div className="flex flex-wrap items-center gap-1.5 mb-2">
                         <Badge variant="outline" className={`text-xs ${getStyleColor()}`}>
                           <Music className="h-3 w-3 mr-1" />
@@ -310,8 +310,8 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                         {course.description || `Master ${course.musical_style?.name || 'Latin music'} with expert instruction`}
                       </p>
-                      <div className="flex flex-wrap items-center justify-between gap-4 mt-auto">
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-between gap-3 sm:gap-4 mt-auto">
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4" />
                             <span>{course.teacher?.name || 'Instructor'}</span>
@@ -321,7 +321,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
                             <span>{course.lessons?.length || 0} lessons</span>
                           </div>
                         </div>
-                        <Button asChild className="gap-2" variant={hasStarted ? 'default' : 'outline'}>
+                        <Button asChild className="gap-2 w-full sm:w-auto" variant={hasStarted ? 'default' : 'outline'}>
                           <Link href={`/dashboard/course/${course.slug || course.id}`}>
                             {hasStarted ? (
                               <>
