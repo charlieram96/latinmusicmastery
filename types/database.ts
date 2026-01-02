@@ -89,6 +89,74 @@ export type Database = {
           },
         ]
       }
+      course_modules: {
+        Row: {
+          correct_answer: string | null
+          course_id: string
+          created_at: string | null
+          description: string | null
+          explanation: string | null
+          id: string
+          is_free: boolean | null
+          module_type: string
+          options: Json | null
+          order_index: number
+          question: string | null
+          question_type: string | null
+          soundslice_embed_url: string | null
+          title: string
+          updated_at: string | null
+          video_duration_seconds: number | null
+          video_url: string | null
+        }
+        Insert: {
+          correct_answer?: string | null
+          course_id: string
+          created_at?: string | null
+          description?: string | null
+          explanation?: string | null
+          id?: string
+          is_free?: boolean | null
+          module_type: string
+          options?: Json | null
+          order_index?: number
+          question?: string | null
+          question_type?: string | null
+          soundslice_embed_url?: string | null
+          title: string
+          updated_at?: string | null
+          video_duration_seconds?: number | null
+          video_url?: string | null
+        }
+        Update: {
+          correct_answer?: string | null
+          course_id?: string
+          created_at?: string | null
+          description?: string | null
+          explanation?: string | null
+          id?: string
+          is_free?: boolean | null
+          module_type?: string
+          options?: Json | null
+          order_index?: number
+          question?: string | null
+          question_type?: string | null
+          soundslice_embed_url?: string | null
+          title?: string
+          updated_at?: string | null
+          video_duration_seconds?: number | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           created_at: string | null

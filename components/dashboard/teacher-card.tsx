@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,7 +19,8 @@ import {
   Video,
   ChevronRight,
   ExternalLink,
-  MessageSquare
+  MessageSquare,
+  User
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -60,65 +62,73 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
   return (
     <>
       <Card
-        className="overflow-hidden cursor-pointer hover:bg-secondary/30 transition-colors group"
+        className="overflow-hidden cursor-pointer group hover:shadow-lg transition-all duration-300 border-0 shadow-md p-0 gap-0"
         onClick={() => setIsOpen(true)}
       >
-        <CardContent className="p-6">
-          <div className="flex flex-col items-center text-center">
-            {/* Avatar */}
-            <Avatar className="w-24 h-24 mb-4 ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
-              {teacher.image_url && (
-                <AvatarImage src={teacher.image_url} alt={teacher.name} />
-              )}
-              <AvatarFallback className="bg-primary/10 text-primary text-2xl font-semibold">
-                {getInitials(teacher.name)}
-              </AvatarFallback>
-            </Avatar>
-
-            {/* Name */}
-            <h3 className="text-lg font-bold mb-1 group-hover:text-primary transition-colors">
-              {teacher.name}
-            </h3>
-
-            {/* Primary Instrument */}
-            <div className="flex items-center gap-1.5 text-primary text-sm mb-3">
-              <Music className="w-4 h-4" />
-              <span className="font-medium">{teacher.instrument}</span>
-            </div>
-
-            {/* Specialties (limited) */}
-            {teacher.specialties && teacher.specialties.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-3 justify-center">
-                {teacher.specialties.slice(0, 3).map((specialty) => (
-                  <Badge key={specialty} variant="secondary" className="text-xs">
-                    {specialty}
-                  </Badge>
-                ))}
-                {teacher.specialties.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{teacher.specialties.length - 3}
-                  </Badge>
-                )}
+        {/* Image Section */}
+        <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/5">
+          {teacher.image_url ? (
+            <Image
+              src={teacher.image_url}
+              alt={teacher.name}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="w-10 h-10 text-primary/40" />
               </div>
-            )}
-
-            {/* Bio Preview */}
-            {teacher.bio && (
-              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                {teacher.bio}
-              </p>
-            )}
-
-            {/* Course Count & View More */}
-            <div className="flex items-center justify-between w-full mt-auto pt-3 border-t border-border">
-              <span className="text-xs text-muted-foreground">
-                {teacher.courses.length} {teacher.courses.length === 1 ? 'course' : 'courses'}
-              </span>
-              <span className="text-xs text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
-                View Profile
-                <ChevronRight className="h-3 w-3" />
-              </span>
             </div>
+          )}
+          {/* Instrument Badge */}
+          <div className="absolute top-3 left-3">
+            <Badge className="bg-black/60 hover:bg-black/60 text-white border-0 backdrop-blur-sm">
+              <Music className="w-3 h-3 mr-1" />
+              {teacher.instrument}
+            </Badge>
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-lg mb-2 truncate group-hover:text-primary transition-colors">
+            {teacher.name}
+          </h3>
+
+          {/* Specialties */}
+          {teacher.specialties && teacher.specialties.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {teacher.specialties.slice(0, 3).map((specialty) => (
+                <Badge key={specialty} variant="secondary" className="text-xs font-normal">
+                  {specialty}
+                </Badge>
+              ))}
+              {teacher.specialties.length > 3 && (
+                <Badge variant="secondary" className="text-xs font-normal">
+                  +{teacher.specialties.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {/* Bio */}
+          {teacher.bio && (
+            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+              {teacher.bio}
+            </p>
+          )}
+
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-3 border-t">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>{teacher.courses.length} {teacher.courses.length === 1 ? 'course' : 'courses'}</span>
+            </div>
+            <span className="text-xs text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
+              View Profile
+              <ChevronRight className="h-3 w-3" />
+            </span>
           </div>
         </CardContent>
       </Card>

@@ -1,10 +1,10 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Music } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Plus, Music, BookOpen, User } from 'lucide-react'
 
 function getInitials(name: string): string {
   return name
@@ -56,59 +56,70 @@ export default async function TeachersPage() {
       </div>
 
       {teachersWithCourses && teachersWithCourses.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {teachersWithCourses.map((teacher: any) => (
-            <Card key={teacher.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center text-center">
-                  {/* Avatar */}
-                  <Avatar className="w-20 h-20 mb-4">
-                    {teacher.image_url && (
-                      <AvatarImage src={teacher.image_url} alt={teacher.name} />
-                    )}
-                    <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
-                      {getInitials(teacher.name)}
-                    </AvatarFallback>
-                  </Avatar>
-
-                  {/* Name */}
-                  <h3 className="text-lg font-semibold mb-1">{teacher.name}</h3>
-
-                  {/* Instrument */}
-                  <div className="flex items-center gap-1 text-sm text-primary mb-2">
-                    <Music className="w-4 h-4" />
-                    <span>{teacher.instrument}</span>
-                  </div>
-
-                  {/* Specialties */}
-                  {teacher.specialties && teacher.specialties.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-3 justify-center">
-                      {teacher.specialties.map((specialty: string) => (
-                        <Badge key={specialty} variant="secondary" className="text-xs">
-                          {specialty}
-                        </Badge>
-                      ))}
+            <Card key={teacher.id} className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-0 shadow-md p-0 gap-0">
+              {/* Image Section */}
+              <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/5">
+                {teacher.image_url ? (
+                  <Image
+                    src={teacher.image_url}
+                    alt={teacher.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="w-10 h-10 text-primary/40" />
                     </div>
-                  )}
-
-                  {/* Bio */}
-                  {teacher.bio && (
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                      {teacher.bio}
-                    </p>
-                  )}
-
-                  {/* Course Count */}
-                  <p className="text-xs text-muted-foreground mb-4">
-                    {teacher.courseCount} {teacher.courseCount === 1 ? 'course' : 'courses'} assigned
-                  </p>
-
-                  {/* Actions */}
-                  <div className="flex gap-2 w-full">
-                    <Button asChild variant="outline" size="sm" className="flex-1">
-                      <Link href={`/admin/teachers/${teacher.id}`}>Edit</Link>
-                    </Button>
                   </div>
+                )}
+                {/* Instrument Badge */}
+                <div className="absolute top-3 left-3">
+                  <Badge className="bg-black/60 hover:bg-black/60 text-white border-0 backdrop-blur-sm">
+                    <Music className="w-3 h-3 mr-1" />
+                    {teacher.instrument}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Content Section */}
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-lg mb-2 truncate">{teacher.name}</h3>
+
+                {/* Specialties */}
+                {teacher.specialties && teacher.specialties.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {teacher.specialties.slice(0, 3).map((specialty: string) => (
+                      <Badge key={specialty} variant="secondary" className="text-xs font-normal">
+                        {specialty}
+                      </Badge>
+                    ))}
+                    {teacher.specialties.length > 3 && (
+                      <Badge variant="secondary" className="text-xs font-normal">
+                        +{teacher.specialties.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
+                {/* Bio */}
+                {teacher.bio && (
+                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                    {teacher.bio}
+                  </p>
+                )}
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-3 border-t">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>{teacher.courseCount} {teacher.courseCount === 1 ? 'course' : 'courses'}</span>
+                  </div>
+                  <Button asChild variant="ghost" size="sm" className="h-8">
+                    <Link href={`/admin/teachers/${teacher.id}`}>Edit</Link>
+                  </Button>
                 </div>
               </CardContent>
             </Card>

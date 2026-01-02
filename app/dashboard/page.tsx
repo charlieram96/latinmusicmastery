@@ -14,7 +14,9 @@ import {
   Trophy,
   Users,
   Video,
-  Sparkles
+  Sparkles,
+  Calendar,
+  Music
 } from 'lucide-react'
 import { StartLearningCard } from '@/components/dashboard/start-learning-card'
 
@@ -154,6 +156,7 @@ export default async function DashboardPage() {
       id,
       title,
       slug,
+      description,
       thumbnail_url,
       difficulty,
       musical_style:musical_styles(name),
@@ -164,33 +167,95 @@ export default async function DashboardPage() {
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
 
+  // Get time-based greeting
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+
+  // Format current date
+  const today = new Date()
+  const dateString = today.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  })
+
+  // Get courses in progress count
+  const coursesInProgress = courseProgress.size
+
   return (
     <div className="space-y-8">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-transparent p-6 md:p-8">
+      <div className="relative overflow-hidden rounded-3xl bg-muted/50 dark:bg-muted/30 p-8 md:p-10">
+        {/* Background decorations */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-slate-200/50 dark:bg-slate-700/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-slate-200/30 dark:bg-slate-700/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
+
+        {/* Music note decorations */}
+        <div className="absolute top-6 right-8 opacity-[0.07] dark:opacity-[0.1]">
+          <Music className="w-16 h-16 text-foreground" />
+        </div>
+        <div className="absolute bottom-8 right-24 opacity-[0.04] dark:opacity-[0.06]">
+          <Music className="w-10 h-10 rotate-12 text-foreground" />
+        </div>
+
         <div className="relative z-10">
-          <h1 className="text-2xl md:text-3xl font-bold font-heading mb-2">
-            Welcome back, {firstName}!
+          {/* Date badge */}
+          <div className="inline-flex items-center gap-2 bg-background/80 dark:bg-background/50 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm text-muted-foreground mb-4 border border-border/50">
+            <Calendar className="w-4 h-4" />
+            <span>{dateString}</span>
+          </div>
+
+          {/* Greeting */}
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 text-foreground">
+            {greeting}, {firstName}!
           </h1>
-          <p className="text-muted-foreground mb-4">
-            Continue your Latin music journey
+          <p className="text-muted-foreground text-lg mb-8 max-w-xl">
+            Ready to continue your Latin music journey? Pick up where you left off or explore something new.
           </p>
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-lg px-4 py-2">
-              <Flame className={`h-5 w-5 ${streak > 0 ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
-              <span className="font-semibold">{streak} day streak</span>
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="bg-background/80 dark:bg-background/50 backdrop-blur-sm rounded-2xl p-4 hover:bg-background transition-colors">
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`p-2 rounded-xl ${streak > 0 ? 'bg-orange-500/15' : 'bg-muted'}`}>
+                  <Flame className={`h-5 w-5 ${streak > 0 ? 'text-orange-500 fill-orange-500' : 'text-muted-foreground'}`} />
+                </div>
+                <span className="text-2xl font-bold text-foreground">{streak}</span>
+              </div>
+              <p className="text-muted-foreground text-sm">Day Streak</p>
             </div>
-            <div className="flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-lg px-4 py-2">
-              <Trophy className="h-5 w-5 text-primary" />
-              <span className="font-semibold">{totalLessonsCompleted || 0} lessons completed</span>
+
+            <div className="bg-background/80 dark:bg-background/50 backdrop-blur-sm rounded-2xl p-4 hover:bg-background transition-colors">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-xl bg-emerald-500/15">
+                  <Trophy className="h-5 w-5 text-emerald-500" />
+                </div>
+                <span className="text-2xl font-bold text-foreground">{totalLessonsCompleted || 0}</span>
+              </div>
+              <p className="text-muted-foreground text-sm">Lessons Done</p>
             </div>
-            <div className="flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-lg px-4 py-2">
-              <Award className="h-5 w-5 text-primary" />
-              <span className="font-semibold">{achievementsCount || 0} achievements</span>
+
+            <div className="bg-background/80 dark:bg-background/50 backdrop-blur-sm rounded-2xl p-4 hover:bg-background transition-colors">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-xl bg-amber-500/15">
+                  <Award className="h-5 w-5 text-amber-500" />
+                </div>
+                <span className="text-2xl font-bold text-foreground">{achievementsCount || 0}</span>
+              </div>
+              <p className="text-muted-foreground text-sm">Achievements</p>
+            </div>
+
+            <div className="bg-background/80 dark:bg-background/50 backdrop-blur-sm rounded-2xl p-4 hover:bg-background transition-colors">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-xl bg-blue-500/15">
+                  <BookOpen className="h-5 w-5 text-blue-500" />
+                </div>
+                <span className="text-2xl font-bold text-foreground">{coursesInProgress}</span>
+              </div>
+              <p className="text-muted-foreground text-sm">Courses Active</p>
             </div>
           </div>
         </div>
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
       </div>
 
       {/* Quick Actions */}
