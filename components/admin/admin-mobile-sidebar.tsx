@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3, MessageSquare, X } from 'lucide-react'
+import { Menu, Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: Home },
@@ -23,18 +23,23 @@ export function AdminMobileSidebar() {
   const pathname = usePathname()
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle menu</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-[280px] p-0">
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9"
+        onClick={() => setOpen(true)}
+        type="button"
+      >
+        <Menu className="h-5 w-5" />
+        <span className="sr-only">Toggle menu</span>
+      </Button>
+      <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
         <SheetHeader className="p-6 border-b">
           <SheetTitle>Admin Panel</SheetTitle>
         </SheetHeader>
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href ||
@@ -60,7 +65,7 @@ export function AdminMobileSidebar() {
             )
           })}
         </nav>
-        <div className="p-4 border-t mt-auto">
+        <div className="p-4 border-t">
           <Link
             href="/dashboard"
             onClick={() => setOpen(false)}
@@ -70,6 +75,7 @@ export function AdminMobileSidebar() {
           </Link>
         </div>
       </SheetContent>
-    </Sheet>
+      </Sheet>
+    </>
   )
 }
