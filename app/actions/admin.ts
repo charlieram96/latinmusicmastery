@@ -565,7 +565,7 @@ export async function getAnalytics() {
     // Find users who have started this course
     const usersWithProgress = new Set(
       progressData
-        ?.filter(p => lessonIds.includes(p.lesson_id))
+        ?.filter(p => p.lesson_id && lessonIds.includes(p.lesson_id))
         .map(p => p.user_id) || []
     )
 
@@ -573,7 +573,7 @@ export async function getAnalytics() {
     let totalCompletionRate = 0
     usersWithProgress.forEach(userId => {
       const userProgress = progressData?.filter(
-        p => p.user_id === userId && lessonIds.includes(p.lesson_id) && p.completed
+        p => p.user_id === userId && p.lesson_id && lessonIds.includes(p.lesson_id) && p.completed
       )
       const completedLessons = userProgress?.length || 0
       totalCompletionRate += completedLessons / totalLessons
@@ -593,8 +593,8 @@ export async function getAnalytics() {
 
   // Popular lessons (most completed)
   const lessonCompletions: Record<string, number> = {}
-  progressData?.filter(p => p.completed).forEach(p => {
-    lessonCompletions[p.lesson_id] = (lessonCompletions[p.lesson_id] || 0) + 1
+  progressData?.filter(p => p.completed && p.lesson_id).forEach(p => {
+    lessonCompletions[p.lesson_id!] = (lessonCompletions[p.lesson_id!] || 0) + 1
   })
 
   const { data: lessons } = await supabase

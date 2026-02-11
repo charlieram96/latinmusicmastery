@@ -44,7 +44,7 @@ export default async function StyleCoursesPage({ params }: PageProps) {
     .from('courses')
     .select(`
       *,
-      lessons:lessons(id)
+      course_modules:course_modules(id)
     `)
     .eq('musical_style_id', style.id)
     .eq('is_published', true)
@@ -88,8 +88,8 @@ export default async function StyleCoursesPage({ params }: PageProps) {
                   {course.description}
                 </CardDescription>
                 <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                  {course.lessons && (
-                    <span>{course.lessons.length} lessons</span>
+                  {course.course_modules && (
+                    <span>{course.course_modules.length} lessons</span>
                   )}
                 </div>
                 {course.teacher_name && (

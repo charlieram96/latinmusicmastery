@@ -10,14 +10,14 @@ export default async function AdminDashboard() {
     { count: countriesCount },
     { count: stylesCount },
     { count: coursesCount },
-    { count: lessonsCount },
+    { count: modulesCount },
     { count: exercisesCount },
     { count: usersCount },
   ] = await Promise.all([
     supabase.from('countries').select('*', { count: 'exact', head: true }),
     supabase.from('musical_styles').select('*', { count: 'exact', head: true }),
     supabase.from('courses').select('*', { count: 'exact', head: true }),
-    supabase.from('lessons').select('*', { count: 'exact', head: true }),
+    supabase.from('course_modules').select('*', { count: 'exact', head: true }),
     supabase.from('exercises').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
   ])
@@ -58,11 +58,11 @@ export default async function AdminDashboard() {
       description: 'Total courses',
     },
     {
-      title: 'Lessons',
-      value: lessonsCount || 0,
+      title: 'Modules',
+      value: modulesCount || 0,
       icon: FileText,
-      href: '/admin/lessons',
-      description: 'Total lessons',
+      href: '/admin/courses',
+      description: 'Total modules',
     },
     {
       title: 'Exercises',

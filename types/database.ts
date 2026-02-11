@@ -632,7 +632,8 @@ export type Database = {
           created_at: string | null
           id: string
           last_position_seconds: number | null
-          lesson_id: string
+          lesson_id: string | null
+          module_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -642,7 +643,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           last_position_seconds?: number | null
-          lesson_id: string
+          lesson_id?: string | null
+          module_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -652,7 +654,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           last_position_seconds?: number | null
-          lesson_id?: string
+          lesson_id?: string | null
+          module_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -662,6 +665,13 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "course_modules"
             referencedColumns: ["id"]
           },
           {

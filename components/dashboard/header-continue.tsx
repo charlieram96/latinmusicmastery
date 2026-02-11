@@ -11,12 +11,12 @@ import {
 } from '@/components/ui/tooltip'
 
 interface HeaderContinueClientProps {
-  lessonId: string
-  lessonTitle: string
+  moduleId: string
+  moduleTitle: string
   courseTitle: string
 }
 
-export function HeaderContinueClient({ lessonId, lessonTitle, courseTitle }: HeaderContinueClientProps) {
+export function HeaderContinueClient({ moduleId, moduleTitle, courseTitle }: HeaderContinueClientProps) {
   return (
     <TooltipProvider>
       <Tooltip>
@@ -27,14 +27,14 @@ export function HeaderContinueClient({ lessonId, lessonTitle, courseTitle }: Hea
             className="h-9 gap-2"
             asChild
           >
-            <Link href={`/lessons/${lessonId}`}>
+            <Link href={`/modules/${moduleId}`}>
               <Play className="h-4 w-4 fill-current" />
               <span className="hidden lg:inline">Continue</span>
             </Link>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          <p className="font-medium">{lessonTitle}</p>
+          <p className="font-medium">{moduleTitle}</p>
           <p className="text-xs text-muted-foreground">{courseTitle}</p>
         </TooltipContent>
       </Tooltip>

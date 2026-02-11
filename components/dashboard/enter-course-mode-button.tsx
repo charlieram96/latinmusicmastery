@@ -8,14 +8,14 @@ import { cn } from '@/lib/utils'
 import { enrollInCourse } from '@/app/actions/progress'
 
 interface EnterCourseModeButtonProps extends Omit<ComponentProps<typeof Button>, 'onClick'> {
-  lessonId: string
+  moduleId: string
   courseId: string
   courseTitle?: string
   isNewCourse?: boolean
 }
 
 export function EnterCourseModeButton({
-  lessonId,
+  moduleId,
   courseId,
   courseTitle,
   isNewCourse = false,
@@ -34,7 +34,7 @@ export function EnterCourseModeButton({
 
     // Small delay to show the loading state before navigation
     setTimeout(() => {
-      router.push(`/lessons/${lessonId}`)
+      router.push(`/modules/${moduleId}`)
     }, 100)
   }
 

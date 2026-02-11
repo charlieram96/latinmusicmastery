@@ -14,7 +14,7 @@ export default async function CoursesPage() {
       *,
       musical_style:musical_styles(name, country:countries(name)),
       teacher:teachers(id, name, instrument),
-      lessons(id)
+      course_modules(id)
     `)
     .order('created_at', { ascending: false })
 
@@ -129,7 +129,7 @@ export default async function CoursesPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <BookOpen className="h-4 w-4" />
-                    <span>{course.lessons?.length || 0} lessons</span>
+                    <span>{course.course_modules?.length || 0} modules</span>
                   </div>
                 </div>
               </CardContent>

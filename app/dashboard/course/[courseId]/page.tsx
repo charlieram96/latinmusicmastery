@@ -90,9 +90,9 @@ export default async function CoursePage({ params }: PageProps) {
     notFound()
   }
 
-  // Get lessons for this course
-  const { data: lessons } = await supabase
-    .from('lessons')
+  // Get modules for this course
+  const { data: modules } = await supabase
+    .from('course_modules')
     .select('*')
     .eq('course_id', course.id)
     .order('order_index')
@@ -106,39 +106,39 @@ export default async function CoursePage({ params }: PageProps) {
 
   const isStudent = profile?.rank === 'student' || profile?.is_admin
 
-  // Get user's progress for this course's lessons
-  const lessonIds = lessons?.map(l => l.id) || []
+  // Get user's progress for this course's modules
+  const moduleIds = modules?.map(m => m.id) || []
   const { data: progressData } = await supabase
     .from('user_progress')
     .select('*')
     .eq('user_id', user.id)
-    .in('lesson_id', lessonIds)
+    .in('module_id', moduleIds)
 
-  // Create a map of lesson progress
+  // Create a map of module progress
   const progressMap = new Map(
-    progressData?.map(p => [p.lesson_id, p]) || []
+    progressData?.map(p => [p.module_id, p]) || []
   )
 
   // Calculate course progress
-  const totalLessons = lessons?.length || 0
+  const totalLessons = modules?.length || 0
   const completedLessons = progressData?.filter(p => p.completed).length || 0
   const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
 
-  // Find next lesson to continue
-  const nextLesson = lessons?.find(lesson => {
-    const progress = progressMap.get(lesson.id)
-    return (lesson.is_free || isStudent) && (!progress || !progress.completed)
-  }) || lessons?.[0]
+  // Find next module to continue
+  const nextModule = modules?.find(mod => {
+    const progress = progressMap.get(mod.id)
+    return (mod.is_free || isStudent) && (!progress || !progress.completed)
+  }) || modules?.[0]
 
   const style = course.musical_style
   const country = style?.country
   const teacher = course.teacher
 
-  // Calculate durations
-  const totalDuration = lessons?.reduce((acc, l) => acc + (l.duration_minutes || 0), 0) || 0
-  const completedDuration = lessons
-    ?.filter(l => progressMap.get(l.id)?.completed)
-    .reduce((acc, l) => acc + (l.duration_minutes || 0), 0) || 0
+  // Calculate durations (video_duration_seconds -> minutes)
+  const totalDuration = modules?.reduce((acc, m) => acc + Math.round((m.video_duration_seconds || 0) / 60), 0) || 0
+  const completedDuration = modules
+    ?.filter(m => progressMap.get(m.id)?.completed)
+    .reduce((acc, m) => acc + Math.round((m.video_duration_seconds || 0) / 60), 0) || 0
   const remainingDuration = totalDuration - completedDuration
 
   // Difficulty config
@@ -253,9 +253,9 @@ export default async function CoursePage({ params }: PageProps) {
             )}
 
             {/* Primary CTA Button */}
-            {nextLesson ? (
+            {nextModule ? (
               <EnterCourseModeButton
-                lessonId={nextLesson.id}
+                moduleId={nextModule.id}
                 courseId={course.id}
                 courseTitle={course.title}
                 isNewCourse={!hasStarted}
@@ -439,16 +439,17 @@ export default async function CoursePage({ params }: PageProps) {
                 Work through the content at your own pace and track your progress as you master each concept.
               </p>
               <div className="space-y-1 border rounded-lg overflow-hidden">
-                {lessons?.map((lesson, index) => {
-                  const progress = progressMap.get(lesson.id)
+                {modules?.map((mod, index) => {
+                  const progress = progressMap.get(mod.id)
                   const isCompleted = progress?.completed || false
-                  const isLocked = !lesson.is_free && !isStudent
-                  const canAccess = lesson.is_free || isStudent
-                  const isNext = nextLesson?.id === lesson.id
+                  const isLocked = !mod.is_free && !isStudent
+                  const canAccess = mod.is_free || isStudent
+                  const isNext = nextModule?.id === mod.id
+                  const durationMin = mod.video_duration_seconds ? Math.round(mod.video_duration_seconds / 60) : null
 
                   return (
                     <div
-                      key={lesson.id}
+                      key={mod.id}
                       className={`flex items-center gap-4 p-4 transition-colors border-b last:border-b-0 ${
                         isCompleted
                           ? 'bg-green-500/5'
@@ -470,23 +471,23 @@ export default async function CoursePage({ params }: PageProps) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className={`font-medium text-sm ${isNext ? 'text-primary' : ''}`}>
-                          {lesson.title}
+                          {mod.title}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          {lesson.duration_minutes ? `${lesson.duration_minutes} min` : 'TBD'}
+                          {durationMin ? `${durationMin} min` : 'TBD'}
                           {isNext && !isCompleted && (
                             <Badge variant="default" className="text-[10px] px-1.5 py-0 ml-2">Up Next</Badge>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        {lesson.is_free && !isStudent && (
+                        {mod.is_free && !isStudent && (
                           <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">Free Preview</Badge>
                         )}
                         {canAccess ? (
                           <Button asChild size="sm" variant={isNext ? 'default' : 'ghost'}>
-                            <Link href={`/lessons/${lesson.id}`}>
+                            <Link href={`/modules/${mod.id}`}>
                               {isCompleted ? 'Review' : isNext ? 'Start' : 'Preview'}
                             </Link>
                           </Button>
@@ -541,9 +542,9 @@ export default async function CoursePage({ params }: PageProps) {
           <Card className="sticky top-6 border-2">
             <CardContent className="p-5 space-y-5">
               {/* Main CTA */}
-              {nextLesson ? (
+              {nextModule ? (
                 <EnterCourseModeButton
-                  lessonId={nextLesson.id}
+                  moduleId={nextModule.id}
                   courseId={course.id}
                   courseTitle={course.title}
                   isNewCourse={!hasStarted}

@@ -3,26 +3,31 @@
 import { useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { markLessonComplete } from '@/app/actions/progress'
+import { markModuleComplete, markLessonComplete } from '@/app/actions/progress'
 
 interface LessonCompleteButtonProps {
-  lessonId: string
+  lessonId?: string
+  moduleId?: string
   userId: string
 }
 
-export function LessonCompleteButton({ lessonId, userId }: LessonCompleteButtonProps) {
+export function LessonCompleteButton({ lessonId, moduleId, userId }: LessonCompleteButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleComplete = async () => {
     setIsLoading(true)
     try {
-      const result = await markLessonComplete(lessonId, userId)
+      const result = moduleId
+        ? await markModuleComplete(moduleId, userId)
+        : lessonId
+          ? await markLessonComplete(lessonId, userId)
+          : { error: 'No module or lesson ID provided' }
       if (result.error) {
-        console.error('Failed to mark lesson as complete:', result.error)
-        alert('Failed to mark lesson as complete. Please try again.')
+        console.error('Failed to mark as complete:', result.error)
+        alert('Failed to mark as complete. Please try again.')
       }
     } catch (error) {
-      console.error('Error marking lesson as complete:', error)
+      console.error('Error marking as complete:', error)
       alert('An error occurred. Please try again.')
     } finally {
       setIsLoading(false)

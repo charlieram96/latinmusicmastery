@@ -23,7 +23,7 @@ export default async function MyProgressPage() {
   // Get all user progress
   const { data: userProgress } = await supabase
     .from('user_progress')
-    .select('*, lesson:lessons(*)')
+    .select('*, module:course_modules(*)')
     .eq('user_id', user.id)
 
   // Get all exercise attempts
@@ -46,7 +46,7 @@ export default async function MyProgressPage() {
   // Calculate total learning time (sum of lesson durations for completed lessons)
   const totalMinutes = userProgress
     ?.filter(p => p.completed)
-    .reduce((sum, p) => sum + (p.lesson?.duration_minutes || 0), 0) || 0
+    .reduce((sum, p) => sum + Math.round((p.module?.video_duration_seconds || 0) / 60), 0) || 0
   const totalHours = Math.round(totalMinutes / 60)
 
   // Calculate streak (simplified - consecutive days with activity)
@@ -175,7 +175,7 @@ export default async function MyProgressPage() {
                   <div key={activity.id} className="flex items-center justify-between">
                     <div className="flex-1">
                       <p className="text-sm font-medium line-clamp-1">
-                        {activity.lesson?.title || 'Lesson'}
+                        {activity.module?.title || 'Lesson'}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(activity.updated_at).toLocaleDateString()}

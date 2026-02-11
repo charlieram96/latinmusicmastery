@@ -1,20 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
 import { HeaderContinueClient } from './header-continue'
 
-interface LastLesson {
-  lessonId: string
-  lessonTitle: string
+interface LastModule {
+  moduleId: string
+  moduleTitle: string
   courseTitle: string
 }
 
-async function getLastLesson(userId: string): Promise<LastLesson | null> {
+async function getLastModule(userId: string): Promise<LastModule | null> {
   const supabase = await createClient()
 
   const { data } = await supabase
     .from('user_progress')
     .select(`
-      lesson_id,
-      lessons (
+      module_id,
+      course_modules (
         id,
         title,
         courses (
@@ -24,35 +24,36 @@ async function getLastLesson(userId: string): Promise<LastLesson | null> {
     `)
     .eq('user_id', userId)
     .eq('completed', false)
+    .not('module_id', 'is', null)
     .order('updated_at', { ascending: false })
     .limit(1)
     .single()
 
-  if (!data || !data.lessons) {
+  if (!data || !data.course_modules) {
     return null
   }
 
-  const lesson = data.lessons as any
+  const mod = data.course_modules as any
 
   return {
-    lessonId: lesson.id,
-    lessonTitle: lesson.title,
-    courseTitle: lesson.courses?.title || 'Course',
+    moduleId: mod.id,
+    moduleTitle: mod.title,
+    courseTitle: mod.courses?.title || 'Course',
   }
 }
 
 export async function HeaderContinue({ userId }: { userId: string }) {
-  const lastLesson = await getLastLesson(userId)
+  const lastModule = await getLastModule(userId)
 
-  if (!lastLesson) {
+  if (!lastModule) {
     return null
   }
 
   return (
     <HeaderContinueClient
-      lessonId={lastLesson.lessonId}
-      lessonTitle={lastLesson.lessonTitle}
-      courseTitle={lastLesson.courseTitle}
+      moduleId={lastModule.moduleId}
+      moduleTitle={lastModule.moduleTitle}
+      courseTitle={lastModule.courseTitle}
     />
   )
 }

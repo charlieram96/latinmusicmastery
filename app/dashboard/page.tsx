@@ -42,12 +42,12 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .single()
 
-  // Fetch user progress with lesson and course details
+  // Fetch user progress with module and course details
   const { data: progressData } = await supabase
     .from('user_progress')
     .select(`
       *,
-      lesson:lessons(
+      module:course_modules(
         id,
         title,
         order_index,
@@ -56,7 +56,7 @@ export default async function DashboardPage() {
           title,
           slug,
           thumbnail_url,
-          lessons(id)
+          course_modules(id)
         )
       )
     `)
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
   // Calculate statistics
   const { count: totalLessonsCompleted } = await supabase
     .from('user_progress')
-    .select('lesson_id', { count: 'exact', head: true })
+    .select('module_id', { count: 'exact', head: true })
     .eq('user_id', user.id)
     .eq('completed', true)
 
@@ -111,21 +111,21 @@ export default async function DashboardPage() {
     }
   }
 
-  // Get continue learning (most recent incomplete lesson)
-  const continueLesson = progressData
-    ?.filter((p: any) => !p.completed && p.lesson?.course)
+  // Get continue learning (most recent incomplete module)
+  const continueModule = (progressData as any[])
+    ?.filter((p) => !p.completed && p.module?.course)
     .slice(0, 1)[0]
 
   // Get my courses with progress
   const courseProgress = new Map<string, { total: number; completed: number; course: any }>()
-  progressData?.forEach((p: any) => {
-    if (p.lesson?.course) {
-      const courseId = p.lesson.course.id
+  ;(progressData as any[])?.forEach((p) => {
+    if (p.module?.course) {
+      const courseId = p.module.course.id
       if (!courseProgress.has(courseId)) {
         courseProgress.set(courseId, {
-          total: p.lesson.course.lessons?.length || 1,
+          total: p.module.course.course_modules?.length || 1,
           completed: 0,
-          course: p.lesson.course
+          course: p.module.course
         })
       }
       if (p.completed) {
@@ -337,15 +337,15 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         {/* Continue Learning - Large Card */}
         <div className="lg:col-span-2">
-          {continueLesson ? (
+          {continueModule ? (
             <Card className="overflow-hidden relative group border-0 bg-gradient-to-br from-card via-card to-primary/5">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="flex flex-col md:flex-row relative">
-                {continueLesson.lesson.course.thumbnail_url && (
+                {continueModule.module?.course?.thumbnail_url && (
                   <div className="md:w-80 aspect-video md:aspect-auto bg-muted flex-shrink-0 relative overflow-hidden">
                     <img
-                      src={continueLesson.lesson.course.thumbnail_url}
-                      alt={continueLesson.lesson.course.title}
+                      src={continueModule.module.course.thumbnail_url}
+                      alt={continueModule.module.course.title}
                       className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent to-card/50 md:block hidden" />
@@ -356,12 +356,12 @@ export default async function DashboardPage() {
                     <Play className="h-3 w-3 mr-1 fill-current" />
                     Continue Learning
                   </Badge>
-                  <h3 className="text-xl font-semibold mb-2">{continueLesson.lesson.course.title}</h3>
+                  <h3 className="text-xl font-semibold mb-2">{continueModule.module?.course?.title}</h3>
                   <p className="text-muted-foreground mb-5">
-                    Lesson {(continueLesson.lesson.order_index ?? 0) + 1}: {continueLesson.lesson.title}
+                    Lesson {(continueModule.module?.order_index ?? 0) + 1}: {continueModule.module?.title}
                   </p>
                   <Button asChild size="lg" className="w-fit">
-                    <Link href={`/lessons/${continueLesson.lesson_id}`}>
+                    <Link href={`/modules/${continueModule.module_id}`}>
                       <Play className="h-4 w-4 mr-2 fill-current" />
                       Continue Lesson
                     </Link>

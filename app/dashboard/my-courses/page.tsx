@@ -38,7 +38,7 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
       *,
       course:courses(
         *,
-        lessons(id),
+        course_modules(id),
         musical_style:musical_styles(
           name,
           country:countries(name)
@@ -48,12 +48,12 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
     `)
     .eq('user_id', user.id)
 
-  // Get user's progress on lessons
+  // Get user's progress on modules
   const { data: userProgress } = await supabase
     .from('user_progress')
     .select(`
       *,
-      lesson:lessons(
+      module:course_modules(
         id,
         course_id
       )
@@ -61,21 +61,21 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
     .eq('user_id', user.id)
 
   // Create a map of progress by course
-  const courseProgressMap = new Map<string, { completedLessons: number; lastProgressUpdate: string; nextLessonId: string | null }>()
+  const courseProgressMap = new Map<string, { completedLessons: number; lastProgressUpdate: string; nextModuleId: string | null }>()
   userProgress?.forEach((progress: any) => {
-    const courseId = progress.lesson?.course_id
+    const courseId = progress.module?.course_id
     if (!courseId) return
 
     const existing = courseProgressMap.get(courseId) || {
       completedLessons: 0,
       lastProgressUpdate: progress.updated_at,
-      nextLessonId: null
+      nextModuleId: null
     }
 
     if (progress.completed) {
       existing.completedLessons++
-    } else if (!existing.nextLessonId) {
-      existing.nextLessonId = progress.lesson_id
+    } else if (!existing.nextModuleId) {
+      existing.nextModuleId = progress.module_id
     }
 
     if (new Date(progress.updated_at) > new Date(existing.lastProgressUpdate)) {
@@ -96,10 +96,10 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
 
     coursesMap.set(course.id, {
       ...course,
-      totalLessons: course.lessons?.length || 0,
+      totalLessons: course.course_modules?.length || 0,
       completedLessons: progress?.completedLessons || 0,
       lastAccessed: enrollment.last_accessed_at || enrollment.enrolled_at,
-      nextLessonId: progress?.nextLessonId || null,
+      nextModuleId: progress?.nextModuleId || null,
       enrolledAt: enrollment.enrolled_at,
     })
   })

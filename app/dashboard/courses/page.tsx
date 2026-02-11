@@ -38,13 +38,13 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
     supabase.from('teachers').select('id, name').order('name'),
     supabase.from('musical_styles').select('name').order('name'),
     supabase.from('teachers').select('instrument').not('instrument', 'is', null),
-    supabase.from('user_progress').select('lesson_id, completed, lesson:lessons(course_id)').eq('user_id', user.id)
+    supabase.from('user_progress').select('module_id, completed, module:course_modules(course_id)').eq('user_id', user.id)
   ])
 
   // Create a map of course progress
   const courseProgressMap = new Map<string, { started: boolean; completed: number }>()
   userProgress?.forEach((progress: any) => {
-    const courseId = progress.lesson?.course_id
+    const courseId = progress.module?.course_id
     if (courseId) {
       const existing = courseProgressMap.get(courseId) || { started: false, completed: 0 }
       existing.started = true
@@ -66,7 +66,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
         country:countries(name, slug)
       ),
       teacher:teachers(id, name, instrument, image_url),
-      lessons(id)
+      course_modules(id)
     `)
     .eq('is_published', true)
 
@@ -226,7 +226,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
                         </div>
                         <div className="flex items-center gap-1">
                           <BookOpen className="h-4 w-4" />
-                          <span>{course.lessons?.length || 0} lessons</span>
+                          <span>{course.course_modules?.length || 0} lessons</span>
                         </div>
                       </div>
                     </div>
@@ -318,7 +318,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
                           </div>
                           <div className="flex items-center gap-2">
                             <BookOpen className="h-4 w-4" />
-                            <span>{course.lessons?.length || 0} lessons</span>
+                            <span>{course.course_modules?.length || 0} lessons</span>
                           </div>
                         </div>
                         <Button asChild className="gap-2 w-full sm:w-auto" variant={hasStarted ? 'default' : 'outline'}>

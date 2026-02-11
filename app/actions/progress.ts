@@ -97,6 +97,100 @@ export async function updateLessonProgress(
   return { success: true }
 }
 
+export async function markModuleComplete(moduleId: string, userId: string) {
+  const supabase = await createClient()
+
+  // Check if progress record exists
+  const { data: existing } = await supabase
+    .from('user_progress')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('module_id', moduleId)
+    .single()
+
+  if (existing) {
+    // Update existing record
+    const { error } = await supabase
+      .from('user_progress')
+      .update({
+        completed: true,
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id)
+
+    if (error) {
+      return { error: error.message }
+    }
+  } else {
+    // Create new record
+    const { error } = await supabase
+      .from('user_progress')
+      .insert({
+        user_id: userId,
+        module_id: moduleId,
+        completed: true,
+        completed_at: new Date().toISOString(),
+      })
+
+    if (error) {
+      return { error: error.message }
+    }
+  }
+
+  revalidatePath(`/modules/${moduleId}`)
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function updateModuleProgress(
+  moduleId: string,
+  userId: string,
+  lastPositionSeconds?: number
+) {
+  const supabase = await createClient()
+
+  // Check if progress record exists
+  const { data: existing } = await supabase
+    .from('user_progress')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('module_id', moduleId)
+    .single()
+
+  if (existing) {
+    // Update existing record
+    const { error } = await supabase
+      .from('user_progress')
+      .update({
+        last_position_seconds: lastPositionSeconds,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id)
+
+    if (error) {
+      return { error: error.message }
+    }
+  } else {
+    // Create new record
+    const { error } = await supabase
+      .from('user_progress')
+      .insert({
+        user_id: userId,
+        module_id: moduleId,
+        last_position_seconds: lastPositionSeconds,
+      })
+
+    if (error) {
+      return { error: error.message }
+    }
+  }
+
+  revalidatePath(`/modules/${moduleId}`)
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
 export async function submitExerciseAttempt(
   exerciseId: string,
   userId: string,
