@@ -9,6 +9,8 @@ import {
   Library,
   GraduationCap,
   Award,
+  AudioWaveform,
+  Crown,
   Settings,
   Shield,
   User,
@@ -67,6 +69,11 @@ const discoverNavItems = [
     icon: GraduationCap,
   },
   {
+    title: 'Master Class',
+    href: '/dashboard/master-class',
+    icon: Crown,
+  },
+  {
     title: 'Achievements',
     href: '/dashboard/achievements',
     icon: Award,
@@ -87,7 +94,16 @@ const connectNavItems = [
   },
 ]
 
-// Section 4: Settings
+// Section 4: Tools
+const toolsNavItems = [
+  {
+    title: 'Tuner',
+    href: '/dashboard/tuner',
+    icon: AudioWaveform,
+  },
+]
+
+// Section 5: Settings
 const settingsNavItems = [
   {
     title: 'Subscription',
@@ -226,7 +242,42 @@ export function DashboardSidebar({
 
         <SidebarSeparator className="mx-0 bg-border/50" />
 
-        {/* Section 4: Settings */}
+        {/* Section 4: Tools */}
+        <SidebarGroup className="px-0 py-4">
+          <SidebarGroupLabel className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+            Tools
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              {toolsNavItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className={cn(
+                        "h-10 px-3 gap-3 font-medium hover:bg-secondary justify-start",
+                        isActive && "bg-secondary text-foreground"
+                      )}
+                    >
+                      <Link href={item.href}>
+                        <Icon className="h-[18px] w-[18px] flex-shrink-0" />
+                        <span className="text-sm">{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className="mx-0 bg-border/50" />
+
+        {/* Section 5: Settings */}
         <SidebarGroup className="px-0 py-4">
           <SidebarGroupLabel className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
             Settings

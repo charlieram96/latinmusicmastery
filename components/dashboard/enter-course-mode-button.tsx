@@ -34,7 +34,7 @@ export function EnterCourseModeButton({
 
     // Small delay to show the loading state before navigation
     setTimeout(() => {
-      router.push(`/modules/${moduleId}`)
+      router.push(`/dashboard/modules/${moduleId}`)
     }, 100)
   }
 

@@ -27,7 +27,7 @@ export function HeaderContinueClient({ moduleId, moduleTitle, courseTitle }: Hea
             className="h-9 gap-2"
             asChild
           >
-            <Link href={`/modules/${moduleId}`}>
+            <Link href={`/dashboard/modules/${moduleId}`}>
               <Play className="h-4 w-4 fill-current" />
               <span className="hidden lg:inline">Continue</span>
             </Link>

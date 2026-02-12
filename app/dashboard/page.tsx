@@ -361,7 +361,7 @@ export default async function DashboardPage() {
                     Lesson {(continueModule.module?.order_index ?? 0) + 1}: {continueModule.module?.title}
                   </p>
                   <Button asChild size="lg" className="w-fit">
-                    <Link href={`/modules/${continueModule.module_id}`}>
+                    <Link href={`/dashboard/modules/${continueModule.module_id}`}>
                       <Play className="h-4 w-4 mr-2 fill-current" />
                       Continue Lesson
                     </Link>

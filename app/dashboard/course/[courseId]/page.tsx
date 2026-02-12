@@ -487,7 +487,7 @@ export default async function CoursePage({ params }: PageProps) {
                         )}
                         {canAccess ? (
                           <Button asChild size="sm" variant={isNext ? 'default' : 'ghost'}>
-                            <Link href={`/modules/${mod.id}`}>
+                            <Link href={`/dashboard/modules/${mod.id}`}>
                               {isCompleted ? 'Review' : isNext ? 'Start' : 'Preview'}
                             </Link>
                           </Button>
