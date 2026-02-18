@@ -207,7 +207,7 @@ export default async function AchievementsPage() {
 
   // Get user progress for calculating achievement progress
   const { data: userProgress } = await supabase
-    .from('user_progress')
+    .from('user_progress_legacy')
     .select(`
       *,
       lesson:lessons(

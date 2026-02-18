@@ -14,6 +14,266 @@ export type Database = {
   }
   public: {
     Tables: {
+      class_comments: {
+        Row: {
+          class_id: string
+          content: string
+          created_at: string | null
+          id: string
+          is_edited: boolean | null
+          parent_comment_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          class_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          parent_comment_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          class_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          parent_comment_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_comments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "class_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_item_progress: {
+        Row: {
+          class_item_id: string
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          last_position_seconds: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          class_item_id: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          last_position_seconds?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          class_item_id?: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          last_position_seconds?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_item_progress_class_item_id_fkey"
+            columns: ["class_item_id"]
+            isOneToOne: false
+            referencedRelation: "class_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_item_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_items: {
+        Row: {
+          audio_url: string | null
+          bpm: number | null
+          class_id: string
+          correct_answer: string | null
+          created_at: string | null
+          description: string | null
+          explanation: string | null
+          id: string
+          item_type: string
+          key_signature: string | null
+          options: Json | null
+          order_index: number
+          question: string | null
+          question_type: string | null
+          rich_content: Json | null
+          soundslice_embed_url: string | null
+          title: string
+          updated_at: string | null
+          video_duration_seconds: number | null
+          video_url: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          bpm?: number | null
+          class_id: string
+          correct_answer?: string | null
+          created_at?: string | null
+          description?: string | null
+          explanation?: string | null
+          id?: string
+          item_type: string
+          key_signature?: string | null
+          options?: Json | null
+          order_index?: number
+          question?: string | null
+          question_type?: string | null
+          rich_content?: Json | null
+          soundslice_embed_url?: string | null
+          title: string
+          updated_at?: string | null
+          video_duration_seconds?: number | null
+          video_url?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          bpm?: number | null
+          class_id?: string
+          correct_answer?: string | null
+          created_at?: string | null
+          description?: string | null
+          explanation?: string | null
+          id?: string
+          item_type?: string
+          key_signature?: string | null
+          options?: Json | null
+          order_index?: number
+          question?: string | null
+          question_type?: string | null
+          rich_content?: Json | null
+          soundslice_embed_url?: string | null
+          title?: string
+          updated_at?: string | null
+          video_duration_seconds?: number | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_items_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_free: boolean | null
+          order_index: number
+          section_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_free?: boolean | null
+          order_index?: number
+          section_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_free?: boolean | null
+          order_index?: number
+          section_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "course_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comment_reactions: {
+        Row: {
+          comment_id: string
+          created_at: string | null
+          emoji: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string | null
+          emoji: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string | null
+          emoji?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_reactions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "class_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comment_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           created_at: string | null
@@ -89,7 +349,7 @@ export type Database = {
           },
         ]
       }
-      course_modules: {
+      course_modules_legacy: {
         Row: {
           correct_answer: string | null
           course_id: string
@@ -157,6 +417,44 @@ export type Database = {
           },
         ]
       }
+      course_sections: {
+        Row: {
+          course_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          order_index: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          course_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          course_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_sections_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           created_at: string | null
@@ -164,6 +462,7 @@ export type Database = {
           difficulty: string | null
           id: string
           instrument: string | null
+          is_master_class: boolean
           is_published: boolean | null
           musical_style_id: string
           order_index: number | null
@@ -183,6 +482,7 @@ export type Database = {
           difficulty?: string | null
           id?: string
           instrument?: string | null
+          is_master_class?: boolean
           is_published?: boolean | null
           musical_style_id: string
           order_index?: number | null
@@ -202,6 +502,7 @@ export type Database = {
           difficulty?: string | null
           id?: string
           instrument?: string | null
+          is_master_class?: boolean
           is_published?: boolean | null
           musical_style_id?: string
           order_index?: number | null
@@ -474,6 +775,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
           email: string
           full_name: string | null
@@ -483,6 +785,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
           email: string
           full_name?: string | null
@@ -492,6 +795,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
           email?: string
           full_name?: string | null
@@ -625,7 +929,7 @@ export type Database = {
           },
         ]
       }
-      user_progress: {
+      user_progress_legacy: {
         Row: {
           completed: boolean | null
           completed_at: string | null
@@ -671,7 +975,7 @@ export type Database = {
             foreignKeyName: "user_progress_module_id_fkey"
             columns: ["module_id"]
             isOneToOne: false
-            referencedRelation: "course_modules"
+            referencedRelation: "course_modules_legacy"
             referencedColumns: ["id"]
           },
           {

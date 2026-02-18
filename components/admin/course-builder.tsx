@@ -68,7 +68,7 @@ export function CourseBuilder({ courseId, initialModules }: CourseBuilderProps) 
 
     const supabase = createClient()
     const { error } = await supabase
-      .from('course_modules')
+      .from('course_modules_legacy')
       .delete()
       .eq('id', moduleId)
 

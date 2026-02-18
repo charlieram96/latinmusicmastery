@@ -83,7 +83,7 @@ export function ModuleList({
     try {
       for (const update of updates) {
         await supabase
-          .from('course_modules')
+          .from('course_modules_legacy')
           .update({ order_index: update.order_index })
           .eq('id', update.id)
       }

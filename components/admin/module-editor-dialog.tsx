@@ -100,7 +100,7 @@ export function ModuleEditorDialog({
       if (isNew) {
         // Get max order_index for this course
         const { data: existing } = await supabase
-          .from('course_modules')
+          .from('course_modules_legacy')
           .select('order_index')
           .eq('course_id', courseId)
           .order('order_index', { ascending: false })
@@ -110,7 +110,7 @@ export function ModuleEditorDialog({
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await (supabase
-          .from('course_modules') as any)
+          .from('course_modules_legacy') as any)
           .insert({
             course_id: courseId,
             module_type: formData.module_type,
@@ -136,7 +136,7 @@ export function ModuleEditorDialog({
       } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await (supabase
-          .from('course_modules') as any)
+          .from('course_modules_legacy') as any)
           .update({
             title: formData.title,
             description: formData.description || null,

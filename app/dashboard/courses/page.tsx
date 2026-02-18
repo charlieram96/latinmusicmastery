@@ -38,7 +38,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
     supabase.from('teachers').select('id, name').order('name'),
     supabase.from('musical_styles').select('name').order('name'),
     supabase.from('teachers').select('instrument').not('instrument', 'is', null),
-    supabase.from('user_progress').select('module_id, completed, module:course_modules(course_id)').eq('user_id', user.id)
+    supabase.from('user_progress_legacy').select('module_id, completed, module:course_modules_legacy(course_id)').eq('user_id', user.id)
   ])
 
   // Create a map of course progress
@@ -66,7 +66,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
         country:countries(name, slug)
       ),
       teacher:teachers(id, name, instrument, image_url),
-      course_modules(id)
+      course_modules_legacy(id)
     `)
     .eq('is_published', true)
 

@@ -2,9 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { CourseBuilder } from '@/components/admin/course-builder'
+import { CourseBuilderV2 } from '@/components/admin/course-builder-v2'
 import { CourseEditForm } from '@/components/admin/course-edit-form'
-import { CourseModule } from '@/types/modules'
+import { getCourseStructure } from '@/app/actions/course-builder'
 
 interface CourseEditPageProps {
   params: Promise<{
@@ -51,15 +51,11 @@ export default async function CourseEditPage({ params }: CourseEditPageProps) {
     .select('id, name, instrument')
     .order('name')
 
-  // Fetch course modules
-  const { data: modules } = await supabase
-    .from('course_modules')
-    .select('*')
-    .eq('course_id', id)
-    .order('order_index')
+  // Fetch course structure (sections -> classes -> items)
+  const { data: sections } = await getCourseStructure(id)
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-4xl">
+    <div className="container mx-auto px-6 py-8 max-w-5xl">
       {/* Header */}
       <div className="mb-8">
         <Link href="/admin/courses" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
@@ -96,11 +92,11 @@ export default async function CourseEditPage({ params }: CourseEditPageProps) {
         }))}
       />
 
-      {/* Course Builder */}
+      {/* Course Builder V2 */}
       <div className="mt-8">
-        <CourseBuilder
+        <CourseBuilderV2
           courseId={course.id}
-          initialModules={(modules || []) as CourseModule[]}
+          initialSections={(sections || []) as any}
         />
       </div>
     </div>

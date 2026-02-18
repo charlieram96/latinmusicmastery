@@ -26,7 +26,7 @@ export default async function ModulePage({ params }: PageProps) {
 
   // Get module with course details
   const { data: module } = await supabase
-    .from('course_modules')
+    .from('course_modules_legacy')
     .select(`
       *,
       course:courses(
@@ -67,7 +67,7 @@ export default async function ModulePage({ params }: PageProps) {
 
   // Get all modules in this course for navigation
   const { data: courseModules } = await supabase
-    .from('course_modules')
+    .from('course_modules_legacy')
     .select('id, title, order_index, is_free, module_type')
     .eq('course_id', module.course_id)
     .order('order_index')
@@ -75,7 +75,7 @@ export default async function ModulePage({ params }: PageProps) {
   // Get user progress for all modules in this course
   const moduleIds = courseModules?.map(m => m.id) || []
   const { data: progressData } = await supabase
-    .from('user_progress')
+    .from('user_progress_legacy')
     .select('*')
     .eq('user_id', user.id)
     .in('module_id', moduleIds)

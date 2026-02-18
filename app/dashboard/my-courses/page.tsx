@@ -31,14 +31,20 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
     redirect('/login')
   }
 
-  // Get user's course enrollments
+  // Get user's course enrollments with new hierarchy
   const { data: enrollments } = await supabase
     .from('course_enrollments')
     .select(`
       *,
       course:courses(
         *,
-        course_modules(id),
+        course_sections(
+          id,
+          classes(
+            id,
+            items:class_items(id)
+          )
+        ),
         musical_style:musical_styles(
           name,
           country:countries(name)
@@ -48,63 +54,57 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
     `)
     .eq('user_id', user.id)
 
-  // Get user's progress on modules
-  const { data: userProgress } = await supabase
-    .from('user_progress')
-    .select(`
-      *,
-      module:course_modules(
-        id,
-        course_id
-      )
-    `)
-    .eq('user_id', user.id)
+  // Collect all item IDs across all enrolled courses
+  const allItemIds: string[] = []
+  const courseItemMap = new Map<string, string[]>()
 
-  // Create a map of progress by course
-  const courseProgressMap = new Map<string, { completedLessons: number; lastProgressUpdate: string; nextModuleId: string | null }>()
-  userProgress?.forEach((progress: any) => {
-    const courseId = progress.module?.course_id
-    if (!courseId) return
-
-    const existing = courseProgressMap.get(courseId) || {
-      completedLessons: 0,
-      lastProgressUpdate: progress.updated_at,
-      nextModuleId: null
+  for (const enrollment of enrollments || []) {
+    const course = enrollment.course as any
+    if (!course) continue
+    const itemIds: string[] = []
+    for (const section of course.course_sections || []) {
+      for (const cls of section.classes || []) {
+        for (const item of cls.items || []) {
+          itemIds.push(item.id)
+          allItemIds.push(item.id)
+        }
+      }
     }
+    courseItemMap.set(course.id, itemIds)
+  }
 
-    if (progress.completed) {
-      existing.completedLessons++
-    } else if (!existing.nextModuleId) {
-      existing.nextModuleId = progress.module_id
-    }
+  // Get progress for all items in one query
+  let progressData: any[] = []
+  if (allItemIds.length > 0) {
+    const { data } = await supabase
+      .from('class_item_progress')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('class_item_id', allItemIds)
+    progressData = data || []
+  }
 
-    if (new Date(progress.updated_at) > new Date(existing.lastProgressUpdate)) {
-      existing.lastProgressUpdate = progress.updated_at
-    }
+  const completedItemIds = new Set(
+    progressData.filter(p => p.completed).map(p => p.class_item_id)
+  )
 
-    courseProgressMap.set(courseId, existing)
-  })
-
-  // Group by course from enrollments
-  const coursesMap = new Map()
-
-  enrollments?.forEach((enrollment: any) => {
+  // Build enriched courses array
+  let enrolledCourses = (enrollments || []).map((enrollment: any) => {
     const course = enrollment.course
-    if (!course) return
+    if (!course) return null
 
-    const progress = courseProgressMap.get(course.id)
+    const itemIds = courseItemMap.get(course.id) || []
+    const totalItems = itemIds.length
+    const completedCount = itemIds.filter(id => completedItemIds.has(id)).length
 
-    coursesMap.set(course.id, {
+    return {
       ...course,
-      totalLessons: course.course_modules?.length || 0,
-      completedLessons: progress?.completedLessons || 0,
+      totalLessons: totalItems,
+      completedLessons: completedCount,
       lastAccessed: enrollment.last_accessed_at || enrollment.enrolled_at,
-      nextModuleId: progress?.nextModuleId || null,
       enrolledAt: enrollment.enrolled_at,
-    })
-  })
-
-  let enrolledCourses = Array.from(coursesMap.values())
+    }
+  }).filter(Boolean) as any[]
 
   // Apply filter
   const filter = params.filter || 'all'
@@ -134,8 +134,17 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
     enrolledCourses.sort((a, b) => a.title.localeCompare(b.title))
   }
 
-  // Get counts for filter badges
-  const allCourses = Array.from(coursesMap.values())
+  // Get counts for filter badges (from unfiltered data)
+  const allCourses = (enrollments || []).map((e: any) => {
+    const course = e.course
+    if (!course) return null
+    const itemIds = courseItemMap.get(course.id) || []
+    return {
+      totalLessons: itemIds.length,
+      completedLessons: itemIds.filter(id => completedItemIds.has(id)).length,
+    }
+  }).filter(Boolean) as any[]
+
   const counts = {
     all: allCourses.length,
     inProgress: allCourses.filter(c => c.completedLessons > 0 && c.completedLessons < c.totalLessons).length,
@@ -277,7 +286,7 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
                     {/* Progress Bar */}
                     <div className="mt-auto">
                       <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                        <span>{course.completedLessons} of {course.totalLessons} lessons</span>
+                        <span>{course.completedLessons} of {course.totalLessons} items</span>
                         <span className="font-medium">{progressPercent}%</span>
                       </div>
                       <Progress value={progressPercent} className="h-2" />

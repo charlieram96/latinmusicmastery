@@ -42,33 +42,64 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .single()
 
-  // Fetch user progress with module and course details
-  const { data: progressData } = await supabase
-    .from('user_progress')
+  // Fetch user's course enrollments with course details
+  const { data: enrollments } = await supabase
+    .from('course_enrollments')
     .select(`
       *,
-      module:course_modules(
+      course:courses(
         id,
         title,
-        order_index,
-        course:courses(
+        slug,
+        thumbnail_url,
+        course_sections(
           id,
-          title,
-          slug,
-          thumbnail_url,
-          course_modules(id)
+          classes(
+            id,
+            items:class_items(id)
+          )
         )
       )
     `)
     .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
+    .order('last_accessed_at', { ascending: false })
 
-  // Calculate statistics
-  const { count: totalLessonsCompleted } = await supabase
-    .from('user_progress')
-    .select('module_id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('completed', true)
+  // Get all class item IDs from enrolled courses
+  const allItemIds: string[] = []
+  const courseItemMap = new Map<string, string[]>()
+
+  for (const enrollment of enrollments || []) {
+    const course = enrollment.course as any
+    if (!course) continue
+    const itemIds: string[] = []
+    for (const section of course.course_sections || []) {
+      for (const cls of section.classes || []) {
+        for (const item of cls.items || []) {
+          itemIds.push(item.id)
+          allItemIds.push(item.id)
+        }
+      }
+    }
+    courseItemMap.set(course.id, itemIds)
+  }
+
+  // Get all progress for these items
+  let progressData: any[] = []
+  if (allItemIds.length > 0) {
+    const { data } = await supabase
+      .from('class_item_progress')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('class_item_id', allItemIds)
+    progressData = data || []
+  }
+
+  const completedItemIds = new Set(
+    progressData.filter(p => p.completed).map(p => p.class_item_id)
+  )
+
+  // Calculate total lessons completed
+  const totalLessonsCompleted = completedItemIds.size
 
   // Get user achievements count
   const { count: achievementsCount } = await supabase
@@ -76,19 +107,13 @@ export default async function DashboardPage() {
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
 
-  // Calculate streak (simplified - count consecutive days)
-  const { data: recentActivity } = await supabase
-    .from('user_progress')
-    .select('updated_at')
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
-
+  // Calculate streak from class_item_progress
   let streak = 0
-  if (recentActivity && recentActivity.length > 0) {
+  if (progressData.length > 0) {
     const uniqueDates = new Set<string>()
-    recentActivity.forEach((activity) => {
-      if (activity.updated_at) {
-        const date = new Date(activity.updated_at).toISOString().split('T')[0]
+    progressData.forEach((p) => {
+      if (p.completed_at) {
+        const date = new Date(p.completed_at).toISOString().split('T')[0]
         uniqueDates.add(date)
       }
     })
@@ -111,33 +136,56 @@ export default async function DashboardPage() {
     }
   }
 
-  // Get continue learning (most recent incomplete module)
-  const continueModule = (progressData as any[])
-    ?.filter((p) => !p.completed && p.module?.course)
-    .slice(0, 1)[0]
+  // Build course progress for "My Courses" section
+  const myCoursesArray: { course: any; total: number; completed: number }[] = []
+  for (const enrollment of enrollments || []) {
+    const course = enrollment.course as any
+    if (!course) continue
+    const itemIds = courseItemMap.get(course.id) || []
+    const completedCount = itemIds.filter(id => completedItemIds.has(id)).length
+    myCoursesArray.push({
+      course,
+      total: itemIds.length,
+      completed: completedCount,
+    })
+  }
 
-  // Get my courses with progress
-  const courseProgress = new Map<string, { total: number; completed: number; course: any }>()
-  ;(progressData as any[])?.forEach((p) => {
-    if (p.module?.course) {
-      const courseId = p.module.course.id
-      if (!courseProgress.has(courseId)) {
-        courseProgress.set(courseId, {
-          total: p.module.course.course_modules?.length || 1,
-          completed: 0,
-          course: p.module.course
-        })
-      }
-      if (p.completed) {
-        const current = courseProgress.get(courseId)!
-        current.completed++
+  // Find continue learning: most recently accessed course with incomplete items
+  let continueData: { courseId: string; courseSlug: string; courseTitle: string; courseThumbnail: string | null; classId: string | null } | null = null
+
+  // Get most recent progress entry to find last class
+  if (progressData.length > 0) {
+    const sortedProgress = [...progressData]
+      .filter(p => !p.completed)
+      .sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime())
+
+    if (sortedProgress.length > 0) {
+      // Find which course this item belongs to
+      const recentItemId = sortedProgress[0].class_item_id
+      for (const enrollment of enrollments || []) {
+        const course = enrollment.course as any
+        if (!course) continue
+        for (const section of course.course_sections || []) {
+          for (const cls of section.classes || []) {
+            for (const item of cls.items || []) {
+              if (item.id === recentItemId) {
+                continueData = {
+                  courseId: course.id,
+                  courseSlug: course.slug,
+                  courseTitle: course.title,
+                  courseThumbnail: course.thumbnail_url,
+                  classId: cls.id,
+                }
+              }
+            }
+          }
+        }
       }
     }
-  })
-  const myCoursesArray = Array.from(courseProgress.values()).slice(0, 3)
+  }
 
   // Get recommended courses
-  const startedCourseIds = Array.from(courseProgress.keys())
+  const startedCourseIds = myCoursesArray.map(c => c.course.id)
   const { data: recommendedCourses } = await supabase
     .from('courses')
     .select(`
@@ -167,11 +215,9 @@ export default async function DashboardPage() {
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
 
-  // Get time-based greeting
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
-  // Format current date
   const today = new Date()
   const dateString = today.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -179,18 +225,15 @@ export default async function DashboardPage() {
     day: 'numeric'
   })
 
-  // Get courses in progress count
-  const coursesInProgress = courseProgress.size
+  const coursesInProgress = myCoursesArray.length
 
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Welcome Banner */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-muted/50 dark:bg-muted/30 p-5 sm:p-8 md:p-10">
-        {/* Background decorations */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-slate-200/50 dark:bg-slate-700/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-slate-200/30 dark:bg-slate-700/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
 
-        {/* Music note decorations - hidden on mobile */}
         <div className="hidden sm:block absolute top-6 right-8 opacity-[0.07] dark:opacity-[0.1]">
           <Music className="w-16 h-16 text-foreground" />
         </div>
@@ -199,13 +242,11 @@ export default async function DashboardPage() {
         </div>
 
         <div className="relative z-10">
-          {/* Date badge */}
           <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-background/80 dark:bg-background/50 backdrop-blur-sm rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 border border-border/50">
             <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>{dateString}</span>
           </div>
 
-          {/* Greeting */}
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1.5 sm:mb-2 text-foreground">
             {greeting}, {firstName}!
           </h1>
@@ -213,7 +254,6 @@ export default async function DashboardPage() {
             Ready to continue your Latin music journey? Pick up where you left off or explore something new.
           </p>
 
-          {/* Stats grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
             <div className="bg-background/80 dark:bg-background/50 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 hover:bg-background transition-colors">
               <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
@@ -232,7 +272,7 @@ export default async function DashboardPage() {
                 </div>
                 <span className="text-xl sm:text-2xl font-bold text-foreground">{totalLessonsCompleted || 0}</span>
               </div>
-              <p className="text-muted-foreground text-xs sm:text-sm">Lessons Done</p>
+              <p className="text-muted-foreground text-xs sm:text-sm">Items Done</p>
             </div>
 
             <div className="bg-background/80 dark:bg-background/50 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 hover:bg-background transition-colors">
@@ -262,10 +302,7 @@ export default async function DashboardPage() {
       <div className="grid gap-2 sm:gap-4 grid-cols-2 md:grid-cols-4">
         <Link href="/dashboard/courses" className="group">
           <Card className="h-full relative overflow-hidden border-0 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent hover:from-blue-500/20 hover:via-blue-500/10 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-1">
-            <div
-              className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300 bg-cover bg-center"
-              style={{ backgroundImage: "url('https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&q=80')" }}
-            />
+            <div className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&q=80')" }} />
             <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/70 to-background/40" />
             <CardContent className="p-3 sm:p-5 flex items-center gap-3 sm:gap-4 relative">
               <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
@@ -280,10 +317,7 @@ export default async function DashboardPage() {
         </Link>
         <Link href="/dashboard/teachers" className="group">
           <Card className="h-full relative overflow-hidden border-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent hover:from-purple-500/20 hover:via-purple-500/10 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-1">
-            <div
-              className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300 bg-cover bg-center"
-              style={{ backgroundImage: "url('https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&q=80')" }}
-            />
+            <div className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&q=80')" }} />
             <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/70 to-background/40" />
             <CardContent className="p-3 sm:p-5 flex items-center gap-3 sm:gap-4 relative">
               <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
@@ -298,10 +332,7 @@ export default async function DashboardPage() {
         </Link>
         <Link href="/dashboard/feedback" className="group">
           <Card className="h-full relative overflow-hidden border-0 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent hover:from-amber-500/20 hover:via-amber-500/10 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/10 hover:-translate-y-1">
-            <div
-              className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300 bg-cover bg-center"
-              style={{ backgroundImage: "url('https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400&q=80')" }}
-            />
+            <div className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400&q=80')" }} />
             <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/70 to-background/40" />
             <CardContent className="p-3 sm:p-5 flex items-center gap-3 sm:gap-4 relative">
               <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
@@ -316,10 +347,7 @@ export default async function DashboardPage() {
         </Link>
         <Link href="/dashboard/achievements" className="group">
           <Card className="h-full relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent hover:from-emerald-500/20 hover:via-emerald-500/10 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-1">
-            <div
-              className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300 bg-cover bg-center"
-              style={{ backgroundImage: "url('https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=400&q=80')" }}
-            />
+            <div className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=400&q=80')" }} />
             <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/70 to-background/40" />
             <CardContent className="p-3 sm:p-5 flex items-center gap-3 sm:gap-4 relative">
               <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
@@ -335,17 +363,17 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
-        {/* Continue Learning - Large Card */}
+        {/* Continue Learning */}
         <div className="lg:col-span-2">
-          {continueModule ? (
+          {continueData ? (
             <Card className="overflow-hidden relative group border-0 bg-gradient-to-br from-card via-card to-primary/5">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="flex flex-col md:flex-row relative">
-                {continueModule.module?.course?.thumbnail_url && (
+                {continueData.courseThumbnail && (
                   <div className="md:w-80 aspect-video md:aspect-auto bg-muted flex-shrink-0 relative overflow-hidden">
                     <img
-                      src={continueModule.module.course.thumbnail_url}
-                      alt={continueModule.module.course.title}
+                      src={continueData.courseThumbnail}
+                      alt={continueData.courseTitle}
                       className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent to-card/50 md:block hidden" />
@@ -356,14 +384,11 @@ export default async function DashboardPage() {
                     <Play className="h-3 w-3 mr-1 fill-current" />
                     Continue Learning
                   </Badge>
-                  <h3 className="text-xl font-semibold mb-2">{continueModule.module?.course?.title}</h3>
-                  <p className="text-muted-foreground mb-5">
-                    Lesson {(continueModule.module?.order_index ?? 0) + 1}: {continueModule.module?.title}
-                  </p>
+                  <h3 className="text-xl font-semibold mb-2">{continueData.courseTitle}</h3>
                   <Button asChild size="lg" className="w-fit">
-                    <Link href={`/dashboard/modules/${continueModule.module_id}`}>
+                    <Link href={`/dashboard/course/${continueData.courseSlug}/class/${continueData.classId}`}>
                       <Play className="h-4 w-4 mr-2 fill-current" />
-                      Continue Lesson
+                      Continue Learning
                     </Link>
                   </Button>
                 </div>
@@ -394,8 +419,8 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3 relative">
             {myCoursesArray.length > 0 ? (
-              myCoursesArray.map(({ course, total, completed }) => {
-                const progress = Math.round((completed / total) * 100)
+              myCoursesArray.slice(0, 3).map(({ course, total, completed }) => {
+                const progress = total > 0 ? Math.round((completed / total) * 100) : 0
                 return (
                   <Link key={course.id} href={`/dashboard/course/${course.slug}`} className="block group">
                     <div className="flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-muted/50 transition-colors">
@@ -458,11 +483,7 @@ export default async function DashboardPage() {
                 <Card className="overflow-hidden h-full border-0 bg-gradient-to-b from-card to-muted/20 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1 p-0 gap-0">
                   <div className="aspect-video bg-muted relative overflow-hidden">
                     {course.thumbnail_url ? (
-                      <img
-                        src={course.thumbnail_url}
-                        alt={course.title}
-                        className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
-                      />
+                      <img src={course.thumbnail_url} alt={course.title} className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full bg-primary/10 flex items-center justify-center">
                         <BookOpen className="h-8 w-8 text-primary/50" />
@@ -491,7 +512,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Subscription CTA for free users */}
+      {/* Subscription CTA */}
       {!subscription?.status && (
         <Card className="relative overflow-hidden border-0 bg-gradient-to-r from-primary/20 via-primary/10 to-purple-500/10">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />

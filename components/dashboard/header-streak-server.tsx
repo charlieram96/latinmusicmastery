@@ -6,7 +6,7 @@ async function calculateStreak(userId: string): Promise<number> {
 
   // Get distinct activity dates ordered by most recent
   const { data: activities } = await supabase
-    .from('user_progress')
+    .from('user_progress_legacy')
     .select('updated_at')
     .eq('user_id', userId)
     .order('updated_at', { ascending: false })

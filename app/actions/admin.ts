@@ -552,7 +552,7 @@ export async function getAnalytics() {
 
   // Get all progress data
   const { data: progressData } = await supabase
-    .from('user_progress')
+    .from('user_progress_legacy')
     .select('lesson_id, completed, user_id')
 
   // Calculate completion rates per course

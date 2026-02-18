@@ -8,10 +8,11 @@ import { cn } from '@/lib/utils'
 import { enrollInCourse } from '@/app/actions/progress'
 
 interface EnterCourseModeButtonProps extends Omit<ComponentProps<typeof Button>, 'onClick'> {
-  moduleId: string
+  moduleId?: string
   courseId: string
   courseTitle?: string
   isNewCourse?: boolean
+  href?: string
 }
 
 export function EnterCourseModeButton({
@@ -19,6 +20,7 @@ export function EnterCourseModeButton({
   courseId,
   courseTitle,
   isNewCourse = false,
+  href,
   children,
   className,
   ...props
@@ -34,7 +36,7 @@ export function EnterCourseModeButton({
 
     // Small delay to show the loading state before navigation
     setTimeout(() => {
-      router.push(`/dashboard/modules/${moduleId}`)
+      router.push(href || (moduleId ? `/dashboard/modules/${moduleId}` : `/dashboard/course/${courseId}`))
     }, 100)
   }
 
