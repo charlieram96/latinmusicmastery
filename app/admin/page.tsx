@@ -17,7 +17,7 @@ export default async function AdminDashboard() {
     supabase.from('countries').select('*', { count: 'exact', head: true }),
     supabase.from('musical_styles').select('*', { count: 'exact', head: true }),
     supabase.from('courses').select('*', { count: 'exact', head: true }),
-    supabase.from('course_modules_legacy').select('*', { count: 'exact', head: true }),
+    supabase.from('classes').select('*', { count: 'exact', head: true }),
     supabase.from('exercises').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
   ])
@@ -58,11 +58,11 @@ export default async function AdminDashboard() {
       description: 'Total courses',
     },
     {
-      title: 'Modules',
+      title: 'Classes',
       value: modulesCount || 0,
       icon: FileText,
       href: '/admin/courses',
-      description: 'Total modules',
+      description: 'Total classes',
     },
     {
       title: 'Exercises',
