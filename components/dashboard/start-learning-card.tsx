@@ -159,7 +159,7 @@ export function StartLearningCard({ courses }: StartLearningCardProps) {
   }
 
   return (
-    <Card className="relative overflow-hidden border-0 bg-gradient-to-b from-card to-muted/30 h-[280px] sm:h-[320px] md:h-[380px]">
+    <div className="relative overflow-hidden rounded-xl bg-card border border-border min-h-[260px] sm:min-h-[300px] md:min-h-[340px]">
       {/* Animated Course Boxes */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Row 1 - moves left, cut off at top */}
@@ -261,6 +261,6 @@ export function StartLearningCard({ courses }: StartLearningCardProps) {
           animation: marquee-left-slow 108s linear infinite;
         }
       `}</style>
-    </Card>
+    </div>
   )
 }

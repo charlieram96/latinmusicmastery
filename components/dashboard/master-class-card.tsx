@@ -48,12 +48,12 @@ function getInitials(name: string): string {
 export function MasterClassCard({ course }: MasterClassCardProps) {
   return (
     <Link href={`/dashboard/course/${course.slug || course.id}`}>
-      <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-0 shadow-md p-0 gap-0">
-        {/* Gradient accent bar */}
-        <div className="h-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500" />
+      <Card className="overflow-hidden group hover:brightness-110 transition-all duration-300 p-0 gap-0">
+        {/* Accent bar */}
+        <div className="h-1 bg-primary" />
 
         {/* Thumbnail */}
-        <div className="relative aspect-video bg-gradient-to-br from-amber-500/10 to-orange-500/5">
+        <div className="relative aspect-video bg-muted">
           {course.thumbnail_url ? (
             <Image
               src={course.thumbnail_url}
@@ -62,7 +62,7 @@ export function MasterClassCard({ course }: MasterClassCardProps) {
               className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-amber-500/10 to-orange-500/5">
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
               <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center">
                 <User className="w-8 h-8 text-amber-500/40" />
               </div>

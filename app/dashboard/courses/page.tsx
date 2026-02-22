@@ -171,14 +171,14 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
               const hasStarted = progress?.started || false
 
               return (
-                <Card key={course.id} className="overflow-hidden h-full hover:shadow-lg transition-shadow group flex flex-col p-0 gap-0">
+                <Card key={course.id} className="overflow-hidden h-full transition-colors group flex flex-col p-0 gap-0">
                   <Link href={`/dashboard/course/${course.slug || course.id}`} className="flex-1 flex flex-col">
                     <div className="aspect-video bg-muted relative overflow-hidden">
                       {course.thumbnail_url ? (
                         <img
                           src={course.thumbnail_url}
                           alt={course.title}
-                          className="object-cover w-full h-full transform group-hover:scale-110 transition-transform duration-500 ease-out"
+                          className="object-cover w-full h-full"
                         />
                       ) : (
                         <div className="w-full h-full bg-primary/10 flex items-center justify-center">
@@ -260,14 +260,14 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
               const hasStarted = progress?.started || false
 
               return (
-                <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow group p-0 gap-0">
+                <Card key={course.id} className="overflow-hidden transition-colors group p-0 gap-0">
                   <div className="flex flex-col sm:flex-row">
                     <Link href={`/dashboard/course/${course.slug || course.id}`} className="sm:w-56 md:w-72 sm:h-36 md:h-44 aspect-video sm:aspect-auto bg-muted flex-shrink-0 relative overflow-hidden">
                       {course.thumbnail_url ? (
                         <img
                           src={course.thumbnail_url}
                           alt={course.title}
-                          className="object-cover w-full h-full transform group-hover:scale-110 transition-transform duration-500 ease-out"
+                          className="object-cover w-full h-full"
                         />
                       ) : (
                         <div className="w-full h-full bg-primary/10 flex items-center justify-center">

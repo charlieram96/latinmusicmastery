@@ -105,7 +105,7 @@ export default function HelpPage() {
         {resources.map((resource) => {
           const Icon = resource.icon
           return (
-            <Card key={resource.title} className="hover:shadow-md transition-shadow">
+            <Card key={resource.title} className="hover:bg-secondary/50 transition-colors">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">

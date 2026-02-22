@@ -8,7 +8,6 @@ import Link from 'next/link'
 import {
   Play,
   BookOpen,
-  Clock,
   CheckCircle2,
   ArrowRight,
   GraduationCap
@@ -151,12 +150,6 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
     completed: allCourses.filter(c => c.completedLessons === c.totalLessons && c.totalLessons > 0).length,
   }
 
-  const getProgressRingColor = (percent: number) => {
-    if (percent === 100) return 'text-green-500'
-    if (percent >= 50) return 'text-primary'
-    return 'text-muted-foreground'
-  }
-
   return (
     <>
       {/* Page Header */}
@@ -181,73 +174,20 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
 
             return (
               <Link key={course.id} href={`/dashboard/course/${course.slug || course.id}`} className="group">
-                <Card className="overflow-hidden h-full hover:shadow-lg transition-shadow p-0 gap-0">
-                  {/* Thumbnail with Progress Ring Overlay */}
-                  <div className="relative aspect-video bg-muted overflow-hidden">
+                <Card className="overflow-hidden h-full transition-colors p-0 gap-0">
+                  {/* Thumbnail */}
+                  <div className="aspect-video bg-muted overflow-hidden">
                     {course.thumbnail_url ? (
                       <img
                         src={course.thumbnail_url}
                         alt={course.title}
-                        className="object-cover w-full h-full transform group-hover:scale-110 transition-transform duration-500 ease-out"
+                        className="object-cover w-full h-full"
                       />
                     ) : (
                       <div className="w-full h-full bg-primary/10 flex items-center justify-center">
                         <BookOpen className="h-10 w-10 text-primary/50" />
                       </div>
                     )}
-
-                    {/* Progress Ring */}
-                    <div className="absolute bottom-3 right-3 bg-background/90 backdrop-blur-sm rounded-full p-1">
-                      <div className="relative h-12 w-12">
-                        <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
-                          <circle
-                            cx="18"
-                            cy="18"
-                            r="15.5"
-                            fill="none"
-                            className="stroke-muted"
-                            strokeWidth="2"
-                          />
-                          <circle
-                            cx="18"
-                            cy="18"
-                            r="15.5"
-                            fill="none"
-                            className={`${getProgressRingColor(progressPercent)} transition-all duration-500`}
-                            strokeWidth="2"
-                            strokeDasharray={`${progressPercent} 100`}
-                            strokeLinecap="round"
-                            stroke="currentColor"
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          {isCompleted ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <span className="text-xs font-bold">{progressPercent}%</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Status Badge */}
-                    <div className="absolute top-3 left-3">
-                      {isCompleted ? (
-                        <Badge className="bg-green-500/90 text-white gap-1">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Completed
-                        </Badge>
-                      ) : progressPercent > 0 ? (
-                        <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm gap-1">
-                          <Clock className="h-3 w-3" />
-                          In Progress
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm">
-                          Not Started
-                        </Badge>
-                      )}
-                    </div>
                   </div>
 
                   {/* Content */}
