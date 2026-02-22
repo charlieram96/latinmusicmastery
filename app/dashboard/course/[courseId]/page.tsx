@@ -124,14 +124,14 @@ export default async function CoursePage({ params }: PageProps) {
   return (
     <>
       {/* Hero Section */}
-      <div className="relative -mx-6 -mt-[calc(50px+1.5rem)] mb-8 overflow-hidden">
+      <div className="relative -mx-6 -mt-[calc(56px+1.5rem)] mb-8 overflow-hidden">
         {course.thumbnail_url && (
           <img src={course.thumbnail_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
 
-        <div className="relative px-6 pt-[calc(50px+2rem)] pb-10 min-h-[420px] flex flex-col justify-end">
-          <div className="absolute top-[calc(50px+1rem)] left-6">
+        <div className="relative px-6 pt-[calc(56px+2rem)] pb-10 min-h-[420px] flex flex-col justify-end">
+          <div className="absolute top-[calc(56px+1rem)] left-6">
             <Button size="sm" variant="outline" asChild className="gap-2 bg-background/80 backdrop-blur-sm">
               <Link href="/dashboard/courses">
                 <ChevronLeft className="h-4 w-4" />
@@ -198,13 +198,13 @@ export default async function CoursePage({ params }: PageProps) {
                 courseTitle={course.title}
                 isNewCourse={!hasStarted}
                 size="lg"
-                className="shadow-lg"
+                className=""
               >
                 <PlayCircle className="h-5 w-5 mr-2" />
                 {hasStarted ? 'Continue Course' : 'Begin Course'}
               </EnterCourseModeButton>
             ) : (
-              <Button size="lg" disabled className="shadow-lg">
+              <Button size="lg" disabled className="">
                 <Clock className="h-5 w-5 mr-2" />
                 Coming Soon
               </Button>
@@ -215,7 +215,7 @@ export default async function CoursePage({ params }: PageProps) {
 
       {/* Stats Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <Card className="bg-card/50">
+        <Card className="">
           <CardContent className="p-4 flex items-center gap-4">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center ${progressPercentage > 0 ? 'bg-primary/20' : 'bg-muted'}`}>
               <Target className={`w-6 h-6 ${progressPercentage > 0 ? 'text-primary' : 'text-muted-foreground'}`} />
@@ -227,7 +227,7 @@ export default async function CoursePage({ params }: PageProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50">
+        <Card className="">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
               <BookOpen className="w-6 h-6 text-blue-500" />
@@ -239,7 +239,7 @@ export default async function CoursePage({ params }: PageProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50">
+        <Card className="">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center">
               <Clock className="w-6 h-6 text-orange-500" />
@@ -251,7 +251,7 @@ export default async function CoursePage({ params }: PageProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50">
+        <Card className="">
           <CardContent className="p-4 flex items-center gap-4">
             <div className={`w-12 h-12 rounded-full ${difficulty.bg} flex items-center justify-center`}>
               <BarChart3 className={`w-6 h-6 ${difficulty.color}`} />

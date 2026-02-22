@@ -33,7 +33,7 @@ const ACHIEVEMENTS = {
     icon: BookOpen,
     category: 'learning',
     requirement: 1,
-    color: 'from-blue-500 to-cyan-500',
+    color: 'from-amber-500/80 to-amber-600/80',
   },
   lessons_10: {
     key: 'lessons_10',
@@ -42,7 +42,7 @@ const ACHIEVEMENTS = {
     icon: Target,
     category: 'learning',
     requirement: 10,
-    color: 'from-blue-600 to-indigo-600',
+    color: 'from-amber-500/80 to-amber-600/80',
   },
   lessons_25: {
     key: 'lessons_25',
@@ -51,7 +51,7 @@ const ACHIEVEMENTS = {
     icon: Star,
     category: 'learning',
     requirement: 25,
-    color: 'from-indigo-500 to-purple-500',
+    color: 'from-amber-500/80 to-amber-600/80',
   },
   lessons_50: {
     key: 'lessons_50',
@@ -60,7 +60,7 @@ const ACHIEVEMENTS = {
     icon: Trophy,
     category: 'learning',
     requirement: 50,
-    color: 'from-purple-500 to-pink-500',
+    color: 'from-amber-500/80 to-amber-600/80',
   },
   lessons_100: {
     key: 'lessons_100',
@@ -69,7 +69,7 @@ const ACHIEVEMENTS = {
     icon: Crown,
     category: 'learning',
     requirement: 100,
-    color: 'from-yellow-500 to-orange-500',
+    color: 'from-amber-500/80 to-amber-600/80',
   },
 
   // Consistency Streaks
@@ -80,7 +80,7 @@ const ACHIEVEMENTS = {
     icon: Flame,
     category: 'consistency',
     requirement: 3,
-    color: 'from-orange-400 to-red-400',
+    color: 'from-amber-500/80 to-amber-600/80',
   },
   streak_7: {
     key: 'streak_7',
@@ -89,7 +89,7 @@ const ACHIEVEMENTS = {
     icon: Flame,
     category: 'consistency',
     requirement: 7,
-    color: 'from-orange-500 to-red-500',
+    color: 'from-amber-500/80 to-amber-600/80',
   },
   streak_30: {
     key: 'streak_30',
@@ -98,7 +98,7 @@ const ACHIEVEMENTS = {
     icon: Zap,
     category: 'consistency',
     requirement: 30,
-    color: 'from-red-500 to-pink-500',
+    color: 'from-amber-500/80 to-amber-600/80',
   },
 
   // Course Completion
@@ -109,7 +109,7 @@ const ACHIEVEMENTS = {
     icon: Award,
     category: 'completion',
     requirement: 1,
-    color: 'from-green-500 to-emerald-500',
+    color: 'from-emerald-500/80 to-emerald-600/80',
   },
   course_3: {
     key: 'course_3',
@@ -118,7 +118,7 @@ const ACHIEVEMENTS = {
     icon: Sparkles,
     category: 'completion',
     requirement: 3,
-    color: 'from-emerald-500 to-teal-500',
+    color: 'from-emerald-500/80 to-emerald-600/80',
   },
   course_5: {
     key: 'course_5',
@@ -127,7 +127,7 @@ const ACHIEVEMENTS = {
     icon: GraduationCap,
     category: 'completion',
     requirement: 5,
-    color: 'from-teal-500 to-cyan-500',
+    color: 'from-emerald-500/80 to-emerald-600/80',
   },
 
   // Exploration
@@ -138,7 +138,7 @@ const ACHIEVEMENTS = {
     icon: Compass,
     category: 'exploration',
     requirement: 3,
-    color: 'from-violet-500 to-purple-500',
+    color: 'from-blue-400/80 to-blue-500/80',
   },
   styles_5: {
     key: 'styles_5',
@@ -147,7 +147,7 @@ const ACHIEVEMENTS = {
     icon: Music,
     category: 'exploration',
     requirement: 5,
-    color: 'from-purple-500 to-fuchsia-500',
+    color: 'from-blue-400/80 to-blue-500/80',
   },
   teachers_3: {
     key: 'teachers_3',
@@ -156,7 +156,7 @@ const ACHIEVEMENTS = {
     icon: Users,
     category: 'exploration',
     requirement: 3,
-    color: 'from-fuchsia-500 to-pink-500',
+    color: 'from-blue-400/80 to-blue-500/80',
   },
 
   // Engagement
@@ -167,7 +167,7 @@ const ACHIEVEMENTS = {
     icon: Video,
     category: 'engagement',
     requirement: 1,
-    color: 'from-amber-500 to-orange-500',
+    color: 'from-amber-500/80 to-amber-600/80',
   },
   community_joined: {
     key: 'community_joined',
@@ -176,7 +176,7 @@ const ACHIEVEMENTS = {
     icon: Heart,
     category: 'engagement',
     requirement: 1,
-    color: 'from-pink-500 to-rose-500',
+    color: 'from-amber-500/80 to-amber-600/80',
   },
 }
 
@@ -357,7 +357,7 @@ export default async function AchievementsPage() {
 
       {/* Overall Progress Card */}
       <Card className="mb-8 overflow-hidden">
-        <div className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent p-6">
+        <div className="bg-card p-6">
           <div className="flex flex-col md:flex-row md:items-center gap-6">
             <div className="h-20 w-20 rounded-2xl bg-primary/20 flex items-center justify-center">
               <Trophy className="h-10 w-10 text-primary" />
@@ -372,15 +372,15 @@ export default async function AchievementsPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-4 text-center">
-              <div className="bg-background/80 backdrop-blur-sm rounded-lg px-4 py-2">
+              <div className="bg-secondary rounded-lg px-4 py-2">
                 <p className="text-2xl font-bold text-primary">{completedLessons}</p>
                 <p className="text-xs text-muted-foreground">Lessons</p>
               </div>
-              <div className="bg-background/80 backdrop-blur-sm rounded-lg px-4 py-2">
+              <div className="bg-secondary rounded-lg px-4 py-2">
                 <p className="text-2xl font-bold text-primary">{streak}</p>
                 <p className="text-xs text-muted-foreground">Day Streak</p>
               </div>
-              <div className="bg-background/80 backdrop-blur-sm rounded-lg px-4 py-2">
+              <div className="bg-secondary rounded-lg px-4 py-2">
                 <p className="text-2xl font-bold text-primary">{completedCourses}</p>
                 <p className="text-xs text-muted-foreground">Courses</p>
               </div>
@@ -413,7 +413,7 @@ export default async function AchievementsPage() {
                     key={achievement.key}
                     className={`relative overflow-hidden transition-all ${
                       achievement.isUnlocked
-                        ? 'ring-2 ring-primary/50'
+                        ? 'border-primary/30'
                         : 'opacity-75 grayscale'
                     }`}
                   >
@@ -464,7 +464,7 @@ export default async function AchievementsPage() {
                           )}
 
                           {achievement.isUnlocked && (
-                            <Badge className={`bg-gradient-to-r ${achievement.color} text-white border-0 text-xs`}>
+                            <Badge className="bg-primary/20 text-primary border-0 text-xs">
                               Unlocked
                             </Badge>
                           )}

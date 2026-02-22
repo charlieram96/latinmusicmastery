@@ -110,7 +110,7 @@ export default async function ModulePage({ params }: PageProps) {
   return (
     <>
       {/* Top Navigation */}
-      <div className="border-b bg-background sticky top-0 z-10 -mx-6 -mt-6 mb-6">
+      <div className="border-b border-border bg-background sticky top-0 z-10 -mx-6 -mt-6 mb-6">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1 min-w-0">

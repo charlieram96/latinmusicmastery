@@ -62,11 +62,11 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
   return (
     <>
       <Card
-        className="overflow-hidden cursor-pointer group hover:shadow-lg transition-all duration-300 border-0 shadow-md p-0 gap-0"
+        className="overflow-hidden cursor-pointer group hover:brightness-110 transition-all duration-300 p-0 gap-0"
         onClick={() => setIsOpen(true)}
       >
         {/* Image Section */}
-        <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/5">
+        <div className="relative aspect-[4/3] bg-muted">
           {teacher.image_url ? (
             <Image
               src={teacher.image_url}

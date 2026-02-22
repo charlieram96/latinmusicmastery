@@ -36,7 +36,7 @@ export default async function DashboardLayout({
     <SidebarProvider
       style={
         {
-          "--sidebar-width": "240px",
+          "--sidebar-width": "64px",
           "--sidebar-width-mobile": "0px",
         } as React.CSSProperties
       }

@@ -7,59 +7,67 @@
 @layer base {
   /* Light theme (default) */
   :root {
-    --background: 0 0% 100%; /* white */
-    --foreground: 0 0% 9%; /* near black */
-    --card: 0 0% 100%; /* white */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
-    --primary: 28 90% 50%; /* Orange */
+    --primary: 30 85% 55%;
     --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
-    --accent: 28 90% 50%;
+    --accent: 30 85% 55%;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 28 90% 50%;
+    --ring: 30 85% 55%;
     --radius: 0.5rem;
-    --chart-1: 28 90% 50%;
+    --chart-1: 30 85% 55%;
     --chart-2: 35 90% 45%;
     --chart-3: 24 100% 45%;
     --chart-4: 280 75% 60%;
     --chart-5: 340 75% 50%;
+
+    --spacing-section: 2rem;
+    --spacing-card: 1.5rem;
+    --spacing-element: 1rem;
   }
 
-  /* Dark theme */
+  /* Dark theme — Spotify x MasterClass cinematic aesthetic */
   .dark {
-    --background: 0 0% 8%; /* #141414 */
+    --background: 0 0% 4%; /* #0A0A0A near-black */
     --foreground: 0 0% 93%; /* #ededed */
-    --card: 0 0% 11%; /* #1c1c1c */
+    --card: 0 0% 8%; /* #141414 */
     --card-foreground: 0 0% 93%;
-    --popover: 0 0% 11%;
+    --popover: 0 0% 8%;
     --popover-foreground: 0 0% 93%;
-    --primary: 28 90% 57%; /* Orange #F48C2E */
+    --primary: 30 85% 55%; /* warm amber */
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 15%;
+    --secondary: 0 0% 11%; /* #1C1C1C elevated */
     --secondary-foreground: 0 0% 93%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 28 90% 57%;
+    --muted: 0 0% 11%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 30 85% 55%;
     --accent-foreground: 0 0% 93%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 28 90% 57%;
-    --chart-1: 28 90% 57%;
+    --border: 0 0% 100% / 0.06; /* near-invisible */
+    --input: 0 0% 100% / 0.06;
+    --ring: 30 85% 55%;
+    --chart-1: 30 85% 55%;
     --chart-2: 35 90% 50%;
     --chart-3: 24 100% 50%;
     --chart-4: 280 75% 65%;
     --chart-5: 340 75% 55%;
+
+    --spacing-section: 2rem;
+    --spacing-card: 1.5rem;
+    --spacing-element: 1rem;
   }
 }
 
@@ -76,32 +84,8 @@
   }
 }
 
-/* Stripe-inspired gradient animations */
-@keyframes gradient-shift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-.animated-gradient {
-  background: linear-gradient(135deg,
-    hsl(var(--primary)),
-    hsl(35 90% 50%),
-    hsl(var(--primary))
-  );
-  background-size: 200% 200%;
-  animation: gradient-shift 15s ease infinite;
-}
-
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  .animated-gradient {
-    animation: none;
-  }
-
   * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -112,23 +96,23 @@
 :root {
   --sidebar: #f8f8f8;
   --sidebar-foreground: hsl(0 0% 9%);
-  --sidebar-primary: hsl(28 90% 50%);
+  --sidebar-primary: hsl(30 85% 55%);
   --sidebar-primary-foreground: hsl(0 0% 98%);
   --sidebar-accent: hsl(0 0% 96%);
   --sidebar-accent-foreground: hsl(0 0% 9%);
   --sidebar-border: hsl(0 0% 90%);
-  --sidebar-ring: hsl(28 90% 50%);
+  --sidebar-ring: hsl(30 85% 55%);
 }
 
 .dark {
-  --sidebar: #141414;
+  --sidebar: #0E0E0E;
   --sidebar-foreground: hsl(0 0% 93%);
-  --sidebar-primary: hsl(28 90% 57%);
+  --sidebar-primary: hsl(30 85% 55%);
   --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(0 0% 15%);
+  --sidebar-accent: hsl(0 0% 100% / 0.06);
   --sidebar-accent-foreground: hsl(0 0% 93%);
-  --sidebar-border: hsl(0 0% 20%);
-  --sidebar-ring: hsl(28 90% 57%);
+  --sidebar-border: hsl(0 0% 100% / 0.06);
+  --sidebar-ring: hsl(30 85% 55%);
 }
 
 @theme inline {

@@ -1,12 +1,8 @@
-import Link from 'next/link'
-import { HelpCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { UserNav } from '@/components/user-nav'
-import { Button } from '@/components/ui/button'
 import { MobileSidebarTrigger } from '@/components/dashboard/mobile-sidebar-trigger'
 import { HeaderSearch } from '@/components/dashboard/header-search'
 import { HeaderStreak } from '@/components/dashboard/header-streak-server'
-import { HeaderContinue } from '@/components/dashboard/header-continue-server'
 import { DashboardHeaderWrapper } from '@/components/dashboard/dashboard-header-wrapper'
 
 export async function DashboardHeader() {
@@ -23,7 +19,7 @@ export async function DashboardHeader() {
 
   return (
     <DashboardHeaderWrapper>
-      <div className="flex h-[50px] items-center px-6 gap-4">
+      <div className="flex h-14 items-center px-6 gap-4">
         {/* Mobile Menu Toggle */}
         <MobileSidebarTrigger />
 
@@ -32,18 +28,8 @@ export async function DashboardHeader() {
 
         {/* Right side items */}
         <div className="flex items-center gap-3">
-          {/* Continue Learning */}
-          <HeaderContinue userId={user.id} />
-
           {/* Learning Streak */}
           <HeaderStreak userId={user.id} />
-
-          {/* Help Button */}
-          <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/20 hover:text-primary" asChild>
-            <Link href="/dashboard/help">
-              <HelpCircle className="h-5 w-5" />
-            </Link>
-          </Button>
 
           {/* Search Bar */}
           <HeaderSearch />
