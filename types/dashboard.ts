@@ -64,7 +64,7 @@ export interface FeaturedTeacher {
   id: string
   name: string
   bio: string | null
-  photo_url: string | null
+  image_url: string | null
   instrument?: string | null
 }
 
