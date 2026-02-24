@@ -65,6 +65,11 @@
     --chart-4: 280 75% 65%;
     --chart-5: 340 75% 55%;
 
+    /* Warm Latin studio palette */
+    --warm-surface: 16 14% 8%; /* #161210 */
+    --terracotta: 14 52% 53%; /* #C4654A */
+    --gold-highlight: 38 58% 58%; /* #D4A854 */
+
     --spacing-section: 2rem;
     --spacing-card: 1.5rem;
     --spacing-element: 1rem;

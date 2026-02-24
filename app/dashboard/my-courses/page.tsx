@@ -2,17 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import Link from 'next/link'
-import {
-  Play,
-  BookOpen,
-  CheckCircle2,
-  ArrowRight,
-  GraduationCap
-} from 'lucide-react'
+import { BookOpen, ArrowRight } from 'lucide-react'
 import { MyCoursesFilters } from '@/components/dashboard/my-courses-filters'
+import { MyCourseCard } from '@/components/dashboard/my-course-card'
 
 interface PageProps {
   searchParams: Promise<{
@@ -38,9 +31,9 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
       course:courses(
         *,
         course_sections(
-          id,
+          id, title, order_index,
           classes(
-            id,
+            id, title, order_index,
             items:class_items(id)
           )
         ),
@@ -96,12 +89,67 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
     const totalItems = itemIds.length
     const completedCount = itemIds.filter(id => completedItemIds.has(id)).length
 
+    // Sort sections and classes by order_index to compute current position
+    const sortedSections = [...(course.course_sections || [])]
+      .sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0))
+      .map((section: any) => ({
+        ...section,
+        classes: [...(section.classes || [])]
+          .sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0)),
+      }))
+
+    const totalSections = sortedSections.length
+
+    // Find current (first incomplete) class
+    let currentSectionTitle: string | null = null
+    let currentSectionIndex: number | null = null
+    let currentClassTitle: string | null = null
+    let currentClassId: string | null = null
+
+    if (totalItems > 0 && completedCount < totalItems) {
+      // Walk sections → classes → items to find first incomplete class
+      let found = false
+      for (let si = 0; si < sortedSections.length && !found; si++) {
+        const section = sortedSections[si]
+        for (const cls of section.classes || []) {
+          const classItemIds = (cls.items || []).map((item: any) => item.id)
+          const allComplete = classItemIds.length > 0 && classItemIds.every((id: string) => completedItemIds.has(id))
+          if (!allComplete) {
+            currentSectionTitle = section.title || `Module ${si + 1}`
+            currentSectionIndex = si + 1
+            currentClassTitle = cls.title || 'Untitled Class'
+            currentClassId = cls.id
+            found = true
+            break
+          }
+        }
+      }
+
+      // Fallback to first section/class if nothing found (e.g. 0 progress)
+      if (!found && sortedSections.length > 0) {
+        const firstSection = sortedSections[0]
+        currentSectionTitle = firstSection.title || 'Module 1'
+        currentSectionIndex = 1
+        const firstClass = firstSection.classes?.[0]
+        if (firstClass) {
+          currentClassTitle = firstClass.title || 'Untitled Class'
+          currentClassId = firstClass.id
+        }
+      }
+    }
+    // If completedCount === totalItems && totalItems > 0 → complete, leave nulls
+
     return {
       ...course,
       totalLessons: totalItems,
       completedLessons: completedCount,
       lastAccessed: enrollment.last_accessed_at || enrollment.enrolled_at,
       enrolledAt: enrollment.enrolled_at,
+      currentSectionTitle,
+      currentSectionIndex,
+      totalSections,
+      currentClassTitle,
+      currentClassId,
     }
   }).filter(Boolean) as any[]
 
@@ -165,100 +213,10 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
 
       {/* Courses */}
       {enrolledCourses.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {enrolledCourses.map((course: any) => {
-            const progressPercent = course.totalLessons > 0
-              ? Math.round((course.completedLessons / course.totalLessons) * 100)
-              : 0
-            const isCompleted = progressPercent === 100
-
-            return (
-              <Link key={course.id} href={`/dashboard/course/${course.slug || course.id}`} className="group">
-                <Card className="overflow-hidden h-full transition-colors p-0 gap-0">
-                  {/* Thumbnail */}
-                  <div className="aspect-video bg-muted overflow-hidden">
-                    {course.thumbnail_url ? (
-                      <img
-                        src={course.thumbnail_url}
-                        alt={course.title}
-                        className="object-cover w-full h-full"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                        <BookOpen className="h-10 w-10 text-primary/50" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4 flex flex-col flex-1">
-                    {/* Style & Country */}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                      <Badge variant="outline" className="text-xs">
-                        {course.musical_style?.name}
-                      </Badge>
-                      <span>{course.musical_style?.country?.name}</span>
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="font-semibold text-base mb-3 line-clamp-2 group-hover:text-primary transition-colors">
-                      {course.title}
-                    </h3>
-
-                    {/* Teacher */}
-                    {course.teacher && (
-                      <div className="flex items-center gap-2 mb-4">
-                        {course.teacher.image_url ? (
-                          <img
-                            src={course.teacher.image_url}
-                            alt={course.teacher.name}
-                            className="h-6 w-6 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
-                            <GraduationCap className="h-3 w-3 text-primary" />
-                          </div>
-                        )}
-                        <span className="text-sm text-muted-foreground">{course.teacher.name}</span>
-                      </div>
-                    )}
-
-                    {/* Progress Bar */}
-                    <div className="mt-auto">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                        <span>{course.completedLessons} of {course.totalLessons} items</span>
-                        <span className="font-medium">{progressPercent}%</span>
-                      </div>
-                      <Progress value={progressPercent} className="h-2" />
-                    </div>
-
-                    {/* Action Button */}
-                    <Button
-                      className="w-full mt-4 gap-2"
-                      variant={isCompleted ? 'outline' : 'default'}
-                    >
-                      {isCompleted ? (
-                        <>
-                          <CheckCircle2 className="h-4 w-4" />
-                          Review Course
-                        </>
-                      ) : progressPercent > 0 ? (
-                        <>
-                          <Play className="h-4 w-4" />
-                          Continue Learning
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-4 w-4" />
-                          Begin Course
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </Card>
-              </Link>
-            )
-          })}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {enrolledCourses.map((course: any, index: number) => (
+            <MyCourseCard key={course.id} course={course} index={index} />
+          ))}
         </div>
       ) : (
         /* Empty State */
