@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
-import { BookOpen, Play, CheckCircle2, Circle } from 'lucide-react'
+import { BookOpen, Play } from 'lucide-react'
 import { GraduationCap } from 'lucide-react'
 
 interface MyCourseCardProps {
@@ -25,6 +25,54 @@ interface MyCourseCardProps {
   index: number
 }
 
+function ProgressRing({ percent, size = 28, strokeWidth = 2.5 }: { percent: number; size?: number; strokeWidth?: number }) {
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (percent / 100) * circumference
+  const isComplete = percent === 100
+
+  return (
+    <svg width={size} height={size} className="drop-shadow-sm">
+      {/* Background ring */}
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="rgba(0,0,0,0.5)"
+        stroke="rgba(255,255,255,0.2)"
+        strokeWidth={strokeWidth}
+      />
+      {/* Progress arc */}
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke={isComplete ? '#22c55e' : '#f59e0b'}
+        strokeWidth={strokeWidth}
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        className="transition-all duration-500"
+      />
+      {/* Percentage text */}
+      <text
+        x="50%"
+        y="50%"
+        dominantBaseline="central"
+        textAnchor="middle"
+        fill="white"
+        fontSize={size * 0.28}
+        fontWeight="600"
+        className="tabular-nums"
+      >
+        {percent}
+      </text>
+    </svg>
+  )
+}
+
 export function MyCourseCard({ course, index }: MyCourseCardProps) {
   const progressPercent = course.totalLessons > 0
     ? Math.round((course.completedLessons / course.totalLessons) * 100)
@@ -33,20 +81,26 @@ export function MyCourseCard({ course, index }: MyCourseCardProps) {
   const isStarted = progressPercent > 0
   const hasSections = course.totalSections > 0
 
+  const accentColor = isComplete
+    ? 'bg-green-500'
+    : isStarted
+      ? 'bg-amber-500'
+      : 'bg-muted-foreground/30'
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
-      whileHover={{ y: -4 }}
+      transition={{ duration: 0.4, delay: index * 0.06, ease: [0.25, 0.46, 0.45, 0.94] }}
+      whileHover={{ y: -3 }}
     >
       <Link href={`/dashboard/course/${course.slug || course.id}`} className="group block">
-        <Card className="overflow-hidden h-full p-0 gap-0 transition-shadow duration-300 group-hover:shadow-xl group-hover:shadow-black/20">
-          {/* Accent bar */}
-          <div className={`h-0.5 ${isComplete ? 'bg-green-500' : 'bg-primary'}`} />
+        <Card className="overflow-hidden h-full p-0 gap-0 relative transition-shadow duration-300 group-hover:shadow-xl group-hover:shadow-black/20">
+          {/* Left accent stripe */}
+          <div className={`absolute left-0 top-0 bottom-0 w-0.5 ${accentColor} z-10`} />
 
-          {/* Thumbnail */}
-          <div className="relative aspect-[16/10] bg-muted overflow-hidden">
+          {/* Square thumbnail */}
+          <div className="relative aspect-square bg-muted overflow-hidden">
             {course.thumbnail_url ? (
               <img
                 src={course.thumbnail_url}
@@ -55,120 +109,88 @@ export function MyCourseCard({ course, index }: MyCourseCardProps) {
               />
             ) : (
               <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                <BookOpen className="h-8 w-8 text-primary/50" />
+                <BookOpen className="h-6 w-6 text-primary/50" />
               </div>
             )}
 
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            {/* Bottom gradient */}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent" />
 
-            {/* Teacher avatar - bottom left */}
+            {/* Style badge — frosted pill, top-right */}
+            {course.musical_style?.name && (
+              <span className="absolute top-1.5 right-1.5 bg-black/50 backdrop-blur-sm text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full">
+                {course.musical_style.name}
+              </span>
+            )}
+
+            {/* Circular progress ring — bottom-right */}
+            {course.totalLessons > 0 && (
+              <div className="absolute bottom-1.5 right-1.5">
+                <ProgressRing percent={progressPercent} />
+              </div>
+            )}
+          </div>
+
+          {/* Content area */}
+          <div className="p-2.5 flex flex-col flex-1">
+            {/* Teacher row */}
             {course.teacher && (
-              <div className="absolute bottom-2 left-2">
+              <div className="flex items-center gap-1.5 mb-1">
                 {course.teacher.image_url ? (
                   <img
                     src={course.teacher.image_url}
                     alt={course.teacher.name}
-                    className="h-6 w-6 rounded-full object-cover ring-2 ring-card"
+                    className="h-4 w-4 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-card">
-                    <GraduationCap className="h-3 w-3 text-primary" />
+                  <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center">
+                    <GraduationCap className="h-2.5 w-2.5 text-primary" />
                   </div>
                 )}
+                <span className="text-[10px] text-muted-foreground truncate">
+                  {course.teacher.name}
+                </span>
               </div>
             )}
 
-            {/* Style badge - bottom right */}
-            {course.musical_style?.name && (
-              <span className="absolute bottom-2 right-2 bg-white/15 backdrop-blur-sm text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
-                {course.musical_style.name}
-              </span>
-            )}
-          </div>
-
-          {/* Content */}
-          <div className="p-3 flex flex-col flex-1">
             {/* Title */}
-            <h3 className="font-semibold text-sm font-heading line-clamp-1 mb-2 group-hover:text-primary transition-colors">
+            <h3 className="font-semibold text-xs font-heading line-clamp-2 mb-1.5 group-hover:text-primary transition-colors leading-tight">
               {course.title}
             </h3>
 
-            {/* Progress block */}
+            {/* Module info — compact */}
             {isComplete ? (
-              /* Complete state */
-              <div className="bg-green-500/10 rounded-lg p-2.5 mb-2">
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
-                  <span className="text-xs font-semibold text-green-500">Course Complete</span>
-                </div>
-                <p className="text-[10px] text-green-500/70 mt-1">
-                  All {course.totalLessons} items completed
-                </p>
+              <div className="flex items-center gap-1 mb-1.5">
+                <span className="text-[10px] font-medium text-green-500">Complete</span>
               </div>
             ) : hasSections && course.currentSectionTitle ? (
-              /* In-progress / not started state with module info */
-              <div className="bg-muted/50 rounded-lg p-2.5 mb-2">
-                {/* Module line */}
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                  Module {course.currentSectionIndex} of {course.totalSections}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Circle className="h-2 w-2 fill-amber-500 text-amber-500 flex-shrink-0" />
-                  <span className="text-xs text-foreground truncate">
-                    {course.currentSectionTitle}
-                  </span>
-                </div>
-
-                {/* Divider */}
-                <div className="border-t border-border/50 my-1.5" />
-
-                {/* Up next / Start here */}
-                <p className="text-[10px] uppercase tracking-wider text-primary font-medium">
-                  {isStarted ? 'Up Next' : 'Start Here'}
+              <div className="mb-1.5 space-y-0.5">
+                <p className="text-[10px] text-muted-foreground">
+                  Mod {course.currentSectionIndex}/{course.totalSections}
                 </p>
                 {course.currentClassTitle && (
-                  <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className="flex items-center gap-1">
                     <Play className="h-2 w-2 text-primary flex-shrink-0" />
-                    <span className="text-xs text-foreground truncate">
+                    <span className="text-[10px] text-foreground line-clamp-2 leading-tight">
                       {course.currentClassTitle}
                     </span>
                   </div>
                 )}
               </div>
-            ) : (
-              /* No sections fallback */
-              <div className="bg-muted/50 rounded-lg p-2.5 mb-2">
-                <p className="text-xs text-muted-foreground">Content coming soon</p>
-              </div>
-            )}
+            ) : null}
 
-            {/* Progress bar */}
+            {/* Thin progress bar + item count */}
             <div className="mt-auto">
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1 h-1 bg-primary/20 rounded-full overflow-hidden">
-                  <div
-                    className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
-                      isComplete
-                        ? 'bg-gradient-to-r from-green-500/80 to-green-500'
-                        : 'bg-gradient-to-r from-primary/80 to-primary'
-                    }`}
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                  {/* Glow dot at progress point */}
-                  {progressPercent > 0 && progressPercent < 100 && (
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-primary shadow-[0_0_6px_1px] shadow-primary/50"
-                      style={{ left: `${progressPercent}%`, transform: `translate(-50%, -50%)` }}
-                    />
-                  )}
-                </div>
-                <span className="text-[10px] font-medium text-muted-foreground tabular-nums w-7 text-right">
-                  {progressPercent}%
-                </span>
+              <div className="relative w-full h-0.5 bg-primary/15 rounded-full overflow-hidden">
+                <div
+                  className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
+                    isComplete ? 'bg-green-500' : 'bg-primary'
+                  }`}
+                  style={{ width: `${progressPercent}%` }}
+                />
               </div>
-              <p className="text-[10px] text-muted-foreground mt-1">
-                {course.completedLessons} of {course.totalLessons} items
+              <p className="text-[9px] text-muted-foreground mt-1 tabular-nums">
+                {course.completedLessons}/{course.totalLessons} items
               </p>
             </div>
           </div>

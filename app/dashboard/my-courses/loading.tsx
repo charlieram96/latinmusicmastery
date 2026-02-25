@@ -21,42 +21,42 @@ export default function MyCoursesLoading() {
       </div>
 
       {/* Courses Grid Skeleton */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Card key={i} className="overflow-hidden p-0 gap-0">
-            {/* Accent bar */}
-            <Skeleton className="h-0.5 w-full rounded-none" />
-
-            {/* Thumbnail */}
-            <div className="relative aspect-[16/10]">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {Array.from({ length: 10 }, (_, i) => i + 1).map((i) => (
+          <Card key={i} className="overflow-hidden p-0 gap-0 relative">
+            {/* Left accent stripe */}
+            <div className="absolute left-0 top-0 bottom-0 w-0.5">
               <Skeleton className="h-full w-full rounded-none" />
-              {/* Teacher avatar overlay */}
-              <div className="absolute bottom-2 left-2">
-                <Skeleton className="h-6 w-6 rounded-full" />
-              </div>
-              {/* Style badge */}
-              <div className="absolute bottom-2 right-2">
-                <Skeleton className="h-4 w-14 rounded" />
+            </div>
+
+            {/* Square thumbnail */}
+            <div className="relative aspect-square">
+              <Skeleton className="h-full w-full rounded-none" />
+              {/* Progress ring placeholder */}
+              <div className="absolute bottom-1.5 right-1.5">
+                <Skeleton className="h-7 w-7 rounded-full" />
               </div>
             </div>
 
             {/* Content */}
-            <div className="p-3">
-              {/* Title */}
-              <Skeleton className="h-4 w-3/4 mb-2" />
-
-              {/* Progress block */}
-              <div className="bg-muted/50 rounded-lg p-2.5 mb-2 space-y-1.5">
-                <Skeleton className="h-2.5 w-20" />
-                <Skeleton className="h-3 w-full" />
-                <div className="border-t border-border/50 my-1.5" />
-                <Skeleton className="h-2.5 w-14" />
-                <Skeleton className="h-3 w-4/5" />
+            <div className="p-2.5">
+              {/* Teacher row */}
+              <div className="flex items-center gap-1.5 mb-1">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-2.5 w-16" />
               </div>
 
-              {/* Progress bar */}
-              <Skeleton className="h-1 w-full rounded-full" />
-              <Skeleton className="h-2.5 w-24 mt-1" />
+              {/* Title */}
+              <Skeleton className="h-3 w-full mb-1" />
+              <Skeleton className="h-3 w-3/4 mb-1.5" />
+
+              {/* Module line */}
+              <Skeleton className="h-2.5 w-12 mb-1" />
+              <Skeleton className="h-2.5 w-4/5 mb-1.5" />
+
+              {/* Thin progress bar */}
+              <Skeleton className="h-0.5 w-full rounded-full" />
+              <Skeleton className="h-2 w-14 mt-1" />
             </div>
           </Card>
         ))}
