@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, BookOpen, Music, GraduationCap, Loader2 } from 'lucide-react'
+import { Search, BookOpen, Music, GraduationCap, Loader2, Disc3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   CommandDialog,
@@ -13,11 +13,12 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { createClient } from '@/lib/supabase/client'
+import { SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
 
 interface SearchResult {
   id: string
   title: string
-  type: 'course' | 'lesson' | 'teacher' | 'style'
+  type: 'course' | 'lesson' | 'teacher' | 'style' | 'instrument'
   href: string
   subtitle?: string
 }
@@ -51,56 +52,66 @@ export function HeaderSearch() {
     setIsLoading(true)
     const supabase = createClient()
     const searchResults: SearchResult[] = []
+    const q = searchQuery.trim().toLowerCase()
 
     try {
-      // Search courses
-      const { data: courses } = await supabase
-        .from('courses')
-        .select('id, title, slug, teacher_name')
-        .ilike('title', `%${searchQuery}%`)
-        .eq('is_published', true)
-        .limit(3)
+      // Run all queries in parallel
+      const [coursesRes, classesRes, teachersRes, stylesRes] = await Promise.allSettled([
+        supabase
+          .from('courses')
+          .select('id, title, slug, teacher_name, instrument')
+          .ilike('title', `%${searchQuery}%`)
+          .eq('is_published', true)
+          .limit(3),
+        supabase
+          .from('classes')
+          .select('id, title, section:course_sections(id, course:courses(id, slug, title))')
+          .ilike('title', `%${searchQuery}%`)
+          .limit(3),
+        supabase
+          .from('teachers')
+          .select('id, name, instrument')
+          .ilike('name', `%${searchQuery}%`)
+          .limit(3),
+        supabase
+          .from('musical_styles')
+          .select('id, name, slug, countries(name)')
+          .ilike('name', `%${searchQuery}%`)
+          .limit(3),
+      ])
 
-      if (courses) {
-        courses.forEach((course) => {
+      // Process courses
+      if (coursesRes.status === 'fulfilled' && coursesRes.value.data) {
+        coursesRes.value.data.forEach((course) => {
           searchResults.push({
             id: course.id,
             title: course.title,
             type: 'course',
             href: `/dashboard/course/${course.slug}`,
-            subtitle: course.teacher_name || undefined,
+            subtitle: [course.teacher_name, course.instrument].filter(Boolean).join(' · ') || undefined,
           })
         })
       }
 
-      // Search lessons
-      const { data: lessons } = await supabase
-        .from('lessons')
-        .select('id, title, slug, course_id, courses(title, slug)')
-        .ilike('title', `%${searchQuery}%`)
-        .limit(3)
-
-      if (lessons) {
-        lessons.forEach((lesson: any) => {
-          searchResults.push({
-            id: lesson.id,
-            title: lesson.title,
-            type: 'lesson',
-            href: `/lessons/${lesson.id}`,
-            subtitle: lesson.courses?.title || undefined,
-          })
+      // Process classes (lessons)
+      if (classesRes.status === 'fulfilled' && classesRes.value.data) {
+        classesRes.value.data.forEach((cls: any) => {
+          const course = cls.section?.course
+          if (course) {
+            searchResults.push({
+              id: cls.id,
+              title: cls.title,
+              type: 'lesson',
+              href: `/dashboard/course/${course.slug || course.id}`,
+              subtitle: course.title || undefined,
+            })
+          }
         })
       }
 
-      // Search teachers
-      const { data: teachers } = await supabase
-        .from('teachers')
-        .select('id, name, instrument')
-        .ilike('name', `%${searchQuery}%`)
-        .limit(3)
-
-      if (teachers) {
-        teachers.forEach((teacher) => {
+      // Process teachers
+      if (teachersRes.status === 'fulfilled' && teachersRes.value.data) {
+        teachersRes.value.data.forEach((teacher) => {
           searchResults.push({
             id: teacher.id,
             title: teacher.name,
@@ -111,15 +122,9 @@ export function HeaderSearch() {
         })
       }
 
-      // Search musical styles
-      const { data: styles } = await supabase
-        .from('musical_styles')
-        .select('id, name, slug, countries(name)')
-        .ilike('name', `%${searchQuery}%`)
-        .limit(3)
-
-      if (styles) {
-        styles.forEach((style: any) => {
+      // Process musical styles
+      if (stylesRes.status === 'fulfilled' && stylesRes.value.data) {
+        stylesRes.value.data.forEach((style: any) => {
           searchResults.push({
             id: style.id,
             title: style.name,
@@ -129,6 +134,20 @@ export function HeaderSearch() {
           })
         })
       }
+
+      // Match instruments locally
+      const matchingInstruments = SUBSCRIBABLE_INSTRUMENTS.filter(
+        (inst) => inst.toLowerCase().includes(q)
+      )
+      matchingInstruments.forEach((inst) => {
+        searchResults.push({
+          id: `instrument-${inst}`,
+          title: inst,
+          type: 'instrument',
+          href: `/dashboard/courses?instrument=${inst}`,
+          subtitle: 'Browse courses',
+        })
+      })
 
       setResults(searchResults)
     } catch (error) {
@@ -162,6 +181,8 @@ export function HeaderSearch() {
         return <GraduationCap className="h-4 w-4" />
       case 'style':
         return <Music className="h-4 w-4" />
+      case 'instrument':
+        return <Disc3 className="h-4 w-4" />
     }
   }
 
@@ -175,6 +196,8 @@ export function HeaderSearch() {
         return 'Teacher'
       case 'style':
         return 'Style'
+      case 'instrument':
+        return 'Instrument'
     }
   }
 
@@ -219,16 +242,16 @@ export function HeaderSearch() {
           )}
           {!isLoading && query && results.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-sm text-muted-foreground">No results found for "{query}"</p>
+              <p className="text-sm text-muted-foreground">No results found for &ldquo;{query}&rdquo;</p>
             </div>
           )}
           {!isLoading && results.length > 0 && (
             <>
-              {['course', 'lesson', 'teacher', 'style'].map((type) => {
+              {(['course', 'lesson', 'teacher', 'style', 'instrument'] as const).map((type) => {
                 const typeResults = results.filter((r) => r.type === type)
                 if (typeResults.length === 0) return null
                 return (
-                  <CommandGroup key={type} heading={`${getTypeLabel(type as SearchResult['type'])}s`} className="mb-2">
+                  <CommandGroup key={type} heading={`${getTypeLabel(type)}s`} className="mb-2">
                     {typeResults.map((result) => (
                       <CommandItem
                         key={result.id}

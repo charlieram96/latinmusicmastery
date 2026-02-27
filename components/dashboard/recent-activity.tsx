@@ -89,8 +89,14 @@ function ActivityIcon({ item }: { item: RecentActivityItem }) {
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
-export function RecentActivity({ activities }: RecentActivityProps) {
+interface ExtendedRecentActivityProps extends RecentActivityProps {
+  maxItems?: number
+}
+
+export function RecentActivity({ activities, maxItems = 8 }: ExtendedRecentActivityProps) {
   if (activities.length === 0) return null
+
+  const displayed = activities.slice(0, maxItems)
 
   return (
     <AnimatedSection delay={0.3}>
@@ -104,16 +110,16 @@ export function RecentActivity({ activities }: RecentActivityProps) {
         </div>
 
         {/* Timeline card */}
-        <div className="warm-surface rounded-2xl p-4 sm:p-5">
+        <div className="warm-surface rounded-2xl p-3 sm:p-4">
           <StaggerContainer className="relative">
             {/* Vertical timeline line */}
             <div className="absolute left-[15px] top-4 bottom-4 w-0.5 bg-warm-surface brightness-150 rounded-full" />
 
-            {activities.map((activity, index) => (
+            {displayed.map((activity, index) => (
               <StaggerItem key={activity.id}>
                 <div
                   className={`relative flex gap-3 ${
-                    index < activities.length - 1 ? 'pb-5' : ''
+                    index < displayed.length - 1 ? 'pb-5' : ''
                   }`}
                 >
                   {/* Icon circle on the timeline */}

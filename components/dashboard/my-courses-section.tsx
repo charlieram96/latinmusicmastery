@@ -37,7 +37,7 @@ export function MyCoursesSection({ courses }: MyCoursesProps) {
         </div>
 
         {/* Course cards grid */}
-        <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerContainer className="grid gap-4 sm:grid-cols-2">
           {displayed.map((item) => {
             const percent =
               item.total > 0

@@ -18,6 +18,7 @@ import {
   Heart,
   type LucideIcon,
 } from 'lucide-react'
+import { Progress } from '@/components/ui/progress'
 import {
   AnimatedSection,
   StaggerContainer,
@@ -110,8 +111,50 @@ function CircularProgress({
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
-export function LearningMilestones({ milestones }: LearningMilestonesProps) {
+interface ExtendedLearningMilestonesProps extends LearningMilestonesProps {
+  variant?: 'cards' | 'compact'
+}
+
+export function LearningMilestones({ milestones, variant = 'cards' }: ExtendedLearningMilestonesProps) {
   if (milestones.length === 0) return null
+
+  if (variant === 'compact') {
+    const displayed = milestones.slice(0, 3)
+    return (
+      <AnimatedSection delay={0.2}>
+        <div className="warm-surface rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Trophy className="h-4 w-4 text-gold" />
+            <h3 className="text-sm font-heading font-semibold text-foreground">
+              Next Milestones
+            </h3>
+          </div>
+          <div className="space-y-3">
+            {displayed.map((milestone) => {
+              const Icon = ICON_MAP[milestone.iconName] ?? Star
+              return (
+                <div key={milestone.key} className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-3.5 w-3.5 text-gold/70 flex-shrink-0" />
+                    <p className="text-sm font-medium text-foreground leading-tight truncate flex-1">
+                      {milestone.title}
+                    </p>
+                    <span className="text-[11px] font-medium tabular-nums text-amber-400/80 flex-shrink-0">
+                      {milestone.current}/{milestone.requirement}
+                    </span>
+                  </div>
+                  <Progress
+                    value={milestone.progress}
+                    className="h-1.5 bg-amber-500/15 [&>[data-slot=progress-indicator]]:bg-gradient-to-r [&>[data-slot=progress-indicator]]:from-amber-500 [&>[data-slot=progress-indicator]]:to-gold"
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </AnimatedSection>
+    )
+  }
 
   return (
     <AnimatedSection delay={0.2}>
@@ -135,7 +178,6 @@ export function LearningMilestones({ milestones }: LearningMilestonesProps) {
                   {/* Circular progress ring */}
                   <div className="relative">
                     <CircularProgress progress={milestone.progress} />
-                    {/* Icon overlaid in the center (visible beside percentage) */}
                   </div>
 
                   {/* Achievement icon */}

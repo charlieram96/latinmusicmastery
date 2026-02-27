@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useTransition } from 'react'
+import { useCallback, useState, useEffect, useRef, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -12,18 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { 
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Search, Filter, X, Grid3X3, List, ChevronDown } from 'lucide-react' 
+import { Search, Filter, X, Grid3X3, List, ChevronDown } from 'lucide-react'
 
 interface FilterOptions {
   teachers: { id: string; name: string }[]
   styles: { name: string }[]
-  instruments: string[]
 }
 
 interface CourseFiltersProps {
@@ -42,8 +41,16 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
   const selectedTeachers = searchParams.get('teachers')?.split(',').filter(Boolean) || []
   const difficulty = searchParams.get('difficulty') || ''
   const style = searchParams.get('style') || ''
-  const instrument = searchParams.get('instrument') || ''
   const view = searchParams.get('view') || 'grid'
+
+  // Local search state for debouncing
+  const [localSearch, setLocalSearch] = useState(search)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
+
+  // Sync local search when URL changes externally (e.g. clear filters)
+  useEffect(() => {
+    setLocalSearch(search)
+  }, [search])
 
   const createQueryString = useCallback(
     (params: Record<string, string | string[] | null>) => {
@@ -64,16 +71,39 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
     [searchParams]
   )
 
-  const updateFilters = (params: Record<string, string | string[] | null>) => {
+  const updateFilters = useCallback((params: Record<string, string | string[] | null>) => {
     startTransition(() => {
       const queryString = createQueryString(params)
       router.push(`/dashboard/courses${queryString ? `?${queryString}` : ''}`, { scroll: false })
     })
+  }, [createQueryString, router])
+
+  // Debounced search handler
+  const handleSearchChange = (value: string) => {
+    setLocalSearch(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      updateFilters({ search: value || null })
+    }, 400)
   }
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
+
   const clearAllFilters = () => {
+    setLocalSearch('')
     startTransition(() => {
-      router.push('/dashboard/courses', { scroll: false })
+      // Preserve the instrument param when clearing other filters
+      const instrument = searchParams.get('instrument')
+      if (instrument) {
+        router.push(`/dashboard/courses?instrument=${instrument}`, { scroll: false })
+      } else {
+        router.push('/dashboard/courses', { scroll: false })
+      }
     })
   }
 
@@ -84,7 +114,7 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
     updateFilters({ teachers: newTeachers })
   }
 
-  const hasActiveFilters = search || selectedTeachers.length > 0 || difficulty || style || instrument
+  const hasActiveFilters = search || selectedTeachers.length > 0 || difficulty || style
 
   return (
     <div className="space-y-4 mb-8">
@@ -95,8 +125,8 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search courses..."
-            value={search}
-            onChange={(e) => updateFilters({ search: e.target.value || null })}
+            value={localSearch}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-9 bg-secondary border-0"
           />
         </div>
@@ -188,23 +218,6 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
           </SelectContent>
         </Select>
 
-        {/* Instrument Select */}
-        <Select
-          value={instrument}
-          onValueChange={(value) => updateFilters({ instrument: value || null })}
-        >
-          <SelectTrigger className="w-[150px] h-9 bg-secondary border-0">
-            <SelectValue placeholder="Instrument" />
-          </SelectTrigger>
-          <SelectContent>
-            {options.instruments.map((inst) => (
-              <SelectItem key={inst} value={inst}>
-                {inst}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         {/* Clear Filters */}
         {hasActiveFilters && (
           <Button
@@ -251,17 +264,6 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
             {style}
             <button
               onClick={() => updateFilters({ style: null })}
-              className="ml-1 hover:bg-background/50 rounded-full p-0.5"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </Badge>
-        )}
-        {instrument && (
-          <Badge variant="secondary" className="gap-1 pr-1">
-            {instrument}
-            <button
-              onClick={() => updateFilters({ instrument: null })}
               className="ml-1 hover:bg-background/50 rounded-full p-0.5"
             >
               <X className="h-3 w-3" />

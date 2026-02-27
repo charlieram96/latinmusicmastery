@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { BookOpen, User, PlayCircle, Globe, Music, Disc3 } from 'lucide-react'
+import { getInstrumentColor, SUBSCRIBABLE_INSTRUMENTS, INSTRUMENT_CONFIG } from '@/lib/instruments'
 import { CourseFilters } from '@/components/dashboard/course-filters'
 import { redirect } from 'next/navigation'
 
@@ -32,12 +33,10 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
   const [
     { data: teachers },
     { data: styles },
-    { data: teacherInstruments },
     { data: userProgress }
   ] = await Promise.all([
     supabase.from('teachers').select('id, name').order('name'),
     supabase.from('musical_styles').select('name').order('name'),
-    supabase.from('teachers').select('instrument').not('instrument', 'is', null),
     supabase.from('user_progress_legacy').select('module_id, completed, module:course_modules_legacy(course_id)').eq('user_id', user.id)
   ])
 
@@ -52,9 +51,6 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
       courseProgressMap.set(courseId, existing)
     }
   })
-
-  // Get unique instruments
-  const instruments = [...new Set(teacherInstruments?.map(t => t.instrument).filter(Boolean))] as string[]
 
   // Build course query with filters
   let query = supabase
@@ -85,9 +81,9 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
     query = query.eq('musical_style.name', params.style)
   }
 
-  // Apply instrument filter (through teacher)
+  // Apply instrument filter directly on courses table
   if (params.instrument) {
-    query = query.eq('teacher.instrument', params.instrument)
+    query = query.eq('instrument', params.instrument)
   }
 
   const { data: courses } = await query.order('created_at', { ascending: false })
@@ -105,13 +101,6 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
   if (params.style) {
     filteredCourses = filteredCourses.filter((course: any) =>
       course.musical_style?.name === params.style
-    )
-  }
-
-  // Filter by instrument client-side
-  if (params.instrument) {
-    filteredCourses = filteredCourses.filter((course: any) =>
-      course.teacher?.instrument === params.instrument
     )
   }
 
@@ -138,7 +127,6 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
 
   // Color schemes for different tag types
   const getStyleColor = () => 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
-  const getInstrumentColor = () => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
   const getCountryColor = () => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
 
   return (
@@ -151,12 +139,42 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
         </p>
       </div>
 
+      {/* Instrument Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-4 scrollbar-hide">
+        <Link
+          href="/dashboard/courses"
+          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+            !params.instrument
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+          }`}
+        >
+          All
+        </Link>
+        {SUBSCRIBABLE_INSTRUMENTS.map((inst) => {
+          const isActive = params.instrument === inst
+          const config = INSTRUMENT_CONFIG[inst]
+          return (
+            <Link
+              key={inst}
+              href={`/dashboard/courses?instrument=${inst}`}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                isActive
+                  ? config?.color || 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+              }`}
+            >
+              {inst}
+            </Link>
+          )
+        })}
+      </div>
+
       {/* Filters */}
       <CourseFilters
         options={{
           teachers: teachers || [],
           styles: styles || [],
-          instruments
         }}
         totalCount={totalCount || 0}
         filteredCount={filteredCourses.length}
@@ -200,10 +218,10 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
                           <Music className="h-3 w-3 mr-1" />
                           {course.musical_style?.name || 'Course'}
                         </Badge>
-                        {course.teacher?.instrument && (
-                          <Badge variant="outline" className={`text-xs ${getInstrumentColor()}`}>
+                        {course.instrument && !params.instrument && (
+                          <Badge variant="outline" className={`text-xs ${getInstrumentColor(course.instrument)}`}>
                             <Disc3 className="h-3 w-3 mr-1" />
-                            {course.teacher.instrument}
+                            {course.instrument}
                           </Badge>
                         )}
                         {course.musical_style?.country?.name && (
@@ -289,10 +307,10 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
                             {course.difficulty}
                           </Badge>
                         )}
-                        {course.teacher?.instrument && (
-                          <Badge variant="outline" className={`text-xs ${getInstrumentColor()}`}>
+                        {course.instrument && !params.instrument && (
+                          <Badge variant="outline" className={`text-xs ${getInstrumentColor(course.instrument)}`}>
                             <Disc3 className="h-3 w-3 mr-1" />
-                            {course.teacher.instrument}
+                            {course.instrument}
                           </Badge>
                         )}
                         {course.musical_style?.country?.name && (

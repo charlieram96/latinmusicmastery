@@ -395,40 +395,63 @@ export default async function DashboardPage() {
 
   // ── Render ──────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
-      {/* 1. Welcome + Weekly Summary */}
-      <WelcomeSummary
-        name={profile?.full_name || null}
-        streak={streak}
-        itemsCompletedThisWeek={itemsCompletedThisWeek}
-        closestCourse={closestCourse}
-      />
+    <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6">
+      {/* ── Main column ────────────────────────────────────────── */}
+      <div className="space-y-6">
+        {/* 1. Welcome + Weekly Summary */}
+        <WelcomeSummary
+          name={profile?.full_name || null}
+          streak={streak}
+          itemsCompletedThisWeek={itemsCompletedThisWeek}
+          closestCourse={closestCourse}
+        />
 
-      {/* 2. Continue Learning Hero */}
-      <ContinueLearningHero continueData={continueData} />
+        {/* 2. Continue Learning Hero */}
+        <ContinueLearningHero continueData={continueData} />
 
-      {/* 3. Quick Actions */}
-      <QuickActions />
+        {/* 3. Quick Actions — mobile only (grid variant) */}
+        <div className="lg:hidden">
+          <QuickActions variant="grid" />
+        </div>
 
-      {/* 4. My Courses */}
-      <MyCoursesSection courses={myCoursesArray} />
+        {/* 4. My Courses */}
+        <MyCoursesSection courses={myCoursesArray} />
 
-      {/* 5. Learning Milestones */}
-      <LearningMilestones milestones={milestones} />
+        {/* 5. Learning Milestones — mobile only (cards variant) */}
+        <div className="lg:hidden">
+          <LearningMilestones milestones={milestones} variant="cards" />
+        </div>
 
-      {/* 6. Recommended + Featured */}
-      <RecommendedFeatured
-        recommendedCourses={(recommendedCourses || []) as any}
-        newCourseIds={newCourseIds}
-        featuredTeacher={featuredTeacher || null}
-        allCourses={(allCourses || []) as any}
-      />
+        {/* 6. Recommended + Featured */}
+        <RecommendedFeatured
+          recommendedCourses={(recommendedCourses || []) as any}
+          newCourseIds={newCourseIds}
+          featuredTeacher={featuredTeacher || null}
+          allCourses={(allCourses || []) as any}
+        />
 
-      {/* 7. Recent Activity */}
-      <RecentActivity activities={activities} />
+        {/* 7. Recent Activity — mobile only */}
+        <div className="lg:hidden">
+          <RecentActivity activities={activities} />
+        </div>
 
-      {/* 8. Subscription CTA */}
-      <SubscriptionCta hasSubscription={!!subscription?.status} />
+        {/* 8. Subscription CTA */}
+        <SubscriptionCta hasSubscription={!!subscription?.status} />
+      </div>
+
+      {/* ── Sidebar (desktop only) ─────────────────────────────── */}
+      <aside className="hidden lg:block">
+        <div className="lg:sticky lg:top-20 max-h-[calc(100vh-5rem)] overflow-y-auto space-y-6">
+          {/* Quick Actions — list variant */}
+          <QuickActions variant="list" />
+
+          {/* Learning Milestones — compact variant */}
+          <LearningMilestones milestones={milestones} variant="compact" />
+
+          {/* Recent Activity — 5 items */}
+          <RecentActivity activities={activities} maxItems={5} />
+        </div>
+      </aside>
     </div>
   )
 }

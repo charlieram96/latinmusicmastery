@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { BookOpen, Users, ArrowRight, Sparkles } from 'lucide-react'
 import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/dashboard/animated-section'
-import { StartLearningCard } from '@/components/dashboard/start-learning-card'
 import type { DashboardCourse, FeaturedTeacher } from '@/types/dashboard'
 
 /* ------------------------------------------------------------------ */
@@ -33,16 +32,35 @@ export function RecommendedFeatured({
 }: RecommendedFeaturedProps) {
   const newIds = useMemo(() => new Set(newCourseIds), [newCourseIds])
 
+  const displayed = recommendedCourses.slice(0, 3)
+
   return (
     <AnimatedSection delay={0.25}>
       <div className="space-y-6">
-        {/* ── Browse Courses Hero (always visible) ───────────────── */}
-        <StartLearningCard
-          courses={allCourses.map((c) => ({
-            ...c,
-            difficulty: c.difficulty ?? null,
-          }))}
-        />
+        {/* ── Compact Browse Banner ─────────────────────────────── */}
+        <Link
+          href="/dashboard/courses"
+          className="group block rounded-2xl overflow-hidden"
+        >
+          <div className="relative bg-gradient-to-r from-terracotta/30 via-amber-900/20 to-gold/20 px-5 py-6 flex items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-heading font-semibold text-foreground">
+                Start Your Journey
+              </h3>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Explore our full library of Latin music courses
+              </p>
+            </div>
+            <Button
+              size="sm"
+              className="bg-terracotta hover:bg-terracotta/90 text-white flex-shrink-0"
+              tabIndex={-1}
+            >
+              Browse Courses
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </Link>
 
         {/* ── Featured Teacher Spotlight ──────────────────────────── */}
         {featuredTeacher && (
@@ -92,7 +110,7 @@ export function RecommendedFeatured({
         )}
 
         {/* ── Recommended Courses ────────────────────────────────── */}
-        {recommendedCourses.length > 0 && (
+        {displayed.length > 0 && (
           <div className="space-y-4">
             {/* Section header */}
             <div className="flex items-center justify-between">
@@ -111,8 +129,8 @@ export function RecommendedFeatured({
             </div>
 
             {/* Course grid */}
-            <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {recommendedCourses.map((course) => (
+            <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {displayed.map((course) => (
                 <StaggerItem key={course.id}>
                   <Link href={`/dashboard/course/${course.slug}`} className="group block">
                     <div className="warm-surface rounded-2xl overflow-hidden transition-all duration-200 hover:brightness-110 hover:warm-glow">

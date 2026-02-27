@@ -33,6 +33,7 @@ import {
 } from 'lucide-react'
 import { EnterCourseModeButton } from '@/components/dashboard/enter-course-mode-button'
 import { canAccessCourse } from '@/lib/subscriptions'
+import { getInstrumentColor } from '@/lib/instruments'
 
 interface PageProps {
   params: Promise<{
@@ -117,7 +118,6 @@ export default async function CoursePage({ params }: PageProps) {
   const difficulty = difficultyConfig[course.difficulty as keyof typeof difficultyConfig] || difficultyConfig.beginner
 
   const getStyleColor = () => 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
-  const getInstrumentColor = () => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
   const getCountryColor = () => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
 
   const nextClassHref = nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : undefined
@@ -149,7 +149,7 @@ export default async function CoursePage({ params }: PageProps) {
               </Badge>
             )}
             {teacher?.instrument && (
-              <Badge variant="outline" className={`${getInstrumentColor()} bg-background/80 backdrop-blur-sm`}>
+              <Badge variant="outline" className={`${getInstrumentColor(teacher?.instrument)} bg-background/80 backdrop-blur-sm`}>
                 <Disc3 className="h-3 w-3 mr-1" />
                 {teacher.instrument}
               </Badge>
@@ -606,7 +606,7 @@ export default async function CoursePage({ params }: PageProps) {
                   </Badge>
                 )}
                 {teacher?.instrument && (
-                  <Badge variant="outline" className={getInstrumentColor()}>
+                  <Badge variant="outline" className={getInstrumentColor(teacher?.instrument)}>
                     <Disc3 className="h-3 w-3 mr-1" />{teacher.instrument}
                   </Badge>
                 )}

@@ -11,7 +11,7 @@ export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps
   if (!continueData) {
     return (
       <AnimatedSection delay={0.05}>
-        <div className="relative overflow-hidden rounded-2xl min-h-[260px] flex flex-col justify-center items-center text-center px-6 py-10 bg-gradient-to-br from-terracotta/20 via-warm-surface to-gold/10 warm-glow">
+        <div className="relative overflow-hidden rounded-2xl min-h-[160px] flex flex-col justify-center items-center text-center px-6 py-8 bg-gradient-to-br from-terracotta/20 via-warm-surface to-gold/10 warm-glow">
           {/* Decorative background glow */}
           <div className="absolute inset-0 bg-gradient-to-tr from-terracotta/5 via-transparent to-gold/5 pointer-events-none" />
 
@@ -44,7 +44,7 @@ export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps
   return (
     <AnimatedSection delay={0.05}>
       <Link href={resumeHref} className="group block">
-        <div className="relative overflow-hidden rounded-2xl min-h-[260px] flex flex-col justify-end warm-glow">
+        <div className="relative overflow-hidden rounded-2xl min-h-[180px] flex flex-col justify-end warm-glow">
           {/* Thumbnail background */}
           {continueData.courseThumbnail ? (
             <img
@@ -61,7 +61,7 @@ export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps
           <div className="absolute inset-0 bg-gradient-to-br from-terracotta/15 via-transparent to-amber-900/20 mix-blend-normal" />
 
           {/* Content */}
-          <div className="relative z-10 p-5 sm:p-6 flex flex-col gap-3">
+          <div className="relative z-10 p-4 sm:p-5 flex flex-col gap-3">
             {/* Badge */}
             <Badge className="w-fit border-amber-500/30 bg-amber-500/15 text-amber-300 backdrop-blur-sm">
               Continue Learning
@@ -79,8 +79,7 @@ export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps
               tabIndex={-1}
             >
               <span className="relative flex items-center justify-center h-6 w-6">
-                {/* Pulse glow ring */}
-                <span className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
+                <span className="absolute inset-0 rounded-full ring-2 ring-white/20" />
                 <Play className="relative h-4 w-4 fill-white text-white" />
               </span>
               Resume Lesson

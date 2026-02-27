@@ -39,7 +39,44 @@ const ACTIONS = [
   },
 ] as const
 
-export function QuickActions() {
+interface QuickActionsProps {
+  variant?: 'grid' | 'list'
+}
+
+export function QuickActions({ variant = 'grid' }: QuickActionsProps) {
+  if (variant === 'list') {
+    return (
+      <AnimatedSection delay={0.1}>
+        <div className="warm-surface rounded-2xl p-4">
+          <h3 className="text-sm font-heading font-semibold text-foreground mb-3">
+            Quick Actions
+          </h3>
+          <div className="space-y-1">
+            {ACTIONS.map((action) => {
+              const Icon = action.icon
+              return (
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors duration-200 hover:bg-white/[0.04] group"
+                >
+                  <div
+                    className={`rounded-lg p-1.5 ${action.iconBg} transition-colors duration-200`}
+                  >
+                    <Icon className={`h-4 w-4 ${action.iconColor}`} />
+                  </div>
+                  <span className="text-sm font-medium text-foreground/90 group-hover:text-foreground transition-colors">
+                    {action.label}
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      </AnimatedSection>
+    )
+  }
+
   return (
     <AnimatedSection delay={0.1}>
       <StaggerContainer className="grid grid-cols-2 sm:grid-cols-4 gap-3">

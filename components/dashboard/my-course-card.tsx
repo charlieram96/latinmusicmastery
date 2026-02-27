@@ -3,8 +3,8 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
-import { BookOpen, Play } from 'lucide-react'
-import { GraduationCap } from 'lucide-react'
+import { BookOpen, Play, GraduationCap } from 'lucide-react'
+import { getInstrumentColor } from '@/lib/instruments'
 
 interface MyCourseCardProps {
   course: {
@@ -12,6 +12,7 @@ interface MyCourseCardProps {
     title: string
     slug?: string
     thumbnail_url?: string | null
+    instrument?: string | null
     totalLessons: number
     completedLessons: number
     currentSectionTitle: string | null
@@ -115,6 +116,13 @@ export function MyCourseCard({ course, index }: MyCourseCardProps) {
 
             {/* Bottom gradient */}
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent" />
+
+            {/* Instrument badge — top-left */}
+            {course.instrument && (
+              <span className={`absolute top-1.5 left-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${getInstrumentColor(course.instrument)}`}>
+                {course.instrument}
+              </span>
+            )}
 
             {/* Style badge — frosted pill, top-right */}
             {course.musical_style?.name && (
