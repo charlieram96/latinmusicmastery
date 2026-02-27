@@ -37,15 +37,19 @@ export function WelcomeSummary({
 
   return (
     <AnimatedSection delay={0}>
-      <div className="warm-surface warm-glow rounded-2xl p-5 sm:p-6">
+      <div className="relative overflow-hidden warm-surface warm-glow rounded-2xl p-5 sm:p-6">
+        {/* Decorative gradient wash */}
+        <div className="absolute inset-0 bg-gradient-to-br from-terracotta/8 to-gold/6 pointer-events-none" />
+        {/* Soft gold glow — top right */}
+        <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-gold/8 blur-3xl pointer-events-none" />
         {/* Greeting */}
-        <h2 className="text-xl sm:text-2xl font-heading font-semibold text-foreground">
+        <h2 className="relative text-xl sm:text-2xl font-heading font-semibold text-foreground">
           {greeting},{' '}
           <span className="text-terracotta">{firstName}</span>
         </h2>
 
         {/* Stat pills */}
-        <div className="flex flex-wrap items-center gap-2 mt-4">
+        <div className="relative flex flex-wrap items-center gap-2 mt-4">
           {/* Streak */}
           <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1.5">
             <Flame className="h-3.5 w-3.5 text-orange-400" />
@@ -74,7 +78,7 @@ export function WelcomeSummary({
         </div>
 
         {/* Motivational quote */}
-        <p className="mt-4 text-sm italic text-muted-foreground leading-relaxed">
+        <p className="relative mt-4 text-sm italic text-muted-foreground leading-relaxed">
           {quote}
         </p>
       </div>

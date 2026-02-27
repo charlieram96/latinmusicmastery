@@ -122,14 +122,15 @@ export function LearningMilestones({ milestones, variant = 'cards' }: ExtendedLe
     const displayed = milestones.slice(0, 3)
     return (
       <AnimatedSection delay={0.2}>
-        <div className="warm-surface rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="relative overflow-hidden warm-surface rounded-2xl p-4">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-gold/3 pointer-events-none" />
+          <div className="relative flex items-center gap-2 mb-3">
             <Trophy className="h-4 w-4 text-gold" />
             <h3 className="text-sm font-heading font-semibold text-foreground">
               Next Milestones
             </h3>
           </div>
-          <div className="space-y-3">
+          <div className="relative space-y-3">
             {displayed.map((milestone) => {
               const Icon = ICON_MAP[milestone.iconName] ?? Star
               return (

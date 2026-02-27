@@ -90,4 +90,5 @@ export interface RecentActivityProps {
 
 export interface SubscriptionCtaProps {
   hasSubscription: boolean
+  variant?: 'default' | 'sidebar'
 }

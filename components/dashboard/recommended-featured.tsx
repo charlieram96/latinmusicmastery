@@ -43,7 +43,24 @@ export function RecommendedFeatured({
           className="group block rounded-2xl overflow-hidden"
         >
           <div className="relative bg-gradient-to-r from-terracotta/30 via-amber-900/20 to-gold/20 px-5 py-6 flex items-center justify-between gap-4">
-            <div>
+            {/* Decorative SVG wave pattern */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.07]"
+              preserveAspectRatio="none"
+              viewBox="0 0 400 100"
+            >
+              <path
+                d="M0,60 C50,30 100,80 150,50 C200,20 250,70 300,40 C350,10 400,60 400,60 L400,100 L0,100 Z"
+                fill="currentColor"
+                className="text-gold"
+              />
+              <path
+                d="M0,75 C60,50 120,90 180,65 C240,40 300,80 400,55 L400,100 L0,100 Z"
+                fill="currentColor"
+                className="text-terracotta"
+              />
+            </svg>
+            <div className="relative">
               <h3 className="text-lg font-heading font-semibold text-foreground">
                 Start Your Journey
               </h3>
@@ -53,7 +70,7 @@ export function RecommendedFeatured({
             </div>
             <Button
               size="sm"
-              className="bg-terracotta hover:bg-terracotta/90 text-white flex-shrink-0"
+              className="relative bg-terracotta hover:bg-terracotta/90 text-white flex-shrink-0"
               tabIndex={-1}
             >
               Browse Courses
@@ -62,9 +79,9 @@ export function RecommendedFeatured({
           </div>
         </Link>
 
-        {/* ── Featured Teacher Spotlight ──────────────────────────── */}
+        {/* ── Featured Teacher Spotlight (mobile only — desktop shows in sidebar) */}
         {featuredTeacher && (
-          <div className="warm-surface rounded-2xl border-l-4 border-l-terracotta p-4 sm:p-5 flex items-center gap-4">
+          <div className="warm-surface rounded-2xl border-l-4 border-l-terracotta p-4 sm:p-5 flex items-center gap-4 lg:hidden">
             {/* Photo */}
             <div className="flex-shrink-0">
               {featuredTeacher.image_url ? (

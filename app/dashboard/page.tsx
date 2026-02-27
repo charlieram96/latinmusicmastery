@@ -9,6 +9,8 @@ import { LearningMilestones } from '@/components/dashboard/learning-milestones'
 import { RecommendedFeatured } from '@/components/dashboard/recommended-featured'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
 import { SubscriptionCta } from '@/components/dashboard/subscription-cta'
+import { DailyPracticeTip } from '@/components/dashboard/daily-practice-tip'
+import { FeaturedTeacherSpotlight } from '@/components/dashboard/featured-teacher-spotlight'
 import type {
   ContinueLearningData,
   CourseProgress,
@@ -395,7 +397,7 @@ export default async function DashboardPage() {
 
   // ── Render ──────────────────────────────────────────────────────
   return (
-    <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6">
+    <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-6">
       {/* ── Main column ────────────────────────────────────────── */}
       <div className="space-y-6">
         {/* 1. Welcome + Weekly Summary */}
@@ -435,8 +437,10 @@ export default async function DashboardPage() {
           <RecentActivity activities={activities} />
         </div>
 
-        {/* 8. Subscription CTA */}
-        <SubscriptionCta hasSubscription={!!subscription?.status} />
+        {/* 8. Subscription CTA — mobile only */}
+        <div className="lg:hidden">
+          <SubscriptionCta hasSubscription={!!subscription?.status} />
+        </div>
       </div>
 
       {/* ── Sidebar (desktop only) ─────────────────────────────── */}
@@ -445,11 +449,25 @@ export default async function DashboardPage() {
           {/* Quick Actions — list variant */}
           <QuickActions variant="list" />
 
+          {/* Daily Practice Tip */}
+          <DailyPracticeTip />
+
           {/* Learning Milestones — compact variant */}
           <LearningMilestones milestones={milestones} variant="compact" />
 
+          {/* Featured Teacher Spotlight */}
+          {featuredTeacher && (
+            <FeaturedTeacherSpotlight teacher={featuredTeacher} />
+          )}
+
           {/* Recent Activity — 5 items */}
           <RecentActivity activities={activities} maxItems={5} />
+
+          {/* Subscription CTA — sidebar variant */}
+          <SubscriptionCta
+            hasSubscription={!!subscription?.status}
+            variant="sidebar"
+          />
         </div>
       </aside>
     </div>

@@ -10,8 +10,46 @@ import type { SubscriptionCtaProps } from '@/types/dashboard'
 /*  Subscription upsell banner                                         */
 /* ------------------------------------------------------------------ */
 
-export function SubscriptionCta({ hasSubscription }: SubscriptionCtaProps) {
+export function SubscriptionCta({ hasSubscription, variant = 'default' }: SubscriptionCtaProps) {
   if (hasSubscription) return null
+
+  if (variant === 'sidebar') {
+    return (
+      <AnimatedSection delay={0.35}>
+        <div
+          className="relative overflow-hidden rounded-2xl p-4"
+          style={{
+            background:
+              'linear-gradient(135deg, #b45309 0%, #C4654A 50%, #b45309 100%)',
+          }}
+        >
+          <Sparkles className="absolute top-3 right-3 h-10 w-10 text-white/10 pointer-events-none" />
+
+          <div className="relative z-10 space-y-3">
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-white">
+                Unlock All Courses
+              </h3>
+              <p className="text-xs text-white/80 leading-relaxed">
+                Unlimited access to every course and practice tool.
+              </p>
+            </div>
+
+            <Button
+              asChild
+              size="sm"
+              className="w-full bg-gold hover:bg-gold/90 text-[#161210] font-semibold shadow-lg shadow-black/20"
+            >
+              <Link href="/pricing">
+                Upgrade Now
+                <Sparkles className="h-3.5 w-3.5 ml-1.5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </AnimatedSection>
+    )
+  }
 
   return (
     <AnimatedSection delay={0.35}>

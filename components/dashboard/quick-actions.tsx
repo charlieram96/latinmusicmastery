@@ -15,6 +15,7 @@ const ACTIONS = [
     icon: Play,
     iconBg: 'bg-terracotta/15',
     iconColor: 'text-terracotta',
+    gradient: 'from-terracotta/6 to-transparent',
   },
   {
     label: 'Browse Courses',
@@ -22,6 +23,7 @@ const ACTIONS = [
     icon: BookOpen,
     iconBg: 'bg-gold/15',
     iconColor: 'text-gold',
+    gradient: 'from-gold/6 to-transparent',
   },
   {
     label: 'Open Tuner',
@@ -29,6 +31,7 @@ const ACTIONS = [
     icon: Music,
     iconBg: 'bg-amber-500/15',
     iconColor: 'text-amber-400',
+    gradient: 'from-amber-500/6 to-transparent',
   },
   {
     label: 'Submit Feedback',
@@ -36,6 +39,7 @@ const ACTIONS = [
     icon: MessageSquare,
     iconBg: 'bg-terracotta/10',
     iconColor: 'text-terracotta/80',
+    gradient: 'from-terracotta/5 to-transparent',
   },
 ] as const
 
@@ -86,14 +90,15 @@ export function QuickActions({ variant = 'grid' }: QuickActionsProps) {
             <StaggerItem key={action.href}>
               <Link
                 href={action.href}
-                className="warm-surface rounded-xl p-4 flex flex-col items-center gap-2 text-center transition-all duration-200 hover:scale-[1.02] hover:warm-glow hover:shadow-[0_4px_24px_-4px_hsl(var(--warm-surface)/0.5),0_0_0_1px_hsl(0_0%_100%/0.04)] group"
+                className="relative overflow-hidden warm-surface rounded-xl p-4 flex flex-col items-center gap-2 text-center transition-all duration-200 hover:scale-[1.02] hover:warm-glow hover:shadow-[0_4px_24px_-4px_hsl(var(--warm-surface)/0.5),0_0_0_1px_hsl(0_0%_100%/0.04)] group"
               >
+                <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} pointer-events-none`} />
                 <div
-                  className={`rounded-lg p-2.5 ${action.iconBg} transition-colors duration-200`}
+                  className={`relative rounded-lg p-2.5 ${action.iconBg} transition-colors duration-200`}
                 >
                   <Icon className={`h-5 w-5 ${action.iconColor}`} />
                 </div>
-                <span className="text-sm font-medium text-foreground/90 group-hover:text-foreground transition-colors">
+                <span className="relative text-sm font-medium text-foreground/90 group-hover:text-foreground transition-colors">
                   {action.label}
                 </span>
               </Link>

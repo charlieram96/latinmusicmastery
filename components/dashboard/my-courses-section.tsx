@@ -61,7 +61,7 @@ export function MyCoursesSection({ courses }: MyCoursesProps) {
                           className="object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-amber-500/10">
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-500/15 to-terracotta/10">
                           <BookOpen className="h-6 w-6 text-amber-400/60" />
                         </div>
                       )}

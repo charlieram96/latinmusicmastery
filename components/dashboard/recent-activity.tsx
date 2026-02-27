@@ -110,7 +110,9 @@ export function RecentActivity({ activities, maxItems = 8 }: ExtendedRecentActiv
         </div>
 
         {/* Timeline card */}
-        <div className="warm-surface rounded-2xl p-3 sm:p-4">
+        <div className="relative overflow-hidden warm-surface rounded-2xl p-3 sm:p-4">
+          {/* Subtle gold glow along left edge */}
+          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-gold/5 to-transparent pointer-events-none" />
           <StaggerContainer className="relative">
             {/* Vertical timeline line */}
             <div className="absolute left-[15px] top-4 bottom-4 w-0.5 bg-warm-surface brightness-150 rounded-full" />
