@@ -43,19 +43,26 @@ export async function POST(request: NextRequest) {
 
           // Get subscription details
           const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+          const planType = subscription.metadata?.plan_type || 'all_access'
+          const instrument = subscription.metadata?.instrument || null
 
-          // Create or update subscription record
+          // Upsert keyed on stripe_subscription_id
           const { error } = await supabaseAdmin
             .from('subscriptions')
-            .upsert({
-              user_id: userId,
-              stripe_customer_id: customerId,
-              stripe_subscription_id: subscriptionId,
-              status: subscription.status as 'active' | 'canceled' | 'past_due' | 'incomplete',
-              current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
-              current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
-              cancel_at_period_end: subscription.cancel_at_period_end,
-            })
+            .upsert(
+              {
+                user_id: userId,
+                stripe_customer_id: customerId,
+                stripe_subscription_id: subscriptionId,
+                status: subscription.status as 'active' | 'canceled' | 'past_due' | 'incomplete',
+                current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+                current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
+                cancel_at_period_end: subscription.cancel_at_period_end,
+                plan_type: planType,
+                instrument: instrument,
+              },
+              { onConflict: 'stripe_subscription_id' }
+            )
 
           if (error) {
             console.error('Error creating subscription:', error)

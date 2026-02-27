@@ -12,20 +12,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's subscription
-    const { data: subscription } = await supabase
+    // Get user's stripe customer ID from any subscription
+    const { data: subs } = await supabase
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
-      .single()
+      .limit(1)
 
-    if (!subscription?.stripe_customer_id) {
+    const stripeCustomerId = subs?.[0]?.stripe_customer_id
+    if (!stripeCustomerId) {
       return NextResponse.json({ error: 'No subscription found' }, { status: 404 })
     }
 
     // Create Stripe customer portal session
     const session = await stripe.billingPortal.sessions.create({
-      customer: subscription.stripe_customer_id,
+      customer: stripeCustomerId,
       return_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
     })
 

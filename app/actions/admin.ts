@@ -318,7 +318,6 @@ export async function deleteExercise(id: string) {
 
 export async function getUsers(options?: {
   search?: string
-  rank?: string
   isAdmin?: boolean
   isTeacher?: boolean
   limit?: number
@@ -333,6 +332,8 @@ export async function getUsers(options?: {
       subscriptions (
         id,
         status,
+        plan_type,
+        instrument,
         current_period_end
       ),
       teachers!teachers_user_id_fkey (
@@ -344,10 +345,6 @@ export async function getUsers(options?: {
 
   if (options?.search) {
     query = query.or(`email.ilike.%${options.search}%,full_name.ilike.%${options.search}%`)
-  }
-
-  if (options?.rank) {
-    query = query.eq('rank', options.rank)
   }
 
   if (options?.isAdmin !== undefined) {
@@ -383,6 +380,8 @@ export async function getUser(userId: string) {
       subscriptions (
         id,
         status,
+        plan_type,
+        instrument,
         current_period_end,
         stripe_customer_id,
         stripe_subscription_id
@@ -409,9 +408,6 @@ export async function updateUserProfile(userId: string, formData: FormData) {
     updated_at: new Date().toISOString(),
   }
 
-  if (formData.has('rank')) {
-    data.rank = formData.get('rank') as string
-  }
   if (formData.has('is_admin')) {
     data.is_admin = formData.get('is_admin') === 'true'
   }

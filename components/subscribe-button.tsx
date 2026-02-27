@@ -5,9 +5,12 @@ import { Button } from '@/components/ui/button'
 
 interface SubscribeButtonProps {
   priceId: string
+  planType: 'instrument' | 'all_access'
+  instrument?: string
+  label?: string
 }
 
-export function SubscribeButton({ priceId }: SubscribeButtonProps) {
+export function SubscribeButton({ priceId, planType, instrument, label }: SubscribeButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubscribe = async () => {
@@ -18,7 +21,7 @@ export function SubscribeButton({ priceId }: SubscribeButtonProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({ priceId, planType, instrument }),
       })
 
       const data = await response.json()
@@ -47,7 +50,7 @@ export function SubscribeButton({ priceId }: SubscribeButtonProps) {
       size="lg"
       className="w-full"
     >
-      {isLoading ? 'Loading...' : 'Subscribe Now'}
+      {isLoading ? 'Loading...' : (label || 'Subscribe Now')}
     </Button>
   )
 }

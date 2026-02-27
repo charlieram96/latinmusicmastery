@@ -30,22 +30,26 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   const scheduleClick = useCallback(
     (audioContext: AudioContext, time: number, isDownbeat: boolean) => {
       const osc = audioContext.createOscillator()
-      const gain = audioContext.createGain()
+      const gainNode = audioContext.createGain()
 
       osc.type = 'sine'
       osc.frequency.value = isDownbeat ? 4400 : 3300
-      gain.gain.value = isDownbeat ? 0.3 : 0.15
 
-      osc.connect(gain)
-      gain.connect(audioContext.destination)
+      const peakGain = isDownbeat ? 0.6 : 0.4
+      const duration = isDownbeat ? 0.03 : 0.02
+      const holdTime = duration * 0.7
+      const rampTime = duration * 0.3
 
-      const duration = isDownbeat ? 0.005 : 0.004
+      osc.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      // Envelope: attack → hold → ramp down
+      gainNode.gain.setValueAtTime(peakGain, time)
+      gainNode.gain.setValueAtTime(peakGain, time + holdTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.001, time + holdTime + rampTime)
+
       osc.start(time)
-      osc.stop(time + duration)
-
-      // Ramp down to avoid click
-      gain.gain.setValueAtTime(gain.gain.value, time)
-      gain.gain.exponentialRampToValueAtTime(0.001, time + duration)
+      osc.stop(time + duration + 0.01)
     },
     []
   )

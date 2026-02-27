@@ -12,10 +12,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { priceId } = await request.json()
+    const { priceId, planType, instrument } = await request.json()
 
     if (!priceId) {
       return NextResponse.json({ error: 'Price ID is required' }, { status: 400 })
+    }
+
+    if (!planType || !['instrument', 'all_access'].includes(planType)) {
+      return NextResponse.json({ error: 'Valid planType is required' }, { status: 400 })
+    }
+
+    if (planType === 'instrument' && !instrument) {
+      return NextResponse.json({ error: 'Instrument is required for instrument plans' }, { status: 400 })
+    }
+
+    // Check for duplicate active subscription
+    let dupQuery = supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .eq('plan_type', planType)
+
+    if (planType === 'instrument') {
+      dupQuery = dupQuery.eq('instrument', instrument)
+    }
+
+    const { data: existingSub } = await dupQuery.limit(1)
+    if (existingSub && existingSub.length > 0) {
+      return NextResponse.json({ error: 'You already have an active subscription for this plan' }, { status: 409 })
     }
 
     // Get user profile
@@ -25,17 +50,19 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    // Check if user already has a subscription
-    const { data: existingSubscription } = await supabase
+    // Look up existing Stripe customer across all user subs
+    const { data: anySub } = await supabase
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
-      .single()
+      .limit(1)
+
+    const stripeCustomerId = anySub?.[0]?.stripe_customer_id
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
-      customer: existingSubscription?.stripe_customer_id,
-      customer_email: existingSubscription?.stripe_customer_id ? undefined : profile?.email,
+      customer: stripeCustomerId || undefined,
+      customer_email: stripeCustomerId ? undefined : profile?.email,
       line_items: [
         {
           price: priceId,
@@ -43,7 +70,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
       metadata: {
         user_id: user.id,
@@ -51,6 +78,8 @@ export async function POST(request: NextRequest) {
       subscription_data: {
         metadata: {
           user_id: user.id,
+          plan_type: planType,
+          ...(instrument ? { instrument } : {}),
         },
       },
     })

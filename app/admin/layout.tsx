@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3, MessageSquare } from 'lucide-react'
+import { Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3, MessageSquare, Drum } from 'lucide-react'
 import { AdminHeader } from '@/components/admin/admin-header'
 
 export default async function AdminLayout({
@@ -35,6 +35,7 @@ export default async function AdminLayout({
     { href: '/admin/styles', label: 'Musical Styles', icon: Music },
     { href: '/admin/courses', label: 'Courses', icon: BookOpen },
     { href: '/admin/teachers', label: 'Teachers', icon: GraduationCap },
+    { href: '/admin/play-sense', label: 'Play Sense', icon: Drum },
   ]
 
   return (

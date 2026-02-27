@@ -773,6 +773,217 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          href: string | null
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          href?: string | null
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          href?: string | null
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      play_sense_attempt_events: {
+        Row: {
+          attempt_id: string
+          created_at: string | null
+          event_index: number
+          grade: string
+          id: string
+          offset_ms: number | null
+          onset_energy: number | null
+          timing: string | null
+        }
+        Insert: {
+          attempt_id: string
+          created_at?: string | null
+          event_index: number
+          grade: string
+          id?: string
+          offset_ms?: number | null
+          onset_energy?: number | null
+          timing?: string | null
+        }
+        Update: {
+          attempt_id?: string
+          created_at?: string | null
+          event_index?: number
+          grade?: string
+          id?: string
+          offset_ms?: number | null
+          onset_energy?: number | null
+          timing?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "play_sense_attempt_events_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "play_sense_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      play_sense_attempts: {
+        Row: {
+          accuracy: number
+          avg_offset_ms: number | null
+          created_at: string | null
+          duration_seconds: number | null
+          exercise_id: string
+          extra_hits: number
+          good_count: number
+          id: string
+          max_combo: number
+          max_streak: number
+          miss_count: number
+          ok_count: number
+          perfect_count: number
+          score: number
+          tempo_drift_ms: number | null
+          user_id: string
+        }
+        Insert: {
+          accuracy: number
+          avg_offset_ms?: number | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          exercise_id: string
+          extra_hits?: number
+          good_count?: number
+          id?: string
+          max_combo?: number
+          max_streak?: number
+          miss_count?: number
+          ok_count?: number
+          perfect_count?: number
+          score: number
+          tempo_drift_ms?: number | null
+          user_id: string
+        }
+        Update: {
+          accuracy?: number
+          avg_offset_ms?: number | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          exercise_id?: string
+          extra_hits?: number
+          good_count?: number
+          id?: string
+          max_combo?: number
+          max_streak?: number
+          miss_count?: number
+          ok_count?: number
+          perfect_count?: number
+          score?: number
+          tempo_drift_ms?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "play_sense_attempts_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "play_sense_exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "play_sense_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      play_sense_exercises: {
+        Row: {
+          audio_url: string | null
+          bpm: number
+          created_at: string | null
+          description: string | null
+          difficulty: string
+          events: Json
+          id: string
+          instrument: string
+          is_published: boolean
+          loop_count: number
+          measures: number
+          order_index: number
+          swing: number
+          time_signature: Json
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          bpm: number
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string
+          events: Json
+          id?: string
+          instrument: string
+          is_published?: boolean
+          loop_count?: number
+          measures?: number
+          order_index?: number
+          swing?: number
+          time_signature?: Json
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          bpm?: number
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string
+          events?: Json
+          id?: string
+          instrument?: string
+          is_published?: boolean
+          loop_count?: number
+          measures?: number
+          order_index?: number
+          swing?: number
+          time_signature?: Json
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -781,7 +992,6 @@ export type Database = {
           full_name: string | null
           id: string
           is_admin: boolean | null
-          rank: string
           updated_at: string | null
         }
         Insert: {
@@ -791,7 +1001,6 @@ export type Database = {
           full_name?: string | null
           id: string
           is_admin?: boolean | null
-          rank?: string
           updated_at?: string | null
         }
         Update: {
@@ -801,7 +1010,6 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_admin?: boolean | null
-          rank?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -813,6 +1021,8 @@ export type Database = {
           current_period_end: string
           current_period_start: string
           id: string
+          instrument: string | null
+          plan_type: string
           status: string
           stripe_customer_id: string
           stripe_subscription_id: string
@@ -825,6 +1035,8 @@ export type Database = {
           current_period_end: string
           current_period_start: string
           id?: string
+          instrument?: string | null
+          plan_type?: string
           status: string
           stripe_customer_id: string
           stripe_subscription_id: string
@@ -837,6 +1049,8 @@ export type Database = {
           current_period_end?: string
           current_period_start?: string
           id?: string
+          instrument?: string | null
+          plan_type?: string
           status?: string
           stripe_customer_id?: string
           stripe_subscription_id?: string
@@ -847,7 +1061,7 @@ export type Database = {
           {
             foreignKeyName: "subscriptions_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },

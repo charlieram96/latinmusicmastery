@@ -10,18 +10,16 @@ import { getUsers } from '@/app/actions/admin'
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; rank?: string; page?: string }>
+  searchParams: Promise<{ search?: string; page?: string }>
 }) {
   const params = await searchParams
   const search = params.search || ''
-  const rank = params.rank || ''
   const page = parseInt(params.page || '1')
   const limit = 20
   const offset = (page - 1) * limit
 
   const { users, total } = await getUsers({
     search: search || undefined,
-    rank: rank || undefined,
     limit,
     offset,
   })
@@ -37,7 +35,7 @@ export default async function AdminUsersPage({
         </p>
       </div>
 
-      {/* Search and Filters */}
+      {/* Search */}
       <Card className="mb-6">
         <CardContent className="pt-6">
           <form className="flex flex-wrap gap-4">
@@ -52,16 +50,6 @@ export default async function AdminUsersPage({
                 />
               </div>
             </div>
-            <select
-              name="rank"
-              defaultValue={rank}
-              className="px-3 py-2 rounded-md border bg-background text-sm"
-            >
-              <option value="">All Ranks</option>
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-            </select>
             <Button type="submit">Search</Button>
           </form>
         </CardContent>
@@ -81,53 +69,59 @@ export default async function AdminUsersPage({
         <CardContent>
           {users && users.length > 0 ? (
             <div className="space-y-2">
-              {users.map((user: any) => (
-                <Link
-                  key={user.id}
-                  href={`/admin/users/${user.id}`}
-                  className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatar_url} alt={user.full_name} />
-                      <AvatarFallback>
-                        {user.email?.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{user.full_name || 'No name'}</span>
-                        {user.is_admin && (
-                          <Badge variant="destructive" className="h-5">
-                            <Shield className="w-3 h-3 mr-1" />
-                            Admin
-                          </Badge>
-                        )}
-                        {user.teachers && user.teachers.length > 0 && (
-                          <Badge variant="secondary" className="h-5">
-                            <GraduationCap className="w-3 h-3 mr-1" />
-                            Teacher
-                          </Badge>
+              {users.map((user: any) => {
+                const activeSubs = (user.subscriptions || []).filter((s: any) => s.status === 'active')
+                return (
+                  <Link
+                    key={user.id}
+                    href={`/admin/users/${user.id}`}
+                    className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                        <AvatarFallback>
+                          {user.email?.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{user.full_name || 'No name'}</span>
+                          {user.is_admin && (
+                            <Badge variant="destructive" className="h-5">
+                              <Shield className="w-3 h-3 mr-1" />
+                              Admin
+                            </Badge>
+                          )}
+                          {user.teachers && user.teachers.length > 0 && (
+                            <Badge variant="secondary" className="h-5">
+                              <GraduationCap className="w-3 h-3 mr-1" />
+                              Teacher
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right hidden sm:block">
+                        {activeSubs.length > 0 ? (
+                          <div className="flex gap-1 flex-wrap justify-end">
+                            {activeSubs.map((sub: any) => (
+                              <Badge key={sub.id} variant="default" className="text-xs">
+                                {sub.plan_type === 'all_access' ? 'All-Access' : sub.instrument}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <Badge variant="outline">Free</Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right hidden sm:block">
-                      <Badge variant="outline" className="capitalize">
-                        {user.rank || 'beginner'}
-                      </Badge>
-                      {user.subscriptions?.[0]?.status === 'active' && (
-                        <Badge variant="default" className="ml-2">
-                          Subscribed
-                        </Badge>
-                      )}
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                )
+              })}
             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
@@ -141,7 +135,7 @@ export default async function AdminUsersPage({
             <div className="flex justify-center gap-2 mt-6">
               {page > 1 && (
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/users?search=${search}&rank=${rank}&page=${page - 1}`}>
+                  <Link href={`/admin/users?search=${search}&page=${page - 1}`}>
                     Previous
                   </Link>
                 </Button>
@@ -151,7 +145,7 @@ export default async function AdminUsersPage({
               </span>
               {page < totalPages && (
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/users?search=${search}&rank=${rank}&page=${page + 1}`}>
+                  <Link href={`/admin/users?search=${search}&page=${page + 1}`}>
                     Next
                   </Link>
                 </Button>

@@ -32,6 +32,7 @@ import {
   Headphones
 } from 'lucide-react'
 import { EnterCourseModeButton } from '@/components/dashboard/enter-course-mode-button'
+import { canAccessCourse } from '@/lib/subscriptions'
 
 interface PageProps {
   params: Promise<{
@@ -81,14 +82,14 @@ export default async function CoursePage({ params }: PageProps) {
     notFound()
   }
 
-  // Get user profile
+  // Check admin status
   const { data: profile } = await supabase
     .from('profiles')
-    .select('rank, is_admin')
+    .select('is_admin')
     .eq('id', user.id)
     .single()
 
-  const isStudent = profile?.rank === 'student' || profile?.is_admin
+  const isStudent = await canAccessCourse(supabase, user.id, course.instrument, profile?.is_admin ?? false)
 
   // Get course structure with progress
   const structureResult = await getCourseStructureForStudent(course.id)

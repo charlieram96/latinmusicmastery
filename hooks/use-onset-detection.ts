@@ -82,10 +82,15 @@ export function useOnsetDetection(
       mediaStreamRef.current = stream
       setHasPermission(true)
 
-      // Create AudioContext inside user gesture handler (Safari)
-      const audioContext = new AudioContextClass()
-      await audioContext.resume()
-      audioContextRef.current = audioContext
+      // Reuse existing AudioContext if still open, otherwise create new
+      let audioContext = audioContextRef.current
+      if (audioContext && audioContext.state !== 'closed') {
+        await audioContext.resume()
+      } else {
+        audioContext = new AudioContextClass()
+        await audioContext.resume()
+        audioContextRef.current = audioContext
+      }
 
       // Load AudioWorklet
       await audioContext.audioWorklet.addModule('/audio-worklets/onset-detector-processor.js')
@@ -105,7 +110,11 @@ export function useOnsetDetection(
             timestamp: e.data.timestamp,
             energy: e.data.energy,
           }
-          setRecentOnsets((prev) => [...prev, onset])
+          setRecentOnsets((prev) => {
+            const next = [...prev, onset]
+            // Cap at 500 to prevent unbounded growth
+            return next.length > 500 ? next.slice(-500) : next
+          })
         } else if (e.data.type === 'level') {
           // Throttle level updates to ~30fps
           const now = performance.now()

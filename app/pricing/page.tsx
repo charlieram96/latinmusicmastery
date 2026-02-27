@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Check } from 'lucide-react'
+import { Check, Crown, Music } from 'lucide-react'
 import { SubscribeButton } from '@/components/subscribe-button'
 import { ManageSubscriptionButton } from '@/components/manage-subscription-button'
+import { getActiveSubscriptions } from '@/lib/subscriptions'
+import { SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
 
 export default async function PricingPage() {
   const supabase = await createClient()
@@ -16,108 +16,75 @@ export default async function PricingPage() {
     redirect('/login')
   }
 
-  // Get user profile to check rank
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('rank')
-    .eq('id', user.id)
-    .single()
+  const activeSubs = await getActiveSubscriptions(supabase, user.id)
+  const hasAllAccess = activeSubs.some((s) => s.plan_type === 'all_access')
+  const subscribedInstruments = new Set(
+    activeSubs.filter((s) => s.plan_type === 'instrument').map((s) => s.instrument)
+  )
+  const hasAnySub = activeSubs.length > 0
 
-  const isStudent = profile?.rank === 'student'
+  // Get course counts per instrument
+  const { data: courses } = await supabase
+    .from('courses')
+    .select('instrument')
+    .eq('is_published', true)
+
+  const courseCountMap: Record<string, number> = {}
+  for (const c of courses || []) {
+    if (c.instrument && c.instrument !== 'Various') {
+      courseCountMap[c.instrument] = (courseCountMap[c.instrument] || 0) + 1
+    }
+  }
+
+  const instrumentPriceId = process.env.NEXT_PUBLIC_STRIPE_INSTRUMENT_PRICE_ID || ''
+  const allAccessPriceId = process.env.NEXT_PUBLIC_STRIPE_ALL_ACCESS_PRICE_ID || ''
 
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Choose Your Plan</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Unlock unlimited access to all Latin music courses and lessons
+          Subscribe to a single instrument or get unlimited access to everything
         </p>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 max-w-4xl mx-auto">
-        {/* Free Plan */}
-        <Card className="relative">
-          <CardHeader>
-            <CardTitle className="text-2xl">Free</CardTitle>
-            <CardDescription>
-              Get started with basic access
-            </CardDescription>
-            <div className="mt-4">
-              <span className="text-4xl font-bold">$0</span>
-              <span className="text-muted-foreground">/month</span>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Access to free lessons</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Preview course content</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Basic progress tracking</span>
-              </div>
-            </div>
-            {!isStudent && (
-              <Badge variant="secondary" className="w-full justify-center py-2">
-                Current Plan
-              </Badge>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Pro Plan */}
+      {/* All-Access Card */}
+      <div className="max-w-2xl mx-auto mb-16">
         <Card className="relative border-primary shadow-lg">
           <div className="absolute -top-4 left-0 right-0 flex justify-center">
-            <Badge className="px-4 py-1">Most Popular</Badge>
+            <Badge className="px-4 py-1 gap-1">
+              <Crown className="w-3 h-3" />
+              Best Value
+            </Badge>
           </div>
-          <CardHeader>
-            <CardTitle className="text-2xl">Pro</CardTitle>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">All-Access</CardTitle>
             <CardDescription>
-              Full access to all content
+              Every instrument, every course, unlimited learning
             </CardDescription>
             <div className="mt-4">
-              <span className="text-4xl font-bold">$39.99</span>
+              <span className="text-4xl font-bold">$69.99</span>
               <span className="text-muted-foreground">/month</span>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="font-medium">Everything in Free, plus:</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Unlimited access to all courses</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span>All lessons and exercises</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Soundslice interactive lessons</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Full progress tracking</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Certificate of completion</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Cancel anytime</span>
-              </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {[
+                'All 9 instruments included',
+                'Every course and lesson',
+                'Soundslice interactive tools',
+                'Full progress tracking',
+                'New content added monthly',
+                'Cancel anytime',
+              ].map((feature) => (
+                <div key={feature} className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span>{feature}</span>
+                </div>
+              ))}
             </div>
 
-            {isStudent ? (
+            {hasAllAccess ? (
               <div className="space-y-2">
                 <Badge variant="default" className="w-full justify-center py-2">
                   Current Plan
@@ -125,23 +92,119 @@ export default async function PricingPage() {
                 <ManageSubscriptionButton />
               </div>
             ) : (
-              <SubscribeButton priceId={process.env.NEXT_PUBLIC_STRIPE_PRICE_ID || 'price_1234'} />
+              <SubscribeButton
+                priceId={allAccessPriceId}
+                planType="all_access"
+                label="Get All-Access"
+              />
             )}
           </CardContent>
         </Card>
       </div>
 
+      {/* Instrument Grid */}
+      <div className="mb-16">
+        <h2 className="text-2xl font-bold mb-2 text-center">Or subscribe per instrument</h2>
+        <p className="text-muted-foreground text-center mb-8">
+          $24.99/month per instrument — only pay for what you play
+        </p>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+          {SUBSCRIBABLE_INSTRUMENTS.map((instrument) => {
+            const count = courseCountMap[instrument] || 0
+            const isSubscribed = subscribedInstruments.has(instrument)
+
+            return (
+              <Card key={instrument} className="relative">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Music className="w-4 h-4" />
+                      {instrument}
+                    </CardTitle>
+                    {(isSubscribed || hasAllAccess) && (
+                      <Badge variant={hasAllAccess && !isSubscribed ? 'secondary' : 'default'}>
+                        {hasAllAccess && !isSubscribed ? 'Included' : 'Subscribed'}
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription>
+                    {count} {count === 1 ? 'course' : 'courses'} available
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isSubscribed || hasAllAccess ? (
+                    <Badge variant="outline" className="w-full justify-center py-2">
+                      {hasAllAccess ? 'Included in All-Access' : 'Active'}
+                    </Badge>
+                  ) : (
+                    <SubscribeButton
+                      priceId={instrumentPriceId}
+                      planType="instrument"
+                      instrument={instrument}
+                      label={`$24.99/mo`}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Manage existing subs */}
+      {hasAnySub && !hasAllAccess && (
+        <div className="text-center mb-16">
+          <ManageSubscriptionButton />
+        </div>
+      )}
+
       {/* FAQ Section */}
-      <div className="mt-20 max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h2>
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">What's the difference between plans?</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                The Instrument Plan ($24.99/mo) gives you access to all courses for a single instrument.
+                The All-Access Plan ($69.99/mo) unlocks every instrument and every course on the platform.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Can I subscribe to multiple instruments?</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Yes! You can subscribe to as many individual instruments as you like. If you play 3 or more instruments,
+                the All-Access plan is usually the better deal.
+              </p>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Can I cancel anytime?</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Yes! You can cancel your subscription at any time. You'll continue to have access until the end of your billing period.
+                Yes! You can cancel any subscription at any time. You'll continue to have access until the end of your billing period.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Can I upgrade from instrument plans to All-Access?</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Absolutely! You can upgrade to All-Access at any time. Your existing instrument subscriptions can be
+                managed through the billing portal.
               </p>
             </CardContent>
           </Card>
@@ -153,28 +216,6 @@ export default async function PricingPage() {
             <CardContent>
               <p className="text-muted-foreground">
                 We accept all major credit cards (Visa, Mastercard, American Express) and debit cards through Stripe.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Is there a free trial?</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                While we don't offer a traditional free trial, our free plan gives you access to preview lessons so you can experience our teaching style before upgrading.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Do you offer student discounts?</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Please contact us at support@latinmusicmastery.com with proof of student status for information about student discounts.
               </p>
             </CardContent>
           </Card>

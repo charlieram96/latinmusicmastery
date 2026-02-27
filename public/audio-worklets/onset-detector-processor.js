@@ -1,5 +1,5 @@
 /**
- * AudioWorklet processor for dual-criterion onset detection (energy envelope + spectral flux).
+ * AudioWorklet processor for onset detection (energy envelope + optional spectral flux boost).
  * Must be plain JS for addModule().
  */
 class OnsetDetectorProcessor extends AudioWorkletProcessor {
@@ -27,6 +27,7 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     this.bufferIndex = 0
     this.envelope = 0
     this.energyHistory = []
+    this.fluxHistory = []
     this.prevMagnitudes = null
     this.lastOnsetTime = -Infinity
     this.sampleRate = 44100 // Updated on first process call
@@ -40,6 +41,7 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
         this.inputBuffer = new Float32Array(this.config.frameSize)
         this.bufferIndex = 0
         this.energyHistory = []
+        this.fluxHistory = []
         this.prevMagnitudes = null
       }
     }
@@ -92,22 +94,68 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
   }
 
   /**
-   * Compute half-wave rectified spectral flux.
+   * Radix-2 FFT for spectral flux (O(N log N)).
+   * Operates in-place on real/imag arrays.
+   */
+  fft(real, imag) {
+    const N = real.length
+    // Bit-reversal permutation
+    for (let i = 1, j = 0; i < N; i++) {
+      let bit = N >> 1
+      for (; j & bit; bit >>= 1) {
+        j ^= bit
+      }
+      j ^= bit
+      if (i < j) {
+        let tmp = real[i]; real[i] = real[j]; real[j] = tmp
+        tmp = imag[i]; imag[i] = imag[j]; imag[j] = tmp
+      }
+    }
+    // Cooley-Tukey
+    for (let len = 2; len <= N; len <<= 1) {
+      const halfLen = len >> 1
+      const angle = -2 * Math.PI / len
+      const wR = Math.cos(angle)
+      const wI = Math.sin(angle)
+      for (let i = 0; i < N; i += len) {
+        let curR = 1, curI = 0
+        for (let j = 0; j < halfLen; j++) {
+          const uR = real[i + j]
+          const uI = imag[i + j]
+          const vR = real[i + j + halfLen] * curR - imag[i + j + halfLen] * curI
+          const vI = real[i + j + halfLen] * curI + imag[i + j + halfLen] * curR
+          real[i + j] = uR + vR
+          imag[i + j] = uI + vI
+          real[i + j + halfLen] = uR - vR
+          imag[i + j + halfLen] = uI - vI
+          const newCurR = curR * wR - curI * wI
+          curI = curR * wI + curI * wR
+          curR = newCurR
+        }
+      }
+    }
+  }
+
+  /**
+   * Compute half-wave rectified spectral flux using radix-2 FFT.
    */
   computeSpectralFlux(frame) {
-    // Simple DFT magnitudes (use frame as-is, no windowing for speed in worklet)
     const N = this.config.fftSize
-    const magnitudes = new Float32Array(N / 2)
+    const real = new Float32Array(N)
+    const imag = new Float32Array(N)
 
+    // Copy frame into real array (zero-pad if needed)
+    const copyLen = Math.min(frame.length, N)
+    for (let i = 0; i < copyLen; i++) {
+      real[i] = frame[i]
+    }
+
+    this.fft(real, imag)
+
+    // Compute magnitudes for first half
+    const magnitudes = new Float32Array(N / 2)
     for (let k = 0; k < N / 2; k++) {
-      let real = 0
-      let imag = 0
-      for (let n = 0; n < N && n < frame.length; n++) {
-        const angle = (2 * Math.PI * k * n) / N
-        real += frame[n] * Math.cos(angle)
-        imag -= frame[n] * Math.sin(angle)
-      }
-      magnitudes[k] = Math.sqrt(real * real + imag * imag)
+      magnitudes[k] = Math.sqrt(real[k] * real[k] + imag[k] * imag[k])
     }
 
     if (!this.prevMagnitudes) {
@@ -140,6 +188,19 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
         : sorted[mid]
 
     return median * this.config.adaptiveThresholdMultiplier + this.config.adaptiveThresholdOffset
+  }
+
+  /**
+   * Compute adaptive flux threshold from recent flux history.
+   */
+  getAdaptiveFluxThreshold() {
+    if (this.fluxHistory.length === 0) return Infinity
+    let sum = 0
+    for (let i = 0; i < this.fluxHistory.length; i++) {
+      sum += this.fluxHistory[i]
+    }
+    const mean = sum / this.fluxHistory.length
+    return mean * 2.0 + 0.1
   }
 
   process(inputs, outputs, parameters) {
@@ -182,9 +243,10 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     // Criterion 1: Energy envelope
     const rms = this.computeRMS(frame)
 
-    // Update envelope follower
-    const attackCoeff = 1 - Math.exp(-1 / ((this.config.envelopeAttackMs / 1000) * this.sampleRate))
-    const releaseCoeff = 1 - Math.exp(-1 / ((this.config.envelopeReleaseMs / 1000) * this.sampleRate))
+    // Fix: compute envelope coefficients per-frame (not per-sample)
+    const frameSize = this.config.frameSize
+    const attackCoeff = 1 - Math.exp(-frameSize / ((this.config.envelopeAttackMs / 1000) * this.sampleRate))
+    const releaseCoeff = 1 - Math.exp(-frameSize / ((this.config.envelopeReleaseMs / 1000) * this.sampleRate))
 
     if (rms > this.envelope) {
       this.envelope += attackCoeff * (rms - this.envelope)
@@ -201,14 +263,17 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     const energyThreshold = this.getAdaptiveThreshold()
     const energyExceeds = this.envelope > energyThreshold && this.envelope > this.config.minOnsetEnergy
 
-    // Criterion 2: Spectral flux
+    // Criterion 2: Spectral flux (used as confidence boost, not gate)
     const flux = this.computeSpectralFlux(frame)
-    // Use a simple fixed threshold for spectral flux confirmation
-    const fluxThreshold = 0.5
+    this.fluxHistory.push(flux)
+    if (this.fluxHistory.length > this.config.adaptiveMedianFrames) {
+      this.fluxHistory.shift()
+    }
+    const fluxThreshold = this.getAdaptiveFluxThreshold()
     const fluxExceeds = flux > fluxThreshold
 
-    // Dual-criterion onset: BOTH must exceed thresholds
-    if (energyExceeds && fluxExceeds) {
+    // Energy is primary criterion; flux only boosts confidence
+    if (energyExceeds) {
       const now = currentTime // Global in AudioWorklet scope
       const refractorySec = this.config.refractoryPeriodMs / 1000
 
@@ -218,6 +283,7 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
           type: 'onset',
           timestamp: now,
           energy: this.envelope,
+          fluxConfirmed: fluxExceeds,
         })
       }
     }

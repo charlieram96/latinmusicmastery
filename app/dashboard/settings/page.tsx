@@ -81,18 +81,6 @@ export default async function SettingsPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="rank">Current Rank</Label>
-            <Input
-              id="rank"
-              defaultValue={profile?.rank || 'Beginner'}
-              disabled
-            />
-            <p className="text-xs text-muted-foreground">
-              Your rank increases as you complete lessons
-            </p>
-          </div>
-
           <Button>Save Changes</Button>
         </CardContent>
       </Card>

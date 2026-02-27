@@ -29,12 +29,12 @@ export default function MyCoursesLoading() {
               <Skeleton className="h-full w-full rounded-none" />
             </div>
 
-            {/* Square thumbnail */}
-            <div className="relative aspect-square">
+            {/* Thumbnail */}
+            <div className="relative aspect-[4/3]">
               <Skeleton className="h-full w-full rounded-none" />
               {/* Progress ring placeholder */}
               <div className="absolute bottom-1.5 right-1.5">
-                <Skeleton className="h-7 w-7 rounded-full" />
+                <Skeleton className="h-10 w-10 rounded-full" />
               </div>
             </div>
 

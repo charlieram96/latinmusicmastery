@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowRight, CheckCircle2, PlayCircle, Lock, FileQuestion, Dumbbell } from 'lucide-react'
 import { LessonCompleteButton } from '@/components/lesson-complete-button'
+import { canAccessCourse } from '@/lib/subscriptions'
 
 interface PageProps {
   params: Promise<{
@@ -32,6 +33,7 @@ export default async function ModulePage({ params }: PageProps) {
       course:courses(
         id,
         title,
+        instrument,
         musical_style:musical_styles(
           id,
           name,
@@ -51,14 +53,14 @@ export default async function ModulePage({ params }: PageProps) {
     notFound()
   }
 
-  // Get user profile to check rank
+  // Check access via subscription
   const { data: profile } = await supabase
     .from('profiles')
-    .select('rank, is_admin')
+    .select('is_admin')
     .eq('id', user.id)
     .single()
 
-  const isStudent = profile?.rank === 'student' || profile?.is_admin
+  const isStudent = await canAccessCourse(supabase, user.id, (module.course as any)?.instrument, profile?.is_admin ?? false)
 
   // Check if user has access
   if (!module.is_free && !isStudent) {
@@ -92,7 +94,7 @@ export default async function ModulePage({ params }: PageProps) {
   const previousModule = currentIndex > 0 ? courseModules?.[currentIndex - 1] : null
   const nextModule = currentIndex < (courseModules?.length || 0) - 1 ? courseModules?.[currentIndex + 1] : null
 
-  // Check if next module is accessible
+  // Check if next module is accessible (isStudent already accounts for subscription + admin)
   const canAccessNext = nextModule && (nextModule.is_free || isStudent)
 
   const course = module.course

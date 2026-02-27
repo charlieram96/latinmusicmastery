@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,7 +18,9 @@ import {
   Save,
   Loader2,
   Link as LinkIcon,
-  Unlink
+  Unlink,
+  Crown,
+  Music,
 } from 'lucide-react'
 import {
   getUser,
@@ -34,14 +35,12 @@ interface UserDetailPageProps {
 }
 
 export default function UserDetailPage({ params }: UserDetailPageProps) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [teachers, setTeachers] = useState<any[]>([])
   const [selectedTeacherId, setSelectedTeacherId] = useState('')
   const [fullName, setFullName] = useState('')
-  const [rank, setRank] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [success, setSuccess] = useState('')
 
@@ -51,7 +50,6 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
       const userData = await getUser(id)
       setUser(userData)
       setFullName(userData.full_name || '')
-      setRank(userData.rank || 'beginner')
       setIsAdmin(userData.is_admin || false)
 
       // Load available teachers
@@ -73,7 +71,6 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 
     const formData = new FormData()
     formData.append('full_name', fullName)
-    formData.append('rank', rank)
     formData.append('is_admin', isAdmin.toString())
 
     startTransition(async () => {
@@ -148,6 +145,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
 
   const linkedTeacher = user.teachers?.[0]
   const availableTeachers = teachers.filter(t => !t.user_id || t.user_id === user.id)
+  const activeSubs = (user.subscriptions || []).filter((s: any) => s.status === 'active')
 
   return (
     <div className="container mx-auto px-6 py-8">
@@ -192,9 +190,6 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
                   Teacher
                 </Badge>
               )}
-              <Badge variant="outline" className="capitalize">
-                {user.rank || 'beginner'}
-              </Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
               Joined {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
@@ -209,29 +204,14 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
             <CardDescription>Update user settings and permissions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label htmlFor="full_name">Full Name</Label>
-                <Input
-                  id="full_name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="rank">Rank</Label>
-                <select
-                  id="rank"
-                  value={rank}
-                  onChange={(e) => setRank(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 rounded-md border bg-background text-sm"
-                >
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
-                </select>
-              </div>
+            <div>
+              <Label htmlFor="full_name">Full Name</Label>
+              <Input
+                id="full_name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="mt-1"
+              />
             </div>
 
             <div className="flex items-center justify-between p-4 border rounded-lg">
@@ -335,32 +315,39 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
-              Subscription
+              Subscriptions
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {user.subscriptions?.[0] ? (
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status</span>
-                  <Badge
-                    variant={user.subscriptions[0].status === 'active' ? 'default' : 'secondary'}
-                    className="capitalize"
-                  >
-                    {user.subscriptions[0].status}
-                  </Badge>
-                </div>
-                {user.subscriptions[0].current_period_end && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Renews</span>
-                    <span>
-                      {new Date(user.subscriptions[0].current_period_end).toLocaleDateString()}
-                    </span>
+            {activeSubs.length > 0 ? (
+              <div className="space-y-4">
+                {activeSubs.map((sub: any) => (
+                  <div key={sub.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-2">
+                      {sub.plan_type === 'all_access' ? (
+                        <Crown className="w-4 h-4 text-primary" />
+                      ) : (
+                        <Music className="w-4 h-4" />
+                      )}
+                      <div>
+                        <p className="font-medium text-sm">
+                          {sub.plan_type === 'all_access' ? 'All-Access' : sub.instrument}
+                        </p>
+                        {sub.current_period_end && (
+                          <p className="text-xs text-muted-foreground">
+                            Renews {new Date(sub.current_period_end).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Badge variant="default" className="capitalize text-xs">
+                      {sub.status}
+                    </Badge>
                   </div>
-                )}
+                ))}
               </div>
             ) : (
-              <p className="text-muted-foreground">No subscription</p>
+              <p className="text-muted-foreground">No active subscriptions</p>
             )}
           </CardContent>
         </Card>

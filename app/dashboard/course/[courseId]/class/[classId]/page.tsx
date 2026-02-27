@@ -8,6 +8,7 @@ import { ClassItemRenderer } from '@/components/class-viewer/class-item-renderer
 import { ClassNavigation } from '@/components/class-viewer/class-navigation'
 import { CourseSidebar } from '@/components/class-viewer/course-sidebar'
 import { CommentsSection } from '@/components/comments/comments-section'
+import { canAccessCourse } from '@/lib/subscriptions'
 
 interface PageProps {
   params: Promise<{
@@ -44,6 +45,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           id,
           title,
           slug,
+          instrument,
           teacher:teachers (name),
           musical_style:musical_styles (name)
         )
@@ -73,14 +75,14 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   )
   const activeItem = items[activeIndex] || null
 
-  // Get user profile
+  // Check access via subscription
   const { data: profile } = await supabase
     .from('profiles')
-    .select('rank, is_admin')
+    .select('is_admin')
     .eq('id', user.id)
     .single()
 
-  const isStudent = profile?.rank === 'student' || profile?.is_admin
+  const isStudent = await canAccessCourse(supabase, user.id, course.instrument, profile?.is_admin ?? false)
 
   // Check access
   if (!classData.is_free && !isStudent) {

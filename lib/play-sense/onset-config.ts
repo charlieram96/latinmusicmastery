@@ -35,4 +35,17 @@ export const NOISY_ROOM_CONFIG = {
   minOnsetEnergy: 0.02,
 } as const
 
-export type OnsetConfig = typeof ONSET_CONFIG
+export type OnsetConfig = {
+  bandPassLow: number
+  bandPassHigh: number
+  envelopeAttackMs: number
+  envelopeReleaseMs: number
+  adaptiveMedianFrames: number
+  adaptiveThresholdMultiplier: number
+  adaptiveThresholdOffset: number
+  refractoryPeriodMs: number
+  minOnsetEnergy: number
+  fftSize: number
+  frameSize: number
+  hopSize: number
+}

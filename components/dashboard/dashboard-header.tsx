@@ -3,6 +3,8 @@ import { UserNav } from '@/components/user-nav'
 import { MobileSidebarTrigger } from '@/components/dashboard/mobile-sidebar-trigger'
 import { HeaderSearch } from '@/components/dashboard/header-search'
 import { HeaderStreak } from '@/components/dashboard/header-streak-server'
+import { HeaderContinue } from '@/components/dashboard/header-continue-server'
+import { HeaderNotifications } from '@/components/dashboard/header-notifications-server'
 import { DashboardHeaderWrapper } from '@/components/dashboard/dashboard-header-wrapper'
 
 export async function DashboardHeader() {
@@ -17,17 +19,30 @@ export async function DashboardHeader() {
     .eq('id', user.id)
     .single()
 
+  const firstName = profile?.full_name?.split(' ')[0]
+
   return (
     <DashboardHeaderWrapper>
       <div className="flex h-14 items-center px-6 gap-4">
         {/* Mobile Menu Toggle */}
         <MobileSidebarTrigger />
 
-        {/* Spacer */}
-        <div className="flex-1" />
+        {/* Greeting — hidden on mobile */}
+        <p className="hidden md:flex text-sm font-medium text-foreground flex-1">
+          Hello, {firstName || 'there'}
+        </p>
+
+        {/* Spacer on mobile when greeting is hidden */}
+        <div className="flex-1 md:hidden" />
 
         {/* Right side items */}
         <div className="flex items-center gap-3">
+          {/* Continue Learning */}
+          <HeaderContinue userId={user.id} />
+
+          {/* Notifications */}
+          <HeaderNotifications userId={user.id} />
+
           {/* Learning Streak */}
           <HeaderStreak userId={user.id} />
 

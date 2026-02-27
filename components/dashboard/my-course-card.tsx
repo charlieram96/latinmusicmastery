@@ -99,8 +99,8 @@ export function MyCourseCard({ course, index }: MyCourseCardProps) {
           {/* Left accent stripe */}
           <div className={`absolute left-0 top-0 bottom-0 w-0.5 ${accentColor} z-10`} />
 
-          {/* Square thumbnail */}
-          <div className="relative aspect-square bg-muted overflow-hidden">
+          {/* Thumbnail — 4:3 landscape */}
+          <div className="relative aspect-[4/3] bg-muted overflow-hidden">
             {course.thumbnail_url ? (
               <img
                 src={course.thumbnail_url}
@@ -118,7 +118,7 @@ export function MyCourseCard({ course, index }: MyCourseCardProps) {
 
             {/* Style badge — frosted pill, top-right */}
             {course.musical_style?.name && (
-              <span className="absolute top-1.5 right-1.5 bg-black/50 backdrop-blur-sm text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full">
+              <span className="absolute top-1.5 right-1.5 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-1.5 py-0.5 rounded-full">
                 {course.musical_style.name}
               </span>
             )}
@@ -126,7 +126,7 @@ export function MyCourseCard({ course, index }: MyCourseCardProps) {
             {/* Circular progress ring — bottom-right */}
             {course.totalLessons > 0 && (
               <div className="absolute bottom-1.5 right-1.5">
-                <ProgressRing percent={progressPercent} />
+                <ProgressRing percent={progressPercent} size={40} strokeWidth={3} />
               </div>
             )}
           </div>
@@ -147,31 +147,31 @@ export function MyCourseCard({ course, index }: MyCourseCardProps) {
                     <GraduationCap className="h-2.5 w-2.5 text-primary" />
                   </div>
                 )}
-                <span className="text-[10px] text-muted-foreground truncate">
+                <span className="text-xs text-muted-foreground truncate">
                   {course.teacher.name}
                 </span>
               </div>
             )}
 
             {/* Title */}
-            <h3 className="font-semibold text-xs font-heading line-clamp-2 mb-1.5 group-hover:text-primary transition-colors leading-tight">
+            <h3 className="font-semibold text-sm font-heading line-clamp-2 mb-1.5 group-hover:text-primary transition-colors leading-tight">
               {course.title}
             </h3>
 
             {/* Module info — compact */}
             {isComplete ? (
               <div className="flex items-center gap-1 mb-1.5">
-                <span className="text-[10px] font-medium text-green-500">Complete</span>
+                <span className="text-xs font-medium text-green-500">Complete</span>
               </div>
             ) : hasSections && course.currentSectionTitle ? (
               <div className="mb-1.5 space-y-0.5">
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Mod {course.currentSectionIndex}/{course.totalSections}
                 </p>
                 {course.currentClassTitle && (
                   <div className="flex items-center gap-1">
-                    <Play className="h-2 w-2 text-primary flex-shrink-0" />
-                    <span className="text-[10px] text-foreground line-clamp-2 leading-tight">
+                    <Play className="h-2.5 w-2.5 text-primary flex-shrink-0" />
+                    <span className="text-xs text-foreground line-clamp-2 leading-tight">
                       {course.currentClassTitle}
                     </span>
                   </div>
@@ -189,7 +189,7 @@ export function MyCourseCard({ course, index }: MyCourseCardProps) {
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <p className="text-[9px] text-muted-foreground mt-1 tabular-nums">
+              <p className="text-[10px] text-muted-foreground mt-1 tabular-nums">
                 {course.completedLessons}/{course.totalLessons} items
               </p>
             </div>
