@@ -106,7 +106,7 @@ export default async function PricingPage() {
       <div className="mb-16">
         <h2 className="text-2xl font-bold mb-2 text-center">Or subscribe per instrument</h2>
         <p className="text-muted-foreground text-center mb-8">
-          $24.99/month per instrument — only pay for what you play
+          $14.99/month per instrument — only pay for what you play
         </p>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
           {SUBSCRIBABLE_INSTRUMENTS.map((instrument) => {
@@ -141,7 +141,7 @@ export default async function PricingPage() {
                       priceId={instrumentPriceId}
                       planType="instrument"
                       instrument={instrument}
-                      label={`$24.99/mo`}
+                      label={`$14.99/mo`}
                     />
                   )}
                 </CardContent>
@@ -168,7 +168,7 @@ export default async function PricingPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                The Instrument Plan ($24.99/mo) gives you access to all courses for a single instrument.
+                The Instrument Plan ($14.99/mo) gives you access to all courses for a single instrument.
                 The All-Access Plan ($69.99/mo) unlocks every instrument and every course on the platform.
               </p>
             </CardContent>

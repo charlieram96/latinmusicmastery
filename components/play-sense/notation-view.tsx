@@ -12,7 +12,6 @@ interface NotationViewProps {
   isPlaying: boolean
 }
 
-const MEASURES_PER_LINE = 2
 const MIN_MEASURE_WIDTH = 250
 
 export function NotationView({ exercise, eventResults, playheadProgress, isPlaying }: NotationViewProps) {
@@ -23,6 +22,21 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
   const notationLeftRef = useRef(0)
   const totalRenderedHeightRef = useRef(0)
   const [svgReady, setSvgReady] = useState(false)
+  const [measuresPerLine, setMeasuresPerLine] = useState(2)
+
+  // Dynamic measures per line based on container width
+  useEffect(() => {
+    if (!scrollContainerRef.current) return
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width
+        const fits = Math.max(1, Math.floor((width - 40) / MIN_MEASURE_WIDTH))
+        setMeasuresPerLine(Math.min(fits, exercise.measures))
+      }
+    })
+    observer.observe(scrollContainerRef.current)
+    return () => observer.disconnect()
+  }, [exercise.measures])
 
   const renderNotation = useCallback(async () => {
     if (!containerRef.current) return
@@ -33,15 +47,15 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     const container = containerRef.current
     container.innerHTML = ''
 
-    const measuresPerLine = Math.min(MEASURES_PER_LINE, exercise.measures)
-    const totalLines = Math.ceil(exercise.measures / measuresPerLine)
+    const effectiveMeasuresPerLine = Math.min(measuresPerLine, exercise.measures)
+    const totalLines = Math.ceil(exercise.measures / effectiveMeasuresPerLine)
 
     const containerWidth = container.clientWidth || 800
     const measureWidth = Math.max(
-      Math.floor((containerWidth - 40) / measuresPerLine),
+      Math.floor((containerWidth - 40) / effectiveMeasuresPerLine),
       MIN_MEASURE_WIDTH
     )
-    const actualWidth = Math.max(containerWidth, measuresPerLine * measureWidth + 40)
+    const actualWidth = Math.max(containerWidth, effectiveMeasuresPerLine * measureWidth + 40)
     const staveHeight = 140
     const totalHeight = totalLines * staveHeight + 40
 
@@ -61,8 +75,8 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     let lastStaveEndX = 0
 
     for (let line = 0; line < totalLines; line++) {
-      for (let col = 0; col < measuresPerLine; col++) {
-        const measureNum = line * measuresPerLine + col + 1
+      for (let col = 0; col < effectiveMeasuresPerLine; col++) {
+        const measureNum = line * effectiveMeasuresPerLine + col + 1
         if (measureNum > exercise.measures) break
 
         const x = col * measureWidth + 20
@@ -79,7 +93,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
         stave.setStyle({ fillStyle: '#94a3b8', strokeStyle: '#475569' })
         stave.setContext(context).draw()
 
-        if (col === measuresPerLine - 1 || measureNum === exercise.measures) {
+        if (col === effectiveMeasuresPerLine - 1 || measureNum === exercise.measures) {
           lastStaveEndX = x + measureWidth
         }
 
@@ -153,7 +167,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     })
 
     setSvgReady(true)
-  }, [exercise])
+  }, [exercise, measuresPerLine])
 
   // Render notation on mount and exercise change
   useEffect(() => {

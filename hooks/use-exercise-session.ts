@@ -13,6 +13,7 @@ import { generateExpectedTimestamps, getExerciseDuration, getCountInDuration } f
 import { useOnsetDetection } from './use-onset-detection'
 import { useMetronome } from './use-metronome'
 import { useCalibration } from './use-calibration'
+import { useBackingTrack } from './use-backing-track'
 
 interface UseExerciseSessionResult {
   // State
@@ -34,6 +35,10 @@ interface UseExerciseSessionResult {
   isCalibrating: boolean
   calibrationBeat: number
   totalCalibrationBeats: number
+
+  // Backing track
+  backingTrackLoading: boolean
+  backingTrackLoaded: boolean
 
   // Playhead
   playheadProgress: number // 0-1
@@ -100,6 +105,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
   })
 
   const calibration = useCalibration()
+
+  const backingTrack = useBackingTrack({ audioUrl: exercise?.audioUrl })
 
   // Load stored calibration on mount
   useEffect(() => {
@@ -188,6 +195,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
       countdownIntervalRef.current = null
     }
     metronome.stopMetronome()
+    backingTrack.stopPlayback()
 
     // Mark any unmatched expected events as misses
     const allResults = [...eventResultsRef.current]
@@ -220,7 +228,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     setAttemptStats(stats)
     setSessionState('results')
     stopListening()
-  }, [metronome, stopListening])
+  }, [metronome, stopListening, backingTrack])
 
   const selectExercise = useCallback((ex: ExerciseDefinition) => {
     setExercise(ex)
@@ -280,6 +288,11 @@ export function useExerciseSession(): UseExerciseSessionResult {
     const exerciseStartTime = metronome.startMetronome(audioCtx)
     exerciseStartTimeRef.current = exerciseStartTime
 
+    // Start backing track in sync with exercise start (after count-in)
+    if (backingTrack.isLoaded) {
+      backingTrack.startPlayback(audioCtx, exerciseStartTime)
+    }
+
     // Track countdown beats — store interval in ref for cleanup
     const beatDuration = 60 / exercise.bpm
     let countBeat = 0
@@ -302,7 +315,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
         rafRef.current = requestAnimationFrame(updatePlayhead)
       }
     }, 25)
-  }, [exercise, startListening, clearOnsets, metronome, updatePlayhead])
+  }, [exercise, startListening, clearOnsets, metronome, updatePlayhead, backingTrack])
 
   const stopExercise = useCallback(() => {
     finishExercise()
@@ -322,6 +335,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     setAttemptStats(null)
     stopListening()
     metronome.stopMetronome()
+    backingTrack.stopPlayback()
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current)
       rafRef.current = null
@@ -330,7 +344,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
       clearInterval(countdownIntervalRef.current)
       countdownIntervalRef.current = null
     }
-  }, [stopListening, metronome])
+  }, [stopListening, metronome, backingTrack])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -357,6 +371,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
     isCalibrating: calibration.isCalibrating,
     calibrationBeat: calibration.calibrationBeat,
     totalCalibrationBeats: calibration.totalCalibrationBeats,
+    backingTrackLoading: backingTrack.isLoading,
+    backingTrackLoaded: backingTrack.isLoaded,
     playheadProgress,
     currentScore,
     currentCombo,

@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select,
   SelectContent,
@@ -15,6 +16,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { createExercise, updateExercise } from '@/app/actions/play-sense'
+import { PlaySenseAudioUpload } from '@/components/admin/play-sense-audio-upload'
+import { PlaySensePatternGrid } from '@/components/admin/play-sense-pattern-grid'
+import type { ExerciseEvent, Instrument } from '@/lib/play-sense/types'
 import { Save, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
@@ -33,6 +37,7 @@ interface ExerciseEditorFormProps {
     events: unknown
     is_published: boolean
     order_index: number
+    audio_url?: string | null
   } | null
   isNew: boolean
 }
@@ -51,6 +56,22 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
   )
   const [jsonError, setJsonError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [audioUrl, setAudioUrl] = useState<string>(exercise?.audio_url || '')
+  const [instrument, setInstrument] = useState<Instrument>((exercise?.instrument || 'conga') as Instrument)
+  const [measures, setMeasures] = useState(exercise?.measures || 4)
+  const [activeTab, setActiveTab] = useState<string>('grid')
+
+  const timeSignature = exercise?.time_signature as [number, number] || [4, 4]
+  const [timeSig, setTimeSig] = useState<[number, number]>(timeSignature)
+
+  // Parse events from JSON for grid use
+  const parsedEvents: ExerciseEvent[] = (() => {
+    try {
+      const parsed = JSON.parse(eventsJson)
+      if (Array.isArray(parsed)) return parsed
+    } catch { /* ignore */ }
+    return []
+  })()
 
   const validateJson = (json: string) => {
     try {
@@ -73,12 +94,22 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
     }
   }
 
+  // Grid -> JSON sync
+  const handleGridChange = useCallback((newEvents: ExerciseEvent[]) => {
+    const json = JSON.stringify(newEvents, null, 2)
+    setEventsJson(json)
+    setJsonError(null)
+  }, [])
+
+  // JSON -> Grid sync happens automatically via parsedEvents
+
   const handleSubmit = async (formData: FormData) => {
     if (!validateJson(eventsJson)) return
 
     setSaving(true)
     try {
       formData.set('events', eventsJson)
+      formData.set('audio_url', audioUrl)
       if (isNew) {
         await createExercise(formData)
       } else {
@@ -91,8 +122,6 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
       setSaving(false)
     }
   }
-
-  const timeSignature = exercise?.time_signature as [number, number] || [4, 4]
 
   return (
     <form action={handleSubmit} className="space-y-6">
@@ -117,7 +146,11 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
           </div>
           <div className="space-y-2">
             <Label htmlFor="instrument">Instrument</Label>
-            <Select name="instrument" defaultValue={exercise?.instrument || 'conga'}>
+            <Select
+              name="instrument"
+              defaultValue={instrument}
+              onValueChange={(v) => setInstrument(v as Instrument)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -147,6 +180,20 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
         </div>
       </Card>
 
+      {/* Audio Upload */}
+      <Card className="p-6 space-y-4">
+        <h2 className="font-semibold text-lg">Backing Track</h2>
+        <p className="text-sm text-muted-foreground">
+          Upload an audio file to play as a backing track during practice. Optional — exercises work with metronome only.
+        </p>
+        <PlaySenseAudioUpload
+          exerciseId={exercise?.id || 'new'}
+          currentAudioUrl={audioUrl || null}
+          onAudioUploaded={setAudioUrl}
+        />
+        <input type="hidden" name="audio_url" value={audioUrl} />
+      </Card>
+
       {/* Timing */}
       <Card className="p-6 space-y-4">
         <h2 className="font-semibold text-lg">Timing</h2>
@@ -157,7 +204,13 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
           </div>
           <div className="space-y-2">
             <Label htmlFor="time_signature">Time Signature</Label>
-            <Select name="time_signature" defaultValue={JSON.stringify(timeSignature)}>
+            <Select
+              name="time_signature"
+              defaultValue={JSON.stringify(timeSig)}
+              onValueChange={(v) => {
+                try { setTimeSig(JSON.parse(v)) } catch { /* ignore */ }
+              }}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -177,7 +230,16 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="measures">Measures</Label>
-            <Input id="measures" name="measures" type="number" min="1" max="64" defaultValue={exercise?.measures || 4} required />
+            <Input
+              id="measures"
+              name="measures"
+              type="number"
+              min="1"
+              max="64"
+              defaultValue={measures}
+              onChange={(e) => setMeasures(Number(e.target.value) || 4)}
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="loop_count">Loop Count</Label>
@@ -190,24 +252,43 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
         </div>
       </Card>
 
-      {/* Events JSON */}
+      {/* Pattern Editor */}
       <Card className="p-6 space-y-4">
-        <h2 className="font-semibold text-lg">Events (JSON)</h2>
-        <p className="text-sm text-muted-foreground">
-          Define the percussion pattern as an array of events. Each event needs: beat, measure, instrument, technique, hand, duration, vexKey, accent.
-        </p>
-        <textarea
-          className="w-full min-h-[300px] p-3 font-mono text-sm bg-muted rounded-lg border resize-y focus:outline-none focus:ring-2 focus:ring-primary"
-          value={eventsJson}
-          onChange={(e) => {
-            setEventsJson(e.target.value)
-            if (jsonError) validateJson(e.target.value)
-          }}
-          onBlur={() => validateJson(eventsJson)}
-        />
-        {jsonError && (
-          <p className="text-sm text-destructive">{jsonError}</p>
-        )}
+        <h2 className="font-semibold text-lg">Pattern</h2>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="grid">Grid Editor</TabsTrigger>
+            <TabsTrigger value="json">JSON</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="grid" className="mt-4">
+            <PlaySensePatternGrid
+              events={parsedEvents}
+              instrument={instrument}
+              measures={measures}
+              timeSignature={timeSig}
+              onChange={handleGridChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="json" className="mt-4 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Define the percussion pattern as an array of events. Each event needs: beat, measure, instrument, technique, hand, duration, vexKey, accent.
+            </p>
+            <textarea
+              className="w-full min-h-[300px] p-3 font-mono text-sm bg-muted rounded-lg border resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+              value={eventsJson}
+              onChange={(e) => {
+                setEventsJson(e.target.value)
+                if (jsonError) validateJson(e.target.value)
+              }}
+              onBlur={() => validateJson(eventsJson)}
+            />
+            {jsonError && (
+              <p className="text-sm text-destructive">{jsonError}</p>
+            )}
+          </TabsContent>
+        </Tabs>
       </Card>
 
       {/* Publish & Submit */}

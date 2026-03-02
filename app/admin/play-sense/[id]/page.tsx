@@ -24,7 +24,7 @@ export default async function AdminPlaySenseEditPage({ params }: Props) {
   }
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-4xl">
+    <div className="container mx-auto px-6 py-8 max-w-7xl">
       <h1 className="text-3xl font-bold mb-6">
         {isNew ? 'Create Exercise' : 'Edit Exercise'}
       </h1>

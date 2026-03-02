@@ -138,6 +138,8 @@ export async function createExercise(formData: FormData) {
     timeSignature = [4, 4]
   }
 
+  const audioUrl = formData.get('audio_url') as string | null
+
   const { error } = await supabase
     .from('play_sense_exercises')
     .insert({
@@ -153,6 +155,7 @@ export async function createExercise(formData: FormData) {
       events,
       is_published: formData.get('is_published') === 'true',
       order_index: Number(formData.get('order_index') || 0),
+      audio_url: audioUrl || null,
     })
 
   if (error) throw error
@@ -190,6 +193,8 @@ export async function updateExercise(id: string, formData: FormData) {
     timeSignature = [4, 4]
   }
 
+  const audioUrl = formData.get('audio_url') as string | null
+
   const { error } = await supabase
     .from('play_sense_exercises')
     .update({
@@ -205,6 +210,7 @@ export async function updateExercise(id: string, formData: FormData) {
       events,
       is_published: formData.get('is_published') === 'true',
       order_index: Number(formData.get('order_index') || 0),
+      audio_url: audioUrl || null,
     })
     .eq('id', id)
 

@@ -32,15 +32,17 @@ export default async function PlaySensePage() {
   }))
 
   return (
-    <>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Play Sense</h1>
-        <p className="text-muted-foreground mt-1">
-          Practice percussion patterns with real-time feedback
-        </p>
+    <div className="w-full">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Play Sense</h1>
+          <p className="text-sm text-muted-foreground">
+            Practice percussion patterns with real-time feedback
+          </p>
+        </div>
       </div>
 
-      <div className="max-w-4xl">
+      <div className="w-full">
         <div className="bg-slate-950 rounded-2xl p-4 md:p-6 border border-slate-800/50"
           style={{
             background: 'linear-gradient(145deg, rgba(2,6,23,0.95), rgba(15,23,42,0.9))',
@@ -49,6 +51,6 @@ export default async function PlaySensePage() {
           <ExercisePlayer exercises={exerciseDefinitions} />
         </div>
       </div>
-    </>
+    </div>
   )
 }

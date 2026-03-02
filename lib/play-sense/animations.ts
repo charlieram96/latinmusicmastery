@@ -113,6 +113,35 @@ export function getStarCount(score: number): number {
   return 1
 }
 
+// Track highlight for playlist rows
+export const trackHighlight: Variants = {
+  idle: { backgroundColor: 'rgba(255,255,255,0)' },
+  active: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    transition: { duration: 0.2 },
+  },
+}
+
+// Slide up for now-playing bar
+export const slideUp: Variants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 400, damping: 30 },
+  },
+  exit: { opacity: 0, y: 40, transition: { duration: 0.2 } },
+}
+
+// Equalizer bar animation
+export const equalizerBar: Variants = {
+  idle: { scaleY: 0.3 },
+  active: {
+    scaleY: [0.3, 1, 0.5, 0.8, 0.3],
+    transition: { duration: 1.2, repeat: Infinity, ease: 'easeInOut' },
+  },
+}
+
 // Difficulty glow colors
 export const DIFFICULTY_GLOW: Record<string, string> = {
   beginner: 'shadow-green-500/20',

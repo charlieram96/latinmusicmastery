@@ -3,62 +3,24 @@
 import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
-import { GRADE_COLORS, type HitGrade } from '@/lib/play-sense/types'
-import { getInstrumentLabel } from '@/lib/play-sense/exercise-utils'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
-import { NotationView } from './notation-view'
+import { PlaylistView } from './playlist-view'
+import { NowPlayingBar } from './now-playing-bar'
+import { VisualizationPanel } from './visualization-panel'
 import { CalibrationWizard } from './calibration-wizard'
-import { LiveScoreHUD } from './live-score-hud'
 import { ResultsSummary } from './results-summary'
-import { ExerciseList } from './exercise-list'
-import { SensitivitySettings } from './sensitivity-settings'
 import { saveAttempt } from '@/app/actions/play-sense'
 import {
   fadeInUp,
   slideInLeft,
-  countdownPop,
-  gradeFloat,
-  GRADE_LABELS,
   standardTransition,
 } from '@/lib/play-sense/animations'
-import {
-  Play,
-  Square,
-  ArrowLeft,
-  Settings2,
-  AlertTriangle,
-  Headphones,
-} from 'lucide-react'
+import { ArrowLeft, AlertTriangle } from 'lucide-react'
 
 interface ExercisePlayerProps {
   exercises: ExerciseDefinition[]
-}
-
-// Floating grade component
-function FloatingGrade({ grade, id }: { grade: string; id: number }) {
-  const color = GRADE_COLORS[grade as HitGrade] || '#94a3b8'
-  const label = GRADE_LABELS[grade] || grade
-
-  return (
-    <motion.div
-      key={id}
-      variants={gradeFloat}
-      initial="hidden"
-      animate="visible"
-      className="absolute left-1/2 top-1/3 -translate-x-1/2 pointer-events-none z-20"
-      style={{ color }}
-    >
-      <span
-        className="text-2xl font-black tracking-tight"
-        style={{ textShadow: `0 0 16px ${color}` }}
-      >
-        +{label}
-      </span>
-    </motion.div>
-  )
 }
 
 export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
@@ -121,334 +83,159 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
     }
   }, [session.lastHitGrade, session.sessionState, session.eventResults.length])
 
-  // Compute overall progress for the bottom bar
-  const overallProgress = session.sessionState === 'playing' ? session.playheadProgress : 0
+  const isActive = session.sessionState === 'selecting' ||
+    session.sessionState === 'countdown' ||
+    session.sessionState === 'playing'
+
+  const showPlaylist = session.sessionState === 'idle' || isActive
 
   return (
-    <AnimatePresence mode="wait">
-      {/* Idle state — show exercise list */}
-      {session.sessionState === 'idle' && (
-        <motion.div
-          key="idle"
-          variants={fadeInUp}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          transition={standardTransition}
-          className="space-y-4"
-        >
-          <ExerciseList exercises={exercises} onSelect={session.selectExercise} />
-        </motion.div>
-      )}
-
-      {/* Calibrating state */}
-      {session.sessionState === 'calibrating' && (
-        <motion.div
-          key="calibrating"
-          variants={slideInLeft}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          transition={standardTransition}
-          className="space-y-4"
-        >
-          <Button variant="ghost" size="sm" onClick={session.goToSelect}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
-          </Button>
-          <CalibrationWizard
-            isCalibrating={session.isCalibrating}
-            calibrationData={session.calibrationData}
-            calibrationBeat={session.calibrationBeat}
-            totalCalibrationBeats={session.totalCalibrationBeats}
-            onStartCalibration={session.startCalibration}
-            onSkip={() => session.startExercise()}
-            onClearCalibration={() => session.startCalibration()}
-          />
-        </motion.div>
-      )}
-
-      {/* Results state */}
-      {session.sessionState === 'results' && session.attemptStats && session.exercise && (
-        <motion.div
-          key="results"
-          variants={fadeInUp}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          transition={standardTransition}
-          className="space-y-4"
-        >
-          <Button variant="ghost" size="sm" onClick={session.goToSelect}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            All Exercises
-          </Button>
-          <ResultsSummary
-            stats={session.attemptStats}
-            exerciseTitle={session.exercise.title}
-            onRetry={session.retry}
-            onNext={session.goToSelect}
-          />
-        </motion.div>
-      )}
-
-      {/* Selecting / Countdown / Playing states */}
-      {(session.sessionState === 'selecting' ||
-        session.sessionState === 'countdown' ||
-        session.sessionState === 'playing') &&
-        session.exercise && (
+    <div className="flex flex-col h-[calc(100vh-12rem)] min-h-[500px]">
+      <AnimatePresence mode="wait">
+        {/* Calibrating state — full panel */}
+        {session.sessionState === 'calibrating' && (
           <motion.div
-            key="active"
+            key="calibrating"
+            variants={slideInLeft}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={standardTransition}
+            className="flex-1 flex flex-col gap-4 p-4"
+          >
+            <Button variant="ghost" size="sm" onClick={session.goToSelect} className="self-start text-slate-400 hover:text-slate-200">
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Back
+            </Button>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="w-full max-w-lg">
+                <CalibrationWizard
+                  isCalibrating={session.isCalibrating}
+                  calibrationData={session.calibrationData}
+                  calibrationBeat={session.calibrationBeat}
+                  totalCalibrationBeats={session.totalCalibrationBeats}
+                  onStartCalibration={session.startCalibration}
+                  onSkip={() => session.startExercise()}
+                  onClearCalibration={() => session.startCalibration()}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Results state — full panel */}
+        {session.sessionState === 'results' && session.attemptStats && session.exercise && (
+          <motion.div
+            key="results"
             variants={fadeInUp}
             initial="hidden"
             animate="visible"
             exit="exit"
             transition={standardTransition}
-            className="space-y-4 relative"
+            className="flex-1 flex flex-col gap-4 p-4 overflow-y-auto"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={session.goToSelect}
-                  disabled={session.sessionState === 'playing' || session.sessionState === 'countdown'}
-                >
-                  <ArrowLeft className="w-4 h-4 mr-1" />
-                  Back
-                </Button>
-                <div>
-                  <h2 className="text-lg font-semibold">{session.exercise.title}</h2>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <Badge variant="secondary" className="text-xs">
-                      {getInstrumentLabel(session.exercise.instrument)}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {session.exercise.difficulty}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground font-mono">
-                      {session.exercise.bpm} BPM
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Button variant="ghost" size="sm" onClick={session.goToSelect} className="self-start text-slate-400 hover:text-slate-200">
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              All Exercises
+            </Button>
+            <ResultsSummary
+              stats={session.attemptStats}
+              exerciseTitle={session.exercise.title}
+              onRetry={session.retry}
+              onNext={session.goToSelect}
+            />
+          </motion.div>
+        )}
 
-            {/* Main content area with edge flash */}
-            <div
-              className={cn(
-                'relative rounded-xl transition-shadow duration-150',
-                edgeFlash && 'shadow-[inset_0_0_30px_rgba(59,130,246,0.15)]'
-              )}
-            >
-              {/* Countdown overlay */}
-              <AnimatePresence>
-                {session.sessionState === 'countdown' && (
-                  <motion.div
-                    key="countdown-overlay"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm rounded-xl"
-                  >
-                    <div className="text-center">
-                      <AnimatePresence mode="wait">
-                        <motion.p
-                          key={session.countdownBeat}
-                          variants={countdownPop}
-                          initial="hidden"
-                          animate="visible"
-                          exit="exit"
-                          className="text-8xl font-black text-white"
-                          style={{
-                            textShadow: '0 0 40px rgba(59,130,246,0.5), 0 0 80px rgba(147,51,234,0.3)',
-                          }}
-                        >
-                          {session.countdownBeat || '...'}
-                        </motion.p>
-                      </AnimatePresence>
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-sm text-slate-400 mt-4 tracking-widest uppercase"
-                      >
-                        Get ready
-                      </motion.p>
-                      {/* Beat ring animation */}
-                      <motion.div
-                        key={`ring-${session.countdownBeat}`}
-                        initial={{ scale: 0.5, opacity: 0.8 }}
-                        animate={{ scale: 2.5, opacity: 0 }}
-                        transition={{ duration: 0.6, ease: 'easeOut' }}
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-2 border-blue-400/50"
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Floating grade labels */}
-              <AnimatePresence>
-                {floatingGrades.map(fg => (
-                  <FloatingGrade key={fg.id} grade={fg.grade} id={fg.id} />
-                ))}
-              </AnimatePresence>
-
-              {/* Notation + HUD grid */}
+        {/* Main layout: playlist + visualization + now playing */}
+        {showPlaylist && (
+          <motion.div
+            key="main"
+            variants={fadeInUp}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={standardTransition}
+            className="flex-1 flex flex-col min-h-0"
+          >
+            <div className="flex-1 flex min-h-0">
+              {/* Playlist sidebar — desktop */}
               <div className={cn(
-                'grid gap-4',
-                session.sessionState === 'playing' ? 'grid-cols-1 lg:grid-cols-[1fr_220px]' : 'grid-cols-1'
+                'w-[300px] lg:w-[340px] shrink-0 border-r border-slate-800/40 hidden md:flex flex-col',
+                // On mobile when idle, show full-width playlist
               )}>
-                {/* Notation */}
-                <div className={session.sessionState === 'countdown' ? 'opacity-40' : ''}>
-                  <NotationView
-                    exercise={session.exercise}
-                    eventResults={session.eventResults}
-                    playheadProgress={session.playheadProgress}
-                    isPlaying={session.sessionState === 'playing'}
-                  />
-                </div>
-
-                {/* Live Score HUD - desktop */}
-                {session.sessionState === 'playing' && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="hidden lg:block"
-                  >
-                    <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4">
-                      <LiveScoreHUD
-                        score={session.currentScore}
-                        combo={session.currentCombo}
-                        accuracy={session.currentAccuracy}
-                        tempoDrift={session.tempoDrift}
-                        lastHitGrade={session.lastHitGrade}
-                        inputLevel={session.inputLevel}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            </div>
-
-            {/* Mobile live score - compact */}
-            {session.sessionState === 'playing' && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between lg:hidden p-3 bg-slate-900/80 backdrop-blur-sm rounded-lg border border-slate-700/50"
-              >
-                <div className="flex items-center gap-4 text-sm font-mono text-slate-200">
-                  <span>Score: {Math.round(session.currentScore)}%</span>
-                  <span className={cn(
-                    session.currentCombo >= 10 && 'text-orange-400',
-                    session.currentCombo >= 5 && session.currentCombo < 10 && 'text-yellow-400'
-                  )}>
-                    Combo: {session.currentCombo}x
-                  </span>
-                  <span>Acc: {Math.round(session.currentAccuracy)}%</span>
-                </div>
-                {session.lastHitGrade && (
-                  <span
-                    className="text-xs font-bold"
-                    style={{ color: GRADE_COLORS[session.lastHitGrade as HitGrade] }}
-                  >
-                    {GRADE_LABELS[session.lastHitGrade] || session.lastHitGrade}
-                  </span>
-                )}
-              </motion.div>
-            )}
-
-            {/* Progress bar - bottom */}
-            {session.sessionState === 'playing' && (
-              <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{
-                    background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)',
-                    width: `${overallProgress * 100}%`,
-                  }}
-                  transition={{ duration: 0.1 }}
+                <PlaylistView
+                  exercises={exercises}
+                  selectedExercise={session.exercise}
+                  isPlaying={session.sessionState === 'playing'}
+                  onSelect={session.selectExercise}
                 />
               </div>
-            )}
 
-            {/* Controls */}
-            <div className="bg-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4">
-              <div className="flex items-center gap-3 flex-wrap">
-                {session.sessionState === 'selecting' && (
-                  <>
-                    <Button
-                      onClick={() => session.startExercise()}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-0"
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Start Practice
-                    </Button>
-                    {!session.calibrationData && (
-                      <Button variant="outline" onClick={session.startCalibration} className="border-slate-600 text-slate-300 hover:bg-slate-800">
-                        <Settings2 className="w-4 h-4 mr-2" />
-                        Calibrate
-                      </Button>
-                    )}
-                    {session.calibrationData && (
-                      <span className="text-xs text-slate-400">
-                        Latency: {session.calibrationData.latencyMs.toFixed(1)}ms
-                      </span>
-                    )}
-                  </>
-                )}
-
-                {session.sessionState === 'playing' && (
-                  <Button
-                    variant="destructive"
-                    onClick={session.stopExercise}
-                    className="bg-red-600/80 hover:bg-red-600"
-                  >
-                    <Square className="w-4 h-4 mr-2" />
-                    Stop
-                  </Button>
-                )}
-
-                {session.sessionState === 'countdown' && (
-                  <Button variant="outline" disabled className="border-slate-600 text-slate-400">
-                    Starting...
-                  </Button>
-                )}
-
-                <div className="flex-1" />
-
-                {session.sessionState === 'selecting' && (
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <Headphones className="w-3 h-3" />
-                    <span>Headphones recommended</span>
-                  </div>
-                )}
-              </div>
-
-              {(session.sessionState === 'selecting' || session.sessionState === 'playing') && (
-                <div className="mt-3 pt-3 border-t border-slate-700/50">
-                  <SensitivitySettings
-                    noisyRoomMode={session.noisyRoomMode}
-                    onNoisyRoomChange={session.setNoisyRoomMode}
-                    inputLevel={session.inputLevel}
+              {/* Mobile playlist — full screen when idle */}
+              {session.sessionState === 'idle' && (
+                <div className="flex-1 md:hidden">
+                  <PlaylistView
+                    exercises={exercises}
+                    selectedExercise={session.exercise}
+                    isPlaying={false}
+                    onSelect={session.selectExercise}
                   />
                 </div>
               )}
+
+              {/* Visualization panel */}
+              <div className={cn(
+                'flex-1 flex flex-col min-h-0 p-4',
+                session.sessionState === 'idle' && 'hidden md:flex',
+              )}>
+                <VisualizationPanel
+                  exercise={session.exercise}
+                  sessionState={session.sessionState}
+                  eventResults={session.eventResults}
+                  playheadProgress={session.playheadProgress}
+                  countdownBeat={session.countdownBeat}
+                  floatingGrades={floatingGrades}
+                  edgeFlash={edgeFlash}
+                  currentScore={session.currentScore}
+                  currentCombo={session.currentCombo}
+                  currentAccuracy={session.currentAccuracy}
+                  tempoDrift={session.tempoDrift}
+                  lastHitGrade={session.lastHitGrade}
+                  inputLevel={session.inputLevel}
+                />
+              </div>
             </div>
+
+            {/* Now Playing Bar — shown when exercise selected */}
+            <AnimatePresence>
+              {session.exercise && isActive && (
+                <NowPlayingBar
+                  exercise={session.exercise}
+                  sessionState={session.sessionState}
+                  playheadProgress={session.playheadProgress}
+                  calibrationData={session.calibrationData}
+                  noisyRoomMode={session.noisyRoomMode}
+                  inputLevel={session.inputLevel}
+                  backingTrackLoading={session.backingTrackLoading}
+                  backingTrackLoaded={session.backingTrackLoaded}
+                  onStart={session.startExercise}
+                  onStop={session.stopExercise}
+                  onCalibrate={session.startCalibration}
+                  onNoisyRoomChange={session.setNoisyRoomMode}
+                />
+              )}
+            </AnimatePresence>
 
             {/* Error states */}
             {session.audioError && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-4 rounded-xl border border-red-500/30 bg-red-950/30"
+                className="mx-4 mb-4 p-3 rounded-xl border border-red-500/30 bg-red-950/30"
               >
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                  <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm text-slate-300">{session.audioError}</p>
                     {session.hasPermission === false && (
@@ -462,6 +249,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
             )}
           </motion.div>
         )}
-    </AnimatePresence>
+      </AnimatePresence>
+    </div>
   )
 }
