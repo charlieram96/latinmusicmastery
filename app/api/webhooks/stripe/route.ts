@@ -67,6 +67,27 @@ export async function POST(request: NextRequest) {
           if (error) {
             console.error('Error creating subscription:', error)
           }
+
+          // Auto-cancel instrument subscriptions when upgrading to all-access
+          if (planType === 'all_access') {
+            const { data: instrumentSubs } = await supabaseAdmin
+              .from('subscriptions')
+              .select('stripe_subscription_id')
+              .eq('user_id', userId)
+              .eq('plan_type', 'instrument')
+              .eq('status', 'active')
+
+            if (instrumentSubs && instrumentSubs.length > 0) {
+              for (const sub of instrumentSubs) {
+                try {
+                  await stripe.subscriptions.cancel(sub.stripe_subscription_id)
+                  console.log(`Canceled instrument subscription ${sub.stripe_subscription_id} for user ${userId}`)
+                } catch (cancelError) {
+                  console.error(`Failed to cancel instrument subscription ${sub.stripe_subscription_id}:`, cancelError)
+                }
+              }
+            }
+          }
         }
         break
       }
