@@ -65,6 +65,11 @@
     --chart-4: 280 75% 65%;
     --chart-5: 340 75% 55%;
 
+    /* Warm Latin studio palette */
+    --warm-surface: 16 14% 8%; /* #161210 */
+    --terracotta: 14 52% 53%; /* #C4654A */
+    --gold-highlight: 38 58% 58%; /* #D4A854 */
+
     --spacing-section: 2rem;
     --spacing-card: 1.5rem;
     --spacing-element: 1rem;
@@ -133,4 +138,15 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Warm Latin studio noise texture */
+.warm-surface {
+  background-color: hsl(var(--warm-surface, 0 0% 8%));
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+.warm-glow {
+  box-shadow: 0 4px 24px -4px hsl(var(--warm-surface, 0 0% 8%) / 0.5),
+              0 0 0 1px hsl(0 0% 100% / 0.04);
 }

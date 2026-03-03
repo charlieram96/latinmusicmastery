@@ -18,6 +18,7 @@ import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { CourseThumbnailUpload } from './course-thumbnail-upload'
 import { createClient } from '@/lib/supabase/client'
+import { SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
 
 interface MusicalStyle {
   id: string
@@ -40,6 +41,7 @@ interface Course {
   teacher_id: string | null
   is_published: boolean | null
   thumbnail_url: string | null
+  instrument: string | null
 }
 
 interface CourseEditFormProps {
@@ -63,6 +65,7 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
     const description = formData.get('description') as string
     const musicalStyleId = formData.get('musical_style_id') as string
     const teacherId = formData.get('teacher_id') as string
+    const instrumentValue = formData.get('instrument') as string
     const isPublished = formData.get('is_published') === 'on'
 
     try {
@@ -90,6 +93,7 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
           musical_style_id: musicalStyleId,
           teacher_id: teacherId === 'unassigned' ? null : teacherId,
           teacher_name: teacherName,
+          instrument: instrumentValue === 'auto' ? null : (instrumentValue || null),
           is_published: isPublished,
           thumbnail_url: thumbnailUrl || null,
           updated_at: new Date().toISOString(),
@@ -177,6 +181,26 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="instrument">Instrument</Label>
+              <Select name="instrument" defaultValue={course.instrument || 'auto'}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto (from teacher)</SelectItem>
+                  {SUBSCRIBABLE_INSTRUMENTS.map((inst) => (
+                    <SelectItem key={inst} value={inst}>
+                      {inst}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Auto-set when teacher is assigned, but can be overridden
+              </p>
             </div>
           </CardContent>
         </Card>

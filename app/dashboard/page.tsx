@@ -1,66 +1,92 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import Link from 'next/link'
-import {
-  Play,
-  BookOpen,
-  Award,
-  Flame,
-  ArrowRight,
-  Trophy,
-  Users,
-  Sparkles,
-} from 'lucide-react'
-import { StartLearningCard } from '@/components/dashboard/start-learning-card'
+import { ACHIEVEMENTS } from '@/lib/achievements'
+import { WelcomeSummary } from '@/components/dashboard/welcome-summary'
+import { ContinueLearningHero } from '@/components/dashboard/continue-learning-hero'
+import { QuickActions } from '@/components/dashboard/quick-actions'
+import { MyCoursesSection } from '@/components/dashboard/my-courses-section'
+import { LearningMilestones } from '@/components/dashboard/learning-milestones'
+import { RecommendedFeatured } from '@/components/dashboard/recommended-featured'
+import { RecentActivity } from '@/components/dashboard/recent-activity'
+import { SubscriptionCta } from '@/components/dashboard/subscription-cta'
+import { DailyPracticeTip } from '@/components/dashboard/daily-practice-tip'
+import { FeaturedTeacherSpotlight } from '@/components/dashboard/featured-teacher-spotlight'
+import type {
+  ContinueLearningData,
+  CourseProgress,
+  MilestoneItem,
+  RecentActivityItem,
+} from '@/types/dashboard'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) {
     redirect('/login')
   }
 
-  // Fetch user profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user.id)
-    .single()
-
-  // Fetch user's subscription status
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
-
-  // Fetch user's course enrollments with course details
-  const { data: enrollments } = await supabase
-    .from('course_enrollments')
-    .select(`
-      *,
-      course:courses(
-        id,
-        title,
-        slug,
-        thumbnail_url,
-        course_sections(
+  // ── Batch 1: independent queries ─────────────────────────────────
+  const [
+    { data: profile },
+    { data: subscription },
+    { data: enrollments },
+    { count: achievementsCount },
+    { data: recentAchievements },
+    { data: featuredTeacher },
+  ] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', user.id)
+      .single(),
+    supabase
+      .from('course_enrollments')
+      .select(
+        `
+        *,
+        course:courses(
           id,
-          classes(
+          title,
+          slug,
+          thumbnail_url,
+          course_sections(
             id,
-            items:class_items(id)
+            classes(
+              id,
+              items:class_items(id)
+            )
           )
         )
+      `
       )
-    `)
-    .eq('user_id', user.id)
-    .order('last_accessed_at', { ascending: false })
+      .eq('user_id', user.id)
+      .order('last_accessed_at', { ascending: false }),
+    supabase
+      .from('user_achievements')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+    supabase
+      .from('user_achievements')
+      .select('achievement_key, unlocked_at')
+      .eq('user_id', user.id)
+      .order('unlocked_at', { ascending: false })
+      .limit(5),
+    supabase
+      .from('teachers')
+      .select('id, name, bio, image_url, instrument')
+      .limit(1)
+      .single(),
+  ])
 
-  // Get all class item IDs from enrolled courses
+  // ── Build course → item ID map ──────────────────────────────────
   const allItemIds: string[] = []
   const courseItemMap = new Map<string, string[]>()
 
@@ -79,7 +105,7 @@ export default async function DashboardPage() {
     courseItemMap.set(course.id, itemIds)
   }
 
-  // Get all progress for these items
+  // ── Batch 2: progress data (depends on allItemIds) ──────────────
   let progressData: any[] = []
   if (allItemIds.length > 0) {
     const { data } = await supabase
@@ -91,19 +117,12 @@ export default async function DashboardPage() {
   }
 
   const completedItemIds = new Set(
-    progressData.filter(p => p.completed).map(p => p.class_item_id)
+    progressData.filter((p) => p.completed).map((p) => p.class_item_id)
   )
 
-  // Calculate total lessons completed
   const totalLessonsCompleted = completedItemIds.size
 
-  // Get user achievements count
-  const { count: achievementsCount } = await supabase
-    .from('user_achievements')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-
-  // Calculate streak from class_item_progress
+  // ── Streak calculation ──────────────────────────────────────────
   let streak = 0
   if (progressData.length > 0) {
     const uniqueDates = new Set<string>()
@@ -115,15 +134,20 @@ export default async function DashboardPage() {
     })
     const sortedDates = Array.from(uniqueDates).sort().reverse()
     const today = new Date().toISOString().split('T')[0]
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+    const yesterday = new Date(Date.now() - 86400000)
+      .toISOString()
+      .split('T')[0]
 
     if (sortedDates[0] === today || sortedDates[0] === yesterday) {
-      let currentDate = new Date(sortedDates[0])
+      const currentDate = new Date(sortedDates[0])
       for (const dateStr of sortedDates) {
         const date = new Date(dateStr)
         const expectedDate = new Date(currentDate)
         expectedDate.setDate(expectedDate.getDate() - streak)
-        if (date.toISOString().split('T')[0] === expectedDate.toISOString().split('T')[0]) {
+        if (
+          date.toISOString().split('T')[0] ===
+          expectedDate.toISOString().split('T')[0]
+        ) {
           streak++
         } else {
           break
@@ -132,31 +156,64 @@ export default async function DashboardPage() {
     }
   }
 
-  // Build course progress for "My Courses" section
-  const myCoursesArray: { course: any; total: number; completed: number }[] = []
+  // ── Items completed this week ───────────────────────────────────
+  const now = new Date()
+  const startOfWeek = new Date(now)
+  startOfWeek.setDate(now.getDate() - now.getDay())
+  startOfWeek.setHours(0, 0, 0, 0)
+  const startOfWeekISO = startOfWeek.toISOString()
+
+  const itemsCompletedThisWeek = progressData.filter(
+    (p) => p.completed && p.completed_at && p.completed_at >= startOfWeekISO
+  ).length
+
+  // ── My Courses progress ─────────────────────────────────────────
+  const myCoursesArray: CourseProgress[] = []
   for (const enrollment of enrollments || []) {
     const course = enrollment.course as any
     if (!course) continue
     const itemIds = courseItemMap.get(course.id) || []
-    const completedCount = itemIds.filter(id => completedItemIds.has(id)).length
+    const completedCount = itemIds.filter((id) =>
+      completedItemIds.has(id)
+    ).length
     myCoursesArray.push({
-      course,
+      course: {
+        id: course.id,
+        title: course.title,
+        slug: course.slug,
+        thumbnail_url: course.thumbnail_url,
+      },
       total: itemIds.length,
       completed: completedCount,
     })
   }
 
-  // Find continue learning: most recently accessed course with incomplete items
-  let continueData: { courseId: string; courseSlug: string; courseTitle: string; courseThumbnail: string | null; classId: string | null } | null = null
+  // ── Closest course to completion ────────────────────────────────
+  let closestCourse: { title: string; progress: number } | null = null
+  {
+    let bestProgress = -1
+    for (const c of myCoursesArray) {
+      if (c.total === 0) continue
+      const pct = Math.round((c.completed / c.total) * 100)
+      if (pct < 100 && pct > bestProgress) {
+        bestProgress = pct
+        closestCourse = { title: c.course.title, progress: pct }
+      }
+    }
+  }
 
-  // Get most recent progress entry to find last class
+  // ── Continue learning data ──────────────────────────────────────
+  let continueData: ContinueLearningData | null = null
   if (progressData.length > 0) {
     const sortedProgress = [...progressData]
-      .filter(p => !p.completed)
-      .sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime())
+      .filter((p) => !p.completed)
+      .sort(
+        (a, b) =>
+          new Date(b.updated_at || b.created_at).getTime() -
+          new Date(a.updated_at || a.created_at).getTime()
+      )
 
     if (sortedProgress.length > 0) {
-      // Find which course this item belongs to
       const recentItemId = sortedProgress[0].class_item_id
       for (const enrollment of enrollments || []) {
         const course = enrollment.course as any
@@ -180,224 +237,239 @@ export default async function DashboardPage() {
     }
   }
 
-  // Get recommended courses
-  const startedCourseIds = myCoursesArray.map(c => c.course.id)
-  const { data: recommendedCourses } = await supabase
-    .from('courses')
-    .select(`
-      *,
-      musical_style:musical_styles(name),
-      teacher:teachers(name)
-    `)
-    .eq('is_published', true)
-    .not('id', 'in', `(${startedCourseIds.length > 0 ? startedCourseIds.join(',') : '00000000-0000-0000-0000-000000000000'})`)
-    .limit(4)
+  // ── Batch 3: recommended, new courses, all courses ──────────────
+  const startedCourseIds = myCoursesArray.map((c) => c.course.id)
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString()
 
-  // Get all courses for the carousel (when no course started)
-  const { data: allCourses } = await supabase
-    .from('courses')
-    .select(`
-      id,
-      title,
-      slug,
-      description,
-      thumbnail_url,
-      difficulty,
-      musical_style:musical_styles(name),
-      teacher:teachers(name)
-    `)
-    .eq('is_published', true)
-    .limit(12)
+  const [
+    { data: recommendedCourses },
+    { data: newCoursesRaw },
+    { data: allCourses },
+  ] = await Promise.all([
+    supabase
+      .from('courses')
+      .select(
+        `
+        *,
+        musical_style:musical_styles(name),
+        teacher:teachers(name)
+      `
+      )
+      .eq('is_published', true)
+      .not(
+        'id',
+        'in',
+        `(${
+          startedCourseIds.length > 0
+            ? startedCourseIds.join(',')
+            : '00000000-0000-0000-0000-000000000000'
+        })`
+      )
+      .limit(4),
+    supabase
+      .from('courses')
+      .select('id')
+      .eq('is_published', true)
+      .gte('created_at', sevenDaysAgo),
+    supabase
+      .from('courses')
+      .select(
+        `
+        id,
+        title,
+        slug,
+        description,
+        thumbnail_url,
+        difficulty,
+        musical_style:musical_styles(name),
+        teacher:teachers(name)
+      `
+      )
+      .eq('is_published', true)
+      .limit(12),
+  ])
 
-  const coursesInProgress = myCoursesArray.length
+  const newCourseIds = (newCoursesRaw || []).map((c: any) => c.id)
 
+  // ── Milestones: next uncompleted achievements ───────────────────
+  const completedCourses = myCoursesArray.filter(
+    (c) => c.total > 0 && c.completed === c.total
+  ).length
+
+  function getAchievementCurrent(key: string): number {
+    if (key.startsWith('lessons_') || key === 'first_lesson')
+      return totalLessonsCompleted
+    if (key.startsWith('streak_')) return streak
+    if (key.startsWith('course_')) return completedCourses
+    return 0
+  }
+
+  const unlockedKeys = new Set(
+    (recentAchievements || []).map((a: any) => a.achievement_key)
+  )
+
+  const milestones: MilestoneItem[] = Object.values(ACHIEVEMENTS)
+    .filter((a) => {
+      // Only show learning, consistency, completion categories (quantifiable)
+      if (!['learning', 'consistency', 'completion'].includes(a.category))
+        return false
+      const current = getAchievementCurrent(a.key)
+      return current < a.requirement && !unlockedKeys.has(a.key)
+    })
+    .map((a) => {
+      const current = getAchievementCurrent(a.key)
+      return {
+        key: a.key,
+        title: a.title,
+        description: a.description,
+        iconName: a.iconName,
+        category: a.category,
+        requirement: a.requirement,
+        current,
+        progress: Math.min((current / a.requirement) * 100, 100),
+      }
+    })
+    .sort((a, b) => b.progress - a.progress)
+    .slice(0, 4)
+
+  // ── Recent activity feed ────────────────────────────────────────
+  // Build item → course name lookup
+  const itemToCourse = new Map<string, { title: string; slug: string }>()
+  for (const enrollment of enrollments || []) {
+    const course = enrollment.course as any
+    if (!course) continue
+    for (const section of course.course_sections || []) {
+      for (const cls of section.classes || []) {
+        for (const item of cls.items || []) {
+          itemToCourse.set(item.id, {
+            title: course.title,
+            slug: course.slug,
+          })
+        }
+      }
+    }
+  }
+
+  const recentCompletions: RecentActivityItem[] = progressData
+    .filter((p) => p.completed && p.completed_at)
+    .sort(
+      (a, b) =>
+        new Date(b.completed_at).getTime() -
+        new Date(a.completed_at).getTime()
+    )
+    .slice(0, 6)
+    .map((p, i) => {
+      const courseInfo = itemToCourse.get(p.class_item_id)
+      return {
+        id: `completion-${i}`,
+        type: 'lesson_completed' as const,
+        title: 'Completed a lesson',
+        subtitle: courseInfo?.title || null,
+        timestamp: p.completed_at,
+        iconName: 'CheckCircle',
+      }
+    })
+
+  const recentAchievementActivities: RecentActivityItem[] = (
+    recentAchievements || []
+  ).map((a: any, i: number) => {
+    const def = ACHIEVEMENTS[a.achievement_key]
+    return {
+      id: `achievement-${i}`,
+      type: 'achievement_earned' as const,
+      title: def?.title || a.achievement_key,
+      subtitle: def?.description || 'Achievement unlocked',
+      timestamp: a.unlocked_at,
+      iconName: 'Trophy',
+    }
+  })
+
+  // Merge and sort by timestamp, take 8
+  const activities: RecentActivityItem[] = [
+    ...recentCompletions,
+    ...recentAchievementActivities,
+  ]
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+    .slice(0, 8)
+
+  // ── Render ──────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
-      {/* Hero Row: Continue Learning + Stats */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-        {/* Continue Learning Hero */}
-        {continueData ? (
-          <div className="relative overflow-hidden rounded-xl min-h-[260px] flex items-end">
-            {/* Background image */}
-            {continueData.courseThumbnail && (
-              <img
-                src={continueData.courseThumbnail}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            )}
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
-            {/* Content */}
-            <div className="relative z-10 p-6 w-full">
-              <Badge className="mb-3 bg-primary/20 text-primary border-0 backdrop-blur-sm">
-                <Play className="h-3 w-3 mr-1 fill-current" />
-                Continue Learning
-              </Badge>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">{continueData.courseTitle}</h2>
-              <Button asChild size="lg">
-                <Link href={`/dashboard/course/${continueData.courseSlug}/class/${continueData.classId}`}>
-                  <Play className="h-4 w-4 mr-2 fill-current" />
-                  Resume Lesson
-                </Link>
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <StartLearningCard courses={allCourses || []} />
-        )}
+    <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-6">
+      {/* ── Main column ────────────────────────────────────────── */}
+      <div className="space-y-6">
+        {/* 1. Welcome + Weekly Summary */}
+        <WelcomeSummary
+          name={profile?.full_name || null}
+          streak={streak}
+          itemsCompletedThisWeek={itemsCompletedThisWeek}
+          closestCourse={closestCourse}
+        />
 
-        {/* Stats Strip */}
-        <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between">
-          <div className="flex items-center gap-3 pb-4 border-b border-border">
-            <div className={`p-2 rounded-lg ${streak > 0 ? 'bg-orange-500/15' : 'bg-muted'}`}>
-              <Flame className={`h-5 w-5 ${streak > 0 ? 'text-orange-500 fill-orange-500' : 'text-muted-foreground'}`} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{streak}</p>
-              <p className="text-xs text-muted-foreground">Day Streak</p>
-            </div>
-          </div>
+        {/* 2. Continue Learning Hero */}
+        <ContinueLearningHero continueData={continueData} />
 
-          <div className="flex items-center gap-3 py-4 border-b border-border">
-            <div className="p-2 rounded-lg bg-emerald-500/15">
-              <Trophy className="h-5 w-5 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{totalLessonsCompleted || 0}</p>
-              <p className="text-xs text-muted-foreground">Lessons Done</p>
-            </div>
-          </div>
+        {/* 3. Quick Actions — mobile only (grid variant) */}
+        <div className="lg:hidden">
+          <QuickActions variant="grid" />
+        </div>
 
-          <div className="flex items-center gap-3 py-4 border-b border-border">
-            <div className="p-2 rounded-lg bg-amber-500/15">
-              <Award className="h-5 w-5 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{achievementsCount || 0}</p>
-              <p className="text-xs text-muted-foreground">Achievements</p>
-            </div>
-          </div>
+        {/* 4. My Courses */}
+        <MyCoursesSection courses={myCoursesArray} />
 
-          <div className="flex items-center gap-3 pt-4">
-            <div className="p-2 rounded-lg bg-blue-500/15">
-              <BookOpen className="h-5 w-5 text-blue-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{coursesInProgress}</p>
-              <p className="text-xs text-muted-foreground">Active Courses</p>
-            </div>
-          </div>
+        {/* 5. Learning Milestones — mobile only (cards variant) */}
+        <div className="lg:hidden">
+          <LearningMilestones milestones={milestones} variant="cards" />
+        </div>
+
+        {/* 6. Recommended + Featured */}
+        <RecommendedFeatured
+          recommendedCourses={(recommendedCourses || []) as any}
+          newCourseIds={newCourseIds}
+          featuredTeacher={featuredTeacher || null}
+          allCourses={(allCourses || []) as any}
+        />
+
+        {/* 7. Recent Activity — mobile only */}
+        <div className="lg:hidden">
+          <RecentActivity activities={activities} />
+        </div>
+
+        {/* 8. Subscription CTA — mobile only */}
+        <div className="lg:hidden">
+          <SubscriptionCta hasSubscription={!!subscription?.status} />
         </div>
       </div>
 
-      {/* My Courses Row */}
-      {myCoursesArray.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">My Courses</h2>
-            <Link href="/dashboard/my-courses">
-              <Button variant="ghost" size="sm" className="text-xs">
-                View All <ArrowRight className="h-3 w-3 ml-1" />
-              </Button>
-            </Link>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {myCoursesArray.slice(0, 3).map(({ course, total, completed }) => {
-              const progress = total > 0 ? Math.round((completed / total) * 100) : 0
-              return (
-                <Link key={course.id} href={`/dashboard/course/${course.slug}`} className="block group">
-                  <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-4 hover:bg-secondary/50 transition-colors">
-                    <div className="h-16 w-16 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                      {course.thumbnail_url ? (
-                        <img src={course.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                          <BookOpen className="h-6 w-6 text-primary" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-                        {course.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Progress value={progress} className="h-1.5 flex-1" />
-                        <span className="text-xs text-muted-foreground">{progress}%</span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      {/* ── Sidebar (desktop only) ─────────────────────────────── */}
+      <aside className="hidden lg:block">
+        <div className="lg:sticky lg:top-20 max-h-[calc(100vh-5rem)] overflow-y-auto space-y-6">
+          {/* Quick Actions — list variant */}
+          <QuickActions variant="list" />
 
-      {/* Recommended Courses */}
-      {recommendedCourses && recommendedCourses.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Recommended For You</h2>
-            <Link href="/dashboard/courses">
-              <Button variant="ghost" size="sm" className="text-xs">
-                View All <ArrowRight className="h-3 w-3 ml-1" />
-              </Button>
-            </Link>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {recommendedCourses.map((course: any) => (
-              <Link key={course.id} href={`/dashboard/course/${course.slug}`} className="group block">
-                <div className="bg-card border border-border rounded-xl overflow-hidden hover:brightness-110 transition-all">
-                  <div className="aspect-[4/3] bg-muted relative overflow-hidden">
-                    {course.thumbnail_url ? (
-                      <img src={course.thumbnail_url} alt={course.title} className="object-cover w-full h-full" />
-                    ) : (
-                      <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                        <BookOpen className="h-8 w-8 text-primary/50" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    {course.musical_style?.name && (
-                      <Badge variant="outline" className="mb-2 text-xs border-border">
-                        {course.musical_style.name}
-                      </Badge>
-                    )}
-                    <h3 className="font-semibold text-sm line-clamp-1">
-                      {course.title}
-                    </h3>
-                    {course.teacher?.name && (
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {course.teacher.name}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+          {/* Daily Practice Tip */}
+          <DailyPracticeTip />
 
-      {/* Subscription CTA */}
-      {!subscription?.status && (
-        <div className="bg-card border border-border rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-l-4 border-l-primary">
-          <div>
-            <h3 className="font-bold text-lg mb-1">Unlock All Courses</h3>
-            <p className="text-muted-foreground text-sm">
-              Get unlimited access to all lessons, teacher feedback, and exclusive content.
-            </p>
-          </div>
-          <Button asChild size="lg" className="flex-shrink-0 w-full sm:w-auto">
-            <Link href="/pricing">
-              Upgrade Now
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Link>
-          </Button>
+          {/* Learning Milestones — compact variant */}
+          <LearningMilestones milestones={milestones} variant="compact" />
+
+          {/* Featured Teacher Spotlight */}
+          {featuredTeacher && (
+            <FeaturedTeacherSpotlight teacher={featuredTeacher} />
+          )}
+
+          {/* Recent Activity — 5 items */}
+          <RecentActivity activities={activities} maxItems={5} />
+
+          {/* Subscription CTA — sidebar variant */}
+          <SubscriptionCta
+            hasSubscription={!!subscription?.status}
+            variant="sidebar"
+          />
         </div>
-      )}
+      </aside>
     </div>
   )
 }

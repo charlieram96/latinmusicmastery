@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 
 export default function MyCoursesLoading() {
   return (
@@ -21,38 +21,43 @@ export default function MyCoursesLoading() {
       </div>
 
       {/* Courses Grid Skeleton */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Card key={i} className="overflow-hidden">
-            <div className="relative aspect-video">
-              <Skeleton className="h-full w-full" />
-              {/* Progress Ring Placeholder */}
-              <div className="absolute bottom-3 right-3">
-                <Skeleton className="h-14 w-14 rounded-full" />
-              </div>
-              {/* Status Badge Placeholder */}
-              <div className="absolute top-3 left-3">
-                <Skeleton className="h-6 w-24" />
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {Array.from({ length: 10 }, (_, i) => i + 1).map((i) => (
+          <Card key={i} className="overflow-hidden p-0 gap-0 relative">
+            {/* Left accent stripe */}
+            <div className="absolute left-0 top-0 bottom-0 w-0.5">
+              <Skeleton className="h-full w-full rounded-none" />
+            </div>
+
+            {/* Thumbnail */}
+            <div className="relative aspect-[4/3]">
+              <Skeleton className="h-full w-full rounded-none" />
+              {/* Progress ring placeholder */}
+              <div className="absolute bottom-1.5 right-1.5">
+                <Skeleton className="h-10 w-10 rounded-full" />
               </div>
             </div>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Skeleton className="h-5 w-16" />
-                <Skeleton className="h-4 w-12" />
+
+            {/* Content */}
+            <div className="p-2.5">
+              {/* Teacher row */}
+              <div className="flex items-center gap-1.5 mb-1">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-2.5 w-16" />
               </div>
-              <Skeleton className="h-5 w-full mb-2" />
-              <div className="mb-3">
-                <Skeleton className="h-1.5 w-full rounded-full" />
-                <Skeleton className="h-3 w-32 mt-1.5" />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-6 w-6 rounded-full" />
-                  <Skeleton className="h-3 w-20" />
-                </div>
-                <Skeleton className="h-7 w-20" />
-              </div>
-            </CardContent>
+
+              {/* Title */}
+              <Skeleton className="h-3 w-full mb-1" />
+              <Skeleton className="h-3 w-3/4 mb-1.5" />
+
+              {/* Module line */}
+              <Skeleton className="h-2.5 w-12 mb-1" />
+              <Skeleton className="h-2.5 w-4/5 mb-1.5" />
+
+              {/* Thin progress bar */}
+              <Skeleton className="h-0.5 w-full rounded-full" />
+              <Skeleton className="h-2 w-14 mt-1" />
+            </div>
           </Card>
         ))}
       </div>

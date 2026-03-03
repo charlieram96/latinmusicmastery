@@ -16,6 +16,7 @@ import {
   Video,
   Users,
   CreditCard,
+  Drum,
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
@@ -48,6 +49,7 @@ const connectNavItems = [
 
 const toolsNavItems = [
   { title: 'Tuner', href: '/dashboard/tuner', icon: AudioWaveform },
+  { title: 'Play Sense', href: '/dashboard/play-sense', icon: Drum },
 ]
 
 const settingsNavItems = [

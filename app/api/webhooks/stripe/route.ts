@@ -43,22 +43,50 @@ export async function POST(request: NextRequest) {
 
           // Get subscription details
           const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+          const planType = subscription.metadata?.plan_type || 'all_access'
+          const instrument = subscription.metadata?.instrument || null
 
-          // Create or update subscription record
+          // Upsert keyed on stripe_subscription_id
           const { error } = await supabaseAdmin
             .from('subscriptions')
-            .upsert({
-              user_id: userId,
-              stripe_customer_id: customerId,
-              stripe_subscription_id: subscriptionId,
-              status: subscription.status as 'active' | 'canceled' | 'past_due' | 'incomplete',
-              current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
-              current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
-              cancel_at_period_end: subscription.cancel_at_period_end,
-            })
+            .upsert(
+              {
+                user_id: userId,
+                stripe_customer_id: customerId,
+                stripe_subscription_id: subscriptionId,
+                status: subscription.status as 'active' | 'canceled' | 'past_due' | 'incomplete',
+                current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+                current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
+                cancel_at_period_end: subscription.cancel_at_period_end,
+                plan_type: planType,
+                instrument: instrument,
+              },
+              { onConflict: 'stripe_subscription_id' }
+            )
 
           if (error) {
             console.error('Error creating subscription:', error)
+          }
+
+          // Auto-cancel instrument subscriptions when upgrading to all-access
+          if (planType === 'all_access') {
+            const { data: instrumentSubs } = await supabaseAdmin
+              .from('subscriptions')
+              .select('stripe_subscription_id')
+              .eq('user_id', userId)
+              .eq('plan_type', 'instrument')
+              .eq('status', 'active')
+
+            if (instrumentSubs && instrumentSubs.length > 0) {
+              for (const sub of instrumentSubs) {
+                try {
+                  await stripe.subscriptions.cancel(sub.stripe_subscription_id)
+                  console.log(`Canceled instrument subscription ${sub.stripe_subscription_id} for user ${userId}`)
+                } catch (cancelError) {
+                  console.error(`Failed to cancel instrument subscription ${sub.stripe_subscription_id}:`, cancelError)
+                }
+              }
+            }
           }
         }
         break

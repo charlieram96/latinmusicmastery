@@ -4,11 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, BookOpen, User, Music, Globe, Disc3, Pencil } from 'lucide-react'
+import { getInstrumentColor, SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
 
-export default async function CoursesPage() {
+interface PageProps {
+  searchParams: Promise<{
+    instrument?: string
+  }>
+}
+
+export default async function CoursesPage({ searchParams }: PageProps) {
+  const params = await searchParams
   const supabase = await createClient()
 
-  const { data: courses } = await supabase
+  // Build query
+  let query = supabase
     .from('courses')
     .select(`
       *,
@@ -17,6 +26,25 @@ export default async function CoursesPage() {
       course_sections(id, classes(id, items:class_items(id)))
     `)
     .order('created_at', { ascending: false })
+
+  if (params.instrument) {
+    query = query.eq('instrument', params.instrument)
+  }
+
+  const { data: courses } = await query
+
+  // Get counts per instrument for tab badges
+  const { data: instrumentCounts } = await supabase
+    .from('courses')
+    .select('instrument')
+
+  const countMap = new Map<string, number>()
+  instrumentCounts?.forEach((c: any) => {
+    if (c.instrument) {
+      countMap.set(c.instrument, (countMap.get(c.instrument) || 0) + 1)
+    }
+  })
+  const totalCount = instrumentCounts?.length || 0
 
   const getDifficultyColor = (difficulty: string | null) => {
     switch (difficulty) {
@@ -32,7 +60,6 @@ export default async function CoursesPage() {
   }
 
   const getStyleColor = () => 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
-  const getInstrumentColor = () => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
   const getCountryColor = () => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
 
   return (
@@ -50,6 +77,47 @@ export default async function CoursesPage() {
             Add Course
           </Link>
         </Button>
+      </div>
+
+      {/* Instrument Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-6 scrollbar-hide">
+        <Link
+          href="/admin/courses"
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+            !params.instrument
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+          }`}
+        >
+          All
+          <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+            !params.instrument ? 'bg-primary-foreground/20' : 'bg-background/50'
+          }`}>
+            {totalCount}
+          </span>
+        </Link>
+        {SUBSCRIBABLE_INSTRUMENTS.map((inst) => {
+          const count = countMap.get(inst) || 0
+          const isActive = params.instrument === inst
+          return (
+            <Link
+              key={inst}
+              href={`/admin/courses?instrument=${inst}`}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                isActive
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+              }`}
+            >
+              {inst}
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                isActive ? 'bg-primary-foreground/20' : 'bg-background/50'
+              }`}>
+                {count}
+              </span>
+            </Link>
+          )
+        })}
       </div>
 
       {courses && courses.length > 0 ? (
@@ -98,10 +166,10 @@ export default async function CoursesPage() {
                       {course.musical_style.name}
                     </Badge>
                   )}
-                  {course.teacher?.instrument && (
-                    <Badge variant="outline" className={`text-xs ${getInstrumentColor()}`}>
+                  {course.instrument && !params.instrument && (
+                    <Badge variant="outline" className={`text-xs ${getInstrumentColor(course.instrument)}`}>
                       <Disc3 className="h-3 w-3 mr-1" />
-                      {course.teacher.instrument}
+                      {course.instrument}
                     </Badge>
                   )}
                   {course.musical_style?.country?.name && (
@@ -152,7 +220,9 @@ export default async function CoursesPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Create your first course to start building content.
+              {params.instrument
+                ? `No courses found for ${params.instrument}.`
+                : 'Create your first course to start building content.'}
             </p>
             <Button asChild>
               <Link href="/admin/courses/new">Add Course</Link>
