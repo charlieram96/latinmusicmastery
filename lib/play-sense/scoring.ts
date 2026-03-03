@@ -1,7 +1,9 @@
 import type {
   Difficulty,
   EventResult,
+  ExerciseEvent,
   HitGrade,
+  InstrumentCategory,
   OnsetEvent,
   TimingFeedback,
   AttemptStats,
@@ -9,9 +11,15 @@ import type {
 } from './types'
 import { TOLERANCE_BY_DIFFICULTY, GRADE_POINTS } from './types'
 
-interface ExpectedEvent {
+export interface ExpectedEvent {
   eventIndex: number
   timestamp: number // seconds
+  /** Expected MIDI note number for pitched instruments */
+  expectedPitch?: number
+  /** Expected technique for percussion technique scoring */
+  expectedTechnique?: string
+  /** Expected duration in seconds for sustain scoring */
+  expectedDurationSec?: number
 }
 
 /**
@@ -129,7 +137,7 @@ function gradeHit(absOffsetMs: number, tolerance: ToleranceWindows): HitGrade {
 
 /**
  * Grade a single onset against the nearest expected event in real-time.
- * Used during live play for immediate note coloring.
+ * Supports both percussion (onset-only) and pitched instruments (onset + pitch).
  */
 export function gradeSingleOnset(
   onsetTimestamp: number,
@@ -138,7 +146,10 @@ export function gradeSingleOnset(
   matchedIndices: Set<number>,
   difficulty: Difficulty,
   calibrationOffsetSec: number = 0,
-  widenMs: number = 0
+  widenMs: number = 0,
+  instrumentCategory: InstrumentCategory = 'percussion',
+  detectedMidiNote?: number | null,
+  detectedFrequency?: number | null
 ): EventResult | null {
   const tolerance = TOLERANCE_BY_DIFFICULTY[difficulty]
   const effectiveTolerance: ToleranceWindows = {
@@ -154,7 +165,7 @@ export function gradeSingleOnset(
   let bestAbsOffset = Infinity
 
   for (let i = 0; i < expectedEvents.length; i++) {
-    if (matchedIndices.has(i)) continue
+    if (matchedIndices.has(expectedEvents[i].eventIndex)) continue
     const expectedMs = expectedEvents[i].timestamp * 1000
     const absOffset = Math.abs(correctedMs - expectedMs)
 
@@ -166,20 +177,57 @@ export function gradeSingleOnset(
 
   if (bestIdx === -1) return null
 
-  const expectedMs = expectedEvents[bestIdx].timestamp * 1000
+  const matched = expectedEvents[bestIdx]
+  const expectedMs = matched.timestamp * 1000
   const offsetMs = correctedMs - expectedMs
-  const grade = gradeHit(Math.abs(offsetMs), effectiveTolerance)
+  let grade = gradeHit(Math.abs(offsetMs), effectiveTolerance)
   const timing: TimingFeedback = offsetMs < -5 ? 'early' : offsetMs > 5 ? 'late' : 'on_time'
 
-  matchedIndices.add(bestIdx)
+  // Pitch scoring for pitched instruments
+  let pitchCorrect: boolean | null = null
+  let pitchCents: number | null = null
+  if (instrumentCategory === 'pitched' && matched.expectedPitch != null && detectedMidiNote != null) {
+    pitchCorrect = detectedMidiNote === matched.expectedPitch
+    if (detectedFrequency != null) {
+      const expectedFreq = 440 * Math.pow(2, (matched.expectedPitch - 69) / 12)
+      pitchCents = Math.round(1200 * Math.log2(detectedFrequency / expectedFreq))
+      pitchCents = Math.max(-50, Math.min(50, pitchCents))
+    }
+    // Wrong note degrades the grade
+    if (!pitchCorrect) {
+      grade = grade === 'perfect' || grade === 'good' ? 'ok' : 'miss'
+    }
+  }
+
+  matchedIndices.add(matched.eventIndex)
 
   return {
-    eventIndex: expectedEvents[bestIdx].eventIndex,
+    eventIndex: matched.eventIndex,
     grade,
     offsetMs: Math.round(offsetMs * 100) / 100,
     timing,
     onsetEnergy: onsetEnergy,
+    detectedPitch: detectedFrequency ?? null,
+    pitchCorrect,
+    pitchCents,
   }
+}
+
+/**
+ * Convert a frequency in Hz to the nearest MIDI note number.
+ */
+export function frequencyToMidi(freq: number): number {
+  return Math.round(69 + 12 * Math.log2(freq / 440))
+}
+
+/**
+ * Convert a MIDI note number to a note name (e.g. 60 → 'C4').
+ */
+export function midiToNoteName(midi: number): string {
+  const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+  const note = names[((midi % 12) + 12) % 12]
+  const octave = Math.floor((midi - 12) / 12)
+  return `${note}${octave}`
 }
 
 /**
@@ -225,8 +273,12 @@ export function computeStats(
     totalScore += GRADE_POINTS[result.grade] * multiplier
   }
 
-  // Normalize to 0-100
-  const maxPossibleScore = totalEvents * GRADE_POINTS.perfect * 4
+  // Normalize to 0-100: simulate a perfect run with the same combo ramp-up
+  let maxPossibleScore = 0
+  for (let i = 0; i < totalEvents; i++) {
+    const maxMultiplier = Math.min(Math.floor((i + 1) / 10) + 1, 4)
+    maxPossibleScore += GRADE_POINTS.perfect * maxMultiplier
+  }
   const score = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0
 
   // Average offset (excluding misses)

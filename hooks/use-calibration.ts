@@ -12,7 +12,7 @@ interface UseCalibrationResult {
   isCalibrating: boolean
   calibrationBeat: number
   totalCalibrationBeats: number
-  startCalibration: (audioContext: AudioContext) => void
+  startCalibration: (audioContext: AudioContext, onsetWorkletNode?: AudioWorkletNode | null) => void
   cancelCalibration: () => void
   loadStoredCalibration: () => CalibrationData | null
   clearCalibration: () => void
@@ -122,7 +122,7 @@ export function useCalibration(): UseCalibrationResult {
     return data
   }, [])
 
-  const startCalibration = useCallback((audioContext: AudioContext) => {
+  const startCalibration = useCallback((audioContext: AudioContext, onsetWorkletNode?: AudioWorkletNode | null) => {
     audioCtxRef.current = audioContext
     setIsCalibrating(true)
     setCalibrationBeat(0)
@@ -172,12 +172,9 @@ export function useCalibration(): UseCalibrationResult {
     }
     expectedTimesRef.current = expectedTimes
 
-    // Listen for onset events from the worklet
-    // We need to find the existing worklet node from the audio graph
-    // The onset detection hook manages this, so we listen on it
-    const nodes = (audioContext as AudioContext & { _onsetWorkletNode?: AudioWorkletNode })._onsetWorkletNode
-    if (nodes) {
-      workletNodeRef.current = nodes
+    // Listen for onset events from the worklet node passed in by the session hook
+    if (onsetWorkletNode) {
+      workletNodeRef.current = onsetWorkletNode
       const handler = (e: MessageEvent) => {
         if (e.data.type === 'onset') {
           onsetsRef.current.push({
@@ -187,7 +184,7 @@ export function useCalibration(): UseCalibrationResult {
         }
       }
       onsetHandlerRef.current = handler
-      nodes.port.addEventListener('message', handler)
+      onsetWorkletNode.port.addEventListener('message', handler)
     }
 
     // Track beats for UI

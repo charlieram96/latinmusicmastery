@@ -161,6 +161,14 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
                 <SelectItem value="clave">Clave</SelectItem>
                 <SelectItem value="cowbell">Cowbell</SelectItem>
                 <SelectItem value="guiro">Guiro</SelectItem>
+                <SelectItem value="guitar">Guitar</SelectItem>
+                <SelectItem value="bass">Bass</SelectItem>
+                <SelectItem value="piano">Piano</SelectItem>
+                <SelectItem value="tres">Tres</SelectItem>
+                <SelectItem value="cuatro">Cuatro</SelectItem>
+                <SelectItem value="trumpet">Trumpet</SelectItem>
+                <SelectItem value="saxophone">Saxophone</SelectItem>
+                <SelectItem value="flute">Flute</SelectItem>
               </SelectContent>
             </Select>
           </div>
