@@ -1,25 +1,23 @@
+import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import {
-  BarChart3,
   TrendingUp,
   Users,
   DollarSign,
   BookOpen,
   MessageSquare,
   Clock,
-  CheckCircle
+  CheckCircle,
+  ArrowRight,
 } from 'lucide-react'
 import { getAnalytics } from '@/app/actions/admin'
 
 export default async function AdminAnalyticsPage() {
   const analytics = await getAnalytics()
 
-  // Calculate totals
-  const totalRevenue = analytics.monthlyRevenue.reduce((sum, m) => sum + m.revenue, 0)
   const totalUsers = analytics.userGrowth.reduce((sum, m) => sum + m.users, 0)
-  const currentMonthRevenue = analytics.monthlyRevenue[analytics.monthlyRevenue.length - 1]?.revenue || 0
   const currentMonthUsers = analytics.userGrowth[analytics.userGrowth.length - 1]?.users || 0
 
   return (
@@ -33,19 +31,6 @@ export default async function AdminAnalyticsPage() {
 
       {/* Summary Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="w-4 h-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              ${currentMonthRevenue} this month
-            </p>
-          </CardContent>
-        </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">New Users</CardTitle>
@@ -91,36 +76,24 @@ export default async function AdminAnalyticsPage() {
             </p>
           </CardContent>
         </Card>
+
+        <Link href="/admin/financials" className="block">
+          <Card className="h-full hover:bg-muted/50 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Revenue & Financials</CardTitle>
+              <DollarSign className="w-4 h-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                View financial data
+                <ArrowRight className="w-4 h-4" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2 mb-8">
-        {/* Monthly Revenue Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Monthly Revenue
-            </CardTitle>
-            <CardDescription>Revenue over the last 12 months</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {analytics.monthlyRevenue.slice(-6).map((month) => (
-                <div key={month.month} className="flex items-center gap-4">
-                  <span className="w-20 text-sm text-muted-foreground">{month.month}</span>
-                  <div className="flex-1">
-                    <Progress
-                      value={totalRevenue > 0 ? (month.revenue / totalRevenue) * 100 : 0}
-                      className="h-2"
-                    />
-                  </div>
-                  <span className="w-16 text-sm font-medium text-right">${month.revenue}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* User Growth Chart */}
         <Card>
           <CardHeader>
@@ -147,9 +120,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      <div className="grid gap-6 lg:grid-cols-2 mb-8">
         {/* Course Completion Rates */}
         <Card>
           <CardHeader>
@@ -179,7 +150,9 @@ export default async function AdminAnalyticsPage() {
             )}
           </CardContent>
         </Card>
+      </div>
 
+      <div className="grid gap-6 lg:grid-cols-2 mb-8">
         {/* Popular Lessons */}
         <Card>
           <CardHeader>
@@ -213,47 +186,47 @@ export default async function AdminAnalyticsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Feedback Stats */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            Feedback Overview
-          </CardTitle>
-          <CardDescription>Student feedback request status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="p-4 rounded-lg border text-center">
-              <div className="text-3xl font-bold mb-1">{analytics.feedbackStats.total}</div>
-              <p className="text-sm text-muted-foreground">Total Requests</p>
-            </div>
-            <div className="p-4 rounded-lg border text-center">
-              <div className="flex items-center justify-center gap-2 text-3xl font-bold mb-1 text-yellow-500">
-                <Clock className="w-6 h-6" />
-                {analytics.feedbackStats.pending}
+        {/* Feedback Stats */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5" />
+              Feedback Overview
+            </CardTitle>
+            <CardDescription>Student feedback request status</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 grid-cols-2">
+              <div className="p-4 rounded-lg border text-center">
+                <div className="text-3xl font-bold mb-1">{analytics.feedbackStats.total}</div>
+                <p className="text-sm text-muted-foreground">Total Requests</p>
               </div>
-              <p className="text-sm text-muted-foreground">Pending</p>
-            </div>
-            <div className="p-4 rounded-lg border text-center">
-              <div className="flex items-center justify-center gap-2 text-3xl font-bold mb-1 text-blue-500">
-                <MessageSquare className="w-6 h-6" />
-                {analytics.feedbackStats.inReview}
+              <div className="p-4 rounded-lg border text-center">
+                <div className="flex items-center justify-center gap-2 text-3xl font-bold mb-1 text-yellow-500">
+                  <Clock className="w-6 h-6" />
+                  {analytics.feedbackStats.pending}
+                </div>
+                <p className="text-sm text-muted-foreground">Pending</p>
               </div>
-              <p className="text-sm text-muted-foreground">In Review</p>
-            </div>
-            <div className="p-4 rounded-lg border text-center">
-              <div className="flex items-center justify-center gap-2 text-3xl font-bold mb-1 text-green-500">
-                <CheckCircle className="w-6 h-6" />
-                {analytics.feedbackStats.completed}
+              <div className="p-4 rounded-lg border text-center">
+                <div className="flex items-center justify-center gap-2 text-3xl font-bold mb-1 text-blue-500">
+                  <MessageSquare className="w-6 h-6" />
+                  {analytics.feedbackStats.inReview}
+                </div>
+                <p className="text-sm text-muted-foreground">In Review</p>
               </div>
-              <p className="text-sm text-muted-foreground">Completed</p>
+              <div className="p-4 rounded-lg border text-center">
+                <div className="flex items-center justify-center gap-2 text-3xl font-bold mb-1 text-green-500">
+                  <CheckCircle className="w-6 h-6" />
+                  {analytics.feedbackStats.completed}
+                </div>
+                <p className="text-sm text-muted-foreground">Completed</p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

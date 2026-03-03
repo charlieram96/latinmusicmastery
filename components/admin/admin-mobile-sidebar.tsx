@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3, MessageSquare } from 'lucide-react'
+import { Menu, Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3, MessageSquare, DollarSign, Drum } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
@@ -11,11 +11,13 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: Home },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/admin/financials', label: 'Financials', icon: DollarSign },
   { href: '/admin/feedback', label: 'Feedback', icon: MessageSquare },
   { href: '/admin/countries', label: 'Countries', icon: Globe },
   { href: '/admin/styles', label: 'Musical Styles', icon: Music },
   { href: '/admin/courses', label: 'Courses', icon: BookOpen },
   { href: '/admin/teachers', label: 'Teachers', icon: GraduationCap },
+  { href: '/admin/play-sense', label: 'Play Sense', icon: Drum },
 ]
 
 export function AdminMobileSidebar() {

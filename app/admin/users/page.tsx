@@ -2,29 +2,44 @@ import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Users, Shield, GraduationCap, Search, ChevronRight } from 'lucide-react'
-import { getUsers } from '@/app/actions/admin'
+import { Users, Shield, GraduationCap, ChevronRight, CreditCard, DollarSign, UserX, CalendarClock } from 'lucide-react'
+import { getUsers, getUserStats } from '@/app/actions/admin'
+import { formatCurrency } from '@/lib/pricing'
+import { UserFilters } from '@/components/admin/user-filters'
 
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; page?: string }>
+  searchParams: Promise<{ search?: string; page?: string; status?: string; plan?: string }>
 }) {
   const params = await searchParams
   const search = params.search || ''
   const page = parseInt(params.page || '1')
+  const status = (params.status || 'all') as 'all' | 'subscribed' | 'free'
+  const plan = (params.plan || 'all') as 'all' | 'instrument' | 'all_access'
   const limit = 20
   const offset = (page - 1) * limit
 
-  const { users, total } = await getUsers({
-    search: search || undefined,
-    limit,
-    offset,
-  })
+  const [{ users, total }, stats] = await Promise.all([
+    getUsers({
+      search: search || undefined,
+      subscriptionStatus: status,
+      planType: plan,
+      limit,
+      offset,
+    }),
+    getUserStats(),
+  ])
 
   const totalPages = Math.ceil((total || 0) / limit)
+
+  // Build pagination query string
+  const paginationParams = new URLSearchParams()
+  if (search) paginationParams.set('search', search)
+  if (status !== 'all') paginationParams.set('status', status)
+  if (plan !== 'all') paginationParams.set('plan', plan)
+  const baseQuery = paginationParams.toString()
 
   return (
     <div className="container mx-auto px-6 py-8">
@@ -35,23 +50,53 @@ export default async function AdminUsersPage({
         </p>
       </div>
 
-      {/* Search */}
+      {/* Summary Stats */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="w-4 h-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalUsers}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Active Subscribers</CardTitle>
+            <CreditCard className="w-4 h-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalSubscribers}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.instrumentCount} instrument, {stats.allAccessCount} all-access
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Free Users</CardTitle>
+            <UserX className="w-4 h-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.freeUsers}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">MRR</CardTitle>
+            <DollarSign className="w-4 h-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(stats.mrr)}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
       <Card className="mb-6">
         <CardContent className="pt-6">
-          <form className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  name="search"
-                  placeholder="Search by name or email..."
-                  defaultValue={search}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Button type="submit">Search</Button>
-          </form>
+          <UserFilters />
         </CardContent>
       </Card>
 
@@ -106,12 +151,20 @@ export default async function AdminUsersPage({
                     <div className="flex items-center gap-4">
                       <div className="text-right hidden sm:block">
                         {activeSubs.length > 0 ? (
-                          <div className="flex gap-1 flex-wrap justify-end">
-                            {activeSubs.map((sub: any) => (
-                              <Badge key={sub.id} variant="default" className="text-xs">
-                                {sub.plan_type === 'all_access' ? 'All-Access' : sub.instrument}
-                              </Badge>
-                            ))}
+                          <div className="space-y-1">
+                            <div className="flex gap-1 flex-wrap justify-end">
+                              {activeSubs.map((sub: any) => (
+                                <Badge key={sub.id} variant="default" className="text-xs">
+                                  {sub.plan_type === 'all_access' ? 'All-Access' : sub.plan_type === 'instrument' ? sub.instrument || 'Instrument' : sub.plan_type}
+                                </Badge>
+                              ))}
+                            </div>
+                            {activeSubs[0]?.current_period_end && (
+                              <div className="flex items-center gap-1 justify-end text-xs text-muted-foreground">
+                                <CalendarClock className="w-3 h-3" />
+                                Renews {new Date(activeSubs[0].current_period_end).toLocaleDateString()}
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <Badge variant="outline">Free</Badge>
@@ -135,7 +188,7 @@ export default async function AdminUsersPage({
             <div className="flex justify-center gap-2 mt-6">
               {page > 1 && (
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/users?search=${search}&page=${page - 1}`}>
+                  <Link href={`/admin/users?${baseQuery}${baseQuery ? '&' : ''}page=${page - 1}`}>
                     Previous
                   </Link>
                 </Button>
@@ -145,7 +198,7 @@ export default async function AdminUsersPage({
               </span>
               {page < totalPages && (
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/users?search=${search}&page=${page + 1}`}>
+                  <Link href={`/admin/users?${baseQuery}${baseQuery ? '&' : ''}page=${page + 1}`}>
                     Next
                   </Link>
                 </Button>
