@@ -6,7 +6,6 @@ import type {
   SessionState,
   EventResult,
   AttemptStats,
-  OnsetEvent,
   InstrumentCategory,
 } from '@/lib/play-sense/types'
 import { TOLERANCE_BY_DIFFICULTY, getInstrumentCategory } from '@/lib/play-sense/types'
@@ -38,6 +37,7 @@ interface UseExerciseSessionResult {
   isCalibrating: boolean
   calibrationBeat: number
   totalCalibrationBeats: number
+  calibrationError: string | null
 
   // Backing track
   backingTrackLoading: boolean
@@ -92,6 +92,9 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const lastMissCheckIndexRef = useRef(0)
   const calibrationDataRef = useRef<import('@/lib/play-sense/types').CalibrationData | null>(null)
   const exerciseDifficultyRef = useRef<import('@/lib/play-sense/types').Difficulty>('beginner')
+  // Sustain tracking: maps eventIndex -> { onsetTime, expectedDurationSec }
+  const sustainTrackingRef = useRef<Map<number, { onsetTime: number; expectedDurationSec: number }>>(new Map())
+  const lastInputLevelRef = useRef(0)
 
   const {
     isListening,
@@ -116,11 +119,11 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const backingTrack = useBackingTrack({ audioUrl: exercise?.audioUrl })
 
   // Pitch detection for melodic instruments
-  const instrumentCategory: InstrumentCategory = exercise
-    ? getInstrumentCategory(exercise.instrument)
-    : 'percussion'
   const pitchDetection = usePitchDetection()
+  const pitchDetectionRef = useRef(pitchDetection)
+  pitchDetectionRef.current = pitchDetection
   const instrumentCategoryRef = useRef<InstrumentCategory>('percussion')
+  const pitchFreqRef = useRef<number | null>(null)
 
   // Load stored calibration on mount
   useEffect(() => {
@@ -140,6 +143,16 @@ export function useExerciseSession(): UseExerciseSessionResult {
     }
   }, [exercise])
 
+  // Keep pitch frequency ref in sync so onset processing reads the latest value
+  useEffect(() => {
+    pitchFreqRef.current = pitchDetection.frequency
+  }, [pitchDetection.frequency])
+
+  // Keep input level ref in sync for sustain tracking
+  useEffect(() => {
+    lastInputLevelRef.current = inputLevel
+  }, [inputLevel])
+
   // Process new onsets during playing
   useEffect(() => {
     if (sessionState !== 'playing' || !exercise) return
@@ -155,14 +168,14 @@ export function useExerciseSession(): UseExerciseSessionResult {
     const category = getInstrumentCategory(exercise.instrument)
 
     for (const onset of newOnsets) {
-      // For pitched instruments, use current pitch detection data
-      const detectedMidi = category === 'pitched' && onset.frequency
-        ? frequencyToMidi(onset.frequency)
-        : (category === 'pitched' && pitchDetection.frequency
-          ? frequencyToMidi(pitchDetection.frequency)
-          : undefined)
+      // For pitched instruments, use frequency from onset if available,
+      // otherwise read the latest pitch detection value from ref (avoids stale state)
+      const pitchFreq = onset.frequency ?? pitchFreqRef.current ?? null
+      const detectedMidi = category === 'pitched' && pitchFreq
+        ? frequencyToMidi(pitchFreq)
+        : undefined
       const detectedFreq = category === 'pitched'
-        ? (onset.frequency ?? pitchDetection.frequency ?? undefined)
+        ? (pitchFreq ?? undefined)
         : undefined
 
       const result = gradeSingleOnset(
@@ -179,6 +192,19 @@ export function useExerciseSession(): UseExerciseSessionResult {
       )
 
       if (result) {
+        // Start sustain tracking for pitched instruments with duration > 0
+        if (category === 'pitched') {
+          const matchedExpected = expectedEventsRef.current.find(
+            e => e.eventIndex === result.eventIndex
+          )
+          if (matchedExpected && (matchedExpected as import('@/lib/play-sense/scoring').ExpectedEvent).expectedDurationSec) {
+            sustainTrackingRef.current.set(result.eventIndex, {
+              onsetTime: onset.timestamp,
+              expectedDurationSec: (matchedExpected as import('@/lib/play-sense/scoring').ExpectedEvent).expectedDurationSec!,
+            })
+          }
+        }
+
         eventResultsRef.current = [...eventResultsRef.current, result]
         setEventResults([...eventResultsRef.current])
         setLastHitGrade(result.grade)
@@ -211,6 +237,22 @@ export function useExerciseSession(): UseExerciseSessionResult {
       ? (elapsed % singleLoop) / singleLoop
       : overallProgress
     setPlayheadProgress(progress)
+
+    // Resolve sustain tracking: when input level drops or expected duration passes
+    const SUSTAIN_SILENCE_THRESHOLD = 0.005
+    const currentInputLevel = lastInputLevelRef.current
+    for (const [eventIndex, tracking] of sustainTrackingRef.current.entries()) {
+      const heldSec = currentTime - tracking.onsetTime
+      // Resolve if silence detected or held past 150% of expected duration
+      if (currentInputLevel < SUSTAIN_SILENCE_THRESHOLD || heldSec > tracking.expectedDurationSec * 1.5) {
+        eventResultsRef.current = eventResultsRef.current.map(r =>
+          r.eventIndex === eventIndex
+            ? { ...r, durationHeld: Math.round(heldSec * 100) / 100 }
+            : r
+        )
+        sustainTrackingRef.current.delete(eventIndex)
+      }
+    }
 
     // Detect missed events in real-time: any unmatched event whose ok window has passed
     const calibOffset = (calibrationDataRef.current?.latencyMs || 0) / 1000
@@ -305,8 +347,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
     setAttemptStats(stats)
     setSessionState('results')
     stopListening()
-    pitchDetection.stopListening()
-  }, [metronome, stopListening, backingTrack, pitchDetection])
+    pitchDetectionRef.current.stopListening()
+  }, [metronome, stopListening, backingTrack])
 
   const selectExercise = useCallback((ex: ExerciseDefinition) => {
     setExercise(ex)
@@ -343,6 +385,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     lastProcessedOnsetRef.current = 0
     liveComboRef.current = 0
     lastMissCheckIndexRef.current = 0
+    sustainTrackingRef.current.clear()
     clearOnsets()
 
     // Start mic
@@ -355,7 +398,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
 
     // Start pitch detection for pitched instruments
     if (getInstrumentCategory(exercise.instrument) === 'pitched') {
-      pitchDetection.startListening()
+      pitchDetectionRef.current.startListening()
     }
 
     // Generate expected events
@@ -419,7 +462,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     setEventResults([])
     setAttemptStats(null)
     stopListening()
-    pitchDetection.stopListening()
+    pitchDetectionRef.current.stopListening()
     metronome.stopMetronome()
     backingTrack.stopPlayback()
     if (rafRef.current) {
@@ -430,7 +473,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
       clearInterval(countdownIntervalRef.current)
       countdownIntervalRef.current = null
     }
-  }, [stopListening, pitchDetection, metronome, backingTrack])
+  }, [stopListening, metronome, backingTrack])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -457,6 +500,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     isCalibrating: calibration.isCalibrating,
     calibrationBeat: calibration.calibrationBeat,
     totalCalibrationBeats: calibration.totalCalibrationBeats,
+    calibrationError: calibration.calibrationError,
     backingTrackLoading: backingTrack.isLoading,
     backingTrackLoaded: backingTrack.isLoaded,
     playheadProgress,

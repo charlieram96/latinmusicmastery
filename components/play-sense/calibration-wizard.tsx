@@ -11,6 +11,7 @@ interface CalibrationWizardProps {
   calibrationData: CalibrationData | null
   calibrationBeat: number
   totalCalibrationBeats: number
+  calibrationError: string | null
   onStartCalibration: () => void
   onSkip: () => void
   onClearCalibration: () => void
@@ -21,6 +22,7 @@ export function CalibrationWizard({
   calibrationData,
   calibrationBeat,
   totalCalibrationBeats,
+  calibrationError,
   onStartCalibration,
   onSkip,
   onClearCalibration,
@@ -185,9 +187,16 @@ export function CalibrationWizard({
               exit={{ opacity: 0 }}
               className="space-y-4"
             >
-              <p className="text-sm text-slate-500">
-                Use headphones for best results. The calibration takes about 15 seconds.
-              </p>
+              {calibrationError ? (
+                <div className="flex items-start gap-2 text-left p-3 rounded-lg bg-red-950/30 border border-red-500/20">
+                  <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-red-300">{calibrationError}</p>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">
+                  Use headphones for best results. The calibration takes about 15 seconds.
+                </p>
+              )}
               <div className="flex gap-2 justify-center">
                 <Button
                   variant="outline"
@@ -202,7 +211,7 @@ export function CalibrationWizard({
                   onClick={onStartCalibration}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-0"
                 >
-                  Start Calibration
+                  {calibrationError ? 'Try Again' : 'Start Calibration'}
                 </Button>
               </div>
             </motion.div>

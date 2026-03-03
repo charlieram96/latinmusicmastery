@@ -1,7 +1,6 @@
 import type {
   Difficulty,
   EventResult,
-  ExerciseEvent,
   HitGrade,
   InstrumentCategory,
   OnsetEvent,
@@ -199,6 +198,14 @@ export function gradeSingleOnset(
     }
   }
 
+  // Technique tracking for percussion instruments
+  let techniqueCorrect: boolean | null = null
+  if (instrumentCategory === 'percussion' && matched.expectedTechnique) {
+    // Technique detection from audio requires ML models (future enhancement).
+    // For now, mark as null (unknown) rather than penalizing.
+    techniqueCorrect = null
+  }
+
   matchedIndices.add(matched.eventIndex)
 
   return {
@@ -210,6 +217,7 @@ export function gradeSingleOnset(
     detectedPitch: detectedFrequency ?? null,
     pitchCorrect,
     pitchCents,
+    techniqueCorrect,
   }
 }
 
@@ -279,7 +287,13 @@ export function computeStats(
     const maxMultiplier = Math.min(Math.floor((i + 1) / 10) + 1, 4)
     maxPossibleScore += GRADE_POINTS.perfect * maxMultiplier
   }
-  const score = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0
+  let score = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0
+
+  // Penalize extra hits: each extra hit deducts 2% of the score (min 0)
+  if (extraHits > 0 && score > 0) {
+    const penalty = extraHits * 2
+    score = Math.max(0, score - penalty)
+  }
 
   // Average offset (excluding misses)
   const hitResults = results.filter(r => r.offsetMs !== null)

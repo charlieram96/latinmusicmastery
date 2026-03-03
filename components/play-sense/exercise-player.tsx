@@ -75,12 +75,18 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
     prevEventCountRef.current = count
   }, [session.eventResults.length, session.lastHitGrade, session.sessionState])
 
-  // Edge flash on onset detection
+  // Edge flash on onset detection (use ref + timeout to avoid setState in effect body)
+  const edgeFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     if (session.lastHitGrade && session.sessionState === 'playing') {
-      setEdgeFlash(true)
-      const t = setTimeout(() => setEdgeFlash(false), 150)
-      return () => clearTimeout(t)
+      if (edgeFlashTimerRef.current) clearTimeout(edgeFlashTimerRef.current)
+      edgeFlashTimerRef.current = setTimeout(() => {
+        setEdgeFlash(true)
+        edgeFlashTimerRef.current = setTimeout(() => setEdgeFlash(false), 150)
+      }, 0)
+      return () => {
+        if (edgeFlashTimerRef.current) clearTimeout(edgeFlashTimerRef.current)
+      }
     }
   }, [session.lastHitGrade, session.sessionState, session.eventResults.length])
 
@@ -115,6 +121,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                   calibrationData={session.calibrationData}
                   calibrationBeat={session.calibrationBeat}
                   totalCalibrationBeats={session.totalCalibrationBeats}
+                  calibrationError={session.calibrationError}
                   onStartCalibration={session.startCalibration}
                   onSkip={() => session.startExercise()}
                   onClearCalibration={() => session.startCalibration()}
