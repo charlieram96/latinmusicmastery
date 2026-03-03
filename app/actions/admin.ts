@@ -2,7 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { unstable_cache } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { getStripe } from '@/lib/stripe'
+import { PLAN_PRICES, getPlanPrice } from '@/lib/pricing'
 
 // Countries
 export async function createCountry(formData: FormData) {
@@ -320,6 +323,8 @@ export async function getUsers(options?: {
   search?: string
   isAdmin?: boolean
   isTeacher?: boolean
+  subscriptionStatus?: 'all' | 'subscribed' | 'free'
+  planType?: 'all' | 'instrument' | 'all_access'
   limit?: number
   offset?: number
 }) {
@@ -367,7 +372,55 @@ export async function getUsers(options?: {
     users = users.filter((u: any) => !u.teachers || u.teachers.length === 0)
   }
 
+  // Filter by subscription status
+  if (options?.subscriptionStatus === 'subscribed') {
+    users = users.filter((u: any) =>
+      (u.subscriptions || []).some((s: any) => s.status === 'active')
+    )
+  } else if (options?.subscriptionStatus === 'free') {
+    users = users.filter((u: any) =>
+      !(u.subscriptions || []).some((s: any) => s.status === 'active')
+    )
+  }
+
+  // Filter by plan type
+  if (options?.planType && options.planType !== 'all') {
+    users = users.filter((u: any) =>
+      (u.subscriptions || []).some(
+        (s: any) => s.status === 'active' && s.plan_type === options.planType
+      )
+    )
+  }
+
   return { users, total: count }
+}
+
+export async function getUserStats() {
+  const supabase = await createClient()
+
+  const { data: subscriptions } = await supabase
+    .from('subscriptions')
+    .select('status, plan_type')
+
+  const { count: totalUsers } = await supabase
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+
+  const activeSubs = (subscriptions || []).filter(s => s.status === 'active')
+  const instrumentCount = activeSubs.filter(s => s.plan_type === 'instrument').length
+  const allAccessCount = activeSubs.filter(s => s.plan_type === 'all_access').length
+  const totalSubscribers = activeSubs.length
+  const freeUsers = (totalUsers || 0) - totalSubscribers
+  const mrr = instrumentCount * PLAN_PRICES.instrument + allAccessCount * PLAN_PRICES.all_access
+
+  return {
+    totalUsers: totalUsers || 0,
+    totalSubscribers,
+    instrumentCount,
+    allAccessCount,
+    freeUsers: Math.max(freeUsers, 0),
+    mrr,
+  }
 }
 
 export async function getUser(userId: string) {
@@ -531,6 +584,129 @@ export async function deleteTeacher(id: string) {
   return { success: true }
 }
 
+// === FINANCIALS ===
+
+export const getFinancials = unstable_cache(
+  async () => {
+    const supabase = await createClient()
+
+    // Get all subscriptions
+    const { data: subscriptions } = await supabase
+      .from('subscriptions')
+      .select('id, status, plan_type, instrument, cancel_at_period_end, created_at, current_period_end, user_id, profiles:user_id (full_name, email)')
+      .order('created_at', { ascending: false })
+
+    const allSubs = subscriptions || []
+    const activeSubs = allSubs.filter(s => s.status === 'active')
+    const canceledSubs = allSubs.filter(s => s.status === 'canceled')
+    const pastDueSubs = allSubs.filter(s => s.status === 'past_due')
+    const pendingCancelSubs = activeSubs.filter(s => s.cancel_at_period_end)
+
+    const instrumentActive = activeSubs.filter(s => s.plan_type === 'instrument').length
+    const allAccessActive = activeSubs.filter(s => s.plan_type === 'all_access').length
+    const mrr = instrumentActive * PLAN_PRICES.instrument + allAccessActive * PLAN_PRICES.all_access
+
+    // Fetch real revenue from Stripe invoices (last 12 months)
+    const stripe = getStripe()
+    const now = new Date()
+    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+    const startTimestamp = Math.floor(twelveMonthsAgo.getTime() / 1000)
+
+    let totalStripeRevenue = 0
+    const monthlyRevenue: Record<string, number> = {}
+
+    // Initialize all 12 months
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      monthlyRevenue[key] = 0
+    }
+
+    try {
+      const invoices = await stripe.invoices.list({
+        created: { gte: startTimestamp },
+        status: 'paid',
+        limit: 100,
+      })
+
+      for (const invoice of invoices.data) {
+        const amount = invoice.amount_paid / 100
+        totalStripeRevenue += amount
+        const date = new Date(invoice.created * 1000)
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        if (monthlyRevenue[key] !== undefined) {
+          monthlyRevenue[key] += amount
+        }
+      }
+
+      // Paginate if more than 100
+      if (invoices.has_more) {
+        let lastId = invoices.data[invoices.data.length - 1]?.id
+        while (lastId) {
+          const more = await stripe.invoices.list({
+            created: { gte: startTimestamp },
+            status: 'paid',
+            limit: 100,
+            starting_after: lastId,
+          })
+          for (const invoice of more.data) {
+            const amount = invoice.amount_paid / 100
+            totalStripeRevenue += amount
+            const date = new Date(invoice.created * 1000)
+            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+            if (monthlyRevenue[key] !== undefined) {
+              monthlyRevenue[key] += amount
+            }
+          }
+          if (!more.has_more) break
+          lastId = more.data[more.data.length - 1]?.id
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch Stripe invoices:', error)
+    }
+
+    // Churn: canceled in last 30 days
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const recentCanceled = canceledSubs.filter(s => {
+      if (!s.current_period_end) return false
+      return new Date(s.current_period_end) >= thirtyDaysAgo
+    })
+
+    // Recent subscriptions (last 20)
+    const recentSubs = allSubs.slice(0, 20).map(s => ({
+      id: s.id,
+      status: s.status,
+      planType: s.plan_type,
+      instrument: s.instrument,
+      cancelAtPeriodEnd: s.cancel_at_period_end,
+      createdAt: s.created_at,
+      currentPeriodEnd: s.current_period_end,
+      userName: (s.profiles as any)?.full_name || 'Unknown',
+      userEmail: (s.profiles as any)?.email || '',
+    }))
+
+    return {
+      mrr,
+      totalRevenue: totalStripeRevenue,
+      activeCount: activeSubs.length,
+      instrumentActive,
+      allAccessActive,
+      canceledCount: canceledSubs.length,
+      pastDueCount: pastDueSubs.length,
+      pendingCancelCount: pendingCancelSubs.length,
+      recentChurn: recentCanceled.length,
+      monthlyRevenue: Object.entries(monthlyRevenue).map(([month, revenue]) => ({
+        month,
+        revenue: Math.round(revenue * 100) / 100,
+      })),
+      recentSubs,
+    }
+  },
+  ['admin-financials'],
+  { revalidate: 300 }
+)
+
 // === ANALYTICS ===
 
 export async function getAnalytics() {
@@ -614,31 +790,8 @@ export async function getAnalytics() {
       }
     })
 
-  // Subscriptions over time (last 12 months)
-  const { data: subscriptions } = await supabase
-    .from('subscriptions')
-    .select('created_at, status')
-    .order('created_at')
-
-  const monthlyRevenue: Record<string, { active: number; revenue: number }> = {}
-  const now = new Date()
-
-  for (let i = 11; i >= 0; i--) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-    monthlyRevenue[key] = { active: 0, revenue: 0 }
-  }
-
-  subscriptions?.forEach(sub => {
-    const date = new Date(sub.created_at!)
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-    if (monthlyRevenue[key] && sub.status === 'active') {
-      monthlyRevenue[key].active += 1
-      monthlyRevenue[key].revenue += 29
-    }
-  })
-
   // User growth (users by month)
+  const now = new Date()
   const { data: profiles } = await supabase
     .from('profiles')
     .select('created_at')
@@ -674,10 +827,6 @@ export async function getAnalytics() {
   return {
     courseCompletionRates,
     popularLessons,
-    monthlyRevenue: Object.entries(monthlyRevenue).map(([month, data]) => ({
-      month,
-      ...data,
-    })),
     userGrowth: Object.entries(userGrowth).map(([month, count]) => ({
       month,
       users: count,
