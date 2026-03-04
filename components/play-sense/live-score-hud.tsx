@@ -68,7 +68,7 @@ function AccuracyRing({ accuracy }: { accuracy: number }) {
         </defs>
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-sm font-bold text-slate-200 font-mono">
+        <span className="text-sm font-bold text-foreground font-mono">
           {Math.round(accuracy)}%
         </span>
       </div>
@@ -93,10 +93,10 @@ export function LiveScoreHUD({
 
   const tempoColor =
     Math.abs(tempoDrift) < 15
-      ? 'text-green-400'
+      ? 'text-green-600 dark:text-green-400'
       : Math.abs(tempoDrift) < 30
-        ? 'text-yellow-400'
-        : 'text-red-400'
+        ? 'text-yellow-600 dark:text-yellow-400'
+        : 'text-red-600 dark:text-red-400'
 
   const gradeColor = lastHitGrade
     ? GRADE_COLORS[lastHitGrade as HitGrade] || '#94a3b8'
@@ -130,15 +130,15 @@ export function LiveScoreHUD({
     <div className="space-y-5">
       {/* Score */}
       <div>
-        <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Score</p>
-        <p className="text-3xl font-black font-mono text-slate-100">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Score</p>
+        <p className="text-3xl font-black font-mono text-foreground">
           <AnimatedNumber value={Math.round(score)} suffix="%" />
         </p>
       </div>
 
       {/* Combo with fire */}
       <div>
-        <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Combo</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Combo</p>
         <motion.div
           className="flex items-center gap-2"
           animate={
@@ -156,7 +156,7 @@ export function LiveScoreHUD({
               <Flame
                 className={cn(
                   'w-5 h-5',
-                  comboHigh ? 'text-red-400' : comboMed ? 'text-orange-400' : 'text-yellow-400'
+                  comboHigh ? 'text-red-500 dark:text-red-400' : comboMed ? 'text-orange-500 dark:text-orange-400' : 'text-yellow-500 dark:text-yellow-400'
                 )}
                 style={{
                   filter: comboHigh
@@ -170,7 +170,7 @@ export function LiveScoreHUD({
           )}
           <p className={cn(
             'text-2xl font-black font-mono',
-            comboHigh ? 'text-red-400' : comboMed ? 'text-orange-400' : comboLow ? 'text-yellow-400' : 'text-slate-100'
+            comboHigh ? 'text-red-500 dark:text-red-400' : comboMed ? 'text-orange-500 dark:text-orange-400' : comboLow ? 'text-yellow-500 dark:text-yellow-400' : 'text-foreground'
           )}>
             {combo}x
           </p>
@@ -179,19 +179,19 @@ export function LiveScoreHUD({
 
       {/* Accuracy Ring */}
       <div>
-        <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-2">Accuracy</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Accuracy</p>
         <AccuracyRing accuracy={accuracy} />
       </div>
 
       {/* Tempo */}
       <div>
-        <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Tempo</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Tempo</p>
         <p className={cn('text-sm font-medium', tempoColor)}>{tempoLabel}</p>
       </div>
 
       {/* Last hit grade */}
       <div>
-        <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Last Hit</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Last Hit</p>
         <motion.p
           key={lastHitGrade}
           initial={{ scale: 0.5, opacity: 0 }}
@@ -205,8 +205,8 @@ export function LiveScoreHUD({
 
       {/* Mic level */}
       <div>
-        <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-2">Mic Level</p>
-        <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Mic Level</p>
+        <div className="w-full h-2.5 bg-secondary rounded-full overflow-hidden">
           <motion.div
             className={cn('h-full rounded-full bg-gradient-to-r', meterColor)}
             animate={{ width: `${meterWidth}%` }}

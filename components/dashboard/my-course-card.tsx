@@ -39,8 +39,8 @@ function ProgressRing({ percent, size = 28, strokeWidth = 2.5 }: { percent: numb
         cx={size / 2}
         cy={size / 2}
         r={radius}
-        fill="rgba(0,0,0,0.5)"
-        stroke="rgba(255,255,255,0.2)"
+        fill="hsl(var(--muted))"
+        stroke="hsl(var(--border))"
         strokeWidth={strokeWidth}
       />
       {/* Progress arc */}
@@ -63,7 +63,7 @@ function ProgressRing({ percent, size = 28, strokeWidth = 2.5 }: { percent: numb
         y="50%"
         dominantBaseline="central"
         textAnchor="middle"
-        fill="white"
+        fill="hsl(var(--foreground))"
         fontSize={size * 0.28}
         fontWeight="600"
         className="tabular-nums"

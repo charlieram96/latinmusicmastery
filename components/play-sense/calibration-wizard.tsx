@@ -34,7 +34,7 @@ export function CalibrationWizard({
   const isApproximate = calibrationData && calibrationData.iqrMs > 30
 
   return (
-    <div className="max-w-lg mx-auto bg-slate-900 rounded-2xl border border-slate-700/50 p-6 md:p-8">
+    <div className="max-w-lg mx-auto bg-card rounded-2xl border border-border p-6 md:p-8">
       <div className="text-center space-y-5">
         {/* Icon */}
         <motion.div
@@ -47,8 +47,8 @@ export function CalibrationWizard({
         </motion.div>
 
         <div>
-          <h3 className="text-lg font-semibold text-slate-200">Audio Calibration</h3>
-          <p className="text-sm text-slate-500 mt-1">
+          <h3 className="text-lg font-semibold text-foreground">Audio Calibration</h3>
+          <p className="text-sm text-muted-foreground mt-1">
             Calibrate your mic latency for accurate scoring. Tap along to the metronome clicks.
           </p>
         </div>
@@ -62,14 +62,14 @@ export function CalibrationWizard({
               exit={{ opacity: 0 }}
               className="space-y-4"
             >
-              <p className="text-sm font-medium text-slate-300">
+              <p className="text-sm font-medium text-foreground dark:text-slate-300">
                 {calibrationBeat === 0
                   ? 'Count-in... get ready to tap!'
                   : `Tap along! ${calibrationBeat} / ${totalCalibrationBeats}`}
               </p>
 
               {/* Progress bar */}
-              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-2 bg-secondary rounded-full overflow-hidden">
                 <motion.div
                   className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
                   animate={{ width: `${progress}%` }}
@@ -109,7 +109,7 @@ export function CalibrationWizard({
                     initial={{ scale: 0 }}
                     animate={{
                       scale: 1,
-                      backgroundColor: i < calibrationBeat ? '#3b82f6' : '#334155',
+                      backgroundColor: i < calibrationBeat ? '#3b82f6' : 'hsl(var(--muted))',
                     }}
                     transition={{ delay: i * 0.02 }}
                     className="w-2.5 h-2.5 rounded-full"
@@ -148,9 +148,9 @@ export function CalibrationWizard({
 
               <p className="font-medium text-green-400">Calibrated</p>
 
-              <div className="text-sm text-slate-500 space-y-1">
-                <p>Latency: <span className="font-mono text-slate-300">{calibrationData.latencyMs.toFixed(1)}ms</span></p>
-                <p>Consistency: <span className="font-mono text-slate-300">{calibrationData.iqrMs.toFixed(1)}ms IQR</span></p>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>Latency: <span className="font-mono text-foreground dark:text-slate-300">{calibrationData.latencyMs.toFixed(1)}ms</span></p>
+                <p>Consistency: <span className="font-mono text-foreground dark:text-slate-300">{calibrationData.iqrMs.toFixed(1)}ms IQR</span></p>
               </div>
 
               {isApproximate && (
@@ -165,7 +165,7 @@ export function CalibrationWizard({
                   variant="outline"
                   size="sm"
                   onClick={onClearCalibration}
-                  className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                  className="border-border text-foreground dark:text-slate-300 hover:bg-secondary"
                 >
                   <RotateCcw className="w-3 h-3 mr-1" />
                   Recalibrate
@@ -188,12 +188,12 @@ export function CalibrationWizard({
               className="space-y-4"
             >
               {calibrationError ? (
-                <div className="flex items-start gap-2 text-left p-3 rounded-lg bg-red-950/30 border border-red-500/20">
+                <div className="flex items-start gap-2 text-left p-3 rounded-lg bg-red-100 dark:bg-red-950/30 border border-red-500/20">
                   <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-red-300">{calibrationError}</p>
+                  <p className="text-sm text-red-600 dark:text-red-300">{calibrationError}</p>
                 </div>
               ) : (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   Use headphones for best results. The calibration takes about 15 seconds.
                 </p>
               )}
@@ -202,7 +202,7 @@ export function CalibrationWizard({
                   variant="outline"
                   size="sm"
                   onClick={onSkip}
-                  className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                  className="border-border text-foreground dark:text-slate-300 hover:bg-secondary"
                 >
                   Skip
                 </Button>

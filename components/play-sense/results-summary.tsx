@@ -85,10 +85,10 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
   const showConfetti = stats.score >= 80
 
   const gradeColor =
-    stats.score >= 90 ? 'text-green-400' :
-    stats.score >= 70 ? 'text-yellow-400' :
-    stats.score >= 50 ? 'text-orange-400' :
-    'text-red-400'
+    stats.score >= 90 ? 'text-green-600 dark:text-green-400' :
+    stats.score >= 70 ? 'text-yellow-600 dark:text-yellow-400' :
+    stats.score >= 50 ? 'text-orange-600 dark:text-orange-400' :
+    'text-red-600 dark:text-red-400'
 
   const gradeGlow =
     stats.score >= 90 ? '0 0 40px rgba(34,197,94,0.4)' :
@@ -104,7 +104,7 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
   ]
 
   return (
-    <div className="max-w-2xl mx-auto bg-slate-900 rounded-2xl border border-slate-700/50 p-6 md:p-8 space-y-8 relative overflow-hidden">
+    <div className="max-w-2xl mx-auto bg-card rounded-2xl border border-border p-6 md:p-8 space-y-8 relative overflow-hidden">
       {/* Confetti */}
       {showConfetti && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
@@ -121,8 +121,8 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
         transition={{ delay: 0.1 }}
         className="text-center space-y-2"
       >
-        <h2 className="text-xl font-semibold text-slate-200">{exerciseTitle}</h2>
-        <p className="text-sm text-slate-500 tracking-wider uppercase">Practice Complete</p>
+        <h2 className="text-xl font-semibold text-foreground">{exerciseTitle}</h2>
+        <p className="text-sm text-muted-foreground tracking-wider uppercase">Practice Complete</p>
       </motion.div>
 
       {/* Stars */}
@@ -141,7 +141,7 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
             <Star
               className={cn(
                 'w-8 h-8',
-                i < starCount ? 'text-yellow-400 fill-yellow-400' : 'text-slate-600'
+                i < starCount ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/40'
               )}
               style={i < starCount ? { filter: 'drop-shadow(0 0 8px rgba(234,179,8,0.5))' } : {}}
             />
@@ -170,10 +170,10 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
           transition={{ delay: 0.7 }}
           className="text-center"
         >
-          <p className="text-4xl font-black font-mono text-slate-100">
+          <p className="text-4xl font-black font-mono text-foreground">
             <AnimatedScore target={stats.score} />
           </p>
-          <p className="text-sm text-slate-500 mt-1">Score</p>
+          <p className="text-sm text-muted-foreground mt-1">Score</p>
         </motion.div>
       </div>
 
@@ -184,8 +184,8 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
         transition={{ delay: 0.9 }}
         className="space-y-3"
       >
-        <p className="text-sm font-medium text-slate-400">Hit Distribution</p>
-        <div className="flex h-7 rounded-full overflow-hidden bg-slate-800">
+        <p className="text-sm font-medium text-muted-foreground">Hit Distribution</p>
+        <div className="flex h-7 rounded-full overflow-hidden bg-secondary">
           {hitDistribution.map((item) =>
             item.count > 0 ? (
               <motion.div
@@ -203,7 +203,7 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
             ) : null
           )}
         </div>
-        <div className="flex justify-between text-[10px] text-slate-500">
+        <div className="flex justify-between text-[10px] text-muted-foreground">
           {hitDistribution.map((item) => (
             <span key={item.label} className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
@@ -221,20 +221,20 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
         className="grid grid-cols-2 gap-3"
       >
         {[
-          { icon: Target, color: 'text-blue-400', value: `${stats.accuracy.toFixed(1)}%`, label: 'Accuracy' },
-          { icon: Flame, color: 'text-orange-400', value: `${stats.maxCombo}x`, label: 'Best Combo' },
-          { icon: Zap, color: 'text-yellow-400', value: String(stats.maxStreak), label: 'Perfect Streak' },
-          { icon: Trophy, color: 'text-green-400', value: `${stats.avgOffsetMs > 0 ? '+' : ''}${stats.avgOffsetMs.toFixed(1)}ms`, label: 'Avg Timing' },
+          { icon: Target, color: 'text-blue-600 dark:text-blue-400', value: `${stats.accuracy.toFixed(1)}%`, label: 'Accuracy' },
+          { icon: Flame, color: 'text-orange-600 dark:text-orange-400', value: `${stats.maxCombo}x`, label: 'Best Combo' },
+          { icon: Zap, color: 'text-yellow-600 dark:text-yellow-400', value: String(stats.maxStreak), label: 'Perfect Streak' },
+          { icon: Trophy, color: 'text-green-600 dark:text-green-400', value: `${stats.avgOffsetMs > 0 ? '+' : ''}${stats.avgOffsetMs.toFixed(1)}ms`, label: 'Avg Timing' },
         ].map((stat) => (
           <motion.div
             key={stat.label}
             variants={staggerItem}
-            className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/30"
+            className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border"
           >
             <stat.icon className={cn('w-5 h-5 flex-shrink-0', stat.color)} />
             <div>
-              <p className="text-sm font-bold text-slate-200 font-mono">{stat.value}</p>
-              <p className="text-xs text-slate-500">{stat.label}</p>
+              <p className="text-sm font-bold text-foreground font-mono">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
             </div>
           </motion.div>
         ))}
@@ -248,11 +248,11 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
         className="flex gap-2 flex-wrap"
       >
         {stats.extraHits > 0 && (
-          <span className="text-xs px-2 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700/50">
+          <span className="text-xs px-2 py-1 rounded-full bg-secondary text-muted-foreground border border-border">
             {stats.extraHits} extra hit{stats.extraHits > 1 ? 's' : ''}
           </span>
         )}
-        <span className="text-xs px-2 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700/50">
+        <span className="text-xs px-2 py-1 rounded-full bg-secondary text-muted-foreground border border-border">
           {stats.durationSeconds.toFixed(0)}s duration
         </span>
       </motion.div>
@@ -266,7 +266,7 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
       >
         <Button
           variant="outline"
-          className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-800"
+          className="flex-1 border-border text-foreground dark:text-slate-300 hover:bg-secondary"
           onClick={onRetry}
         >
           <RotateCcw className="w-4 h-4 mr-2" />

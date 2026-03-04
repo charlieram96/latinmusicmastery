@@ -48,8 +48,8 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
   if (exercises.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full py-12 px-4">
-        <Music2 className="w-10 h-10 text-slate-600 mb-3" />
-        <p className="text-sm text-slate-500 text-center">No exercises yet</p>
+        <Music2 className="w-10 h-10 text-muted-foreground mb-3" />
+        <p className="text-sm text-muted-foreground text-center">No exercises yet</p>
       </div>
     )
   }
@@ -57,8 +57,8 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
   return (
     <div className="flex flex-col h-full">
       {/* Playlist header */}
-      <div className="px-4 py-3 border-b border-slate-800/60">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+      <div className="px-4 py-3 border-b border-border">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
           Exercises
         </h3>
       </div>
@@ -68,7 +68,7 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
-        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent"
+        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
       >
         {exercises.map((exercise, index) => {
           const isSelected = selectedExercise?.id === exercise.id
@@ -82,8 +82,8 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
               onClick={() => onSelect(exercise)}
               className={cn(
                 'group flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors duration-150',
-                'hover:bg-white/[0.04]',
-                isSelected && 'bg-white/[0.06]',
+                'hover:bg-black/[0.04] dark:hover:bg-white/[0.04]',
+                isSelected && 'bg-black/[0.06] dark:bg-white/[0.06]',
               )}
             >
               {/* Track number / play icon / equalizer */}
@@ -94,13 +94,13 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
                   <>
                     <span className={cn(
                       'text-xs font-mono tabular-nums group-hover:hidden',
-                      isSelected ? 'text-emerald-400' : 'text-slate-600'
+                      isSelected ? 'text-emerald-400' : 'text-muted-foreground'
                     )}>
                       {index + 1}
                     </span>
                     <Play className={cn(
                       'w-3.5 h-3.5 hidden group-hover:block',
-                      isSelected ? 'text-emerald-400' : 'text-slate-400'
+                      isSelected ? 'text-emerald-400' : 'text-muted-foreground'
                     )} />
                   </>
                 )}
@@ -110,16 +110,16 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
               <div className="flex-1 min-w-0">
                 <p className={cn(
                   'text-sm font-medium truncate',
-                  isSelected ? 'text-emerald-400' : 'text-slate-200'
+                  isSelected ? 'text-emerald-400' : 'text-foreground'
                 )}>
                   {exercise.title}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[11px] text-slate-500 truncate">
+                  <span className="text-[11px] text-muted-foreground truncate">
                     {getInstrumentLabel(exercise.instrument)}
                   </span>
                   {exercise.audioUrl && (
-                    <Volume2 className="w-2.5 h-2.5 text-slate-600 shrink-0" />
+                    <Volume2 className="w-2.5 h-2.5 text-muted-foreground shrink-0" />
                   )}
                 </div>
               </div>
@@ -127,16 +127,16 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
               {/* Difficulty dot */}
               <div className={cn(
                 'w-1.5 h-1.5 rounded-full shrink-0',
-                DIFFICULTY_DOT[exercise.difficulty] || 'bg-slate-600'
+                DIFFICULTY_DOT[exercise.difficulty] || 'bg-muted-foreground'
               )} />
 
               {/* BPM */}
-              <span className="text-[11px] font-mono text-slate-600 tabular-nums w-10 text-right shrink-0">
+              <span className="text-[11px] font-mono text-muted-foreground tabular-nums w-10 text-right shrink-0">
                 {exercise.bpm}
               </span>
 
               {/* Duration */}
-              <span className="text-[11px] font-mono text-slate-600 tabular-nums w-8 text-right shrink-0">
+              <span className="text-[11px] font-mono text-muted-foreground tabular-nums w-8 text-right shrink-0">
                 {formatDuration(duration)}
               </span>
             </motion.div>

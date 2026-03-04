@@ -6,6 +6,7 @@ import { HeaderStreak } from '@/components/dashboard/header-streak-server'
 import { HeaderContinue } from '@/components/dashboard/header-continue-server'
 import { HeaderNotifications } from '@/components/dashboard/header-notifications-server'
 import { DashboardHeaderWrapper } from '@/components/dashboard/dashboard-header-wrapper'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export async function DashboardHeader() {
   const supabase = await createClient()
@@ -48,6 +49,9 @@ export async function DashboardHeader() {
 
           {/* Search Bar */}
           <HeaderSearch />
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
           {/* User Dropdown */}
           <UserNav

@@ -17,10 +17,10 @@ interface ExerciseListProps {
 export function ExerciseList({ exercises, onSelect }: ExerciseListProps) {
   if (exercises.length === 0) {
     return (
-      <div className="bg-slate-900 rounded-2xl border border-slate-700/50 p-10 text-center">
-        <Music className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-        <h3 className="font-medium text-slate-300">No exercises available</h3>
-        <p className="text-sm text-slate-500 mt-1">
+      <div className="bg-card dark:bg-slate-900 rounded-2xl border border-border p-10 text-center">
+        <Music className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+        <h3 className="font-medium text-foreground">No exercises available</h3>
+        <p className="text-sm text-muted-foreground mt-1">
           Check back soon for new percussion exercises.
         </p>
       </div>
@@ -41,11 +41,11 @@ export function ExerciseList({ exercises, onSelect }: ExerciseListProps) {
           whileHover={{ y: -2 }}
           transition={{ duration: 0.2 }}
           className={cn(
-            'group relative bg-slate-900 rounded-xl border p-4 cursor-pointer',
+            'group relative bg-card dark:bg-slate-900 rounded-xl border p-4 cursor-pointer',
             'transition-all duration-200',
-            'hover:shadow-lg hover:shadow-slate-950/50',
-            'hover:border-slate-500/50',
-            DIFFICULTY_BORDER[exercise.difficulty] || 'border-slate-700/50'
+            'hover:shadow-lg hover:shadow-black/10 dark:hover:shadow-slate-950/50',
+            'hover:border-muted-foreground/30',
+            DIFFICULTY_BORDER[exercise.difficulty] || 'border-border'
           )}
           onClick={() => onSelect(exercise)}
         >
@@ -59,13 +59,13 @@ export function ExerciseList({ exercises, onSelect }: ExerciseListProps) {
           <div className="flex items-center justify-between relative">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-medium text-slate-200 truncate">{exercise.title}</h3>
+                <h3 className="font-medium text-foreground truncate">{exercise.title}</h3>
               </div>
-              <p className="text-sm text-slate-500 line-clamp-1">
+              <p className="text-sm text-muted-foreground line-clamp-1">
                 {exercise.description}
               </p>
               <div className="flex items-center gap-2 mt-2">
-                <Badge variant="secondary" className="text-xs bg-slate-800 text-slate-300 border-slate-700">
+                <Badge variant="secondary" className="text-xs">
                   {getInstrumentLabel(exercise.instrument)}
                 </Badge>
                 <Badge
@@ -77,10 +77,10 @@ export function ExerciseList({ exercises, onSelect }: ExerciseListProps) {
                 >
                   {exercise.difficulty}
                 </Badge>
-                <span className="text-xs text-slate-500 font-mono">
+                <span className="text-xs text-muted-foreground font-mono">
                   {exercise.bpm} BPM
                 </span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-muted-foreground">
                   {exercise.measures} bars
                   {exercise.loopCount > 1 ? ` x${exercise.loopCount}` : ''}
                 </span>
@@ -89,7 +89,7 @@ export function ExerciseList({ exercises, onSelect }: ExerciseListProps) {
             <Button
               size="sm"
               variant="ghost"
-              className="ml-3 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-white hover:bg-slate-800"
+              className="ml-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground hover:bg-secondary"
             >
               <Play className="w-4 h-4" />
             </Button>

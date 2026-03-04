@@ -186,21 +186,6 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
           </PopoverContent>
         </Popover>
 
-        {/* Difficulty Select */}
-        <Select
-          value={difficulty}
-          onValueChange={(value) => updateFilters({ difficulty: value || null })}
-        >
-          <SelectTrigger className="w-[140px] h-9 bg-secondary border-0">
-            <SelectValue placeholder="Difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="beginner">Beginner</SelectItem>
-            <SelectItem value="intermediate">Intermediate</SelectItem>
-            <SelectItem value="advanced">Advanced</SelectItem>
-          </SelectContent>
-        </Select>
-
         {/* Style Select */}
         <Select
           value={style}
@@ -215,6 +200,21 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
                 {s.name}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+
+        {/* Difficulty Select */}
+        <Select
+          value={difficulty}
+          onValueChange={(value) => updateFilters({ difficulty: value || null })}
+        >
+          <SelectTrigger className="w-[140px] h-9 bg-secondary border-0">
+            <SelectValue placeholder="Difficulty" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="beginner">Beginner</SelectItem>
+            <SelectItem value="intermediate">Intermediate</SelectItem>
+            <SelectItem value="advanced">Advanced</SelectItem>
           </SelectContent>
         </Select>
 
@@ -248,22 +248,22 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
             </Badge>
           ) : null
         })}
-        {difficulty && (
-          <Badge variant="secondary" className="gap-1 pr-1 capitalize">
-            {difficulty}
+        {style && (
+          <Badge variant="secondary" className="gap-1 pr-1">
+            {style}
             <button
-              onClick={() => updateFilters({ difficulty: null })}
+              onClick={() => updateFilters({ style: null })}
               className="ml-1 hover:bg-background/50 rounded-full p-0.5"
             >
               <X className="h-3 w-3" />
             </button>
           </Badge>
         )}
-        {style && (
-          <Badge variant="secondary" className="gap-1 pr-1">
-            {style}
+        {difficulty && (
+          <Badge variant="secondary" className="gap-1 pr-1 capitalize">
+            {difficulty}
             <button
-              onClick={() => updateFilters({ style: null })}
+              onClick={() => updateFilters({ difficulty: null })}
               className="ml-1 hover:bg-background/50 rounded-full p-0.5"
             >
               <X className="h-3 w-3" />

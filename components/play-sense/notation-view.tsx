@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useCallback, useState } from 'react'
+import { useTheme } from '@/components/theme-provider'
 import type { ExerciseDefinition, EventResult } from '@/lib/play-sense/types'
 import { GRADE_COLORS } from '@/lib/play-sense/types'
 import { groupEventsByMeasure, beatDurationToVexDuration } from '@/lib/play-sense/exercise-utils'
@@ -23,6 +24,9 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
   const totalRenderedHeightRef = useRef(0)
   const [svgReady, setSvgReady] = useState(false)
   const [measuresPerLine, setMeasuresPerLine] = useState(2)
+  const { theme } = useTheme()
+
+  const isDark = theme === 'dark'
 
   // Dynamic measures per line based on container width
   useEffect(() => {
@@ -63,11 +67,19 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     renderer.resize(actualWidth, totalHeight)
     const context = renderer.getContext()
 
-    // Style the SVG for dark theme
+    // Style the SVG
     const svgEl = container.querySelector('svg')
     if (svgEl) {
       svgEl.style.background = 'transparent'
     }
+
+    // Theme-aware colors
+    const staveStyle = isDark
+      ? { fillStyle: '#94a3b8', strokeStyle: '#475569' }
+      : { fillStyle: '#334155', strokeStyle: '#94a3b8' }
+    const noteStyle = isDark
+      ? { fillStyle: '#e2e8f0', strokeStyle: '#e2e8f0' }
+      : { fillStyle: '#1e293b', strokeStyle: '#1e293b' }
 
     const grouped = groupEventsByMeasure(exercise.events, exercise.measures)
     let globalEventIdx = 0
@@ -89,8 +101,8 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
           if (line === 0) firstStaveX = x + stave.getNoteStartX() - x
         }
 
-        // Style stave lines for dark theme
-        stave.setStyle({ fillStyle: '#94a3b8', strokeStyle: '#475569' })
+        // Style stave lines
+        stave.setStyle(staveStyle)
         stave.setContext(context).draw()
 
         if (col === effectiveMeasuresPerLine - 1 || measureNum === exercise.measures) {
@@ -128,8 +140,8 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
             }
           }
 
-          // Light note color for dark background
-          staveNote.setStyle({ fillStyle: '#e2e8f0', strokeStyle: '#e2e8f0' })
+          // Theme-aware note color
+          staveNote.setStyle(noteStyle)
           ;(staveNote as unknown as { _eventIndex: number })._eventIndex = globalEventIdx
 
           notes.push(staveNote)
@@ -167,7 +179,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     })
 
     setSvgReady(true)
-  }, [exercise, measuresPerLine])
+  }, [exercise, measuresPerLine, isDark])
 
   // Render notation on mount and exercise change
   useEffect(() => {
@@ -229,7 +241,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
   }, [playheadProgress, isPlaying])
 
   return (
-    <div className="relative w-full bg-slate-900 rounded-xl border border-slate-700/50 overflow-hidden">
+    <div className="relative w-full bg-card rounded-xl border border-border overflow-hidden">
       {/* CSS for hit pulse animation */}
       <style jsx global>{`
         @keyframes notePulse {

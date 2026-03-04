@@ -74,7 +74,7 @@ export function VisualizationPanel({
   if (!exercise || sessionState === 'idle') {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-center text-slate-600">
+        <div className="text-center text-muted-foreground">
           <Music2 className="w-16 h-16 mx-auto mb-3 opacity-30" />
           <p className="text-sm">Select an exercise to begin</p>
         </div>
@@ -99,7 +99,7 @@ export function VisualizationPanel({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm rounded-xl"
+            className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 dark:bg-slate-950/80 backdrop-blur-sm rounded-xl"
           >
             <div className="text-center">
               <AnimatePresence mode="wait">
@@ -109,7 +109,7 @@ export function VisualizationPanel({
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="text-8xl font-black text-white"
+                  className="text-8xl font-black text-foreground"
                   style={{
                     textShadow: '0 0 40px rgba(59,130,246,0.5), 0 0 80px rgba(147,51,234,0.3)',
                   }}
@@ -121,7 +121,7 @@ export function VisualizationPanel({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="text-sm text-slate-400 mt-4 tracking-widest uppercase"
+                className="text-sm text-muted-foreground mt-4 tracking-widest uppercase"
               >
                 Get ready
               </motion.p>
@@ -170,7 +170,7 @@ export function VisualizationPanel({
             transition={{ delay: 0.2 }}
             className="hidden xl:block"
           >
-            <div className="bg-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-700/30 p-3">
+            <div className="bg-card/60 backdrop-blur-sm rounded-xl border border-border p-3">
               <LiveScoreHUD
                 score={currentScore}
                 combo={currentCombo}
@@ -189,9 +189,9 @@ export function VisualizationPanel({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between xl:hidden p-3 mt-2 bg-slate-900/60 backdrop-blur-sm rounded-lg border border-slate-700/30"
+          className="flex items-center justify-between xl:hidden p-3 mt-2 bg-card/60 backdrop-blur-sm rounded-lg border border-border"
         >
-          <div className="flex items-center gap-4 text-sm font-mono text-slate-200">
+          <div className="flex items-center gap-4 text-sm font-mono text-foreground">
             <span>Score: {Math.round(currentScore)}%</span>
             <span className={cn(
               currentCombo >= 10 && 'text-orange-400',

@@ -63,10 +63,10 @@ export function NowPlayingBar({
       initial="hidden"
       animate="visible"
       exit="exit"
-      className="bg-slate-900/95 backdrop-blur-md border-t border-slate-700/40"
+      className="bg-card/95 backdrop-blur-md border-t border-border"
     >
       {/* Progress bar — thin line at top of bar */}
-      <div className="h-1 w-full bg-slate-800 relative group cursor-pointer">
+      <div className="h-1 w-full bg-secondary relative group cursor-pointer">
         <motion.div
           className="h-full rounded-r-full"
           style={{
@@ -93,25 +93,25 @@ export function NowPlayingBar({
               'w-10 h-10 rounded-md flex items-center justify-center shrink-0',
               isActive
                 ? 'bg-gradient-to-br from-emerald-500/20 to-blue-500/20 border border-emerald-500/30'
-                : 'bg-slate-800 border border-slate-700/50'
+                : 'bg-secondary border border-border'
             )}>
               {exercise.audioUrl ? (
-                <Volume2 className={cn('w-4 h-4', isActive ? 'text-emerald-400' : 'text-slate-500')} />
+                <Volume2 className={cn('w-4 h-4', isActive ? 'text-emerald-400' : 'text-muted-foreground')} />
               ) : (
-                <VolumeX className="w-4 h-4 text-slate-600" />
+                <VolumeX className="w-4 h-4 text-muted-foreground" />
               )}
             </div>
 
             <div className="min-w-0">
-              <p className="text-sm font-medium text-slate-200 truncate">{exercise.title}</p>
+              <p className="text-sm font-medium text-foreground truncate">{exercise.title}</p>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[11px] text-slate-500">{getInstrumentLabel(exercise.instrument)}</span>
-                <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-slate-700 text-slate-500">
+                <span className="text-[11px] text-muted-foreground">{getInstrumentLabel(exercise.instrument)}</span>
+                <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-border text-muted-foreground">
                   {exercise.difficulty}
                 </Badge>
-                <span className="text-[11px] text-slate-600 font-mono">{exercise.bpm} BPM</span>
+                <span className="text-[11px] text-muted-foreground font-mono">{exercise.bpm} BPM</span>
                 {!exercise.audioUrl && (
-                  <span className="text-[10px] text-slate-600">Metronome only</span>
+                  <span className="text-[10px] text-muted-foreground">Metronome only</span>
                 )}
               </div>
             </div>
@@ -121,7 +121,7 @@ export function NowPlayingBar({
           <div className="flex items-center gap-3 shrink-0">
             {/* Time elapsed */}
             {sessionState === 'playing' && (
-              <span className="text-[11px] font-mono text-slate-500 tabular-nums w-8 text-right hidden sm:block">
+              <span className="text-[11px] font-mono text-muted-foreground tabular-nums w-8 text-right hidden sm:block">
                 {formatTime(elapsed)}
               </span>
             )}
@@ -148,7 +148,7 @@ export function NowPlayingBar({
                 variant="outline"
                 size="sm"
                 disabled
-                className="border-slate-600 text-slate-400 rounded-full h-9 w-9 p-0"
+                className="border-border text-muted-foreground rounded-full h-9 w-9 p-0"
               >
                 <Loader2 className="w-4 h-4 animate-spin" />
               </Button>
@@ -158,7 +158,7 @@ export function NowPlayingBar({
               <Button
                 onClick={onStop}
                 size="sm"
-                className="bg-slate-700 hover:bg-slate-600 text-white border-0 rounded-full h-9 w-9 p-0"
+                className="bg-secondary hover:bg-secondary/80 text-foreground border-0 rounded-full h-9 w-9 p-0"
               >
                 <Square className="w-3.5 h-3.5" />
               </Button>
@@ -166,7 +166,7 @@ export function NowPlayingBar({
 
             {/* Time total */}
             {sessionState === 'playing' && (
-              <span className="text-[11px] font-mono text-slate-500 tabular-nums w-8 hidden sm:block">
+              <span className="text-[11px] font-mono text-muted-foreground tabular-nums w-8 hidden sm:block">
                 {formatTime(totalDuration)}
               </span>
             )}
@@ -179,7 +179,7 @@ export function NowPlayingBar({
                 variant="ghost"
                 size="sm"
                 onClick={onCalibrate}
-                className="text-slate-500 hover:text-slate-300 h-8 text-xs hidden sm:flex"
+                className="text-muted-foreground hover:text-foreground h-8 text-xs hidden sm:flex"
               >
                 <Settings2 className="w-3.5 h-3.5 mr-1" />
                 Calibrate
@@ -187,7 +187,7 @@ export function NowPlayingBar({
             )}
 
             {calibrationData && (
-              <span className="text-[10px] text-slate-600 font-mono hidden sm:block">
+              <span className="text-[10px] text-muted-foreground font-mono hidden sm:block">
                 {calibrationData.latencyMs.toFixed(0)}ms
               </span>
             )}
@@ -203,7 +203,7 @@ export function NowPlayingBar({
             )}
 
             {sessionState === 'selecting' && (
-              <div className="flex items-center gap-1 text-slate-600 sm:hidden">
+              <div className="flex items-center gap-1 text-muted-foreground sm:hidden">
                 <Headphones className="w-3 h-3" />
               </div>
             )}

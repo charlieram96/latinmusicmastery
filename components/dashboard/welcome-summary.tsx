@@ -53,7 +53,7 @@ export function WelcomeSummary({
           {/* Streak */}
           <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1.5">
             <Flame className="h-3.5 w-3.5 text-orange-400" />
-            <span className="text-xs font-medium text-orange-300">
+            <span className="text-xs font-medium text-orange-600 dark:text-orange-300">
               {streak} day{streak !== 1 ? 's' : ''} streak
             </span>
           </div>
@@ -61,7 +61,7 @@ export function WelcomeSummary({
           {/* Items completed this week */}
           <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-            <span className="text-xs font-medium text-emerald-300">
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
               {itemsCompletedThisWeek} completed this week
             </span>
           </div>
@@ -70,7 +70,7 @@ export function WelcomeSummary({
           {closestCourse && (
             <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5">
               <BarChart3 className="h-3.5 w-3.5 text-amber-400" />
-              <span className="text-xs font-medium text-amber-300">
+              <span className="text-xs font-medium text-amber-600 dark:text-amber-300">
                 {closestCourse.progress}% {closestCourse.title}
               </span>
             </div>
