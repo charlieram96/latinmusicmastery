@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useState } from 'react'
 
 interface UseMetronomeOptions {
   bpm: number
@@ -22,7 +22,7 @@ interface UseMetronomeResult {
 export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   const { bpm, timeSignature, countInBeats = 4 } = options
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const isPlayingRef = useRef(false)
+  const [isPlaying, setIsPlaying] = useState(false)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const scheduledBeatsRef = useRef(0)
   const nextBeatTimeRef = useRef(0)
@@ -57,7 +57,7 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   const startMetronome = useCallback(
     (audioContext: AudioContext): number => {
       audioCtxRef.current = audioContext
-      isPlayingRef.current = true
+      setIsPlaying(true)
 
       const beatDuration = 60 / bpm
       const beatsPerMeasure = timeSignature[0]
@@ -81,7 +81,7 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
       const scheduleInterval = 25 // 25ms
 
       intervalRef.current = setInterval(() => {
-        if (!audioCtxRef.current || !isPlayingRef.current) return
+        if (!audioCtxRef.current) return
 
         while (nextBeatTimeRef.current < audioCtxRef.current.currentTime + lookahead) {
           const beatInMeasure = scheduledBeatsRef.current % beatsPerMeasure
@@ -99,7 +99,7 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   )
 
   const stopMetronome = useCallback(() => {
-    isPlayingRef.current = false
+    setIsPlaying(false)
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
@@ -111,6 +111,6 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   return {
     startMetronome,
     stopMetronome,
-    isPlaying: isPlayingRef.current,
+    isPlaying,
   }
 }

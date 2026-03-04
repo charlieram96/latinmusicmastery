@@ -1,9 +1,21 @@
-export type Instrument = 'conga' | 'timbale' | 'bongo' | 'clave' | 'cowbell' | 'guiro'
+// Percussion instruments
+export type PercussionInstrument = 'conga' | 'timbale' | 'bongo' | 'clave' | 'cowbell' | 'guiro'
+// Melodic / pitched instruments
+export type PitchedInstrument = 'guitar' | 'bass' | 'piano' | 'tres' | 'cuatro' | 'trumpet' | 'saxophone' | 'flute'
+export type Instrument = PercussionInstrument | PitchedInstrument
+
 export type Technique = 'open' | 'slap' | 'mute' | 'bass' | 'touch' | 'rim' | 'shell' | 'bell' | 'tip' | 'heel'
 export type Hand = 'R' | 'L'
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced'
 export type HitGrade = 'perfect' | 'good' | 'ok' | 'miss'
 export type TimingFeedback = 'early' | 'on_time' | 'late'
+export type InstrumentCategory = 'percussion' | 'pitched'
+
+/** Classify an instrument as percussion or pitched */
+export function getInstrumentCategory(instrument: Instrument): InstrumentCategory {
+  const percussion: Instrument[] = ['conga', 'timbale', 'bongo', 'clave', 'cowbell', 'guiro']
+  return percussion.includes(instrument) ? 'percussion' : 'pitched'
+}
 
 export interface ExerciseEvent {
   /** Beat position: 1-based, supports decimals for subdivisions (1, 1.5, 2, 2.25...) */
@@ -12,16 +24,20 @@ export interface ExerciseEvent {
   measure: number
   /** Instrument producing this event */
   instrument: Instrument
-  /** Technique (MVP: ignored for scoring, stored for future classification) */
+  /** Technique — scored for percussion when technique scoring is enabled */
   technique: Technique
-  /** Which hand (for notation stem direction and future technique analysis) */
+  /** Which hand (for notation stem direction and technique analysis) */
   hand: Hand
-  /** Duration in beats (for notation rendering, not scoring) */
+  /** Duration in beats — scored for pitched instruments (sustain) */
   duration: number
   /** VexFlow note key for staff position */
   vexKey: string
   /** Whether this is an accent (louder expected) */
   accent: boolean
+  /** Expected pitch as MIDI note number (pitched instruments only) */
+  expectedPitch?: number
+  /** Expected note name for display (e.g. 'C4', 'Eb3') */
+  expectedNoteName?: string
 }
 
 export interface ExerciseDefinition {
@@ -45,6 +61,16 @@ export interface EventResult {
   offsetMs: number | null
   timing: TimingFeedback | null
   onsetEnergy: number | null
+  /** Detected pitch in Hz (pitched instruments only) */
+  detectedPitch?: number | null
+  /** Whether the detected pitch matched the expected note */
+  pitchCorrect?: boolean | null
+  /** Cents offset from expected pitch (-50 to +50) */
+  pitchCents?: number | null
+  /** Whether the detected technique matched (percussion) */
+  techniqueCorrect?: boolean | null
+  /** Duration held in beats (pitched instruments) */
+  durationHeld?: number | null
 }
 
 export interface AttemptStats {
@@ -81,6 +107,10 @@ export interface CalibrationData {
 export interface OnsetEvent {
   timestamp: number
   energy: number
+  /** Detected frequency in Hz at onset (pitched instruments) */
+  frequency?: number | null
+  /** Detected MIDI note number at onset */
+  midiNote?: number | null
 }
 
 export interface ToleranceWindows {

@@ -12,7 +12,8 @@ interface UseCalibrationResult {
   isCalibrating: boolean
   calibrationBeat: number
   totalCalibrationBeats: number
-  startCalibration: (audioContext: AudioContext) => void
+  calibrationError: string | null
+  startCalibration: (audioContext: AudioContext, onsetWorkletNode?: AudioWorkletNode | null) => void
   cancelCalibration: () => void
   loadStoredCalibration: () => CalibrationData | null
   clearCalibration: () => void
@@ -22,6 +23,7 @@ export function useCalibration(): UseCalibrationResult {
   const [calibrationData, setCalibrationData] = useState<CalibrationData | null>(null)
   const [isCalibrating, setIsCalibrating] = useState(false)
   const [calibrationBeat, setCalibrationBeat] = useState(0)
+  const [calibrationError, setCalibrationError] = useState<string | null>(null)
 
   const audioCtxRef = useRef<AudioContext | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -64,7 +66,12 @@ export function useCalibration(): UseCalibrationResult {
   }, [])
 
   const computeCalibration = useCallback((expectedTimes: number[], onsets: OnsetEvent[]): CalibrationData | null => {
-    if (onsets.length < 4) return null
+    if (onsets.length < 4) {
+      setCalibrationError(
+        `Not enough taps detected (${onsets.length} of 4 minimum). Make sure your mic is picking up your taps and try again.`
+      )
+      return null
+    }
 
     // For each onset, find the nearest expected beat and compute offset
     const offsets: number[] = []
@@ -84,7 +91,12 @@ export function useCalibration(): UseCalibrationResult {
       }
     }
 
-    if (offsets.length < 4) return null
+    if (offsets.length < 4) {
+      setCalibrationError(
+        `Not enough valid taps detected (${offsets.length} of 4 minimum). Tap more closely to the beat and try again.`
+      )
+      return null
+    }
 
     // Remove outliers (beyond 1.5 * IQR)
     const sorted = [...offsets].sort((a, b) => a - b)
@@ -95,7 +107,12 @@ export function useCalibration(): UseCalibrationResult {
     const upper = q3 + 1.5 * iqr
     const filtered = sorted.filter(o => o >= lower && o <= upper)
 
-    if (filtered.length < 3) return null
+    if (filtered.length < 3) {
+      setCalibrationError(
+        'Tap timing was too inconsistent. Try tapping more steadily with the beat.'
+      )
+      return null
+    }
 
     // Compute median
     const mid = Math.floor(filtered.length / 2)
@@ -122,10 +139,11 @@ export function useCalibration(): UseCalibrationResult {
     return data
   }, [])
 
-  const startCalibration = useCallback((audioContext: AudioContext) => {
+  const startCalibration = useCallback((audioContext: AudioContext, onsetWorkletNode?: AudioWorkletNode | null) => {
     audioCtxRef.current = audioContext
     setIsCalibrating(true)
     setCalibrationBeat(0)
+    setCalibrationError(null)
     beatCountRef.current = 0
     expectedTimesRef.current = []
     onsetsRef.current = []
@@ -172,12 +190,9 @@ export function useCalibration(): UseCalibrationResult {
     }
     expectedTimesRef.current = expectedTimes
 
-    // Listen for onset events from the worklet
-    // We need to find the existing worklet node from the audio graph
-    // The onset detection hook manages this, so we listen on it
-    const nodes = (audioContext as AudioContext & { _onsetWorkletNode?: AudioWorkletNode })._onsetWorkletNode
-    if (nodes) {
-      workletNodeRef.current = nodes
+    // Listen for onset events from the worklet node passed in by the session hook
+    if (onsetWorkletNode) {
+      workletNodeRef.current = onsetWorkletNode
       const handler = (e: MessageEvent) => {
         if (e.data.type === 'onset') {
           onsetsRef.current.push({
@@ -187,7 +202,7 @@ export function useCalibration(): UseCalibrationResult {
         }
       }
       onsetHandlerRef.current = handler
-      nodes.port.addEventListener('message', handler)
+      onsetWorkletNode.port.addEventListener('message', handler)
     }
 
     // Track beats for UI
@@ -213,6 +228,7 @@ export function useCalibration(): UseCalibrationResult {
     isCalibrating,
     calibrationBeat,
     totalCalibrationBeats: CALIBRATION_BEATS,
+    calibrationError,
     startCalibration,
     cancelCalibration,
     loadStoredCalibration,

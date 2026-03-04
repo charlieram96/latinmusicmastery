@@ -28,7 +28,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
   const [floatingGrades, setFloatingGrades] = useState<Array<{ grade: string; id: number }>>([])
   const gradeIdRef = useRef(0)
   const [edgeFlash, setEdgeFlash] = useState(false)
-  const prevLastHitGradeRef = useRef<string | null>(null)
+  const prevEventCountRef = useRef(0)
 
   // Save attempt to Supabase when results are ready
   useEffect(() => {
@@ -58,12 +58,13 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
     }
   }, [session.sessionState, session.attemptStats, session.exercise, session.eventResults])
 
-  // Floating grade labels on hit
+  // Floating grade labels on every new event result
   useEffect(() => {
+    const count = session.eventResults.length
     if (
+      count > prevEventCountRef.current &&
       session.lastHitGrade &&
-      session.sessionState === 'playing' &&
-      session.lastHitGrade !== prevLastHitGradeRef.current
+      session.sessionState === 'playing'
     ) {
       const id = ++gradeIdRef.current
       setFloatingGrades(prev => [...prev.slice(-3), { grade: session.lastHitGrade!, id }])
@@ -71,15 +72,21 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
         setFloatingGrades(prev => prev.filter(g => g.id !== id))
       }, 1100)
     }
-    prevLastHitGradeRef.current = session.lastHitGrade
-  }, [session.lastHitGrade, session.sessionState])
+    prevEventCountRef.current = count
+  }, [session.eventResults.length, session.lastHitGrade, session.sessionState])
 
-  // Edge flash on onset detection
+  // Edge flash on onset detection (use ref + timeout to avoid setState in effect body)
+  const edgeFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     if (session.lastHitGrade && session.sessionState === 'playing') {
-      setEdgeFlash(true)
-      const t = setTimeout(() => setEdgeFlash(false), 150)
-      return () => clearTimeout(t)
+      if (edgeFlashTimerRef.current) clearTimeout(edgeFlashTimerRef.current)
+      edgeFlashTimerRef.current = setTimeout(() => {
+        setEdgeFlash(true)
+        edgeFlashTimerRef.current = setTimeout(() => setEdgeFlash(false), 150)
+      }, 0)
+      return () => {
+        if (edgeFlashTimerRef.current) clearTimeout(edgeFlashTimerRef.current)
+      }
     }
   }, [session.lastHitGrade, session.sessionState, session.eventResults.length])
 
@@ -114,6 +121,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                   calibrationData={session.calibrationData}
                   calibrationBeat={session.calibrationBeat}
                   totalCalibrationBeats={session.totalCalibrationBeats}
+                  calibrationError={session.calibrationError}
                   onStartCalibration={session.startCalibration}
                   onSkip={() => session.startExercise()}
                   onClearCalibration={() => session.startCalibration()}

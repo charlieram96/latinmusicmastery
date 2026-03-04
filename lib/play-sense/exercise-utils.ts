@@ -1,15 +1,18 @@
 import type { ExerciseDefinition, ExerciseEvent } from './types'
+import type { ExpectedEvent } from './scoring'
 
 /**
  * Convert a beat position to a timestamp in seconds relative to exercise start.
  * beat is 1-based, measure is 1-based.
+ * swing (0-100) pushes upbeats (off-eighth-notes) later: 0 = straight, 67 = triplet swing.
  */
 export function beatToTimestamp(
   event: ExerciseEvent,
   bpm: number,
   timeSignature: [number, number],
   loopIndex: number = 0,
-  totalMeasures: number = 0
+  totalMeasures: number = 0,
+  swing: number = 0
 ): number {
   const beatsPerMeasure = timeSignature[0]
   const beatDuration = 60 / bpm
@@ -20,17 +23,31 @@ export function beatToTimestamp(
   const measureOffset = (event.measure - 1) * beatsPerMeasure
   const beatOffset = event.beat - 1
 
-  return (loopOffsetBeats + measureOffset + beatOffset) * beatDuration
+  let timestamp = (loopOffsetBeats + measureOffset + beatOffset) * beatDuration
+
+  // Apply swing: offset upbeat eighth notes (fractional part = 0.5)
+  if (swing > 0) {
+    const fractionalBeat = (event.beat - 1) % 1
+    if (Math.abs(fractionalBeat - 0.5) < 0.01) {
+      // Swing ratio: 0 = 50/50 (straight), 67 = 2:1 (triplet), 100 = fully dotted
+      const swingRatio = swing / 100
+      const swingOffset = swingRatio * beatDuration * 0.5
+      timestamp += swingOffset
+    }
+  }
+
+  return timestamp
 }
 
 /**
  * Generate all expected event timestamps for a full exercise (including loops).
- * Returns array of { eventIndex (in original events), timestamp (seconds) }
+ * Returns ExpectedEvent[] with timing, pitch, technique, and duration data.
  */
 export function generateExpectedTimestamps(
   exercise: ExerciseDefinition
-): Array<{ eventIndex: number; timestamp: number }> {
-  const results: Array<{ eventIndex: number; timestamp: number }> = []
+): ExpectedEvent[] {
+  const results: ExpectedEvent[] = []
+  const beatDuration = 60 / exercise.bpm
 
   for (let loop = 0; loop < exercise.loopCount; loop++) {
     for (let i = 0; i < exercise.events.length; i++) {
@@ -40,9 +57,16 @@ export function generateExpectedTimestamps(
         exercise.bpm,
         exercise.timeSignature,
         loop,
-        exercise.measures
+        exercise.measures,
+        exercise.swing
       )
-      results.push({ eventIndex: results.length, timestamp })
+      results.push({
+        eventIndex: results.length,
+        timestamp,
+        expectedPitch: event.expectedPitch,
+        expectedTechnique: event.technique,
+        expectedDurationSec: event.duration * beatDuration,
+      })
     }
   }
 
@@ -127,6 +151,14 @@ export function getInstrumentLabel(instrument: string): string {
     clave: 'Clave',
     cowbell: 'Cowbell',
     guiro: 'Guiro',
+    guitar: 'Guitar',
+    bass: 'Bass',
+    piano: 'Piano',
+    tres: 'Tres',
+    cuatro: 'Cuatro',
+    trumpet: 'Trumpet',
+    saxophone: 'Saxophone',
+    flute: 'Flute',
   }
   return labels[instrument] || instrument
 }

@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import type { OnsetEvent } from '@/lib/play-sense/types'
-import { ONSET_CONFIG, NOISY_ROOM_CONFIG, type OnsetConfig } from '@/lib/play-sense/onset-config'
+import type { OnsetEvent, Instrument } from '@/lib/play-sense/types'
+import { getInstrumentConfig, type OnsetConfig } from '@/lib/play-sense/onset-config'
 
 interface UseOnsetDetectionOptions {
   noisyRoomMode?: boolean
+  instrument?: Instrument | null
 }
 
 interface UseOnsetDetectionResult {
@@ -15,6 +16,7 @@ interface UseOnsetDetectionResult {
   inputLevel: number
   recentOnsets: OnsetEvent[]
   audioContext: AudioContext | null
+  workletNode: AudioWorkletNode | null
   startListening: () => Promise<AudioContext | null>
   stopListening: () => void
   clearOnsets: () => void
@@ -23,7 +25,7 @@ interface UseOnsetDetectionResult {
 export function useOnsetDetection(
   options: UseOnsetDetectionOptions = {}
 ): UseOnsetDetectionResult {
-  const { noisyRoomMode = false } = options
+  const { noisyRoomMode = false, instrument = null } = options
 
   const [isListening, setIsListening] = useState(false)
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
@@ -99,8 +101,10 @@ export function useOnsetDetection(
       const workletNode = new AudioWorkletNode(audioContext, 'onset-detector-processor')
       workletNodeRef.current = workletNode
 
-      // Send config
-      const config: OnsetConfig = noisyRoomMode ? NOISY_ROOM_CONFIG : ONSET_CONFIG
+      // Send config — use instrument-specific profile when available
+      const config: OnsetConfig = instrument
+        ? getInstrumentConfig(instrument, noisyRoomMode)
+        : getInstrumentConfig('conga', noisyRoomMode)
       workletNode.port.postMessage({ type: 'config', config })
 
       // Listen for messages from worklet
@@ -144,7 +148,7 @@ export function useOnsetDetection(
       stopListening()
       return null
     }
-  }, [noisyRoomMode, stopListening])
+  }, [noisyRoomMode, instrument, stopListening])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -168,6 +172,7 @@ export function useOnsetDetection(
     inputLevel,
     recentOnsets,
     audioContext: audioContextRef.current,
+    workletNode: workletNodeRef.current,
     startListening,
     stopListening,
     clearOnsets,

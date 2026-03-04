@@ -21,6 +21,14 @@ const INSTRUMENT_TECHNIQUES: Record<Instrument, Technique[]> = {
   clave: ['open'],
   cowbell: ['open', 'mute', 'bell'],
   guiro: ['open', 'mute'],
+  guitar: ['open'],
+  bass: ['open'],
+  piano: ['open'],
+  tres: ['open'],
+  cuatro: ['open'],
+  trumpet: ['open'],
+  saxophone: ['open'],
+  flute: ['open'],
 }
 
 // Default vexKey per technique
