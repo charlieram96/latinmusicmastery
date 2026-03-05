@@ -835,6 +835,108 @@ export async function getAnalytics() {
   }
 }
 
+// === INSTRUMENTS ===
+
+export async function getInstruments() {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('instruments')
+    .select(`
+      *,
+      country:countries(id, name),
+      instrument_styles(
+        style:musical_styles(id, name)
+      )
+    `)
+    .order('name')
+
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function createInstrument(formData: FormData) {
+  const supabase = await createClient()
+
+  const countryIdValue = formData.get('country_id') as string
+
+  const data = {
+    name: formData.get('name') as string,
+    slug: formData.get('slug') as string,
+    description: formData.get('description') as string || null,
+    image_url: formData.get('image_url') as string || null,
+    country_id: countryIdValue && countryIdValue !== '' ? countryIdValue : null,
+  }
+
+  const { data: instrument, error } = await supabase
+    .from('instruments')
+    .insert(data)
+    .select('id')
+    .single()
+
+  if (error) throw new Error(error.message)
+
+  // Link styles
+  const styleIds = (formData.get('style_ids') as string || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+
+  if (styleIds.length > 0 && instrument) {
+    await supabase
+      .from('instrument_styles')
+      .insert(styleIds.map(style_id => ({ instrument_id: instrument.id, style_id })))
+  }
+
+  revalidatePath('/admin/instruments')
+  redirect('/admin/instruments')
+}
+
+export async function updateInstrument(id: string, formData: FormData) {
+  const supabase = await createClient()
+
+  const countryIdValue = formData.get('country_id') as string
+
+  const data = {
+    name: formData.get('name') as string,
+    slug: formData.get('slug') as string,
+    description: formData.get('description') as string || null,
+    image_url: formData.get('image_url') as string || null,
+    country_id: countryIdValue && countryIdValue !== '' ? countryIdValue : null,
+  }
+
+  const { error } = await supabase.from('instruments').update(data).eq('id', id)
+  if (error) throw new Error(error.message)
+
+  // Replace styles
+  await supabase.from('instrument_styles').delete().eq('instrument_id', id)
+
+  const styleIds = (formData.get('style_ids') as string || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+
+  if (styleIds.length > 0) {
+    await supabase
+      .from('instrument_styles')
+      .insert(styleIds.map(style_id => ({ instrument_id: id, style_id })))
+  }
+
+  revalidatePath('/admin/instruments')
+  redirect('/admin/instruments')
+}
+
+export async function deleteInstrument(id: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase.from('instruments').delete().eq('id', id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/instruments')
+  return { success: true }
+}
+
 // === FEEDBACK MANAGEMENT (Admin) ===
 
 export async function getAllFeedbackRequests(status?: string) {

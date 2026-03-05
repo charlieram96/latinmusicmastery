@@ -20,7 +20,7 @@ interface ResultsSummaryProps {
 // Confetti particle
 function ConfettiParticle({ index }: { index: number }) {
   const style = useMemo(() => {
-    const colors = ['#22c55e', '#3b82f6', '#eab308', '#ec4899', '#8b5cf6', '#f97316']
+    const colors = ['#22c55e', '#3b82f6', '#eab308', '#ec4899', '#D4A854', '#C4654A', '#8b5cf6', '#f97316']
     const color = colors[index % colors.length]
     const left = Math.random() * 100
     const delay = Math.random() * 0.8

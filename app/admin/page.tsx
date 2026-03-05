@@ -1,171 +1,198 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Globe, Music, BookOpen, FileText, Dumbbell, Users } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import {
+  Globe, Music, BookOpen, Users, DollarSign, CreditCard,
+  BarChart3, GraduationCap, Drum, Guitar, Dumbbell, ArrowRight,
+} from 'lucide-react'
+import { getUserStats } from '@/app/actions/admin'
+import { formatCurrency } from '@/lib/pricing'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
 
-  // Get counts for all entities
   const [
     { count: countriesCount },
     { count: stylesCount },
     { count: coursesCount },
-    { count: modulesCount },
     { count: exercisesCount },
-    { count: usersCount },
+    stats,
+    { data: recentUsers },
   ] = await Promise.all([
     supabase.from('countries').select('*', { count: 'exact', head: true }),
     supabase.from('musical_styles').select('*', { count: 'exact', head: true }),
     supabase.from('courses').select('*', { count: 'exact', head: true }),
-    supabase.from('classes').select('*', { count: 'exact', head: true }),
     supabase.from('exercises').select('*', { count: 'exact', head: true }),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    getUserStats(),
+    supabase
+      .from('profiles')
+      .select('*, subscriptions(status, plan_type, instrument)')
+      .order('created_at', { ascending: false })
+      .limit(8),
   ])
 
-  // Get active subscriptions count
-  const { count: activeSubscriptionsCount } = await supabase
-    .from('subscriptions')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active')
-
-  // Get recent users
-  const { data: recentUsers } = await supabase
-    .from('profiles')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(5)
-
-  const stats = [
+  const heroStats = [
     {
-      title: 'Countries',
-      value: countriesCount || 0,
-      icon: Globe,
-      href: '/admin/countries',
-      description: 'Total countries',
+      label: 'Total Users',
+      value: stats.totalUsers,
+      icon: Users,
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
+      href: '/admin/users',
     },
     {
-      title: 'Musical Styles',
-      value: stylesCount || 0,
-      icon: Music,
-      href: '/admin/styles',
-      description: 'Total styles',
+      label: 'Active Subscribers',
+      value: stats.totalSubscribers,
+      icon: CreditCard,
+      color: 'text-green-500',
+      bg: 'bg-green-500/10',
+      href: '/admin/users?status=subscribed',
     },
     {
-      title: 'Courses',
+      label: 'MRR',
+      value: formatCurrency(stats.mrr),
+      icon: DollarSign,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10',
+      href: '/admin/financials',
+    },
+    {
+      label: 'Courses',
       value: coursesCount || 0,
       icon: BookOpen,
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
       href: '/admin/courses',
-      description: 'Total courses',
-    },
-    {
-      title: 'Classes',
-      value: modulesCount || 0,
-      icon: FileText,
-      href: '/admin/courses',
-      description: 'Total classes',
-    },
-    {
-      title: 'Exercises',
-      value: exercisesCount || 0,
-      icon: Dumbbell,
-      href: '/admin/exercises',
-      description: 'Total exercises',
-    },
-    {
-      title: 'Users',
-      value: usersCount || 0,
-      icon: Users,
-      href: '/admin/users',
-      description: 'Total registered users',
     },
   ]
 
+  const quickLinks = [
+    { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, description: 'Growth & engagement' },
+    { href: '/admin/financials', label: 'Financials', icon: DollarSign, description: 'Revenue & billing' },
+    { href: '/admin/feedback', label: 'Feedback', icon: GraduationCap, description: 'Student requests' },
+    { href: '/admin/countries', label: 'Countries', icon: Globe, description: `${countriesCount || 0} countries` },
+    { href: '/admin/styles', label: 'Musical Styles', icon: Music, description: `${stylesCount || 0} styles` },
+    { href: '/admin/instruments', label: 'Instruments', icon: Guitar, description: 'Link styles & countries' },
+    { href: '/admin/play-sense', label: 'Play Sense', icon: Drum, description: 'Percussion exercises' },
+    { href: '/admin/teachers', label: 'Teachers', icon: GraduationCap, description: 'Manage instructors' },
+  ]
+
   return (
-    <div className="container mx-auto px-6 py-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-        <p className="text-muted-foreground">
-          Manage your Latin Music Mastery platform
-        </p>
+        <h1 className="text-4xl font-black tracking-tight mb-1">Dashboard</h1>
+        <p className="text-muted-foreground">Latin Music Mastery platform overview</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-        {stats.map((stat) => {
+      {/* Hero Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {heroStats.map((stat) => {
           const Icon = stat.icon
           return (
-            <Card key={stat.title} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {stat.title}
-                </CardTitle>
-                <Icon className="w-4 h-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
+            <Link
+              key={stat.label}
+              href={stat.href}
+              className="group rounded-xl border bg-card p-5 hover:shadow-md transition-shadow"
+            >
+              <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${stat.bg} mb-3`}>
+                <Icon className={`w-4 h-4 ${stat.color}`} />
+              </div>
+              <div className="text-3xl font-bold mb-0.5">{stat.value}</div>
+              <div className="text-sm text-muted-foreground flex items-center gap-1">
+                {stat.label}
+                <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </Link>
           )
         })}
       </div>
 
-      {/* Additional Stats */}
-      <div className="grid gap-6 md:grid-cols-2 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Subscriptions</CardTitle>
-            <CardDescription>Active paid subscriptions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{activeSubscriptionsCount || 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue Estimate</CardTitle>
-            <CardDescription>Monthly recurring revenue</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              ${((activeSubscriptionsCount || 0) * 29).toLocaleString()}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Users */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Users</CardTitle>
-          <CardDescription>Latest registered users</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Recent Users */}
+        <div className="lg:col-span-2 rounded-xl border bg-card">
+          <div className="flex items-center justify-between px-6 py-4 border-b">
+            <h2 className="font-bold text-lg">Recent Users</h2>
+            <Link href="/admin/users" className="text-xs text-primary hover:underline flex items-center gap-1">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="divide-y">
             {recentUsers && recentUsers.length > 0 ? (
-              recentUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center justify-between p-3 rounded-lg border"
-                >
-                  <div>
-                    <div className="font-medium">{user.full_name || 'No name'}</div>
-                    <div className="text-sm text-muted-foreground">{user.email}</div>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                  </div>
-                </div>
-              ))
+              recentUsers.map((user: any) => {
+                const activeSubs = (user.subscriptions || []).filter((s: any) => s.status === 'active')
+                return (
+                  <Link
+                    key={user.id}
+                    href={`/admin/users/${user.id}`}
+                    className="flex items-center justify-between px-6 py-3.5 hover:bg-muted/50 transition-colors"
+                  >
+                    <div>
+                      <div className="font-medium text-sm">{user.full_name || 'No name'}</div>
+                      <div className="text-xs text-muted-foreground">{user.email}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {activeSubs.length > 0 ? (
+                        <Badge variant="default" className="text-xs">
+                          {activeSubs[0]?.plan_type === 'all_access' ? 'All-Access' : activeSubs[0]?.instrument || 'Subscriber'}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">Free</Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
+                      </span>
+                    </div>
+                  </Link>
+                )
+              })
             ) : (
-              <p className="text-muted-foreground">No users yet</p>
+              <div className="px-6 py-12 text-center text-muted-foreground text-sm">No users yet</div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Platform Health + Quick Links */}
+        <div className="space-y-4">
+          {/* Platform Health */}
+          <div className="rounded-xl border bg-card p-5">
+            <h2 className="font-bold text-lg mb-4">Platform Health</h2>
+            <div className="space-y-3">
+              {[
+                { label: 'Countries', value: countriesCount || 0, icon: Globe },
+                { label: 'Musical Styles', value: stylesCount || 0, icon: Music },
+                { label: 'Courses', value: coursesCount || 0, icon: BookOpen },
+                { label: 'Exercises', value: exercisesCount || 0, icon: Dumbbell },
+              ].map(({ label, value, icon: Icon }) => (
+                <div key={label} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Icon className="w-3.5 h-3.5" />
+                    {label}
+                  </div>
+                  <span className="font-bold text-sm">{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div className="rounded-xl border bg-card p-5">
+            <h2 className="font-bold text-lg mb-4">Quick Access</h2>
+            <div className="grid grid-cols-2 gap-2">
+              {quickLinks.slice(0, 6).map(({ href, label, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex items-center gap-2 rounded-lg p-2.5 text-xs font-medium hover:bg-muted transition-colors"
+                >
+                  <Icon className="w-3.5 h-3.5 text-primary" />
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

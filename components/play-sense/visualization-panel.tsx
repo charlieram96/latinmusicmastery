@@ -12,7 +12,7 @@ import {
   gradeFloat,
   GRADE_LABELS,
 } from '@/lib/play-sense/animations'
-import { Music2 } from 'lucide-react'
+import { Music2, ChevronLeft } from 'lucide-react'
 
 interface VisualizationPanelProps {
   exercise: ExerciseDefinition | null
@@ -70,13 +70,23 @@ export function VisualizationPanel({
   lastHitGrade,
   inputLevel,
 }: VisualizationPanelProps) {
-  // Idle state — instrument illustration
+  // Idle state — instrument illustration with glow
   if (!exercise || sessionState === 'idle') {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-center text-muted-foreground">
-          <Music2 className="w-16 h-16 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Select an exercise to begin</p>
+        <div className="text-center text-muted-foreground relative">
+          <div className="absolute inset-0 -m-8 rounded-full bg-primary/5 blur-2xl" />
+          <motion.div
+            animate={{ opacity: [0.3, 0.5, 0.3] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <Music2 className="w-20 h-20 mx-auto mb-4 relative" />
+          </motion.div>
+          <p className="text-sm relative">Choose an exercise to start practicing</p>
+          <div className="hidden md:flex items-center gap-1 justify-center mt-2 text-xs text-muted-foreground/60 relative">
+            <ChevronLeft className="w-3 h-3" />
+            <span>Pick from the playlist</span>
+          </div>
         </div>
       </div>
     )
@@ -99,7 +109,7 @@ export function VisualizationPanel({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 dark:bg-slate-950/80 backdrop-blur-sm rounded-xl"
+            className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-xl"
           >
             <div className="text-center">
               <AnimatePresence mode="wait">
@@ -149,6 +159,14 @@ export function VisualizationPanel({
         'flex-1 grid gap-4',
         isPlaying ? 'grid-cols-1 xl:grid-cols-[1fr_200px]' : 'grid-cols-1'
       )}>
+        {/* Exercise context bar */}
+        <div className="flex items-center justify-between px-2 mb-2">
+          <span className="text-xs font-medium text-muted-foreground">{exercise.title}</span>
+          <span className="text-xs font-mono text-muted-foreground">
+            {exercise.bpm} BPM &middot; {exercise.timeSignature[0]}/{exercise.timeSignature[1]}
+          </span>
+        </div>
+
         {/* Notation */}
         <div className={cn(
           'min-h-0',

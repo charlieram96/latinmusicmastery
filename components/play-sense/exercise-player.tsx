@@ -110,7 +110,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
             transition={standardTransition}
             className="flex-1 flex flex-col gap-4 p-4"
           >
-            <Button variant="ghost" size="sm" onClick={session.goToSelect} className="self-start text-slate-400 hover:text-slate-200">
+            <Button variant="ghost" size="sm" onClick={session.goToSelect} className="self-start text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-4 h-4 mr-1" />
               Back
             </Button>
@@ -142,7 +142,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
             transition={standardTransition}
             className="flex-1 flex flex-col gap-4 p-4 overflow-y-auto"
           >
-            <Button variant="ghost" size="sm" onClick={session.goToSelect} className="self-start text-slate-400 hover:text-slate-200">
+            <Button variant="ghost" size="sm" onClick={session.goToSelect} className="self-start text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-4 h-4 mr-1" />
               All Exercises
             </Button>
@@ -169,7 +169,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
             <div className="flex-1 flex min-h-0">
               {/* Playlist sidebar — desktop */}
               <div className={cn(
-                'w-[300px] lg:w-[340px] shrink-0 border-r border-slate-800/40 hidden md:flex flex-col',
+                'w-[300px] lg:w-[340px] shrink-0 border-r border-border hidden md:flex flex-col',
                 // On mobile when idle, show full-width playlist
               )}>
                 <PlaylistView
@@ -240,14 +240,14 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-4 mb-4 p-3 rounded-xl border border-red-500/30 bg-red-950/30"
+                className="mx-4 mb-4 p-3 rounded-xl border border-red-500/30 bg-destructive/10"
               >
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm text-slate-300">{session.audioError}</p>
+                    <p className="text-sm text-muted-foreground">{session.audioError}</p>
                     {session.hasPermission === false && (
-                      <p className="text-xs text-slate-400 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Please allow microphone access in your browser settings.
                       </p>
                     )}

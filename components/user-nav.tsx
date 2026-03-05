@@ -53,7 +53,7 @@ export function UserNav({ user, isAdmin }: UserNavProps) {
           <Link href="/courses">My Courses</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/pricing">Subscription</Link>
+          <Link href="/dashboard/subscription">Subscription</Link>
         </DropdownMenuItem>
         {isAdmin && (
           <>

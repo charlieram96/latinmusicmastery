@@ -34,7 +34,6 @@ export interface WelcomeSummaryProps {
   name: string | null
   streak: number
   itemsCompletedThisWeek: number
-  closestCourse: { title: string; progress: number } | null
 }
 
 export interface ContinueLearningHeroProps {

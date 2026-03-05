@@ -39,13 +39,11 @@ export default async function TeachersPage() {
   )
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Teachers</h1>
-          <p className="text-muted-foreground">
-            Manage all instructors
-          </p>
+          <h1 className="text-4xl font-black tracking-tight mb-1">Teachers</h1>
+          <p className="text-muted-foreground">Manage all instructors</p>
         </div>
         <Button asChild>
           <Link href="/admin/teachers/new">

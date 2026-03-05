@@ -40,7 +40,7 @@ export function SubscriptionCta({ hasSubscription, variant = 'default' }: Subscr
               size="sm"
               className="w-full bg-gold hover:bg-gold/90 text-[#161210] font-semibold shadow-lg shadow-black/20"
             >
-              <Link href="/pricing">
+              <Link href="/dashboard/subscribe">
                 Upgrade Now
                 <Sparkles className="h-3.5 w-3.5 ml-1.5" />
               </Link>
@@ -83,7 +83,7 @@ export function SubscriptionCta({ hasSubscription, variant = 'default' }: Subscr
             size="lg"
             className="flex-shrink-0 bg-gold hover:bg-gold/90 text-[#161210] font-semibold shadow-lg shadow-black/20"
           >
-            <Link href="/pricing">
+            <Link href="/dashboard/subscribe">
               Upgrade Now
               <Sparkles className="h-4 w-4 ml-2" />
             </Link>

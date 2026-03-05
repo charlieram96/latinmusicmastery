@@ -43,11 +43,7 @@ export default async function PlaySensePage() {
       </div>
 
       <div className="w-full">
-        <div className="bg-slate-950 rounded-2xl p-4 md:p-6 border border-slate-800/50"
-          style={{
-            background: 'linear-gradient(145deg, rgba(2,6,23,0.95), rgba(15,23,42,0.9))',
-          }}
-        >
+        <div className="bg-card/50 dark:bg-card/80 rounded-2xl p-4 md:p-6 border border-border backdrop-blur-sm">
           <ExercisePlayer exercises={exerciseDefinitions} />
         </div>
       </div>

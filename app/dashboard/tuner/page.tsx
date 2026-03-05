@@ -11,6 +11,7 @@ import {
   ChevronsUp,
   ChevronsDown,
   AlertTriangle,
+  Music,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,35 @@ import { cn } from '@/lib/utils'
 import { usePitchDetection } from '@/hooks/use-pitch-detection'
 
 const REFERENCE_PITCHES = [432, 434, 436, 438, 440, 441, 442, 443, 444]
+
+const TUNABLE_INSTRUMENTS = ['Guitar', 'Bass', 'Piano', 'Violin', 'Tres'] as const
+
+const INSTRUMENT_TUNING_INFO: Record<string, { description: string; strings?: string[] }> = {
+  Guitar: {
+    description: 'Play each open string and tune to match.',
+    strings: ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'],
+  },
+  Bass: {
+    description: 'Play each open string and tune to match.',
+    strings: ['E1', 'A1', 'D2', 'G2'],
+  },
+  Piano: {
+    description: 'Play individual keys and compare to the target pitch. Use for spot-checking after a full tuning.',
+  },
+  Violin: {
+    description: 'Tune each string by bowing or plucking gently.',
+    strings: ['G3', 'D4', 'A4', 'E5'],
+  },
+  Tres: {
+    description: 'Tune each course (doubled strings) to match.',
+    strings: ['G4', 'C4', 'E4'],
+  },
+}
+
+// Arc gauge constants
+const CX = 170
+const CY = 160
+const R = 130
 
 function getTuningStatus(cents: number | null) {
   if (cents === null) return { label: 'Waiting...', icon: AudioWaveform, color: 'text-muted-foreground' }
@@ -47,8 +77,52 @@ function getNoteColor(cents: number | null) {
   return 'text-red-500'
 }
 
+/** Convert cents (-50..+50) to arc angle in degrees (180..0, left-to-right) */
+function centsToAngle(cents: number): number {
+  return 180 - ((cents + 50) / 100) * 180
+}
+
+/** Convert polar angle (degrees) to cartesian coords on the arc */
+function polarToCartesian(angleDeg: number): { x: number; y: number } {
+  const rad = (angleDeg * Math.PI) / 180
+  return { x: CX + R * Math.cos(rad), y: CY - R * Math.sin(rad) }
+}
+
+/** Build an SVG arc path between two cent values */
+function arcPath(startCents: number, endCents: number): string {
+  const a1 = centsToAngle(startCents)
+  const a2 = centsToAngle(endCents)
+  const start = polarToCartesian(a1)
+  const end = polarToCartesian(a2)
+  // arc sweeps clockwise (large-arc=0 since each segment < 180°)
+  return `M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}`
+}
+
+/** Generate tick mark endpoints */
+function tickMark(cents: number, inner: number, outer: number) {
+  const angle = centsToAngle(cents)
+  const rad = (angle * Math.PI) / 180
+  return {
+    x1: CX + inner * Math.cos(rad),
+    y1: CY - inner * Math.sin(rad),
+    x2: CX + outer * Math.cos(rad),
+    y2: CY - outer * Math.sin(rad),
+  }
+}
+
+const ARC_SEGMENTS: { start: number; end: number; color: string }[] = [
+  { start: -50, end: -20, color: '#ef4444' },
+  { start: -20, end: -5, color: '#eab308' },
+  { start: -5, end: 5, color: '#22c55e' },
+  { start: 5, end: 20, color: '#eab308' },
+  { start: 20, end: 50, color: '#ef4444' },
+]
+
+const TICKS = [-50, -25, 0, 25, 50]
+
 export default function TunerPage() {
   const [referencePitch, setReferencePitch] = useState(440)
+  const [selectedInstrument, setSelectedInstrument] = useState('Guitar')
   const {
     frequency,
     note,
@@ -65,8 +139,12 @@ export default function TunerPage() {
   const StatusIcon = tuningStatus.icon
   const noteColor = getNoteColor(cents)
 
-  // Gauge needle position: cents ranges from -50 to +50, map to 0% - 100%
-  const needlePosition = cents !== null ? ((cents + 50) / 100) * 100 : 50
+  // Needle rotation: 0° = straight up (center), ±90° = edges
+  const needleRotation = cents !== null ? (cents / 50) * 90 : 0
+
+  // Needle tip position for the SVG line
+  const needleAngle = centsToAngle(cents ?? 0)
+  const needleTip = polarToCartesian(needleAngle)
 
   return (
     <>
@@ -80,62 +158,128 @@ export default function TunerPage() {
 
       {/* Main Tuner Card */}
       <Card className="max-w-2xl mx-auto p-6 mb-6">
-        {/* Top bar */}
-        <div className="flex items-center justify-between mb-6">
+        {/* Top bar: badge + reference pitch */}
+        <div className="flex items-center justify-between gap-2 mb-6 flex-wrap">
           <Badge variant="secondary">
             <AudioWaveform className="h-3 w-3" />
             Chromatic
           </Badge>
-          <span className="text-sm text-muted-foreground font-mono">
-            A4 = {referencePitch} Hz
-          </span>
-        </div>
-
-        {/* Gauge meter */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-full max-w-lg">
-            {/* Tick labels */}
-            <div className="flex justify-between px-1 mb-1">
-              <span className="text-[10px] text-muted-foreground font-mono">-50</span>
-              <span className="text-[10px] text-muted-foreground font-mono">-25</span>
-              <span className="text-[10px] text-muted-foreground font-mono font-bold">0</span>
-              <span className="text-[10px] text-muted-foreground font-mono">+25</span>
-              <span className="text-[10px] text-muted-foreground font-mono">+50</span>
-            </div>
-
-            {/* Gradient bar with needle */}
-            <div className="relative h-8 rounded-full overflow-hidden bg-muted">
-              {/* Gradient */}
-              <div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  background:
-                    'linear-gradient(to right, #ef4444, #eab308 25%, #22c55e 45%, #22c55e 55%, #eab308 75%, #ef4444)',
-                }}
-              />
-
-              {/* Needle */}
-              <div
-                className="absolute top-0 bottom-0 w-1 bg-white shadow-lg transition-all duration-100 ease-out"
-                style={{
-                  left: `calc(${needlePosition}% - 2px)`,
-                  boxShadow: '0 0 6px rgba(0,0,0,0.5)',
-                }}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select
+              value={selectedInstrument}
+              onValueChange={setSelectedInstrument}
+            >
+              <SelectTrigger className="w-[120px] h-8">
+                <Music className="h-3 w-3 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TUNABLE_INSTRUMENTS.map((inst) => (
+                  <SelectItem key={inst} value={inst}>
+                    {inst}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-muted-foreground">A4 =</label>
+              <Select
+                value={referencePitch.toString()}
+                onValueChange={(val) => setReferencePitch(Number(val))}
               >
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rounded-full shadow-md" />
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rounded-full shadow-md" />
-              </div>
-
-              {/* Center tick */}
-              <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-0.5 bg-white/40" />
-            </div>
-
-            {/* Flat / Sharp labels */}
-            <div className="flex justify-between px-1 mt-1">
-              <span className="text-xs text-muted-foreground">Flat</span>
-              <span className="text-xs text-muted-foreground">Sharp</span>
+                <SelectTrigger className="w-[100px] h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {REFERENCE_PITCHES.map((pitch) => (
+                    <SelectItem key={pitch} value={pitch.toString()}>
+                      {pitch} Hz
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+        </div>
+
+        {/* Semi-circle arc gauge */}
+        <div className="flex justify-center mb-4">
+          <svg
+            viewBox="0 0 340 185"
+            className="w-full max-w-sm"
+            aria-label="Tuning gauge"
+          >
+            {/* Arc segments */}
+            {ARC_SEGMENTS.map((seg) => (
+              <path
+                key={`${seg.start}-${seg.end}`}
+                d={arcPath(seg.start, seg.end)}
+                fill="none"
+                stroke={seg.color}
+                strokeWidth={18}
+                strokeLinecap="round"
+                opacity={0.85}
+              />
+            ))}
+
+            {/* Tick marks */}
+            {TICKS.map((t) => {
+              const tick = tickMark(t, R - 16, R + 16)
+              const isCenter = t === 0
+              return (
+                <line
+                  key={t}
+                  x1={tick.x1}
+                  y1={tick.y1}
+                  x2={tick.x2}
+                  y2={tick.y2}
+                  stroke="hsl(var(--muted-foreground))"
+                  strokeWidth={isCenter ? 2.5 : 1.5}
+                  opacity={isCenter ? 1 : 0.5}
+                />
+              )
+            })}
+
+            {/* Needle */}
+            <line
+              x1={CX}
+              y1={CY}
+              x2={needleTip.x}
+              y2={needleTip.y}
+              stroke="hsl(var(--foreground))"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              style={{
+                transition: 'x2 100ms ease-out, y2 100ms ease-out',
+              }}
+            />
+
+            {/* Pivot circle */}
+            <circle cx={CX} cy={CY} r={6} fill="hsl(var(--foreground))" />
+            <circle cx={CX} cy={CY} r={3} fill="hsl(var(--background))" />
+
+            {/* Labels */}
+            <text
+              x={18}
+              y={CY + 6}
+              textAnchor="start"
+              fontSize={12}
+              fill="hsl(var(--muted-foreground))"
+              fontFamily="inherit"
+            >
+              Flat
+            </text>
+            <text
+              x={322}
+              y={CY + 6}
+              textAnchor="end"
+              fontSize={12}
+              fill="hsl(var(--muted-foreground))"
+              fontFamily="inherit"
+            >
+              Sharp
+            </text>
+          </svg>
         </div>
 
         {/* Note display */}
@@ -144,58 +288,55 @@ export default function TunerPage() {
             {note && octave !== null ? `${note}${octave}` : '--'}
           </div>
 
-          {/* Frequency readout */}
           <div className="text-lg font-mono text-muted-foreground">
             {frequency !== null ? `${frequency.toFixed(1)} Hz` : '-- Hz'}
           </div>
 
-          {/* Status text */}
           <div className={cn('flex items-center gap-1.5 text-sm font-medium mt-1', tuningStatus.color)}>
             <StatusIcon className="h-4 w-4" />
             {tuningStatus.label}
           </div>
         </div>
 
-        {/* Start/Stop button */}
-        <Button
-          size="lg"
-          className="w-full h-12 text-base"
-          variant={isListening ? 'destructive' : 'default'}
-          onClick={isListening ? stopListening : startListening}
-        >
-          {isListening ? (
-            <>
-              <MicOff className="h-5 w-5 mr-2" />
-              Stop Tuner
-            </>
-          ) : (
-            <>
-              <Mic className="h-5 w-5 mr-2" />
-              Start Tuner
-            </>
-          )}
-        </Button>
-      </Card>
+        {/* Instrument tuning info */}
+        {INSTRUMENT_TUNING_INFO[selectedInstrument] && (
+          <div className="rounded-lg bg-muted/50 p-4 mb-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{selectedInstrument}</span>
+              {' — '}
+              {INSTRUMENT_TUNING_INFO[selectedInstrument].description}
+            </p>
+            {INSTRUMENT_TUNING_INFO[selectedInstrument].strings && (
+              <div className="flex items-center justify-center gap-1.5 mt-2 flex-wrap">
+                {INSTRUMENT_TUNING_INFO[selectedInstrument].strings!.map((s) => (
+                  <Badge key={s} variant="outline" className="text-xs font-mono">
+                    {s}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* Settings Card */}
-      <Card className="max-w-2xl mx-auto p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Reference Pitch (A4)</label>
-          <Select
-            value={referencePitch.toString()}
-            onValueChange={(val) => setReferencePitch(Number(val))}
-          >
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {REFERENCE_PITCHES.map((pitch) => (
-                <SelectItem key={pitch} value={pitch.toString()}>
-                  {pitch} Hz
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Circular mic button */}
+        <div className="flex justify-center">
+          <div className="relative">
+            {isListening && (
+              <span className="absolute inset-0 rounded-full bg-destructive/30 animate-ping" />
+            )}
+            <Button
+              variant={isListening ? 'destructive' : 'default'}
+              className="rounded-full h-16 w-16 relative"
+              onClick={isListening ? stopListening : startListening}
+              aria-label={isListening ? 'Stop tuner' : 'Start tuner'}
+            >
+              {isListening ? (
+                <MicOff className="h-6 w-6" />
+              ) : (
+                <Mic className="h-6 w-6" />
+              )}
+            </Button>
+          </div>
         </div>
       </Card>
 

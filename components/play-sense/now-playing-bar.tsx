@@ -70,7 +70,7 @@ export function NowPlayingBar({
         <motion.div
           className="h-full rounded-r-full"
           style={{
-            background: 'linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6)',
+            background: 'linear-gradient(90deg, hsl(30,85%,55%), hsl(14,52%,53%), hsl(38,58%,58%))',
             width: `${(sessionState === 'playing' ? playheadProgress : 0) * 100}%`,
           }}
           transition={{ duration: 0.1 }}
@@ -78,7 +78,7 @@ export function NowPlayingBar({
         {/* Glow dot at progress head */}
         {sessionState === 'playing' && (
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_8px_rgba(59,130,246,0.8)] opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_8px_hsla(30,85%,55%,0.8)] opacity-0 group-hover:opacity-100 transition-opacity"
             style={{ left: `${playheadProgress * 100}%`, transform: 'translate(-50%, -50%)' }}
           />
         )}

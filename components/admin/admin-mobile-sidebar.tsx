@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3, MessageSquare, DollarSign, Drum } from 'lucide-react'
+import { Menu, Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3, MessageSquare, DollarSign, Drum, Guitar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/admin/feedback', label: 'Feedback', icon: MessageSquare },
   { href: '/admin/countries', label: 'Countries', icon: Globe },
   { href: '/admin/styles', label: 'Musical Styles', icon: Music },
+  { href: '/admin/instruments', label: 'Instruments', icon: Guitar },
   { href: '/admin/courses', label: 'Courses', icon: BookOpen },
   { href: '/admin/teachers', label: 'Teachers', icon: GraduationCap },
   { href: '/admin/play-sense', label: 'Play Sense', icon: Drum },

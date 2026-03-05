@@ -144,7 +144,7 @@ export default async function MySubscriptionPage() {
           <div className="flex flex-wrap gap-4">
             {!hasAllAccess && (
               <Button asChild>
-                <Link href="/pricing">
+                <Link href="/dashboard/subscribe">
                   <ArrowUpCircle className="mr-2 h-4 w-4" />
                   Upgrade to All-Access
                 </Link>
@@ -152,7 +152,7 @@ export default async function MySubscriptionPage() {
             )}
             {!hasAllAccess && (
               <Button asChild variant="outline">
-                <Link href="/pricing">
+                <Link href="/dashboard/subscribe">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Instrument
                 </Link>
@@ -188,7 +188,7 @@ export default async function MySubscriptionPage() {
                 Subscribe to unlock courses and start learning
               </p>
               <Button asChild size="lg">
-                <Link href="/pricing">
+                <Link href="/dashboard/subscribe">
                   <ArrowUpCircle className="mr-2 h-5 w-5" />
                   View Plans
                 </Link>

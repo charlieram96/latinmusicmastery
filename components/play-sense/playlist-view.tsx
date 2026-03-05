@@ -83,7 +83,7 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
               className={cn(
                 'group flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors duration-150',
                 'hover:bg-black/[0.04] dark:hover:bg-white/[0.04]',
-                isSelected && 'bg-black/[0.06] dark:bg-white/[0.06]',
+                isSelected && 'bg-primary/5',
               )}
             >
               {/* Track number / play icon / equalizer */}

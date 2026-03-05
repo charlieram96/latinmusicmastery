@@ -60,7 +60,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
       MIN_MEASURE_WIDTH
     )
     const actualWidth = Math.max(containerWidth, effectiveMeasuresPerLine * measureWidth + 40)
-    const staveHeight = 140
+    const staveHeight = 160
     const totalHeight = totalLines * staveHeight + 40
 
     const renderer = new Renderer(container, Renderer.Backends.SVG)
@@ -73,13 +73,13 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
       svgEl.style.background = 'transparent'
     }
 
-    // Theme-aware colors
+    // Theme-aware warm colors
     const staveStyle = isDark
-      ? { fillStyle: '#94a3b8', strokeStyle: '#475569' }
-      : { fillStyle: '#334155', strokeStyle: '#94a3b8' }
+      ? { fillStyle: 'hsl(220,10%,32%)', strokeStyle: 'hsl(220,10%,32%)' }
+      : { fillStyle: 'hsl(30,15%,78%)', strokeStyle: 'hsl(30,15%,78%)' }
     const noteStyle = isDark
-      ? { fillStyle: '#e2e8f0', strokeStyle: '#e2e8f0' }
-      : { fillStyle: '#1e293b', strokeStyle: '#1e293b' }
+      ? { fillStyle: 'hsl(30,10%,85%)', strokeStyle: 'hsl(30,10%,85%)' }
+      : { fillStyle: 'hsl(20,15%,18%)', strokeStyle: 'hsl(20,15%,18%)' }
 
     const grouped = groupEventsByMeasure(exercise.events, exercise.measures)
     let globalEventIdx = 0
@@ -116,7 +116,10 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
             keys: ['b/4'],
             duration: 'wr',
           })
-          rest.setStyle({ fillStyle: '#64748b', strokeStyle: '#64748b' })
+          rest.setStyle(isDark
+            ? { fillStyle: 'hsl(0,0%,40%)', strokeStyle: 'hsl(0,0%,40%)' }
+            : { fillStyle: 'hsl(30,10%,60%)', strokeStyle: 'hsl(30,10%,60%)' }
+          )
           Formatter.FormatAndDraw(context, stave, [rest])
           continue
         }
@@ -241,24 +244,23 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
   }, [playheadProgress, isPlaying])
 
   return (
-    <div className="relative w-full bg-card rounded-xl border border-border overflow-hidden">
+    <div className="relative w-full staff-paper rounded-xl border border-border overflow-hidden">
       {/* CSS for hit pulse animation */}
       <style jsx global>{`
         @keyframes notePulse {
-          0% { transform: scale(1); filter: brightness(1); }
-          30% { transform: scale(1.3); filter: brightness(1.8) drop-shadow(0 0 8px currentColor); }
-          100% { transform: scale(1); filter: brightness(1); }
+          0% { filter: brightness(1) drop-shadow(0 0 0px currentColor); }
+          25% { filter: brightness(1.6) drop-shadow(0 0 10px currentColor); }
+          100% { filter: brightness(1) drop-shadow(0 0 0px currentColor); }
         }
         .note-hit-pulse {
           animation: notePulse 0.4s ease-out;
-          transform-origin: center center;
         }
       `}</style>
 
       {/* Scrollable notation area */}
       <div
         ref={scrollContainerRef}
-        className="relative overflow-x-auto overflow-y-hidden p-4 md:p-6"
+        className="relative overflow-x-auto overflow-y-hidden p-5 md:p-8"
       >
         {/* Glow playhead */}
         <div
@@ -267,10 +269,12 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
           style={{
             display: 'none',
             width: '4px',
-            background: 'linear-gradient(180deg, rgba(59,130,246,0.8), rgba(147,51,234,0.8))',
-            boxShadow: '0 0 12px rgba(59,130,246,0.6), 0 0 24px rgba(147,51,234,0.3)',
+            background: 'linear-gradient(180deg, hsl(30,85%,55%), hsl(14,52%,53%))',
+            boxShadow: '0 0 12px hsla(30,85%,55%,0.6), 0 0 24px hsla(14,52%,53%,0.3)',
             borderRadius: '2px',
-            transition: 'left 16ms linear',
+            transition: 'left 32ms linear',
+            maskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
           }}
         />
 

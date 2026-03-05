@@ -188,20 +188,6 @@ export default async function DashboardPage() {
     })
   }
 
-  // ── Closest course to completion ────────────────────────────────
-  let closestCourse: { title: string; progress: number } | null = null
-  {
-    let bestProgress = -1
-    for (const c of myCoursesArray) {
-      if (c.total === 0) continue
-      const pct = Math.round((c.completed / c.total) * 100)
-      if (pct < 100 && pct > bestProgress) {
-        bestProgress = pct
-        closestCourse = { title: c.course.title, progress: pct }
-      }
-    }
-  }
-
   // ── Continue learning data ──────────────────────────────────────
   let continueData: ContinueLearningData | null = null
   if (progressData.length > 0) {
@@ -405,7 +391,6 @@ export default async function DashboardPage() {
           name={profile?.full_name || null}
           streak={streak}
           itemsCompletedThisWeek={itemsCompletedThisWeek}
-          closestCourse={closestCourse}
         />
 
         {/* 2. Continue Learning Hero */}

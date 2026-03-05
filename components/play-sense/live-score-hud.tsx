@@ -62,8 +62,8 @@ function AccuracyRing({ accuracy }: { accuracy: number }) {
         />
         <defs>
           <linearGradient id="accuracyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#3b82f6" />
-            <stop offset="100%" stopColor="#8b5cf6" />
+            <stop offset="0%" stopColor={accuracy > 80 ? '#22c55e' : accuracy > 60 ? '#eab308' : '#ef4444'} />
+            <stop offset="100%" stopColor={accuracy > 80 ? '#3b82f6' : accuracy > 60 ? '#f97316' : '#dc2626'} />
           </linearGradient>
         </defs>
       </svg>
@@ -129,15 +129,20 @@ export function LiveScoreHUD({
   return (
     <div className="space-y-5">
       {/* Score */}
-      <div>
+      <div className="border-b border-border/50 pb-4">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Score</p>
-        <p className="text-3xl font-black font-mono text-foreground">
+        <p className={cn(
+          'text-3xl font-black font-mono',
+          score >= 80
+            ? 'bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent'
+            : 'text-foreground'
+        )}>
           <AnimatedNumber value={Math.round(score)} suffix="%" />
         </p>
       </div>
 
       {/* Combo with fire */}
-      <div>
+      <div className="border-b border-border/50 pb-4">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Combo</p>
         <motion.div
           className="flex items-center gap-2"
@@ -178,7 +183,7 @@ export function LiveScoreHUD({
       </div>
 
       {/* Accuracy Ring */}
-      <div>
+      <div className="border-b border-border/50 pb-4">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Accuracy</p>
         <AccuracyRing accuracy={accuracy} />
       </div>

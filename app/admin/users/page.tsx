@@ -1,7 +1,6 @@
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Users, Shield, GraduationCap, ChevronRight, CreditCard, DollarSign, UserX, CalendarClock } from 'lucide-react'
 import { getUsers, getUserStats } from '@/app/actions/admin'
@@ -34,158 +33,137 @@ export default async function AdminUsersPage({
 
   const totalPages = Math.ceil((total || 0) / limit)
 
-  // Build pagination query string
   const paginationParams = new URLSearchParams()
   if (search) paginationParams.set('search', search)
   if (status !== 'all') paginationParams.set('status', status)
   if (plan !== 'all') paginationParams.set('plan', plan)
   const baseQuery = paginationParams.toString()
 
+  const statCards = [
+    { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Active Subscribers', value: stats.totalSubscribers, icon: CreditCard, color: 'text-green-500', bg: 'bg-green-500/10', sub: `${stats.instrumentCount} instrument · ${stats.allAccessCount} all-access` },
+    { label: 'Free Users', value: stats.freeUsers, icon: UserX, color: 'text-zinc-400', bg: 'bg-zinc-400/10' },
+    { label: 'MRR', value: formatCurrency(stats.mrr), icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  ]
+
   return (
-    <div className="container mx-auto px-6 py-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">User Management</h1>
-        <p className="text-muted-foreground">
-          Manage users, assign roles, and link teacher accounts
-        </p>
+        <h1 className="text-4xl font-black tracking-tight mb-1">Users</h1>
+        <p className="text-muted-foreground">Manage users, assign roles, and link teacher accounts</p>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="w-4 h-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Subscribers</CardTitle>
-            <CreditCard className="w-4 h-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSubscribers}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {stats.instrumentCount} instrument, {stats.allAccessCount} all-access
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Free Users</CardTitle>
-            <UserX className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.freeUsers}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">MRR</CardTitle>
-            <DollarSign className="w-4 h-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.mrr)}</div>
-          </CardContent>
-        </Card>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {statCards.map((s) => {
+          const Icon = s.icon
+          return (
+            <div key={s.label} className="rounded-xl border bg-card p-5">
+              <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${s.bg} mb-3`}>
+                <Icon className={`w-4 h-4 ${s.color}`} />
+              </div>
+              <div className="text-3xl font-bold mb-0.5">{s.value}</div>
+              <div className="text-sm text-muted-foreground">{s.label}</div>
+              {s.sub && <div className="text-xs text-muted-foreground/70 mt-0.5">{s.sub}</div>}
+            </div>
+          )
+        })}
       </div>
 
       {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <UserFilters />
-        </CardContent>
-      </Card>
+      <div className="mb-4">
+        <UserFilters />
+      </div>
 
       {/* Users List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Users
-          </CardTitle>
-          <CardDescription>
-            {total || 0} total user{(total || 0) !== 1 ? 's' : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {users && users.length > 0 ? (
-            <div className="space-y-2">
-              {users.map((user: any) => {
-                const activeSubs = (user.subscriptions || []).filter((s: any) => s.status === 'active')
-                return (
-                  <Link
-                    key={user.id}
-                    href={`/admin/users/${user.id}`}
-                    className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.avatar_url} alt={user.full_name} />
-                        <AvatarFallback>
-                          {user.email?.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{user.full_name || 'No name'}</span>
-                          {user.is_admin && (
-                            <Badge variant="destructive" className="h-5">
-                              <Shield className="w-3 h-3 mr-1" />
-                              Admin
-                            </Badge>
-                          )}
-                          {user.teachers && user.teachers.length > 0 && (
-                            <Badge variant="secondary" className="h-5">
-                              <GraduationCap className="w-3 h-3 mr-1" />
-                              Teacher
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right hidden sm:block">
-                        {activeSubs.length > 0 ? (
-                          <div className="space-y-1">
-                            <div className="flex gap-1 flex-wrap justify-end">
-                              {activeSubs.map((sub: any) => (
-                                <Badge key={sub.id} variant="default" className="text-xs">
-                                  {sub.plan_type === 'all_access' ? 'All-Access' : sub.plan_type === 'instrument' ? sub.instrument || 'Instrument' : sub.plan_type}
-                                </Badge>
-                              ))}
-                            </div>
-                            {activeSubs[0]?.current_period_end && (
-                              <div className="flex items-center gap-1 justify-end text-xs text-muted-foreground">
-                                <CalendarClock className="w-3 h-3" />
-                                Renews {new Date(activeSubs[0].current_period_end).toLocaleDateString()}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <Badge variant="outline">Free</Badge>
+      <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            <h2 className="font-bold">Users</h2>
+          </div>
+          <span className="text-sm text-muted-foreground">{total || 0} total</span>
+        </div>
+
+        {users && users.length > 0 ? (
+          <div className="divide-y">
+            {users.map((user: any) => {
+              const activeSubs = (user.subscriptions || []).filter((s: any) => s.status === 'active')
+              return (
+                <Link
+                  key={user.id}
+                  href={`/admin/users/${user.id}`}
+                  className="flex items-center justify-between px-6 py-3.5 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                      <AvatarFallback className="text-xs">
+                        {user.email?.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-sm">{user.full_name || 'No name'}</span>
+                        {user.is_admin && (
+                          <Badge variant="destructive" className="h-4 text-[10px] px-1">
+                            <Shield className="w-2.5 h-2.5 mr-0.5" />
+                            Admin
+                          </Badge>
+                        )}
+                        {user.teachers && user.teachers.length > 0 && (
+                          <Badge variant="secondary" className="h-4 text-[10px] px-1">
+                            <GraduationCap className="w-2.5 h-2.5 mr-0.5" />
+                            Teacher
+                          </Badge>
                         )}
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
                     </div>
-                  </Link>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No users found</p>
-            </div>
-          )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right hidden sm:block">
+                      {activeSubs.length > 0 ? (
+                        <div className="space-y-0.5">
+                          <div className="flex gap-1 flex-wrap justify-end">
+                            {activeSubs.map((sub: any) => (
+                              <Badge key={sub.id} variant="default" className="text-xs h-5">
+                                {sub.plan_type === 'all_access' ? 'All-Access' : sub.instrument || 'Instrument'}
+                              </Badge>
+                            ))}
+                          </div>
+                          {activeSubs[0]?.current_period_end && (
+                            <div className="flex items-center gap-1 justify-end text-xs text-muted-foreground">
+                              <CalendarClock className="w-3 h-3" />
+                              {new Date(activeSubs[0].current_period_end).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">Free</Badge>
+                      )}
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-16 text-muted-foreground">
+            <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p className="text-sm">No users found</p>
+          </div>
+        )}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t">
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </span>
+            <div className="flex gap-2">
               {page > 1 && (
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/admin/users?${baseQuery}${baseQuery ? '&' : ''}page=${page - 1}`}>
@@ -193,9 +171,6 @@ export default async function AdminUsersPage({
                   </Link>
                 </Button>
               )}
-              <span className="flex items-center px-4 text-sm text-muted-foreground">
-                Page {page} of {totalPages}
-              </span>
               {page < totalPages && (
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/admin/users?${baseQuery}${baseQuery ? '&' : ''}page=${page + 1}`}>
@@ -204,9 +179,9 @@ export default async function AdminUsersPage({
                 </Button>
               )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

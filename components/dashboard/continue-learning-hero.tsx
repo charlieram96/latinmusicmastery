@@ -11,21 +11,30 @@ export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps
   if (!continueData) {
     return (
       <AnimatedSection delay={0.05}>
-        <div className="relative overflow-hidden rounded-2xl min-h-[160px] flex flex-col justify-center items-center text-center px-6 py-8 bg-gradient-to-br from-terracotta/20 via-warm-surface to-gold/10 warm-glow">
-          {/* Decorative background glow */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-terracotta/5 via-transparent to-gold/5 pointer-events-none" />
+        <div className="relative overflow-hidden rounded-2xl min-h-[240px] flex flex-col justify-center items-center text-center">
+          {/* Video background */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+            src="https://videos.pexels.com/video-files/4488162/4488162-uhd_2560_1440_24fps.mp4"
+          />
+          {/* Dark overlay for text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30" />
 
-          <div className="relative z-10 flex flex-col items-center gap-4">
-            <div className="rounded-full bg-terracotta/15 p-4">
-              <Play className="h-8 w-8 text-terracotta" />
+          <div className="relative z-10 flex flex-col items-center gap-4 px-6 py-10">
+            <div className="rounded-full bg-white/10 backdrop-blur-md p-4 ring-1 ring-white/20">
+              <Play className="h-8 w-8 text-white" />
             </div>
-            <h3 className="text-xl sm:text-2xl font-heading font-semibold text-foreground">
+            <h3 className="text-xl sm:text-2xl font-heading font-semibold text-white">
               Start your first course
             </h3>
-            <p className="text-sm text-muted-foreground max-w-md">
+            <p className="text-sm text-white/80 max-w-md">
               Explore our library of Latin music courses and begin your journey today.
             </p>
-            <Button asChild className="mt-2 bg-terracotta hover:bg-terracotta/90 text-white">
+            <Button asChild className="mt-2 bg-white text-neutral-900 hover:bg-white/90 hover:shadow-lg hover:-translate-y-0.5 transition-all">
               <Link href="/dashboard/courses">
                 Browse Courses
                 <ArrowRight className="h-4 w-4 ml-1" />
