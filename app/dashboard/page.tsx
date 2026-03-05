@@ -445,7 +445,7 @@ export default async function DashboardPage() {
 
       {/* ── Sidebar (desktop only) ─────────────────────────────── */}
       <aside className="hidden lg:block">
-        <div className="lg:sticky lg:top-20 max-h-[calc(100vh-5rem)] overflow-y-auto space-y-6">
+        <div className="space-y-6">
           {/* Quick Actions — list variant */}
           <QuickActions variant="list" />
 

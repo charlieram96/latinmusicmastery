@@ -20,7 +20,6 @@ export async function DashboardHeader() {
     .eq('id', user.id)
     .single()
 
-  const firstName = profile?.full_name?.split(' ')[0]
 
   return (
     <DashboardHeaderWrapper>
@@ -28,12 +27,9 @@ export async function DashboardHeader() {
         {/* Mobile Menu Toggle */}
         <MobileSidebarTrigger />
 
-        {/* Greeting — hidden on mobile */}
         <p className="hidden md:flex text-sm font-medium text-foreground flex-1">
-          Hello, {firstName || 'there'}
+          Welcome to Latin Music Mastery
         </p>
-
-        {/* Spacer on mobile when greeting is hidden */}
         <div className="flex-1 md:hidden" />
 
         {/* Right side items */}
