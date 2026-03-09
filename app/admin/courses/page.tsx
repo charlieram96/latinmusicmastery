@@ -63,7 +63,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
   const getCountryColor = () => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="p-6 lg:p-8">
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-4xl font-black tracking-tight mb-1">Courses</h1>

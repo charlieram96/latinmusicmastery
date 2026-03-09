@@ -49,7 +49,7 @@ export default async function AdminFinancialsPage() {
   const allAccessMrr = financials.allAccessActive * PLAN_PRICES.all_access
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-black tracking-tight mb-1">Financials</h1>
