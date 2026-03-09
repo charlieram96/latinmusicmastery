@@ -20,7 +20,13 @@ interface CurriculumNavigatorProps {
   totalItems: number
   totalDurationMinutes: number
   hasStarted: boolean
-  formatDuration: (mins: number) => string
+}
+
+function formatDuration(mins: number): string {
+  if (mins < 60) return `${mins}m`
+  const hours = Math.floor(mins / 60)
+  const remaining = mins % 60
+  return remaining > 0 ? `${hours}h ${remaining}m` : `${hours}h`
 }
 
 export function CurriculumNavigator({
@@ -31,7 +37,6 @@ export function CurriculumNavigator({
   totalItems,
   totalDurationMinutes,
   hasStarted,
-  formatDuration,
 }: CurriculumNavigatorProps) {
   const [hoveredLesson, setHoveredLesson] = useState<string | null>(null)
 

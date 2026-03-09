@@ -7,7 +7,13 @@ interface HeroStatsStripProps {
   remainingDuration: number
   difficulty: string
   difficultyColor: string
-  formatDuration: (mins: number) => string
+}
+
+function formatDuration(mins: number): string {
+  if (mins < 60) return `${mins}m`
+  const hours = Math.floor(mins / 60)
+  const remaining = mins % 60
+  return remaining > 0 ? `${hours}h ${remaining}m` : `${hours}h`
 }
 
 export function HeroStatsStrip({
@@ -17,7 +23,6 @@ export function HeroStatsStrip({
   remainingDuration,
   difficulty,
   difficultyColor,
-  formatDuration,
 }: HeroStatsStripProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x divide-white/10">

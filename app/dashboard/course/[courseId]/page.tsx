@@ -237,7 +237,6 @@ export default async function CoursePage({ params }: PageProps) {
             remainingDuration={remainingDuration}
             difficulty={course.difficulty || 'All'}
             difficultyColor={difficulty.color}
-            formatDuration={formatDuration}
           />
         </div>
       </div>
@@ -341,7 +340,6 @@ export default async function CoursePage({ params }: PageProps) {
                   totalItems={totalItems}
                   totalDurationMinutes={totalDurationMinutes}
                   hasStarted={hasStarted}
-                  formatDuration={formatDuration}
                 />
               </div>
             </div>
@@ -358,7 +356,6 @@ export default async function CoursePage({ params }: PageProps) {
                 totalItems={totalItems}
                 totalDurationMinutes={totalDurationMinutes}
                 hasStarted={hasStarted}
-                formatDuration={formatDuration}
               />
             </div>
           </div>
