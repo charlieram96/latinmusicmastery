@@ -13,7 +13,7 @@ interface NotationViewProps {
   isPlaying: boolean
 }
 
-const MIN_MEASURE_WIDTH = 320
+const MIN_MEASURE_WIDTH = 416
 
 export function NotationView({ exercise, eventResults, playheadProgress, isPlaying }: NotationViewProps) {
   const { theme } = useTheme()
@@ -62,7 +62,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     )
     // Total SVG width extends beyond viewport for scrolling
     const actualWidth = exercise.measures * measureWidth + 40
-    const staveHeight = 220
+    const staveHeight = 286
     const totalHeight = totalLines * staveHeight + 40
 
     const renderer = new Renderer(container, Renderer.Backends.SVG)
@@ -72,15 +72,16 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     // Style the SVG
     const svgEl = container.querySelector('svg')
     if (svgEl) {
-      svgEl.style.background = 'transparent'
+      svgEl.style.background = isDark ? '#ffffff' : 'transparent'
+      if (isDark) svgEl.style.borderRadius = '12px'
     }
 
     // Theme-aware colors: dark notes on cream (light) or light notes on dark (dark)
     const staveStyle = isDark
-      ? { fillStyle: 'hsl(0,0%,30%)', strokeStyle: 'hsl(0,0%,30%)' }
+      ? { fillStyle: 'hsl(0,0%,75%)', strokeStyle: 'hsl(0,0%,75%)' }
       : { fillStyle: 'hsl(0,0%,80%)', strokeStyle: 'hsl(0,0%,80%)' }
     const noteStyle = isDark
-      ? { fillStyle: 'hsl(30,10%,85%)', strokeStyle: 'hsl(30,10%,85%)' }
+      ? { fillStyle: 'hsl(0,0%,15%)', strokeStyle: 'hsl(0,0%,15%)' }
       : { fillStyle: 'hsl(20,15%,18%)', strokeStyle: 'hsl(20,15%,18%)' }
 
     const grouped = groupEventsByMeasure(exercise.events, exercise.measures)
@@ -285,7 +286,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
         />
 
         {/* Notation container */}
-        <div ref={containerRef} className="w-full min-h-[220px]" />
+        <div ref={containerRef} className="w-full min-h-[286px]" />
       </div>
     </div>
   )
