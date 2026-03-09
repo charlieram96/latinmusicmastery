@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { unstable_cache } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
 import { PLAN_PRICES, getPlanPrice } from '@/lib/pricing'
@@ -586,8 +585,7 @@ export async function deleteTeacher(id: string) {
 
 // === FINANCIALS ===
 
-export const getFinancials = unstable_cache(
-  async () => {
+export async function getFinancials() {
     const supabase = await createClient()
 
     // Get all subscriptions
@@ -702,10 +700,7 @@ export const getFinancials = unstable_cache(
       })),
       recentSubs,
     }
-  },
-  ['admin-financials'],
-  { revalidate: 300 }
-)
+}
 
 // === ANALYTICS ===
 
