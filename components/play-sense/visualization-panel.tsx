@@ -97,7 +97,7 @@ export function VisualizationPanel({
   return (
     <div
       className={cn(
-        'flex-1 flex flex-col relative rounded-xl overflow-hidden transition-shadow duration-150',
+        'flex-1 flex flex-col relative overflow-hidden transition-shadow duration-150',
         edgeFlash && 'shadow-[inset_0_0_30px_rgba(59,130,246,0.15)]'
       )}
     >
@@ -109,7 +109,7 @@ export function VisualizationPanel({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-xl"
+            className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm"
           >
             <div className="text-center">
               <AnimatePresence mode="wait">

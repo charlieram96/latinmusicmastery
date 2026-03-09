@@ -13,7 +13,7 @@ interface NotationViewProps {
   isPlaying: boolean
 }
 
-const MIN_MEASURE_WIDTH = 250
+const MIN_MEASURE_WIDTH = 320
 
 export function NotationView({ exercise, eventResults, playheadProgress, isPlaying }: NotationViewProps) {
   const { theme } = useTheme()
@@ -57,12 +57,12 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     const containerWidth = container.clientWidth || 800
     // Size each measure so 3 fit in the viewport
     const measureWidth = Math.max(
-      Math.floor((containerWidth - 40) / Math.min(measuresPerLine, 3)),
+      Math.floor((containerWidth - 40) / Math.min(measuresPerLine, 2)),
       MIN_MEASURE_WIDTH
     )
     // Total SVG width extends beyond viewport for scrolling
     const actualWidth = exercise.measures * measureWidth + 40
-    const staveHeight = 160
+    const staveHeight = 220
     const totalHeight = totalLines * staveHeight + 40
 
     const renderer = new Renderer(container, Renderer.Backends.SVG)
@@ -77,8 +77,8 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
 
     // Theme-aware colors: dark notes on cream (light) or light notes on dark (dark)
     const staveStyle = isDark
-      ? { fillStyle: 'hsl(220,10%,32%)', strokeStyle: 'hsl(220,10%,32%)' }
-      : { fillStyle: 'hsl(30,15%,78%)', strokeStyle: 'hsl(30,15%,78%)' }
+      ? { fillStyle: 'hsl(0,0%,30%)', strokeStyle: 'hsl(0,0%,30%)' }
+      : { fillStyle: 'hsl(0,0%,80%)', strokeStyle: 'hsl(0,0%,80%)' }
     const noteStyle = isDark
       ? { fillStyle: 'hsl(30,10%,85%)', strokeStyle: 'hsl(30,10%,85%)' }
       : { fillStyle: 'hsl(20,15%,18%)', strokeStyle: 'hsl(20,15%,18%)' }
@@ -250,7 +250,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
   }, [playheadProgress, isPlaying])
 
   return (
-    <div className="relative w-full staff-paper rounded-xl border border-border overflow-hidden">
+    <div className="relative w-full overflow-hidden">
       {/* CSS for hit pulse animation */}
       <style jsx global>{`
         @keyframes notePulse {
@@ -266,7 +266,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
       {/* Scrollable notation area */}
       <div
         ref={scrollContainerRef}
-        className="relative overflow-x-auto overflow-y-hidden p-5 md:p-8"
+        className="relative overflow-x-auto overflow-y-hidden py-4 px-2 md:py-6 md:px-4"
       >
         {/* Glow playhead */}
         <div
@@ -285,7 +285,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
         />
 
         {/* Notation container */}
-        <div ref={containerRef} className="w-full min-h-[160px]" />
+        <div ref={containerRef} className="w-full min-h-[220px]" />
       </div>
     </div>
   )
