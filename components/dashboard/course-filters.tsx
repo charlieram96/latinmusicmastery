@@ -23,6 +23,7 @@ import { Search, Filter, X, Grid3X3, List, ChevronDown } from 'lucide-react'
 interface FilterOptions {
   teachers: { id: string; name: string }[]
   styles: { name: string }[]
+  instruments: string[]
 }
 
 interface CourseFiltersProps {
@@ -41,6 +42,7 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
   const selectedTeachers = searchParams.get('teachers')?.split(',').filter(Boolean) || []
   const difficulty = searchParams.get('difficulty') || ''
   const style = searchParams.get('style') || ''
+  const instrument = searchParams.get('instrument') || ''
   const view = searchParams.get('view') || 'grid'
 
   // Local search state for debouncing
@@ -114,7 +116,7 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
     updateFilters({ teachers: newTeachers })
   }
 
-  const hasActiveFilters = search || selectedTeachers.length > 0 || difficulty || style
+  const hasActiveFilters = search || selectedTeachers.length > 0 || difficulty || style || instrument
 
   return (
     <div className="space-y-4 mb-8">
@@ -154,6 +156,23 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
 
       {/* Filter Row */}
       <div className="flex flex-wrap gap-3">
+        {/* Instruments Select */}
+        <Select
+          value={instrument}
+          onValueChange={(value) => updateFilters({ instrument: value || null })}
+        >
+          <SelectTrigger className="w-[160px] h-9 bg-secondary border-0">
+            <SelectValue placeholder="Instrument" />
+          </SelectTrigger>
+          <SelectContent className="max-h-[250px]">
+            {options.instruments.map((inst) => (
+              <SelectItem key={inst} value={inst}>
+                {inst}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         {/* Teachers Multi-Select */}
         <Popover>
           <PopoverTrigger asChild>
@@ -169,7 +188,7 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-56 p-3" align="start">
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[250px] overflow-y-auto">
               {options.teachers.map((teacher) => (
                 <label
                   key={teacher.id}
@@ -194,7 +213,7 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
           <SelectTrigger className="w-[140px] h-9 bg-secondary border-0">
             <SelectValue placeholder="Style" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-[250px]">
             {options.styles.map((s) => (
               <SelectItem key={s.name} value={s.name}>
                 {s.name}
@@ -211,7 +230,7 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
           <SelectTrigger className="w-[140px] h-9 bg-secondary border-0">
             <SelectValue placeholder="Difficulty" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-[250px]">
             <SelectItem value="beginner">Beginner</SelectItem>
             <SelectItem value="intermediate">Intermediate</SelectItem>
             <SelectItem value="advanced">Advanced</SelectItem>
@@ -234,6 +253,17 @@ export function CourseFilters({ options, totalCount, filteredCount }: CourseFilt
 
       {/* Active Filters & Results Count */}
       <div className="flex flex-wrap items-center gap-2">
+        {instrument && (
+          <Badge variant="secondary" className="gap-1 pr-1">
+            {instrument}
+            <button
+              onClick={() => updateFilters({ instrument: null })}
+              className="ml-1 hover:bg-background/50 rounded-full p-0.5"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        )}
         {selectedTeachers.length > 0 && selectedTeachers.map((teacherId) => {
           const teacher = options.teachers.find(t => t.id === teacherId)
           return teacher ? (
