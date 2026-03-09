@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useCallback, useState } from 'react'
+import { useTheme } from '@/components/theme-provider'
 import type { ExerciseDefinition, EventResult } from '@/lib/play-sense/types'
 import { GRADE_COLORS } from '@/lib/play-sense/types'
 import { groupEventsByMeasure, beatDurationToVexDuration } from '@/lib/play-sense/exercise-utils'
@@ -15,6 +16,8 @@ interface NotationViewProps {
 const MIN_MEASURE_WIDTH = 250
 
 export function NotationView({ exercise, eventResults, playheadProgress, isPlaying }: NotationViewProps) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const playheadRef = useRef<HTMLDivElement>(null)
@@ -72,9 +75,13 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
       svgEl.style.background = 'transparent'
     }
 
-    // Always use dark-on-light colors (paper is always cream)
-    const staveStyle = { fillStyle: 'hsl(30,15%,78%)', strokeStyle: 'hsl(30,15%,78%)' }
-    const noteStyle = { fillStyle: 'hsl(20,15%,18%)', strokeStyle: 'hsl(20,15%,18%)' }
+    // Theme-aware colors: dark notes on cream (light) or light notes on dark (dark)
+    const staveStyle = isDark
+      ? { fillStyle: 'hsl(220,10%,32%)', strokeStyle: 'hsl(220,10%,32%)' }
+      : { fillStyle: 'hsl(30,15%,78%)', strokeStyle: 'hsl(30,15%,78%)' }
+    const noteStyle = isDark
+      ? { fillStyle: 'hsl(30,10%,85%)', strokeStyle: 'hsl(30,10%,85%)' }
+      : { fillStyle: 'hsl(20,15%,18%)', strokeStyle: 'hsl(20,15%,18%)' }
 
     const grouped = groupEventsByMeasure(exercise.events, exercise.measures)
     let globalEventIdx = 0
@@ -111,7 +118,10 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
           keys: ['b/4'],
           duration: 'wr',
         })
-        rest.setStyle({ fillStyle: 'hsl(30,10%,60%)', strokeStyle: 'hsl(30,10%,60%)' })
+        rest.setStyle(isDark
+          ? { fillStyle: 'hsl(0,0%,40%)', strokeStyle: 'hsl(0,0%,40%)' }
+          : { fillStyle: 'hsl(30,10%,60%)', strokeStyle: 'hsl(30,10%,60%)' }
+        )
         Formatter.FormatAndDraw(context, stave, [rest])
         continue
       }
@@ -173,7 +183,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     })
 
     setSvgReady(true)
-  }, [exercise, measuresPerLine])
+  }, [exercise, measuresPerLine, isDark])
 
   // Render notation on mount and exercise change
   useEffect(() => {
