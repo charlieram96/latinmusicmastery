@@ -104,7 +104,7 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
   ]
 
   return (
-    <div className="max-w-2xl mx-auto bg-card rounded-2xl border border-border p-6 md:p-8 space-y-8 relative overflow-hidden">
+    <div className="max-w-2xl mx-auto notation-parchment rounded-2xl border border-border p-6 md:p-8 space-y-8 relative overflow-hidden">
       {/* Confetti */}
       {showConfetti && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
@@ -221,10 +221,10 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
         className="grid grid-cols-2 gap-3"
       >
         {[
-          { icon: Target, color: 'text-blue-600 dark:text-blue-400', value: `${stats.accuracy.toFixed(1)}%`, label: 'Accuracy' },
-          { icon: Flame, color: 'text-orange-600 dark:text-orange-400', value: `${stats.maxCombo}x`, label: 'Best Combo' },
-          { icon: Zap, color: 'text-yellow-600 dark:text-yellow-400', value: String(stats.maxStreak), label: 'Perfect Streak' },
-          { icon: Trophy, color: 'text-green-600 dark:text-green-400', value: `${stats.avgOffsetMs > 0 ? '+' : ''}${stats.avgOffsetMs.toFixed(1)}ms`, label: 'Avg Timing' },
+          { icon: Target, color: 'text-amber-600 dark:text-amber-400', value: `${stats.accuracy.toFixed(1)}%`, label: 'Accuracy' },
+          { icon: Flame, color: 'text-[hsl(14,52%,48%)] dark:text-[hsl(14,52%,53%)]', value: `${stats.maxCombo}x`, label: 'Best Combo' },
+          { icon: Zap, color: 'text-[hsl(38,58%,50%)] dark:text-[hsl(38,58%,58%)]', value: String(stats.maxStreak), label: 'Perfect Streak' },
+          { icon: Trophy, color: 'text-emerald-600 dark:text-emerald-400', value: `${stats.avgOffsetMs > 0 ? '+' : ''}${stats.avgOffsetMs.toFixed(1)}ms`, label: 'Avg Timing' },
         ].map((stat) => (
           <motion.div
             key={stat.label}
@@ -273,7 +273,7 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
           Retry
         </Button>
         <Button
-          className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-0"
+          className="flex-1 bg-gradient-to-r from-primary to-[hsl(14,52%,48%)] hover:from-primary/90 hover:to-[hsl(14,52%,53%)] text-white border-0"
           onClick={onNext}
         >
           Next Exercise

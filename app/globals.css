@@ -192,6 +192,32 @@
   );
 }
 
+/* Notation parchment — engraved sheet music feel */
+.notation-parchment {
+  background-color: hsl(36, 33%, 95%);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  box-shadow: inset 0 2px 8px hsl(30 15% 70% / 0.25), inset 0 0 0 1px hsl(30 10% 85% / 0.4);
+  border-radius: 1rem;
+}
+
+.dark .notation-parchment {
+  background-color: hsl(25, 10%, 12%);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+  box-shadow: inset 0 2px 8px hsl(25 10% 5% / 0.4), 0 0 24px -8px hsl(30 40% 30% / 0.15), inset 0 0 0 1px hsl(30 10% 20% / 0.3);
+}
+
+/* Studio divider — gradient fade line */
+.studio-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--border)) 20%, hsl(var(--border)) 80%, transparent);
+}
+
+/* Thin scrollbar for curriculum navigator */
+.scrollbar-thin::-webkit-scrollbar { width: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 999px; }
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--muted)) transparent; }
+
 /* Smooth scroll for marketing pages */
 html:has([data-marketing]) {
   scroll-behavior: smooth;

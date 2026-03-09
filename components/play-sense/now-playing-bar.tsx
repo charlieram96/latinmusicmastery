@@ -72,6 +72,7 @@ export function NowPlayingBar({
           style={{
             background: 'linear-gradient(90deg, hsl(30,85%,55%), hsl(14,52%,53%), hsl(38,58%,58%))',
             width: `${(sessionState === 'playing' ? playheadProgress : 0) * 100}%`,
+            boxShadow: sessionState === 'playing' ? '0 2px 8px hsl(30,85%,55%,0.3)' : 'none',
           }}
           transition={{ duration: 0.1 }}
         />
@@ -90,13 +91,13 @@ export function NowPlayingBar({
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Album art placeholder */}
             <div className={cn(
-              'w-10 h-10 rounded-md flex items-center justify-center shrink-0',
+              'w-10 h-10 rounded-md flex items-center justify-center shrink-0 transition-transform duration-300',
               isActive
-                ? 'bg-gradient-to-br from-emerald-500/20 to-blue-500/20 border border-emerald-500/30'
+                ? 'bg-gradient-to-br from-primary/20 to-[hsl(14,52%,53%)]/20 border border-primary/30'
                 : 'bg-secondary border border-border'
             )}>
               {exercise.audioUrl ? (
-                <Volume2 className={cn('w-4 h-4', isActive ? 'text-emerald-400' : 'text-muted-foreground')} />
+                <Volume2 className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
               ) : (
                 <VolumeX className="w-4 h-4 text-muted-foreground" />
               )}
@@ -132,7 +133,7 @@ export function NowPlayingBar({
                   onClick={onStart}
                   disabled={backingTrackLoading}
                   size="sm"
-                  className="bg-emerald-500 hover:bg-emerald-400 text-white border-0 rounded-full h-9 w-9 p-0"
+                  className="bg-primary hover:bg-primary/90 text-white border-0 rounded-full h-9 w-9 p-0"
                 >
                   {backingTrackLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

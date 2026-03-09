@@ -62,8 +62,8 @@ function AccuracyRing({ accuracy }: { accuracy: number }) {
         />
         <defs>
           <linearGradient id="accuracyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={accuracy > 80 ? '#22c55e' : accuracy > 60 ? '#eab308' : '#ef4444'} />
-            <stop offset="100%" stopColor={accuracy > 80 ? '#3b82f6' : accuracy > 60 ? '#f97316' : '#dc2626'} />
+            <stop offset="0%" stopColor={accuracy > 80 ? '#22c55e' : accuracy > 60 ? '#D4A854' : '#C4654A'} />
+            <stop offset="100%" stopColor={accuracy > 80 ? '#D4A854' : accuracy > 60 ? '#C4654A' : '#dc2626'} />
           </linearGradient>
         </defs>
       </svg>
@@ -114,8 +114,9 @@ export function LiveScoreHUD({
   const meterWidth = Math.min(inputLevel * 500, 100)
   const meterColor =
     meterWidth > 80 ? 'from-red-500 to-red-400' :
-    meterWidth > 50 ? 'from-yellow-500 to-yellow-400' :
-    'from-green-500 to-emerald-400'
+    meterWidth > 60 ? 'from-[hsl(14,52%,53%)] to-[hsl(30,85%,55%)]' :
+    meterWidth > 35 ? 'from-[hsl(38,58%,50%)] to-[hsl(30,85%,55%)]' :
+    'from-emerald-500 to-emerald-400'
 
   // Combo fire effects
   const comboHigh = combo >= 20
@@ -129,21 +130,22 @@ export function LiveScoreHUD({
   return (
     <div className="space-y-5">
       {/* Score */}
-      <div className="border-b border-border/50 pb-4">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Score</p>
+      <div className="pb-4">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] mb-1">Score</p>
         <p className={cn(
-          'text-3xl font-black font-mono',
+          'text-3xl font-black font-heading',
           score >= 80
-            ? 'bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent'
+            ? 'bg-gradient-to-r from-amber-400 to-emerald-400 bg-clip-text text-transparent'
             : 'text-foreground'
         )}>
           <AnimatedNumber value={Math.round(score)} suffix="%" />
         </p>
+        <div className="studio-divider mt-4" />
       </div>
 
       {/* Combo with fire */}
-      <div className="border-b border-border/50 pb-4">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Combo</p>
+      <div className="pb-4">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] mb-1">Combo</p>
         <motion.div
           className="flex items-center gap-2"
           animate={
@@ -180,23 +182,25 @@ export function LiveScoreHUD({
             {combo}x
           </p>
         </motion.div>
+        <div className="studio-divider mt-4" />
       </div>
 
       {/* Accuracy Ring */}
-      <div className="border-b border-border/50 pb-4">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Accuracy</p>
+      <div className="pb-4">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] mb-2">Accuracy</p>
         <AccuracyRing accuracy={accuracy} />
+        <div className="studio-divider mt-4" />
       </div>
 
       {/* Tempo */}
       <div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Tempo</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] mb-1">Tempo</p>
         <p className={cn('text-sm font-medium', tempoColor)}>{tempoLabel}</p>
       </div>
 
       {/* Last hit grade */}
       <div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Last Hit</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] mb-1">Last Hit</p>
         <motion.p
           key={lastHitGrade}
           initial={{ scale: 0.5, opacity: 0 }}
@@ -210,7 +214,7 @@ export function LiveScoreHUD({
 
       {/* Mic level */}
       <div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Mic Level</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] mb-2">Mic Level</p>
         <div className="w-full h-2.5 bg-secondary rounded-full overflow-hidden">
           <motion.div
             className={cn('h-full rounded-full bg-gradient-to-r', meterColor)}

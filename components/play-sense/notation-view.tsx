@@ -69,20 +69,19 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     renderer.resize(actualWidth, totalHeight)
     const context = renderer.getContext()
 
-    // Style the SVG
+    // Style the SVG — transparent bg, parchment wrapper handles theming
     const svgEl = container.querySelector('svg')
     if (svgEl) {
-      svgEl.style.background = isDark ? '#ffffff' : 'transparent'
-      if (isDark) svgEl.style.borderRadius = '12px'
+      svgEl.style.background = 'transparent'
     }
 
-    // Theme-aware colors: dark notes on cream (light) or light notes on dark (dark)
+    // Engraved sheet music colors
     const staveStyle = isDark
-      ? { fillStyle: 'hsl(0,0%,75%)', strokeStyle: 'hsl(0,0%,75%)' }
-      : { fillStyle: 'hsl(0,0%,80%)', strokeStyle: 'hsl(0,0%,80%)' }
+      ? { fillStyle: 'hsl(25,6%,42%)', strokeStyle: 'hsl(25,6%,42%)' }
+      : { fillStyle: 'hsl(25,8%,72%)', strokeStyle: 'hsl(25,8%,72%)' }
     const noteStyle = isDark
-      ? { fillStyle: 'hsl(0,0%,15%)', strokeStyle: 'hsl(0,0%,15%)' }
-      : { fillStyle: 'hsl(20,15%,18%)', strokeStyle: 'hsl(20,15%,18%)' }
+      ? { fillStyle: 'hsl(30,15%,85%)', strokeStyle: 'hsl(30,15%,85%)' }
+      : { fillStyle: 'hsl(20,25%,12%)', strokeStyle: 'hsl(20,25%,12%)' }
 
     const grouped = groupEventsByMeasure(exercise.events, exercise.measures)
     let globalEventIdx = 0
@@ -120,8 +119,8 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
           duration: 'wr',
         })
         rest.setStyle(isDark
-          ? { fillStyle: 'hsl(0,0%,40%)', strokeStyle: 'hsl(0,0%,40%)' }
-          : { fillStyle: 'hsl(30,10%,60%)', strokeStyle: 'hsl(30,10%,60%)' }
+          ? { fillStyle: 'hsl(25,8%,50%)', strokeStyle: 'hsl(25,8%,50%)' }
+          : { fillStyle: 'hsl(25,12%,55%)', strokeStyle: 'hsl(25,12%,55%)' }
         )
         Formatter.FormatAndDraw(context, stave, [rest])
         continue
@@ -211,9 +210,14 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
           ;(child as SVGElement).style.stroke = color
         })
 
-        // Hit pulse animation via CSS class
-        htmlEl.classList.add('note-hit-pulse')
-        setTimeout(() => htmlEl.classList.remove('note-hit-pulse'), 400)
+        // Hit pulse or miss shake animation
+        if (result.grade === 'miss') {
+          htmlEl.classList.add('note-miss-shake')
+          setTimeout(() => htmlEl.classList.remove('note-miss-shake'), 400)
+        } else {
+          htmlEl.classList.add('note-hit-pulse')
+          setTimeout(() => htmlEl.classList.remove('note-hit-pulse'), 450)
+        }
       }
     }
   }, [eventResults, svgReady])
@@ -251,16 +255,28 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
   }, [playheadProgress, isPlaying])
 
   return (
-    <div className="relative w-full overflow-hidden">
+    <div className="relative w-full overflow-hidden notation-parchment rounded-2xl shadow-[0_4px_16px_-4px_hsl(25_15%_50%/0.12)]">
       {/* CSS for hit pulse animation */}
       <style jsx global>{`
         @keyframes notePulse {
-          0% { filter: brightness(1) drop-shadow(0 0 0px currentColor); }
-          25% { filter: brightness(1.6) drop-shadow(0 0 10px currentColor); }
-          100% { filter: brightness(1) drop-shadow(0 0 0px currentColor); }
+          0% { filter: brightness(1) drop-shadow(0 0 0px currentColor); transform: scale(1); }
+          20% { filter: brightness(1.8) drop-shadow(0 0 14px currentColor); transform: scale(1.08); }
+          50% { filter: brightness(1.4) drop-shadow(0 0 8px currentColor); transform: scale(1.02); }
+          100% { filter: brightness(1) drop-shadow(0 0 0px currentColor); transform: scale(1); }
+        }
+        @keyframes noteMiss {
+          0% { filter: brightness(1); transform: translateX(0); }
+          15% { filter: brightness(1.2) hue-rotate(-20deg); transform: translateX(-3px); }
+          30% { transform: translateX(3px); }
+          45% { transform: translateX(-2px); }
+          60% { transform: translateX(1px); }
+          100% { filter: brightness(1); transform: translateX(0); }
         }
         .note-hit-pulse {
-          animation: notePulse 0.4s ease-out;
+          animation: notePulse 0.45s ease-out;
+        }
+        .note-miss-shake {
+          animation: noteMiss 0.4s ease-out;
         }
       `}</style>
 
@@ -275,13 +291,14 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
           className="absolute top-0 bottom-0 z-10 pointer-events-none"
           style={{
             display: 'none',
-            width: '4px',
+            width: '3px',
             background: 'linear-gradient(180deg, hsl(30,85%,55%), hsl(14,52%,53%))',
-            boxShadow: '0 0 12px hsla(30,85%,55%,0.6), 0 0 24px hsla(14,52%,53%,0.3)',
+            boxShadow: '0 0 8px hsla(30,85%,55%,0.4), 0 0 16px hsla(14,52%,53%,0.2)',
             borderRadius: '2px',
             transition: 'left 32ms linear',
             maskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
             WebkitMaskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+            animation: isPlaying ? 'pulse-glow 2s ease-in-out infinite' : 'none',
           }}
         />
 

@@ -46,8 +46,8 @@ function FloatingGrade({ grade, id }: { grade: string; id: number }) {
       style={{ color }}
     >
       <span
-        className="text-2xl font-black tracking-tight"
-        style={{ textShadow: `0 0 16px ${color}` }}
+        className="text-3xl font-black tracking-tight"
+        style={{ textShadow: `0 0 20px ${color}, 0 0 40px ${color}40` }}
       >
         +{label}
       </span>
@@ -98,7 +98,7 @@ export function VisualizationPanel({
     <div
       className={cn(
         'flex-1 flex flex-col relative overflow-hidden transition-shadow duration-150',
-        edgeFlash && 'shadow-[inset_0_0_30px_rgba(59,130,246,0.15)]'
+        edgeFlash && 'shadow-[inset_0_0_30px_hsl(30,85%,55%,0.12)]'
       )}
     >
       {/* Countdown overlay */}
@@ -121,7 +121,7 @@ export function VisualizationPanel({
                   exit="exit"
                   className="text-8xl font-black text-foreground"
                   style={{
-                    textShadow: '0 0 40px rgba(59,130,246,0.5), 0 0 80px rgba(147,51,234,0.3)',
+                    textShadow: '0 0 40px hsl(30,85%,55%,0.5), 0 0 80px hsl(14,52%,53%,0.3)',
                   }}
                 >
                   {countdownBeat || '...'}
@@ -140,7 +140,7 @@ export function VisualizationPanel({
                 initial={{ scale: 0.5, opacity: 0.8 }}
                 animate={{ scale: 2.5, opacity: 0 }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-2 border-blue-400/50"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-2 border-amber-400/50"
               />
             </div>
           </motion.div>
@@ -160,11 +160,12 @@ export function VisualizationPanel({
         isPlaying ? 'grid-cols-1 xl:grid-cols-[1fr_200px]' : 'grid-cols-1'
       )}>
         {/* Exercise context bar */}
-        <div className="flex items-center justify-between px-2 mb-2">
-          <span className="text-xs font-medium text-muted-foreground">{exercise.title}</span>
+        <div className="flex items-center justify-between px-3 pb-2 mb-2 relative">
+          <span className="text-xs font-heading font-semibold text-foreground/80 tracking-wide">{exercise.title}</span>
           <span className="text-xs font-mono text-muted-foreground">
             {exercise.bpm} BPM &middot; {exercise.timeSignature[0]}/{exercise.timeSignature[1]}
           </span>
+          <div className="absolute bottom-0 left-3 right-3 h-px bg-gradient-to-r from-amber-500/30 via-terracotta/20 to-transparent" />
         </div>
 
         {/* Notation */}
