@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useEffect, useCallback, useState } from 'react'
-import { useTheme } from '@/components/theme-provider'
 import type { ExerciseDefinition, EventResult } from '@/lib/play-sense/types'
 import { GRADE_COLORS } from '@/lib/play-sense/types'
 import { groupEventsByMeasure, beatDurationToVexDuration } from '@/lib/play-sense/exercise-utils'
@@ -24,9 +23,6 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
   const totalRenderedHeightRef = useRef(0)
   const [svgReady, setSvgReady] = useState(false)
   const [measuresPerLine, setMeasuresPerLine] = useState(2)
-  const { theme } = useTheme()
-
-  const isDark = theme === 'dark'
 
   // Dynamic measures per line based on container width
   useEffect(() => {
@@ -51,15 +47,18 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     const container = containerRef.current
     container.innerHTML = ''
 
-    const effectiveMeasuresPerLine = Math.min(measuresPerLine, exercise.measures)
-    const totalLines = Math.ceil(exercise.measures / effectiveMeasuresPerLine)
+    // Render all measures in a single horizontal row
+    const effectiveMeasuresPerLine = exercise.measures
+    const totalLines = 1
 
     const containerWidth = container.clientWidth || 800
+    // Size each measure so 3 fit in the viewport
     const measureWidth = Math.max(
-      Math.floor((containerWidth - 40) / effectiveMeasuresPerLine),
+      Math.floor((containerWidth - 40) / Math.min(measuresPerLine, 3)),
       MIN_MEASURE_WIDTH
     )
-    const actualWidth = Math.max(containerWidth, effectiveMeasuresPerLine * measureWidth + 40)
+    // Total SVG width extends beyond viewport for scrolling
+    const actualWidth = exercise.measures * measureWidth + 40
     const staveHeight = 160
     const totalHeight = totalLines * staveHeight + 40
 
@@ -73,98 +72,90 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
       svgEl.style.background = 'transparent'
     }
 
-    // Theme-aware warm colors
-    const staveStyle = isDark
-      ? { fillStyle: 'hsl(220,10%,32%)', strokeStyle: 'hsl(220,10%,32%)' }
-      : { fillStyle: 'hsl(30,15%,78%)', strokeStyle: 'hsl(30,15%,78%)' }
-    const noteStyle = isDark
-      ? { fillStyle: 'hsl(30,10%,85%)', strokeStyle: 'hsl(30,10%,85%)' }
-      : { fillStyle: 'hsl(20,15%,18%)', strokeStyle: 'hsl(20,15%,18%)' }
+    // Always use dark-on-light colors (paper is always cream)
+    const staveStyle = { fillStyle: 'hsl(30,15%,78%)', strokeStyle: 'hsl(30,15%,78%)' }
+    const noteStyle = { fillStyle: 'hsl(20,15%,18%)', strokeStyle: 'hsl(20,15%,18%)' }
 
     const grouped = groupEventsByMeasure(exercise.events, exercise.measures)
     let globalEventIdx = 0
     let firstStaveX = 0
     let lastStaveEndX = 0
 
-    for (let line = 0; line < totalLines; line++) {
-      for (let col = 0; col < effectiveMeasuresPerLine; col++) {
-        const measureNum = line * effectiveMeasuresPerLine + col + 1
-        if (measureNum > exercise.measures) break
+    // Single loop: all measures left-to-right
+    for (let col = 0; col < effectiveMeasuresPerLine; col++) {
+      const measureNum = col + 1
+      if (measureNum > exercise.measures) break
 
-        const x = col * measureWidth + 20
-        const y = line * staveHeight + 10
+      const x = col * measureWidth + 20
+      const y = 10
 
-        const stave = new Stave(x, y, measureWidth)
-        if (col === 0) {
-          stave.addClef('percussion')
-          stave.addTimeSignature(`${exercise.timeSignature[0]}/${exercise.timeSignature[1]}`)
-          if (line === 0) firstStaveX = x + stave.getNoteStartX() - x
-        }
+      const stave = new Stave(x, y, measureWidth)
+      if (col === 0) {
+        stave.addClef('percussion')
+        stave.addTimeSignature(`${exercise.timeSignature[0]}/${exercise.timeSignature[1]}`)
+        firstStaveX = x + stave.getNoteStartX() - x
+      }
 
-        // Style stave lines
-        stave.setStyle(staveStyle)
-        stave.setContext(context).draw()
+      // Style stave lines
+      stave.setStyle(staveStyle)
+      stave.setContext(context).draw()
 
-        if (col === effectiveMeasuresPerLine - 1 || measureNum === exercise.measures) {
-          lastStaveEndX = x + measureWidth
-        }
+      if (col === effectiveMeasuresPerLine - 1 || measureNum === exercise.measures) {
+        lastStaveEndX = x + measureWidth
+      }
 
-        const measureEvents = grouped.get(measureNum) || []
+      const measureEvents = grouped.get(measureNum) || []
 
-        if (measureEvents.length === 0) {
-          const rest = new StaveNote({
-            keys: ['b/4'],
-            duration: 'wr',
-          })
-          rest.setStyle(isDark
-            ? { fillStyle: 'hsl(0,0%,40%)', strokeStyle: 'hsl(0,0%,40%)' }
-            : { fillStyle: 'hsl(30,10%,60%)', strokeStyle: 'hsl(30,10%,60%)' }
-          )
-          Formatter.FormatAndDraw(context, stave, [rest])
-          continue
-        }
+      if (measureEvents.length === 0) {
+        const rest = new StaveNote({
+          keys: ['b/4'],
+          duration: 'wr',
+        })
+        rest.setStyle({ fillStyle: 'hsl(30,10%,60%)', strokeStyle: 'hsl(30,10%,60%)' })
+        Formatter.FormatAndDraw(context, stave, [rest])
+        continue
+      }
 
-        const notes: InstanceType<typeof StaveNote>[] = []
-        for (const event of measureEvents) {
-          const duration = beatDurationToVexDuration(event.duration)
-          const noteKey = event.vexKey || 'c/5'
+      const notes: InstanceType<typeof StaveNote>[] = []
+      for (const event of measureEvents) {
+        const duration = beatDurationToVexDuration(event.duration)
+        const noteKey = event.vexKey || 'c/5'
 
-          const staveNote = new StaveNote({
-            keys: [noteKey],
-            duration,
-          })
+        const staveNote = new StaveNote({
+          keys: [noteKey],
+          duration,
+        })
 
-          if (event.accent) {
-            try {
-              const { Articulation } = vexflow
-              staveNote.addModifier(new Articulation('a>'))
-            } catch {
-              // Articulation may not be available
-            }
+        if (event.accent) {
+          try {
+            const { Articulation } = vexflow
+            staveNote.addModifier(new Articulation('a>'))
+          } catch {
+            // Articulation may not be available
           }
-
-          // Theme-aware note color
-          staveNote.setStyle(noteStyle)
-          ;(staveNote as unknown as { _eventIndex: number })._eventIndex = globalEventIdx
-
-          notes.push(staveNote)
-          globalEventIdx++
         }
 
-        Formatter.FormatAndDraw(context, stave, notes)
+        // Note color (always dark on cream paper)
+        staveNote.setStyle(noteStyle)
+        ;(staveNote as unknown as { _eventIndex: number })._eventIndex = globalEventIdx
 
-        try {
-          const beamableNotes = notes.filter(n => {
-            const dur = n.getDuration()
-            return dur === '8' || dur === '16'
-          })
-          if (beamableNotes.length >= 2) {
-            const beam = new Beam(beamableNotes)
-            beam.setContext(context).draw()
-          }
-        } catch {
-          // Beam may fail
+        notes.push(staveNote)
+        globalEventIdx++
+      }
+
+      Formatter.FormatAndDraw(context, stave, notes)
+
+      try {
+        const beamableNotes = notes.filter(n => {
+          const dur = n.getDuration()
+          return dur === '8' || dur === '16'
+        })
+        if (beamableNotes.length >= 2) {
+          const beam = new Beam(beamableNotes)
+          beam.setContext(context).draw()
         }
+      } catch {
+        // Beam may fail
       }
     }
 
@@ -182,7 +173,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     })
 
     setSvgReady(true)
-  }, [exercise, measuresPerLine, isDark])
+  }, [exercise, measuresPerLine])
 
   // Render notation on mount and exercise change
   useEffect(() => {
@@ -228,6 +219,11 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     playheadRef.current.style.display = 'block'
     const x = notationLeftRef.current + playheadProgress * notationWidthRef.current
     playheadRef.current.style.left = `${x}px`
+
+    // Reset scroll on playback start
+    if (scrollContainerRef.current && playheadProgress < 0.01) {
+      scrollContainerRef.current.scrollTo({ left: 0 })
+    }
 
     // Auto-scroll to keep playhead visible
     if (scrollContainerRef.current) {

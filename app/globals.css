@@ -159,8 +159,10 @@
     repeating-linear-gradient(0deg, transparent, transparent 31px, hsl(30 20% 88% / 0.3) 31px, hsl(30 20% 88% / 0.3) 32px);
 }
 .dark .staff-paper {
-  background-color: hsl(var(--warm-surface));
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  background-color: hsl(40 30% 96%);
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(0deg, transparent, transparent 31px, hsl(30 20% 88% / 0.3) 31px, hsl(30 20% 88% / 0.3) 32px);
 }
 
 .warm-glow {
