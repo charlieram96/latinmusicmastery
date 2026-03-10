@@ -110,6 +110,19 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
     .select('id', { count: 'exact', head: true })
     .eq('is_published', true)
 
+  // Group courses by instrument when showing "All"
+  const coursesByInstrument = new Map<string, any[]>()
+  if (!params.instrument) {
+    filteredCourses.forEach((course: any) => {
+      const inst = course.instrument || 'Other'
+      if (!coursesByInstrument.has(inst)) coursesByInstrument.set(inst, [])
+      coursesByInstrument.get(inst)!.push(course)
+    })
+  } else {
+    coursesByInstrument.set(params.instrument, filteredCourses)
+  }
+  const showGroupHeadings = !params.instrument && coursesByInstrument.size > 1
+
   const view = params.view || 'grid'
 
   const getDifficultyColor = (difficulty: string | null) => {
@@ -175,6 +188,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
         options={{
           teachers: teachers || [],
           styles: styles || [],
+          instruments: SUBSCRIBABLE_INSTRUMENTS as unknown as string[],
         }}
         totalCount={totalCount || 0}
         filteredCount={filteredCourses.length}
@@ -182,186 +196,197 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
 
       {/* Courses */}
       {filteredCourses.length > 0 ? (
-        view === 'grid' ? (
-          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredCourses.map((course: any) => {
-              const progress = courseProgressMap.get(course.id)
-              const hasStarted = progress?.started || false
+        <>
+          {Array.from(coursesByInstrument.entries()).map(([instrument, courses]) => (
+            <div key={instrument}>
+              {showGroupHeadings && (
+                <h2 className="text-xl font-bold mb-4 mt-8 first:mt-0 flex items-center gap-2">
+                  {instrument}
+                </h2>
+              )}
+              {view === 'grid' ? (
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {courses.map((course: any) => {
+                    const progress = courseProgressMap.get(course.id)
+                    const hasStarted = progress?.started || false
 
-              return (
-                <Card key={course.id} className="overflow-hidden h-full transition-colors group flex flex-col p-0 gap-0">
-                  <Link href={`/dashboard/course/${course.slug || course.id}`} className="flex-1 flex flex-col">
-                    <div className="aspect-video bg-muted relative overflow-hidden">
-                      {course.thumbnail_url ? (
-                        <img
-                          src={course.thumbnail_url}
-                          alt={course.title}
-                          className="object-cover w-full h-full"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                          <BookOpen className="h-10 w-10 text-primary/50" />
-                        </div>
-                      )}
-                      {course.difficulty && (
-                        <Badge
-                          variant="outline"
-                          className={`absolute top-3 right-3 capitalize bg-background/90 backdrop-blur-sm ${getDifficultyColor(course.difficulty)}`}
-                        >
-                          {course.difficulty}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="p-4 flex flex-col flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                        <Badge variant="outline" className={`text-xs ${getStyleColor()}`}>
-                          <Music className="h-3 w-3 mr-1" />
-                          {course.musical_style?.name || 'Course'}
-                        </Badge>
-                        {course.instrument && !params.instrument && (
-                          <Badge variant="outline" className={`text-xs ${getInstrumentColor(course.instrument)}`}>
-                            <Disc3 className="h-3 w-3 mr-1" />
-                            {course.instrument}
-                          </Badge>
-                        )}
-                        {course.musical_style?.country?.name && (
-                          <Badge variant="outline" className={`text-xs ${getCountryColor()}`}>
-                            <Globe className="h-3 w-3 mr-1" />
-                            {course.musical_style.country.name}
-                          </Badge>
-                        )}
-                      </div>
-                      <h3 className="font-semibold text-base line-clamp-2 group-hover:text-primary transition-colors mb-2">
-                        {course.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                        {course.description || `Master ${course.musical_style?.name || 'Latin music'} with expert instruction`}
-                      </p>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground mt-auto">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          <span className="truncate max-w-[100px]">{course.teacher?.name || 'Instructor'}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <BookOpen className="h-4 w-4" />
-                          <span>{course.course_modules?.length || 0} lessons</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                  <div className="px-4 pb-4">
-                    <Button asChild className="w-full gap-2" variant={hasStarted ? 'default' : 'outline'}>
-                      <Link href={`/dashboard/course/${course.slug || course.id}`}>
-                        {hasStarted ? (
-                          <>
-                            <PlayCircle className="h-4 w-4" />
-                            Continue Course
-                          </>
-                        ) : (
-                          <>
-                            <BookOpen className="h-4 w-4" />
-                            View Course
-                          </>
-                        )}
-                      </Link>
-                    </Button>
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
-        ) : (
-          /* List View */
-          <div className="space-y-3 sm:space-y-4">
-            {filteredCourses.map((course: any) => {
-              const progress = courseProgressMap.get(course.id)
-              const hasStarted = progress?.started || false
-
-              return (
-                <Card key={course.id} className="overflow-hidden transition-colors group p-0 gap-0">
-                  <div className="flex flex-col sm:flex-row">
-                    <Link href={`/dashboard/course/${course.slug || course.id}`} className="sm:w-56 md:w-72 sm:h-36 md:h-44 aspect-video sm:aspect-auto bg-muted flex-shrink-0 relative overflow-hidden">
-                      {course.thumbnail_url ? (
-                        <img
-                          src={course.thumbnail_url}
-                          alt={course.title}
-                          className="object-cover w-full h-full"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                          <BookOpen className="h-10 w-10 text-primary/50" />
-                        </div>
-                      )}
-                    </Link>
-                    <div className="flex-1 p-4 sm:p-5 flex flex-col">
-                      <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                        <Badge variant="outline" className={`text-xs ${getStyleColor()}`}>
-                          <Music className="h-3 w-3 mr-1" />
-                          {course.musical_style?.name || 'Course'}
-                        </Badge>
-                        {course.difficulty && (
-                          <Badge
-                            variant="outline"
-                            className={`text-xs capitalize ${getDifficultyColor(course.difficulty)}`}
-                          >
-                            {course.difficulty}
-                          </Badge>
-                        )}
-                        {course.instrument && !params.instrument && (
-                          <Badge variant="outline" className={`text-xs ${getInstrumentColor(course.instrument)}`}>
-                            <Disc3 className="h-3 w-3 mr-1" />
-                            {course.instrument}
-                          </Badge>
-                        )}
-                        {course.musical_style?.country?.name && (
-                          <Badge variant="outline" className={`text-xs ${getCountryColor()}`}>
-                            <Globe className="h-3 w-3 mr-1" />
-                            {course.musical_style.country.name}
-                          </Badge>
-                        )}
-                      </div>
-                      <Link href={`/dashboard/course/${course.slug || course.id}`}>
-                        <h3 className="text-lg font-semibold mb-1 group-hover:text-primary transition-colors">
-                          {course.title}
-                        </h3>
-                      </Link>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                        {course.description || `Master ${course.musical_style?.name || 'Latin music'} with expert instruction`}
-                      </p>
-                      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-between gap-3 sm:gap-4 mt-auto">
-                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <span>{course.teacher?.name || 'Instructor'}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <BookOpen className="h-4 w-4" />
-                            <span>{course.course_modules?.length || 0} lessons</span>
-                          </div>
-                        </div>
-                        <Button asChild className="gap-2 w-full sm:w-auto" variant={hasStarted ? 'default' : 'outline'}>
-                          <Link href={`/dashboard/course/${course.slug || course.id}`}>
-                            {hasStarted ? (
-                              <>
-                                <PlayCircle className="h-4 w-4" />
-                                Continue Course
-                              </>
+                    return (
+                      <Card key={course.id} className="overflow-hidden h-full transition-colors group flex flex-col p-0 gap-0">
+                        <Link href={`/dashboard/course/${course.slug || course.id}`} className="flex-1 flex flex-col">
+                          <div className="aspect-video bg-muted relative overflow-hidden">
+                            {course.thumbnail_url ? (
+                              <img
+                                src={course.thumbnail_url}
+                                alt={course.title}
+                                className="object-cover w-full h-full"
+                              />
                             ) : (
-                              <>
+                              <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                                <BookOpen className="h-10 w-10 text-primary/50" />
+                              </div>
+                            )}
+                            {course.difficulty && (
+                              <Badge
+                                variant="outline"
+                                className={`absolute top-3 right-3 capitalize bg-background/90 backdrop-blur-sm ${getDifficultyColor(course.difficulty)}`}
+                              >
+                                {course.difficulty}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="p-4 flex flex-col flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                              <Badge variant="outline" className={`text-xs ${getStyleColor()}`}>
+                                <Music className="h-3 w-3 mr-1" />
+                                {course.musical_style?.name || 'Course'}
+                              </Badge>
+                              {course.instrument && !params.instrument && (
+                                <Badge variant="outline" className={`text-xs ${getInstrumentColor(course.instrument)}`}>
+                                  <Disc3 className="h-3 w-3 mr-1" />
+                                  {course.instrument}
+                                </Badge>
+                              )}
+                              {course.musical_style?.country?.name && (
+                                <Badge variant="outline" className={`text-xs ${getCountryColor()}`}>
+                                  <Globe className="h-3 w-3 mr-1" />
+                                  {course.musical_style.country.name}
+                                </Badge>
+                              )}
+                            </div>
+                            <h3 className="font-semibold text-base line-clamp-2 group-hover:text-primary transition-colors mb-2">
+                              {course.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                              {course.description || `Master ${course.musical_style?.name || 'Latin music'} with expert instruction`}
+                            </p>
+                            <div className="flex items-center justify-between text-sm text-muted-foreground mt-auto">
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4" />
+                                <span className="truncate max-w-[100px]">{course.teacher?.name || 'Instructor'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
                                 <BookOpen className="h-4 w-4" />
-                                View Course
-                              </>
+                                <span>{course.course_modules?.length || 0} lessons</span>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                        <div className="px-4 pb-4">
+                          <Button asChild className="w-full gap-2" variant={hasStarted ? 'default' : 'outline'}>
+                            <Link href={`/dashboard/course/${course.slug || course.id}`}>
+                              {hasStarted ? (
+                                <>
+                                  <PlayCircle className="h-4 w-4" />
+                                  Continue Course
+                                </>
+                              ) : (
+                                <>
+                                  <BookOpen className="h-4 w-4" />
+                                  View Course
+                                </>
+                              )}
+                            </Link>
+                          </Button>
+                        </div>
+                      </Card>
+                    )
+                  })}
+                </div>
+              ) : (
+                /* List View */
+                <div className="space-y-3 sm:space-y-4">
+                  {courses.map((course: any) => {
+                    const progress = courseProgressMap.get(course.id)
+                    const hasStarted = progress?.started || false
+
+                    return (
+                      <Card key={course.id} className="overflow-hidden transition-colors group p-0 gap-0">
+                        <div className="flex flex-col sm:flex-row">
+                          <Link href={`/dashboard/course/${course.slug || course.id}`} className="sm:w-56 md:w-72 sm:h-36 md:h-44 aspect-video sm:aspect-auto bg-muted flex-shrink-0 relative overflow-hidden">
+                            {course.thumbnail_url ? (
+                              <img
+                                src={course.thumbnail_url}
+                                alt={course.title}
+                                className="object-cover w-full h-full"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                                <BookOpen className="h-10 w-10 text-primary/50" />
+                              </div>
                             )}
                           </Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
-        )
+                          <div className="flex-1 p-4 sm:p-5 flex flex-col">
+                            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                              <Badge variant="outline" className={`text-xs ${getStyleColor()}`}>
+                                <Music className="h-3 w-3 mr-1" />
+                                {course.musical_style?.name || 'Course'}
+                              </Badge>
+                              {course.difficulty && (
+                                <Badge
+                                  variant="outline"
+                                  className={`text-xs capitalize ${getDifficultyColor(course.difficulty)}`}
+                                >
+                                  {course.difficulty}
+                                </Badge>
+                              )}
+                              {course.instrument && !params.instrument && (
+                                <Badge variant="outline" className={`text-xs ${getInstrumentColor(course.instrument)}`}>
+                                  <Disc3 className="h-3 w-3 mr-1" />
+                                  {course.instrument}
+                                </Badge>
+                              )}
+                              {course.musical_style?.country?.name && (
+                                <Badge variant="outline" className={`text-xs ${getCountryColor()}`}>
+                                  <Globe className="h-3 w-3 mr-1" />
+                                  {course.musical_style.country.name}
+                                </Badge>
+                              )}
+                            </div>
+                            <Link href={`/dashboard/course/${course.slug || course.id}`}>
+                              <h3 className="text-lg font-semibold mb-1 group-hover:text-primary transition-colors">
+                                {course.title}
+                              </h3>
+                            </Link>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                              {course.description || `Master ${course.musical_style?.name || 'Latin music'} with expert instruction`}
+                            </p>
+                            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-between gap-3 sm:gap-4 mt-auto">
+                              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                  <User className="h-4 w-4" />
+                                  <span>{course.teacher?.name || 'Instructor'}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <BookOpen className="h-4 w-4" />
+                                  <span>{course.course_modules?.length || 0} lessons</span>
+                                </div>
+                              </div>
+                              <Button asChild className="gap-2 w-full sm:w-auto" variant={hasStarted ? 'default' : 'outline'}>
+                                <Link href={`/dashboard/course/${course.slug || course.id}`}>
+                                  {hasStarted ? (
+                                    <>
+                                      <PlayCircle className="h-4 w-4" />
+                                      Continue Course
+                                    </>
+                                  ) : (
+                                    <>
+                                      <BookOpen className="h-4 w-4" />
+                                      View Course
+                                    </>
+                                  )}
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </>
       ) : (
         /* Empty State */
         <Card>

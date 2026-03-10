@@ -25,11 +25,11 @@ export default async function StylesPage() {
   })
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-black tracking-tight mb-1">Musical Styles</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-1">Musical Styles</h1>
           <p className="text-muted-foreground">Manage musical styles by country</p>
         </div>
         <Button asChild>

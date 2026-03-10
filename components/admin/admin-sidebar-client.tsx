@@ -55,19 +55,19 @@ export function AdminSidebarClient() {
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col h-screen sticky top-0 bg-zinc-900 text-zinc-100 flex-shrink-0 transition-all duration-200',
+        'hidden md:flex flex-col h-screen sticky top-0 bg-sidebar text-sidebar-foreground flex-shrink-0 transition-all duration-200',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       {/* Header */}
-      <div className={cn('flex items-center border-b border-zinc-800 flex-shrink-0', collapsed ? 'h-14 justify-center px-0' : 'h-14 px-5')}>
+      <div className={cn('flex items-center border-b border-sidebar-border flex-shrink-0', collapsed ? 'h-14 justify-center px-0' : 'h-14 px-5')}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <LayoutDashboard className="w-4 h-4 text-amber-400 flex-shrink-0" />
-            <span className="text-sm font-bold tracking-wide text-white">Admin Panel</span>
+            <LayoutDashboard className="w-4 h-4 text-sidebar-primary flex-shrink-0" />
+            <span className="text-sm font-bold tracking-wide text-sidebar-foreground">Admin Panel</span>
           </div>
         )}
-        {collapsed && <LayoutDashboard className="w-4 h-4 text-amber-400" />}
+        {collapsed && <LayoutDashboard className="w-4 h-4 text-sidebar-primary" />}
       </div>
 
       {/* Nav */}
@@ -84,10 +84,10 @@ export function AdminSidebarClient() {
               className={cn(
                 'flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors relative group',
                 isActive
-                  ? 'bg-amber-400/10 text-amber-400 border-l-2 border-amber-400 pl-[9px]'
-                  : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100',
+                  ? 'bg-sidebar-primary/10 text-sidebar-primary border-l-2 border-sidebar-primary pl-[9px]'
+                  : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground',
                 collapsed && 'justify-center px-0 border-l-0 pl-0',
-                collapsed && isActive && 'text-amber-400 bg-amber-400/10'
+                collapsed && isActive && 'text-sidebar-primary bg-sidebar-primary/10'
               )}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
@@ -111,13 +111,13 @@ export function AdminSidebarClient() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-zinc-800 p-2 space-y-1 flex-shrink-0">
+      <div className="border-t border-sidebar-border p-2 space-y-1 flex-shrink-0">
         {collapsed ? (
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
                 href="/dashboard"
-                className="flex items-center justify-center rounded-lg p-2 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+                className="flex items-center justify-center rounded-lg p-2 text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
               </Link>
@@ -129,7 +129,7 @@ export function AdminSidebarClient() {
         ) : (
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+            className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Dashboard
@@ -140,7 +140,7 @@ export function AdminSidebarClient() {
         <button
           onClick={toggle}
           className={cn(
-            'flex items-center rounded-lg p-2 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800 transition-colors w-full',
+            'flex items-center rounded-lg p-2 text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors w-full',
             collapsed ? 'justify-center' : 'gap-2 px-2.5'
           )}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}

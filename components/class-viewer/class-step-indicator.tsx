@@ -19,11 +19,11 @@ interface ClassStepIndicatorProps {
   classId: string
 }
 
-const typeConfig: Record<string, { color: string, activeColor: string, icon: typeof Video }> = {
-  VIDEO: { color: 'text-blue-500', activeColor: 'ring-blue-500 bg-blue-500/10', icon: Video },
-  QUIZ: { color: 'text-purple-500', activeColor: 'ring-purple-500 bg-purple-500/10', icon: FileQuestion },
-  EXERCISE: { color: 'text-green-500', activeColor: 'ring-green-500 bg-green-500/10', icon: Dumbbell },
-  JAM_SESSION: { color: 'text-orange-500', activeColor: 'ring-orange-500 bg-orange-500/10', icon: Music },
+const typeConfig: Record<string, { color: string, activeBg: string, icon: typeof Video }> = {
+  VIDEO: { color: 'text-blue-500', activeBg: 'bg-blue-500/15 text-blue-700 dark:text-blue-400', icon: Video },
+  QUIZ: { color: 'text-purple-500', activeBg: 'bg-purple-500/15 text-purple-700 dark:text-purple-400', icon: FileQuestion },
+  EXERCISE: { color: 'text-green-500', activeBg: 'bg-green-500/15 text-green-700 dark:text-green-400', icon: Dumbbell },
+  JAM_SESSION: { color: 'text-orange-500', activeBg: 'bg-orange-500/15 text-orange-700 dark:text-orange-400', icon: Music },
 }
 
 export function ClassStepIndicator({
@@ -34,8 +34,8 @@ export function ClassStepIndicator({
   classId,
 }: ClassStepIndicatorProps) {
   return (
-    <div className="overflow-x-auto pb-2 -mx-2 px-2">
-      <div className="flex items-center gap-1 min-w-max">
+    <div className="overflow-x-auto -mx-2 px-2 pb-1">
+      <div className="inline-flex items-center rounded-xl bg-muted/50 p-1 min-w-max">
         {items.map((item, index) => {
           const config = typeConfig[item.item_type] || typeConfig.VIDEO
           const Icon = config.icon
@@ -43,32 +43,25 @@ export function ClassStepIndicator({
           const isCompleted = completedItemIds.includes(item.id)
 
           return (
-            <div key={item.id} className="flex items-center">
-              <Link
-                href={`/dashboard/course/${courseId}/class/${classId}?item=${index}`}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-full transition-all text-sm',
-                  isActive && `ring-2 ${config.activeColor} font-medium`,
-                  !isActive && !isCompleted && 'text-muted-foreground hover:bg-muted',
-                  isCompleted && !isActive && 'text-muted-foreground'
-                )}
-                title={item.title}
-              >
-                {isCompleted && !isActive ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                ) : (
-                  <Icon className={cn('w-4 h-4 flex-shrink-0', isActive ? config.color : '')} />
-                )}
-                <span className="hidden sm:inline max-w-[120px] truncate">{item.title}</span>
-                <span className="sm:hidden">{index + 1}</span>
-              </Link>
-              {index < items.length - 1 && (
-                <div className={cn(
-                  'w-4 h-0.5 mx-0.5',
-                  isCompleted ? 'bg-green-500/30' : 'bg-border'
-                )} />
+            <Link
+              key={item.id}
+              href={`/dashboard/course/${courseId}/class/${classId}?item=${index}`}
+              className={cn(
+                'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm whitespace-nowrap transition-all',
+                isActive && `${config.activeBg} font-medium shadow-sm`,
+                !isActive && !isCompleted && 'text-muted-foreground hover:bg-muted',
+                isCompleted && !isActive && 'text-muted-foreground'
               )}
-            </div>
+              title={item.title}
+            >
+              {isCompleted && !isActive ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+              ) : (
+                <Icon className={cn('w-4 h-4 flex-shrink-0', isActive ? config.color : '')} />
+              )}
+              <span className="hidden sm:inline">{item.title}</span>
+              <span className="sm:hidden">{index + 1}</span>
+            </Link>
           )
         })}
       </div>

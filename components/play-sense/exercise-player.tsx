@@ -169,8 +169,8 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
             <div className="flex-1 flex min-h-0">
               {/* Playlist sidebar — desktop */}
               <div className={cn(
-                'w-[300px] lg:w-[340px] shrink-0 border-r border-border hidden md:flex flex-col',
-                // On mobile when idle, show full-width playlist
+                'shrink-0 border-r border-border hidden md:flex flex-col transition-all duration-300',
+                isActive ? 'w-[220px] lg:w-[260px]' : 'w-[300px] lg:w-[340px]',
               )}>
                 <PlaylistView
                   exercises={exercises}
@@ -194,7 +194,8 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
 
               {/* Visualization panel */}
               <div className={cn(
-                'flex-1 flex flex-col min-h-0 p-4',
+                'flex-1 flex flex-col min-h-0',
+                isActive ? 'p-2' : 'p-4',
                 session.sessionState === 'idle' && 'hidden md:flex',
               )}>
                 <VisualizationPanel
@@ -205,12 +206,6 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                   countdownBeat={session.countdownBeat}
                   floatingGrades={floatingGrades}
                   edgeFlash={edgeFlash}
-                  currentScore={session.currentScore}
-                  currentCombo={session.currentCombo}
-                  currentAccuracy={session.currentAccuracy}
-                  tempoDrift={session.tempoDrift}
-                  lastHitGrade={session.lastHitGrade}
-                  inputLevel={session.inputLevel}
                 />
               </div>
             </div>
@@ -227,6 +222,10 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                   inputLevel={session.inputLevel}
                   backingTrackLoading={session.backingTrackLoading}
                   backingTrackLoaded={session.backingTrackLoaded}
+                  currentScore={session.currentScore}
+                  currentCombo={session.currentCombo}
+                  currentAccuracy={session.currentAccuracy}
+                  lastHitGrade={session.lastHitGrade}
                   onStart={session.startExercise}
                   onStop={session.stopExercise}
                   onCalibrate={session.startCalibration}

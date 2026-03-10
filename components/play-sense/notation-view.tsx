@@ -13,9 +13,11 @@ interface NotationViewProps {
   isPlaying: boolean
 }
 
-const MIN_MEASURE_WIDTH = 250
+const MIN_MEASURE_WIDTH = 416
 
 export function NotationView({ exercise, eventResults, playheadProgress, isPlaying }: NotationViewProps) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const playheadRef = useRef<HTMLDivElement>(null)
@@ -24,9 +26,6 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
   const totalRenderedHeightRef = useRef(0)
   const [svgReady, setSvgReady] = useState(false)
   const [measuresPerLine, setMeasuresPerLine] = useState(2)
-  const { theme } = useTheme()
-
-  const isDark = theme === 'dark'
 
   // Dynamic measures per line based on container width
   useEffect(() => {
@@ -51,120 +50,123 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     const container = containerRef.current
     container.innerHTML = ''
 
-    const effectiveMeasuresPerLine = Math.min(measuresPerLine, exercise.measures)
-    const totalLines = Math.ceil(exercise.measures / effectiveMeasuresPerLine)
+    // Render all measures in a single horizontal row
+    const effectiveMeasuresPerLine = exercise.measures
+    const totalLines = 1
 
     const containerWidth = container.clientWidth || 800
+    // Size each measure so 3 fit in the viewport
     const measureWidth = Math.max(
-      Math.floor((containerWidth - 40) / effectiveMeasuresPerLine),
+      Math.floor((containerWidth - 40) / Math.min(measuresPerLine, 2)),
       MIN_MEASURE_WIDTH
     )
-    const actualWidth = Math.max(containerWidth, effectiveMeasuresPerLine * measureWidth + 40)
-    const staveHeight = 160
+    // Total SVG width extends beyond viewport for scrolling
+    const actualWidth = exercise.measures * measureWidth + 40
+    const staveHeight = 286
     const totalHeight = totalLines * staveHeight + 40
 
     const renderer = new Renderer(container, Renderer.Backends.SVG)
     renderer.resize(actualWidth, totalHeight)
     const context = renderer.getContext()
 
-    // Style the SVG
+    // Style the SVG — transparent bg, parchment wrapper handles theming
     const svgEl = container.querySelector('svg')
     if (svgEl) {
       svgEl.style.background = 'transparent'
     }
 
-    // Theme-aware warm colors
+    // Engraved sheet music colors
+    const darkColor = 'hsl(0,0%,85%)'
     const staveStyle = isDark
-      ? { fillStyle: 'hsl(220,10%,32%)', strokeStyle: 'hsl(220,10%,32%)' }
-      : { fillStyle: 'hsl(30,15%,78%)', strokeStyle: 'hsl(30,15%,78%)' }
+      ? { fillStyle: 'hsl(25,6%,42%)', strokeStyle: 'hsl(25,6%,42%)' }
+      : { fillStyle: 'hsl(25,8%,72%)', strokeStyle: 'hsl(25,8%,72%)' }
     const noteStyle = isDark
-      ? { fillStyle: 'hsl(30,10%,85%)', strokeStyle: 'hsl(30,10%,85%)' }
-      : { fillStyle: 'hsl(20,15%,18%)', strokeStyle: 'hsl(20,15%,18%)' }
+      ? { fillStyle: 'hsl(30,15%,85%)', strokeStyle: 'hsl(30,15%,85%)' }
+      : { fillStyle: 'hsl(20,25%,12%)', strokeStyle: 'hsl(20,25%,12%)' }
 
     const grouped = groupEventsByMeasure(exercise.events, exercise.measures)
     let globalEventIdx = 0
     let firstStaveX = 0
     let lastStaveEndX = 0
 
-    for (let line = 0; line < totalLines; line++) {
-      for (let col = 0; col < effectiveMeasuresPerLine; col++) {
-        const measureNum = line * effectiveMeasuresPerLine + col + 1
-        if (measureNum > exercise.measures) break
+    // Single loop: all measures left-to-right
+    for (let col = 0; col < effectiveMeasuresPerLine; col++) {
+      const measureNum = col + 1
+      if (measureNum > exercise.measures) break
 
-        const x = col * measureWidth + 20
-        const y = line * staveHeight + 10
+      const x = col * measureWidth + 20
+      const y = 10
 
-        const stave = new Stave(x, y, measureWidth)
-        if (col === 0) {
-          stave.addClef('percussion')
-          stave.addTimeSignature(`${exercise.timeSignature[0]}/${exercise.timeSignature[1]}`)
-          if (line === 0) firstStaveX = x + stave.getNoteStartX() - x
-        }
+      const stave = new Stave(x, y, measureWidth)
+      if (col === 0) {
+        stave.addClef('percussion')
+        stave.addTimeSignature(`${exercise.timeSignature[0]}/${exercise.timeSignature[1]}`)
+        firstStaveX = x + stave.getNoteStartX() - x
+      }
 
-        // Style stave lines
-        stave.setStyle(staveStyle)
-        stave.setContext(context).draw()
+      // Style stave lines
+      stave.setStyle(staveStyle)
+      stave.setContext(context).draw()
 
-        if (col === effectiveMeasuresPerLine - 1 || measureNum === exercise.measures) {
-          lastStaveEndX = x + measureWidth
-        }
+      if (col === effectiveMeasuresPerLine - 1 || measureNum === exercise.measures) {
+        lastStaveEndX = x + measureWidth
+      }
 
-        const measureEvents = grouped.get(measureNum) || []
+      const measureEvents = grouped.get(measureNum) || []
 
-        if (measureEvents.length === 0) {
-          const rest = new StaveNote({
-            keys: ['b/4'],
-            duration: 'wr',
-          })
-          rest.setStyle(isDark
-            ? { fillStyle: 'hsl(0,0%,40%)', strokeStyle: 'hsl(0,0%,40%)' }
-            : { fillStyle: 'hsl(30,10%,60%)', strokeStyle: 'hsl(30,10%,60%)' }
-          )
-          Formatter.FormatAndDraw(context, stave, [rest])
-          continue
-        }
+      if (measureEvents.length === 0) {
+        const rest = new StaveNote({
+          keys: ['b/4'],
+          duration: 'wr',
+        })
+        rest.setStyle(isDark
+          ? { fillStyle: 'hsl(25,8%,50%)', strokeStyle: 'hsl(25,8%,50%)' }
+          : { fillStyle: 'hsl(25,12%,55%)', strokeStyle: 'hsl(25,12%,55%)' }
+        )
+        Formatter.FormatAndDraw(context, stave, [rest])
+        continue
+      }
 
-        const notes: InstanceType<typeof StaveNote>[] = []
-        for (const event of measureEvents) {
-          const duration = beatDurationToVexDuration(event.duration)
-          const noteKey = event.vexKey || 'c/5'
+      const notes: InstanceType<typeof StaveNote>[] = []
+      for (const event of measureEvents) {
+        const duration = beatDurationToVexDuration(event.duration)
+        const noteKey = event.vexKey || 'c/5'
 
-          const staveNote = new StaveNote({
-            keys: [noteKey],
-            duration,
-          })
+        const staveNote = new StaveNote({
+          keys: [noteKey],
+          duration,
+        })
 
-          if (event.accent) {
-            try {
-              const { Articulation } = vexflow
-              staveNote.addModifier(new Articulation('a>'))
-            } catch {
-              // Articulation may not be available
-            }
+        if (event.accent) {
+          try {
+            const { Articulation } = vexflow
+            staveNote.addModifier(new Articulation('a>'))
+          } catch {
+            // Articulation may not be available
           }
-
-          // Theme-aware note color
-          staveNote.setStyle(noteStyle)
-          ;(staveNote as unknown as { _eventIndex: number })._eventIndex = globalEventIdx
-
-          notes.push(staveNote)
-          globalEventIdx++
         }
 
-        Formatter.FormatAndDraw(context, stave, notes)
+        // Note color (always dark on cream paper)
+        staveNote.setStyle(noteStyle)
+        ;(staveNote as unknown as { _eventIndex: number })._eventIndex = globalEventIdx
 
-        try {
-          const beamableNotes = notes.filter(n => {
-            const dur = n.getDuration()
-            return dur === '8' || dur === '16'
-          })
-          if (beamableNotes.length >= 2) {
-            const beam = new Beam(beamableNotes)
-            beam.setContext(context).draw()
-          }
-        } catch {
-          // Beam may fail
+        notes.push(staveNote)
+        globalEventIdx++
+      }
+
+      Formatter.FormatAndDraw(context, stave, notes)
+
+      try {
+        const beamableNotes = notes.filter(n => {
+          const dur = n.getDuration()
+          return dur === '8' || dur === '16'
+        })
+        if (beamableNotes.length >= 2) {
+          const beam = new Beam(beamableNotes)
+          beam.setContext(context).draw()
         }
+      } catch {
+        // Beam may fail
       }
     }
 
@@ -194,6 +196,17 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
   useEffect(() => {
     if (!containerRef.current || !svgReady) return
 
+    if (eventResults.length === 0) {
+      containerRef.current.querySelectorAll('[data-graded]').forEach(el => {
+        delete (el as HTMLElement).dataset.graded
+        el.querySelectorAll('path, text, rect, line').forEach(child => {
+          ;(child as SVGElement).style.fill = ''
+          ;(child as SVGElement).style.stroke = ''
+        })
+      })
+      return
+    }
+
     for (const result of eventResults) {
       const color = GRADE_COLORS[result.grade]
       const el = containerRef.current.querySelector(`[data-event-index="${result.eventIndex}"]`)
@@ -209,77 +222,92 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
           ;(child as SVGElement).style.stroke = color
         })
 
-        // Hit pulse animation via CSS class
-        htmlEl.classList.add('note-hit-pulse')
-        setTimeout(() => htmlEl.classList.remove('note-hit-pulse'), 400)
+        // Hit pulse or miss shake animation
+        if (result.grade === 'miss') {
+          htmlEl.classList.add('note-miss-shake')
+          setTimeout(() => htmlEl.classList.remove('note-miss-shake'), 400)
+        } else {
+          htmlEl.classList.add('note-hit-pulse')
+          setTimeout(() => htmlEl.classList.remove('note-hit-pulse'), 450)
+        }
       }
     }
   }, [eventResults, svgReady])
 
-  // Update playhead position and auto-scroll
+  // Fixed playhead position: 30% from left of viewport
+  const PLAYHEAD_VIEWPORT_RATIO = 0.3
+
+  // Guitar Hero style: fixed playhead, notation scrolls behind it
   useEffect(() => {
-    if (!playheadRef.current) return
+    if (!playheadRef.current || !scrollContainerRef.current) return
 
     if (!isPlaying) {
-      playheadRef.current.style.display = 'none'
+      playheadRef.current.style.opacity = '0'
+      scrollContainerRef.current.scrollTo({ left: 0 })
       return
     }
 
-    playheadRef.current.style.display = 'block'
-    const x = notationLeftRef.current + playheadProgress * notationWidthRef.current
-    playheadRef.current.style.left = `${x}px`
+    playheadRef.current.style.opacity = '1'
+    const viewWidth = scrollContainerRef.current.clientWidth
+    const fixedX = viewWidth * PLAYHEAD_VIEWPORT_RATIO
 
-    // Auto-scroll to keep playhead visible
-    if (scrollContainerRef.current) {
-      const scrollEl = scrollContainerRef.current
-      const viewWidth = scrollEl.clientWidth
-      const scrollLeft = scrollEl.scrollLeft
-
-      if (x > scrollLeft + viewWidth - 60) {
-        scrollEl.scrollTo({ left: x - 100, behavior: 'smooth' })
-      } else if (x < scrollLeft + 40) {
-        scrollEl.scrollTo({ left: Math.max(0, x - 100), behavior: 'smooth' })
-      }
-    }
+    // Scroll so current beat position aligns under the fixed playhead
+    const beatX = notationLeftRef.current + playheadProgress * notationWidthRef.current
+    const targetScroll = beatX - fixedX
+    scrollContainerRef.current.scrollLeft = Math.max(0, targetScroll)
   }, [playheadProgress, isPlaying])
 
   return (
-    <div className="relative w-full staff-paper rounded-xl border border-border overflow-hidden">
+    <div className="relative w-full overflow-hidden rounded-2xl notation-parchment shadow-md">
       {/* CSS for hit pulse animation */}
       <style jsx global>{`
         @keyframes notePulse {
-          0% { filter: brightness(1) drop-shadow(0 0 0px currentColor); }
-          25% { filter: brightness(1.6) drop-shadow(0 0 10px currentColor); }
-          100% { filter: brightness(1) drop-shadow(0 0 0px currentColor); }
+          0% { filter: brightness(1) drop-shadow(0 0 0px currentColor); transform: scale(1); }
+          20% { filter: brightness(1.8) drop-shadow(0 0 14px currentColor); transform: scale(1.08); }
+          50% { filter: brightness(1.4) drop-shadow(0 0 8px currentColor); transform: scale(1.02); }
+          100% { filter: brightness(1) drop-shadow(0 0 0px currentColor); transform: scale(1); }
+        }
+        @keyframes noteMiss {
+          0% { filter: brightness(1); transform: translateX(0); }
+          15% { filter: brightness(1.2) hue-rotate(-20deg); transform: translateX(-3px); }
+          30% { transform: translateX(3px); }
+          45% { transform: translateX(-2px); }
+          60% { transform: translateX(1px); }
+          100% { filter: brightness(1); transform: translateX(0); }
         }
         .note-hit-pulse {
-          animation: notePulse 0.4s ease-out;
+          animation: notePulse 0.45s ease-out;
+        }
+        .note-miss-shake {
+          animation: noteMiss 0.4s ease-out;
         }
       `}</style>
+
+      {/* Fixed playhead — positioned over the scroll area, never moves */}
+      <div
+        ref={playheadRef}
+        className="absolute top-0 bottom-0 z-10 pointer-events-none"
+        style={{
+          opacity: 0,
+          left: '30%',
+          width: '3px',
+          background: 'linear-gradient(180deg, hsl(30,85%,55%), hsl(14,52%,53%))',
+          boxShadow: '0 0 8px hsla(30,85%,55%,0.4), 0 0 16px hsla(14,52%,53%,0.2)',
+          borderRadius: '2px',
+          maskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+          animation: isPlaying ? 'pulse-glow 2s ease-in-out infinite' : 'none',
+          transition: 'opacity 0.2s ease',
+        }}
+      />
 
       {/* Scrollable notation area */}
       <div
         ref={scrollContainerRef}
-        className="relative overflow-x-auto overflow-y-hidden p-5 md:p-8"
+        className="relative overflow-x-hidden overflow-y-hidden py-4 px-2 md:py-6 md:px-4"
       >
-        {/* Glow playhead */}
-        <div
-          ref={playheadRef}
-          className="absolute top-0 bottom-0 z-10 pointer-events-none"
-          style={{
-            display: 'none',
-            width: '4px',
-            background: 'linear-gradient(180deg, hsl(30,85%,55%), hsl(14,52%,53%))',
-            boxShadow: '0 0 12px hsla(30,85%,55%,0.6), 0 0 24px hsla(14,52%,53%,0.3)',
-            borderRadius: '2px',
-            transition: 'left 32ms linear',
-            maskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
-          }}
-        />
-
         {/* Notation container */}
-        <div ref={containerRef} className="w-full min-h-[160px]" />
+        <div ref={containerRef} className="w-full min-h-[286px]" />
       </div>
     </div>
   )

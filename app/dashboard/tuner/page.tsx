@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Mic,
   MicOff,
@@ -11,11 +12,14 @@ import {
   ChevronsUp,
   ChevronsDown,
   AlertTriangle,
+  Guitar,
+  Piano,
+  Music2,
   Music,
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -25,10 +29,19 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { usePitchDetection } from '@/hooks/use-pitch-detection'
+import { staggerContainer, staggerChild } from '@/lib/animation-variants'
 
 const REFERENCE_PITCHES = [432, 434, 436, 438, 440, 441, 442, 443, 444]
 
 const TUNABLE_INSTRUMENTS = ['Guitar', 'Bass', 'Piano', 'Violin', 'Tres'] as const
+
+const INSTRUMENT_ICONS: Record<string, typeof Guitar> = {
+  Guitar: Guitar,
+  Bass: Guitar,
+  Piano: Piano,
+  Violin: Music2,
+  Tres: Music,
+}
 
 const INSTRUMENT_TUNING_INFO: Record<string, { description: string; strings?: string[] }> = {
   Guitar: {
@@ -52,10 +65,10 @@ const INSTRUMENT_TUNING_INFO: Record<string, { description: string; strings?: st
   },
 }
 
-// Arc gauge constants
-const CX = 170
-const CY = 160
-const R = 130
+// Arc gauge constants — larger gauge
+const CX = 250
+const CY = 220
+const R = 190
 
 function getTuningStatus(cents: number | null) {
   if (cents === null) return { label: 'Waiting...', icon: AudioWaveform, color: 'text-muted-foreground' }
@@ -83,19 +96,18 @@ function centsToAngle(cents: number): number {
 }
 
 /** Convert polar angle (degrees) to cartesian coords on the arc */
-function polarToCartesian(angleDeg: number): { x: number; y: number } {
+function polarToCartesian(angleDeg: number, radius = R): { x: number; y: number } {
   const rad = (angleDeg * Math.PI) / 180
-  return { x: CX + R * Math.cos(rad), y: CY - R * Math.sin(rad) }
+  return { x: CX + radius * Math.cos(rad), y: CY - radius * Math.sin(rad) }
 }
 
 /** Build an SVG arc path between two cent values */
-function arcPath(startCents: number, endCents: number): string {
+function arcPath(startCents: number, endCents: number, radius = R): string {
   const a1 = centsToAngle(startCents)
   const a2 = centsToAngle(endCents)
-  const start = polarToCartesian(a1)
-  const end = polarToCartesian(a2)
-  // arc sweeps clockwise (large-arc=0 since each segment < 180°)
-  return `M ${start.x} ${start.y} A ${R} ${R} 0 0 1 ${end.x} ${end.y}`
+  const start = polarToCartesian(a1, radius)
+  const end = polarToCartesian(a2, radius)
+  return `M ${start.x} ${start.y} A ${radius} ${radius} 0 0 1 ${end.x} ${end.y}`
 }
 
 /** Generate tick mark endpoints */
@@ -110,15 +122,31 @@ function tickMark(cents: number, inner: number, outer: number) {
   }
 }
 
-const ARC_SEGMENTS: { start: number; end: number; color: string }[] = [
-  { start: -50, end: -20, color: '#ef4444' },
-  { start: -20, end: -5, color: '#eab308' },
-  { start: -5, end: 5, color: '#22c55e' },
-  { start: 5, end: 20, color: '#eab308' },
-  { start: 20, end: 50, color: '#ef4444' },
+const ARC_SEGMENTS: { start: number; end: number; id: string }[] = [
+  { start: -50, end: -20, id: 'red-left' },
+  { start: -20, end: -5, id: 'yellow-left' },
+  { start: -5, end: 5, id: 'green-center' },
+  { start: 5, end: 20, id: 'yellow-right' },
+  { start: 20, end: 50, id: 'red-right' },
 ]
 
-const TICKS = [-50, -25, 0, 25, 50]
+// 11 ticks at every 10 cents
+const TICKS = [-50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50]
+const TICK_LABELS: Record<number, string> = { '-50': '-50', '-25': '-25', 0: '0', 25: '+25', 50: '+50' }
+const LABELED_TICKS = [-50, -25, 0, 25, 50]
+
+const pulseVariants = {
+  initial: { scale: 1, opacity: 0.3 },
+  animate: {
+    scale: [1, 1.6, 1],
+    opacity: [0.3, 0, 0.3],
+    transition: {
+      duration: 1.5,
+      ease: 'easeInOut' as const,
+      repeat: Infinity,
+    },
+  },
+}
 
 export default function TunerPage() {
   const [referencePitch, setReferencePitch] = useState(440)
@@ -139,210 +167,289 @@ export default function TunerPage() {
   const StatusIcon = tuningStatus.icon
   const noteColor = getNoteColor(cents)
 
-  // Needle rotation: 0° = straight up (center), ±90° = edges
-  const needleRotation = cents !== null ? (cents / 50) * 90 : 0
-
-  // Needle tip position for the SVG line
-  const needleAngle = centsToAngle(cents ?? 0)
-  const needleTip = polarToCartesian(needleAngle)
+  // Needle angle for the tapered polygon
+  const needleAngleDeg = centsToAngle(cents ?? 0)
+  const isInTune = cents !== null && Math.abs(cents) < 5
 
   return (
-    <>
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Instrument Tuner</h1>
-        <p className="text-muted-foreground mt-1">
-          Tune your instrument using your device&apos;s microphone
-        </p>
+    <div className="flex flex-col h-[calc(100vh-3.5rem-3rem)]">
+      {/* Compact header */}
+      <div className="mb-4 flex items-center gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">Instrument Tuner</h1>
+        <Badge variant="secondary" className="hidden sm:flex">
+          <AudioWaveform className="h-3 w-3" />
+          Chromatic
+        </Badge>
       </div>
 
-      {/* Main Tuner Card */}
-      <Card className="max-w-2xl mx-auto p-6 mb-6">
-        {/* Top bar: badge + reference pitch */}
-        <div className="flex items-center justify-between gap-2 mb-6 flex-wrap">
-          <Badge variant="secondary">
-            <AudioWaveform className="h-3 w-3" />
-            Chromatic
-          </Badge>
-          <div className="flex items-center gap-2 flex-wrap">
+      {/* Two-column body */}
+      <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
+        {/* ── Left Column ── */}
+        <div className="w-full md:w-[280px] flex flex-col gap-4 shrink-0">
+          {/* Instrument cards — horizontal scroll on mobile, vertical on desktop */}
+          <motion.div
+            className="flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0"
+            variants={staggerContainer(0.08, 0.05)}
+            initial="hidden"
+            animate="visible"
+          >
+            {TUNABLE_INSTRUMENTS.map((inst) => {
+              const Icon = INSTRUMENT_ICONS[inst]
+              const isSelected = selectedInstrument === inst
+              return (
+                <motion.button
+                  key={inst}
+                  variants={staggerChild}
+                  onClick={() => setSelectedInstrument(inst)}
+                  className={cn(
+                    'flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors whitespace-nowrap shrink-0',
+                    'text-sm font-medium cursor-pointer',
+                    isSelected
+                      ? 'bg-primary/10 border-primary text-primary'
+                      : 'bg-card border-border text-muted-foreground hover:bg-muted/50'
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {inst}
+                </motion.button>
+              )
+            })}
+          </motion.div>
+
+          {/* Instrument info */}
+          {INSTRUMENT_TUNING_INFO[selectedInstrument] && (
+            <div className="rounded-xl bg-muted/50 p-4">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{selectedInstrument}</span>
+                {' \u2014 '}
+                {INSTRUMENT_TUNING_INFO[selectedInstrument].description}
+              </p>
+              {INSTRUMENT_TUNING_INFO[selectedInstrument].strings && (
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  {INSTRUMENT_TUNING_INFO[selectedInstrument].strings!.map((s) => (
+                    <Badge key={s} variant="outline" className="text-xs font-mono">
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Reference pitch — pushed to bottom on desktop */}
+          <div className="mt-auto flex items-center gap-2">
+            <label className="text-sm text-muted-foreground whitespace-nowrap">A4 =</label>
             <Select
-              value={selectedInstrument}
-              onValueChange={setSelectedInstrument}
+              value={referencePitch.toString()}
+              onValueChange={(val) => setReferencePitch(Number(val))}
             >
-              <SelectTrigger className="w-[120px] h-8">
-                <Music className="h-3 w-3 mr-1" />
+              <SelectTrigger className="w-[100px] h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TUNABLE_INSTRUMENTS.map((inst) => (
-                  <SelectItem key={inst} value={inst}>
-                    {inst}
+                {REFERENCE_PITCHES.map((pitch) => (
+                  <SelectItem key={pitch} value={pitch.toString()}>
+                    {pitch} Hz
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground">A4 =</label>
-              <Select
-                value={referencePitch.toString()}
-                onValueChange={(val) => setReferencePitch(Number(val))}
+          </div>
+        </div>
+
+        {/* ── Right Column ── */}
+        <div className="flex-1 flex flex-col items-center justify-center min-h-0">
+          {/* SVG Gauge */}
+          <div className="w-full max-w-lg">
+            <svg
+              viewBox="0 0 500 260"
+              className="w-full"
+              aria-label="Tuning gauge"
+            >
+              <defs>
+                {/* Gradient: red left */}
+                <linearGradient id="grad-red-left" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#dc2626" />
+                  <stop offset="100%" stopColor="#ef4444" />
+                </linearGradient>
+                {/* Gradient: yellow left */}
+                <linearGradient id="grad-yellow-left" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="#eab308" />
+                </linearGradient>
+                {/* Gradient: green center */}
+                <linearGradient id="grad-green-center" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#22c55e" stopOpacity="0.9" />
+                  <stop offset="50%" stopColor="#4ade80" />
+                  <stop offset="100%" stopColor="#22c55e" stopOpacity="0.9" />
+                </linearGradient>
+                {/* Gradient: yellow right */}
+                <linearGradient id="grad-yellow-right" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#eab308" />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity="0.8" />
+                </linearGradient>
+                {/* Gradient: red right */}
+                <linearGradient id="grad-red-right" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#ef4444" />
+                  <stop offset="100%" stopColor="#dc2626" />
+                </linearGradient>
+                {/* Glow filter for in-tune */}
+                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="6" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                {/* Drop shadow for needle */}
+                <filter id="needle-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feDropShadow dx="1" dy="1" stdDeviation="2" floodOpacity="0.3" />
+                </filter>
+              </defs>
+
+              {/* Background track */}
+              <path
+                d={arcPath(-50, 50)}
+                fill="none"
+                stroke="hsl(var(--muted))"
+                strokeWidth={28}
+                strokeLinecap="round"
+                opacity={0.5}
+              />
+
+              {/* Colored arc segments */}
+              {ARC_SEGMENTS.map((seg) => (
+                <path
+                  key={seg.id}
+                  d={arcPath(seg.start, seg.end)}
+                  fill="none"
+                  stroke={`url(#grad-${seg.id})`}
+                  strokeWidth={24}
+                  strokeLinecap="round"
+                  opacity={0.85}
+                  filter={seg.id === 'green-center' && isInTune ? 'url(#glow)' : undefined}
+                />
+              ))}
+
+              {/* Tick marks — 11 ticks */}
+              {TICKS.map((t) => {
+                const tick = tickMark(t, R - 20, R + 20)
+                const isCenter = t === 0
+                const isMajor = t % 25 === 0 || t === 0
+                return (
+                  <line
+                    key={t}
+                    x1={tick.x1}
+                    y1={tick.y1}
+                    x2={tick.x2}
+                    y2={tick.y2}
+                    stroke="hsl(var(--muted-foreground))"
+                    strokeWidth={isCenter ? 3 : isMajor ? 2 : 1.2}
+                    opacity={isCenter ? 1 : isMajor ? 0.7 : 0.35}
+                  />
+                )
+              })}
+
+              {/* Cent labels outside arc */}
+              {LABELED_TICKS.map((t) => {
+                const pos = polarToCartesian(centsToAngle(t), R + 38)
+                return (
+                  <text
+                    key={`label-${t}`}
+                    x={pos.x}
+                    y={pos.y}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={11}
+                    fill="hsl(var(--muted-foreground))"
+                    opacity={0.7}
+                  >
+                    {TICK_LABELS[t] ?? t}
+                  </text>
+                )
+              })}
+
+              {/* Tapered needle */}
+              <motion.g
+                animate={{ rotate: -(needleAngleDeg - 90) }}
+                transition={{ type: 'spring', stiffness: 80, damping: 28 }}
+                style={{ transformOrigin: `${CX}px ${CY}px` }}
+                filter="url(#needle-shadow)"
               >
-                <SelectTrigger className="w-[100px] h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {REFERENCE_PITCHES.map((pitch) => (
-                    <SelectItem key={pitch} value={pitch.toString()}>
-                      {pitch} Hz
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <polygon
+                  points={`${CX},${CY - R + 28} ${CX - 5},${CY} ${CX + 5},${CY}`}
+                  fill="hsl(var(--foreground))"
+                />
+              </motion.g>
+
+              {/* Pivot circle */}
+              <circle cx={CX} cy={CY} r={8} fill="hsl(var(--foreground))" />
+              <circle cx={CX} cy={CY} r={4} fill="hsl(var(--background))" />
+            </svg>
+
+            {/* Flat / Sharp labels — HTML, not SVG */}
+            <div className="flex justify-between px-8 -mt-2">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Flat</span>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Sharp</span>
+            </div>
+          </div>
+
+          {/* Note display */}
+          <div className="flex flex-col items-center gap-1 mt-4">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${note ?? '--'}${octave ?? ''}`}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className={cn('text-6xl sm:text-8xl font-bold font-mono transition-colors', noteColor)}
+              >
+                {note && octave !== null ? `${note}${octave}` : '--'}
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="text-lg font-mono text-muted-foreground">
+              {frequency !== null ? `${frequency.toFixed(1)} Hz` : '-- Hz'}
+            </div>
+
+            <div className={cn('flex items-center gap-1.5 text-sm font-medium mt-1', tuningStatus.color)}>
+              <StatusIcon className="h-4 w-4" />
+              {tuningStatus.label}
+            </div>
+          </div>
+
+          {/* Mic button */}
+          <div className="flex justify-center mt-6">
+            <div className="relative">
+              {isListening && (
+                <motion.span
+                  className="absolute inset-0 rounded-full bg-destructive/30"
+                  variants={pulseVariants}
+                  initial="initial"
+                  animate="animate"
+                />
+              )}
+              <Button
+                variant={isListening ? 'destructive' : 'default'}
+                className="rounded-full h-20 w-20 relative shadow-lg"
+                onClick={isListening ? stopListening : startListening}
+                aria-label={isListening ? 'Stop tuner' : 'Start tuner'}
+              >
+                {isListening ? (
+                  <MicOff className="h-7 w-7" />
+                ) : (
+                  <Mic className="h-7 w-7" />
+                )}
+              </Button>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Semi-circle arc gauge */}
-        <div className="flex justify-center mb-4">
-          <svg
-            viewBox="0 0 340 185"
-            className="w-full max-w-sm"
-            aria-label="Tuning gauge"
-          >
-            {/* Arc segments */}
-            {ARC_SEGMENTS.map((seg) => (
-              <path
-                key={`${seg.start}-${seg.end}`}
-                d={arcPath(seg.start, seg.end)}
-                fill="none"
-                stroke={seg.color}
-                strokeWidth={18}
-                strokeLinecap="round"
-                opacity={0.85}
-              />
-            ))}
-
-            {/* Tick marks */}
-            {TICKS.map((t) => {
-              const tick = tickMark(t, R - 16, R + 16)
-              const isCenter = t === 0
-              return (
-                <line
-                  key={t}
-                  x1={tick.x1}
-                  y1={tick.y1}
-                  x2={tick.x2}
-                  y2={tick.y2}
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeWidth={isCenter ? 2.5 : 1.5}
-                  opacity={isCenter ? 1 : 0.5}
-                />
-              )
-            })}
-
-            {/* Needle */}
-            <line
-              x1={CX}
-              y1={CY}
-              x2={needleTip.x}
-              y2={needleTip.y}
-              stroke="hsl(var(--foreground))"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              style={{
-                transition: 'x2 100ms ease-out, y2 100ms ease-out',
-              }}
-            />
-
-            {/* Pivot circle */}
-            <circle cx={CX} cy={CY} r={6} fill="hsl(var(--foreground))" />
-            <circle cx={CX} cy={CY} r={3} fill="hsl(var(--background))" />
-
-            {/* Labels */}
-            <text
-              x={18}
-              y={CY + 6}
-              textAnchor="start"
-              fontSize={12}
-              fill="hsl(var(--muted-foreground))"
-              fontFamily="inherit"
-            >
-              Flat
-            </text>
-            <text
-              x={322}
-              y={CY + 6}
-              textAnchor="end"
-              fontSize={12}
-              fill="hsl(var(--muted-foreground))"
-              fontFamily="inherit"
-            >
-              Sharp
-            </text>
-          </svg>
-        </div>
-
-        {/* Note display */}
-        <div className="flex flex-col items-center gap-1 mb-6">
-          <div className={cn('text-5xl sm:text-7xl font-bold font-mono transition-colors', noteColor)}>
-            {note && octave !== null ? `${note}${octave}` : '--'}
-          </div>
-
-          <div className="text-lg font-mono text-muted-foreground">
-            {frequency !== null ? `${frequency.toFixed(1)} Hz` : '-- Hz'}
-          </div>
-
-          <div className={cn('flex items-center gap-1.5 text-sm font-medium mt-1', tuningStatus.color)}>
-            <StatusIcon className="h-4 w-4" />
-            {tuningStatus.label}
-          </div>
-        </div>
-
-        {/* Instrument tuning info */}
-        {INSTRUMENT_TUNING_INFO[selectedInstrument] && (
-          <div className="rounded-lg bg-muted/50 p-4 mb-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{selectedInstrument}</span>
-              {' — '}
-              {INSTRUMENT_TUNING_INFO[selectedInstrument].description}
-            </p>
-            {INSTRUMENT_TUNING_INFO[selectedInstrument].strings && (
-              <div className="flex items-center justify-center gap-1.5 mt-2 flex-wrap">
-                {INSTRUMENT_TUNING_INFO[selectedInstrument].strings!.map((s) => (
-                  <Badge key={s} variant="outline" className="text-xs font-mono">
-                    {s}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Circular mic button */}
-        <div className="flex justify-center">
-          <div className="relative">
-            {isListening && (
-              <span className="absolute inset-0 rounded-full bg-destructive/30 animate-ping" />
-            )}
-            <Button
-              variant={isListening ? 'destructive' : 'default'}
-              className="rounded-full h-16 w-16 relative"
-              onClick={isListening ? stopListening : startListening}
-              aria-label={isListening ? 'Stop tuner' : 'Start tuner'}
-            >
-              {isListening ? (
-                <MicOff className="h-6 w-6" />
-              ) : (
-                <Mic className="h-6 w-6" />
-              )}
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Permission Denied Card */}
+      {/* Error cards — full width below layout */}
       {hasPermission === false && (
-        <Card className="max-w-2xl mx-auto p-6 border-destructive/50 bg-destructive/5">
+        <Card className="p-6 border-destructive/50 bg-destructive/5 mt-6">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
             <div className="flex-1">
@@ -365,9 +472,8 @@ export default function TunerPage() {
         </Card>
       )}
 
-      {/* Generic error (not permission related) */}
       {error && hasPermission !== false && (
-        <Card className="max-w-2xl mx-auto p-6 border-destructive/50 bg-destructive/5">
+        <Card className="p-6 border-destructive/50 bg-destructive/5 mt-6">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
             <div className="flex-1">
@@ -384,6 +490,6 @@ export default function TunerPage() {
           </div>
         </Card>
       )}
-    </>
+    </div>
   )
 }

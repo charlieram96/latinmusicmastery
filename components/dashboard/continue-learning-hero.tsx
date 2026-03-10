@@ -19,7 +19,7 @@ export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps
             muted
             playsInline
             className="absolute inset-0 w-full h-full object-cover"
-            src="https://videos.pexels.com/video-files/4488162/4488162-uhd_2560_1440_24fps.mp4"
+            src="/videos/band-performing.mp4"
           />
           {/* Dark overlay for text contrast */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30" />

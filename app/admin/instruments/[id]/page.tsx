@@ -51,7 +51,7 @@ export default async function InstrumentFormPage({ params }: PageProps) {
           <ArrowLeft className="w-4 h-4 mr-1" />
           Back to Instruments
         </Link>
-        <h1 className="text-4xl font-black tracking-tight">
+        <h1 className="text-4xl font-bold tracking-tight">
           {isNew ? 'Add Instrument' : 'Edit Instrument'}
         </h1>
       </div>

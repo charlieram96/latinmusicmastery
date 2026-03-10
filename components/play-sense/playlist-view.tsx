@@ -30,7 +30,7 @@ function EqualizerIcon() {
           variants={equalizerBar}
           initial="idle"
           animate="active"
-          className="w-[3px] bg-emerald-400 rounded-full origin-bottom"
+          className="w-[3px] bg-primary rounded-full origin-bottom"
           style={{ animationDelay: `${i * 0.15}s` }}
         />
       ))}
@@ -39,9 +39,9 @@ function EqualizerIcon() {
 }
 
 const DIFFICULTY_DOT: Record<string, string> = {
-  beginner: 'bg-emerald-400',
-  intermediate: 'bg-amber-400',
-  advanced: 'bg-rose-400',
+  beginner: 'bg-emerald-400 shadow-[0_0_4px_hsl(142,69%,58%,0.4)]',
+  intermediate: 'bg-amber-400 shadow-[0_0_4px_hsl(38,92%,50%,0.4)]',
+  advanced: 'bg-rose-400 shadow-[0_0_4px_hsl(351,95%,71%,0.4)]',
 }
 
 export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect }: PlaylistViewProps) {
@@ -57,10 +57,13 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
   return (
     <div className="flex flex-col h-full">
       {/* Playlist header */}
-      <div className="px-4 py-3 border-b border-border">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+      <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+        <h3 className="text-xs font-heading font-semibold uppercase tracking-[0.2em] text-muted-foreground">
           Exercises
         </h3>
+        <span className="text-[10px] font-mono text-muted-foreground/60 bg-secondary/80 rounded-full px-2 py-0.5">
+          {exercises.length}
+        </span>
       </div>
 
       {/* Track list */}
@@ -81,9 +84,10 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
               variants={staggerItem}
               onClick={() => onSelect(exercise)}
               className={cn(
-                'group flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors duration-150',
-                'hover:bg-black/[0.04] dark:hover:bg-white/[0.04]',
-                isSelected && 'bg-primary/5',
+                'group flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-all duration-150',
+                'hover:bg-gradient-to-r hover:from-primary/[0.03] hover:to-transparent',
+                isSelected && 'bg-primary/5 border-l-2 border-primary',
+                !isSelected && 'border-l-2 border-transparent',
               )}
             >
               {/* Track number / play icon / equalizer */}
@@ -94,13 +98,13 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
                   <>
                     <span className={cn(
                       'text-xs font-mono tabular-nums group-hover:hidden',
-                      isSelected ? 'text-emerald-400' : 'text-muted-foreground'
+                      isSelected ? 'text-primary' : 'text-muted-foreground'
                     )}>
                       {index + 1}
                     </span>
                     <Play className={cn(
                       'w-3.5 h-3.5 hidden group-hover:block',
-                      isSelected ? 'text-emerald-400' : 'text-muted-foreground'
+                      isSelected ? 'text-primary' : 'text-muted-foreground'
                     )} />
                   </>
                 )}
@@ -110,7 +114,7 @@ export function PlaylistView({ exercises, selectedExercise, isPlaying, onSelect 
               <div className="flex-1 min-w-0">
                 <p className={cn(
                   'text-sm font-medium truncate',
-                  isSelected ? 'text-emerald-400' : 'text-foreground'
+                  isSelected ? 'text-primary' : 'text-foreground'
                 )}>
                   {exercise.title}
                 </p>

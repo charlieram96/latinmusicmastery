@@ -41,9 +41,9 @@ export function CalibrationWizard({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          className="w-14 h-14 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto"
+          className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto"
         >
-          <Mic className="w-6 h-6 text-blue-400" />
+          <Mic className="w-6 h-6 text-primary" />
         </motion.div>
 
         <div>
@@ -71,7 +71,7 @@ export function CalibrationWizard({
               {/* Progress bar */}
               <div className="h-2 bg-secondary rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-[hsl(14,52%,53%)]"
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.3 }}
                 />
@@ -81,8 +81,8 @@ export function CalibrationWizard({
               <div className="flex justify-center relative h-20">
                 <div className="relative">
                   {/* Static center dot */}
-                  <div className="w-10 h-10 rounded-full bg-blue-500/30 flex items-center justify-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-5 h-5 rounded-full bg-blue-500" />
+                  <div className="w-10 h-10 rounded-full bg-primary/30 flex items-center justify-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-5 h-5 rounded-full bg-primary" />
                   </div>
 
                   {/* Expanding ring on each beat */}
@@ -94,7 +94,7 @@ export function CalibrationWizard({
                         animate={{ scale: 3, opacity: 0 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className="w-10 h-10 rounded-full border-2 border-blue-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                        className="w-10 h-10 rounded-full border-2 border-primary/60 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                       />
                     )}
                   </AnimatePresence>
@@ -109,7 +109,7 @@ export function CalibrationWizard({
                     initial={{ scale: 0 }}
                     animate={{
                       scale: 1,
-                      backgroundColor: i < calibrationBeat ? '#3b82f6' : 'hsl(var(--muted))',
+                      backgroundColor: i < calibrationBeat ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
                     }}
                     transition={{ delay: i * 0.02 }}
                     className="w-2.5 h-2.5 rounded-full"
@@ -173,7 +173,7 @@ export function CalibrationWizard({
                 <Button
                   size="sm"
                   onClick={onSkip}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-0"
+                  className="bg-gradient-to-r from-primary to-[hsl(14,52%,48%)] hover:from-primary/90 hover:to-[hsl(14,52%,53%)] text-white border-0"
                 >
                   Continue
                 </Button>
@@ -209,7 +209,7 @@ export function CalibrationWizard({
                 <Button
                   size="sm"
                   onClick={onStartCalibration}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-0"
+                  className="bg-gradient-to-r from-primary to-[hsl(14,52%,48%)] hover:from-primary/90 hover:to-[hsl(14,52%,53%)] text-white border-0"
                 >
                   {calibrationError ? 'Try Again' : 'Start Calibration'}
                 </Button>

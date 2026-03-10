@@ -40,10 +40,14 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
       const holdTime = duration * 0.7
       const rampTime = duration * 0.3
 
+      // Start gain at 0 to prevent artifacts from default value (1.0)
+      gainNode.gain.value = 0
+
       osc.connect(gainNode)
       gainNode.connect(audioContext.destination)
 
-      // Envelope: attack → hold → ramp down
+      // Envelope: silent → attack → hold → ramp down
+      gainNode.gain.setValueAtTime(0, Math.max(0, time - 0.001))
       gainNode.gain.setValueAtTime(peakGain, time)
       gainNode.gain.setValueAtTime(peakGain, time + holdTime)
       gainNode.gain.exponentialRampToValueAtTime(0.001, time + holdTime + rampTime)
@@ -56,6 +60,12 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
 
   const startMetronome = useCallback(
     (audioContext: AudioContext): number => {
+      // Clear any existing scheduling interval to prevent leaks
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+
       audioCtxRef.current = audioContext
       setIsPlaying(true)
 
@@ -89,7 +99,8 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
           scheduleClick(audioCtxRef.current, nextBeatTimeRef.current, isDownbeat)
 
           scheduledBeatsRef.current++
-          nextBeatTimeRef.current += beatDuration
+          // Use multiplication from base time to avoid floating-point drift
+          nextBeatTimeRef.current = exerciseStart + scheduledBeatsRef.current * beatDuration
         }
       }, scheduleInterval)
 

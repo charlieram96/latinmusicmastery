@@ -85,8 +85,8 @@ export function getExerciseDuration(exercise: ExerciseDefinition): number {
 /**
  * Compute count-in duration in seconds (4 beats).
  */
-export function getCountInDuration(bpm: number): number {
-  return (4 * 60) / bpm
+export function getCountInDuration(bpm: number, countInBeats: number = 4): number {
+  return (countInBeats * 60) / bpm
 }
 
 /**

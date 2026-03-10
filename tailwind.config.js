@@ -112,6 +112,10 @@ module.exports = {
           from: { backgroundPosition: "200% 0" },
           to: { backgroundPosition: "-200% 0" },
         },
+        "slow-zoom": {
+          "0%": { transform: "scale(1.05)" },
+          "100%": { transform: "scale(1.15)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -125,6 +129,8 @@ module.exports = {
         "slide-up-fade": "slide-up-fade 0.6s ease-out",
         "scale-in": "scale-in 0.5s ease-out",
         "shimmer": "shimmer 8s linear infinite",
+        "fade-in-up-delayed": "fade-in-up 0.5s ease-out both",
+        "slow-zoom": "slow-zoom 25s ease-in-out infinite alternate",
       },
     },
   },

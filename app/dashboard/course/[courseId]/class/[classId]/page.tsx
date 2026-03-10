@@ -197,7 +197,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         </div>
 
         {/* Sidebar */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 lg:border-l lg:pl-6">
           <CourseSidebar
             courseId={courseId}
             currentClassId={classId}

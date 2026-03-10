@@ -22,9 +22,9 @@ export function ClassViewerNav({
   isCompleted,
 }: ClassViewerNavProps) {
   return (
-    <div className="border-b bg-background sticky top-0 z-10 -mx-6 -mt-6 mb-6">
+    <div className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-10 -mx-6 -mt-6 mb-6">
       <div className="px-4 py-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <Button asChild variant="ghost" size="sm">
               <Link href={`/dashboard/course/${courseId}`}>
@@ -41,14 +41,16 @@ export function ClassViewerNav({
               </div>
             </div>
           </div>
-          {isCompleted ? (
-            <Badge variant="default" className="gap-1">
-              <CheckCircle2 className="w-4 h-4" />
-              Completed
-            </Badge>
-          ) : classItemId ? (
-            <ClassItemCompleteButton classItemId={classItemId} />
-          ) : null}
+          <div className="flex-shrink-0">
+            {isCompleted ? (
+              <Badge variant="default" className="gap-1">
+                <CheckCircle2 className="w-4 h-4" />
+                Completed
+              </Badge>
+            ) : classItemId ? (
+              <ClassItemCompleteButton classItemId={classItemId} />
+            ) : null}
+          </div>
         </div>
       </div>
     </div>
