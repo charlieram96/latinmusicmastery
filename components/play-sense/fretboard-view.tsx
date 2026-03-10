@@ -19,15 +19,15 @@ interface FretboardViewProps {
 }
 
 const HIT_LINE_RATIO = .95
-const LOOK_AHEAD_SEC = 9
+const LOOK_AHEAD_SEC = 30
 const BOARD_HEIGHT = 2500
 const BOARD_HEIGHT_MOBILE = 2000
 const LOOK_BEHIND_SEC = 0.5
-const NOTE_RADIUS_DESKTOP = 14
-const NOTE_RADIUS_MOBILE = 10
+const NOTE_RADIUS_DESKTOP = 30
+const NOTE_RADIUS_MOBILE = 24
 const MIN_LANE_WIDTH = 48
-const RECEIVER_RADIUS_DESKTOP = 20
-const RECEIVER_RADIUS_MOBILE = 15
+const RECEIVER_RADIUS_DESKTOP = 30
+const RECEIVER_RADIUS_MOBILE = 24
 const PROXIMITY_THRESHOLD = 0.5 // seconds for receiver glow
 
 export function FretboardView({ exercise, eventResults, playheadProgress, isPlaying }: FretboardViewProps) {
