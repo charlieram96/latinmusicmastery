@@ -223,7 +223,11 @@ export function useExerciseSession(): UseExerciseSessionResult {
         setEventResults([...eventResultsRef.current])
         setLastHitGrade(result.grade)
 
-        liveComboRef.current++
+        if (result.grade !== 'miss') {
+          liveComboRef.current++
+        } else {
+          liveComboRef.current = 0
+        }
         setCurrentCombo(liveComboRef.current)
 
         // Update live stats
@@ -289,6 +293,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
           onsetEnergy: null,
         }
         eventResultsRef.current = [...eventResultsRef.current, missResult]
+        matchedIndicesRef.current.add(evt.eventIndex)
         liveComboRef.current = 0
         missDetected = true
       }
