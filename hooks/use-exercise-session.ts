@@ -245,12 +245,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     const elapsed = currentTime - exerciseStartTimeRef.current
     const overallProgress = Math.min(elapsed / exerciseDurationRef.current, 1)
 
-    // For multi-loop exercises, playhead loops within a single loop's worth of notation
-    const singleLoop = singleLoopDurationRef.current
-    const progress = singleLoop > 0 && exerciseDurationRef.current > singleLoop
-      ? (elapsed % singleLoop) / singleLoop
-      : overallProgress
-    setPlayheadProgress(progress)
+    setPlayheadProgress(overallProgress)
 
     // Resolve sustain tracking: when input level drops or expected duration passes
     const SUSTAIN_SILENCE_THRESHOLD = 0.005

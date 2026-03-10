@@ -19,12 +19,12 @@ interface FretboardViewProps {
 }
 
 const HIT_LINE_RATIO = .95
-const LOOK_AHEAD_SEC = 30
+const LOOK_AHEAD_SEC = 9
 const BOARD_HEIGHT = 2500
 const BOARD_HEIGHT_MOBILE = 2000
 const LOOK_BEHIND_SEC = 0.5
-const NOTE_RADIUS_DESKTOP = 30
-const NOTE_RADIUS_MOBILE = 24
+const NOTE_RADIUS_DESKTOP = 20
+const NOTE_RADIUS_MOBILE = 16
 const MIN_LANE_WIDTH = 48
 const RECEIVER_RADIUS_DESKTOP = 30
 const RECEIVER_RADIUS_MOBILE = 24
@@ -437,6 +437,16 @@ export function FretboardView({ exercise, eventResults, playheadProgress, isPlay
         </div>
         </div>
       </div>
+      {/* Top fade overlay — painted after 3D content so it renders on top */}
+      <div
+        className="absolute top-0 left-0 right-0 h-32 pointer-events-none rounded-t-[1rem]"
+        style={{
+          zIndex: 50,
+          background: isDark
+            ? 'linear-gradient(rgb(18 18 18) 0%, rgb(18 18 18) 45%, rgb(18 18 18) 60%, transparent 100%)'
+            : 'linear-gradient(hsl(35 30% 93%) 0%, hsl(35 30% 93%) 45%, hsl(35 30% 93%) 60%, transparent 100%)',
+        }}
+      />
     </div>
   )
 }

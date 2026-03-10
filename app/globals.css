@@ -241,7 +241,7 @@
 }
 
 .fretboard-board {
-  transform: rotateX(50deg);
+  transform: rotateX(46deg);
   transform-origin: center bottom;
   transform-style: preserve-3d;
   width: 100%;
