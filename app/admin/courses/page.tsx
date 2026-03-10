@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, BookOpen, User, Music, Globe, Disc3, Pencil } from 'lucide-react'
 import { getInstrumentColor, SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
+import { AdminSearch } from '@/components/admin/admin-search'
 
 interface PageProps {
   searchParams: Promise<{
     instrument?: string
+    q?: string
   }>
 }
 
@@ -29,6 +31,10 @@ export default async function CoursesPage({ searchParams }: PageProps) {
 
   if (params.instrument) {
     query = query.eq('instrument', params.instrument)
+  }
+
+  if (params.q) {
+    query = query.ilike('title', `%${params.q}%`)
   }
 
   const { data: courses } = await query
@@ -75,6 +81,10 @@ export default async function CoursesPage({ searchParams }: PageProps) {
             Add Course
           </Link>
         </Button>
+      </div>
+
+      <div className="mb-6">
+        <AdminSearch placeholder="Search courses..." />
       </div>
 
       {/* Instrument Tabs */}
