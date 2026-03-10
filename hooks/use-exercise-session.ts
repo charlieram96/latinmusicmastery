@@ -330,25 +330,31 @@ export function useExerciseSession(): UseExerciseSessionResult {
     metronome.stopMetronome()
     backingTrack.stopPlayback()
 
-    // Mark any unmatched expected events as misses
-    const allResults = [...eventResultsRef.current]
+    // Build authoritative results: deduplicate by eventIndex, preferring
+    // non-miss grades over miss when duplicates exist (race condition safety net)
+    const resultsByIndex = new Map<number, EventResult>()
+    for (const r of eventResultsRef.current) {
+      const existing = resultsByIndex.get(r.eventIndex)
+      if (!existing || (existing.grade === 'miss' && r.grade !== 'miss')) {
+        resultsByIndex.set(r.eventIndex, r)
+      }
+    }
+
+    // Fill in any expected events that have no result as misses
     for (const expected of expectedEventsRef.current) {
-      if (!matchedIndicesRef.current.has(expected.eventIndex)) {
-        // Check if we already have a result for this event
-        const hasResult = allResults.some(r => r.eventIndex === expected.eventIndex)
-        if (!hasResult) {
-          allResults.push({
-            eventIndex: expected.eventIndex,
-            grade: 'miss',
-            offsetMs: null,
-            timing: null,
-            onsetEnergy: null,
-          })
-        }
+      if (!resultsByIndex.has(expected.eventIndex)) {
+        resultsByIndex.set(expected.eventIndex, {
+          eventIndex: expected.eventIndex,
+          grade: 'miss',
+          offsetMs: null,
+          timing: null,
+          onsetEnergy: null,
+        })
       }
     }
 
     // Sort by eventIndex
+    const allResults = Array.from(resultsByIndex.values())
     allResults.sort((a, b) => a.eventIndex - b.eventIndex)
 
     const duration = audioCtxRef.current

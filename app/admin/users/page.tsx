@@ -50,7 +50,7 @@ export default async function AdminUsersPage({
     <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-black tracking-tight mb-1">Users</h1>
+        <h1 className="text-4xl font-bold tracking-tight mb-1">Users</h1>
         <p className="text-muted-foreground">Manage users, assign roles, and link teacher accounts</p>
       </div>
 

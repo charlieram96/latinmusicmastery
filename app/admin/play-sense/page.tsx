@@ -27,7 +27,7 @@ export default async function AdminPlaySensePage() {
     <div className="p-6 lg:p-8">
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-black tracking-tight mb-1">Play Sense</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-1">Play Sense</h1>
           <p className="text-muted-foreground">Create and manage percussion practice exercises</p>
         </div>
         <Button asChild>

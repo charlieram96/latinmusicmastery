@@ -55,7 +55,7 @@ export default async function AdminAnalyticsPage() {
     <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-black tracking-tight mb-1">Analytics</h1>
+        <h1 className="text-4xl font-bold tracking-tight mb-1">Analytics</h1>
         <p className="text-muted-foreground">Platform performance and engagement metrics</p>
       </div>
 

@@ -21,7 +21,7 @@ export default async function CountriesPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-black tracking-tight mb-1">Countries</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-1">Countries</h1>
           <p className="text-muted-foreground">Manage Latin American countries</p>
         </div>
         <Button asChild>
