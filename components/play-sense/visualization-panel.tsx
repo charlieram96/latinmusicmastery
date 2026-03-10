@@ -4,9 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import type { ExerciseDefinition, EventResult, SessionState, HitGrade } from '@/lib/play-sense/types'
 import { GRADE_COLORS } from '@/lib/play-sense/types'
-import { getInstrumentLabel } from '@/lib/play-sense/exercise-utils'
 import { FretboardView } from './fretboard-view'
-import { LiveScoreHUD } from './live-score-hud'
 import {
   countdownPop,
   gradeFloat,
@@ -22,14 +20,6 @@ interface VisualizationPanelProps {
   countdownBeat: number
   floatingGrades: Array<{ grade: string; id: number }>
   edgeFlash: boolean
-
-  // Live scoring
-  currentScore: number
-  currentCombo: number
-  currentAccuracy: number
-  tempoDrift: number
-  lastHitGrade: string | null
-  inputLevel: number
 }
 
 function FloatingGrade({ grade, id }: { grade: string; id: number }) {
@@ -63,12 +53,6 @@ export function VisualizationPanel({
   countdownBeat,
   floatingGrades,
   edgeFlash,
-  currentScore,
-  currentCombo,
-  currentAccuracy,
-  tempoDrift,
-  lastHitGrade,
-  inputLevel,
 }: VisualizationPanelProps) {
   // Idle state — instrument illustration with glow
   if (!exercise || sessionState === 'idle') {
@@ -174,55 +158,7 @@ export function VisualizationPanel({
           </span>
         </div>
 
-        {/* HUD sidebar — overlaid right edge */}
-        {isPlaying && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="absolute top-10 right-2 z-10 w-[160px] hidden md:block"
-          >
-            <div className="bg-card/70 backdrop-blur-md rounded-xl border border-border/50 p-2.5 shadow-lg">
-              <LiveScoreHUD
-                score={currentScore}
-                combo={currentCombo}
-                accuracy={currentAccuracy}
-                tempoDrift={tempoDrift}
-                lastHitGrade={lastHitGrade}
-                inputLevel={inputLevel}
-              />
-            </div>
-          </motion.div>
-        )}
       </div>
-
-      {/* Mobile live score — compact bottom bar */}
-      {isPlaying && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between md:hidden bg-card/60 backdrop-blur-sm rounded-lg border border-border p-2.5 mt-1"
-        >
-          <div className="flex items-center gap-3 text-sm font-mono text-foreground">
-            <span>Score: {Math.round(currentScore)}%</span>
-            <span className={cn(
-              currentCombo >= 10 && 'text-orange-400',
-              currentCombo >= 5 && currentCombo < 10 && 'text-yellow-400'
-            )}>
-              {currentCombo}x
-            </span>
-            <span>{Math.round(currentAccuracy)}%</span>
-          </div>
-          {lastHitGrade && (
-            <span
-              className="text-xs font-bold"
-              style={{ color: GRADE_COLORS[lastHitGrade as HitGrade] }}
-            >
-              {GRADE_LABELS[lastHitGrade] || lastHitGrade}
-            </span>
-          )}
-        </motion.div>
-      )}
     </div>
   )
 }

@@ -4,8 +4,10 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import type { ExerciseDefinition, SessionState } from '@/lib/play-sense/types'
+import type { ExerciseDefinition, SessionState, HitGrade } from '@/lib/play-sense/types'
+import { GRADE_COLORS } from '@/lib/play-sense/types'
 import { getInstrumentLabel, getExerciseDuration } from '@/lib/play-sense/exercise-utils'
+import { GRADE_LABELS } from '@/lib/play-sense/animations'
 import { SensitivitySettings } from './sensitivity-settings'
 import { slideUp } from '@/lib/play-sense/animations'
 import {
@@ -16,6 +18,7 @@ import {
   Loader2,
   Volume2,
   VolumeX,
+  Flame,
 } from 'lucide-react'
 
 interface NowPlayingBarProps {
@@ -27,6 +30,10 @@ interface NowPlayingBarProps {
   inputLevel: number
   backingTrackLoading: boolean
   backingTrackLoaded: boolean
+  currentScore: number
+  currentCombo: number
+  currentAccuracy: number
+  lastHitGrade: string | null
   onStart: () => void
   onStop: () => void
   onCalibrate: () => void
@@ -48,6 +55,10 @@ export function NowPlayingBar({
   inputLevel,
   backingTrackLoading,
   backingTrackLoaded,
+  currentScore,
+  currentCombo,
+  currentAccuracy,
+  lastHitGrade,
   onStart,
   onStop,
   onCalibrate,
@@ -56,6 +67,7 @@ export function NowPlayingBar({
   const totalDuration = getExerciseDuration(exercise)
   const elapsed = playheadProgress * totalDuration
   const isActive = sessionState === 'playing' || sessionState === 'countdown'
+  const isPlaying = sessionState === 'playing'
 
   return (
     <motion.div
@@ -115,6 +127,46 @@ export function NowPlayingBar({
                   <span className="text-[10px] text-muted-foreground">Metronome only</span>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Score stats — always rendered for fixed height */}
+          <div className={cn(
+            'flex items-center gap-2 sm:gap-3 shrink-0 transition-opacity duration-300',
+            isPlaying ? 'opacity-100' : 'opacity-40'
+          )}>
+            <div className="flex items-center gap-1 font-mono text-xs sm:text-sm">
+              <span className="text-muted-foreground text-[10px] sm:text-[11px] hidden sm:inline">Score</span>
+              <span className="text-foreground font-semibold tabular-nums">
+                {isPlaying ? `${Math.round(currentScore)}%` : '--%'}
+              </span>
+            </div>
+            <div className="flex items-center gap-0.5 font-mono text-xs sm:text-sm">
+              {currentCombo >= 5 && isPlaying && (
+                <Flame className="w-3 h-3 text-orange-400" />
+              )}
+              <span className={cn(
+                'font-semibold tabular-nums',
+                isPlaying && currentCombo >= 10 ? 'text-orange-400' :
+                isPlaying && currentCombo >= 5 ? 'text-yellow-400' :
+                'text-foreground'
+              )}>
+                {isPlaying ? `${currentCombo}x` : '--x'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 font-mono text-xs sm:text-sm">
+              <span className="text-muted-foreground text-[10px] sm:text-[11px] hidden sm:inline">Acc</span>
+              <span className="text-foreground font-semibold tabular-nums">
+                {isPlaying ? `${Math.round(currentAccuracy)}%` : '--%'}
+              </span>
+            </div>
+            <div className={cn(
+              'rounded-full px-1.5 py-0.5 text-[10px] sm:text-xs font-bold transition-colors min-w-[3rem] text-center',
+              isPlaying && lastHitGrade
+                ? 'bg-foreground/10'
+                : 'bg-transparent'
+            )} style={isPlaying && lastHitGrade ? { color: GRADE_COLORS[lastHitGrade as HitGrade] } : { color: 'var(--muted-foreground)' }}>
+              {isPlaying && lastHitGrade ? (GRADE_LABELS[lastHitGrade] || lastHitGrade) : '--'}
             </div>
           </div>
 

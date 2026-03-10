@@ -206,12 +206,6 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                   countdownBeat={session.countdownBeat}
                   floatingGrades={floatingGrades}
                   edgeFlash={edgeFlash}
-                  currentScore={session.currentScore}
-                  currentCombo={session.currentCombo}
-                  currentAccuracy={session.currentAccuracy}
-                  tempoDrift={session.tempoDrift}
-                  lastHitGrade={session.lastHitGrade}
-                  inputLevel={session.inputLevel}
                 />
               </div>
             </div>
@@ -228,6 +222,10 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                   inputLevel={session.inputLevel}
                   backingTrackLoading={session.backingTrackLoading}
                   backingTrackLoaded={session.backingTrackLoaded}
+                  currentScore={session.currentScore}
+                  currentCombo={session.currentCombo}
+                  currentAccuracy={session.currentAccuracy}
+                  lastHitGrade={session.lastHitGrade}
                   onStart={session.startExercise}
                   onStop={session.stopExercise}
                   onCalibrate={session.startCalibration}
