@@ -83,6 +83,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const exerciseStartTimeRef = useRef(0)
   const exerciseDurationRef = useRef(0)
   const singleLoopDurationRef = useRef(0)
+  const sessionStateRef = useRef<SessionState>('idle')
   const rafRef = useRef<number | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const eventResultsRef = useRef<EventResult[]>([])
@@ -95,6 +96,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
   // Sustain tracking: maps eventIndex -> { onsetTime, expectedDurationSec }
   const sustainTrackingRef = useRef<Map<number, { onsetTime: number; expectedDurationSec: number }>>(new Map())
   const lastInputLevelRef = useRef(0)
+  const readyToGradeRef = useRef(false)
 
   const {
     isListening,
@@ -108,10 +110,11 @@ export function useExerciseSession(): UseExerciseSessionResult {
     clearOnsets,
   } = useOnsetDetection({ noisyRoomMode, instrument: exercise?.instrument })
 
+  const countInBeats = exercise?.timeSignature?.[0] || 4
   const metronome = useMetronome({
     bpm: exercise?.bpm || 100,
     timeSignature: exercise?.timeSignature || [4, 4],
-    countInBeats: 4,
+    countInBeats,
   })
 
   const calibration = useCalibration()
@@ -130,6 +133,9 @@ export function useExerciseSession(): UseExerciseSessionResult {
     calibration.loadStoredCalibration()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Keep sessionStateRef in sync so rAF callback reads latest value
+  useEffect(() => { sessionStateRef.current = sessionState }, [sessionState])
 
   // Keep refs in sync for rAF callback access
   useEffect(() => {
@@ -157,6 +163,14 @@ export function useExerciseSession(): UseExerciseSessionResult {
   useEffect(() => {
     if (sessionState !== 'playing' || !exercise) return
 
+    // On the first render in 'playing' state, sync the processed index
+    // to skip all countdown-period onsets, then enable grading
+    if (!readyToGradeRef.current) {
+      lastProcessedOnsetRef.current = recentOnsets.length
+      readyToGradeRef.current = true
+      return
+    }
+
     // Process only new onsets
     const newOnsets = recentOnsets.slice(lastProcessedOnsetRef.current)
     if (newOnsets.length === 0) return
@@ -179,7 +193,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
         : undefined
 
       const result = gradeSingleOnset(
-        onset.timestamp,
+        onset.timestamp - exerciseStartTimeRef.current,
         onset.energy,
         expectedEventsRef.current,
         matchedIndicesRef.current,
@@ -225,7 +239,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
 
   // Playhead animation and exercise end detection
   const updatePlayhead = useCallback(() => {
-    if (!audioCtxRef.current || sessionState !== 'playing') return
+    if (!audioCtxRef.current || sessionStateRef.current !== 'playing') return
 
     const currentTime = audioCtxRef.current.currentTime
     const elapsed = currentTime - exerciseStartTimeRef.current
@@ -258,7 +272,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     const calibOffset = (calibrationDataRef.current?.latencyMs || 0) / 1000
     const difficulty = exerciseDifficultyRef.current
     const okWindowSec = (TOLERANCE_BY_DIFFICULTY[difficulty].ok + 50) / 1000 // add buffer
-    const correctedTime = currentTime - calibOffset
+    const correctedTime = elapsed - calibOffset
     const expected = expectedEventsRef.current
     let missDetected = false
 
@@ -302,7 +316,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
 
     rafRef.current = requestAnimationFrame(updatePlayhead)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionState])
+  }, [])
 
   const finishExercise = useCallback(() => {
     if (rafRef.current) {
@@ -383,6 +397,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     matchedIndicesRef.current = new Set()
     extraHitsRef.current = 0
     lastProcessedOnsetRef.current = 0
+    readyToGradeRef.current = false
     liveComboRef.current = 0
     lastMissCheckIndexRef.current = 0
     sustainTrackingRef.current.clear()
@@ -394,6 +409,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
       audioCtx = await startListening()
       if (!audioCtx) return
       audioCtxRef.current = audioCtx
+    } else if (audioCtx.state === 'suspended') {
+      await audioCtx.resume()
     }
 
     // Start pitch detection for pitched instruments
@@ -412,7 +429,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
 
     // Start countdown
     setSessionState('countdown')
-    const countInDuration = getCountInDuration(exercise.bpm)
+    const countInDuration = getCountInDuration(exercise.bpm, beatsPerMeasure)
     const exerciseStartTime = metronome.startMetronome(audioCtx)
     exerciseStartTimeRef.current = exerciseStartTime
 
@@ -429,7 +446,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
       if (!audioCtxRef.current) return
       const elapsed = audioCtxRef.current.currentTime - (exerciseStartTime - countInDuration)
       const newBeat = Math.floor(elapsed / beatDuration) + 1
-      if (newBeat !== countBeat && newBeat <= 4) {
+      if (newBeat !== countBeat && newBeat <= beatsPerMeasure) {
         countBeat = newBeat
         setCountdownBeat(countBeat)
       }
@@ -438,6 +455,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
           clearInterval(countdownIntervalRef.current)
           countdownIntervalRef.current = null
         }
+        sessionStateRef.current = 'playing'
         setSessionState('playing')
         setCountdownBeat(0)
         rafRef.current = requestAnimationFrame(updatePlayhead)

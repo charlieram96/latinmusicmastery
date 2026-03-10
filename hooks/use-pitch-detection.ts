@@ -142,7 +142,7 @@ export function usePitchDetection(
 
     if (detectedFreq > 0) {
       // Exponential smoothing
-      const smoothingFactor = 0.7
+      const smoothingFactor = 0.3
       const smoothed =
         smoothedFreqRef.current !== null
           ? smoothedFreqRef.current * (1 - smoothingFactor) + detectedFreq * smoothingFactor

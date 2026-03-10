@@ -192,24 +192,99 @@
   );
 }
 
-/* Notation parchment — engraved sheet music feel */
+/* Notation parchment — warm textured background */
 .notation-parchment {
-  background-color: hsl(36, 33%, 95%);
+  background-color: hsl(35, 30%, 93%);
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  box-shadow: inset 0 2px 8px hsl(30 15% 70% / 0.25), inset 0 0 0 1px hsl(30 10% 85% / 0.4);
   border-radius: 1rem;
+  box-shadow: inset 0 1px 4px hsl(30, 10%, 70% / 0.3), 0 2px 8px hsl(30, 10%, 70% / 0.15);
 }
 
 .dark .notation-parchment {
-  background-color: hsl(25, 10%, 12%);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
-  box-shadow: inset 0 2px 8px hsl(25 10% 5% / 0.4), 0 0 24px -8px hsl(30 40% 30% / 0.15), inset 0 0 0 1px hsl(30 10% 20% / 0.3);
+  background-color: hsl(20, 8%, 14%);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  border-radius: 1rem;
+  box-shadow: inset 0 1px 4px hsl(0, 0%, 0% / 0.4), 0 2px 8px hsl(0, 0%, 0% / 0.3);
 }
 
 /* Studio divider — gradient fade line */
 .studio-divider {
   height: 1px;
   background: linear-gradient(90deg, transparent, hsl(var(--border)) 20%, hsl(var(--border)) 80%, transparent);
+}
+
+/* Fretboard vertical notation */
+.fretboard-hit-line {
+  filter: url(#hitLineGlow);
+}
+
+/* 3D perspective board */
+.fretboard-outer {
+  overflow: hidden;
+  border-radius: 1rem;
+}
+
+.fretboard-perspective {
+  perspective: 800px;
+  perspective-origin: center 90%;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.fretboard-runway {
+  width: 100%;
+  height: 2500px;
+  transform-style: preserve-3d;
+  position: absolute;
+  bottom: 0;
+}
+
+.fretboard-board {
+  transform: rotateX(50deg);
+  transform-origin: center bottom;
+  transform-style: preserve-3d;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 640px) {
+  .fretboard-perspective {
+    perspective: 600px;
+  }
+  .fretboard-runway {
+    height: 2000px;
+  }
+  .fretboard-board {
+    transform: rotateX(40deg);
+    height: 100%;
+  }
+}
+
+/* Receiver circle glow */
+.receiver-glow {
+  transition: opacity 0.15s ease;
+}
+
+@keyframes receiverFlash {
+  0% { opacity: 1; filter: drop-shadow(0 0 12px currentColor); }
+  100% { opacity: 0.4; filter: none; }
+}
+
+.receiver-hit-flash {
+  animation: receiverFlash 0.3s ease-out;
+}
+
+.fretboard-measure-line {
+  pointer-events: none;
+}
+
+.fretboard-note-R {
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.fretboard-note-L {
+  transition: fill 0.15s ease, stroke 0.15s ease;
 }
 
 /* Thin scrollbar for curriculum navigator */

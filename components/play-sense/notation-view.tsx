@@ -76,6 +76,7 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     }
 
     // Engraved sheet music colors
+    const darkColor = 'hsl(0,0%,85%)'
     const staveStyle = isDark
       ? { fillStyle: 'hsl(25,6%,42%)', strokeStyle: 'hsl(25,6%,42%)' }
       : { fillStyle: 'hsl(25,8%,72%)', strokeStyle: 'hsl(25,8%,72%)' }
@@ -195,6 +196,17 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
   useEffect(() => {
     if (!containerRef.current || !svgReady) return
 
+    if (eventResults.length === 0) {
+      containerRef.current.querySelectorAll('[data-graded]').forEach(el => {
+        delete (el as HTMLElement).dataset.graded
+        el.querySelectorAll('path, text, rect, line').forEach(child => {
+          ;(child as SVGElement).style.fill = ''
+          ;(child as SVGElement).style.stroke = ''
+        })
+      })
+      return
+    }
+
     for (const result of eventResults) {
       const color = GRADE_COLORS[result.grade]
       const el = containerRef.current.querySelector(`[data-event-index="${result.eventIndex}"]`)
@@ -222,40 +234,31 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
     }
   }, [eventResults, svgReady])
 
-  // Update playhead position and auto-scroll
+  // Fixed playhead position: 30% from left of viewport
+  const PLAYHEAD_VIEWPORT_RATIO = 0.3
+
+  // Guitar Hero style: fixed playhead, notation scrolls behind it
   useEffect(() => {
-    if (!playheadRef.current) return
+    if (!playheadRef.current || !scrollContainerRef.current) return
 
     if (!isPlaying) {
-      playheadRef.current.style.display = 'none'
+      playheadRef.current.style.opacity = '0'
+      scrollContainerRef.current.scrollTo({ left: 0 })
       return
     }
 
-    playheadRef.current.style.display = 'block'
-    const x = notationLeftRef.current + playheadProgress * notationWidthRef.current
-    playheadRef.current.style.left = `${x}px`
+    playheadRef.current.style.opacity = '1'
+    const viewWidth = scrollContainerRef.current.clientWidth
+    const fixedX = viewWidth * PLAYHEAD_VIEWPORT_RATIO
 
-    // Reset scroll on playback start
-    if (scrollContainerRef.current && playheadProgress < 0.01) {
-      scrollContainerRef.current.scrollTo({ left: 0 })
-    }
-
-    // Auto-scroll to keep playhead visible
-    if (scrollContainerRef.current) {
-      const scrollEl = scrollContainerRef.current
-      const viewWidth = scrollEl.clientWidth
-      const scrollLeft = scrollEl.scrollLeft
-
-      if (x > scrollLeft + viewWidth - 60) {
-        scrollEl.scrollTo({ left: x - 100, behavior: 'smooth' })
-      } else if (x < scrollLeft + 40) {
-        scrollEl.scrollTo({ left: Math.max(0, x - 100), behavior: 'smooth' })
-      }
-    }
+    // Scroll so current beat position aligns under the fixed playhead
+    const beatX = notationLeftRef.current + playheadProgress * notationWidthRef.current
+    const targetScroll = beatX - fixedX
+    scrollContainerRef.current.scrollLeft = Math.max(0, targetScroll)
   }, [playheadProgress, isPlaying])
 
   return (
-    <div className="relative w-full overflow-hidden notation-parchment rounded-2xl shadow-[0_4px_16px_-4px_hsl(25_15%_50%/0.12)]">
+    <div className="relative w-full overflow-hidden rounded-2xl notation-parchment shadow-md">
       {/* CSS for hit pulse animation */}
       <style jsx global>{`
         @keyframes notePulse {
@@ -280,28 +283,29 @@ export function NotationView({ exercise, eventResults, playheadProgress, isPlayi
         }
       `}</style>
 
+      {/* Fixed playhead — positioned over the scroll area, never moves */}
+      <div
+        ref={playheadRef}
+        className="absolute top-0 bottom-0 z-10 pointer-events-none"
+        style={{
+          opacity: 0,
+          left: '30%',
+          width: '3px',
+          background: 'linear-gradient(180deg, hsl(30,85%,55%), hsl(14,52%,53%))',
+          boxShadow: '0 0 8px hsla(30,85%,55%,0.4), 0 0 16px hsla(14,52%,53%,0.2)',
+          borderRadius: '2px',
+          maskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+          animation: isPlaying ? 'pulse-glow 2s ease-in-out infinite' : 'none',
+          transition: 'opacity 0.2s ease',
+        }}
+      />
+
       {/* Scrollable notation area */}
       <div
         ref={scrollContainerRef}
-        className="relative overflow-x-auto overflow-y-hidden py-4 px-2 md:py-6 md:px-4"
+        className="relative overflow-x-hidden overflow-y-hidden py-4 px-2 md:py-6 md:px-4"
       >
-        {/* Glow playhead */}
-        <div
-          ref={playheadRef}
-          className="absolute top-0 bottom-0 z-10 pointer-events-none"
-          style={{
-            display: 'none',
-            width: '3px',
-            background: 'linear-gradient(180deg, hsl(30,85%,55%), hsl(14,52%,53%))',
-            boxShadow: '0 0 8px hsla(30,85%,55%,0.4), 0 0 16px hsla(14,52%,53%,0.2)',
-            borderRadius: '2px',
-            transition: 'left 32ms linear',
-            maskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
-            animation: isPlaying ? 'pulse-glow 2s ease-in-out infinite' : 'none',
-          }}
-        />
-
         {/* Notation container */}
         <div ref={containerRef} className="w-full min-h-[286px]" />
       </div>

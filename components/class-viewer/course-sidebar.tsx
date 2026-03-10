@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { CheckCircle2 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Accordion,
   AccordionContent,
@@ -35,16 +34,14 @@ export function CourseSidebar({ courseId, currentClassId, sections }: CourseSide
   )?.id
 
   return (
-    <Card className="sticky top-20">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Course Content</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
+    <div className="sticky top-20">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Course Content</h3>
+      <div className="border-b mb-4" />
+      <div className="max-h-[calc(100vh-10rem)] overflow-y-auto scrollbar-thin">
         <Accordion
           type="single"
           collapsible
           defaultValue={activeSectionId}
-          className="max-h-[600px] overflow-y-auto"
         >
           {sections.map((section) => (
             <AccordionItem key={section.id} value={section.id}>
@@ -111,7 +108,7 @@ export function CourseSidebar({ courseId, currentClassId, sections }: CourseSide
             </AccordionItem>
           ))}
         </Accordion>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

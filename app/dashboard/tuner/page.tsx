@@ -372,8 +372,8 @@ export default function TunerPage() {
               {/* Tapered needle */}
               <motion.g
                 animate={{ rotate: -(needleAngleDeg - 90) }}
-                transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-                style={{ originX: `${CX}px`, originY: `${CY}px` }}
+                transition={{ type: 'spring', stiffness: 80, damping: 28 }}
+                style={{ transformOrigin: `${CX}px ${CY}px` }}
                 filter="url(#needle-shadow)"
               >
                 <polygon
