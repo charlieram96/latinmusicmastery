@@ -18,6 +18,7 @@ import {
   standardTransition,
 } from '@/lib/play-sense/animations'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { AudioModePrompt } from './audio-mode-prompt'
 
 interface ExercisePlayerProps {
   exercises: ExerciseDefinition[]
@@ -192,21 +193,29 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                 </div>
               )}
 
-              {/* Visualization panel */}
+              {/* Visualization panel / Audio mode prompt */}
               <div className={cn(
                 'flex-1 flex flex-col min-h-0',
                 isActive ? 'p-2' : 'p-4',
                 session.sessionState === 'idle' && 'hidden md:flex',
               )}>
-                <VisualizationPanel
-                  exercise={session.exercise}
-                  sessionState={session.sessionState}
-                  eventResults={session.eventResults}
-                  playheadProgress={session.playheadProgress}
-                  countdownBeat={session.countdownBeat}
-                  floatingGrades={floatingGrades}
-                  edgeFlash={edgeFlash}
-                />
+                {session.sessionState === 'selecting' && session.audioMode === null ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <AudioModePrompt onSelect={session.setAudioMode} />
+                  </div>
+                ) : (
+                  <VisualizationPanel
+                    exercise={session.exercise}
+                    sessionState={session.sessionState}
+                    eventResults={session.eventResults}
+                    playheadProgress={session.playheadProgress}
+                    countdownBeat={session.countdownBeat}
+                    floatingGrades={floatingGrades}
+                    edgeFlash={edgeFlash}
+                    metronomeBeat={session.metronomeBeat}
+                    metronomeDownbeat={session.metronomeDownbeat}
+                  />
+                )}
               </div>
             </div>
 
@@ -220,8 +229,13 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                   calibrationData={session.calibrationData}
                   noisyRoomMode={session.noisyRoomMode}
                   inputLevel={session.inputLevel}
+                  isListening={session.isListening}
+                  isMicTesting={session.isMicTesting}
                   backingTrackLoading={session.backingTrackLoading}
                   backingTrackLoaded={session.backingTrackLoaded}
+                  audioMetronome={session.audioMetronome}
+                  audioMode={session.audioMode}
+                  onAudioModeChange={session.setAudioMode}
                   currentScore={session.currentScore}
                   currentCombo={session.currentCombo}
                   currentAccuracy={session.currentAccuracy}
@@ -229,7 +243,10 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                   onStart={session.startExercise}
                   onStop={session.stopExercise}
                   onCalibrate={session.startCalibration}
+                  onTestMic={session.testMic}
+                  onStopTestMic={session.stopTestMic}
                   onNoisyRoomChange={session.setNoisyRoomMode}
+                  onAudioMetronomeChange={session.setAudioMetronome}
                 />
               )}
             </AnimatePresence>

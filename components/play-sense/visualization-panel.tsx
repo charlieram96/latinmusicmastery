@@ -11,6 +11,7 @@ import {
   GRADE_LABELS,
 } from '@/lib/play-sense/animations'
 import { Music2, ChevronLeft } from 'lucide-react'
+import { VisualMetronome } from './visual-metronome'
 
 interface VisualizationPanelProps {
   exercise: ExerciseDefinition | null
@@ -20,6 +21,8 @@ interface VisualizationPanelProps {
   countdownBeat: number
   floatingGrades: Array<{ grade: string; id: number }>
   edgeFlash: boolean
+  metronomeBeat: number
+  metronomeDownbeat: boolean
 }
 
 function FloatingGrade({ grade, id }: { grade: string; id: number }) {
@@ -53,6 +56,8 @@ export function VisualizationPanel({
   countdownBeat,
   floatingGrades,
   edgeFlash,
+  metronomeBeat,
+  metronomeDownbeat,
 }: VisualizationPanelProps) {
   // Idle state — instrument illustration with glow
   if (!exercise || sessionState === 'idle') {
@@ -96,6 +101,11 @@ export function VisualizationPanel({
             isPlaying={isPlaying}
           />
         </div>
+
+        {/* Visual metronome pulse */}
+        {(sessionState === 'countdown' || sessionState === 'playing') && (
+          <VisualMetronome beat={metronomeBeat} isDownbeat={metronomeDownbeat} />
+        )}
 
         {/* Countdown overlay */}
         <AnimatePresence>

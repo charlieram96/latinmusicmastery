@@ -4,9 +4,12 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import type { OnsetEvent, Instrument } from '@/lib/play-sense/types'
 import { getInstrumentConfig, type OnsetConfig } from '@/lib/play-sense/onset-config'
 
+type AudioMode = 'headphones' | 'speaker-safe'
+
 interface UseOnsetDetectionOptions {
   noisyRoomMode?: boolean
   instrument?: Instrument | null
+  audioMode?: AudioMode
 }
 
 interface UseOnsetDetectionResult {
@@ -25,7 +28,7 @@ interface UseOnsetDetectionResult {
 export function useOnsetDetection(
   options: UseOnsetDetectionOptions = {}
 ): UseOnsetDetectionResult {
-  const { noisyRoomMode = false, instrument = null } = options
+  const { noisyRoomMode = false, instrument = null, audioMode } = options
 
   const [isListening, setIsListening] = useState(false)
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
@@ -72,12 +75,13 @@ export function useOnsetDetection(
     }
 
     try {
-      // Request mic with all processing disabled (critical for percussion)
+      // In speaker-safe mode, enable browser echo cancellation to reduce backing track bleed
+      const useSpeakerSafe = audioMode === 'speaker-safe'
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
-          echoCancellation: false,
-          noiseSuppression: false,
+          echoCancellation: useSpeakerSafe,
+          noiseSuppression: useSpeakerSafe,
           autoGainControl: false,
         },
       })
@@ -102,9 +106,10 @@ export function useOnsetDetection(
       workletNodeRef.current = workletNode
 
       // Send config — use instrument-specific profile when available
+      const speakerSafe = audioMode === 'speaker-safe'
       const config: OnsetConfig = instrument
-        ? getInstrumentConfig(instrument, noisyRoomMode)
-        : getInstrumentConfig('conga', noisyRoomMode)
+        ? getInstrumentConfig(instrument, noisyRoomMode, speakerSafe)
+        : getInstrumentConfig('conga', noisyRoomMode, speakerSafe)
       workletNode.port.postMessage({ type: 'config', config })
 
       // Listen for messages from worklet
@@ -148,7 +153,7 @@ export function useOnsetDetection(
       stopListening()
       return null
     }
-  }, [noisyRoomMode, instrument, stopListening])
+  }, [noisyRoomMode, instrument, audioMode, stopListening])
 
   // Cleanup on unmount
   useEffect(() => {

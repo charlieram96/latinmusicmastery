@@ -6,12 +6,16 @@ interface UseMetronomeOptions {
   bpm: number
   timeSignature: [number, number]
   countInBeats?: number
+  silent?: boolean
 }
 
 interface UseMetronomeResult {
   startMetronome: (audioContext: AudioContext) => number // returns startTime (after count-in)
   stopMetronome: () => void
   isPlaying: boolean
+  currentBeat: number // 1-indexed beat in measure
+  isDownbeat: boolean
+  setSilent: (silent: boolean) => void
 }
 
 /**
@@ -20,15 +24,24 @@ interface UseMetronomeResult {
  * to be spectrally distinct from percussion (120-2000Hz band-pass).
  */
 export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
-  const { bpm, timeSignature, countInBeats = 4 } = options
+  const { bpm, timeSignature, countInBeats = 4, silent: silentProp = true } = options
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [currentBeat, setCurrentBeat] = useState(0)
+  const [isDownbeat, setIsDownbeat] = useState(false)
+  const [silent, setSilent] = useState(silentProp)
+  const silentRef = useRef(silentProp)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const scheduledBeatsRef = useRef(0)
   const nextBeatTimeRef = useRef(0)
+  const countInStartRef = useRef(0)
+  const beatCounterRef = useRef(0) // total beats elapsed (for visual tracking)
 
   const scheduleClick = useCallback(
     (audioContext: AudioContext, time: number, isDownbeat: boolean) => {
+      // Skip audio output when silent
+      if (silentRef.current) return
+
       const osc = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
 
@@ -58,6 +71,12 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
     []
   )
 
+  // Keep silentRef in sync with state
+  const handleSetSilent = useCallback((value: boolean) => {
+    setSilent(value)
+    silentRef.current = value
+  }, [])
+
   const startMetronome = useCallback(
     (audioContext: AudioContext): number => {
       // Clear any existing scheduling interval to prevent leaks
@@ -68,12 +87,14 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
 
       audioCtxRef.current = audioContext
       setIsPlaying(true)
+      beatCounterRef.current = 0
 
       const beatDuration = 60 / bpm
       const beatsPerMeasure = timeSignature[0]
 
       // Count-in starts immediately
       const countInStart = audioContext.currentTime + 0.05 // tiny buffer
+      countInStartRef.current = countInStart
       const exerciseStart = countInStart + countInBeats * beatDuration
 
       // Schedule count-in clicks
@@ -93,6 +114,7 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
       intervalRef.current = setInterval(() => {
         if (!audioCtxRef.current) return
 
+        // Schedule audio clicks ahead
         while (nextBeatTimeRef.current < audioCtxRef.current.currentTime + lookahead) {
           const beatInMeasure = scheduledBeatsRef.current % beatsPerMeasure
           const isDownbeat = beatInMeasure === 0
@@ -102,7 +124,24 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
           // Use multiplication from base time to avoid floating-point drift
           nextBeatTimeRef.current = exerciseStart + scheduledBeatsRef.current * beatDuration
         }
+
+        // Update visual beat tracking (including count-in)
+        const now = audioCtxRef.current.currentTime
+        const elapsedSinceStart = now - countInStartRef.current
+        if (elapsedSinceStart >= 0) {
+          const totalBeatIndex = Math.floor(elapsedSinceStart / beatDuration)
+          if (totalBeatIndex !== beatCounterRef.current) {
+            beatCounterRef.current = totalBeatIndex
+            const beatInMeasure = (totalBeatIndex % beatsPerMeasure) + 1 // 1-indexed
+            setCurrentBeat(beatInMeasure)
+            setIsDownbeat(beatInMeasure === 1)
+          }
+        }
       }, scheduleInterval)
+
+      // Set initial beat
+      setCurrentBeat(1)
+      setIsDownbeat(true)
 
       return exerciseStart
     },
@@ -111,17 +150,23 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
 
   const stopMetronome = useCallback(() => {
     setIsPlaying(false)
+    setCurrentBeat(0)
+    setIsDownbeat(false)
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
     scheduledBeatsRef.current = 0
     nextBeatTimeRef.current = 0
+    beatCounterRef.current = 0
   }, [])
 
   return {
     startMetronome,
     stopMetronome,
     isPlaying,
+    currentBeat,
+    isDownbeat,
+    setSilent: handleSetSilent,
   }
 }

@@ -17,6 +17,17 @@ import { useCalibration } from './use-calibration'
 import { useBackingTrack } from './use-backing-track'
 import { usePitchDetection } from './use-pitch-detection'
 
+export type AudioMode = 'headphones' | 'speaker-safe'
+
+const AUDIO_MODE_STORAGE_KEY = 'playSenseAudioMode'
+
+function loadStoredAudioMode(): AudioMode | null {
+  if (typeof window === 'undefined') return null
+  const stored = localStorage.getItem(AUDIO_MODE_STORAGE_KEY)
+  if (stored === 'headphones' || stored === 'speaker-safe') return stored
+  return null
+}
+
 interface UseExerciseSessionResult {
   // State
   sessionState: SessionState
@@ -24,6 +35,10 @@ interface UseExerciseSessionResult {
   eventResults: EventResult[]
   attemptStats: AttemptStats | null
   countdownBeat: number
+
+  // Audio mode
+  audioMode: AudioMode | null
+  setAudioMode: (mode: AudioMode) => void
 
   // Audio state
   isListening: boolean
@@ -43,6 +58,12 @@ interface UseExerciseSessionResult {
   backingTrackLoading: boolean
   backingTrackLoaded: boolean
 
+  // Metronome
+  metronomeBeat: number
+  metronomeDownbeat: boolean
+  audioMetronome: boolean
+  setAudioMetronome: (enabled: boolean) => void
+
   // Playhead
   playheadProgress: number // 0-1
 
@@ -52,6 +73,11 @@ interface UseExerciseSessionResult {
   currentAccuracy: number
   tempoDrift: number
   lastHitGrade: string | null
+
+  // Mic testing
+  isMicTesting: boolean
+  testMic: () => void
+  stopTestMic: () => void
 
   // Actions
   selectExercise: (exercise: ExerciseDefinition) => void
@@ -65,11 +91,13 @@ interface UseExerciseSessionResult {
 
 export function useExerciseSession(): UseExerciseSessionResult {
   const [sessionState, setSessionState] = useState<SessionState>('idle')
+  const [audioMode, setAudioModeState] = useState<AudioMode | null>(null)
   const [exercise, setExercise] = useState<ExerciseDefinition | null>(null)
   const [eventResults, setEventResults] = useState<EventResult[]>([])
   const [attemptStats, setAttemptStats] = useState<AttemptStats | null>(null)
   const [countdownBeat, setCountdownBeat] = useState(0)
   const [noisyRoomMode, setNoisyRoomMode] = useState(false)
+  const [audioMetronome, setAudioMetronome] = useState(false)
   const [playheadProgress, setPlayheadProgress] = useState(0)
   const [currentScore, setCurrentScore] = useState(0)
   const [currentCombo, setCurrentCombo] = useState(0)
@@ -108,18 +136,25 @@ export function useExerciseSession(): UseExerciseSessionResult {
     startListening,
     stopListening,
     clearOnsets,
-  } = useOnsetDetection({ noisyRoomMode, instrument: exercise?.instrument })
+  } = useOnsetDetection({ noisyRoomMode, instrument: exercise?.instrument, audioMode: audioMode ?? undefined })
 
   const countInBeats = exercise?.timeSignature?.[0] || 4
   const metronome = useMetronome({
     bpm: exercise?.bpm || 100,
     timeSignature: exercise?.timeSignature || [4, 4],
     countInBeats,
+    silent: !audioMetronome,
   })
+
+  // Keep metronome silent state in sync at runtime
+  const handleSetAudioMetronome = useCallback((enabled: boolean) => {
+    setAudioMetronome(enabled)
+    metronome.setSilent(!enabled)
+  }, [metronome])
 
   const calibration = useCalibration()
 
-  const backingTrack = useBackingTrack({ audioUrl: exercise?.audioUrl })
+  const backingTrack = useBackingTrack({ audioUrl: exercise?.audioUrl, audioMode: audioMode ?? undefined })
 
   // Pitch detection for melodic instruments
   const pitchDetection = usePitchDetection()
@@ -128,11 +163,34 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const instrumentCategoryRef = useRef<InstrumentCategory>('percussion')
   const pitchFreqRef = useRef<number | null>(null)
 
-  // Load stored calibration on mount
+  // Load stored audio mode and calibration on mount
   useEffect(() => {
+    const stored = loadStoredAudioMode()
+    if (stored) setAudioModeState(stored)
     calibration.loadStoredCalibration()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const setAudioMode = useCallback((mode: AudioMode) => {
+    setAudioModeState(mode)
+    localStorage.setItem(AUDIO_MODE_STORAGE_KEY, mode)
+  }, [])
+
+  // Mic testing — opens the mic so user can see level meter without starting an exercise
+  const [isMicTesting, setIsMicTesting] = useState(false)
+
+  const testMic = useCallback(async () => {
+    const audioCtx = await startListening()
+    if (audioCtx) {
+      audioCtxRef.current = audioCtx
+      setIsMicTesting(true)
+    }
+  }, [startListening])
+
+  const stopTestMic = useCallback(() => {
+    stopListening()
+    setIsMicTesting(false)
+  }, [stopListening])
 
   // Keep sessionStateRef in sync so rAF callback reads latest value
   useEffect(() => { sessionStateRef.current = sessionState }, [sessionState])
@@ -390,6 +448,9 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const startExercise = useCallback(async () => {
     if (!exercise) return
 
+    // Clear mic test state if active
+    setIsMicTesting(false)
+
     // Reset state
     setEventResults([])
     eventResultsRef.current = []
@@ -483,6 +544,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const goToSelect = useCallback(() => {
     setExercise(null)
     setSessionState('idle')
+    setIsMicTesting(false)
     setEventResults([])
     setAttemptStats(null)
     stopListening()
@@ -515,6 +577,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
     eventResults,
     attemptStats,
     countdownBeat,
+    audioMode,
+    setAudioMode,
     isListening,
     hasPermission,
     audioError,
@@ -525,6 +589,10 @@ export function useExerciseSession(): UseExerciseSessionResult {
     calibrationBeat: calibration.calibrationBeat,
     totalCalibrationBeats: calibration.totalCalibrationBeats,
     calibrationError: calibration.calibrationError,
+    metronomeBeat: metronome.currentBeat,
+    metronomeDownbeat: metronome.isDownbeat,
+    audioMetronome,
+    setAudioMetronome: handleSetAudioMetronome,
     backingTrackLoading: backingTrack.isLoading,
     backingTrackLoaded: backingTrack.isLoaded,
     playheadProgress,
@@ -533,6 +601,9 @@ export function useExerciseSession(): UseExerciseSessionResult {
     currentAccuracy,
     tempoDrift,
     lastHitGrade,
+    isMicTesting,
+    testMic,
+    stopTestMic,
     selectExercise,
     startCalibration: startCalibrationFlow,
     startExercise,
