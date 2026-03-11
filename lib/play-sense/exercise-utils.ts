@@ -159,6 +159,7 @@ export function getInstrumentLabel(instrument: string): string {
     trumpet: 'Trumpet',
     saxophone: 'Saxophone',
     flute: 'Flute',
+    violin: 'Violin',
   }
   return labels[instrument] || instrument
 }

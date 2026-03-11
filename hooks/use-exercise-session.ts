@@ -17,6 +17,17 @@ import { useCalibration } from './use-calibration'
 import { useBackingTrack } from './use-backing-track'
 import { usePitchDetection } from './use-pitch-detection'
 
+export type AudioMode = 'headphones' | 'speaker-safe'
+
+const AUDIO_MODE_STORAGE_KEY = 'playSenseAudioMode'
+
+function loadStoredAudioMode(): AudioMode | null {
+  if (typeof window === 'undefined') return null
+  const stored = localStorage.getItem(AUDIO_MODE_STORAGE_KEY)
+  if (stored === 'headphones' || stored === 'speaker-safe') return stored
+  return null
+}
+
 interface UseExerciseSessionResult {
   // State
   sessionState: SessionState
@@ -24,6 +35,10 @@ interface UseExerciseSessionResult {
   eventResults: EventResult[]
   attemptStats: AttemptStats | null
   countdownBeat: number
+
+  // Audio mode
+  audioMode: AudioMode | null
+  setAudioMode: (mode: AudioMode) => void
 
   // Audio state
   isListening: boolean
@@ -43,6 +58,12 @@ interface UseExerciseSessionResult {
   backingTrackLoading: boolean
   backingTrackLoaded: boolean
 
+  // Metronome
+  metronomeBeat: number
+  metronomeDownbeat: boolean
+  audioMetronome: boolean
+  setAudioMetronome: (enabled: boolean) => void
+
   // Playhead
   playheadProgress: number // 0-1
 
@@ -52,6 +73,12 @@ interface UseExerciseSessionResult {
   currentAccuracy: number
   tempoDrift: number
   lastHitGrade: string | null
+  detectedMidiNote: number | null
+
+  // Mic testing
+  isMicTesting: boolean
+  testMic: () => void
+  stopTestMic: () => void
 
   // Actions
   selectExercise: (exercise: ExerciseDefinition) => void
@@ -65,17 +92,21 @@ interface UseExerciseSessionResult {
 
 export function useExerciseSession(): UseExerciseSessionResult {
   const [sessionState, setSessionState] = useState<SessionState>('idle')
+  const [audioMode, setAudioModeState] = useState<AudioMode | null>(null)
   const [exercise, setExercise] = useState<ExerciseDefinition | null>(null)
   const [eventResults, setEventResults] = useState<EventResult[]>([])
   const [attemptStats, setAttemptStats] = useState<AttemptStats | null>(null)
   const [countdownBeat, setCountdownBeat] = useState(0)
   const [noisyRoomMode, setNoisyRoomMode] = useState(false)
+  const [audioMetronome, setAudioMetronome] = useState(false)
   const [playheadProgress, setPlayheadProgress] = useState(0)
   const [currentScore, setCurrentScore] = useState(0)
   const [currentCombo, setCurrentCombo] = useState(0)
   const [currentAccuracy, setCurrentAccuracy] = useState(0)
   const [tempoDrift, setTempoDrift] = useState(0)
   const [lastHitGrade, setLastHitGrade] = useState<string | null>(null)
+  const [detectedMidiNote, setDetectedMidiNote] = useState<number | null>(null)
+  const lastDetectedMidiRef = useRef<number | null>(null)
 
   const expectedEventsRef = useRef<Array<{ eventIndex: number; timestamp: number }>>([])
   const matchedIndicesRef = useRef<Set<number>>(new Set())
@@ -97,6 +128,9 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const sustainTrackingRef = useRef<Map<number, { onsetTime: number; expectedDurationSec: number }>>(new Map())
   const lastInputLevelRef = useRef(0)
   const readyToGradeRef = useRef(false)
+  const missDetectedIndicesRef = useRef<Set<number>>(new Set())
+  // Deferred pitch grading: pending timeouts for pitched onsets where pitch was null at onset time
+  const pendingPitchTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
 
   const {
     isListening,
@@ -108,31 +142,60 @@ export function useExerciseSession(): UseExerciseSessionResult {
     startListening,
     stopListening,
     clearOnsets,
-  } = useOnsetDetection({ noisyRoomMode, instrument: exercise?.instrument })
+  } = useOnsetDetection({ noisyRoomMode, instrument: exercise?.instrument, audioMode: audioMode ?? undefined })
 
   const countInBeats = exercise?.timeSignature?.[0] || 4
   const metronome = useMetronome({
     bpm: exercise?.bpm || 100,
     timeSignature: exercise?.timeSignature || [4, 4],
     countInBeats,
+    silent: !audioMetronome,
   })
+
+  // Keep metronome silent state in sync at runtime
+  const handleSetAudioMetronome = useCallback((enabled: boolean) => {
+    setAudioMetronome(enabled)
+    metronome.setSilent(!enabled)
+  }, [metronome])
 
   const calibration = useCalibration()
 
-  const backingTrack = useBackingTrack({ audioUrl: exercise?.audioUrl })
+  const backingTrack = useBackingTrack({ audioUrl: exercise?.audioUrl, audioMode: audioMode ?? undefined })
 
   // Pitch detection for melodic instruments
   const pitchDetection = usePitchDetection()
   const pitchDetectionRef = useRef(pitchDetection)
   pitchDetectionRef.current = pitchDetection
   const instrumentCategoryRef = useRef<InstrumentCategory>('percussion')
-  const pitchFreqRef = useRef<number | null>(null)
 
-  // Load stored calibration on mount
+  // Load stored audio mode and calibration on mount
   useEffect(() => {
+    const stored = loadStoredAudioMode()
+    if (stored) setAudioModeState(stored)
     calibration.loadStoredCalibration()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const setAudioMode = useCallback((mode: AudioMode) => {
+    setAudioModeState(mode)
+    localStorage.setItem(AUDIO_MODE_STORAGE_KEY, mode)
+  }, [])
+
+  // Mic testing — opens the mic so user can see level meter without starting an exercise
+  const [isMicTesting, setIsMicTesting] = useState(false)
+
+  const testMic = useCallback(async () => {
+    const audioCtx = await startListening()
+    if (audioCtx) {
+      audioCtxRef.current = audioCtx
+      setIsMicTesting(true)
+    }
+  }, [startListening])
+
+  const stopTestMic = useCallback(() => {
+    stopListening()
+    setIsMicTesting(false)
+  }, [stopListening])
 
   // Keep sessionStateRef in sync so rAF callback reads latest value
   useEffect(() => { sessionStateRef.current = sessionState }, [sessionState])
@@ -148,11 +211,6 @@ export function useExerciseSession(): UseExerciseSessionResult {
       instrumentCategoryRef.current = getInstrumentCategory(exercise.instrument)
     }
   }, [exercise])
-
-  // Keep pitch frequency ref in sync so onset processing reads the latest value
-  useEffect(() => {
-    pitchFreqRef.current = pitchDetection.frequency
-  }, [pitchDetection.frequency])
 
   // Keep input level ref in sync for sustain tracking
   useEffect(() => {
@@ -183,14 +241,71 @@ export function useExerciseSession(): UseExerciseSessionResult {
 
     for (const onset of newOnsets) {
       // For pitched instruments, use frequency from onset if available,
-      // otherwise read the latest pitch detection value from ref (avoids stale state)
-      const pitchFreq = onset.frequency ?? pitchFreqRef.current ?? null
-      const detectedMidi = category === 'pitched' && pitchFreq
-        ? frequencyToMidi(pitchFreq)
+      // otherwise read the latest pitch detection value, then fall back to
+      // the last MIDI note seen by the rAF loop so wrong notes are caught
+      const pitchFreq = onset.frequency ?? pitchDetectionRef.current.getFrequency() ?? null
+      const detectedMidi = category === 'pitched'
+        ? (pitchFreq ? frequencyToMidi(pitchFreq) : lastDetectedMidiRef.current ?? undefined)
         : undefined
       const detectedFreq = category === 'pitched'
         ? (pitchFreq ?? undefined)
         : undefined
+
+      // If pitched instrument and no pitch detected, defer grading by 100ms
+      // to allow the note to stabilize before pitch detection
+      if (category === 'pitched' && detectedMidi == null) {
+        const deferredOnset = { ...onset }
+        const timer = setTimeout(() => {
+          pendingPitchTimersRef.current.delete(timer)
+          if (sessionStateRef.current !== 'playing') return
+
+          // Re-read pitch after 100ms delay
+          const delayedFreq = pitchDetectionRef.current.getFrequency() ?? null
+          const delayedMidi = delayedFreq ? frequencyToMidi(delayedFreq) : undefined
+
+          const deferredResult = gradeSingleOnset(
+            deferredOnset.timestamp - exerciseStartTimeRef.current,
+            deferredOnset.energy,
+            expectedEventsRef.current,
+            matchedIndicesRef.current,
+            exercise.difficulty,
+            calibOffset,
+            widenMs,
+            category,
+            delayedMidi,
+            delayedFreq ?? undefined
+          )
+
+          if (deferredResult) {
+            if (missDetectedIndicesRef.current.has(deferredResult.eventIndex)) {
+              missDetectedIndicesRef.current.delete(deferredResult.eventIndex)
+              eventResultsRef.current = eventResultsRef.current.filter(
+                r => !(r.eventIndex === deferredResult.eventIndex && r.grade === 'miss')
+              )
+            }
+
+            eventResultsRef.current = [...eventResultsRef.current, deferredResult]
+            setEventResults([...eventResultsRef.current])
+            setLastHitGrade(deferredResult.grade)
+
+            if (deferredResult.grade !== 'miss') {
+              liveComboRef.current++
+            } else {
+              liveComboRef.current = 0
+            }
+            setCurrentCombo(liveComboRef.current)
+
+            const stats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
+            setCurrentScore(stats.score)
+            setCurrentAccuracy(stats.accuracy)
+            setTempoDrift(stats.tempoDriftMs)
+          } else {
+            extraHitsRef.current++
+          }
+        }, 100)
+        pendingPitchTimersRef.current.add(timer)
+        continue
+      }
 
       const result = gradeSingleOnset(
         onset.timestamp - exerciseStartTimeRef.current,
@@ -206,6 +321,15 @@ export function useExerciseSession(): UseExerciseSessionResult {
       )
 
       if (result) {
+        // If this onset matched an event previously marked as a tentative miss,
+        // remove the tentative miss result so the real hit takes its place
+        if (missDetectedIndicesRef.current.has(result.eventIndex)) {
+          missDetectedIndicesRef.current.delete(result.eventIndex)
+          eventResultsRef.current = eventResultsRef.current.filter(
+            r => !(r.eventIndex === result.eventIndex && r.grade === 'miss')
+          )
+        }
+
         // Start sustain tracking for pitched instruments with duration > 0
         if (category === 'pitched') {
           const matchedExpected = expectedEventsRef.current.find(
@@ -251,6 +375,16 @@ export function useExerciseSession(): UseExerciseSessionResult {
 
     setPlayheadProgress(overallProgress)
 
+    // Update detected MIDI note for visualization (pitched instruments only)
+    if (instrumentCategoryRef.current === 'pitched') {
+      const freq = pitchDetectionRef.current.getFrequency()
+      const midi = freq ? frequencyToMidi(freq) : null
+      if (midi !== lastDetectedMidiRef.current) {
+        lastDetectedMidiRef.current = midi
+        setDetectedMidiNote(midi)
+      }
+    }
+
     // Resolve sustain tracking: when input level drops or expected duration passes
     const SUSTAIN_SILENCE_THRESHOLD = 0.005
     const currentInputLevel = lastInputLevelRef.current
@@ -268,9 +402,11 @@ export function useExerciseSession(): UseExerciseSessionResult {
     }
 
     // Detect missed events in real-time: any unmatched event whose ok window has passed
+    // Use missDetectedIndicesRef (not matchedIndicesRef) so gradeSingleOnset can still
+    // match late onsets that arrive after the miss window
     const calibOffset = (calibrationDataRef.current?.latencyMs || 0) / 1000
     const difficulty = exerciseDifficultyRef.current
-    const okWindowSec = (TOLERANCE_BY_DIFFICULTY[difficulty].ok + 50) / 1000 // add buffer
+    const okWindowSec = (TOLERANCE_BY_DIFFICULTY[difficulty].ok + 200) / 1000 // generous buffer for late hits
     const correctedTime = elapsed - calibOffset
     const expected = expectedEventsRef.current
     let missDetected = false
@@ -278,25 +414,22 @@ export function useExerciseSession(): UseExerciseSessionResult {
     for (let i = lastMissCheckIndexRef.current; i < expected.length; i++) {
       const evt = expected[i]
       if (correctedTime < evt.timestamp + okWindowSec) break
-      if (matchedIndicesRef.current.has(evt.eventIndex)) {
+      if (matchedIndicesRef.current.has(evt.eventIndex) || missDetectedIndicesRef.current.has(evt.eventIndex)) {
         lastMissCheckIndexRef.current = i + 1
         continue
       }
-      // This event was missed
-      const hasResult = eventResultsRef.current.some(r => r.eventIndex === evt.eventIndex)
-      if (!hasResult) {
-        const missResult: EventResult = {
-          eventIndex: evt.eventIndex,
-          grade: 'miss',
-          offsetMs: null,
-          timing: null,
-          onsetEnergy: null,
-        }
-        eventResultsRef.current = [...eventResultsRef.current, missResult]
-        matchedIndicesRef.current.add(evt.eventIndex)
-        liveComboRef.current = 0
-        missDetected = true
+      // This event was tentatively missed — record it but don't block gradeSingleOnset
+      const missResult: EventResult = {
+        eventIndex: evt.eventIndex,
+        grade: 'miss',
+        offsetMs: null,
+        timing: null,
+        onsetEnergy: null,
       }
+      eventResultsRef.current = [...eventResultsRef.current, missResult]
+      missDetectedIndicesRef.current.add(evt.eventIndex)
+      liveComboRef.current = 0
+      missDetected = true
       lastMissCheckIndexRef.current = i + 1
     }
 
@@ -327,6 +460,13 @@ export function useExerciseSession(): UseExerciseSessionResult {
       clearInterval(countdownIntervalRef.current)
       countdownIntervalRef.current = null
     }
+
+    // Flush pending deferred pitch checks — clear timers so callbacks don't fire
+    for (const timer of pendingPitchTimersRef.current) {
+      clearTimeout(timer)
+    }
+    pendingPitchTimersRef.current.clear()
+
     metronome.stopMetronome()
     backingTrack.stopPlayback()
 
@@ -390,6 +530,9 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const startExercise = useCallback(async () => {
     if (!exercise) return
 
+    // Clear mic test state if active
+    setIsMicTesting(false)
+
     // Reset state
     setEventResults([])
     eventResultsRef.current = []
@@ -401,12 +544,15 @@ export function useExerciseSession(): UseExerciseSessionResult {
     setTempoDrift(0)
     setLastHitGrade(null)
     matchedIndicesRef.current = new Set()
+    missDetectedIndicesRef.current = new Set()
     extraHitsRef.current = 0
     lastProcessedOnsetRef.current = 0
     readyToGradeRef.current = false
     liveComboRef.current = 0
     lastMissCheckIndexRef.current = 0
     sustainTrackingRef.current.clear()
+    for (const timer of pendingPitchTimersRef.current) clearTimeout(timer)
+    pendingPitchTimersRef.current.clear()
     clearOnsets()
 
     // Start mic
@@ -483,6 +629,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const goToSelect = useCallback(() => {
     setExercise(null)
     setSessionState('idle')
+    setIsMicTesting(false)
     setEventResults([])
     setAttemptStats(null)
     stopListening()
@@ -515,6 +662,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
     eventResults,
     attemptStats,
     countdownBeat,
+    audioMode,
+    setAudioMode,
     isListening,
     hasPermission,
     audioError,
@@ -525,6 +674,10 @@ export function useExerciseSession(): UseExerciseSessionResult {
     calibrationBeat: calibration.calibrationBeat,
     totalCalibrationBeats: calibration.totalCalibrationBeats,
     calibrationError: calibration.calibrationError,
+    metronomeBeat: metronome.currentBeat,
+    metronomeDownbeat: metronome.isDownbeat,
+    audioMetronome,
+    setAudioMetronome: handleSetAudioMetronome,
     backingTrackLoading: backingTrack.isLoading,
     backingTrackLoaded: backingTrack.isLoaded,
     playheadProgress,
@@ -533,6 +686,10 @@ export function useExerciseSession(): UseExerciseSessionResult {
     currentAccuracy,
     tempoDrift,
     lastHitGrade,
+    detectedMidiNote,
+    isMicTesting,
+    testMic,
+    stopTestMic,
     selectExercise,
     startCalibration: startCalibrationFlow,
     startExercise,

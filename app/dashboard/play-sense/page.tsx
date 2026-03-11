@@ -37,7 +37,7 @@ export default async function PlaySensePage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Play Sense</h1>
           <p className="text-sm text-muted-foreground">
-            Practice percussion patterns with real-time feedback
+            Practice music patterns with real-time feedback
           </p>
         </div>
       </div>

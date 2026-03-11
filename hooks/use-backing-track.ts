@@ -2,8 +2,11 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 
+type AudioMode = 'headphones' | 'speaker-safe'
+
 interface UseBackingTrackOptions {
   audioUrl?: string
+  audioMode?: AudioMode
 }
 
 interface UseBackingTrackResult {
@@ -14,13 +17,14 @@ interface UseBackingTrackResult {
   stopPlayback: () => void
 }
 
-export function useBackingTrack({ audioUrl }: UseBackingTrackOptions): UseBackingTrackResult {
+export function useBackingTrack({ audioUrl, audioMode }: UseBackingTrackOptions): UseBackingTrackResult {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const audioBufferRef = useRef<AudioBuffer | null>(null)
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null)
+  const gainNodeRef = useRef<GainNode | null>(null)
 
   // Fetch and decode audio when URL changes
   useEffect(() => {
@@ -78,7 +82,13 @@ export function useBackingTrack({ audioUrl }: UseBackingTrackOptions): UseBackin
 
     const source = audioContext.createBufferSource()
     source.buffer = audioBufferRef.current
-    source.connect(audioContext.destination)
+
+    // Route through gain node — reduce volume in speaker-safe mode to minimize bleed
+    const gainNode = audioContext.createGain()
+    gainNode.gain.value = audioMode === 'speaker-safe' ? 0.5 : 1.0
+    source.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+    gainNodeRef.current = gainNode
 
     // Start at the same timestamp as the metronome
     source.start(startTime)
@@ -96,6 +106,10 @@ export function useBackingTrack({ audioUrl }: UseBackingTrackOptions): UseBackin
       sourceNodeRef.current.disconnect()
       sourceNodeRef.current = null
     }
+    if (gainNodeRef.current) {
+      gainNodeRef.current.disconnect()
+      gainNodeRef.current = null
+    }
   }, [])
 
   // Cleanup on unmount
@@ -104,6 +118,9 @@ export function useBackingTrack({ audioUrl }: UseBackingTrackOptions): UseBackin
       if (sourceNodeRef.current) {
         try { sourceNodeRef.current.stop() } catch { /* ignore */ }
         sourceNodeRef.current.disconnect()
+      }
+      if (gainNodeRef.current) {
+        gainNodeRef.current.disconnect()
       }
     }
   }, [])

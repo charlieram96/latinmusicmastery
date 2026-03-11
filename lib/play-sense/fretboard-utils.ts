@@ -37,6 +37,7 @@ export const INSTRUMENT_TECHNIQUES: Record<Instrument, Technique[]> = {
   trumpet: ['open'],
   saxophone: ['open'],
   flute: ['open'],
+  violin: ['open'],
 }
 
 export interface LaneConfig {

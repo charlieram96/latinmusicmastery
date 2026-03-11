@@ -5,12 +5,16 @@ import { cn } from '@/lib/utils'
 import type { ExerciseDefinition, EventResult, SessionState, HitGrade } from '@/lib/play-sense/types'
 import { GRADE_COLORS } from '@/lib/play-sense/types'
 import { FretboardView } from './fretboard-view'
+import { PianoKeyboardView } from './piano-keyboard-view'
+import { ViolinFingerboardView } from './violin-fingerboard-view'
+import type { Instrument } from '@/lib/play-sense/types'
 import {
   countdownPop,
   gradeFloat,
   GRADE_LABELS,
 } from '@/lib/play-sense/animations'
 import { Music2, ChevronLeft } from 'lucide-react'
+import { VisualMetronome } from './visual-metronome'
 
 interface VisualizationPanelProps {
   exercise: ExerciseDefinition | null
@@ -20,6 +24,15 @@ interface VisualizationPanelProps {
   countdownBeat: number
   floatingGrades: Array<{ grade: string; id: number }>
   edgeFlash: boolean
+  metronomeBeat: number
+  metronomeDownbeat: boolean
+  detectedMidiNote?: number | null
+}
+
+function getViewType(instrument: Instrument): 'fretboard' | 'piano' | 'violin' {
+  if (instrument === 'piano') return 'piano'
+  if (instrument === 'violin') return 'violin'
+  return 'fretboard'
 }
 
 function FloatingGrade({ grade, id }: { grade: string; id: number }) {
@@ -53,6 +66,9 @@ export function VisualizationPanel({
   countdownBeat,
   floatingGrades,
   edgeFlash,
+  metronomeBeat,
+  metronomeDownbeat,
+  detectedMidiNote,
 }: VisualizationPanelProps) {
   // Idle state — instrument illustration with glow
   if (!exercise || sessionState === 'idle') {
@@ -87,15 +103,21 @@ export function VisualizationPanel({
     >
       {/* Full-bleed fretboard with overlays */}
       <div className="flex-1 flex min-h-0 relative">
-        {/* Fretboard — fills entire panel */}
+        {/* Instrument visualization — fills entire panel */}
         <div className="flex-1 min-h-0">
-          <FretboardView
-            exercise={exercise}
-            eventResults={eventResults}
-            playheadProgress={playheadProgress}
-            isPlaying={isPlaying}
-          />
+          {(() => {
+            const viewType = getViewType(exercise.instrument)
+            const viewProps = { exercise, eventResults, playheadProgress, isPlaying, detectedMidiNote }
+            if (viewType === 'piano') return <PianoKeyboardView {...viewProps} />
+            if (viewType === 'violin') return <ViolinFingerboardView {...viewProps} />
+            return <FretboardView {...viewProps} />
+          })()}
         </div>
+
+        {/* Visual metronome pulse */}
+        {(sessionState === 'countdown' || sessionState === 'playing') && (
+          <VisualMetronome beat={metronomeBeat} isDownbeat={metronomeDownbeat} />
+        )}
 
         {/* Countdown overlay */}
         <AnimatePresence>

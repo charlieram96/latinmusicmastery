@@ -16,6 +16,7 @@ interface FretboardViewProps {
   eventResults: EventResult[]
   playheadProgress: number // 0-1
   isPlaying: boolean
+  mode?: 'live' | 'static' // default 'live'
 }
 
 const HIT_LINE_RATIO = .95
@@ -30,7 +31,8 @@ const RECEIVER_RADIUS_DESKTOP = 30
 const RECEIVER_RADIUS_MOBILE = 24
 const PROXIMITY_THRESHOLD = 0.5 // seconds for receiver glow
 
-export function FretboardView({ exercise, eventResults, playheadProgress, isPlaying }: FretboardViewProps) {
+export function FretboardView({ exercise, eventResults, playheadProgress, isPlaying, mode = 'live' }: FretboardViewProps) {
+  const isStatic = mode === 'static'
   const { theme } = useTheme()
   const isDark = theme === 'dark'
   const containerRef = useRef<HTMLDivElement>(null)
@@ -100,15 +102,19 @@ export function FretboardView({ exercise, eventResults, playheadProgress, isPlay
   // Compute virtual height: maps the full exercise duration to pixel space
   const lookAheadFraction = duration > 0 ? LOOK_AHEAD_SEC / duration : 0.3
   const hitLineY = boardHeight * HIT_LINE_RATIO
-  const virtualHeight = lookAheadFraction > 0 ? hitLineY / lookAheadFraction : boardHeight * 3
+  const virtualHeight = isStatic
+    ? boardHeight * 0.85 // In static mode, fit all notes within the board
+    : lookAheadFraction > 0 ? hitLineY / lookAheadFraction : boardHeight * 3
 
   // Note group translateY: shift so current progress aligns at hit line
-  const noteGroupOffset = hitLineY + playheadProgress * virtualHeight
+  const noteGroupOffset = isStatic
+    ? boardHeight * 0.92 // In static mode, start notes near bottom
+    : hitLineY + playheadProgress * virtualHeight
 
   // Visible range for culling (in normalized time)
   const lookBehindFraction = duration > 0 ? LOOK_BEHIND_SEC / duration : 0.05
-  const visibleMin = playheadProgress - lookBehindFraction
-  const visibleMax = playheadProgress + lookAheadFraction * 1.2
+  const visibleMin = isStatic ? -1 : playheadProgress - lookBehindFraction
+  const visibleMax = isStatic ? 2 : playheadProgress + lookAheadFraction * 1.2
 
   // Build event result lookup
   const resultMap = useMemo(() => {
@@ -234,9 +240,9 @@ export function FretboardView({ exercise, eventResults, playheadProgress, isPlay
       ref={containerRef}
       className="relative w-full h-full fretboard-outer shadow-md"
     >
-      <div className="fretboard-perspective">
-        <div className="fretboard-runway">
-        <div className="fretboard-board notation-parchment">
+      <div className={isStatic ? '' : 'fretboard-perspective'}>
+        <div className={isStatic ? '' : 'fretboard-runway'}>
+        <div className={isStatic ? 'notation-parchment' : 'fretboard-board notation-parchment'}>
           <svg
             ref={svgRef}
             viewBox={`0 0 ${size.width} ${boardHeight}`}
@@ -285,34 +291,38 @@ export function FretboardView({ exercise, eventResults, playheadProgress, isPlay
               })}
             </g>
 
-            {/* Hit line */}
-            <defs>
-              <linearGradient id="hitLineGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="hsl(30, 85%, 55%)" stopOpacity={0} />
-                <stop offset="15%" stopColor="hsl(30, 85%, 55%)" stopOpacity={1} />
-                <stop offset="85%" stopColor="hsl(14, 52%, 53%)" stopOpacity={1} />
-                <stop offset="100%" stopColor="hsl(14, 52%, 53%)" stopOpacity={0} />
-              </linearGradient>
-              <filter id="hitLineGlow">
-                <feGaussianBlur stdDeviation="3" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-            <rect
-              x={0}
-              y={hitLineY - 2}
-              width={size.width}
-              height={4}
-              fill="url(#hitLineGrad)"
-              filter="url(#hitLineGlow)"
-              className="fretboard-hit-line"
-            />
+            {/* Hit line (hidden in static mode) */}
+            {!isStatic && (
+              <>
+                <defs>
+                  <linearGradient id="hitLineGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="hsl(30, 85%, 55%)" stopOpacity={0} />
+                    <stop offset="15%" stopColor="hsl(30, 85%, 55%)" stopOpacity={1} />
+                    <stop offset="85%" stopColor="hsl(14, 52%, 53%)" stopOpacity={1} />
+                    <stop offset="100%" stopColor="hsl(14, 52%, 53%)" stopOpacity={0} />
+                  </linearGradient>
+                  <filter id="hitLineGlow">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+                <rect
+                  x={0}
+                  y={hitLineY - 2}
+                  width={size.width}
+                  height={4}
+                  fill="url(#hitLineGrad)"
+                  filter="url(#hitLineGlow)"
+                  className="fretboard-hit-line"
+                />
+              </>
+            )}
 
-            {/* Receiver circles — one per lane at hit line */}
-            {lanes.map((lane, i) => {
+            {/* Receiver circles — one per lane at hit line (hidden in static mode) */}
+            {!isStatic && lanes.map((lane, i) => {
               const cx = (i + 0.5) * laneWidth
               const cy = hitLineY
               const color = lane.color
@@ -437,8 +447,8 @@ export function FretboardView({ exercise, eventResults, playheadProgress, isPlay
         </div>
         </div>
       </div>
-      {/* Top fade overlay — painted after 3D content so it renders on top */}
-      <div
+      {/* Top fade overlay — painted after 3D content so it renders on top (hidden in static mode) */}
+      {!isStatic && <div
         className="absolute top-0 left-0 right-0 h-32 pointer-events-none rounded-t-[1rem]"
         style={{
           zIndex: 50,
@@ -446,7 +456,7 @@ export function FretboardView({ exercise, eventResults, playheadProgress, isPlay
             ? 'linear-gradient(rgb(18 18 18) 0%, rgb(18 18 18) 45%, rgb(18 18 18) 60%, transparent 100%)'
             : 'linear-gradient(hsl(35 30% 93%) 0%, hsl(35 30% 93%) 45%, hsl(35 30% 93%) 60%, transparent 100%)',
         }}
-      />
+      />}
     </div>
   )
 }

@@ -129,14 +129,48 @@ const INSTRUMENT_PROFILES: Partial<Record<Instrument, Partial<OnsetConfig>>> = {
     fftSize: 2048,
     frameSize: 2048,
   },
+  violin: {
+    bandPassLow: 180,
+    bandPassHigh: 6000,
+    envelopeAttackMs: 8,
+    envelopeReleaseMs: 100,
+    refractoryPeriodMs: 80,
+    minOnsetEnergy: 0.005,
+    fftSize: 2048,
+    frameSize: 2048,
+  },
+}
+
+/** Speaker-safe mode preset — higher thresholds to reject backing track bleed */
+export const SPEAKER_SAFE_CONFIG: Partial<OnsetConfig> = {
+  adaptiveThresholdMultiplier: 2.2,
+  minOnsetEnergy: 0.015,
+  refractoryPeriodMs: 100,
+}
+
+/** Speaker-safe overrides for percussion — narrower band to reject bleed */
+const SPEAKER_SAFE_PERCUSSION: Partial<OnsetConfig> = {
+  ...SPEAKER_SAFE_CONFIG,
+  bandPassLow: 200,
+  bandPassHigh: 1800,
 }
 
 /** Get the onset detection config for a specific instrument */
-export function getInstrumentConfig(instrument: Instrument, noisyRoom: boolean = false): OnsetConfig {
+export function getInstrumentConfig(
+  instrument: Instrument,
+  noisyRoom: boolean = false,
+  speakerSafe: boolean = false,
+): OnsetConfig {
   const base = noisyRoom ? NOISY_ROOM_CONFIG : ONSET_CONFIG
   const profile = INSTRUMENT_PROFILES[instrument]
-  if (!profile) return base
-  return { ...base, ...profile }
+  const instrumentConfig = profile ? { ...base, ...profile } : base
+
+  if (!speakerSafe) return instrumentConfig
+
+  // Apply speaker-safe overrides — use percussion-specific narrower band for percussion
+  const category = getInstrumentCategory(instrument)
+  const safeOverrides = category === 'percussion' ? SPEAKER_SAFE_PERCUSSION : SPEAKER_SAFE_CONFIG
+  return { ...instrumentConfig, ...safeOverrides }
 }
 
 /** Whether an instrument needs pitch detection in addition to onset detection */

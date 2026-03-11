@@ -10,6 +10,7 @@ import { GRADE_COLORS } from '@/lib/play-sense/types'
 import { getInstrumentLabel, getExerciseDuration } from '@/lib/play-sense/exercise-utils'
 import { GRADE_LABELS, scaleIn, comboFire, GRADE_GLOW } from '@/lib/play-sense/animations'
 import { slideUp } from '@/lib/play-sense/animations'
+import type { AudioMode } from '@/hooks/use-exercise-session'
 import {
   Play,
   Square,
@@ -19,6 +20,8 @@ import {
   VolumeX,
   Flame,
   Mic,
+  Headphones,
+  Speaker,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 
@@ -29,8 +32,13 @@ interface NowPlayingBarProps {
   calibrationData: { latencyMs: number } | null
   noisyRoomMode: boolean
   inputLevel: number
+  isListening: boolean
+  isMicTesting: boolean
   backingTrackLoading: boolean
   backingTrackLoaded: boolean
+  audioMetronome: boolean
+  audioMode: AudioMode | null
+  onAudioModeChange: (mode: AudioMode) => void
   currentScore: number
   currentCombo: number
   currentAccuracy: number
@@ -38,7 +46,10 @@ interface NowPlayingBarProps {
   onStart: () => void
   onStop: () => void
   onCalibrate: () => void
+  onTestMic: () => void
+  onStopTestMic: () => void
   onNoisyRoomChange: (enabled: boolean) => void
+  onAudioMetronomeChange: (enabled: boolean) => void
 }
 
 function formatTime(seconds: number): string {
@@ -77,8 +88,13 @@ export function NowPlayingBar({
   calibrationData,
   noisyRoomMode,
   inputLevel,
+  isListening,
+  isMicTesting,
   backingTrackLoading,
   backingTrackLoaded,
+  audioMetronome,
+  audioMode,
+  onAudioModeChange,
   currentScore,
   currentCombo,
   currentAccuracy,
@@ -86,7 +102,10 @@ export function NowPlayingBar({
   onStart,
   onStop,
   onCalibrate,
+  onTestMic,
+  onStopTestMic,
   onNoisyRoomChange,
+  onAudioMetronomeChange,
 }: NowPlayingBarProps) {
   const totalDuration = getExerciseDuration(exercise)
   const elapsed = playheadProgress * totalDuration
@@ -129,63 +148,121 @@ export function NowPlayingBar({
       {/* ─── Three-Column Layout ─── */}
       <div className="flex flex-col sm:flex-row items-stretch">
 
-        {/* ── Left Column — Play + Song ── */}
-        <div className="shrink-0 px-4 py-3 flex items-center gap-4 sm:w-[270px] md:w-[310px]">
-          {/* Play/Stop button — large & prominent */}
-          <div className="shrink-0">
-            {sessionState === 'selecting' && (
-              <Button
-                onClick={onStart}
-                disabled={backingTrackLoading}
-                size="sm"
-                className="bg-primary hover:bg-primary/90 text-white border-0 rounded-full h-12 w-12 p-0 shadow-lg shadow-primary/30"
-              >
-                {backingTrackLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Play className="w-5 h-5 ml-0.5" />
-                )}
-              </Button>
-            )}
+        {/* ── Left Column — Play + Song + Calibrate + Mic ── */}
+        <div className="shrink-0 px-4 py-3 flex flex-col gap-2.5 sm:w-[300px] md:w-[340px]">
+          {/* Top row: Play button + song info */}
+          <div className="flex items-center gap-4">
+            {/* Play/Stop button */}
+            <div className="shrink-0">
+              {sessionState === 'selecting' && (
+                <Button
+                  onClick={onStart}
+                  disabled={backingTrackLoading}
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-white border-0 rounded-full h-12 w-12 p-0 shadow-lg shadow-primary/30"
+                >
+                  {backingTrackLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Play className="w-5 h-5 ml-0.5" />
+                  )}
+                </Button>
+              )}
 
-            {sessionState === 'countdown' && (
+              {sessionState === 'countdown' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled
+                  className="border-border text-muted-foreground rounded-full h-12 w-12 p-0"
+                >
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                </Button>
+              )}
+
+              {sessionState === 'playing' && (
+                <Button
+                  onClick={onStop}
+                  size="sm"
+                  className="bg-secondary hover:bg-secondary/80 text-foreground border-0 rounded-full h-12 w-12 p-0"
+                >
+                  <Square className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+
+            {/* Song info */}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-foreground truncate leading-tight">{exercise.title}</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="text-[10px] text-muted-foreground">{getInstrumentLabel(exercise.instrument)}</span>
+                <span className="text-[10px] text-muted-foreground">·</span>
+                <Badge variant="outline" className="text-[9px] h-3.5 px-1 border-border text-muted-foreground">
+                  {exercise.difficulty}
+                </Badge>
+                <span className="text-[10px] text-muted-foreground">·</span>
+                <span className="text-[10px] text-muted-foreground font-mono">{exercise.bpm} BPM</span>
+              </div>
+              {sessionState === 'playing' && (
+                <span className="text-[10px] font-mono text-muted-foreground/70 tabular-nums mt-0.5 block">
+                  {formatTime(elapsed)} / {formatTime(totalDuration)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Calibration — prominent when uncalibrated */}
+          {sessionState === 'selecting' && (
+            !calibrationData ? (
               <Button
                 variant="outline"
                 size="sm"
-                disabled
-                className="border-border text-muted-foreground rounded-full h-12 w-12 p-0"
+                onClick={onCalibrate}
+                className="h-8 text-xs px-3 w-full justify-start border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
               >
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Settings2 className="w-4 h-4 mr-2 shrink-0" />
+                Calibrate for best results
               </Button>
-            )}
-
-            {sessionState === 'playing' && (
-              <Button
-                onClick={onStop}
-                size="sm"
-                className="bg-secondary hover:bg-secondary/80 text-foreground border-0 rounded-full h-12 w-12 p-0"
+            ) : (
+              <button
+                onClick={onCalibrate}
+                className="flex items-center gap-2 px-3 h-7 rounded-md hover:bg-secondary/50 transition-colors"
               >
-                <Square className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
+                <Settings2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                <span className="text-[11px] text-muted-foreground">Calibrated</span>
+                <span className="text-[11px] font-mono text-foreground ml-auto">{calibrationData.latencyMs.toFixed(0)}ms</span>
+              </button>
+            )
+          )}
 
-          {/* Song info */}
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-foreground truncate leading-tight">{exercise.title}</p>
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-[10px] text-muted-foreground">{getInstrumentLabel(exercise.instrument)}</span>
-              <span className="text-[10px] text-muted-foreground">·</span>
-              <Badge variant="outline" className="text-[9px] h-3.5 px-1 border-border text-muted-foreground">
-                {exercise.difficulty}
-              </Badge>
-              <span className="text-[10px] text-muted-foreground">·</span>
-              <span className="text-[10px] text-muted-foreground font-mono">{exercise.bpm} BPM</span>
+          {/* Mic level + test button */}
+          <div className="flex items-center gap-2 h-7">
+            <Mic className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-75"
+                style={{
+                  width: `${Math.min(inputLevel * 500, 100)}%`,
+                  backgroundColor:
+                    inputLevel * 500 > 80 ? '#ef4444' :
+                    inputLevel * 500 > 50 ? '#eab308' : '#22c55e',
+                }}
+              />
             </div>
-            {sessionState === 'playing' && (
-              <span className="text-[10px] font-mono text-muted-foreground/70 tabular-nums mt-0.5 block">
-                {formatTime(elapsed)} / {formatTime(totalDuration)}
-              </span>
+            {sessionState === 'selecting' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={isMicTesting ? onStopTestMic : onTestMic}
+                className={cn(
+                  'h-6 text-[10px] px-2 shrink-0',
+                  isMicTesting
+                    ? 'text-green-500 hover:text-green-400'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {isMicTesting ? 'Stop' : 'Test'}
+              </Button>
             )}
           </div>
         </div>
@@ -272,25 +349,24 @@ export function NowPlayingBar({
           </div>
         </motion.div>
 
-        {/* ── Right Column — Settings ── */}
-        <div className="shrink-0 px-4 py-3 sm:w-[360px] md:w-[380px] hidden sm:flex flex-col justify-center gap-2.5">
-          {/* Calibrate */}
-          {!calibrationData ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onCalibrate}
-              className="text-muted-foreground hover:text-foreground h-8 text-xs px-3 w-full justify-start"
+        {/* ── Right Column — Toggles ── */}
+        <div className="shrink-0 px-4 py-3 sm:w-[280px] md:w-[300px] hidden sm:flex flex-col justify-center gap-2">
+          {/* Audio mode indicator */}
+          {audioMode && (
+            <button
+              onClick={() => onAudioModeChange(audioMode === 'headphones' ? 'speaker-safe' : 'headphones')}
+              className="flex items-center gap-2 px-3 h-8 w-full rounded-md hover:bg-secondary/50 transition-colors"
             >
-              <Settings2 className="w-4 h-4 mr-2 shrink-0" />
-              Calibrate
-            </Button>
-          ) : (
-            <div className="flex items-center gap-2 px-3 h-8">
-              <Settings2 className="w-4 h-4 text-muted-foreground shrink-0" />
-              <span className="text-xs text-muted-foreground">Latency</span>
-              <span className="text-xs font-mono text-foreground ml-auto">{calibrationData.latencyMs.toFixed(0)}ms</span>
-            </div>
+              {audioMode === 'headphones' ? (
+                <Headphones className="w-4 h-4 text-muted-foreground shrink-0" />
+              ) : (
+                <Speaker className="w-4 h-4 text-yellow-500 shrink-0" />
+              )}
+              <span className="text-xs text-muted-foreground">
+                {audioMode === 'headphones' ? 'Headphones' : 'Speaker Safe'}
+              </span>
+              <span className="text-[10px] text-muted-foreground/60 ml-auto">switch</span>
+            </button>
           )}
 
           {/* Noisy room toggle */}
@@ -305,22 +381,23 @@ export function NowPlayingBar({
             </div>
           </div>
 
-          {/* Mic level meter */}
-          <div className="flex items-center gap-2 px-3 h-8">
-            <Mic className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span className="text-xs text-muted-foreground">Mic</span>
-            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-75"
-                style={{
-                  width: `${Math.min(inputLevel * 500, 100)}%`,
-                  backgroundColor:
-                    inputLevel * 500 > 80 ? '#ef4444' :
-                    inputLevel * 500 > 50 ? '#eab308' : '#22c55e',
-                }}
-              />
+          {/* Audio click toggle — only in selecting state */}
+          {sessionState === 'selecting' && (
+            <div className="flex items-center gap-2 px-3 h-8">
+              {audioMetronome ? (
+                <Volume2 className="w-4 h-4 text-muted-foreground shrink-0" />
+              ) : (
+                <VolumeX className="w-4 h-4 text-muted-foreground shrink-0" />
+              )}
+              <span className="text-xs text-muted-foreground">Audio Click</span>
+              <div className="ml-auto">
+                <Switch
+                  checked={audioMetronome}
+                  onCheckedChange={onAudioMetronomeChange}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
       </div>

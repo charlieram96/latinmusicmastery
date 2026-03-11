@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -12,18 +12,25 @@ import { VisualizationPanel } from './visualization-panel'
 import { CalibrationWizard } from './calibration-wizard'
 import { ResultsSummary } from './results-summary'
 import { saveAttempt } from '@/app/actions/play-sense'
+import { MELODIC_EXERCISES } from '@/lib/play-sense/melodic-exercises'
 import {
   fadeInUp,
   slideInLeft,
   standardTransition,
 } from '@/lib/play-sense/animations'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { AudioModePrompt } from './audio-mode-prompt'
 
 interface ExercisePlayerProps {
   exercises: ExerciseDefinition[]
 }
 
 export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
+  // Merge DB exercises with built-in melodic exercises
+  const allExercises = useMemo(
+    () => [...exercises, ...MELODIC_EXERCISES],
+    [exercises]
+  )
   const session = useExerciseSession()
   const [floatingGrades, setFloatingGrades] = useState<Array<{ grade: string; id: number }>>([])
   const gradeIdRef = useRef(0)
@@ -173,7 +180,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                 isActive ? 'w-[220px] lg:w-[260px]' : 'w-[300px] lg:w-[340px]',
               )}>
                 <PlaylistView
-                  exercises={exercises}
+                  exercises={allExercises}
                   selectedExercise={session.exercise}
                   isPlaying={session.sessionState === 'playing'}
                   onSelect={session.selectExercise}
@@ -184,7 +191,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
               {session.sessionState === 'idle' && (
                 <div className="flex-1 md:hidden">
                   <PlaylistView
-                    exercises={exercises}
+                    exercises={allExercises}
                     selectedExercise={session.exercise}
                     isPlaying={false}
                     onSelect={session.selectExercise}
@@ -192,21 +199,30 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                 </div>
               )}
 
-              {/* Visualization panel */}
+              {/* Visualization panel / Audio mode prompt */}
               <div className={cn(
                 'flex-1 flex flex-col min-h-0',
                 isActive ? 'p-2' : 'p-4',
                 session.sessionState === 'idle' && 'hidden md:flex',
               )}>
-                <VisualizationPanel
-                  exercise={session.exercise}
-                  sessionState={session.sessionState}
-                  eventResults={session.eventResults}
-                  playheadProgress={session.playheadProgress}
-                  countdownBeat={session.countdownBeat}
-                  floatingGrades={floatingGrades}
-                  edgeFlash={edgeFlash}
-                />
+                {session.sessionState === 'selecting' && session.audioMode === null ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <AudioModePrompt onSelect={session.setAudioMode} />
+                  </div>
+                ) : (
+                  <VisualizationPanel
+                    exercise={session.exercise}
+                    sessionState={session.sessionState}
+                    eventResults={session.eventResults}
+                    playheadProgress={session.playheadProgress}
+                    countdownBeat={session.countdownBeat}
+                    floatingGrades={floatingGrades}
+                    edgeFlash={edgeFlash}
+                    metronomeBeat={session.metronomeBeat}
+                    metronomeDownbeat={session.metronomeDownbeat}
+                    detectedMidiNote={session.detectedMidiNote}
+                  />
+                )}
               </div>
             </div>
 
@@ -220,8 +236,13 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                   calibrationData={session.calibrationData}
                   noisyRoomMode={session.noisyRoomMode}
                   inputLevel={session.inputLevel}
+                  isListening={session.isListening}
+                  isMicTesting={session.isMicTesting}
                   backingTrackLoading={session.backingTrackLoading}
                   backingTrackLoaded={session.backingTrackLoaded}
+                  audioMetronome={session.audioMetronome}
+                  audioMode={session.audioMode}
+                  onAudioModeChange={session.setAudioMode}
                   currentScore={session.currentScore}
                   currentCombo={session.currentCombo}
                   currentAccuracy={session.currentAccuracy}
@@ -229,7 +250,10 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                   onStart={session.startExercise}
                   onStop={session.stopExercise}
                   onCalibrate={session.startCalibration}
+                  onTestMic={session.testMic}
+                  onStopTestMic={session.stopTestMic}
                   onNoisyRoomChange={session.setNoisyRoomMode}
+                  onAudioMetronomeChange={session.setAudioMetronome}
                 />
               )}
             </AnimatePresence>
