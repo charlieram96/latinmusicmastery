@@ -26,6 +26,7 @@ interface VisualizationPanelProps {
   edgeFlash: boolean
   metronomeBeat: number
   metronomeDownbeat: boolean
+  detectedMidiNote?: number | null
 }
 
 function getViewType(instrument: Instrument): 'fretboard' | 'piano' | 'violin' {
@@ -67,6 +68,7 @@ export function VisualizationPanel({
   edgeFlash,
   metronomeBeat,
   metronomeDownbeat,
+  detectedMidiNote,
 }: VisualizationPanelProps) {
   // Idle state — instrument illustration with glow
   if (!exercise || sessionState === 'idle') {
@@ -105,7 +107,7 @@ export function VisualizationPanel({
         <div className="flex-1 min-h-0">
           {(() => {
             const viewType = getViewType(exercise.instrument)
-            const viewProps = { exercise, eventResults, playheadProgress, isPlaying }
+            const viewProps = { exercise, eventResults, playheadProgress, isPlaying, detectedMidiNote }
             if (viewType === 'piano') return <PianoKeyboardView {...viewProps} />
             if (viewType === 'violin') return <ViolinFingerboardView {...viewProps} />
             return <FretboardView {...viewProps} />

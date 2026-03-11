@@ -12,21 +12,21 @@ interface PianoKeyboardViewProps {
   eventResults: EventResult[]
   playheadProgress: number
   isPlaying: boolean
+  detectedMidiNote?: number | null
 }
 
-const HIT_LINE_RATIO = 0.88
+const HIT_LINE_RATIO = 0.96
 const LOOK_AHEAD_SEC = 9
 const BOARD_HEIGHT = 2500
 const BOARD_HEIGHT_MOBILE = 2000
 const LOOK_BEHIND_SEC = 0.5
-const NOTE_RADIUS_DESKTOP = 18
-const NOTE_RADIUS_MOBILE = 14
 const PROXIMITY_THRESHOLD = 0.5
 
-const WHITE_KEY_WIDTH = 36
-const BLACK_KEY_WIDTH = 22
-const WHITE_KEY_HEIGHT = 80
-const BLACK_KEY_HEIGHT = 50
+// Base key dimensions — scaled dynamically in component to fit 52 white keys
+const BASE_WHITE_KEY_WIDTH = 36
+const BASE_BLACK_KEY_WIDTH = 22
+const BASE_WHITE_KEY_HEIGHT = 80
+const BASE_BLACK_KEY_HEIGHT = 50
 
 // Standard piano layout: which notes in an octave are white keys
 // C=0, C#=1, D=2, D#=3, E=4, F=5, F#=6, G=7, G#=8, A=9, A#=10, B=11
@@ -35,7 +35,7 @@ const IS_BLACK = [false, true, false, true, false, false, true, false, true, fal
 const WHITE_KEY_INDEX = [0, -1, 1, -1, 2, 3, -1, 4, -1, 5, -1, 6]
 
 /** Map a MIDI note to its key position relative to a range start */
-function midiToKeyPosition(midi: number, rangeStart: number): { x: number; isBlack: boolean; whiteKeyIndex: number } {
+function midiToKeyPosition(midi: number, rangeStart: number, whiteKeyWidth: number): { x: number; isBlack: boolean; whiteKeyIndex: number } {
   const noteInOctave = ((midi % 12) + 12) % 12
   const isBlack = IS_BLACK[noteInOctave]
 
@@ -51,7 +51,7 @@ function midiToKeyPosition(midi: number, rangeStart: number): { x: number; isBla
   // X position: center of the white key, or center of the black key (between whites)
   let x: number
   if (!isBlack) {
-    x = whiteCount * WHITE_KEY_WIDTH + WHITE_KEY_WIDTH / 2
+    x = whiteCount * whiteKeyWidth + whiteKeyWidth / 2
   } else {
     // Black key sits between the previous and next white keys
     // Find the white key just below this note
@@ -59,22 +59,14 @@ function midiToKeyPosition(midi: number, rangeStart: number): { x: number; isBla
     for (let n = rangeStart; n < midi; n++) {
       if (!IS_BLACK[((n % 12) + 12) % 12]) belowWhiteCount++
     }
-    x = belowWhiteCount * WHITE_KEY_WIDTH
+    x = belowWhiteCount * whiteKeyWidth
   }
 
   return { x, isBlack, whiteKeyIndex: whiteCount }
 }
 
-/** Count white keys in a MIDI range */
-function countWhiteKeys(from: number, to: number): number {
-  let count = 0
-  for (let n = from; n <= to; n++) {
-    if (!IS_BLACK[((n % 12) + 12) % 12]) count++
-  }
-  return count
-}
 
-export function PianoKeyboardView({ exercise, eventResults, playheadProgress, isPlaying }: PianoKeyboardViewProps) {
+export function PianoKeyboardView({ exercise, eventResults, playheadProgress, isPlaying, detectedMidiNote }: PianoKeyboardViewProps) {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
   const containerRef = useRef<HTMLDivElement>(null)
@@ -97,28 +89,22 @@ export function PianoKeyboardView({ exercise, eventResults, playheadProgress, is
     return () => observer.disconnect()
   }, [])
 
-  // Determine pitch range from exercise events
-  const { rangeStart, rangeEnd } = useMemo(() => {
-    let minPitch = 127
-    let maxPitch = 0
-    for (const event of exercise.events) {
-      if (event.expectedPitch != null) {
-        minPitch = Math.min(minPitch, event.expectedPitch)
-        maxPitch = Math.max(maxPitch, event.expectedPitch)
-      }
-    }
-    if (minPitch > maxPitch) { minPitch = 60; maxPitch = 72 }
-    return { rangeStart: minPitch - 2, rangeEnd: maxPitch + 2 }
-  }, [exercise])
+  // Full 88-key piano range: A0 (MIDI 21) to C8 (MIDI 108)
+  const rangeStart = 21
+  const rangeEnd = 108
+  const whiteKeyCount = 52 // 52 white keys on a standard 88-key piano
 
-  const whiteKeyCount = useMemo(() => countWhiteKeys(rangeStart, rangeEnd), [rangeStart, rangeEnd])
-  const keyboardWidth = whiteKeyCount * WHITE_KEY_WIDTH
+  // Scale key dimensions to fit container width
+  const WHITE_KEY_WIDTH = size.width / whiteKeyCount
+  const scale = WHITE_KEY_WIDTH / BASE_WHITE_KEY_WIDTH
+  const BLACK_KEY_WIDTH = BASE_BLACK_KEY_WIDTH * scale
+  const WHITE_KEY_HEIGHT = BASE_WHITE_KEY_HEIGHT * scale
+  const BLACK_KEY_HEIGHT = BASE_BLACK_KEY_HEIGHT * scale
+  const keyboardWidth = size.width
   const duration = useMemo(() => getExerciseDuration(exercise), [exercise])
   const boardHeight = size.width < 640 ? BOARD_HEIGHT_MOBILE : BOARD_HEIGHT
-  const noteRadius = size.width < 500 ? NOTE_RADIUS_MOBILE : NOTE_RADIUS_DESKTOP
-
-  const hitLineY = boardHeight * HIT_LINE_RATIO
-  const keyboardY = hitLineY + 8
+  const keyboardY = boardHeight * HIT_LINE_RATIO
+  const hitLineY = keyboardY
 
   // Center keyboard horizontally
   const keyboardOffsetX = Math.max(0, (size.width - keyboardWidth) / 2)
@@ -196,13 +182,16 @@ export function PianoKeyboardView({ exercise, eventResults, playheadProgress, is
     return closest
   }, [notes, playheadProgress, duration])
 
-  // Get X position for a MIDI note
-  const getNoteX = useCallback(
+  // Get position and dimensions for a MIDI note (matches its target key)
+  const getNotePos = useCallback(
     (midi: number) => {
-      const pos = midiToKeyPosition(midi, rangeStart)
-      return keyboardOffsetX + pos.x
+      const pos = midiToKeyPosition(midi, rangeStart, WHITE_KEY_WIDTH)
+      const cx = keyboardOffsetX + pos.x
+      const noteW = pos.isBlack ? BLACK_KEY_WIDTH : WHITE_KEY_WIDTH
+      const noteH = pos.isBlack ? BLACK_KEY_HEIGHT : WHITE_KEY_HEIGHT
+      return { cx, isBlack: pos.isBlack, noteW, noteH }
     },
-    [rangeStart, keyboardOffsetX]
+    [rangeStart, keyboardOffsetX, WHITE_KEY_WIDTH, BLACK_KEY_WIDTH, WHITE_KEY_HEIGHT, BLACK_KEY_HEIGHT]
   )
 
   // Colors
@@ -266,7 +255,7 @@ export function PianoKeyboardView({ exercise, eventResults, playheadProgress, is
     }
 
     return { whites, blacks }
-  }, [rangeStart, rangeEnd, keyboardOffsetX])
+  }, [rangeStart, rangeEnd, keyboardOffsetX, WHITE_KEY_WIDTH, BLACK_KEY_WIDTH])
 
   return (
     <div
@@ -380,6 +369,17 @@ export function PianoKeyboardView({ exercise, eventResults, playheadProgress, is
                         opacity={glowOpacity * 0.3}
                       />
                     )}
+                    {key.midi === detectedMidiNote && (
+                      <rect
+                        x={key.x + 1}
+                        y={keyboardY}
+                        width={WHITE_KEY_WIDTH - 2}
+                        height={WHITE_KEY_HEIGHT}
+                        rx={3}
+                        fill="hsl(190, 95%, 55%)"
+                        opacity={0.75}
+                      />
+                    )}
                   </g>
                 )
               })}
@@ -414,6 +414,17 @@ export function PianoKeyboardView({ exercise, eventResults, playheadProgress, is
                         opacity={glowOpacity * 0.4}
                       />
                     )}
+                    {key.midi === detectedMidiNote && (
+                      <rect
+                        x={key.x}
+                        y={keyboardY}
+                        width={BLACK_KEY_WIDTH}
+                        height={BLACK_KEY_HEIGHT}
+                        rx={2}
+                        fill="hsl(190, 95%, 55%)"
+                        opacity={0.75}
+                      />
+                    )}
                   </g>
                 )
               })}
@@ -426,15 +437,17 @@ export function PianoKeyboardView({ exercise, eventResults, playheadProgress, is
                 {notes.map((note) => {
                   if (note.normalizedTime < visibleMin || note.normalizedTime > visibleMax) return null
 
-                  const cx = getNoteX(note.expectedPitch)
+                  const { cx, isBlack, noteW, noteH } = getNotePos(note.expectedPitch)
+                  const noteX = cx - noteW / 2
+                  // Bottom edge of the rect lands at cy (the hit/keyboard line)
                   const cy = -note.normalizedTime * virtualHeight
-                  const r = note.accent ? noteRadius * 1.3 : noteRadius
+                  const noteY = cy - noteH
                   const result = resultMap.get(note.eventIndex)
                   const gradeColor = result ? GRADE_COLORS[result.grade] : undefined
                   const isRightHand = note.hand === 'R'
                   const defaultColor = 'hsl(30, 60%, 55%)'
 
-                  // Duration tail
+                  // Duration tail — extends upward from the note
                   const beatDuration = 60 / exercise.bpm
                   const tailHeight =
                     note.duration > 0.5
@@ -446,9 +459,9 @@ export function PianoKeyboardView({ exercise, eventResults, playheadProgress, is
                       {tailHeight > 4 && (
                         <line
                           x1={cx}
-                          y1={cy - tailHeight}
+                          y1={noteY - tailHeight}
                           x2={cx}
-                          y2={cy}
+                          y2={noteY}
                           stroke={gradeColor || defaultColor}
                           strokeWidth={3}
                           strokeLinecap="round"
@@ -456,13 +469,15 @@ export function PianoKeyboardView({ exercise, eventResults, playheadProgress, is
                         />
                       )}
 
-                      <circle
-                        cx={cx}
-                        cy={cy}
-                        r={r}
+                      <rect
+                        x={noteX}
+                        y={noteY}
+                        width={noteW}
+                        height={noteH}
+                        rx={2}
                         fill={gradeColor || (isRightHand ? defaultColor : 'transparent')}
                         stroke={gradeColor || defaultColor}
-                        strokeWidth={isRightHand ? 0 : 2.5}
+                        strokeWidth={isRightHand ? 0 : 2}
                         className={isRightHand ? 'fretboard-note-R' : 'fretboard-note-L'}
                       />
 
@@ -470,11 +485,11 @@ export function PianoKeyboardView({ exercise, eventResults, playheadProgress, is
                       {note.expectedNoteName && (
                         <text
                           x={cx}
-                          y={cy + 1}
+                          y={noteY + noteH / 2}
                           textAnchor="middle"
                           dominantBaseline="central"
                           fill={gradeColor ? '#fff' : (isDark ? '#fff' : '#1a1a1a')}
-                          fontSize={10}
+                          fontSize={Math.max(8, noteW * 0.4)}
                           fontWeight={700}
                           style={{ userSelect: 'none', pointerEvents: 'none' }}
                         >
@@ -485,10 +500,10 @@ export function PianoKeyboardView({ exercise, eventResults, playheadProgress, is
                       {note.accent && (
                         <text
                           x={cx}
-                          y={cy - r - 4}
+                          y={noteY - 4}
                           textAnchor="middle"
                           fill={gradeColor || defaultColor}
-                          fontSize={14}
+                          fontSize={Math.max(10, noteW * 0.5)}
                           fontWeight={700}
                         >
                           &gt;

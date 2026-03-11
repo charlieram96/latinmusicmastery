@@ -193,16 +193,14 @@ export function gradeSingleOnset(
         pitchCents = Math.round(1200 * Math.log2(detectedFrequency / expectedFreq))
         pitchCents = Math.max(-50, Math.min(50, pitchCents))
       }
-      // Wrong note degrades the grade
+      // Wrong note is always a miss
       if (!pitchCorrect) {
-        grade = grade === 'perfect' || grade === 'good' ? 'ok' : 'miss'
+        grade = 'miss'
       }
     } else {
-      // Pitch expected but not detected — soft downgrade (one tier)
-      pitchCorrect = null
-      if (grade === 'perfect') grade = 'good'
-      else if (grade === 'good') grade = 'ok'
-      // 'ok' stays 'ok' — don't punish to 'miss' for detection failure
+      // Pitch expected but not detected — treat as miss
+      pitchCorrect = false
+      grade = 'miss'
     }
   }
 

@@ -73,6 +73,7 @@ interface UseExerciseSessionResult {
   currentAccuracy: number
   tempoDrift: number
   lastHitGrade: string | null
+  detectedMidiNote: number | null
 
   // Mic testing
   isMicTesting: boolean
@@ -104,6 +105,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const [currentAccuracy, setCurrentAccuracy] = useState(0)
   const [tempoDrift, setTempoDrift] = useState(0)
   const [lastHitGrade, setLastHitGrade] = useState<string | null>(null)
+  const [detectedMidiNote, setDetectedMidiNote] = useState<number | null>(null)
+  const lastDetectedMidiRef = useRef<number | null>(null)
 
   const expectedEventsRef = useRef<Array<{ eventIndex: number; timestamp: number }>>([])
   const matchedIndicesRef = useRef<Set<number>>(new Set())
@@ -126,6 +129,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const lastInputLevelRef = useRef(0)
   const readyToGradeRef = useRef(false)
   const missDetectedIndicesRef = useRef<Set<number>>(new Set())
+  // Deferred pitch grading: pending timeouts for pitched onsets where pitch was null at onset time
+  const pendingPitchTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
 
   const {
     isListening,
@@ -236,14 +241,71 @@ export function useExerciseSession(): UseExerciseSessionResult {
 
     for (const onset of newOnsets) {
       // For pitched instruments, use frequency from onset if available,
-      // otherwise read the latest pitch detection value from ref (avoids stale state)
+      // otherwise read the latest pitch detection value, then fall back to
+      // the last MIDI note seen by the rAF loop so wrong notes are caught
       const pitchFreq = onset.frequency ?? pitchDetectionRef.current.getFrequency() ?? null
-      const detectedMidi = category === 'pitched' && pitchFreq
-        ? frequencyToMidi(pitchFreq)
+      const detectedMidi = category === 'pitched'
+        ? (pitchFreq ? frequencyToMidi(pitchFreq) : lastDetectedMidiRef.current ?? undefined)
         : undefined
       const detectedFreq = category === 'pitched'
         ? (pitchFreq ?? undefined)
         : undefined
+
+      // If pitched instrument and no pitch detected, defer grading by 100ms
+      // to allow the note to stabilize before pitch detection
+      if (category === 'pitched' && detectedMidi == null) {
+        const deferredOnset = { ...onset }
+        const timer = setTimeout(() => {
+          pendingPitchTimersRef.current.delete(timer)
+          if (sessionStateRef.current !== 'playing') return
+
+          // Re-read pitch after 100ms delay
+          const delayedFreq = pitchDetectionRef.current.getFrequency() ?? null
+          const delayedMidi = delayedFreq ? frequencyToMidi(delayedFreq) : undefined
+
+          const deferredResult = gradeSingleOnset(
+            deferredOnset.timestamp - exerciseStartTimeRef.current,
+            deferredOnset.energy,
+            expectedEventsRef.current,
+            matchedIndicesRef.current,
+            exercise.difficulty,
+            calibOffset,
+            widenMs,
+            category,
+            delayedMidi,
+            delayedFreq ?? undefined
+          )
+
+          if (deferredResult) {
+            if (missDetectedIndicesRef.current.has(deferredResult.eventIndex)) {
+              missDetectedIndicesRef.current.delete(deferredResult.eventIndex)
+              eventResultsRef.current = eventResultsRef.current.filter(
+                r => !(r.eventIndex === deferredResult.eventIndex && r.grade === 'miss')
+              )
+            }
+
+            eventResultsRef.current = [...eventResultsRef.current, deferredResult]
+            setEventResults([...eventResultsRef.current])
+            setLastHitGrade(deferredResult.grade)
+
+            if (deferredResult.grade !== 'miss') {
+              liveComboRef.current++
+            } else {
+              liveComboRef.current = 0
+            }
+            setCurrentCombo(liveComboRef.current)
+
+            const stats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
+            setCurrentScore(stats.score)
+            setCurrentAccuracy(stats.accuracy)
+            setTempoDrift(stats.tempoDriftMs)
+          } else {
+            extraHitsRef.current++
+          }
+        }, 100)
+        pendingPitchTimersRef.current.add(timer)
+        continue
+      }
 
       const result = gradeSingleOnset(
         onset.timestamp - exerciseStartTimeRef.current,
@@ -312,6 +374,16 @@ export function useExerciseSession(): UseExerciseSessionResult {
     const overallProgress = Math.min(elapsed / exerciseDurationRef.current, 1)
 
     setPlayheadProgress(overallProgress)
+
+    // Update detected MIDI note for visualization (pitched instruments only)
+    if (instrumentCategoryRef.current === 'pitched') {
+      const freq = pitchDetectionRef.current.getFrequency()
+      const midi = freq ? frequencyToMidi(freq) : null
+      if (midi !== lastDetectedMidiRef.current) {
+        lastDetectedMidiRef.current = midi
+        setDetectedMidiNote(midi)
+      }
+    }
 
     // Resolve sustain tracking: when input level drops or expected duration passes
     const SUSTAIN_SILENCE_THRESHOLD = 0.005
@@ -388,6 +460,13 @@ export function useExerciseSession(): UseExerciseSessionResult {
       clearInterval(countdownIntervalRef.current)
       countdownIntervalRef.current = null
     }
+
+    // Flush pending deferred pitch checks — clear timers so callbacks don't fire
+    for (const timer of pendingPitchTimersRef.current) {
+      clearTimeout(timer)
+    }
+    pendingPitchTimersRef.current.clear()
+
     metronome.stopMetronome()
     backingTrack.stopPlayback()
 
@@ -472,6 +551,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
     liveComboRef.current = 0
     lastMissCheckIndexRef.current = 0
     sustainTrackingRef.current.clear()
+    for (const timer of pendingPitchTimersRef.current) clearTimeout(timer)
+    pendingPitchTimersRef.current.clear()
     clearOnsets()
 
     // Start mic
@@ -605,6 +686,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     currentAccuracy,
     tempoDrift,
     lastHitGrade,
+    detectedMidiNote,
     isMicTesting,
     testMic,
     stopTestMic,
