@@ -25,6 +25,11 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     // State
     this.inputBuffer = new Float32Array(this.config.frameSize)
     this.bufferIndex = 0
+
+    // Circular buffer of raw (unfiltered) samples for pitch detection at onset time
+    this.pitchBufferSize = 4096
+    this.pitchBuffer = new Float32Array(this.pitchBufferSize)
+    this.pitchBufferWritePos = 0
     this.envelope = 0
     this.energyHistory = []
     this.fluxHistory = []
@@ -203,12 +208,90 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     return mean * 2.0 + 0.1
   }
 
+  /**
+   * Autocorrelation-based pitch detection (same algorithm as use-pitch-detection.ts).
+   * Returns detected frequency in Hz, or -1 if no confident pitch found.
+   */
+  detectPitch(buffer, sampleRate) {
+    // RMS silence gate
+    let rms = 0
+    for (let i = 0; i < buffer.length; i++) {
+      rms += buffer[i] * buffer[i]
+    }
+    rms = Math.sqrt(rms / buffer.length)
+    if (rms < 0.01) return -1
+
+    // Autocorrelation
+    const minLag = Math.floor(sampleRate / 1500) // ~1500 Hz
+    const maxLag = Math.floor(sampleRate / 27)   // ~27 Hz
+    const correlations = new Float32Array(maxLag + 1)
+
+    for (let lag = minLag; lag <= maxLag; lag++) {
+      let sum = 0
+      let sumSq1 = 0
+      let sumSq2 = 0
+      for (let i = 0; i < buffer.length - lag; i++) {
+        sum += buffer[i] * buffer[i + lag]
+        sumSq1 += buffer[i] * buffer[i]
+        sumSq2 += buffer[i + lag] * buffer[i + lag]
+      }
+      const denom = Math.sqrt(sumSq1 * sumSq2)
+      correlations[lag] = denom > 0 ? sum / denom : 0
+    }
+
+    // Find first peak above 0.9 confidence
+    let bestLag = -1
+    let bestCorr = 0.9
+
+    for (let lag = minLag; lag <= maxLag; lag++) {
+      if (correlations[lag] > bestCorr) {
+        if (
+          (lag === minLag || correlations[lag] > correlations[lag - 1]) &&
+          (lag === maxLag || correlations[lag] >= correlations[lag + 1])
+        ) {
+          bestCorr = correlations[lag]
+          bestLag = lag
+          break // Take first peak above threshold
+        }
+      }
+    }
+
+    if (bestLag === -1) return -1
+
+    // Parabolic interpolation for sub-sample accuracy
+    const prev = bestLag > 0 ? correlations[bestLag - 1] : correlations[bestLag]
+    const curr = correlations[bestLag]
+    const next = bestLag < maxLag ? correlations[bestLag + 1] : correlations[bestLag]
+    const shift = (prev - next) / (2 * (prev - 2 * curr + next))
+    const truePeak = bestLag + (isFinite(shift) ? shift : 0)
+
+    return sampleRate / truePeak
+  }
+
+  /**
+   * Get the contents of the pitch circular buffer as a contiguous array.
+   */
+  getPitchBufferSnapshot() {
+    const buf = new Float32Array(this.pitchBufferSize)
+    const wp = this.pitchBufferWritePos
+    // Copy from write position to end, then from start to write position
+    buf.set(this.pitchBuffer.subarray(wp), 0)
+    buf.set(this.pitchBuffer.subarray(0, wp), this.pitchBufferSize - wp)
+    return buf
+  }
+
   process(inputs, outputs, parameters) {
     const input = inputs[0]
     if (!input || !input[0]) return true
 
     const channelData = input[0]
     this.sampleRate = sampleRate // Global in AudioWorklet scope
+
+    // Accumulate raw (unfiltered) samples into pitch circular buffer
+    for (let i = 0; i < channelData.length; i++) {
+      this.pitchBuffer[this.pitchBufferWritePos] = channelData[i]
+      this.pitchBufferWritePos = (this.pitchBufferWritePos + 1) % this.pitchBufferSize
+    }
 
     // Feed samples through band-pass and into buffer
     for (let i = 0; i < channelData.length; i++) {
@@ -279,11 +362,17 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
 
       if (now - this.lastOnsetTime > refractorySec) {
         this.lastOnsetTime = now
+
+        // Run pitch detection on the raw sample buffer
+        const pitchSnapshot = this.getPitchBufferSnapshot()
+        const detectedFreq = this.detectPitch(pitchSnapshot, this.sampleRate)
+
         this.port.postMessage({
           type: 'onset',
           timestamp: now,
           energy: this.envelope,
           fluxConfirmed: fluxExceeds,
+          frequency: detectedFreq > 0 ? detectedFreq : null,
         })
       }
     }

@@ -129,6 +129,16 @@ const INSTRUMENT_PROFILES: Partial<Record<Instrument, Partial<OnsetConfig>>> = {
     fftSize: 2048,
     frameSize: 2048,
   },
+  violin: {
+    bandPassLow: 180,
+    bandPassHigh: 6000,
+    envelopeAttackMs: 8,
+    envelopeReleaseMs: 100,
+    refractoryPeriodMs: 80,
+    minOnsetEnergy: 0.005,
+    fftSize: 2048,
+    frameSize: 2048,
+  },
 }
 
 /** Speaker-safe mode preset — higher thresholds to reject backing track bleed */

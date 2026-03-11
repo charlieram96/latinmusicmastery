@@ -1,7 +1,7 @@
 // Percussion instruments
 export type PercussionInstrument = 'conga' | 'timbale' | 'bongo' | 'clave' | 'cowbell' | 'guiro'
 // Melodic / pitched instruments
-export type PitchedInstrument = 'guitar' | 'bass' | 'piano' | 'tres' | 'cuatro' | 'trumpet' | 'saxophone' | 'flute'
+export type PitchedInstrument = 'guitar' | 'bass' | 'piano' | 'tres' | 'cuatro' | 'trumpet' | 'saxophone' | 'flute' | 'violin'
 export type Instrument = PercussionInstrument | PitchedInstrument
 
 export type Technique = 'open' | 'slap' | 'mute' | 'bass' | 'touch' | 'rim' | 'shell' | 'bell' | 'tip' | 'heel'
@@ -86,6 +86,8 @@ export interface AttemptStats {
   avgOffsetMs: number
   tempoDriftMs: number
   durationSeconds: number
+  /** Pitch accuracy percentage for pitched instruments (null if not applicable) */
+  pitchAccuracy: number | null
 }
 
 export interface AttemptData extends AttemptStats {

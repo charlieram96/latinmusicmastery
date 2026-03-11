@@ -118,6 +118,7 @@ export function useOnsetDetection(
           const onset: OnsetEvent = {
             timestamp: e.data.timestamp,
             energy: e.data.energy,
+            frequency: e.data.frequency ?? null,
           }
           setRecentOnsets((prev) => {
             const next = [...prev, onset]

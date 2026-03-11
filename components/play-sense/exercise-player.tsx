@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -12,6 +12,7 @@ import { VisualizationPanel } from './visualization-panel'
 import { CalibrationWizard } from './calibration-wizard'
 import { ResultsSummary } from './results-summary'
 import { saveAttempt } from '@/app/actions/play-sense'
+import { MELODIC_EXERCISES } from '@/lib/play-sense/melodic-exercises'
 import {
   fadeInUp,
   slideInLeft,
@@ -25,6 +26,11 @@ interface ExercisePlayerProps {
 }
 
 export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
+  // Merge DB exercises with built-in melodic exercises
+  const allExercises = useMemo(
+    () => [...exercises, ...MELODIC_EXERCISES],
+    [exercises]
+  )
   const session = useExerciseSession()
   const [floatingGrades, setFloatingGrades] = useState<Array<{ grade: string; id: number }>>([])
   const gradeIdRef = useRef(0)
@@ -174,7 +180,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                 isActive ? 'w-[220px] lg:w-[260px]' : 'w-[300px] lg:w-[340px]',
               )}>
                 <PlaylistView
-                  exercises={exercises}
+                  exercises={allExercises}
                   selectedExercise={session.exercise}
                   isPlaying={session.sessionState === 'playing'}
                   onSelect={session.selectExercise}
@@ -185,7 +191,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
               {session.sessionState === 'idle' && (
                 <div className="flex-1 md:hidden">
                   <PlaylistView
-                    exercises={exercises}
+                    exercises={allExercises}
                     selectedExercise={session.exercise}
                     isPlaying={false}
                     onSelect={session.selectExercise}

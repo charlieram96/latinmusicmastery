@@ -16,6 +16,7 @@ interface PitchDetectionResult {
   isListening: boolean
   hasPermission: boolean | null
   error: string | null
+  getFrequency: () => number | null
   startListening: () => Promise<void>
   stopListening: () => void
 }
@@ -250,6 +251,8 @@ export function usePitchDetection(
     }
   }, [])
 
+  const getFrequency = useCallback(() => smoothedFreqRef.current, [])
+
   return {
     frequency,
     note,
@@ -258,6 +261,7 @@ export function usePitchDetection(
     isListening,
     hasPermission,
     error,
+    getFrequency,
     startListening,
     stopListening,
   }

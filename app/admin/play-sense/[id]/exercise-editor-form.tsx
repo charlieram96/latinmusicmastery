@@ -7,7 +7,6 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select,
   SelectContent,
@@ -17,8 +16,8 @@ import {
 } from '@/components/ui/select'
 import { createExercise, updateExercise } from '@/app/actions/play-sense'
 import { PlaySenseAudioUpload } from '@/components/admin/play-sense-audio-upload'
-import { PlaySensePatternGrid } from '@/components/admin/play-sense-pattern-grid'
-import type { ExerciseEvent, Instrument } from '@/lib/play-sense/types'
+import { ExerciseWorkspace } from '@/components/admin/sequencer/exercise-workspace'
+import type { ExerciseEvent, Instrument, Difficulty } from '@/lib/play-sense/types'
 import { Save, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
@@ -42,38 +41,47 @@ interface ExerciseEditorFormProps {
   isNew: boolean
 }
 
-const EXAMPLE_EVENTS = JSON.stringify([
+const EXAMPLE_EVENTS: ExerciseEvent[] = [
   { beat: 1, measure: 1, instrument: "conga", technique: "heel", hand: "L", duration: 0.5, vexKey: "c/5", accent: false },
   { beat: 1.5, measure: 1, instrument: "conga", technique: "tip", hand: "L", duration: 0.5, vexKey: "c/5", accent: false },
   { beat: 2, measure: 1, instrument: "conga", technique: "touch", hand: "R", duration: 0.5, vexKey: "e/5", accent: false },
   { beat: 2.5, measure: 1, instrument: "conga", technique: "open", hand: "R", duration: 0.5, vexKey: "e/5", accent: true },
-], null, 2)
+]
 
 export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps) {
   const router = useRouter()
-  const [eventsJson, setEventsJson] = useState(
-    exercise?.events ? JSON.stringify(exercise.events, null, 2) : EXAMPLE_EVENTS
-  )
-  const [jsonError, setJsonError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [audioUrl, setAudioUrl] = useState<string>(exercise?.audio_url || '')
+
+  // Controlled form state
+  const [title, setTitle] = useState(exercise?.title || '')
+  const [description, setDescription] = useState(exercise?.description || '')
   const [instrument, setInstrument] = useState<Instrument>((exercise?.instrument || 'conga') as Instrument)
+  const [difficulty, setDifficulty] = useState<Difficulty>((exercise?.difficulty || 'beginner') as Difficulty)
+  const [bpm, setBpm] = useState(exercise?.bpm || 100)
+  const [timeSig, setTimeSig] = useState<[number, number]>(
+    (exercise?.time_signature as [number, number]) || [4, 4]
+  )
+  const [swing, setSwing] = useState(exercise?.swing || 0)
   const [measures, setMeasures] = useState(exercise?.measures || 4)
-  const [activeTab, setActiveTab] = useState<string>('grid')
+  const [loopCount, setLoopCount] = useState(exercise?.loop_count || 1)
+  const [orderIndex, setOrderIndex] = useState(exercise?.order_index || 0)
+  const [audioUrl, setAudioUrl] = useState<string>(exercise?.audio_url || '')
+  const [isPublished, setIsPublished] = useState(exercise?.is_published || false)
 
-  const timeSignature = exercise?.time_signature as [number, number] || [4, 4]
-  const [timeSig, setTimeSig] = useState<[number, number]>(timeSignature)
-
-  // Parse events from JSON for grid use
-  const parsedEvents: ExerciseEvent[] = (() => {
+  // Events state
+  const initialEvents: ExerciseEvent[] = (() => {
     try {
-      const parsed = JSON.parse(eventsJson)
+      const parsed = exercise?.events
       if (Array.isArray(parsed)) return parsed
     } catch { /* ignore */ }
-    return []
+    return EXAMPLE_EVENTS
   })()
 
-  const validateJson = (json: string) => {
+  const [events, setEvents] = useState<ExerciseEvent[]>(initialEvents)
+  const [eventsJson, setEventsJson] = useState(JSON.stringify(initialEvents, null, 2))
+  const [jsonError, setJsonError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const validateJson = useCallback((json: string) => {
     try {
       const parsed = JSON.parse(json)
       if (!Array.isArray(parsed)) {
@@ -92,24 +100,49 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
       setJsonError('Invalid JSON: ' + (e as Error).message)
       return false
     }
-  }
+  }, [])
 
-  // Grid -> JSON sync
-  const handleGridChange = useCallback((newEvents: ExerciseEvent[]) => {
-    const json = JSON.stringify(newEvents, null, 2)
-    setEventsJson(json)
+  // Sequencer -> JSON sync
+  const handleEventsChange = useCallback((newEvents: ExerciseEvent[]) => {
+    setEvents(newEvents)
+    setEventsJson(JSON.stringify(newEvents, null, 2))
     setJsonError(null)
   }, [])
 
-  // JSON -> Grid sync happens automatically via parsedEvents
+  // JSON -> Sequencer sync
+  const handleJsonChange = useCallback((json: string) => {
+    setEventsJson(json)
+    if (jsonError) validateJson(json)
+    try {
+      const parsed = JSON.parse(json)
+      if (Array.isArray(parsed)) {
+        setEvents(parsed)
+      }
+    } catch { /* ignore during typing */ }
+  }, [jsonError, validateJson])
+
+  const handleJsonBlur = useCallback(() => {
+    validateJson(eventsJson)
+  }, [eventsJson, validateJson])
 
   const handleSubmit = async (formData: FormData) => {
     if (!validateJson(eventsJson)) return
 
     setSaving(true)
     try {
+      formData.set('title', title)
+      formData.set('description', description)
+      formData.set('instrument', instrument)
+      formData.set('difficulty', difficulty)
+      formData.set('bpm', String(bpm))
+      formData.set('time_signature', JSON.stringify(timeSig))
+      formData.set('swing', String(swing))
+      formData.set('measures', String(measures))
+      formData.set('loop_count', String(loopCount))
+      formData.set('order_index', String(orderIndex))
       formData.set('events', eventsJson)
       formData.set('audio_url', audioUrl)
+      formData.set('is_published', isPublished ? 'true' : 'false')
       if (isNew) {
         await createExercise(formData)
       } else {
@@ -138,17 +171,17 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" name="title" defaultValue={exercise?.title || ''} required />
+            <Input id="title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="description">Description</Label>
-            <Input id="description" name="description" defaultValue={exercise?.description || ''} />
+            <Input id="description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="instrument">Instrument</Label>
             <Select
               name="instrument"
-              defaultValue={instrument}
+              value={instrument}
               onValueChange={(v) => setInstrument(v as Instrument)}
             >
               <SelectTrigger>
@@ -174,7 +207,7 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
           </div>
           <div className="space-y-2">
             <Label htmlFor="difficulty">Difficulty</Label>
-            <Select name="difficulty" defaultValue={exercise?.difficulty || 'beginner'}>
+            <Select name="difficulty" value={difficulty} onValueChange={(v) => setDifficulty(v as Difficulty)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -208,13 +241,22 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="bpm">BPM</Label>
-            <Input id="bpm" name="bpm" type="number" min="40" max="300" defaultValue={exercise?.bpm || 100} required />
+            <Input
+              id="bpm"
+              name="bpm"
+              type="number"
+              min="40"
+              max="300"
+              value={bpm}
+              onChange={(e) => setBpm(Number(e.target.value) || 100)}
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="time_signature">Time Signature</Label>
             <Select
               name="time_signature"
-              defaultValue={JSON.stringify(timeSig)}
+              value={JSON.stringify(timeSig)}
               onValueChange={(v) => {
                 try { setTimeSig(JSON.parse(v)) } catch { /* ignore */ }
               }}
@@ -232,7 +274,16 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
           </div>
           <div className="space-y-2">
             <Label htmlFor="swing">Swing (0-1)</Label>
-            <Input id="swing" name="swing" type="number" min="0" max="1" step="0.1" defaultValue={exercise?.swing || 0} />
+            <Input
+              id="swing"
+              name="swing"
+              type="number"
+              min="0"
+              max="1"
+              step="0.1"
+              value={swing}
+              onChange={(e) => setSwing(Number(e.target.value) || 0)}
+            />
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
@@ -244,60 +295,57 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
               type="number"
               min="1"
               max="64"
-              defaultValue={measures}
+              value={measures}
               onChange={(e) => setMeasures(Number(e.target.value) || 4)}
               required
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="loop_count">Loop Count</Label>
-            <Input id="loop_count" name="loop_count" type="number" min="1" max="16" defaultValue={exercise?.loop_count || 1} />
+            <Input
+              id="loop_count"
+              name="loop_count"
+              type="number"
+              min="1"
+              max="16"
+              value={loopCount}
+              onChange={(e) => setLoopCount(Number(e.target.value) || 1)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="order_index">Sort Order</Label>
-            <Input id="order_index" name="order_index" type="number" min="0" defaultValue={exercise?.order_index || 0} />
+            <Input
+              id="order_index"
+              name="order_index"
+              type="number"
+              min="0"
+              value={orderIndex}
+              onChange={(e) => setOrderIndex(Number(e.target.value) || 0)}
+            />
           </div>
         </div>
       </Card>
 
-      {/* Pattern Editor */}
-      <Card className="p-6 space-y-4">
-        <h2 className="font-semibold text-lg">Pattern</h2>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="grid">Grid Editor</TabsTrigger>
-            <TabsTrigger value="json">JSON</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="grid" className="mt-4">
-            <PlaySensePatternGrid
-              events={parsedEvents}
-              instrument={instrument}
-              measures={measures}
-              timeSignature={timeSig}
-              onChange={handleGridChange}
-            />
-          </TabsContent>
-
-          <TabsContent value="json" className="mt-4 space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Define the percussion pattern as an array of events. Each event needs: beat, measure, instrument, technique, hand, duration, vexKey, accent.
-            </p>
-            <textarea
-              className="w-full min-h-[300px] p-3 font-mono text-sm bg-muted rounded-lg border resize-y focus:outline-none focus:ring-2 focus:ring-primary"
-              value={eventsJson}
-              onChange={(e) => {
-                setEventsJson(e.target.value)
-                if (jsonError) validateJson(e.target.value)
-              }}
-              onBlur={() => validateJson(eventsJson)}
-            />
-            {jsonError && (
-              <p className="text-sm text-destructive">{jsonError}</p>
-            )}
-          </TabsContent>
-        </Tabs>
-      </Card>
+      {/* Sequencer Workspace */}
+      <ExerciseWorkspace
+        events={events}
+        onChange={handleEventsChange}
+        instrument={instrument}
+        measures={measures}
+        timeSignature={timeSig}
+        bpm={bpm}
+        swing={swing}
+        difficulty={difficulty}
+        audioUrl={audioUrl}
+        exerciseId={exercise?.id || 'new'}
+        title={title}
+        description={description}
+        loopCount={loopCount}
+        eventsJson={eventsJson}
+        onJsonChange={handleJsonChange}
+        jsonError={jsonError}
+        onJsonBlur={handleJsonBlur}
+      />
 
       {/* Publish & Submit */}
       <Card className="p-6">
@@ -306,7 +354,8 @@ export function ExerciseEditorForm({ exercise, isNew }: ExerciseEditorFormProps)
             <Switch
               id="is_published"
               name="is_published"
-              defaultChecked={exercise?.is_published || false}
+              checked={isPublished}
+              onCheckedChange={setIsPublished}
               value="true"
             />
             <Label htmlFor="is_published">Published</Label>

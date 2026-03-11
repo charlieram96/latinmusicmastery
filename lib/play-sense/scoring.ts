@@ -185,16 +185,24 @@ export function gradeSingleOnset(
   // Pitch scoring for pitched instruments
   let pitchCorrect: boolean | null = null
   let pitchCents: number | null = null
-  if (instrumentCategory === 'pitched' && matched.expectedPitch != null && detectedMidiNote != null) {
-    pitchCorrect = detectedMidiNote === matched.expectedPitch
-    if (detectedFrequency != null) {
-      const expectedFreq = 440 * Math.pow(2, (matched.expectedPitch - 69) / 12)
-      pitchCents = Math.round(1200 * Math.log2(detectedFrequency / expectedFreq))
-      pitchCents = Math.max(-50, Math.min(50, pitchCents))
-    }
-    // Wrong note degrades the grade
-    if (!pitchCorrect) {
-      grade = grade === 'perfect' || grade === 'good' ? 'ok' : 'miss'
+  if (instrumentCategory === 'pitched' && matched.expectedPitch != null) {
+    if (detectedMidiNote != null) {
+      pitchCorrect = detectedMidiNote === matched.expectedPitch
+      if (detectedFrequency != null) {
+        const expectedFreq = 440 * Math.pow(2, (matched.expectedPitch - 69) / 12)
+        pitchCents = Math.round(1200 * Math.log2(detectedFrequency / expectedFreq))
+        pitchCents = Math.max(-50, Math.min(50, pitchCents))
+      }
+      // Wrong note degrades the grade
+      if (!pitchCorrect) {
+        grade = grade === 'perfect' || grade === 'good' ? 'ok' : 'miss'
+      }
+    } else {
+      // Pitch expected but not detected — soft downgrade (one tier)
+      pitchCorrect = null
+      if (grade === 'perfect') grade = 'good'
+      else if (grade === 'good') grade = 'ok'
+      // 'ok' stays 'ok' — don't punish to 'miss' for detection failure
     }
   }
 
@@ -307,6 +315,15 @@ export function computeStats(
     ? driftWindow.reduce((sum, r) => sum + r.offsetMs!, 0) / driftWindow.length
     : 0
 
+  // Pitch accuracy: percentage of notes with pitchCorrect === true
+  // out of notes that had expectedPitch (pitchCorrect !== undefined)
+  const pitchedResults = results.filter(r => r.pitchCorrect !== undefined)
+  const pitchAccuracy = pitchedResults.length > 0
+    ? Math.round(
+        (pitchedResults.filter(r => r.pitchCorrect === true).length / pitchedResults.length) * 10000
+      ) / 100
+    : null
+
   return {
     score: Math.round(score * 100) / 100,
     accuracy: Math.round(accuracy * 100) / 100,
@@ -320,5 +337,6 @@ export function computeStats(
     avgOffsetMs: Math.round(avgOffsetMs * 100) / 100,
     tempoDriftMs: Math.round(tempoDriftMs * 100) / 100,
     durationSeconds: Math.round(durationSeconds * 100) / 100,
+    pitchAccuracy,
   }
 }

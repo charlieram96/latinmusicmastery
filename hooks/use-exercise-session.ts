@@ -125,6 +125,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const sustainTrackingRef = useRef<Map<number, { onsetTime: number; expectedDurationSec: number }>>(new Map())
   const lastInputLevelRef = useRef(0)
   const readyToGradeRef = useRef(false)
+  const missDetectedIndicesRef = useRef<Set<number>>(new Set())
 
   const {
     isListening,
@@ -161,7 +162,6 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const pitchDetectionRef = useRef(pitchDetection)
   pitchDetectionRef.current = pitchDetection
   const instrumentCategoryRef = useRef<InstrumentCategory>('percussion')
-  const pitchFreqRef = useRef<number | null>(null)
 
   // Load stored audio mode and calibration on mount
   useEffect(() => {
@@ -207,11 +207,6 @@ export function useExerciseSession(): UseExerciseSessionResult {
     }
   }, [exercise])
 
-  // Keep pitch frequency ref in sync so onset processing reads the latest value
-  useEffect(() => {
-    pitchFreqRef.current = pitchDetection.frequency
-  }, [pitchDetection.frequency])
-
   // Keep input level ref in sync for sustain tracking
   useEffect(() => {
     lastInputLevelRef.current = inputLevel
@@ -242,7 +237,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     for (const onset of newOnsets) {
       // For pitched instruments, use frequency from onset if available,
       // otherwise read the latest pitch detection value from ref (avoids stale state)
-      const pitchFreq = onset.frequency ?? pitchFreqRef.current ?? null
+      const pitchFreq = onset.frequency ?? pitchDetectionRef.current.getFrequency() ?? null
       const detectedMidi = category === 'pitched' && pitchFreq
         ? frequencyToMidi(pitchFreq)
         : undefined
@@ -264,6 +259,15 @@ export function useExerciseSession(): UseExerciseSessionResult {
       )
 
       if (result) {
+        // If this onset matched an event previously marked as a tentative miss,
+        // remove the tentative miss result so the real hit takes its place
+        if (missDetectedIndicesRef.current.has(result.eventIndex)) {
+          missDetectedIndicesRef.current.delete(result.eventIndex)
+          eventResultsRef.current = eventResultsRef.current.filter(
+            r => !(r.eventIndex === result.eventIndex && r.grade === 'miss')
+          )
+        }
+
         // Start sustain tracking for pitched instruments with duration > 0
         if (category === 'pitched') {
           const matchedExpected = expectedEventsRef.current.find(
@@ -326,9 +330,11 @@ export function useExerciseSession(): UseExerciseSessionResult {
     }
 
     // Detect missed events in real-time: any unmatched event whose ok window has passed
+    // Use missDetectedIndicesRef (not matchedIndicesRef) so gradeSingleOnset can still
+    // match late onsets that arrive after the miss window
     const calibOffset = (calibrationDataRef.current?.latencyMs || 0) / 1000
     const difficulty = exerciseDifficultyRef.current
-    const okWindowSec = (TOLERANCE_BY_DIFFICULTY[difficulty].ok + 50) / 1000 // add buffer
+    const okWindowSec = (TOLERANCE_BY_DIFFICULTY[difficulty].ok + 200) / 1000 // generous buffer for late hits
     const correctedTime = elapsed - calibOffset
     const expected = expectedEventsRef.current
     let missDetected = false
@@ -336,25 +342,22 @@ export function useExerciseSession(): UseExerciseSessionResult {
     for (let i = lastMissCheckIndexRef.current; i < expected.length; i++) {
       const evt = expected[i]
       if (correctedTime < evt.timestamp + okWindowSec) break
-      if (matchedIndicesRef.current.has(evt.eventIndex)) {
+      if (matchedIndicesRef.current.has(evt.eventIndex) || missDetectedIndicesRef.current.has(evt.eventIndex)) {
         lastMissCheckIndexRef.current = i + 1
         continue
       }
-      // This event was missed
-      const hasResult = eventResultsRef.current.some(r => r.eventIndex === evt.eventIndex)
-      if (!hasResult) {
-        const missResult: EventResult = {
-          eventIndex: evt.eventIndex,
-          grade: 'miss',
-          offsetMs: null,
-          timing: null,
-          onsetEnergy: null,
-        }
-        eventResultsRef.current = [...eventResultsRef.current, missResult]
-        matchedIndicesRef.current.add(evt.eventIndex)
-        liveComboRef.current = 0
-        missDetected = true
+      // This event was tentatively missed — record it but don't block gradeSingleOnset
+      const missResult: EventResult = {
+        eventIndex: evt.eventIndex,
+        grade: 'miss',
+        offsetMs: null,
+        timing: null,
+        onsetEnergy: null,
       }
+      eventResultsRef.current = [...eventResultsRef.current, missResult]
+      missDetectedIndicesRef.current.add(evt.eventIndex)
+      liveComboRef.current = 0
+      missDetected = true
       lastMissCheckIndexRef.current = i + 1
     }
 
@@ -462,6 +465,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     setTempoDrift(0)
     setLastHitGrade(null)
     matchedIndicesRef.current = new Set()
+    missDetectedIndicesRef.current = new Set()
     extraHitsRef.current = 0
     lastProcessedOnsetRef.current = 0
     readyToGradeRef.current = false
