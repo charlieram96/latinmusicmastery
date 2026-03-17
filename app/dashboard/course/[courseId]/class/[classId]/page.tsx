@@ -44,6 +44,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         course:courses (
           id,
           title,
+          description,
           slug,
           instrument,
           teacher:teachers (name),
@@ -146,19 +147,38 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   })) || []
 
   return (
-    <>
-      {/* Top Navigation */}
-      <ClassViewerNav
-        courseId={courseId}
-        courseTitle={course.title}
-        classTitle={classData.title}
-        classItemId={activeItem?.id || null}
-        isCompleted={isCurrentItemCompleted}
-      />
+    <div className="-m-6 flex h-[calc(100vh-3.5rem)]">
+      {/* Left Sidebar */}
+      <aside className="hidden lg:flex w-80 flex-shrink-0 border-r bg-muted/30 flex-col overflow-y-auto">
+        <CourseSidebar
+          courseId={courseId}
+          currentClassId={classId}
+          sections={sidebarSections}
+          courseTitle={course.title}
+          courseDescription={course.description}
+        />
+      </aside>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+      {/* Right Content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Top Navigation */}
+        <ClassViewerNav
+          courseId={courseId}
+          courseTitle={course.title}
+          classTitle={classData.title}
+          classItemId={activeItem?.id || null}
+          isCompleted={isCurrentItemCompleted}
+        />
+
+        <div className="p-6 space-y-6">
+          {/* Class Details Header */}
+          <div>
+            <h1 className="text-2xl font-bold">{classData.title}</h1>
+            {classData.description && (
+              <p className="text-muted-foreground mt-1">{classData.description}</p>
+            )}
+          </div>
+
           {/* Step Indicator */}
           {items.length > 1 && (
             <ClassStepIndicator
@@ -195,16 +215,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
             userId={user.id}
           />
         </div>
-
-        {/* Sidebar */}
-        <div className="lg:col-span-1 lg:border-l lg:pl-6">
-          <CourseSidebar
-            courseId={courseId}
-            currentClassId={classId}
-            sections={sidebarSections}
-          />
-        </div>
       </div>
-    </>
+    </div>
   )
 }

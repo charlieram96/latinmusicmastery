@@ -1,9 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import {
   staggerContainer,
   staggerChild,
@@ -12,7 +11,7 @@ import {
   floatAnimation,
 } from "@/lib/animation-variants";
 import GradientText from "@/components/marketing/GradientText";
-import { Button } from "@/components/ui/button";
+import { WaitlistForm } from "@/components/marketing/WaitlistForm";
 
 export default function VideoHero() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -28,11 +27,11 @@ export default function VideoHero() {
           muted
           loop
           playsInline
-          poster="/images/hero-poster.jpg"
+          poster="/hero-band.jpg"
           onError={() => setVideoFailed(true)}
           className="absolute inset-0 h-full w-full object-cover"
         >
-          <source src="/videos/hero-latin-music.mp4" type="video/mp4" />
+          <source src="/videos/band-performing.mp4" type="video/mp4" />
         </video>
       ) : (
         /* Fallback gradient background when video fails to load */
@@ -86,7 +85,7 @@ export default function VideoHero() {
           variants={heroTextReveal}
           className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
         >
-          Master the Soul of{" "}
+          Learning from the Masters of{" "}
           <GradientText>Latin Music</GradientText>
         </motion.h1>
 
@@ -100,29 +99,12 @@ export default function VideoHero() {
           of every level.
         </motion.p>
 
-        {/* CTA Buttons */}
+        {/* Waitlist Form */}
         <motion.div
           variants={staggerChild}
-          className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
+          className="mt-10 flex justify-center"
         >
-          <Button
-            asChild
-            size="lg"
-            className="rounded-full bg-white px-8 text-gray-900 hover:bg-white/90"
-          >
-            <Link href="/signup">
-              Start Learning Free
-              <ArrowRight className="ml-2 size-4" />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="rounded-full border-white/40 text-white hover:bg-white/10 hover:text-white"
-          >
-            <Link href="/explore">Explore Courses</Link>
-          </Button>
+          <WaitlistForm variant="hero" />
         </motion.div>
       </motion.div>
 

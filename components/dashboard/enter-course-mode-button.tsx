@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, ComponentProps } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { PlayCircle, Music, Loader2 } from 'lucide-react'
@@ -42,9 +43,9 @@ export function EnterCourseModeButton({
 
   return (
     <>
-      {/* Full-screen loading overlay */}
-      {isLoading && (
-        <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm">
+      {/* Full-screen loading overlay - portaled to document.body to escape stacking contexts */}
+      {isLoading && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-background/95 backdrop-blur-sm">
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             {/* Animated background pattern */}
             <div className="absolute inset-0 overflow-hidden">
@@ -108,7 +109,8 @@ export function EnterCourseModeButton({
               }
             }
           `}</style>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Button */}

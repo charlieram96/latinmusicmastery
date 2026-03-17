@@ -134,6 +134,7 @@ export function ModuleAccordionList({
   return (
     <div className="space-y-4">
       <DndContext
+        id="modules-dnd"
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}

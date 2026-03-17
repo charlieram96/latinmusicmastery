@@ -115,6 +115,7 @@ export function ClassList({
   return (
     <div className="space-y-4">
       <DndContext
+        id={`classes-dnd-${sectionId}`}
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}

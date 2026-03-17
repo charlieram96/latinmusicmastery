@@ -105,6 +105,9 @@ export function CourseBuilderV2({ courseId, initialSections }: CourseBuilderV2Pr
   const handleSaveClass = useCallback(async (title: string, description: string) => {
     if (classDialog.mode === 'create' && classDialog.sectionId) {
       const result = await createClass(classDialog.sectionId, title, description)
+      if (result.error) {
+        console.error('Failed to create class:', result.error)
+      }
       if (result.data) {
         const newClass: ClassWithItems = { ...(result.data as ClassRecord), items: [] }
         setSections(prev =>

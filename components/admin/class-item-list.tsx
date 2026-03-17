@@ -87,6 +87,7 @@ export function ClassItemList({
         <p className="text-sm text-muted-foreground">No items yet. Add content below.</p>
       ) : (
         <DndContext
+          id={`items-dnd-${classId}`}
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
