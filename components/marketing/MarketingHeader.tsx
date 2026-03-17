@@ -6,7 +6,6 @@ import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 /* ------------------------------------------------------------------ */
@@ -364,19 +363,8 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
           </MobileAccordion>
         </nav>
 
-        {/* Bottom actions */}
-        <div className="mt-auto border-t border-border px-4 py-6 space-y-3">
-          <Button variant="ghost" className="w-full justify-center" asChild>
-            <Link href="/login" onClick={onClose}>
-              Log in
-            </Link>
-          </Button>
-          <Button className="w-full justify-center rounded-full" asChild>
-            <Link href="/signup" onClick={onClose}>
-              Get Started
-            </Link>
-          </Button>
-        </div>
+        {/* Bottom spacer */}
+        <div className="mt-auto" />
       </motion.div>
     </motion.div>
   )
@@ -529,16 +517,6 @@ export function MarketingHeader() {
           {/* Right actions */}
           <div className="flex items-center gap-2">
             <ThemeToggle />
-
-            {/* Desktop buttons */}
-            <div className="hidden md:flex items-center gap-2">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">Log in</Link>
-              </Button>
-              <Button size="sm" className="rounded-full" asChild>
-                <Link href="/signup">Get Started</Link>
-              </Button>
-            </div>
 
             {/* Mobile hamburger */}
             <button

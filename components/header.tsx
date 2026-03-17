@@ -84,23 +84,7 @@ export async function Header() {
                 )}
                 <UserNav user={user} isAdmin={isAdmin} />
               </>
-            ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  className="text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
-                  asChild
-                >
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button
-                  className="bg-primary hover:bg-primary/90 text-white rounded-full px-5 py-2 text-sm font-medium"
-                  asChild
-                >
-                  <Link href="/signup">Get Started</Link>
-                </Button>
-              </>
-            )}
+            ) : null}
           </div>
         </nav>
       </div>

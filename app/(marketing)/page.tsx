@@ -17,7 +17,7 @@ import { HomeFeaturesSection } from './sections/HomeFeaturesSection'
 import { HomeInstructorsSection } from './sections/HomeInstructorsSection'
 import { HomeTestimonialsSection } from './sections/HomeTestimonialsSection'
 import { HomePricingPreview } from './sections/HomePricingPreview'
-import CTABanner from '@/components/marketing/CTABanner'
+import { WaitlistForm } from '@/components/marketing/WaitlistForm'
 
 export default async function MarketingHomePage() {
   const supabase = await createClient()
@@ -57,12 +57,15 @@ export default async function MarketingHomePage() {
       )}
       <HomeTestimonialsSection />
       <HomePricingPreview />
-      <CTABanner
-        title="Ready to Start Your Musical Journey?"
-        subtitle="Join thousands of musicians mastering authentic Latin American music. Start your free trial today."
-        primaryAction={{ label: 'Get Started Free', href: '/signup' }}
-        secondaryAction={{ label: 'Explore Courses', href: '/explore' }}
-      />
+      <section className="relative overflow-hidden bg-gradient-to-r from-primary/90 to-orange-500/90 py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <WaitlistForm
+            title="Ready to Start Your Musical Journey?"
+            subtitle="Be the first to know when we launch. Join the waiting list for early access."
+            variant="hero"
+          />
+        </div>
+      </section>
     </div>
   )
 }

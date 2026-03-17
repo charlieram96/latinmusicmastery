@@ -1,11 +1,10 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { ShieldCheck } from "lucide-react"
+import { WaitlistForm } from "@/components/marketing/WaitlistForm"
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
@@ -141,67 +140,6 @@ function FooterColumn({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Newsletter Form                                                    */
-/* ------------------------------------------------------------------ */
-
-function NewsletterForm() {
-  const [email, setEmail] = useState("")
-  const [submitted, setSubmitted] = useState(false)
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    if (!email) return
-    // TODO: integrate with newsletter service
-    setSubmitted(true)
-    setEmail("")
-    setTimeout(() => setSubmitted(false), 3000)
-  }
-
-  return (
-    <div>
-      <h3 className="mb-4 text-sm font-semibold text-foreground">
-        Stay in the loop
-      </h3>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Get weekly tips, new courses, and Latin music insights.
-      </p>
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@email.com"
-          required
-          className={cn(
-            "flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm text-foreground",
-            "placeholder:text-muted-foreground",
-            "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary",
-            "transition-colors"
-          )}
-        />
-        <Button
-          type="submit"
-          size="sm"
-          className="rounded-full px-5"
-          disabled={submitted}
-        >
-          {submitted ? "Sent!" : "Subscribe"}
-        </Button>
-      </form>
-      {submitted && (
-        <motion.p
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-2 text-xs text-primary"
-        >
-          Thanks for subscribing!
-        </motion.p>
-      )}
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Main Footer                                                        */
 /* ------------------------------------------------------------------ */
 
@@ -254,9 +192,15 @@ export function MarketingFooter() {
           <FooterColumn title="Company" links={companyLinks} />
           <FooterColumn title="Legal" links={legalLinks} />
 
-          {/* Newsletter */}
+          {/* Waitlist */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <NewsletterForm />
+            <h3 className="mb-4 text-sm font-semibold text-foreground">
+              Join the waiting list
+            </h3>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Be the first to know when we launch.
+            </p>
+            <WaitlistForm />
           </div>
         </div>
 
@@ -265,13 +209,22 @@ export function MarketingFooter() {
           <p className="text-sm text-muted-foreground">
             &copy; {currentYear} Latin Music Mastery. All rights reserved.
           </p>
-          <p className="text-sm text-muted-foreground">
-            Made with{" "}
-            <span className="text-primary" aria-label="love">
-              &#9829;
-            </span>{" "}
-            for Latin music
-          </p>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/login"
+              className="text-muted-foreground/30 hover:text-muted-foreground transition-colors"
+              aria-label="Admin login"
+            >
+              <ShieldCheck className="h-4 w-4" />
+            </Link>
+            <p className="text-sm text-muted-foreground">
+              Made with{" "}
+              <span className="text-primary" aria-label="love">
+                &#9829;
+              </span>{" "}
+              for Latin music
+            </p>
+          </div>
         </div>
       </div>
     </footer>
