@@ -9,8 +9,8 @@ import {
 import AnimatedCounter from "@/components/marketing/AnimatedCounter";
 
 const stats = [
-  { end: 10000, suffix: "+", label: "Active Students" },
-  { end: 500, suffix: "+", label: "Video Lessons" },
+  { end: 0, suffix: "", label: "Active Students", staticText: "In Progress" },
+  { end: 1500, suffix: "+", label: "Video Lessons" },
   { end: 200, suffix: "+", label: "Hours of Content" },
   { end: 15, suffix: "", label: "Expert Instructors" },
 ] as const;
@@ -37,11 +37,15 @@ export default function StatsBar() {
             className="flex flex-col items-center text-center"
           >
             <span className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-              <AnimatedCounter
-                end={stat.end}
-                suffix={stat.suffix}
-                duration={2.5}
-              />
+              {"staticText" in stat && stat.staticText ? (
+                stat.staticText
+              ) : (
+                <AnimatedCounter
+                  end={stat.end}
+                  suffix={stat.suffix}
+                  duration={2.5}
+                />
+              )}
             </span>
             <span className="mt-2 text-sm font-medium text-muted-foreground sm:text-base">
               {stat.label}

@@ -22,7 +22,7 @@ export function ClassViewerNav({
   isCompleted,
 }: ClassViewerNavProps) {
   return (
-    <div className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-10 -mx-6 -mt-6 mb-6">
+    <div className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-10">
       <div className="px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1 min-w-0">

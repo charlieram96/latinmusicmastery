@@ -28,11 +28,11 @@ export default function VideoHero() {
           muted
           loop
           playsInline
-          poster="/images/hero-poster.jpg"
+          poster="/hero-band.jpg"
           onError={() => setVideoFailed(true)}
           className="absolute inset-0 h-full w-full object-cover"
         >
-          <source src="/videos/hero-latin-music.mp4" type="video/mp4" />
+          <source src="/videos/band-performing.mp4" type="video/mp4" />
         </video>
       ) : (
         /* Fallback gradient background when video fails to load */
@@ -86,7 +86,7 @@ export default function VideoHero() {
           variants={heroTextReveal}
           className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
         >
-          Master the Soul of{" "}
+          Learning from the Masters of{" "}
           <GradientText>Latin Music</GradientText>
         </motion.h1>
 

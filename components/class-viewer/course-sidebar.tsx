@@ -25,19 +25,31 @@ interface CourseSidebarProps {
   courseId: string
   currentClassId: string
   sections: SidebarSection[]
+  courseTitle?: string
+  courseDescription?: string
 }
 
-export function CourseSidebar({ courseId, currentClassId, sections }: CourseSidebarProps) {
+export function CourseSidebar({ courseId, currentClassId, sections, courseTitle, courseDescription }: CourseSidebarProps) {
   // Find which section contains the current class to default-open it
   const activeSectionId = sections.find(s =>
     s.classes.some(c => c.id === currentClassId)
   )?.id
 
   return (
-    <div className="sticky top-20">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Course Content</h3>
-      <div className="border-b mb-4" />
-      <div className="max-h-[calc(100vh-10rem)] overflow-y-auto scrollbar-thin">
+    <div className="flex flex-col h-full">
+      {courseTitle && (
+        <div className="p-4 border-b">
+          <h2 className="font-semibold text-sm">{courseTitle}</h2>
+          {courseDescription && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{courseDescription}</p>
+          )}
+        </div>
+      )}
+      <div className="p-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Course Content</h3>
+        <div className="border-b mb-4" />
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-thin">
         <Accordion
           type="single"
           collapsible
