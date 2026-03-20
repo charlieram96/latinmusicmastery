@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { socialLinks } from "@/components/marketing/SocialLinks"
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
@@ -363,8 +364,26 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
           </MobileAccordion>
         </nav>
 
-        {/* Bottom spacer */}
-        <div className="mt-auto" />
+        {/* Social links */}
+        <div className="border-t border-border px-4 py-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Follow Us
+          </p>
+          <div className="flex items-center gap-3">
+            {socialLinks.map((social) => (
+              <a
+                key={social.label}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={social.label}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+              >
+                <social.icon className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   )
@@ -516,6 +535,21 @@ export function MarketingHeader() {
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
+            {/* Desktop social icons */}
+            <div className="hidden md:flex items-center gap-1">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
+                >
+                  <social.icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
             <ThemeToggle />
 
             {/* Mobile hamburger */}

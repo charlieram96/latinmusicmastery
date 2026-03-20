@@ -31,9 +31,9 @@ const milestones = [
   },
   {
     year: "2025",
-    title: "10,000+ Students",
+    title: "Growing Community",
     description:
-      "Reached 10,000+ active students worldwide, building a thriving global community of Latin music enthusiasts.",
+      "Building a thriving global community of Latin music enthusiasts, connecting students and instructors across borders.",
   },
   {
     year: "2026",

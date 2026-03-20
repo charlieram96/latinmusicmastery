@@ -18,6 +18,7 @@ import { HomeFeaturesSection } from './sections/HomeFeaturesSection'
 import { HomeInstructorsSection } from './sections/HomeInstructorsSection'
 import { HomeTestimonialsSection } from './sections/HomeTestimonialsSection'
 import { HomePricingPreview } from './sections/HomePricingPreview'
+import { HomeSocialSection } from './sections/HomeSocialSection'
 import { WaitlistForm } from '@/components/marketing/WaitlistForm'
 
 export default async function MarketingHomePage() {
@@ -60,6 +61,7 @@ export default async function MarketingHomePage() {
       )}
       <HomeTestimonialsSection />
       <HomePricingPreview />
+      <HomeSocialSection />
       <section id="waitlist" className="relative overflow-hidden py-20 sm:py-28">
         <Image
           src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&auto=format&fit=crop&q=80"
