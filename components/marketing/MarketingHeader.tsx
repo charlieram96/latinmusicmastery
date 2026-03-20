@@ -40,7 +40,7 @@ const instruments = [
   { label: "Bass", href: "/explore?instrument=bass" },
   { label: "Percussion", href: "/explore?instrument=percussion" },
   { label: "Voice", href: "/explore?instrument=voice" },
-  { label: "Trumpet", href: "/explore?instrument=trumpet" },
+  { label: "Violin", href: "/explore?instrument=violin" },
 ]
 
 const aboutLinks = [
@@ -63,7 +63,7 @@ function ExploreMegaMenu() {
       transition={{ duration: 0.2, ease: "easeOut" }}
       className="absolute left-1/2 top-full pt-3 -translate-x-1/2"
     >
-      <div className="w-[720px] rounded-2xl border border-border bg-popover/95 backdrop-blur-xl shadow-stripe p-6">
+      <div className="w-[720px] -ml-[30px] rounded-2xl border border-border bg-popover/95 backdrop-blur-xl shadow-stripe p-6">
         <div className="grid grid-cols-3 gap-8">
           {/* By Country */}
           <div>
@@ -153,7 +153,7 @@ function AboutDropdown() {
       transition={{ duration: 0.18, ease: "easeOut" }}
       className="absolute left-1/2 top-full pt-3 -translate-x-1/2"
     >
-      <div className="w-48 rounded-xl border border-border bg-popover/95 backdrop-blur-xl shadow-stripe-md py-2">
+      <div className="w-48 -ml-[30px] rounded-xl border border-border bg-popover/95 backdrop-blur-xl shadow-stripe-md py-2">
         {aboutLinks.map((item) => (
           <Link
             key={item.href}

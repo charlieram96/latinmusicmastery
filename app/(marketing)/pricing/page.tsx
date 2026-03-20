@@ -32,7 +32,7 @@ const plans = [
       "New content added monthly",
       "Cancel anytime",
     ],
-    cta: { label: "Choose Instrument", href: "/signup" },
+    cta: { label: "Choose Instrument", href: "/#waitlist" },
     popular: false,
   },
   {
@@ -42,7 +42,7 @@ const plans = [
     description:
       "Unlimited access to every instrument, every course, and every feature on the platform.",
     features: [
-      "All 9 instruments included",
+      "All 6 instruments included",
       "Every course and lesson",
       "Interactive Soundslice integration",
       "Progress tracking dashboard",
@@ -50,13 +50,13 @@ const plans = [
       "New content added monthly",
       "Cancel anytime",
     ],
-    cta: { label: "Get All-Access", href: "/signup" },
+    cta: { label: "Get All-Access", href: "/#waitlist" },
     popular: true,
   },
 ] as const;
 
 const comparisonRows = [
-  { feature: "Number of instruments", perInstrument: "1", allAccess: "All 9" },
+  { feature: "Number of instruments", perInstrument: "1", allAccess: "All 6" },
   { feature: "Video lessons", perInstrument: true, allAccess: true },
   { feature: "Interactive notation", perInstrument: true, allAccess: true },
   { feature: "Progress tracking", perInstrument: true, allAccess: true },
@@ -72,17 +72,14 @@ const instruments = [
   { name: "Bass", emoji: "\uD83C\uDFB5" },
   { name: "Drums/Percussion", emoji: "\uD83E\uDD41" },
   { name: "Vocals", emoji: "\uD83C\uDFA4" },
-  { name: "Trumpet", emoji: "\uD83C\uDFBA" },
-  { name: "Saxophone", emoji: "\uD83C\uDFB7" },
   { name: "Violin", emoji: "\uD83C\uDFBB" },
-  { name: "Cuatro", emoji: "\uD83C\uDFB6" },
 ];
 
 const faqItems = [
   {
     question: "What's the difference between the plans?",
     answer:
-      "The Per Instrument plan gives you full access to all courses, lessons, interactive notation, and AI feedback for one instrument of your choice. The All-Access plan includes everything across all 9 instruments on the platform, plus priority support. Both plans include full access to PlaySense AI, progress tracking, and all new content added each month.",
+      "The Per Instrument plan gives you full access to all courses, lessons, interactive notation, and AI feedback for one instrument of your choice. The All-Access plan includes everything across all 6 instruments on the platform, plus priority support. Both plans include full access to PlaySense AI, progress tracking, and all new content added each month.",
   },
   {
     question: "Can I switch instruments?",

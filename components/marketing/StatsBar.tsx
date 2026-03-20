@@ -22,21 +22,22 @@ export default function StatsBar() {
   });
 
   return (
-    <section className="border-y border-border bg-card/50">
+    <section className="relative border-t border-white/10 bg-gradient-to-r from-black/90 via-gray-900/95 to-black/90 backdrop-blur-md">
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5" />
       <motion.div
         ref={ref}
         variants={staggerContainer(0.15, 0.1)}
         initial="hidden"
         animate={inView ? "visible" : "hidden"}
-        className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 py-12 sm:px-6 md:grid-cols-4 lg:px-8 lg:py-16"
+        className="relative mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-6 sm:px-6 md:grid-cols-4 lg:px-8 lg:py-8"
       >
-        {stats.map((stat) => (
+        {stats.map((stat, i) => (
           <motion.div
             key={stat.label}
             variants={countUp}
             className="flex flex-col items-center text-center"
           >
-            <span className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            <span className="bg-gradient-to-b from-white to-white/70 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-4xl">
               {"staticText" in stat && stat.staticText ? (
                 stat.staticText
               ) : (
@@ -47,7 +48,7 @@ export default function StatsBar() {
                 />
               )}
             </span>
-            <span className="mt-2 text-sm font-medium text-muted-foreground sm:text-base">
+            <span className="mt-1.5 text-xs font-medium uppercase tracking-wider text-white/50 sm:text-sm">
               {stat.label}
             </span>
           </motion.div>
