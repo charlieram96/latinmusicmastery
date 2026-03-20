@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { PlayCircle, BarChart3, Users, ArrowRight } from "lucide-react";
 import { fadeInLeft, fadeInRight } from "@/lib/animation-variants";
@@ -11,7 +12,7 @@ interface Feature {
   title: string;
   description: string;
   link: string;
-  placeholder: "play" | "chart" | "instructors";
+  image: string;
 }
 
 const features: Feature[] = [
@@ -21,7 +22,7 @@ const features: Feature[] = [
     description:
       "HD video lessons with synchronized notation powered by Soundslice. Slow down, loop sections, and get instant feedback on your playing with PlaySense AI.",
     link: "/explore",
-    placeholder: "play",
+    image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800&auto=format&fit=crop&q=80",
   },
   {
     icon: BarChart3,
@@ -29,7 +30,7 @@ const features: Feature[] = [
     description:
       "Comprehensive dashboard tracking practice time, completed lessons, streaks, and skill progression. Set goals and watch yourself improve.",
     link: "/explore",
-    placeholder: "chart",
+    image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80",
   },
   {
     icon: Users,
@@ -37,49 +38,21 @@ const features: Feature[] = [
     description:
       "Our instructors are professional performers and educators with decades of experience in authentic Latin American music traditions.",
     link: "/instructors",
-    placeholder: "instructors",
+    image: "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=800&auto=format&fit=crop&q=80",
   },
 ];
 
-function PlaceholderImage({ type }: { type: Feature["placeholder"] }) {
+function FeatureImage({ src, alt }: { src: string; alt: string }) {
   return (
-    <div className="relative aspect-video overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-orange-400/10 to-amber-500/20 border border-border">
-      <div className="absolute inset-0 flex items-center justify-center">
-        {type === "play" && (
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex size-16 items-center justify-center rounded-full bg-primary/20 backdrop-blur-sm">
-              <PlayCircle className="size-8 text-primary" />
-            </div>
-            <div className="space-y-2 px-8 w-full max-w-xs">
-              <div className="h-2 rounded-full bg-primary/15 w-full" />
-              <div className="h-2 rounded-full bg-primary/10 w-3/4" />
-              <div className="h-2 rounded-full bg-primary/15 w-5/6" />
-              <div className="h-2 rounded-full bg-primary/10 w-2/3" />
-            </div>
-          </div>
-        )}
-        {type === "chart" && (
-          <div className="flex items-end gap-3 px-8">
-            {[40, 65, 45, 80, 55, 90, 70].map((h, i) => (
-              <div
-                key={i}
-                className="w-6 rounded-t-md bg-primary/20"
-                style={{ height: `${h}%` }}
-              />
-            ))}
-          </div>
-        )}
-        {type === "instructors" && (
-          <div className="flex items-center gap-4">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="flex flex-col items-center gap-2">
-                <div className="size-14 rounded-full bg-primary/15" />
-                <div className="h-2 w-12 rounded-full bg-primary/10" />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+    <div className="group/img relative aspect-video overflow-hidden rounded-2xl border border-border">
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className="object-cover transition-transform duration-500 group-hover:scale-105"
+        sizes="(max-width: 768px) 100vw, 50vw"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
     </div>
   );
 }
@@ -150,7 +123,7 @@ export function HomeFeaturesSection() {
                   viewport={{ once: true, margin: "-80px" }}
                   className={isEven ? "md:order-2" : "md:order-1"}
                 >
-                  <PlaceholderImage type={feature.placeholder} />
+                  <FeatureImage src={feature.image} alt={feature.title} />
                 </motion.div>
               </div>
             );

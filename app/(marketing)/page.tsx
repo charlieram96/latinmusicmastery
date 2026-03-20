@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
@@ -46,8 +47,10 @@ export default async function MarketingHomePage() {
 
   return (
     <div data-marketing>
-      <VideoHero />
-      <StatsBar />
+      <div className="flex min-h-screen flex-col">
+        <VideoHero />
+        <StatsBar />
+      </div>
       {countries && countries.length > 0 && (
         <HomeCourseShowcase countries={countries} />
       )}
@@ -57,12 +60,20 @@ export default async function MarketingHomePage() {
       )}
       <HomeTestimonialsSection />
       <HomePricingPreview />
-      <section className="relative overflow-hidden bg-gradient-to-r from-primary/90 to-orange-500/90 py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section id="waitlist" className="relative overflow-hidden py-20 sm:py-28">
+        <Image
+          src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&auto=format&fit=crop&q=80"
+          alt="Latin music performance"
+          fill
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-black/65" />
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <WaitlistForm
             title="Ready to Start Your Musical Journey?"
-            subtitle="Be the first to know when we launch. Join the waiting list for early access."
-            variant="hero"
+            subtitle="Be the first to know when we launch. Join the waiting list for early access and founding member pricing."
+            variant="immersive"
           />
         </div>
       </section>

@@ -1,11 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Check, Crown, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fadeInUp } from "@/lib/animation-variants";
+import { fadeInUp, staggerContainer, staggerChild } from "@/lib/animation-variants";
 import GradientText from "@/components/marketing/GradientText";
+
+const instrumentShowcase = [
+  { name: "Guitar", image: "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&auto=format&fit=crop&q=80" },
+  { name: "Piano", image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=600&auto=format&fit=crop&q=80" },
+  { name: "Bass", image: "https://images.unsplash.com/photo-1556449895-a33c9dba33dd?w=600&auto=format&fit=crop&q=80" },
+  { name: "Drums / Percussion", image: "https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=600&auto=format&fit=crop&q=80" },
+  { name: "Vocals", image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&auto=format&fit=crop&q=80" },
+  { name: "Violin", image: "https://images.unsplash.com/photo-1612225330812-01a9c73b5cd5?w=600&auto=format&fit=crop&q=80" },
+];
 
 const instrumentFeatures = [
   "All courses for your instrument",
@@ -16,7 +26,7 @@ const instrumentFeatures = [
 ];
 
 const allAccessFeatures = [
-  "All 9 instruments included",
+  "All 6 instruments included",
   "Every course and lesson",
   "Interactive Soundslice integration",
   "Progress tracking dashboard",
@@ -43,6 +53,49 @@ export function HomePricingPreview() {
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
             Subscribe per instrument or get unlimited access to everything.
           </p>
+        </motion.div>
+
+        {/* Instrument showcase */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-8 text-center"
+        >
+          <h3 className="text-2xl font-bold tracking-tight md:text-3xl">
+            <GradientText>6 Instruments</GradientText> Available
+          </h3>
+        </motion.div>
+
+        <motion.div
+          variants={staggerContainer(0.08, 0.15)}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="mx-auto mb-20 grid max-w-5xl grid-cols-2 gap-4 md:grid-cols-3"
+        >
+          {instrumentShowcase.map((instrument) => (
+            <motion.div
+              key={instrument.name}
+              variants={staggerChild}
+              className="group relative flex items-end overflow-hidden rounded-2xl min-h-[220px] md:min-h-[280px]"
+            >
+              <Image
+                src={instrument.image}
+                alt={instrument.name}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                sizes="(max-width: 768px) 50vw, 33vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+              <div className="relative z-10 w-full p-4 md:p-5">
+                <p className="text-base font-semibold text-white md:text-lg">
+                  {instrument.name}
+                </p>
+              </div>
+            </motion.div>
+          ))}
         </motion.div>
 
         {/* Pricing cards */}
@@ -83,7 +136,7 @@ export function HomePricingPreview() {
                 className="h-auto w-full rounded-full py-4 text-base font-semibold"
                 asChild
               >
-                <Link href="/pricing">Choose Your Instrument</Link>
+                <Link href="#waitlist">Choose Your Instrument</Link>
               </Button>
             </div>
           </motion.div>
@@ -126,7 +179,7 @@ export function HomePricingPreview() {
                 className="h-auto w-full rounded-full bg-primary py-4 text-base font-semibold text-white hover:bg-primary/90"
                 asChild
               >
-                <Link href="/signup">Get All-Access</Link>
+                <Link href="#waitlist">Get All-Access</Link>
               </Button>
 
               <p className="mt-4 text-center text-xs text-muted-foreground">

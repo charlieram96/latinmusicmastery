@@ -18,7 +18,7 @@ export default function VideoHero() {
   const [videoFailed, setVideoFailed] = useState(false);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative flex flex-1 items-center justify-center overflow-hidden">
       {/* Background video */}
       {!videoFailed ? (
         <video
@@ -27,11 +27,11 @@ export default function VideoHero() {
           muted
           loop
           playsInline
-          poster="/hero-band.jpg"
+          poster="/hero-screenshot.webp"
           onError={() => setVideoFailed(true)}
           className="absolute inset-0 h-full w-full object-cover"
         >
-          <source src="/videos/band-performing.mp4" type="video/mp4" />
+          <source src="/videos/hero-video-final.mp4" type="video/mp4" />
         </video>
       ) : (
         /* Fallback gradient background when video fails to load */
@@ -113,7 +113,7 @@ export default function VideoHero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5, duration: 0.8 }}
-        className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2"
+        className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2"
       >
         <motion.div
           animate={{ y: [0, 8, 0] }}

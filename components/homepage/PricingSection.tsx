@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Check, Crown, Music } from 'lucide-react'
 
 const allAccessFeatures = [
-  'All 9 instruments included',
+  'All 6 instruments included',
   'Every course and lesson',
   'Interactive Soundslice integration',
   'Progress tracking dashboard',
@@ -116,7 +116,7 @@ export function PricingSection() {
                 className="w-full bg-primary hover:bg-primary/90 text-white py-4 h-auto text-base font-semibold rounded-full"
                 asChild
               >
-                <Link href="/signup">Get All-Access</Link>
+                <Link href="#waitlist">Get All-Access</Link>
               </Button>
 
               <p className="text-center text-xs text-muted-foreground mt-4">

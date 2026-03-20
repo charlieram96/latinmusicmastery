@@ -5,6 +5,10 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   /* Light theme (default) — warm off-white */
   :root {
     --background: 30 25% 98%;
