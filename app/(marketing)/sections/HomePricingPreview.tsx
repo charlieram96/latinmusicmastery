@@ -9,12 +9,12 @@ import { fadeInUp, staggerContainer, staggerChild } from "@/lib/animation-varian
 import GradientText from "@/components/marketing/GradientText";
 
 const instrumentShowcase = [
-  { name: "Guitar", image: "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&auto=format&fit=crop&q=80" },
-  { name: "Piano", image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=600&auto=format&fit=crop&q=80" },
-  { name: "Bass", image: "https://images.unsplash.com/photo-1556449895-a33c9dba33dd?w=600&auto=format&fit=crop&q=80" },
-  { name: "Drums / Percussion", image: "https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=600&auto=format&fit=crop&q=80" },
+  { name: "Timbal", image: "https://images.unsplash.com/photo-1674168460210-9f1a2fbf730b?w=600&auto=format&fit=crop&q=80" },
+  { name: "Conga", image: "https://images.unsplash.com/photo-1732024004147-38420cac4bb8?w=600&auto=format&fit=crop&q=80" },
+  { name: "Violin", image: "https://images.unsplash.com/photo-1690181462400-84ce69ed68fd?w=600&auto=format&fit=crop&q=80" },
+  { name: "Bass", image: "https://images.unsplash.com/photo-1766033288242-70dd8602752a?w=600&auto=format&fit=crop&q=80" },
+  { name: "Piano", image: "https://images.unsplash.com/photo-1764323038644-501788b28f87?w=600&auto=format&fit=crop&q=80" },
   { name: "Vocals", image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&auto=format&fit=crop&q=80" },
-  { name: "Violin", image: "https://images.unsplash.com/photo-1612225330812-01a9c73b5cd5?w=600&auto=format&fit=crop&q=80" },
 ];
 
 const instrumentFeatures = [

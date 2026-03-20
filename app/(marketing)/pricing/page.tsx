@@ -67,12 +67,12 @@ const comparisonRows = [
 ] as const;
 
 const instruments = [
-  { name: "Guitar", emoji: "\uD83C\uDFB8" },
-  { name: "Piano", emoji: "\uD83C\uDFB9" },
-  { name: "Bass", emoji: "\uD83C\uDFB5" },
-  { name: "Drums/Percussion", emoji: "\uD83E\uDD41" },
-  { name: "Vocals", emoji: "\uD83C\uDFA4" },
+  { name: "Timbal", emoji: "\uD83E\uDD41" },
+  { name: "Conga", emoji: "\uD83E\uDD41" },
   { name: "Violin", emoji: "\uD83C\uDFBB" },
+  { name: "Bass", emoji: "\uD83C\uDFB5" },
+  { name: "Piano", emoji: "\uD83C\uDFB9" },
+  { name: "Vocals", emoji: "\uD83C\uDFA4" },
 ];
 
 const faqItems = [
