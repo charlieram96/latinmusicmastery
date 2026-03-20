@@ -29,7 +29,7 @@ export default function VideoHero() {
           playsInline
           poster="/hero-screenshot.webp"
           onError={() => setVideoFailed(true)}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute -inset-y-[150px] inset-x-0 h-[calc(100%+300px)] w-full object-cover"
         >
           <source src="/videos/hero-video-final.mp4" type="video/mp4" />
         </video>
