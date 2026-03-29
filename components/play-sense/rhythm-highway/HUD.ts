@@ -45,13 +45,13 @@ export class HUD {
   private lastScore = 0
 
   constructor() {
-    const labelStyle = new TextStyle({
+    const labelOpts = {
       fontFamily: HUD_FONT_FAMILY,
       fontSize: HUD_LABEL_SIZE,
-      fontWeight: '600',
+      fontWeight: '600' as const,
       fill: 0xffffff,
       letterSpacing: 2,
-    })
+    }
 
     // Score
     this.scoreText = new Text({
@@ -59,7 +59,7 @@ export class HUD {
       style: new TextStyle({ fontFamily: HUD_FONT_FAMILY, fontSize: HUD_SCORE_SIZE, fontWeight: '900', fill: 0xffffff }),
     })
     this.scoreText.anchor.set(1, 0)
-    this.scoreLabelText = new Text({ text: 'SCORE', style: { ...labelStyle, alpha: 0.4 } as TextStyle })
+    this.scoreLabelText = new Text({ text: 'SCORE', style: new TextStyle(labelOpts) })
     this.scoreLabelText.anchor.set(1, 0)
     this.scoreLabelText.alpha = 0.4
     this.scorePopText = new Text({
@@ -74,7 +74,7 @@ export class HUD {
       text: '0',
       style: new TextStyle({ fontFamily: HUD_FONT_FAMILY, fontSize: HUD_COMBO_SIZE, fontWeight: '900', fill: 0x2ecc71 }),
     })
-    this.comboLabelText = new Text({ text: 'COMBO', style: { ...labelStyle } as TextStyle })
+    this.comboLabelText = new Text({ text: 'COMBO', style: new TextStyle(labelOpts) })
     this.comboLabelText.alpha = 0.7
     this.comboLabelText.style.fill = 0x2ecc71
 
