@@ -26,7 +26,7 @@ interface NoteSprite {
   missAge: number
 }
 
-const MISS_SLIDE_DURATION = 0.6 // seconds to fade out after passing
+const MISS_SLIDE_DURATION = 1.2 // seconds to travel through and past the congas
 
 /**
  * Manages 3D oval note sprites on the highway. Notes are glowing circles/ovals
@@ -232,11 +232,11 @@ export class NoteManager {
     const fadeProgress = missAge / MISS_SLIDE_DURATION
     const alpha = (1 - fadeProgress) * 0.5
 
-    // Slide downward past the congas
-    const slideDistance = fadeProgress * 80
+    // Continue traveling downward past the congas toward bottom of screen
+    const slideDistance = fadeProgress * 250
     const y = hitY + slideDistance
     const x = this.highway.getLaneX(laneIndex, hitY)
-    const scale = this.highway.getScaleAtDepth(1) * (1 - fadeProgress * 0.3)
+    const scale = this.highway.getScaleAtDepth(1) * (1 + fadeProgress * 0.15)
 
     sprite.gfx.clear()
     const rx = 22 * scale
