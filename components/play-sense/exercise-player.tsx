@@ -21,6 +21,7 @@ import {
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
 import { AudioModePrompt } from './audio-mode-prompt'
 import { PlaysenseTestPanel } from './playsense-test-panel'
+import { RhythmHighway } from './rhythm-highway/RhythmHighway'
 
 interface ExercisePlayerProps {
   exercises: ExerciseDefinition[]
@@ -218,6 +219,18 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                       onBack={session.clearAudioMode}
                     />
                   </div>
+                ) : session.sessionState === 'playing' && session.exercise ? (
+                  <RhythmHighway
+                    exercise={session.exercise}
+                    playheadProgress={session.playheadProgress}
+                    currentScore={session.currentScore}
+                    currentCombo={session.currentCombo}
+                    currentAccuracy={session.currentAccuracy}
+                    metronomeBeat={session.metronomeBeat}
+                    lastHitGrade={session.lastHitGrade}
+                    eventResultsLength={session.eventResults.length}
+                    eventResults={session.eventResults}
+                  />
                 ) : (
                   <VisualizationPanel
                     exercise={session.exercise}
