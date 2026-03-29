@@ -80,25 +80,18 @@ export class Highway {
   depthToY(depthFraction: number): number {
     const vanishY = this.getVanishingY()
     const hitY = this.getHitZoneY()
-    const t = depthFraction * depthFraction
-    return vanishY + t * (hitY - vanishY)
+    return vanishY + depthFraction * (hitY - vanishY)
   }
 
-  /** Same as depthToY but continues linearly past the hit zone (depth > 1) */
+  /** Continues past the hit zone at the same rate */
   depthToYExtended(depthFraction: number): number {
-    if (depthFraction <= 1) return this.depthToY(depthFraction)
-    // At depth=1 the velocity is the derivative: 2*depth * (hitY - vanishY)
     const vanishY = this.getVanishingY()
     const hitY = this.getHitZoneY()
-    const velocityAtHit = 2 * (hitY - vanishY)
-    const past = depthFraction - 1
-    return hitY + past * velocityAtHit
+    return vanishY + depthFraction * (hitY - vanishY)
   }
 
   getScaleAtDepth(depthFraction: number): number {
-    // Match the quadratic Y curve so size growth looks linear on screen
-    const t = depthFraction * depthFraction
-    return 0.1 + t * 0.9
+    return 0.1 + depthFraction * 0.9
   }
 
   // ── Private ──
@@ -292,7 +285,7 @@ export class Highway {
 
       const clampedDepth = Math.min(depthFraction, 1)
       const y = this.depthToY(clampedDepth)
-      const halfW = this.getHalfWidthAtT(clampedDepth * clampedDepth)
+      const halfW = this.getHalfWidthAtT(clampedDepth)
       const alpha = GRID_LINE_ALPHA * clampedDepth
 
       // Check if this is a downbeat (beat 1 of a measure) — brighter
