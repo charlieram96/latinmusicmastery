@@ -20,6 +20,7 @@ import {
 } from '@/lib/play-sense/animations'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
 import { AudioModePrompt } from './audio-mode-prompt'
+import { PlaysenseTestPanel } from './playsense-test-panel'
 
 interface ExercisePlayerProps {
   exercises: ExerciseDefinition[]
@@ -208,6 +209,14 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                 {session.sessionState === 'selecting' && session.audioMode === null ? (
                   <div className="flex-1 flex items-center justify-center">
                     <AudioModePrompt onSelect={session.setAudioMode} instrument={session.exercise?.instrument} />
+                  </div>
+                ) : session.sessionState === 'selecting' && session.audioMode === 'playsense' && session.exercise ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <PlaysenseTestPanel
+                      instrument={session.exercise.instrument}
+                      onReady={session.startExercise}
+                      onBack={session.clearAudioMode}
+                    />
                   </div>
                 ) : (
                   <VisualizationPanel

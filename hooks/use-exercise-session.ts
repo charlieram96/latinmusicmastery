@@ -40,6 +40,7 @@ interface UseExerciseSessionResult {
   // Audio mode
   audioMode: AudioMode | null
   setAudioMode: (mode: AudioMode) => void
+  clearAudioMode: () => void
 
   // Audio state
   isListening: boolean
@@ -184,6 +185,11 @@ export function useExerciseSession(): UseExerciseSessionResult {
     if (stored) setAudioModeState(stored)
     calibration.loadStoredCalibration()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const clearAudioMode = useCallback(() => {
+    setAudioModeState(null)
+    localStorage.removeItem(AUDIO_MODE_STORAGE_KEY)
   }, [])
 
   const setAudioMode = useCallback((mode: AudioMode) => {
@@ -676,6 +682,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     countdownBeat,
     audioMode,
     setAudioMode,
+    clearAudioMode,
     isListening,
     hasPermission,
     audioError,
