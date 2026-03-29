@@ -22,6 +22,7 @@ export class HighwayApp {
   private hud: HUD
 
   private exerciseDuration = 0
+  private exerciseBpm = 120
   private destroyed = false
   private resizeObserver: ResizeObserver | null = null
 
@@ -85,6 +86,7 @@ export class HighwayApp {
   /** Initialize with an exercise. Call once before gameplay starts. */
   init(exercise: ExerciseDefinition) {
     this.exerciseDuration = getExerciseDuration(exercise)
+    this.exerciseBpm = exercise.bpm
 
     // Determine lane surfaces
     const laneSurfaces = this.getLaneSurfaces(exercise)
@@ -135,7 +137,7 @@ export class HighwayApp {
     const beat = this.metronomeBeat
     const beatFraction = beat % 1 || 0
 
-    this.highway.update(beatFraction)
+    this.highway.update(elapsed, this.exerciseBpm)
     this.noteManager.update(elapsed)
     this.hitEffects.updateComboFire(this.currentCombo)
     this.hitEffects.update(dt)

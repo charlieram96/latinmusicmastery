@@ -12,6 +12,7 @@ import {
   BG_COLOR,
   ROAD_COLOR,
   ROAD_ALPHA,
+  LOOK_AHEAD_SEC,
   LANE_COLORS,
   DEFAULT_LANE_COLOR,
 } from './constants'
@@ -55,8 +56,8 @@ export class Highway {
     this.draw()
   }
 
-  update(beatFraction: number) {
-    this.drawGrid(beatFraction)
+  update(elapsedSec: number, bpm: number) {
+    this.drawGrid(elapsedSec, bpm)
     this.drawSideFog()
   }
 
@@ -107,7 +108,7 @@ export class Highway {
     this.drawRoad()
     this.drawRails()
     this.drawDividers()
-    this.drawGrid(0)
+    this.drawGrid(0, 120)
     this.drawReceptors()
   }
 
@@ -231,44 +232,61 @@ export class Highway {
     }
   }
 
-  private drawGrid(beatFraction: number) {
+  /**
+   * Draw fret lines that travel with the notes. Each fret = 1 quarter beat.
+   * Uses the same depth math as NoteManager so frets and notes move in sync.
+   */
+  private drawGrid(elapsedSec: number, bpm: number) {
     this.gridLines.clear()
-    const vanishY = this.getVanishingY()
-    const hitY = this.getHitZoneY()
-    const gridCount = 10
     const cx = this.width / 2
+    const beatDuration = 60 / bpm // seconds per quarter beat
 
-    for (let i = 0; i < gridCount; i++) {
-      let t = ((i + beatFraction) / gridCount)
-      if (t > 1) t -= 1
+    // Find the first quarter beat visible in the look-ahead window
+    const firstBeatTime = Math.ceil(elapsedSec / beatDuration) * beatDuration
 
-      const y = vanishY + t * t * (hitY - vanishY)
-      const halfW = this.getHalfWidthAtT(t * t)
-      const alpha = GRID_LINE_ALPHA * t
+    for (let i = 0; i < 20; i++) {
+      const beatTime = firstBeatTime + i * beatDuration
+      const timeDiff = beatTime - elapsedSec
 
-      // Neon grid line
+      // Same window as notes
+      if (timeDiff < -0.1) continue
+      if (timeDiff > LOOK_AHEAD_SEC) break
+
+      // Same depth fraction math as NoteManager
+      const depthFraction = 1 - (timeDiff / LOOK_AHEAD_SEC)
+      if (depthFraction < 0 || depthFraction > 1.05) continue
+
+      const clampedDepth = Math.min(depthFraction, 1)
+      const y = this.depthToY(clampedDepth)
+      const halfW = this.getHalfWidthAtT(clampedDepth * clampedDepth)
+      const alpha = GRID_LINE_ALPHA * clampedDepth
+
+      // Check if this is a downbeat (beat 1 of a measure) — brighter
+      const beatNumber = Math.round(beatTime / beatDuration)
+      const isDownbeat = beatNumber % 4 === 0
+
+      // Neon fret line
       this.gridLines.moveTo(cx - halfW, y)
       this.gridLines.lineTo(cx + halfW, y)
-      this.gridLines.stroke({ color: GRID_LINE_COLOR, width: 1, alpha })
-      // Subtle glow on closer lines
-      if (t > 0.5) {
+      this.gridLines.stroke({ color: GRID_LINE_COLOR, width: isDownbeat ? 1.5 : 1, alpha: isDownbeat ? alpha * 1.5 : alpha })
+
+      // Glow on closer frets
+      if (clampedDepth > 0.5) {
         this.gridLines.moveTo(cx - halfW, y)
         this.gridLines.lineTo(cx + halfW, y)
-        this.gridLines.stroke({ color: GRID_LINE_COLOR, width: 4, alpha: alpha * 0.15 })
+        this.gridLines.stroke({ color: GRID_LINE_COLOR, width: isDownbeat ? 6 : 4, alpha: alpha * 0.12 })
       }
     }
 
-    // Hit zone line — bright neon
+    // Hit zone line — bright neon (static)
+    const hitY = this.getHitZoneY()
     const halfBottom = (this.width * HIGHWAY_BOTTOM_WIDTH) / 2
-    // Wide glow
     this.gridLines.moveTo(cx - halfBottom, hitY)
     this.gridLines.lineTo(cx + halfBottom, hitY)
     this.gridLines.stroke({ color: RAIL_COLOR, width: 14, alpha: 0.15 })
-    // Mid
     this.gridLines.moveTo(cx - halfBottom, hitY)
     this.gridLines.lineTo(cx + halfBottom, hitY)
     this.gridLines.stroke({ color: RAIL_COLOR, width: 5, alpha: 0.5 })
-    // Core
     this.gridLines.moveTo(cx - halfBottom, hitY)
     this.gridLines.lineTo(cx + halfBottom, hitY)
     this.gridLines.stroke({ color: 0xffffff, width: 1.5, alpha: 0.7 })
