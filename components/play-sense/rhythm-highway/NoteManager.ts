@@ -200,7 +200,7 @@ export class NoteManager {
     gfx.fill({ color: 0x0a0a1a, alpha: 1 })
     // Color on top at partial alpha creates a muted/darker tone
     gfx.ellipse(x, y, rx, ry)
-    gfx.fill({ color, alpha: 0.55 })
+    gfx.fill({ color, alpha: 0.8 })
 
     // ── TOP FACE NEON RIM ──
     // Glow
