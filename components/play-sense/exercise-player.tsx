@@ -207,7 +207,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
               )}>
                 {session.sessionState === 'selecting' && session.audioMode === null ? (
                   <div className="flex-1 flex items-center justify-center">
-                    <AudioModePrompt onSelect={session.setAudioMode} />
+                    <AudioModePrompt onSelect={session.setAudioMode} instrument={session.exercise?.instrument} />
                   </div>
                 ) : (
                   <VisualizationPanel
