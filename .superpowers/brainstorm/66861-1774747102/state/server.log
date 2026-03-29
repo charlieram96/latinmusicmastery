@@ -1,0 +1,6 @@
+{"type":"server-started","port":63004,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:63004","screen_dir":"/Users/charlieramirez/Desktop/latinmusicmastery/.superpowers/brainstorm/66861-1774747102/content","state_dir":"/Users/charlieramirez/Desktop/latinmusicmastery/.superpowers/brainstorm/66861-1774747102/state"}
+{"type":"screen-added","file":"/Users/charlieramirez/Desktop/latinmusicmastery/.superpowers/brainstorm/66861-1774747102/content/playsense-test-screen.html"}
+{"type":"screen-updated","file":"/Users/charlieramirez/Desktop/latinmusicmastery/.superpowers/brainstorm/66861-1774747102/content/playsense-test-screen.html"}
+{"type":"screen-added","file":"/Users/charlieramirez/Desktop/latinmusicmastery/.superpowers/brainstorm/66861-1774747102/content/waiting-2.html"}
+{"type":"screen-updated","file":"/Users/charlieramirez/Desktop/latinmusicmastery/.superpowers/brainstorm/66861-1774747102/content/waiting-2.html"}
+{"type":"server-stopped","reason":"idle timeout"}
