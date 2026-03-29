@@ -150,54 +150,85 @@ export class NoteManager {
 
   // ── Private ──
 
-  /** Beat Saber-style neon disc: glowing outline, dark interior, bright edges */
+  /** 3D hockey puck note — thick visible side, lit top face, neon rim */
   private draw3DOval(gfx: Graphics, x: number, y: number, scale: number, alpha: number, color: number, depth: number) {
     gfx.clear()
     gfx.alpha = alpha
 
     const rx = 96 * scale
     const ry = 40 * scale
-    const thickness = 16 * scale
+    const thickness = 28 * scale // thick puck
 
-    // ── Wide neon bloom (outermost) ──
-    gfx.ellipse(x, y, rx + 14 * scale, ry + 7 * scale)
+    // ── Neon bloom ──
+    gfx.ellipse(x, y, rx + 12 * scale, ry + 6 * scale)
     gfx.fill({ color, alpha: 0.06 })
-    gfx.ellipse(x, y, rx + 8 * scale, ry + 4 * scale)
+
+    // ── SIDE OF PUCK (visible 3D thickness) ──
+    // Side wall — darker shade, connects top ellipse to bottom ellipse
+    // Draw as filled region: bottom ellipse + rect band
+    gfx.ellipse(x, y + thickness, rx, ry)
+    gfx.fill({ color, alpha: 0.25 })
+    gfx.rect(x - rx, y, rx * 2, thickness)
+    gfx.fill({ color, alpha: 0.2 })
+
+    // Side highlight — lighter strip on the left (simulates light from upper-left)
+    gfx.rect(x - rx, y + thickness * 0.1, rx * 0.35, thickness * 0.8)
+    gfx.fill({ color: 0xffffff, alpha: 0.04 })
+
+    // Side shadow — darker strip on the right
+    gfx.rect(x + rx * 0.65, y + thickness * 0.1, rx * 0.35, thickness * 0.8)
+    gfx.fill({ color: 0x000000, alpha: 0.12 })
+
+    // Bottom edge rim (neon)
+    gfx.ellipse(x, y + thickness, rx, ry)
+    gfx.stroke({ color, width: 2 * scale, alpha: 0.5 })
+    // Bottom edge white hot
+    gfx.ellipse(x, y + thickness, rx, ry)
+    gfx.stroke({ color: 0xffffff, width: 0.5 * scale, alpha: 0.15 })
+
+    // Side vertical neon edges (left and right silhouette)
+    gfx.moveTo(x - rx, y)
+    gfx.lineTo(x - rx, y + thickness)
+    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.4 })
+    gfx.moveTo(x + rx, y)
+    gfx.lineTo(x + rx, y + thickness)
+    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.4 })
+
+    // ── TOP FACE ──
+    // Dark base
+    gfx.ellipse(x, y, rx, ry)
+    gfx.fill({ color: 0x0a0a1a, alpha: 0.95 })
+
+    // Colored tint
+    gfx.ellipse(x, y, rx * 0.9, ry * 0.9)
     gfx.fill({ color, alpha: 0.1 })
 
-    // ── 3D side band (disc thickness) ──
-    gfx.ellipse(x, y + thickness, rx, ry)
-    gfx.fill({ color, alpha: 0.15 })
-    gfx.rect(x - rx, y, rx * 2, thickness)
-    gfx.fill({ color, alpha: 0.12 })
-    gfx.ellipse(x, y + thickness, rx, ry)
-    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.35 })
+    // Top face lighting — broad highlight (light from upper-left)
+    gfx.ellipse(x - rx * 0.1, y - ry * 0.12, rx * 0.7, ry * 0.5)
+    gfx.fill({ color: 0xffffff, alpha: 0.06 })
 
-    // ── Top face — dark with neon outline ──
-    gfx.ellipse(x, y, rx, ry)
-    gfx.fill({ color: 0x080818, alpha: 0.95 })
+    // Tighter specular highlight
+    gfx.ellipse(x - rx * 0.15, y - ry * 0.2, rx * 0.4, ry * 0.28)
+    gfx.fill({ color: 0xffffff, alpha: 0.1 })
 
-    // Subtle colored fill
-    gfx.ellipse(x, y, rx * 0.85, ry * 0.85)
-    gfx.fill({ color, alpha: 0.12 })
-
-    // ── Neon rim ──
-    gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color, width: 6 * scale, alpha: 0.2 })
-    gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color, width: 2.5 * scale, alpha: 0.7 })
-    gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color: 0xffffff, width: 1 * scale, alpha: 0.35 })
-
-    // ── Inner detail ──
-    gfx.ellipse(x, y, rx * 0.55, ry * 0.55)
-    gfx.stroke({ color, width: 1 * scale, alpha: 0.15 })
-
-    // Center glow dot
-    gfx.circle(x, y, 3 * scale)
-    gfx.fill({ color, alpha: 0.4 })
-    gfx.circle(x, y, 1.5 * scale)
+    // Hot specular dot
+    gfx.circle(x - rx * 0.2, y - ry * 0.22, 2.5 * scale)
     gfx.fill({ color: 0xffffff, alpha: 0.3 })
+
+    // ── TOP FACE NEON RIM ──
+    // Glow
+    gfx.ellipse(x, y, rx, ry)
+    gfx.stroke({ color, width: 5 * scale, alpha: 0.25 })
+    // Main rim
+    gfx.ellipse(x, y, rx, ry)
+    gfx.stroke({ color, width: 2.5 * scale, alpha: 0.8 })
+    // White core
+    gfx.ellipse(x, y, rx, ry)
+    gfx.stroke({ color: 0xffffff, width: 1 * scale, alpha: 0.3 })
+
+    // ── DROP SHADOW (below puck) ──
+    gfx.ellipse(x, y + thickness + 4 * scale, rx * 0.85, ry * 0.4)
+    gfx.fill({ color: 0x000000, alpha: 0.15 })
 
     // ── Wing lines ──
     const wingExtend = 30 * scale
@@ -213,8 +244,8 @@ export class NoteManager {
       const intensity = (depth - 0.7) / 0.3
       const time = Date.now() * 0.008
       const pulse = 1 + Math.sin(time) * 0.2 * intensity
-      gfx.ellipse(x, y, (rx + 18 * scale) * pulse, (ry + 9 * scale) * pulse)
-      gfx.fill({ color, alpha: 0.05 * intensity })
+      gfx.ellipse(x, y, (rx + 16 * scale) * pulse, (ry + 8 * scale) * pulse)
+      gfx.fill({ color, alpha: 0.04 * intensity })
     }
   }
 
