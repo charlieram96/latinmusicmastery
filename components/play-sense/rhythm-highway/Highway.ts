@@ -310,49 +310,47 @@ export class Highway {
     const baseRy = 40
     const bodyHeight = 56
 
-    // ── Drum body glow (barrel outline) ──
-    // Left side
+    // ── Drum body (barrel outline) ──
     this.receptors.moveTo(cx - baseRx * 0.9, cy)
     this.receptors.lineTo(cx - baseRx * 0.85, cy + bodyHeight)
-    this.receptors.stroke({ color, width: 2, alpha: 0.2 })
-    // Right side
+    this.receptors.stroke({ color, width: 2, alpha: 1 })
     this.receptors.moveTo(cx + baseRx * 0.9, cy)
     this.receptors.lineTo(cx + baseRx * 0.85, cy + bodyHeight)
-    this.receptors.stroke({ color, width: 2, alpha: 0.2 })
+    this.receptors.stroke({ color, width: 2, alpha: 1 })
 
     // Bottom ellipse
     this.receptors.ellipse(cx, cy + bodyHeight, baseRx * 0.85, baseRy * 0.6)
-    this.receptors.stroke({ color, width: 1.5, alpha: 0.15 })
+    this.receptors.stroke({ color, width: 1.5, alpha: 0.8 })
 
-    // Body fill — very dark, barely visible
+    // Body fill
     this.receptors.ellipse(cx, cy + bodyHeight, baseRx * 0.85, baseRy * 0.6)
-    this.receptors.fill({ color, alpha: 0.04 })
+    this.receptors.fill({ color, alpha: 0.15 })
 
     // ── Drum head — neon ring ──
-    // Outer glow (wide, soft)
+    // Outer glow
     this.receptors.ellipse(cx, cy, baseRx + 6, baseRy + 3)
-    this.receptors.fill({ color, alpha: 0.04 })
+    this.receptors.fill({ color, alpha: 0.1 })
     this.receptors.ellipse(cx, cy, baseRx + 3, baseRy + 1.5)
-    this.receptors.stroke({ color, width: 6, alpha: 0.1 })
+    this.receptors.stroke({ color, width: 6, alpha: 0.25 })
 
-    // Head surface — very subtle dark fill
+    // Head surface
     this.receptors.ellipse(cx, cy, baseRx, baseRy)
-    this.receptors.fill({ color, alpha: 0.06 })
+    this.receptors.fill({ color, alpha: 0.15 })
 
     // Main neon rim
     this.receptors.ellipse(cx, cy, baseRx, baseRy)
-    this.receptors.stroke({ color, width: 2.5, alpha: 0.6 })
+    this.receptors.stroke({ color, width: 2.5, alpha: 1 })
 
     // Bright core of rim
     this.receptors.ellipse(cx, cy, baseRx, baseRy)
-    this.receptors.stroke({ color: 0xffffff, width: 1, alpha: 0.3 })
+    this.receptors.stroke({ color: 0xffffff, width: 1, alpha: 0.6 })
 
     // Inner ring
     this.receptors.ellipse(cx, cy, baseRx * 0.7, baseRy * 0.7)
-    this.receptors.stroke({ color, width: 1, alpha: 0.15 })
+    this.receptors.stroke({ color, width: 1, alpha: 0.4 })
 
     // Center dot
     this.receptors.circle(cx, cy, 3)
-    this.receptors.fill({ color, alpha: 0.3 })
+    this.receptors.fill({ color, alpha: 0.8 })
   }
 }

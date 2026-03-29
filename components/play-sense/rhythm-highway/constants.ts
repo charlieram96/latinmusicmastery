@@ -79,7 +79,7 @@ export const ROAD_COLOR = 0x06060e
 export const ROAD_ALPHA = 0.9
 export const NOTE_MIN_SCALE = 0.3
 export const NOTE_MAX_SCALE = 1.0
-export const NOTE_MIN_ALPHA = 0.4
+export const NOTE_MIN_ALPHA = 1.0
 export const NOTE_MAX_ALPHA = 1.0
 
 // ── HUD ──

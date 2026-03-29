@@ -164,59 +164,52 @@ export class NoteManager {
 
     // ── Wide neon bloom (outermost) ──
     gfx.ellipse(x, y, rx + 14 * scale, ry + 7 * scale)
-    gfx.fill({ color, alpha: alpha * 0.06 })
+    gfx.fill({ color, alpha: 0.06 })
     gfx.ellipse(x, y, rx + 8 * scale, ry + 4 * scale)
-    gfx.fill({ color, alpha: alpha * 0.1 })
+    gfx.fill({ color, alpha: 0.1 })
 
     // ── 3D side band (disc thickness) ──
     gfx.ellipse(x, y + thickness, rx, ry)
-    gfx.fill({ color, alpha: alpha * 0.15 })
+    gfx.fill({ color, alpha: 0.15 })
     gfx.rect(x - rx, y, rx * 2, thickness)
-    gfx.fill({ color, alpha: alpha * 0.12 })
-    // Side neon edge
+    gfx.fill({ color, alpha: 0.12 })
     gfx.ellipse(x, y + thickness, rx, ry)
-    gfx.stroke({ color, width: 1.5 * scale, alpha: alpha * 0.35 })
+    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.35 })
 
-    // ── Top face — dark with neon outline (Beat Saber style) ──
-    // Dark interior
+    // ── Top face — dark with neon outline ──
     gfx.ellipse(x, y, rx, ry)
-    gfx.fill({ color: 0x080818, alpha: alpha * 0.85 })
+    gfx.fill({ color: 0x080818, alpha: 0.95 })
 
     // Subtle colored fill
     gfx.ellipse(x, y, rx * 0.85, ry * 0.85)
-    gfx.fill({ color, alpha: alpha * 0.12 })
+    gfx.fill({ color, alpha: 0.12 })
 
-    // ── Neon rim (the signature look) ──
-    // Outer glow of rim
+    // ── Neon rim ──
     gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color, width: 6 * scale, alpha: alpha * 0.2 })
-    // Main neon line
+    gfx.stroke({ color, width: 6 * scale, alpha: 0.2 })
     gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color, width: 2.5 * scale, alpha: alpha * 0.7 })
-    // White-hot core of rim
+    gfx.stroke({ color, width: 2.5 * scale, alpha: 0.7 })
     gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color: 0xffffff, width: 1 * scale, alpha: alpha * 0.35 })
+    gfx.stroke({ color: 0xffffff, width: 1 * scale, alpha: 0.35 })
 
     // ── Inner detail ──
     gfx.ellipse(x, y, rx * 0.55, ry * 0.55)
-    gfx.stroke({ color, width: 1 * scale, alpha: alpha * 0.15 })
+    gfx.stroke({ color, width: 1 * scale, alpha: 0.15 })
 
     // Center glow dot
     gfx.circle(x, y, 3 * scale)
-    gfx.fill({ color, alpha: alpha * 0.4 })
+    gfx.fill({ color, alpha: 0.4 })
     gfx.circle(x, y, 1.5 * scale)
-    gfx.fill({ color: 0xffffff, alpha: alpha * 0.3 })
+    gfx.fill({ color: 0xffffff, alpha: 0.3 })
 
-    // ── Wing lines — thin horizontal lines extending from left and right ──
+    // ── Wing lines ──
     const wingExtend = 30 * scale
-    // Left wing
     gfx.moveTo(x - rx - 2, y)
     gfx.lineTo(x - rx - wingExtend, y)
-    gfx.stroke({ color, width: 1 * scale, alpha: alpha * 0.4 })
-    // Right wing
+    gfx.stroke({ color, width: 1 * scale, alpha: 0.4 })
     gfx.moveTo(x + rx + 2, y)
     gfx.lineTo(x + rx + wingExtend, y)
-    gfx.stroke({ color, width: 1 * scale, alpha: alpha * 0.4 })
+    gfx.stroke({ color, width: 1 * scale, alpha: 0.4 })
 
     // ── Pulsing approach glow ──
     if (depth > 0.7) {
@@ -224,7 +217,7 @@ export class NoteManager {
       const time = Date.now() * 0.008
       const pulse = 1 + Math.sin(time) * 0.2 * intensity
       gfx.ellipse(x, y, (rx + 18 * scale) * pulse, (ry + 9 * scale) * pulse)
-      gfx.fill({ color, alpha: alpha * 0.05 * intensity })
+      gfx.fill({ color, alpha: 0.05 * intensity })
     }
   }
 
