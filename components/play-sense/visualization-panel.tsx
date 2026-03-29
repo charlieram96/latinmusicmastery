@@ -113,7 +113,15 @@ export function VisualizationPanel({
           {(() => {
             // PlaySense mode: show drum visualization for supported instruments
             if (audioMode === 'playsense' && PLAYSENSE_INSTRUMENTS.has(exercise.instrument)) {
-              return <CongaView instrument={exercise.instrument} isPlaying={isPlaying} />
+              return (
+                <CongaView
+                  instrument={exercise.instrument}
+                  isPlaying={isPlaying}
+                  exercise={exercise}
+                  playheadProgress={playheadProgress}
+                  eventResults={eventResults}
+                />
+              )
             }
             const viewType = getViewType(exercise.instrument)
             const viewProps = { exercise, eventResults, playheadProgress, isPlaying, detectedMidiNote }
