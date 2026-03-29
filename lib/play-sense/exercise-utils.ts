@@ -66,6 +66,7 @@ export function generateExpectedTimestamps(
         expectedPitch: event.expectedPitch,
         expectedTechnique: event.technique,
         expectedDurationSec: event.duration * beatDuration,
+        expectedSurface: event.surface,
       })
     }
   }
