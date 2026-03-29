@@ -189,14 +189,14 @@ export class NoteManager {
     // Side vertical neon edges (left and right silhouette)
     gfx.moveTo(x - rx, y)
     gfx.lineTo(x - rx, y + thickness)
-    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.2 })
+    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.7 })
     gfx.moveTo(x + rx, y)
     gfx.lineTo(x + rx, y + thickness)
-    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.2 })
+    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.7 })
 
     // ── TOP FACE ──
     gfx.ellipse(x, y, rx, ry)
-    gfx.fill({ color: 0x0a0a1a, alpha: 0.95 })
+    gfx.fill({ color, alpha: 0.9 })
 
     // ── TOP FACE NEON RIM ──
     // Glow
