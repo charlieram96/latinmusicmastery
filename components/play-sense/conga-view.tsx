@@ -43,6 +43,8 @@ const LOOK_AHEAD_SEC = 4
 const BOARD_HEIGHT = 3500
 const BOARD_HEIGHT_MOBILE = 2800
 const LOOK_BEHIND_SEC = 0.4
+/** Fixed SVG coordinate width — decoupled from container pixels for crisp rendering */
+const SVG_WIDTH = 1200
 
 interface NoteData {
   eventIndex: number
@@ -193,20 +195,18 @@ export function CongaView({
   const visibleMax = playheadProgress + lookAheadFraction * 1.2
 
   const laneCount = surfaces.length
-  const laneWidth = laneCount > 0 ? size.width / laneCount : size.width
+  const laneWidth = laneCount > 0 ? SVG_WIDTH / laneCount : SVG_WIDTH
 
   const getLaneX = useCallback((surface: string) => {
     const idx = surfaces.findIndex(([, s]) => s === surface)
-    if (idx === -1) return size.width / 2
+    if (idx === -1) return SVG_WIDTH / 2
     return (idx + 0.5) * laneWidth
-  }, [surfaces, laneWidth, size.width])
+  }, [surfaces, laneWidth])
 
-  // Receiver sizes — congas are bigger
+  // Receiver sizes — scaled for the 1200-wide SVG coordinate space
   const isConga = instrument === 'conga'
-  const receiverRadius = isConga
-    ? (size.width < 500 ? 36 : 48)
-    : (size.width < 500 ? 28 : 36)
-  const noteRadius = size.width < 500 ? 16 : 20
+  const receiverRadius = isConga ? 96 : 72
+  const noteRadius = 40
 
   // Measure lines
   const measureLines = useMemo(() => {
@@ -348,7 +348,7 @@ export function CongaView({
           <div className="conga-board notation-parchment">
             <svg
               ref={svgRef}
-              viewBox={`0 0 ${size.width} ${boardHeight}`}
+              viewBox={`0 0 ${SVG_WIDTH} ${boardHeight}`}
               preserveAspectRatio="none"
               className="block"
               style={{ width: '100%', height: '100%' }}
@@ -358,7 +358,7 @@ export function CongaView({
                 const x = (i + 0.5) * laneWidth
                 return (
                   <line key={`lane-${i}`} x1={x} y1={0} x2={x} y2={boardHeight}
-                    stroke={staffLineColor} strokeWidth={1} opacity={0.5} />
+                    stroke={staffLineColor} strokeWidth={2} opacity={0.5} />
                 )
               })}
 
@@ -367,8 +367,8 @@ export function CongaView({
                 {measureLines.map((t, i) => {
                   const y = -t * virtualHeight
                   return (
-                    <line key={`m-${i}`} x1={0} y1={y} x2={size.width} y2={y}
-                      stroke={measureLineColor} strokeWidth={1} strokeDasharray="6 4" opacity={0.5} />
+                    <line key={`m-${i}`} x1={0} y1={y} x2={SVG_WIDTH} y2={y}
+                      stroke={measureLineColor} strokeWidth={2} strokeDasharray="12 8" opacity={0.5} />
                   )
                 })}
               </g>
@@ -382,11 +382,11 @@ export function CongaView({
                   <stop offset="100%" stopColor="hsl(14, 52%, 53%)" stopOpacity={0} />
                 </linearGradient>
                 <filter id="congaHitLineGlow">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feGaussianBlur stdDeviation="6" result="blur" />
                   <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
                 </filter>
               </defs>
-              <rect x={0} y={hitLineY - 2} width={size.width} height={4}
+              <rect x={0} y={hitLineY - 3} width={SVG_WIDTH} height={6}
                 fill="url(#congaHitLineGrad)" filter="url(#congaHitLineGlow)" />
 
               {/* Receiver drums at hit line */}
@@ -406,15 +406,15 @@ export function CongaView({
                 return (
                   <g key={`recv-${surface}`}>
                     {/* Outer glow ring */}
-                    <circle cx={cx} cy={cy} r={r + 6}
-                      fill="none" stroke={color} strokeWidth={isActive ? 3 : 2}
+                    <circle cx={cx} cy={cy} r={r + 10}
+                      fill="none" stroke={color} strokeWidth={isActive ? 5 : 3}
                       opacity={glowOpacity}
                       style={{ transition: 'opacity 0.1s, r 0.08s' }} />
                     {/* Hit flash ring */}
                     {isActive && (
-                      <circle cx={cx} cy={cy} r={r + 16}
-                        fill="none" stroke={color} strokeWidth={2} opacity={0.4}>
-                        <animate attributeName="r" from={`${r + 6}`} to={`${r + 40}`} dur="0.4s" fill="freeze" />
+                      <circle cx={cx} cy={cy} r={r + 30}
+                        fill="none" stroke={color} strokeWidth={3} opacity={0.4}>
+                        <animate attributeName="r" from={`${r + 10}`} to={`${r + 70}`} dur="0.4s" fill="freeze" />
                         <animate attributeName="opacity" from="0.6" to="0" dur="0.4s" fill="freeze" />
                       </circle>
                     )}
@@ -422,17 +422,17 @@ export function CongaView({
                     <circle cx={cx} cy={cy} r={r * 0.7}
                       fill="none"
                       stroke={isActive ? color : (isDark ? 'hsl(20, 8%, 25%)' : 'hsl(35, 15%, 80%)')}
-                      strokeWidth={1} opacity={isActive ? 0.5 : 0.4} />
+                      strokeWidth={2} opacity={isActive ? 0.5 : 0.4} />
                     {/* Drum body */}
                     <circle cx={cx} cy={cy} r={r}
                       fill={isActive ? `${color}20` : (isDark ? 'hsl(20, 8%, 14%)' : 'hsl(35, 25%, 90%)')}
-                      stroke={color} strokeWidth={isActive ? 3 : 2}
+                      stroke={color} strokeWidth={isActive ? 5 : 3}
                       opacity={isActive ? 1 : 0.8}
                       style={{ transition: 'all 0.08s' }} />
                     {/* Label */}
-                    <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="central"
+                    <text x={cx} y={cy + 2} textAnchor="middle" dominantBaseline="central"
                       fill={isActive ? color : (isDark ? '#ccc' : '#333')}
-                      fontSize={receiverRadius > 40 ? 14 : 12} fontWeight={700}
+                      fontSize={28} fontWeight={700}
                       style={{ userSelect: 'none', pointerEvents: 'none' }}>
                       {label}
                     </text>
@@ -448,7 +448,7 @@ export function CongaView({
                   const cx = getLaneX(note.surface)
                   const cy = -note.normalizedTime * virtualHeight
                   const color = SURFACE_COLORS[note.surface] || '#22c55e'
-                  const r = note.accent ? noteRadius * 1.35 : noteRadius
+                  const r = note.accent ? noteRadius * 1.3 : noteRadius
                   const result = resultMap.get(note.eventIndex)
                   const gradeColor = result ? GRADE_COLORS[result.grade] : undefined
 
@@ -457,17 +457,17 @@ export function CongaView({
                       <circle cx={cx} cy={cy} r={r}
                         fill={gradeColor || `${color}30`}
                         stroke={gradeColor || color}
-                        strokeWidth={note.accent ? 3 : 2}
+                        strokeWidth={note.accent ? 5 : 3}
                         className={note.hand === 'R' ? 'fretboard-note-R' : 'fretboard-note-L'}
                       />
-                      <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="central"
-                        fill={gradeColor || color} fontSize={11} fontWeight={700}
+                      <text x={cx} y={cy + 2} textAnchor="middle" dominantBaseline="central"
+                        fill={gradeColor || color} fontSize={22} fontWeight={700}
                         style={{ userSelect: 'none', pointerEvents: 'none' }}>
                         {note.hand}
                       </text>
                       {note.accent && (
-                        <text x={cx} y={cy - r - 5} textAnchor="middle"
-                          fill={gradeColor || color} fontSize={14} fontWeight={700}>
+                        <text x={cx} y={cy - r - 10} textAnchor="middle"
+                          fill={gradeColor || color} fontSize={28} fontWeight={700}>
                           &gt;
                         </text>
                       )}
