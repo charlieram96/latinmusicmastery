@@ -230,6 +230,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                     metronomeBeat={session.metronomeBeat}
                     metronomeDownbeat={session.metronomeDownbeat}
                     detectedMidiNote={session.detectedMidiNote}
+                    audioMode={session.audioMode}
                   />
                 )}
               </div>

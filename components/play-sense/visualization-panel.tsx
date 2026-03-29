@@ -15,6 +15,9 @@ import {
 } from '@/lib/play-sense/animations'
 import { Music2, ChevronLeft } from 'lucide-react'
 import { VisualMetronome } from './visual-metronome'
+import { CongaView } from './conga-view'
+import { PLAYSENSE_INSTRUMENTS } from '@/lib/play-sense/playsense-mappings'
+import type { AudioMode } from '@/hooks/use-exercise-session'
 
 interface VisualizationPanelProps {
   exercise: ExerciseDefinition | null
@@ -27,6 +30,7 @@ interface VisualizationPanelProps {
   metronomeBeat: number
   metronomeDownbeat: boolean
   detectedMidiNote?: number | null
+  audioMode?: AudioMode | null
 }
 
 function getViewType(instrument: Instrument): 'fretboard' | 'piano' | 'violin' {
@@ -69,6 +73,7 @@ export function VisualizationPanel({
   metronomeBeat,
   metronomeDownbeat,
   detectedMidiNote,
+  audioMode,
 }: VisualizationPanelProps) {
   // Idle state — instrument illustration with glow
   if (!exercise || sessionState === 'idle') {
@@ -106,6 +111,10 @@ export function VisualizationPanel({
         {/* Instrument visualization — fills entire panel */}
         <div className="flex-1 min-h-0">
           {(() => {
+            // PlaySense mode: show drum visualization for supported instruments
+            if (audioMode === 'playsense' && PLAYSENSE_INSTRUMENTS.has(exercise.instrument)) {
+              return <CongaView instrument={exercise.instrument} isPlaying={isPlaying} />
+            }
             const viewType = getViewType(exercise.instrument)
             const viewProps = { exercise, eventResults, playheadProgress, isPlaying, detectedMidiNote }
             if (viewType === 'piano') return <PianoKeyboardView {...viewProps} />
