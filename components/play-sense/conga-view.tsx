@@ -40,8 +40,8 @@ const SURFACE_COLORS: Record<string, string> = {
 
 const HIT_LINE_RATIO = 0.92
 const LOOK_AHEAD_SEC = 4
-const BOARD_HEIGHT = 3500
-const BOARD_HEIGHT_MOBILE = 2800
+const BOARD_HEIGHT = 4500
+const BOARD_HEIGHT_MOBILE = 3500
 const LOOK_BEHIND_SEC = 0.4
 /** Fixed SVG coordinate width — decoupled from container pixels for crisp rendering */
 const SVG_WIDTH = 1200
@@ -203,10 +203,11 @@ export function CongaView({
     return (idx + 0.5) * laneWidth
   }, [surfaces, laneWidth])
 
-  // Receiver sizes — scaled for the 1200-wide SVG coordinate space
+  // Receiver and note sizes — matched so falling notes land exactly on the drum
   const isConga = instrument === 'conga'
-  const receiverRadius = isConga ? 96 : 72
-  const noteRadius = 40
+  const drumRadius = isConga ? 64 : 52
+  const receiverRadius = drumRadius
+  const noteRadius = drumRadius
 
   // Measure lines
   const measureLines = useMemo(() => {
