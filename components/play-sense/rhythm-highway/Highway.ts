@@ -12,17 +12,37 @@ import {
   BG_COLOR_MID,
   BG_COLOR_BOTTOM,
   ROAD_COLOR,
-  AMBIENT_PARTICLE_COUNT,
+  BOKEH_COUNT,
+  LIGHT_RAY_COUNT,
+  FOG_LAYER_COUNT,
   LANE_COLORS,
   DEFAULT_LANE_COLOR,
 } from './constants'
 
-interface AmbientParticle {
+interface Bokeh {
   x: number
   y: number
   size: number
   alpha: number
+  color: number
+  driftX: number
+  driftY: number
+  phase: number
+}
+
+interface LightRay {
+  angle: number
+  width: number
+  length: number
+  alpha: number
   speed: number
+}
+
+interface FogLayer {
+  y: number
+  alpha: number
+  speed: number
+  phase: number
 }
 
 /**
@@ -34,15 +54,20 @@ export class Highway {
   readonly container = new Container()
 
   private bg = new Graphics()
+  private lightRays = new Graphics()
+  private fogLayers = new Graphics()
   private ambientGlow = new Graphics()
+  private bokehLayer = new Graphics()
   private road = new Graphics()
   private rails = new Graphics()
   private dividers = new Graphics()
   private gridLines = new Graphics()
-  private ambientParticles = new Graphics()
+  private vignette = new Graphics()
   private receptors = new Graphics()
 
-  private particles: AmbientParticle[] = []
+  private bokehs: Bokeh[] = []
+  private rays: LightRay[] = []
+  private fogs: FogLayer[] = []
   private width = 0
   private height = 0
   private laneCount = 3
@@ -50,10 +75,13 @@ export class Highway {
 
   constructor() {
     this.container.addChild(
-      this.bg, this.ambientGlow, this.ambientParticles,
-      this.road, this.rails, this.dividers, this.gridLines, this.receptors,
+      this.bg, this.lightRays, this.fogLayers, this.ambientGlow,
+      this.road, this.rails, this.dividers, this.gridLines,
+      this.bokehLayer, this.vignette, this.receptors,
     )
-    this.initParticles()
+    this.initBokehs()
+    this.initRays()
+    this.initFogs()
   }
 
   /** Set the lane configuration based on the instrument's surfaces */
@@ -70,10 +98,12 @@ export class Highway {
     this.draw()
   }
 
-  /** Animate beat grid scrolling. beatFraction is 0-1 within the current beat. */
+  /** Animate per-frame elements: grid scroll, bokeh drift, light rays, fog */
   update(beatFraction: number) {
     this.drawGrid(beatFraction)
-    this.drawAmbientParticles()
+    this.drawBokeh()
+    this.drawLightRays()
+    this.drawFog()
   }
 
   /** Get the X position for a given lane index at a given Y position */
@@ -126,6 +156,7 @@ export class Highway {
   private draw() {
     this.drawBackground()
     this.drawAmbientGlow()
+    this.drawVignette()
     this.drawRoad()
     this.drawRails()
     this.drawDividers()
@@ -221,31 +252,78 @@ export class Highway {
 
   private drawBackground() {
     this.bg.clear()
-    // Dark warm base
-    this.bg.rect(0, 0, this.width, this.height)
+    const w = this.width
+    const h = this.height
+
+    // Base — deep dark
+    this.bg.rect(0, 0, w, h)
     this.bg.fill(BG_COLOR_TOP)
-    // Mid-section warmth
-    this.bg.rect(0, this.height * 0.3, this.width, this.height * 0.4)
+
+    // Layered gradient bands for depth
+    this.bg.rect(0, h * 0.15, w, h * 0.25)
+    this.bg.fill({ color: BG_COLOR_MID, alpha: 0.3 })
+    this.bg.rect(0, h * 0.35, w, h * 0.3)
     this.bg.fill({ color: BG_COLOR_MID, alpha: 0.5 })
-    // Bottom warm glow
-    this.bg.rect(0, this.height * 0.6, this.width, this.height * 0.4)
-    this.bg.fill({ color: BG_COLOR_BOTTOM, alpha: 0.6 })
+    this.bg.rect(0, h * 0.55, w, h * 0.25)
+    this.bg.fill({ color: BG_COLOR_BOTTOM, alpha: 0.55 })
+    this.bg.rect(0, h * 0.75, w, h * 0.25)
+    this.bg.fill({ color: BG_COLOR_BOTTOM, alpha: 0.7 })
+
+    // Warm horizon glow at vanishing point
+    const vanishY = this.getVanishingY()
+    const cx = w / 2
+    this.bg.ellipse(cx, vanishY, w * 0.35, h * 0.12)
+    this.bg.fill({ color: 0x3d2510, alpha: 0.35 })
+    this.bg.ellipse(cx, vanishY, w * 0.2, h * 0.06)
+    this.bg.fill({ color: RAIL_COLOR, alpha: 0.08 })
   }
 
-  /** Subtle warm ambient glow around the highway center */
   private drawAmbientGlow() {
     this.ambientGlow.clear()
     const cx = this.width / 2
-    const cy = this.height * 0.55
-
-    // Large soft warm glow behind the highway
-    this.ambientGlow.circle(cx, cy, this.height * 0.5)
-    this.ambientGlow.fill({ color: 0x2a1a0a, alpha: 0.3 })
-
-    // Tighter gold glow near hit zone
     const hitY = this.getHitZoneY()
-    this.ambientGlow.circle(cx, hitY, this.width * 0.25)
+    const vanishY = this.getVanishingY()
+
+    // Large atmospheric glow filling the highway corridor
+    this.ambientGlow.ellipse(cx, (vanishY + hitY) / 2, this.width * 0.3, (hitY - vanishY) * 0.5)
+    this.ambientGlow.fill({ color: 0x1a0f05, alpha: 0.4 })
+
+    // Warm pool of light near the hit zone (stage lighting feel)
+    this.ambientGlow.ellipse(cx, hitY - 40, this.width * 0.28, 80)
     this.ambientGlow.fill({ color: RAIL_COLOR, alpha: 0.04 })
+    this.ambientGlow.ellipse(cx, hitY - 20, this.width * 0.15, 40)
+    this.ambientGlow.fill({ color: RAIL_COLOR, alpha: 0.03 })
+
+    // Subtle warm haze at the very top (horizon heat)
+    this.ambientGlow.ellipse(cx, vanishY - 10, this.width * 0.4, 30)
+    this.ambientGlow.fill({ color: 0x4a2a10, alpha: 0.12 })
+  }
+
+  private drawVignette() {
+    this.vignette.clear()
+    const w = this.width
+    const h = this.height
+
+    // Top edge darkening
+    this.vignette.rect(0, 0, w, h * 0.12)
+    this.vignette.fill({ color: 0x000000, alpha: 0.4 })
+    this.vignette.rect(0, 0, w, h * 0.06)
+    this.vignette.fill({ color: 0x000000, alpha: 0.3 })
+
+    // Left edge
+    this.vignette.rect(0, 0, w * 0.08, h)
+    this.vignette.fill({ color: 0x000000, alpha: 0.3 })
+    this.vignette.rect(0, 0, w * 0.04, h)
+    this.vignette.fill({ color: 0x000000, alpha: 0.2 })
+
+    // Right edge (less vignette since HUD is there)
+    this.vignette.rect(w * 0.92, 0, w * 0.08, h)
+    this.vignette.fill({ color: 0x000000, alpha: 0.15 })
+
+    // Bottom below hit zone
+    const hitY = this.getHitZoneY()
+    this.vignette.rect(0, hitY + 60, w, h - hitY - 60)
+    this.vignette.fill({ color: 0x000000, alpha: 0.5 })
   }
 
   private drawRoad() {
@@ -354,26 +432,112 @@ export class Highway {
     this.gridLines.stroke({ color: RAIL_COLOR, width: 10, alpha: 0.15 })
   }
 
-  private initParticles() {
-    this.particles = Array.from({ length: AMBIENT_PARTICLE_COUNT }, () => ({
+  // ── Bokeh (warm out-of-focus light circles) ──
+
+  private initBokehs() {
+    const colors = [RAIL_COLOR, 0xc4884a, 0xe8c080, 0x8a6030, 0xf0d8a0]
+    this.bokehs = Array.from({ length: BOKEH_COUNT }, () => ({
       x: Math.random(),
-      y: Math.random(),
-      size: 0.5 + Math.random() * 1,
-      alpha: 0.05 + Math.random() * 0.12,
-      speed: 0.0001 + Math.random() * 0.0003,
+      y: 0.1 + Math.random() * 0.8,
+      size: 4 + Math.random() * 16,
+      alpha: 0.02 + Math.random() * 0.06,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      driftX: (Math.random() - 0.5) * 0.00005,
+      driftY: -0.00002 - Math.random() * 0.00004,
+      phase: Math.random() * Math.PI * 2,
     }))
   }
 
-  private drawAmbientParticles() {
-    this.ambientParticles.clear()
+  private drawBokeh() {
+    this.bokehLayer.clear()
     const time = Date.now()
-    for (const p of this.particles) {
-      // Gentle upward drift
-      const yOffset = (time * p.speed) % 1
-      const y = ((p.y - yOffset + 1) % 1) * this.height
-      const flicker = p.alpha + Math.sin(time * 0.001 + p.x * 50) * 0.04
-      this.ambientParticles.circle(p.x * this.width, y, p.size)
-      this.ambientParticles.fill({ color: RAIL_COLOR, alpha: Math.max(0, flicker) })
+    for (const b of this.bokehs) {
+      const drift = time
+      const x = ((b.x + drift * b.driftX) % 1) * this.width
+      const y = ((b.y + drift * b.driftY + 1) % 1) * this.height
+      const breathe = b.alpha + Math.sin(time * 0.0008 + b.phase) * 0.015
+
+      // Soft outer halo
+      this.bokehLayer.circle(x, y, b.size * 1.8)
+      this.bokehLayer.fill({ color: b.color, alpha: Math.max(0, breathe * 0.3) })
+      // Core
+      this.bokehLayer.circle(x, y, b.size)
+      this.bokehLayer.fill({ color: b.color, alpha: Math.max(0, breathe) })
+      // Bright center
+      this.bokehLayer.circle(x, y, b.size * 0.3)
+      this.bokehLayer.fill({ color: 0xffffff, alpha: Math.max(0, breathe * 0.4) })
+    }
+  }
+
+  // ── Volumetric light rays from vanishing point ──
+
+  private initRays() {
+    this.rays = Array.from({ length: LIGHT_RAY_COUNT }, (_, i) => ({
+      angle: -0.5 + (i / (LIGHT_RAY_COUNT - 1)) * 1.0, // spread across highway
+      width: 15 + Math.random() * 25,
+      length: 0.3 + Math.random() * 0.4,
+      alpha: 0.015 + Math.random() * 0.02,
+      speed: 0.0002 + Math.random() * 0.0003,
+    }))
+  }
+
+  private drawLightRays() {
+    this.lightRays.clear()
+    const cx = this.width / 2
+    const vanishY = this.getVanishingY()
+    const hitY = this.getHitZoneY()
+    const time = Date.now()
+
+    for (const ray of this.rays) {
+      const sway = Math.sin(time * ray.speed + ray.angle * 5) * 0.08
+      const angle = ray.angle + sway
+      const reach = (hitY - vanishY) * ray.length
+
+      // Ray is a tapered quad from vanishing point downward
+      const topX = cx
+      const topY = vanishY
+      const botLeftX = cx + Math.tan(angle - 0.02) * reach - ray.width / 2
+      const botRightX = cx + Math.tan(angle + 0.02) * reach + ray.width / 2
+      const botY = vanishY + reach
+
+      const flicker = ray.alpha + Math.sin(time * 0.001 + ray.angle * 10) * 0.008
+
+      this.lightRays.moveTo(topX - 2, topY)
+      this.lightRays.lineTo(topX + 2, topY)
+      this.lightRays.lineTo(botRightX, botY)
+      this.lightRays.lineTo(botLeftX, botY)
+      this.lightRays.closePath()
+      this.lightRays.fill({ color: RAIL_COLOR, alpha: Math.max(0, flicker) })
+    }
+  }
+
+  // ── Horizontal fog layers for atmospheric depth ──
+
+  private initFogs() {
+    this.fogs = Array.from({ length: FOG_LAYER_COUNT }, (_, i) => ({
+      y: 0.25 + i * 0.18,
+      alpha: 0.03 + Math.random() * 0.03,
+      speed: 0.00003 + Math.random() * 0.00005,
+      phase: Math.random() * Math.PI * 2,
+    }))
+  }
+
+  private drawFog() {
+    this.fogLayers.clear()
+    const time = Date.now()
+    const cx = this.width / 2
+
+    for (const fog of this.fogs) {
+      const y = fog.y * this.height
+      const breathe = fog.alpha + Math.sin(time * 0.0005 + fog.phase) * 0.01
+      const drift = Math.sin(time * fog.speed + fog.phase) * this.width * 0.05
+
+      // Wide soft fog band
+      this.fogLayers.ellipse(cx + drift, y, this.width * 0.45, 25)
+      this.fogLayers.fill({ color: 0x1a1008, alpha: Math.max(0, breathe) })
+      // Brighter core
+      this.fogLayers.ellipse(cx + drift * 0.5, y, this.width * 0.2, 12)
+      this.fogLayers.fill({ color: RAIL_COLOR, alpha: Math.max(0, breathe * 0.3) })
     }
   }
 }
