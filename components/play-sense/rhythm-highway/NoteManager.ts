@@ -164,29 +164,31 @@ export class NoteManager {
     gfx.fill({ color, alpha: 0.06 })
 
     // ── SIDE OF PUCK (visible 3D thickness) ──
-    // Side wall — darker shade, connects top ellipse to bottom ellipse
-    // Draw as filled region: bottom ellipse + rect band
+    // Bottom ellipse + rect band
     gfx.ellipse(x, y + thickness, rx, ry)
     gfx.fill({ color, alpha: 0.25 })
     gfx.rect(x - rx, y, rx * 2, thickness)
     gfx.fill({ color, alpha: 0.2 })
 
-    // Side highlight — lighter strip on the left (simulates light from upper-left)
+    // Side highlight — left
     gfx.rect(x - rx, y + thickness * 0.1, rx * 0.35, thickness * 0.8)
     gfx.fill({ color: 0xffffff, alpha: 0.04 })
 
-    // Side shadow — darker strip on the right
+    // Side shadow — right
     gfx.rect(x + rx * 0.65, y + thickness * 0.1, rx * 0.35, thickness * 0.8)
     gfx.fill({ color: 0x000000, alpha: 0.12 })
+
+    // Shadow cast by the top face onto the side wall (dark band just below the top edge)
+    gfx.rect(x - rx, y, rx * 2, thickness * 0.35)
+    gfx.fill({ color: 0x000000, alpha: 0.3 })
 
     // Bottom edge rim (neon)
     gfx.ellipse(x, y + thickness, rx, ry)
     gfx.stroke({ color, width: 2 * scale, alpha: 0.5 })
-    // Bottom edge white hot
     gfx.ellipse(x, y + thickness, rx, ry)
     gfx.stroke({ color: 0xffffff, width: 0.5 * scale, alpha: 0.15 })
 
-    // Side vertical neon edges (left and right silhouette)
+    // Side vertical neon edges
     gfx.moveTo(x - rx, y)
     gfx.lineTo(x - rx, y + thickness)
     gfx.stroke({ color, width: 1.5 * scale, alpha: 0.7 })
@@ -194,11 +196,7 @@ export class NoteManager {
     gfx.lineTo(x + rx, y + thickness)
     gfx.stroke({ color, width: 1.5 * scale, alpha: 0.7 })
 
-    // ── TOP FACE — muted color at full opacity ──
-    // Dark base underneath to desaturate the color
-    gfx.ellipse(x, y, rx, ry)
-    gfx.fill({ color: 0x0a0a1a, alpha: 1 })
-    // Color on top at partial alpha creates a muted/darker tone
+    // ── TOP FACE — colored, drawn last so it sits on top ──
     gfx.ellipse(x, y, rx, ry)
     gfx.fill({ color, alpha: 0.8 })
 
