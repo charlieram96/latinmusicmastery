@@ -154,42 +154,79 @@ export class NoteManager {
 
   // ── Private ──
 
-  /** Draw a 3D-looking glowing oval note */
+  /** Draw a 3D disc/puck note with visible thickness, lighting, and glow */
   private draw3DOval(gfx: Graphics, x: number, y: number, scale: number, alpha: number, color: number, depth: number) {
     gfx.clear()
 
-    const rx = 22 * scale // horizontal radius
-    const ry = 10 * scale // vertical radius (flattened for perspective)
+    const rx = 48 * scale  // horizontal radius (much larger)
+    const ry = 20 * scale  // vertical radius (perspective-flattened)
+    const thickness = 8 * scale // visible 3D thickness of the disc
 
-    // Outer glow — larger, softer
-    gfx.ellipse(x, y, rx + 6 * scale, ry + 3 * scale)
-    gfx.fill({ color, alpha: alpha * 0.12 })
+    // ── Outer ambient glow ──
+    gfx.ellipse(x, y, rx + 10 * scale, ry + 5 * scale)
+    gfx.fill({ color, alpha: alpha * 0.08 })
 
-    // Mid glow ring
-    gfx.ellipse(x, y, rx + 3 * scale, ry + 1.5 * scale)
-    gfx.fill({ color, alpha: alpha * 0.2 })
+    gfx.ellipse(x, y, rx + 5 * scale, ry + 2.5 * scale)
+    gfx.fill({ color, alpha: alpha * 0.14 })
 
-    // Main oval body — solid with slight transparency
+    // ── 3D disc edge (visible thickness / side) ──
+    // Draw the "side" of the disc as a band below the top face
+    // Left arc of bottom ellipse
+    gfx.ellipse(x, y + thickness, rx, ry)
+    gfx.fill({ color, alpha: alpha * 0.35 })
+
+    // Connect top and bottom with side walls
+    gfx.moveTo(x - rx, y)
+    gfx.lineTo(x - rx, y + thickness)
+    gfx.ellipse(x, y + thickness, rx, ry)
+    gfx.moveTo(x + rx, y + thickness)
+    gfx.lineTo(x + rx, y)
+    // Fill the side band darker for depth
+    gfx.rect(x - rx, y, rx * 2, thickness)
+    gfx.fill({ color, alpha: alpha * 0.3 })
+
+    // Bottom edge highlight
+    gfx.ellipse(x, y + thickness, rx, ry)
+    gfx.stroke({ color, width: 1 * scale, alpha: alpha * 0.25 })
+
+    // ── Top face (main surface) ──
     gfx.ellipse(x, y, rx, ry)
-    gfx.fill({ color, alpha: alpha * 0.85 })
+    gfx.fill({ color, alpha: alpha * 0.8 })
 
-    // 3D highlight — lighter ellipse offset upward for dome effect
-    gfx.ellipse(x, y - ry * 0.25, rx * 0.65, ry * 0.45)
+    // ── Top face lighting ──
+    // Broad highlight across upper half (diffuse light from above)
+    gfx.ellipse(x, y - ry * 0.15, rx * 0.8, ry * 0.55)
+    gfx.fill({ color: 0xffffff, alpha: alpha * 0.15 })
+
+    // Tighter highlight (specular band)
+    gfx.ellipse(x - rx * 0.05, y - ry * 0.25, rx * 0.5, ry * 0.3)
     gfx.fill({ color: 0xffffff, alpha: alpha * 0.2 })
 
-    // Top specular dot
-    gfx.circle(x - rx * 0.15, y - ry * 0.35, 2 * scale)
-    gfx.fill({ color: 0xffffff, alpha: alpha * 0.35 })
+    // Hot specular dot (point light reflection)
+    gfx.circle(x - rx * 0.18, y - ry * 0.3, 3 * scale)
+    gfx.fill({ color: 0xffffff, alpha: alpha * 0.4 })
 
-    // Rim stroke for definition
+    // ── Rim stroke ──
     gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color, width: 1.5 * scale, alpha: alpha * 0.5 })
+    gfx.stroke({ color, width: 2 * scale, alpha: alpha * 0.5 })
 
-    // Pulsing glow intensifies near hit zone
-    if (depth > 0.8) {
-      const pulseIntensity = (depth - 0.8) / 0.2
-      gfx.ellipse(x, y, rx + 8 * scale * pulseIntensity, ry + 4 * scale * pulseIntensity)
-      gfx.fill({ color, alpha: alpha * 0.08 * pulseIntensity })
+    // Inner rim detail (gives a "lip" feel)
+    gfx.ellipse(x, y, rx * 0.88, ry * 0.88)
+    gfx.stroke({ color: 0xffffff, width: 0.5 * scale, alpha: alpha * 0.08 })
+
+    // ── Bottom shadow (below the disc) ──
+    gfx.ellipse(x, y + thickness + 3 * scale, rx * 0.9, ry * 0.5)
+    gfx.fill({ color: 0x000000, alpha: alpha * 0.1 })
+
+    // ── Pulsing approach glow ──
+    if (depth > 0.75) {
+      const pulseIntensity = (depth - 0.75) / 0.25
+      const time = Date.now() * 0.006
+      const pulse = 1 + Math.sin(time) * 0.15 * pulseIntensity
+      gfx.ellipse(x, y, (rx + 14 * scale) * pulse, (ry + 7 * scale) * pulse)
+      gfx.fill({ color, alpha: alpha * 0.06 * pulseIntensity })
+      gfx.ellipse(x, y, (rx + 8 * scale) * pulse, (ry + 4 * scale) * pulse)
+      gfx.fill({ color, alpha: alpha * 0.04 * pulseIntensity })
     }
   }
 
