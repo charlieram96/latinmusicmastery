@@ -121,8 +121,8 @@ export class NoteManager {
       // Use the same continuous depth math for position — notes just keep going
       const y = this.highway.depthToYExtended(depthFraction)
       const x = this.highway.getLaneX(laneIndex, y)
-      const scaleDepth = Math.min(depthFraction, 1)
-      const scale = this.highway.getScaleAtDepth(scaleDepth) * (1 + Math.max(0, pastHitZone) * 0.15)
+      // Scale keeps growing past hit zone at the same rate
+      const scale = this.highway.getScaleAtDepth(depthFraction)
 
       if (isMissed) {
         sprite.state = 'missed'
@@ -130,7 +130,7 @@ export class NoteManager {
         this.drawMissedNote(sprite.gfx, x, y, scale, Math.max(0, fadeAlpha), color)
       } else {
         sprite.state = 'approaching'
-        this.draw3DOval(sprite.gfx, x, y, scale, 1, color, scaleDepth)
+        this.draw3DOval(sprite.gfx, x, y, scale, 1, color, Math.min(depthFraction, 1))
       }
     }
   }

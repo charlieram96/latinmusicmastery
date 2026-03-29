@@ -62,7 +62,7 @@ export class Highway {
   }
 
   getLaneX(laneIndex: number, y: number): number {
-    const t = this.getDepthT(y)
+    const t = this.getDepthTUnclamped(y)
     const halfWidth = this.getHalfWidthAtT(t)
     const cx = this.width / 2
     const laneWidth = (halfWidth * 2) / this.laneCount
@@ -101,11 +101,20 @@ export class Highway {
 
   // ── Private ──
 
+  /** Clamped to [0, 1] — used for drawing road/rails within highway bounds */
   private getDepthT(y: number): number {
     const vanishY = this.getVanishingY()
     const hitY = this.getHitZoneY()
     if (hitY === vanishY) return 0
     return Math.max(0, Math.min(1, (y - vanishY) / (hitY - vanishY)))
+  }
+
+  /** Unclamped — allows values > 1 for notes past the hit zone */
+  private getDepthTUnclamped(y: number): number {
+    const vanishY = this.getVanishingY()
+    const hitY = this.getHitZoneY()
+    if (hitY === vanishY) return 0
+    return Math.max(0, (y - vanishY) / (hitY - vanishY))
   }
 
   private getHalfWidthAtT(t: number): number {
