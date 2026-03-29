@@ -158,9 +158,9 @@ export class NoteManager {
   private draw3DOval(gfx: Graphics, x: number, y: number, scale: number, alpha: number, color: number, depth: number) {
     gfx.clear()
 
-    const rx = 48 * scale
-    const ry = 20 * scale
-    const thickness = 8 * scale
+    const rx = 96 * scale
+    const ry = 40 * scale
+    const thickness = 16 * scale
 
     // ── Wide neon bloom (outermost) ──
     gfx.ellipse(x, y, rx + 14 * scale, ry + 7 * scale)

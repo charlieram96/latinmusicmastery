@@ -288,9 +288,9 @@ export class Highway {
 
   /** Beat Saber-style neon conga — glowing outlines, minimal fill */
   private drawNeonConga(cx: number, cy: number, color: number) {
-    const baseRx = 48
-    const baseRy = 20
-    const bodyHeight = 28
+    const baseRx = 96
+    const baseRy = 40
+    const bodyHeight = 56
 
     // ── Drum body glow (barrel outline) ──
     // Left side
