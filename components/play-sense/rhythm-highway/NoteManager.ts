@@ -194,9 +194,13 @@ export class NoteManager {
     gfx.lineTo(x + rx, y + thickness)
     gfx.stroke({ color, width: 1.5 * scale, alpha: 0.7 })
 
-    // ── TOP FACE ──
+    // ── TOP FACE — muted color at full opacity ──
+    // Dark base underneath to desaturate the color
     gfx.ellipse(x, y, rx, ry)
-    gfx.fill({ color, alpha: 0.8 })
+    gfx.fill({ color: 0x0a0a1a, alpha: 1 })
+    // Color on top at partial alpha creates a muted/darker tone
+    gfx.ellipse(x, y, rx, ry)
+    gfx.fill({ color, alpha: 0.55 })
 
     // ── TOP FACE NEON RIM ──
     // Glow
