@@ -38,6 +38,8 @@ export interface ExerciseEvent {
   expectedPitch?: number
   /** Expected note name for display (e.g. 'C4', 'Eb3') */
   expectedNoteName?: string
+  /** Expected drum surface for PlaySense scoring (e.g. 'quinto', 'macho') */
+  surface?: string
 }
 
 export interface ExerciseDefinition {
@@ -71,6 +73,10 @@ export interface EventResult {
   techniqueCorrect?: boolean | null
   /** Duration held in beats (pitched instruments) */
   durationHeld?: number | null
+  /** Whether the correct drum surface was hit (PlaySense mode) */
+  surfaceCorrect?: boolean | null
+  /** Which drum surface was actually hit (PlaySense mode) */
+  detectedSurface?: string | null
 }
 
 export interface AttemptStats {
@@ -113,6 +119,8 @@ export interface OnsetEvent {
   frequency?: number | null
   /** Detected MIDI note number at onset */
   midiNote?: number | null
+  /** Which drum surface was hit — set by PlaySense BLE device only */
+  surface?: string | null
 }
 
 export interface ToleranceWindows {
