@@ -22,6 +22,7 @@ import {
   Mic,
   Headphones,
   Speaker,
+  Bluetooth,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 
@@ -235,8 +236,8 @@ export function NowPlayingBar({
             )
           )}
 
-          {/* Mic level + test button */}
-          <div className="flex items-center gap-2 h-7">
+          {/* Mic level + test button — hidden in PlaySense mode */}
+          {audioMode !== 'playsense' && <div className="flex items-center gap-2 h-7">
             <Mic className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
               <div
@@ -264,7 +265,7 @@ export function NowPlayingBar({
                 {isMicTesting ? 'Stop' : 'Test'}
               </Button>
             )}
-          </div>
+          </div>}
         </div>
 
         {/* ── Center Column — Hero Stats (widest) ── */}
@@ -354,32 +355,44 @@ export function NowPlayingBar({
           {/* Audio mode indicator */}
           {audioMode && (
             <button
-              onClick={() => onAudioModeChange(audioMode === 'headphones' ? 'speaker-safe' : 'headphones')}
-              className="flex items-center gap-2 px-3 h-8 w-full rounded-md hover:bg-secondary/50 transition-colors"
+              onClick={() => {
+                if (audioMode === 'playsense') return
+                onAudioModeChange(audioMode === 'headphones' ? 'speaker-safe' : 'headphones')
+              }}
+              className={cn(
+                'flex items-center gap-2 px-3 h-8 w-full rounded-md transition-colors',
+                audioMode === 'playsense' ? 'cursor-default' : 'hover:bg-secondary/50'
+              )}
             >
-              {audioMode === 'headphones' ? (
+              {audioMode === 'playsense' ? (
+                <Bluetooth className="w-4 h-4 text-blue-500 shrink-0" />
+              ) : audioMode === 'headphones' ? (
                 <Headphones className="w-4 h-4 text-muted-foreground shrink-0" />
               ) : (
                 <Speaker className="w-4 h-4 text-yellow-500 shrink-0" />
               )}
               <span className="text-xs text-muted-foreground">
-                {audioMode === 'headphones' ? 'Headphones' : 'Speaker Safe'}
+                {audioMode === 'playsense' ? 'PlaySense' : audioMode === 'headphones' ? 'Headphones' : 'Speaker Safe'}
               </span>
-              <span className="text-[10px] text-muted-foreground/60 ml-auto">switch</span>
+              {audioMode !== 'playsense' && (
+                <span className="text-[10px] text-muted-foreground/60 ml-auto">switch</span>
+              )}
             </button>
           )}
 
-          {/* Noisy room toggle */}
-          <div className="flex items-center gap-2 px-3 h-8">
-            <Volume2 className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span className="text-xs text-muted-foreground">Noisy Room</span>
-            <div className="ml-auto">
-              <Switch
-                checked={noisyRoomMode}
-                onCheckedChange={onNoisyRoomChange}
-              />
+          {/* Noisy room toggle — hidden in PlaySense mode */}
+          {audioMode !== 'playsense' && (
+            <div className="flex items-center gap-2 px-3 h-8">
+              <Volume2 className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="text-xs text-muted-foreground">Noisy Room</span>
+              <div className="ml-auto">
+                <Switch
+                  checked={noisyRoomMode}
+                  onCheckedChange={onNoisyRoomChange}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Audio click toggle — only in selecting state */}
           {sessionState === 'selecting' && (
