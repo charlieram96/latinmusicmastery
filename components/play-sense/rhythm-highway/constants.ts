@@ -2,14 +2,14 @@
 import type { HitGrade } from '@/lib/play-sense/types'
 
 // ── Highway geometry ──
-/** Fraction of canvas height where the hit zone line sits (from bottom) */
-export const HIT_ZONE_Y_FRACTION = 0.85
+/** Fraction of canvas height where the hit zone line sits (from top) */
+export const HIT_ZONE_Y_FRACTION = 0.92
 /** Width of the highway at the hit zone (fraction of canvas width) */
-export const HIGHWAY_BOTTOM_WIDTH = 0.6
+export const HIGHWAY_BOTTOM_WIDTH = 0.7
 /** Width of the highway at the vanishing point (fraction of canvas width) */
-export const HIGHWAY_TOP_WIDTH = 0.08
+export const HIGHWAY_TOP_WIDTH = 0.06
 /** Vertical position of the vanishing point (fraction of canvas height) */
-export const VANISHING_POINT_Y = 0.25
+export const VANISHING_POINT_Y = 0.08
 /** How many seconds of upcoming notes are visible on the highway */
 export const LOOK_AHEAD_SEC = 3.0
 
@@ -77,13 +77,15 @@ export const PARTICLE_COUNTS: Record<HitGrade, number> = {
 export const PARTICLE_LIFETIME_SEC = 0.5
 export const COMBO_FIRE_THRESHOLD = 10
 
-// ── Highway visual ──
+// ── Highway visual (warm cinematic theme) ──
 export const RAIL_COLOR = 0xd4a854
 export const RAIL_GLOW_ALPHA = 0.3
-export const GRID_LINE_ALPHA = 0.08
-export const BG_COLOR_TOP = 0x050510
-export const BG_COLOR_BOTTOM = 0x1a0f2e
-export const STARFIELD_COUNT = 40
+export const GRID_LINE_ALPHA = 0.06
+export const BG_COLOR_TOP = 0x0a0806
+export const BG_COLOR_MID = 0x1a130d
+export const BG_COLOR_BOTTOM = 0x1f1610
+export const ROAD_COLOR = 0x120e0a
+export const AMBIENT_PARTICLE_COUNT = 25
 export const NOTE_MIN_SCALE = 0.3
 export const NOTE_MAX_SCALE = 1.0
 export const NOTE_MIN_ALPHA = 0.3

@@ -9,45 +9,51 @@ import {
   RAIL_GLOW_ALPHA,
   GRID_LINE_ALPHA,
   BG_COLOR_TOP,
+  BG_COLOR_MID,
   BG_COLOR_BOTTOM,
-  STARFIELD_COUNT,
+  ROAD_COLOR,
+  AMBIENT_PARTICLE_COUNT,
   LANE_COLORS,
   DEFAULT_LANE_COLOR,
 } from './constants'
 
-interface Star {
+interface AmbientParticle {
   x: number
   y: number
   size: number
   alpha: number
-  color: number
+  speed: number
 }
 
 /**
- * Renders the highway background: perspective road, rails, lane dividers,
- * beat grid, and starfield. Call resize() when canvas dimensions change,
- * and update() each frame with the current beat fraction for grid scrolling.
+ * Renders the highway background: perspective road, warm ambient glow, rails,
+ * lane dividers, beat grid, and receptor pads. Call resize() when canvas
+ * dimensions change, and update() each frame with the current beat fraction.
  */
 export class Highway {
   readonly container = new Container()
 
   private bg = new Graphics()
+  private ambientGlow = new Graphics()
   private road = new Graphics()
   private rails = new Graphics()
   private dividers = new Graphics()
   private gridLines = new Graphics()
-  private starfield = new Graphics()
+  private ambientParticles = new Graphics()
   private receptors = new Graphics()
 
-  private stars: Star[] = []
+  private particles: AmbientParticle[] = []
   private width = 0
   private height = 0
   private laneCount = 3
   private laneSurfaces: string[] = []
 
   constructor() {
-    this.container.addChild(this.bg, this.starfield, this.road, this.rails, this.dividers, this.gridLines, this.receptors)
-    this.initStars()
+    this.container.addChild(
+      this.bg, this.ambientGlow, this.ambientParticles,
+      this.road, this.rails, this.dividers, this.gridLines, this.receptors,
+    )
+    this.initParticles()
   }
 
   /** Set the lane configuration based on the instrument's surfaces */
@@ -67,7 +73,7 @@ export class Highway {
   /** Animate beat grid scrolling. beatFraction is 0-1 within the current beat. */
   update(beatFraction: number) {
     this.drawGrid(beatFraction)
-    this.drawStarfield()
+    this.drawAmbientParticles()
   }
 
   /** Get the X position for a given lane index at a given Y position */
@@ -93,7 +99,6 @@ export class Highway {
   depthToY(depthFraction: number): number {
     const vanishY = this.getVanishingY()
     const hitY = this.getHitZoneY()
-    // Use quadratic easing for perspective foreshortening
     const t = depthFraction * depthFraction
     return vanishY + t * (hitY - vanishY)
   }
@@ -120,6 +125,7 @@ export class Highway {
 
   private draw() {
     this.drawBackground()
+    this.drawAmbientGlow()
     this.drawRoad()
     this.drawRails()
     this.drawDividers()
@@ -127,7 +133,6 @@ export class Highway {
     this.drawReceptors()
   }
 
-  /** Draw receptor pads at the hit zone — one per lane */
   private drawReceptors() {
     this.receptors.clear()
     const hitY = this.getHitZoneY()
@@ -139,7 +144,6 @@ export class Highway {
       const h = 24 * scale
       const color = LANE_COLORS[this.laneSurfaces[i]] ?? DEFAULT_LANE_COLOR
 
-      // Receptor outline
       this.receptors.roundRect(x - w / 2, hitY - h / 2, w, h, 5)
       this.receptors.stroke({ color, width: 2, alpha: 0.4 })
       this.receptors.roundRect(x - w / 2, hitY - h / 2, w, h, 5)
@@ -149,11 +153,31 @@ export class Highway {
 
   private drawBackground() {
     this.bg.clear()
+    // Dark warm base
     this.bg.rect(0, 0, this.width, this.height)
     this.bg.fill(BG_COLOR_TOP)
-    const grd = this.bg
-    grd.rect(0, this.height * 0.5, this.width, this.height * 0.5)
-    grd.fill({ color: BG_COLOR_BOTTOM, alpha: 0.4 })
+    // Mid-section warmth
+    this.bg.rect(0, this.height * 0.3, this.width, this.height * 0.4)
+    this.bg.fill({ color: BG_COLOR_MID, alpha: 0.5 })
+    // Bottom warm glow
+    this.bg.rect(0, this.height * 0.6, this.width, this.height * 0.4)
+    this.bg.fill({ color: BG_COLOR_BOTTOM, alpha: 0.6 })
+  }
+
+  /** Subtle warm ambient glow around the highway center */
+  private drawAmbientGlow() {
+    this.ambientGlow.clear()
+    const cx = this.width / 2
+    const cy = this.height * 0.55
+
+    // Large soft warm glow behind the highway
+    this.ambientGlow.circle(cx, cy, this.height * 0.5)
+    this.ambientGlow.fill({ color: 0x2a1a0a, alpha: 0.3 })
+
+    // Tighter gold glow near hit zone
+    const hitY = this.getHitZoneY()
+    this.ambientGlow.circle(cx, hitY, this.width * 0.25)
+    this.ambientGlow.fill({ color: RAIL_COLOR, alpha: 0.04 })
   }
 
   private drawRoad() {
@@ -169,7 +193,7 @@ export class Highway {
     this.road.lineTo(cx + halfBottom, hitY)
     this.road.lineTo(cx - halfBottom, hitY)
     this.road.closePath()
-    this.road.fill({ color: 0x140a28, alpha: 0.6 })
+    this.road.fill({ color: ROAD_COLOR, alpha: 0.7 })
   }
 
   private drawRails() {
@@ -180,21 +204,24 @@ export class Highway {
     const halfBottom = (this.width * HIGHWAY_BOTTOM_WIDTH) / 2
     const halfTop = (this.width * HIGHWAY_TOP_WIDTH) / 2
 
+    // Left rail
     this.rails.moveTo(cx - halfTop, vanishY)
     this.rails.lineTo(cx - halfBottom, hitY)
-    this.rails.stroke({ color: RAIL_COLOR, width: 3, alpha: 0.6 })
+    this.rails.stroke({ color: RAIL_COLOR, width: 2, alpha: 0.5 })
+
+    // Right rail
+    this.rails.moveTo(cx + halfTop, vanishY)
+    this.rails.lineTo(cx + halfBottom, hitY)
+    this.rails.stroke({ color: RAIL_COLOR, width: 2, alpha: 0.5 })
+
+    // Rail glow
+    this.rails.moveTo(cx - halfTop, vanishY)
+    this.rails.lineTo(cx - halfBottom, hitY)
+    this.rails.stroke({ color: RAIL_COLOR, width: 6, alpha: RAIL_GLOW_ALPHA * 0.4 })
 
     this.rails.moveTo(cx + halfTop, vanishY)
     this.rails.lineTo(cx + halfBottom, hitY)
-    this.rails.stroke({ color: RAIL_COLOR, width: 3, alpha: 0.6 })
-
-    this.rails.moveTo(cx - halfTop, vanishY)
-    this.rails.lineTo(cx - halfBottom, hitY)
-    this.rails.stroke({ color: RAIL_COLOR, width: 8, alpha: RAIL_GLOW_ALPHA * 0.5 })
-
-    this.rails.moveTo(cx + halfTop, vanishY)
-    this.rails.lineTo(cx + halfBottom, hitY)
-    this.rails.stroke({ color: RAIL_COLOR, width: 8, alpha: RAIL_GLOW_ALPHA * 0.5 })
+    this.rails.stroke({ color: RAIL_COLOR, width: 6, alpha: RAIL_GLOW_ALPHA * 0.4 })
   }
 
   private drawDividers() {
@@ -209,8 +236,6 @@ export class Highway {
       for (let i = 0; i < steps; i++) {
         const t1 = i / steps
         const t2 = (i + 1) / steps
-        const y1 = vanishY + t1 * (hitY - vanishY)
-        const y2 = vanishY + t2 * (hitY - vanishY)
         const halfW1 = this.getHalfWidthAtT(t1)
         const halfW2 = this.getHalfWidthAtT(t2)
         const cx = this.width / 2
@@ -218,11 +243,13 @@ export class Highway {
         const laneW2 = (halfW2 * 2) / this.laneCount
         const dx1 = cx - halfW1 + laneW1 * lane
         const dx2 = cx - halfW2 + laneW2 * lane
-        const alpha = 0.03 + t1 * 0.09
+        const y1 = vanishY + t1 * (hitY - vanishY)
+        const y2 = vanishY + t2 * (hitY - vanishY)
+        const alpha = 0.02 + t1 * 0.06
 
         this.dividers.moveTo(dx1, y1)
         this.dividers.lineTo(dx2, y2)
-        this.dividers.stroke({ color: 0xffffff, width: 1, alpha })
+        this.dividers.stroke({ color: RAIL_COLOR, width: 1, alpha })
       }
     }
   }
@@ -244,35 +271,41 @@ export class Highway {
 
       this.gridLines.moveTo(cx - halfW, y)
       this.gridLines.lineTo(cx + halfW, y)
-      this.gridLines.stroke({ color: 0xffffff, width: 1, alpha })
+      this.gridLines.stroke({ color: RAIL_COLOR, width: 1, alpha })
     }
 
+    // Hit zone line
     const halfBottom = (this.width * HIGHWAY_BOTTOM_WIDTH) / 2
     this.gridLines.moveTo(cx - halfBottom, hitY)
     this.gridLines.lineTo(cx + halfBottom, hitY)
-    this.gridLines.stroke({ color: RAIL_COLOR, width: 4, alpha: 0.8 })
+    this.gridLines.stroke({ color: RAIL_COLOR, width: 3, alpha: 0.7 })
 
+    // Hit zone glow
     this.gridLines.moveTo(cx - halfBottom, hitY)
     this.gridLines.lineTo(cx + halfBottom, hitY)
-    this.gridLines.stroke({ color: RAIL_COLOR, width: 12, alpha: 0.2 })
+    this.gridLines.stroke({ color: RAIL_COLOR, width: 10, alpha: 0.15 })
   }
 
-  private initStars() {
-    this.stars = Array.from({ length: STARFIELD_COUNT }, () => ({
+  private initParticles() {
+    this.particles = Array.from({ length: AMBIENT_PARTICLE_COUNT }, () => ({
       x: Math.random(),
-      y: Math.random() * 0.5,
-      size: 0.5 + Math.random() * 1.5,
-      alpha: 0.1 + Math.random() * 0.3,
-      color: [0xffffff, 0xd4a854, 0x9b59b6, 0x3498db][Math.floor(Math.random() * 4)],
+      y: Math.random(),
+      size: 0.5 + Math.random() * 1,
+      alpha: 0.05 + Math.random() * 0.12,
+      speed: 0.0001 + Math.random() * 0.0003,
     }))
   }
 
-  private drawStarfield() {
-    this.starfield.clear()
-    for (const star of this.stars) {
-      const flicker = star.alpha + Math.sin(Date.now() * 0.002 + star.x * 100) * 0.1
-      this.starfield.circle(star.x * this.width, star.y * this.height, star.size)
-      this.starfield.fill({ color: star.color, alpha: Math.max(0, flicker) })
+  private drawAmbientParticles() {
+    this.ambientParticles.clear()
+    const time = Date.now()
+    for (const p of this.particles) {
+      // Gentle upward drift
+      const yOffset = (time * p.speed) % 1
+      const y = ((p.y - yOffset + 1) % 1) * this.height
+      const flicker = p.alpha + Math.sin(time * 0.001 + p.x * 50) * 0.04
+      this.ambientParticles.circle(p.x * this.width, y, p.size)
+      this.ambientParticles.fill({ color: RAIL_COLOR, alpha: Math.max(0, flicker) })
     }
   }
 }
