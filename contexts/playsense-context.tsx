@@ -78,7 +78,10 @@ export function PlaysenseProvider({ children }: { children: ReactNode }) {
       deviceRef.current = device
       device.addEventListener('gattserverdisconnected', onDisconnected)
 
-      const server = await device.gatt!.connect()
+      if (!device.gatt) {
+        throw new Error('PlaySense device does not support GATT')
+      }
+      const server = await device.gatt.connect()
       const service = await server.getPrimaryService(SERVICE_UUID)
       const characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID)
 

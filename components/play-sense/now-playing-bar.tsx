@@ -212,8 +212,8 @@ export function NowPlayingBar({
             </div>
           </div>
 
-          {/* Calibration — prominent when uncalibrated */}
-          {sessionState === 'selecting' && (
+          {/* Calibration — prominent when uncalibrated, hidden in PlaySense mode */}
+          {sessionState === 'selecting' && audioMode !== 'playsense' && (
             !calibrationData ? (
               <Button
                 variant="outline"
@@ -237,7 +237,8 @@ export function NowPlayingBar({
           )}
 
           {/* Mic level + test button — hidden in PlaySense mode */}
-          {audioMode !== 'playsense' && <div className="flex items-center gap-2 h-7">
+          {audioMode !== 'playsense' && (
+            <div className="flex items-center gap-2 h-7">
             <Mic className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
               <div
@@ -265,7 +266,8 @@ export function NowPlayingBar({
                 {isMicTesting ? 'Stop' : 'Test'}
               </Button>
             )}
-          </div>}
+          </div>
+          )}
         </div>
 
         {/* ── Center Column — Hero Stats (widest) ── */}
