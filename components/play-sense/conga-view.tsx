@@ -38,7 +38,7 @@ const SURFACE_COLORS: Record<string, string> = {
   campana: '#eab308', cencerro: '#22c55e', jamblock: '#06b6d4', cascara: '#a855f7',
 }
 
-const HIT_LINE_RATIO = 0.92
+const HIT_LINE_RATIO = 0.942
 const LOOK_AHEAD_SEC = 4
 const BOARD_HEIGHT = 4500
 const BOARD_HEIGHT_MOBILE = 3500
