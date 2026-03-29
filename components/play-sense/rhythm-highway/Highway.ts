@@ -291,7 +291,9 @@ export class Highway {
       const clampedDepth = Math.min(depthFraction, 1)
       const y = this.depthToY(clampedDepth)
       const halfW = this.getHalfWidthAtT(clampedDepth * clampedDepth)
-      const alpha = GRID_LINE_ALPHA * clampedDepth
+      // Fade in over top 20% of highway, matching note fade
+      const fadeIn = Math.min(1, depthFraction / 0.2)
+      const alpha = GRID_LINE_ALPHA * clampedDepth * fadeIn
 
       // Check if this is a downbeat (beat 1 of a measure) — brighter
       const beatNumber = Math.round(beatTime / beatDuration)

@@ -124,13 +124,16 @@ export class NoteManager {
       // Scale keeps growing past hit zone at the same rate
       const scale = this.highway.getScaleAtDepth(depthFraction)
 
+      // Fade in over the first 20% of the highway (Rock Band style)
+      const fadeIn = Math.min(1, depthFraction / 0.2)
+
       if (isMissed) {
         sprite.state = 'missed'
         const fadeAlpha = 1 - (pastHitZone / MISS_PAST_DEPTH)
         this.drawMissedNote(sprite.gfx, x, y, scale, Math.max(0, fadeAlpha), color)
       } else {
         sprite.state = 'approaching'
-        this.draw3DOval(sprite.gfx, x, y, scale, 1, color, Math.min(depthFraction, 1))
+        this.draw3DOval(sprite.gfx, x, y, scale, fadeIn, color, Math.min(depthFraction, 1))
       }
     }
   }
@@ -150,6 +153,7 @@ export class NoteManager {
   /** Beat Saber-style neon disc: glowing outline, dark interior, bright edges */
   private draw3DOval(gfx: Graphics, x: number, y: number, scale: number, alpha: number, color: number, depth: number) {
     gfx.clear()
+    gfx.alpha = alpha
 
     const rx = 96 * scale
     const ry = 40 * scale
