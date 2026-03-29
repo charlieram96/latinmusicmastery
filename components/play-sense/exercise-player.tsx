@@ -227,7 +227,6 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                     currentCombo={session.currentCombo}
                     currentAccuracy={session.currentAccuracy}
                     metronomeBeat={session.metronomeBeat}
-                    lastHitGrade={session.lastHitGrade}
                     eventResultsLength={session.eventResults.length}
                     eventResults={session.eventResults}
                   />

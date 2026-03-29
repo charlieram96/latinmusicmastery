@@ -23,6 +23,7 @@ export class HighwayApp {
 
   private exerciseDuration = 0
   private destroyed = false
+  private resizeObserver: ResizeObserver | null = null
 
   // Refs set by React wrapper — read each frame
   playheadProgress = 0
@@ -69,8 +70,7 @@ export class HighwayApp {
     // Watch for resizes
     const observer = new ResizeObserver(() => instance.resize())
     observer.observe(container)
-    // Store observer reference for cleanup
-    ;(instance as any)._resizeObserver = observer
+    instance.resizeObserver = observer
 
     // Start render loop
     app.ticker.add((ticker) => {
@@ -112,8 +112,7 @@ export class HighwayApp {
   /** Destroy the PixiJS application and free resources */
   destroy() {
     this.destroyed = true
-    const observer = (this as any)._resizeObserver as ResizeObserver | undefined
-    observer?.disconnect()
+    this.resizeObserver?.disconnect()
     this.app.destroy(true, { children: true, texture: true })
   }
 

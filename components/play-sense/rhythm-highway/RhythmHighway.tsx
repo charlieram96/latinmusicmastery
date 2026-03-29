@@ -11,7 +11,6 @@ interface RhythmHighwayProps {
   currentCombo: number
   currentAccuracy: number
   metronomeBeat: number
-  lastHitGrade: string | null
   eventResultsLength: number
   eventResults: Array<{ eventIndex: number; grade: HitGrade }>
 }
@@ -27,7 +26,6 @@ export function RhythmHighway({
   currentCombo,
   currentAccuracy,
   metronomeBeat,
-  lastHitGrade,
   eventResultsLength,
   eventResults,
 }: RhythmHighwayProps) {
@@ -43,6 +41,9 @@ export function RhythmHighway({
     let app: HighwayApp | null = null
     let mounted = true
 
+    // Reset event counter on exercise change
+    prevEventCountRef.current = 0
+
     HighwayApp.create(container).then((instance) => {
       if (!mounted) {
         instance.destroy()
@@ -51,6 +52,8 @@ export function RhythmHighway({
       app = instance
       appRef.current = instance
       instance.init(exercise)
+    }).catch((err) => {
+      console.error('Failed to create PixiJS highway:', err)
     })
 
     return () => {
