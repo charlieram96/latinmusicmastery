@@ -155,9 +155,9 @@ export class Highway {
 
   /** Draw a conga drum illustration at the given position */
   private drawConga(cx: number, cy: number, color: number, sizeMultiplier: number) {
-    const baseRx = 28 * sizeMultiplier
-    const baseRy = 12 * sizeMultiplier
-    const bodyHeight = 22 * sizeMultiplier
+    const baseRx = 78 * sizeMultiplier
+    const baseRy = 32 * sizeMultiplier
+    const bodyHeight = 42 * sizeMultiplier
 
     // ── Drum body (barrel visible below the head) ──
     // Left side of barrel
