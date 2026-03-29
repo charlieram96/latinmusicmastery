@@ -1,14 +1,12 @@
 // components/play-sense/rhythm-highway/NoteManager.ts
 import { Container, Graphics } from 'pixi.js'
 import type { ExerciseDefinition, ExerciseEvent } from '@/lib/play-sense/types'
-import { generateExpectedTimestamps, getExerciseDuration } from '@/lib/play-sense/exercise-utils'
+import { generateExpectedTimestamps } from '@/lib/play-sense/exercise-utils'
 import type { ExpectedEvent } from '@/lib/play-sense/scoring'
 import {
   LOOK_AHEAD_SEC,
   LANE_COLORS,
   DEFAULT_LANE_COLOR,
-  NOTE_MIN_ALPHA,
-  NOTE_MAX_ALPHA,
 } from './constants'
 import type { Highway } from './Highway'
 
@@ -26,7 +24,8 @@ interface NoteSprite {
   missAge: number
 }
 
-const MISS_SLIDE_DURATION = 1.2 // seconds to travel through and past the congas
+/** How far past hit zone (in depth units) before a missed note disappears */
+const MISS_PAST_DEPTH = 0.5
 
 /**
  * Manages 3D oval note sprites on the highway. Notes are glowing circles/ovals
@@ -45,10 +44,8 @@ export class NoteManager {
 
   /** Events that were hit — remove immediately */
   private hitIndices = new Set<number>()
-  /** Events that were missed — let them slide past */
+  /** Events that were missed — continue traveling with red glow */
   private missedIndices = new Set<number>()
-  /** Track when each miss started for slide animation */
-  private missTimestamps = new Map<number, number>()
 
   constructor(highway: Highway) {
     this.highway = highway
@@ -65,7 +62,6 @@ export class NoteManager {
 
     this.hitIndices.clear()
     this.missedIndices.clear()
-    this.missTimestamps.clear()
   }
 
   /** Mark an event as successfully hit — it will be removed and shatter effect triggered externally */
@@ -73,10 +69,9 @@ export class NoteManager {
     this.hitIndices.add(eventIndex)
   }
 
-  /** Mark an event as missed — it will slide past the congas and fade out */
-  markMissed(eventIndex: number, elapsedSec: number) {
+  /** Mark an event as missed — it will continue traveling with red glow */
+  markMissed(eventIndex: number) {
     this.missedIndices.add(eventIndex)
-    this.missTimestamps.set(eventIndex, elapsedSec)
   }
 
   update(elapsedSec: number) {
@@ -94,34 +89,26 @@ export class NoteManager {
       // Skip hit notes entirely
       if (this.hitIndices.has(expected.eventIndex)) continue
 
-      // Handle missed notes — they slide past
-      if (this.missedIndices.has(expected.eventIndex)) {
-        const missStart = this.missTimestamps.get(expected.eventIndex) ?? elapsedSec
-        const missAge = elapsedSec - missStart
-        if (missAge > MISS_SLIDE_DURATION) continue // fully faded
+      // depthFraction: 0 = vanishing point, 1 = hit zone, >1 = past hit zone
+      const depthFraction = 1 - (timeDiff / LOOK_AHEAD_SEC)
 
-        if (poolIdx >= this.pool.length) this.ensurePoolSize(this.pool.length + 10)
-        const sprite = this.pool[poolIdx++]
-        this.drawMissedNote(sprite, expected, missAge)
-        continue
-      }
+      // Not visible yet
+      if (depthFraction < 0) continue
 
-      // Skip events outside visible window
-      if (timeDiff < -0.3 || timeDiff > LOOK_AHEAD_SEC) continue
-
-      // Auto-miss notes that pass the hit zone without being graded
-      if (timeDiff < -0.15) {
+      // Auto-mark as missed once past the hit zone
+      if (depthFraction > 1.02 && !this.missedIndices.has(expected.eventIndex)) {
         this.missedIndices.add(expected.eventIndex)
-        this.missTimestamps.set(expected.eventIndex, elapsedSec)
-        continue
       }
+
+      const isMissed = this.missedIndices.has(expected.eventIndex)
+
+      // How far past hit zone (for fade out)
+      const pastHitZone = depthFraction - 1
+      if (isMissed && pastHitZone > MISS_PAST_DEPTH) continue // fully gone
 
       const originalEvent = this.getOriginalEvent(expected.eventIndex)
       const laneIndex = this.getLaneIndex(originalEvent)
       const color = this.getLaneColor(originalEvent)
-
-      const depthFraction = 1 - (timeDiff / LOOK_AHEAD_SEC)
-      if (depthFraction < 0) continue
 
       if (poolIdx >= this.pool.length) this.ensurePoolSize(this.pool.length + 10)
       const sprite = this.pool[poolIdx++]
@@ -130,15 +117,21 @@ export class NoteManager {
       sprite.eventIndex = expected.eventIndex
       sprite.laneIndex = laneIndex
       sprite.color = color
-      sprite.state = 'approaching'
 
-      const clampedDepth = Math.min(depthFraction, 1)
-      const y = this.highway.depthToY(clampedDepth)
+      // Use the same continuous depth math for position — notes just keep going
+      const y = this.highway.depthToYExtended(depthFraction)
       const x = this.highway.getLaneX(laneIndex, y)
-      const scale = this.highway.getScaleAtDepth(clampedDepth)
-      const alpha = NOTE_MIN_ALPHA + (NOTE_MAX_ALPHA - NOTE_MIN_ALPHA) * clampedDepth
+      const scaleDepth = Math.min(depthFraction, 1)
+      const scale = this.highway.getScaleAtDepth(scaleDepth) * (1 + Math.max(0, pastHitZone) * 0.15)
 
-      this.draw3DOval(sprite.gfx, x, y, scale, alpha, color, clampedDepth)
+      if (isMissed) {
+        sprite.state = 'missed'
+        const fadeAlpha = 1 - (pastHitZone / MISS_PAST_DEPTH)
+        this.drawMissedNote(sprite.gfx, x, y, scale, Math.max(0, fadeAlpha), color)
+      } else {
+        sprite.state = 'approaching'
+        this.draw3DOval(sprite.gfx, x, y, scale, 1, color, scaleDepth)
+      }
     }
   }
 
@@ -221,55 +214,46 @@ export class NoteManager {
     }
   }
 
-  /** Draw a missed note sliding past the congas, fading and greying out */
-  private drawMissedNote(sprite: NoteSprite, expected: ExpectedEvent, missAge: number) {
-    const originalEvent = this.getOriginalEvent(expected.eventIndex)
-    const laneIndex = this.getLaneIndex(originalEvent)
-    const color = this.getLaneColor(originalEvent)
-
-    sprite.active = true
-    sprite.gfx.visible = true
-    sprite.state = 'missed'
-    sprite.eventIndex = expected.eventIndex
-
-    const hitY = this.highway.getHitZoneY()
-    const fadeProgress = missAge / MISS_SLIDE_DURATION
-    const alpha = (1 - fadeProgress) * 0.5
-
-    // Continue traveling along the same perspective path past the congas
-    const slideDistance = fadeProgress * 250
-    const y = hitY + slideDistance
-    const x = this.highway.getLaneX(laneIndex, y)
-    const scale = this.highway.getScaleAtDepth(1) * (1 + fadeProgress * 0.15)
-
-    sprite.gfx.clear()
+  /** Draw a missed note — red neon rim and red wing lines, fading out */
+  private drawMissedNote(gfx: Graphics, x: number, y: number, scale: number, fadeAlpha: number, color: number) {
+    gfx.clear()
     const rx = 96 * scale
     const ry = 40 * scale
+    const thickness = 16 * scale
     const missRed = 0xff1744
+    const a = fadeAlpha
 
-    // Dimmed note body
-    sprite.gfx.ellipse(x, y, rx, ry)
-    sprite.gfx.fill({ color: 0x080818, alpha: alpha * 0.7 })
+    // 3D side band
+    gfx.ellipse(x, y + thickness, rx, ry)
+    gfx.fill({ color: missRed, alpha: a * 0.1 })
+    gfx.rect(x - rx, y, rx * 2, thickness)
+    gfx.fill({ color: missRed, alpha: a * 0.08 })
+
+    // Dark body
+    gfx.ellipse(x, y, rx, ry)
+    gfx.fill({ color: 0x080818, alpha: a * 0.9 })
+
     // Red neon rim
-    sprite.gfx.ellipse(x, y, rx, ry)
-    sprite.gfx.stroke({ color: missRed, width: 2, alpha: alpha * 0.6 })
+    gfx.ellipse(x, y, rx, ry)
+    gfx.stroke({ color: missRed, width: 6 * scale, alpha: a * 0.15 })
+    gfx.ellipse(x, y, rx, ry)
+    gfx.stroke({ color: missRed, width: 2.5 * scale, alpha: a * 0.6 })
 
-    // Red glowing wing lines
+    // Red wing lines
     const wingExtend = 30 * scale
-    sprite.gfx.moveTo(x - rx - 2, y)
-    sprite.gfx.lineTo(x - rx - wingExtend, y)
-    sprite.gfx.stroke({ color: missRed, width: 1.5, alpha: alpha * 0.7 })
-    // Wing glow
-    sprite.gfx.moveTo(x - rx - 2, y)
-    sprite.gfx.lineTo(x - rx - wingExtend, y)
-    sprite.gfx.stroke({ color: missRed, width: 5, alpha: alpha * 0.15 })
+    gfx.moveTo(x - rx - 2, y)
+    gfx.lineTo(x - rx - wingExtend, y)
+    gfx.stroke({ color: missRed, width: 1.5, alpha: a * 0.7 })
+    gfx.moveTo(x - rx - 2, y)
+    gfx.lineTo(x - rx - wingExtend, y)
+    gfx.stroke({ color: missRed, width: 5, alpha: a * 0.12 })
 
-    sprite.gfx.moveTo(x + rx + 2, y)
-    sprite.gfx.lineTo(x + rx + wingExtend, y)
-    sprite.gfx.stroke({ color: missRed, width: 1.5, alpha: alpha * 0.7 })
-    sprite.gfx.moveTo(x + rx + 2, y)
-    sprite.gfx.lineTo(x + rx + wingExtend, y)
-    sprite.gfx.stroke({ color: missRed, width: 5, alpha: alpha * 0.15 })
+    gfx.moveTo(x + rx + 2, y)
+    gfx.lineTo(x + rx + wingExtend, y)
+    gfx.stroke({ color: missRed, width: 1.5, alpha: a * 0.7 })
+    gfx.moveTo(x + rx + 2, y)
+    gfx.lineTo(x + rx + wingExtend, y)
+    gfx.stroke({ color: missRed, width: 5, alpha: a * 0.12 })
   }
 
   private getOriginalEvent(eventIndex: number): ExerciseEvent | undefined {

@@ -105,10 +105,9 @@ export class HighwayApp {
     this.hitEffects.triggerHit(laneIndex, grade, noteColor)
   }
 
-  /** Called by React when a miss is detected — note slides past the congas */
+  /** Called by React when a miss is detected — note continues with red glow */
   triggerMiss(eventIndex: number) {
-    const elapsed = this.playheadProgress * this.exerciseDuration
-    this.noteManager.markMissed(eventIndex, elapsed)
+    this.noteManager.markMissed(eventIndex)
     const laneIndex = this.noteManager.getLaneForEvent(eventIndex)
     this.hitEffects.triggerHit(laneIndex, 'miss', 0x666666)
   }
