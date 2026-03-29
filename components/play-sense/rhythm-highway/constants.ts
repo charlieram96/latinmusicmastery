@@ -4,7 +4,7 @@ import type { HitGrade } from '@/lib/play-sense/types'
 // ── Highway geometry ──
 export const HIT_ZONE_Y_FRACTION = 0.78
 export const HIGHWAY_BOTTOM_WIDTH = 0.7
-export const HIGHWAY_TOP_WIDTH = 0.14
+export const HIGHWAY_TOP_WIDTH = 0.20
 export const VANISHING_POINT_Y = 0.08
 export const LOOK_AHEAD_SEC = 3.0
 
