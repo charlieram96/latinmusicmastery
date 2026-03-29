@@ -96,7 +96,9 @@ export class Highway {
   }
 
   getScaleAtDepth(depthFraction: number): number {
-    return 0.1 + depthFraction * 0.9
+    // Match the quadratic Y curve so size growth looks linear on screen
+    const t = depthFraction * depthFraction
+    return 0.1 + t * 0.9
   }
 
   // ── Private ──
