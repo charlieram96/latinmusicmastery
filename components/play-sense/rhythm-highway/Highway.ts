@@ -382,13 +382,13 @@ export class Highway {
     // ── Drum head — neon ring ──
     // Outer glow
     this.receptors.ellipse(cx, cy, baseRx + 6, baseRy + 3)
-    this.receptors.fill({ color, alpha: 0.1 })
+    this.receptors.fill({ color, alpha: 0.3 })
     this.receptors.ellipse(cx, cy, baseRx + 3, baseRy + 1.5)
-    this.receptors.stroke({ color, width: 6, alpha: 0.25 })
+    this.receptors.stroke({ color, width: 6, alpha: 0.5 })
 
     // Head surface
     this.receptors.ellipse(cx, cy, baseRx, baseRy)
-    this.receptors.fill({ color, alpha: 0.15 })
+    this.receptors.fill({ color, alpha: 0.4 })
 
     // Main neon rim
     this.receptors.ellipse(cx, cy, baseRx, baseRy)
@@ -396,14 +396,14 @@ export class Highway {
 
     // Bright core of rim
     this.receptors.ellipse(cx, cy, baseRx, baseRy)
-    this.receptors.stroke({ color: 0xffffff, width: 1, alpha: 0.6 })
+    this.receptors.stroke({ color: 0xffffff, width: 1, alpha: 1 })
 
     // Inner ring
     this.receptors.ellipse(cx, cy, baseRx * 0.7, baseRy * 0.7)
-    this.receptors.stroke({ color, width: 1, alpha: 0.4 })
+    this.receptors.stroke({ color, width: 1, alpha: 1 })
 
     // Center dot
     this.receptors.circle(cx, cy, 3)
-    this.receptors.fill({ color, alpha: 0.8 })
+    this.receptors.fill({ color, alpha: 1 })
   }
 }
