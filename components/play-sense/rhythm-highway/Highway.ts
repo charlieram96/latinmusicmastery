@@ -278,26 +278,19 @@ export class Highway {
     this.receptors.clear()
     const hitY = this.getHitZoneY()
 
-    const drumSizes: Record<string, number> = {
-      quinto: 0.8, conga: 1.0, tumba: 1.15,
-      macho: 0.85, hembra: 1.0, campana: 0.7,
-      cencerro: 0.65, jamblock: 0.6, cascara: 0.7,
-    }
-
     for (let i = 0; i < this.laneCount; i++) {
       const x = this.getLaneX(i, hitY)
       const surface = this.laneSurfaces[i]
       const color = LANE_COLORS[surface] ?? DEFAULT_LANE_COLOR
-      const sizeMultiplier = drumSizes[surface] ?? 1.0
-      this.drawNeonConga(x, hitY, color, sizeMultiplier)
+      this.drawNeonConga(x, hitY, color)
     }
   }
 
   /** Beat Saber-style neon conga — glowing outlines, minimal fill */
-  private drawNeonConga(cx: number, cy: number, color: number, sizeMultiplier: number) {
-    const baseRx = 78 * sizeMultiplier
-    const baseRy = 32 * sizeMultiplier
-    const bodyHeight = 42 * sizeMultiplier
+  private drawNeonConga(cx: number, cy: number, color: number) {
+    const baseRx = 48
+    const baseRy = 20
+    const bodyHeight = 28
 
     // ── Drum body glow (barrel outline) ──
     // Left side
@@ -341,7 +334,7 @@ export class Highway {
     this.receptors.stroke({ color, width: 1, alpha: 0.15 })
 
     // Center dot
-    this.receptors.circle(cx, cy, 3 * sizeMultiplier)
+    this.receptors.circle(cx, cy, 3)
     this.receptors.fill({ color, alpha: 0.3 })
   }
 }
