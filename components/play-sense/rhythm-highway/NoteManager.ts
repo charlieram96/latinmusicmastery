@@ -207,6 +207,17 @@ export class NoteManager {
     gfx.circle(x, y, 1.5 * scale)
     gfx.fill({ color: 0xffffff, alpha: alpha * 0.3 })
 
+    // ── Wing lines — thin horizontal lines extending from left and right ──
+    const wingExtend = 30 * scale
+    // Left wing
+    gfx.moveTo(x - rx - 2, y)
+    gfx.lineTo(x - rx - wingExtend, y)
+    gfx.stroke({ color, width: 1 * scale, alpha: alpha * 0.4 })
+    // Right wing
+    gfx.moveTo(x + rx + 2, y)
+    gfx.lineTo(x + rx + wingExtend, y)
+    gfx.stroke({ color, width: 1 * scale, alpha: alpha * 0.4 })
+
     // ── Pulsing approach glow ──
     if (depth > 0.7) {
       const intensity = (depth - 0.7) / 0.3
@@ -239,18 +250,33 @@ export class NoteManager {
     const scale = this.highway.getScaleAtDepth(1) * (1 + fadeProgress * 0.15)
 
     sprite.gfx.clear()
-    const rx = 22 * scale
-    const ry = 10 * scale
+    const rx = 96 * scale
+    const ry = 40 * scale
+    const missRed = 0xff1744
 
-    // Dimmed, desaturated oval
+    // Dimmed note body
     sprite.gfx.ellipse(x, y, rx, ry)
-    sprite.gfx.fill({ color: 0x666666, alpha: alpha * 0.6 })
+    sprite.gfx.fill({ color: 0x080818, alpha: alpha * 0.7 })
+    // Red neon rim
     sprite.gfx.ellipse(x, y, rx, ry)
-    sprite.gfx.stroke({ color: 0x444444, width: 1, alpha: alpha * 0.4 })
+    sprite.gfx.stroke({ color: missRed, width: 2, alpha: alpha * 0.6 })
 
-    // Faint original color ghost
-    sprite.gfx.ellipse(x, y, rx + 2, ry + 1)
-    sprite.gfx.fill({ color, alpha: alpha * 0.1 })
+    // Red glowing wing lines
+    const wingExtend = 30 * scale
+    sprite.gfx.moveTo(x - rx - 2, y)
+    sprite.gfx.lineTo(x - rx - wingExtend, y)
+    sprite.gfx.stroke({ color: missRed, width: 1.5, alpha: alpha * 0.7 })
+    // Wing glow
+    sprite.gfx.moveTo(x - rx - 2, y)
+    sprite.gfx.lineTo(x - rx - wingExtend, y)
+    sprite.gfx.stroke({ color: missRed, width: 5, alpha: alpha * 0.15 })
+
+    sprite.gfx.moveTo(x + rx + 2, y)
+    sprite.gfx.lineTo(x + rx + wingExtend, y)
+    sprite.gfx.stroke({ color: missRed, width: 1.5, alpha: alpha * 0.7 })
+    sprite.gfx.moveTo(x + rx + 2, y)
+    sprite.gfx.lineTo(x + rx + wingExtend, y)
+    sprite.gfx.stroke({ color: missRed, width: 5, alpha: alpha * 0.15 })
   }
 
   private getOriginalEvent(eventIndex: number): ExerciseEvent | undefined {

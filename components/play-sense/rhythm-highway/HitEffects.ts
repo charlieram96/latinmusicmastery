@@ -281,7 +281,7 @@ export class HitEffects {
     }
   }
 
-  /** Flash the conga drum head on hit */
+  /** Flash the conga drum head and wing lines on hit */
   private spawnDrumFlash(x: number, y: number, grade: HitGrade) {
     const df = this.drumFlashes.find(d => !d.active)
     if (!df) return
@@ -289,16 +289,33 @@ export class HitEffects {
     const color = GRADE_COLORS_HEX[grade]
 
     df.active = true
-    df.life = 0.25
+    df.life = 0.3
     df.gfx.visible = true
     df.gfx.clear()
 
     // Bright oval flash on the drum head
-    df.gfx.ellipse(x, y, 30, 14)
-    df.gfx.fill({ color, alpha: 0.35 })
+    df.gfx.ellipse(x, y, 96, 40)
+    df.gfx.fill({ color, alpha: 0.25 })
     // Wider soft glow
-    df.gfx.ellipse(x, y, 42, 20)
-    df.gfx.fill({ color, alpha: 0.12 })
+    df.gfx.ellipse(x, y, 120, 50)
+    df.gfx.fill({ color, alpha: 0.08 })
+
+    // Glowing wing lines that flash with the hit
+    const wingExtend = 30
+    // Left wing glow
+    df.gfx.moveTo(x - 96, y)
+    df.gfx.lineTo(x - 96 - wingExtend, y)
+    df.gfx.stroke({ color, width: 3, alpha: 0.7 })
+    df.gfx.moveTo(x - 96, y)
+    df.gfx.lineTo(x - 96 - wingExtend, y)
+    df.gfx.stroke({ color, width: 8, alpha: 0.2 })
+    // Right wing glow
+    df.gfx.moveTo(x + 96, y)
+    df.gfx.lineTo(x + 96 + wingExtend, y)
+    df.gfx.stroke({ color, width: 3, alpha: 0.7 })
+    df.gfx.moveTo(x + 96, y)
+    df.gfx.lineTo(x + 96 + wingExtend, y)
+    df.gfx.stroke({ color, width: 8, alpha: 0.2 })
   }
 
   private spawnGradeText(x: number, y: number, grade: HitGrade) {

@@ -160,45 +160,57 @@ export class Highway {
     const halfBottom = (this.width * HIGHWAY_BOTTOM_WIDTH) / 2
     const halfTop = (this.width * HIGHWAY_TOP_WIDTH) / 2
 
-    // Dark flat runway surface
+    // Estimate how much wider the road gets past the hit zone to the bottom
+    const extraHeight = this.height - hitY
+    const widthGrowthRate = (halfBottom - halfTop) / (hitY - vanishY)
+    const halfEnd = halfBottom + widthGrowthRate * extraHeight
+
+    // Road surface — extends all the way to the container bottom
     this.road.moveTo(cx - halfTop, vanishY)
     this.road.lineTo(cx + halfTop, vanishY)
-    this.road.lineTo(cx + halfBottom, hitY)
-    this.road.lineTo(cx - halfBottom, hitY)
+    this.road.lineTo(cx + halfEnd, this.height)
+    this.road.lineTo(cx - halfEnd, this.height)
     this.road.closePath()
     this.road.fill({ color: ROAD_COLOR, alpha: ROAD_ALPHA })
+
+    // Timing line at hit zone — thin, low opacity, full highway width
+    this.road.moveTo(cx - halfBottom, hitY)
+    this.road.lineTo(cx + halfBottom, hitY)
+    this.road.stroke({ color: 0xffffff, width: 1, alpha: 0.18 })
   }
 
   private drawRails() {
     this.rails.clear()
     const cx = this.width / 2
     const vanishY = this.getVanishingY()
-    const hitY = this.getHitZoneY()
     const halfBottom = (this.width * HIGHWAY_BOTTOM_WIDTH) / 2
     const halfTop = (this.width * HIGHWAY_TOP_WIDTH) / 2
+    const extraHeight = this.height - this.getHitZoneY()
+    const widthGrowthRate = (halfBottom - halfTop) / (this.getHitZoneY() - vanishY)
+    const halfEnd = halfBottom + widthGrowthRate * extraHeight
 
-    // Wide neon glow (outer)
+    // Wide neon glow (outer) — full length to bottom
     this.rails.moveTo(cx - halfTop, vanishY)
-    this.rails.lineTo(cx - halfBottom, hitY)
+    this.rails.lineTo(cx - halfEnd, this.height)
     this.rails.stroke({ color: RAIL_COLOR, width: 10, alpha: RAIL_GLOW_ALPHA * 0.2 })
     this.rails.moveTo(cx + halfTop, vanishY)
-    this.rails.lineTo(cx + halfBottom, hitY)
+    this.rails.lineTo(cx + halfEnd, this.height)
     this.rails.stroke({ color: RAIL_COLOR, width: 10, alpha: RAIL_GLOW_ALPHA * 0.2 })
 
     // Mid glow
     this.rails.moveTo(cx - halfTop, vanishY)
-    this.rails.lineTo(cx - halfBottom, hitY)
+    this.rails.lineTo(cx - halfEnd, this.height)
     this.rails.stroke({ color: RAIL_COLOR, width: 4, alpha: RAIL_GLOW_ALPHA * 0.5 })
     this.rails.moveTo(cx + halfTop, vanishY)
-    this.rails.lineTo(cx + halfBottom, hitY)
+    this.rails.lineTo(cx + halfEnd, this.height)
     this.rails.stroke({ color: RAIL_COLOR, width: 4, alpha: RAIL_GLOW_ALPHA * 0.5 })
 
     // Bright core line
     this.rails.moveTo(cx - halfTop, vanishY)
-    this.rails.lineTo(cx - halfBottom, hitY)
+    this.rails.lineTo(cx - halfEnd, this.height)
     this.rails.stroke({ color: 0xffffff, width: 1.5, alpha: 0.6 })
     this.rails.moveTo(cx + halfTop, vanishY)
-    this.rails.lineTo(cx + halfBottom, hitY)
+    this.rails.lineTo(cx + halfEnd, this.height)
     this.rails.stroke({ color: 0xffffff, width: 1.5, alpha: 0.6 })
   }
 
@@ -278,18 +290,6 @@ export class Highway {
       }
     }
 
-    // Hit zone line — bright neon (static)
-    const hitY = this.getHitZoneY()
-    const halfBottom = (this.width * HIGHWAY_BOTTOM_WIDTH) / 2
-    this.gridLines.moveTo(cx - halfBottom, hitY)
-    this.gridLines.lineTo(cx + halfBottom, hitY)
-    this.gridLines.stroke({ color: RAIL_COLOR, width: 14, alpha: 0.15 })
-    this.gridLines.moveTo(cx - halfBottom, hitY)
-    this.gridLines.lineTo(cx + halfBottom, hitY)
-    this.gridLines.stroke({ color: RAIL_COLOR, width: 5, alpha: 0.5 })
-    this.gridLines.moveTo(cx - halfBottom, hitY)
-    this.gridLines.lineTo(cx + halfBottom, hitY)
-    this.gridLines.stroke({ color: 0xffffff, width: 1.5, alpha: 0.7 })
   }
 
   private drawReceptors() {
