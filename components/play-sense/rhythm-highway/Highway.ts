@@ -158,17 +158,22 @@ export class Highway {
     this.topFade.clear()
     const vanishY = this.getVanishingY()
     const hitY = this.getHitZoneY()
-    const fadeHeight = (hitY - vanishY) * 0.25
+    const fadeEnd = vanishY + (hitY - vanishY) * 0.3
     const w = this.width
 
-    // Stack rectangles from top, decreasing opacity — simulates gradient
-    const steps = 12
+    // Solid block from top of canvas to vanishing point — fully covers everything above the board
+    this.topFade.rect(0, 0, w, vanishY)
+    this.topFade.fill({ color: BG_COLOR, alpha: 1 })
+
+    // Gradient fade from vanishing point down into the highway
+    const steps = 16
+    const fadeHeight = fadeEnd - vanishY
     for (let i = 0; i < steps; i++) {
       const t = i / steps
       const y = vanishY + t * fadeHeight
       const h = fadeHeight / steps
-      const alpha = 1 - t // fully opaque at top, transparent at bottom
-      this.topFade.rect(0, y, w, h + 1) // +1 to avoid gaps
+      const alpha = 1 - (t * t) // quadratic falloff for smoother transition
+      this.topFade.rect(0, y, w, h + 1)
       this.topFade.fill({ color: BG_COLOR, alpha })
     }
   }
