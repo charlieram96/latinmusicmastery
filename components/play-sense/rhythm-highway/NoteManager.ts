@@ -189,31 +189,14 @@ export class NoteManager {
     // Side vertical neon edges (left and right silhouette)
     gfx.moveTo(x - rx, y)
     gfx.lineTo(x - rx, y + thickness)
-    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.4 })
+    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.2 })
     gfx.moveTo(x + rx, y)
     gfx.lineTo(x + rx, y + thickness)
-    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.4 })
+    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.2 })
 
     // ── TOP FACE ──
-    // Dark base
     gfx.ellipse(x, y, rx, ry)
     gfx.fill({ color: 0x0a0a1a, alpha: 0.95 })
-
-    // Colored tint
-    gfx.ellipse(x, y, rx * 0.9, ry * 0.9)
-    gfx.fill({ color, alpha: 0.1 })
-
-    // Top face lighting — broad highlight (light from upper-left)
-    gfx.ellipse(x - rx * 0.1, y - ry * 0.12, rx * 0.7, ry * 0.5)
-    gfx.fill({ color: 0xffffff, alpha: 0.06 })
-
-    // Tighter specular highlight
-    gfx.ellipse(x - rx * 0.15, y - ry * 0.2, rx * 0.4, ry * 0.28)
-    gfx.fill({ color: 0xffffff, alpha: 0.1 })
-
-    // Hot specular dot
-    gfx.circle(x - rx * 0.2, y - ry * 0.22, 2.5 * scale)
-    gfx.fill({ color: 0xffffff, alpha: 0.3 })
 
     // ── TOP FACE NEON RIM ──
     // Glow
