@@ -169,7 +169,7 @@ export class HUD {
 
     // Combo
     this.comboText.text = String(combo)
-    const comboColor = combo >= COMBO_FIRE_THRESHOLD ? 0xffd93d : 0x2ecc71
+    const comboColor = combo >= COMBO_FIRE_THRESHOLD ? 0x00e5ff : 0x00e676
     this.comboText.style.fill = comboColor
     this.comboLabelText.style.fill = comboColor
 
@@ -208,11 +208,15 @@ export class HUD {
     // Panel background — subtle dark overlay on right side
     this.panelBg.clear()
     this.panelBg.roundRect(px, 0, this.panelWidth, this.height, 0)
-    this.panelBg.fill({ color: 0x0a0806, alpha: 0.6 })
-    // Left edge subtle line
+    this.panelBg.fill({ color: 0x020208, alpha: 0.7 })
+    // Left edge neon line
     this.panelBg.moveTo(px, 0)
     this.panelBg.lineTo(px, this.height)
-    this.panelBg.stroke({ color: RAIL_COLOR, width: 1, alpha: 0.15 })
+    this.panelBg.stroke({ color: RAIL_COLOR, width: 1, alpha: 0.3 })
+    // Glow on edge
+    this.panelBg.moveTo(px, 0)
+    this.panelBg.lineTo(px, this.height)
+    this.panelBg.stroke({ color: RAIL_COLOR, width: 6, alpha: 0.05 })
 
     // ── Exercise title + BPM ──
     this.titleText.x = cx

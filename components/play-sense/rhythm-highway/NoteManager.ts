@@ -154,79 +154,66 @@ export class NoteManager {
 
   // ── Private ──
 
-  /** Draw a 3D disc/puck note with visible thickness, lighting, and glow */
+  /** Beat Saber-style neon disc: glowing outline, dark interior, bright edges */
   private draw3DOval(gfx: Graphics, x: number, y: number, scale: number, alpha: number, color: number, depth: number) {
     gfx.clear()
 
-    const rx = 48 * scale  // horizontal radius (much larger)
-    const ry = 20 * scale  // vertical radius (perspective-flattened)
-    const thickness = 8 * scale // visible 3D thickness of the disc
+    const rx = 48 * scale
+    const ry = 20 * scale
+    const thickness = 8 * scale
 
-    // ── Outer ambient glow ──
-    gfx.ellipse(x, y, rx + 10 * scale, ry + 5 * scale)
-    gfx.fill({ color, alpha: alpha * 0.08 })
+    // ── Wide neon bloom (outermost) ──
+    gfx.ellipse(x, y, rx + 14 * scale, ry + 7 * scale)
+    gfx.fill({ color, alpha: alpha * 0.06 })
+    gfx.ellipse(x, y, rx + 8 * scale, ry + 4 * scale)
+    gfx.fill({ color, alpha: alpha * 0.1 })
 
-    gfx.ellipse(x, y, rx + 5 * scale, ry + 2.5 * scale)
-    gfx.fill({ color, alpha: alpha * 0.14 })
-
-    // ── 3D disc edge (visible thickness / side) ──
-    // Draw the "side" of the disc as a band below the top face
-    // Left arc of bottom ellipse
+    // ── 3D side band (disc thickness) ──
     gfx.ellipse(x, y + thickness, rx, ry)
-    gfx.fill({ color, alpha: alpha * 0.35 })
-
-    // Connect top and bottom with side walls
-    gfx.moveTo(x - rx, y)
-    gfx.lineTo(x - rx, y + thickness)
-    gfx.ellipse(x, y + thickness, rx, ry)
-    gfx.moveTo(x + rx, y + thickness)
-    gfx.lineTo(x + rx, y)
-    // Fill the side band darker for depth
+    gfx.fill({ color, alpha: alpha * 0.15 })
     gfx.rect(x - rx, y, rx * 2, thickness)
-    gfx.fill({ color, alpha: alpha * 0.3 })
-
-    // Bottom edge highlight
+    gfx.fill({ color, alpha: alpha * 0.12 })
+    // Side neon edge
     gfx.ellipse(x, y + thickness, rx, ry)
-    gfx.stroke({ color, width: 1 * scale, alpha: alpha * 0.25 })
+    gfx.stroke({ color, width: 1.5 * scale, alpha: alpha * 0.35 })
 
-    // ── Top face (main surface) ──
+    // ── Top face — dark with neon outline (Beat Saber style) ──
+    // Dark interior
     gfx.ellipse(x, y, rx, ry)
-    gfx.fill({ color, alpha: alpha * 0.8 })
+    gfx.fill({ color: 0x080818, alpha: alpha * 0.85 })
 
-    // ── Top face lighting ──
-    // Broad highlight across upper half (diffuse light from above)
-    gfx.ellipse(x, y - ry * 0.15, rx * 0.8, ry * 0.55)
-    gfx.fill({ color: 0xffffff, alpha: alpha * 0.15 })
+    // Subtle colored fill
+    gfx.ellipse(x, y, rx * 0.85, ry * 0.85)
+    gfx.fill({ color, alpha: alpha * 0.12 })
 
-    // Tighter highlight (specular band)
-    gfx.ellipse(x - rx * 0.05, y - ry * 0.25, rx * 0.5, ry * 0.3)
-    gfx.fill({ color: 0xffffff, alpha: alpha * 0.2 })
-
-    // Hot specular dot (point light reflection)
-    gfx.circle(x - rx * 0.18, y - ry * 0.3, 3 * scale)
-    gfx.fill({ color: 0xffffff, alpha: alpha * 0.4 })
-
-    // ── Rim stroke ──
+    // ── Neon rim (the signature look) ──
+    // Outer glow of rim
     gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color, width: 2 * scale, alpha: alpha * 0.5 })
+    gfx.stroke({ color, width: 6 * scale, alpha: alpha * 0.2 })
+    // Main neon line
+    gfx.ellipse(x, y, rx, ry)
+    gfx.stroke({ color, width: 2.5 * scale, alpha: alpha * 0.7 })
+    // White-hot core of rim
+    gfx.ellipse(x, y, rx, ry)
+    gfx.stroke({ color: 0xffffff, width: 1 * scale, alpha: alpha * 0.35 })
 
-    // Inner rim detail (gives a "lip" feel)
-    gfx.ellipse(x, y, rx * 0.88, ry * 0.88)
-    gfx.stroke({ color: 0xffffff, width: 0.5 * scale, alpha: alpha * 0.08 })
+    // ── Inner detail ──
+    gfx.ellipse(x, y, rx * 0.55, ry * 0.55)
+    gfx.stroke({ color, width: 1 * scale, alpha: alpha * 0.15 })
 
-    // ── Bottom shadow (below the disc) ──
-    gfx.ellipse(x, y + thickness + 3 * scale, rx * 0.9, ry * 0.5)
-    gfx.fill({ color: 0x000000, alpha: alpha * 0.1 })
+    // Center glow dot
+    gfx.circle(x, y, 3 * scale)
+    gfx.fill({ color, alpha: alpha * 0.4 })
+    gfx.circle(x, y, 1.5 * scale)
+    gfx.fill({ color: 0xffffff, alpha: alpha * 0.3 })
 
     // ── Pulsing approach glow ──
-    if (depth > 0.75) {
-      const pulseIntensity = (depth - 0.75) / 0.25
-      const time = Date.now() * 0.006
-      const pulse = 1 + Math.sin(time) * 0.15 * pulseIntensity
-      gfx.ellipse(x, y, (rx + 14 * scale) * pulse, (ry + 7 * scale) * pulse)
-      gfx.fill({ color, alpha: alpha * 0.06 * pulseIntensity })
-      gfx.ellipse(x, y, (rx + 8 * scale) * pulse, (ry + 4 * scale) * pulse)
-      gfx.fill({ color, alpha: alpha * 0.04 * pulseIntensity })
+    if (depth > 0.7) {
+      const intensity = (depth - 0.7) / 0.3
+      const time = Date.now() * 0.008
+      const pulse = 1 + Math.sin(time) * 0.2 * intensity
+      gfx.ellipse(x, y, (rx + 18 * scale) * pulse, (ry + 9 * scale) * pulse)
+      gfx.fill({ color, alpha: alpha * 0.05 * intensity })
     }
   }
 
