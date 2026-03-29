@@ -236,10 +236,10 @@ export class NoteManager {
     const fadeProgress = missAge / MISS_SLIDE_DURATION
     const alpha = (1 - fadeProgress) * 0.5
 
-    // Continue traveling downward past the congas toward bottom of screen
+    // Continue traveling along the same perspective path past the congas
     const slideDistance = fadeProgress * 250
     const y = hitY + slideDistance
-    const x = this.highway.getLaneX(laneIndex, hitY)
+    const x = this.highway.getLaneX(laneIndex, y)
     const scale = this.highway.getScaleAtDepth(1) * (1 + fadeProgress * 0.15)
 
     sprite.gfx.clear()
