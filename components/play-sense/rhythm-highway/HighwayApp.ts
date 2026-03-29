@@ -42,10 +42,11 @@ export class HighwayApp {
     this.hitEffects = new HitEffects(this.highway)
     this.hud = new HUD()
 
-    // Layer order: highway (bg) → notes → effects → hud (top)
+    // Layer order: highway (bg) → notes → top fade overlay → effects → hud (top)
     app.stage.addChild(
       this.highway.container,
       this.noteManager.container,
+      this.highway.overlayContainer,
       this.hitEffects.container,
       this.hud.container,
     )

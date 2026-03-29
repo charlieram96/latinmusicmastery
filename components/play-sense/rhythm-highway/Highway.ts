@@ -31,6 +31,10 @@ export class Highway {
   private dividers = new Graphics()
   private gridLines = new Graphics()
   private receptors = new Graphics()
+  private topFade = new Graphics()
+
+  /** Separate container for the top fade overlay — placed above notes in HighwayApp */
+  readonly overlayContainer = new Container()
 
   private width = 0
   private height = 0
@@ -42,6 +46,7 @@ export class Highway {
       this.bg, this.sideFog, this.road, this.rails,
       this.dividers, this.gridLines, this.receptors,
     )
+    this.overlayContainer.addChild(this.topFade)
   }
 
   setLanes(surfaces: string[]) {
@@ -96,7 +101,7 @@ export class Highway {
 
   getScaleAtDepth(depthFraction: number): number {
     const t = depthFraction * depthFraction
-    return 0.35 + t * 0.65
+    return 0.28 + t * 0.72
   }
 
   // ── Private ──
@@ -130,6 +135,7 @@ export class Highway {
     this.drawDividers()
     this.drawGrid(0, 120)
     this.drawReceptors()
+    this.drawTopFade()
   }
 
   private drawBackground() {
@@ -145,6 +151,26 @@ export class Highway {
     this.bg.fill({ color: RAIL_COLOR, alpha: 0.06 })
     this.bg.ellipse(cx, vanishY, this.width * 0.12, this.height * 0.03)
     this.bg.fill({ color: RAIL_COLOR, alpha: 0.04 })
+  }
+
+  /** Gradient overlay at the top of the board — notes/frets emerge from fog */
+  private drawTopFade() {
+    this.topFade.clear()
+    const vanishY = this.getVanishingY()
+    const hitY = this.getHitZoneY()
+    const fadeHeight = (hitY - vanishY) * 0.25
+    const w = this.width
+
+    // Stack rectangles from top, decreasing opacity — simulates gradient
+    const steps = 12
+    for (let i = 0; i < steps; i++) {
+      const t = i / steps
+      const y = vanishY + t * fadeHeight
+      const h = fadeHeight / steps
+      const alpha = 1 - t // fully opaque at top, transparent at bottom
+      this.topFade.rect(0, y, w, h + 1) // +1 to avoid gaps
+      this.topFade.fill({ color: BG_COLOR, alpha })
+    }
   }
 
   /** Animated colored fog hugging the sides of the runway */
