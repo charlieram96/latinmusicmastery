@@ -137,18 +137,86 @@ export class Highway {
     this.receptors.clear()
     const hitY = this.getHitZoneY()
 
+    // Drum sizes: quinto is smallest, tumba is largest
+    const drumSizes: Record<string, number> = {
+      quinto: 0.8, conga: 1.0, tumba: 1.15,
+      macho: 0.85, hembra: 1.0, campana: 0.7,
+      cencerro: 0.65, jamblock: 0.6, cascara: 0.7,
+    }
+
     for (let i = 0; i < this.laneCount; i++) {
       const x = this.getLaneX(i, hitY)
-      const scale = this.getScaleAtDepth(1)
-      const w = 44 * scale
-      const h = 24 * scale
-      const color = LANE_COLORS[this.laneSurfaces[i]] ?? DEFAULT_LANE_COLOR
-
-      this.receptors.roundRect(x - w / 2, hitY - h / 2, w, h, 5)
-      this.receptors.stroke({ color, width: 2, alpha: 0.4 })
-      this.receptors.roundRect(x - w / 2, hitY - h / 2, w, h, 5)
-      this.receptors.fill({ color, alpha: 0.08 })
+      const surface = this.laneSurfaces[i]
+      const color = LANE_COLORS[surface] ?? DEFAULT_LANE_COLOR
+      const sizeMultiplier = drumSizes[surface] ?? 1.0
+      this.drawConga(x, hitY, color, sizeMultiplier)
     }
+  }
+
+  /** Draw a conga drum illustration at the given position */
+  private drawConga(cx: number, cy: number, color: number, sizeMultiplier: number) {
+    const baseRx = 28 * sizeMultiplier
+    const baseRy = 12 * sizeMultiplier
+    const bodyHeight = 22 * sizeMultiplier
+
+    // ── Drum body (barrel visible below the head) ──
+    // Left side of barrel
+    this.receptors.moveTo(cx - baseRx * 0.9, cy)
+    this.receptors.lineTo(cx - baseRx * 0.85, cy + bodyHeight)
+    // Bottom curve
+    this.receptors.ellipse(cx, cy + bodyHeight, baseRx * 0.85, baseRy * 0.6)
+    // Right side
+    this.receptors.moveTo(cx + baseRx * 0.9, cy)
+    this.receptors.lineTo(cx + baseRx * 0.85, cy + bodyHeight)
+
+    // Body fill — darker shade of the drum color
+    this.receptors.ellipse(cx, cy + bodyHeight, baseRx * 0.85, baseRy * 0.6)
+    this.receptors.fill({ color, alpha: 0.12 })
+
+    // Body barrel sides
+    this.receptors.moveTo(cx - baseRx * 0.9, cy)
+    this.receptors.lineTo(cx - baseRx * 0.85, cy + bodyHeight)
+    this.receptors.stroke({ color, width: 1.5, alpha: 0.2 })
+    this.receptors.moveTo(cx + baseRx * 0.9, cy)
+    this.receptors.lineTo(cx + baseRx * 0.85, cy + bodyHeight)
+    this.receptors.stroke({ color, width: 1.5, alpha: 0.2 })
+
+    // Barrel stave lines (vertical detail)
+    for (let s = -0.6; s <= 0.6; s += 0.3) {
+      const sx = cx + baseRx * s
+      this.receptors.moveTo(sx, cy + baseRy * 0.3)
+      this.receptors.lineTo(sx * 0.98 + cx * 0.02, cy + bodyHeight - baseRy * 0.2)
+      this.receptors.stroke({ color, width: 0.5, alpha: 0.08 })
+    }
+
+    // ── Drum head (top, main surface) ──
+    // Outer rim glow
+    this.receptors.ellipse(cx, cy, baseRx + 4, baseRy + 2)
+    this.receptors.fill({ color, alpha: 0.06 })
+
+    // Drum head skin — main surface
+    this.receptors.ellipse(cx, cy, baseRx, baseRy)
+    this.receptors.fill({ color, alpha: 0.15 })
+
+    // Head rim (thick ring)
+    this.receptors.ellipse(cx, cy, baseRx, baseRy)
+    this.receptors.stroke({ color, width: 2.5, alpha: 0.45 })
+
+    // Inner rim line
+    this.receptors.ellipse(cx, cy, baseRx * 0.85, baseRy * 0.85)
+    this.receptors.stroke({ color, width: 1, alpha: 0.15 })
+
+    // Skin highlight — lighter patch for 3D dome
+    this.receptors.ellipse(cx - baseRx * 0.1, cy - baseRy * 0.15, baseRx * 0.5, baseRy * 0.4)
+    this.receptors.fill({ color: 0xffffff, alpha: 0.05 })
+
+    // Center bearing spot
+    this.receptors.circle(cx, cy, 2.5 * sizeMultiplier)
+    this.receptors.fill({ color, alpha: 0.2 })
+
+    // Metal ring detail at top of barrel
+    this.receptors.ellipse(cx, cy + 2, baseRx * 0.95, baseRy * 0.95)
+    this.receptors.stroke({ color: RAIL_COLOR, width: 0.8, alpha: 0.15 })
   }
 
   private drawBackground() {

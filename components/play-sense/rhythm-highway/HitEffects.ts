@@ -11,16 +11,21 @@ import {
   RAIL_COLOR,
   HUD_FONT_FAMILY,
   HIGHWAY_BOTTOM_WIDTH,
-  HIT_ZONE_Y_FRACTION,
 } from './constants'
 import type { Highway } from './Highway'
 
-interface Particle {
+interface ShardParticle {
   gfx: Graphics
+  x: number
+  y: number
   vx: number
   vy: number
+  rotation: number
+  rotSpeed: number
   life: number
   maxLife: number
+  color: number
+  size: number
   active: boolean
 }
 
@@ -32,11 +37,10 @@ interface FloatingText {
   active: boolean
 }
 
-interface ReceptorFlash {
+interface DrumFlash {
   gfx: Graphics
   life: number
   active: boolean
-  laneIndex: number
 }
 
 interface Ember {
@@ -49,15 +53,15 @@ interface Ember {
 }
 
 /**
- * Visual effects layer: particle bursts, floating grade text, receptor flashes,
- * and combo fire embers. Call triggerHit() when a note is hit, and update() each frame.
+ * Visual effects: shatter/break on hit, floating grade text, drum flash,
+ * and combo fire embers. Notes breaking into shards on hit is the primary effect.
  */
 export class HitEffects {
   readonly container = new Container()
 
-  private particles: Particle[] = []
+  private shards: ShardParticle[] = []
   private floatingTexts: FloatingText[] = []
-  private receptorFlashes: ReceptorFlash[] = []
+  private drumFlashes: DrumFlash[] = []
   private embers: Ember[] = []
   private highway: Highway
   private laneCount = 3
@@ -66,14 +70,19 @@ export class HitEffects {
 
   constructor(highway: Highway) {
     this.highway = highway
-    // Pre-allocate particles
-    for (let i = 0; i < 60; i++) {
+
+    // Pre-allocate shards (more for impressive break effect)
+    for (let i = 0; i < 80; i++) {
       const gfx = new Graphics()
       gfx.visible = false
       this.container.addChild(gfx)
-      this.particles.push({ gfx, vx: 0, vy: 0, life: 0, maxLife: 0, active: false })
+      this.shards.push({
+        gfx, x: 0, y: 0, vx: 0, vy: 0, rotation: 0, rotSpeed: 0,
+        life: 0, maxLife: 0, color: 0, size: 0, active: false,
+      })
     }
-    // Pre-allocate floating texts
+
+    // Floating texts
     for (let i = 0; i < 8; i++) {
       const text = new Text({
         text: '',
@@ -90,14 +99,16 @@ export class HitEffects {
       this.container.addChild(text)
       this.floatingTexts.push({ text, vy: 0, life: 0, maxLife: 0, active: false })
     }
-    // Pre-allocate receptor flashes
+
+    // Drum flashes (glow on the conga when hit)
     for (let i = 0; i < 6; i++) {
       const gfx = new Graphics()
       gfx.visible = false
       this.container.addChild(gfx)
-      this.receptorFlashes.push({ gfx, life: 0, active: false, laneIndex: 0 })
+      this.drumFlashes.push({ gfx, life: 0, active: false })
     }
-    // Pre-allocate embers
+
+    // Embers
     for (let i = 0; i < 20; i++) {
       const gfx = new Graphics()
       gfx.visible = false
@@ -115,25 +126,25 @@ export class HitEffects {
     this.height = height
   }
 
-  /** Trigger visual effects for a hit on a specific lane */
-  triggerHit(laneIndex: number, grade: HitGrade) {
+  /** Trigger break/shatter effect when a note is hit */
+  triggerHit(laneIndex: number, grade: HitGrade, noteColor: number) {
     const hitY = this.highway.getHitZoneY()
     const x = this.highway.getLaneX(laneIndex, hitY)
 
-    // Particle burst
-    this.spawnParticles(x, hitY, grade)
+    if (grade !== 'miss') {
+      // Shatter the note into shards
+      this.spawnShards(x, hitY, grade, noteColor)
+      // Flash the conga drum
+      this.spawnDrumFlash(x, hitY, grade)
+    }
 
     // Floating grade text
-    this.spawnGradeText(x, hitY - 30, grade)
-
-    // Receptor flash
-    this.spawnReceptorFlash(laneIndex, grade)
+    this.spawnGradeText(x, hitY - 40, grade)
   }
 
   /** Spawn combo fire embers along the rails */
   updateComboFire(combo: number) {
     if (combo < COMBO_FIRE_THRESHOLD) return
-    // Spawn an ember on each rail occasionally
     if (Math.random() > 0.3) return
 
     const hitY = this.highway.getHitZoneY()
@@ -153,20 +164,38 @@ export class HitEffects {
     ember.gfx.visible = true
   }
 
-  /** Update all active effects. dt is delta time in seconds. */
+  /** Update all active effects each frame */
   update(dt: number) {
-    // Particles
-    for (const p of this.particles) {
-      if (!p.active) continue
-      p.life -= dt
-      if (p.life <= 0) {
-        p.active = false
-        p.gfx.visible = false
+    // Shards
+    for (const s of this.shards) {
+      if (!s.active) continue
+      s.life -= dt
+      if (s.life <= 0) {
+        s.active = false
+        s.gfx.visible = false
         continue
       }
-      p.gfx.x += p.vx * dt * 60
-      p.gfx.y += p.vy * dt * 60
-      p.gfx.alpha = p.life / p.maxLife
+
+      s.x += s.vx * dt * 60
+      s.y += s.vy * dt * 60
+      s.vy += 0.15 // gravity
+      s.rotation += s.rotSpeed * dt * 60
+
+      const progress = 1 - s.life / s.maxLife
+      const alpha = 1 - progress * progress // quadratic fade
+
+      s.gfx.clear()
+      // Draw shard as a small oval fragment
+      const sz = s.size * (1 - progress * 0.5)
+      s.gfx.ellipse(0, 0, sz, sz * 0.6)
+      s.gfx.fill({ color: s.color, alpha: alpha * 0.8 })
+      // Shard glow
+      s.gfx.ellipse(0, 0, sz + 2, sz * 0.6 + 1)
+      s.gfx.fill({ color: s.color, alpha: alpha * 0.2 })
+
+      s.gfx.x = s.x
+      s.gfx.y = s.y
+      s.gfx.rotation = s.rotation
     }
 
     // Floating texts
@@ -180,7 +209,6 @@ export class HitEffects {
       }
       ft.text.y += ft.vy * dt * 60
       const progress = 1 - ft.life / ft.maxLife
-      // Fade in quickly, hold, then fade out
       if (progress < 0.15) {
         ft.text.alpha = progress / 0.15
       } else if (progress > 0.6) {
@@ -191,16 +219,16 @@ export class HitEffects {
       ft.text.scale.set(1 + Math.sin(progress * Math.PI) * 0.1)
     }
 
-    // Receptor flashes
-    for (const rf of this.receptorFlashes) {
-      if (!rf.active) continue
-      rf.life -= dt
-      if (rf.life <= 0) {
-        rf.active = false
-        rf.gfx.visible = false
+    // Drum flashes
+    for (const df of this.drumFlashes) {
+      if (!df.active) continue
+      df.life -= dt
+      if (df.life <= 0) {
+        df.active = false
+        df.gfx.visible = false
         continue
       }
-      rf.gfx.alpha = rf.life / 0.2
+      df.gfx.alpha = df.life / 0.25
     }
 
     // Embers
@@ -225,30 +253,52 @@ export class HitEffects {
 
   // ── Private ──
 
-  private spawnParticles(x: number, y: number, grade: HitGrade) {
+  /** Spawn oval-shaped shards that fly outward like the note shattered */
+  private spawnShards(x: number, y: number, grade: HitGrade, noteColor: number) {
     const count = PARTICLE_COUNTS[grade]
-    const color = GRADE_COLORS_HEX[grade]
+    const gradeColor = GRADE_COLORS_HEX[grade]
 
     for (let i = 0; i < count; i++) {
-      const p = this.particles.find(p => !p.active)
-      if (!p) break
+      const s = this.shards.find(s => !s.active)
+      if (!s) break
 
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5
-      const speed = 2 + Math.random() * 3
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6
+      const speed = 2.5 + Math.random() * 4
 
-      p.active = true
-      p.vx = Math.cos(angle) * speed
-      p.vy = Math.sin(angle) * speed - 1 // Bias upward
-      p.life = PARTICLE_LIFETIME_SEC
-      p.maxLife = PARTICLE_LIFETIME_SEC
-      p.gfx.visible = true
-      p.gfx.clear()
-      const size = 2 + Math.random() * 2
-      p.gfx.circle(0, 0, size)
-      p.gfx.fill(color)
-      p.gfx.x = x
-      p.gfx.y = y
+      s.active = true
+      s.x = x + (Math.random() - 0.5) * 10
+      s.y = y + (Math.random() - 0.5) * 6
+      s.vx = Math.cos(angle) * speed
+      s.vy = Math.sin(angle) * speed - 2 // strong upward bias
+      s.rotation = Math.random() * Math.PI * 2
+      s.rotSpeed = (Math.random() - 0.5) * 0.3
+      s.life = PARTICLE_LIFETIME_SEC + Math.random() * 0.3
+      s.maxLife = s.life
+      // Mix note color and grade color for variety
+      s.color = i % 3 === 0 ? gradeColor : noteColor
+      s.size = 3 + Math.random() * 4
+      s.gfx.visible = true
     }
+  }
+
+  /** Flash the conga drum head on hit */
+  private spawnDrumFlash(x: number, y: number, grade: HitGrade) {
+    const df = this.drumFlashes.find(d => !d.active)
+    if (!df) return
+
+    const color = GRADE_COLORS_HEX[grade]
+
+    df.active = true
+    df.life = 0.25
+    df.gfx.visible = true
+    df.gfx.clear()
+
+    // Bright oval flash on the drum head
+    df.gfx.ellipse(x, y, 30, 14)
+    df.gfx.fill({ color, alpha: 0.35 })
+    // Wider soft glow
+    df.gfx.ellipse(x, y, 42, 20)
+    df.gfx.fill({ color, alpha: 0.12 })
   }
 
   private spawnGradeText(x: number, y: number, grade: HitGrade) {
@@ -270,29 +320,5 @@ export class HitEffects {
     ft.vy = -1.2
     ft.life = 1.0
     ft.maxLife = 1.0
-  }
-
-  private spawnReceptorFlash(laneIndex: number, grade: HitGrade) {
-    const rf = this.receptorFlashes.find(r => !r.active)
-    if (!rf) return
-
-    const hitY = this.highway.getHitZoneY()
-    const x = this.highway.getLaneX(laneIndex, hitY)
-    const scale = this.highway.getScaleAtDepth(1)
-    const w = 50 * scale
-    const h = 28 * scale
-    const color = GRADE_COLORS_HEX[grade]
-
-    rf.active = true
-    rf.life = 0.2
-    rf.laneIndex = laneIndex
-    rf.gfx.visible = true
-    rf.gfx.clear()
-    rf.gfx.roundRect(-w / 2, -h / 2, w, h, 6)
-    rf.gfx.fill({ color, alpha: 0.3 })
-    rf.gfx.roundRect(-w / 2, -h / 2, w, h, 6)
-    rf.gfx.stroke({ color, width: 2, alpha: 0.8 })
-    rf.gfx.x = x
-    rf.gfx.y = hitY
   }
 }

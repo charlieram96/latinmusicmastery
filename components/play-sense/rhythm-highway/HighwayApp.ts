@@ -95,18 +95,20 @@ export class HighwayApp {
     this.hud.setExerciseInfo(exercise.title, exercise.bpm)
   }
 
-  /** Called by React when a hit is detected */
+  /** Called by React when a note is hit — shatters the note and shows grade */
   triggerHitEffect(eventIndex: number, grade: HitGrade) {
     const laneIndex = this.noteManager.getLaneForEvent(eventIndex)
-    this.noteManager.markGraded(eventIndex)
-    this.hitEffects.triggerHit(laneIndex, grade)
+    const noteColor = this.noteManager.getColorForEvent(eventIndex)
+    this.noteManager.markHit(eventIndex)
+    this.hitEffects.triggerHit(laneIndex, grade, noteColor)
   }
 
-  /** Called by React when a miss is detected */
+  /** Called by React when a miss is detected — note slides past the congas */
   triggerMiss(eventIndex: number) {
-    this.noteManager.markGraded(eventIndex)
+    const elapsed = this.playheadProgress * this.exerciseDuration
+    this.noteManager.markMissed(eventIndex, elapsed)
     const laneIndex = this.noteManager.getLaneForEvent(eventIndex)
-    this.hitEffects.triggerHit(laneIndex, 'miss')
+    this.hitEffects.triggerHit(laneIndex, 'miss', 0x666666)
   }
 
   /** Destroy the PixiJS application and free resources */
