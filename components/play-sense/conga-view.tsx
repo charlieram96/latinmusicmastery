@@ -40,8 +40,8 @@ const SURFACE_COLORS: Record<string, string> = {
 
 const HIT_LINE_RATIO = 0.92
 const LOOK_AHEAD_SEC = 4
-const BOARD_HEIGHT = 2500
-const BOARD_HEIGHT_MOBILE = 2000
+const BOARD_HEIGHT = 3500
+const BOARD_HEIGHT_MOBILE = 2800
 const LOOK_BEHIND_SEC = 0.4
 
 interface NoteData {
@@ -344,8 +344,8 @@ export function CongaView({
   return (
     <div ref={containerRef} className="relative w-full h-full fretboard-outer shadow-md">
       <div className="fretboard-perspective">
-        <div className="fretboard-runway">
-          <div className="fretboard-board notation-parchment">
+        <div className="conga-runway">
+          <div className="conga-board notation-parchment">
             <svg
               ref={svgRef}
               viewBox={`0 0 ${size.width} ${boardHeight}`}
