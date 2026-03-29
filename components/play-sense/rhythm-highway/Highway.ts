@@ -37,6 +37,7 @@ export class Highway {
   private dividers = new Graphics()
   private gridLines = new Graphics()
   private starfield = new Graphics()
+  private receptors = new Graphics()
 
   private stars: Star[] = []
   private width = 0
@@ -45,7 +46,7 @@ export class Highway {
   private laneSurfaces: string[] = []
 
   constructor() {
-    this.container.addChild(this.bg, this.starfield, this.road, this.rails, this.dividers, this.gridLines)
+    this.container.addChild(this.bg, this.starfield, this.road, this.rails, this.dividers, this.gridLines, this.receptors)
     this.initStars()
   }
 
@@ -123,6 +124,27 @@ export class Highway {
     this.drawRails()
     this.drawDividers()
     this.drawGrid(0)
+    this.drawReceptors()
+  }
+
+  /** Draw receptor pads at the hit zone — one per lane */
+  private drawReceptors() {
+    this.receptors.clear()
+    const hitY = this.getHitZoneY()
+
+    for (let i = 0; i < this.laneCount; i++) {
+      const x = this.getLaneX(i, hitY)
+      const scale = this.getScaleAtDepth(1)
+      const w = 44 * scale
+      const h = 24 * scale
+      const color = LANE_COLORS[this.laneSurfaces[i]] ?? DEFAULT_LANE_COLOR
+
+      // Receptor outline
+      this.receptors.roundRect(x - w / 2, hitY - h / 2, w, h, 5)
+      this.receptors.stroke({ color, width: 2, alpha: 0.4 })
+      this.receptors.roundRect(x - w / 2, hitY - h / 2, w, h, 5)
+      this.receptors.fill({ color, alpha: 0.08 })
+    }
   }
 
   private drawBackground() {
