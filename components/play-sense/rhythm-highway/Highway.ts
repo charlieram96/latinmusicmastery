@@ -84,7 +84,7 @@ export class Highway {
   }
 
   getScaleAtDepth(depthFraction: number): number {
-    return 0.3 + depthFraction * 0.7
+    return 0.1 + depthFraction * 0.9
   }
 
   // ── Private ──
