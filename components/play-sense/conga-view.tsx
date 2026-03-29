@@ -243,12 +243,60 @@ export function CongaView({
       svgEl.dataset.graded = 'true'
       svgEl.style.fill = color
       svgEl.style.stroke = color
+
       if (result.grade === 'miss') {
         svgEl.classList.add('note-miss-shake')
         setTimeout(() => svgEl.classList.remove('note-miss-shake'), 400)
       } else {
-        svgEl.classList.add('note-hit-pulse')
-        setTimeout(() => svgEl.classList.remove('note-hit-pulse'), 450)
+        // Explode: scale up + fade out the note
+        svgEl.style.transformOrigin = 'center'
+        svgEl.style.transition = 'none'
+        svgEl.style.opacity = '1'
+        requestAnimationFrame(() => {
+          svgEl.style.transition = 'transform 0.35s ease-out, opacity 0.35s ease-out'
+          svgEl.style.transform = 'scale(2.2)'
+          svgEl.style.opacity = '0'
+        })
+
+        // Add burst rings as sibling SVG elements
+        const noteData = notes.find(n => n.eventIndex === result.eventIndex)
+        if (noteData && svgRef.current) {
+          const cx = getLaneX(noteData.surface)
+          const cy = -noteData.normalizedTime * virtualHeight
+          const parentG = svgRef.current.querySelector(`g[transform*="translate"]:last-of-type`)
+          if (parentG) {
+            for (let ring = 0; ring < 3; ring++) {
+              const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+              circle.setAttribute('cx', String(cx))
+              circle.setAttribute('cy', String(cy))
+              circle.setAttribute('r', String(drumRadius))
+              circle.setAttribute('fill', 'none')
+              circle.setAttribute('stroke', color)
+              circle.setAttribute('stroke-width', String(4 - ring))
+              circle.setAttribute('opacity', '0.7')
+              circle.style.transformOrigin = `${cx}px ${cy}px`
+
+              const aR = document.createElementNS('http://www.w3.org/2000/svg', 'animate')
+              aR.setAttribute('attributeName', 'r')
+              aR.setAttribute('from', String(drumRadius))
+              aR.setAttribute('to', String(drumRadius * (2.5 + ring * 0.8)))
+              aR.setAttribute('dur', `${0.4 + ring * 0.1}s`)
+              aR.setAttribute('fill', 'freeze')
+              circle.appendChild(aR)
+
+              const aO = document.createElementNS('http://www.w3.org/2000/svg', 'animate')
+              aO.setAttribute('attributeName', 'opacity')
+              aO.setAttribute('from', String(0.7 - ring * 0.15))
+              aO.setAttribute('to', '0')
+              aO.setAttribute('dur', `${0.4 + ring * 0.1}s`)
+              aO.setAttribute('fill', 'freeze')
+              circle.appendChild(aO)
+
+              parentG.appendChild(circle)
+              setTimeout(() => circle.remove(), 600)
+            }
+          }
+        }
       }
     }
   }, [eventResults])
