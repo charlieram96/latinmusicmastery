@@ -58,6 +58,8 @@ const SLIDER_CONFIG: { key: keyof NoteStyle; label: string; min: number; max: nu
   { key: 'topFaceShadowAlpha', label: 'Top Shadow on Side', min: 0, max: 1, step: 0.01 },
   { key: 'bottomRimAlpha', label: 'Bottom Rim Neon', min: 0, max: 1, step: 0.01 },
   { key: 'bottomRimWhiteAlpha', label: 'Bottom Rim White', min: 0, max: 1, step: 0.01 },
+  { key: 'midFaceAlpha', label: 'Mid Face', min: 0, max: 1, step: 0.01 },
+  { key: 'midRimAlpha', label: 'Mid Rim', min: 0, max: 1, step: 0.01 },
   { key: 'verticalEdgeAlpha', label: 'Vertical Edges', min: 0, max: 1, step: 0.01 },
   { key: 'dropShadowAlpha', label: 'Drop Shadow', min: 0, max: 1, step: 0.01 },
   { key: 'wingLineAlpha', label: 'Wing Lines', min: 0, max: 1, step: 0.01 },

@@ -19,6 +19,8 @@ export interface NoteStyle {
   topFaceShadowAlpha: number
   bottomRimAlpha: number
   bottomRimWhiteAlpha: number
+  midFaceAlpha: number
+  midRimAlpha: number
   verticalEdgeAlpha: number
   topFaceAlpha: number
   topRimGlowAlpha: number
@@ -39,6 +41,8 @@ export const DEFAULT_NOTE_STYLE: NoteStyle = {
   topFaceShadowAlpha: 0,
   bottomRimAlpha: 0.59,
   bottomRimWhiteAlpha: 0.38,
+  midFaceAlpha: 0.4,
+  midRimAlpha: 0.45,
   verticalEdgeAlpha: 0,
   topFaceAlpha: 0.89,
   topRimGlowAlpha: 0.5,
@@ -235,7 +239,14 @@ export class NoteManager {
     gfx.ellipse(x, y + thickness, rx, ry)
     gfx.stroke({ color: 0xffffff, width: 0.5 * scale, alpha: s.bottomRimWhiteAlpha })
 
-    // 9. Side vertical neon edges
+    // 9. Middle face
+    const midY = y + thickness * 0.5
+    gfx.ellipse(x, midY, rx, ry)
+    gfx.fill({ color, alpha: s.midFaceAlpha })
+    gfx.ellipse(x, midY, rx, ry)
+    gfx.stroke({ color, width: 1.5 * scale, alpha: s.midRimAlpha })
+
+    // 10. Side vertical neon edges
     gfx.moveTo(x - rx, y)
     gfx.lineTo(x - rx, y + thickness)
     gfx.stroke({ color, width: 1.5 * scale, alpha: s.verticalEdgeAlpha })
