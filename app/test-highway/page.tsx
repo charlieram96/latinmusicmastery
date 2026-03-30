@@ -145,19 +145,15 @@ export default function TestHighwayPage() {
 
   const triggerHit = useCallback((grade: HitGrade) => {
     const app = appRef.current; if (!app) return
-    const elapsed = ((Date.now() - startTimeRef.current) / 1000) * speed
-    const currentTime = durationRef.current > 0 ? (elapsed % durationRef.current) : 0
-    const eventIdx = Math.floor(currentTime / (60 / MOCK_EXERCISE.bpm)) % (MOCK_EXERCISE.events.length * MOCK_EXERCISE.loopCount)
-    app.triggerHitEffect(eventIdx, grade)
-  }, [speed])
+    const idx = app.getClosestEventIndex()
+    if (idx !== null) app.triggerHitEffect(idx, grade)
+  }, [])
 
   const triggerMiss = useCallback(() => {
     const app = appRef.current; if (!app) return
-    const elapsed = ((Date.now() - startTimeRef.current) / 1000) * speed
-    const currentTime = durationRef.current > 0 ? (elapsed % durationRef.current) : 0
-    const eventIdx = Math.floor(currentTime / (60 / MOCK_EXERCISE.bpm)) % (MOCK_EXERCISE.events.length * MOCK_EXERCISE.loopCount)
-    app.triggerMiss(eventIdx)
-  }, [speed])
+    const idx = app.getClosestEventIndex()
+    if (idx !== null) app.triggerMiss(idx)
+  }, [])
 
   const currentStyles = tab === 'notes' ? noteStyle : tab === 'congas' ? congaStyle : fadeStyle
   const currentSliders = tab === 'notes' ? NOTE_SLIDERS : tab === 'congas' ? CONGA_SLIDERS : FADE_SLIDERS

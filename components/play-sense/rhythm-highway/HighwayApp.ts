@@ -110,6 +110,12 @@ export class HighwayApp {
   get congaStyle(): CongaStyle { return this.highway.congaStyle }
   set congaStyle(style: CongaStyle) { this.highway.congaStyle = style }
 
+  /** Find the note closest to the hit zone */
+  getClosestEventIndex(): number | null {
+    const elapsed = this.playheadProgress * this.exerciseDuration
+    return this.noteManager.getClosestEventIndex(elapsed)
+  }
+
   /** Called by React when a note is hit — shatters the note and shows grade */
   triggerHitEffect(eventIndex: number, grade: HitGrade) {
     const laneIndex = this.noteManager.getLaneForEvent(eventIndex)

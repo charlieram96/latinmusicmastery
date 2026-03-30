@@ -185,6 +185,22 @@ export class NoteManager {
     }
   }
 
+  /** Find the event index of the note closest to the hit zone that hasn't been hit or missed */
+  getClosestEventIndex(elapsedSec: number): number | null {
+    let bestIdx: number | null = null
+    let bestDist = Infinity
+    for (const expected of this.expectedEvents) {
+      if (this.hitIndices.has(expected.eventIndex)) continue
+      if (this.missedIndices.has(expected.eventIndex)) continue
+      const dist = Math.abs(expected.timestamp - elapsedSec)
+      if (dist < bestDist) {
+        bestDist = dist
+        bestIdx = expected.eventIndex
+      }
+    }
+    return bestIdx
+  }
+
   getLaneForEvent(eventIndex: number): number {
     const originalEvent = this.getOriginalEvent(eventIndex)
     return this.getLaneIndex(originalEvent)
