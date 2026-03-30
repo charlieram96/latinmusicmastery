@@ -161,21 +161,21 @@ export class Highway {
     const fadeEnd = vanishY + (hitY - vanishY) * 0.3
     const w = this.width
 
-    // Solid block from top of canvas to vanishing point
-    this.topFade.rect(0, 0, w, vanishY)
+    // Solid block from top of canvas past vanishing point into the highway
+    const solidEnd = vanishY + (hitY - vanishY) * 0.12
+    this.topFade.rect(0, 0, w, solidEnd)
     this.topFade.fill({ color: BG_COLOR, alpha: 1 })
 
-    // Smooth continuous gradient — many thin overlapping strips
-    const steps = 64
-    const fadeHeight = fadeEnd - vanishY
+    // Smooth gradient from solid end to fade end — 80 thin strips
+    const steps = 80
+    const fadeHeight = fadeEnd - solidEnd
+    const stripH = fadeHeight / steps + 0.5 // slight overlap to avoid gaps
     for (let i = 0; i < steps; i++) {
-      const t = i / (steps - 1)
-      const y = vanishY + t * fadeHeight
-      // Each strip covers from current position to the end of the fade zone
-      // with decreasing alpha — overlapping creates a smooth gradient
-      const alpha = (1 - t) * (1 - t)
-      this.topFade.rect(0, y, w, fadeHeight - t * fadeHeight + 1)
-      this.topFade.fill({ color: BG_COLOR, alpha: alpha * 0.06 })
+      const t = i / steps
+      const y = solidEnd + t * fadeHeight
+      const alpha = 1 - t * t * t // cubic falloff — stays opaque longer, then drops
+      this.topFade.rect(0, y, w, stripH)
+      this.topFade.fill({ color: BG_COLOR, alpha })
     }
   }
 
