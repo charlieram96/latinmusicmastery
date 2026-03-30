@@ -224,10 +224,19 @@ export class Highway {
     this.road.closePath()
     this.road.fill({ color: ROAD_COLOR, alpha: ROAD_ALPHA })
 
-    // Timing line at hit zone — thin, low opacity, full highway width
+    // Timing line at hit zone — prominent yellow glow
+    // Wide glow
     this.road.moveTo(cx - halfBottom, hitY)
     this.road.lineTo(cx + halfBottom, hitY)
-    this.road.stroke({ color: 0xffffff, width: 1, alpha: 0.18 })
+    this.road.stroke({ color: 0xffea00, width: 12, alpha: 0.12 })
+    // Mid glow
+    this.road.moveTo(cx - halfBottom, hitY)
+    this.road.lineTo(cx + halfBottom, hitY)
+    this.road.stroke({ color: 0xffea00, width: 5, alpha: 0.3 })
+    // Core line
+    this.road.moveTo(cx - halfBottom, hitY)
+    this.road.lineTo(cx + halfBottom, hitY)
+    this.road.stroke({ color: 0xffea00, width: 1.5, alpha: 0.7 })
   }
 
   private drawRails() {
