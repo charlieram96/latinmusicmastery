@@ -293,46 +293,9 @@ export class NoteManager {
     }
   }
 
-  /** Draw a missed note — red neon rim and red wing lines, fading out */
+  /** Missed note — same look as approaching, just fading out in original color */
   private drawMissedNote(gfx: Graphics, x: number, y: number, scale: number, fadeAlpha: number, color: number) {
-    gfx.clear()
-    const rx = 96 * scale
-    const ry = 40 * scale
-    const thickness = 16 * scale
-    const missRed = 0xff1744
-    const a = fadeAlpha
-
-    // 3D side band
-    gfx.ellipse(x, y + thickness, rx, ry)
-    gfx.fill({ color: missRed, alpha: a * 0.1 })
-    gfx.rect(x - rx, y, rx * 2, thickness)
-    gfx.fill({ color: missRed, alpha: a * 0.08 })
-
-    // Dark body
-    gfx.ellipse(x, y, rx, ry)
-    gfx.fill({ color: 0x080818, alpha: a * 0.9 })
-
-    // Red neon rim
-    gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color: missRed, width: 6 * scale, alpha: a * 0.15 })
-    gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color: missRed, width: 2.5 * scale, alpha: a * 0.6 })
-
-    // Red wing lines
-    const wingExtend = 30 * scale
-    gfx.moveTo(x - rx - 2, y)
-    gfx.lineTo(x - rx - wingExtend, y)
-    gfx.stroke({ color: missRed, width: 1.5, alpha: a * 0.7 })
-    gfx.moveTo(x - rx - 2, y)
-    gfx.lineTo(x - rx - wingExtend, y)
-    gfx.stroke({ color: missRed, width: 5, alpha: a * 0.12 })
-
-    gfx.moveTo(x + rx + 2, y)
-    gfx.lineTo(x + rx + wingExtend, y)
-    gfx.stroke({ color: missRed, width: 1.5, alpha: a * 0.7 })
-    gfx.moveTo(x + rx + 2, y)
-    gfx.lineTo(x + rx + wingExtend, y)
-    gfx.stroke({ color: missRed, width: 5, alpha: a * 0.12 })
+    this.draw3DOval(gfx, x, y, scale, fadeAlpha, color, 1)
   }
 
   private getOriginalEvent(eventIndex: number): ExerciseEvent | undefined {
