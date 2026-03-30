@@ -46,17 +46,17 @@ export interface CongaStyle {
 export const DEFAULT_CONGA_STYLE: CongaStyle = {
   bodyWidth: 96,
   bodyHeight: 40,
-  barrelHeight: 56,
-  barrelSideAlpha: 1,
-  barrelBottomAlpha: 0.8,
-  barrelFillAlpha: 0.15,
-  outerGlowAlpha: 0.3,
-  outerGlowStrokeAlpha: 0.5,
+  barrelHeight: 120,
+  barrelSideAlpha: 0.16,
+  barrelBottomAlpha: 0.32,
+  barrelFillAlpha: 0.12,
+  outerGlowAlpha: 0.51,
+  outerGlowStrokeAlpha: 0.28,
   headSurfaceAlpha: 0.4,
   mainRimAlpha: 1,
-  whiteRimAlpha: 1,
-  innerRingAlpha: 1,
-  centerDotAlpha: 1,
+  whiteRimAlpha: 0.45,
+  innerRingAlpha: 0.6,
+  centerDotAlpha: 0,
 }
 
 /**
