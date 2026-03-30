@@ -109,6 +109,8 @@ export class Highway {
   update(elapsedSec: number, bpm: number) {
     this.drawGrid(elapsedSec, bpm)
     this.drawSideFog()
+    this.drawReceptors()
+    this.drawTopFade()
   }
 
   getLaneX(laneIndex: number, y: number): number {
