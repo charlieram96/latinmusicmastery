@@ -24,7 +24,7 @@ export interface FadeStyle {
 
 export const DEFAULT_FADE_STYLE: FadeStyle = {
   solidExtend: 0,
-  fadeLength: 0.05,
+  fadeLength: 0.09,
 }
 
 export interface CongaStyle {
