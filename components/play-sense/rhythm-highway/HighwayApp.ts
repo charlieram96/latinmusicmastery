@@ -5,6 +5,7 @@ import { getExerciseDuration } from '@/lib/play-sense/exercise-utils'
 import { getInstrumentCategory } from '@/lib/play-sense/types'
 import { PLAYSENSE_MAPPINGS } from '@/lib/play-sense/playsense-mappings'
 import { Highway } from './Highway'
+import type { FadeStyle, CongaStyle } from './Highway'
 import { NoteManager } from './NoteManager'
 import type { NoteStyle } from './NoteManager'
 import { HitEffects } from './HitEffects'
@@ -102,6 +103,12 @@ export class HighwayApp {
   /** Get/set the note visual style — changes apply next frame */
   get noteStyle(): NoteStyle { return this.noteManager.noteStyle }
   set noteStyle(style: NoteStyle) { this.noteManager.noteStyle = style }
+
+  get fadeStyle(): FadeStyle { return this.highway.fadeStyle }
+  set fadeStyle(style: FadeStyle) { this.highway.fadeStyle = style }
+
+  get congaStyle(): CongaStyle { return this.highway.congaStyle }
+  set congaStyle(style: CongaStyle) { this.highway.congaStyle = style }
 
   /** Called by React when a note is hit — shatters the note and shows grade */
   triggerHitEffect(eventIndex: number, grade: HitGrade) {

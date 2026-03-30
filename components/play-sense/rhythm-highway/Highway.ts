@@ -17,6 +17,48 @@ import {
   DEFAULT_LANE_COLOR,
 } from './constants'
 
+export interface FadeStyle {
+  solidExtend: number    // how far solid block extends past vanishing point (fraction of highway)
+  fadeLength: number     // how far the gradient extends (fraction of highway)
+}
+
+export const DEFAULT_FADE_STYLE: FadeStyle = {
+  solidExtend: 0.12,
+  fadeLength: 0.15,
+}
+
+export interface CongaStyle {
+  bodyWidth: number        // base rx
+  bodyHeight: number       // base ry
+  barrelHeight: number
+  barrelSideAlpha: number
+  barrelBottomAlpha: number
+  barrelFillAlpha: number
+  outerGlowAlpha: number
+  outerGlowStrokeAlpha: number
+  headSurfaceAlpha: number
+  mainRimAlpha: number
+  whiteRimAlpha: number
+  innerRingAlpha: number
+  centerDotAlpha: number
+}
+
+export const DEFAULT_CONGA_STYLE: CongaStyle = {
+  bodyWidth: 96,
+  bodyHeight: 40,
+  barrelHeight: 56,
+  barrelSideAlpha: 1,
+  barrelBottomAlpha: 0.8,
+  barrelFillAlpha: 0.15,
+  outerGlowAlpha: 0.3,
+  outerGlowStrokeAlpha: 0.5,
+  headSurfaceAlpha: 0.4,
+  mainRimAlpha: 1,
+  whiteRimAlpha: 1,
+  innerRingAlpha: 1,
+  centerDotAlpha: 1,
+}
+
 /**
  * Beat Saber-style highway: dark void background, neon-outlined flat runway,
  * glowing rails, and neon receptor targets. Clean and minimal.
@@ -40,6 +82,9 @@ export class Highway {
   private height = 0
   private laneCount = 3
   private laneSurfaces: string[] = []
+
+  fadeStyle: FadeStyle = { ...DEFAULT_FADE_STYLE }
+  congaStyle: CongaStyle = { ...DEFAULT_CONGA_STYLE }
 
   constructor() {
     this.container.addChild(
@@ -158,22 +203,23 @@ export class Highway {
     this.topFade.clear()
     const vanishY = this.getVanishingY()
     const hitY = this.getHitZoneY()
-    const fadeEnd = vanishY + (hitY - vanishY) * 0.15
+    const f = this.fadeStyle
+    const fadeEnd = vanishY + (hitY - vanishY) * f.fadeLength
     const w = this.width
 
     // Solid block from top of canvas past vanishing point into the highway
-    const solidEnd = vanishY + (hitY - vanishY) * 0.12
+    const solidEnd = vanishY + (hitY - vanishY) * f.solidExtend
     this.topFade.rect(0, 0, w, solidEnd)
     this.topFade.fill({ color: BG_COLOR, alpha: 1 })
 
-    // Smooth gradient from solid end to fade end — 80 thin strips
+    // Smooth gradient from solid end to fade end
     const steps = 80
     const fadeHeight = fadeEnd - solidEnd
-    const stripH = fadeHeight / steps + 0.5 // slight overlap to avoid gaps
+    const stripH = fadeHeight / steps + 0.5
     for (let i = 0; i < steps; i++) {
       const t = i / steps
       const y = solidEnd + t * fadeHeight
-      const alpha = 1 - t * t * t // cubic falloff — stays opaque longer, then drops
+      const alpha = 1 - t * t * t
       this.topFade.rect(0, y, w, stripH)
       this.topFade.fill({ color: BG_COLOR, alpha })
     }
@@ -377,53 +423,54 @@ export class Highway {
     }
   }
 
-  /** Beat Saber-style neon conga — glowing outlines, minimal fill */
+  /** Beat Saber-style neon conga — all values driven by this.congaStyle */
   private drawNeonConga(cx: number, cy: number, color: number) {
-    const baseRx = 96
-    const baseRy = 40
-    const bodyHeight = 56
+    const c = this.congaStyle
+    const baseRx = c.bodyWidth
+    const baseRy = c.bodyHeight
+    const bodyHeight = c.barrelHeight
 
     // ── Drum body (barrel outline) ──
     this.receptors.moveTo(cx - baseRx * 0.9, cy)
     this.receptors.lineTo(cx - baseRx * 0.85, cy + bodyHeight)
-    this.receptors.stroke({ color, width: 2, alpha: 1 })
+    this.receptors.stroke({ color, width: 2, alpha: c.barrelSideAlpha })
     this.receptors.moveTo(cx + baseRx * 0.9, cy)
     this.receptors.lineTo(cx + baseRx * 0.85, cy + bodyHeight)
-    this.receptors.stroke({ color, width: 2, alpha: 1 })
+    this.receptors.stroke({ color, width: 2, alpha: c.barrelSideAlpha })
 
     // Bottom ellipse
     this.receptors.ellipse(cx, cy + bodyHeight, baseRx * 0.85, baseRy * 0.6)
-    this.receptors.stroke({ color, width: 1.5, alpha: 0.8 })
+    this.receptors.stroke({ color, width: 1.5, alpha: c.barrelBottomAlpha })
 
     // Body fill
     this.receptors.ellipse(cx, cy + bodyHeight, baseRx * 0.85, baseRy * 0.6)
-    this.receptors.fill({ color, alpha: 0.15 })
+    this.receptors.fill({ color, alpha: c.barrelFillAlpha })
 
     // ── Drum head — neon ring ──
     // Outer glow
     this.receptors.ellipse(cx, cy, baseRx + 6, baseRy + 3)
-    this.receptors.fill({ color, alpha: 0.3 })
+    this.receptors.fill({ color, alpha: c.outerGlowAlpha })
     this.receptors.ellipse(cx, cy, baseRx + 3, baseRy + 1.5)
-    this.receptors.stroke({ color, width: 6, alpha: 0.5 })
+    this.receptors.stroke({ color, width: 6, alpha: c.outerGlowStrokeAlpha })
 
     // Head surface
     this.receptors.ellipse(cx, cy, baseRx, baseRy)
-    this.receptors.fill({ color, alpha: 0.4 })
+    this.receptors.fill({ color, alpha: c.headSurfaceAlpha })
 
     // Main neon rim
     this.receptors.ellipse(cx, cy, baseRx, baseRy)
-    this.receptors.stroke({ color, width: 2.5, alpha: 1 })
+    this.receptors.stroke({ color, width: 2.5, alpha: c.mainRimAlpha })
 
     // Bright core of rim
     this.receptors.ellipse(cx, cy, baseRx, baseRy)
-    this.receptors.stroke({ color: 0xffffff, width: 1, alpha: 1 })
+    this.receptors.stroke({ color: 0xffffff, width: 1, alpha: c.whiteRimAlpha })
 
     // Inner ring
     this.receptors.ellipse(cx, cy, baseRx * 0.7, baseRy * 0.7)
-    this.receptors.stroke({ color, width: 1, alpha: 1 })
+    this.receptors.stroke({ color, width: 1, alpha: c.innerRingAlpha })
 
     // Center dot
     this.receptors.circle(cx, cy, 3)
-    this.receptors.fill({ color, alpha: 1 })
+    this.receptors.fill({ color, alpha: c.centerDotAlpha })
   }
 }
