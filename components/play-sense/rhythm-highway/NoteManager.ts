@@ -44,14 +44,14 @@ export const DEFAULT_NOTE_STYLE: NoteStyle = {
   midFaceAlpha: 0,
   midRimAlpha: 0,
   verticalEdgeAlpha: 0,
-  topFaceAlpha: 0.31,
+  topFaceAlpha: 0.8,
   topRimGlowAlpha: 0.5,
   topRimMainAlpha: 0.4,
   topRimWhiteAlpha: 0.39,
   dropShadowAlpha: 0,
   wingLineAlpha: 0.43,
   pulseGlowAlpha: 0.08,
-  thickness: 19,
+  thickness: 26,
 }
 
 type NoteState = 'approaching' | 'missed'
