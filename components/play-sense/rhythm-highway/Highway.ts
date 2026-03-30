@@ -85,7 +85,7 @@ export class Highway {
   depthToY(depthFraction: number): number {
     const vanishY = this.getVanishingY()
     const hitY = this.getHitZoneY()
-    const t = depthFraction * depthFraction * depthFraction
+    const t = depthFraction * depthFraction * depthFraction * depthFraction
     return vanishY + t * (hitY - vanishY)
   }
 
@@ -94,13 +94,13 @@ export class Highway {
     if (depthFraction <= 1) return this.depthToY(depthFraction)
     const vanishY = this.getVanishingY()
     const hitY = this.getHitZoneY()
-    const velocityAtHit = 3 * (hitY - vanishY) // derivative of t³ at t=1
+    const velocityAtHit = 4 * (hitY - vanishY) // derivative of t⁴ at t=1
     const past = depthFraction - 1
     return hitY + past * velocityAtHit
   }
 
   getScaleAtDepth(depthFraction: number): number {
-    const t = depthFraction * depthFraction * depthFraction
+    const t = depthFraction * depthFraction * depthFraction * depthFraction
     return 0.28 + t * 0.72
   }
 
