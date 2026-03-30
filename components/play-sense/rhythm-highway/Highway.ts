@@ -158,7 +158,7 @@ export class Highway {
     this.topFade.clear()
     const vanishY = this.getVanishingY()
     const hitY = this.getHitZoneY()
-    const fadeEnd = vanishY + (hitY - vanishY) * 0.3
+    const fadeEnd = vanishY + (hitY - vanishY) * 0.15
     const w = this.width
 
     // Solid block from top of canvas past vanishing point into the highway
