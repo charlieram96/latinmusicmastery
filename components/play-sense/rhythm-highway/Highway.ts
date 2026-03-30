@@ -270,22 +270,32 @@ export class Highway {
     if (this.laneCount <= 1) return
 
     const vanishY = this.getVanishingY()
+    const endY = this.height
     const hitY = this.getHitZoneY()
-    const steps = 24
+    const totalHeight = endY - vanishY
+    const steps = 30
+    const cx = this.width / 2
+
+    // Compute half-width at bottom of canvas (extrapolate past hit zone)
+    const halfBottom = (this.width * HIGHWAY_BOTTOM_WIDTH) / 2
+    const halfTop = (this.width * HIGHWAY_TOP_WIDTH) / 2
+    const widthGrowthRate = (halfBottom - halfTop) / (hitY - vanishY)
 
     for (let lane = 1; lane < this.laneCount; lane++) {
       for (let i = 0; i < steps; i++) {
         const t1 = i / steps
         const t2 = (i + 1) / steps
-        const halfW1 = this.getHalfWidthAtT(t1)
-        const halfW2 = this.getHalfWidthAtT(t2)
-        const cx = this.width / 2
-        const laneW1 = (halfW1 * 2) / this.laneCount
-        const laneW2 = (halfW2 * 2) / this.laneCount
-        const dx1 = cx - halfW1 + laneW1 * lane
-        const dx2 = cx - halfW2 + laneW2 * lane
-        const y1 = vanishY + t1 * (hitY - vanishY)
-        const y2 = vanishY + t2 * (hitY - vanishY)
+        const y1 = vanishY + t1 * totalHeight
+        const y2 = vanishY + t2 * totalHeight
+
+        // Half-width at each Y, extrapolating past hit zone
+        const hw1 = y1 <= hitY ? this.getHalfWidthAtT((y1 - vanishY) / (hitY - vanishY)) : halfBottom + widthGrowthRate * (y1 - hitY)
+        const hw2 = y2 <= hitY ? this.getHalfWidthAtT((y2 - vanishY) / (hitY - vanishY)) : halfBottom + widthGrowthRate * (y2 - hitY)
+
+        const laneW1 = (hw1 * 2) / this.laneCount
+        const laneW2 = (hw2 * 2) / this.laneCount
+        const dx1 = cx - hw1 + laneW1 * lane
+        const dx2 = cx - hw2 + laneW2 * lane
         const alpha = 0.03 + t1 * 0.1
 
         this.dividers.moveTo(dx1, y1)
