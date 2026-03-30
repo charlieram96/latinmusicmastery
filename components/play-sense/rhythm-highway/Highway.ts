@@ -85,7 +85,7 @@ export class Highway {
   depthToY(depthFraction: number): number {
     const vanishY = this.getVanishingY()
     const hitY = this.getHitZoneY()
-    const t = depthFraction * depthFraction
+    const t = depthFraction * depthFraction * depthFraction
     return vanishY + t * (hitY - vanishY)
   }
 
@@ -94,13 +94,13 @@ export class Highway {
     if (depthFraction <= 1) return this.depthToY(depthFraction)
     const vanishY = this.getVanishingY()
     const hitY = this.getHitZoneY()
-    const velocityAtHit = 2 * (hitY - vanishY)
+    const velocityAtHit = 3 * (hitY - vanishY) // derivative of t³ at t=1
     const past = depthFraction - 1
     return hitY + past * velocityAtHit
   }
 
   getScaleAtDepth(depthFraction: number): number {
-    const t = depthFraction * depthFraction
+    const t = depthFraction * depthFraction * depthFraction
     return 0.28 + t * 0.72
   }
 
@@ -321,7 +321,7 @@ export class Highway {
 
       const clampedDepth = Math.min(depthFraction, 1)
       const y = this.depthToY(clampedDepth)
-      const halfW = this.getHalfWidthAtT(clampedDepth * clampedDepth)
+      const halfW = this.getHalfWidthAtT(clampedDepth * clampedDepth * clampedDepth)
       // Fade in over top 20% of highway, matching note fade
       const fadeIn = Math.min(1, depthFraction / 0.2)
       const alpha = GRID_LINE_ALPHA * clampedDepth * fadeIn
