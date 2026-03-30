@@ -198,7 +198,7 @@ export class NoteManager {
 
     // ── TOP FACE — colored, drawn last so it sits on top ──
     gfx.ellipse(x, y, rx, ry)
-    gfx.fill({ color, alpha: 0.95 })
+    gfx.fill({ color, alpha: 0.9 })
 
     // ── TOP FACE NEON RIM ──
     // Glow
