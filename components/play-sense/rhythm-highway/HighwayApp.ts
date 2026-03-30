@@ -6,6 +6,7 @@ import { getInstrumentCategory } from '@/lib/play-sense/types'
 import { PLAYSENSE_MAPPINGS } from '@/lib/play-sense/playsense-mappings'
 import { Highway } from './Highway'
 import { NoteManager } from './NoteManager'
+import type { NoteStyle } from './NoteManager'
 import { HitEffects } from './HitEffects'
 import { HUD } from './HUD'
 
@@ -97,6 +98,10 @@ export class HighwayApp {
     this.hitEffects.setLaneCount(laneSurfaces.length)
     this.hud.setExerciseInfo(exercise.title, exercise.bpm)
   }
+
+  /** Get/set the note visual style — changes apply next frame */
+  get noteStyle(): NoteStyle { return this.noteManager.noteStyle }
+  set noteStyle(style: NoteStyle) { this.noteManager.noteStyle = style }
 
   /** Called by React when a note is hit — shatters the note and shows grade */
   triggerHitEffect(eventIndex: number, grade: HitGrade) {

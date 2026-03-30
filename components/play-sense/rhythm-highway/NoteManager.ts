@@ -10,6 +10,46 @@ import {
 } from './constants'
 import type { Highway } from './Highway'
 
+export interface NoteStyle {
+  neonBloomAlpha: number
+  bottomFaceAlpha: number
+  sideWallAlpha: number
+  sideHighlightAlpha: number
+  sideShadowAlpha: number
+  topFaceShadowAlpha: number
+  bottomRimAlpha: number
+  bottomRimWhiteAlpha: number
+  verticalEdgeAlpha: number
+  topFaceAlpha: number
+  topRimGlowAlpha: number
+  topRimMainAlpha: number
+  topRimWhiteAlpha: number
+  dropShadowAlpha: number
+  wingLineAlpha: number
+  pulseGlowAlpha: number
+  thickness: number
+}
+
+export const DEFAULT_NOTE_STYLE: NoteStyle = {
+  neonBloomAlpha: 0.06,
+  bottomFaceAlpha: 0.25,
+  sideWallAlpha: 0.2,
+  sideHighlightAlpha: 0.04,
+  sideShadowAlpha: 0.12,
+  topFaceShadowAlpha: 0.3,
+  bottomRimAlpha: 0.5,
+  bottomRimWhiteAlpha: 0.15,
+  verticalEdgeAlpha: 0.7,
+  topFaceAlpha: 0.9,
+  topRimGlowAlpha: 0.25,
+  topRimMainAlpha: 0.8,
+  topRimWhiteAlpha: 0.3,
+  dropShadowAlpha: 0.15,
+  wingLineAlpha: 0.4,
+  pulseGlowAlpha: 0.04,
+  thickness: 28,
+}
+
 type NoteState = 'approaching' | 'missed'
 
 interface NoteSprite {
@@ -41,6 +81,9 @@ export class NoteManager {
   private highway: Highway
   private exerciseEvents: ExerciseEvent[] = []
   private laneCount = 3
+
+  /** Live-editable note style — change values and notes update next frame */
+  noteStyle: NoteStyle = { ...DEFAULT_NOTE_STYLE }
 
   /** Events that were hit — remove immediately */
   private hitIndices = new Set<number>()
@@ -150,87 +193,92 @@ export class NoteManager {
 
   // ── Private ──
 
-  /** 3D hockey puck note — thick visible side, lit top face, neon rim */
+  /** 3D hockey puck note — all alphas driven by this.noteStyle */
   private draw3DOval(gfx: Graphics, x: number, y: number, scale: number, alpha: number, color: number, depth: number) {
     gfx.clear()
     gfx.alpha = alpha
+    const s = this.noteStyle
 
     const rx = 96 * scale
     const ry = 40 * scale
-    const thickness = 28 * scale // thick puck
+    const thickness = s.thickness * scale
 
-    // ── Neon bloom ──
+    // 1. Neon bloom
     gfx.ellipse(x, y, rx + 12 * scale, ry + 6 * scale)
-    gfx.fill({ color, alpha: 0.06 })
+    gfx.fill({ color, alpha: s.neonBloomAlpha })
 
-    // ── SIDE OF PUCK (visible 3D thickness) ──
-    // Bottom ellipse + rect band
+    // 2. Bottom face
     gfx.ellipse(x, y + thickness, rx, ry)
-    gfx.fill({ color, alpha: 0.25 })
+    gfx.fill({ color, alpha: s.bottomFaceAlpha })
+
+    // 3. Side wall
     gfx.rect(x - rx, y, rx * 2, thickness)
-    gfx.fill({ color, alpha: 0.2 })
+    gfx.fill({ color, alpha: s.sideWallAlpha })
 
-    // Side highlight — left
+    // 4. Side highlight (left)
     gfx.rect(x - rx, y + thickness * 0.1, rx * 0.35, thickness * 0.8)
-    gfx.fill({ color: 0xffffff, alpha: 0.04 })
+    gfx.fill({ color: 0xffffff, alpha: s.sideHighlightAlpha })
 
-    // Side shadow — right
+    // 5. Side shadow (right)
     gfx.rect(x + rx * 0.65, y + thickness * 0.1, rx * 0.35, thickness * 0.8)
-    gfx.fill({ color: 0x000000, alpha: 0.12 })
+    gfx.fill({ color: 0x000000, alpha: s.sideShadowAlpha })
 
-    // Shadow cast by the top face onto the side wall (dark band just below the top edge)
+    // 6. Top face shadow on side wall
     gfx.rect(x - rx, y, rx * 2, thickness * 0.35)
-    gfx.fill({ color: 0x000000, alpha: 0.3 })
+    gfx.fill({ color: 0x000000, alpha: s.topFaceShadowAlpha })
 
-    // Bottom edge rim (neon)
+    // 7. Bottom edge rim (neon)
     gfx.ellipse(x, y + thickness, rx, ry)
-    gfx.stroke({ color, width: 2 * scale, alpha: 0.5 })
-    gfx.ellipse(x, y + thickness, rx, ry)
-    gfx.stroke({ color: 0xffffff, width: 0.5 * scale, alpha: 0.15 })
+    gfx.stroke({ color, width: 2 * scale, alpha: s.bottomRimAlpha })
 
-    // Side vertical neon edges
+    // 8. Bottom edge rim (white)
+    gfx.ellipse(x, y + thickness, rx, ry)
+    gfx.stroke({ color: 0xffffff, width: 0.5 * scale, alpha: s.bottomRimWhiteAlpha })
+
+    // 9. Side vertical neon edges
     gfx.moveTo(x - rx, y)
     gfx.lineTo(x - rx, y + thickness)
-    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.7 })
+    gfx.stroke({ color, width: 1.5 * scale, alpha: s.verticalEdgeAlpha })
     gfx.moveTo(x + rx, y)
     gfx.lineTo(x + rx, y + thickness)
-    gfx.stroke({ color, width: 1.5 * scale, alpha: 0.7 })
+    gfx.stroke({ color, width: 1.5 * scale, alpha: s.verticalEdgeAlpha })
 
-    // ── TOP FACE — colored, drawn last so it sits on top ──
+    // 10. Top face
     gfx.ellipse(x, y, rx, ry)
-    gfx.fill({ color, alpha: 0.9 })
+    gfx.fill({ color, alpha: s.topFaceAlpha })
 
-    // ── TOP FACE NEON RIM ──
-    // Glow
+    // 11. Top rim glow
     gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color, width: 5 * scale, alpha: 0.25 })
-    // Main rim
-    gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color, width: 2.5 * scale, alpha: 0.8 })
-    // White core
-    gfx.ellipse(x, y, rx, ry)
-    gfx.stroke({ color: 0xffffff, width: 1 * scale, alpha: 0.3 })
+    gfx.stroke({ color, width: 5 * scale, alpha: s.topRimGlowAlpha })
 
-    // ── DROP SHADOW (below puck) ──
+    // 12. Top rim main
+    gfx.ellipse(x, y, rx, ry)
+    gfx.stroke({ color, width: 2.5 * scale, alpha: s.topRimMainAlpha })
+
+    // 13. Top rim white core
+    gfx.ellipse(x, y, rx, ry)
+    gfx.stroke({ color: 0xffffff, width: 1 * scale, alpha: s.topRimWhiteAlpha })
+
+    // 14. Drop shadow
     gfx.ellipse(x, y + thickness + 4 * scale, rx * 0.85, ry * 0.4)
-    gfx.fill({ color: 0x000000, alpha: 0.15 })
+    gfx.fill({ color: 0x000000, alpha: s.dropShadowAlpha })
 
-    // ── Wing lines ──
+    // 15. Wing lines
     const wingExtend = 30 * scale
     gfx.moveTo(x - rx - 2, y)
     gfx.lineTo(x - rx - wingExtend, y)
-    gfx.stroke({ color, width: 1 * scale, alpha: 0.4 })
+    gfx.stroke({ color, width: 1 * scale, alpha: s.wingLineAlpha })
     gfx.moveTo(x + rx + 2, y)
     gfx.lineTo(x + rx + wingExtend, y)
-    gfx.stroke({ color, width: 1 * scale, alpha: 0.4 })
+    gfx.stroke({ color, width: 1 * scale, alpha: s.wingLineAlpha })
 
-    // ── Pulsing approach glow ──
+    // 16. Pulsing approach glow
     if (depth > 0.7) {
       const intensity = (depth - 0.7) / 0.3
       const time = Date.now() * 0.008
       const pulse = 1 + Math.sin(time) * 0.2 * intensity
       gfx.ellipse(x, y, (rx + 16 * scale) * pulse, (ry + 8 * scale) * pulse)
-      gfx.fill({ color, alpha: 0.04 * intensity })
+      gfx.fill({ color, alpha: s.pulseGlowAlpha * intensity })
     }
   }
 
