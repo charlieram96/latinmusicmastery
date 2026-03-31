@@ -20,6 +20,8 @@ import {
 } from '@/lib/play-sense/animations'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
 import { AudioModePrompt } from './audio-mode-prompt'
+import { PlaysenseTestPanel } from './playsense-test-panel'
+import { RhythmHighway } from './rhythm-highway/RhythmHighway'
 
 interface ExercisePlayerProps {
   exercises: ExerciseDefinition[]
@@ -207,8 +209,27 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
               )}>
                 {session.sessionState === 'selecting' && session.audioMode === null ? (
                   <div className="flex-1 flex items-center justify-center">
-                    <AudioModePrompt onSelect={session.setAudioMode} />
+                    <AudioModePrompt onSelect={session.setAudioMode} instrument={session.exercise?.instrument} />
                   </div>
+                ) : session.sessionState === 'selecting' && session.audioMode === 'playsense' && session.exercise ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <PlaysenseTestPanel
+                      instrument={session.exercise.instrument}
+                      onReady={session.startExercise}
+                      onBack={session.clearAudioMode}
+                    />
+                  </div>
+                ) : session.sessionState === 'playing' && session.exercise ? (
+                  <RhythmHighway
+                    exercise={session.exercise}
+                    playheadProgress={session.playheadProgress}
+                    currentScore={session.currentScore}
+                    currentCombo={session.currentCombo}
+                    currentAccuracy={session.currentAccuracy}
+                    metronomeBeat={session.metronomeBeat}
+                    eventResultsLength={session.eventResults.length}
+                    eventResults={session.eventResults}
+                  />
                 ) : (
                   <VisualizationPanel
                     exercise={session.exercise}
@@ -221,6 +242,7 @@ export function ExercisePlayer({ exercises }: ExercisePlayerProps) {
                     metronomeBeat={session.metronomeBeat}
                     metronomeDownbeat={session.metronomeDownbeat}
                     detectedMidiNote={session.detectedMidiNote}
+                    audioMode={session.audioMode}
                   />
                 )}
               </div>

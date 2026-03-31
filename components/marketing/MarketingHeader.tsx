@@ -36,12 +36,12 @@ const styles = [
 ]
 
 const instruments = [
-  { label: "Guitar", href: "/explore?instrument=guitar" },
-  { label: "Piano", href: "/explore?instrument=piano" },
-  { label: "Bass", href: "/explore?instrument=bass" },
-  { label: "Percussion", href: "/explore?instrument=percussion" },
-  { label: "Voice", href: "/explore?instrument=voice" },
+  { label: "Timbal", href: "/explore?instrument=timbal" },
+  { label: "Conga", href: "/explore?instrument=conga" },
   { label: "Violin", href: "/explore?instrument=violin" },
+  { label: "Bass", href: "/explore?instrument=bass" },
+  { label: "Piano", href: "/explore?instrument=piano" },
+  { label: "Vocals", href: "/explore?instrument=vocals" },
 ]
 
 const aboutLinks = [

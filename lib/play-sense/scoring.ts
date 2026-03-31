@@ -19,6 +19,8 @@ export interface ExpectedEvent {
   expectedTechnique?: string
   /** Expected duration in seconds for sustain scoring */
   expectedDurationSec?: number
+  /** Expected drum surface for PlaySense scoring */
+  expectedSurface?: string
 }
 
 /**
@@ -148,7 +150,8 @@ export function gradeSingleOnset(
   widenMs: number = 0,
   instrumentCategory: InstrumentCategory = 'percussion',
   detectedMidiNote?: number | null,
-  detectedFrequency?: number | null
+  detectedFrequency?: number | null,
+  detectedSurface?: string | null
 ): EventResult | null {
   const tolerance = TOLERANCE_BY_DIFFICULTY[difficulty]
   const effectiveTolerance: ToleranceWindows = {
@@ -212,6 +215,16 @@ export function gradeSingleOnset(
     techniqueCorrect = null
   }
 
+  // Surface scoring for PlaySense device
+  let surfaceCorrect: boolean | null = null
+  let detectedSurfaceResult: string | null = detectedSurface ?? null
+  if (matched.expectedSurface && detectedSurface != null) {
+    surfaceCorrect = detectedSurface === matched.expectedSurface
+    if (!surfaceCorrect) {
+      grade = 'miss' // wrong drum = miss
+    }
+  }
+
   matchedIndices.add(matched.eventIndex)
 
   return {
@@ -224,6 +237,8 @@ export function gradeSingleOnset(
     pitchCorrect,
     pitchCents,
     techniqueCorrect,
+    surfaceCorrect,
+    detectedSurface: detectedSurfaceResult,
   }
 }
 

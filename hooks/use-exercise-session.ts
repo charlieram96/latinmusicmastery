@@ -16,15 +16,16 @@ import { useMetronome } from './use-metronome'
 import { useCalibration } from './use-calibration'
 import { useBackingTrack } from './use-backing-track'
 import { usePitchDetection } from './use-pitch-detection'
+import { usePlaysenseOnsets } from './use-playsense-onsets'
 
-export type AudioMode = 'headphones' | 'speaker-safe'
+export type AudioMode = 'headphones' | 'speaker-safe' | 'playsense'
 
 const AUDIO_MODE_STORAGE_KEY = 'playSenseAudioMode'
 
 function loadStoredAudioMode(): AudioMode | null {
   if (typeof window === 'undefined') return null
   const stored = localStorage.getItem(AUDIO_MODE_STORAGE_KEY)
-  if (stored === 'headphones' || stored === 'speaker-safe') return stored
+  if (stored === 'headphones' || stored === 'speaker-safe' || stored === 'playsense') return stored
   return null
 }
 
@@ -39,6 +40,7 @@ interface UseExerciseSessionResult {
   // Audio mode
   audioMode: AudioMode | null
   setAudioMode: (mode: AudioMode) => void
+  clearAudioMode: () => void
 
   // Audio state
   isListening: boolean
@@ -132,17 +134,25 @@ export function useExerciseSession(): UseExerciseSessionResult {
   // Deferred pitch grading: pending timeouts for pitched onsets where pitch was null at onset time
   const pendingPitchTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
 
+  const micAudioMode = (audioMode === 'headphones' || audioMode === 'speaker-safe') ? audioMode : undefined
+  const micOnsets = useOnsetDetection({ noisyRoomMode, instrument: exercise?.instrument, audioMode: micAudioMode })
+  const bleOnsets = usePlaysenseOnsets(exercise?.instrument ?? null)
+
+  const isPlaysenseMode = audioMode === 'playsense'
+  const activeOnsets = isPlaysenseMode ? bleOnsets : micOnsets
+
   const {
     isListening,
     hasPermission,
     error: audioError,
     inputLevel,
     recentOnsets,
-    workletNode,
     startListening,
     stopListening,
     clearOnsets,
-  } = useOnsetDetection({ noisyRoomMode, instrument: exercise?.instrument, audioMode: audioMode ?? undefined })
+  } = activeOnsets
+
+  const workletNode = micOnsets.workletNode
 
   const countInBeats = exercise?.timeSignature?.[0] || 4
   const metronome = useMetronome({
@@ -160,7 +170,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
 
   const calibration = useCalibration()
 
-  const backingTrack = useBackingTrack({ audioUrl: exercise?.audioUrl, audioMode: audioMode ?? undefined })
+  const backingTrackAudioMode = (audioMode === 'headphones' || audioMode === 'speaker-safe') ? audioMode : undefined
+  const backingTrack = useBackingTrack({ audioUrl: exercise?.audioUrl, audioMode: backingTrackAudioMode })
 
   // Pitch detection for melodic instruments
   const pitchDetection = usePitchDetection()
@@ -174,6 +185,11 @@ export function useExerciseSession(): UseExerciseSessionResult {
     if (stored) setAudioModeState(stored)
     calibration.loadStoredCalibration()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const clearAudioMode = useCallback(() => {
+    setAudioModeState(null)
+    localStorage.removeItem(AUDIO_MODE_STORAGE_KEY)
   }, [])
 
   const setAudioMode = useCallback((mode: AudioMode) => {
@@ -273,7 +289,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
             widenMs,
             category,
             delayedMidi,
-            delayedFreq ?? undefined
+            delayedFreq ?? undefined,
+            deferredOnset.surface ?? undefined
           )
 
           if (deferredResult) {
@@ -317,7 +334,8 @@ export function useExerciseSession(): UseExerciseSessionResult {
         widenMs,
         category,
         detectedMidi,
-        detectedFreq
+        detectedFreq,
+        onset.surface ?? undefined
       )
 
       if (result) {
@@ -664,6 +682,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
     countdownBeat,
     audioMode,
     setAudioMode,
+    clearAudioMode,
     isListening,
     hasPermission,
     audioError,

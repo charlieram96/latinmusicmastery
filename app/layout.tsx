@@ -3,6 +3,7 @@ import { Inter, Montserrat } from "next/font/google";
 import { PageLoadingProvider } from "@/components/page-loading-overlay";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CourseModeProvider } from "@/contexts/course-mode-context";
+import { PlaysenseProvider } from "@/contexts/playsense-context";
 import "./globals.css";
 
 const inter = Inter({
@@ -32,9 +33,11 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <CourseModeProvider>
-            <PageLoadingProvider>
-              {children}
-            </PageLoadingProvider>
+            <PlaysenseProvider>
+              <PageLoadingProvider>
+                {children}
+              </PageLoadingProvider>
+            </PlaysenseProvider>
           </CourseModeProvider>
         </ThemeProvider>
       </body>

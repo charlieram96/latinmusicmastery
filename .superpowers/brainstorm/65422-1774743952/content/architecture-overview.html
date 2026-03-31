@@ -1,0 +1,92 @@
+<h2>PlaySense BLE Integration — Architecture</h2>
+<p class="subtitle">How BLE device data flows into the existing scoring pipeline</p>
+
+<div class="section">
+  <div class="mockup">
+    <div class="mockup-header">Data Flow: BLE Device → Scoring</div>
+    <div class="mockup-body" style="padding: 24px; font-family: monospace; font-size: 13px; line-height: 1.8;">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+
+        <div style="background: #2a2a3e; padding: 12px 16px; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+          <strong style="color: #8b5cf6;">🔵 PlaySense BLE Device</strong><br>
+          <span style="color: #999;">Sends JSON via BLE notifications:</span><br>
+          <code style="color: #a5f3fc;">{ piezos: [420, 0, 0, 0, 0, 0], mic: 1200 }</code>
+        </div>
+
+        <div style="text-align: center; color: #666;">▼ BLE characteristic notification</div>
+
+        <div style="background: #2a2a3e; padding: 12px 16px; border-radius: 8px; border-left: 3px solid #f59e0b;">
+          <strong style="color: #f59e0b;">📡 PlaysenseContext</strong> <span style="color: #666;">(new file: contexts/playsense-context.tsx)</span><br>
+          <span style="color: #999;">App-level provider — manages BLE connection lifecycle</span><br>
+          <span style="color: #999;">Persists across pages. Exposes: connect(), disconnect(), connectionStatus, lastReading</span>
+        </div>
+
+        <div style="text-align: center; color: #666;">▼ lastReading consumed by hook</div>
+
+        <div style="background: #2a2a3e; padding: 12px 16px; border-radius: 8px; border-left: 3px solid #22c55e;">
+          <strong style="color: #22c55e;">🎯 usePlaysenseOnsets</strong> <span style="color: #666;">(new file: hooks/use-playsense-onsets.ts)</span><br>
+          <span style="color: #999;">Converts BLE readings → OnsetEvent[]</span><br>
+          <span style="color: #999;">Maps piezo index → drum surface name using instrument config</span><br>
+          <code style="color: #a5f3fc;">OnsetEvent { timestamp, energy: 420, surface: 'quinto' }</code>
+        </div>
+
+        <div style="text-align: center; color: #666;">▼ recentOnsets[] (same interface as useOnsetDetection)</div>
+
+        <div style="background: #2a2a3e; padding: 12px 16px; border-radius: 8px; border-left: 3px solid #ef4444;">
+          <strong style="color: #ef4444;">⚡ useExerciseSession</strong> <span style="color: #666;">(modified: hooks/use-exercise-session.ts)</span><br>
+          <span style="color: #999;">Dual-source pattern: reads from BLE or mic based on audioMode</span><br>
+          <code style="color: #a5f3fc;">const activeOnsets = audioMode === 'playsense' ? bleOnsets : micOnsets</code>
+        </div>
+
+        <div style="text-align: center; color: #666;">▼ onset.surface passed to grading</div>
+
+        <div style="background: #2a2a3e; padding: 12px 16px; border-radius: 8px; border-left: 3px solid #06b6d4;">
+          <strong style="color: #06b6d4;">📊 gradeSingleOnset()</strong> <span style="color: #666;">(modified: lib/play-sense/scoring.ts)</span><br>
+          <span style="color: #999;">New param: detectedSurface. Checks if hit was on correct drum.</span><br>
+          <span style="color: #999;">Wrong drum = miss. No surface expected = timing only (backward compat).</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>Instrument Mappings</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">Congas — 3 Piezos + Mic</div>
+      <div class="mockup-body" style="padding: 16px;">
+        <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+          <tr style="border-bottom: 1px solid #333;"><td style="padding: 6px; color: #8b5cf6;">Piezo 1</td><td style="padding: 6px;">→ Quinto</td></tr>
+          <tr style="border-bottom: 1px solid #333;"><td style="padding: 6px; color: #8b5cf6;">Piezo 2</td><td style="padding: 6px;">→ Conga</td></tr>
+          <tr style="border-bottom: 1px solid #333;"><td style="padding: 6px; color: #8b5cf6;">Piezo 3</td><td style="padding: 6px;">→ Tumba</td></tr>
+          <tr style="color: #555;"><td style="padding: 6px;">Piezo 4-6</td><td style="padding: 6px;">→ Unused</td></tr>
+          <tr style="border-top: 1px solid #333;"><td style="padding: 6px; color: #f59e0b;">Mic</td><td style="padding: 6px;">→ Reserved (technique detection later)</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">Timbales — 6 Piezos</div>
+      <div class="mockup-body" style="padding: 16px;">
+        <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+          <tr style="border-bottom: 1px solid #333;"><td style="padding: 6px; color: #8b5cf6;">Piezo 1</td><td style="padding: 6px;">→ Macho</td></tr>
+          <tr style="border-bottom: 1px solid #333;"><td style="padding: 6px; color: #8b5cf6;">Piezo 2</td><td style="padding: 6px;">→ Hembra</td></tr>
+          <tr style="border-bottom: 1px solid #333;"><td style="padding: 6px; color: #8b5cf6;">Piezo 3</td><td style="padding: 6px;">→ Campana</td></tr>
+          <tr style="border-bottom: 1px solid #333;"><td style="padding: 6px; color: #8b5cf6;">Piezo 4</td><td style="padding: 6px;">→ Cencerro</td></tr>
+          <tr style="border-bottom: 1px solid #333;"><td style="padding: 6px; color: #8b5cf6;">Piezo 5</td><td style="padding: 6px;">→ Jam Block</td></tr>
+          <tr><td style="padding: 6px; color: #8b5cf6;">Piezo 6</td><td style="padding: 6px;">→ Cáscara</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>Key Principle: Dual-Source Pattern</h3>
+  <p style="color: #999; font-size: 14px; line-height: 1.6;">
+    Both <code>useOnsetDetection</code> (mic) and <code>usePlaysenseOnsets</code> (BLE) are always instantiated (React hooks can't be conditional).
+    Based on <code>audioMode</code>, only one source's <code>startListening()</code> is called.
+    The rest of the pipeline (metronome, scoring, backing track) doesn't care where onsets come from — it just reads <code>recentOnsets[]</code>.
+  </p>
+</div>
+</div>
