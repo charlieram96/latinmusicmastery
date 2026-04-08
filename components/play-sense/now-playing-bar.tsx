@@ -11,6 +11,7 @@ import { getInstrumentLabel, getExerciseDuration } from '@/lib/play-sense/exerci
 import { GRADE_LABELS, scaleIn, comboFire, GRADE_GLOW } from '@/lib/play-sense/animations'
 import { slideUp } from '@/lib/play-sense/animations'
 import type { AudioMode } from '@/hooks/use-exercise-session'
+import { PLAYSENSE_INSTRUMENTS } from '@/lib/play-sense/playsense-mappings'
 import {
   Play,
   Square,
@@ -358,13 +359,16 @@ export function NowPlayingBar({
           {audioMode && (
             <button
               onClick={() => {
-                if (audioMode === 'playsense') return
-                onAudioModeChange(audioMode === 'headphones' ? 'speaker-safe' : 'headphones')
+                const supportsPlaysense = exercise.instrument ? PLAYSENSE_INSTRUMENTS.has(exercise.instrument) : false
+                if (audioMode === 'headphones') {
+                  onAudioModeChange('speaker-safe')
+                } else if (audioMode === 'speaker-safe') {
+                  onAudioModeChange(supportsPlaysense ? 'playsense' : 'headphones')
+                } else {
+                  onAudioModeChange('headphones')
+                }
               }}
-              className={cn(
-                'flex items-center gap-2 px-3 h-8 w-full rounded-md transition-colors',
-                audioMode === 'playsense' ? 'cursor-default' : 'hover:bg-secondary/50'
-              )}
+              className="flex items-center gap-2 px-3 h-8 w-full rounded-md transition-colors hover:bg-secondary/50"
             >
               {audioMode === 'playsense' ? (
                 <Bluetooth className="w-4 h-4 text-blue-500 shrink-0" />
@@ -376,9 +380,7 @@ export function NowPlayingBar({
               <span className="text-xs text-muted-foreground">
                 {audioMode === 'playsense' ? 'PlaySense' : audioMode === 'headphones' ? 'Headphones' : 'Speaker Safe'}
               </span>
-              {audioMode !== 'playsense' && (
-                <span className="text-[10px] text-muted-foreground/60 ml-auto">switch</span>
-              )}
+              <span className="text-[10px] text-muted-foreground/60 ml-auto">switch</span>
             </button>
           )}
 

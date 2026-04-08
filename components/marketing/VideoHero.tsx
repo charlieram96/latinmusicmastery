@@ -94,7 +94,7 @@ export default function VideoHero() {
           variants={fadeInUp}
           className="mx-auto mt-6 max-w-2xl text-lg text-white/80 sm:text-xl"
         >
-          Learn salsa, bossa nova, tango, cumbia and more from world-class
+          Learn Son, Mambo, Bolero, Chacha, Salsa, Cumbia, Merengue, Timba and more from world-class
           instructors. Interactive lessons with real-time feedback for musicians
           of every level.
         </motion.p>
