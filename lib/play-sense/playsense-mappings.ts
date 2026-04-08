@@ -27,11 +27,13 @@ export const TIMBALE_MAPPING: PlaySenseMapping = {
 
 export const PLAYSENSE_MAPPINGS: Record<string, PlaySenseMapping> = {
   conga: CONGA_MAPPING,
+  congas: CONGA_MAPPING,
   timbale: TIMBALE_MAPPING,
+  timbales: TIMBALE_MAPPING,
 }
 
 /** Instruments that support PlaySense device input */
-export const PLAYSENSE_INSTRUMENTS = new Set(['conga', 'timbale'])
+export const PLAYSENSE_INSTRUMENTS = new Set(['conga', 'congas', 'timbale', 'timbales'])
 
 /** Get the PlaySense mapping for an instrument, or null if unsupported */
 export function getPlaySenseMapping(instrument: string): PlaySenseMapping | null {

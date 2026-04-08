@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
   title: 'Latin Music Mastery - Learn Authentic Latin Music Online',
-  description: 'Master salsa, bossa nova, tango, cumbia and more with world-class instructors. Interactive lessons with real-time feedback for musicians of every level.',
+  description: 'Master Son, Mambo, Bolero, Chacha, Salsa, Cumbia, Merengue, Timba and more with world-class instructors. Interactive lessons with real-time feedback for musicians of every level.',
   openGraph: {
     title: 'Latin Music Mastery - Learn Authentic Latin Music Online',
     description: 'Master salsa, bossa nova, tango, cumbia and more with world-class instructors.',
