@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { LanguageToggle } from "@/components/language-toggle"
+import { useTranslation } from "@/components/language-provider"
 import { socialLinks } from "@/components/marketing/SocialLinks"
 
 /* ------------------------------------------------------------------ */
@@ -45,10 +47,10 @@ const instruments = [
 ]
 
 const aboutLinks = [
-  { label: "About Us", href: "/about" },
-  { label: "Blog", href: "/blog" },
-  { label: "FAQ", href: "/faq" },
-  { label: "Contact", href: "/contact" },
+  { labelKey: "nav.aboutUs", href: "/about" },
+  { labelKey: "nav.blog", href: "/blog" },
+  { labelKey: "nav.faq", href: "/faq" },
+  { labelKey: "nav.contact", href: "/contact" },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -56,6 +58,7 @@ const aboutLinks = [
 /* ------------------------------------------------------------------ */
 
 function ExploreMegaMenu() {
+  const { t } = useTranslation()
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -69,7 +72,7 @@ function ExploreMegaMenu() {
           {/* By Country */}
           <div>
             <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              By Country
+              {t("nav.byCountry")}
             </h4>
             <ul className="space-y-1.5">
               {countries.map((item) => (
@@ -88,7 +91,7 @@ function ExploreMegaMenu() {
           {/* By Style */}
           <div>
             <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              By Style
+              {t("nav.byStyle")}
             </h4>
             <ul className="space-y-1.5">
               {styles.map((item) => (
@@ -107,7 +110,7 @@ function ExploreMegaMenu() {
           {/* By Instrument */}
           <div>
             <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              By Instrument
+              {t("nav.byInstrument")}
             </h4>
             <ul className="space-y-1.5">
               {instruments.map((item) => (
@@ -127,13 +130,13 @@ function ExploreMegaMenu() {
         {/* CTA strip */}
         <div className="mt-6 flex items-center justify-between rounded-xl bg-primary/5 px-5 py-3">
           <p className="text-sm text-muted-foreground">
-            Discover 200+ courses across Latin America
+            {t("nav.discoverCopy")}
           </p>
           <Link
             href="/explore"
             className="text-sm font-semibold text-primary hover:underline"
           >
-            Browse all courses &rarr;
+            {t("nav.browseAllCourses")} &rarr;
           </Link>
         </div>
       </div>
@@ -146,6 +149,7 @@ function ExploreMegaMenu() {
 /* ------------------------------------------------------------------ */
 
 function AboutDropdown() {
+  const { t } = useTranslation()
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -161,7 +165,7 @@ function AboutDropdown() {
             href={item.href}
             className="block px-4 py-2 text-sm text-foreground/80 transition-colors hover:bg-accent/10 hover:text-foreground"
           >
-            {item.label}
+            {t(item.labelKey)}
           </Link>
         ))}
       </div>
@@ -218,6 +222,7 @@ function MobileAccordion({
 /* ------------------------------------------------------------------ */
 
 function MobileDrawer({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
   // Lock body scroll when drawer is open
   useEffect(() => {
     document.body.style.overflow = "hidden"
@@ -262,7 +267,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
           <button
             onClick={onClose}
             className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            aria-label="Close menu"
+            aria-label={t("nav.closeMenu")}
           >
             <X className="h-5 w-5" />
           </button>
@@ -271,11 +276,11 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
         {/* Nav sections */}
         <nav className="flex flex-col">
           {/* Explore accordion */}
-          <MobileAccordion title="Explore">
+          <MobileAccordion title={t("nav.explore")}>
             <div className="space-y-4">
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  By Country
+                  {t("nav.byCountry")}
                 </p>
                 <div className="space-y-1">
                   {countries.map((item) => (
@@ -293,7 +298,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
               </div>
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  By Style
+                  {t("nav.byStyle")}
                 </p>
                 <div className="space-y-1">
                   {styles.map((item) => (
@@ -311,7 +316,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
               </div>
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  By Instrument
+                  {t("nav.byInstrument")}
                 </p>
                 <div className="space-y-1">
                   {instruments.map((item) => (
@@ -336,18 +341,18 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="border-b border-border px-4 py-4 text-base font-medium text-foreground hover:bg-muted transition-colors"
           >
-            Pricing
+            {t("nav.pricing")}
           </Link>
           <Link
             href="/instructors"
             onClick={onClose}
             className="border-b border-border px-4 py-4 text-base font-medium text-foreground hover:bg-muted transition-colors"
           >
-            Instructors
+            {t("nav.instructors")}
           </Link>
 
           {/* About accordion */}
-          <MobileAccordion title="About">
+          <MobileAccordion title={t("nav.about")}>
             <div className="space-y-1">
               {aboutLinks.map((item) => (
                 <Link
@@ -357,17 +362,20 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground/80 hover:bg-muted hover:text-foreground transition-colors"
                 >
                   <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               ))}
             </div>
           </MobileAccordion>
         </nav>
 
-        {/* Social links */}
+        {/* Language toggle + Social links */}
+        <div className="border-t border-border px-4 py-4 flex items-center justify-between">
+          <LanguageToggle variant="labeled" />
+        </div>
         <div className="border-t border-border px-4 py-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Follow Us
+            {t("common.followUs")}
           </p>
           <div className="flex items-center gap-3">
             {socialLinks.map((social) => (
@@ -456,6 +464,7 @@ function NavDropdown({
 /* ------------------------------------------------------------------ */
 
 export function MarketingHeader() {
+  const { t } = useTranslation()
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
@@ -499,7 +508,7 @@ export function MarketingHeader() {
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1">
             <NavDropdown
-              label="Explore"
+              label={t("nav.explore")}
               openKey="explore"
               activeKey={activeDropdown}
               onOpen={openDropdown}
@@ -512,18 +521,18 @@ export function MarketingHeader() {
               href="/pricing"
               className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              Pricing
+              {t("nav.pricing")}
             </Link>
 
             <Link
               href="/instructors"
               className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              Instructors
+              {t("nav.instructors")}
             </Link>
 
             <NavDropdown
-              label="About"
+              label={t("nav.about")}
               openKey="about"
               activeKey={activeDropdown}
               onOpen={openDropdown}
@@ -550,13 +559,14 @@ export function MarketingHeader() {
                 </a>
               ))}
             </div>
+            <LanguageToggle variant="labeled" className="hidden md:inline-flex" />
             <ThemeToggle />
 
             {/* Mobile hamburger */}
             <button
               className="md:hidden rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               onClick={() => setMobileOpen(true)}
-              aria-label="Open menu"
+              aria-label={t("nav.openMenu")}
             >
               <Menu className="h-5 w-5" />
             </button>

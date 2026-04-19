@@ -64,6 +64,7 @@ export default async function StylePage({
           { label: country.name, href: `/explore/${countrySlug}` },
           { label: style.name },
         ]}
+        showBackButton
       />
 
       <div className="mx-auto max-w-7xl px-6 py-16">

@@ -12,10 +12,12 @@ import {
 } from "@/lib/animation-variants";
 import GradientText from "@/components/marketing/GradientText";
 import { WaitlistForm } from "@/components/marketing/WaitlistForm";
+import { useTranslation } from "@/components/language-provider";
 
 export default function VideoHero() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoFailed, setVideoFailed] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <section className="relative flex flex-1 items-center justify-center overflow-hidden">
@@ -76,7 +78,7 @@ export default function VideoHero() {
         {/* Badge */}
         <motion.div variants={staggerChild} className="mb-8">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
-            The #1 Platform for Latin Music Education
+            {t('homepage.videoHero.badge')}
           </span>
         </motion.div>
 
@@ -85,8 +87,8 @@ export default function VideoHero() {
           variants={heroTextReveal}
           className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
         >
-          Learning from the Masters of{" "}
-          <GradientText>Latin Music</GradientText>
+          {t('homepage.videoHero.titlePrefix')}{" "}
+          <GradientText>{t('homepage.videoHero.titleHighlight')}</GradientText>
         </motion.h1>
 
         {/* Subtitle */}
@@ -94,9 +96,7 @@ export default function VideoHero() {
           variants={fadeInUp}
           className="mx-auto mt-6 max-w-2xl text-lg text-white/80 sm:text-xl"
         >
-          Learn Son, Mambo, Bolero, Chacha, Salsa, Cumbia, Merengue, Timba and more from world-class
-          instructors. Interactive lessons with real-time feedback for musicians
-          of every level.
+          {t('homepage.videoHero.subtitle')}
         </motion.p>
 
         {/* Waitlist Form */}
@@ -126,7 +126,7 @@ export default function VideoHero() {
           className="flex flex-col items-center gap-2"
         >
           <span className="text-xs font-medium uppercase tracking-widest text-white/50">
-            Scroll
+            {t('homepage.videoHero.scroll')}
           </span>
           <ChevronDown className="size-5 text-white/50" />
         </motion.div>

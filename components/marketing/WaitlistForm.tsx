@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { joinWaitlist } from "@/app/actions/waitlist"
+import { useTranslation } from "@/components/language-provider"
 
 interface WaitlistFormProps {
   title?: string
@@ -15,6 +16,7 @@ interface WaitlistFormProps {
 export function WaitlistForm({ title, subtitle, variant = "default" }: WaitlistFormProps) {
   const [isPending, startTransition] = useTransition()
   const [result, setResult] = useState<{ success?: boolean; error?: string } | null>(null)
+  const { t } = useTranslation()
 
   const handleSubmit = (formData: FormData) => {
     startTransition(async () => {
@@ -35,7 +37,7 @@ export function WaitlistForm({ title, subtitle, variant = "default" }: WaitlistF
     )}>
       {isImmersive && (
         <span className="mb-5 inline-block rounded-full border border-white/20 bg-white/10 px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white backdrop-blur-sm">
-          Launching Soon
+          {t('homepage.waitlistForm.launchingSoon')}
         </span>
       )}
 
@@ -74,7 +76,7 @@ export function WaitlistForm({ title, subtitle, variant = "default" }: WaitlistF
               : "border-primary/20 bg-primary/5 text-primary text-sm"
           )}
         >
-          You&apos;re on the list! We&apos;ll be in touch soon.
+          {t('homepage.waitlistForm.success')}
         </motion.div>
       ) : (
         <form action={handleSubmit} className={cn(
@@ -84,7 +86,7 @@ export function WaitlistForm({ title, subtitle, variant = "default" }: WaitlistF
           <input
             type="email"
             name="email"
-            placeholder="you@email.com"
+            placeholder={t('homepage.waitlistForm.emailPlaceholder')}
             required
             className={cn(
               "flex-1 rounded-full border transition-colors",
@@ -109,7 +111,7 @@ export function WaitlistForm({ title, subtitle, variant = "default" }: WaitlistF
                   : "px-5"
             )}
           >
-            {isPending ? "Joining..." : isImmersive ? "Get Early Access" : "Join Waitlist"}
+            {isPending ? t('homepage.waitlistForm.joining') : isImmersive ? t('homepage.waitlistForm.getEarlyAccess') : t('homepage.waitlistForm.joinWaitlist')}
           </Button>
         </form>
       )}

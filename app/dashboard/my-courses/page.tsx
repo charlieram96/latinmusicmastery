@@ -1,11 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import { BookOpen, ArrowRight } from 'lucide-react'
-import { MyCoursesFilters } from '@/components/dashboard/my-courses-filters'
-import { MyCourseCard } from '@/components/dashboard/my-course-card'
+import { MyCoursesView } from './my-courses-view'
 
 interface PageProps {
   searchParams: Promise<{
@@ -198,56 +193,5 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
     completed: allCourses.filter(c => c.completedLessons === c.totalLessons && c.totalLessons > 0).length,
   }
 
-  return (
-    <>
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold font-heading mb-2">My Courses</h1>
-        <p className="text-muted-foreground">
-          Track your progress and continue learning
-        </p>
-      </div>
-
-      {/* Filters & Sort */}
-      <MyCoursesFilters counts={counts} />
-
-      {/* Courses */}
-      {enrolledCourses.length > 0 ? (
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {enrolledCourses.map((course: any, index: number) => (
-            <MyCourseCard key={course.id} course={course} index={index} />
-          ))}
-        </div>
-      ) : (
-        /* Empty State */
-        <Card className="mt-8">
-          <CardContent className="p-12 text-center">
-            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="h-8 w-8 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">
-              {filter === 'completed'
-                ? 'No Completed Courses Yet'
-                : filter === 'in-progress'
-                  ? 'No Courses In Progress'
-                  : 'No Courses Yet'}
-            </h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              {filter === 'completed'
-                ? 'Complete your first course to see it here. Keep learning!'
-                : filter === 'in-progress'
-                  ? 'Start a course to track your progress here.'
-                  : 'Start your Latin music journey by enrolling in a course'}
-            </p>
-            <Button asChild>
-              <Link href="/dashboard/courses">
-                Browse Courses
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-    </>
-  )
+  return <MyCoursesView enrolledCourses={enrolledCourses} counts={counts} filter={filter} />
 }

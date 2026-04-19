@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { socialLinks } from "@/components/marketing/SocialLinks"
+import { useTranslation } from "@/components/language-provider"
 
 const container = {
   hidden: {},
@@ -16,6 +17,7 @@ const item = {
 }
 
 export function HomeSocialSection() {
+  const { t } = useTranslation()
   return (
     <section className="py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
@@ -26,7 +28,7 @@ export function HomeSocialSection() {
           transition={{ duration: 0.5 }}
           className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
         >
-          Join Our Community
+          {t('homepage.homeSections.socialSection.heading')}
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -35,8 +37,7 @@ export function HomeSocialSection() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground"
         >
-          Follow us for daily tips, behind-the-scenes content, and inspiration
-          from the Latin music world.
+          {t('homepage.homeSections.socialSection.description')}
         </motion.p>
 
         <motion.div

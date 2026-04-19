@@ -76,6 +76,7 @@ export default async function CountryPage({
           { label: "Explore", href: "/explore" },
           { label: country.name },
         ]}
+        showBackButton
       />
 
       {/* Musical Styles Section */}

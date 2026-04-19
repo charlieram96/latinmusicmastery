@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
+import { cookies } from "next/headers";
 import { PageLoadingProvider } from "@/components/page-loading-overlay";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LanguageProvider } from "@/components/language-provider";
 import { CourseModeProvider } from "@/contexts/course-mode-context";
 import { PlaysenseProvider } from "@/contexts/playsense-context";
+import { DEFAULT_LOCALE, LANGUAGE_COOKIE, getTranslation, isLocale } from "@/lib/i18n";
 import "./globals.css";
 
 const inter = Inter({
@@ -16,29 +19,40 @@ const montserrat = Montserrat({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Latin Music Mastery - Learn Latin Music Styles",
-  description: "Master Salsa, Bachata, Reggaeton, Cumbia and more with comprehensive online courses organized by country and musical style.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get(LANGUAGE_COOKIE)?.value;
+  const locale = isLocale(cookieLocale) ? cookieLocale : DEFAULT_LOCALE;
+  return {
+    title: getTranslation(locale, "metadata.root.title"),
+    description: getTranslation(locale, "metadata.root.description"),
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get(LANGUAGE_COOKIE)?.value;
+  const locale = isLocale(cookieLocale) ? cookieLocale : DEFAULT_LOCALE;
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
         className={`${inter.variable} ${montserrat.variable} antialiased font-sans`}
       >
         <ThemeProvider>
-          <CourseModeProvider>
-            <PlaysenseProvider>
-              <PageLoadingProvider>
-                {children}
-              </PageLoadingProvider>
-            </PlaysenseProvider>
-          </CourseModeProvider>
+          <LanguageProvider initialLocale={locale}>
+            <CourseModeProvider>
+              <PlaysenseProvider>
+                <PageLoadingProvider>
+                  {children}
+                </PageLoadingProvider>
+              </PlaysenseProvider>
+            </CourseModeProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

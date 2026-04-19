@@ -3,18 +3,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { motion } from 'framer-motion'
+import { useTranslation } from '@/components/language-provider'
 
 interface Stat {
-  label: string
+  labelKey: string
   value: number
   suffix?: string
 }
 
 const stats: Stat[] = [
-  { label: 'Active Students', value: 10000, suffix: '+' },
-  { label: 'Video Lessons', value: 500, suffix: '+' },
-  { label: 'Hours of Content', value: 200, suffix: '+' },
-  { label: 'Expert Instructors', value: 15, suffix: '' },
+  { labelKey: 'homepage.stats.activeStudents.label', value: 10000, suffix: '+' },
+  { labelKey: 'homepage.stats.videoLessons.label', value: 500, suffix: '+' },
+  { labelKey: 'homepage.stats.hoursOfContent.label', value: 200, suffix: '+' },
+  { labelKey: 'homepage.stats.expertInstructors.label', value: 15, suffix: '' },
 ]
 
 function CountUp({ end, suffix = '', duration = 2 }: { end: number; suffix?: string; duration?: number }) {
@@ -51,13 +52,14 @@ function CountUp({ end, suffix = '', duration = 2 }: { end: number; suffix?: str
 }
 
 export function StatsBar() {
+  const { t } = useTranslation()
   return (
     <section className="bg-secondary border-y border-border">
       <div className="container mx-auto px-4 py-16 md:py-20">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           {stats.map((stat, index) => (
             <motion.div
-              key={stat.label}
+              key={stat.labelKey}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -65,7 +67,7 @@ export function StatsBar() {
               className="text-center"
             >
               <CountUp end={stat.value} suffix={stat.suffix} />
-              <p className="mt-2 text-sm md:text-base text-muted-foreground">{stat.label}</p>
+              <p className="mt-2 text-sm md:text-base text-muted-foreground">{t(stat.labelKey)}</p>
             </motion.div>
           ))}
         </div>

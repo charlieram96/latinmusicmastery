@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
+import { useTranslation } from '@/components/language-provider'
 
 export default function LoginPage() {
+  const { t } = useTranslation()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -28,19 +30,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen bg-background">
       {/* Left Side - Image with Text Overlay (always dark themed) */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        {/* Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage: `url('https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?q=80&w=2070&auto=format&fit=crop')`,
           }}
         />
-        {/* Dark Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-black/70 to-primary/30" />
 
-        {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
-          {/* Logo */}
           <Link href="/">
             <img
               src="/large-color-logo.svg"
@@ -49,41 +47,36 @@ export default function LoginPage() {
             />
           </Link>
 
-          {/* Text Content */}
           <div className="space-y-6">
             <h1 className="text-4xl xl:text-5xl font-bold font-heading leading-tight">
-              Master the rhythms of
-              <span className="text-primary"> Latin America</span>
+              {t('auth.login.heroTitlePre')}
+              <span className="text-primary"> {t('auth.login.heroTitleHighlight')}</span>
             </h1>
             <p className="text-lg text-white/70 max-w-md">
-              Join our community of musicians learning salsa, bossa nova, tango,
-              and more from world-class instructors.
+              {t('auth.login.heroSubtitle')}
             </p>
 
-            {/* Stats */}
             <div className="flex gap-8 pt-4">
               <div>
                 <div className="text-2xl font-bold">150+</div>
-                <div className="text-sm text-white/60">Video Lessons</div>
+                <div className="text-sm text-white/60">{t('auth.login.statVideoLessons')}</div>
               </div>
               <div>
                 <div className="text-2xl font-bold">8</div>
-                <div className="text-sm text-white/60">Music Styles</div>
+                <div className="text-sm text-white/60">{t('auth.login.statMusicStyles')}</div>
               </div>
               <div>
                 <div className="text-2xl font-bold">4.9</div>
-                <div className="text-sm text-white/60">Rating</div>
+                <div className="text-sm text-white/60">{t('auth.login.statRating')}</div>
               </div>
             </div>
           </div>
 
-          {/* Quote */}
           <div className="space-y-3">
             <p className="text-white/80 italic">
-              "The best platform for learning authentic Latin American music.
-              The instructors are incredible."
+              {t('auth.login.quote')}
             </p>
-            <p className="text-sm text-white/60">— Carlos R., Guitarist</p>
+            <p className="text-sm text-white/60">{t('auth.login.quoteAuthor')}</p>
           </div>
         </div>
       </div>
@@ -91,7 +84,6 @@ export default function LoginPage() {
       {/* Right Side - Login Form (theme-aware) */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md space-y-8">
-          {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
             <Link href="/">
               <img
@@ -102,30 +94,26 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          {/* Header */}
           <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-bold font-heading text-foreground">Welcome back</h2>
+            <h2 className="text-3xl font-bold font-heading text-foreground">{t('auth.login.welcomeBack')}</h2>
             <p className="mt-2 text-muted-foreground">
-              Sign in to continue your musical journey
+              {t('auth.login.signInSubtitle')}
             </p>
           </div>
 
-          {/* Google Sign In */}
           <GoogleSignInButton />
 
-          {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-4 text-muted-foreground">
-                Or continue with email
+                {t('auth.orContinueWithEmail')}
               </span>
             </div>
           </div>
 
-          {/* Form */}
           <form action={handleSubmit} className="space-y-6">
             {error && (
               <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-500">
@@ -134,12 +122,12 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">Email</Label>
+              <Label htmlFor="email" className="text-foreground">{t('common.email')}</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t('common.emailPlaceholder')}
                 required
                 disabled={loading}
                 className="bg-background border-input text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
@@ -148,12 +136,12 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-foreground">Password</Label>
+                <Label htmlFor="password" className="text-foreground">{t('common.password')}</Label>
                 <Link
                   href="/forgot-password"
                   className="text-sm text-primary hover:text-primary/80 transition-colors"
                 >
-                  Forgot password?
+                  {t('auth.login.forgotPassword')}
                 </Link>
               </div>
               <Input
@@ -171,15 +159,14 @@ export default function LoginPage() {
               className="w-full bg-primary hover:bg-primary/90 text-white py-3 h-auto text-base font-semibold rounded-full"
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? t('auth.login.signingIn') : t('auth.login.signInButton')}
             </Button>
           </form>
 
-          {/* Sign Up Link */}
           <p className="text-center text-muted-foreground">
-            Don't have an account?{' '}
+            {t('auth.login.noAccount')}{' '}
             <Link href="/signup" className="text-primary hover:text-primary/80 font-medium transition-colors">
-              Sign up for free
+              {t('auth.login.signUpFree')}
             </Link>
           </p>
         </div>

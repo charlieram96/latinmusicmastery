@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { fadeInUp } from "@/lib/animation-variants";
+import InstructorBioModal from "@/components/marketing/InstructorBioModal";
 
 interface InstructorCardProps {
   name: string;
@@ -83,6 +84,26 @@ export default function InstructorCard({
       <Link href={href} className="group block">
         {content}
       </Link>
+    );
+  }
+
+  if (bio) {
+    return (
+      <InstructorBioModal
+        name={name}
+        instrument={instrument}
+        bio={bio}
+        imageUrl={imageUrl}
+        specialties={specialties}
+      >
+        <button
+          type="button"
+          aria-label={`Open bio for ${name}`}
+          className="group block w-full cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-2xl"
+        >
+          {content}
+        </button>
+      </InstructorBioModal>
     );
   }
 

@@ -4,8 +4,10 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowRight, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/components/language-provider'
 
 export function ModernHero() {
+  const { t } = useTranslation()
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20">
       {/* Subtle gradient background */}
@@ -36,7 +38,7 @@ export function ModernHero() {
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border text-sm text-muted-foreground mb-8"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-          Learn authentic Latin rhythms from world-class instructors
+          {t('homepage.modernHero.badge')}
         </motion.div>
 
         {/* Main Headline */}
@@ -46,9 +48,9 @@ export function ModernHero() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight text-foreground leading-[1.1] mb-6 font-heading"
         >
-          Master the rhythms of
+          {t('homepage.modernHero.titleLine1')}
           <br />
-          <span className="text-primary">Latin America</span>
+          <span className="text-primary">{t('homepage.modernHero.titleLine2')}</span>
         </motion.h1>
 
         {/* Subheadline */}
@@ -58,8 +60,7 @@ export function ModernHero() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
         >
-          Learn salsa, bossa nova, tango, and more from world-class instructors.
-          Interactive lessons designed for musicians of all levels.
+          {t('homepage.modernHero.subtitle')}
         </motion.p>
 
         {/* CTAs */}
@@ -74,7 +75,7 @@ export function ModernHero() {
             asChild
           >
             <Link href="/signup" className="flex items-center justify-center">
-              Start Learning Free
+              {t('homepage.modernHero.ctaPrimary')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>
@@ -86,7 +87,7 @@ export function ModernHero() {
           >
             <Link href="#demo" className="flex items-center justify-center">
               <Play className="w-4 h-4 mr-2" />
-              Watch Demo
+              {t('homepage.modernHero.ctaSecondary')}
             </Link>
           </Button>
         </motion.div>

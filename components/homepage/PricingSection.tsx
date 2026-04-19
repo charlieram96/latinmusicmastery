@@ -4,25 +4,27 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Check, Crown, Music } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
 
-const allAccessFeatures = [
-  'All 6 instruments included',
-  'Every course and lesson',
-  'Interactive Soundslice integration',
-  'Progress tracking dashboard',
-  'New content added monthly',
-  'Cancel anytime',
+const allAccessFeatureKeys = [
+  'homepage.pricing.allAccessFeatures.allInstruments',
+  'homepage.pricing.allAccessFeatures.everyCourse',
+  'homepage.pricing.allAccessFeatures.soundslice',
+  'homepage.pricing.allAccessFeatures.progress',
+  'homepage.pricing.allAccessFeatures.monthly',
+  'homepage.pricing.allAccessFeatures.cancelAnytime',
 ]
 
-const instrumentFeatures = [
-  'All courses for your instrument',
-  'Interactive Soundslice integration',
-  'Progress tracking dashboard',
-  'New content added monthly',
-  'Cancel anytime',
+const instrumentFeatureKeys = [
+  'homepage.pricing.instrumentFeatures.allCourses',
+  'homepage.pricing.instrumentFeatures.soundslice',
+  'homepage.pricing.instrumentFeatures.progress',
+  'homepage.pricing.instrumentFeatures.monthly',
+  'homepage.pricing.instrumentFeatures.cancelAnytime',
 ]
 
 export function PricingSection() {
+  const { t } = useTranslation()
   return (
     <section id="pricing" className="py-24 lg:py-32">
       <div className="max-w-5xl mx-auto px-6">
@@ -35,10 +37,10 @@ export function PricingSection() {
           className="text-center mb-12"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4 font-heading">
-            Simple, flexible pricing
+            {t('homepage.pricing.heading')}
           </h2>
           <p className="text-lg text-muted-foreground">
-            Subscribe per instrument or get unlimited access to everything.
+            {t('homepage.pricing.subheading')}
           </p>
         </motion.div>
 
@@ -55,19 +57,19 @@ export function PricingSection() {
               <div className="text-center mb-8">
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground uppercase tracking-wider mb-2">
                   <Music className="w-4 h-4" />
-                  Per Instrument
+                  {t('homepage.pricing.perInstrument')}
                 </div>
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-5xl font-bold text-foreground">$24.99</span>
-                  <span className="text-lg text-muted-foreground">/month</span>
+                  <span className="text-lg text-muted-foreground">{t('homepage.pricing.perMonth')}</span>
                 </div>
               </div>
 
               <ul className="space-y-4 mb-8 flex-1">
-                {instrumentFeatures.map((feature) => (
-                  <li key={feature} className="flex items-center gap-3">
+                {instrumentFeatureKeys.map((featureKey) => (
+                  <li key={featureKey} className="flex items-center gap-3">
                     <Check className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span className="text-foreground/80">{feature}</span>
+                    <span className="text-foreground/80">{t(featureKey)}</span>
                   </li>
                 ))}
               </ul>
@@ -77,7 +79,7 @@ export function PricingSection() {
                 className="w-full py-4 h-auto text-base font-semibold rounded-full"
                 asChild
               >
-                <Link href="/pricing">Choose Your Instrument</Link>
+                <Link href="/pricing">{t('homepage.pricing.chooseInstrument')}</Link>
               </Button>
             </div>
           </motion.div>
@@ -95,19 +97,19 @@ export function PricingSection() {
               <div className="text-center mb-8">
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground uppercase tracking-wider mb-2">
                   <Crown className="w-4 h-4" />
-                  All-Access
+                  {t('homepage.pricing.allAccess')}
                 </div>
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-5xl font-bold text-foreground">$69.99</span>
-                  <span className="text-lg text-muted-foreground">/month</span>
+                  <span className="text-lg text-muted-foreground">{t('homepage.pricing.perMonth')}</span>
                 </div>
               </div>
 
               <ul className="space-y-4 mb-8 flex-1">
-                {allAccessFeatures.map((feature) => (
-                  <li key={feature} className="flex items-center gap-3">
+                {allAccessFeatureKeys.map((featureKey) => (
+                  <li key={featureKey} className="flex items-center gap-3">
                     <Check className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span className="text-foreground/80">{feature}</span>
+                    <span className="text-foreground/80">{t(featureKey)}</span>
                   </li>
                 ))}
               </ul>
@@ -116,11 +118,11 @@ export function PricingSection() {
                 className="w-full bg-primary hover:bg-primary/90 text-white py-4 h-auto text-base font-semibold rounded-full"
                 asChild
               >
-                <Link href="#waitlist">Get All-Access</Link>
+                <Link href="#waitlist">{t('homepage.pricing.getAllAccess')}</Link>
               </Button>
 
               <p className="text-center text-xs text-muted-foreground mt-4">
-                14-day money-back guarantee. No credit card required.
+                {t('homepage.pricing.moneyBackNote')}
               </p>
             </div>
           </motion.div>

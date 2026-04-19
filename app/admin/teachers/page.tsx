@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Music, BookOpen, User } from 'lucide-react'
+import { DeleteTeacherButton } from '@/components/admin/delete-teacher-button'
 
 function getInitials(name: string): string {
   return name
@@ -115,9 +116,16 @@ export default async function TeachersPage() {
                     <BookOpen className="w-3.5 h-3.5" />
                     <span>{teacher.courseCount} {teacher.courseCount === 1 ? 'course' : 'courses'}</span>
                   </div>
-                  <Button asChild variant="ghost" size="sm" className="h-8">
-                    <Link href={`/admin/teachers/${teacher.id}`}>Edit</Link>
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button asChild variant="ghost" size="sm" className="h-8">
+                      <Link href={`/admin/teachers/${teacher.id}`}>Edit</Link>
+                    </Button>
+                    <DeleteTeacherButton
+                      teacherId={teacher.id}
+                      teacherName={teacher.name}
+                      courseCount={teacher.courseCount}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>

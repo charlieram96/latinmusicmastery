@@ -1,15 +1,19 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
+import { getServerTranslator } from '@/lib/i18n/server'
 
-export const metadata: Metadata = {
-  title: 'Latin Music Mastery - Learn Authentic Latin Music Online',
-  description: 'Master Son, Mambo, Bolero, Chacha, Salsa, Cumbia, Merengue, Timba and more with world-class instructors. Interactive lessons with real-time feedback for musicians of every level.',
-  openGraph: {
-    title: 'Latin Music Mastery - Learn Authentic Latin Music Online',
-    description: 'Master salsa, bossa nova, tango, cumbia and more with world-class instructors.',
-    type: 'website',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslator()
+  return {
+    title: t('metadata.home.title'),
+    description: t('metadata.home.description'),
+    openGraph: {
+      title: t('metadata.home.title'),
+      description: t('metadata.home.ogDescription'),
+      type: 'website',
+    },
+  }
 }
 import VideoHero from '@/components/marketing/VideoHero'
 import StatsBar from '@/components/marketing/StatsBar'
@@ -23,6 +27,7 @@ import { WaitlistForm } from '@/components/marketing/WaitlistForm'
 
 export default async function MarketingHomePage() {
   const supabase = await createClient()
+  const { t } = await getServerTranslator()
 
   const [{ data: countries }, { data: teachers }] = await Promise.all([
     supabase
@@ -73,8 +78,8 @@ export default async function MarketingHomePage() {
         <div className="absolute inset-0 bg-black/65" />
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <WaitlistForm
-            title="Ready to Start Your Musical Journey?"
-            subtitle="Be the first to know when we launch. Join the waiting list for early access and founding member pricing."
+            title={t('marketing.home.waitlistTitle')}
+            subtitle={t('marketing.home.waitlistSubtitle')}
             variant="immersive"
           />
         </div>

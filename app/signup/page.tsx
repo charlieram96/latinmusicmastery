@@ -8,8 +8,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
+import { useTranslation } from '@/components/language-provider'
 
 export default function SignupPage() {
+  const { t } = useTranslation()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -38,9 +40,9 @@ export default function SignupPage() {
               />
             </Link>
           </div>
-          <CardTitle className="text-2xl font-bold text-center text-foreground">Create Account</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center text-foreground">{t('auth.signup.title')}</CardTitle>
           <CardDescription className="text-center">
-            Start your journey with Latin Music Mastery
+            {t('auth.signup.subtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
@@ -52,7 +54,7 @@ export default function SignupPage() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-2 text-muted-foreground">
-                Or continue with email
+                {t('auth.orContinueWithEmail')}
               </span>
             </div>
           </div>
@@ -66,29 +68,29 @@ export default function SignupPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="full_name" className="text-foreground">Full Name</Label>
+              <Label htmlFor="full_name" className="text-foreground">{t('common.fullName')}</Label>
               <Input
                 id="full_name"
                 name="full_name"
                 type="text"
-                placeholder="John Doe"
+                placeholder={t('auth.signup.fullNamePlaceholder')}
                 required
                 disabled={loading}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">Email</Label>
+              <Label htmlFor="email" className="text-foreground">{t('common.email')}</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t('common.emailPlaceholder')}
                 required
                 disabled={loading}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground">Password</Label>
+              <Label htmlFor="password" className="text-foreground">{t('common.password')}</Label>
               <Input
                 id="password"
                 name="password"
@@ -98,7 +100,7 @@ export default function SignupPage() {
                 minLength={6}
               />
               <p className="text-xs text-muted-foreground">
-                Must be at least 6 characters
+                {t('auth.signup.passwordHint')}
               </p>
             </div>
           </CardContent>
@@ -108,12 +110,12 @@ export default function SignupPage() {
               className="w-full bg-primary hover:bg-primary/90 text-white rounded-full"
               disabled={loading}
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? t('auth.signup.creating') : t('auth.signup.createAccount')}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
-              Already have an account?{' '}
+              {t('auth.signup.haveAccount')}{' '}
               <Link href="/login" className="text-primary hover:underline">
-                Sign in
+                {t('common.signIn')}
               </Link>
             </p>
           </CardFooter>

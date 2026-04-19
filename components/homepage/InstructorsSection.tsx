@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
 
 interface Instructor {
   id: string
@@ -27,6 +28,7 @@ function getInitials(name: string): string {
 }
 
 export function InstructorsSection({ instructors }: Props) {
+  const { t } = useTranslation()
   return (
     <section id="instructors" className="py-24 lg:py-32">
       <div className="max-w-7xl mx-auto px-6">
@@ -40,11 +42,10 @@ export function InstructorsSection({ instructors }: Props) {
         >
           <div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-2 font-heading">
-              Learn from the best
+              {t('homepage.homeSections.instructors.heading')}
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl">
-              World-class musicians with decades of performance and teaching
-              experience
+              {t('homepage.homeSections.instructors.subheading')}
             </p>
           </div>
 
@@ -52,7 +53,7 @@ export function InstructorsSection({ instructors }: Props) {
             href="/dashboard/teachers"
             className="text-primary hover:text-primary/80 text-sm font-medium inline-flex items-center gap-1 transition-colors"
           >
-            View all instructors
+            {t('homepage.homeSections.instructors.viewAll')}
             <ArrowRight className="w-4 h-4" />
           </Link>
         </motion.div>

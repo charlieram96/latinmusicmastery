@@ -3,53 +3,49 @@
 import { motion } from 'framer-motion'
 import { PlayCircle, BarChart3, Users, Download, Clock, Sparkles } from 'lucide-react'
 import { LucideIcon } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
 
 interface Feature {
   icon: LucideIcon
-  title: string
-  description: string
+  titleKey: string
+  descriptionKey: string
 }
 
 const features: Feature[] = [
   {
     icon: PlayCircle,
-    title: 'Interactive Lessons',
-    description:
-      'HD video with Soundslice integration for synchronized notation. Slow down, loop, and master every note.',
+    titleKey: 'homepage.homeSections.features.interactive.title',
+    descriptionKey: 'homepage.homeSections.features.interactive.description',
   },
   {
     icon: BarChart3,
-    title: 'Progress Tracking',
-    description:
-      'Monitor your practice time, completed lessons, and skill improvements in one dashboard.',
+    titleKey: 'homepage.homeSections.features.progress.title',
+    descriptionKey: 'homepage.homeSections.features.progress.description',
   },
   {
     icon: Users,
-    title: 'Expert Instructors',
-    description:
-      'Learn from professional musicians with decades of performance and teaching experience.',
+    titleKey: 'homepage.homeSections.features.experts.title',
+    descriptionKey: 'homepage.homeSections.features.experts.description',
   },
   {
     icon: Download,
-    title: 'Downloadable Resources',
-    description:
-      'Sheet music, tablature, and backing tracks available for offline practice.',
+    titleKey: 'homepage.homeSections.features.downloads.title',
+    descriptionKey: 'homepage.homeSections.features.downloads.description',
   },
   {
     icon: Clock,
-    title: 'Learn at Your Pace',
-    description:
-      'Access lessons anytime, anywhere. No deadlines, no pressure.',
+    titleKey: 'homepage.homeSections.features.pace.title',
+    descriptionKey: 'homepage.homeSections.features.pace.description',
   },
   {
     icon: Sparkles,
-    title: 'New Content Monthly',
-    description:
-      'Fresh lessons and courses added regularly to expand your repertoire.',
+    titleKey: 'homepage.homeSections.features.monthly.title',
+    descriptionKey: 'homepage.homeSections.features.monthly.description',
   },
 ]
 
 export function FeaturesSection() {
+  const { t } = useTranslation()
   return (
     <section className="py-24 lg:py-32 bg-muted/50">
       <div className="max-w-7xl mx-auto px-6">
@@ -62,10 +58,10 @@ export function FeaturesSection() {
           className="text-center max-w-3xl mx-auto mb-16"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4 font-heading">
-            Everything you need to excel
+            {t('homepage.homeSections.features.heading')}
           </h2>
           <p className="text-lg text-muted-foreground">
-            A complete learning platform built for serious musicians
+            {t('homepage.homeSections.features.subheading')}
           </p>
         </motion.div>
 
@@ -73,7 +69,7 @@ export function FeaturesSection() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {features.map((feature, i) => (
             <motion.div
-              key={feature.title}
+              key={feature.titleKey}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -86,11 +82,11 @@ export function FeaturesSection() {
               </div>
 
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                {feature.title}
+                {t(feature.titleKey)}
               </h3>
 
               <p className="text-sm text-muted-foreground leading-relaxed">
-                {feature.description}
+                {t(feature.descriptionKey)}
               </p>
             </motion.div>
           ))}

@@ -7,47 +7,49 @@ import { motion } from 'framer-motion'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/components/language-provider'
 
 interface Testimonial {
-  name: string
-  role: string
-  content: string
+  nameKey: string
+  roleKey: string
+  contentKey: string
   initials: string
   rating: number
 }
 
 const testimonials: Testimonial[] = [
   {
-    name: 'David Chen',
-    role: 'Salsa Student',
-    content: 'The interactive lessons and expert instructors helped me master salsa rhythms in just 3 months. I can now play confidently with my local band!',
+    nameKey: 'homepage.testimonials.carousel.davidChen.name',
+    roleKey: 'homepage.testimonials.carousel.davidChen.role',
+    contentKey: 'homepage.testimonials.carousel.davidChen.content',
     initials: 'DC',
     rating: 5,
   },
   {
-    name: 'Sarah Williams',
-    role: 'Bossa Nova Enthusiast',
-    content: 'As a jazz guitarist, learning bossa nova opened up a whole new world. The Soundslice integration makes following along so easy.',
+    nameKey: 'homepage.testimonials.carousel.sarahWilliams.name',
+    roleKey: 'homepage.testimonials.carousel.sarahWilliams.role',
+    contentKey: 'homepage.testimonials.carousel.sarahWilliams.content',
     initials: 'SW',
     rating: 5,
   },
   {
-    name: 'Miguel Santos',
-    role: 'Professional Musician',
-    content: 'I wanted to connect with my Colombian roots through music. The cumbia course exceeded my expectations - authentic, detailed, and inspiring.',
+    nameKey: 'homepage.testimonials.carousel.miguelSantos.name',
+    roleKey: 'homepage.testimonials.carousel.miguelSantos.role',
+    contentKey: 'homepage.testimonials.carousel.miguelSantos.content',
     initials: 'MS',
     rating: 5,
   },
   {
-    name: 'Emma Taylor',
-    role: 'Music Teacher',
-    content: 'I use these courses to teach my students about Latin American music. The quality and cultural context are unmatched.',
+    nameKey: 'homepage.testimonials.carousel.emmaTaylor.name',
+    roleKey: 'homepage.testimonials.carousel.emmaTaylor.role',
+    contentKey: 'homepage.testimonials.carousel.emmaTaylor.content',
     initials: 'ET',
     rating: 5,
   },
 ]
 
 export function TestimonialCarousel() {
+  const { t } = useTranslation()
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
     Autoplay({ delay: 5000, stopOnInteraction: false }),
   ])
@@ -86,10 +88,10 @@ export function TestimonialCarousel() {
           className="text-center max-w-3xl mx-auto mb-12"
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-3">
-            Student Success Stories
+            {t('homepage.testimonials.carousel.heading')}
           </h2>
           <p className="text-base md:text-lg text-muted-foreground">
-            Join thousands of musicians who have transformed their skills
+            {t('homepage.testimonials.carousel.subheading')}
           </p>
         </motion.div>
 
@@ -108,7 +110,7 @@ export function TestimonialCarousel() {
                     <div className="relative">
                       {/* Testimonial Content */}
                       <blockquote className="text-lg md:text-xl leading-relaxed mb-6 text-foreground">
-                        {testimonial.content}
+                        {t(testimonial.contentKey)}
                       </blockquote>
 
                       {/* Author Info */}
@@ -119,8 +121,8 @@ export function TestimonialCarousel() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                          <div className="font-semibold">{testimonial.name}</div>
-                          <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                          <div className="font-semibold">{t(testimonial.nameKey)}</div>
+                          <div className="text-sm text-muted-foreground">{t(testimonial.roleKey)}</div>
                         </div>
                         {/* Rating */}
                         <div className="flex gap-0.5">
@@ -173,7 +175,7 @@ export function TestimonialCarousel() {
                     ? 'bg-primary w-8'
                     : 'bg-border w-2 hover:bg-primary/50'
                 }`}
-                aria-label={`Go to testimonial ${index + 1}`}
+                aria-label={t('homepage.testimonials.carousel.goToTestimonial', { index: index + 1 })}
               />
             ))}
           </div>

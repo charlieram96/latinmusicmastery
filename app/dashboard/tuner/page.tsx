@@ -30,6 +30,7 @@ import {
 import { cn } from '@/lib/utils'
 import { usePitchDetection } from '@/hooks/use-pitch-detection'
 import { staggerContainer, staggerChild } from '@/lib/animation-variants'
+import { useTranslation } from '@/components/language-provider'
 
 const REFERENCE_PITCHES = [432, 434, 436, 438, 440, 441, 442, 443, 444]
 
@@ -70,16 +71,16 @@ const CX = 250
 const CY = 220
 const R = 190
 
-function getTuningStatus(cents: number | null) {
-  if (cents === null) return { label: 'Waiting...', icon: AudioWaveform, color: 'text-muted-foreground' }
+function getTuningStatus(cents: number | null, t: (key: string) => string) {
+  if (cents === null) return { label: t('dashboard.pages.tuner.status.waiting'), icon: AudioWaveform, color: 'text-muted-foreground' }
   const absCents = Math.abs(cents)
-  if (absCents < 5) return { label: 'In Tune', icon: Check, color: 'text-green-500' }
+  if (absCents < 5) return { label: t('dashboard.pages.tuner.status.inTune'), icon: Check, color: 'text-green-500' }
   if (cents > 0) {
-    if (absCents > 20) return { label: 'Sharp', icon: ChevronsUp, color: 'text-red-500' }
-    return { label: 'Slightly Sharp', icon: ChevronUp, color: 'text-yellow-500' }
+    if (absCents > 20) return { label: t('dashboard.pages.tuner.status.sharp'), icon: ChevronsUp, color: 'text-red-500' }
+    return { label: t('dashboard.pages.tuner.status.slightlySharp'), icon: ChevronUp, color: 'text-yellow-500' }
   }
-  if (absCents > 20) return { label: 'Flat', icon: ChevronsDown, color: 'text-red-500' }
-  return { label: 'Slightly Flat', icon: ChevronDown, color: 'text-yellow-500' }
+  if (absCents > 20) return { label: t('dashboard.pages.tuner.status.flat'), icon: ChevronsDown, color: 'text-red-500' }
+  return { label: t('dashboard.pages.tuner.status.slightlyFlat'), icon: ChevronDown, color: 'text-yellow-500' }
 }
 
 function getNoteColor(cents: number | null) {
@@ -149,6 +150,7 @@ const pulseVariants = {
 }
 
 export default function TunerPage() {
+  const { t } = useTranslation()
   const [referencePitch, setReferencePitch] = useState(440)
   const [selectedInstrument, setSelectedInstrument] = useState('Guitar')
   const {
@@ -163,9 +165,32 @@ export default function TunerPage() {
     stopListening,
   } = usePitchDetection({ referencePitch })
 
-  const tuningStatus = getTuningStatus(cents)
+  const tuningStatus = getTuningStatus(cents, t)
   const StatusIcon = tuningStatus.icon
   const noteColor = getNoteColor(cents)
+
+  const instrumentInfo: Record<string, { description: string; strings?: string[] }> = {
+    Guitar: {
+      description: t('dashboard.pages.tuner.instruments.guitar.description'),
+      strings: INSTRUMENT_TUNING_INFO.Guitar.strings,
+    },
+    Bass: {
+      description: t('dashboard.pages.tuner.instruments.bass.description'),
+      strings: INSTRUMENT_TUNING_INFO.Bass.strings,
+    },
+    Piano: {
+      description: t('dashboard.pages.tuner.instruments.piano.description'),
+    },
+    Violin: {
+      description: t('dashboard.pages.tuner.instruments.violin.description'),
+      strings: INSTRUMENT_TUNING_INFO.Violin.strings,
+    },
+    Tres: {
+      description: t('dashboard.pages.tuner.instruments.tres.description'),
+      strings: INSTRUMENT_TUNING_INFO.Tres.strings,
+    },
+  }
+  const currentInfo = instrumentInfo[selectedInstrument]
 
   // Needle angle for the tapered polygon
   const needleAngleDeg = centsToAngle(cents ?? 0)
@@ -175,10 +200,10 @@ export default function TunerPage() {
     <div className="flex flex-col h-[calc(100vh-3.5rem-3rem)]">
       {/* Compact header */}
       <div className="mb-4 flex items-center gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">Instrument Tuner</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('dashboard.pages.tuner.title')}</h1>
         <Badge variant="secondary" className="hidden sm:flex">
           <AudioWaveform className="h-3 w-3" />
-          Chromatic
+          {t('dashboard.pages.tuner.chromatic')}
         </Badge>
       </div>
 
@@ -217,16 +242,16 @@ export default function TunerPage() {
           </motion.div>
 
           {/* Instrument info */}
-          {INSTRUMENT_TUNING_INFO[selectedInstrument] && (
+          {currentInfo && (
             <div className="rounded-xl bg-muted/50 p-4">
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">{selectedInstrument}</span>
                 {' \u2014 '}
-                {INSTRUMENT_TUNING_INFO[selectedInstrument].description}
+                {currentInfo.description}
               </p>
-              {INSTRUMENT_TUNING_INFO[selectedInstrument].strings && (
+              {currentInfo.strings && (
                 <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                  {INSTRUMENT_TUNING_INFO[selectedInstrument].strings!.map((s) => (
+                  {currentInfo.strings.map((s) => (
                     <Badge key={s} variant="outline" className="text-xs font-mono">
                       {s}
                     </Badge>
@@ -389,8 +414,8 @@ export default function TunerPage() {
 
             {/* Flat / Sharp labels — HTML, not SVG */}
             <div className="flex justify-between px-8 -mt-2">
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">Flat</span>
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">Sharp</span>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">{t('dashboard.pages.tuner.flat')}</span>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">{t('dashboard.pages.tuner.sharp')}</span>
             </div>
           </div>
 
@@ -434,7 +459,7 @@ export default function TunerPage() {
                 variant={isListening ? 'destructive' : 'default'}
                 className="rounded-full h-20 w-20 relative shadow-lg"
                 onClick={isListening ? stopListening : startListening}
-                aria-label={isListening ? 'Stop tuner' : 'Start tuner'}
+                aria-label={isListening ? t('dashboard.pages.tuner.stopTuner') : t('dashboard.pages.tuner.startTuner')}
               >
                 {isListening ? (
                   <MicOff className="h-7 w-7" />
@@ -454,10 +479,10 @@ export default function TunerPage() {
             <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <h3 className="text-sm font-semibold text-destructive">
-                Microphone Access Denied
+                {t('dashboard.pages.tuner.micAccessDenied')}
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                {error || 'Please allow microphone access in your browser settings to use the tuner.'}
+                {error || t('dashboard.pages.tuner.micAccessHelp')}
               </p>
               <Button
                 variant="outline"
@@ -465,7 +490,7 @@ export default function TunerPage() {
                 className="mt-3"
                 onClick={startListening}
               >
-                Try Again
+                {t('dashboard.pages.tuner.tryAgain')}
               </Button>
             </div>
           </div>
@@ -484,7 +509,7 @@ export default function TunerPage() {
                 className="mt-3"
                 onClick={startListening}
               >
-                Try Again
+                {t('dashboard.pages.tuner.tryAgain')}
               </Button>
             </div>
           </div>
