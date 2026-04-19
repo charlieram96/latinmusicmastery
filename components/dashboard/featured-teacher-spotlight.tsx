@@ -5,6 +5,7 @@ import { Users, Sparkles } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { AnimatedSection } from '@/components/dashboard/animated-section'
 import type { FeaturedTeacher } from '@/types/dashboard'
+import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
 
 interface FeaturedTeacherSpotlightProps {
   teacher: FeaturedTeacher
@@ -54,11 +55,14 @@ export function FeaturedTeacherSpotlight({
                 </Badge>
               )}
             </div>
-            {teacher.bio && (
-              <p className="mt-0.5 text-xs text-muted-foreground leading-snug line-clamp-2">
-                {teacher.bio}
-              </p>
-            )}
+            {(() => {
+              const bioPreview = tiptapToPlainText(teacher.bio)
+              return bioPreview ? (
+                <p className="mt-0.5 text-xs text-muted-foreground leading-snug line-clamp-2">
+                  {bioPreview}
+                </p>
+              ) : null
+            })()}
           </div>
         </div>
       </div>

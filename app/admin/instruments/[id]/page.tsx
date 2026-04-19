@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { ArrowLeft } from 'lucide-react'
 import { createInstrument, updateInstrument } from '@/app/actions/admin'
+import { InstrumentImageUpload } from '@/components/admin/instrument-image-upload'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -93,13 +94,10 @@ export default async function InstrumentFormPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="image_url">Image URL</Label>
-            <Input
-              id="image_url"
-              name="image_url"
-              type="url"
-              defaultValue={instrument?.image_url || ''}
-              placeholder="https://example.com/image.jpg"
+            <Label>Image</Label>
+            <InstrumentImageUpload
+              instrumentId={isNew ? 'new' : id}
+              currentImageUrl={instrument?.image_url ?? null}
             />
           </div>
 

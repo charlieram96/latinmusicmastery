@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import type { Json } from '@/types/database'
 
 // Get current teacher's profile
 export async function getTeacherProfile() {
@@ -170,27 +171,28 @@ export async function markFeedbackInReview(requestId: string) {
 }
 
 // Update teacher profile (bio, image, specialties)
-export async function updateTeacherProfile(formData: FormData) {
+export async function updateTeacherProfile(input: {
+  bio: Record<string, unknown> | null
+  image_url: string | null
+  specialties: string | null
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) throw new Error('Unauthorized')
 
-  const specialtiesString = formData.get('specialties') as string
-  const specialties = specialtiesString
-    ? specialtiesString.split(',').map(s => s.trim()).filter(Boolean)
+  const specialties = input.specialties
+    ? input.specialties.split(',').map(s => s.trim()).filter(Boolean)
     : null
-
-  const data = {
-    bio: formData.get('bio') as string || null,
-    image_url: formData.get('image_url') as string || null,
-    specialties,
-    updated_at: new Date().toISOString(),
-  }
 
   const { error } = await supabase
     .from('teachers')
-    .update(data)
+    .update({
+      bio: input.bio as Json | null,
+      image_url: input.image_url,
+      specialties,
+      updated_at: new Date().toISOString(),
+    })
     .eq('user_id', user.id)
 
   if (error) throw new Error(error.message)

@@ -62,7 +62,7 @@ export interface LearningMilestonesProps {
 export interface FeaturedTeacher {
   id: string
   name: string
-  bio: string | null
+  bio: unknown
   image_url: string | null
   instrument?: string | null
 }

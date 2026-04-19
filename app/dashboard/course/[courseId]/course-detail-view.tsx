@@ -23,6 +23,7 @@ import { CurriculumNavigator } from '@/components/course/curriculum-navigator'
 import { HeroStatsStrip } from '@/components/course/hero-stats-strip'
 import { MobileCourseBar } from '@/components/course/mobile-course-bar'
 import { getInstrumentColor } from '@/lib/instruments'
+import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
 import { useTranslation } from '@/components/language-provider'
 
 interface CourseDetailViewProps {
@@ -417,7 +418,7 @@ export function CourseDetailView({
               </Badge>
             )}
             <p className="text-muted-foreground leading-relaxed max-w-2xl">
-              {teacher.bio ||
+              {tiptapToPlainText(teacher.bio) ||
                 t('dashboard.pages.course.teacherBioFallback', {
                   style: style?.name || t('dashboard.pages.course.latinFallback'),
                 })}

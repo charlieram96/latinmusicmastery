@@ -9,7 +9,7 @@ import InstructorBioModal from "@/components/marketing/InstructorBioModal";
 interface InstructorCardProps {
   name: string;
   instrument: string;
-  bio?: string | null;
+  bio?: unknown;
   imageUrl?: string | null;
   specialties?: string[] | null;
   href?: string;

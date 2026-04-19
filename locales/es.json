@@ -724,22 +724,13 @@
         "headingPrefix": "Precios simples,",
         "headingHighlight": "flexibles",
         "description": "Suscríbete por instrumento u obtén acceso ilimitado a todo.",
-        "sixInstruments": "6 instrumentos",
-        "available": "disponibles",
+        "instrumentsAvailable": "{count} Instrumentos Disponibles",
         "perInstrument": "Por instrumento",
         "allAccess": "Acceso total",
         "perMonth": "/mes",
         "chooseInstrument": "Elige tu instrumento",
         "getAllAccess": "Obtener acceso total",
         "moneyBack": "Garantía de reembolso por 14 días",
-        "instruments": {
-          "timbal": "Timbal",
-          "conga": "Conga",
-          "violin": "Violín",
-          "bass": "Bajo",
-          "piano": "Piano",
-          "vocals": "Voz"
-        },
         "instrumentFeatures": {
           "allCourses": "Todos los cursos para tu instrumento",
           "soundslice": "Integración interactiva con Soundslice",

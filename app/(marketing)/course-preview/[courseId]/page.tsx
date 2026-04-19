@@ -21,6 +21,7 @@ import { Lock, BookOpen, BarChart3, User, Music } from "lucide-react";
 import PageHero from "@/components/marketing/PageHero";
 import SectionWrapper from "@/components/marketing/SectionWrapper";
 import CTABanner from "@/components/marketing/CTABanner";
+import { tiptapToPlainText } from "@/lib/tiptap/plain-text";
 import {
   Accordion,
   AccordionItem,
@@ -240,11 +241,14 @@ export default async function CoursePreviewPage({
                 {teacher.instrument && (
                   <p className="text-sm text-primary">{teacher.instrument}</p>
                 )}
-                {teacher.bio && (
-                  <p className="mt-2 text-sm text-muted-foreground line-clamp-4">
-                    {teacher.bio}
-                  </p>
-                )}
+                {(() => {
+                  const bioPreview = tiptapToPlainText(teacher.bio);
+                  return bioPreview ? (
+                    <p className="mt-2 text-sm text-muted-foreground line-clamp-4">
+                      {bioPreview}
+                    </p>
+                  ) : null;
+                })()}
               </div>
             </div>
           </SectionWrapper>

@@ -23,6 +23,8 @@ import {
   User
 } from 'lucide-react'
 import Link from 'next/link'
+import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
+import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
 
 interface Course {
   id: string
@@ -37,7 +39,7 @@ interface Teacher {
   name: string
   image_url: string | null
   instrument: string
-  bio: string | null
+  bio: unknown
   email: string | null
   specialties: string[] | null
   courses: Course[]
@@ -113,11 +115,14 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
           )}
 
           {/* Bio */}
-          {teacher.bio && (
-            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-              {teacher.bio}
-            </p>
-          )}
+          {(() => {
+            const bioPreview = tiptapToPlainText(teacher.bio)
+            return bioPreview ? (
+              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                {bioPreview}
+              </p>
+            ) : null
+          })()}
 
           {/* Footer */}
           <div className="flex items-center justify-between pt-3 border-t">
@@ -173,17 +178,23 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
             </div>
 
             {/* Bio */}
-            {teacher.bio && (
+            {teacher.bio ? (
               <div>
                 <h3 className="font-semibold mb-2 flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-primary" />
                   About
                 </h3>
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {teacher.bio}
-                </p>
+                <div className="text-muted-foreground leading-relaxed text-sm [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-bold [&_h1:first-child]:mt-0 [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h2:first-child]:mt-0 [&_h3]:mt-3 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3:first-child]:mt-0 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-primary [&_a]:underline [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-primary/60 [&_blockquote]:pl-3 [&_blockquote]:italic [&_img]:my-3 [&_img]:rounded-lg [&_img]:max-w-full [&_iframe]:my-3 [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg">
+                  <TiptapReadOnly
+                    content={
+                      teacher.bio && typeof teacher.bio === 'object'
+                        ? (teacher.bio as Record<string, unknown>)
+                        : null
+                    }
+                  />
+                </div>
               </div>
-            )}
+            ) : null}
 
             {/* Courses */}
             {teacher.courses.length > 0 && (
