@@ -9,7 +9,7 @@ import { ImageIcon, Loader2, Upload, X } from 'lucide-react'
 interface CountryImageUploadProps {
   countryId: string
   currentImageUrl: string | null
-  onImageChange: (url: string) => void
+  onImageChange?: (url: string) => void
 }
 
 export function CountryImageUpload({
@@ -27,7 +27,7 @@ export function CountryImageUpload({
   const syncUrl = (next: string) => {
     setUrlValue(next)
     setPreviewUrl(next || null)
-    onImageChange(next)
+    onImageChange?.(next)
   }
 
   const handleFileSelect = async (file: File) => {
