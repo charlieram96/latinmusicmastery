@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { BookOpen, Users, ArrowRight, Sparkles } from 'lucide-react'
 import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/dashboard/animated-section'
 import type { DashboardCourse, FeaturedTeacher } from '@/types/dashboard'
+import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
 
 /* ------------------------------------------------------------------ */
 /*  Props — newCourseIds arrives as string[] (Sets can't serialize)    */
@@ -114,11 +115,14 @@ export function RecommendedFeatured({
                   </Badge>
                 )}
               </div>
-              {featuredTeacher.bio && (
-                <p className="mt-1 text-sm text-muted-foreground leading-snug line-clamp-2">
-                  {featuredTeacher.bio}
-                </p>
-              )}
+              {(() => {
+                const bioPreview = tiptapToPlainText(featuredTeacher.bio)
+                return bioPreview ? (
+                  <p className="mt-1 text-sm text-muted-foreground leading-snug line-clamp-2">
+                    {bioPreview}
+                  </p>
+                ) : null
+              })()}
             </div>
 
             {/* Sparkle accent */}

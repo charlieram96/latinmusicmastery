@@ -29,7 +29,7 @@ export default async function MarketingHomePage() {
   const supabase = await createClient()
   const { t } = await getServerTranslator()
 
-  const [{ data: countries }, { data: teachers }] = await Promise.all([
+  const [{ data: countries }, { data: teachers }, { data: instruments }] = await Promise.all([
     supabase
       .from('countries')
       .select(`
@@ -37,6 +37,7 @@ export default async function MarketingHomePage() {
         name,
         slug,
         description,
+        image_url,
         musical_styles (
           id,
           name,
@@ -48,6 +49,10 @@ export default async function MarketingHomePage() {
     supabase
       .from('teachers')
       .select('id, name, instrument, bio, image_url, specialties')
+      .order('name'),
+    supabase
+      .from('instruments')
+      .select('id, name, slug, image_url')
       .order('name'),
   ])
 
@@ -65,7 +70,7 @@ export default async function MarketingHomePage() {
         <HomeInstructorsSection instructors={teachers} />
       )}
       <HomeTestimonialsSection />
-      <HomePricingPreview />
+      <HomePricingPreview instruments={instruments ?? []} />
       <HomeSocialSection />
       <section id="waitlist" className="relative overflow-hidden py-20 sm:py-28">
         <Image

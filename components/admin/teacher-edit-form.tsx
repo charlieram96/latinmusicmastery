@@ -1,45 +1,72 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { TeacherImageUpload } from './teacher-image-upload'
+import { TiptapEditor } from './tiptap-editor'
+import type { Json } from '@/types/database'
+
+type BioDoc = Record<string, unknown>
+
+function isEmptyDoc(doc: BioDoc | null): boolean {
+  if (!doc) return true
+  const content = (doc as { content?: unknown[] }).content
+  if (!Array.isArray(content) || content.length === 0) return true
+  const hasText = JSON.stringify(content).match(/"text"\s*:\s*"[^"]/)
+  return !hasText
+}
 
 interface Teacher {
   id: string
   name: string
   instrument: string
-  bio: string | null
+  bio: unknown
   email: string | null
   image_url: string | null
   specialties: string[] | null
 }
 
 interface TeacherEditFormProps {
-  teacher: Teacher
+  teacher: Teacher | null
 }
 
 export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
   const router = useRouter()
+  const isNew = teacher === null
+
+  // For a new teacher we need a stable ID up front so the image upload
+  // can name its storage object deterministically.
+  const draftId = useMemo(
+    () => teacher?.id ?? (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `draft-${Date.now()}`),
+    [teacher?.id]
+  )
+
   const [saving, setSaving] = useState(false)
-  const [imageUrl, setImageUrl] = useState(teacher.image_url || '')
+  const [error, setError] = useState<string | null>(null)
+  const [imageUrl, setImageUrl] = useState(teacher?.image_url || '')
+  const [nameValue, setNameValue] = useState(teacher?.name || '')
+  const [bioDoc, setBioDoc] = useState<BioDoc | null>(
+    teacher?.bio && typeof teacher.bio === 'object'
+      ? (teacher.bio as BioDoc)
+      : null
+  )
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSaving(true)
+    setError(null)
 
     const formData = new FormData(e.currentTarget)
-    const name = formData.get('name') as string
-    const instrument = formData.get('instrument') as string
-    const bio = formData.get('bio') as string
-    const email = formData.get('email') as string
+    const name = (formData.get('name') as string).trim()
+    const instrument = (formData.get('instrument') as string).trim()
+    const email = (formData.get('email') as string).trim()
     const specialtiesRaw = formData.get('specialties') as string
 
     const specialties = specialtiesRaw
@@ -47,22 +74,25 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
       : null
 
     const supabase = createClient()
+    const payload = {
+      name,
+      instrument,
+      bio: (isEmptyDoc(bioDoc) ? null : bioDoc) as Json | null,
+      email: email || null,
+      image_url: imageUrl || null,
+      specialties,
+    }
 
-    const { error } = await supabase
-      .from('teachers')
-      .update({
-        name,
-        instrument,
-        bio: bio || null,
-        email: email || null,
-        image_url: imageUrl || null,
-        specialties,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', teacher.id)
+    const { error: dbError } = isNew
+      ? await supabase.from('teachers').insert({ id: draftId, ...payload })
+      : await supabase
+          .from('teachers')
+          .update({ ...payload, updated_at: new Date().toISOString() })
+          .eq('id', teacher!.id)
 
-    if (error) {
-      console.error('Error updating teacher:', error)
+    if (dbError) {
+      console.error('Error saving teacher:', dbError)
+      setError(dbError.message)
       setSaving(false)
       return
     }
@@ -82,13 +112,15 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Teachers
         </Link>
-        <h1 className="text-3xl font-bold">Edit Teacher</h1>
+        <h1 className="text-3xl font-bold">
+          {isNew ? 'Add Teacher' : 'Edit Teacher'}
+        </h1>
         <p className="text-muted-foreground mt-2">
-          Update teacher profile information
+          {isNew ? 'Create a new instructor profile' : 'Update teacher profile information'}
         </p>
       </div>
 
-      {/* Edit Form */}
+      {/* Form */}
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
           {/* Profile Image Card */}
@@ -98,9 +130,9 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
             </CardHeader>
             <CardContent>
               <TeacherImageUpload
-                teacherId={teacher.id}
-                currentImageUrl={teacher.image_url}
-                teacherName={teacher.name}
+                teacherId={draftId}
+                currentImageUrl={teacher?.image_url ?? null}
+                teacherName={nameValue || 'New Teacher'}
                 onImageUploaded={setImageUrl}
               />
             </CardContent>
@@ -117,7 +149,8 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
                 <Input
                   id="name"
                   name="name"
-                  defaultValue={teacher.name}
+                  defaultValue={teacher?.name || ''}
+                  onChange={(e) => setNameValue(e.target.value)}
                   required
                 />
               </div>
@@ -127,7 +160,7 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
                 <Input
                   id="instrument"
                   name="instrument"
-                  defaultValue={teacher.instrument}
+                  defaultValue={teacher?.instrument || ''}
                   required
                 />
               </div>
@@ -138,20 +171,20 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
                   id="email"
                   name="email"
                   type="email"
-                  defaultValue={teacher.email || ''}
+                  defaultValue={teacher?.email || ''}
                   placeholder="teacher@example.com"
                 />
               </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  name="bio"
-                  defaultValue={teacher.bio || ''}
-                  rows={4}
-                  placeholder="Brief biography of the teacher..."
+                <TiptapEditor
+                  content={bioDoc}
+                  onChange={(next) => setBioDoc(next)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Supports rich formatting — headings, lists, links, images, and video.
+                </p>
               </div>
 
               <div className="grid gap-2">
@@ -159,7 +192,7 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
                 <Input
                   id="specialties"
                   name="specialties"
-                  defaultValue={teacher.specialties?.join(', ') || ''}
+                  defaultValue={teacher?.specialties?.join(', ') || ''}
                   placeholder="Salsa, Timba, Son Cubano"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -168,6 +201,12 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
               </div>
             </CardContent>
           </Card>
+
+          {error && (
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-4">
@@ -178,7 +217,7 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
                   Saving...
                 </>
               ) : (
-                'Save Changes'
+                isNew ? 'Create Teacher' : 'Save Changes'
               )}
             </Button>
             <Button type="button" variant="outline" asChild>

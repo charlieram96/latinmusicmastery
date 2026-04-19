@@ -68,25 +68,25 @@ export default function PageHero({
         aria-hidden="true"
       />
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Back button */}
-        {backTarget && (
-          <motion.div
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="mb-4"
+      {/* Fixed back button — stays visible while scrolling */}
+      {backTarget && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut", delay: 0.2 }}
+          className="fixed bottom-6 left-6 z-40"
+        >
+          <Link
+            href={backTarget.href}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/80 px-4 py-2 text-sm font-medium text-muted-foreground shadow-lg backdrop-blur-md transition-colors hover:border-border hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <Link
-              href={backTarget.href}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/50 px-3 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-colors hover:border-border hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to {backTarget.label}</span>
-            </Link>
-          </motion.div>
-        )}
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to {backTarget.label}</span>
+          </Link>
+        </motion.div>
+      )}
 
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
           <motion.div

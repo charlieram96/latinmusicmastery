@@ -12,7 +12,7 @@ interface Instructor {
   id: string;
   name: string;
   instrument: string;
-  bio: string | null;
+  bio: unknown;
   image_url: string | null;
   specialties: string[] | null;
 }

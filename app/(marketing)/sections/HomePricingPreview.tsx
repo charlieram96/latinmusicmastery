@@ -9,14 +9,16 @@ import { fadeInUp, staggerContainer, staggerChild } from "@/lib/animation-varian
 import GradientText from "@/components/marketing/GradientText";
 import { useTranslation } from "@/components/language-provider";
 
-const instrumentShowcase = [
-  { nameKey: "homepage.homeSections.pricingPreview.instruments.timbal", image: "https://images.unsplash.com/photo-1674168460210-9f1a2fbf730b?w=600&auto=format&fit=crop&q=80" },
-  { nameKey: "homepage.homeSections.pricingPreview.instruments.conga", image: "https://images.unsplash.com/photo-1732024004147-38420cac4bb8?w=600&auto=format&fit=crop&q=80" },
-  { nameKey: "homepage.homeSections.pricingPreview.instruments.violin", image: "https://images.unsplash.com/photo-1690181462400-84ce69ed68fd?w=600&auto=format&fit=crop&q=80" },
-  { nameKey: "homepage.homeSections.pricingPreview.instruments.bass", image: "https://images.unsplash.com/photo-1766033288242-70dd8602752a?w=600&auto=format&fit=crop&q=80" },
-  { nameKey: "homepage.homeSections.pricingPreview.instruments.piano", image: "https://images.unsplash.com/photo-1764323038644-501788b28f87?w=600&auto=format&fit=crop&q=80" },
-  { nameKey: "homepage.homeSections.pricingPreview.instruments.vocals", image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&auto=format&fit=crop&q=80" },
-];
+interface Instrument {
+  id: string;
+  name: string;
+  slug: string;
+  image_url: string | null;
+}
+
+interface HomePricingPreviewProps {
+  instruments: Instrument[];
+}
 
 const instrumentFeatureKeys = [
   "homepage.homeSections.pricingPreview.instrumentFeatures.allCourses",
@@ -35,7 +37,7 @@ const allAccessFeatureKeys = [
   "homepage.homeSections.pricingPreview.allAccessFeatures.cancelAnytime",
 ];
 
-export function HomePricingPreview() {
+export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
   const { t } = useTranslation();
   return (
     <section className="py-24 lg:py-32">
@@ -66,39 +68,50 @@ export function HomePricingPreview() {
           className="mb-8 text-center"
         >
           <h3 className="text-2xl font-bold tracking-tight md:text-3xl">
-            <GradientText>{t('homepage.homeSections.pricingPreview.sixInstruments')}</GradientText> {t('homepage.homeSections.pricingPreview.available')}
+            <GradientText>
+              {t('homepage.homeSections.pricingPreview.instrumentsAvailable', { count: instruments.length })}
+            </GradientText>
           </h3>
         </motion.div>
 
-        <motion.div
-          variants={staggerContainer(0.08, 0.15)}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          className="mx-auto mb-20 grid max-w-5xl grid-cols-2 gap-4 md:grid-cols-3"
-        >
-          {instrumentShowcase.map((instrument) => (
-            <motion.div
-              key={instrument.nameKey}
-              variants={staggerChild}
-              className="group relative flex items-end overflow-hidden rounded-2xl min-h-[220px] md:min-h-[280px]"
-            >
-              <Image
-                src={instrument.image}
-                alt={t(instrument.nameKey)}
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                sizes="(max-width: 768px) 50vw, 33vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
-              <div className="relative z-10 w-full p-4 md:p-5">
-                <p className="text-base font-semibold text-white md:text-lg">
-                  {t(instrument.nameKey)}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+        {instruments.length > 0 && (
+          <motion.div
+            variants={staggerContainer(0.08, 0.15)}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            className="mx-auto mb-20 grid max-w-5xl grid-cols-2 gap-4 md:grid-cols-3"
+          >
+            {instruments.map((instrument) => (
+              <motion.div
+                key={instrument.id}
+                variants={staggerChild}
+                className="group relative flex items-end overflow-hidden rounded-2xl min-h-[220px] md:min-h-[280px]"
+              >
+                {instrument.image_url ? (
+                  <Image
+                    src={instrument.image_url}
+                    alt={instrument.name}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                  />
+                ) : (
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 bg-gradient-to-br from-primary/40 via-orange-500/30 to-purple-600/40"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+                <div className="relative z-10 w-full p-4 md:p-5">
+                  <p className="text-base font-semibold text-white md:text-lg">
+                    {instrument.name}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
 
         {/* Pricing cards */}
         <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">

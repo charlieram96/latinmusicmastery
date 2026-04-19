@@ -1188,7 +1188,7 @@ export type Database = {
       }
       teachers: {
         Row: {
-          bio: string | null
+          bio: Json | null
           created_at: string | null
           email: string | null
           id: string
@@ -1200,7 +1200,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          bio?: string | null
+          bio?: Json | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -1212,7 +1212,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          bio?: string | null
+          bio?: Json | null
           created_at?: string | null
           email?: string | null
           id?: string

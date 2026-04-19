@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Music, BookOpen, User } from 'lucide-react'
 import { DeleteTeacherButton } from '@/components/admin/delete-teacher-button'
+import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
 
 function getInitials(name: string): string {
   return name
@@ -104,11 +105,14 @@ export default async function TeachersPage() {
                 )}
 
                 {/* Bio */}
-                {teacher.bio && (
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                    {teacher.bio}
-                  </p>
-                )}
+                {(() => {
+                  const bioPreview = tiptapToPlainText(teacher.bio)
+                  return bioPreview ? (
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                      {bioPreview}
+                    </p>
+                  ) : null
+                })()}
 
                 {/* Footer */}
                 <div className="flex items-center justify-between pt-3 border-t">

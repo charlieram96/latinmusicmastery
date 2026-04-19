@@ -3,19 +3,36 @@
 import { useEffect, useState, useTransition } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { User, Save, Loader2, Music } from 'lucide-react'
 import { getTeacherProfile, updateTeacherProfile } from '@/app/actions/teacher'
+import { TiptapEditor } from '@/components/admin/tiptap-editor'
+import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
+
+type BioDoc = Record<string, unknown>
+
+function isEmptyDoc(doc: BioDoc | null): boolean {
+  if (!doc) return true
+  const content = (doc as { content?: unknown[] }).content
+  if (!Array.isArray(content) || content.length === 0) return true
+  const hasText = JSON.stringify(content).match(/"text"\s*:\s*"[^"]/)
+  return !hasText
+}
 
 export default function TeacherProfilePage() {
   const [isPending, startTransition] = useTransition()
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<{
+    name?: string | null
+    instrument?: string | null
+    image_url?: string | null
+    specialties?: string[] | null
+    bio?: unknown
+  } | null>(null)
   const [loading, setLoading] = useState(true)
-  const [bio, setBio] = useState('')
+  const [bio, setBio] = useState<BioDoc | null>(null)
   const [imageUrl, setImageUrl] = useState('')
   const [specialties, setSpecialties] = useState('')
   const [success, setSuccess] = useState(false)
@@ -25,7 +42,11 @@ export default function TeacherProfilePage() {
       const data = await getTeacherProfile()
       if (data) {
         setProfile(data)
-        setBio(data.bio || '')
+        setBio(
+          data.bio && typeof data.bio === 'object'
+            ? (data.bio as BioDoc)
+            : null
+        )
         setImageUrl(data.image_url || '')
         setSpecialties(data.specialties?.join(', ') || '')
       }
@@ -38,16 +59,14 @@ export default function TeacherProfilePage() {
     e.preventDefault()
     setSuccess(false)
 
-    const formData = new FormData()
-    formData.append('bio', bio)
-    formData.append('image_url', imageUrl)
-    formData.append('specialties', specialties)
-
     startTransition(async () => {
       try {
-        await updateTeacherProfile(formData)
+        await updateTeacherProfile({
+          bio: isEmptyDoc(bio) ? null : bio,
+          image_url: imageUrl || null,
+          specialties: specialties || null,
+        })
         setSuccess(true)
-        // Refresh profile data
         const data = await getTeacherProfile()
         if (data) {
           setProfile(data)
@@ -78,6 +97,8 @@ export default function TeacherProfilePage() {
     )
   }
 
+  const bioPreview = tiptapToPlainText(bio)
+
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="mb-8">
@@ -96,16 +117,22 @@ export default function TeacherProfilePage() {
           </CardHeader>
           <CardContent className="flex flex-col items-center text-center">
             <Avatar className="w-24 h-24 mb-4">
-              <AvatarImage src={imageUrl || profile.image_url} alt={profile.name} />
+              <AvatarImage
+                src={imageUrl || profile.image_url || undefined}
+                alt={profile.name || ''}
+              />
               <AvatarFallback className="text-2xl">
                 {profile.name?.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <h3 className="text-xl font-bold mb-1">{profile.name}</h3>
             <p className="text-muted-foreground mb-3">{profile.instrument}</p>
-            {(specialties || profile.specialties?.length > 0) && (
+            {(specialties || (profile.specialties?.length ?? 0) > 0) && (
               <div className="flex flex-wrap gap-2 justify-center mb-4">
-                {(specialties ? specialties.split(',').map((s: string) => s.trim()).filter(Boolean) : profile.specialties)?.map((specialty: string) => (
+                {(specialties
+                  ? specialties.split(',').map((s: string) => s.trim()).filter(Boolean)
+                  : profile.specialties
+                )?.map((specialty: string) => (
                   <Badge key={specialty} variant="secondary">
                     <Music className="w-3 h-3 mr-1" />
                     {specialty}
@@ -113,9 +140,9 @@ export default function TeacherProfilePage() {
                 ))}
               </div>
             )}
-            {(bio || profile.bio) && (
-              <p className="text-sm text-muted-foreground">
-                {bio || profile.bio}
+            {bioPreview && (
+              <p className="text-sm text-muted-foreground line-clamp-4">
+                {bioPreview}
               </p>
             )}
           </CardContent>
@@ -181,14 +208,15 @@ export default function TeacherProfilePage() {
 
               <div>
                 <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Tell students about your background and teaching style..."
-                  rows={4}
-                  className="mt-1"
-                />
+                <div className="mt-1">
+                  <TiptapEditor
+                    content={bio}
+                    onChange={(next) => setBio(next)}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Supports rich formatting — headings, lists, links, images, and video.
+                </p>
               </div>
 
               {success && (
