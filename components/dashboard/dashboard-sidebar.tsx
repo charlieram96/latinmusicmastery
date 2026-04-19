@@ -11,7 +11,6 @@ import {
   Award,
   AudioWaveform,
   Crown,
-  Settings,
   Shield,
   Video,
   Users,
@@ -20,6 +19,8 @@ import {
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { LanguageToggle } from '@/components/language-toggle'
+import { useTranslation } from '@/components/language-provider'
 import { cn } from '@/lib/utils'
 
 interface DashboardSidebarProps {
@@ -30,33 +31,54 @@ interface DashboardSidebarProps {
   userAvatar?: string
 }
 
-const personalNavItems = [
-  { title: 'Home', href: '/dashboard', icon: Home },
-  { title: 'My Courses', href: '/dashboard/my-courses', icon: BookOpen },
+type NavKey =
+  | 'home'
+  | 'myCourses'
+  | 'browseCourses'
+  | 'teachers'
+  | 'masterClass'
+  | 'achievements'
+  | 'teacherFeedback'
+  | 'community'
+  | 'tuner'
+  | 'playSense'
+  | 'subscription'
+  | 'teacherPortal'
+  | 'adminPanel'
+
+interface NavItemDef {
+  labelKey: NavKey
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+}
+
+const personalNavItems: NavItemDef[] = [
+  { labelKey: 'home', href: '/dashboard', icon: Home },
+  { labelKey: 'myCourses', href: '/dashboard/my-courses', icon: BookOpen },
 ]
 
-const discoverNavItems = [
-  { title: 'Browse Courses', href: '/dashboard/courses', icon: Library },
-  { title: 'Teachers', href: '/dashboard/teachers', icon: GraduationCap },
-  { title: 'Master Class', href: '/dashboard/master-class', icon: Crown },
-  { title: 'Achievements', href: '/dashboard/achievements', icon: Award },
+const discoverNavItems: NavItemDef[] = [
+  { labelKey: 'browseCourses', href: '/dashboard/courses', icon: Library },
+  { labelKey: 'teachers', href: '/dashboard/teachers', icon: GraduationCap },
+  { labelKey: 'masterClass', href: '/dashboard/master-class', icon: Crown },
+  { labelKey: 'achievements', href: '/dashboard/achievements', icon: Award },
 ]
 
-const connectNavItems = [
-  { title: 'Teacher Feedback', href: '/dashboard/feedback', icon: Video },
-  { title: 'Community', href: '/dashboard/community', icon: Users },
+const connectNavItems: NavItemDef[] = [
+  { labelKey: 'teacherFeedback', href: '/dashboard/feedback', icon: Video },
+  { labelKey: 'community', href: '/dashboard/community', icon: Users },
 ]
 
-const toolsNavItems = [
-  { title: 'Tuner', href: '/dashboard/tuner', icon: AudioWaveform },
-  { title: 'Play Sense', href: '/dashboard/play-sense', icon: Drum },
+const toolsNavItems: NavItemDef[] = [
+  { labelKey: 'tuner', href: '/dashboard/tuner', icon: AudioWaveform },
+  { labelKey: 'playSense', href: '/dashboard/play-sense', icon: Drum },
 ]
 
-const settingsNavItems = [
-  { title: 'Subscription', href: '/dashboard/subscription', icon: CreditCard },
+const settingsNavItems: NavItemDef[] = [
+  { labelKey: 'subscription', href: '/dashboard/subscription', icon: CreditCard },
 ]
 
-function NavItem({ item, pathname }: { item: { title: string; href: string; icon: React.ComponentType<{ className?: string }> }; pathname: string }) {
+function NavItem({ item, pathname, label }: { item: NavItemDef; pathname: string; label: string }) {
   const Icon = item.icon
   const isActive = item.href === '/dashboard'
     ? pathname === '/dashboard'
@@ -81,17 +103,30 @@ function NavItem({ item, pathname }: { item: { title: string; href: string; icon
         </Link>
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={12}>
-        {item.title}
+        {label}
       </TooltipContent>
     </Tooltip>
   )
 }
 
-function NavSection({ items, pathname }: { items: typeof personalNavItems; pathname: string }) {
+function NavSection({
+  items,
+  pathname,
+  t,
+}: {
+  items: NavItemDef[]
+  pathname: string
+  t: (key: string) => string
+}) {
   return (
     <div className="flex flex-col items-center gap-1">
       {items.map((item) => (
-        <NavItem key={item.href} item={item} pathname={pathname} />
+        <NavItem
+          key={item.href}
+          item={item}
+          pathname={pathname}
+          label={t(`dashboard.nav.${item.labelKey}`)}
+        />
       ))}
     </div>
   )
@@ -109,11 +144,12 @@ export function DashboardSidebar({
   userAvatar = ''
 }: DashboardSidebarProps) {
   const pathname = usePathname()
+  const { t } = useTranslation()
 
   return (
     <nav className="fixed inset-y-0 left-0 z-50 w-16 bg-sidebar border-r border-sidebar-border hidden md:flex flex-col items-center py-4 gap-4">
       {/* Logo */}
-      <Link href="/dashboard" className="mb-2">
+      <Link href="/" className="mb-2">
         <Image
           src="/logo-solo-color.svg"
           alt="Latin Music Mastery"
@@ -125,23 +161,24 @@ export function DashboardSidebar({
 
       {/* Navigation */}
       <div className="flex-1 flex flex-col gap-3 overflow-y-auto">
-        <NavSection items={personalNavItems} pathname={pathname} />
+        <NavSection items={personalNavItems} pathname={pathname} t={t} />
         <Separator />
-        <NavSection items={discoverNavItems} pathname={pathname} />
+        <NavSection items={discoverNavItems} pathname={pathname} t={t} />
         <Separator />
-        <NavSection items={connectNavItems} pathname={pathname} />
+        <NavSection items={connectNavItems} pathname={pathname} t={t} />
         <Separator />
-        <NavSection items={toolsNavItems} pathname={pathname} />
+        <NavSection items={toolsNavItems} pathname={pathname} t={t} />
         <Separator />
-        <NavSection items={settingsNavItems} pathname={pathname} />
+        <NavSection items={settingsNavItems} pathname={pathname} t={t} />
 
         {isTeacher && (
           <>
             <Separator />
             <div className="flex flex-col items-center gap-1">
               <NavItem
-                item={{ title: 'Teacher Portal', href: '/teacher', icon: GraduationCap }}
+                item={{ labelKey: 'teacherPortal', href: '/teacher', icon: GraduationCap }}
                 pathname={pathname}
+                label={t('dashboard.nav.teacherPortal')}
               />
             </div>
           </>
@@ -152,33 +189,37 @@ export function DashboardSidebar({
             <Separator />
             <div className="flex flex-col items-center gap-1">
               <NavItem
-                item={{ title: 'Admin Panel', href: '/admin', icon: Shield }}
+                item={{ labelKey: 'adminPanel', href: '/admin', icon: Shield }}
                 pathname={pathname}
+                label={t('dashboard.nav.adminPanel')}
               />
             </div>
           </>
         )}
       </div>
 
-      {/* Footer — Avatar only */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            href="/dashboard/settings"
-            className="mt-auto flex items-center justify-center"
-          >
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={userAvatar} alt={userName || 'User'} />
-              <AvatarFallback className="bg-primary text-white text-xs font-semibold">
-                {userEmail?.split('@')[0].slice(0, 2).toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
-        </TooltipTrigger>
-        <TooltipContent side="right" sideOffset={12}>
-          Settings
-        </TooltipContent>
-      </Tooltip>
+      {/* Footer — Language toggle + Avatar */}
+      <div className="mt-auto flex flex-col items-center gap-2">
+        <LanguageToggle variant="icon" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href="/dashboard/settings"
+              className="flex items-center justify-center"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={userAvatar} alt={userName || 'User'} />
+                <AvatarFallback className="bg-primary text-white text-xs font-semibold">
+                  {userEmail?.split('@')[0].slice(0, 2).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={12}>
+            {t('dashboard.nav.settings')}
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </nav>
   )
 }

@@ -3,8 +3,10 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/components/language-provider'
 
 export function AnimatedGradientHero() {
+  const { t } = useTranslation()
   return (
     <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -90,23 +92,23 @@ export function AnimatedGradientHero() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
             </span>
-            10,000+ students learning worldwide
+            {t('homepage.animatedHero.badge')}
           </motion.div>
 
           {/* Main Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1] mb-6">
-            Master Latin Music
+            {t('homepage.animatedHero.titleLine1')}
             <br />
             <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              From Anywhere
+              {t('homepage.animatedHero.titleLine2')}
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-lg sm:text-xl md:text-2xl text-white/70 max-w-2xl mx-auto mb-8 leading-relaxed">
-            Learn from expert instructors. Play authentic rhythms.
+            {t('homepage.animatedHero.subtitleLine1')}
             <br className="hidden sm:block" />
-            Connect with the rich heritage of Latin American music.
+            {t('homepage.animatedHero.subtitleLine2')}
           </p>
 
           {/* CTAs */}
@@ -121,7 +123,7 @@ export function AnimatedGradientHero() {
               asChild
             >
               <Link href="/signup">
-                Start Learning Free
+                {t('homepage.animatedHero.ctaPrimary')}
               </Link>
             </Button>
 
@@ -130,7 +132,7 @@ export function AnimatedGradientHero() {
               asChild
             >
               <Link href="#demo">
-                Watch Demo
+                {t('homepage.animatedHero.ctaSecondary')}
               </Link>
             </Button>
           </motion.div>
@@ -146,19 +148,19 @@ export function AnimatedGradientHero() {
               <svg className="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              No credit card required
+              {t('homepage.animatedHero.trust.noCreditCard')}
             </div>
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              Cancel anytime
+              {t('homepage.animatedHero.trust.cancelAnytime')}
             </div>
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              14-day money-back guarantee
+              {t('homepage.animatedHero.trust.moneyBackGuarantee')}
             </div>
           </motion.div>
         </motion.div>

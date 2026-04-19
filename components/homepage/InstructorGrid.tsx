@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
+import { useTranslation } from '@/components/language-provider'
 
 interface Instructor {
   id: string
@@ -34,6 +35,7 @@ interface InstructorGridProps {
 }
 
 export function InstructorGrid({ instructors }: InstructorGridProps) {
+  const { t } = useTranslation()
   return (
     <section id="instructors" className="py-24 md:py-32 bg-secondary">
       <div className="container mx-auto px-4">
@@ -46,10 +48,10 @@ export function InstructorGrid({ instructors }: InstructorGridProps) {
           className="text-center max-w-3xl mx-auto mb-12"
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-3">
-            Learn From the Best
+            {t('homepage.homeSections.instructors.gridHeading')}
           </h2>
           <p className="text-base md:text-lg text-muted-foreground">
-            Our instructors are world-class musicians with decades of performance and teaching experience
+            {t('homepage.homeSections.instructors.gridSubheading')}
           </p>
         </motion.div>
 

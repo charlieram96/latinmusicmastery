@@ -4,8 +4,10 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/components/language-provider'
 
 export function FinalCTA() {
+  const { t } = useTranslation()
   return (
     <section className="py-24 lg:py-32">
       <div className="max-w-4xl mx-auto px-6 text-center">
@@ -16,14 +18,13 @@ export function FinalCTA() {
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-6 font-heading">
-            Ready to start your
+            {t('homepage.finalCta.headingLine1')}
             <br />
-            musical journey?
+            {t('homepage.finalCta.headingLine2')}
           </h2>
 
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            Join thousands of musicians mastering authentic Latin American music.
-            Start your free trial today.
+            {t('homepage.finalCta.subheading')}
           </p>
 
           <Button
@@ -31,7 +32,7 @@ export function FinalCTA() {
             asChild
           >
             <Link href="/signup" className="flex items-center justify-center">
-              Get Started Free
+              {t('homepage.finalCta.cta')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>

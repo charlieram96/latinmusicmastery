@@ -47,6 +47,7 @@ export default async function ExplorePage() {
         title="Explore Courses"
         subtitle="Discover the rich world of Latin American music organized by country and musical tradition."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Explore" }]}
+        showBackButton
       />
 
       <div className="mx-auto max-w-7xl px-6 py-16">

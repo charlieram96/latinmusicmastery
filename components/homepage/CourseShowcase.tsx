@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
 
 interface MusicalStyle {
   id: string
@@ -41,6 +42,7 @@ function getCountryEmoji(slug: string): string {
 }
 
 export function CourseShowcase({ countries }: Props) {
+  const { t } = useTranslation()
   return (
     <section id="courses" className="py-24 lg:py-32">
       <div className="max-w-7xl mx-auto px-6">
@@ -53,11 +55,10 @@ export function CourseShowcase({ countries }: Props) {
           className="max-w-2xl mb-16"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4 font-heading">
-            Explore musical traditions
+            {t('homepage.homeSections.courseShowcase.heading')}
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            From the Caribbean to South America, master the authentic rhythms and
-            techniques that define Latin American music.
+            {t('homepage.homeSections.courseShowcase.subheading')}
           </p>
         </motion.div>
 

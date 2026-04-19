@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { staggerContainer, staggerChild } from "@/lib/animation-variants";
 import GradientText from "@/components/marketing/GradientText";
+import { useTranslation } from "@/components/language-provider";
 
 interface MusicalStyle {
   id: string;
@@ -39,6 +40,7 @@ const countryImages: Record<string, string> = {
 };
 
 export function HomeCourseShowcase({ countries }: Props) {
+  const { t } = useTranslation();
   return (
     <section className="py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6">
@@ -51,12 +53,11 @@ export function HomeCourseShowcase({ countries }: Props) {
           className="mb-12"
         >
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-            Explore{" "}
-            <GradientText>musical traditions</GradientText>
+            {t('homepage.homeSections.courseShowcase.titlePrefix')}{" "}
+            <GradientText>{t('homepage.homeSections.courseShowcase.titleHighlight')}</GradientText>
           </h2>
           <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-            Dive into the rich musical heritage of Latin America. Each country
-            offers unique styles, rhythms, and techniques to master.
+            {t('homepage.homeSections.courseShowcase.description')}
           </p>
         </motion.div>
 

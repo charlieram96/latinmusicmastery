@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Music } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
 
 interface MusicalStyle {
   id: string
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export function InteractiveCourseExplorer({ countries }: Props) {
+  const { t } = useTranslation()
   return (
     <section className="py-24 md:py-32">
       <div className="container mx-auto px-4">
@@ -38,10 +40,10 @@ export function InteractiveCourseExplorer({ countries }: Props) {
           className="text-center max-w-3xl mx-auto mb-12"
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-3">
-            Explore Latin Music Styles
+            {t('homepage.courseExplorer.heading')}
           </h2>
           <p className="text-base md:text-lg text-muted-foreground">
-            From the Caribbean to South America, discover the rich diversity of Latin American musical traditions
+            {t('homepage.courseExplorer.subheading')}
           </p>
         </motion.div>
 
@@ -75,7 +77,7 @@ export function InteractiveCourseExplorer({ countries }: Props) {
                 <CardContent>
                   <div className="space-y-3">
                     <p className="text-sm font-medium text-muted-foreground mb-2">
-                      Musical Styles:
+                      {t('homepage.courseExplorer.musicalStylesLabel')}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {country.musical_styles.map((style) => (
@@ -112,7 +114,7 @@ export function InteractiveCourseExplorer({ countries }: Props) {
             href="/signup"
             className="text-primary hover:text-primary/80 font-medium text-lg inline-flex items-center gap-2"
           >
-            View All Courses
+            {t('homepage.courseExplorer.viewAllCourses')}
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>

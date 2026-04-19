@@ -2,34 +2,36 @@
 
 import Link from 'next/link'
 import { Music } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
 
 const footerLinks = {
   courses: [
-    { label: 'Browse All Courses', href: '/dashboard' },
-    { label: 'Salsa', href: '/courses' },
-    { label: 'Bossa Nova', href: '/courses' },
-    { label: 'Tango', href: '/courses' },
+    { labelKey: 'homepage.footer.courses.browseAll', href: '/dashboard' },
+    { labelKey: 'homepage.footer.courses.salsa', href: '/courses' },
+    { labelKey: 'homepage.footer.courses.bossaNova', href: '/courses' },
+    { labelKey: 'homepage.footer.courses.tango', href: '/courses' },
   ],
   company: [
-    { label: 'About Us', href: '#' },
-    { label: 'Instructors', href: '#' },
-    { label: 'Pricing', href: '/pricing' },
-    { label: 'Contact', href: '#' },
+    { labelKey: 'homepage.footer.company.about', href: '#' },
+    { labelKey: 'homepage.footer.company.instructors', href: '#' },
+    { labelKey: 'homepage.footer.company.pricing', href: '/pricing' },
+    { labelKey: 'homepage.footer.company.contact', href: '#' },
   ],
   resources: [
-    { label: 'Help Center', href: '#' },
-    { label: 'Community', href: '#' },
-    { label: 'Blog', href: '#' },
-    { label: 'FAQs', href: '#' },
+    { labelKey: 'homepage.footer.resources.helpCenter', href: '#' },
+    { labelKey: 'homepage.footer.resources.community', href: '#' },
+    { labelKey: 'homepage.footer.resources.blog', href: '#' },
+    { labelKey: 'homepage.footer.resources.faqs', href: '#' },
   ],
   legal: [
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Terms of Service', href: '#' },
-    { label: 'Cookie Policy', href: '#' },
+    { labelKey: 'homepage.footer.legal.privacy', href: '#' },
+    { labelKey: 'homepage.footer.legal.terms', href: '#' },
+    { labelKey: 'homepage.footer.legal.cookie', href: '#' },
   ],
 }
 
 export function EnhancedFooter() {
+  const { t } = useTranslation()
   return (
     <footer className="bg-foreground text-background">
       <div className="container mx-auto px-4 py-16 md:py-20">
@@ -37,15 +39,15 @@ export function EnhancedFooter() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-12">
           {/* Courses */}
           <div>
-            <h3 className="font-semibold mb-4">Courses</h3>
+            <h3 className="font-semibold mb-4">{t('homepage.footer.headings.courses')}</h3>
             <ul className="space-y-3">
               {footerLinks.courses.map((link) => (
-                <li key={link.label}>
+                <li key={link.labelKey}>
                   <Link
                     href={link.href}
                     className="text-background/70 hover:text-background transition-colors text-sm"
                   >
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -54,15 +56,15 @@ export function EnhancedFooter() {
 
           {/* Company */}
           <div>
-            <h3 className="font-semibold mb-4">Company</h3>
+            <h3 className="font-semibold mb-4">{t('homepage.footer.headings.company')}</h3>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
-                <li key={link.label}>
+                <li key={link.labelKey}>
                   <Link
                     href={link.href}
                     className="text-background/70 hover:text-background transition-colors text-sm"
                   >
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -71,15 +73,15 @@ export function EnhancedFooter() {
 
           {/* Resources */}
           <div>
-            <h3 className="font-semibold mb-4">Resources</h3>
+            <h3 className="font-semibold mb-4">{t('homepage.footer.headings.resources')}</h3>
             <ul className="space-y-3">
               {footerLinks.resources.map((link) => (
-                <li key={link.label}>
+                <li key={link.labelKey}>
                   <Link
                     href={link.href}
                     className="text-background/70 hover:text-background transition-colors text-sm"
                   >
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -88,15 +90,15 @@ export function EnhancedFooter() {
 
           {/* Legal */}
           <div>
-            <h3 className="font-semibold mb-4">Legal</h3>
+            <h3 className="font-semibold mb-4">{t('homepage.footer.headings.legal')}</h3>
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
-                <li key={link.label}>
+                <li key={link.labelKey}>
                   <Link
                     href={link.href}
                     className="text-background/70 hover:text-background transition-colors text-sm"
                   >
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 </li>
               ))}
@@ -113,7 +115,7 @@ export function EnhancedFooter() {
           </div>
 
           <div className="text-sm text-background/70">
-            © {new Date().getFullYear()} Latin Music Mastery. All rights reserved.
+            {t('homepage.footer.copyright', { year: new Date().getFullYear() })}
           </div>
 
           {/* Social Links (placeholder) */}

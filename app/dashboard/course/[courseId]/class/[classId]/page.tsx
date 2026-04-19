@@ -9,6 +9,7 @@ import { ClassNavigation } from '@/components/class-viewer/class-navigation'
 import { CourseSidebar } from '@/components/class-viewer/course-sidebar'
 import { CommentsSection } from '@/components/comments/comments-section'
 import { canAccessCourse } from '@/lib/subscriptions'
+import { ClassViewerEmpty } from './class-viewer-empty'
 
 interface PageProps {
   params: Promise<{
@@ -194,9 +195,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           {activeItem ? (
             <ClassItemRenderer item={activeItem} userId={user.id} />
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              No content available for this class yet.
-            </div>
+            <ClassViewerEmpty />
           )}
 
           {/* Navigation */}

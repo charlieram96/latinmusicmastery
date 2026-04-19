@@ -7,6 +7,7 @@ import { SUBSCRIBABLE_INSTRUMENTS, INSTRUMENT_CONFIG } from '@/lib/instruments'
 import { PLAN_PRICES, formatCurrency } from '@/lib/pricing'
 import { Crown, Music, Check, ArrowRight, Sparkles, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/components/language-provider'
 
 interface SubscribeClientProps {
   subscribedInstruments: string[]
@@ -19,6 +20,7 @@ export function SubscribeClient({
   instrumentPriceId,
   allAccessPriceId,
 }: SubscribeClientProps) {
+  const { t } = useTranslation()
   const [selectedPlan, setSelectedPlan] = useState<'instrument' | 'all_access' | null>(null)
   const [selectedInstrument, setSelectedInstrument] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -49,7 +51,7 @@ export function SubscribeClient({
       const data = await response.json()
 
       if (data.error) {
-        setError('Failed to start checkout. Please try again.')
+        setError(t('dashboard.pages.subscribe.errors.checkoutFailed'))
         return
       }
 
@@ -57,7 +59,7 @@ export function SubscribeClient({
         window.location.href = data.url
       }
     } catch {
-      setError('An error occurred. Please try again.')
+      setError(t('dashboard.pages.subscribe.errors.generic'))
     } finally {
       setIsLoading(false)
     }
@@ -67,9 +69,9 @@ export function SubscribeClient({
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-10">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Choose Your Plan</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">{t('dashboard.pages.subscribe.title')}</h1>
         <p className="text-muted-foreground">
-          Unlock courses and start your Latin music journey.
+          {t('dashboard.pages.subscribe.subtitle')}
         </p>
       </div>
 
@@ -104,14 +106,14 @@ export function SubscribeClient({
             <Music className="h-5 w-5 text-primary" />
           </div>
 
-          <h3 className="text-lg font-semibold mb-1">Per Instrument</h3>
+          <h3 className="text-lg font-semibold mb-1">{t('dashboard.pages.subscribe.perInstrument.title')}</h3>
           <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-            Deep dive into one instrument with full course access.
+            {t('dashboard.pages.subscribe.perInstrument.description')}
           </p>
 
           <div className="flex items-baseline gap-1">
             <span className="text-2xl font-bold">{formatCurrency(PLAN_PRICES.instrument)}</span>
-            <span className="text-sm text-muted-foreground">/mo</span>
+            <span className="text-sm text-muted-foreground">{t('dashboard.pages.subscribe.perMonth')}</span>
           </div>
         </button>
 
@@ -131,7 +133,7 @@ export function SubscribeClient({
           {/* Popular badge */}
           <span className="absolute -top-3 left-6 flex items-center gap-1 rounded-full bg-primary px-3 py-0.5 text-xs font-semibold text-primary-foreground">
             <Sparkles className="h-3 w-3" />
-            Most Popular
+            {t('dashboard.pages.subscribe.mostPopular')}
           </span>
 
           {selectedPlan === 'all_access' && (
@@ -150,14 +152,14 @@ export function SubscribeClient({
             <Crown className="h-5 w-5 text-primary" />
           </div>
 
-          <h3 className="text-lg font-semibold mb-1">All-Access</h3>
+          <h3 className="text-lg font-semibold mb-1">{t('dashboard.pages.subscribe.allAccess.title')}</h3>
           <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-            Every instrument, every course, every masterclass.
+            {t('dashboard.pages.subscribe.allAccess.description')}
           </p>
 
           <div className="flex items-baseline gap-1">
             <span className="text-2xl font-bold">{formatCurrency(PLAN_PRICES.all_access)}</span>
-            <span className="text-sm text-muted-foreground">/mo</span>
+            <span className="text-sm text-muted-foreground">{t('dashboard.pages.subscribe.perMonth')}</span>
           </div>
         </button>
       </div>
@@ -175,7 +177,7 @@ export function SubscribeClient({
             <div className="mb-6 rounded-2xl border border-border bg-card p-6">
               <div className="flex items-center gap-2 mb-4">
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium text-muted-foreground">Select your instrument</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('dashboard.pages.subscribe.selectInstrument')}</p>
               </div>
 
               <div className="grid grid-cols-3 gap-2.5">
@@ -191,7 +193,7 @@ export function SubscribeClient({
                         className="relative flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/40 px-3 py-4 opacity-50 cursor-not-allowed"
                       >
                         <span className="text-sm font-medium text-muted-foreground truncate max-w-full">{instrument}</span>
-                        <span className="text-[10px] text-muted-foreground">Subscribed</span>
+                        <span className="text-[10px] text-muted-foreground">{t('dashboard.pages.subscribe.subscribed')}</span>
                       </div>
                     )
                   }
@@ -243,10 +245,10 @@ export function SubscribeClient({
         onClick={handleContinue}
       >
         {isLoading ? (
-          'Redirecting to checkout...'
+          t('dashboard.pages.subscribe.redirecting')
         ) : (
           <>
-            Continue to Payment
+            {t('dashboard.pages.subscribe.continueToPayment')}
             <ArrowRight className="ml-2 h-4 w-4" />
           </>
         )}
@@ -255,8 +257,8 @@ export function SubscribeClient({
       {!isValidSelection && (
         <p className="mt-3 text-xs text-muted-foreground">
           {selectedPlan === 'instrument'
-            ? 'Select an instrument above to continue.'
-            : 'Choose a plan above to continue.'}
+            ? t('dashboard.pages.subscribe.hints.selectInstrument')
+            : t('dashboard.pages.subscribe.hints.selectPlan')}
         </p>
       )}
     </div>

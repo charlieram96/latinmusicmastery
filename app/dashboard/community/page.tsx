@@ -1,17 +1,21 @@
+'use client'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Users, MessageCircle, ExternalLink, Music, Sparkles, Heart } from 'lucide-react'
 import Link from 'next/link'
+import { useTranslation } from '@/components/language-provider'
 
 export default function CommunityPage() {
+  const { t } = useTranslation()
   return (
     <>
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold font-heading">Community</h1>
+        <h1 className="text-3xl font-bold font-heading">{t('dashboard.pages.community.title')}</h1>
         <p className="text-muted-foreground mt-1">
-          Connect with fellow musicians, share your progress, and learn together
+          {t('dashboard.pages.community.subtitle')}
         </p>
       </div>
 
@@ -27,15 +31,14 @@ export default function CommunityPage() {
               </div>
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h2 className="text-2xl font-bold text-white mb-2">Join Our Discord Community</h2>
+              <h2 className="text-2xl font-bold text-white mb-2">{t('dashboard.pages.community.discord.title')}</h2>
               <p className="text-white/80 mb-4 max-w-xl">
-                Connect with 1,000+ Latin music enthusiasts! Get help with lessons, share your progress,
-                participate in challenges, and learn from fellow musicians around the world.
+                {t('dashboard.pages.community.discord.description')}
               </p>
               <Button size="lg" className="bg-white text-[#5865F2] hover:bg-white/90" asChild>
                 <Link href="https://discord.gg/latinmusicmastery" target="_blank">
                   <ExternalLink className="h-4 w-4 mr-2" />
-                  Join Discord Server
+                  {t('dashboard.pages.community.discord.cta')}
                 </Link>
               </Button>
             </div>
@@ -50,9 +53,9 @@ export default function CommunityPage() {
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
               <MessageCircle className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle className="text-lg">Discussion Channels</CardTitle>
+            <CardTitle className="text-lg">{t('dashboard.pages.community.discussionChannels.title')}</CardTitle>
             <CardDescription>
-              Dedicated channels for each instrument and music style
+              {t('dashboard.pages.community.discussionChannels.description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -70,14 +73,14 @@ export default function CommunityPage() {
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
               <Music className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle className="text-lg">Practice Sessions</CardTitle>
+            <CardTitle className="text-lg">{t('dashboard.pages.community.practiceSessions.title')}</CardTitle>
             <CardDescription>
-              Join live practice rooms and jam with other students
+              {t('dashboard.pages.community.practiceSessions.description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Weekly group sessions hosted by our teachers
+              {t('dashboard.pages.community.practiceSessions.note')}
             </p>
           </CardContent>
         </Card>
@@ -87,14 +90,14 @@ export default function CommunityPage() {
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
               <Sparkles className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle className="text-lg">Monthly Challenges</CardTitle>
+            <CardTitle className="text-lg">{t('dashboard.pages.community.challenges.title')}</CardTitle>
             <CardDescription>
-              Participate in challenges and win exclusive rewards
+              {t('dashboard.pages.community.challenges.description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Current: 30-day Salsa Piano Challenge
+              {t('dashboard.pages.community.challenges.current')}
             </p>
           </CardContent>
         </Card>
@@ -105,30 +108,30 @@ export default function CommunityPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-primary" />
-            Community Guidelines
+            {t('dashboard.pages.community.guidelines.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <span className="text-primary font-bold">1.</span>
-              <span><strong className="text-foreground">Be respectful</strong> - Treat all members with kindness and respect, regardless of skill level.</span>
+              <span><strong className="text-foreground">{t('dashboard.pages.community.guidelines.rule1Title')}</strong> - {t('dashboard.pages.community.guidelines.rule1Body')}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary font-bold">2.</span>
-              <span><strong className="text-foreground">Share constructively</strong> - When giving feedback, be encouraging and helpful.</span>
+              <span><strong className="text-foreground">{t('dashboard.pages.community.guidelines.rule2Title')}</strong> - {t('dashboard.pages.community.guidelines.rule2Body')}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary font-bold">3.</span>
-              <span><strong className="text-foreground">Stay on topic</strong> - Keep discussions relevant to music and learning.</span>
+              <span><strong className="text-foreground">{t('dashboard.pages.community.guidelines.rule3Title')}</strong> - {t('dashboard.pages.community.guidelines.rule3Body')}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary font-bold">4.</span>
-              <span><strong className="text-foreground">No spam or self-promotion</strong> - Focus on community engagement, not marketing.</span>
+              <span><strong className="text-foreground">{t('dashboard.pages.community.guidelines.rule4Title')}</strong> - {t('dashboard.pages.community.guidelines.rule4Body')}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary font-bold">5.</span>
-              <span><strong className="text-foreground">Have fun!</strong> - We're all here because we love Latin music. Enjoy the journey!</span>
+              <span><strong className="text-foreground">{t('dashboard.pages.community.guidelines.rule5Title')}</strong> - {t('dashboard.pages.community.guidelines.rule5Body')}</span>
             </li>
           </ul>
         </CardContent>

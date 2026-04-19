@@ -7,34 +7,36 @@ import { Check, Crown, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fadeInUp, staggerContainer, staggerChild } from "@/lib/animation-variants";
 import GradientText from "@/components/marketing/GradientText";
+import { useTranslation } from "@/components/language-provider";
 
 const instrumentShowcase = [
-  { name: "Timbal", image: "https://images.unsplash.com/photo-1674168460210-9f1a2fbf730b?w=600&auto=format&fit=crop&q=80" },
-  { name: "Conga", image: "https://images.unsplash.com/photo-1732024004147-38420cac4bb8?w=600&auto=format&fit=crop&q=80" },
-  { name: "Violin", image: "https://images.unsplash.com/photo-1690181462400-84ce69ed68fd?w=600&auto=format&fit=crop&q=80" },
-  { name: "Bass", image: "https://images.unsplash.com/photo-1766033288242-70dd8602752a?w=600&auto=format&fit=crop&q=80" },
-  { name: "Piano", image: "https://images.unsplash.com/photo-1764323038644-501788b28f87?w=600&auto=format&fit=crop&q=80" },
-  { name: "Vocals", image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&auto=format&fit=crop&q=80" },
+  { nameKey: "homepage.homeSections.pricingPreview.instruments.timbal", image: "https://images.unsplash.com/photo-1674168460210-9f1a2fbf730b?w=600&auto=format&fit=crop&q=80" },
+  { nameKey: "homepage.homeSections.pricingPreview.instruments.conga", image: "https://images.unsplash.com/photo-1732024004147-38420cac4bb8?w=600&auto=format&fit=crop&q=80" },
+  { nameKey: "homepage.homeSections.pricingPreview.instruments.violin", image: "https://images.unsplash.com/photo-1690181462400-84ce69ed68fd?w=600&auto=format&fit=crop&q=80" },
+  { nameKey: "homepage.homeSections.pricingPreview.instruments.bass", image: "https://images.unsplash.com/photo-1766033288242-70dd8602752a?w=600&auto=format&fit=crop&q=80" },
+  { nameKey: "homepage.homeSections.pricingPreview.instruments.piano", image: "https://images.unsplash.com/photo-1764323038644-501788b28f87?w=600&auto=format&fit=crop&q=80" },
+  { nameKey: "homepage.homeSections.pricingPreview.instruments.vocals", image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&auto=format&fit=crop&q=80" },
 ];
 
-const instrumentFeatures = [
-  "All courses for your instrument",
-  "Interactive Soundslice integration",
-  "Progress tracking dashboard",
-  "New content added monthly",
-  "Cancel anytime",
+const instrumentFeatureKeys = [
+  "homepage.homeSections.pricingPreview.instrumentFeatures.allCourses",
+  "homepage.homeSections.pricingPreview.instrumentFeatures.soundslice",
+  "homepage.homeSections.pricingPreview.instrumentFeatures.progress",
+  "homepage.homeSections.pricingPreview.instrumentFeatures.monthly",
+  "homepage.homeSections.pricingPreview.instrumentFeatures.cancelAnytime",
 ];
 
-const allAccessFeatures = [
-  "All 6 instruments included",
-  "Every course and lesson",
-  "Interactive Soundslice integration",
-  "Progress tracking dashboard",
-  "New content added monthly",
-  "Cancel anytime",
+const allAccessFeatureKeys = [
+  "homepage.homeSections.pricingPreview.allAccessFeatures.allInstruments",
+  "homepage.homeSections.pricingPreview.allAccessFeatures.everyCourse",
+  "homepage.homeSections.pricingPreview.allAccessFeatures.soundslice",
+  "homepage.homeSections.pricingPreview.allAccessFeatures.progress",
+  "homepage.homeSections.pricingPreview.allAccessFeatures.monthly",
+  "homepage.homeSections.pricingPreview.allAccessFeatures.cancelAnytime",
 ];
 
 export function HomePricingPreview() {
+  const { t } = useTranslation();
   return (
     <section className="py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6">
@@ -47,11 +49,11 @@ export function HomePricingPreview() {
           className="mb-12 text-center"
         >
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-            Simple,{" "}
-            <GradientText>flexible pricing</GradientText>
+            {t('homepage.homeSections.pricingPreview.headingPrefix')}{" "}
+            <GradientText>{t('homepage.homeSections.pricingPreview.headingHighlight')}</GradientText>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Subscribe per instrument or get unlimited access to everything.
+            {t('homepage.homeSections.pricingPreview.description')}
           </p>
         </motion.div>
 
@@ -64,7 +66,7 @@ export function HomePricingPreview() {
           className="mb-8 text-center"
         >
           <h3 className="text-2xl font-bold tracking-tight md:text-3xl">
-            <GradientText>6 Instruments</GradientText> Available
+            <GradientText>{t('homepage.homeSections.pricingPreview.sixInstruments')}</GradientText> {t('homepage.homeSections.pricingPreview.available')}
           </h3>
         </motion.div>
 
@@ -77,13 +79,13 @@ export function HomePricingPreview() {
         >
           {instrumentShowcase.map((instrument) => (
             <motion.div
-              key={instrument.name}
+              key={instrument.nameKey}
               variants={staggerChild}
               className="group relative flex items-end overflow-hidden rounded-2xl min-h-[220px] md:min-h-[280px]"
             >
               <Image
                 src={instrument.image}
-                alt={instrument.name}
+                alt={t(instrument.nameKey)}
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                 sizes="(max-width: 768px) 50vw, 33vw"
@@ -91,7 +93,7 @@ export function HomePricingPreview() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
               <div className="relative z-10 w-full p-4 md:p-5">
                 <p className="text-base font-semibold text-white md:text-lg">
-                  {instrument.name}
+                  {t(instrument.nameKey)}
                 </p>
               </div>
             </motion.div>
@@ -112,21 +114,21 @@ export function HomePricingPreview() {
               <div className="mb-8 text-center">
                 <div className="mb-2 flex items-center justify-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
                   <Music className="size-4" />
-                  Per Instrument
+                  {t('homepage.homeSections.pricingPreview.perInstrument')}
                 </div>
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-5xl font-bold text-foreground">
                     $14.99
                   </span>
-                  <span className="text-lg text-muted-foreground">/month</span>
+                  <span className="text-lg text-muted-foreground">{t('homepage.homeSections.pricingPreview.perMonth')}</span>
                 </div>
               </div>
 
               <ul className="mb-8 flex-1 space-y-4">
-                {instrumentFeatures.map((feature) => (
-                  <li key={feature} className="flex items-center gap-3">
+                {instrumentFeatureKeys.map((featureKey) => (
+                  <li key={featureKey} className="flex items-center gap-3">
                     <Check className="size-5 shrink-0 text-primary" />
-                    <span className="text-foreground/80">{feature}</span>
+                    <span className="text-foreground/80">{t(featureKey)}</span>
                   </li>
                 ))}
               </ul>
@@ -136,7 +138,7 @@ export function HomePricingPreview() {
                 className="h-auto w-full rounded-full py-4 text-base font-semibold"
                 asChild
               >
-                <Link href="#waitlist">Choose Your Instrument</Link>
+                <Link href="#waitlist">{t('homepage.homeSections.pricingPreview.chooseInstrument')}</Link>
               </Button>
             </div>
           </motion.div>
@@ -156,21 +158,21 @@ export function HomePricingPreview() {
               <div className="mb-8 text-center">
                 <div className="mb-2 flex items-center justify-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
                   <Crown className="size-4" />
-                  All-Access
+                  {t('homepage.homeSections.pricingPreview.allAccess')}
                 </div>
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-5xl font-bold text-foreground">
                     $69.99
                   </span>
-                  <span className="text-lg text-muted-foreground">/month</span>
+                  <span className="text-lg text-muted-foreground">{t('homepage.homeSections.pricingPreview.perMonth')}</span>
                 </div>
               </div>
 
               <ul className="mb-8 flex-1 space-y-4">
-                {allAccessFeatures.map((feature) => (
-                  <li key={feature} className="flex items-center gap-3">
+                {allAccessFeatureKeys.map((featureKey) => (
+                  <li key={featureKey} className="flex items-center gap-3">
                     <Check className="size-5 shrink-0 text-primary" />
-                    <span className="text-foreground/80">{feature}</span>
+                    <span className="text-foreground/80">{t(featureKey)}</span>
                   </li>
                 ))}
               </ul>
@@ -179,11 +181,11 @@ export function HomePricingPreview() {
                 className="h-auto w-full rounded-full bg-primary py-4 text-base font-semibold text-white hover:bg-primary/90"
                 asChild
               >
-                <Link href="#waitlist">Get All-Access</Link>
+                <Link href="#waitlist">{t('homepage.homeSections.pricingPreview.getAllAccess')}</Link>
               </Button>
 
               <p className="mt-4 text-center text-xs text-muted-foreground">
-                14-day money-back guarantee
+                {t('homepage.homeSections.pricingPreview.moneyBack')}
               </p>
             </div>
           </motion.div>

@@ -6,6 +6,7 @@ import { HeaderStreak } from '@/components/dashboard/header-streak-server'
 import { HeaderContinue } from '@/components/dashboard/header-continue-server'
 import { HeaderNotifications } from '@/components/dashboard/header-notifications-server'
 import { DashboardHeaderWrapper } from '@/components/dashboard/dashboard-header-wrapper'
+import { DashboardWelcomeText } from '@/components/dashboard/dashboard-welcome-text'
 import { ThemeToggle } from '@/components/theme-toggle'
 
 export async function DashboardHeader() {
@@ -27,9 +28,7 @@ export async function DashboardHeader() {
         {/* Mobile Menu Toggle */}
         <MobileSidebarTrigger />
 
-        <p className="hidden md:flex text-sm font-medium text-foreground flex-1">
-          Welcome to Latin Music Mastery
-        </p>
+        <DashboardWelcomeText />
         <div className="flex-1 md:hidden" />
 
         {/* Right side items */}

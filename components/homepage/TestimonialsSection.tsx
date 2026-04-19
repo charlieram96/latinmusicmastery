@@ -2,60 +2,56 @@
 
 import { motion } from 'framer-motion'
 import { Star } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
 
 interface Testimonial {
-  name: string
-  role: string
+  nameKey: string
+  roleKey: string
   initials: string
-  content: string
+  contentKey: string
 }
 
 const testimonials: Testimonial[] = [
   {
-    name: 'Carlos Rodriguez',
-    role: 'Guitarist, 3 years learning',
+    nameKey: 'homepage.homeSections.testimonials.items.carlosRodriguez.name',
+    roleKey: 'homepage.homeSections.testimonials.items.carlosRodriguez.role',
     initials: 'CR',
-    content:
-      'The Soundslice integration is incredible. Being able to slow down passages and loop difficult sections has transformed my practice sessions.',
+    contentKey: 'homepage.homeSections.testimonials.items.carlosRodriguez.content',
   },
   {
-    name: 'Sarah Chen',
-    role: 'Pianist, 1 year learning',
+    nameKey: 'homepage.homeSections.testimonials.items.sarahChen.name',
+    roleKey: 'homepage.homeSections.testimonials.items.sarahChen.role',
     initials: 'SC',
-    content:
-      'I never thought I could learn bossa nova rhythms online, but the instructors make it feel like private lessons. The progress tracking keeps me motivated.',
+    contentKey: 'homepage.homeSections.testimonials.items.sarahChen.content',
   },
   {
-    name: 'Marcus Johnson',
-    role: 'Drummer, 2 years learning',
+    nameKey: 'homepage.homeSections.testimonials.items.marcusJohnson.name',
+    roleKey: 'homepage.homeSections.testimonials.items.marcusJohnson.role',
     initials: 'MJ',
-    content:
-      'Finally, a platform that teaches authentic Latin rhythms with proper technique. The quality of instruction is on par with conservatory-level teaching.',
+    contentKey: 'homepage.homeSections.testimonials.items.marcusJohnson.content',
   },
   {
-    name: 'Ana Martinez',
-    role: 'Multi-instrumentalist',
+    nameKey: 'homepage.homeSections.testimonials.items.anaMartinez.name',
+    roleKey: 'homepage.homeSections.testimonials.items.anaMartinez.role',
     initials: 'AM',
-    content:
-      'The variety of styles covered is amazing. From Cuban son to Argentine tango, I have been able to expand my musical vocabulary tremendously.',
+    contentKey: 'homepage.homeSections.testimonials.items.anaMartinez.content',
   },
   {
-    name: 'David Kim',
-    role: 'Bass player, 6 months learning',
+    nameKey: 'homepage.homeSections.testimonials.items.davidKim.name',
+    roleKey: 'homepage.homeSections.testimonials.items.davidKim.role',
     initials: 'DK',
-    content:
-      'The downloadable resources are fantastic. Having sheet music and backing tracks for offline practice has made a huge difference in my learning.',
+    contentKey: 'homepage.homeSections.testimonials.items.davidKim.content',
   },
   {
-    name: 'Elena Volkov',
-    role: 'Jazz musician',
+    nameKey: 'homepage.homeSections.testimonials.items.elenaVolkov.name',
+    roleKey: 'homepage.homeSections.testimonials.items.elenaVolkov.role',
     initials: 'EV',
-    content:
-      'As a jazz musician wanting to incorporate Latin elements, this platform has been invaluable. The instructors explain the cultural context beautifully.',
+    contentKey: 'homepage.homeSections.testimonials.items.elenaVolkov.content',
   },
 ]
 
 export function TestimonialsSection() {
+  const { t } = useTranslation()
   return (
     <section id="testimonials" className="py-24 lg:py-32 bg-muted/50">
       <div className="max-w-7xl mx-auto px-6">
@@ -68,10 +64,10 @@ export function TestimonialsSection() {
           className="text-center max-w-3xl mx-auto mb-16"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4 font-heading">
-            Loved by musicians
+            {t('homepage.homeSections.testimonials.heading')}
           </h2>
           <p className="text-lg text-muted-foreground">
-            See what our students are saying about their learning experience
+            {t('homepage.homeSections.testimonials.subheading')}
           </p>
         </motion.div>
 
@@ -79,7 +75,7 @@ export function TestimonialsSection() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {testimonials.map((testimonial, i) => (
             <motion.div
-              key={testimonial.name}
+              key={testimonial.nameKey}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -98,7 +94,7 @@ export function TestimonialsSection() {
 
               {/* Quote */}
               <p className="text-foreground/80 leading-relaxed mb-6">
-                &ldquo;{testimonial.content}&rdquo;
+                &ldquo;{t(testimonial.contentKey)}&rdquo;
               </p>
 
               {/* Author */}
@@ -110,9 +106,9 @@ export function TestimonialsSection() {
                 </div>
                 <div>
                   <div className="text-sm font-medium text-foreground">
-                    {testimonial.name}
+                    {t(testimonial.nameKey)}
                   </div>
-                  <div className="text-xs text-muted-foreground">{testimonial.role}</div>
+                  <div className="text-xs text-muted-foreground">{t(testimonial.roleKey)}</div>
                 </div>
               </div>
             </motion.div>

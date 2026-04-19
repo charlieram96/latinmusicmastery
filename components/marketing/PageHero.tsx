@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { heroTextReveal, fadeInUp, floatAnimation } from "@/lib/animation-variants";
 import GradientText from "@/components/marketing/GradientText";
@@ -10,13 +12,30 @@ interface PageHeroProps {
   title: string;
   subtitle?: string;
   breadcrumbs?: { label: string; href?: string }[];
+  showBackButton?: boolean;
+}
+
+function getBackTarget(
+  breadcrumbs: { label: string; href?: string }[] | undefined
+): { label: string; href: string } | null {
+  if (!breadcrumbs || breadcrumbs.length === 0) return null;
+  const lastIsCurrent =
+    !breadcrumbs[breadcrumbs.length - 1].href;
+  const end = lastIsCurrent ? breadcrumbs.length - 1 : breadcrumbs.length;
+  for (let i = end - 1; i >= 0; i--) {
+    const item = breadcrumbs[i];
+    if (item.href) return { label: item.label, href: item.href };
+  }
+  return null;
 }
 
 export default function PageHero({
   title,
   subtitle,
   breadcrumbs,
+  showBackButton = false,
 }: PageHeroProps) {
+  const backTarget = showBackButton ? getBackTarget(breadcrumbs) : null;
   // Split the title to apply gradient to the last word
   const words = title.split(" ");
   const leadingWords = words.slice(0, -1).join(" ");
@@ -50,6 +69,24 @@ export default function PageHero({
       />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Back button */}
+        {backTarget && (
+          <motion.div
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="mb-4"
+          >
+            <Link
+              href={backTarget.href}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/50 px-3 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-colors hover:border-border hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to {backTarget.label}</span>
+            </Link>
+          </motion.div>
+        )}
+
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
           <motion.div

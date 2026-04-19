@@ -1,8 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import { useTranslation } from '@/components/language-provider'
 
 export function Footer() {
+  const { t } = useTranslation()
   return (
     <footer className="py-16 border-t border-border">
       <div className="max-w-7xl mx-auto px-6">
@@ -12,20 +14,20 @@ export function Footer() {
           <div className="col-span-2">
             <img src="/large-color-logo.svg" alt="LMM" className="h-8 mb-4" />
             <p className="text-sm text-muted-foreground max-w-xs">
-              Master authentic Latin American music with world-class instructors.
+              {t('homepage.footer.tagline')}
             </p>
           </div>
 
           {/* Product Links */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">Product</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-4">{t('homepage.footer.headings.product')}</h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   href="/dashboard/courses"
                   className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
-                  Courses
+                  {t('homepage.footer.product.courses')}
                 </Link>
               </li>
               <li>
@@ -33,7 +35,7 @@ export function Footer() {
                   href="/pricing"
                   className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
-                  Pricing
+                  {t('homepage.footer.product.pricing')}
                 </Link>
               </li>
               <li>
@@ -41,7 +43,7 @@ export function Footer() {
                   href="/dashboard/teachers"
                   className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
-                  Instructors
+                  {t('homepage.footer.product.instructors')}
                 </Link>
               </li>
             </ul>
@@ -49,14 +51,14 @@ export function Footer() {
 
           {/* Company Links */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">Company</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-4">{t('homepage.footer.headings.company')}</h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   href="/about"
                   className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
-                  About
+                  {t('homepage.footer.companyShort.about')}
                 </Link>
               </li>
               <li>
@@ -64,7 +66,7 @@ export function Footer() {
                   href="/blog"
                   className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
-                  Blog
+                  {t('homepage.footer.companyShort.blog')}
                 </Link>
               </li>
               <li>
@@ -72,7 +74,7 @@ export function Footer() {
                   href="/contact"
                   className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
-                  Contact
+                  {t('homepage.footer.companyShort.contact')}
                 </Link>
               </li>
             </ul>
@@ -80,14 +82,14 @@ export function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">Legal</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-4">{t('homepage.footer.headings.legal')}</h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   href="/privacy"
                   className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
-                  Privacy
+                  {t('homepage.footer.legalShort.privacy')}
                 </Link>
               </li>
               <li>
@@ -95,7 +97,7 @@ export function Footer() {
                   href="/terms"
                   className="text-sm text-muted-foreground hover:text-foreground transition"
                 >
-                  Terms
+                  {t('homepage.footer.legalShort.terms')}
                 </Link>
               </li>
             </ul>
@@ -105,8 +107,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-border">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Latin Music Mastery. All rights
-            reserved.
+            {t('homepage.footer.copyright', { year: new Date().getFullYear() })}
           </p>
 
           {/* Social Icons */}

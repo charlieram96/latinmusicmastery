@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ExercisePlayer } from '@/components/play-sense/exercise-player'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
+import { PlaySenseHeader } from './play-sense-header'
 
 export default async function PlaySensePage() {
   const supabase = await createClient()
@@ -34,12 +35,7 @@ export default async function PlaySensePage() {
   return (
     <div className="w-full">
       <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Play Sense</h1>
-          <p className="text-sm text-muted-foreground">
-            Practice music patterns with real-time feedback
-          </p>
-        </div>
+        <PlaySenseHeader />
       </div>
 
       <div className="w-full">

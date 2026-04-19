@@ -7,12 +7,13 @@ import {
   countUp,
 } from "@/lib/animation-variants";
 import AnimatedCounter from "@/components/marketing/AnimatedCounter";
+import { useTranslation } from "@/components/language-provider";
 
 const stats = [
-  { end: 0, suffix: "", label: "Active Students", staticText: "In Progress" },
-  { end: 1500, suffix: "+", label: "Video Lessons" },
-  { end: 200, suffix: "+", label: "Hours of Content" },
-  { end: 15, suffix: "", label: "Expert Instructors" },
+  { end: 0, suffix: "", labelKey: "homepage.stats.activeStudents.label", staticTextKey: "homepage.stats.activeStudents.staticText" },
+  { end: 1500, suffix: "+", labelKey: "homepage.stats.videoLessons.label" },
+  { end: 200, suffix: "+", labelKey: "homepage.stats.hoursOfContent.label" },
+  { end: 15, suffix: "", labelKey: "homepage.stats.expertInstructors.label" },
 ] as const;
 
 export default function StatsBar() {
@@ -20,6 +21,7 @@ export default function StatsBar() {
     triggerOnce: true,
     threshold: 0.2,
   });
+  const { t } = useTranslation();
 
   return (
     <section className="relative border-t border-white/10 bg-gradient-to-r from-black/90 via-gray-900/95 to-black/90 backdrop-blur-md">
@@ -33,13 +35,13 @@ export default function StatsBar() {
       >
         {stats.map((stat, i) => (
           <motion.div
-            key={stat.label}
+            key={stat.labelKey}
             variants={countUp}
             className="flex flex-col items-center text-center"
           >
             <span className="bg-gradient-to-b from-white to-white/70 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-4xl">
-              {"staticText" in stat && stat.staticText ? (
-                stat.staticText
+              {"staticTextKey" in stat && stat.staticTextKey ? (
+                t(stat.staticTextKey)
               ) : (
                 <AnimatedCounter
                   end={stat.end}
@@ -49,7 +51,7 @@ export default function StatsBar() {
               )}
             </span>
             <span className="mt-1.5 text-xs font-medium uppercase tracking-wider text-white/50 sm:text-sm">
-              {stat.label}
+              {t(stat.labelKey)}
             </span>
           </motion.div>
         ))}
