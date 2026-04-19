@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
@@ -8,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { ArrowLeft } from 'lucide-react'
 import { createCountry, updateCountry } from '@/app/actions/admin'
+import { CountryImageUpload } from '@/components/admin/country-image-upload'
 
 interface PageProps {
   params: Promise<{
@@ -37,6 +39,7 @@ export default async function CountryFormPage({ params }: PageProps) {
   }
 
   const action = isNew ? createCountry : updateCountry.bind(null, id)
+  const uploadId = country?.id ?? randomUUID()
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-2xl">
@@ -96,13 +99,10 @@ export default async function CountryFormPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="image_url">Image URL</Label>
-              <Input
-                id="image_url"
-                name="image_url"
-                type="url"
-                defaultValue={country?.image_url || ''}
-                placeholder="https://example.com/image.jpg"
+              <Label>Image</Label>
+              <CountryImageUpload
+                countryId={uploadId}
+                currentImageUrl={country?.image_url ?? null}
               />
             </div>
 
