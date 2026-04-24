@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,7 +39,7 @@ export default async function ExplorePage() {
 
   const { data: countries } = await supabase
     .from("countries")
-    .select("id, name, slug, description, musical_styles(id, name, slug)")
+    .select("id, name, slug, description, image_url, musical_styles(id, name, slug)")
     .order("name");
 
   return (
@@ -65,10 +66,20 @@ export default async function ExplorePage() {
                   className="group block"
                 >
                   <div className="relative overflow-hidden rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
-                    {/* Background gradient image area */}
+                    {/* Background image (admin-uploaded) or gradient fallback */}
                     <div
-                      className={`relative aspect-[4/3] bg-gradient-to-br ${gradient}`}
+                      className={`relative aspect-[4/3] ${country.image_url ? "" : `bg-gradient-to-br ${gradient}`}`}
                     >
+                      {country.image_url && (
+                        <Image
+                          src={country.image_url}
+                          alt={country.name}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
+                      )}
+
                       {/* Dark overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 transition-opacity duration-300 group-hover:from-black/60 group-hover:via-black/20" />
 

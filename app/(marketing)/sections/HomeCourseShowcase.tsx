@@ -20,6 +20,7 @@ interface Country {
   name: string;
   slug: string;
   description: string | null;
+  image_url: string | null;
   musical_styles: MusicalStyle[];
 }
 
@@ -70,7 +71,7 @@ export function HomeCourseShowcase({ countries }: Props) {
           className="grid gap-4 md:grid-cols-2 lg:gap-6"
         >
           {countries.map((country) => {
-            const image = countryImages[country.slug];
+            const image = country.image_url ?? countryImages[country.slug] ?? null;
             const styles = country.musical_styles ?? [];
             const visibleStyles = styles.slice(0, 3);
             const extraCount = styles.length - 3;
@@ -81,8 +82,8 @@ export function HomeCourseShowcase({ countries }: Props) {
                   href={`/explore/${country.slug}`}
                   className="group relative flex flex-col justify-end overflow-hidden rounded-2xl min-h-[260px] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
-                  {/* Background image */}
-                  {image && (
+                  {/* Background image or gradient fallback */}
+                  {image ? (
                     <Image
                       src={image}
                       alt={country.name}
@@ -90,6 +91,8 @@ export function HomeCourseShowcase({ countries }: Props) {
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                       sizes="(max-width: 768px) 100vw, 50vw"
                     />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary/40" />
                   )}
 
                   {/* Dark gradient overlay */}

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
@@ -13,6 +14,7 @@ interface PageHeroProps {
   subtitle?: string;
   breadcrumbs?: { label: string; href?: string }[];
   showBackButton?: boolean;
+  backgroundImage?: string | null;
 }
 
 function getBackTarget(
@@ -34,6 +36,7 @@ export default function PageHero({
   subtitle,
   breadcrumbs,
   showBackButton = false,
+  backgroundImage,
 }: PageHeroProps) {
   const backTarget = showBackButton ? getBackTarget(breadcrumbs) : null;
   // Split the title to apply gradient to the last word
@@ -42,31 +45,55 @@ export default function PageHero({
   const lastWord = words[words.length - 1];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-background via-background to-secondary/30 py-24 lg:py-32">
-      {/* Decorative floating gradient orbs */}
-      <motion.div
-        variants={floatAnimation}
-        initial="initial"
-        animate="float"
-        className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl"
-        aria-hidden="true"
-      />
-      <motion.div
-        variants={floatAnimation}
-        initial="initial"
-        animate="float"
-        transition={{ delay: 1.5 }}
-        className="pointer-events-none absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-orange-400/8 blur-3xl"
-        aria-hidden="true"
-      />
-      <motion.div
-        variants={floatAnimation}
-        initial="initial"
-        animate="float"
-        transition={{ delay: 0.8 }}
-        className="pointer-events-none absolute left-1/2 top-1/3 h-56 w-56 -translate-x-1/2 rounded-full bg-amber-500/6 blur-2xl"
-        aria-hidden="true"
-      />
+    <section
+      className={cn(
+        "relative overflow-hidden py-24 lg:py-32",
+        !backgroundImage && "bg-gradient-to-b from-background via-background to-secondary/30"
+      )}
+    >
+      {/* Optional background image */}
+      {backgroundImage && (
+        <>
+          <Image
+            src={backgroundImage}
+            alt=""
+            fill
+            priority
+            className="object-cover"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-background" />
+        </>
+      )}
+
+      {/* Decorative floating gradient orbs (only when no image) */}
+      {!backgroundImage && (
+        <>
+          <motion.div
+            variants={floatAnimation}
+            initial="initial"
+            animate="float"
+            className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl"
+            aria-hidden="true"
+          />
+          <motion.div
+            variants={floatAnimation}
+            initial="initial"
+            animate="float"
+            transition={{ delay: 1.5 }}
+            className="pointer-events-none absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-orange-400/8 blur-3xl"
+            aria-hidden="true"
+          />
+          <motion.div
+            variants={floatAnimation}
+            initial="initial"
+            animate="float"
+            transition={{ delay: 0.8 }}
+            className="pointer-events-none absolute left-1/2 top-1/3 h-56 w-56 -translate-x-1/2 rounded-full bg-amber-500/6 blur-2xl"
+            aria-hidden="true"
+          />
+        </>
+      )}
 
       {/* Fixed back button — stays visible while scrolling */}
       {backTarget && (
@@ -104,7 +131,10 @@ export default function PageHero({
           variants={heroTextReveal}
           initial="hidden"
           animate="visible"
-          className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl"
+          className={cn(
+            "text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl",
+            backgroundImage && "text-white drop-shadow-lg"
+          )}
         >
           {leadingWords}{" "}
           <GradientText>{lastWord}</GradientText>
@@ -117,7 +147,10 @@ export default function PageHero({
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.2 }}
-            className="mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl"
+            className={cn(
+              "mt-6 max-w-2xl text-lg sm:text-xl",
+              backgroundImage ? "text-white/90 drop-shadow" : "text-muted-foreground"
+            )}
           >
             {subtitle}
           </motion.p>

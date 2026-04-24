@@ -122,7 +122,7 @@ export function AnimatedGradientHero() {
               className="bg-white text-[#0a2540] hover:bg-white/90 hover:text-[#0a2540] px-8 py-3.5 h-auto rounded-full shadow-2xl shadow-white/20 font-semibold text-base"
               asChild
             >
-              <Link href="/signup">
+              <Link href="/">
                 {t('homepage.animatedHero.ctaPrimary')}
               </Link>
             </Button>
