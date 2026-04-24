@@ -111,7 +111,7 @@ export function InteractiveCourseExplorer({ countries }: Props) {
           className="text-center mt-12"
         >
           <Link
-            href="/signup"
+            href="/"
             className="text-primary hover:text-primary/80 font-medium text-lg inline-flex items-center gap-2"
           >
             {t('homepage.courseExplorer.viewAllCourses')}

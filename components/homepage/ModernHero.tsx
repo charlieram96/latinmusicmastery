@@ -74,7 +74,7 @@ export function ModernHero() {
             className="bg-primary hover:bg-primary/90 text-white !px-8 py-4 h-auto text-base font-semibold rounded-full shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5"
             asChild
           >
-            <Link href="/signup" className="flex items-center justify-center">
+            <Link href="/" className="flex items-center justify-center">
               {t('homepage.modernHero.ctaPrimary')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>

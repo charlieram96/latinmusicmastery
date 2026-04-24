@@ -27,7 +27,7 @@ export default async function CountryPage({
   const { data: country } = await supabase
     .from("countries")
     .select(
-      "id, name, slug, description, musical_styles(id, name, slug, description)"
+      "id, name, slug, description, image_url, musical_styles(id, name, slug, description)"
     )
     .eq("slug", countrySlug)
     .single();
@@ -77,6 +77,7 @@ export default async function CountryPage({
           { label: country.name },
         ]}
         showBackButton
+        backgroundImage={country.image_url}
       />
 
       {/* Musical Styles Section */}
