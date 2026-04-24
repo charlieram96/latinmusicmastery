@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3,
   MessageSquare, DollarSign, Drum, ChevronLeft, ChevronRight,
-  LayoutDashboard, Guitar, ArrowLeft,
+  LayoutDashboard, Guitar, ArrowLeft, Mail,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -27,6 +27,7 @@ const navItems = [
   { href: '/admin/courses', label: 'Courses', icon: BookOpen },
   { href: '/admin/teachers', label: 'Teachers', icon: GraduationCap },
   { href: '/admin/play-sense', label: 'Play Sense', icon: Drum },
+  { href: '/admin/waitlist', label: 'Waitlist', icon: Mail },
 ]
 
 const STORAGE_KEY = 'admin-sidebar-collapsed'
