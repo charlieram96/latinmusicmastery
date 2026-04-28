@@ -48,8 +48,7 @@ export function HomeCourseShowcase({ countries }: Props) {
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="mb-12"
         >
@@ -66,8 +65,7 @@ export function HomeCourseShowcase({ countries }: Props) {
         <motion.div
           variants={staggerContainer(0.08, 0.1)}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          animate="visible"
           className="grid gap-4 md:grid-cols-2 lg:gap-6"
         >
           {countries.map((country) => {

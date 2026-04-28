@@ -31,8 +31,7 @@ export function HomeInstructorsSection({ instructors }: Props) {
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end"
         >
@@ -58,8 +57,7 @@ export function HomeInstructorsSection({ instructors }: Props) {
         <motion.div
           variants={staggerContainer(0.1, 0.1)}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          animate="visible"
           className="-mx-6 flex gap-4 overflow-x-auto px-6 pb-4 scrollbar-hide md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0"
         >
           {displayed.map((instructor) => (

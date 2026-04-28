@@ -47,8 +47,7 @@ export function HomeTestimonialsSection() {
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="mb-12 text-center"
         >
@@ -65,8 +64,7 @@ export function HomeTestimonialsSection() {
         <motion.div
           variants={staggerContainer(0.1, 0.1)}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          animate="visible"
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {testimonials.map((testimonial) => (

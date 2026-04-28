@@ -63,8 +63,7 @@ export function HomeFeaturesSection() {
         {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="mb-16 text-center"
         >
@@ -92,8 +91,7 @@ export function HomeFeaturesSection() {
                 <motion.div
                   variants={isEven ? fadeInLeft : fadeInRight}
                   initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-80px" }}
+                  animate="visible"
                   className={isEven ? "md:order-1" : "md:order-2"}
                 >
                   <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10">
@@ -118,8 +116,7 @@ export function HomeFeaturesSection() {
                 <motion.div
                   variants={isEven ? fadeInRight : fadeInLeft}
                   initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-80px" }}
+                  animate="visible"
                   className={isEven ? "md:order-2" : "md:order-1"}
                 >
                   <FeatureImage src={feature.image} alt={t(feature.titleKey)} />

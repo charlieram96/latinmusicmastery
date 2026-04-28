@@ -45,8 +45,7 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="mb-12 text-center"
         >
@@ -62,8 +61,7 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
         {/* Instrument showcase */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mb-8 text-center"
         >
@@ -78,8 +76,7 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
           <motion.div
             variants={staggerContainer(0.08, 0.15)}
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
+            animate="visible"
             className="mx-auto mb-20 grid max-w-5xl grid-cols-2 gap-4 md:grid-cols-3"
           >
             {instruments.map((instrument) => (
@@ -119,8 +116,7 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
           <motion.div
             variants={fadeInUp}
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+            animate="visible"
             transition={{ delay: 0.1 }}
           >
             <div className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card p-8">
@@ -160,8 +156,7 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
           <motion.div
             variants={fadeInUp}
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+            animate="visible"
             transition={{ delay: 0.2 }}
           >
             <div className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card p-8">
