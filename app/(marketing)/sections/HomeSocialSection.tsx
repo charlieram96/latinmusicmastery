@@ -23,8 +23,7 @@ export function HomeSocialSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
         >
@@ -32,8 +31,7 @@ export function HomeSocialSection() {
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground"
         >
@@ -43,8 +41,7 @@ export function HomeSocialSection() {
         <motion.div
           variants={container}
           initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-100px" }}
+          animate="show"
           className="mt-10 flex flex-wrap items-center justify-center gap-6"
         >
           {socialLinks.map((social) => (
