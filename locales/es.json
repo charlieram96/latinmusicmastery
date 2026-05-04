@@ -91,6 +91,12 @@
           "home": "Inicio",
           "pricing": "Precios"
         },
+        "limitedTimeNotice": {
+          "eyebrow": "Precios por Tiempo Limitado",
+          "title": "Estos precios no durarán mucho",
+          "body": "Los precios mostrados están disponibles por tiempo limitado y aumentarán pronto. Únete a la lista de espera ahora para asegurar tu membresía a estas tarifas.",
+          "ctaLabel": "Únete a la Lista de Espera"
+        },
         "plans": {
           "perInstrument": {
             "name": "Por Instrumento",
@@ -724,6 +730,12 @@
         "headingPrefix": "Precios simples,",
         "headingHighlight": "flexibles",
         "description": "Suscríbete por instrumento u obtén acceso ilimitado a todo.",
+        "limitedTimeNotice": {
+          "eyebrow": "Precios por Tiempo Limitado",
+          "title": "Estos precios no durarán mucho",
+          "body": "Los precios mostrados están disponibles por tiempo limitado y aumentarán pronto. Únete a la lista de espera ahora para asegurar tu membresía a estas tarifas.",
+          "ctaLabel": "Únete a la Lista de Espera"
+        },
         "instrumentsAvailable": "{count} Instrumentos Disponibles",
         "perInstrument": "Por instrumento",
         "allAccess": "Acceso total",

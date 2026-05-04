@@ -35,7 +35,7 @@ export default function InstructorsContent({ teachers }: InstructorsContentProps
       />
 
       {/* Instructor Grid */}
-      <SectionWrapper className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <SectionWrapper threshold={0} className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         {teachers && teachers.length > 0 ? (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {teachers.map((teacher) => (

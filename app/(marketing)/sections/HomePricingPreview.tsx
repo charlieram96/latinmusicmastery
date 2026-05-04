@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Check, Crown, Music } from "lucide-react";
+import { ArrowRight, Check, Crown, Music, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fadeInUp, staggerContainer, staggerChild } from "@/lib/animation-variants";
 import GradientText from "@/components/marketing/GradientText";
@@ -109,6 +109,49 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
             ))}
           </motion.div>
         )}
+
+        {/* Limited-time pricing notice */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6 }}
+          className="mx-auto mb-10 max-w-4xl"
+        >
+          <div className="overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 sm:p-8">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <span
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary"
+                  aria-hidden="true"
+                >
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <div>
+                  <span className="inline-block text-xs font-semibold uppercase tracking-wider text-primary">
+                    {t('homepage.homeSections.pricingPreview.limitedTimeNotice.eyebrow')}
+                  </span>
+                  <h3 className="mt-1 text-lg font-semibold sm:text-xl">
+                    {t('homepage.homeSections.pricingPreview.limitedTimeNotice.title')}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+                    {t('homepage.homeSections.pricingPreview.limitedTimeNotice.body')}
+                  </p>
+                </div>
+              </div>
+              <Button
+                asChild
+                size="lg"
+                className="w-full shrink-0 rounded-full sm:w-auto"
+              >
+                <Link href="#waitlist">
+                  {t('homepage.homeSections.pricingPreview.limitedTimeNotice.ctaLabel')}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Pricing cards */}
         <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">

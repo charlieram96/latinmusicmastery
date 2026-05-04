@@ -1,11 +1,13 @@
 "use client";
 
-import { Music, Crown, Check, Minus } from "lucide-react";
+import Link from "next/link";
+import { Music, Crown, Check, Minus, Sparkles, ArrowRight } from "lucide-react";
 import PageHero from "@/components/marketing/PageHero";
 import SectionWrapper from "@/components/marketing/SectionWrapper";
 import CTABanner from "@/components/marketing/CTABanner";
 import GradientText from "@/components/marketing/GradientText";
 import PricingCard from "@/components/marketing/PricingCard";
+import { Button } from "@/components/ui/button";
 import {
   Accordion,
   AccordionItem,
@@ -158,6 +160,41 @@ export default function PricingContent() {
 
       {/* Pricing Cards */}
       <SectionWrapper className="mx-auto max-w-5xl px-4 py-20 sm:px-6 lg:px-8">
+        {/* Limited-time pricing notice */}
+        <div className="mb-12 overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary"
+                aria-hidden="true"
+              >
+                <Sparkles className="h-5 w-5" />
+              </span>
+              <div>
+                <span className="inline-block text-xs font-semibold uppercase tracking-wider text-primary">
+                  {t("marketing.pages.pricing.limitedTimeNotice.eyebrow")}
+                </span>
+                <h3 className="mt-1 text-lg font-semibold sm:text-xl">
+                  {t("marketing.pages.pricing.limitedTimeNotice.title")}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+                  {t("marketing.pages.pricing.limitedTimeNotice.body")}
+                </p>
+              </div>
+            </div>
+            <Button
+              asChild
+              size="lg"
+              className="w-full shrink-0 rounded-full sm:w-auto"
+            >
+              <Link href="/#waitlist">
+                {t("marketing.pages.pricing.limitedTimeNotice.ctaLabel")}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+
         <div className="grid gap-8 md:grid-cols-2">
           {plans.map((plan) => (
             <PricingCard
