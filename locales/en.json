@@ -91,6 +91,12 @@
           "home": "Home",
           "pricing": "Pricing"
         },
+        "limitedTimeNotice": {
+          "eyebrow": "Limited-Time Pricing",
+          "title": "These prices won't last long",
+          "body": "The prices below are available for a limited time and will increase soon. Join the waitlist now to lock in your membership at these rates.",
+          "ctaLabel": "Join the Waitlist"
+        },
         "plans": {
           "perInstrument": {
             "name": "Per Instrument",
@@ -724,6 +730,12 @@
         "headingPrefix": "Simple,",
         "headingHighlight": "flexible pricing",
         "description": "Subscribe per instrument or get unlimited access to everything.",
+        "limitedTimeNotice": {
+          "eyebrow": "Limited-Time Pricing",
+          "title": "These prices won't last long",
+          "body": "The prices below are available for a limited time and will increase soon. Join the waitlist now to lock in your membership at these rates.",
+          "ctaLabel": "Join the Waitlist"
+        },
         "instrumentsAvailable": "{count} Instruments Available",
         "perInstrument": "Per Instrument",
         "allAccess": "All-Access",
