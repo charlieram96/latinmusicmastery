@@ -170,6 +170,7 @@ export type Database = {
       }
       class_items: {
         Row: {
+          active_time_map_id: string | null
           audio_url: string | null
           bpm: number | null
           class_id: string
@@ -185,6 +186,7 @@ export type Database = {
           question: string | null
           question_type: string | null
           rich_content: Json | null
+          score_document_id: string | null
           soundslice_embed_url: string | null
           title: string
           updated_at: string | null
@@ -192,6 +194,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          active_time_map_id?: string | null
           audio_url?: string | null
           bpm?: number | null
           class_id: string
@@ -207,6 +210,7 @@ export type Database = {
           question?: string | null
           question_type?: string | null
           rich_content?: Json | null
+          score_document_id?: string | null
           soundslice_embed_url?: string | null
           title: string
           updated_at?: string | null
@@ -214,6 +218,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          active_time_map_id?: string | null
           audio_url?: string | null
           bpm?: number | null
           class_id?: string
@@ -229,6 +234,7 @@ export type Database = {
           question?: string | null
           question_type?: string | null
           rich_content?: Json | null
+          score_document_id?: string | null
           soundslice_embed_url?: string | null
           title?: string
           updated_at?: string | null
@@ -237,10 +243,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "class_items_active_time_map_id_fkey"
+            columns: ["active_time_map_id"]
+            isOneToOne: false
+            referencedRelation: "score_time_maps"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "class_items_class_id_fkey"
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_items_score_document_id_fkey"
+            columns: ["score_document_id"]
+            isOneToOne: false
+            referencedRelation: "score_documents"
             referencedColumns: ["id"]
           },
         ]
@@ -1132,6 +1152,280 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      score_clips: {
+        Row: {
+          class_item_id: string
+          created_at: string | null
+          end_seconds: number
+          id: string
+          loop_count: number | null
+          name: string
+          playback_rate: number | null
+          start_seconds: number
+          user_id: string
+        }
+        Insert: {
+          class_item_id: string
+          created_at?: string | null
+          end_seconds: number
+          id?: string
+          loop_count?: number | null
+          name: string
+          playback_rate?: number | null
+          start_seconds: number
+          user_id: string
+        }
+        Update: {
+          class_item_id?: string
+          created_at?: string | null
+          end_seconds?: number
+          id?: string
+          loop_count?: number | null
+          name?: string
+          playback_rate?: number | null
+          start_seconds?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "score_clips_class_item_id_fkey"
+            columns: ["class_item_id"]
+            isOneToOne: false
+            referencedRelation: "class_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "score_clips_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      score_documents: {
+        Row: {
+          composer: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          parsed_score: Json
+          schema_version: number
+          source_format: string
+          source_storage_path: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          composer?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          parsed_score: Json
+          schema_version?: number
+          source_format: string
+          source_storage_path?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          composer?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          parsed_score?: Json
+          schema_version?: number
+          source_format?: string
+          source_storage_path?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "score_documents_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      score_revisions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          edit_summary: string | null
+          id: string
+          parsed_score: Json
+          score_document_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          edit_summary?: string | null
+          id?: string
+          parsed_score: Json
+          score_document_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          edit_summary?: string | null
+          id?: string
+          parsed_score?: Json
+          score_document_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "score_revisions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "score_revisions_score_document_id_fkey"
+            columns: ["score_document_id"]
+            isOneToOne: false
+            referencedRelation: "score_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      score_time_maps: {
+        Row: {
+          class_item_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          method: string
+          params: Json
+          score_document_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          class_item_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          method: string
+          params?: Json
+          score_document_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          class_item_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          method?: string
+          params?: Json
+          score_document_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "score_time_maps_class_item_id_fkey"
+            columns: ["class_item_id"]
+            isOneToOne: false
+            referencedRelation: "class_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "score_time_maps_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "score_time_maps_score_document_id_fkey"
+            columns: ["score_document_id"]
+            isOneToOne: false
+            referencedRelation: "score_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      score_time_waypoints: {
+        Row: {
+          beat_in_measure: number | null
+          id: string
+          measure_number: number | null
+          musical_position_qn: number
+          time_map_id: string
+          video_time_seconds: number
+        }
+        Insert: {
+          beat_in_measure?: number | null
+          id?: string
+          measure_number?: number | null
+          musical_position_qn: number
+          time_map_id: string
+          video_time_seconds: number
+        }
+        Update: {
+          beat_in_measure?: number | null
+          id?: string
+          measure_number?: number | null
+          musical_position_qn?: number
+          time_map_id?: string
+          video_time_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "score_time_waypoints_time_map_id_fkey"
+            columns: ["time_map_id"]
+            isOneToOne: false
+            referencedRelation: "score_time_maps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      score_tracks: {
+        Row: {
+          channel: number | null
+          default_view: string | null
+          display_name: string
+          id: string
+          instrument: string
+          score_document_id: string
+          string_multiplicity: number | null
+          track_index: number
+          tuning: Json | null
+        }
+        Insert: {
+          channel?: number | null
+          default_view?: string | null
+          display_name: string
+          id?: string
+          instrument: string
+          score_document_id: string
+          string_multiplicity?: number | null
+          track_index: number
+          tuning?: Json | null
+        }
+        Update: {
+          channel?: number | null
+          default_view?: string | null
+          display_name?: string
+          id?: string
+          instrument?: string
+          score_document_id?: string
+          string_multiplicity?: number | null
+          track_index?: number
+          tuning?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "score_tracks_score_document_id_fkey"
+            columns: ["score_document_id"]
+            isOneToOne: false
+            referencedRelation: "score_documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
