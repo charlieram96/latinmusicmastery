@@ -14,7 +14,14 @@ import GradientText from "@/components/marketing/GradientText";
 import { WaitlistForm } from "@/components/marketing/WaitlistForm";
 import { useTranslation } from "@/components/language-provider";
 
-export default function VideoHero() {
+type Option = { id: string; name: string };
+
+interface VideoHeroProps {
+  instruments?: Option[];
+  styles?: Option[];
+}
+
+export default function VideoHero({ instruments = [], styles = [] }: VideoHeroProps = {}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoFailed, setVideoFailed] = useState(false);
   const { t } = useTranslation();
@@ -104,7 +111,7 @@ export default function VideoHero() {
           variants={staggerChild}
           className="mt-10 flex justify-center"
         >
-          <WaitlistForm variant="hero" />
+          <WaitlistForm variant="hero" instruments={instruments} styles={styles} />
         </motion.div>
       </motion.div>
 

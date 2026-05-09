@@ -29,6 +29,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@sendgrid/mail": "^8.1.6",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.80.0",
     "@tiptap/extension-image": "^2.11.0",

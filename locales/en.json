@@ -478,7 +478,23 @@
       "emailPlaceholder": "you@email.com",
       "joining": "Joining...",
       "getEarlyAccess": "Get Early Access",
-      "joinWaitlist": "Join Waitlist"
+      "joinWaitlist": "Join Waitlist",
+      "invalidEmail": "Please enter a valid email address.",
+      "modal": {
+        "title": "A few quick questions",
+        "subtitle": "Help us tailor early access to what you care about. All optional.",
+        "instrumentsLabel": "Which instrument(s) are you most interested in?",
+        "genresLabel": "Which genre(s) are you most interested in?",
+        "expertiseLabel": "What is your current expertise level?",
+        "expertise": {
+          "beginner": "Beginner",
+          "intermediate": "Intermediate",
+          "advanced": "Advanced"
+        },
+        "skip": "Skip",
+        "submit": "Submit",
+        "noOptions": "No options available right now."
+      }
     },
     "featureShowcase": {
       "heading": "Everything You Need to Excel",

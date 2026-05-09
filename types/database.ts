@@ -1324,17 +1324,26 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string
+          expertise_level: string | null
           id: string
+          instrument_ids: string[]
+          style_ids: string[]
         }
         Insert: {
           created_at?: string | null
           email: string
+          expertise_level?: string | null
           id?: string
+          instrument_ids?: string[]
+          style_ids?: string[]
         }
         Update: {
           created_at?: string | null
           email?: string
+          expertise_level?: string | null
           id?: string
+          instrument_ids?: string[]
+          style_ids?: string[]
         }
         Relationships: []
       }
