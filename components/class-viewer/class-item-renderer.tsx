@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Video, FileQuestion, Dumbbell, Music } from 'lucide-react'
+import { Video, Dumbbell, Music } from 'lucide-react'
 import { ExerciseQuiz } from '@/components/exercise-quiz'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
+import { CompasPlayer } from '@/components/compas/player/compas-player'
+import { getScoreDocumentForClassItem } from '@/app/actions/compas'
 
 interface ClassItemRendererProps {
   item: {
@@ -11,6 +13,8 @@ interface ClassItemRendererProps {
     item_type: string
     soundslice_embed_url: string | null
     video_url: string | null
+    score_document_id: string | null
+    active_time_map_id: string | null
     question: string | null
     question_type: string | null
     options: unknown
@@ -26,14 +30,37 @@ interface ClassItemRendererProps {
   userId: string
 }
 
-export function ClassItemRenderer({ item, userId }: ClassItemRendererProps) {
+export async function ClassItemRenderer({ item, userId }: ClassItemRendererProps) {
+  // Compás takes priority over the legacy Soundslice iframe whenever a
+  // score_document is attached AND we have a media URL to drive the cursor
+  // (video for VIDEO items, audio for JAM_SESSION).
+  const compasMediaUrl =
+    item.item_type === 'VIDEO'
+      ? item.video_url
+      : item.item_type === 'JAM_SESSION'
+        ? item.audio_url ?? item.video_url
+        : null
+
+  const compasData =
+    item.score_document_id && compasMediaUrl
+      ? (await getScoreDocumentForClassItem(item.id)).data ?? null
+      : null
+
   return (
     <div className="space-y-6">
       {/* VIDEO */}
       {item.item_type === 'VIDEO' && (
         <Card>
           <CardContent className="p-0">
-            {item.soundslice_embed_url ? (
+            {compasData && compasMediaUrl ? (
+              <CompasPlayer
+                classItemId={item.id}
+                videoUrl={compasMediaUrl}
+                score={compasData.scoreDocument.parsedScore}
+                tracks={compasData.tracks}
+                activeTimeMap={compasData.activeTimeMap}
+              />
+            ) : item.soundslice_embed_url ? (
               <div className="aspect-video bg-black rounded-lg overflow-hidden">
                 <iframe
                   src={item.soundslice_embed_url}
@@ -131,18 +158,30 @@ export function ClassItemRenderer({ item, userId }: ClassItemRendererProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {item.audio_url && (
-              <audio controls className="w-full" src={item.audio_url} />
-            )}
-            {item.soundslice_embed_url && (
-              <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                <iframe
-                  src={item.soundslice_embed_url}
-                  className="w-full h-full"
-                  allow="autoplay; fullscreen"
-                  allowFullScreen
-                />
-              </div>
+            {compasData && compasMediaUrl ? (
+              <CompasPlayer
+                classItemId={item.id}
+                videoUrl={compasMediaUrl}
+                score={compasData.scoreDocument.parsedScore}
+                tracks={compasData.tracks}
+                activeTimeMap={compasData.activeTimeMap}
+              />
+            ) : (
+              <>
+                {item.audio_url && (
+                  <audio controls className="w-full" src={item.audio_url} />
+                )}
+                {item.soundslice_embed_url && (
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                    <iframe
+                      src={item.soundslice_embed_url}
+                      className="w-full h-full"
+                      allow="autoplay; fullscreen"
+                      allowFullScreen
+                    />
+                  </div>
+                )}
+              </>
             )}
             <div className="flex items-center gap-2 flex-wrap">
               {item.bpm && (
