@@ -1,71 +1,94 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { joinWaitlist } from "@/app/actions/waitlist"
 import { useTranslation } from "@/components/language-provider"
+import { WaitlistDetailsModal } from "@/components/marketing/WaitlistDetailsModal"
+
+type Option = { id: string; name: string }
 
 interface WaitlistFormProps {
   title?: string
   subtitle?: string
   variant?: "default" | "hero" | "immersive"
+  instruments?: Option[]
+  styles?: Option[]
 }
 
-export function WaitlistForm({ title, subtitle, variant = "default" }: WaitlistFormProps) {
-  const [isPending, startTransition] = useTransition()
-  const [result, setResult] = useState<{ success?: boolean; error?: string } | null>(null)
-  const { t } = useTranslation()
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-  const handleSubmit = (formData: FormData) => {
-    startTransition(async () => {
-      const res = await joinWaitlist(formData)
-      setResult(res)
-    })
-  }
+export function WaitlistForm({
+  title,
+  subtitle,
+  variant = "default",
+  instruments = [],
+  styles = [],
+}: WaitlistFormProps) {
+  const [email, setEmail] = useState("")
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const { t } = useTranslation()
 
   const isHero = variant === "hero"
   const isImmersive = variant === "immersive"
   const isDark = isHero || isImmersive
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!EMAIL_RE.test(email)) {
+      setEmailError(t("homepage.waitlistForm.invalidEmail"))
+      return
+    }
+    setEmailError(null)
+    setModalOpen(true)
+  }
+
   return (
-    <div className={cn(
-      "w-full",
-      isImmersive ? "max-w-2xl text-center mx-auto" : "max-w-md",
-      title && !isImmersive && "text-center mx-auto"
-    )}>
+    <div
+      className={cn(
+        "w-full",
+        isImmersive ? "max-w-2xl text-center mx-auto" : "max-w-md",
+        title && !isImmersive && "text-center mx-auto"
+      )}
+    >
       {isImmersive && (
         <span className="mb-5 inline-block rounded-full border border-white/20 bg-white/10 px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white backdrop-blur-sm">
-          {t('homepage.waitlistForm.launchingSoon')}
+          {t("homepage.waitlistForm.launchingSoon")}
         </span>
       )}
 
       {title && (
-        <h3 className={cn(
-          "font-semibold",
-          isImmersive
-            ? "mb-3 text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl font-heading"
-            : isHero
-              ? "mb-2 text-lg text-white"
-              : "mb-2 text-sm text-foreground"
-        )}>
+        <h3
+          className={cn(
+            "font-semibold",
+            isImmersive
+              ? "mb-3 text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl font-heading"
+              : isHero
+                ? "mb-2 text-lg text-white"
+                : "mb-2 text-sm text-foreground"
+          )}
+        >
           {title}
         </h3>
       )}
       {subtitle && (
-        <p className={cn(
-          isImmersive
-            ? "mb-8 text-base text-white/70 md:text-lg"
-            : isDark
-              ? "mb-4 text-sm text-white/70"
-              : "mb-4 text-sm text-muted-foreground"
-        )}>
+        <p
+          className={cn(
+            isImmersive
+              ? "mb-8 text-base text-white/70 md:text-lg"
+              : isDark
+                ? "mb-4 text-sm text-white/70"
+                : "mb-4 text-sm text-muted-foreground"
+          )}
+        >
           {subtitle}
         </p>
       )}
 
-      {result?.success ? (
+      {submitted ? (
         <motion.div
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
@@ -76,17 +99,19 @@ export function WaitlistForm({ title, subtitle, variant = "default" }: WaitlistF
               : "border-primary/20 bg-primary/5 text-primary text-sm"
           )}
         >
-          {t('homepage.waitlistForm.success')}
+          {t("homepage.waitlistForm.success")}
         </motion.div>
       ) : (
-        <form action={handleSubmit} className={cn(
-          "flex gap-3",
-          isImmersive && "mx-auto max-w-lg"
-        )}>
+        <form
+          onSubmit={handleSubmit}
+          className={cn("flex gap-3", isImmersive && "mx-auto max-w-lg")}
+        >
           <input
             type="email"
             name="email"
-            placeholder={t('homepage.waitlistForm.emailPlaceholder')}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t("homepage.waitlistForm.emailPlaceholder")}
             required
             className={cn(
               "flex-1 rounded-full border transition-colors",
@@ -101,7 +126,6 @@ export function WaitlistForm({ title, subtitle, variant = "default" }: WaitlistF
           <Button
             type="submit"
             size={isImmersive ? "lg" : isHero ? "default" : "sm"}
-            disabled={isPending}
             className={cn(
               "rounded-full whitespace-nowrap font-semibold transition-all",
               isImmersive
@@ -111,12 +135,14 @@ export function WaitlistForm({ title, subtitle, variant = "default" }: WaitlistF
                   : "px-5"
             )}
           >
-            {isPending ? t('homepage.waitlistForm.joining') : isImmersive ? t('homepage.waitlistForm.getEarlyAccess') : t('homepage.waitlistForm.joinWaitlist')}
+            {isImmersive
+              ? t("homepage.waitlistForm.getEarlyAccess")
+              : t("homepage.waitlistForm.joinWaitlist")}
           </Button>
         </form>
       )}
 
-      {result?.error && (
+      {emailError && !submitted && (
         <motion.p
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
@@ -125,9 +151,18 @@ export function WaitlistForm({ title, subtitle, variant = "default" }: WaitlistF
             isDark ? "text-white/70" : "text-muted-foreground"
           )}
         >
-          {result.error}
+          {emailError}
         </motion.p>
       )}
+
+      <WaitlistDetailsModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        email={email}
+        instruments={instruments}
+        styles={styles}
+        onSuccess={() => setSubmitted(true)}
+      />
     </div>
   )
 }

@@ -478,7 +478,23 @@
       "emailPlaceholder": "tucorreo@ejemplo.com",
       "joining": "Uniéndote...",
       "getEarlyAccess": "Obtener acceso anticipado",
-      "joinWaitlist": "Unirme a la lista"
+      "joinWaitlist": "Unirme a la lista",
+      "invalidEmail": "Por favor ingresa un correo electrónico válido.",
+      "modal": {
+        "title": "Unas preguntas rápidas",
+        "subtitle": "Ayúdanos a personalizar tu acceso anticipado. Todo es opcional.",
+        "instrumentsLabel": "¿Qué instrumento(s) te interesan más?",
+        "genresLabel": "¿Qué género(s) te interesan más?",
+        "expertiseLabel": "¿Cuál es tu nivel actual?",
+        "expertise": {
+          "beginner": "Principiante",
+          "intermediate": "Intermedio",
+          "advanced": "Avanzado"
+        },
+        "skip": "Omitir",
+        "submit": "Enviar",
+        "noOptions": "No hay opciones disponibles en este momento."
+      }
     },
     "featureShowcase": {
       "heading": "Todo lo que necesitas para sobresalir",

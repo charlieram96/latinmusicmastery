@@ -55,7 +55,14 @@ function FooterColumn({
   )
 }
 
-export function MarketingFooter() {
+type Option = { id: string; name: string }
+
+interface MarketingFooterProps {
+  instruments?: Option[]
+  styles?: Option[]
+}
+
+export function MarketingFooter({ instruments = [], styles = [] }: MarketingFooterProps = {}) {
   const { t } = useTranslation()
   const currentYear = new Date().getFullYear()
 
@@ -90,7 +97,7 @@ export function MarketingFooter() {
             <p className="mb-4 text-sm text-muted-foreground">
               {t("footer.waitlistCopy")}
             </p>
-            <WaitlistForm />
+            <WaitlistForm instruments={instruments} styles={styles} />
           </div>
         </div>
 

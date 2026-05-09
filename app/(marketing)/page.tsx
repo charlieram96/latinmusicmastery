@@ -29,7 +29,7 @@ export default async function MarketingHomePage() {
   const supabase = await createClient()
   const { t } = await getServerTranslator()
 
-  const [{ data: countries }, { data: teachers }, { data: instruments }] = await Promise.all([
+  const [{ data: countries }, { data: teachers }, { data: instruments }, { data: musicalStyles }] = await Promise.all([
     supabase
       .from('countries')
       .select(`
@@ -54,12 +54,19 @@ export default async function MarketingHomePage() {
       .from('instruments')
       .select('id, name, slug, image_url')
       .order('name'),
+    supabase
+      .from('musical_styles')
+      .select('id, name')
+      .order('name'),
   ])
+
+  const waitlistInstruments = (instruments ?? []).map(({ id, name }) => ({ id, name }))
+  const waitlistStyles = musicalStyles ?? []
 
   return (
     <div data-marketing>
       <div className="flex min-h-screen flex-col">
-        <VideoHero />
+        <VideoHero instruments={waitlistInstruments} styles={waitlistStyles} />
         <StatsBar />
       </div>
       {countries && countries.length > 0 && (
@@ -86,6 +93,8 @@ export default async function MarketingHomePage() {
             title={t('marketing.home.waitlistTitle')}
             subtitle={t('marketing.home.waitlistSubtitle')}
             variant="immersive"
+            instruments={waitlistInstruments}
+            styles={waitlistStyles}
           />
         </div>
       </section>
