@@ -6,7 +6,7 @@ export async function POST(request: Request) {
 
     const { name, email, subject, message } = body;
 
-    // Validate required fields
+    // Validate required fields 
     if (!name || typeof name !== "string" || name.trim().length < 2) {
       return NextResponse.json(
         { error: "Name is required and must be at least 2 characters." },
