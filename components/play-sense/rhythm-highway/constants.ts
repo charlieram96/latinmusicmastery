@@ -36,6 +36,22 @@ export const LANE_COLORS: Record<string, number> = {
 
 export const DEFAULT_LANE_COLOR = 0x2979ff
 
+// ── Melodic lane palette (cycled by lane index for piano / violin / guitar) ──
+export const MELODIC_LANE_COLORS: number[] = [
+  0xff1744, // neon red
+  0xff9100, // neon orange
+  0xffea00, // neon yellow
+  0x00e676, // neon green
+  0x00e5ff, // neon cyan
+  0x2979ff, // neon blue
+  0xd500f9, // neon magenta
+  0xff4081, // neon pink
+]
+
+// ── Open-string note names for fretted instruments (low → high) ──
+export const VIOLIN_OPEN_STRINGS = ['G', 'D', 'A', 'E']
+export const GUITAR_OPEN_STRINGS = ['E', 'A', 'D', 'G', 'B', 'E']
+
 // ── Grade colors ──
 export const GRADE_COLORS_HEX: Record<HitGrade, number> = {
   perfect: 0x00e5ff,

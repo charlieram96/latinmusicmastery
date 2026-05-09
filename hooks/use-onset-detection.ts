@@ -145,9 +145,13 @@ export function useOnsetDetection(
       const domErr = err as DOMException
       if (domErr.name === 'NotAllowedError') {
         setHasPermission(false)
-        setError('Microphone permission was denied. Please allow access to use Play Sense.')
+        setError('Microphone permission was denied. Click the lock/site-info icon in your address bar, allow microphone access, then click Play to retry.')
       } else if (domErr.name === 'NotFoundError') {
         setError('No microphone found. Please connect a microphone and try again.')
+      } else if (domErr.name === 'NotReadableError') {
+        setError('Your microphone is in use by another app. Close other apps that might be using it and try again.')
+      } else if (err instanceof Error && err.message.toLowerCase().includes('worklet')) {
+        setError('Audio processor failed to load. Refresh the page (the AudioWorklet must be served over HTTPS or localhost).')
       } else {
         setError('Could not access the microphone. Please try again.')
       }

@@ -12,10 +12,20 @@ interface WaitlistEntry {
   id: string
   email: string
   created_at: string | null
+  instrument_ids: string[] | null
+  style_ids: string[] | null
+  expertise_level: string | null
+}
+
+interface NamedRecord {
+  id: string
+  name: string
 }
 
 interface Props {
   entries: WaitlistEntry[]
+  instruments: NamedRecord[]
+  styles: NamedRecord[]
 }
 
 type DialogState =
@@ -24,11 +34,36 @@ type DialogState =
   | { open: true; mode: 'selected'; ids: string[]; recipientCount: number }
   | { open: true; mode: 'all'; recipientCount: number }
 
-export function WaitlistList({ entries }: Props) {
+const EXPERTISE_LABEL: Record<string, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+}
+
+const EXPERTISE_STYLES: Record<string, string> = {
+  beginner: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20',
+  intermediate: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
+  advanced: 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20',
+}
+
+// Grid layout shared by header + each row, so columns line up.
+const GRID_CLASSES =
+  'grid grid-cols-[28px_minmax(220px,1.6fr)_minmax(160px,1.2fr)_minmax(160px,1.2fr)_120px_140px_36px] items-center gap-4 px-6'
+
+export function WaitlistList({ entries, instruments, styles }: Props) {
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [dialog, setDialog] = useState<DialogState>({ open: false })
   const [flash, setFlash] = useState<string | null>(null)
+
+  const instrumentMap = useMemo(
+    () => new Map(instruments.map((i) => [i.id, i.name])),
+    [instruments]
+  )
+  const styleMap = useMemo(
+    () => new Map(styles.map((s) => [s.id, s.name])),
+    [styles]
+  )
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -136,69 +171,96 @@ export function WaitlistList({ entries }: Props) {
       </AnimatePresence>
 
       {filtered.length > 0 ? (
-        <>
-          <div className="flex items-center gap-3 px-6 py-2.5 border-b bg-muted/30 text-xs text-muted-foreground">
-            <Checkbox
-              checked={
-                allFilteredSelected ? true : someFilteredSelected ? 'indeterminate' : false
-              }
-              onCheckedChange={toggleAllFiltered}
-              aria-label="Select all visible"
-            />
-            <span>
-              {selected.size > 0
-                ? `${selected.size} selected`
-                : 'Select all visible'}
-            </span>
-          </div>
-          <div className="divide-y">
-            {filtered.map((entry) => {
-              const isSelected = selected.has(entry.id)
-              return (
-                <div
-                  key={entry.id}
-                  className="flex items-center justify-between gap-3 px-6 py-3.5"
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="overflow-x-auto">
+          <div className="min-w-[1080px]">
+            <div
+              className={`${GRID_CLASSES} py-2.5 border-b bg-muted/30 text-xs font-medium uppercase tracking-wider text-muted-foreground`}
+            >
+              <Checkbox
+                checked={
+                  allFilteredSelected
+                    ? true
+                    : someFilteredSelected
+                      ? 'indeterminate'
+                      : false
+                }
+                onCheckedChange={toggleAllFiltered}
+                aria-label="Select all visible"
+              />
+              <span>Email</span>
+              <span>Instruments</span>
+              <span>Genres</span>
+              <span>Expertise</span>
+              <span>Signed up</span>
+              <span className="sr-only">Actions</span>
+            </div>
+
+            <div className="divide-y">
+              {filtered.map((entry) => {
+                const isSelected = selected.has(entry.id)
+                const instrumentNames = (entry.instrument_ids ?? [])
+                  .map((id) => instrumentMap.get(id))
+                  .filter((n): n is string => Boolean(n))
+                const styleNames = (entry.style_ids ?? [])
+                  .map((id) => styleMap.get(id))
+                  .filter((n): n is string => Boolean(n))
+
+                return (
+                  <div
+                    key={entry.id}
+                    className={`${GRID_CLASSES} py-3.5 hover:bg-accent/30 transition-colors`}
+                  >
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={() => toggleOne(entry.id)}
                       aria-label={`Select ${entry.email}`}
                     />
-                    <div className="flex-shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted">
-                      <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex-shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted">
+                        <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                      </div>
+                      <span className="text-sm font-medium truncate">
+                        {entry.email}
+                      </span>
                     </div>
-                    <span className="text-sm font-medium truncate">{entry.email}</span>
-                  </div>
-                  <time className="text-xs text-muted-foreground whitespace-nowrap">
-                    {entry.created_at
-                      ? new Date(entry.created_at).toLocaleString(undefined, {
-                          dateStyle: 'medium',
-                          timeStyle: 'short',
+
+                    <PillList items={instrumentNames} />
+                    <PillList items={styleNames} />
+
+                    <ExpertiseBadge level={entry.expertise_level} />
+
+                    <time className="text-xs text-muted-foreground whitespace-nowrap">
+                      {entry.created_at
+                        ? new Date(entry.created_at).toLocaleString(undefined, {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })
+                        : '—'}
+                    </time>
+
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label={`Send email to ${entry.email}`}
+                      onClick={() =>
+                        setDialog({
+                          open: true,
+                          mode: 'single',
+                          ids: [entry.id],
+                          recipientCount: 1,
+                          recipientPreview: entry.email,
                         })
-                      : '—'}
-                  </time>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label={`Send email to ${entry.email}`}
-                    onClick={() =>
-                      setDialog({
-                        open: true,
-                        mode: 'single',
-                        ids: [entry.id],
-                        recipientCount: 1,
-                        recipientPreview: entry.email,
-                      })
-                    }
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              )
-            })}
+                      }
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </>
+        </div>
       ) : (
         <div className="text-center py-16 text-muted-foreground">
           <Mail className="w-10 h-10 mx-auto mb-3 opacity-30" />
@@ -224,5 +286,38 @@ export function WaitlistList({ entries }: Props) {
         onSent={handleSent}
       />
     </div>
+  )
+}
+
+function PillList({ items }: { items: string[] }) {
+  if (items.length === 0) {
+    return <span className="text-xs text-muted-foreground">—</span>
+  }
+  return (
+    <div className="flex flex-wrap gap-1">
+      {items.map((name) => (
+        <span
+          key={name}
+          className="inline-flex items-center rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs text-foreground"
+        >
+          {name}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function ExpertiseBadge({ level }: { level: string | null }) {
+  if (!level) {
+    return <span className="text-xs text-muted-foreground">—</span>
+  }
+  const label = EXPERTISE_LABEL[level] ?? level
+  const cls = EXPERTISE_STYLES[level] ?? 'bg-muted text-muted-foreground border-border'
+  return (
+    <span
+      className={`inline-flex w-fit items-center rounded-md border px-2 py-0.5 text-xs font-medium ${cls}`}
+    >
+      {label}
+    </span>
   )
 }

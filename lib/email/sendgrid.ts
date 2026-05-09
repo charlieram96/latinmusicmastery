@@ -44,14 +44,28 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
   for (let i = 0; i < recipients.length; i += MAX_PERSONALIZATIONS_PER_REQUEST) {
     const batch = recipients.slice(i, i + MAX_PERSONALIZATIONS_PER_REQUEST)
 
+    console.log('[sendgrid] sending', {
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      recipients: batch,
+      subject: input.subject,
+      subjectLength: input.subject.length,
+      textLength: input.text.length,
+      htmlLength: input.html.length,
+    })
+
     try {
-      await sgMail.send({
+      const response = await sgMail.send({
         from: { email: FROM_EMAIL, name: FROM_NAME },
         subject: input.subject,
         html: input.html,
         text: input.text,
         // Each personalization gets its own `to` so recipients never see each other.
         personalizations: batch.map((email) => ({ to: [{ email }] })),
+      })
+      const first = Array.isArray(response) ? response[0] : response
+      console.log('[sendgrid] response', {
+        statusCode: first?.statusCode,
+        messageId: first?.headers?.['x-message-id'],
       })
       result.sent += batch.length
     } catch (err) {

@@ -1,5 +1,5 @@
 // components/play-sense/rhythm-highway/Highway.ts
-import { Container, Graphics } from 'pixi.js'
+import { Container, Graphics, Text, TextStyle } from 'pixi.js'
 import {
   HIT_ZONE_Y_FRACTION,
   HIGHWAY_BOTTOM_WIDTH,
@@ -15,7 +15,14 @@ import {
   LOOK_AHEAD_SEC,
   LANE_COLORS,
   DEFAULT_LANE_COLOR,
+  HUD_FONT_FAMILY,
+  MELODIC_LANE_COLORS,
 } from './constants'
+
+export type ReceptorStyle = 'drum' | 'piano' | 'string'
+
+// Internal alias so the helper can read the imported palette without re-exporting it
+const MELODIC_LANE_COLORS_INTERNAL = MELODIC_LANE_COLORS
 
 export interface FadeStyle {
   solidExtend: number    // how far solid block extends past vanishing point (fraction of highway)
@@ -74,6 +81,8 @@ export class Highway {
   private gridLines = new Graphics()
   private receptors = new Graphics()
   private topFade = new Graphics()
+  private labelContainer = new Container()
+  private labelTexts: Text[] = []
 
   /** Separate container for the top fade overlay — placed above notes in HighwayApp */
   readonly overlayContainer = new Container()
@@ -82,6 +91,11 @@ export class Highway {
   private height = 0
   private laneCount = 3
   private laneSurfaces: string[] = []
+  private laneLabels: string[] = []
+  private receptorStyle: ReceptorStyle = 'drum'
+
+  /** Pulse intensity 0..1 — driven by metronome beat to make receptors throb during countdown/playing */
+  private receptorPulse = 0
 
   fadeStyle: FadeStyle = { ...DEFAULT_FADE_STYLE }
   congaStyle: CongaStyle = { ...DEFAULT_CONGA_STYLE }
@@ -89,15 +103,28 @@ export class Highway {
   constructor() {
     this.container.addChild(
       this.bg, this.sideFog, this.road, this.rails,
-      this.dividers, this.gridLines, this.receptors,
+      this.dividers, this.gridLines, this.receptors, this.labelContainer,
     )
     this.overlayContainer.addChild(this.topFade)
   }
 
-  setLanes(surfaces: string[]) {
+  setLanes(surfaces: string[], labels?: string[]) {
     this.laneSurfaces = surfaces
+    this.laneLabels = labels && labels.length === surfaces.length ? labels : surfaces
     this.laneCount = surfaces.length
+    this.rebuildLabels()
     if (this.width > 0) this.draw()
+  }
+
+  setReceptorStyle(style: ReceptorStyle) {
+    this.receptorStyle = style
+    this.rebuildLabels()
+    if (this.width > 0) this.draw()
+  }
+
+  /** Set the metronome-beat pulse intensity (0..1) used to throb receptors. */
+  setReceptorPulse(pulse: number) {
+    this.receptorPulse = Math.max(0, Math.min(1, pulse))
   }
 
   resize(width: number, height: number) {
@@ -416,13 +443,154 @@ export class Highway {
   private drawReceptors() {
     this.receptors.clear()
     const hitY = this.getHitZoneY()
+    const halfBottom = (this.width * HIGHWAY_BOTTOM_WIDTH) / 2
+    const cx = this.width / 2
+    const laneWidth = (halfBottom * 2) / Math.max(this.laneCount, 1)
 
     for (let i = 0; i < this.laneCount; i++) {
       const x = this.getLaneX(i, hitY)
       const surface = this.laneSurfaces[i]
-      const color = LANE_COLORS[surface] ?? DEFAULT_LANE_COLOR
-      this.drawNeonConga(x, hitY, color)
+      const color = this.getLaneColorForIndex(i, surface)
+
+      if (this.receptorStyle === 'piano') {
+        this.drawNeonPianoKey(x, hitY, laneWidth, color)
+      } else if (this.receptorStyle === 'string') {
+        this.drawNeonString(x, hitY, laneWidth, color, cx, halfBottom)
+      } else {
+        this.drawNeonConga(x, hitY, color)
+      }
     }
+
+    // Position labels in front of receptor shapes
+    this.layoutLabels(hitY, laneWidth)
+  }
+
+  private getLaneColorForIndex(i: number, surface: string): number {
+    if (LANE_COLORS[surface] != null) return LANE_COLORS[surface]
+    // Fallback: cycle melodic palette by index
+    const palette = MELODIC_LANE_COLORS_INTERNAL
+    return palette[i % palette.length]
+  }
+
+  private rebuildLabels() {
+    // Remove existing
+    for (const t of this.labelTexts) this.labelContainer.removeChild(t)
+    this.labelTexts = []
+
+    if (this.receptorStyle === 'drum') return // Conga has no in-canvas labels
+
+    for (let i = 0; i < this.laneCount; i++) {
+      const label = this.laneLabels[i] ?? this.laneSurfaces[i] ?? ''
+      const t = new Text({
+        text: label,
+        style: new TextStyle({
+          fontFamily: HUD_FONT_FAMILY,
+          fontSize: this.receptorStyle === 'piano' ? 14 : 16,
+          fontWeight: '800',
+          fill: 0xffffff,
+          letterSpacing: 1,
+        }),
+      })
+      t.anchor.set(0.5)
+      t.alpha = 0.9
+      this.labelContainer.addChild(t)
+      this.labelTexts.push(t)
+    }
+  }
+
+  private layoutLabels(hitY: number, laneWidth: number) {
+    if (this.labelTexts.length === 0) return
+    for (let i = 0; i < this.labelTexts.length; i++) {
+      const t = this.labelTexts[i]
+      const x = this.getLaneX(i, hitY)
+      if (this.receptorStyle === 'piano') {
+        t.x = x
+        t.y = hitY + 36
+      } else if (this.receptorStyle === 'string') {
+        t.x = x
+        t.y = hitY - 30
+      }
+      // Cap label width so it doesn't overflow lane
+      const maxWidth = laneWidth * 0.9
+      t.scale.x = t.width > maxWidth ? maxWidth / t.width : 1
+      t.scale.y = t.scale.x
+    }
+  }
+
+  /** Beat Saber-style neon piano key — flat front face, glowing rim, intense underglow */
+  private drawNeonPianoKey(cx: number, cy: number, laneWidth: number, color: number) {
+    const pulse = 1 + this.receptorPulse * 0.06
+    const w = laneWidth * 0.78 * pulse
+    const h = 34 * pulse
+    const x = cx - w / 2
+    const y = cy - h / 2
+
+    // Outer glow
+    this.receptors.roundRect(x - 4, y - 4, w + 8, h + 8, 8)
+    this.receptors.fill({ color, alpha: 0.18 })
+
+    // Body
+    this.receptors.roundRect(x, y, w, h, 6)
+    this.receptors.fill({ color: 0x080814, alpha: 0.85 })
+
+    // Neon rim
+    this.receptors.roundRect(x, y, w, h, 6)
+    this.receptors.stroke({ color, width: 2, alpha: 0.95 })
+
+    // Inner faint rim (white core)
+    this.receptors.roundRect(x + 1, y + 1, w - 2, h - 2, 5)
+    this.receptors.stroke({ color: 0xffffff, width: 0.5, alpha: 0.35 })
+
+    // Top inner highlight
+    this.receptors.roundRect(x + 4, y + 3, w - 8, 4, 2)
+    this.receptors.fill({ color, alpha: 0.4 })
+
+    // Bottom underglow strip (suggests key depression light)
+    this.receptors.roundRect(x + 3, y + h - 5, w - 6, 3, 1.5)
+    this.receptors.fill({ color, alpha: 0.6 + this.receptorPulse * 0.3 })
+  }
+
+  /** Beat Saber-style neon string — a long horizontal glowing line through the lane */
+  private drawNeonString(cx: number, cy: number, laneWidth: number, color: number, _highwayCx: number, halfBottom: number) {
+    const pulse = 1 + this.receptorPulse * 0.15
+    const stringExtend = laneWidth * 0.92
+    const x1 = cx - stringExtend / 2
+    const x2 = cx + stringExtend / 2
+
+    // Outer wide glow
+    this.receptors.moveTo(x1, cy)
+    this.receptors.lineTo(x2, cy)
+    this.receptors.stroke({ color, width: 14 * pulse, alpha: 0.12 + this.receptorPulse * 0.18 })
+
+    // Mid glow
+    this.receptors.moveTo(x1, cy)
+    this.receptors.lineTo(x2, cy)
+    this.receptors.stroke({ color, width: 6 * pulse, alpha: 0.45 })
+
+    // Core string
+    this.receptors.moveTo(x1, cy)
+    this.receptors.lineTo(x2, cy)
+    this.receptors.stroke({ color, width: 2, alpha: 0.95 })
+
+    // White core
+    this.receptors.moveTo(x1, cy)
+    this.receptors.lineTo(x2, cy)
+    this.receptors.stroke({ color: 0xffffff, width: 0.6, alpha: 0.55 })
+
+    // Bridge endpoints (small circles)
+    this.receptors.circle(x1, cy, 4)
+    this.receptors.fill({ color, alpha: 0.7 })
+    this.receptors.circle(x1, cy, 2.5)
+    this.receptors.fill({ color: 0xffffff, alpha: 0.6 })
+
+    this.receptors.circle(x2, cy, 4)
+    this.receptors.fill({ color, alpha: 0.7 })
+    this.receptors.circle(x2, cy, 2.5)
+    this.receptors.fill({ color: 0xffffff, alpha: 0.6 })
+
+    // Suppress unused-param lints
+    void _highwayCx
+    void halfBottom
   }
 
   /** Beat Saber-style neon conga — all values driven by this.congaStyle */
