@@ -5,12 +5,19 @@ import { WaitlistList } from '@/components/admin/waitlist-list'
 export default async function WaitlistPage() {
   const supabase = await createClient()
 
-  const { data: entries } = await supabase
-    .from('waitlist')
-    .select('id, email, created_at')
-    .order('created_at', { ascending: false })
+  const [entriesRes, instrumentsRes, stylesRes] = await Promise.all([
+    supabase
+      .from('waitlist')
+      .select('id, email, created_at, instrument_ids, style_ids, expertise_level')
+      .order('created_at', { ascending: false }),
+    supabase.from('instruments').select('id, name').order('name'),
+    supabase.from('musical_styles').select('id, name').order('name'),
+  ])
 
-  const total = entries?.length ?? 0
+  const entries = entriesRes.data ?? []
+  const instruments = instrumentsRes.data ?? []
+  const styles = stylesRes.data ?? []
+  const total = entries.length
 
   return (
     <div className="p-6 lg:p-8">
@@ -27,7 +34,11 @@ export default async function WaitlistPage() {
         <div className="text-sm text-muted-foreground">Signups</div>
       </div>
 
-      <WaitlistList entries={entries ?? []} />
+      <WaitlistList
+        entries={entries}
+        instruments={instruments}
+        styles={styles}
+      />
     </div>
   )
 }

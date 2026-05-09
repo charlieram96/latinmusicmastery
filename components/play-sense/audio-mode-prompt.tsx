@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Headphones, Speaker, AlertTriangle, Bluetooth } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -47,37 +47,46 @@ export function AudioModePrompt({ onSelect, instrument }: AudioModePromptProps) 
       setBleConnecting(false)
       setBleError(playsense.error || 'Could not connect to PlaySense device.')
     } else if (bleConnecting && playsense.connectionStatus === 'disconnected') {
-      // User likely cancelled the BLE dialog
       setBleConnecting(false)
     }
   }, [playsense.connectionStatus, playsense.error, bleConnecting, onSelect])
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
+  }
+  const itemVariants = {
+    hidden: { opacity: 0, y: 14 },
+    visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 320, damping: 24 } },
+  }
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center gap-6 p-8 max-w-md mx-auto"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl shadow-black/40 p-6 sm:p-8 flex flex-col gap-6"
     >
-      <div className="text-center space-y-2">
+      <motion.div variants={itemVariants} className="text-center space-y-2">
         <h3 className="text-lg font-bold text-foreground">How are you listening?</h3>
         <p className="text-sm text-muted-foreground">
-          This helps us optimize detection for your setup.
+          We optimize detection for your setup.
         </p>
-      </div>
+      </motion.div>
 
-      <div className="flex flex-col sm:flex-row gap-3 w-full">
-        <Button
-          variant="outline"
+      <motion.div variants={itemVariants} className="grid gap-3 sm:grid-cols-3">
+        <ModeCard
+          icon={<Headphones className="w-7 h-7" />}
+          label="Headphones"
+          hint="Best accuracy"
           onClick={() => onSelect('headphones')}
-          className="flex-1 h-auto py-4 px-4 flex flex-col items-center gap-2 border-border hover:border-primary hover:bg-primary/5 transition-colors"
-        >
-          <Headphones className="w-8 h-8 text-foreground" />
-          <span className="text-sm font-semibold">Headphones</span>
-          <span className="text-[11px] text-muted-foreground">Best accuracy</span>
-        </Button>
+          accent="hover:border-primary hover:bg-primary/5"
+        />
 
-        <Button
-          variant="outline"
+        <ModeCard
+          icon={<Speaker className="w-7 h-7" />}
+          label="Speakers"
+          hint="Reduced accuracy"
           onClick={() => {
             if (!showWarning) {
               setShowWarning(true)
@@ -85,72 +94,116 @@ export function AudioModePrompt({ onSelect, instrument }: AudioModePromptProps) 
               onSelect('speaker-safe')
             }
           }}
-          className="flex-1 h-auto py-4 px-4 flex flex-col items-center gap-2 border-border hover:border-yellow-500/50 hover:bg-yellow-500/5 transition-colors"
-        >
-          <Speaker className="w-8 h-8 text-foreground" />
-          <span className="text-sm font-semibold">Speakers</span>
-          <span className="text-[11px] text-muted-foreground">Reduced accuracy</span>
-        </Button>
+          accent="hover:border-yellow-500/50 hover:bg-yellow-500/5"
+        />
 
         {showPlaysense && (
-          <Button
-            variant="outline"
-            onClick={handlePlaysenseSelect}
-            disabled={bleConnecting || !playsense.isSupported}
-            className="flex-1 h-auto py-4 px-4 flex flex-col items-center gap-2 border-border hover:border-blue-500/50 hover:bg-blue-500/5 transition-colors"
-          >
-            <Bluetooth className={cn('w-8 h-8', playsense.connectionStatus === 'connected' ? 'text-blue-500' : 'text-foreground')} />
-            <span className="text-sm font-semibold">
-              {bleConnecting ? 'Connecting...' : 'PlaySense'}
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              {!playsense.isSupported
-                ? 'Chrome/Edge only'
+          <ModeCard
+            icon={
+              <div className="relative">
+                <Bluetooth className={cn(
+                  'w-7 h-7',
+                  playsense.connectionStatus === 'connected' ? 'text-blue-400' : '',
+                )} />
+                {bleConnecting && (
+                  <motion.span
+                    initial={{ scale: 0.5, opacity: 0.6 }}
+                    animate={{ scale: 1.7, opacity: 0 }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeOut' }}
+                    className="absolute inset-0 rounded-full border-2 border-blue-400"
+                  />
+                )}
+              </div>
+            }
+            label={bleConnecting ? 'Connecting…' : 'PlaySense'}
+            hint={
+              !playsense.isSupported
+                ? 'Chrome / Edge'
                 : playsense.connectionStatus === 'connected'
                   ? 'Connected'
-                  : 'Direct sensor'}
-            </span>
-          </Button>
+                  : 'Direct sensor'
+            }
+            onClick={handlePlaysenseSelect}
+            disabled={bleConnecting || !playsense.isSupported}
+            accent="hover:border-blue-400/60 hover:bg-blue-500/5"
+          />
         )}
-      </div>
+      </motion.div>
 
-      {showWarning && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          className="w-full p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10"
-        >
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">
-                Speaker mode reduces backing track volume and raises detection thresholds to minimize mic bleed. Results may be less accurate.
-              </p>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onSelect('speaker-safe')}
-                className="text-xs h-7 px-2 text-yellow-500 hover:text-yellow-400"
-              >
-                Continue with speakers
-              </Button>
+      <AnimatePresence>
+        {showWarning && (
+          <motion.div
+            key="speaker-warn"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
+                <div className="space-y-1.5 text-left">
+                  <p className="text-xs text-muted-foreground">
+                    Speaker mode reduces backing-track volume and raises detection thresholds to fight mic bleed. Results may be less accurate.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => onSelect('speaker-safe')}
+                    className="text-xs h-7 px-2 text-yellow-500 hover:text-yellow-400"
+                  >
+                    Continue with speakers
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {bleError && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          className="w-full p-3 rounded-lg border border-red-500/30 bg-red-500/10"
-        >
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
-            <p className="text-xs text-muted-foreground">{bleError}</p>
-          </div>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {bleError && (
+          <motion.div
+            key="ble-err"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="p-3 rounded-lg border border-red-500/30 bg-red-500/10 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-muted-foreground">{bleError}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
+  )
+}
+
+interface ModeCardProps {
+  icon: React.ReactNode
+  label: string
+  hint: string
+  onClick: () => void
+  disabled?: boolean
+  accent: string
+}
+
+function ModeCard({ icon, label, hint, onClick, disabled, accent }: ModeCardProps) {
+  return (
+    <Button
+      variant="outline"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'h-auto py-5 px-3 flex flex-col items-center gap-2 border-border bg-background/60 transition-colors',
+        accent,
+      )}
+    >
+      <div className="text-foreground">{icon}</div>
+      <span className="text-sm font-semibold text-foreground">{label}</span>
+      <span className="text-[11px] text-muted-foreground">{hint}</span>
+    </Button>
   )
 }

@@ -2,9 +2,11 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import type { CalibrationData } from '@/lib/play-sense/types'
 import { scaleIn, standardTransition } from '@/lib/play-sense/animations'
-import { Mic, RotateCcw, Check, AlertTriangle } from 'lucide-react'
+import { Mic, RotateCcw, Check, AlertTriangle, Bluetooth } from 'lucide-react'
+import type { AudioMode } from '@/hooks/use-exercise-session'
 
 interface CalibrationWizardProps {
   isCalibrating: boolean
@@ -15,6 +17,7 @@ interface CalibrationWizardProps {
   onStartCalibration: () => void
   onSkip: () => void
   onClearCalibration: () => void
+  audioMode?: AudioMode | null
 }
 
 export function CalibrationWizard({
@@ -26,30 +29,50 @@ export function CalibrationWizard({
   onStartCalibration,
   onSkip,
   onClearCalibration,
+  audioMode,
 }: CalibrationWizardProps) {
   const progress = totalCalibrationBeats > 0
     ? (calibrationBeat / totalCalibrationBeats) * 100
     : 0
 
   const isApproximate = calibrationData && calibrationData.iqrMs > 30
+  const isBle = audioMode === 'playsense'
 
   return (
     <div className="max-w-lg mx-auto bg-card rounded-2xl border border-border p-6 md:p-8">
       <div className="text-center space-y-5">
+        {/* Source chip */}
+        <div className={cn(
+          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border mx-auto',
+          isBle
+            ? 'border-blue-500/40 bg-blue-500/10 text-blue-400'
+            : 'border-primary/40 bg-primary/10 text-primary',
+        )}>
+          {isBle ? <Bluetooth className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+          {isBle ? 'Calibrating: PlaySense' : 'Calibrating: Microphone'}
+        </div>
+
         {/* Icon */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto"
+          className={cn(
+            'w-14 h-14 rounded-full border flex items-center justify-center mx-auto',
+            isBle ? 'bg-blue-500/10 border-blue-500/30' : 'bg-primary/10 border-primary/20',
+          )}
         >
-          <Mic className="w-6 h-6 text-primary" />
+          {isBle
+            ? <Bluetooth className="w-6 h-6 text-blue-400" />
+            : <Mic className="w-6 h-6 text-primary" />}
         </motion.div>
 
         <div>
           <h3 className="text-lg font-semibold text-foreground">Audio Calibration</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Calibrate your mic latency for accurate scoring. Tap along to the metronome clicks.
+            {isBle
+              ? 'Calibrate your PlaySense device latency. Tap a pad along to the metronome clicks.'
+              : 'Calibrate your mic latency for accurate scoring. Tap along to the metronome clicks.'}
           </p>
         </div>
 

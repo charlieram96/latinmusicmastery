@@ -227,7 +227,7 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-2xl mx-auto notation-parchment rounded-2xl border border-border p-6 md:p-8 space-y-7 relative overflow-hidden"
+      className="max-w-2xl mx-auto bg-card rounded-2xl border border-border p-6 md:p-8 space-y-7 relative overflow-hidden"
     >
       {/* Confetti */}
       {showConfetti && (

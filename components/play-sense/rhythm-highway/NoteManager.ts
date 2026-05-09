@@ -7,8 +7,24 @@ import {
   LOOK_AHEAD_SEC,
   LANE_COLORS,
   DEFAULT_LANE_COLOR,
+  MELODIC_LANE_COLORS,
 } from './constants'
 import type { Highway } from './Highway'
+
+const NOTE_NAMES_MIDI: Record<string, number> = {
+  C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5,
+  'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11,
+}
+
+function noteNameToMidi(name: string): number | null {
+  // Expects e.g. 'C4', 'D#5', 'Bb3'
+  const match = name.match(/^([A-Ga-g][b#]?)(-?\d+)$/)
+  if (!match) return null
+  const semi = NOTE_NAMES_MIDI[match[1].charAt(0).toUpperCase() + match[1].slice(1)]
+  if (semi == null) return null
+  const octave = parseInt(match[2], 10)
+  return (octave + 1) * 12 + semi
+}
 
 export interface NoteStyle {
   neonBloomAlpha: number
@@ -119,6 +135,14 @@ export class NoteManager {
   /** Mark an event as missed — it will continue traveling with red glow */
   markMissed(eventIndex: number) {
     this.missedIndices.add(eventIndex)
+  }
+
+  /** Hide all sprites without advancing state — used during paused/preview frames. */
+  clearVisible() {
+    for (const sprite of this.pool) {
+      sprite.active = false
+      sprite.gfx.visible = false
+    }
   }
 
   update(elapsedSec: number) {
@@ -325,6 +349,15 @@ export class NoteManager {
       const idx = this.laneSurfaces.indexOf(event.surface)
       if (idx >= 0) return idx
     }
+    // Pitched instruments — match by note name
+    if (event.expectedNoteName) {
+      const idx = this.laneSurfaces.indexOf(event.expectedNoteName)
+      if (idx >= 0) return idx
+      // If the exact note isn't a lane (because we capped lanes), pick the closest by pitch
+      if (event.expectedPitch != null) {
+        return this.closestPitchedLaneIndex(event.expectedPitch)
+      }
+    }
     const techIdx = this.laneSurfaces.indexOf(event.technique)
     if (techIdx >= 0) return techIdx
     return 0
@@ -333,7 +366,27 @@ export class NoteManager {
   private getLaneColor(event: ExerciseEvent | undefined): number {
     if (!event) return DEFAULT_LANE_COLOR
     const surface = event.surface || event.technique
-    return LANE_COLORS[surface] ?? DEFAULT_LANE_COLOR
+    if (LANE_COLORS[surface] != null) return LANE_COLORS[surface]
+    // For melodic lanes, pick a color from the palette by lane index
+    const laneIndex = this.getLaneIndex(event)
+    return MELODIC_LANE_COLORS[laneIndex % MELODIC_LANE_COLORS.length]
+  }
+
+  /** For melodic exercises with capped lanes — pick the lane whose anchor note is closest by pitch. */
+  private closestPitchedLaneIndex(midiPitch: number): number {
+    let bestIdx = 0
+    let bestDist = Infinity
+    for (let i = 0; i < this.laneSurfaces.length; i++) {
+      const name = this.laneSurfaces[i]
+      const lanePitch = noteNameToMidi(name)
+      if (lanePitch == null) continue
+      const d = Math.abs(lanePitch - midiPitch)
+      if (d < bestDist) {
+        bestDist = d
+        bestIdx = i
+      }
+    }
+    return bestIdx
   }
 
   private ensurePoolSize(size: number) {

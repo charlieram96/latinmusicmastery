@@ -26,6 +26,7 @@ import {
   Bluetooth,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
+import { usePlaysense } from '@/contexts/playsense-context'
 
 interface NowPlayingBarProps {
   exercise: ExerciseDefinition
@@ -58,6 +59,45 @@ function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
   const s = Math.floor(seconds % 60)
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function BleStatusRow({ inputLevel }: { inputLevel: number }) {
+  const playsense = usePlaysense()
+  const status = playsense.connectionStatus
+  const dotColor =
+    status === 'connected' ? '#22c55e'
+    : status === 'reconnecting' ? '#eab308'
+    : status === 'connecting' ? '#3b82f6'
+    : status === 'error' ? '#ef4444'
+    : '#6b7280'
+  const label =
+    status === 'connected' ? 'Connected'
+    : status === 'reconnecting' ? 'Reconnecting…'
+    : status === 'connecting' ? 'Connecting…'
+    : status === 'error' ? 'Error'
+    : 'Disconnected'
+
+  return (
+    <div className="flex items-center gap-2 h-7">
+      <Bluetooth className={cn('w-3.5 h-3.5 shrink-0', status === 'connected' ? 'text-blue-400' : 'text-muted-foreground')} />
+      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-75"
+          style={{
+            width: `${Math.min(inputLevel * 100, 100)}%`,
+            backgroundColor: '#3b82f6',
+          }}
+        />
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <span
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ backgroundColor: dotColor, boxShadow: status === 'connected' ? `0 0 6px ${dotColor}` : 'none' }}
+        />
+        <span className="text-[10px] text-muted-foreground">{label}</span>
+      </div>
+    </div>
+  )
 }
 
 function AnimatedNumber({ value, isActive }: { value: number; isActive: boolean }) {
@@ -268,6 +308,11 @@ export function NowPlayingBar({
               </Button>
             )}
           </div>
+          )}
+
+          {/* BLE connection + input level — visible in PlaySense mode */}
+          {audioMode === 'playsense' && (
+            <BleStatusRow inputLevel={inputLevel} />
           )}
         </div>
 

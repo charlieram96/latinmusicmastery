@@ -5,11 +5,20 @@ import { getExerciseDuration } from '@/lib/play-sense/exercise-utils'
 import { getInstrumentCategory } from '@/lib/play-sense/types'
 import { PLAYSENSE_MAPPINGS } from '@/lib/play-sense/playsense-mappings'
 import { Highway } from './Highway'
-import type { FadeStyle, CongaStyle } from './Highway'
+import type { FadeStyle, CongaStyle, ReceptorStyle } from './Highway'
 import { NoteManager } from './NoteManager'
 import type { NoteStyle } from './NoteManager'
 import { HitEffects } from './HitEffects'
 import { HUD } from './HUD'
+import { VIOLIN_OPEN_STRINGS, GUITAR_OPEN_STRINGS } from './constants'
+
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+function midiToNoteName(midi: number): string {
+  const octave = Math.floor(midi / 12) - 1
+  const name = NOTE_NAMES[midi % 12]
+  return `${name}${octave}`
+}
 
 /**
  * Top-level PixiJS application for the rhythm highway.
@@ -34,6 +43,8 @@ export class HighwayApp {
   currentCombo = 0
   currentAccuracy = 100
   metronomeBeat = 0
+  /** When true: highway / receptors / grid still render, but notes don't scroll, score/combo are frozen at 0. */
+  paused = false
   private lastMetronomeBeat = 0
 
   private constructor(app: Application) {
@@ -91,12 +102,13 @@ export class HighwayApp {
     this.exerciseDuration = getExerciseDuration(exercise)
     this.exerciseBpm = exercise.bpm
 
-    // Determine lane surfaces
-    const laneSurfaces = this.getLaneSurfaces(exercise)
+    // Determine lane surfaces + labels + receptor style based on instrument
+    const { surfaces, labels, style } = this.getLaneConfig(exercise)
 
-    this.highway.setLanes(laneSurfaces)
-    this.noteManager.init(exercise, laneSurfaces)
-    this.hitEffects.setLaneCount(laneSurfaces.length)
+    this.highway.setReceptorStyle(style)
+    this.highway.setLanes(surfaces, labels)
+    this.noteManager.init(exercise, surfaces)
+    this.hitEffects.setLaneCount(surfaces.length)
     this.hud.setExerciseInfo(exercise.title, exercise.bpm)
   }
 
@@ -149,52 +161,101 @@ export class HighwayApp {
   }
 
   private update(dt: number) {
-    const elapsed = this.playheadProgress * this.exerciseDuration
+    // When paused, freeze elapsed at 0 (no scrolling) and force HUD to neutral.
+    const elapsed = this.paused ? 0 : this.playheadProgress * this.exerciseDuration
+    const score = this.paused ? 0 : this.currentScore
+    const combo = this.paused ? 0 : this.currentCombo
+    const accuracy = this.paused ? 100 : this.currentAccuracy
+    const progress = this.paused ? 0 : this.playheadProgress
 
-    // Beat fraction for grid scrolling
-    const beat = this.metronomeBeat
-    const beatFraction = beat % 1 || 0
+    // Receptor pulse from metronome beat fraction (only while we have a metronome running)
+    if (!this.paused) {
+      const beat = this.metronomeBeat
+      const fraction = ((beat % 1) + 1) % 1
+      // 1 at beat onset → fades to 0 over the beat
+      this.highway.setReceptorPulse(Math.max(0, 1 - fraction))
+    } else {
+      this.highway.setReceptorPulse(0)
+    }
 
     this.highway.update(elapsed, this.exerciseBpm)
-    this.noteManager.update(elapsed)
-    this.hitEffects.updateComboFire(this.currentCombo)
+    if (this.paused) {
+      // Notes are not visible while paused
+      this.noteManager.clearVisible()
+    } else {
+      this.noteManager.update(elapsed)
+    }
+    this.hitEffects.updateComboFire(combo)
     this.hitEffects.update(dt)
     this.hud.update(
-      this.currentScore,
-      this.currentCombo,
-      this.currentAccuracy,
-      this.playheadProgress,
+      score,
+      combo,
+      accuracy,
+      progress,
       elapsed,
       this.exerciseDuration,
       dt,
     )
   }
 
-  private getLaneSurfaces(exercise: ExerciseDefinition): string[] {
-    // Check for PlaySense mapping first
+  private getLaneConfig(exercise: ExerciseDefinition): { surfaces: string[]; labels: string[]; style: ReceptorStyle } {
+    // Percussion with PlaySense piezo mapping
     const mapping = PLAYSENSE_MAPPINGS[exercise.instrument]
     if (mapping) {
-      return Object.values(mapping.piezoMap)
+      const surfaces = Object.values(mapping.piezoMap)
+      return { surfaces, labels: surfaces.map(s => capitalize(s)), style: 'drum' }
     }
 
-    // For percussion without PlaySense mapping, use unique techniques from events
     const category = getInstrumentCategory(exercise.instrument)
+
+    // Percussion without PlaySense mapping — use unique techniques from events
     if (category === 'percussion') {
       const techniques = [...new Set(exercise.events.map(e => e.surface || e.technique))]
-      return techniques.length > 0 ? techniques : ['open', 'slap', 'mute']
+      const surfaces = techniques.length > 0 ? techniques : ['open', 'slap', 'mute']
+      return { surfaces, labels: surfaces.map(s => capitalize(s)), style: 'drum' }
     }
 
-    // For melodic instruments, use pitch-based lanes
-    const pitches = exercise.events
-      .filter(e => e.expectedPitch != null)
-      .map(e => e.expectedPitch!)
-    if (pitches.length === 0) return ['low', 'mid', 'high']
+    // Pitched / melodic instruments — one lane per unique note in the exercise.
+    const uniqueByName = new Map<string, number>()
+    for (const e of exercise.events) {
+      const name = e.expectedNoteName ?? (e.expectedPitch != null ? midiToNoteName(e.expectedPitch) : null)
+      if (!name) continue
+      const pitch = e.expectedPitch ?? 0
+      if (!uniqueByName.has(name)) uniqueByName.set(name, pitch)
+    }
+    let surfaces: string[]
+    if (uniqueByName.size === 0) {
+      surfaces = ['low', 'mid', 'high']
+    } else {
+      surfaces = [...uniqueByName.entries()]
+        .sort(([, a], [, b]) => a - b)
+        .map(([name]) => name)
+      // Cap lane count so lanes stay readable
+      if (surfaces.length > 8) {
+        const step = Math.ceil(surfaces.length / 8)
+        surfaces = surfaces.filter((_, i) => i % step === 0).slice(0, 8)
+      }
+    }
 
-    const minPitch = Math.min(...pitches)
-    const maxPitch = Math.max(...pitches)
-    const range = maxPitch - minPitch
-    if (range <= 4) return ['low', 'mid', 'high']
-    if (range <= 8) return ['low', 'mid-low', 'mid', 'mid-high', 'high']
-    return ['low', 'mid-low', 'mid', 'mid-high', 'high', 'high+']
+    let labels = surfaces
+    let style: ReceptorStyle = 'piano'
+    if (exercise.instrument === 'violin') {
+      style = 'string'
+      labels = surfaces.map((_, i) => VIOLIN_OPEN_STRINGS[i % VIOLIN_OPEN_STRINGS.length])
+    } else if (exercise.instrument === 'guitar' || exercise.instrument === 'bass') {
+      style = 'string'
+      const palette = exercise.instrument === 'guitar' ? GUITAR_OPEN_STRINGS : ['E', 'A', 'D', 'G']
+      labels = surfaces.map((_, i) => palette[i % palette.length])
+    } else {
+      // piano / other pitched: use the actual note names as labels
+      labels = surfaces
+    }
+
+    return { surfaces, labels, style }
   }
+}
+
+function capitalize(s: string): string {
+  if (!s) return s
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }

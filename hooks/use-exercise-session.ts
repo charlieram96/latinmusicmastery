@@ -187,6 +187,13 @@ export function useExerciseSession(): UseExerciseSessionResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Keep the calibration hook's active source type aligned with the chosen audio mode
+  // so calibrationData returns the right record.
+  useEffect(() => {
+    calibration.setActiveSourceType(audioMode === 'playsense' ? 'ble' : 'mic')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioMode])
+
   const clearAudioMode = useCallback(() => {
     setAudioModeState(null)
     localStorage.removeItem(AUDIO_MODE_STORAGE_KEY)
@@ -537,13 +544,32 @@ export function useExerciseSession(): UseExerciseSessionResult {
 
   const startCalibrationFlow = useCallback(async () => {
     setSessionState('calibrating')
-    const audioCtx = await startListening()
-    if (audioCtx) {
-      audioCtxRef.current = audioCtx
-      // Pass the worklet node so calibration can listen for onset events
-      calibration.startCalibration(audioCtx, workletNode)
+
+    if (audioMode === 'playsense') {
+      // BLE calibration — we still need an AudioContext for the count-in metronome,
+      // but the onset source is the PlaySense device.
+      let audioCtx = audioCtxRef.current
+      if (!audioCtx || audioCtx.state === 'closed') {
+        audioCtx = new AudioContext()
+        audioCtxRef.current = audioCtx
+      } else if (audioCtx.state === 'suspended') {
+        await audioCtx.resume()
+      }
+      calibration.startCalibration(audioCtx, {
+        type: 'ble',
+        subscribeToHits: bleOnsets.subscribeToHits,
+      })
+    } else {
+      const audioCtx = await startListening()
+      if (audioCtx) {
+        audioCtxRef.current = audioCtx
+        calibration.startCalibration(audioCtx, {
+          type: 'mic',
+          workletNode,
+        })
+      }
     }
-  }, [startListening, calibration, workletNode])
+  }, [startListening, calibration, workletNode, audioMode, bleOnsets])
 
   const startExercise = useCallback(async () => {
     if (!exercise) return

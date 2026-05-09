@@ -1,10 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
-import { FretboardView } from '@/components/play-sense/fretboard-view'
+import { RhythmHighway } from '@/components/play-sense/rhythm-highway/RhythmHighway'
 import { VisualMetronome } from '@/components/play-sense/visual-metronome'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
 import type { UseAdminPlaybackResult } from '@/hooks/use-admin-playback'
@@ -54,14 +52,18 @@ export function PreviewPanel({ exercise, playback }: PreviewPanelProps) {
         </span>
       </div>
 
-      {/* Fretboard */}
-      <div className="flex-1 relative rounded-lg overflow-hidden border border-slate-800/50">
-        <FretboardView
+      {/* Canvas preview — the same PixiJS highway used in PlaySense */}
+      <div className="flex-1 relative rounded-lg overflow-hidden border border-slate-800/50 flex">
+        <RhythmHighway
           exercise={exercise}
-          eventResults={[]}
+          sessionState={mode === 'animated' && playback.isPlaying ? 'playing' : 'selecting'}
           playheadProgress={mode === 'animated' ? playback.playheadProgress : 0}
-          isPlaying={mode === 'animated' && playback.isPlaying}
-          mode={mode === 'static' ? 'static' : 'live'}
+          currentScore={0}
+          currentCombo={0}
+          currentAccuracy={100}
+          metronomeBeat={playback.currentBeat}
+          eventResultsLength={0}
+          eventResults={[]}
         />
 
         {/* Visual metronome overlay during animated playback */}

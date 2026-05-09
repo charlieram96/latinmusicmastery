@@ -16,6 +16,8 @@ interface UsePlaysenseOnsetsResult {
   startListening: () => Promise<AudioContext | null>
   stopListening: () => void
   clearOnsets: () => void
+  /** Subscribe to BLE hits regardless of `isListening` — used by calibration. */
+  subscribeToHits: (cb: (timestampMs: number) => void) => () => void
 }
 
 export function usePlaysenseOnsets(
@@ -29,6 +31,16 @@ export function usePlaysenseOnsets(
 
   const audioContextRef = useRef<AudioContext | null>(null)
   const lastReadingRef = useRef<number>(0)
+  /** Subscribers that always fire on any BLE hit (irrespective of `isListening`). */
+  const hitSubscribersRef = useRef<Set<(ts: number) => void>>(new Set())
+  const lastHitReadingRef = useRef<number>(0)
+
+  const subscribeToHits = useCallback((cb: (timestampMs: number) => void) => {
+    hitSubscribersRef.current.add(cb)
+    return () => {
+      hitSubscribersRef.current.delete(cb)
+    }
+  }, [])
 
   const clearOnsets = useCallback(() => {
     setRecentOnsets([])
@@ -69,6 +81,20 @@ export function usePlaysenseOnsets(
     setRecentOnsets([])
     return audioContext
   }, [playsense])
+
+  // Always-on subscribers — fire on any BLE hit, regardless of `isListening`.
+  // Used for the calibration wizard which doesn't go through the normal start/stop lifecycle.
+  useEffect(() => {
+    if (!playsense.lastReading) return
+    const reading = playsense.lastReading
+    if (reading.receivedAt <= lastHitReadingRef.current) return
+    lastHitReadingRef.current = reading.receivedAt
+    const anyHit = (reading.piezos || []).some((v) => v > 0)
+    if (!anyHit) return
+    for (const cb of hitSubscribersRef.current) {
+      try { cb(reading.receivedAt) } catch { /* swallow */ }
+    }
+  }, [playsense.lastReading])
 
   useEffect(() => {
     if (!isListening || !playsense.lastReading || !instrument) return
@@ -132,5 +158,6 @@ export function usePlaysenseOnsets(
     startListening,
     stopListening,
     clearOnsets,
+    subscribeToHits,
   }
 }
