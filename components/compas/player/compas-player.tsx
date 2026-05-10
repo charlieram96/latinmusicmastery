@@ -169,7 +169,7 @@ export function CompasPlayer({
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-lg p-4 overflow-x-auto">
+      <div className="bg-card border border-border rounded-lg p-4 overflow-hidden">
         <StaffRenderer
           score={score}
           trackIndex={activeTrackIndex}

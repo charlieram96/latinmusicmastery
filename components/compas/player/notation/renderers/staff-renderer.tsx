@@ -60,18 +60,31 @@ const PER_NOTE_MIN_WIDTH = 60;
  * vector). Click x and cursor x compensate by dividing/multiplying by SCALE.
  */
 const SCALE = 1.3;
+/**
+ * Scrolling-music mode: the cursor is anchored at this fraction of the
+ * viewport's width and the staff translates underneath so that the playhead
+ * is always under the cursor. ~22% leaves a small "lookback" of completed
+ * material before the cursor.
+ */
+const CURSOR_ANCHOR_FRACTION = 0.22;
 
 class StaffRendererImpl implements ScoreRenderer {
   private container: HTMLElement | null = null;
   private renderer: Renderer | null = null;
+  private viewportEl: HTMLDivElement | null = null;
+  private rendererDiv: HTMLDivElement | null = null;
   private cursorEl: HTMLDivElement | null = null;
   private hits: NoteHit[] = [];
   private listeners: Set<SeekListener> = new Set();
   private clickHandler: ((e: PointerEvent) => void) | null = null;
+  private resizeObserver: ResizeObserver | null = null;
   private totalWidth = 0;
   private totalDurationMs = 0;
   private pixelsPerMs = 0;
   private startMs = 0;
+  private viewportWidth = 0;
+  private cursorAnchorPx = 0;
+  private lastCursorMs = 0;
 
   mount(el: HTMLElement, score: ScoreDocument, trackIndex: number): void {
     this.destroy();
@@ -101,11 +114,39 @@ class StaffRendererImpl implements ScoreRenderer {
 
     // VexFlow renderer. Native model size first; we resize the SVG via
     // viewBox after drawing so the rendered pixels are SCALE'd up.
+    //
+    // Layout:
+    //   <el>                                         positioned, fixed height
+    //     <viewport overflow:hidden width:100%>      the visible window
+    //       <rendererDiv translateX'd>               the score, slides left
+    //         <svg/>
+    //       </rendererDiv>
+    //     </viewport>
+    //     <cursor at fixed anchor X />               playhead stays put
+    //   </el>
     const stageHeight = STAVE_TOP + STAVE_HEIGHT + 20;
+    const scaledStageHeight = stageHeight * SCALE;
+
+    const viewport = document.createElement('div');
+    Object.assign(viewport.style, {
+      position: 'relative',
+      width: '100%',
+      height: `${scaledStageHeight}px`,
+      overflow: 'hidden',
+    } as CSSStyleDeclaration);
+    el.appendChild(viewport);
+    el.style.height = `${scaledStageHeight}px`;
+    this.viewportEl = viewport;
+
     const rendererDiv = document.createElement('div');
+    rendererDiv.style.position = 'absolute';
+    rendererDiv.style.top = '0';
+    rendererDiv.style.left = '0';
     rendererDiv.style.width = `${this.totalWidth * SCALE}px`;
-    rendererDiv.style.height = `${stageHeight * SCALE}px`;
-    el.appendChild(rendererDiv);
+    rendererDiv.style.height = `${scaledStageHeight}px`;
+    rendererDiv.style.willChange = 'transform';
+    viewport.appendChild(rendererDiv);
+    this.rendererDiv = rendererDiv;
 
     this.renderer = new Renderer(rendererDiv, Renderer.Backends.SVG);
     this.renderer.resize(this.totalWidth, stageHeight);
@@ -173,12 +214,12 @@ class StaffRendererImpl implements ScoreRenderer {
     this.pixelsPerMs =
       this.totalDurationMs > 0 ? this.totalWidth / this.totalDurationMs : 0;
 
-    // Cursor (sized in scaled pixel space so it visually matches the SVG)
+    // Cursor — fixed at the anchor position; the staff scrolls under it.
     this.cursorEl = document.createElement('div');
     Object.assign(this.cursorEl.style, {
       position: 'absolute',
       top: `${(STAVE_TOP - 6) * SCALE}px`,
-      left: '0',
+      left: '0px',
       width: `${2 * SCALE}px`,
       height: `${(STAVE_HEIGHT + 12) * SCALE}px`,
       background: 'hsl(30 85% 55%)',
@@ -188,6 +229,23 @@ class StaffRendererImpl implements ScoreRenderer {
       opacity: '0.85',
     } as CSSStyleDeclaration);
     el.appendChild(this.cursorEl);
+
+    // Capture the viewport's current width and recompute on resize so the
+    // cursor anchor stays at CURSOR_ANCHOR_FRACTION of the visible width.
+    const updateLayout = () => {
+      this.viewportWidth = viewport.clientWidth;
+      this.cursorAnchorPx = this.viewportWidth * CURSOR_ANCHOR_FRACTION;
+      if (this.cursorEl) {
+        this.cursorEl.style.transform = `translateX(${this.cursorAnchorPx}px)`;
+      }
+      // Re-apply current time so the staff translation reflects the new anchor.
+      this.applyScroll(this.lastCursorMs);
+    };
+    updateLayout();
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(updateLayout);
+      this.resizeObserver.observe(viewport);
+    }
 
     // Theme + scale + click-to-seek
     const svg = rendererDiv.querySelector('svg') as SVGSVGElement | null;
@@ -227,11 +285,17 @@ class StaffRendererImpl implements ScoreRenderer {
   }
 
   setTimeMs(ms: number): void {
-    if (!this.cursorEl) return;
-    // msToCursorX returns model-space x; multiply by SCALE for the rendered
-    // pixel position.
-    const x = this.msToCursorX(ms) * SCALE;
-    this.cursorEl.style.transform = `translateX(${x}px)`;
+    this.applyScroll(ms);
+  }
+
+  private applyScroll(ms: number): void {
+    this.lastCursorMs = ms;
+    if (!this.rendererDiv) return;
+    // The position in scaled pixels of the playhead within the rendererDiv.
+    const cursorScaledX = this.msToCursorX(ms) * SCALE;
+    // Translate the rendererDiv so that cursorScaledX lands at the anchor.
+    const translate = this.cursorAnchorPx - cursorScaledX;
+    this.rendererDiv.style.transform = `translateX(${translate}px)`;
   }
 
   onSeek(listener: SeekListener): () => void {
@@ -240,13 +304,20 @@ class StaffRendererImpl implements ScoreRenderer {
   }
 
   destroy(): void {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
     if (this.container) {
       const svg = this.container.querySelector('svg');
       if (svg && this.clickHandler) svg.removeEventListener('pointerdown', this.clickHandler);
       this.container.innerHTML = '';
+      this.container.style.height = '';
     }
     this.container = null;
     this.renderer = null;
+    this.viewportEl = null;
+    this.rendererDiv = null;
     this.cursorEl = null;
     this.hits = [];
     this.listeners.clear();
@@ -254,6 +325,9 @@ class StaffRendererImpl implements ScoreRenderer {
     this.totalWidth = 0;
     this.totalDurationMs = 0;
     this.pixelsPerMs = 0;
+    this.viewportWidth = 0;
+    this.cursorAnchorPx = 0;
+    this.lastCursorMs = 0;
   }
 
   private msToCursorX(ms: number): number {
