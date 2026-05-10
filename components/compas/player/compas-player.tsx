@@ -29,6 +29,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
 import { StaffRenderer } from './notation/renderers/staff-renderer';
+import { TabRenderer } from './notation/renderers/tab-renderer';
+import { FretboardRenderer } from './notation/renderers/fretboard-renderer';
+import { RhythmGridRenderer } from './notation/renderers/rhythm-grid-renderer';
+import {
+  ViewSwitcher,
+  usePersistedView,
+  viewsForInstrument,
+} from './notation/view-switcher';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
 import {
   WaypointTimeMap,
@@ -36,7 +44,11 @@ import {
   type Waypoint,
 } from '@/components/compas/shared/time-map/time-map';
 import { qnToTrackMs, trackDurationQN } from '@/lib/compas/time-mapping';
-import type { ScoreDocument } from '@/components/compas/shared/score-model/types';
+import type {
+  DefaultView,
+  Instrument,
+  ScoreDocument,
+} from '@/components/compas/shared/score-model/types';
 import type { SeekTarget } from '@/lib/compas/renderer';
 import { updateClassItemPosition } from '@/app/actions/progress';
 
@@ -88,6 +100,12 @@ export function CompasPlayer({
 
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
+  const activeInstrument = activeTrack.instrument as Instrument;
+
+  const trackDefaultView: DefaultView =
+    (activeTrack.defaultView as DefaultView | undefined) ??
+    viewsForInstrument(activeInstrument)[0];
+  const [view, setView] = usePersistedView(activeInstrument, trackDefaultView);
 
   // Build (or synthesize) the WaypointTimeMap for the active track.
   const timeMap = useMemo(() => {
@@ -148,34 +166,68 @@ export function CompasPlayer({
         onRateChange={clock.setPlaybackRate}
       />
 
-      {tracks.length > 1 && (
-        <div className="flex flex-wrap gap-2">
-          <span className="text-xs uppercase tracking-wider text-muted-foreground self-center mr-1">
-            Track
-          </span>
-          {score.tracks.map((t, i) => (
-            <button
-              key={t.index}
-              onClick={() => setActiveTrackIndex(i)}
-              className={`px-2.5 py-1 rounded-md text-xs border transition ${
-                i === activeTrackIndex
-                  ? 'bg-secondary text-secondary-foreground border-secondary'
-                  : 'bg-card border-border hover:bg-muted'
-              }`}
-            >
-              {t.displayName}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-3">
+        {tracks.length > 1 && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground self-center mr-1">
+              Track
+            </span>
+            {score.tracks.map((t, i) => (
+              <button
+                key={t.index}
+                onClick={() => setActiveTrackIndex(i)}
+                className={`px-2.5 py-1 rounded-md text-xs border transition ${
+                  i === activeTrackIndex
+                    ? 'bg-secondary text-secondary-foreground border-secondary'
+                    : 'bg-card border-border hover:bg-muted'
+                }`}
+              >
+                {t.displayName}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <ViewSwitcher
+          instrument={activeInstrument}
+          defaultView={trackDefaultView}
+          value={view}
+          onChange={setView}
+          className="ml-auto"
+        />
+      </div>
 
       <div className="bg-card border border-border rounded-lg p-4 overflow-x-auto">
-        <StaffRenderer
-          score={score}
-          trackIndex={activeTrackIndex}
-          currentMs={cursorMs}
-          onSeek={handleSeek}
-        />
+        {view === 'staff' && (
+          <StaffRenderer
+            score={score}
+            trackIndex={activeTrackIndex}
+            currentMs={cursorMs}
+            onSeek={handleSeek}
+          />
+        )}
+        {view === 'tab' && (
+          <TabRenderer
+            score={score}
+            trackIndex={activeTrackIndex}
+            currentMs={cursorMs}
+            onSeek={handleSeek}
+          />
+        )}
+        {view === 'fretboard' && (
+          <FretboardRenderer
+            score={score}
+            trackIndex={activeTrackIndex}
+            currentMs={cursorMs}
+          />
+        )}
+        {view === 'rhythm-grid' && (
+          <RhythmGridRenderer
+            score={score}
+            trackIndex={activeTrackIndex}
+            currentMs={cursorMs}
+          />
+        )}
       </div>
     </div>
   );
