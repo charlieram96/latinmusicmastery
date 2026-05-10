@@ -217,18 +217,32 @@
 .scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--muted)) transparent; }
 
 /* Compás notation — make VexFlow SVG follow the theme.
-   VexFlow renders with explicit black fills/strokes; without intervention they
-   stay black even in dark mode. The wrapper sets a theme color, and the rules
-   below force every drawn fill/stroke (other than transparent ones, which are
-   used for open noteheads and similar) to inherit it via currentColor. */
+   VexFlow renders with explicit black fills/strokes (and sometimes inline
+   `style="fill: …"`). To beat both inline attributes and inline styles we
+   force currentColor with !important on all drawable SVG primitives, then
+   restore `fill="none"` (used for open noteheads, slurs) explicitly. The
+   wrapper sets `color` from --compas-notation so the cascade resolves to
+   the theme's note color. */
 .compas-notation {
   color: hsl(var(--compas-notation));
 }
-.compas-notation svg [fill]:not([fill="none"]):not([fill="transparent"]):not([fill^="hsl"]):not([fill^="var"]) {
-  fill: currentColor;
+.compas-notation svg path,
+.compas-notation svg rect,
+.compas-notation svg line,
+.compas-notation svg circle,
+.compas-notation svg ellipse,
+.compas-notation svg polygon,
+.compas-notation svg polyline,
+.compas-notation svg text,
+.compas-notation svg tspan {
+  fill: currentColor !important;
+  stroke: currentColor !important;
 }
-.compas-notation svg [stroke]:not([stroke="none"]):not([stroke="transparent"]):not([stroke^="hsl"]):not([stroke^="var"]) {
-  stroke: currentColor;
+.compas-notation svg [fill="none"] {
+  fill: none !important;
+}
+.compas-notation svg [stroke="none"] {
+  stroke: none !important;
 }
 .compas-notation .compas-notation-muted {
   color: hsl(var(--compas-notation-muted));
