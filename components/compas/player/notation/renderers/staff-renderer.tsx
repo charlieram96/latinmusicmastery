@@ -173,6 +173,10 @@ class StaffRendererImpl implements ScoreRenderer {
     rendererDiv.style.width = `${this.totalWidth * SCALE}px`;
     rendererDiv.style.height = `${scaledStageHeight}px`;
     rendererDiv.style.willChange = 'transform';
+    rendererDiv.style.cursor = 'pointer';
+    rendererDiv.style.userSelect = 'none';
+    (rendererDiv.style as CSSStyleDeclaration & { webkitUserSelect?: string }).webkitUserSelect = 'none';
+    rendererDiv.style.touchAction = 'none';
     viewport.appendChild(rendererDiv);
     this.rendererDiv = rendererDiv;
 
@@ -290,11 +294,14 @@ class StaffRendererImpl implements ScoreRenderer {
       svg.style.width = `${scaledWidth}px`;
       svg.style.height = `${scaledHeight}px`;
       svg.style.cursor = 'pointer';
-      // Suppress browser text/glyph selection during drag so VexFlow's
-      // <text> elements don't get the selection highlight.
       svg.style.userSelect = 'none';
       (svg.style as CSSStyleDeclaration & { webkitUserSelect?: string }).webkitUserSelect = 'none';
       svg.style.touchAction = 'none';
+      // pointer-events: none on the inner SVG forces every click to land on
+      // the wrapping rendererDiv instead of being absorbed by VexFlow's
+      // visiblePainted glyphs. The staff stays visible (paint isn't pointer
+      // events), just non-interactive at the SVG level.
+      svg.style.pointerEvents = 'none';
 
       const NS = 'http://www.w3.org/2000/svg';
 
@@ -329,21 +336,23 @@ class StaffRendererImpl implements ScoreRenderer {
       svg.appendChild(overlay);
       this.dragOverlayEl = overlay;
 
-      // Click-or-drag pointer handlers. A small initial movement is
-      // tolerated (taps on touch devices wobble); past DRAG_THRESHOLD_PX
-      // we switch into drag-selection mode and emit onSelectRange on up.
-      // preventDefault on pointerdown stops the browser from starting a
-      // text/glyph selection while the user drags across the SVG.
+      // Click-or-drag pointer handlers attach to the rendererDiv (the
+      // wrapper) rather than the inner SVG. This guarantees clicks on
+      // empty staff space register: a div is always pointer-event-active
+      // across its entire painted box, while SVG only fires on painted
+      // child elements by default. preventDefault on pointerdown stops
+      // the browser from starting a text/glyph selection.
+      const target = rendererDiv;
       this.downHandler = (event: PointerEvent) => {
         event.preventDefault();
-        const rect = svg.getBoundingClientRect();
+        const rect = target.getBoundingClientRect();
         const x = (event.clientX - rect.left) / SCALE;
         this.dragStartModelX = x;
         this.dragCurrentModelX = x;
         this.dragIsActive = false;
         this.boundPointerId = event.pointerId;
         try {
-          svg.setPointerCapture(event.pointerId);
+          target.setPointerCapture(event.pointerId);
         } catch {
           /* setPointerCapture may fail on some browsers; degrades gracefully */
         }
@@ -355,7 +364,7 @@ class StaffRendererImpl implements ScoreRenderer {
         )
           return;
         event.preventDefault();
-        const rect = svg.getBoundingClientRect();
+        const rect = target.getBoundingClientRect();
         const x = (event.clientX - rect.left) / SCALE;
         this.dragCurrentModelX = x;
         const delta = Math.abs((x - this.dragStartModelX) * SCALE);
@@ -371,7 +380,7 @@ class StaffRendererImpl implements ScoreRenderer {
         )
           return;
         try {
-          svg.releasePointerCapture(event.pointerId);
+          target.releasePointerCapture(event.pointerId);
         } catch {
           /* noop */
         }
@@ -413,10 +422,10 @@ class StaffRendererImpl implements ScoreRenderer {
         this.hideDragOverlay();
       };
 
-      svg.addEventListener('pointerdown', this.downHandler);
-      svg.addEventListener('pointermove', this.moveHandler);
-      svg.addEventListener('pointerup', this.upHandler);
-      svg.addEventListener('pointercancel', this.upHandler);
+      target.addEventListener('pointerdown', this.downHandler);
+      target.addEventListener('pointermove', this.moveHandler);
+      target.addEventListener('pointerup', this.upHandler);
+      target.addEventListener('pointercancel', this.upHandler);
     }
   }
 
@@ -488,16 +497,15 @@ class StaffRendererImpl implements ScoreRenderer {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
     }
-    if (this.container) {
-      const svg = this.container.querySelector('svg');
-      if (svg) {
-        if (this.downHandler) svg.removeEventListener('pointerdown', this.downHandler);
-        if (this.moveHandler) svg.removeEventListener('pointermove', this.moveHandler);
-        if (this.upHandler) {
-          svg.removeEventListener('pointerup', this.upHandler);
-          svg.removeEventListener('pointercancel', this.upHandler);
-        }
+    if (this.rendererDiv) {
+      if (this.downHandler) this.rendererDiv.removeEventListener('pointerdown', this.downHandler);
+      if (this.moveHandler) this.rendererDiv.removeEventListener('pointermove', this.moveHandler);
+      if (this.upHandler) {
+        this.rendererDiv.removeEventListener('pointerup', this.upHandler);
+        this.rendererDiv.removeEventListener('pointercancel', this.upHandler);
       }
+    }
+    if (this.container) {
       this.container.innerHTML = '';
       this.container.style.height = '';
     }
