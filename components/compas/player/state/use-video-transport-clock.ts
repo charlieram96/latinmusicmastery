@@ -26,6 +26,17 @@ export interface VideoTransportClock {
   setPlaybackRate: (rate: number) => void;
   /** Imperative read. Useful inside RAF loops without a React subscription. */
   getCurrentSeconds: () => number;
+
+  // A/B loop
+  loopA: number | null;
+  loopB: number | null;
+  loopEnabled: boolean;
+  setLoopA: (seconds: number | null) => void;
+  setLoopB: (seconds: number | null) => void;
+  setLoopEnabled: (enabled: boolean) => void;
+  clearLoop: () => void;
+  /** Apply both endpoints + enabled in one call (used when loading a saved clip). */
+  loadLoop: (a: number, b: number, options?: { rate?: number }) => void;
 }
 
 const MIN_RATE = 0.25;
@@ -40,6 +51,10 @@ export function useVideoTransportClock(
   const [durationSeconds, setDurationSeconds] = useState(0);
   const [isReady, setIsReady] = useState(false);
 
+  const [loopA, setLoopAState] = useState<number | null>(null);
+  const [loopB, setLoopBState] = useState<number | null>(null);
+  const [loopEnabled, setLoopEnabledState] = useState(false);
+
   // Anchor: wall-clock time + video time at the most recent video event.
   // While playing, currentSeconds = anchorVideoSec + (now - anchorWall) * rate.
   const anchorWallRef = useRef(0);
@@ -49,6 +64,11 @@ export function useVideoTransportClock(
   const durationRef = useRef(0);
   const currentRef = useRef(0);
   const rafIdRef = useRef<number | null>(null);
+
+  // Loop refs read from the RAF loop without re-binding tick on each change.
+  const loopARef = useRef<number | null>(null);
+  const loopBRef = useRef<number | null>(null);
+  const loopEnabledRef = useRef(false);
 
   const reanchor = useCallback((video: HTMLVideoElement) => {
     anchorWallRef.current = performance.now();
@@ -67,12 +87,33 @@ export function useVideoTransportClock(
       const elapsedSec = (performance.now() - anchorWallRef.current) / 1000;
       const interpolated = anchorVideoRef.current + elapsedSec * rateRef.current;
       const clamped = Math.min(interpolated, durationRef.current || interpolated);
-      currentRef.current = clamped;
-      setCurrentSeconds(clamped);
+
+      // Loop wrap. We do this BEFORE publishing the time so the cursor
+      // never visibly overshoots. Pre-seek a hair before B isn't necessary
+      // here since RAF sees the actual instantaneous time and the seek is
+      // synchronous on the video element.
+      if (
+        loopEnabledRef.current &&
+        loopBRef.current !== null &&
+        loopARef.current !== null &&
+        clamped >= loopBRef.current
+      ) {
+        const video = videoRef.current;
+        if (video) {
+          video.currentTime = loopARef.current;
+        }
+        // Optimistic: reflect immediately. The seeking event will reanchor
+        // the wall clock.
+        currentRef.current = loopARef.current;
+        setCurrentSeconds(loopARef.current);
+      } else {
+        currentRef.current = clamped;
+        setCurrentSeconds(clamped);
+      }
       rafIdRef.current = requestAnimationFrame(tick);
     };
     rafIdRef.current = requestAnimationFrame(tick);
-  }, []);
+  }, [videoRef]);
 
   const stopRaf = useCallback(() => {
     if (rafIdRef.current !== null) {
@@ -185,6 +226,46 @@ export function useVideoTransportClock(
 
   const getCurrentSeconds = useCallback(() => currentRef.current, []);
 
+  // Loop setters — keep refs and React state in sync.
+  const setLoopA = useCallback((seconds: number | null) => {
+    loopARef.current = seconds;
+    setLoopAState(seconds);
+  }, []);
+  const setLoopB = useCallback((seconds: number | null) => {
+    loopBRef.current = seconds;
+    setLoopBState(seconds);
+  }, []);
+  const setLoopEnabled = useCallback((enabled: boolean) => {
+    loopEnabledRef.current = enabled;
+    setLoopEnabledState(enabled);
+  }, []);
+  const clearLoop = useCallback(() => {
+    loopARef.current = null;
+    loopBRef.current = null;
+    loopEnabledRef.current = false;
+    setLoopAState(null);
+    setLoopBState(null);
+    setLoopEnabledState(false);
+  }, []);
+  const loadLoop = useCallback(
+    (a: number, b: number, options: { rate?: number } = {}) => {
+      loopARef.current = a;
+      loopBRef.current = b;
+      loopEnabledRef.current = true;
+      setLoopAState(a);
+      setLoopBState(b);
+      setLoopEnabledState(true);
+      const video = videoRef.current;
+      if (video) {
+        video.currentTime = a;
+        if (options.rate !== undefined) {
+          video.playbackRate = options.rate;
+        }
+      }
+    },
+    [videoRef]
+  );
+
   return {
     currentSeconds,
     isPlaying,
@@ -197,5 +278,13 @@ export function useVideoTransportClock(
     seek,
     setPlaybackRate,
     getCurrentSeconds,
+    loopA,
+    loopB,
+    loopEnabled,
+    setLoopA,
+    setLoopB,
+    setLoopEnabled,
+    clearLoop,
+    loadLoop,
   };
 }

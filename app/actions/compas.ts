@@ -9,6 +9,7 @@
 //   M7: publishTimeMap (writes score_time_maps + score_time_waypoints)
 //   M8: saveScoreDocument / saveScoreRevision
 
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import type { ScoreDocument } from '@/components/compas/shared/score-model/types';
 
@@ -124,4 +125,118 @@ export async function getScoreDocumentForClassItem(
       activeTimeMap,
     },
   };
+}
+
+// ============================================
+// M5 — clip CRUD (per-user A/B loop bookmarks)
+// ============================================
+
+export interface CompasClip {
+  id: string;
+  name: string;
+  startSeconds: number;
+  endSeconds: number;
+  loopCount: number | null;
+  playbackRate: number;
+  createdAt: string;
+}
+
+export async function createClip(input: {
+  classItemId: string;
+  name: string;
+  startSeconds: number;
+  endSeconds: number;
+  playbackRate?: number;
+  loopCount?: number | null;
+}): Promise<{ data?: CompasClip; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  if (input.endSeconds <= input.startSeconds) {
+    return { error: 'End must be greater than start' };
+  }
+  const trimmed = input.name.trim();
+  if (!trimmed) return { error: 'Name is required' };
+
+  const { data, error } = await supabase
+    .from('score_clips')
+    .insert({
+      user_id: user.id,
+      class_item_id: input.classItemId,
+      name: trimmed,
+      start_seconds: input.startSeconds,
+      end_seconds: input.endSeconds,
+      playback_rate: input.playbackRate ?? 1,
+      loop_count: input.loopCount ?? null,
+    })
+    .select('id, name, start_seconds, end_seconds, loop_count, playback_rate, created_at')
+    .single();
+
+  if (error || !data) return { error: error?.message ?? 'Insert failed' };
+
+  return {
+    data: {
+      id: data.id,
+      name: data.name,
+      startSeconds: data.start_seconds,
+      endSeconds: data.end_seconds,
+      loopCount: data.loop_count,
+      playbackRate: data.playback_rate ?? 1,
+      createdAt: data.created_at ?? new Date().toISOString(),
+    },
+  };
+}
+
+export async function listClipsForClassItem(
+  classItemId: string
+): Promise<{ data?: CompasClip[]; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { data, error } = await supabase
+    .from('score_clips')
+    .select('id, name, start_seconds, end_seconds, loop_count, playback_rate, created_at')
+    .eq('user_id', user.id)
+    .eq('class_item_id', classItemId)
+    .order('created_at', { ascending: false });
+
+  if (error) return { error: error.message };
+
+  return {
+    data: (data ?? []).map((c) => ({
+      id: c.id,
+      name: c.name,
+      startSeconds: c.start_seconds,
+      endSeconds: c.end_seconds,
+      loopCount: c.loop_count,
+      playbackRate: c.playback_rate ?? 1,
+      createdAt: c.created_at ?? new Date().toISOString(),
+    })),
+  };
+}
+
+export async function deleteClip(
+  clipId: string
+): Promise<{ success?: true; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { error } = await supabase
+    .from('score_clips')
+    .delete()
+    .eq('id', clipId)
+    .eq('user_id', user.id);
+
+  if (error) return { error: error.message };
+  revalidatePath('/dashboard');
+  return { success: true };
 }

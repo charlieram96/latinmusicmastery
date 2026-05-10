@@ -29,7 +29,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
 import { StaffRenderer } from './notation/renderers/staff-renderer';
+import { ClipsPanel } from './clips/clips-panel';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
+import type { CompasClip } from '@/app/actions/compas';
 import {
   WaypointTimeMap,
   type SyncMethod,
@@ -146,6 +148,15 @@ export function CompasPlayer({
         onRestart={() => clock.seek(0)}
         onSeek={clock.seek}
         onRateChange={clock.setPlaybackRate}
+        loopA={clock.loopA}
+        loopB={clock.loopB}
+        loopEnabled={clock.loopEnabled}
+        onSetLoopA={clock.setLoopA}
+        onSetLoopB={clock.setLoopB}
+        onToggleLoop={() => clock.setLoopEnabled(!clock.loopEnabled)}
+        onClearLoop={clock.clearLoop}
+        bpm={score.initialTempo}
+        beatsPerMeasure={score.initialTimeSignature[0]}
       />
 
       {tracks.length > 1 && (
@@ -177,6 +188,20 @@ export function CompasPlayer({
           onSeek={handleSeek}
         />
       </div>
+
+      {!readOnly && (
+        <ClipsPanel
+          classItemId={classItemId}
+          loopA={clock.loopA}
+          loopB={clock.loopB}
+          playbackRate={clock.playbackRate}
+          onLoadClip={(clip: CompasClip) => {
+            clock.loadLoop(clip.startSeconds, clip.endSeconds, {
+              rate: clip.playbackRate,
+            });
+          }}
+        />
+      )}
     </div>
   );
 }
