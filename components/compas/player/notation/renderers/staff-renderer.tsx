@@ -63,10 +63,11 @@ const SCALE = 1.3;
 /**
  * Scrolling-music mode: the cursor is anchored at this fraction of the
  * viewport's width and the staff translates underneath so that the playhead
- * is always under the cursor. ~22% leaves a small "lookback" of completed
- * material before the cursor.
+ * is always under the cursor. ~8% leaves a tight margin so the staff sits
+ * close to the left edge while still leaving room for completed material
+ * to slide back in for context.
  */
-const CURSOR_ANCHOR_FRACTION = 0.22;
+const CURSOR_ANCHOR_FRACTION = 0.08;
 
 class StaffRendererImpl implements ScoreRenderer {
   private container: HTMLElement | null = null;
