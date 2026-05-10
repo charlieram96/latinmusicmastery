@@ -53,6 +53,13 @@ const STAVE_TOP = 40;
 const STAVE_HEIGHT = 100;
 const FIRST_MEASURE_EXTRA_WIDTH = 80; // room for clef + time signature
 const PER_NOTE_MIN_WIDTH = 60;
+/**
+ * Visual scale for the rendered SVG. The internal model coordinates
+ * (bounding boxes, hit testing) stay in 1x; the SVG's rendered pixels are
+ * SCALE'd via viewBox so the browser handles the upscaling crisply (still
+ * vector). Click x and cursor x compensate by dividing/multiplying by SCALE.
+ */
+const SCALE = 1.8;
 
 class StaffRendererImpl implements ScoreRenderer {
   private container: HTMLElement | null = null;
@@ -92,14 +99,16 @@ class StaffRendererImpl implements ScoreRenderer {
     this.totalWidth =
       SYSTEM_PADDING_X * 2 + measureWidths.reduce((s, w) => s + w, 0);
 
-    // VexFlow renderer
+    // VexFlow renderer. Native model size first; we resize the SVG via
+    // viewBox after drawing so the rendered pixels are SCALE'd up.
+    const stageHeight = STAVE_TOP + STAVE_HEIGHT + 20;
     const rendererDiv = document.createElement('div');
-    rendererDiv.style.width = `${this.totalWidth}px`;
-    rendererDiv.style.height = `${STAVE_TOP + STAVE_HEIGHT + 20}px`;
+    rendererDiv.style.width = `${this.totalWidth * SCALE}px`;
+    rendererDiv.style.height = `${stageHeight * SCALE}px`;
     el.appendChild(rendererDiv);
 
     this.renderer = new Renderer(rendererDiv, Renderer.Backends.SVG);
-    this.renderer.resize(this.totalWidth, STAVE_TOP + STAVE_HEIGHT + 20);
+    this.renderer.resize(this.totalWidth, stageHeight);
     const ctx = this.renderer.getContext();
 
     // Lay out each measure as its own Stave; keep one continuous SVG.
@@ -164,14 +173,14 @@ class StaffRendererImpl implements ScoreRenderer {
     this.pixelsPerMs =
       this.totalDurationMs > 0 ? this.totalWidth / this.totalDurationMs : 0;
 
-    // Cursor
+    // Cursor (sized in scaled pixel space so it visually matches the SVG)
     this.cursorEl = document.createElement('div');
     Object.assign(this.cursorEl.style, {
       position: 'absolute',
-      top: `${STAVE_TOP - 6}px`,
+      top: `${(STAVE_TOP - 6) * SCALE}px`,
       left: '0',
-      width: '2px',
-      height: `${STAVE_HEIGHT + 12}px`,
+      width: `${2 * SCALE}px`,
+      height: `${(STAVE_HEIGHT + 12) * SCALE}px`,
       background: 'hsl(30 85% 55%)',
       pointerEvents: 'none',
       transform: 'translateX(0px)',
@@ -180,14 +189,20 @@ class StaffRendererImpl implements ScoreRenderer {
     } as CSSStyleDeclaration);
     el.appendChild(this.cursorEl);
 
-    // Theme + click-to-seek
-    const svg = rendererDiv.querySelector('svg');
+    // Theme + scale + click-to-seek
+    const svg = rendererDiv.querySelector('svg') as SVGSVGElement | null;
     if (svg) {
       themeVexflowSvg(svg);
+      // viewBox keeps drawn coordinates in model space while the SVG itself
+      // is rendered at SCALE'd pixel dimensions.
+      svg.setAttribute('viewBox', `0 0 ${this.totalWidth} ${stageHeight}`);
+      svg.setAttribute('width', `${this.totalWidth * SCALE}`);
+      svg.setAttribute('height', `${stageHeight * SCALE}`);
       svg.style.cursor = 'pointer';
       this.clickHandler = (event: PointerEvent) => {
         const rect = svg.getBoundingClientRect();
-        const x = event.clientX - rect.left;
+        // CSS pixel x → model space x by dividing out the scale.
+        const x = (event.clientX - rect.left) / SCALE;
         const target = this.findNearestHit(x);
         if (target) {
           for (const listener of this.listeners) {
@@ -205,7 +220,9 @@ class StaffRendererImpl implements ScoreRenderer {
 
   setTimeMs(ms: number): void {
     if (!this.cursorEl) return;
-    const x = this.msToCursorX(ms);
+    // msToCursorX returns model-space x; multiply by SCALE for the rendered
+    // pixel position.
+    const x = this.msToCursorX(ms) * SCALE;
     this.cursorEl.style.transform = `translateX(${x}px)`;
   }
 
