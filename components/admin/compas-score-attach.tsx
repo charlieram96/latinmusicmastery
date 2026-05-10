@@ -6,7 +6,8 @@
 // action that persists it. No raw upload bucket is needed in v1 — the
 // canonical JSON IS the score.
 
-import { CheckCircle2, FileMusic, Loader2, Upload, X } from 'lucide-react';
+import { CheckCircle2, FileMusic, Loader2, Settings2, Upload, X } from 'lucide-react';
+import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import {
   attachScoreFromImport,
@@ -125,44 +126,62 @@ export function CompasScoreAttach({
       </div>
 
       {hasAttached && !importSummary && (
-        <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-border bg-muted/30 text-sm">
-          <span className="flex items-center gap-2 text-muted-foreground">
-            <CheckCircle2 className="w-4 h-4 text-primary" />
-            A score is attached to this class item.
-          </span>
-          <button
-            type="button"
-            onClick={handleDetach}
-            disabled={busy}
-            className="text-xs px-2 py-1 rounded border border-border hover:bg-muted disabled:opacity-50"
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-border bg-muted/30 text-sm">
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <CheckCircle2 className="w-4 h-4 text-primary" />
+              A score is attached to this class item.
+            </span>
+            <button
+              type="button"
+              onClick={handleDetach}
+              disabled={busy}
+              className="text-xs px-2 py-1 rounded border border-border hover:bg-muted disabled:opacity-50"
+            >
+              Replace / detach
+            </button>
+          </div>
+          <Link
+            href={`/admin/compas/${classItemId}/sync`}
+            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
           >
-            Replace / detach
-          </button>
+            <Settings2 className="w-3.5 h-3.5" />
+            Open sync workspace
+          </Link>
         </div>
       )}
 
       {importSummary && (
-        <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-primary/30 bg-primary/5 text-sm">
-          <span className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-primary" />
-            <span>
-              <span className="font-medium">{importSummary.title}</span>
-              <span className="text-muted-foreground">
-                {' '}
-                · {importSummary.format.toUpperCase()} ·{' '}
-                {importSummary.trackCount} track{importSummary.trackCount === 1 ? '' : 's'}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-primary/30 bg-primary/5 text-sm">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-primary" />
+              <span>
+                <span className="font-medium">{importSummary.title}</span>
+                <span className="text-muted-foreground">
+                  {' '}
+                  · {importSummary.format.toUpperCase()} ·{' '}
+                  {importSummary.trackCount} track{importSummary.trackCount === 1 ? '' : 's'}
+                </span>
               </span>
             </span>
-          </span>
-          <button
-            type="button"
-            onClick={handleDetach}
-            disabled={busy}
-            className="text-xs p-1 rounded border border-border hover:bg-muted disabled:opacity-50"
-            aria-label="Detach"
+            <button
+              type="button"
+              onClick={handleDetach}
+              disabled={busy}
+              className="text-xs p-1 rounded border border-border hover:bg-muted disabled:opacity-50"
+              aria-label="Detach"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <Link
+            href={`/admin/compas/${classItemId}/sync`}
+            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
           >
-            <X className="w-3.5 h-3.5" />
-          </button>
+            <Settings2 className="w-3.5 h-3.5" />
+            Open sync workspace
+          </Link>
         </div>
       )}
 

@@ -335,6 +335,104 @@ export async function attachScoreFromImport(
   return { scoreDocumentId: doc.id };
 }
 
+// ============================================
+// M7 — sync (publishing time maps)
+// ============================================
+
+export type CompasSyncMethod = 'tempo' | 'tap' | 'drag' | 'midi';
+
+export interface PublishTimeMapInput {
+  classItemId: string;
+  scoreDocumentId: string;
+  method: CompasSyncMethod;
+  /** Method-specific parameters (e.g. {bpm, offset_seconds} for 'tempo'). */
+  params: Record<string, unknown>;
+  waypoints: Array<{
+    musicalPositionQN: number;
+    videoTimeSeconds: number;
+    measureNumber: number | null;
+    beatInMeasure: number | null;
+  }>;
+  /** When true, also set this class_item's active_time_map_id to the new map. */
+  makeActive?: boolean;
+}
+
+export async function publishTimeMap(
+  input: PublishTimeMapInput
+): Promise<{ timeMapId?: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single();
+  if (!profile?.is_admin) return { error: 'Admin only' };
+
+  if (input.waypoints.length < 2) {
+    return { error: 'Need at least two waypoints to publish a time map.' };
+  }
+
+  // Strict-monotonic check on both axes — the player relies on this.
+  const sorted = [...input.waypoints].sort(
+    (a, b) => a.musicalPositionQN - b.musicalPositionQN
+  );
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i].musicalPositionQN <= sorted[i - 1].musicalPositionQN) {
+      return { error: 'Waypoints have duplicate musical positions.' };
+    }
+    if (sorted[i].videoTimeSeconds <= sorted[i - 1].videoTimeSeconds) {
+      return { error: 'Waypoints must be strictly increasing in video time.' };
+    }
+  }
+
+  // 1. Insert the time map header.
+  const { data: tmRow, error: tmErr } = await supabase
+    .from('score_time_maps')
+    .insert({
+      score_document_id: input.scoreDocumentId,
+      class_item_id: input.classItemId,
+      method: input.method,
+      params: input.params as unknown as never,
+      created_by: user.id,
+    })
+    .select('id')
+    .single();
+  if (tmErr || !tmRow) return { error: tmErr?.message ?? 'Insert failed' };
+
+  // 2. Insert waypoints.
+  const waypointRows = sorted.map((w) => ({
+    time_map_id: tmRow.id,
+    musical_position_qn: w.musicalPositionQN,
+    video_time_seconds: w.videoTimeSeconds,
+    measure_number: w.measureNumber,
+    beat_in_measure: w.beatInMeasure,
+  }));
+  const { error: wpErr } = await supabase
+    .from('score_time_waypoints')
+    .insert(waypointRows);
+  if (wpErr) {
+    await supabase.from('score_time_maps').delete().eq('id', tmRow.id);
+    return { error: wpErr.message };
+  }
+
+  // 3. Optionally point the class_item at this new map.
+  if (input.makeActive ?? true) {
+    const { error: linkErr } = await supabase
+      .from('class_items')
+      .update({ active_time_map_id: tmRow.id })
+      .eq('id', input.classItemId);
+    if (linkErr) return { error: linkErr.message };
+  }
+
+  revalidatePath('/dashboard');
+  return { timeMapId: tmRow.id };
+}
+
 export async function detachScoreFromClassItem(
   classItemId: string
 ): Promise<{ success?: true; error?: string }> {
