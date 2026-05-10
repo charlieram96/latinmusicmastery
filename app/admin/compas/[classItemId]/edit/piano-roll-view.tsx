@@ -74,15 +74,33 @@ export function PianoRollView({
   const [hoverCell, setHoverCell] = useState<{ midi: number; measureIndex: number; qn: number } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // Live drag state — while dragging, we render the note at the cursor's
+  // current pitch but only commit the change to the model on release.
+  const [dragging, setDragging] = useState<{
+    measureIndex: number;
+    eventIndex: number;
+    originalMidi: number;
+    currentMidi: number;
+    pointerId: number;
+  } | null>(null);
+
   const { notes, measureWidth, totalCells, totalRows } = useMemo(() => {
     return computeRenderable(score, activeTrackIndex);
   }, [score, activeTrackIndex]);
 
-  // Delete the selected event on Delete/Backspace.
+  // Keyboard: Delete/Backspace removes the selection; Esc clears it.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (!selected) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLSelectElement) return;
+      if (e.key === 'Escape') {
+        if (selected) {
+          e.preventDefault();
+          setSelected(null);
+        }
+        return;
+      }
+      if (!selected) return;
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         dispatch({
@@ -321,27 +339,84 @@ export function PianoRollView({
             />
           )}
 
-          {/* Notes */}
+          {/* Notes — pointer events on the wrapper g implement
+              click-to-select + vertical drag-to-pitch-change. The model
+              isn't mutated until pointerup so the undo stack stays sane.
+              While dragging, we render at the live midi instead of the
+              stored value. */}
           {notes.map((n) => {
             const isSelected =
               selected?.measureIndex === n.measureIndex &&
               selected?.eventIndex === n.eventIndex;
+            const isDragging =
+              dragging?.measureIndex === n.measureIndex &&
+              dragging?.eventIndex === n.eventIndex;
+            const renderMidi = isDragging ? dragging!.currentMidi : n.midi;
             const x =
               KEY_LABEL_WIDTH +
               n.measureIndex * measureWidth +
               (n.startQNInMeasure / CELL_QN) * CELL_WIDTH;
-            const y = HEADER_HEIGHT + (PITCH_TOP_MIDI - n.midi) * ROW_HEIGHT;
+            const y = HEADER_HEIGHT + (PITCH_TOP_MIDI - renderMidi) * ROW_HEIGHT;
             const w = Math.max(CELL_WIDTH * 0.85, (n.durationQN / CELL_QN) * CELL_WIDTH - 2);
+
             return (
               <g
                 key={`note-${n.measureIndex}-${n.eventIndex}-${n.midi}`}
-                style={{ cursor: 'pointer' }}
-                onClick={(e) => {
+                style={{ cursor: 'grab' }}
+                onPointerDown={(e) => {
                   e.stopPropagation();
+                  // Select on press so click-without-drag still selects.
                   setSelected({
                     measureIndex: n.measureIndex,
                     eventIndex: n.eventIndex,
                   });
+                  setDragging({
+                    measureIndex: n.measureIndex,
+                    eventIndex: n.eventIndex,
+                    originalMidi: n.midi,
+                    currentMidi: n.midi,
+                    pointerId: e.pointerId,
+                  });
+                  (e.currentTarget as SVGGElement).setPointerCapture(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  if (!dragging || dragging.pointerId !== e.pointerId) return;
+                  if (
+                    dragging.measureIndex !== n.measureIndex ||
+                    dragging.eventIndex !== n.eventIndex
+                  )
+                    return;
+                  const svg = (e.currentTarget as SVGGElement).ownerSVGElement;
+                  if (!svg) return;
+                  const rect = svg.getBoundingClientRect();
+                  const cursorY = e.clientY - rect.top;
+                  const row = Math.round((cursorY - HEADER_HEIGHT) / ROW_HEIGHT);
+                  const newMidi = clamp(PITCH_TOP_MIDI - row, PITCH_BOTTOM_MIDI, PITCH_TOP_MIDI);
+                  if (newMidi !== dragging.currentMidi) {
+                    setDragging({ ...dragging, currentMidi: newMidi });
+                  }
+                }}
+                onPointerUp={(e) => {
+                  if (!dragging || dragging.pointerId !== e.pointerId) return;
+                  try {
+                    (e.currentTarget as SVGGElement).releasePointerCapture(e.pointerId);
+                  } catch {
+                    /* noop */
+                  }
+                  if (dragging.currentMidi !== dragging.originalMidi) {
+                    dispatch({
+                      type: 'set-event-pitch',
+                      trackIndex: activeTrackIndex,
+                      measureIndex: dragging.measureIndex,
+                      eventIndex: dragging.eventIndex,
+                      midi: dragging.currentMidi,
+                    });
+                  }
+                  setDragging(null);
+                }}
+                onPointerCancel={(e) => {
+                  if (dragging?.pointerId !== e.pointerId) return;
+                  setDragging(null);
                 }}
               >
                 <rect
@@ -372,8 +447,10 @@ export function PianoRollView({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Click a cell to add a note at the selected duration. Click an existing
-        note to select it; press <kbd className="px-1 py-0.5 rounded bg-muted text-foreground text-[11px]">Delete</kbd> to remove it.
+        Click a cell to add a note at the selected duration. Click + drag a
+        note vertically to change its pitch. Press{' '}
+        <kbd className="px-1 py-0.5 rounded bg-muted text-foreground text-[11px]">Delete</kbd> to remove the selected note,{' '}
+        <kbd className="px-1 py-0.5 rounded bg-muted text-foreground text-[11px]">Esc</kbd> to clear the selection.
       </p>
 
       {/* Add measure */}
@@ -439,6 +516,10 @@ function computeRenderable(
 function isBlackKey(midi: number): boolean {
   const pc = ((midi % 12) + 12) % 12;
   return pc === 1 || pc === 3 || pc === 6 || pc === 8 || pc === 10;
+}
+
+function clamp(n: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, n));
 }
 
 function midiToName(midi: number): string {

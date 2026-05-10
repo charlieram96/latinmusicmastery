@@ -127,35 +127,50 @@ export function StaffEditView({
     });
   };
 
-  // Click on staff → either select an existing note at the clicked beat or
-  // append a new note to the clicked measure.
+  // Click on staff → either select the closest existing non-rest event or
+  // append a new note to the clicked measure. We use a forgiving "closest
+  // event within tolerance" algorithm rather than strict range membership
+  // so clicks landing right on an onset reliably select.
   const handleClick = (target: { qn: number; measure: number; beat: number }) => {
     if (!track) return;
-    // Find the measure containing the clicked qn.
     const measureIndex = track.measures.findIndex((m) => m.number === target.measure);
     if (measureIndex === -1) return;
     const measure = track.measures[measureIndex];
-    // Compute qn-within-measure to find a hit.
     const measureStartQN = measureBeatToQN(track, score, target.measure, 1);
     if (measureStartQN === null) return;
     const qnInMeasure = target.qn - measureStartQN;
 
-    // Walk events to see if the click falls inside one.
+    // Find the closest non-rest event by distance to its time range.
+    let bestIdx = -1;
+    let bestDist = Infinity;
     let walker = 0;
     for (let i = 0; i < measure.voices[0].events.length; i++) {
       const ev = measure.voices[0].events[i];
-      const span = ev.durationQN;
-      if (qnInMeasure >= walker && qnInMeasure < walker + span) {
-        if (ev.kind !== 'rest') {
-          setSelected({ measureIndex, eventIndex: i });
-          return;
+      if (ev.kind !== 'rest') {
+        // Distance from the click to the event's [walker, walker+span] range.
+        const distFromRange =
+          qnInMeasure < walker
+            ? walker - qnInMeasure
+            : qnInMeasure > walker + ev.durationQN
+              ? qnInMeasure - (walker + ev.durationQN)
+              : 0;
+        if (distFromRange < bestDist) {
+          bestDist = distFromRange;
+          bestIdx = i;
         }
-        break;
       }
-      walker += span;
+      walker += ev.durationQN;
     }
 
-    // No hit — append new note.
+    // Quarter-note tolerance — clicks that land within ~1 beat of an
+    // existing note count as a select; further away counts as "empty
+    // space, append a new note".
+    const TOLERANCE_QN = 1;
+    if (bestIdx >= 0 && bestDist <= TOLERANCE_QN) {
+      setSelected({ measureIndex, eventIndex: bestIdx });
+      return;
+    }
+
     dispatch({
       type: 'add-note',
       trackIndex: activeTrackIndex,
@@ -166,12 +181,19 @@ export function StaffEditView({
     setSelected(null);
   };
 
-  // Delete key removes selected event.
+  // Keyboard: Delete/Backspace removes the selection, Esc clears it.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (!selected) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.target instanceof HTMLSelectElement) return;
+      if (e.key === 'Escape') {
+        if (selected) {
+          e.preventDefault();
+          setSelected(null);
+        }
+        return;
+      }
+      if (!selected) return;
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         dispatch({
