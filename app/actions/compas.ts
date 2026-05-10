@@ -240,3 +240,123 @@ export async function deleteClip(
   revalidatePath('/dashboard');
   return { success: true };
 }
+
+// ============================================
+// M6 — admin import (MusicXML / MIDI)
+// ============================================
+
+import { parseScoreDocument } from '@/components/compas/shared/score-model/serialization';
+
+export interface AttachScoreFromImportInput {
+  classItemId: string;
+  /** A ScoreDocument produced by one of the parsers (already validated client-side; we re-validate here). */
+  scoreDocument: ScoreDocument;
+  /** Original filename — used as the document's title fallback and for audit. */
+  sourceFilename?: string;
+}
+
+export interface AttachScoreFromImportResult {
+  scoreDocumentId?: string;
+  error?: string;
+}
+
+export async function attachScoreFromImport(
+  input: AttachScoreFromImportInput
+): Promise<AttachScoreFromImportResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single();
+  if (!profile?.is_admin) return { error: 'Admin only' };
+
+  // Re-validate at the storage boundary. A bad/corrupt payload from the
+  // browser shouldn't be able to insert junk JSON into the DB.
+  let parsed: ScoreDocument;
+  try {
+    parsed = parseScoreDocument(input.scoreDocument as unknown);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'invalid score document';
+    return { error: `Score validation failed: ${message}` };
+  }
+
+  // 1. Insert the score_documents row.
+  const { data: doc, error: docErr } = await supabase
+    .from('score_documents')
+    .insert({
+      title: parsed.title,
+      composer: parsed.composer ?? null,
+      source_format: parsed.sourceFormat,
+      parsed_score: parsed as unknown as never,
+      schema_version: parsed.schemaVersion,
+      created_by: user.id,
+    })
+    .select('id')
+    .single();
+
+  if (docErr || !doc) return { error: docErr?.message ?? 'Insert failed' };
+
+  // 2. Insert score_tracks rows mirroring parsed_score.tracks[].
+  if (parsed.tracks.length > 0) {
+    const trackRows = parsed.tracks.map((t) => ({
+      score_document_id: doc.id,
+      track_index: t.index,
+      instrument: t.instrument,
+      display_name: t.displayName,
+      tuning: t.tuning as unknown as never,
+      string_multiplicity: t.stringMultiplicity,
+      channel: t.channel,
+      default_view: t.defaultView,
+    }));
+    const { error: trackErr } = await supabase
+      .from('score_tracks')
+      .insert(trackRows);
+    if (trackErr) {
+      // Best-effort cleanup so we don't leave an orphan score_document row.
+      await supabase.from('score_documents').delete().eq('id', doc.id);
+      return { error: trackErr.message };
+    }
+  }
+
+  // 3. Wire to the class_item.
+  const { error: linkErr } = await supabase
+    .from('class_items')
+    .update({ score_document_id: doc.id })
+    .eq('id', input.classItemId);
+  if (linkErr) return { error: linkErr.message };
+
+  revalidatePath('/dashboard');
+  return { scoreDocumentId: doc.id };
+}
+
+export async function detachScoreFromClassItem(
+  classItemId: string
+): Promise<{ success?: true; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single();
+  if (!profile?.is_admin) return { error: 'Admin only' };
+
+  const { error } = await supabase
+    .from('class_items')
+    .update({ score_document_id: null, active_time_map_id: null })
+    .eq('id', classItemId);
+
+  if (error) return { error: error.message };
+  revalidatePath('/dashboard');
+  return { success: true };
+}

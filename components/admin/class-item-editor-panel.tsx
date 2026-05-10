@@ -25,6 +25,7 @@ import { VideoUpload } from './video-upload'
 import { QuizBuilder } from './quiz-builder'
 import { JamSessionEditor } from './jam-session-editor'
 import { TiptapEditor } from './tiptap-editor'
+import { CompasScoreAttach } from './compas-score-attach'
 import { ClassItem, ClassItemType, QuestionType } from '@/types/modules'
 import { updateClassItem } from '@/app/actions/course-builder'
 
@@ -161,20 +162,35 @@ export function ClassItemEditorPanel({
                   setFormData({ ...formData, video_url: url })
                 }
               />
-              <div className="grid gap-2">
-                <Label htmlFor="soundslice-url">Soundslice Embed URL (optional)</Label>
-                <Input
-                  id="soundslice-url"
-                  value={formData.soundslice_embed_url || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, soundslice_embed_url: e.target.value })
-                  }
-                  placeholder="https://www.soundslice.com/slices/..."
-                />
-                <p className="text-xs text-muted-foreground">
-                  Add a Soundslice embed for interactive sheet music/tabs
-                </p>
-              </div>
+
+              <CompasScoreAttach
+                classItemId={item.id}
+                currentScoreDocumentId={
+                  (item as ClassItem & { score_document_id?: string | null })
+                    .score_document_id ?? null
+                }
+              />
+
+              <details className="group">
+                <summary className="text-xs uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition">
+                  Legacy Soundslice URL
+                </summary>
+                <div className="grid gap-2 mt-3">
+                  <Label htmlFor="soundslice-url">Soundslice Embed URL</Label>
+                  <Input
+                    id="soundslice-url"
+                    value={formData.soundslice_embed_url || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, soundslice_embed_url: e.target.value })
+                    }
+                    placeholder="https://www.soundslice.com/slices/..."
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Used as a fallback when no Compás score is attached. New
+                    content should use the Compás Score importer above.
+                  </p>
+                </div>
+              </details>
             </div>
           )}
 
