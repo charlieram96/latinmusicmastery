@@ -194,10 +194,18 @@ class StaffRendererImpl implements ScoreRenderer {
     if (svg) {
       themeVexflowSvg(svg);
       // viewBox keeps drawn coordinates in model space while the SVG itself
-      // is rendered at SCALE'd pixel dimensions.
+      // is rendered at SCALE'd pixel dimensions. We also clear VexFlow's
+      // inline style and set both the attribute and CSS dimensions to the
+      // scaled size — VexFlow sets `style.width/height` during resize() and
+      // inline style otherwise overrides the attribute.
+      const scaledWidth = this.totalWidth * SCALE;
+      const scaledHeight = stageHeight * SCALE;
       svg.setAttribute('viewBox', `0 0 ${this.totalWidth} ${stageHeight}`);
-      svg.setAttribute('width', `${this.totalWidth * SCALE}`);
-      svg.setAttribute('height', `${stageHeight * SCALE}`);
+      svg.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+      svg.setAttribute('width', `${scaledWidth}`);
+      svg.setAttribute('height', `${scaledHeight}`);
+      svg.style.width = `${scaledWidth}px`;
+      svg.style.height = `${scaledHeight}px`;
       svg.style.cursor = 'pointer';
       this.clickHandler = (event: PointerEvent) => {
         const rect = svg.getBoundingClientRect();
