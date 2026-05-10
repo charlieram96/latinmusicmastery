@@ -250,6 +250,12 @@
   fill: hsl(var(--primary)) !important;
   stroke: hsl(var(--primary)) !important;
 }
+/* Click-capture background — transparent so it doesn't paint, but it
+   needs to override the !important currentColor rule. */
+.compas-notation svg [data-compas-staff-bg] {
+  fill: transparent !important;
+  stroke: none !important;
+}
 .compas-notation .compas-notation-muted {
   color: hsl(var(--compas-notation-muted));
 }

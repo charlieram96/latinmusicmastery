@@ -126,14 +126,14 @@ export function CompasPlayer({
     setViewMs(0);
   }, [activeTrackIndex]);
 
-  // Click-on-notation → seek video.
+  // Click-on-staff → seek the video. Importantly we do NOT re-engage
+  // follow here: the user wants the orange line to land at the click
+  // position, not the staff to jump so the click position becomes the
+  // anchor. If they want follow back, they hit the Follow button.
   const handleSeek = (target: SeekTarget) => {
     if (!timeMap) return;
     const seconds = timeMap.toVideoTime(target.qn);
     clock.seek(seconds);
-    // A click also re-engages follow — the user clearly wants to play
-    // from there.
-    setIsFollowing(true);
   };
 
   // Drag-on-staff → set A/B and arm the loop.

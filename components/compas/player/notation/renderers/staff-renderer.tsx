@@ -296,12 +296,27 @@ class StaffRendererImpl implements ScoreRenderer {
       (svg.style as CSSStyleDeclaration & { webkitUserSelect?: string }).webkitUserSelect = 'none';
       svg.style.touchAction = 'none';
 
+      const NS = 'http://www.w3.org/2000/svg';
+
+      // A transparent background rect that fills the entire SVG so the
+      // user's clicks on empty space (between/above/below notes) still
+      // produce pointer events. SVG only fires events on painted elements
+      // by default, so without this clicks would only register on note
+      // glyphs themselves.
+      const bg = document.createElementNS(NS, 'rect');
+      bg.setAttribute('data-compas-staff-bg', 'true');
+      bg.setAttribute('x', '0');
+      bg.setAttribute('y', '0');
+      bg.setAttribute('width', `${this.totalWidth}`);
+      bg.setAttribute('height', `${stageHeight}`);
+      bg.setAttribute('fill', 'transparent');
+      svg.insertBefore(bg, svg.firstChild);
+
       // A drag-preview overlay rect inside the SVG. We reuse the SVG's
       // model coordinate system so the rect lives in the same space as
       // the notes and translates with the staff. The data attribute opts
       // out of the global "force currentColor" CSS rule so the brand fill
       // survives.
-      const NS = 'http://www.w3.org/2000/svg';
       const overlay = document.createElementNS(NS, 'rect');
       overlay.setAttribute('data-compas-drag-overlay', 'true');
       overlay.setAttribute('y', `${STAVE_TOP - 4}`);
