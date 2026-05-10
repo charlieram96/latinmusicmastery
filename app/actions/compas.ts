@@ -434,6 +434,122 @@ export async function publishTimeMap(
 }
 
 // ============================================
+// M8 — blank score creation (author from scratch)
+// ============================================
+
+export async function createBlankScoreForClassItem(input: {
+  classItemId: string;
+  title?: string;
+}): Promise<{ scoreDocumentId?: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single();
+  if (!profile?.is_admin) return { error: 'Admin only' };
+
+  // Check the class item exists and isn't already attached.
+  const { data: classItem } = await supabase
+    .from('class_items')
+    .select('id, score_document_id, title')
+    .eq('id', input.classItemId)
+    .single();
+  if (!classItem) return { error: 'Class item not found' };
+  if (classItem.score_document_id) {
+    return { error: 'A score is already attached. Detach it first.' };
+  }
+
+  // Default-shape empty score: 4 bars of 4/4 at 120 BPM, single staff track,
+  // each measure holding one whole-note rest (durationQN = 4).
+  const blank: ScoreDocument = {
+    schemaVersion: 1,
+    title: input.title?.trim() || classItem.title || 'New score',
+    sourceFormat: 'native',
+    initialTempo: 120,
+    initialTimeSignature: [4, 4],
+    initialKeyFifths: 0,
+    tracks: [
+      {
+        index: 0,
+        instrument: 'staff',
+        displayName: 'Staff',
+        tuning: null,
+        stringMultiplicity: 1,
+        channel: null,
+        defaultView: 'staff',
+        measures: [1, 2, 3, 4].map((number) => ({
+          number,
+          voices: [
+            {
+              number: 1,
+              events: [{ kind: 'rest' as const, durationQN: 4 }],
+            },
+          ],
+        })),
+      },
+    ],
+  };
+
+  // Re-validate so we never insert junk even from our own builder.
+  let parsed: ScoreDocument;
+  try {
+    parsed = parseScoreDocument(blank as unknown);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'invalid score document';
+    return { error: `Score validation failed: ${message}` };
+  }
+
+  // Insert score_documents.
+  const { data: doc, error: docErr } = await supabase
+    .from('score_documents')
+    .insert({
+      title: parsed.title,
+      composer: parsed.composer ?? null,
+      source_format: parsed.sourceFormat,
+      parsed_score: parsed as unknown as never,
+      schema_version: parsed.schemaVersion,
+      created_by: user.id,
+    })
+    .select('id')
+    .single();
+  if (docErr || !doc) return { error: docErr?.message ?? 'Insert failed' };
+
+  // Insert score_tracks.
+  const { error: trackErr } = await supabase.from('score_tracks').insert(
+    parsed.tracks.map((t) => ({
+      score_document_id: doc.id,
+      track_index: t.index,
+      instrument: t.instrument,
+      display_name: t.displayName,
+      tuning: t.tuning as unknown as never,
+      string_multiplicity: t.stringMultiplicity,
+      channel: t.channel,
+      default_view: t.defaultView,
+    }))
+  );
+  if (trackErr) {
+    await supabase.from('score_documents').delete().eq('id', doc.id);
+    return { error: trackErr.message };
+  }
+
+  // Attach to the class item.
+  const { error: linkErr } = await supabase
+    .from('class_items')
+    .update({ score_document_id: doc.id })
+    .eq('id', input.classItemId);
+  if (linkErr) return { error: linkErr.message };
+
+  revalidatePath('/dashboard');
+  return { scoreDocumentId: doc.id };
+}
+
+// ============================================
 // M8 — score document save (visual editor)
 // ============================================
 

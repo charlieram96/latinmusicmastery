@@ -6,11 +6,13 @@
 // action that persists it. No raw upload bucket is needed in v1 — the
 // canonical JSON IS the score.
 
-import { CheckCircle2, FileMusic, Loader2, Pencil, Settings2, Upload, X } from 'lucide-react';
+import { CheckCircle2, FileMusic, FilePlus, Loader2, Pencil, Settings2, Upload, X } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import {
   attachScoreFromImport,
+  createBlankScoreForClassItem,
   detachScoreFromClassItem,
 } from '@/app/actions/compas';
 import { parseMidi } from '@/lib/compas/parsers/midi';
@@ -36,12 +38,27 @@ export function CompasScoreAttach({
   currentScoreDocumentId,
   onChanged,
 }: CompasScoreAttachProps) {
+  const router = useRouter();
   const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
   const [hasAttached, setHasAttached] = useState(currentScoreDocumentId !== null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  const handleCreateBlank = () => {
+    setError(null);
+    startTransition(async () => {
+      const result = await createBlankScoreForClassItem({ classItemId });
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      onChanged?.();
+      // Hop straight to the editor so the admin can start authoring.
+      router.push(`/admin/compas/${classItemId}/edit`);
+    });
+  };
 
   const handleFile = async (file: File) => {
     setError(null);
@@ -204,45 +221,66 @@ export function CompasScoreAttach({
       )}
 
       {!hasAttached && !importSummary && (
-        <label
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragOver(true);
-          }}
-          onDragLeave={() => setIsDragOver(false)}
-          onDrop={onDrop}
-          className={`block cursor-pointer rounded-md border-2 border-dashed transition px-4 py-6 text-center ${
-            isDragOver
-              ? 'border-primary bg-primary/5'
-              : 'border-border hover:border-primary/50'
-          } ${busy ? 'opacity-60 pointer-events-none' : ''}`}
-        >
-          <input
-            type="file"
-            accept=".mid,.midi,.musicxml,.xml,.mxl"
-            className="hidden"
-            disabled={busy}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void handleFile(f);
+        <div className="space-y-2">
+          <label
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragOver(true);
             }}
-          />
-          <div className="flex flex-col items-center gap-2 text-sm">
-            {busy ? (
-              <Loader2 className="w-5 h-5 text-primary animate-spin" />
-            ) : (
-              <Upload className="w-5 h-5 text-muted-foreground" />
-            )}
-            <div>
-              <span className="font-medium">
-                {busy ? 'Importing…' : 'Drop a score file or click to browse'}
-              </span>
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={onDrop}
+            className={`block cursor-pointer rounded-md border-2 border-dashed transition px-4 py-6 text-center ${
+              isDragOver
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50'
+            } ${busy ? 'opacity-60 pointer-events-none' : ''}`}
+          >
+            <input
+              type="file"
+              accept=".mid,.midi,.musicxml,.xml,.mxl"
+              className="hidden"
+              disabled={busy}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void handleFile(f);
+              }}
+            />
+            <div className="flex flex-col items-center gap-2 text-sm">
+              {busy ? (
+                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              ) : (
+                <Upload className="w-5 h-5 text-muted-foreground" />
+              )}
+              <div>
+                <span className="font-medium">
+                  {busy ? 'Working…' : 'Drop a score file or click to browse'}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                MIDI (.mid, .midi) or MusicXML (.musicxml, .xml, .mxl)
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              MIDI (.mid, .midi) or MusicXML (.musicxml, .xml, .mxl)
-            </p>
+          </label>
+
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex-1 h-px bg-border" />
+            <span>or</span>
+            <span className="flex-1 h-px bg-border" />
           </div>
-        </label>
+
+          <button
+            type="button"
+            onClick={handleCreateBlank}
+            disabled={busy}
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition text-sm"
+          >
+            <FilePlus className="w-4 h-4" />
+            Create blank score and edit
+          </button>
+          <p className="text-[11px] text-muted-foreground text-center">
+            Starts with 4 bars of 4/4 at 120 BPM, ready to author.
+          </p>
+        </div>
       )}
 
       {error && (
