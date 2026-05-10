@@ -294,12 +294,17 @@ class StaffRendererImpl implements ScoreRenderer {
 
       // A drag-preview overlay rect inside the SVG. We reuse the SVG's
       // model coordinate system so the rect lives in the same space as
-      // the notes and translates with the staff.
+      // the notes and translates with the staff. The data attribute opts
+      // out of the global "force currentColor" CSS rule so the brand fill
+      // survives.
       const NS = 'http://www.w3.org/2000/svg';
       const overlay = document.createElementNS(NS, 'rect');
+      overlay.setAttribute('data-compas-drag-overlay', 'true');
       overlay.setAttribute('y', `${STAVE_TOP - 4}`);
       overlay.setAttribute('height', `${STAVE_HEIGHT + 8}`);
       overlay.setAttribute('fill', 'hsl(var(--primary))');
+      overlay.setAttribute('stroke', 'hsl(var(--primary))');
+      overlay.setAttribute('stroke-width', '1.5');
       overlay.setAttribute('opacity', '0');
       overlay.setAttribute('pointer-events', 'none');
       svg.appendChild(overlay);
@@ -401,7 +406,7 @@ class StaffRendererImpl implements ScoreRenderer {
     const b = Math.max(this.dragStartModelX, this.dragCurrentModelX);
     this.dragOverlayEl.setAttribute('x', `${a}`);
     this.dragOverlayEl.setAttribute('width', `${Math.max(b - a, 1)}`);
-    this.dragOverlayEl.setAttribute('opacity', '0.18');
+    this.dragOverlayEl.setAttribute('opacity', '0.28');
   }
 
   private hideDragOverlay(): void {

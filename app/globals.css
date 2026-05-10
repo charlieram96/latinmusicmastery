@@ -244,6 +244,12 @@
 .compas-notation svg [stroke="none"] {
   stroke: none !important;
 }
+/* Drag-selection preview rect opts out so its brand fill survives the
+   "force currentColor" rule above. */
+.compas-notation svg [data-compas-drag-overlay] {
+  fill: hsl(var(--primary)) !important;
+  stroke: hsl(var(--primary)) !important;
+}
 .compas-notation .compas-notation-muted {
   color: hsl(var(--compas-notation-muted));
 }
