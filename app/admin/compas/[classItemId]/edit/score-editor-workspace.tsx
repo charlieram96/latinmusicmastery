@@ -19,7 +19,11 @@ import {
 } from '@/components/compas/player/compas-player';
 import { TrackEditor } from './track-editor';
 import { ScoreMetaEditor } from './score-meta-editor';
+import { PianoRollView } from './piano-roll-view';
+import { StaffEditView } from './staff-edit-view';
 import type { ScoreDocument } from '@/components/compas/shared/score-model/types';
+
+type EditorTab = 'staff' | 'piano-roll' | 'list';
 
 const AUTOSAVE_INTERVAL_MS = 5000;
 
@@ -45,6 +49,7 @@ export function ScoreEditorWorkspace({
   const editor = useEditor(initialScore);
   const { state, dispatch, undo, redo, canUndo, canRedo, markClean } = editor;
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
+  const [editorTab, setEditorTab] = useState<EditorTab>('staff');
 
   const [savingState, setSavingState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -175,12 +180,76 @@ export function ScoreEditorWorkspace({
 
         <ScoreMetaEditor score={state.score} dispatch={dispatch} />
 
-        <TrackEditor
-          score={state.score}
-          activeTrackIndex={activeTrackIndex}
-          onSelectTrack={setActiveTrackIndex}
-          dispatch={dispatch}
-        />
+        {/* Track tabs (always visible — switching tracks belongs above the
+            view-mode tabs since it changes what the views render). */}
+        {state.score.tracks.length > 1 && (
+          <div className="flex items-center gap-1 flex-wrap">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground self-center mr-2">
+              Track
+            </span>
+            {state.score.tracks.map((t, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTrackIndex(i)}
+                className={`px-3 py-1.5 rounded-md text-sm transition ${
+                  i === activeTrackIndex
+                    ? 'bg-secondary text-secondary-foreground'
+                    : 'hover:bg-muted'
+                }`}
+              >
+                {t.displayName}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* View mode tabs */}
+        <div className="flex items-center gap-1 border-b border-border">
+          {(
+            [
+              { id: 'staff' as const, label: 'Staff' },
+              { id: 'piano-roll' as const, label: 'Piano-roll' },
+              { id: 'list' as const, label: 'List' },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setEditorTab(t.id)}
+              className={`px-4 py-2 text-sm border-b-2 -mb-px transition ${
+                editorTab === t.id
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <section className="bg-card border border-border rounded-lg p-5">
+          {editorTab === 'staff' && (
+            <StaffEditView
+              score={state.score}
+              activeTrackIndex={activeTrackIndex}
+              dispatch={dispatch}
+            />
+          )}
+          {editorTab === 'piano-roll' && (
+            <PianoRollView
+              score={state.score}
+              activeTrackIndex={activeTrackIndex}
+              dispatch={dispatch}
+            />
+          )}
+          {editorTab === 'list' && (
+            <TrackEditor
+              score={state.score}
+              activeTrackIndex={activeTrackIndex}
+              onSelectTrack={setActiveTrackIndex}
+              dispatch={dispatch}
+            />
+          )}
+        </section>
 
         <section className="space-y-2">
           <h3 className="text-sm font-medium">Live preview</h3>
