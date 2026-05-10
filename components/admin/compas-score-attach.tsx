@@ -6,7 +6,7 @@
 // action that persists it. No raw upload bucket is needed in v1 — the
 // canonical JSON IS the score.
 
-import { CheckCircle2, FileMusic, Loader2, Settings2, Upload, X } from 'lucide-react';
+import { CheckCircle2, FileMusic, Loader2, Pencil, Settings2, Upload, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import {
@@ -141,13 +141,22 @@ export function CompasScoreAttach({
               Replace / detach
             </button>
           </div>
-          <Link
-            href={`/admin/compas/${classItemId}/sync`}
-            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-          >
-            <Settings2 className="w-3.5 h-3.5" />
-            Open sync workspace
-          </Link>
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <Link
+              href={`/admin/compas/${classItemId}/edit`}
+              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Edit score
+            </Link>
+            <Link
+              href={`/admin/compas/${classItemId}/sync`}
+              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              Open sync workspace
+            </Link>
+          </div>
         </div>
       )}
 
@@ -175,13 +184,22 @@ export function CompasScoreAttach({
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
-          <Link
-            href={`/admin/compas/${classItemId}/sync`}
-            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-          >
-            <Settings2 className="w-3.5 h-3.5" />
-            Open sync workspace
-          </Link>
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <Link
+              href={`/admin/compas/${classItemId}/edit`}
+              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Edit score
+            </Link>
+            <Link
+              href={`/admin/compas/${classItemId}/sync`}
+              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              Open sync workspace
+            </Link>
+          </div>
         </div>
       )}
 
