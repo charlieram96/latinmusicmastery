@@ -235,10 +235,18 @@
 .scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--muted)) transparent; }
 
 /* Compás notation — make VexFlow SVG follow the theme.
-   The renderer post-processes its SVG to replace explicit black fills/strokes
-   with currentColor; we set color on the wrapper so the cascade reaches VexFlow. */
+   VexFlow renders with explicit black fills/strokes; without intervention they
+   stay black even in dark mode. The wrapper sets a theme color, and the rules
+   below force every drawn fill/stroke (other than transparent ones, which are
+   used for open noteheads and similar) to inherit it via currentColor. */
 .compas-notation {
   color: hsl(var(--compas-notation));
+}
+.compas-notation svg [fill]:not([fill="none"]):not([fill="transparent"]):not([fill^="hsl"]):not([fill^="var"]) {
+  fill: currentColor;
+}
+.compas-notation svg [stroke]:not([stroke="none"]):not([stroke="transparent"]):not([stroke^="hsl"]):not([stroke^="var"]) {
+  stroke: currentColor;
 }
 .compas-notation .compas-notation-muted {
   color: hsl(var(--compas-notation-muted));
