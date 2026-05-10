@@ -107,6 +107,20 @@ export function CompasPlayer({
     return qnToTrackMs(activeTrack, score, qn);
   }, [clock.currentSeconds, timeMap, activeTrack, score]);
 
+  // Loop markers in the staff are placed at the score-internal ms
+  // corresponding to the (video-time) loop endpoints — same translation
+  // path the playhead takes.
+  const loopAMs = useMemo(() => {
+    if (!timeMap || clock.loopA === null) return null;
+    const qn = timeMap.toMusicalPosition(clock.loopA);
+    return qnToTrackMs(activeTrack, score, qn);
+  }, [timeMap, clock.loopA, activeTrack, score]);
+  const loopBMs = useMemo(() => {
+    if (!timeMap || clock.loopB === null) return null;
+    const qn = timeMap.toMusicalPosition(clock.loopB);
+    return qnToTrackMs(activeTrack, score, qn);
+  }, [timeMap, clock.loopB, activeTrack, score]);
+
   // Independent staff view position. When isFollowing is true, the view
   // tracks playback (cursorMs); when false, viewMs is held wherever the
   // user dragged the scroll bar last.
@@ -231,6 +245,8 @@ export function CompasPlayer({
           trackIndex={activeTrackIndex}
           currentMs={cursorMs}
           viewMs={viewMs}
+          loopAMs={loopAMs}
+          loopBMs={loopBMs}
           onSeek={handleSeek}
           onSelectRange={handleSelectRange}
           onDurationKnown={setTrackDurationMs}

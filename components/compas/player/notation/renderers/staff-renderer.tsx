@@ -88,6 +88,10 @@ class StaffRendererImpl implements ScoreRenderer {
   private rendererDiv: HTMLDivElement | null = null;
   private cursorEl: HTMLDivElement | null = null;
   private dragOverlayEl: SVGRectElement | null = null;
+  private aMarkerLineEl: SVGLineElement | null = null;
+  private aMarkerLabelEl: SVGTextElement | null = null;
+  private bMarkerLineEl: SVGLineElement | null = null;
+  private bMarkerLabelEl: SVGTextElement | null = null;
   private hits: NoteHit[] = [];
   private seekListeners: Set<SeekListener> = new Set();
   private rangeListeners: Set<RangeListener> = new Set();
@@ -336,6 +340,43 @@ class StaffRendererImpl implements ScoreRenderer {
       svg.appendChild(overlay);
       this.dragOverlayEl = overlay;
 
+      // A/B loop markers — vertical dashed lines in the gold-highlight
+      // color so they're clearly distinct from the orange playhead. Both
+      // line and label live in the SVG so they translate with the staff
+      // when the user scrolls.
+      const buildMarker = (label: 'A' | 'B') => {
+        const line = document.createElementNS(NS, 'line');
+        line.setAttribute('data-compas-loop-marker', label);
+        line.setAttribute('y1', `${STAVE_TOP - 14}`);
+        line.setAttribute('y2', `${STAVE_TOP + STAVE_HEIGHT + 8}`);
+        line.setAttribute('stroke', 'hsl(var(--gold-highlight))');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-dasharray', '5 4');
+        line.setAttribute('opacity', '0');
+        line.setAttribute('pointer-events', 'none');
+        svg.appendChild(line);
+
+        const text = document.createElementNS(NS, 'text');
+        text.setAttribute('data-compas-loop-marker', label);
+        text.setAttribute('y', `${STAVE_TOP - 18}`);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-size', '14');
+        text.setAttribute('font-family', 'Inter, system-ui, sans-serif');
+        text.setAttribute('font-weight', '700');
+        text.setAttribute('fill', 'hsl(var(--gold-highlight))');
+        text.setAttribute('opacity', '0');
+        text.setAttribute('pointer-events', 'none');
+        text.textContent = label;
+        svg.appendChild(text);
+        return { line, text };
+      };
+      const a = buildMarker('A');
+      const b = buildMarker('B');
+      this.aMarkerLineEl = a.line;
+      this.aMarkerLabelEl = a.text;
+      this.bMarkerLineEl = b.line;
+      this.bMarkerLabelEl = b.text;
+
       // Click-or-drag pointer handlers attach to the rendererDiv (the
       // wrapper) rather than the inner SVG. This guarantees clicks on
       // empty staff space register: a div is always pointer-event-active
@@ -463,6 +504,35 @@ class StaffRendererImpl implements ScoreRenderer {
     return this.totalDurationMs;
   }
 
+  /**
+   * Position the A/B loop markers on the staff. Pass null for either to
+   * hide that side. Coordinates are in score-internal ms; we convert to
+   * the model x via the same hits-based interpolation as the cursor.
+   */
+  setLoopMarkers(aMs: number | null, bMs: number | null): void {
+    this.placeMarker(this.aMarkerLineEl, this.aMarkerLabelEl, aMs);
+    this.placeMarker(this.bMarkerLineEl, this.bMarkerLabelEl, bMs);
+  }
+
+  private placeMarker(
+    line: SVGLineElement | null,
+    label: SVGTextElement | null,
+    ms: number | null
+  ): void {
+    if (!line || !label) return;
+    if (ms === null) {
+      line.setAttribute('opacity', '0');
+      label.setAttribute('opacity', '0');
+      return;
+    }
+    const x = this.msToCursorX(ms);
+    line.setAttribute('x1', `${x}`);
+    line.setAttribute('x2', `${x}`);
+    line.setAttribute('opacity', '0.85');
+    label.setAttribute('x', `${x}`);
+    label.setAttribute('opacity', '1');
+  }
+
   private applyLayout(): void {
     if (!this.rendererDiv || !this.cursorEl) return;
     const viewScaledX = this.msToCursorX(this.lastViewMs) * SCALE;
@@ -515,6 +585,10 @@ class StaffRendererImpl implements ScoreRenderer {
     this.rendererDiv = null;
     this.cursorEl = null;
     this.dragOverlayEl = null;
+    this.aMarkerLineEl = null;
+    this.aMarkerLabelEl = null;
+    this.bMarkerLineEl = null;
+    this.bMarkerLabelEl = null;
     this.hits = [];
     this.seekListeners.clear();
     this.rangeListeners.clear();
@@ -693,6 +767,10 @@ export interface StaffRendererProps {
   currentMs: number;
   /** Score-relative ms anchored at the cursor anchor. Defaults to currentMs (auto-follow). */
   viewMs?: number;
+  /** Score-relative ms of the loop start marker on the staff (null = hidden). */
+  loopAMs?: number | null;
+  /** Score-relative ms of the loop end marker on the staff (null = hidden). */
+  loopBMs?: number | null;
   onSeek?: (target: SeekTarget) => void;
   /** Fires when the user click-and-drags a range across the staff. */
   onSelectRange?: (range: SelectedRange) => void;
@@ -706,6 +784,8 @@ export function StaffRenderer({
   trackIndex,
   currentMs,
   viewMs,
+  loopAMs,
+  loopBMs,
   onSeek,
   onSelectRange,
   onDurationKnown,
@@ -759,6 +839,13 @@ export function StaffRenderer({
       rendererRef.current.setViewMs(viewMs ?? currentMs);
     }
   }, [viewMs, currentMs]);
+
+  useEffect(() => {
+    rendererRef.current?.setLoopMarkers(
+      loopAMs ?? null,
+      loopBMs ?? null
+    );
+  }, [loopAMs, loopBMs]);
 
   return (
     <div

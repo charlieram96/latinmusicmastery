@@ -256,6 +256,12 @@
   fill: transparent !important;
   stroke: none !important;
 }
+/* A/B loop markers — gold-highlight overrides the global currentColor
+   force so the markers stay visibly distinct from the playhead. */
+.compas-notation svg [data-compas-loop-marker] {
+  fill: hsl(var(--gold-highlight)) !important;
+  stroke: hsl(var(--gold-highlight)) !important;
+}
 .compas-notation .compas-notation-muted {
   color: hsl(var(--compas-notation-muted));
 }
