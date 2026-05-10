@@ -34,6 +34,7 @@ import type {
   SeekListener,
   SeekTarget,
 } from '@/lib/compas/renderer';
+import { themeVexflowSvg } from '@/lib/compas/svg-theme';
 
 interface NoteHit {
   qn: number;
@@ -190,6 +191,7 @@ class TabRendererImpl implements ScoreRenderer {
 
     const svg = rendererDiv.querySelector('svg');
     if (svg) {
+      themeVexflowSvg(svg);
       svg.style.cursor = 'pointer';
       this.clickHandler = (event: PointerEvent) => {
         const rect = svg.getBoundingClientRect();
@@ -400,5 +402,10 @@ export function TabRenderer({
     rendererRef.current?.setTimeMs(currentMs);
   }, [currentMs]);
 
-  return <div ref={containerRef} className={className} />;
+  return (
+    <div
+      ref={containerRef}
+      className={`compas-notation ${className ?? ''}`}
+    />
+  );
 }

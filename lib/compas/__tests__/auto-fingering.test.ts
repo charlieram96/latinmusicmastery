@@ -18,49 +18,47 @@ describe('noteNameToMidi', () => {
   });
 });
 
-describe('fingerNote — guitar', () => {
-  it('open low E (E2 = midi 40) → string 6, fret 0', () => {
+describe('fingerNote — guitar (prefers highest string with positive fret)', () => {
+  // Tuning: ["E2","A2","D3","G3","B3","E4"] = MIDI [40,45,50,55,59,64]
+  // VexFlow strings: E4=1, B3=2, G3=3, D3=4, A2=5, E2=6.
+  it('open low E (E2 = 40) → string 6 fret 0 (only option)', () => {
     expect(fingerNote('guitar', 40)).toEqual({ string: 6, fret: 0 });
   });
-  it('high E (E4 = midi 64) → first string available is low E at fret 24, but our string is 22 frets, so it picks A2 string at fret 19? Actually open high E (string 1) at fret 0 wins? It should pick the LOWEST string', () => {
-    // Lowest pitch string that reaches E4 (midi 64) within 22 frets:
-    //   E2 (40) → fret 24 — past 22, no
-    //   A2 (45) → fret 19 — fits
-    //   D3 (50) → fret 14 — fits
-    //   G3 (55) → fret 9 — fits
-    //   B3 (59) → fret 5 — fits
-    //   E4 (64) → fret 0 — fits
-    // Lowest pitch = E2 = string index 0 = VexFlow string 6. But E2 → fret 24
-    // exceeds the 22-fret limit, so it skips to A2 (string 5).
-    expect(fingerNote('guitar', 64)).toEqual({ string: 5, fret: 19 });
+  it('open high E (E4 = 64) → string 1 fret 0', () => {
+    expect(fingerNote('guitar', 64)).toEqual({ string: 1, fret: 0 });
+  });
+  it('C4 (60) → string 2 fret 1 (1st position)', () => {
+    expect(fingerNote('guitar', 60)).toEqual({ string: 2, fret: 1 });
   });
   it('returns null for notes below the lowest string', () => {
-    // C2 = midi 36, below open low E (40). Guitar can't play it.
     expect(fingerNote('guitar', 36)).toBeNull();
   });
 });
 
 describe('fingerNote — bass', () => {
-  it('open low E (E1 = midi 28) → string 4, fret 0', () => {
+  // Tuning: ["E1","A1","D2","G2"] = MIDI [28,33,38,43]
+  // Strings: G2=1, D2=2, A1=3, E1=4.
+  it('open low E (E1 = 28) → string 4 fret 0', () => {
     expect(fingerNote('bass', 28)).toEqual({ string: 4, fret: 0 });
   });
-  it('G2 = 43 → fits on lowest string', () => {
-    // E1 (28) → fret 15
-    expect(fingerNote('bass', 43)).toEqual({ string: 4, fret: 15 });
+  it('G2 (43) → string 1 fret 0 (open)', () => {
+    expect(fingerNote('bass', 43)).toEqual({ string: 1, fret: 0 });
+  });
+  it('C2 (36) → string 3 fret 3 (1st position on A string)', () => {
+    expect(fingerNote('bass', 36)).toEqual({ string: 3, fret: 3 });
   });
 });
 
 describe('fingerNote — tres (Cuban)', () => {
-  // Tres tuning: ["G3","C4","E4"] = MIDI [55, 60, 64].
-  // String index 0 = G3 (lowest pitch) = VexFlow string 3.
-  it('open G3 (midi 55) → string 3, fret 0', () => {
+  // Tuning: ["G3","C4","E4"] = MIDI [55,60,64]. Strings: E4=1, C4=2, G3=3.
+  it('open G3 (55) → string 3 fret 0', () => {
     expect(fingerNote('tres', 55)).toEqual({ string: 3, fret: 0 });
   });
-  it('C4 (midi 60) → lowest string (G3) at fret 5', () => {
-    expect(fingerNote('tres', 60)).toEqual({ string: 3, fret: 5 });
+  it('open C4 (60) → string 2 fret 0', () => {
+    expect(fingerNote('tres', 60)).toEqual({ string: 2, fret: 0 });
   });
-  it('E4 (midi 64) → still picks G3 (fret 9), the lowest reachable', () => {
-    expect(fingerNote('tres', 64)).toEqual({ string: 3, fret: 9 });
+  it('open E4 (64) → string 1 fret 0', () => {
+    expect(fingerNote('tres', 64)).toEqual({ string: 1, fret: 0 });
   });
 });
 

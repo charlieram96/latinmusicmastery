@@ -41,8 +41,13 @@ export function noteNameToMidi(name: string): number {
 
 /**
  * Given an instrument and a target MIDI note, return a fingering on the
- * lowest-pitched string that can reach it without exceeding the instrument's
- * fret count. Returns null when the note is below the instrument's range.
+ * highest-pitched string that can reach it. Returns null when the note is
+ * below the instrument's range.
+ *
+ * Highest string = lowest fret for the same target pitch, which is what
+ * players actually use in practice ("first position" preference). The
+ * algorithm walks strings from highest to lowest pitch and picks the first
+ * one whose fret is ≥ 0 and ≤ fretCount.
  *
  * String numbering follows VexFlow tab convention: string 1 is the top line
  * (highest pitch). Our `tuning` arrays are stored low→high, so the highest-
@@ -55,15 +60,12 @@ export function fingerNote(instrument: Instrument, midi: number): Fingering | nu
 
   const tuningMidi = config.tuning.map(noteNameToMidi);
 
-  // Walk from lowest string (index 0) to highest. The lowest string that
-  // can play the note (within fret range) wins — keeps fingerings in low
-  // position for readability.
-  for (let i = 0; i < tuningMidi.length; i++) {
+  // Walk highest→lowest string. The first string with a positive in-range
+  // fret wins — that's the lowest fret available for this note.
+  for (let i = tuningMidi.length - 1; i >= 0; i--) {
     const openMidi = tuningMidi[i];
     const fret = midi - openMidi;
     if (fret >= 0 && fret <= config.fretCount) {
-      // Convert internal index (0 = lowest pitch) to VexFlow string number
-      // (1 = highest pitch).
       return {
         string: tuningMidi.length - i,
         fret,
@@ -78,23 +80,35 @@ export function fingerNote(instrument: Instrument, midi: number): Fingering | nu
  * Compute fingerings for a set of MIDI notes (e.g. a chord) on one instrument.
  * Returns one entry per input note, in input order; null entries indicate
  * out-of-range notes the caller should skip.
+ *
+ * Strategy: process the highest pitch first and assign to the highest-pitched
+ * unclaimed string with a non-negative fret. This produces compact fingerings
+ * grouped near the top of the neck — the natural way most chords are played.
+ * Falls back to fingerNote() when no string is left, which may return a
+ * shared string (caller can dedupe if needed).
  */
 export function fingerChord(
   instrument: Instrument,
   midis: number[]
 ): Array<Fingering | null> {
-  // Greedy: assign each note to the lowest available string that hasn't been
-  // claimed yet. Falls back to per-note finger() when nothing remains.
   const config = INSTRUMENTS[instrument];
   if (!config.fretted) return midis.map(() => null);
 
   const tuningMidi = config.tuning.map(noteNameToMidi);
   const claimed = new Set<number>();
-  const result: Array<Fingering | null> = [];
 
-  for (const midi of midis) {
+  // Sort indices by descending MIDI so we assign highest pitch to highest
+  // string first.
+  const order = midis
+    .map((midi, idx) => ({ midi, idx }))
+    .sort((a, b) => b.midi - a.midi);
+
+  const result: Array<Fingering | null> = midis.map(() => null);
+
+  for (const { midi, idx } of order) {
     let assignment: Fingering | null = null;
-    for (let i = 0; i < tuningMidi.length; i++) {
+    // Walk highest→lowest, take the first unclaimed string with a positive fret.
+    for (let i = tuningMidi.length - 1; i >= 0; i--) {
       if (claimed.has(i)) continue;
       const fret = midi - tuningMidi[i];
       if (fret >= 0 && fret <= config.fretCount) {
@@ -103,7 +117,7 @@ export function fingerChord(
         break;
       }
     }
-    result.push(assignment ?? fingerNote(instrument, midi));
+    result[idx] = assignment ?? fingerNote(instrument, midi);
   }
 
   return result;

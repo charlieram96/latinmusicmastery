@@ -42,6 +42,19 @@
     --terracotta: 14 52% 48%;
     --gold-highlight: 38 58% 50%;
 
+    /* Compás notation palette — light mode */
+    --compas-notation: 20 10% 15%;          /* note glyphs, staff lines */
+    --compas-notation-muted: 20 8% 42%;     /* secondary text (fret numbers, beat labels) */
+    --compas-fretboard-bg: 35 30% 88%;      /* light maple */
+    --compas-fretboard-bg-edge: 30 30% 75%;
+    --compas-fretboard-fret: 30 15% 50%;
+    --compas-fretboard-string: 20 10% 25%;
+    --compas-fretboard-nut: 38 58% 40%;
+    --compas-fretboard-inlay: 30 15% 60%;
+    --compas-grid-cell-bg: 30 20% 94%;
+    --compas-grid-cell-border: 30 10% 75%;
+    --compas-grid-stroke: 38 58% 50%;
+
     --spacing-section: 2rem;
     --spacing-card: 1.5rem;
     --spacing-element: 1rem;
@@ -78,6 +91,19 @@
     --warm-surface: 16 14% 8%; /* #161210 */
     --terracotta: 14 52% 53%; /* #C4654A */
     --gold-highlight: 38 58% 58%; /* #D4A854 */
+
+    /* Compás notation palette — dark mode */
+    --compas-notation: 0 0% 88%;            /* near-white note glyphs */
+    --compas-notation-muted: 0 0% 60%;
+    --compas-fretboard-bg: 30 25% 12%;      /* dark wood */
+    --compas-fretboard-bg-edge: 30 25% 8%;
+    --compas-fretboard-fret: 30 15% 35%;
+    --compas-fretboard-string: 45 30% 70%;
+    --compas-fretboard-nut: 38 58% 70%;
+    --compas-fretboard-inlay: 30 15% 50%;
+    --compas-grid-cell-bg: 30 25% 12%;
+    --compas-grid-cell-border: 30 15% 30%;
+    --compas-grid-stroke: 38 58% 50%;
 
     --spacing-section: 2rem;
     --spacing-card: 1.5rem;
@@ -207,6 +233,16 @@
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 999px; }
 .scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--muted)) transparent; }
+
+/* Compás notation — make VexFlow SVG follow the theme.
+   The renderer post-processes its SVG to replace explicit black fills/strokes
+   with currentColor; we set color on the wrapper so the cascade reaches VexFlow. */
+.compas-notation {
+  color: hsl(var(--compas-notation));
+}
+.compas-notation .compas-notation-muted {
+  color: hsl(var(--compas-notation-muted));
+}
 
 /* Smooth scroll for marketing pages */
 html:has([data-marketing]) {

@@ -99,7 +99,10 @@ export function RhythmGridRenderer({
       if (!el) return;
       const active = currentMs >= event.startMs && currentMs < event.endMs;
       el.setAttribute('opacity', active ? '1' : '0.7');
-      el.setAttribute('fill', active ? 'hsl(30 85% 55%)' : 'hsl(38 58% 50%)');
+      el.setAttribute(
+        'fill',
+        active ? 'hsl(var(--primary))' : 'hsl(var(--compas-grid-stroke))'
+      );
     });
   }, [currentMs, cells]);
 
@@ -140,7 +143,11 @@ export function RhythmGridRenderer({
               textAnchor="middle"
               fontSize="11"
               fontFamily="ui-monospace, monospace"
-              fill={isDownbeat ? 'hsl(45 30% 80%)' : 'hsl(45 30% 50%)'}
+              fill={
+                isDownbeat
+                  ? 'hsl(var(--compas-notation))'
+                  : 'hsl(var(--compas-notation-muted))'
+              }
             >
               {label}
             </text>
@@ -157,7 +164,7 @@ export function RhythmGridRenderer({
                 y={y + ROW_HEIGHT / 2 + 4}
                 fontSize="12"
                 fontFamily="Inter, system-ui, sans-serif"
-                fill="hsl(45 30% 80%)"
+                fill="hsl(var(--compas-notation))"
               >
                 {row.label}
               </text>
@@ -172,15 +179,14 @@ export function RhythmGridRenderer({
                     y={y + 4}
                     width={CELL_WIDTH - 2}
                     height={ROW_HEIGHT - 8}
-                    fill="hsl(30 25% 12%)"
+                    fill="hsl(var(--compas-grid-cell-bg))"
                     stroke={
                       isBarStart
-                        ? 'hsl(38 58% 50%)'
-                        : isBeat
-                          ? 'hsl(30 15% 30%)'
-                          : 'hsl(30 15% 18%)'
+                        ? 'hsl(var(--compas-grid-stroke))'
+                        : 'hsl(var(--compas-grid-cell-border))'
                     }
-                    strokeWidth={isBarStart ? 2 : 1}
+                    strokeWidth={isBarStart ? 2 : isBeat ? 1.5 : 1}
+                    opacity={isBeat || isBarStart ? 1 : 0.7}
                   />
                 );
               })}
@@ -208,7 +214,7 @@ export function RhythmGridRenderer({
               width={cellsWide * CELL_WIDTH - 6}
               height={ROW_HEIGHT - 12}
               rx={4}
-              fill="hsl(38 58% 50%)"
+              fill="hsl(var(--compas-grid-stroke))"
               opacity={0.7}
               style={{ transition: 'opacity 80ms linear, fill 80ms linear' }}
             />

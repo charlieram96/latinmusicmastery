@@ -102,8 +102,8 @@ export function FretboardRenderer({
           y={20}
           width={FRETBOARD_WIDTH - NUT_INSET - TRAILING_MARGIN}
           height={FRETBOARD_HEIGHT - 40}
-          fill="hsl(30 25% 12%)"
-          stroke="hsl(30 25% 8%)"
+          fill="hsl(var(--compas-fretboard-bg))"
+          stroke="hsl(var(--compas-fretboard-bg-edge))"
         />
 
         {/* Frets */}
@@ -114,29 +114,36 @@ export function FretboardRenderer({
             y1={20}
             x2={NUT_INSET + fret * fretSpacing}
             y2={FRETBOARD_HEIGHT - 20}
-            stroke={fret === 0 ? 'hsl(38 58% 70%)' : 'hsl(30 15% 35%)'}
+            stroke={
+              fret === 0
+                ? 'hsl(var(--compas-fretboard-nut))'
+                : 'hsl(var(--compas-fretboard-fret))'
+            }
             strokeWidth={fret === 0 ? 4 : 1}
           />
         ))}
 
-        {/* Inlay dots (5, 7, 9, 12) */}
+        {/* Inlay dots (3, 5, 7, 9, 12) */}
         {[3, 5, 7, 9, 12].map((fret) => (
           <circle
             key={fret}
             cx={NUT_INSET + (fret - 0.5) * fretSpacing}
             cy={FRETBOARD_HEIGHT / 2}
             r={fret === 12 ? 6 : 5}
-            fill={fret === 12 ? 'hsl(38 58% 60%)' : 'hsl(30 15% 50%)'}
+            fill={
+              fret === 12
+                ? 'hsl(var(--compas-fretboard-nut))'
+                : 'hsl(var(--compas-fretboard-inlay))'
+            }
             opacity={0.4}
           />
         ))}
 
         {/* Strings */}
         {Array.from({ length: stringCount }, (_, i) => {
-          // i=0 is the topmost (highest-pitch) string in our SVG, which is VexFlow string 1
           const y = 20 + i * stringSpacing;
           const stringNumber = i + 1;
-          const tuningIndex = stringCount - stringNumber; // tuning is low→high
+          const tuningIndex = stringCount - stringNumber;
           const tuningName = config.tuning[tuningIndex];
           return (
             <g key={i}>
@@ -145,7 +152,7 @@ export function FretboardRenderer({
                 y1={y}
                 x2={FRETBOARD_WIDTH - TRAILING_MARGIN}
                 y2={y}
-                stroke="hsl(45 30% 70%)"
+                stroke="hsl(var(--compas-fretboard-string))"
                 strokeWidth={1 + (stringCount - stringNumber) * 0.3}
               />
               <text
@@ -153,7 +160,7 @@ export function FretboardRenderer({
                 y={y + 4}
                 fontFamily="ui-monospace, monospace"
                 fontSize="11"
-                fill="hsl(45 30% 70%)"
+                fill="hsl(var(--compas-fretboard-string))"
               >
                 {tuningName}
               </text>
@@ -169,7 +176,7 @@ export function FretboardRenderer({
             y={FRETBOARD_HEIGHT - 4}
             fontSize="10"
             fontFamily="ui-monospace, monospace"
-            fill="hsl(30 15% 50%)"
+            fill="hsl(var(--compas-notation-muted))"
             textAnchor="middle"
           >
             {fret + 1}
@@ -195,8 +202,8 @@ export function FretboardRenderer({
               cx={cx}
               cy={cy}
               r={9}
-              fill="hsl(30 85% 55%)"
-              stroke="hsl(0 0% 4%)"
+              fill="hsl(var(--primary))"
+              stroke="hsl(var(--compas-fretboard-bg-edge))"
               strokeWidth={1.5}
               opacity={0.08}
               style={{ transition: 'opacity 80ms linear, r 80ms linear' }}
