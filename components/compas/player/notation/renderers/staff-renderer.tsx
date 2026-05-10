@@ -59,7 +59,7 @@ const PER_NOTE_MIN_WIDTH = 60;
  * SCALE'd via viewBox so the browser handles the upscaling crisply (still
  * vector). Click x and cursor x compensate by dividing/multiplying by SCALE.
  */
-const SCALE = 1.8;
+const SCALE = 1.3;
 
 class StaffRendererImpl implements ScoreRenderer {
   private container: HTMLElement | null = null;
