@@ -4,7 +4,12 @@ import { Video, Dumbbell, Music } from 'lucide-react'
 import { ExerciseQuiz } from '@/components/exercise-quiz'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
 import { CompasPlayer } from '@/components/compas/player/compas-player'
-import { getScoreDocumentForClassItem } from '@/app/actions/compas'
+import { getScoreDocumentForClassItem, logCompasEvent } from '@/app/actions/compas'
+
+// Feature flag — set COMPAS_ENABLED=false in env to roll back to the legacy
+// iframe path even when a class item has a score attached. Default true so
+// production lights up automatically once admins start attaching scores.
+const compasEnabled = process.env.COMPAS_ENABLED !== 'false'
 
 interface ClassItemRendererProps {
   item: {
@@ -42,9 +47,26 @@ export async function ClassItemRenderer({ item, userId }: ClassItemRendererProps
         : null
 
   const compasData =
-    item.score_document_id && compasMediaUrl
+    compasEnabled && item.score_document_id && compasMediaUrl
       ? (await getScoreDocumentForClassItem(item.id)).data ?? null
       : null
+
+  // M9 cutover analytics — log when the legacy iframe is shown so we know
+  // when zero traffic has migrated. Fire-and-forget; logCompasEvent
+  // swallows errors.
+  const renderingLegacyIframe =
+    !compasData && item.soundslice_embed_url !== null
+  if (renderingLegacyIframe) {
+    void logCompasEvent({
+      eventType: 'compas_legacy_iframe_shown',
+      classItemId: item.id,
+      metadata: {
+        item_type: item.item_type,
+        compas_enabled: compasEnabled,
+        has_score_attached: item.score_document_id !== null,
+      },
+    })
+  }
 
   return (
     <div className="space-y-6">

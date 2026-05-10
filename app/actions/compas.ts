@@ -242,6 +242,44 @@ export async function deleteClip(
 }
 
 // ============================================
+// M9 — analytics
+// ============================================
+
+export type CompasEventType =
+  | 'compas_player_loaded'
+  | 'compas_play'
+  | 'compas_seek_via_notation'
+  | 'compas_clip_saved'
+  | 'compas_view_switched'
+  | 'compas_legacy_iframe_shown';
+
+/**
+ * Log a Compás player event. Cheap, fire-and-forget; we don't await this
+ * from the call sites and silently drop on error so the player never
+ * blocks waiting for analytics.
+ */
+export async function logCompasEvent(input: {
+  eventType: CompasEventType;
+  classItemId?: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    await supabase.from('compas_events').insert({
+      user_id: user?.id ?? null,
+      class_item_id: input.classItemId ?? null,
+      event_type: input.eventType,
+      metadata: (input.metadata ?? null) as unknown as never,
+    });
+  } catch {
+    // analytics failures must never bubble up
+  }
+}
+
+// ============================================
 // M6 — admin import (MusicXML / MIDI)
 // ============================================
 

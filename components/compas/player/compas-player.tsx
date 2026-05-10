@@ -35,7 +35,7 @@ import {
 import { StaffScrubBar } from './notation/staff-scrub-bar';
 import { ClipsPanel } from './clips/clips-panel';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
-import type { CompasClip } from '@/app/actions/compas';
+import { logCompasEvent, type CompasClip } from '@/app/actions/compas';
 import {
   WaypointTimeMap,
   type SyncMethod,
@@ -95,6 +95,24 @@ export function CompasPlayer({
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
 
+  // Track view-switch events. We only count it as a switch after the
+  // first render so the initial mount doesn't create a spurious event.
+  const previousTrackRef = useRef(activeTrackIndex);
+  useEffect(() => {
+    if (readOnly) return;
+    if (previousTrackRef.current !== activeTrackIndex) {
+      previousTrackRef.current = activeTrackIndex;
+      void logCompasEvent({
+        eventType: 'compas_view_switched',
+        classItemId,
+        metadata: {
+          to_track_index: activeTrackIndex,
+          to_instrument: score.tracks[activeTrackIndex]?.instrument,
+        },
+      });
+    }
+  }, [activeTrackIndex, classItemId, readOnly, score]);
+
   // Build (or synthesize) the WaypointTimeMap for the active track.
   const timeMap = useMemo(() => {
     return buildTimeMap(score, activeTrackIndex, activeTimeMap, clock.durationSeconds);
@@ -148,6 +166,13 @@ export function CompasPlayer({
     if (!timeMap) return;
     const seconds = timeMap.toVideoTime(target.qn);
     clock.seek(seconds);
+    if (!readOnly) {
+      void logCompasEvent({
+        eventType: 'compas_seek_via_notation',
+        classItemId,
+        metadata: { qn: target.qn, video_seconds: seconds },
+      });
+    }
   };
 
   // Drag-on-staff → set A/B and arm the loop.
@@ -189,6 +214,36 @@ export function CompasPlayer({
       }
     };
   }, [classItemId, clock, readOnly]);
+
+  // Analytics — one event on first mount + one each time playback transitions
+  // from paused to playing. Fire-and-forget; errors are swallowed inside
+  // logCompasEvent so they can't block the UI.
+  const sentLoadedRef = useRef(false);
+  const wasPlayingRef = useRef(false);
+  useEffect(() => {
+    if (readOnly) return;
+    if (sentLoadedRef.current) return;
+    sentLoadedRef.current = true;
+    void logCompasEvent({
+      eventType: 'compas_player_loaded',
+      classItemId,
+      metadata: {
+        track_count: tracks.length,
+        has_time_map: activeTimeMap !== null,
+      },
+    });
+  }, [classItemId, tracks.length, activeTimeMap, readOnly]);
+  useEffect(() => {
+    if (readOnly) return;
+    if (clock.isPlaying && !wasPlayingRef.current) {
+      void logCompasEvent({
+        eventType: 'compas_play',
+        classItemId,
+        metadata: { from_seconds: clock.currentSeconds, rate: clock.playbackRate },
+      });
+    }
+    wasPlayingRef.current = clock.isPlaying;
+  }, [clock.isPlaying, clock.currentSeconds, clock.playbackRate, classItemId, readOnly]);
 
   return (
     <div className="space-y-4">

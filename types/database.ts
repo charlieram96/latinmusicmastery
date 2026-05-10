@@ -345,6 +345,48 @@ export type Database = {
           },
         ]
       }
+      compas_events: {
+        Row: {
+          class_item_id: string | null
+          created_at: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          class_item_id?: string | null
+          created_at?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          class_item_id?: string | null
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compas_events_class_item_id_fkey"
+            columns: ["class_item_id"]
+            isOneToOne: false
+            referencedRelation: "class_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compas_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           created_at: string | null

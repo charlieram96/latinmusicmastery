@@ -12,6 +12,7 @@ import {
   createClip,
   deleteClip,
   listClipsForClassItem,
+  logCompasEvent,
   type CompasClip,
 } from '@/app/actions/compas';
 
@@ -76,6 +77,14 @@ export function ClipsPanel({
       } else if (result.data) {
         setClips((prev) => [result.data!, ...prev]);
         setName('');
+        void logCompasEvent({
+          eventType: 'compas_clip_saved',
+          classItemId,
+          metadata: {
+            duration_seconds: result.data!.endSeconds - result.data!.startSeconds,
+            playback_rate: result.data!.playbackRate,
+          },
+        });
       }
     });
   };
