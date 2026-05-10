@@ -111,7 +111,6 @@ class StaffRendererImpl implements ScoreRenderer {
   // Drag-selection state
   private dragStartModelX: number | null = null;
   private dragCurrentModelX: number | null = null;
-  private dragStartHit: NoteHit | null = null;
   private dragIsActive = false;
   private boundPointerId: number | null = null;
 
@@ -291,6 +290,11 @@ class StaffRendererImpl implements ScoreRenderer {
       svg.style.width = `${scaledWidth}px`;
       svg.style.height = `${scaledHeight}px`;
       svg.style.cursor = 'pointer';
+      // Suppress browser text/glyph selection during drag so VexFlow's
+      // <text> elements don't get the selection highlight.
+      svg.style.userSelect = 'none';
+      (svg.style as CSSStyleDeclaration & { webkitUserSelect?: string }).webkitUserSelect = 'none';
+      svg.style.touchAction = 'none';
 
       // A drag-preview overlay rect inside the SVG. We reuse the SVG's
       // model coordinate system so the rect lives in the same space as
@@ -313,12 +317,14 @@ class StaffRendererImpl implements ScoreRenderer {
       // Click-or-drag pointer handlers. A small initial movement is
       // tolerated (taps on touch devices wobble); past DRAG_THRESHOLD_PX
       // we switch into drag-selection mode and emit onSelectRange on up.
+      // preventDefault on pointerdown stops the browser from starting a
+      // text/glyph selection while the user drags across the SVG.
       this.downHandler = (event: PointerEvent) => {
+        event.preventDefault();
         const rect = svg.getBoundingClientRect();
         const x = (event.clientX - rect.left) / SCALE;
         this.dragStartModelX = x;
         this.dragCurrentModelX = x;
-        this.dragStartHit = this.findNearestHit(x);
         this.dragIsActive = false;
         this.boundPointerId = event.pointerId;
         try {
@@ -333,6 +339,7 @@ class StaffRendererImpl implements ScoreRenderer {
           this.boundPointerId !== event.pointerId
         )
           return;
+        event.preventDefault();
         const rect = svg.getBoundingClientRect();
         const x = (event.clientX - rect.left) / SCALE;
         this.dragCurrentModelX = x;
@@ -355,34 +362,37 @@ class StaffRendererImpl implements ScoreRenderer {
         }
 
         if (this.dragIsActive) {
-          // Drag selection — snap both ends to nearest note hits.
+          // Drag selection — convert pixel x's to ms via continuous
+          // interpolation across the staff, NOT note snapping. The user
+          // can select any time range, not just from-note-to-note.
           const startX = Math.min(this.dragStartModelX, this.dragCurrentModelX ?? this.dragStartModelX);
           const endX = Math.max(this.dragStartModelX, this.dragCurrentModelX ?? this.dragStartModelX);
-          const startHit = this.findNearestHit(startX);
-          const endHit = this.findNearestHit(endX);
-          if (startHit && endHit && endHit.ms > startHit.ms) {
+          const startPos = this.xToTimePosition(startX);
+          const endPos = this.xToTimePosition(endX);
+          if (endPos.ms > startPos.ms) {
             const range: SelectedRange = {
-              startMs: startHit.ms,
-              endMs: endHit.ms,
-              startQn: startHit.qn,
-              endQn: endHit.qn,
+              startMs: startPos.ms,
+              endMs: endPos.ms,
+              startQn: startPos.qn,
+              endQn: endPos.qn,
             };
             for (const listener of this.rangeListeners) listener(range);
           }
-        } else if (this.dragStartHit) {
-          // Single click — seek.
+        } else {
+          // Bare click anywhere on the staff — interpolate to the time
+          // at that x and seek there. No nearest-note snap.
+          const pos = this.xToTimePosition(this.dragStartModelX);
           for (const listener of this.seekListeners) {
             listener({
-              qn: this.dragStartHit.qn,
-              measure: this.dragStartHit.measure,
-              beat: this.dragStartHit.beat,
+              qn: pos.qn,
+              measure: pos.measure,
+              beat: pos.beat,
             });
           }
         }
 
         this.dragStartModelX = null;
         this.dragCurrentModelX = null;
-        this.dragStartHit = null;
         this.dragIsActive = false;
         this.boundPointerId = null;
         this.hideDragOverlay();
@@ -497,7 +507,6 @@ class StaffRendererImpl implements ScoreRenderer {
     this.lastViewMs = 0;
     this.dragStartModelX = null;
     this.dragCurrentModelX = null;
-    this.dragStartHit = null;
     this.dragIsActive = false;
     this.boundPointerId = null;
   }
@@ -545,6 +554,75 @@ class StaffRendererImpl implements ScoreRenderer {
       }
     }
     return best;
+  }
+
+  /**
+   * Map an x position in model space to a continuous time position on the
+   * staff. We use the captured per-note bounding boxes as anchors and
+   * linear-interpolate ms / qn between adjacent ones, so the user can land
+   * a click or a drag endpoint anywhere — the resolved ms doesn't quantize
+   * to note onsets.
+   */
+  private xToTimePosition(x: number): {
+    ms: number;
+    qn: number;
+    measure: number;
+    beat: number;
+  } {
+    if (this.hits.length === 0) return { ms: 0, qn: 0, measure: 1, beat: 1 };
+    if (this.hits.length === 1) {
+      const only = this.hits[0];
+      return { ms: only.ms, qn: only.qn, measure: only.measure, beat: only.beat };
+    }
+
+    const first = this.hits[0];
+    const last = this.hits[this.hits.length - 1];
+
+    if (x <= first.x) {
+      // Extrapolate left of the first note using the slope of the first segment.
+      const second = this.hits[1];
+      const denom = Math.max(second.x - first.x, 1);
+      const t = (x - first.x) / denom;
+      return {
+        ms: Math.max(0, first.ms + t * (second.ms - first.ms)),
+        qn: Math.max(0, first.qn + t * (second.qn - first.qn)),
+        measure: first.measure,
+        beat: first.beat,
+      };
+    }
+    if (x >= last.x) {
+      const prev = this.hits[this.hits.length - 2];
+      const denom = Math.max(last.x - prev.x, 1);
+      const t = (x - prev.x) / denom;
+      return {
+        ms: prev.ms + t * (last.ms - prev.ms),
+        qn: prev.qn + t * (last.qn - prev.qn),
+        measure: last.measure,
+        beat: last.beat,
+      };
+    }
+
+    // Binary search for the surrounding hits.
+    let lo = 0;
+    let hi = this.hits.length - 1;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >>> 1;
+      if (this.hits[mid].x <= x) lo = mid;
+      else hi = mid;
+    }
+    const a = this.hits[lo];
+    const b = this.hits[hi];
+    const denom = Math.max(b.x - a.x, 1);
+    const t = (x - a.x) / denom;
+    return {
+      ms: a.ms + t * (b.ms - a.ms),
+      qn: a.qn + t * (b.qn - a.qn),
+      // measure/beat are denormalized note-level info — pick whichever side
+      // we're closer to. The seek consumer uses ms/qn for actual seeking
+      // so this is purely informational.
+      measure: t < 0.5 ? a.measure : b.measure,
+      beat: t < 0.5 ? a.beat : b.beat,
+    };
   }
 }
 
