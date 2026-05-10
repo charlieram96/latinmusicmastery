@@ -34,6 +34,15 @@ import type {
 } from '@/lib/compas/renderer';
 import { themeVexflowSvg } from '@/lib/compas/svg-theme';
 
+export interface SelectedRange {
+  startMs: number;
+  endMs: number;
+  startQn: number;
+  endQn: number;
+}
+
+export type RangeListener = (range: SelectedRange) => void;
+
 interface NoteHit {
   /** Cumulative QN at the start of this event. */
   qn: number;
@@ -69,15 +78,22 @@ const SCALE = 1.3;
  */
 const CURSOR_ANCHOR_FRACTION = 0.08;
 
+/** Pixel distance the pointer must travel before we treat it as a drag. */
+const DRAG_THRESHOLD_PX = 5;
+
 class StaffRendererImpl implements ScoreRenderer {
   private container: HTMLElement | null = null;
   private renderer: Renderer | null = null;
   private viewportEl: HTMLDivElement | null = null;
   private rendererDiv: HTMLDivElement | null = null;
   private cursorEl: HTMLDivElement | null = null;
+  private dragOverlayEl: SVGRectElement | null = null;
   private hits: NoteHit[] = [];
-  private listeners: Set<SeekListener> = new Set();
-  private clickHandler: ((e: PointerEvent) => void) | null = null;
+  private seekListeners: Set<SeekListener> = new Set();
+  private rangeListeners: Set<RangeListener> = new Set();
+  private downHandler: ((e: PointerEvent) => void) | null = null;
+  private moveHandler: ((e: PointerEvent) => void) | null = null;
+  private upHandler: ((e: PointerEvent) => void) | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private totalWidth = 0;
   private totalDurationMs = 0;
@@ -85,7 +101,19 @@ class StaffRendererImpl implements ScoreRenderer {
   private startMs = 0;
   private viewportWidth = 0;
   private cursorAnchorPx = 0;
-  private lastCursorMs = 0;
+
+  // Two independent time inputs. Playback drives the orange line; view
+  // drives staff translation. They equal each other when "follow playback"
+  // is on; the parent decouples them while the user is scrubbing the staff.
+  private lastPlaybackMs = 0;
+  private lastViewMs = 0;
+
+  // Drag-selection state
+  private dragStartModelX: number | null = null;
+  private dragCurrentModelX: number | null = null;
+  private dragStartHit: NoteHit | null = null;
+  private dragIsActive = false;
+  private boundPointerId: number | null = null;
 
   mount(el: HTMLElement, score: ScoreDocument, trackIndex: number): void {
     this.destroy();
@@ -215,7 +243,8 @@ class StaffRendererImpl implements ScoreRenderer {
     this.pixelsPerMs =
       this.totalDurationMs > 0 ? this.totalWidth / this.totalDurationMs : 0;
 
-    // Cursor — fixed at the anchor position; the staff scrolls under it.
+    // Cursor goes INSIDE the viewport so it gets clipped when the user
+    // scrolls the staff away from the playhead.
     this.cursorEl = document.createElement('div');
     Object.assign(this.cursorEl.style, {
       position: 'absolute',
@@ -229,18 +258,14 @@ class StaffRendererImpl implements ScoreRenderer {
       willChange: 'transform',
       opacity: '0.85',
     } as CSSStyleDeclaration);
-    el.appendChild(this.cursorEl);
+    viewport.appendChild(this.cursorEl);
 
     // Capture the viewport's current width and recompute on resize so the
     // cursor anchor stays at CURSOR_ANCHOR_FRACTION of the visible width.
     const updateLayout = () => {
       this.viewportWidth = viewport.clientWidth;
       this.cursorAnchorPx = this.viewportWidth * CURSOR_ANCHOR_FRACTION;
-      if (this.cursorEl) {
-        this.cursorEl.style.transform = `translateX(${this.cursorAnchorPx}px)`;
-      }
-      // Re-apply current time so the staff translation reflects the new anchor.
-      this.applyScroll(this.lastCursorMs);
+      this.applyLayout();
     };
     updateLayout();
     if (typeof ResizeObserver !== 'undefined') {
@@ -266,42 +291,166 @@ class StaffRendererImpl implements ScoreRenderer {
       svg.style.width = `${scaledWidth}px`;
       svg.style.height = `${scaledHeight}px`;
       svg.style.cursor = 'pointer';
-      this.clickHandler = (event: PointerEvent) => {
+
+      // A drag-preview overlay rect inside the SVG. We reuse the SVG's
+      // model coordinate system so the rect lives in the same space as
+      // the notes and translates with the staff.
+      const NS = 'http://www.w3.org/2000/svg';
+      const overlay = document.createElementNS(NS, 'rect');
+      overlay.setAttribute('y', `${STAVE_TOP - 4}`);
+      overlay.setAttribute('height', `${STAVE_HEIGHT + 8}`);
+      overlay.setAttribute('fill', 'hsl(var(--primary))');
+      overlay.setAttribute('opacity', '0');
+      overlay.setAttribute('pointer-events', 'none');
+      svg.appendChild(overlay);
+      this.dragOverlayEl = overlay;
+
+      // Click-or-drag pointer handlers. A small initial movement is
+      // tolerated (taps on touch devices wobble); past DRAG_THRESHOLD_PX
+      // we switch into drag-selection mode and emit onSelectRange on up.
+      this.downHandler = (event: PointerEvent) => {
         const rect = svg.getBoundingClientRect();
-        // CSS pixel x → model space x by dividing out the scale.
         const x = (event.clientX - rect.left) / SCALE;
-        const target = this.findNearestHit(x);
-        if (target) {
-          for (const listener of this.listeners) {
+        this.dragStartModelX = x;
+        this.dragCurrentModelX = x;
+        this.dragStartHit = this.findNearestHit(x);
+        this.dragIsActive = false;
+        this.boundPointerId = event.pointerId;
+        try {
+          svg.setPointerCapture(event.pointerId);
+        } catch {
+          /* setPointerCapture may fail on some browsers; degrades gracefully */
+        }
+      };
+      this.moveHandler = (event: PointerEvent) => {
+        if (
+          this.dragStartModelX === null ||
+          this.boundPointerId !== event.pointerId
+        )
+          return;
+        const rect = svg.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / SCALE;
+        this.dragCurrentModelX = x;
+        const delta = Math.abs((x - this.dragStartModelX) * SCALE);
+        if (!this.dragIsActive && delta >= DRAG_THRESHOLD_PX) {
+          this.dragIsActive = true;
+        }
+        if (this.dragIsActive) this.updateDragOverlay();
+      };
+      this.upHandler = (event: PointerEvent) => {
+        if (
+          this.dragStartModelX === null ||
+          this.boundPointerId !== event.pointerId
+        )
+          return;
+        try {
+          svg.releasePointerCapture(event.pointerId);
+        } catch {
+          /* noop */
+        }
+
+        if (this.dragIsActive) {
+          // Drag selection — snap both ends to nearest note hits.
+          const startX = Math.min(this.dragStartModelX, this.dragCurrentModelX ?? this.dragStartModelX);
+          const endX = Math.max(this.dragStartModelX, this.dragCurrentModelX ?? this.dragStartModelX);
+          const startHit = this.findNearestHit(startX);
+          const endHit = this.findNearestHit(endX);
+          if (startHit && endHit && endHit.ms > startHit.ms) {
+            const range: SelectedRange = {
+              startMs: startHit.ms,
+              endMs: endHit.ms,
+              startQn: startHit.qn,
+              endQn: endHit.qn,
+            };
+            for (const listener of this.rangeListeners) listener(range);
+          }
+        } else if (this.dragStartHit) {
+          // Single click — seek.
+          for (const listener of this.seekListeners) {
             listener({
-              qn: target.qn,
-              measure: target.measure,
-              beat: target.beat,
+              qn: this.dragStartHit.qn,
+              measure: this.dragStartHit.measure,
+              beat: this.dragStartHit.beat,
             });
           }
         }
+
+        this.dragStartModelX = null;
+        this.dragCurrentModelX = null;
+        this.dragStartHit = null;
+        this.dragIsActive = false;
+        this.boundPointerId = null;
+        this.hideDragOverlay();
       };
-      svg.addEventListener('pointerdown', this.clickHandler);
+
+      svg.addEventListener('pointerdown', this.downHandler);
+      svg.addEventListener('pointermove', this.moveHandler);
+      svg.addEventListener('pointerup', this.upHandler);
+      svg.addEventListener('pointercancel', this.upHandler);
     }
   }
 
-  setTimeMs(ms: number): void {
-    this.applyScroll(ms);
+  private updateDragOverlay(): void {
+    if (
+      !this.dragOverlayEl ||
+      this.dragStartModelX === null ||
+      this.dragCurrentModelX === null
+    )
+      return;
+    const a = Math.min(this.dragStartModelX, this.dragCurrentModelX);
+    const b = Math.max(this.dragStartModelX, this.dragCurrentModelX);
+    this.dragOverlayEl.setAttribute('x', `${a}`);
+    this.dragOverlayEl.setAttribute('width', `${Math.max(b - a, 1)}`);
+    this.dragOverlayEl.setAttribute('opacity', '0.18');
   }
 
-  private applyScroll(ms: number): void {
-    this.lastCursorMs = ms;
-    if (!this.rendererDiv) return;
-    // The position in scaled pixels of the playhead within the rendererDiv.
-    const cursorScaledX = this.msToCursorX(ms) * SCALE;
-    // Translate the rendererDiv so that cursorScaledX lands at the anchor.
-    const translate = this.cursorAnchorPx - cursorScaledX;
-    this.rendererDiv.style.transform = `translateX(${translate}px)`;
+  private hideDragOverlay(): void {
+    if (!this.dragOverlayEl) return;
+    this.dragOverlayEl.setAttribute('opacity', '0');
+  }
+
+  setTimeMs(ms: number): void {
+    this.lastPlaybackMs = ms;
+    this.applyLayout();
+  }
+
+  setViewMs(ms: number): void {
+    this.lastViewMs = ms;
+    this.applyLayout();
+  }
+
+  /** Total ms covered by the active track — useful for the parent's scrub bar range. */
+  getTotalDurationMs(): number {
+    return this.totalDurationMs;
+  }
+
+  private applyLayout(): void {
+    if (!this.rendererDiv || !this.cursorEl) return;
+    const viewScaledX = this.msToCursorX(this.lastViewMs) * SCALE;
+    const playbackScaledX = this.msToCursorX(this.lastPlaybackMs) * SCALE;
+
+    // Translate the staff so the viewMs-position lands at the cursor anchor.
+    const staffTranslate = this.cursorAnchorPx - viewScaledX;
+    this.rendererDiv.style.transform = `translateX(${staffTranslate}px)`;
+
+    // Cursor follows playback within the viewport. When viewMs == playbackMs
+    // the cursor sits at cursorAnchorPx. Off that, it shifts; if it leaves
+    // the viewport bounds it gets visually clipped (overflow:hidden) and we
+    // fade it out so a half-visible line doesn't read as the playhead.
+    const cursorX = this.cursorAnchorPx + (playbackScaledX - viewScaledX);
+    this.cursorEl.style.transform = `translateX(${cursorX}px)`;
+    const visible = cursorX >= -2 && cursorX <= this.viewportWidth + 2;
+    this.cursorEl.style.opacity = visible ? '0.85' : '0';
   }
 
   onSeek(listener: SeekListener): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
+    this.seekListeners.add(listener);
+    return () => this.seekListeners.delete(listener);
+  }
+
+  onSelectRange(listener: RangeListener): () => void {
+    this.rangeListeners.add(listener);
+    return () => this.rangeListeners.delete(listener);
   }
 
   destroy(): void {
@@ -311,7 +460,14 @@ class StaffRendererImpl implements ScoreRenderer {
     }
     if (this.container) {
       const svg = this.container.querySelector('svg');
-      if (svg && this.clickHandler) svg.removeEventListener('pointerdown', this.clickHandler);
+      if (svg) {
+        if (this.downHandler) svg.removeEventListener('pointerdown', this.downHandler);
+        if (this.moveHandler) svg.removeEventListener('pointermove', this.moveHandler);
+        if (this.upHandler) {
+          svg.removeEventListener('pointerup', this.upHandler);
+          svg.removeEventListener('pointercancel', this.upHandler);
+        }
+      }
       this.container.innerHTML = '';
       this.container.style.height = '';
     }
@@ -320,15 +476,25 @@ class StaffRendererImpl implements ScoreRenderer {
     this.viewportEl = null;
     this.rendererDiv = null;
     this.cursorEl = null;
+    this.dragOverlayEl = null;
     this.hits = [];
-    this.listeners.clear();
-    this.clickHandler = null;
+    this.seekListeners.clear();
+    this.rangeListeners.clear();
+    this.downHandler = null;
+    this.moveHandler = null;
+    this.upHandler = null;
     this.totalWidth = 0;
     this.totalDurationMs = 0;
     this.pixelsPerMs = 0;
     this.viewportWidth = 0;
     this.cursorAnchorPx = 0;
-    this.lastCursorMs = 0;
+    this.lastPlaybackMs = 0;
+    this.lastViewMs = 0;
+    this.dragStartModelX = null;
+    this.dragCurrentModelX = null;
+    this.dragStartHit = null;
+    this.dragIsActive = false;
+    this.boundPointerId = null;
   }
 
   private msToCursorX(ms: number): number {
@@ -417,9 +583,15 @@ function lookupMeasureNumber(
 export interface StaffRendererProps {
   score: ScoreDocument;
   trackIndex: number;
-  /** Score-relative ms. Updates push directly to DOM, not through React. */
+  /** Score-relative ms of the playhead (drives the orange line). */
   currentMs: number;
+  /** Score-relative ms anchored at the cursor anchor. Defaults to currentMs (auto-follow). */
+  viewMs?: number;
   onSeek?: (target: SeekTarget) => void;
+  /** Fires when the user click-and-drags a range across the staff. */
+  onSelectRange?: (range: SelectedRange) => void;
+  /** Fires once after mount with the active track's total duration in ms. */
+  onDurationKnown?: (ms: number) => void;
   className?: string;
 }
 
@@ -427,17 +599,27 @@ export function StaffRenderer({
   score,
   trackIndex,
   currentMs,
+  viewMs,
   onSeek,
+  onSelectRange,
+  onDurationKnown,
   className,
 }: StaffRendererProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<StaffRendererImpl | null>(null);
   const onSeekRef = useRef(onSeek);
+  const onSelectRangeRef = useRef(onSelectRange);
+  const onDurationKnownRef = useRef(onDurationKnown);
 
-  // Keep latest seek handler in a ref so we can register a stable listener.
   useEffect(() => {
     onSeekRef.current = onSeek;
   }, [onSeek]);
+  useEffect(() => {
+    onSelectRangeRef.current = onSelectRange;
+  }, [onSelectRange]);
+  useEffect(() => {
+    onDurationKnownRef.current = onDurationKnown;
+  }, [onDurationKnown]);
 
   // Mount / remount whenever the score or active track changes.
   useEffect(() => {
@@ -448,12 +630,14 @@ export function StaffRenderer({
     rendererRef.current = impl;
     impl.mount(el, score, trackIndex);
 
-    const unsub = impl.onSeek((target) => {
-      onSeekRef.current?.(target);
-    });
+    const unsubSeek = impl.onSeek((target) => onSeekRef.current?.(target));
+    const unsubRange = impl.onSelectRange((range) => onSelectRangeRef.current?.(range));
+
+    onDurationKnownRef.current?.(impl.getTotalDurationMs());
 
     return () => {
-      unsub();
+      unsubSeek();
+      unsubRange();
       impl.destroy();
       rendererRef.current = null;
     };
@@ -463,6 +647,12 @@ export function StaffRenderer({
   useEffect(() => {
     rendererRef.current?.setTimeMs(currentMs);
   }, [currentMs]);
+
+  useEffect(() => {
+    if (rendererRef.current) {
+      rendererRef.current.setViewMs(viewMs ?? currentMs);
+    }
+  }, [viewMs, currentMs]);
 
   return (
     <div

@@ -22,12 +22,12 @@ interface TransportBarProps {
   onSeek: (seconds: number) => void;
   onRateChange: (rate: number) => void;
 
-  // A/B loop controls
+  // A/B loop — endpoints are set by dragging on the staff. The transport
+  // exposes the toggle + clear so the user can disarm/clear without
+  // touching the staff.
   loopA: number | null;
   loopB: number | null;
   loopEnabled: boolean;
-  onSetLoopA: (seconds: number | null) => void;
-  onSetLoopB: (seconds: number | null) => void;
   onToggleLoop: () => void;
   onClearLoop: () => void;
 
@@ -48,8 +48,6 @@ export function TransportBar({
   loopA,
   loopB,
   loopEnabled,
-  onSetLoopA,
-  onSetLoopB,
   onToggleLoop,
   onClearLoop,
   bpm,
@@ -58,14 +56,6 @@ export function TransportBar({
   const safeDuration = Math.max(durationSeconds, 0.001);
   const loopAPct = loopA !== null ? (loopA / safeDuration) * 100 : null;
   const loopBPct = loopB !== null ? (loopB / safeDuration) * 100 : null;
-
-  const handleSetA = () => onSetLoopA(currentSeconds);
-  const handleSetB = () => {
-    // If A is unset, set A first; the user pressing "B" implies "I want
-    // to loop ending here".
-    if (loopA === null) onSetLoopA(0);
-    onSetLoopB(currentSeconds);
-  };
 
   return (
     <div className="space-y-2">
@@ -128,34 +118,28 @@ export function TransportBar({
           <span className="text-muted-foreground"> / {formatSeconds(durationSeconds)}</span>
         </span>
 
-        {/* A/B loop cluster */}
+        {/* Loop control cluster — endpoints are set by dragging on the staff;
+            this row only toggles + clears + offers the metronome. */}
         <div className="flex items-center gap-1 sm:ml-2">
-          <button
-            onClick={handleSetA}
-            className="px-2 py-1 rounded text-xs border border-border hover:bg-muted"
-            title="Set loop start at current position"
-          >
-            <span className="hidden sm:inline">Set </span>A
-          </button>
-          <button
-            onClick={handleSetB}
-            className="px-2 py-1 rounded text-xs border border-border hover:bg-muted"
-            title="Set loop end at current position"
-          >
-            <span className="hidden sm:inline">Set </span>B
-          </button>
           <button
             onClick={onToggleLoop}
             disabled={loopA === null || loopB === null}
-            className={`p-1.5 rounded text-xs border transition ${
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs border transition ${
               loopEnabled
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed'
             }`}
-            title={loopEnabled ? 'Loop on' : 'Loop off'}
+            title={
+              loopA === null || loopB === null
+                ? 'Drag on the staff to set a loop range'
+                : loopEnabled
+                  ? 'Loop on'
+                  : 'Loop off'
+            }
             aria-pressed={loopEnabled}
           >
             <Repeat className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Loop</span>
           </button>
           {(loopA !== null || loopB !== null) && (
             <button

@@ -28,7 +28,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
-import { StaffRenderer } from './notation/renderers/staff-renderer';
+import {
+  StaffRenderer,
+  type SelectedRange,
+} from './notation/renderers/staff-renderer';
+import { StaffScrubBar } from './notation/staff-scrub-bar';
 import { ClipsPanel } from './clips/clips-panel';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
 import type { CompasClip } from '@/app/actions/compas';
@@ -103,11 +107,54 @@ export function CompasPlayer({
     return qnToTrackMs(activeTrack, score, qn);
   }, [clock.currentSeconds, timeMap, activeTrack, score]);
 
+  // Independent staff view position. When isFollowing is true, the view
+  // tracks playback (cursorMs); when false, viewMs is held wherever the
+  // user dragged the scroll bar last.
+  const [viewMs, setViewMs] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(true);
+  const [trackDurationMs, setTrackDurationMs] = useState(0);
+
+  useEffect(() => {
+    if (isFollowing) setViewMs(cursorMs);
+  }, [cursorMs, isFollowing]);
+
+  // Reset view + follow flag when the active track changes — different
+  // tracks have different durations, and a scrub position from one doesn't
+  // make sense for another.
+  useEffect(() => {
+    setIsFollowing(true);
+    setViewMs(0);
+  }, [activeTrackIndex]);
+
   // Click-on-notation → seek video.
   const handleSeek = (target: SeekTarget) => {
     if (!timeMap) return;
     const seconds = timeMap.toVideoTime(target.qn);
     clock.seek(seconds);
+    // A click also re-engages follow — the user clearly wants to play
+    // from there.
+    setIsFollowing(true);
+  };
+
+  // Drag-on-staff → set A/B and arm the loop.
+  const handleSelectRange = (range: SelectedRange) => {
+    if (!timeMap) return;
+    const startSec = timeMap.toVideoTime(range.startQn);
+    const endSec = timeMap.toVideoTime(range.endQn);
+    if (endSec <= startSec) return;
+    clock.setLoopA(startSec);
+    clock.setLoopB(endSec);
+    clock.setLoopEnabled(true);
+  };
+
+  const handleStaffScrub = (ms: number) => {
+    setIsFollowing(false);
+    setViewMs(ms);
+  };
+
+  const handleFollow = () => {
+    setIsFollowing(true);
+    setViewMs(cursorMs);
   };
 
   // Save last position periodically and on unmount.
@@ -151,8 +198,6 @@ export function CompasPlayer({
         loopA={clock.loopA}
         loopB={clock.loopB}
         loopEnabled={clock.loopEnabled}
-        onSetLoopA={clock.setLoopA}
-        onSetLoopB={clock.setLoopB}
         onToggleLoop={() => clock.setLoopEnabled(!clock.loopEnabled)}
         onClearLoop={clock.clearLoop}
         bpm={score.initialTempo}
@@ -180,13 +225,27 @@ export function CompasPlayer({
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-lg p-4 overflow-hidden">
+      <div className="bg-card border border-border rounded-lg p-4 overflow-hidden space-y-3">
         <StaffRenderer
           score={score}
           trackIndex={activeTrackIndex}
           currentMs={cursorMs}
+          viewMs={viewMs}
           onSeek={handleSeek}
+          onSelectRange={handleSelectRange}
+          onDurationKnown={setTrackDurationMs}
         />
+
+        {trackDurationMs > 0 && (
+          <StaffScrubBar
+            durationMs={trackDurationMs}
+            viewMs={viewMs}
+            playbackMs={cursorMs}
+            isFollowing={isFollowing}
+            onScrub={handleStaffScrub}
+            onFollow={handleFollow}
+          />
+        )}
       </div>
 
       {!readOnly && (
