@@ -345,7 +345,7 @@ export type Database = {
           },
         ]
       }
-      compas_events: {
+      playsense_studio_events: {
         Row: {
           class_item_id: string | null
           created_at: string | null
@@ -372,14 +372,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "compas_events_class_item_id_fkey"
+            foreignKeyName: "playsense_studio_events_class_item_id_fkey"
             columns: ["class_item_id"]
             isOneToOne: false
             referencedRelation: "class_items"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "compas_events_user_id_fkey"
+            foreignKeyName: "playsense_studio_events_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"

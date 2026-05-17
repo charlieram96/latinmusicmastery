@@ -3,13 +3,13 @@ import { Badge } from '@/components/ui/badge'
 import { Video, Dumbbell, Music } from 'lucide-react'
 import { ExerciseQuiz } from '@/components/exercise-quiz'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
-import { CompasPlayer } from '@/components/compas/player/compas-player'
-import { getScoreDocumentForClassItem, logCompasEvent } from '@/app/actions/compas'
+import { PlaysenseStudioPlayer } from '@/components/playsense-studio/player/playsense-studio-player'
+import { getScoreDocumentForClassItem, logPlaysenseStudioEvent } from '@/app/actions/playsense-studio'
 
-// Feature flag — set COMPAS_ENABLED=false in env to roll back to the legacy
+// Feature flag — set PLAYSENSE_STUDIO_ENABLED=false in env to roll back to the legacy
 // iframe path even when a class item has a score attached. Default true so
 // production lights up automatically once admins start attaching scores.
-const compasEnabled = process.env.COMPAS_ENABLED !== 'false'
+const playsenseStudioEnabled = process.env.PLAYSENSE_STUDIO_ENABLED !== 'false'
 
 interface ClassItemRendererProps {
   item: {
@@ -36,33 +36,33 @@ interface ClassItemRendererProps {
 }
 
 export async function ClassItemRenderer({ item, userId }: ClassItemRendererProps) {
-  // Compás takes priority over the legacy Soundslice iframe whenever a
+  // PlaySense Studio takes priority over the legacy Soundslice iframe whenever a
   // score_document is attached AND we have a media URL to drive the cursor
   // (video for VIDEO items, audio for JAM_SESSION).
-  const compasMediaUrl =
+  const playsenseStudioMediaUrl =
     item.item_type === 'VIDEO'
       ? item.video_url
       : item.item_type === 'JAM_SESSION'
         ? item.audio_url ?? item.video_url
         : null
 
-  const compasData =
-    compasEnabled && item.score_document_id && compasMediaUrl
+  const playsenseStudioData =
+    playsenseStudioEnabled && item.score_document_id && playsenseStudioMediaUrl
       ? (await getScoreDocumentForClassItem(item.id)).data ?? null
       : null
 
   // M9 cutover analytics — log when the legacy iframe is shown so we know
-  // when zero traffic has migrated. Fire-and-forget; logCompasEvent
+  // when zero traffic has migrated. Fire-and-forget; logPlaysenseStudioEvent
   // swallows errors.
   const renderingLegacyIframe =
-    !compasData && item.soundslice_embed_url !== null
+    !playsenseStudioData && item.soundslice_embed_url !== null
   if (renderingLegacyIframe) {
-    void logCompasEvent({
-      eventType: 'compas_legacy_iframe_shown',
+    void logPlaysenseStudioEvent({
+      eventType: 'playsense_studio_legacy_iframe_shown',
       classItemId: item.id,
       metadata: {
         item_type: item.item_type,
-        compas_enabled: compasEnabled,
+        playsense_studio_enabled: playsenseStudioEnabled,
         has_score_attached: item.score_document_id !== null,
       },
     })
@@ -74,13 +74,13 @@ export async function ClassItemRenderer({ item, userId }: ClassItemRendererProps
       {item.item_type === 'VIDEO' && (
         <Card>
           <CardContent className="p-0">
-            {compasData && compasMediaUrl ? (
-              <CompasPlayer
+            {playsenseStudioData && playsenseStudioMediaUrl ? (
+              <PlaysenseStudioPlayer
                 classItemId={item.id}
-                videoUrl={compasMediaUrl}
-                score={compasData.scoreDocument.parsedScore}
-                tracks={compasData.tracks}
-                activeTimeMap={compasData.activeTimeMap}
+                videoUrl={playsenseStudioMediaUrl}
+                score={playsenseStudioData.scoreDocument.parsedScore}
+                tracks={playsenseStudioData.tracks}
+                activeTimeMap={playsenseStudioData.activeTimeMap}
               />
             ) : item.soundslice_embed_url ? (
               <div className="aspect-video bg-black rounded-lg overflow-hidden">
@@ -180,13 +180,13 @@ export async function ClassItemRenderer({ item, userId }: ClassItemRendererProps
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {compasData && compasMediaUrl ? (
-              <CompasPlayer
+            {playsenseStudioData && playsenseStudioMediaUrl ? (
+              <PlaysenseStudioPlayer
                 classItemId={item.id}
-                videoUrl={compasMediaUrl}
-                score={compasData.scoreDocument.parsedScore}
-                tracks={compasData.tracks}
-                activeTimeMap={compasData.activeTimeMap}
+                videoUrl={playsenseStudioMediaUrl}
+                score={playsenseStudioData.scoreDocument.parsedScore}
+                tracks={playsenseStudioData.tracks}
+                activeTimeMap={playsenseStudioData.activeTimeMap}
               />
             ) : (
               <>

@@ -24,7 +24,7 @@ import { VideoUpload } from './video-upload'
 import { QuizBuilder } from './quiz-builder'
 import { JamSessionEditor } from './jam-session-editor'
 import { TiptapEditor } from './tiptap-editor'
-import { CompasScoreAttach } from './compas-score-attach'
+import { PlaysenseStudioScoreAttach } from './playsense-studio-score-attach'
 import { ClassItem, QuestionType } from '@/types/modules'
 import { updateClassItem } from '@/app/actions/course-builder'
 
@@ -160,7 +160,7 @@ export function ClassItemEditorPanel({
           </div>
 
           {/* Two-column layout for the body. Type-specific content on the left
-              gets a roomy area for video upload + Compás score; rich content
+              gets a roomy area for video upload + PlaySense Studio score; rich content
               on the right gives the TipTap editor breathing space. */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-border">
             {/* Left column — type-specific content */}
@@ -176,7 +176,7 @@ export function ClassItemEditorPanel({
                     }
                   />
 
-                  <CompasScoreAttach
+                  <PlaysenseStudioScoreAttach
                     classItemId={item.id}
                     currentScoreDocumentId={
                       (item as ClassItem & { score_document_id?: string | null })
@@ -199,8 +199,8 @@ export function ClassItemEditorPanel({
                         placeholder="https://www.soundslice.com/slices/..."
                       />
                       <p className="text-xs text-muted-foreground">
-                        Used as a fallback when no Compás score is attached. New
-                        content should use the Compás Score importer above.
+                        Used as a fallback when no PlaySense Studio score is attached. New
+                        content should use the PlaySense Studio Score importer above.
                       </p>
                     </div>
                   </details>
