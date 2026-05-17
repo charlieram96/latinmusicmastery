@@ -42,6 +42,10 @@
     --terracotta: 14 52% 48%;
     --gold-highlight: 38 58% 50%;
 
+    /* PlaySense Studio notation palette — light mode */
+    --playsense-studio-notation: 20 10% 15%;          /* note glyphs, staff lines */
+    --playsense-studio-notation-muted: 20 8% 42%;     /* secondary text (e.g. measure labels) */
+
     --spacing-section: 2rem;
     --spacing-card: 1.5rem;
     --spacing-element: 1rem;
@@ -78,6 +82,10 @@
     --warm-surface: 16 14% 8%; /* #161210 */
     --terracotta: 14 52% 53%; /* #C4654A */
     --gold-highlight: 38 58% 58%; /* #D4A854 */
+
+    /* PlaySense Studio notation palette — dark mode */
+    --playsense-studio-notation: 0 0% 88%;            /* near-white note glyphs */
+    --playsense-studio-notation-muted: 0 0% 60%;
 
     --spacing-section: 2rem;
     --spacing-card: 1.5rem;
@@ -207,6 +215,56 @@
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 999px; }
 .scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--muted)) transparent; }
+
+/* PlaySense Studio notation — make VexFlow SVG follow the theme.
+   VexFlow renders with explicit black fills/strokes (and sometimes inline
+   `style="fill: …"`). To beat both inline attributes and inline styles we
+   force currentColor with !important on all drawable SVG primitives, then
+   restore `fill="none"` (used for open noteheads, slurs) explicitly. The
+   wrapper sets `color` from --playsense-studio-notation so the cascade resolves to
+   the theme's note color. */
+.playsense-studio-notation {
+  color: hsl(var(--playsense-studio-notation));
+}
+.playsense-studio-notation svg path,
+.playsense-studio-notation svg rect,
+.playsense-studio-notation svg line,
+.playsense-studio-notation svg circle,
+.playsense-studio-notation svg ellipse,
+.playsense-studio-notation svg polygon,
+.playsense-studio-notation svg polyline,
+.playsense-studio-notation svg text,
+.playsense-studio-notation svg tspan {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+.playsense-studio-notation svg [fill="none"] {
+  fill: none !important;
+}
+.playsense-studio-notation svg [stroke="none"] {
+  stroke: none !important;
+}
+/* Drag-selection preview rect opts out so its brand fill survives the
+   "force currentColor" rule above. */
+.playsense-studio-notation svg [data-playsense-studio-drag-overlay] {
+  fill: hsl(var(--primary)) !important;
+  stroke: hsl(var(--primary)) !important;
+}
+/* Click-capture background — transparent so it doesn't paint, but it
+   needs to override the !important currentColor rule. */
+.playsense-studio-notation svg [data-playsense-studio-staff-bg] {
+  fill: transparent !important;
+  stroke: none !important;
+}
+/* A/B loop markers — gold-highlight overrides the global currentColor
+   force so the markers stay visibly distinct from the playhead. */
+.playsense-studio-notation svg [data-playsense-studio-loop-marker] {
+  fill: hsl(var(--gold-highlight)) !important;
+  stroke: hsl(var(--gold-highlight)) !important;
+}
+.playsense-studio-notation .playsense-studio-notation-muted {
+  color: hsl(var(--playsense-studio-notation-muted));
+}
 
 /* Smooth scroll for marketing pages */
 html:has([data-marketing]) {
