@@ -9,6 +9,27 @@ export type SendWaitlistEmailInput = {
   ids?: string[]
   subject: string
   body: string
+  imageUrl?: string
+  signature?: string
+}
+
+const SIGNATURE_MAX = 2000
+
+// Header image must be a public https URL we control: our own domain or a
+// Supabase storage host (where uploads land). Anything else is rejected so we
+// never inject an arbitrary URL into the email HTML.
+function isAllowedImageUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:') return false
+    return (
+      parsed.hostname === 'latinmusicmastery.com' ||
+      parsed.hostname.endsWith('.latinmusicmastery.com') ||
+      parsed.hostname.endsWith('.supabase.co')
+    )
+  } catch {
+    return false
+  }
 }
 
 export type SendWaitlistEmailResult =
@@ -40,12 +61,20 @@ export async function sendWaitlistEmail(
 
   const subject = (input.subject ?? '').trim()
   const body = (input.body ?? '').trim()
+  const signature = (input.signature ?? '').trim()
+  const imageUrl = (input.imageUrl ?? '').trim()
 
   if (subject.length < 1 || subject.length > 200) {
     return { error: 'Subject must be between 1 and 200 characters.' }
   }
   if (body.length < 1 || body.length > 20000) {
     return { error: 'Body must be between 1 and 20000 characters.' }
+  }
+  if (signature.length > SIGNATURE_MAX) {
+    return { error: `Signature must be ${SIGNATURE_MAX} characters or fewer.` }
+  }
+  if (imageUrl && !isAllowedImageUrl(imageUrl)) {
+    return { error: 'Header image must be an uploaded image.' }
   }
 
   if (input.mode === 'single' || input.mode === 'selected') {
@@ -76,7 +105,12 @@ export async function sendWaitlistEmail(
     return { error: 'No matching waitlist recipients found.' }
   }
 
-  const { html, text } = wrapBrandedEmail({ subject, body })
+  const { html, text } = wrapBrandedEmail({
+    subject,
+    body,
+    imageUrl: imageUrl || undefined,
+    signature: signature || undefined,
+  })
 
   try {
     const result = await sendEmail({

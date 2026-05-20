@@ -14,10 +14,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { EmailImageUpload } from '@/components/admin/email-image-upload'
 import { sendWaitlistEmail } from '@/app/actions/email'
 
 const SUBJECT_MAX = 200
 const BODY_MAX = 20000
+const SIGNATURE_MAX = 2000
+const SIGNATURE_KEY = 'lmm:waitlist-email-signature'
 
 type Mode = 'single' | 'selected' | 'all'
 
@@ -42,13 +45,23 @@ export function SendEmailDialog({
 }: Props) {
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
+  const [signature, setSignature] = useState('')
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      // Prefill the signature with the remembered default (editable per send).
+      try {
+        setSignature(localStorage.getItem(SIGNATURE_KEY) ?? '')
+      } catch {
+        // localStorage may be unavailable; fall back to empty.
+      }
+    } else {
       setSubject('')
       setBody('')
+      setImageUrl(null)
       setError(null)
     }
   }, [open])
@@ -64,17 +77,27 @@ export function SendEmailDialog({
 
   const handleSubmit = () => {
     setError(null)
+    const trimmedSignature = signature.trim()
     startTransition(async () => {
       const res = await sendWaitlistEmail({
         mode,
         ids,
         subject: subject.trim(),
         body: body.trim(),
+        imageUrl: imageUrl ?? undefined,
+        signature: trimmedSignature || undefined,
       })
 
       if ('error' in res) {
         setError(res.error)
         return
+      }
+
+      // Remember the signature as the default for next time.
+      try {
+        localStorage.setItem(SIGNATURE_KEY, trimmedSignature)
+      } catch {
+        // Ignore storage failures.
       }
 
       onSent?.(res.count)
@@ -122,6 +145,30 @@ export function SendEmailDialog({
             />
             <div className="text-xs text-muted-foreground text-right">
               {body.length}/{BODY_MAX}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Header image (optional)</Label>
+            <EmailImageUpload value={imageUrl} onChange={(url) => setImageUrl(url || null)} disabled={pending} />
+            <p className="text-xs text-muted-foreground">
+              Shown as a banner at the top of the email, under the logo.
+            </p>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="email-signature">Signature (optional)</Label>
+            <Textarea
+              id="email-signature"
+              value={signature}
+              onChange={(e) => setSignature(e.target.value)}
+              placeholder="e.g. — The Latin Music Mastery Team"
+              rows={4}
+              maxLength={SIGNATURE_MAX}
+              disabled={pending}
+            />
+            <div className="text-xs text-muted-foreground text-right">
+              Saved as your default • {signature.length}/{SIGNATURE_MAX}
             </div>
           </div>
 
