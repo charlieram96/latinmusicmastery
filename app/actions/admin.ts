@@ -169,9 +169,30 @@ export async function updateCourse(id: string, formData: FormData) {
   redirect('/admin/courses')
 }
 
-export async function deleteCourse(id: string) {
+export async function deleteCourse(
+  id: string
+): Promise<{ error: string } | { success: true }> {
   const supabase = await createClient()
 
+  // Admin-only. The /admin layout and RLS already block non-admins; this gives
+  // a clean, explicit error instead of an opaque RLS failure.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.is_admin) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Deleting a course cascades to its sections, classes, content, enrollments,
+  // and student progress (all FKs are ON DELETE CASCADE).
   const { error } = await supabase.from('courses').delete().eq('id', id)
 
   if (error) {

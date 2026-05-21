@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, BookOpen, User, Music, Globe, Disc3, Pencil } from 'lucide-react'
 import { getInstrumentColor, SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
 import { AdminSearch } from '@/components/admin/admin-search'
+import { DeleteCourseButton } from '@/components/admin/delete-course-button'
 
 interface PageProps {
   searchParams: Promise<{
@@ -210,13 +211,14 @@ export default async function CoursesPage({ searchParams }: PageProps) {
                 </div>
               </CardContent>
 
-              <div className="px-4 pb-4">
-                <Button asChild className="w-full gap-2" variant="outline">
+              <div className="px-4 pb-4 flex gap-2">
+                <Button asChild className="flex-1 gap-2" variant="outline">
                   <Link href={`/admin/courses/${course.id}`}>
                     <Pencil className="h-4 w-4" />
                     Edit Course
                   </Link>
                 </Button>
+                <DeleteCourseButton courseId={course.id} courseTitle={course.title} />
               </div>
             </Card>
           ))}
