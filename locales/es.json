@@ -102,9 +102,9 @@
             "name": "Por Instrumento",
             "description": "Comienza con un solo instrumento: su curso de fundamentos para principiantes más un curso de género de tu elección.",
             "features": [
-              "Curso de fundamentos para principiantes incluido",
+              "Curso de técnicas básicas para principiantes incluido",
               "1 curso de género de tu elección",
-              "Notación interactiva con Soundslice",
+              "Notación interactiva con PlaySense Studio",
               "Retroalimentación con PlaySense IA",
               "Panel de seguimiento de progreso",
               "Contenido nuevo cada mes",
@@ -118,7 +118,7 @@
             "features": [
               "Los 9 instrumentos incluidos",
               "Todos los cursos de fundamentos y de género",
-              "Notación interactiva con Soundslice",
+              "Notación interactiva con PlaySense Studio",
               "Retroalimentación con PlaySense IA",
               "Panel de seguimiento de progreso",
               "Cancela cuando quieras"
@@ -129,9 +129,10 @@
         "billing": {
           "monthly": "Mensual",
           "annual": "Anual",
-          "save": "Ahorra 15%",
+          "save": "Ahorra 17%",
           "perMonth": "/mes",
           "perYear": "/año",
+          "or": "o",
           "annualNote": "El precio anual aplica a la base del instrumento. Los cursos de género adicionales siguen a $9.99/mes."
         },
         "comingSoon": "Próximamente",
@@ -143,8 +144,8 @@
           "step1Body": "$19.99/mes incluye el curso de fundamentos para principiantes de ese instrumento más un curso de género de tu elección.",
           "step2Title": "Agrega más géneros",
           "step2Body": "¿Quieres más estilos en el mismo instrumento? Agrega cualquier curso de género por $9.99/mes cada uno.",
-          "step3Title": "Hazlo anual y ahorra 15%",
-          "step3Body": "Paga la base de un instrumento por año a $203.90/año, un ahorro del 15%. Los adicionales siguen siendo mensuales."
+          "step3Title": "Hazlo anual y ahorra 17%",
+          "step3Body": "Paga la base de un instrumento por año a $199.99/año, un ahorro del 17%. Los adicionales siguen siendo mensuales."
         },
         "comparison": {
           "titlePrefix": "Compara",
@@ -193,7 +194,7 @@
           },
           "upgrade": {
             "question": "¿Cómo funciona la facturación anual?",
-            "answer": "Puedes pagar la base de un instrumento por año y ahorrar 15%: $203.90/año en lugar de $19.99/mes. El descuento anual aplica a la base del instrumento; los cursos de género adicionales siguen a $9.99/mes, y puedes elegir mensual o anual por separado para cada instrumento."
+            "answer": "Puedes pagar la base de un instrumento por año y ahorrar 17%: $199.99/año en lugar de $239.88. El descuento anual aplica a la base del instrumento; los cursos de género adicionales siguen a $9.99/mes, y puedes elegir mensual o anual por separado para cada instrumento."
           },
           "payment": {
             "question": "¿Qué métodos de pago aceptan?",
@@ -522,7 +523,7 @@
       "screenshotPlaceholder": "Captura de la función",
       "interactive": {
         "title": "Lecciones en video interactivas",
-        "description": "Aprende con tutoriales en video de alta calidad con integración Soundslice para partituras y tablaturas sincronizadas. Reduce la velocidad, haz loops y domina cada nota a tu propio ritmo."
+        "description": "Aprende con tutoriales en video de alta calidad con integración PlaySense Studio para partituras y tablaturas sincronizadas. Reduce la velocidad, haz loops y domina cada nota a tu propio ritmo."
       },
       "progress": {
         "title": "Monitorea tu progreso",
@@ -585,7 +586,7 @@
         "sarahWilliams": {
           "name": "Sarah Williams",
           "role": "Entusiasta de la bossa nova",
-          "content": "Como guitarrista de jazz, aprender bossa nova me abrió un mundo completamente nuevo. La integración con Soundslice hace que seguir las partituras sea muy fácil."
+          "content": "Como guitarrista de jazz, aprender bossa nova me abrió un mundo completamente nuevo. La integración con PlaySense Studio hace que seguir las partituras sea muy fácil."
         },
         "miguelSantos": {
           "name": "Miguel Santos",
@@ -597,31 +598,6 @@
           "role": "Profesora de música",
           "content": "Uso estos cursos para enseñar música latinoamericana a mis estudiantes. La calidad y el contexto cultural son incomparables."
         }
-      }
-    },
-    "pricing": {
-      "heading": "Precios simples y flexibles",
-      "subheading": "Suscríbete por instrumento u obtén acceso ilimitado a todo.",
-      "perInstrument": "Por instrumento",
-      "allAccess": "Acceso total",
-      "perMonth": "/mes",
-      "chooseInstrument": "Elige tu instrumento",
-      "getAllAccess": "Obtener acceso total",
-      "moneyBackNote": "Garantía de reembolso por 14 días. Sin tarjeta de crédito.",
-      "instrumentFeatures": {
-        "allCourses": "Todos los cursos para tu instrumento",
-        "soundslice": "Integración interactiva con Soundslice",
-        "progress": "Panel de seguimiento del progreso",
-        "monthly": "Contenido nuevo cada mes",
-        "cancelAnytime": "Cancela cuando quieras"
-      },
-      "allAccessFeatures": {
-        "allInstruments": "Los 6 instrumentos incluidos",
-        "everyCourse": "Todos los cursos y lecciones",
-        "soundslice": "Integración interactiva con Soundslice",
-        "progress": "Panel de seguimiento del progreso",
-        "monthly": "Contenido nuevo cada mes",
-        "cancelAnytime": "Cancela cuando quieras"
       }
     },
     "finalCta": {
@@ -688,7 +664,7 @@
         "learnMore": "Saber más",
         "interactive": {
           "title": "Lecciones interactivas",
-          "description": "Video HD con integración Soundslice para partituras sincronizadas. Reduce la velocidad, haz loops y domina cada nota."
+          "description": "Video HD con integración PlaySense Studio para partituras sincronizadas. Reduce la velocidad, haz loops y domina cada nota."
         },
         "progress": {
           "title": "Seguimiento del progreso",
@@ -712,7 +688,7 @@
         },
         "interactiveRealtime": {
           "title": "Lecciones interactivas con retroalimentación en tiempo real",
-          "description": "Lecciones en video HD con notación sincronizada impulsadas por Soundslice. Reduce la velocidad, haz loops por secciones y recibe retroalimentación instantánea de tu interpretación con PlaySense AI."
+          "description": "Lecciones en video HD con notación sincronizada impulsadas por PlaySense Studio. Reduce la velocidad, haz loops por secciones y recibe retroalimentación instantánea de tu interpretación con PlaySense AI."
         },
         "trackProgress": {
           "title": "Sigue tu progreso como un profesional",
@@ -733,7 +709,7 @@
           "carlosRodriguez": {
             "name": "Carlos Rodríguez",
             "role": "Guitarrista, 3 años aprendiendo",
-            "content": "La integración con Soundslice es increíble. Poder reducir la velocidad de los pasajes y hacer loops en las secciones difíciles ha transformado mis sesiones de práctica."
+            "content": "La integración con PlaySense Studio es increíble. Poder reducir la velocidad de los pasajes y hacer loops en las secciones difíciles ha transformado mis sesiones de práctica."
           },
           "sarahChen": {
             "name": "Sarah Chen",
@@ -776,14 +752,17 @@
         "perInstrument": "Por instrumento",
         "allAccess": "Acceso total",
         "perMonth": "/mes",
+        "perYear": "/año",
+        "annualSave": "Ahorra 17%",
+        "or": "o",
         "comingSoon": "Próximamente",
         "addonNote": "+$9.99/mes por cada curso de género adicional",
         "chooseInstrument": "Empezar",
         "getAllAccess": "Obtener acceso total",
         "moneyBack": "Garantía de reembolso por 14 días",
         "instrumentFeatures": {
-          "allCourses": "Fundamentos + 1 curso de género de tu elección",
-          "soundslice": "Notación interactiva con Soundslice",
+          "allCourses": "Técnicas básicas + 1 curso de género de tu elección",
+          "soundslice": "Notación interactiva con PlaySense Studio",
           "progress": "Panel de seguimiento del progreso",
           "monthly": "Contenido nuevo cada mes",
           "cancelAnytime": "Cancela cuando quieras"
@@ -791,7 +770,7 @@
         "allAccessFeatures": {
           "allInstruments": "Los 9 instrumentos incluidos",
           "everyCourse": "Todos los cursos de fundamentos y de género",
-          "soundslice": "Notación interactiva con Soundslice",
+          "soundslice": "Notación interactiva con PlaySense Studio",
           "progress": "Panel de seguimiento del progreso",
           "monthly": "Contenido nuevo cada mes",
           "cancelAnytime": "Cancela cuando quieras"

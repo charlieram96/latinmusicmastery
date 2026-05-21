@@ -174,9 +174,31 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
                   </span>
                   <span className="text-lg text-muted-foreground">{t('homepage.homeSections.pricingPreview.perMonth')}</span>
                 </div>
-                <p className="mt-2 text-sm font-medium text-primary">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {t('homepage.homeSections.pricingPreview.addonNote')}
                 </p>
+                {/* Annual alternative — an "or" divider, then a roomy stacked price */}
+                <div className="mt-6 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {t('homepage.homeSections.pricingPreview.or')}
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+                <div className="mt-4 text-center">
+                  <p className="text-lg text-muted-foreground/70 line-through">$239.88</p>
+                  <div className="mt-1 flex items-center justify-center gap-2.5">
+                    <span className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold text-foreground">$199.99</span>
+                      <span className="text-sm text-muted-foreground">
+                        {t('homepage.homeSections.pricingPreview.perYear')}
+                      </span>
+                    </span>
+                    <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-primary-foreground">
+                      {t('homepage.homeSections.pricingPreview.annualSave')}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <ul className="mb-8 flex-1 space-y-4">
@@ -205,20 +227,14 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
             transition={{ delay: 0.2 }}
           >
             <div className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-dashed border-border bg-card/60 p-8">
-              <span className="absolute right-6 top-6 rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('homepage.homeSections.pricingPreview.comingSoon')}
-              </span>
-
               <div className="mb-8 text-center">
-                <div className="mb-2 flex items-center justify-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
+                <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-primary/70" aria-hidden="true" />
+                  {t('homepage.homeSections.pricingPreview.comingSoon')}
+                </span>
+                <div className="flex items-center justify-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
                   <Crown className="size-4" />
                   {t('homepage.homeSections.pricingPreview.allAccess')}
-                </div>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl font-bold text-foreground">
-                    $69.99
-                  </span>
-                  <span className="text-lg text-muted-foreground">{t('homepage.homeSections.pricingPreview.perMonth')}</span>
                 </div>
               </div>
 

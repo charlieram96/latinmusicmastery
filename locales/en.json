@@ -104,7 +104,7 @@
             "features": [
               "Beginner fundamentals course included",
               "1 genre course of your choice",
-              "Interactive Soundslice notation",
+              "Interactive PlaySense Studio notation",
               "PlaySense AI feedback",
               "Progress tracking dashboard",
               "New content added monthly",
@@ -118,7 +118,7 @@
             "features": [
               "All 9 instruments included",
               "Every fundamentals & genre course",
-              "Interactive Soundslice notation",
+              "Interactive PlaySense Studio notation",
               "PlaySense AI feedback",
               "Progress tracking dashboard",
               "Cancel anytime"
@@ -129,9 +129,10 @@
         "billing": {
           "monthly": "Monthly",
           "annual": "Annual",
-          "save": "Save 15%",
+          "save": "Save 17%",
           "perMonth": "/mo",
           "perYear": "/yr",
+          "or": "or",
           "annualNote": "Annual pricing applies to the instrument base. Extra genre courses stay $9.99/mo."
         },
         "comingSoon": "Coming soon",
@@ -143,8 +144,8 @@
           "step1Body": "$19.99/mo includes that instrument's beginner fundamentals course plus one genre course of your choice.",
           "step2Title": "Add more genres",
           "step2Body": "Want more styles on the same instrument? Add any genre course for $9.99/mo each.",
-          "step3Title": "Go annual, save 15%",
-          "step3Body": "Pay yearly for an instrument's base for $203.90/yr — a 15% saving. Add-ons stay monthly."
+          "step3Title": "Go annual, save 17%",
+          "step3Body": "Pay yearly for an instrument's base for $199.99/yr — a 17% saving. Add-ons stay monthly."
         },
         "comparison": {
           "titlePrefix": "Compare",
@@ -193,7 +194,7 @@
           },
           "upgrade": {
             "question": "How does annual billing work?",
-            "answer": "You can pay for an instrument's base yearly and save 15% — $203.90/yr instead of $19.99/mo. The annual discount applies to the instrument base; any additional genre courses stay $9.99/mo, and you can choose monthly or annual separately for each instrument."
+            "answer": "You can pay for an instrument's base yearly and save 17% — $199.99/yr instead of $239.88. The annual discount applies to the instrument base; any additional genre courses stay $9.99/mo, and you can choose monthly or annual separately for each instrument."
           },
           "payment": {
             "question": "What payment methods do you accept?",
@@ -522,7 +523,7 @@
       "screenshotPlaceholder": "Feature Screenshot",
       "interactive": {
         "title": "Interactive Video Lessons",
-        "description": "Learn with high-quality video tutorials featuring Soundslice integration for synchronized sheet music and tablature. Slow down, loop, and master every note at your own pace."
+        "description": "Learn with high-quality video tutorials featuring PlaySense Studio integration for synchronized sheet music and tablature. Slow down, loop, and master every note at your own pace."
       },
       "progress": {
         "title": "Track Your Progress",
@@ -585,7 +586,7 @@
         "sarahWilliams": {
           "name": "Sarah Williams",
           "role": "Bossa Nova Enthusiast",
-          "content": "As a jazz guitarist, learning bossa nova opened up a whole new world. The Soundslice integration makes following along so easy."
+          "content": "As a jazz guitarist, learning bossa nova opened up a whole new world. The PlaySense Studio integration makes following along so easy."
         },
         "miguelSantos": {
           "name": "Miguel Santos",
@@ -597,31 +598,6 @@
           "role": "Music Teacher",
           "content": "I use these courses to teach my students about Latin American music. The quality and cultural context are unmatched."
         }
-      }
-    },
-    "pricing": {
-      "heading": "Simple, flexible pricing",
-      "subheading": "Subscribe per instrument or get unlimited access to everything.",
-      "perInstrument": "Per Instrument",
-      "allAccess": "All-Access",
-      "perMonth": "/month",
-      "chooseInstrument": "Choose Your Instrument",
-      "getAllAccess": "Get All-Access",
-      "moneyBackNote": "14-day money-back guarantee. No credit card required.",
-      "instrumentFeatures": {
-        "allCourses": "All courses for your instrument",
-        "soundslice": "Interactive Soundslice integration",
-        "progress": "Progress tracking dashboard",
-        "monthly": "New content added monthly",
-        "cancelAnytime": "Cancel anytime"
-      },
-      "allAccessFeatures": {
-        "allInstruments": "All 6 instruments included",
-        "everyCourse": "Every course and lesson",
-        "soundslice": "Interactive Soundslice integration",
-        "progress": "Progress tracking dashboard",
-        "monthly": "New content added monthly",
-        "cancelAnytime": "Cancel anytime"
       }
     },
     "finalCta": {
@@ -688,7 +664,7 @@
         "learnMore": "Learn more",
         "interactive": {
           "title": "Interactive Lessons",
-          "description": "HD video with Soundslice integration for synchronized notation. Slow down, loop, and master every note."
+          "description": "HD video with PlaySense Studio integration for synchronized notation. Slow down, loop, and master every note."
         },
         "progress": {
           "title": "Progress Tracking",
@@ -712,7 +688,7 @@
         },
         "interactiveRealtime": {
           "title": "Interactive Lessons with Real-Time Feedback",
-          "description": "HD video lessons with synchronized notation powered by Soundslice. Slow down, loop sections, and get instant feedback on your playing with PlaySense AI."
+          "description": "HD video lessons with synchronized notation powered by PlaySense Studio. Slow down, loop sections, and get instant feedback on your playing with PlaySense AI."
         },
         "trackProgress": {
           "title": "Track Your Progress Like a Pro",
@@ -733,7 +709,7 @@
           "carlosRodriguez": {
             "name": "Carlos Rodriguez",
             "role": "Guitarist, 3 years learning",
-            "content": "The Soundslice integration is incredible. Being able to slow down passages and loop difficult sections has transformed my practice sessions."
+            "content": "The PlaySense Studio integration is incredible. Being able to slow down passages and loop difficult sections has transformed my practice sessions."
           },
           "sarahChen": {
             "name": "Sarah Chen",
@@ -776,6 +752,9 @@
         "perInstrument": "Per Instrument",
         "allAccess": "All-Access",
         "perMonth": "/month",
+        "perYear": "/yr",
+        "annualSave": "Save 17%",
+        "or": "or",
         "comingSoon": "Coming soon",
         "addonNote": "+$9.99/mo per additional genre course",
         "chooseInstrument": "Get Started",
@@ -783,7 +762,7 @@
         "moneyBack": "14-day money-back guarantee",
         "instrumentFeatures": {
           "allCourses": "Fundamentals + 1 genre course of your choice",
-          "soundslice": "Interactive Soundslice notation",
+          "soundslice": "Interactive PlaySense Studio notation",
           "progress": "Progress tracking dashboard",
           "monthly": "New content added monthly",
           "cancelAnytime": "Cancel anytime"
@@ -791,7 +770,7 @@
         "allAccessFeatures": {
           "allInstruments": "All 9 instruments included",
           "everyCourse": "Every fundamentals & genre course",
-          "soundslice": "Interactive Soundslice notation",
+          "soundslice": "Interactive PlaySense Studio notation",
           "progress": "Progress tracking dashboard",
           "monthly": "New content added monthly",
           "cancelAnytime": "Cancel anytime"
