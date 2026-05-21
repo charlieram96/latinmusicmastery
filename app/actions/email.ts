@@ -3,34 +3,20 @@
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/sendgrid'
 import { wrapBrandedEmail } from '@/lib/email/templates'
+import { sanitizeEmailHtml, emailHtmlToText } from '@/lib/email/sanitize-email-html'
 
 export type SendWaitlistEmailInput = {
   mode: 'single' | 'selected' | 'all'
   ids?: string[]
   subject: string
+  /** Email body as HTML from the WYSIWYG composer. */
   body: string
-  imageUrl?: string
   signature?: string
 }
 
 const SIGNATURE_MAX = 2000
-
-// Header image must be a public https URL we control: our own domain or a
-// Supabase storage host (where uploads land). Anything else is rejected so we
-// never inject an arbitrary URL into the email HTML.
-function isAllowedImageUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url)
-    if (parsed.protocol !== 'https:') return false
-    return (
-      parsed.hostname === 'latinmusicmastery.com' ||
-      parsed.hostname.endsWith('.latinmusicmastery.com') ||
-      parsed.hostname.endsWith('.supabase.co')
-    )
-  } catch {
-    return false
-  }
-}
+const BODY_HTML_MAX = 100000
+const BODY_TEXT_MAX = 20000
 
 export type SendWaitlistEmailResult =
   | { success: true; count: number; failed: number }
@@ -60,21 +46,27 @@ export async function sendWaitlistEmail(
   }
 
   const subject = (input.subject ?? '').trim()
-  const body = (input.body ?? '').trim()
+  const rawBody = (input.body ?? '').trim()
   const signature = (input.signature ?? '').trim()
-  const imageUrl = (input.imageUrl ?? '').trim()
 
   if (subject.length < 1 || subject.length > 200) {
     return { error: 'Subject must be between 1 and 200 characters.' }
   }
-  if (body.length < 1 || body.length > 20000) {
-    return { error: 'Body must be between 1 and 20000 characters.' }
+  if (rawBody.length > BODY_HTML_MAX) {
+    return { error: 'Message is too long.' }
   }
   if (signature.length > SIGNATURE_MAX) {
     return { error: `Signature must be ${SIGNATURE_MAX} characters or fewer.` }
   }
-  if (imageUrl && !isAllowedImageUrl(imageUrl)) {
-    return { error: 'Header image must be an uploaded image.' }
+
+  // Sanitize the WYSIWYG HTML and inline-style it for email clients.
+  const bodyHtml = sanitizeEmailHtml(rawBody)
+  const bodyText = emailHtmlToText(bodyHtml)
+  if (bodyText.length < 1) {
+    return { error: 'Message cannot be empty.' }
+  }
+  if (bodyText.length > BODY_TEXT_MAX) {
+    return { error: 'Message is too long.' }
   }
 
   if (input.mode === 'single' || input.mode === 'selected') {
@@ -107,8 +99,7 @@ export async function sendWaitlistEmail(
 
   const { html, text } = wrapBrandedEmail({
     subject,
-    body,
-    imageUrl: imageUrl || undefined,
+    bodyHtml,
     signature: signature || undefined,
   })
 
