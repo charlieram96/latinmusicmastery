@@ -80,6 +80,7 @@ export default async function CourseEditPage({ params }: CourseEditPageProps) {
           is_published: course.is_published,
           thumbnail_url: course.thumbnail_url,
           instrument: course.instrument,
+          is_fundamentals: course.is_fundamentals ?? false,
         }}
         musicalStyles={(musicalStyles || []).map((style: any) => ({
           id: style.id,

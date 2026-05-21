@@ -577,7 +577,8 @@ export type Database = {
           instrument: string | null
           is_master_class: boolean
           is_published: boolean | null
-          musical_style_id: string
+          is_fundamentals: boolean
+          musical_style_id: string | null
           order_index: number | null
           preview_video_url: string | null
           slug: string
@@ -597,7 +598,8 @@ export type Database = {
           instrument?: string | null
           is_master_class?: boolean
           is_published?: boolean | null
-          musical_style_id: string
+          is_fundamentals?: boolean
+          musical_style_id?: string | null
           order_index?: number | null
           preview_video_url?: string | null
           slug: string
@@ -617,7 +619,8 @@ export type Database = {
           instrument?: string | null
           is_master_class?: boolean
           is_published?: boolean | null
-          musical_style_id?: string
+          is_fundamentals?: boolean
+          musical_style_id?: string | null
           order_index?: number | null
           preview_video_url?: string | null
           slug?: string
