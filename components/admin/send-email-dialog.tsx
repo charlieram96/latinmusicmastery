@@ -108,7 +108,7 @@ export function SendEmailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{heading}</DialogTitle>
           <DialogDescription>
@@ -116,7 +116,7 @@ export function SendEmailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2 pr-1">
           <div className="grid gap-2">
             <Label htmlFor="email-subject">Subject</Label>
             <Input
