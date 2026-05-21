@@ -649,6 +649,104 @@ export type Database = {
           },
         ]
       }
+      instrument_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          instrument: string
+          billing_interval: string
+          stripe_customer_id: string | null
+          stripe_base_subscription_id: string | null
+          stripe_addon_subscription_id: string | null
+          status: string
+          base_current_period_end: string | null
+          addon_current_period_end: string | null
+          cancel_at_period_end: boolean
+          pending_interval: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          instrument: string
+          billing_interval: string
+          stripe_customer_id?: string | null
+          stripe_base_subscription_id?: string | null
+          stripe_addon_subscription_id?: string | null
+          status?: string
+          base_current_period_end?: string | null
+          addon_current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          pending_interval?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          instrument?: string
+          billing_interval?: string
+          stripe_customer_id?: string | null
+          stripe_base_subscription_id?: string | null
+          stripe_addon_subscription_id?: string | null
+          status?: string
+          base_current_period_end?: string | null
+          addon_current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          pending_interval?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instrument_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_courses: {
+        Row: {
+          id: string
+          instrument_subscription_id: string
+          user_id: string
+          course_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          instrument_subscription_id: string
+          user_id: string
+          course_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          instrument_subscription_id?: string
+          user_id?: string
+          course_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_courses_instrument_subscription_id_fkey"
+            columns: ["instrument_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "instrument_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_attempts: {
         Row: {
           created_at: string | null
