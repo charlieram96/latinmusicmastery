@@ -170,10 +170,13 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
                 </div>
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-5xl font-bold text-foreground">
-                    $14.99
+                    $19.99
                   </span>
                   <span className="text-lg text-muted-foreground">{t('homepage.homeSections.pricingPreview.perMonth')}</span>
                 </div>
+                <p className="mt-2 text-sm font-medium text-primary">
+                  {t('homepage.homeSections.pricingPreview.addonNote')}
+                </p>
               </div>
 
               <ul className="mb-8 flex-1 space-y-4">
@@ -186,7 +189,6 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
               </ul>
 
               <Button
-                variant="outline"
                 className="h-auto w-full rounded-full py-4 text-base font-semibold"
                 asChild
               >
@@ -202,9 +204,10 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
             animate="visible"
             transition={{ delay: 0.2 }}
           >
-            <div className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card p-8">
-              {/* Gradient top accent */}
-              <div className="absolute left-0 right-0 top-0 h-1 bg-gradient-to-r from-primary via-orange-400 to-primary" />
+            <div className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-dashed border-border bg-card/60 p-8">
+              <span className="absolute right-6 top-6 rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('homepage.homeSections.pricingPreview.comingSoon')}
+              </span>
 
               <div className="mb-8 text-center">
                 <div className="mb-2 flex items-center justify-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
@@ -222,22 +225,19 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
               <ul className="mb-8 flex-1 space-y-4">
                 {allAccessFeatureKeys.map((featureKey) => (
                   <li key={featureKey} className="flex items-center gap-3">
-                    <Check className="size-5 shrink-0 text-primary" />
-                    <span className="text-foreground/80">{t(featureKey)}</span>
+                    <Check className="size-5 shrink-0 text-muted-foreground/60" />
+                    <span className="text-muted-foreground">{t(featureKey)}</span>
                   </li>
                 ))}
               </ul>
 
               <Button
-                className="h-auto w-full rounded-full bg-primary py-4 text-base font-semibold text-white hover:bg-primary/90"
-                asChild
+                variant="outline"
+                className="h-auto w-full rounded-full py-4 text-base font-semibold"
+                disabled
               >
-                <Link href="#waitlist">{t('homepage.homeSections.pricingPreview.getAllAccess')}</Link>
+                {t('homepage.homeSections.pricingPreview.comingSoon')}
               </Button>
-
-              <p className="mt-4 text-center text-xs text-muted-foreground">
-                {t('homepage.homeSections.pricingPreview.moneyBack')}
-              </p>
             </div>
           </motion.div>
         </div>

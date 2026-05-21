@@ -85,7 +85,7 @@
       "pricing": {
         "hero": {
           "title": "Pricing",
-          "subtitle": "Choose the plan that fits your musical journey. No commitment, cancel anytime."
+          "subtitle": "Start with one instrument — its fundamentals course plus a genre you choose. Add more styles whenever you're ready."
         },
         "breadcrumbs": {
           "home": "Home",
@@ -100,37 +100,57 @@
         "plans": {
           "perInstrument": {
             "name": "Per Instrument",
-            "description": "Full access to all courses, lessons, and tools for a single instrument of your choice.",
+            "description": "Begin with a single instrument: its beginner fundamentals course plus one genre course of your choice.",
             "features": [
-              "All courses for your instrument",
-              "Interactive Soundslice integration",
-              "Progress tracking dashboard",
+              "Beginner fundamentals course included",
+              "1 genre course of your choice",
+              "Interactive Soundslice notation",
               "PlaySense AI feedback",
+              "Progress tracking dashboard",
               "New content added monthly",
               "Cancel anytime"
             ],
-            "ctaLabel": "Choose Instrument"
+            "ctaLabel": "Get Started"
           },
           "allAccess": {
             "name": "All-Access",
-            "description": "Unlimited access to every instrument, every course, and every feature on the platform.",
+            "description": "Every instrument and every course in one membership.",
             "features": [
-              "All 6 instruments included",
-              "Every course and lesson",
-              "Interactive Soundslice integration",
-              "Progress tracking dashboard",
+              "All 9 instruments included",
+              "Every fundamentals & genre course",
+              "Interactive Soundslice notation",
               "PlaySense AI feedback",
-              "New content added monthly",
+              "Progress tracking dashboard",
               "Cancel anytime"
             ],
             "ctaLabel": "Get All-Access"
           }
         },
+        "billing": {
+          "monthly": "Monthly",
+          "annual": "Annual",
+          "save": "Save 15%",
+          "perMonth": "/mo",
+          "perYear": "/yr",
+          "annualNote": "Annual pricing applies to the instrument base. Extra genre courses stay $9.99/mo."
+        },
+        "comingSoon": "Coming soon",
+        "addonNote": "+$9.99/mo per additional genre course",
+        "includesLabel": "What's included",
+        "howItWorks": {
+          "title": "How pricing works",
+          "step1Title": "Pick an instrument",
+          "step1Body": "$19.99/mo includes that instrument's beginner fundamentals course plus one genre course of your choice.",
+          "step2Title": "Add more genres",
+          "step2Body": "Want more styles on the same instrument? Add any genre course for $9.99/mo each.",
+          "step3Title": "Go annual, save 15%",
+          "step3Body": "Pay yearly for an instrument's base for $203.90/yr — a 15% saving. Add-ons stay monthly."
+        },
         "comparison": {
           "titlePrefix": "Compare",
           "titleHighlight": "Plans",
           "feature": "Feature",
-          "allSix": "All 6",
+          "allSix": "All 9",
           "rows": {
             "instruments": "Number of instruments",
             "videoLessons": "Video lessons",
@@ -160,20 +180,20 @@
           "titlePrefix": "Frequently Asked",
           "titleHighlight": "Questions",
           "difference": {
-            "question": "What's the difference between the plans?",
-            "answer": "The Per Instrument plan gives you full access to all courses, lessons, interactive notation, and AI feedback for one instrument of your choice. The All-Access plan includes everything across all 6 instruments on the platform, plus priority support. Both plans include full access to PlaySense AI, progress tracking, and all new content added each month."
+            "question": "What's included for $19.99/month?",
+            "answer": "Subscribing to an instrument for $19.99/mo includes that instrument's beginner fundamentals course plus one genre course of your choice. You can add more genre courses on the same instrument for $9.99/mo each. All-Access — one membership for every instrument and course — is coming soon."
           },
           "switch": {
-            "question": "Can I switch instruments?",
-            "answer": "Yes, you can change your instrument selection at any time from your account settings. When you switch, you'll immediately get access to all content for your new instrument. Your progress on your previous instrument is saved, so if you switch back later, you can pick up right where you left off."
+            "question": "Can I add more courses or instruments?",
+            "answer": "Yes. Add another genre course on an instrument you already have for $9.99/mo, or start a new instrument for $19.99/mo (which again includes that instrument's fundamentals course plus one genre course of your choice). You can manage everything from your account."
           },
           "trial": {
             "question": "Is there a free trial?",
-            "answer": "Yes! You get a 14-day free trial when you sign up for any plan. During the trial you'll have full access to all features included in your chosen plan. If you decide it's not for you, simply cancel before the trial ends and you won't be charged."
+            "answer": "Yes! You get a 14-day free trial when you sign up. During the trial you'll have full access to the courses included in your plan. If you decide it's not for you, simply cancel before the trial ends and you won't be charged."
           },
           "upgrade": {
-            "question": "Can I upgrade later?",
-            "answer": "Absolutely. You can upgrade from the Per Instrument plan to All-Access at any time. When you upgrade, we'll prorate the remaining time on your current billing cycle so you only pay the difference. Your progress and saved content will carry over seamlessly."
+            "question": "How does annual billing work?",
+            "answer": "You can pay for an instrument's base yearly and save 15% — $203.90/yr instead of $19.99/mo. The annual discount applies to the instrument base; any additional genre courses stay $9.99/mo, and you can choose monthly or annual separately for each instrument."
           },
           "payment": {
             "question": "What payment methods do you accept?",
@@ -745,7 +765,7 @@
       "pricingPreview": {
         "headingPrefix": "Simple,",
         "headingHighlight": "flexible pricing",
-        "description": "Subscribe per instrument or get unlimited access to everything.",
+        "description": "Start with one instrument — its fundamentals course plus a genre you choose — and add more anytime.",
         "limitedTimeNotice": {
           "eyebrow": "Limited-Time Pricing",
           "title": "These prices won't last long",
@@ -756,20 +776,22 @@
         "perInstrument": "Per Instrument",
         "allAccess": "All-Access",
         "perMonth": "/month",
-        "chooseInstrument": "Choose Your Instrument",
+        "comingSoon": "Coming soon",
+        "addonNote": "+$9.99/mo per additional genre course",
+        "chooseInstrument": "Get Started",
         "getAllAccess": "Get All-Access",
         "moneyBack": "14-day money-back guarantee",
         "instrumentFeatures": {
-          "allCourses": "All courses for your instrument",
-          "soundslice": "Interactive Soundslice integration",
+          "allCourses": "Fundamentals + 1 genre course of your choice",
+          "soundslice": "Interactive Soundslice notation",
           "progress": "Progress tracking dashboard",
           "monthly": "New content added monthly",
           "cancelAnytime": "Cancel anytime"
         },
         "allAccessFeatures": {
-          "allInstruments": "All 6 instruments included",
-          "everyCourse": "Every course and lesson",
-          "soundslice": "Interactive Soundslice integration",
+          "allInstruments": "All 9 instruments included",
+          "everyCourse": "Every fundamentals & genre course",
+          "soundslice": "Interactive Soundslice notation",
           "progress": "Progress tracking dashboard",
           "monthly": "New content added monthly",
           "cancelAnytime": "Cancel anytime"
