@@ -195,11 +195,44 @@ export default function PricingContent() {
             </div>
 
             <div className="mt-4 flex items-baseline gap-1">
-              <span className="text-5xl font-bold">{isAnnual ? "$203.90" : "$19.99"}</span>
+              <span className="text-5xl font-bold">{isAnnual ? "$199.99" : "$19.99"}</span>
               <span className="text-muted-foreground">
                 {isAnnual ? t(`${k}.billing.perYear`) : t(`${k}.billing.perMonth`)}
               </span>
             </div>
+
+            {/* Annual savings — one cohesive offer pill with the discount nested as a tag */}
+            {isAnnual ? (
+              <div className="mt-2 flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground/50 line-through">$239.88</span>
+                <span className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-primary-foreground">
+                  {t(`${k}.billing.save`)}
+                </span>
+              </div>
+            ) : (
+              <>
+                {/* Annual alternative — an "or" divider, then a roomy stacked price */}
+                <div className="mt-4 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {t(`${k}.billing.or`)}
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+                <div className="mt-3">
+                  <p className="text-lg text-muted-foreground/70 line-through">$239.88</p>
+                  <div className="mt-1 flex items-center gap-2.5">
+                    <span className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold text-foreground">$199.99</span>
+                      <span className="text-sm text-muted-foreground">{t(`${k}.billing.perYear`)}</span>
+                    </span>
+                    <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-primary-foreground">
+                      {t(`${k}.billing.save`)}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="mt-2 flex items-center gap-1.5 text-sm font-medium text-primary">
               <Plus className="h-4 w-4" />
@@ -248,12 +281,7 @@ export default function PricingContent() {
               </span>
             </div>
 
-            <div className="mt-4 flex items-baseline gap-1">
-              <span className="text-5xl font-bold">$69.99</span>
-              <span className="text-muted-foreground">{t(`${k}.billing.perMonth`)}</span>
-            </div>
-
-            <p className="mt-3 text-sm text-muted-foreground">
+            <p className="mt-4 text-sm text-muted-foreground">
               {t(`${k}.plans.allAccess.description`)}
             </p>
 
