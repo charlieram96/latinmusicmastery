@@ -14,13 +14,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { EmailImageUpload } from '@/components/admin/email-image-upload'
+import { EmailRichTextEditor } from '@/components/admin/email-rich-text-editor'
 import { sendWaitlistEmail } from '@/app/actions/email'
 
 const SUBJECT_MAX = 200
-const BODY_MAX = 20000
 const SIGNATURE_MAX = 2000
 const SIGNATURE_KEY = 'lmm:waitlist-email-signature'
+
+// True when the editor HTML has real text (an empty editor is "<p></p>").
+function htmlHasText(html: string): boolean {
+  return html.replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').trim().length > 0
+}
 
 type Mode = 'single' | 'selected' | 'all'
 
@@ -46,7 +50,6 @@ export function SendEmailDialog({
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [signature, setSignature] = useState('')
-  const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -61,7 +64,6 @@ export function SendEmailDialog({
     } else {
       setSubject('')
       setBody('')
-      setImageUrl(null)
       setError(null)
     }
   }, [open])
@@ -73,7 +75,7 @@ export function SendEmailDialog({
         ? `Send to ${recipientCount} selected ${recipientCount === 1 ? 'member' : 'members'}`
         : `Send to all ${recipientCount} waitlist ${recipientCount === 1 ? 'member' : 'members'}`
 
-  const canSubmit = subject.trim().length > 0 && body.trim().length > 0 && !pending
+  const canSubmit = subject.trim().length > 0 && htmlHasText(body) && !pending
 
   const handleSubmit = () => {
     setError(null)
@@ -83,8 +85,7 @@ export function SendEmailDialog({
         mode,
         ids,
         subject: subject.trim(),
-        body: body.trim(),
-        imageUrl: imageUrl ?? undefined,
+        body,
         signature: trimmedSignature || undefined,
       })
 
@@ -133,26 +134,9 @@ export function SendEmailDialog({
 
           <div className="grid gap-2">
             <Label htmlFor="email-body">Message</Label>
-            <Textarea
-              id="email-body"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="Write your message. Leave a blank line between paragraphs."
-              rows={10}
-              maxLength={BODY_MAX}
-              disabled={pending}
-              className="min-h-[220px]"
-            />
-            <div className="text-xs text-muted-foreground text-right">
-              {body.length}/{BODY_MAX}
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Header image (optional)</Label>
-            <EmailImageUpload value={imageUrl} onChange={(url) => setImageUrl(url || null)} disabled={pending} />
+            <EmailRichTextEditor value={body} onChange={setBody} disabled={pending} />
             <p className="text-xs text-muted-foreground">
-              Shown as a banner at the top of the email, under the logo.
+              Use the toolbar to format your message — headings, bold, lists, and links.
             </p>
           </div>
 
