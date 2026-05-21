@@ -50,7 +50,7 @@ export default async function LessonsPage() {
                     {lesson.is_free && <Badge variant="secondary">Free</Badge>}
                   </div>
                   <p className="text-sm text-muted-foreground mb-2">
-                    {lesson.course.title} • {lesson.course.musical_style.name}
+                    {lesson.course.title} • {lesson.course.musical_style?.name ?? 'Fundamentals'}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {lesson.duration_minutes ? `${lesson.duration_minutes} min` : 'No duration'} •

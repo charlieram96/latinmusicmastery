@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
 import { PLAN_PRICES, getPlanPrice } from '@/lib/pricing'
+import { validateCourseKind } from '@/lib/courses/fundamentals'
 
 // Countries
 export async function createCountry(formData: FormData) {
@@ -118,16 +119,27 @@ export async function deleteStyle(id: string) {
 export async function createCourse(formData: FormData) {
   const supabase = await createClient()
 
+  const isFundamentals = formData.get('is_fundamentals') === 'true'
+  const instrument = (formData.get('instrument') as string) || null
+  const musicalStyleId = isFundamentals ? null : ((formData.get('musical_style_id') as string) || null)
+
+  const kind = validateCourseKind({ isFundamentals, musicalStyleId, instrument })
+  if (!kind.ok) {
+    throw new Error(kind.error)
+  }
+
   const data = {
-    musical_style_id: formData.get('musical_style_id') as string,
+    musical_style_id: musicalStyleId,
+    is_fundamentals: isFundamentals,
+    instrument,
     title: formData.get('title') as string,
     slug: formData.get('slug') as string,
-    description: formData.get('description') as string || null,
-    teacher_name: formData.get('teacher_name') as string,
-    teacher_bio: formData.get('teacher_bio') as string || null,
-    teacher_image_url: formData.get('teacher_image_url') as string || null,
-    thumbnail_url: formData.get('thumbnail_url') as string || null,
-    preview_video_url: formData.get('preview_video_url') as string || null,
+    description: (formData.get('description') as string) || null,
+    teacher_name: (formData.get('teacher_name') as string) || 'Latin Music Mastery',
+    teacher_bio: (formData.get('teacher_bio') as string) || null,
+    teacher_image_url: (formData.get('teacher_image_url') as string) || null,
+    thumbnail_url: (formData.get('thumbnail_url') as string) || null,
+    preview_video_url: (formData.get('preview_video_url') as string) || null,
     is_published: formData.get('is_published') === 'true',
     order_index: parseInt(formData.get('order_index') as string) || 0,
   }
@@ -145,16 +157,27 @@ export async function createCourse(formData: FormData) {
 export async function updateCourse(id: string, formData: FormData) {
   const supabase = await createClient()
 
+  const isFundamentals = formData.get('is_fundamentals') === 'true'
+  const instrument = (formData.get('instrument') as string) || null
+  const musicalStyleId = isFundamentals ? null : ((formData.get('musical_style_id') as string) || null)
+
+  const kind = validateCourseKind({ isFundamentals, musicalStyleId, instrument })
+  if (!kind.ok) {
+    throw new Error(kind.error)
+  }
+
   const data = {
-    musical_style_id: formData.get('musical_style_id') as string,
+    musical_style_id: musicalStyleId,
+    is_fundamentals: isFundamentals,
+    instrument,
     title: formData.get('title') as string,
     slug: formData.get('slug') as string,
-    description: formData.get('description') as string || null,
-    teacher_name: formData.get('teacher_name') as string,
-    teacher_bio: formData.get('teacher_bio') as string || null,
-    teacher_image_url: formData.get('teacher_image_url') as string || null,
-    thumbnail_url: formData.get('thumbnail_url') as string || null,
-    preview_video_url: formData.get('preview_video_url') as string || null,
+    description: (formData.get('description') as string) || null,
+    teacher_name: (formData.get('teacher_name') as string) || 'Latin Music Mastery',
+    teacher_bio: (formData.get('teacher_bio') as string) || null,
+    teacher_image_url: (formData.get('teacher_image_url') as string) || null,
+    thumbnail_url: (formData.get('thumbnail_url') as string) || null,
+    preview_video_url: (formData.get('preview_video_url') as string) || null,
     is_published: formData.get('is_published') === 'true',
     order_index: parseInt(formData.get('order_index') as string) || 0,
   }

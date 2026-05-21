@@ -3,7 +3,7 @@ import PricingContent from './pricing-content'
 
 export const metadata: Metadata = {
   title: 'Pricing - Latin Music Mastery',
-  description: 'Simple, flexible pricing. Subscribe per instrument at $14.99/mo or get unlimited All-Access for $69.99/mo.',
+  description: 'Simple, flexible pricing. Start an instrument for $19.99/mo (fundamentals course + a genre of your choice), add more genre courses for $9.99/mo each, or save 15% with annual billing.',
 }
 
 export default function PricingPage() {

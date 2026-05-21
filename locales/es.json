@@ -85,7 +85,7 @@
       "pricing": {
         "hero": {
           "title": "Precios",
-          "subtitle": "Elige el plan que mejor se ajuste a tu camino musical. Sin compromiso, cancela cuando quieras."
+          "subtitle": "Comienza con un instrumento: su curso de fundamentos más un género de tu elección. Agrega más estilos cuando quieras."
         },
         "breadcrumbs": {
           "home": "Inicio",
@@ -100,37 +100,57 @@
         "plans": {
           "perInstrument": {
             "name": "Por Instrumento",
-            "description": "Acceso total a todos los cursos, lecciones y herramientas para un instrumento de tu elección.",
+            "description": "Comienza con un solo instrumento: su curso de fundamentos para principiantes más un curso de género de tu elección.",
             "features": [
-              "Todos los cursos de tu instrumento",
-              "Integración interactiva con Soundslice",
-              "Panel de seguimiento de progreso",
+              "Curso de fundamentos para principiantes incluido",
+              "1 curso de género de tu elección",
+              "Notación interactiva con Soundslice",
               "Retroalimentación con PlaySense IA",
+              "Panel de seguimiento de progreso",
               "Contenido nuevo cada mes",
               "Cancela cuando quieras"
             ],
-            "ctaLabel": "Elegir Instrumento"
+            "ctaLabel": "Empezar"
           },
           "allAccess": {
             "name": "Acceso Total",
-            "description": "Acceso ilimitado a todos los instrumentos, todos los cursos y todas las funciones de la plataforma.",
+            "description": "Todos los instrumentos y todos los cursos en una sola membresía.",
             "features": [
-              "Los 6 instrumentos incluidos",
-              "Todos los cursos y lecciones",
-              "Integración interactiva con Soundslice",
-              "Panel de seguimiento de progreso",
+              "Los 9 instrumentos incluidos",
+              "Todos los cursos de fundamentos y de género",
+              "Notación interactiva con Soundslice",
               "Retroalimentación con PlaySense IA",
-              "Contenido nuevo cada mes",
+              "Panel de seguimiento de progreso",
               "Cancela cuando quieras"
             ],
             "ctaLabel": "Obtener Acceso Total"
           }
         },
+        "billing": {
+          "monthly": "Mensual",
+          "annual": "Anual",
+          "save": "Ahorra 15%",
+          "perMonth": "/mes",
+          "perYear": "/año",
+          "annualNote": "El precio anual aplica a la base del instrumento. Los cursos de género adicionales siguen a $9.99/mes."
+        },
+        "comingSoon": "Próximamente",
+        "addonNote": "+$9.99/mes por cada curso de género adicional",
+        "includesLabel": "Qué incluye",
+        "howItWorks": {
+          "title": "Cómo funcionan los precios",
+          "step1Title": "Elige un instrumento",
+          "step1Body": "$19.99/mes incluye el curso de fundamentos para principiantes de ese instrumento más un curso de género de tu elección.",
+          "step2Title": "Agrega más géneros",
+          "step2Body": "¿Quieres más estilos en el mismo instrumento? Agrega cualquier curso de género por $9.99/mes cada uno.",
+          "step3Title": "Hazlo anual y ahorra 15%",
+          "step3Body": "Paga la base de un instrumento por año a $203.90/año, un ahorro del 15%. Los adicionales siguen siendo mensuales."
+        },
         "comparison": {
           "titlePrefix": "Compara",
           "titleHighlight": "Planes",
           "feature": "Característica",
-          "allSix": "Los 6",
+          "allSix": "Los 9",
           "rows": {
             "instruments": "Cantidad de instrumentos",
             "videoLessons": "Lecciones en video",
@@ -160,20 +180,20 @@
           "titlePrefix": "Preguntas",
           "titleHighlight": "Frecuentes",
           "difference": {
-            "question": "¿Cuál es la diferencia entre los planes?",
-            "answer": "El plan Por Instrumento te da acceso total a todos los cursos, lecciones, notación interactiva y retroalimentación con IA para un instrumento de tu elección. El plan Acceso Total incluye todo lo referente a los 6 instrumentos de la plataforma, además de soporte prioritario. Ambos planes incluyen acceso completo a PlaySense IA, seguimiento de progreso y todo el contenido nuevo que se añade cada mes."
+            "question": "¿Qué incluye por $19.99 al mes?",
+            "answer": "Suscribirte a un instrumento por $19.99/mes incluye el curso de fundamentos para principiantes de ese instrumento más un curso de género de tu elección. Puedes agregar más cursos de género del mismo instrumento por $9.99/mes cada uno. El Acceso Total —una sola membresía para todos los instrumentos y cursos— llegará próximamente."
           },
           "switch": {
-            "question": "¿Puedo cambiar de instrumento?",
-            "answer": "Sí, puedes cambiar tu instrumento seleccionado en cualquier momento desde la configuración de tu cuenta. Al cambiar, obtendrás acceso inmediato a todo el contenido de tu nuevo instrumento. Tu progreso en el instrumento anterior se guarda, así que si vuelves a cambiarlo más adelante, podrás retomar justo donde lo dejaste."
+            "question": "¿Puedo agregar más cursos o instrumentos?",
+            "answer": "Sí. Agrega otro curso de género en un instrumento que ya tienes por $9.99/mes, o comienza un nuevo instrumento por $19.99/mes (que de nuevo incluye el curso de fundamentos de ese instrumento más un curso de género de tu elección). Puedes administrar todo desde tu cuenta."
           },
           "trial": {
             "question": "¿Hay una prueba gratuita?",
-            "answer": "¡Sí! Recibes una prueba gratuita de 14 días al registrarte en cualquier plan. Durante la prueba tendrás acceso total a todas las funciones incluidas en el plan que elijas. Si decides que no es para ti, simplemente cancela antes de que termine la prueba y no se te cobrará."
+            "answer": "¡Sí! Recibes una prueba gratuita de 14 días al registrarte. Durante la prueba tendrás acceso total a los cursos incluidos en tu plan. Si decides que no es para ti, simplemente cancela antes de que termine la prueba y no se te cobrará."
           },
           "upgrade": {
-            "question": "¿Puedo mejorar mi plan después?",
-            "answer": "Por supuesto. Puedes pasar del plan Por Instrumento al Acceso Total en cualquier momento. Al mejorar tu plan, prorrateamos el tiempo restante de tu ciclo de facturación actual para que solo pagues la diferencia. Tu progreso y contenido guardado se transfieren sin problemas."
+            "question": "¿Cómo funciona la facturación anual?",
+            "answer": "Puedes pagar la base de un instrumento por año y ahorrar 15%: $203.90/año en lugar de $19.99/mes. El descuento anual aplica a la base del instrumento; los cursos de género adicionales siguen a $9.99/mes, y puedes elegir mensual o anual por separado para cada instrumento."
           },
           "payment": {
             "question": "¿Qué métodos de pago aceptan?",
@@ -745,7 +765,7 @@
       "pricingPreview": {
         "headingPrefix": "Precios simples,",
         "headingHighlight": "flexibles",
-        "description": "Suscríbete por instrumento u obtén acceso ilimitado a todo.",
+        "description": "Comienza con un instrumento —su curso de fundamentos más un género de tu elección— y agrega más cuando quieras.",
         "limitedTimeNotice": {
           "eyebrow": "Precios por Tiempo Limitado",
           "title": "Estos precios no durarán mucho",
@@ -756,20 +776,22 @@
         "perInstrument": "Por instrumento",
         "allAccess": "Acceso total",
         "perMonth": "/mes",
-        "chooseInstrument": "Elige tu instrumento",
+        "comingSoon": "Próximamente",
+        "addonNote": "+$9.99/mes por cada curso de género adicional",
+        "chooseInstrument": "Empezar",
         "getAllAccess": "Obtener acceso total",
         "moneyBack": "Garantía de reembolso por 14 días",
         "instrumentFeatures": {
-          "allCourses": "Todos los cursos para tu instrumento",
-          "soundslice": "Integración interactiva con Soundslice",
+          "allCourses": "Fundamentos + 1 curso de género de tu elección",
+          "soundslice": "Notación interactiva con Soundslice",
           "progress": "Panel de seguimiento del progreso",
           "monthly": "Contenido nuevo cada mes",
           "cancelAnytime": "Cancela cuando quieras"
         },
         "allAccessFeatures": {
-          "allInstruments": "Los 6 instrumentos incluidos",
-          "everyCourse": "Todos los cursos y lecciones",
-          "soundslice": "Integración interactiva con Soundslice",
+          "allInstruments": "Los 9 instrumentos incluidos",
+          "everyCourse": "Todos los cursos de fundamentos y de género",
+          "soundslice": "Notación interactiva con Soundslice",
           "progress": "Panel de seguimiento del progreso",
           "monthly": "Contenido nuevo cada mes",
           "cancelAnytime": "Cancela cuando quieras"

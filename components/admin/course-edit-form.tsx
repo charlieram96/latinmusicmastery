@@ -19,6 +19,7 @@ import Link from 'next/link'
 import { CourseThumbnailUpload } from './course-thumbnail-upload'
 import { createClient } from '@/lib/supabase/client'
 import { SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
+import { validateCourseKind } from '@/lib/courses/fundamentals'
 
 interface MusicalStyle {
   id: string
@@ -37,11 +38,12 @@ interface Course {
   title: string
   slug: string
   description: string | null
-  musical_style_id: string
+  musical_style_id: string | null
   teacher_id: string | null
   is_published: boolean | null
   thumbnail_url: string | null
   instrument: string | null
+  is_fundamentals: boolean
 }
 
 interface CourseEditFormProps {
@@ -54,20 +56,31 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [thumbnailUrl, setThumbnailUrl] = useState(course.thumbnail_url || '')
+  const [isFundamentals, setIsFundamentals] = useState(course.is_fundamentals)
+  const [formError, setFormError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setSaving(true)
+    setFormError(null)
 
     const formData = new FormData(e.currentTarget)
     const title = formData.get('title') as string
     const slug = formData.get('slug') as string
     const description = formData.get('description') as string
-    const musicalStyleId = formData.get('musical_style_id') as string
     const teacherId = formData.get('teacher_id') as string
     const instrumentValue = formData.get('instrument') as string
     const isPublished = formData.get('is_published') === 'on'
 
+    const instrument = instrumentValue === 'auto' ? null : (instrumentValue || null)
+    const musicalStyleId = isFundamentals ? null : ((formData.get('musical_style_id') as string) || null)
+
+    const kind = validateCourseKind({ isFundamentals, musicalStyleId, instrument })
+    if (!kind.ok) {
+      setFormError(kind.error)
+      return
+    }
+
+    setSaving(true)
     try {
       const supabase = createClient()
 
@@ -91,9 +104,10 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
           slug,
           description: description || null,
           musical_style_id: musicalStyleId,
+          is_fundamentals: isFundamentals,
           teacher_id: teacherId === 'unassigned' ? null : teacherId,
           teacher_name: teacherName,
-          instrument: instrumentValue === 'auto' ? null : (instrumentValue || null),
+          instrument,
           is_published: isPublished,
           thumbnail_url: thumbnailUrl || null,
           updated_at: new Date().toISOString(),
@@ -102,6 +116,7 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
 
       if (error) {
         console.error('Error updating course:', error)
+        setFormError(error.message)
         return
       }
 
@@ -109,6 +124,7 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
       router.refresh()
     } catch (err) {
       console.error('Error:', err)
+      setFormError('Something went wrong. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -167,21 +183,36 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="musical_style_id">Musical Style</Label>
-              <Select name="musical_style_id" defaultValue={course.musical_style_id}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {musicalStyles?.map((style) => (
-                    <SelectItem key={style.id} value={style.id}>
-                      {style.name} ({style.country.name})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center space-x-3 rounded-md border p-3">
+              <input
+                type="checkbox"
+                id="is_fundamentals"
+                checked={isFundamentals}
+                onChange={(e) => setIsFundamentals(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <Label htmlFor="is_fundamentals" className="font-normal">
+                This is the instrument&rsquo;s beginner fundamentals course (no genre)
+              </Label>
             </div>
+
+            {!isFundamentals && (
+              <div className="grid gap-2">
+                <Label htmlFor="musical_style_id">Musical Style</Label>
+                <Select name="musical_style_id" defaultValue={course.musical_style_id ?? undefined}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a genre" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {musicalStyles?.map((style) => (
+                      <SelectItem key={style.id} value={style.id}>
+                        {style.name} ({style.country.name})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="instrument">Instrument</Label>
@@ -255,6 +286,11 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
         </Card>
 
         {/* Actions */}
+        {formError && (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {formError}
+          </div>
+        )}
         <div className="flex gap-4">
           <Button type="submit" className="flex-1" disabled={saving}>
             {saving ? (
