@@ -17,6 +17,7 @@ import {
   Disc3,
   Award,
   Headphones,
+  Lock,
 } from 'lucide-react'
 import { EnterCourseModeButton } from '@/components/dashboard/enter-course-mode-button'
 import { CurriculumNavigator } from '@/components/course/curriculum-navigator'
@@ -43,6 +44,7 @@ interface CourseDetailViewProps {
   sections: any[]
   hasStarted: boolean
   isStudent: boolean
+  locked: boolean
 }
 
 function formatDuration(mins: number): string {
@@ -69,6 +71,7 @@ export function CourseDetailView({
   sections,
   hasStarted,
   isStudent,
+  locked,
 }: CourseDetailViewProps) {
   const { t } = useTranslation()
   const difficultyLabel = t(`dashboard.pages.course.difficulty.${difficultyKey}`)
@@ -236,7 +239,18 @@ export function CourseDetailView({
               </div>
             )}
 
-            {nextClassHref ? (
+            {locked ? (
+              <Button
+                asChild
+                size="lg"
+                className="h-14 px-10 rounded-2xl shadow-[0_0_40px_-8px_hsl(var(--primary)/0.4)] text-base"
+              >
+                <Link href="/dashboard/subscribe">
+                  <Lock className="h-5 w-5 mr-2" />
+                  {t('dashboard.pages.course.subscribeToUnlock')}
+                </Link>
+              </Button>
+            ) : nextClassHref ? (
               <EnterCourseModeButton
                 courseId={course.id}
                 href={nextClassHref}

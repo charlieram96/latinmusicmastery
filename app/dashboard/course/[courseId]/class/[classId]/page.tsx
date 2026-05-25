@@ -10,6 +10,7 @@ import { CourseSidebar } from '@/components/class-viewer/course-sidebar'
 import { CommentsSection } from '@/components/comments/comments-section'
 import { canAccessCourse } from '@/lib/subscriptions'
 import { ClassViewerEmpty } from './class-viewer-empty'
+import { ClassViewerLocked } from './class-viewer-locked'
 
 interface PageProps {
   params: Promise<{
@@ -85,15 +86,54 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     .single()
 
   const isStudent = await canAccessCourse(supabase, user.id, course.instrument, profile?.is_admin ?? false)
-
-  // Check access
-  if (!classData.is_free && !isStudent) {
-    redirect(`/dashboard/course/${courseId}`)
-  }
+  const locked = !classData.is_free && !isStudent
 
   // Get course structure for sidebar
   const structureResult = await getCourseStructureForStudent(course.id)
   const structure = structureResult.data
+
+  // Build sidebar sections (needed for both locked and unlocked views)
+  const sidebarSections = structure?.sections.map((s: any) => ({
+    id: s.id,
+    title: s.title,
+    totalItems: s.totalItems,
+    completedItems: s.completedItems,
+    classes: s.classes.map((c: any) => ({
+      id: c.id,
+      title: c.title,
+      totalItems: c.totalItems,
+      completedItems: c.completedItems,
+    })),
+  })) || []
+
+  // Subscription-gated: show a paywall instead of the lesson content.
+  if (locked) {
+    return (
+      <div className="-m-6 flex h-[calc(100vh-3.5rem)]">
+        <aside className="hidden lg:flex w-80 flex-shrink-0 border-r bg-muted/30 flex-col overflow-y-auto">
+          <CourseSidebar
+            courseId={courseId}
+            currentClassId={classId}
+            sections={sidebarSections}
+            courseTitle={course.title}
+            courseDescription={course.description}
+          />
+        </aside>
+        <div className="flex-1 overflow-y-auto">
+          <ClassViewerNav
+            courseId={courseId}
+            courseTitle={course.title}
+            classTitle={classData.title}
+            classItemId={null}
+            isCompleted={false}
+          />
+          <div className="p-6">
+            <ClassViewerLocked courseId={courseId} />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Get progress for current class items
   const completedItemIds: string[] = []
@@ -132,20 +172,6 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   // Get comments
   const commentsResult = await getComments(classId)
   const comments = commentsResult.data || []
-
-  // Build sidebar sections
-  const sidebarSections = structure?.sections.map((s: any) => ({
-    id: s.id,
-    title: s.title,
-    totalItems: s.totalItems,
-    completedItems: s.completedItems,
-    classes: s.classes.map((c: any) => ({
-      id: c.id,
-      title: c.title,
-      totalItems: c.totalItems,
-      completedItems: c.completedItems,
-    })),
-  })) || []
 
   return (
     <div className="-m-6 flex h-[calc(100vh-3.5rem)]">
