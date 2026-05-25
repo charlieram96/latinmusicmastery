@@ -195,7 +195,7 @@ export function CoursesView({
                               <div className="flex items-center gap-1">
                                 <BookOpen className="h-4 w-4" />
                                 <span>
-                                  {t('dashboard.pages.courses.lessonCount', { count: course.course_modules?.length || 0 })}
+                                  {t('dashboard.pages.courses.lessonCount', { count: course.course_sections?.reduce((acc: number, s: any) => acc + (s.classes?.length || 0), 0) || 0 })}
                                 </span>
                               </div>
                             </div>
@@ -295,7 +295,7 @@ export function CoursesView({
                                 <div className="flex items-center gap-2">
                                   <BookOpen className="h-4 w-4" />
                                   <span>
-                                    {t('dashboard.pages.courses.lessonCount', { count: course.course_modules?.length || 0 })}
+                                    {t('dashboard.pages.courses.lessonCount', { count: course.course_sections?.reduce((acc: number, s: any) => acc + (s.classes?.length || 0), 0) || 0 })}
                                   </span>
                                 </div>
                               </div>

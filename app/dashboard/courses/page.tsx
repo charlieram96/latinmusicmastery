@@ -56,7 +56,7 @@ export default async function BrowseCoursesPage({ searchParams }: PageProps) {
         country:countries(name, slug)
       ),
       teacher:teachers(id, name, instrument, image_url),
-      course_modules_legacy(id)
+      course_sections(classes(id))
     `)
     .eq('is_published', true)
 

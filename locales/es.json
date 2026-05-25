@@ -1247,6 +1247,7 @@
         "continueCourse": "Continuar curso",
         "beginCourse": "Comenzar curso",
         "comingSoon": "Muy pronto",
+        "subscribeToUnlock": "Suscríbete para desbloquear",
         "instructor": "Instructor",
         "yourInstructor": "Tu instructor",
         "previewLabel": "Vista previa",
@@ -1296,7 +1297,13 @@
           "cta": "Ver planes"
         },
         "class": {
-          "emptyContent": "Aún no hay contenido disponible para esta clase."
+          "emptyContent": "Aún no hay contenido disponible para esta clase.",
+          "locked": {
+            "title": "Esta lección está bloqueada",
+            "description": "Suscríbete para desbloquear esta lección y obtener acceso a todos los videos, pistas de acompañamiento y partituras interactivas.",
+            "cta": "Suscríbete para desbloquear",
+            "back": "Volver al curso"
+          }
         }
       },
       "modules": {

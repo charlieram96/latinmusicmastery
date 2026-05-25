@@ -68,6 +68,18 @@ export default async function CoursePage({ params }: PageProps) {
   const sections = structure?.sections || []
   const hasStarted = completedItems > 0
 
+  // Subscription gate: the CTA should prompt to subscribe (not "Begin Course")
+  // when the user can't access the class they'd land on and it isn't free.
+  let nextClassIsFree = false
+  for (const section of sections) {
+    const cls = section.classes?.find((c: any) => c.id === nextClassId)
+    if (cls) {
+      nextClassIsFree = cls.is_free ?? false
+      break
+    }
+  }
+  const locked = !!nextClassId && !isStudent && !nextClassIsFree
+
   const style = course.musical_style
   const country = style?.country
   const teacher = course.teacher
@@ -100,6 +112,7 @@ export default async function CoursePage({ params }: PageProps) {
       sections={sections}
       hasStarted={hasStarted}
       isStudent={isStudent}
+      locked={locked}
     />
   )
 }

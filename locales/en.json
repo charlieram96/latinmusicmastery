@@ -1247,6 +1247,7 @@
         "continueCourse": "Continue Course",
         "beginCourse": "Begin Course",
         "comingSoon": "Coming Soon",
+        "subscribeToUnlock": "Subscribe to Unlock",
         "instructor": "Instructor",
         "yourInstructor": "Your Instructor",
         "previewLabel": "Preview",
@@ -1296,7 +1297,13 @@
           "cta": "View Plans"
         },
         "class": {
-          "emptyContent": "No content available for this class yet."
+          "emptyContent": "No content available for this class yet.",
+          "locked": {
+            "title": "This lesson is locked",
+            "description": "Subscribe to unlock this lesson and get access to all videos, backing tracks, and interactive sheet music.",
+            "cta": "Subscribe to Unlock",
+            "back": "Back to Course"
+          }
         }
       },
       "modules": {

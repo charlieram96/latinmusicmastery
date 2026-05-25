@@ -64,7 +64,7 @@ function renderHtml({
             <tr>
               <td align="center" style="padding:36px 32px 18px 32px;">
                 <a href="${SITE_URL}" style="text-decoration:none;display:inline-block;">
-                  <img src="${LOGO_URL}" alt="${BRAND_NAME}" width="190" style="display:block;width:190px;max-width:70%;height:auto;border:0;" />
+                  <img src="${LOGO_URL}" alt="${BRAND_NAME}" width="300" style="display:block;width:300px;max-width:85%;height:auto;border:0;" />
                 </a>
               </td>
             </tr>
