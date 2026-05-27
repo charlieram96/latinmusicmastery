@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getScoreDocumentForClassItem } from '@/app/actions/playsense-studio';
-import { SyncWorkspace } from './sync-workspace';
+import { WaveformSyncWorkspace } from './waveform-sync-workspace';
 
 interface PageProps {
   params: Promise<{ classItemId: string }>;
@@ -27,7 +27,7 @@ export default async function PlaysenseStudioSyncPage({ params }: PageProps) {
 
   const { data: classItem } = await supabase
     .from('class_items')
-    .select('id, title, video_url, score_document_id')
+    .select('id, title, video_url, score_document_id, video_duration_seconds')
     .eq('id', classItemId)
     .single();
   if (!classItem) notFound();
@@ -39,7 +39,7 @@ export default async function PlaysenseStudioSyncPage({ params }: PageProps) {
   if (!result.data) notFound();
 
   return (
-    <SyncWorkspace
+    <WaveformSyncWorkspace
       classItemId={classItemId}
       classItemTitle={classItem.title}
       videoUrl={classItem.video_url}
@@ -47,6 +47,7 @@ export default async function PlaysenseStudioSyncPage({ params }: PageProps) {
       score={result.data.scoreDocument.parsedScore}
       tracks={result.data.tracks}
       activeTimeMap={result.data.activeTimeMap}
+      videoDurationSeconds={classItem.video_duration_seconds}
     />
   );
 }
