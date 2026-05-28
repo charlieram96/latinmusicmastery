@@ -1,7 +1,8 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getScoreDocumentForClassItem } from '@/app/actions/playsense-studio';
-import { ScoreEditorWorkspace } from './score-editor-workspace';
+import { StudioWorkspace } from './studio-workspace';
+import { StudioSetup } from '@/components/playsense-studio/studio/studio-setup';
 
 interface PageProps {
   params: Promise<{ classItemId: string }>;
@@ -9,7 +10,7 @@ interface PageProps {
 
 export const dynamic = 'force-dynamic';
 
-export default async function PlaysenseStudioEditorPage({ params }: PageProps) {
+export default async function PlaysenseStudioPage({ params }: PageProps) {
   const { classItemId } = await params;
   const supabase = await createClient();
 
@@ -27,24 +28,28 @@ export default async function PlaysenseStudioEditorPage({ params }: PageProps) {
 
   const { data: classItem } = await supabase
     .from('class_items')
-    .select('id, title, video_url, score_document_id')
+    .select('id, title, video_url, video_duration_seconds, score_document_id')
     .eq('id', classItemId)
     .single();
   if (!classItem) notFound();
-  if (!classItem.score_document_id) redirect(`/admin/courses`);
+
+  // No score yet → setup (import/create) lives here in the Studio.
+  if (!classItem.score_document_id) {
+    return <StudioSetup classItemId={classItemId} classItemTitle={classItem.title} />;
+  }
 
   const result = await getScoreDocumentForClassItem(classItemId);
   if (!result.data) notFound();
 
   return (
-    <ScoreEditorWorkspace
+    <StudioWorkspace
       classItemId={classItemId}
       classItemTitle={classItem.title}
       videoUrl={classItem.video_url}
       scoreDocumentId={classItem.score_document_id}
       initialScore={result.data.scoreDocument.parsedScore}
-      tracks={result.data.tracks}
       activeTimeMap={result.data.activeTimeMap}
+      videoDurationSeconds={classItem.video_duration_seconds}
     />
   );
 }

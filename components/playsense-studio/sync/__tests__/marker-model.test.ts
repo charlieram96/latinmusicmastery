@@ -8,6 +8,7 @@ import {
   setMarkerTime,
   setTailTime,
   reinterpolateUnedited,
+  reconcileMarkers,
   enforceMonotonic,
   EPS,
   type MarkerState,
@@ -269,5 +270,130 @@ describe('round-trip waypoints -> state -> waypoints', () => {
 
     const wps2 = markerStateToWaypoints(state2, { includeBeats: 'edited-beats' });
     expect(wps2).toEqual(wps1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// reconcileMarkers — re-derive markers after a score-structure change while
+// preserving dragged anchor times.
+// ---------------------------------------------------------------------------
+
+/** Build a simple N-measure score; per-measure optional time signature. */
+function makeScore(specs: Array<{ ts?: [number, number] }>, tempo = 120): ScoreDocument {
+  return {
+    schemaVersion: 1,
+    title: 'x',
+    sourceFormat: 'native',
+    initialTempo: tempo,
+    initialTimeSignature: [4, 4],
+    initialKeyFifths: 0,
+    tracks: [
+      {
+        index: 0,
+        instrument: 'staff',
+        displayName: 'S',
+        tuning: null,
+        stringMultiplicity: 1,
+        channel: null,
+        defaultView: 'staff',
+        measures: specs.map((s, i) => ({
+          number: i + 1,
+          timeSignature: s.ts,
+          voices: [{ number: 1, events: [{ kind: 'rest', durationQN: s.ts ? (s.ts[0] * 4) / s.ts[1] : 4 }] }],
+        })),
+      },
+    ],
+  };
+}
+
+function seedScore(score: ScoreDocument): MarkerState {
+  const track = score.tracks[0];
+  return seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, 0));
+}
+
+const downbeatTimes = (s: MarkerState) => s.measures.map((m) => m.beats[0].videoTimeSeconds);
+
+describe('reconcileMarkers', () => {
+  it('is an identity no-op when the score structure is unchanged', () => {
+    const state = seededGuitar();
+    const next = reconcileMarkers(state, GUITAR_TRACK, GUITAR);
+    expect(next).toEqual(state);
+  });
+
+  it('preserves existing downbeat times and interpolates an appended measure', () => {
+    const two = makeScore([{}, {}]); // bars at t=0, 2; tail t=4
+    const prev = seedScore(two);
+    const three = makeScore([{}, {}, {}]);
+    const next = reconcileMarkers(prev, three.tracks[0], three);
+    expect(next.measures).toHaveLength(3);
+    expect(downbeatTimes(next)[0]).toBeCloseTo(0, 6);
+    expect(downbeatTimes(next)[1]).toBeCloseTo(2, 6);
+    // bar 3 interpolates between bar 2 (qn4@2) and the preserved tail (qn12@4): t=3
+    expect(downbeatTimes(next)[2]).toBeCloseTo(3, 6);
+    expect(next.tailVideoTimeSeconds).toBeCloseTo(4, 6);
+    const wps = markerStateToWaypoints(next, { includeBeats: 'downbeats-only' });
+    expect(() => new WaypointTimeMap('t', 'drag', wps)).not.toThrow();
+  });
+
+  it('drops the last measure and stays monotonic on delete-from-end', () => {
+    const three = makeScore([{}, {}, {}]); // downbeats 0,2,4; tail 6
+    const prev = seedScore(three);
+    const two = makeScore([{}, {}]);
+    const next = reconcileMarkers(prev, two.tracks[0], two);
+    expect(next.measures).toHaveLength(2);
+    expect(downbeatTimes(next)).toEqual([expect.closeTo(0, 6), expect.closeTo(2, 6)]);
+    expect(next.tailVideoTimeSeconds).toBeCloseTo(6, 6); // preserved old tail
+    const wps = markerStateToWaypoints(next, { includeBeats: 'downbeats-only' });
+    expect(() => new WaypointTimeMap('t', 'drag', wps)).not.toThrow();
+  });
+
+  it('keeps measure count and monotonicity on a middle delete (identity shift accepted)', () => {
+    const three = makeScore([{}, {}, {}]);
+    const prev = seedScore(three);
+    const two = makeScore([{}, {}]); // simulates "delete bar 2" then renumber to 1,2
+    const next = reconcileMarkers(prev, two.tracks[0], two);
+    expect(next.measures).toHaveLength(2);
+    const times = downbeatTimes(next);
+    for (let i = 1; i < times.length; i++) expect(times[i]).toBeGreaterThan(times[i - 1]);
+    const wps = markerStateToWaypoints(next, { includeBeats: 'downbeats-only' });
+    expect(() => new WaypointTimeMap('t', 'drag', wps)).not.toThrow();
+  });
+
+  it('preserves an edited non-downbeat beat and re-flags it', () => {
+    const state = seededGuitar();
+    state.measures[0].beats[1].edited = true;
+    state.measures[0].beats[1].videoTimeSeconds = 0.7;
+    // Append a measure (structure change) and reconcile.
+    const three = makeScore([{}, {}, {}]);
+    const next = reconcileMarkers(state, three.tracks[0], three);
+    expect(next.measures[0].beats[1].edited).toBe(true);
+    expect(next.measures[0].beats[1].videoTimeSeconds).toBeCloseTo(0.7, 6);
+  });
+
+  it('recomputes downstream QN positions when an upstream time signature changes', () => {
+    const prev = seedScore(makeScore([{}, {}, {}])); // all 4/4: downbeats qn 0,4,8
+    // bar1 -> 6/8 (3 QN); bar2 returns to 4/4; bar3 inherits 4/4.
+    const changed = makeScore([{ ts: [6, 8] }, { ts: [4, 4] }, {}]);
+    const next = reconcileMarkers(prev, changed.tracks[0], changed);
+    expect(next.measures).toHaveLength(3);
+    expect(next.measures[0].beatsInMeasure).toBe(6); // 6/8 -> 6 beats
+    expect(next.measures[1].downbeatQN).toBeCloseTo(3, 6); // bar 2 now starts at qn 3
+    expect(next.measures[2].downbeatQN).toBeCloseTo(7, 6); // bar 3 at qn 7 (3 + 4)
+  });
+
+  it('collapses to a single measure (downbeat + tail) when deleted to one', () => {
+    const prev = seedScore(makeScore([{}, {}]));
+    const one = makeScore([{}]);
+    const next = reconcileMarkers(prev, one.tracks[0], one);
+    expect(next.measures).toHaveLength(1);
+    expect(next.measures[0].beats[0].videoTimeSeconds).toBeCloseTo(0, 6);
+    expect(next.tailVideoTimeSeconds).toBeGreaterThan(0);
+  });
+
+  it('falls back to a fresh tempo grid when fewer than two anchors survive', () => {
+    const empty: MarkerState = { measures: [], tailQN: 0, tailVideoTimeSeconds: 0 };
+    const next = reconcileMarkers(empty, GUITAR_TRACK, GUITAR);
+    expect(next.measures).toHaveLength(2);
+    expect(next.measures[0].beats[0].videoTimeSeconds).toBeCloseTo(0, 6);
   });
 });
