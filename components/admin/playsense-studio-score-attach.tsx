@@ -1,36 +1,20 @@
 'use client';
 
-// Admin attach widget — drop a MIDI or MusicXML file to attach a PlaySense Studio
-// score to the class item we're editing. Parses on the client (in the
-// admin's browser) and ships the validated ScoreDocument to the server
-// action that persists it. No raw upload bucket is needed in v1 — the
-// canonical JSON IS the score.
+// Admin class-item control for PlaySense Studio. Building/importing a score and
+// syncing it all happen inside the Studio now — this just shows whether a score
+// is attached and links into the Studio (and offers detach).
 
-import { CheckCircle2, FileMusic, FilePlus, Loader2, Pencil, Settings2, Upload, X } from 'lucide-react';
+import { CheckCircle2, ExternalLink, FileMusic, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import {
-  attachScoreFromImport,
-  createBlankScoreForClassItem,
-  detachScoreFromClassItem,
-} from '@/app/actions/playsense-studio';
-import { parseMidi } from '@/lib/playsense-studio/parsers/midi';
-import { parseMusicXmlBuffer } from '@/lib/playsense-studio/parsers/musicxml';
-import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { detachScoreFromClassItem } from '@/app/actions/playsense-studio';
 
 interface PlaysenseStudioScoreAttachProps {
   classItemId: string;
   /** Current score_document_id from the class_item, if attached. */
   currentScoreDocumentId: string | null;
-  /** Called after successful attach/detach so the parent sheet can refresh. */
+  /** Called after a successful detach so the parent sheet can refresh. */
   onChanged?: () => void;
-}
-
-interface ImportSummary {
-  title: string;
-  format: 'midi' | 'musicxml';
-  trackCount: number;
 }
 
 export function PlaysenseStudioScoreAttach({
@@ -38,79 +22,11 @@ export function PlaysenseStudioScoreAttach({
   currentScoreDocumentId,
   onChanged,
 }: PlaysenseStudioScoreAttachProps) {
-  const router = useRouter();
-  const [isParsing, setIsParsing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
   const [hasAttached, setHasAttached] = useState(currentScoreDocumentId !== null);
-  const [isDragOver, setIsDragOver] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const handleCreateBlank = () => {
-    setError(null);
-    startTransition(async () => {
-      const result = await createBlankScoreForClassItem({ classItemId });
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      onChanged?.();
-      // Hop straight to the editor so the admin can start authoring.
-      router.push(`/admin/playsense-studio/${classItemId}/edit`);
-    });
-  };
-
-  const handleFile = async (file: File) => {
-    setError(null);
-    setImportSummary(null);
-    setIsParsing(true);
-    try {
-      const buffer = await file.arrayBuffer();
-      const lower = file.name.toLowerCase();
-      let score: ScoreDocument;
-      let format: ImportSummary['format'];
-      if (lower.endsWith('.mid') || lower.endsWith('.midi')) {
-        score = await parseMidi(buffer, { title: stripExt(file.name) });
-        format = 'midi';
-      } else if (
-        lower.endsWith('.musicxml') ||
-        lower.endsWith('.xml') ||
-        lower.endsWith('.mxl')
-      ) {
-        score = await parseMusicXmlBuffer(buffer, file.name, {
-          title: stripExt(file.name),
-        });
-        format = 'musicxml';
-      } else {
-        throw new Error(
-          `Unsupported file type: ${file.name}. Use .mid, .midi, .musicxml, .xml, or .mxl.`
-        );
-      }
-      setIsParsing(false);
-
-      startTransition(async () => {
-        const result = await attachScoreFromImport({
-          classItemId,
-          scoreDocument: score,
-          sourceFilename: file.name,
-        });
-        if (result.error) {
-          setError(result.error);
-          return;
-        }
-        setImportSummary({
-          title: score.title,
-          format,
-          trackCount: score.tracks.length,
-        });
-        setHasAttached(true);
-        onChanged?.();
-      });
-    } catch (err) {
-      setIsParsing(false);
-      setError(err instanceof Error ? err.message : 'Import failed');
-    }
-  };
+  const studioHref = `/admin/playsense-studio/${classItemId}`;
 
   const handleDetach = () => {
     setError(null);
@@ -121,19 +37,9 @@ export function PlaysenseStudioScoreAttach({
         return;
       }
       setHasAttached(false);
-      setImportSummary(null);
       onChanged?.();
     });
   };
-
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) void handleFile(file);
-  };
-
-  const busy = isParsing || isPending;
 
   return (
     <div className="space-y-3">
@@ -142,159 +48,48 @@ export function PlaysenseStudioScoreAttach({
         <h4 className="font-medium">PlaySense Studio Score</h4>
       </div>
 
-      {hasAttached && !importSummary && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-border bg-muted/30 text-sm">
-            <span className="flex items-center gap-2 text-muted-foreground">
-              <CheckCircle2 className="w-4 h-4 text-primary" />
-              A score is attached to this class item.
-            </span>
+      {hasAttached ? (
+        <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-border bg-muted/30 text-sm">
+          <span className="flex items-center gap-2 text-muted-foreground">
+            <CheckCircle2 className="w-4 h-4 text-primary" />
+            A score is attached to this class item.
+          </span>
+          <div className="flex items-center gap-2">
+            <Link
+              href={studioHref}
+              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Open PlaySense Studio
+            </Link>
             <button
               type="button"
               onClick={handleDetach}
-              disabled={busy}
-              className="text-xs px-2 py-1 rounded border border-border hover:bg-muted disabled:opacity-50"
-            >
-              Replace / detach
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            <Link
-              href={`/admin/playsense-studio/${classItemId}/edit`}
-              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-              Edit score
-            </Link>
-            <Link
-              href={`/admin/playsense-studio/${classItemId}/sync`}
-              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-            >
-              <Settings2 className="w-3.5 h-3.5" />
-              Open sync workspace
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {importSummary && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-primary/30 bg-primary/5 text-sm">
-            <span className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-primary" />
-              <span>
-                <span className="font-medium">{importSummary.title}</span>
-                <span className="text-muted-foreground">
-                  {' '}
-                  · {importSummary.format.toUpperCase()} ·{' '}
-                  {importSummary.trackCount} track{importSummary.trackCount === 1 ? '' : 's'}
-                </span>
-              </span>
-            </span>
-            <button
-              type="button"
-              onClick={handleDetach}
-              disabled={busy}
-              className="text-xs p-1 rounded border border-border hover:bg-muted disabled:opacity-50"
-              aria-label="Detach"
+              disabled={isPending}
+              className="p-1 rounded border border-border hover:bg-muted disabled:opacity-50"
+              aria-label="Detach score"
+              title="Detach score"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            <Link
-              href={`/admin/playsense-studio/${classItemId}/edit`}
-              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-              Edit score
-            </Link>
-            <Link
-              href={`/admin/playsense-studio/${classItemId}/sync`}
-              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-            >
-              <Settings2 className="w-3.5 h-3.5" />
-              Open sync workspace
-            </Link>
-          </div>
         </div>
+      ) : (
+        <Link
+          href={studioHref}
+          className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 rounded-md border border-border hover:bg-muted transition text-sm"
+        >
+          <ExternalLink className="w-4 h-4" />
+          Open PlaySense Studio to add a score
+        </Link>
       )}
 
-      {!hasAttached && !importSummary && (
-        <div className="space-y-2">
-          <label
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragOver(true);
-            }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={onDrop}
-            className={`block cursor-pointer rounded-md border-2 border-dashed transition px-4 py-6 text-center ${
-              isDragOver
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:border-primary/50'
-            } ${busy ? 'opacity-60 pointer-events-none' : ''}`}
-          >
-            <input
-              type="file"
-              accept=".mid,.midi,.musicxml,.xml,.mxl"
-              className="hidden"
-              disabled={busy}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void handleFile(f);
-              }}
-            />
-            <div className="flex flex-col items-center gap-2 text-sm">
-              {busy ? (
-                <Loader2 className="w-5 h-5 text-primary animate-spin" />
-              ) : (
-                <Upload className="w-5 h-5 text-muted-foreground" />
-              )}
-              <div>
-                <span className="font-medium">
-                  {busy ? 'Working…' : 'Drop a score file or click to browse'}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                MIDI (.mid, .midi) or MusicXML (.musicxml, .xml, .mxl)
-              </p>
-            </div>
-          </label>
-
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex-1 h-px bg-border" />
-            <span>or</span>
-            <span className="flex-1 h-px bg-border" />
-          </div>
-
-          <button
-            type="button"
-            onClick={handleCreateBlank}
-            disabled={busy}
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition text-sm"
-          >
-            <FilePlus className="w-4 h-4" />
-            Create blank score and edit
-          </button>
-          <p className="text-[11px] text-muted-foreground text-center">
-            Starts with 4 bars of 4/4 at 120 BPM, ready to author.
-          </p>
-        </div>
-      )}
-
-      {error && (
-        <p className="text-xs text-destructive">{error}</p>
-      )}
+      {error && <p className="text-xs text-destructive">{error}</p>}
 
       <p className="text-xs text-muted-foreground">
-        Once attached, students see the PlaySense Studio player on this lesson instead of any legacy
-        Soundslice embed. Sync between video and notation can be tightened later.
+        In PlaySense Studio you import or create the score, build the notation, and sync it to the
+        video. Once attached, students see the PlaySense Studio player on this lesson.
       </p>
     </div>
   );
-}
-
-function stripExt(filename: string): string {
-  return filename.replace(/\.[^.]+$/, '');
 }

@@ -25,27 +25,31 @@ For each remaining item:
      export to MIDI instead. As a last resort, take a high-resolution PDF
      screenshot — you'll re-author from it in the PlaySense Studio editor.
 
-2. **Attach a PlaySense Studio score** to the class item.
-   - In `/admin/courses/[id]`, open the class item editor.
-   - In the "PlaySense Studio Score" section, drop the `.musicxml` / `.mxl` /
-     `.mid` file into the upload zone. Or click **"Create blank score
-     and edit"** if you'll author from a screenshot.
-   - The page reports the parsed track count when import succeeds.
+2. **Open PlaySense Studio** for the class item.
+   - In `/admin/courses/[id]`, open the class item editor and click
+     **"Open PlaySense Studio"** in the "PlaySense Studio Score" section
+     (this opens `/admin/playsense-studio/[classItemId]`).
+   - If no score is attached yet, the Studio shows the setup screen: drop the
+     `.musicxml` / `.mxl` / `.mid` file, or **"Create a blank score"** if you'll
+     author from a screenshot. Score building and syncing both happen here.
 
-3. **Polish the score** in the editor (`/admin/playsense-studio/[classItemId]/edit`).
+3. **Polish the score** in the Studio's "Build score" section.
    - Compare the imported notation to the Soundslice original.
    - MIDI imports tend to need fixes: wrong octaves on octave-transposing
      instruments, dropped articulations, drum tracks that landed on a
      standard staff.
    - Use the Staff or Piano-roll tabs for visual edits, the List tab for
-     surgical work.
+     surgical work. Changes autosave (every 5s, or Cmd/Ctrl+S).
 
-4. **Sync notation to video** (`/admin/playsense-studio/[classItemId]/sync`).
-   - Tempo + offset is fastest for steady-tempo studio tracks. Set BPM,
-     drag the offset slider until the cursor lands on bar 1's downbeat
-     in the live preview, hit Publish.
-   - Tap-along is the answer for live recordings or rubato passages. Press
-     play, spacebar on every measure downbeat, hit Publish.
+4. **Sync notation to video** in the same Studio (the waveform editor on top).
+   - Seed the markers with **Tempo grid** (set BPM + start offset) for
+     steady-tempo studio tracks, or **Tap along** (play + spacebar on each
+     downbeat) for live/rubato recordings.
+   - Then fine-tune visually: drag the numbered measure markers onto the audio
+     downbeats on the waveform, expand a measure to nudge individual beats, and
+     "Loop measure" to check alignment by ear. Hit **Publish sync** when it lines
+     up. Editing the score afterward keeps your dragged markers (they reconcile
+     to the new measure structure).
 
 5. **Smoke-test as a student.** Open the lesson page in another tab,
    confirm video plays, cursor tracks, click-to-seek lands sensibly, A/B

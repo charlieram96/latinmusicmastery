@@ -17,6 +17,7 @@ import {
   trackDurationQN,
   walkMeasures,
 } from '@/lib/playsense-studio/time-mapping';
+import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import {
   WaypointTimeMap,
   type Waypoint,
@@ -419,4 +420,111 @@ export function enforceMonotonic(waypoints: Waypoint[]): Waypoint[] {
     if (sorted[i].videoTimeSeconds < min) sorted[i].videoTimeSeconds = min;
   }
   return sorted;
+}
+
+// ---------------------------------------------------------------------------
+// Reconciliation with score edits
+// ---------------------------------------------------------------------------
+
+/**
+ * A string that changes only when the score's MEASURE STRUCTURE changes — i.e.
+ * anything that moves a downbeat/beat QN position or the timeline math: the
+ * initial time signature + tempo, and each measure's number, time-signature
+ * override, and tempo change. Note edits (pitch/duration/add/delete event) do
+ * NOT change it, because a measure's QN length comes from its time signature,
+ * not its events. The unified studio uses this to decide when to reconcile the
+ * sync markers against a freshly-edited score.
+ */
+export function structuralSignature(score: ScoreDocument): string {
+  const track = score.tracks[0];
+  if (!track) return 'empty';
+  const head = `${score.initialTimeSignature[0]}/${score.initialTimeSignature[1]}@${score.initialTempo}`;
+  const body = track.measures
+    .map((m) => {
+      const ts = m.timeSignature ? `${m.timeSignature[0]}/${m.timeSignature[1]}` : '-';
+      const tc = m.tempoChange ?? '-';
+      return `${m.number}:${ts}:${tc}`;
+    })
+    .join(',');
+  return `${head}|${body}`;
+}
+
+/**
+ * Re-derive the marker state for a (possibly edited) score while preserving the
+ * admin's dragged anchor times. Downbeat times are preserved by measureNumber
+ * and edited-beat times by (measureNumber, beatInMeasure); their QN positions
+ * are RECOMPUTED from the new score (so an upstream time-signature change shifts
+ * everything correctly). New measures interpolate/extrapolate through the
+ * surviving anchors; deleted measures drop out.
+ *
+ * Known limitation: the editor renumbers measures on delete, so deleting a bar
+ * in the middle reattaches later times to renumbered bars (the admin re-drags
+ * those). Acceptable for v1.
+ */
+export function reconcileMarkers(
+  prevState: MarkerState,
+  track: Track,
+  score: ScoreDocument
+): MarkerState {
+  // 1. Harvest preserved video times keyed by identity.
+  const downbeatTimes = new Map<number, number>();
+  const editedBeatTimes = new Map<string, number>();
+  for (const m of prevState.measures) {
+    for (const beat of m.beats) {
+      if (beat.beatInMeasure === 1) {
+        downbeatTimes.set(m.measureNumber, beat.videoTimeSeconds);
+      } else if (beat.edited) {
+        editedBeatTimes.set(`${m.measureNumber}:${beat.beatInMeasure}`, beat.videoTimeSeconds);
+      }
+    }
+  }
+
+  // 2. Build seed waypoints from the NEW score skeleton, pulling preserved
+  //    times where the identity still exists.
+  const seed: Waypoint[] = [];
+  for (const { measure, state } of walkMeasures(track, score)) {
+    const downbeatQN = state.cumulativeQN;
+    const dbTime = downbeatTimes.get(measure.number);
+    if (dbTime !== undefined) {
+      seed.push({
+        musicalPositionQN: downbeatQN,
+        videoTimeSeconds: dbTime,
+        measureNumber: measure.number,
+        beatInMeasure: 1,
+      });
+    }
+    const beatQN = beatLengthInQN(state.timeSignature);
+    const beatsInMeasure = state.timeSignature[0];
+    for (let b = 2; b <= beatsInMeasure; b++) {
+      const t = editedBeatTimes.get(`${measure.number}:${b}`);
+      if (t !== undefined) {
+        seed.push({
+          musicalPositionQN: downbeatQN + (b - 1) * beatQN,
+          videoTimeSeconds: t,
+          measureNumber: measure.number,
+          beatInMeasure: b,
+        });
+      }
+    }
+  }
+
+  // tail boundary, keeping the previous end time.
+  const tailQN = trackDurationQN(track, score);
+  seed.push({
+    musicalPositionQN: tailQN,
+    videoTimeSeconds: prevState.tailVideoTimeSeconds,
+    measureNumber: null,
+    beatInMeasure: null,
+  });
+
+  const cleaned = enforceMonotonic(seed);
+
+  // 3. Fall back to a fresh tempo grid if too few anchors survive.
+  if (cleaned.length < 2) {
+    return seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, 0));
+  }
+
+  // 4. Rebuild the full marker state, interpolating unedited/new beats and
+  //    re-flagging preserved non-downbeat beats as edited.
+  return seedMarkerState(track, score, cleaned);
 }
