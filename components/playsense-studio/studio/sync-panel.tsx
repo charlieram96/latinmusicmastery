@@ -13,14 +13,14 @@
 // panel below has no preview player, so playback never re-renders the parent.
 
 import { ChevronsLeftRight, Maximize, Repeat, UploadCloud, Video, ZoomIn, ZoomOut } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type Dispatch } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { publishTimeMap } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
 import { buildWaypoints, buildTapSeed } from '@/lib/playsense-studio/sync-seed';
-import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
+import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
   enforceMonotonic,
@@ -42,7 +42,10 @@ import {
   type DragTarget,
   type MarkerHandle,
 } from '@/components/playsense-studio/sync/waveform-canvas';
-import { MeasureStrip, type MeasureStripItem } from '@/components/playsense-studio/sync/measure-strip';
+import {
+  IntegratedEditor,
+  type IntegratedEditorMeasureTiming,
+} from '@/components/playsense-studio/studio/integrated-editor';
 import { SeedControls } from '@/components/playsense-studio/sync/seed-controls';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
@@ -51,6 +54,7 @@ export interface SyncPanelProps {
   scoreDocumentId: string;
   videoUrl: string | null;
   score: ScoreDocument;
+  dispatch: Dispatch<EditorAction>;
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
   videoDurationSeconds: number | null;
 }
@@ -64,6 +68,7 @@ export function SyncPanel({
   scoreDocumentId,
   videoUrl,
   score,
+  dispatch,
   activeTimeMap,
   videoDurationSeconds,
 }: SyncPanelProps) {
@@ -182,12 +187,9 @@ export function SyncPanel({
     [markers]
   );
 
-  const trackEvents = useMemo(
-    () => extractTrackEvents(track, score.initialTimeSignature, score.initialKeyFifths),
-    [track, score.initialTimeSignature, score.initialKeyFifths]
-  );
-
-  const stripItems: MeasureStripItem[] = useMemo(() => {
+  // Timing-only per-measure slots — the editor zips these with extractTrackEvents
+  // for the ACTIVE track inside IntegratedEditor (so track-switching doesn't churn SyncPanel).
+  const measureTimings: IntegratedEditorMeasureTiming[] = useMemo(() => {
     return markers.measures.map((m, i) => {
       const next = markers.measures[i + 1];
       const endVideoTimeSeconds = next ? next.beats[0].videoTimeSeconds : markers.tailVideoTimeSeconds;
@@ -195,12 +197,9 @@ export function SyncPanel({
         measureNumber: m.measureNumber,
         startVideoTimeSeconds: m.beats[0].videoTimeSeconds,
         endVideoTimeSeconds,
-        events: trackEvents[i]?.events ?? [],
-        timeSignature: trackEvents[i]?.timeSignature ?? score.initialTimeSignature,
-        isFirst: i === 0,
       };
     });
-  }, [markers, trackEvents, score.initialTimeSignature]);
+  }, [markers]);
 
   // --- Marker interaction handlers ---
   const handleMarkerDrag = useCallback((ref: MarkerRef, videoTimeSeconds: number, mode: DragMode) => {
@@ -449,7 +448,18 @@ export function SyncPanel({
           onScrollByPx={handleScrollByPx}
           onViewportWidth={setViewportWidth}
         />
-        <MeasureStrip measures={stripItems} pixelsPerSecond={pps} scrollLeftPx={scrollLeft} />
+        <IntegratedEditor
+          score={score}
+          dispatch={dispatch}
+          measureTimings={measureTimings}
+          pixelsPerSecond={pps}
+          scrollLeftPx={scrollLeft}
+          viewportWidth={viewportWidth}
+          onRequestZoom={(nextPps, nextScroll) => {
+            setPps(clamp(nextPps, MIN_PPS, MAX_PPS));
+            setScrollLeft(clampScroll(nextScroll));
+          }}
+        />
         <ScrollBar
           scrollLeft={scrollLeft}
           maxScroll={maxScroll}
