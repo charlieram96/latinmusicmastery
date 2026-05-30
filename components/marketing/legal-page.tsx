@@ -20,7 +20,7 @@ export function LegalPage({ title, effectiveDate, lastUpdated, children }: Legal
   return (
     <article>
       <section className="relative border-b border-border bg-gradient-to-b from-primary/5 via-background to-background py-16 md:py-20">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
           <h1 className="mb-4 text-3xl font-bold md:text-5xl">{title}</h1>
           <div className="space-y-1 text-sm text-muted-foreground">
             {effectiveDate && (
@@ -38,7 +38,7 @@ export function LegalPage({ title, effectiveDate, lastUpdated, children }: Legal
       <section className="py-12 md:py-16">
         <div
           className="
-            mx-auto max-w-3xl px-4 sm:px-6 lg:px-8
+            mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8
             leading-relaxed text-muted-foreground
             [&_h2]:mt-12 [&_h2]:mb-4 [&_h2]:scroll-mt-24 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-foreground
             [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-foreground

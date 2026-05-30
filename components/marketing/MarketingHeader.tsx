@@ -26,25 +26,10 @@ const countries = [
   { label: "Peru", href: "/explore/peru" },
 ]
 
-const styles = [
-  { label: "Salsa", href: "/explore?style=salsa" },
-  { label: "Bachata", href: "/explore?style=bachata" },
-  { label: "Cumbia", href: "/explore?style=cumbia" },
-  { label: "Reggaeton", href: "/explore?style=reggaeton" },
-  { label: "Bossa Nova", href: "/explore?style=bossa-nova" },
-  { label: "Merengue", href: "/explore?style=merengue" },
-  { label: "Son Cubano", href: "/explore?style=son-cubano" },
-  { label: "Tango", href: "/explore?style=tango" },
-]
-
-const instruments = [
-  { label: "Timbal", href: "/explore?instrument=timbal" },
-  { label: "Conga", href: "/explore?instrument=conga" },
-  { label: "Violin", href: "/explore?instrument=violin" },
-  { label: "Bass", href: "/explore?instrument=bass" },
-  { label: "Piano", href: "/explore?instrument=piano" },
-  { label: "Vocals", href: "/explore?instrument=vocals" },
-]
+/** A {slug,name} catalog item from the DB (instruments / musical styles). */
+type NavItem = { slug: string; name: string }
+/** A resolved nav link rendered in the dropdowns. */
+type NavLink = { label: string; href: string }
 
 const aboutLinks = [
   { labelKey: "nav.aboutUs", href: "/about" },
@@ -57,7 +42,13 @@ const aboutLinks = [
 /*  Desktop Mega-Menu                                                  */
 /* ------------------------------------------------------------------ */
 
-function ExploreMegaMenu() {
+function ExploreMegaMenu({
+  styleLinks,
+  instrumentLinks,
+}: {
+  styleLinks: NavLink[]
+  instrumentLinks: NavLink[]
+}) {
   const { t } = useTranslation()
   return (
     <motion.div
@@ -94,7 +85,7 @@ function ExploreMegaMenu() {
               {t("nav.byStyle")}
             </h4>
             <ul className="space-y-1.5">
-              {styles.map((item) => (
+              {styleLinks.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
@@ -113,7 +104,7 @@ function ExploreMegaMenu() {
               {t("nav.byInstrument")}
             </h4>
             <ul className="space-y-1.5">
-              {instruments.map((item) => (
+              {instrumentLinks.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
@@ -221,7 +212,15 @@ function MobileAccordion({
 /*  Mobile Drawer                                                      */
 /* ------------------------------------------------------------------ */
 
-function MobileDrawer({ onClose }: { onClose: () => void }) {
+function MobileDrawer({
+  onClose,
+  styleLinks,
+  instrumentLinks,
+}: {
+  onClose: () => void
+  styleLinks: NavLink[]
+  instrumentLinks: NavLink[]
+}) {
   const { t } = useTranslation()
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -301,7 +300,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
                   {t("nav.byStyle")}
                 </p>
                 <div className="space-y-1">
-                  {styles.map((item) => (
+                  {styleLinks.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
@@ -319,7 +318,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
                   {t("nav.byInstrument")}
                 </p>
                 <div className="space-y-1">
-                  {instruments.map((item) => (
+                  {instrumentLinks.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
@@ -463,11 +462,27 @@ function NavDropdown({
 /*  Main Header                                                        */
 /* ------------------------------------------------------------------ */
 
-export function MarketingHeader() {
+interface MarketingHeaderProps {
+  instruments?: NavItem[]
+  styles?: NavItem[]
+}
+
+export function MarketingHeader({ instruments = [], styles = [] }: MarketingHeaderProps = {}) {
   const { t } = useTranslation()
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+
+  // Build dropdown links from the DB catalog so slugs resolve to the real
+  // /explore?instrument= / ?style= filtered pages.
+  const instrumentLinks: NavLink[] = instruments.map((i) => ({
+    label: i.name,
+    href: `/explore?instrument=${encodeURIComponent(i.slug)}`,
+  }))
+  const styleLinks: NavLink[] = styles.map((s) => ({
+    label: s.name,
+    href: `/explore?style=${encodeURIComponent(s.slug)}`,
+  }))
 
   // Track scroll for header background
   useEffect(() => {
@@ -514,7 +529,7 @@ export function MarketingHeader() {
               onOpen={openDropdown}
               onClose={closeDropdown}
             >
-              <ExploreMegaMenu />
+              <ExploreMegaMenu styleLinks={styleLinks} instrumentLinks={instrumentLinks} />
             </NavDropdown>
 
             <Link
@@ -577,7 +592,11 @@ export function MarketingHeader() {
       {/* Mobile Drawer */}
       <AnimatePresence>
         {mobileOpen && (
-          <MobileDrawer onClose={() => setMobileOpen(false)} />
+          <MobileDrawer
+            onClose={() => setMobileOpen(false)}
+            styleLinks={styleLinks}
+            instrumentLinks={instrumentLinks}
+          />
         )}
       </AnimatePresence>
     </>

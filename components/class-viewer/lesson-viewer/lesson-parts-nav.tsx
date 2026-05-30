@@ -57,7 +57,7 @@ export function LessonPartsNav({
   return (
     <nav
       aria-label="Lesson parts"
-      className="flex items-stretch border-y border-border bg-[hsl(0_0%_4%)]"
+      className="flex items-stretch border-y border-border bg-background"
     >
       <div
         className={cn(
@@ -102,7 +102,7 @@ export function LessonPartsNav({
                   <span
                     className={cn(
                       'whitespace-nowrap text-xs font-normal',
-                      isActive ? 'text-[hsl(0_0%_70%)]' : 'text-muted-foreground'
+                      isActive ? 'text-foreground/70' : 'text-muted-foreground'
                     )}
                   >
                     {item.title}

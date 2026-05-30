@@ -92,6 +92,12 @@ export function CourseDetailView({
   const nextClassHref = nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : undefined
 
   const totalLessons = sections.reduce((acc: number, s: any) => acc + (s.classes?.length ?? 0), 0)
+  const completedLessons = sections.reduce(
+    (acc: number, s: any) =>
+      acc +
+      (s.classes?.filter((c: any) => c.totalItems > 0 && c.completedItems === c.totalItems).length ?? 0),
+    0,
+  )
   const levelLabel = course.difficulty ? difficultyLabel : t('dashboard.pages.course.allLevels')
   const teacherBio =
     tiptapToPlainText(teacher?.bio) ||
@@ -180,7 +186,7 @@ export function CourseDetailView({
         />
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.08] via-transparent to-terracotta/[0.05]" />
 
-        <div className="relative mx-auto flex min-h-[560px] w-full max-w-[1240px] flex-col justify-end px-6 pb-16 pt-[calc(56px+3rem)] md:px-10 lg:min-h-[620px]">
+        <div className="relative flex min-h-[560px] w-full flex-col justify-end px-6 pb-16 pt-[calc(56px+3rem)] md:px-10 lg:min-h-[620px]">
           {/* Back button */}
           <div className="absolute left-6 top-[calc(56px+1rem)] z-10 md:left-10">
             <Button
@@ -233,7 +239,7 @@ export function CourseDetailView({
 
             {/* Title */}
             <h1
-              className="animate-fade-in-up-delayed font-heading text-[clamp(3rem,6.5vw,5.5rem)] font-extrabold leading-[0.95] tracking-[-0.035em] text-white"
+              className="animate-fade-in-up-delayed font-heading text-[clamp(2.25rem,4.5vw,4rem)] font-extrabold leading-[0.98] tracking-[-0.03em] text-white"
               style={{ animationDelay: '0.15s' }}
             >
               {course.title}
@@ -342,15 +348,15 @@ export function CourseDetailView({
         </div>
       </div>
 
-      {/* ── Centered content column ── */}
-      <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
+      {/* ── Content column (full width) ── */}
+      <div className="w-full px-6 md:px-10">
         {/* Stats bar (overlaps hero) */}
         <div className="relative z-10 -mt-14 mb-4">
           <div className="overflow-hidden rounded-[20px] border border-border shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)]">
             <HeroStatsStrip
               progressPercentage={progressPercentage}
-              completedItems={completedItems}
-              totalItems={totalItems}
+              completedItems={completedLessons}
+              totalItems={totalLessons}
               remainingDuration={remainingDuration}
               difficulty={course.difficulty || 'All'}
               difficultyColor={difficultyColor}
