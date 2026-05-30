@@ -29,6 +29,7 @@ export default async function ModulePage({ params }: PageProps) {
         id,
         title,
         instrument,
+        is_fundamentals,
         musical_style:musical_styles(
           id,
           name,
@@ -55,7 +56,7 @@ export default async function ModulePage({ params }: PageProps) {
     .eq('id', user.id)
     .single()
 
-  const isStudent = await canAccessCourse(supabase, user.id, (module.course as any)?.instrument, profile?.is_admin ?? false)
+  const isStudent = await canAccessCourse(supabase, user.id, (module.course as any), profile?.is_admin ?? false)
 
   // Check if user has access
   if (!module.is_free && !isStudent) {

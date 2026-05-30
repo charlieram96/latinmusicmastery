@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { fadeInUp, staggerContainer, staggerChild } from "@/lib/animation-variants";
 import GradientText from "@/components/marketing/GradientText";
 import { useTranslation } from "@/components/language-provider";
+import { formatCents, type PricingMap } from "@/lib/payments/pricing-types";
 
 interface Instrument {
   id: string;
@@ -18,6 +19,7 @@ interface Instrument {
 
 interface HomePricingPreviewProps {
   instruments: Instrument[];
+  prices: PricingMap;
 }
 
 const instrumentFeatureKeys = [
@@ -37,8 +39,11 @@ const allAccessFeatureKeys = [
   "homepage.homeSections.pricingPreview.allAccessFeatures.cancelAnytime",
 ];
 
-export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
+export function HomePricingPreview({ instruments, prices }: HomePricingPreviewProps) {
   const { t } = useTranslation();
+  const monthlyLabel = formatCents(prices.base_monthly.amount_cents);
+  const annualLabel = formatCents(prices.base_annual.amount_cents);
+  const yearlyAtMonthlyLabel = formatCents(prices.base_monthly.amount_cents * 12);
   return (
     <section className="py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6">
@@ -170,7 +175,7 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
                 </div>
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-5xl font-bold text-foreground">
-                    $19.99
+                    {monthlyLabel}
                   </span>
                   <span className="text-lg text-muted-foreground">{t('homepage.homeSections.pricingPreview.perMonth')}</span>
                 </div>
@@ -186,10 +191,10 @@ export function HomePricingPreview({ instruments }: HomePricingPreviewProps) {
                   <span className="h-px flex-1 bg-border" />
                 </div>
                 <div className="mt-4 text-center">
-                  <p className="text-lg text-muted-foreground/70 line-through">$239.88</p>
+                  <p className="text-lg text-muted-foreground/70 line-through">{yearlyAtMonthlyLabel}</p>
                   <div className="mt-1 flex items-center justify-center gap-2.5">
                     <span className="flex items-baseline gap-1.5">
-                      <span className="text-2xl font-bold text-foreground">$199.99</span>
+                      <span className="text-2xl font-bold text-foreground">{annualLabel}</span>
                       <span className="text-sm text-muted-foreground">
                         {t('homepage.homeSections.pricingPreview.perYear')}
                       </span>

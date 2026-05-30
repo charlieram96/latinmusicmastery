@@ -747,6 +747,44 @@ export type Database = {
           },
         ]
       }
+      pricing: {
+        Row: {
+          key: string
+          amount_cents: number
+          currency: string
+          stripe_price_id: string
+          description: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          key: string
+          amount_cents: number
+          currency?: string
+          stripe_price_id?: string
+          description?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          key?: string
+          amount_cents?: number
+          currency?: string
+          stripe_price_id?: string
+          description?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_attempts: {
         Row: {
           created_at: string | null

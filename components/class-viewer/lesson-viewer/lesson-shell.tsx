@@ -1,0 +1,88 @@
+'use client'
+
+// Client orchestrator for the redesigned lesson viewer. Owns the sidebar
+// collapse state and lays out sidebar + header + parts nav + workspace +
+// body + fixed footer. Server-rendered content (the workspace + body) is
+// passed in as slots so data-fetching stays on the server.
+
+import { useState, type ReactNode } from 'react'
+import { cn } from '@/lib/utils'
+import { LessonSidebar, type LessonSidebarSection } from './lesson-sidebar'
+import { LessonHeader } from './lesson-header'
+import { LessonPartsNav, type LessonPart } from './lesson-parts-nav'
+import { LessonFooter } from './lesson-footer'
+import styles from './lesson-viewer.module.css'
+
+interface LessonShellProps {
+  sidebar: {
+    courseId: string
+    currentClassId: string
+    sections: LessonSidebarSection[]
+    courseTitle: string
+    teacherName?: string | null
+  }
+  header: {
+    moduleTitle: string
+    title: string
+    subtitle?: string | null
+  }
+  parts?: {
+    items: LessonPart[]
+    activeIndex: number
+    completedItemIds: string[]
+    courseId: string
+    classId: string
+  } | null
+  footer?: {
+    courseId: string
+    classId: string
+    currentIndex: number
+    totalItems: number
+    nextClassId: string | null
+    activeItemId: string | null
+    isCompleted: boolean
+    nextLabel?: string | null
+  } | null
+  /** Full-bleed media workspace (video / PlaySense split). Omit for non-media. */
+  workspace?: ReactNode
+  /** Scrollable lesson body (meta strip, prose, item content, comments). */
+  body: ReactNode
+}
+
+export function LessonShell({
+  sidebar,
+  header,
+  parts,
+  footer,
+  workspace,
+  body,
+}: LessonShellProps) {
+  const [collapsed, setCollapsed] = useState(false)
+
+  return (
+    <div
+      className={cn(
+        styles.app,
+        '-m-6 flex min-h-[calc(100vh-3.5rem)] w-full items-stretch bg-background text-foreground'
+      )}
+      data-railed={collapsed}
+    >
+      <LessonSidebar
+        {...sidebar}
+        collapsed={collapsed}
+        onToggle={() => setCollapsed((c) => !c)}
+      />
+
+      <div
+        className="relative flex min-w-0 flex-1 flex-col"
+        style={{ paddingBottom: footer ? 68 : 0 }}
+      >
+        <LessonHeader {...header} />
+        {parts && <LessonPartsNav {...parts} />}
+        {workspace}
+        {body}
+        {footer && <LessonFooter {...footer} />}
+      </div>
+    </div>
+  )
+}

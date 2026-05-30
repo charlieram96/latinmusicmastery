@@ -1,209 +1,237 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
+import { useState, useTransition } from 'react'
+import { Button } from '@/components/ui/button'
 import {
-  CreditCard,
-  Calendar,
-  ArrowUpCircle,
-  AlertCircle,
-  Crown,
-  Music,
-  Plus,
+  Music, Plus, X, AlertCircle, CreditCard, Crown,
 } from 'lucide-react'
+import { formatCents, type PricingMap } from '@/lib/payments/pricing-types'
 import { ManageSubscriptionButton } from '@/components/manage-subscription-button'
-import { useTranslation } from '@/components/language-provider'
+import { removeCourseFromSubscription, cancelInstrument } from '@/app/actions/billing'
 
-interface SubscriptionViewProps {
-  activeSubs: any[]
-  hasAllAccess: boolean
-  instrumentSubs: any[]
-  hasAnySub: boolean
+interface CourseRef {
+  id: string
+  title: string
+  slug: string | null
+  instrument: string | null
 }
 
-export function SubscriptionView({
-  activeSubs,
-  hasAllAccess,
-  instrumentSubs,
-  hasAnySub,
-}: SubscriptionViewProps) {
-  const { t, locale } = useTranslation()
-  const dateLocale = locale === 'es' ? 'es-ES' : 'en-US'
+interface SubscriptionCourseRow {
+  id: string
+  course: CourseRef | null
+}
+
+interface SubRow {
+  id: string
+  instrument: string
+  billing_interval: string
+  status: string
+  base_current_period_end: string | null
+  addon_current_period_end: string | null
+  cancel_at_period_end: boolean
+  pending_interval: string | null
+  stripe_addon_subscription_id: string | null
+  subscription_courses: SubscriptionCourseRow[] | null
+}
+
+interface SubscriptionViewProps {
+  subs: SubRow[]
+  fundamentalsByInstrument: Record<string, { id: string; title: string; slug: string }>
+  prices: PricingMap
+}
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: SubscriptionViewProps) {
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+
+  function handleRemoveCourse(courseId: string) {
+    if (!confirm('Remove this course from your plan? This will reduce your monthly bill.')) return
+    setError(null)
+    startTransition(async () => {
+      const res = await removeCourseFromSubscription(courseId)
+      if (res.error) setError(res.error)
+    })
+  }
+
+  function handleCancelInstrument(instrument: string) {
+    if (!confirm(`Cancel your ${instrument} subscription at the end of the current period? You'll keep access until then.`)) return
+    setError(null)
+    startTransition(async () => {
+      const res = await cancelInstrument(instrument)
+      if (res.error) setError(res.error)
+    })
+  }
+
+  if (subs.length === 0) {
+    return (
+      <div className="max-w-3xl mx-auto p-6 md:p-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">My subscription</h1>
+          <p className="mt-2 text-muted-foreground">
+            You don&apos;t have any active subscriptions yet.
+          </p>
+        </div>
+        <div className="rounded-2xl border bg-card p-8 text-center">
+          <Crown className="mx-auto mb-3 h-8 w-8 text-primary" />
+          <h2 className="mb-2 text-lg font-semibold">Start an instrument</h2>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Get the instrument&apos;s fundamentals course plus one genre course from{' '}
+            <strong>{formatCents(prices.base_monthly.amount_cents)}/mo</strong>.
+          </p>
+          <Button asChild size="lg">
+            <Link href="/dashboard/subscribe">Choose a plan</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <>
-      {/* Page Header */}
+    <div className="max-w-4xl mx-auto p-6 md:p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{t('dashboard.pages.subscription.title')}</h1>
-        <p className="text-muted-foreground">
-          {t('dashboard.pages.subscription.subtitle')}
+        <h1 className="text-3xl font-bold tracking-tight">My subscription</h1>
+        <p className="mt-2 text-muted-foreground">
+          One subscription per instrument. Add more genres any time.
         </p>
       </div>
 
-      {hasAnySub ? (
-        <div className="space-y-6">
-          {/* Redundant instrument subs warning */}
-          {hasAllAccess && instrumentSubs.length > 0 && (
-            <div className="flex items-start gap-3 p-4 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
-              <AlertCircle className="h-5 w-5 text-orange-500 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-medium text-orange-900 dark:text-orange-100">
-                  {t('dashboard.pages.subscription.redundant.title')}
-                </p>
-                <p className="text-sm text-orange-700 dark:text-orange-200 mt-1">
-                  {t('dashboard.pages.subscription.redundant.body')}
-                </p>
-              </div>
-            </div>
-          )}
+      {error && (
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4" />
+          <span>{error}</span>
+        </div>
+      )}
 
-          {/* Subscription Cards */}
-          {activeSubs.map((sub) => (
-            <Card key={sub.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {sub.plan_type === 'all_access' ? (
-                      <Crown className="h-5 w-5 text-primary" />
-                    ) : (
-                      <Music className="h-5 w-5" />
-                    )}
-                    <div>
-                      <CardTitle className="text-xl">
-                        {sub.plan_type === 'all_access'
-                          ? t('dashboard.pages.subscription.planNames.allAccess')
-                          : sub.instrument}
-                      </CardTitle>
-                      <CardDescription>
-                        {sub.plan_type === 'all_access'
-                          ? t('dashboard.pages.subscription.planDescriptions.allAccess')
-                          : t('dashboard.pages.subscription.planDescriptions.instrument', {
-                              instrument: sub.instrument,
-                            })}
-                      </CardDescription>
-                    </div>
+      <div className="space-y-6">
+        {subs.map((sub) => {
+          const fundamentals = fundamentalsByInstrument[sub.instrument]
+          const courses = (sub.subscription_courses ?? [])
+            .map((sc) => sc.course)
+            .filter((c): c is CourseRef => !!c)
+          const isCanceling = sub.cancel_at_period_end
+          const monthly = sub.billing_interval === 'month'
+          const addonCount = Math.max(0, courses.length - 1)
+          const periodTotalCents = monthly
+            ? prices.base_monthly.amount_cents + addonCount * prices.addon_monthly.amount_cents
+            : prices.base_annual.amount_cents + addonCount * prices.addon_monthly.amount_cents
+
+          return (
+            <div key={sub.id} className="rounded-2xl border bg-card overflow-hidden">
+              <div className="border-b bg-muted/30 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                    <Music className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h2 className="font-semibold leading-tight">{sub.instrument}</h2>
+                    <p className="text-xs text-muted-foreground">
+                      {monthly ? 'Monthly' : 'Annual'} · {sub.status}
+                      {isCanceling && ' · cancels at period end'}
+                    </p>
                   </div>
-                  <Badge
-                    variant={sub.cancel_at_period_end ? 'secondary' : 'default'}
-                    className="text-sm px-3 py-1"
-                  >
-                    {sub.cancel_at_period_end
-                      ? t('dashboard.pages.subscription.badge.canceling')
-                      : t('dashboard.pages.subscription.badge.active')}
-                  </Badge>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Billing Info */}
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        {t('dashboard.pages.subscription.billing.period')}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <span className="text-sm font-medium">
-                          {new Date(sub.current_period_start).toLocaleDateString(dateLocale)} -{' '}
-                          {new Date(sub.current_period_end).toLocaleDateString(dateLocale)}
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        {sub.cancel_at_period_end
-                          ? t('dashboard.pages.subscription.billing.accessUntil')
-                          : t('dashboard.pages.subscription.billing.nextBilling')}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4" />
-                        <span className="text-sm font-medium">
-                          {new Date(sub.current_period_end).toLocaleDateString(dateLocale)}
-                        </span>
-                      </div>
-                    </div>
+                <div className="text-right">
+                  <div className="font-bold">{formatCents(periodTotalCents)}{monthly ? '/mo' : '/yr'}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Next renewal: {fmtDate(sub.base_current_period_end)}
                   </div>
-
-                  {/* Cancellation Warning */}
-                  {sub.cancel_at_period_end && (
-                    <div className="flex items-start gap-3 p-4 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
-                      <AlertCircle className="h-5 w-5 text-orange-500 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="font-medium text-orange-900 dark:text-orange-100">
-                          {t('dashboard.pages.subscription.endingSoon.title')}
-                        </p>
-                        <p className="text-sm text-orange-700 dark:text-orange-200 mt-1">
-                          {t('dashboard.pages.subscription.endingSoon.body', {
-                            date: new Date(sub.current_period_end).toLocaleDateString(dateLocale),
-                          })}
-                        </p>
-                      </div>
+                  {!monthly && sub.stripe_addon_subscription_id && (
+                    <div className="text-xs text-muted-foreground">
+                      Add-on renewal: {fmtDate(sub.addon_current_period_end)}
                     </div>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-
-          {/* CTAs */}
-          <div className="flex flex-wrap gap-4">
-            {!hasAllAccess && (
-              <Button asChild>
-                <Link href="/dashboard/subscribe">
-                  <ArrowUpCircle className="mr-2 h-4 w-4" />
-                  {t('dashboard.pages.subscription.upgradeToAllAccess')}
-                </Link>
-              </Button>
-            )}
-            {!hasAllAccess && (
-              <Button asChild variant="outline">
-                <Link href="/dashboard/subscribe">
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('dashboard.pages.subscription.addInstrument')}
-                </Link>
-              </Button>
-            )}
-            <ManageSubscriptionButton />
-          </div>
-
-          {/* Billing History */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('dashboard.pages.subscription.history.title')}</CardTitle>
-              <CardDescription>{t('dashboard.pages.subscription.history.description')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.pages.subscription.history.body')}
-              </p>
-              <ManageSubscriptionButton />
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        /* No subscription */
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">{t('dashboard.pages.subscription.empty.title')}</h3>
-              <p className="text-muted-foreground mb-6">
-                {t('dashboard.pages.subscription.empty.body')}
-              </p>
-              <Button asChild size="lg">
-                <Link href="/dashboard/subscribe">
-                  <ArrowUpCircle className="mr-2 h-5 w-5" />
-                  {t('dashboard.pages.subscription.empty.cta')}
-                </Link>
-              </Button>
+
+              <div className="px-6 py-4 space-y-3">
+                {/* Fundamentals (included) */}
+                {fundamentals && (
+                  <div className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
+                    <div>
+                      <div className="text-sm font-medium">
+                        <Link href={`/dashboard/course/${fundamentals.slug || fundamentals.id}`} className="hover:underline">
+                          {fundamentals.title}
+                        </Link>
+                      </div>
+                      <div className="text-xs text-muted-foreground">Fundamentals · included</div>
+                    </div>
+                    <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary">
+                      Included
+                    </span>
+                  </div>
+                )}
+
+                {/* Genre courses */}
+                {courses.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic">No genre courses on this plan yet.</p>
+                ) : (
+                  courses.map((course, idx) => {
+                    const isFirstGenre = idx === 0 // first genre is bundled into the base
+                    return (
+                      <div key={course.id} className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
+                        <div>
+                          <div className="text-sm font-medium">
+                            <Link href={`/dashboard/course/${course.slug || course.id}`} className="hover:underline">
+                              {course.title}
+                            </Link>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {isFirstGenre
+                              ? 'Genre · included with base'
+                              : `Genre · +${formatCents(prices.addon_monthly.amount_cents)}/mo`}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={pending}
+                          onClick={() => handleRemoveCourse(course.id)}
+                          title={isFirstGenre ? 'Removing the last genre cancels the instrument' : 'Remove this genre'}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+
+              <div className="border-t bg-muted/20 px-6 py-3 flex flex-wrap items-center justify-between gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/dashboard/subscribe?instrument=${encodeURIComponent(sub.instrument)}`}>
+                    <Plus className="mr-1 h-3.5 w-3.5" /> Add a genre
+                  </Link>
+                </Button>
+                <div className="flex items-center gap-2">
+                  <ManageSubscriptionButton />
+                  {!isCanceling && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={pending}
+                      onClick={() => handleCancelInstrument(sub.instrument)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </>
+          )
+        })}
+      </div>
+
+      <p className="mt-6 text-xs text-muted-foreground">
+        <CreditCard className="mr-1 inline h-3 w-3" />
+        Payment details and invoices are managed in the Stripe customer portal — click <strong>Manage</strong> above.
+      </p>
+    </div>
   )
 }

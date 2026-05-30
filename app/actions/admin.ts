@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
-import { PLAN_PRICES, getPlanPrice } from '@/lib/pricing'
+import { getPricing } from '@/lib/payments/pricing-source'
 import { validateCourseKind } from '@/lib/courses/fundamentals'
 
 // Countries
@@ -367,7 +367,8 @@ export async function getUsers(options?: {
   isAdmin?: boolean
   isTeacher?: boolean
   subscriptionStatus?: 'all' | 'subscribed' | 'free'
-  planType?: 'all' | 'instrument' | 'all_access'
+  /** Filter by billing cadence (was `planType` in the old tier system). */
+  interval?: 'all' | 'month' | 'year'
   limit?: number
   offset?: number
 }) {
@@ -377,12 +378,12 @@ export async function getUsers(options?: {
     .from('profiles')
     .select(`
       *,
-      subscriptions (
+      instrument_subscriptions (
         id,
         status,
-        plan_type,
         instrument,
-        current_period_end
+        billing_interval,
+        base_current_period_end
       ),
       teachers!teachers_user_id_fkey (
         id,
@@ -415,22 +416,21 @@ export async function getUsers(options?: {
     users = users.filter((u: any) => !u.teachers || u.teachers.length === 0)
   }
 
-  // Filter by subscription status
+  // Filter by subscription status (any active instrument_subscriptions row).
   if (options?.subscriptionStatus === 'subscribed') {
     users = users.filter((u: any) =>
-      (u.subscriptions || []).some((s: any) => s.status === 'active')
+      (u.instrument_subscriptions || []).some((s: any) => s.status === 'active')
     )
   } else if (options?.subscriptionStatus === 'free') {
     users = users.filter((u: any) =>
-      !(u.subscriptions || []).some((s: any) => s.status === 'active')
+      !(u.instrument_subscriptions || []).some((s: any) => s.status === 'active')
     )
   }
 
-  // Filter by plan type
-  if (options?.planType && options.planType !== 'all') {
+  if (options?.interval && options.interval !== 'all') {
     users = users.filter((u: any) =>
-      (u.subscriptions || []).some(
-        (s: any) => s.status === 'active' && s.plan_type === options.planType
+      (u.instrument_subscriptions || []).some(
+        (s: any) => s.status === 'active' && s.billing_interval === options.interval
       )
     )
   }
@@ -440,29 +440,40 @@ export async function getUsers(options?: {
 
 export async function getUserStats() {
   const supabase = await createClient()
+  const prices = await getPricing()
 
-  const { data: subscriptions } = await supabase
-    .from('subscriptions')
-    .select('status, plan_type')
+  const { data: subs } = await supabase
+    .from('instrument_subscriptions')
+    .select('status, billing_interval, user_id, subscription_courses(id)')
 
   const { count: totalUsers } = await supabase
     .from('profiles')
     .select('id', { count: 'exact', head: true })
 
-  const activeSubs = (subscriptions || []).filter(s => s.status === 'active')
-  const instrumentCount = activeSubs.filter(s => s.plan_type === 'instrument').length
-  const allAccessCount = activeSubs.filter(s => s.plan_type === 'all_access').length
-  const totalSubscribers = activeSubs.length
-  const freeUsers = (totalUsers || 0) - totalSubscribers
-  const mrr = instrumentCount * PLAN_PRICES.instrument + allAccessCount * PLAN_PRICES.all_access
+  const activeSubs = (subs || []).filter(s => s.status === 'active')
+  const monthlyCount = activeSubs.filter(s => s.billing_interval === 'month').length
+  const annualCount = activeSubs.filter(s => s.billing_interval === 'year').length
+  const distinctSubscribers = new Set(activeSubs.map(s => s.user_id)).size
+  const freeUsers = Math.max(0, (totalUsers || 0) - distinctSubscribers)
+
+  // MRR in dollars; amortise annual base into months.
+  let mrrCents = 0
+  for (const s of activeSubs) {
+    const addons = Math.max(0, ((s.subscription_courses as any[]) ?? []).length - 1)
+    mrrCents += s.billing_interval === 'year'
+      ? Math.round(prices.base_annual.amount_cents / 12)
+      : prices.base_monthly.amount_cents
+    mrrCents += addons * prices.addon_monthly.amount_cents
+  }
 
   return {
     totalUsers: totalUsers || 0,
-    totalSubscribers,
-    instrumentCount,
-    allAccessCount,
-    freeUsers: Math.max(freeUsers, 0),
-    mrr,
+    totalSubscribers: distinctSubscribers,
+    activeInstrumentSubs: activeSubs.length,
+    monthlyCount,
+    annualCount,
+    freeUsers,
+    mrr: mrrCents / 100,
   }
 }
 
@@ -631,11 +642,17 @@ export async function deleteTeacher(id: string) {
 
 export async function getFinancials() {
     const supabase = await createClient()
+    const prices = await getPricing()
 
-    // Get all subscriptions
+    // Per-instrument subscriptions with their entitled genre courses.
     const { data: subscriptions } = await supabase
-      .from('subscriptions')
-      .select('id, status, plan_type, instrument, cancel_at_period_end, created_at, current_period_end, user_id, profiles:user_id (full_name, email)')
+      .from('instrument_subscriptions')
+      .select(`
+        id, status, instrument, billing_interval, cancel_at_period_end,
+        created_at, base_current_period_end, user_id,
+        profiles:user_id (full_name, email),
+        subscription_courses (id)
+      `)
       .order('created_at', { ascending: false })
 
     const allSubs = subscriptions || []
@@ -644,9 +661,21 @@ export async function getFinancials() {
     const pastDueSubs = allSubs.filter(s => s.status === 'past_due')
     const pendingCancelSubs = activeSubs.filter(s => s.cancel_at_period_end)
 
-    const instrumentActive = activeSubs.filter(s => s.plan_type === 'instrument').length
-    const allAccessActive = activeSubs.filter(s => s.plan_type === 'all_access').length
-    const mrr = instrumentActive * PLAN_PRICES.instrument + allAccessActive * PLAN_PRICES.all_access
+    // MRR in dollars; amortise annual bases into months.
+    let mrrCents = 0
+    const byInstrument: Record<string, { count: number; addons: number }> = {}
+    for (const s of activeSubs) {
+      const addons = Math.max(0, ((s.subscription_courses as any[]) ?? []).length - 1)
+      mrrCents += s.billing_interval === 'year'
+        ? Math.round(prices.base_annual.amount_cents / 12)
+        : prices.base_monthly.amount_cents
+      mrrCents += addons * prices.addon_monthly.amount_cents
+      const ent = byInstrument[s.instrument] ?? { count: 0, addons: 0 }
+      ent.count++
+      ent.addons += addons
+      byInstrument[s.instrument] = ent
+    }
+    const mrr = mrrCents / 100
 
     // Fetch real revenue from Stripe invoices (last 12 months)
     const stripe = getStripe()
@@ -708,32 +737,35 @@ export async function getFinancials() {
       console.error('Failed to fetch Stripe invoices:', error)
     }
 
-    // Churn: canceled in last 30 days
+    // Churn: canceled in last 30 days (uses the base sub period end).
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
     const recentCanceled = canceledSubs.filter(s => {
-      if (!s.current_period_end) return false
-      return new Date(s.current_period_end) >= thirtyDaysAgo
+      if (!s.base_current_period_end) return false
+      return new Date(s.base_current_period_end) >= thirtyDaysAgo
     })
 
     // Recent subscriptions (last 20)
     const recentSubs = allSubs.slice(0, 20).map(s => ({
       id: s.id,
       status: s.status,
-      planType: s.plan_type,
       instrument: s.instrument,
+      interval: s.billing_interval,
+      genreCount: ((s.subscription_courses as any[]) ?? []).length,
       cancelAtPeriodEnd: s.cancel_at_period_end,
       createdAt: s.created_at,
-      currentPeriodEnd: s.current_period_end,
+      currentPeriodEnd: s.base_current_period_end,
       userName: (s.profiles as any)?.full_name || 'Unknown',
       userEmail: (s.profiles as any)?.email || '',
     }))
+
+    const instrumentBreakdown = Object.entries(byInstrument)
+      .map(([instrument, v]) => ({ instrument, ...v }))
+      .sort((a, b) => b.count - a.count)
 
     return {
       mrr,
       totalRevenue: totalStripeRevenue,
       activeCount: activeSubs.length,
-      instrumentActive,
-      allAccessActive,
       canceledCount: canceledSubs.length,
       pastDueCount: pastDueSubs.length,
       pendingCancelCount: pendingCancelSubs.length,
@@ -743,6 +775,7 @@ export async function getFinancials() {
         revenue: Math.round(revenue * 100) / 100,
       })),
       recentSubs,
+      instrumentBreakdown,
     }
 }
 

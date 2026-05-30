@@ -40,11 +40,30 @@ export type EditorAction =
   | { type: 'delete-track'; trackIndex: number }
   | { type: 'add-measure'; trackIndex: number }
   | { type: 'delete-measure'; trackIndex: number; measureIndex: number }
-  | { type: 'add-note'; trackIndex: number; measureIndex: number; midi: number; durationQN: number }
-  | { type: 'add-rest'; trackIndex: number; measureIndex: number; durationQN: number }
+  | {
+      type: 'add-note';
+      trackIndex: number;
+      measureIndex: number;
+      midi: number;
+      durationQN: number;
+      dotted?: boolean;
+      triplet?: boolean;
+      articulation?: 'staccato' | 'accent' | 'tenuto';
+    }
+  | { type: 'add-rest'; trackIndex: number; measureIndex: number; durationQN: number; dotted?: boolean; triplet?: boolean }
   | { type: 'set-event-pitch'; trackIndex: number; measureIndex: number; eventIndex: number; midi: number }
   | { type: 'set-event-duration'; trackIndex: number; measureIndex: number; eventIndex: number; durationQN: number }
   | { type: 'set-event-dotted'; trackIndex: number; measureIndex: number; eventIndex: number; dotted: boolean }
+  | { type: 'set-event-triplet'; trackIndex: number; measureIndex: number; eventIndex: number; triplet: boolean }
+  | { type: 'set-event-tie'; trackIndex: number; measureIndex: number; eventIndex: number; tieToNext: boolean }
+  | {
+      type: 'set-event-articulation';
+      trackIndex: number;
+      measureIndex: number;
+      eventIndex: number;
+      articulation: 'staccato' | 'accent' | 'tenuto' | null;
+    }
+  | { type: 'convert-event-kind'; trackIndex: number; measureIndex: number; eventIndex: number; to: 'note' | 'rest'; midi?: number }
   | { type: 'delete-event'; trackIndex: number; measureIndex: number; eventIndex: number }
   | { type: 'undo' }
   | { type: 'redo' }
@@ -158,6 +177,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         kind: 'note',
         midi: action.midi,
         durationQN: action.durationQN,
+        ...(action.dotted ? { dotted: true } : {}),
+        ...(action.triplet ? { triplet: true } : {}),
+        ...(action.articulation ? { articulation: action.articulation } : {}),
       };
       measure.voices[0].events.push(note);
       return withHistory(state, next);
@@ -166,7 +188,12 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const next = clone(state.score);
       const measure = next.tracks[action.trackIndex]?.measures[action.measureIndex];
       if (!measure) return state;
-      const rest: Rest = { kind: 'rest', durationQN: action.durationQN };
+      const rest: Rest = {
+        kind: 'rest',
+        durationQN: action.durationQN,
+        ...(action.dotted ? { dotted: true } : {}),
+        ...(action.triplet ? { triplet: true } : {}),
+      };
       measure.voices[0].events.push(rest);
       return withHistory(state, next);
     }
@@ -197,6 +224,58 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         ?.voices[0].events[action.eventIndex];
       if (!event) return state;
       event.dotted = action.dotted;
+      return withHistory(state, next);
+    }
+    case 'set-event-triplet': {
+      const next = clone(state.score);
+      const event = next.tracks[action.trackIndex]?.measures[action.measureIndex]
+        ?.voices[0].events[action.eventIndex];
+      if (!event) return state;
+      event.triplet = action.triplet;
+      return withHistory(state, next);
+    }
+    case 'set-event-tie': {
+      const next = clone(state.score);
+      const event = next.tracks[action.trackIndex]?.measures[action.measureIndex]
+        ?.voices[0].events[action.eventIndex];
+      if (!event || event.kind === 'rest') return state;
+      event.tieToNext = action.tieToNext;
+      return withHistory(state, next);
+    }
+    case 'set-event-articulation': {
+      const next = clone(state.score);
+      const event = next.tracks[action.trackIndex]?.measures[action.measureIndex]
+        ?.voices[0].events[action.eventIndex];
+      if (!event || event.kind === 'rest') return state;
+      if (action.articulation === null) delete event.articulation;
+      else event.articulation = action.articulation;
+      return withHistory(state, next);
+    }
+    case 'convert-event-kind': {
+      const next = clone(state.score);
+      const voice = next.tracks[action.trackIndex]?.measures[action.measureIndex]?.voices[0];
+      const event = voice?.events[action.eventIndex];
+      if (!voice || !event) return state;
+      if (action.to === 'rest') {
+        if (event.kind === 'rest') return state;
+        const rest: Rest = {
+          kind: 'rest',
+          durationQN: event.durationQN,
+          ...(event.dotted ? { dotted: true } : {}),
+          ...(event.triplet ? { triplet: true } : {}),
+        };
+        voice.events[action.eventIndex] = rest;
+      } else {
+        if (event.kind === 'note' || event.kind === 'chord') return state;
+        const note: Note = {
+          kind: 'note',
+          midi: action.midi ?? 60,
+          durationQN: event.durationQN,
+          ...(event.dotted ? { dotted: true } : {}),
+          ...(event.triplet ? { triplet: true } : {}),
+        };
+        voice.events[action.eventIndex] = note;
+      }
       return withHistory(state, next);
     }
     case 'delete-event': {

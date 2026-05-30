@@ -14,15 +14,18 @@ import {
   beatLengthInQN,
   measureLengthInQN,
 } from './time-mapping';
+import { isPercussion, midiToPercStroke } from './perc-strokes';
 
 /**
  * VexFlow duration code for a quarter-note duration.
- *  4   → 'w'   (whole)
- *  2   → 'h'   (half)
- *  1   → 'q'   (quarter)
- *  0.5 → '8'   (eighth)
- *  0.25→ '16'  (sixteenth)
- *  0.125→'32'  (thirty-second)
+ *  4     → 'w'   (whole)
+ *  2     → 'h'   (half)
+ *  1     → 'q'   (quarter)
+ *  0.5   → '8'   (eighth)
+ *  0.25  → '16'  (sixteenth)
+ *  0.125 → '32'  (thirty-second)
+ *  0.0625→ '64'  (sixty-fourth)
+ *  0.03125→'128' (hundred-twenty-eighth)
  *
  * Dotted notes return the base code; the caller adds a Dot modifier.
  * Triplets return the base code; tuplet bracketing is the caller's concern.
@@ -31,13 +34,15 @@ export function vexflowDurationCode(durationQN: number, dotted?: boolean): strin
   // If dotted, the underlying duration is durationQN * 2/3; reverse before lookup.
   const base = dotted ? (durationQN * 2) / 3 : durationQN;
 
-  const eps = 1e-6;
+  const eps = 1e-7;
   if (Math.abs(base - 4) < eps) return 'w';
   if (Math.abs(base - 2) < eps) return 'h';
   if (Math.abs(base - 1) < eps) return 'q';
   if (Math.abs(base - 0.5) < eps) return '8';
   if (Math.abs(base - 0.25) < eps) return '16';
   if (Math.abs(base - 0.125) < eps) return '32';
+  if (Math.abs(base - 0.0625) < eps) return '64';
+  if (Math.abs(base - 0.03125) < eps) return '128';
 
   // Fallback for unusual durations: round to the nearest power of 2.
   // Better than throwing — the visual will be close enough for unsupported edge cases.
@@ -47,7 +52,9 @@ export function vexflowDurationCode(durationQN: number, dotted?: boolean): strin
   if (power === 0) return 'q';
   if (power === -1) return '8';
   if (power === -2) return '16';
-  return '32';
+  if (power === -3) return '32';
+  if (power === -4) return '64';
+  return '128';
 }
 
 const SHARP_NAMES: Record<number, string> = {
@@ -125,6 +132,58 @@ export function extractAccidental(keyString: string): '#' | 'b' | null {
 }
 
 // ---------------------------------------------------------------------------
+// Diatonic <-> MIDI helpers (for staff drag-to-pitch)
+//
+// A "diatonic index" counts staff steps continuously: each line/space is one
+// step. We define it as `octave * 7 + letterIndex` where C=0..B=6. Dragging a
+// note up/down the staff changes this index by whole steps; the accidental
+// (from the toolbar) is applied separately so the chromatic pitch is exact.
+// ---------------------------------------------------------------------------
+
+// Chromatic pitch class → diatonic letter index (sharp spelling: C/C#→C, etc.).
+const PC_TO_LETTER_INDEX: Record<number, number> = {
+  0: 0, // C
+  1: 0, // C#
+  2: 1, // D
+  3: 1, // D#
+  4: 2, // E
+  5: 3, // F
+  6: 3, // F#
+  7: 4, // G
+  8: 4, // G#
+  9: 5, // A
+  10: 5, // A#
+  11: 6, // B
+};
+
+// Diatonic letter index → base chromatic pitch class.
+const LETTER_INDEX_TO_PC = [0, 2, 4, 5, 7, 9, 11];
+
+/** MIDI number → continuous diatonic staff index (octave*7 + letterIndex). */
+export function midiToDiatonic(midi: number): number {
+  const pc = ((midi % 12) + 12) % 12;
+  const octave = Math.floor(midi / 12) - 1;
+  return octave * 7 + PC_TO_LETTER_INDEX[pc];
+}
+
+/**
+ * Diatonic staff index back to MIDI, applying an accidental (-1 flat, 0 natural,
+ * +1 sharp). `keyFifths` is accepted for future key-aware spelling; v1 applies
+ * only the explicit accidental.
+ */
+export function diatonicToMidi(
+  diatonicIndex: number,
+  accidental: number = 0,
+  _keyFifths: number = 0
+): number {
+  const octave = Math.floor(diatonicIndex / 7);
+  const letterIndex = ((diatonicIndex % 7) + 7) % 7;
+  const basePc = LETTER_INDEX_TO_PC[letterIndex];
+  const midi = (octave + 1) * 12 + basePc + accidental;
+  return Math.max(0, Math.min(127, midi));
+}
+
+// ---------------------------------------------------------------------------
 // Per-measure event extraction
 // ---------------------------------------------------------------------------
 
@@ -147,6 +206,16 @@ export interface VexEventDescriptor {
   isRest: boolean;
   /** True if this event is dotted; the renderer adds a Dot modifier. */
   dotted: boolean;
+  /** MIDI of the (first) pitch — for staff drag anchoring. null for rests. */
+  midi: number | null;
+  /** 'x' for percussion slap/mute/cymbal noteheads; undefined = normal. */
+  noteType?: 'x';
+  /** True if part of a triplet group (consecutive run forms one tuplet). */
+  triplet: boolean;
+  /** True if tied to the next event (rendered within-measure only). */
+  tieToNext: boolean;
+  /** Articulation glyph to attach, or undefined. */
+  articulation?: 'staccato' | 'accent' | 'tenuto';
 }
 
 /**
@@ -161,13 +230,23 @@ export function extractTrackEvents(
   track: Track,
   initialTimeSignature: [number, number],
   keyFifths: number = 0
-): Array<{ measure: Measure; events: VexEventDescriptor[]; cumulativeQN: number; timeSignature: [number, number] }> {
+): Array<{
+  measure: Measure;
+  events: VexEventDescriptor[];
+  cumulativeQN: number;
+  timeSignature: [number, number];
+  clef: 'treble' | 'percussion';
+}> {
   const result: Array<{
     measure: Measure;
     events: VexEventDescriptor[];
     cumulativeQN: number;
     timeSignature: [number, number];
+    clef: 'treble' | 'percussion';
   }> = [];
+
+  const percussion = isPercussion(track.instrument);
+  const clef: 'treble' | 'percussion' = percussion ? 'percussion' : 'treble';
 
   let cumulativeQN = 0;
   let currentTimeSig: [number, number] = initialTimeSignature;
@@ -188,19 +267,38 @@ export function extractTrackEvents(
 
       let keys: string[];
       let accidentals: Array<'#' | 'b' | null>;
+      let midi: number | null = null;
+      let noteType: 'x' | undefined;
 
       if (event.kind === 'note') {
-        const k = midiToKeyString(event.midi, {
-          spellingHint: event.spellingHint,
-          keyFifths,
-        });
-        keys = [k];
-        accidentals = [extractAccidental(k)];
+        midi = event.midi;
+        if (percussion) {
+          const stroke = midiToPercStroke(track.instrument, event.midi);
+          keys = [stroke?.staffLine ?? 'c/5'];
+          accidentals = [null];
+          noteType = stroke?.noteType;
+        } else {
+          const k = midiToKeyString(event.midi, {
+            spellingHint: event.spellingHint,
+            keyFifths,
+          });
+          keys = [k];
+          accidentals = [extractAccidental(k)];
+        }
       } else if (event.kind === 'chord') {
-        keys = event.notes.map((n) =>
-          midiToKeyString(n.midi, { spellingHint: n.spellingHint, keyFifths })
-        );
-        accidentals = keys.map((k) => extractAccidental(k));
+        midi = event.notes[0]?.midi ?? null;
+        if (percussion) {
+          keys = event.notes.map(
+            (n) => midiToPercStroke(track.instrument, n.midi)?.staffLine ?? 'c/5'
+          );
+          accidentals = keys.map(() => null);
+          noteType = midiToPercStroke(track.instrument, event.notes[0]?.midi ?? 0)?.noteType;
+        } else {
+          keys = event.notes.map((n) =>
+            midiToKeyString(n.midi, { spellingHint: n.spellingHint, keyFifths })
+          );
+          accidentals = keys.map((k) => extractAccidental(k));
+        }
       } else {
         // rest — VexFlow needs a key for visual placement; b/4 is the convention
         keys = ['b/4'];
@@ -217,6 +315,11 @@ export function extractTrackEvents(
         durationCode,
         isRest,
         dotted,
+        midi,
+        noteType,
+        triplet: event.triplet ?? false,
+        tieToNext: event.tieToNext ?? false,
+        articulation: event.kind === 'rest' ? undefined : event.articulation,
       });
 
       qnInMeasure += event.durationQN;
@@ -227,6 +330,7 @@ export function extractTrackEvents(
       events,
       cumulativeQN: measureStartQN,
       timeSignature: currentTimeSig,
+      clef,
     });
 
     cumulativeQN += measureLengthInQN(currentTimeSig);

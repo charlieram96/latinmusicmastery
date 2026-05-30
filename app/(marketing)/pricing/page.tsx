@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import PricingContent from './pricing-content'
+import { getPricing } from '@/lib/payments/pricing-source'
 
 export const metadata: Metadata = {
   title: 'Pricing - Latin Music Mastery',
-  description: 'Simple, flexible pricing. Start an instrument for $19.99/mo (fundamentals course + a genre of your choice), add more genre courses for $9.99/mo each, or save 17% with annual billing ($199.99/yr).',
+  description: 'Simple, flexible pricing. Start an instrument with the fundamentals course + a genre of your choice, add more genre courses, or save with annual billing.',
 }
 
-export default function PricingPage() {
-  return <PricingContent />
+export default async function PricingPage() {
+  const prices = await getPricing()
+  return <PricingContent prices={prices} />
 }

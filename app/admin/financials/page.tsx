@@ -1,14 +1,17 @@
 import { Badge } from '@/components/ui/badge'
 import {
-  DollarSign, TrendingUp, CreditCard, AlertTriangle, XCircle, Clock,
+  DollarSign, TrendingUp, CreditCard, AlertTriangle, XCircle, Clock, Music,
 } from 'lucide-react'
 import { getFinancials } from '@/app/actions/admin'
-import { formatCurrency, PLAN_PRICES } from '@/lib/pricing'
+import { formatCurrency } from '@/lib/payments/pricing-types'
 
 export default async function AdminFinancialsPage() {
   const financials = await getFinancials()
 
   const maxMonthlyRevenue = Math.max(...financials.monthlyRevenue.map(m => m.revenue), 1)
+  const maxInstrumentMrr = financials.activeCount > 0
+    ? Math.max(...financials.instrumentBreakdown.map(b => b.count), 1)
+    : 1
 
   const heroStats = [
     {
@@ -30,7 +33,7 @@ export default async function AdminFinancialsPage() {
     {
       label: 'Active Subscriptions',
       value: financials.activeCount,
-      sub: `${financials.instrumentActive} instrument · ${financials.allAccessActive} all-access`,
+      sub: `${financials.instrumentBreakdown.length} instrument${financials.instrumentBreakdown.length === 1 ? '' : 's'}`,
       icon: CreditCard,
       color: 'text-blue-500',
       bg: 'bg-blue-500/10',
@@ -45,18 +48,13 @@ export default async function AdminFinancialsPage() {
     },
   ]
 
-  const instrumentMrr = financials.instrumentActive * PLAN_PRICES.instrument
-  const allAccessMrr = financials.allAccessActive * PLAN_PRICES.all_access
-
   return (
     <div className="p-6 lg:p-8">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold tracking-tight mb-1">Financials</h1>
         <p className="text-muted-foreground">Revenue, subscription metrics, and billing data from Stripe</p>
       </div>
 
-      {/* Hero Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {heroStats.map((s) => {
           const Icon = s.icon
@@ -74,50 +72,39 @@ export default async function AdminFinancialsPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        {/* Revenue Breakdown */}
+        {/* Per-instrument breakdown */}
         <div className="rounded-xl border bg-card p-6">
-          <h2 className="font-bold text-lg mb-1">Revenue Breakdown</h2>
-          <p className="text-sm text-muted-foreground mb-6">MRR by plan type</p>
-          <div className="space-y-5">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="font-medium">Instrument Plans</span>
-                <span className="text-muted-foreground">
-                  {financials.instrumentActive} × {formatCurrency(PLAN_PRICES.instrument)}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-muted rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="h-full bg-blue-500 rounded-full"
-                    style={{ width: `${financials.mrr > 0 ? (instrumentMrr / financials.mrr) * 100 : 0}%` }}
-                  />
+          <h2 className="font-bold text-lg mb-1">Subscriptions by Instrument</h2>
+          <p className="text-sm text-muted-foreground mb-6">Active subscribers per instrument (with add-ons)</p>
+          {financials.instrumentBreakdown.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No active subscriptions yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {financials.instrumentBreakdown.map((row) => (
+                <div key={row.instrument}>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="font-medium flex items-center gap-2">
+                      <Music className="h-3.5 w-3.5 text-primary" />
+                      {row.instrument}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {row.count} sub{row.count === 1 ? '' : 's'} · {row.addons} add-on{row.addons === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  <div className="flex-1 bg-muted rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{ width: `${(row.count / maxInstrumentMrr) * 100}%` }}
+                    />
+                  </div>
                 </div>
-                <span className="text-sm font-bold w-20 text-right">{formatCurrency(instrumentMrr)}</span>
+              ))}
+              <div className="pt-4 border-t flex justify-between font-bold">
+                <span>Total MRR</span>
+                <span className="text-green-500">{formatCurrency(financials.mrr)}</span>
               </div>
             </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="font-medium">All-Access Plans</span>
-                <span className="text-muted-foreground">
-                  {financials.allAccessActive} × {formatCurrency(PLAN_PRICES.all_access)}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-muted rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full"
-                    style={{ width: `${financials.mrr > 0 ? (allAccessMrr / financials.mrr) * 100 : 0}%` }}
-                  />
-                </div>
-                <span className="text-sm font-bold w-20 text-right">{formatCurrency(allAccessMrr)}</span>
-              </div>
-            </div>
-            <div className="pt-4 border-t flex justify-between font-bold">
-              <span>Total MRR</span>
-              <span className="text-green-500">{formatCurrency(financials.mrr)}</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Subscription Health */}
@@ -157,7 +144,6 @@ export default async function AdminFinancialsPage() {
         </div>
       </div>
 
-      {/* Monthly Revenue Chart */}
       <div className="rounded-xl border bg-card p-6 mb-6">
         <h2 className="font-bold text-lg mb-1">Monthly Revenue</h2>
         <p className="text-sm text-muted-foreground mb-6">Actual revenue from paid Stripe invoices (last 12 months)</p>
@@ -177,7 +163,6 @@ export default async function AdminFinancialsPage() {
         </div>
       </div>
 
-      {/* Recent Subscriptions */}
       <div className="rounded-xl border bg-card overflow-hidden">
         <div className="px-6 py-4 border-b">
           <h2 className="font-bold text-lg">Recent Subscriptions</h2>
@@ -186,17 +171,15 @@ export default async function AdminFinancialsPage() {
         {financials.recentSubs.length > 0 ? (
           <div className="divide-y">
             {financials.recentSubs.map((sub) => (
-              <div
-                key={sub.id}
-                className="flex items-center justify-between px-6 py-3.5"
-              >
+              <div key={sub.id} className="flex items-center justify-between px-6 py-3.5">
                 <div>
                   <p className="font-medium text-sm">{sub.userName}</p>
                   <p className="text-xs text-muted-foreground">{sub.userEmail}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={sub.planType === 'all_access' ? 'default' : 'secondary'} className="text-xs">
-                    {sub.planType === 'all_access' ? 'All-Access' : sub.instrument || 'Instrument'}
+                  <Badge variant="secondary" className="text-xs">
+                    {sub.instrument || 'Instrument'} · {sub.interval === 'year' ? 'Annual' : 'Monthly'}
+                    {sub.genreCount > 1 ? ` +${sub.genreCount - 1}` : ''}
                   </Badge>
                   <Badge
                     variant={

@@ -43,10 +43,12 @@ export default async function DashboardPage() {
       .eq('id', user.id)
       .single(),
     supabase
-      .from('subscriptions')
-      .select('*')
+      .from('instrument_subscriptions')
+      .select('id, status')
       .eq('user_id', user.id)
-      .single(),
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle(),
     supabase
       .from('course_enrollments')
       .select(

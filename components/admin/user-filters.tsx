@@ -52,9 +52,9 @@ export function UserFilters() {
         defaultValue={searchParams.get('plan') || 'all'}
         className="h-9 rounded-md border border-input bg-background px-3 text-sm"
       >
-        <option value="all">All Plans</option>
-        <option value="instrument">Instrument</option>
-        <option value="all_access">All-Access</option>
+        <option value="all">All Cadences</option>
+        <option value="month">Monthly</option>
+        <option value="year">Annual</option>
       </select>
       <Button type="submit">Search</Button>
     </form>

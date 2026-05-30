@@ -1,7 +1,8 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCourseStructureForStudent } from '@/app/actions/course-student'
-import { canAccessCourse } from '@/lib/subscriptions'
+import { canAccessCourse, hasInstrumentSubscription } from '@/lib/subscriptions'
+import { getPricing } from '@/lib/payments/pricing-source'
 import { CourseDetailView } from './course-detail-view'
 
 interface PageProps {
@@ -52,7 +53,7 @@ export default async function CoursePage({ params }: PageProps) {
     .eq('id', user.id)
     .single()
 
-  const isStudent = await canAccessCourse(supabase, user.id, course.instrument, profile?.is_admin ?? false)
+  const isStudent = await canAccessCourse(supabase, user.id, course, profile?.is_admin ?? false)
 
   // Get course structure with progress
   const structureResult = await getCourseStructureForStudent(course.id)
@@ -79,6 +80,15 @@ export default async function CoursePage({ params }: PageProps) {
     }
   }
   const locked = !!nextClassId && !isStudent && !nextClassIsFree
+
+  // If the user already has the instrument subscription but doesn't own this
+  // particular genre course, we offer "Add to my plan" instead of "Subscribe".
+  const hasInstrumentSub = course.instrument
+    ? await hasInstrumentSubscription(supabase, user.id, course.instrument)
+    : false
+  const canAddToPlan = locked && hasInstrumentSub && !course.is_fundamentals
+  const prices = await getPricing()
+  const addonPriceCents = prices.addon_monthly.amount_cents
 
   const style = course.musical_style
   const country = style?.country
@@ -113,6 +123,8 @@ export default async function CoursePage({ params }: PageProps) {
       hasStarted={hasStarted}
       isStudent={isStudent}
       locked={locked}
+      canAddToPlan={canAddToPlan}
+      addonPriceCents={addonPriceCents}
     />
   )
 }

@@ -18,6 +18,7 @@ import {
   Award,
   Headphones,
   Lock,
+  Plus,
 } from 'lucide-react'
 import { EnterCourseModeButton } from '@/components/dashboard/enter-course-mode-button'
 import { CurriculumNavigator } from '@/components/course/curriculum-navigator'
@@ -26,6 +27,9 @@ import { MobileCourseBar } from '@/components/course/mobile-course-bar'
 import { getInstrumentColor } from '@/lib/instruments'
 import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
 import { useTranslation } from '@/components/language-provider'
+import { useTransition, useState } from 'react'
+import { addCourseToSubscription } from '@/app/actions/billing'
+import { formatCents } from '@/lib/payments/pricing-types'
 
 interface CourseDetailViewProps {
   course: any
@@ -45,6 +49,8 @@ interface CourseDetailViewProps {
   hasStarted: boolean
   isStudent: boolean
   locked: boolean
+  canAddToPlan: boolean
+  addonPriceCents: number
 }
 
 function formatDuration(mins: number): string {
@@ -72,11 +78,23 @@ export function CourseDetailView({
   hasStarted,
   isStudent,
   locked,
+  canAddToPlan,
+  addonPriceCents,
 }: CourseDetailViewProps) {
   const { t } = useTranslation()
   const difficultyLabel = t(`dashboard.pages.course.difficulty.${difficultyKey}`)
+  const [pending, startTransition] = useTransition()
+  const [addError, setAddError] = useState<string | null>(null)
 
   const nextClassHref = nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : undefined
+
+  function handleAddToPlan() {
+    setAddError(null)
+    startTransition(async () => {
+      const res = await addCourseToSubscription(course.id)
+      if (res.error) setAddError(res.error)
+    })
+  }
 
   const whatYouLearn = [
     t('dashboard.pages.course.whatYoullMaster.items.rhythms', {
@@ -239,13 +257,32 @@ export function CourseDetailView({
               </div>
             )}
 
-            {locked ? (
+            {locked && canAddToPlan ? (
+              <div className="flex flex-col items-end gap-2">
+                <Button
+                  size="lg"
+                  disabled={pending}
+                  onClick={handleAddToPlan}
+                  className="h-14 px-10 rounded-2xl shadow-[0_0_40px_-8px_hsl(var(--primary)/0.4)] text-base"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  {pending ? 'Adding…' : `Add to my plan (+${formatCents(addonPriceCents)}/mo)`}
+                </Button>
+                {addError && (
+                  <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs text-destructive">
+                    {addError}
+                  </p>
+                )}
+              </div>
+            ) : locked ? (
               <Button
                 asChild
                 size="lg"
                 className="h-14 px-10 rounded-2xl shadow-[0_0_40px_-8px_hsl(var(--primary)/0.4)] text-base"
               >
-                <Link href="/dashboard/subscribe">
+                <Link
+                  href={`/dashboard/subscribe?instrument=${encodeURIComponent(course.instrument ?? '')}&course=${course.id}`}
+                >
                   <Lock className="h-5 w-5 mr-2" />
                   {t('dashboard.pages.course.subscribeToUnlock')}
                 </Link>
