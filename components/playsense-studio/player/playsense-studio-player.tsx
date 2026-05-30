@@ -34,7 +34,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type TouchEvent as ReactTouchEvent,
 } from 'react';
-import { Columns2, Rows2 } from 'lucide-react';
+import { Columns2, Rows2, Rows3, MoveHorizontal } from 'lucide-react';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
 import {
@@ -263,6 +263,7 @@ export function PlaysenseStudioPlayer({
 
   // ---- Split-layout resize state (only used when layout === 'split') ----
   const [orient, setOrient] = useState<'row' | 'column'>('row');
+  const [notationLayout, setNotationLayout] = useState<'wrapped' | 'scroll'>('wrapped');
   const [split, setSplit] = useState(55); // % given to the video pane
   const [workspaceH, setWorkspaceH] = useState(560);
   const [knobDragging, setKnobDragging] = useState(false);
@@ -384,6 +385,11 @@ export function PlaysenseStudioPlayer({
       </div>
     ) : null;
 
+  // Wrapped (stacked staves) only in the split workspace; the legacy stack
+  // layout keeps the single horizontal scrolling line.
+  const staffLayout: 'wrapped' | 'scroll' =
+    layout === 'split' ? notationLayout : 'scroll';
+
   const staffEl = (
     <StaffRenderer
       score={score}
@@ -392,14 +398,17 @@ export function PlaysenseStudioPlayer({
       viewMs={viewMs}
       loopAMs={loopAMs}
       loopBMs={loopBMs}
+      layoutMode={staffLayout}
       onSeek={handleSeek}
       onSelectRange={handleSelectRange}
       onDurationKnown={setTrackDurationMs}
     />
   );
 
+  // The horizontal scrub bar only makes sense for the scrolling line; in
+  // wrapped mode the whole piece is visible / vertically scrollable.
   const scrubEl =
-    trackDurationMs > 0 ? (
+    trackDurationMs > 0 && staffLayout === 'scroll' ? (
       <StaffScrubBar
         durationMs={trackDurationMs}
         viewMs={viewMs}
@@ -482,7 +491,13 @@ export function PlaysenseStudioPlayer({
                     {meta}
                   </div>
                 </div>
-                <OrientationToggle value={orient} onChange={setOrient} />
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <NotationLayoutToggle
+                    value={notationLayout}
+                    onChange={setNotationLayout}
+                  />
+                  <OrientationToggle value={orient} onChange={setOrient} />
+                </div>
               </div>
               <div className="min-h-0 flex-1 space-y-2 overflow-auto p-3">
                 {tracksEl}
@@ -586,6 +601,50 @@ function OrientationToggle({
         }`}
       >
         <Rows2 className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+// Icon-only notation toggle: stacked staves ↔ single horizontal scroll.
+function NotationLayoutToggle({
+  value,
+  onChange,
+}: {
+  value: 'wrapped' | 'scroll';
+  onChange: (v: 'wrapped' | 'scroll') => void;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Notation layout"
+      className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full border border-border bg-[hsl(0_0%_10%)] p-0.5"
+    >
+      <button
+        type="button"
+        onClick={() => onChange('wrapped')}
+        title="Stacked staves"
+        aria-label="Stacked staves"
+        className={`grid h-[30px] w-8 place-items-center rounded-full transition-colors ${
+          value === 'wrapped'
+            ? 'bg-primary/[0.16] text-primary'
+            : 'text-muted-foreground hover:text-foreground'
+        }`}
+      >
+        <Rows3 className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange('scroll')}
+        title="Horizontal scroll"
+        aria-label="Horizontal scroll"
+        className={`grid h-[30px] w-8 place-items-center rounded-full transition-colors ${
+          value === 'scroll'
+            ? 'bg-primary/[0.16] text-primary'
+            : 'text-muted-foreground hover:text-foreground'
+        }`}
+      >
+        <MoveHorizontal className="h-4 w-4" />
       </button>
     </div>
   );

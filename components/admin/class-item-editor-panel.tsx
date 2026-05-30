@@ -12,20 +12,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Loader2 } from 'lucide-react'
 import { VideoUpload } from './video-upload'
-import { QuizBuilder } from './quiz-builder'
+import { QuizQuestionsEditor } from './quiz-questions-editor'
 import { JamSessionEditor } from './jam-session-editor'
 import { TiptapEditor } from './tiptap-editor'
 import { PlaysenseStudioScoreAttach } from './playsense-studio-score-attach'
-import { ClassItem, QuestionType } from '@/types/modules'
+import { ClassItem } from '@/types/modules'
 import { updateClassItem } from '@/app/actions/course-builder'
 
 interface ClassItemEditorPanelProps {
@@ -80,11 +73,9 @@ export function ClassItemEditorPanel({
       }
 
       if (item.item_type === 'QUIZ' || item.item_type === 'EXERCISE') {
-        updates.question = formData.question || null
-        updates.question_type = formData.question_type || null
-        updates.options = formData.options || null
-        updates.correct_answer = formData.correct_answer || null
-        updates.explanation = formData.explanation || null
+        // Questions now live in the quiz_questions table (managed by
+        // QuizQuestionsEditor). The class item only carries optional media.
+        updates.video_url = formData.video_url || null
       }
 
       if (item.item_type === 'JAM_SESSION') {
@@ -207,47 +198,66 @@ export function ClassItemEditorPanel({
                 </div>
               )}
 
-              {(item.item_type === 'QUIZ' || item.item_type === 'EXERCISE') && (
-                <div className="space-y-4">
-                  <h4 className="font-medium">
-                    {item.item_type === 'QUIZ' ? 'Quiz' : 'Exercise'} Content
-                  </h4>
-                  <div className="grid gap-2">
-                    <Label>Question Type</Label>
-                    <Select
-                      value={formData.question_type || 'multiple_choice'}
-                      onValueChange={(v) =>
-                        setFormData({
-                          ...formData,
-                          question_type: v as QuestionType,
-                          options: null,
-                          correct_answer: '',
-                        })
+              {item.item_type === 'QUIZ' && (
+                <div className="space-y-6">
+                  {/* Optional intro video / notation for the quiz */}
+                  <details className="group" open={!!formData.video_url}>
+                    <summary className="text-xs uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition">
+                      Intro Video & Notation (optional)
+                    </summary>
+                    <div className="space-y-5 mt-3">
+                      <VideoUpload
+                        moduleId={item.id}
+                        currentVideoUrl={formData.video_url || null}
+                        onVideoUploaded={(url) =>
+                          setFormData({ ...formData, video_url: url })
+                        }
+                      />
+                      <PlaysenseStudioScoreAttach
+                        classItemId={item.id}
+                        currentScoreDocumentId={
+                          (item as ClassItem & { score_document_id?: string | null })
+                            .score_document_id ?? null
+                        }
+                      />
+                    </div>
+                  </details>
+
+                  <QuizQuestionsEditor classItemId={item.id} kind="Quiz" />
+                </div>
+              )}
+
+              {item.item_type === 'EXERCISE' && (
+                <div className="space-y-6">
+                  {/* Exercise media + score: video synced to the PlaySense notation
+                      staff; the rhythm-highway test view is auto-derived from the score. */}
+                  <div className="space-y-5">
+                    <h4 className="font-medium">Exercise Video & Score</h4>
+                    <VideoUpload
+                      moduleId={item.id}
+                      currentVideoUrl={formData.video_url || null}
+                      onVideoUploaded={(url) =>
+                        setFormData({ ...formData, video_url: url })
                       }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
-                        <SelectItem value="text_answer">Text Answer</SelectItem>
-                        <SelectItem value="true_false">True/False</SelectItem>
-                        <SelectItem value="matching_pairs">Matching Pairs</SelectItem>
-                        <SelectItem value="fill_in_blank">Fill in the Blank</SelectItem>
-                        <SelectItem value="ordering_sequence">Ordering/Sequence</SelectItem>
-                        <SelectItem value="audio">Audio Response</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    />
+                    <PlaysenseStudioScoreAttach
+                      classItemId={item.id}
+                      currentScoreDocumentId={
+                        (item as ClassItem & { score_document_id?: string | null })
+                          .score_document_id ?? null
+                      }
+                    />
                   </div>
 
-                  <QuizBuilder
-                    questionType={(formData.question_type || 'multiple_choice') as QuestionType}
-                    question={formData.question || ''}
-                    options={formData.options}
-                    correctAnswer={formData.correct_answer || ''}
-                    explanation={formData.explanation || ''}
-                    onChange={(data) => setFormData({ ...formData, ...data })}
-                  />
+                  {/* Optional comprehension questions for the exercise */}
+                  <details className="group">
+                    <summary className="text-xs uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition">
+                      Questions (optional)
+                    </summary>
+                    <div className="mt-3">
+                      <QuizQuestionsEditor classItemId={item.id} kind="Exercise" />
+                    </div>
+                  </details>
                 </div>
               )}
 

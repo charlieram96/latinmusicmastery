@@ -42,7 +42,8 @@ export default async function CountryFormPage({ params }: PageProps) {
   const uploadId = country?.id ?? randomUUID()
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-2xl">
+    <div className="px-6 py-8">
+      <div className="max-w-2xl">
       <div className="mb-6">
         <Link
           href="/admin/countries"
@@ -117,6 +118,7 @@ export default async function CountryFormPage({ params }: PageProps) {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

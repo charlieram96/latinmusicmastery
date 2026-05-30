@@ -37,7 +37,8 @@ export default async function StyleFormPage({ params }: PageProps) {
   const action = isNew ? createStyle : updateStyle.bind(null, id)
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-2xl">
+    <div className="px-6 py-8">
+      <div className="max-w-2xl">
       <div className="mb-6">
         <Link
           href="/admin/styles"
@@ -124,6 +125,7 @@ export default async function StyleFormPage({ params }: PageProps) {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

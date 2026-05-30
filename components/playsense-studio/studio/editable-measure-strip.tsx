@@ -84,7 +84,7 @@ export interface EditableMeasureStripProps {
   height?: number;
 }
 
-const DEFAULT_HEIGHT = 110;
+const DEFAULT_HEIGHT = 150;
 const STAVE_TOP = 14;
 const LEFT_PAD = 6;
 const RIGHT_PAD = 6;

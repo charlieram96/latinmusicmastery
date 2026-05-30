@@ -43,7 +43,8 @@ export default async function InstrumentFormPage({ params }: PageProps) {
   const action = isNew ? createInstrument : updateInstrument.bind(null, id)
 
   return (
-    <div className="p-6 lg:p-8 max-w-2xl mx-auto">
+    <div className="p-6 lg:p-8">
+      <div className="max-w-2xl">
       <div className="mb-6">
         <Link
           href="/admin/instruments"
@@ -158,6 +159,7 @@ export default async function InstrumentFormPage({ params }: PageProps) {
             </Button>
           </div>
         </form>
+      </div>
       </div>
     </div>
   )

@@ -47,6 +47,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
       section:course_sections (
         id,
         title,
+        description,
         course_id,
         course:courses (
           id,
@@ -132,7 +133,6 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         header={{
           moduleTitle,
           title: classData.title,
-          subtitle: classData.description,
         }}
         parts={null}
         footer={null}
@@ -189,6 +189,13 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     ? String(course.difficulty).charAt(0).toUpperCase() + String(course.difficulty).slice(1)
     : null
 
+  // Lesson description lives below the video (not in the sidebar / header).
+  // Prefer the lesson's own description; fall back to the section's.
+  const lessonDescription =
+    (classData.description as string | null) ||
+    (section.description as string | null) ||
+    null
+
   const body = (
     <>
       {activeItem ? (
@@ -233,6 +240,23 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           </div>
         )}
 
+        {/* Lesson description — below the video, not in the sidebar/header */}
+        {lessonDescription && (
+          <div className="mb-8 max-w-[820px] space-y-3">
+            {lessonDescription
+              .split(/\n{2,}/)
+              .filter((p) => p.trim().length > 0)
+              .map((para, i) => (
+                <p
+                  key={i}
+                  className="whitespace-pre-wrap text-[15px] leading-relaxed text-[hsl(0_0%_80%)]"
+                >
+                  {para}
+                </p>
+              ))}
+          </div>
+        )}
+
         <div className="max-w-[860px]">
           <CommentsSection
             classId={classId}
@@ -256,7 +280,6 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
       header={{
         moduleTitle,
         title: classData.title,
-        subtitle: classData.description,
       }}
       parts={
         items.length > 1

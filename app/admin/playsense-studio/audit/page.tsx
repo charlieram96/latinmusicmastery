@@ -113,7 +113,7 @@ export default async function PlaysenseStudioAuditPage() {
         <h1 className="text-base font-semibold">PlaySense Studio cutover audit</h1>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-6 space-y-6">
+      <main className="px-6 py-6 space-y-6">
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Stat
             label="Items still on Soundslice"
