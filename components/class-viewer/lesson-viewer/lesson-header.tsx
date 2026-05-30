@@ -29,7 +29,7 @@ export function LessonHeader({ moduleTitle, title, subtitle }: LessonHeaderProps
         </div>
         <button
           aria-label="More options"
-          className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full border border-border text-muted-foreground hover:bg-[hsl(0_0%_9%)]"
+          className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full border border-border text-muted-foreground hover:bg-muted"
         >
           <MoreVertical className="h-4 w-4" />
         </button>

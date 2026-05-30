@@ -213,7 +213,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         {(durationLabel || levelLabel || teacherName) && (
           <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border pb-5">
             {durationLabel && (
-              <span className="inline-flex items-center gap-2 text-[13px] font-medium text-[hsl(0_0%_78%)]">
+              <span className="inline-flex items-center gap-2 text-[13px] font-medium text-foreground/80">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                 {durationLabel}
               </span>
@@ -221,7 +221,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
             {levelLabel && (
               <>
                 {durationLabel && <span className="h-3.5 w-px bg-border" />}
-                <span className="inline-flex items-center gap-2 text-[13px] font-medium text-[hsl(0_0%_78%)]">
+                <span className="inline-flex items-center gap-2 text-[13px] font-medium text-foreground/80">
                   <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
                   {levelLabel}
                 </span>
@@ -232,7 +232,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
                 {(durationLabel || levelLabel) && (
                   <span className="h-3.5 w-px bg-border" />
                 )}
-                <span className="inline-flex items-center gap-2 text-[13px] font-medium text-[hsl(0_0%_78%)]">
+                <span className="inline-flex items-center gap-2 text-[13px] font-medium text-foreground/80">
                   {teacherName}
                 </span>
               </>
@@ -249,7 +249,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
               .map((para, i) => (
                 <p
                   key={i}
-                  className="whitespace-pre-wrap text-[15px] leading-relaxed text-[hsl(0_0%_80%)]"
+                  className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/80"
                 >
                   {para}
                 </p>

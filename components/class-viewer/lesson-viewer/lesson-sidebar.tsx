@@ -83,7 +83,7 @@ export function LessonSidebar({
       <aside
         className={cn(
           styles.side,
-          'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-[hsl(0_0%_5%)] sticky top-0 h-[calc(100vh-3.5rem)] overflow-hidden'
+          'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-card dark:bg-[hsl(0_0%_5%)] sticky top-0 h-[calc(100vh-3.5rem)] overflow-hidden'
         )}
       >
         <div
@@ -98,7 +98,7 @@ export function LessonSidebar({
           <button
             onClick={onToggle}
             aria-label="Expand menu"
-            className="grid h-9 w-9 place-items-center rounded-[9px] border border-border bg-[hsl(0_0%_9%)] text-foreground hover:bg-[hsl(0_0%_13%)]"
+            className="grid h-9 w-9 place-items-center rounded-[9px] border border-border bg-muted text-foreground hover:bg-muted/70 dark:bg-[hsl(0_0%_9%)] dark:hover:bg-[hsl(0_0%_13%)]"
           >
             <ChevronsRight className="h-4 w-4" />
           </button>
@@ -116,9 +116,9 @@ export function LessonSidebar({
                     state === 'active' &&
                       'border-primary bg-primary text-white',
                     state === 'completed' &&
-                      'border-green-600/40 text-green-400 hover:bg-[hsl(0_0%_9%)]',
+                      'border-green-600/40 text-green-600 dark:text-green-400 hover:bg-muted',
                     state === 'available' &&
-                      'border-border text-muted-foreground hover:bg-[hsl(0_0%_9%)] hover:text-foreground'
+                      'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
                   {String(c.n).padStart(2, '0')}
@@ -135,7 +135,7 @@ export function LessonSidebar({
     <aside
       className={cn(
         styles.side,
-        'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-[hsl(0_0%_5%)] sticky top-0 h-[calc(100vh-3.5rem)] overflow-hidden'
+        'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-card dark:bg-[hsl(0_0%_5%)] sticky top-0 h-[calc(100vh-3.5rem)] overflow-hidden'
       )}
     >
       <div className="flex h-full w-[340px] flex-col">
@@ -155,7 +155,7 @@ export function LessonSidebar({
           <button
             onClick={onToggle}
             aria-label="Collapse menu"
-            className="grid h-[30px] w-[30px] place-items-center rounded-lg text-muted-foreground hover:bg-[hsl(0_0%_10%)] hover:text-foreground"
+            className="grid h-[30px] w-[30px] place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <ChevronsLeft className="h-4 w-4" />
           </button>
@@ -165,7 +165,7 @@ export function LessonSidebar({
         <div className={cn(styles.scrollHide, 'flex-1 overflow-y-auto')}>
           <Link
             href={`/dashboard/course/${courseId}`}
-            className="mx-3.5 mb-3.5 mt-1 block rounded-xl border border-border bg-card px-3.5 py-3 text-[13px] font-medium text-foreground transition-colors hover:bg-[hsl(0_0%_11%)]"
+            className="mx-3.5 mb-3.5 mt-1 block rounded-xl border border-border bg-card px-3.5 py-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted"
           >
             Course overview
           </Link>
@@ -257,7 +257,7 @@ function LessonRow({
         'relative mx-3.5 mb-0.5 flex items-center gap-3 rounded-[10px] py-2.5 pl-3.5 pr-3 transition-colors',
         state === 'active'
           ? 'bg-primary/[0.08]'
-          : 'hover:bg-[hsl(0_0%_9%)]'
+          : 'hover:bg-muted'
       )}
     >
       {state === 'active' && <span className={styles.lessonAccent} aria-hidden />}

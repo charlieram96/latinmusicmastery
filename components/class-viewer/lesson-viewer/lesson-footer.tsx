@@ -70,13 +70,13 @@ export function LessonFooter({
     <div
       className={cn(
         styles.footer,
-        'fixed bottom-0 right-0 z-40 flex items-center justify-between gap-4 border-t border-border bg-[hsl(0_0%_5%/0.92)] px-8 py-3 backdrop-blur-xl'
+        'fixed bottom-0 right-0 z-40 flex items-center justify-between gap-4 border-t border-border bg-[hsl(30_20%_99%/0.9)] dark:bg-[hsl(0_0%_5%/0.92)] px-8 py-3 backdrop-blur-xl'
       )}
     >
       {prevHref ? (
         <Link
           href={prevHref}
-          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-[hsl(0_0%_9%)] hover:text-foreground"
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <ChevronLeft className="h-3.5 w-3.5" /> Previous
         </Link>
@@ -101,7 +101,7 @@ export function LessonFooter({
       {nextHref ? (
         <Link
           href={nextHref}
-          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:bg-[hsl(0_0%_9%)]"
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:bg-muted"
         >
           {nextText} <ChevronRight className="h-3.5 w-3.5" />
         </Link>
