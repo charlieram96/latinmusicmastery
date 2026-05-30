@@ -12,7 +12,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { ChevronsLeftRight, Maximize, Repeat, UploadCloud, Video, ZoomIn, ZoomOut } from 'lucide-react';
+import { AudioLines, ChevronsLeftRight, Maximize, Repeat, UploadCloud, Video, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type Dispatch } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { publishTimeMap } from '@/app/actions/playsense-studio';
@@ -106,7 +106,7 @@ export function SyncPanel({
 
   // --- Peaks decode ---
   const [peaks, setPeaks] = useState<WaveformPeaks | null>(null);
-  const [decodeState, setDecodeState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [decodeState, setDecodeState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
 
   // --- Publish ---
@@ -128,10 +128,13 @@ export function SyncPanel({
     [timelineDuration, pps, viewportWidth]
   );
 
-  // Decode the video's audio once (cached in storage for next time).
-  useEffect(() => {
+  // Decode the video's audio ON DEMAND (only when the user clicks "Analyze
+  // audio"). Cached in storage for next time. The grid + markers are fully
+  // usable before analysis, so we don't pay the fetch/decode cost on entry.
+  const analyzeCancelRef = useRef(false);
+  const runAnalysis = useCallback(() => {
     if (!videoUrl) return;
-    let cancelled = false;
+    analyzeCancelRef.current = false;
     setDecodeState('loading');
     setProgress(0);
     (async () => {
@@ -139,20 +142,20 @@ export function SyncPanel({
         const { loadOrComputePeaks } = await import('@/lib/playsense-studio/waveform-decode');
         const supabase = createClient();
         const result = await loadOrComputePeaks(classItemId, videoUrl, supabase, {
-          onProgress: (f) => !cancelled && setProgress(f),
+          onProgress: (f) => !analyzeCancelRef.current && setProgress(f),
         });
-        if (!cancelled) {
+        if (!analyzeCancelRef.current) {
           setPeaks(result);
           setDecodeState('ready');
         }
       } catch {
-        if (!cancelled) setDecodeState('error');
+        if (!analyzeCancelRef.current) setDecodeState('error');
       }
     })();
-    return () => {
-      cancelled = true;
-    };
   }, [classItemId, videoUrl]);
+
+  // Cancel any in-flight decode on unmount.
+  useEffect(() => () => { analyzeCancelRef.current = true; }, []);
 
   // Fit zoom once the viewport width + a duration are known.
   const didFitRef = useRef(false);
@@ -425,11 +428,27 @@ export function SyncPanel({
 
       {/* Waveform + notation */}
       <div className="space-y-1">
-        {decodeState === 'loading' && (
-          <p className="text-xs text-muted-foreground">
-            Analyzing audio… {progress > 0 ? `${Math.round(progress * 100)}%` : ''}
-          </p>
-        )}
+        <div className="flex items-center gap-3">
+          {decodeState !== 'loading' && (
+            <button
+              onClick={runAnalysis}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm transition hover:bg-muted"
+              title="Decode this video's audio to show the waveform"
+            >
+              <AudioLines className="h-4 w-4" />
+              {decodeState === 'idle'
+                ? 'Analyze audio'
+                : decodeState === 'error'
+                  ? 'Retry analysis'
+                  : 'Re-analyze'}
+            </button>
+          )}
+          {decodeState === 'loading' && (
+            <p className="text-xs text-muted-foreground">
+              Analyzing audio… {progress > 0 ? `${Math.round(progress * 100)}%` : ''}
+            </p>
+          )}
+        </div>
         <WaveformCanvas
           peaks={peaks}
           durationSeconds={timelineDuration}

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Mail, Clock, Instagram, Youtube } from "lucide-react";
+import { Mail, Clock, Instagram } from "lucide-react";
 import PageHero from "@/components/marketing/PageHero";
+import { socialLinks } from "@/components/marketing/SocialLinks";
 import SectionWrapper from "@/components/marketing/SectionWrapper";
 import GradientText from "@/components/marketing/GradientText";
 import ContactForm from "@/components/marketing/ContactForm";
@@ -124,25 +125,19 @@ export default function ContactContent() {
                 <p className="text-sm text-muted-foreground">
                   {t("marketing.pages.contact.social.description")}
                 </p>
-                <div className="mt-3 flex gap-3">
-                  <a
-                    href="https://instagram.com/latinmusicmastery"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
-                  >
-                    <Instagram className="h-3.5 w-3.5" />
-                    {t("marketing.pages.contact.social.instagram")}
-                  </a>
-                  <a
-                    href="https://youtube.com/@latinmusicmastery"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
-                  >
-                    <Youtube className="h-3.5 w-3.5" />
-                    {t("marketing.pages.contact.social.youtube")}
-                  </a>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {socialLinks.map((social) => (
+                    <a
+                      key={social.label}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                    >
+                      <social.icon className="h-3.5 w-3.5" />
+                      {social.label}
+                    </a>
+                  ))}
                 </div>
               </div>
             </div>

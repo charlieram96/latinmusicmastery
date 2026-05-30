@@ -314,32 +314,33 @@
         "mission": {
           "titlePrefix": "Our",
           "titleHighlight": "Mission",
-          "paragraph1": "Latin Music Mastery was born from a simple belief: the rich musical traditions of Latin America deserve to be shared with the world. From the syncopated rhythms of Cuban son to the soulful melodies of Brazilian bossa nova, these genres have shaped global music for generations.",
-          "paragraph2": "We bring together master musicians, cutting-edge technology, and a passion for cultural authenticity to create the most comprehensive Latin music learning platform available. Every lesson is designed not just to teach technique, but to immerse you in the history, culture, and soul of the music.",
-          "paragraph3": "Whether you are picking up an instrument for the first time or looking to deepen your expertise, our platform meets you where you are and guides you on a transformative musical journey.",
+          "paragraph1": "Latin Music Mastery was born from a deep respect for the music, culture, and traditions of Latin America.",
+          "paragraph2": "For generations, Latin music has moved the world through its rhythm, soul, and unmistakable energy. From the syncopated language of Cuban son to the elegance of bossa nova, the fire of salsa, the sophistication of mambo, and the depth of countless regional styles, these traditions carry stories, identities, and musical wisdom that deserve to be preserved and shared.",
+          "paragraph3": "Our mission is to make authentic Latin music education accessible to students around the world. We bring together master musicians, thoughtfully structured lessons, and modern learning technology to create a platform that teaches more than notes and patterns. Every course is designed to help students understand the technique, history, feel, and cultural foundation behind the music.",
+          "paragraph4": "Whether you are just beginning your musical journey or looking to deepen your artistry, Latin Music Mastery gives you the tools, guidance, and inspiration to grow with confidence. This is more than learning an instrument. It is an invitation to connect with the roots, language, and soul of Latin music.",
           "mediaPlaceholder": "Video / Image Coming Soon"
         },
         "journey": {
           "titlePrefix": "Our",
           "titleHighlight": "Journey",
-          "description": "Key milestones in our mission to democratize Latin music education."
+          "description": "Latin Music Mastery was created to fill a gap in music education: the need for a structured, authentic, and culturally grounded way to learn Latin music. What began as a vision to preserve and share the musical traditions of Latin America has grown into a platform built for students around the world. By bringing together master musicians, modern learning tools, and carefully designed courses, we are creating a space where technique, rhythm, history, and culture come together. Our journey is just beginning, but our mission is clear: to help students connect with Latin music at a deeper level and carry its legacy forward with knowledge, respect, and passion."
         },
         "milestones": {
           "founded": {
             "title": "Founded",
-            "description": "Founded with a vision to democratize Latin music education and make it accessible to musicians everywhere."
+            "description": "Founded with a vision to expand Latin music education and make it accessible to musicians everywhere. Latin Music Mastery began with a mission to preserve the richness of Latin musical traditions while creating a structured, modern learning experience for students around the world."
           },
           "launch": {
             "title": "Platform Launch",
-            "description": "Launched with 50+ courses covering 8 countries and their rich musical traditions."
+            "description": "Launched the full platform — HD video lessons across multiple instruments and genres, interactive notation with PlaySense Studio, and guided practice — bringing structured Latin music education to students around the world."
           },
           "playsense": {
             "title": "PlaySense AI",
-            "description": "Introduced PlaySense AI for real-time feedback, helping students practice more effectively than ever."
+            "description": "Introduced PlaySense AI, an innovative real-time feedback tool designed to help students practice more effectively, improve their timing and accuracy, and receive guided support throughout their musical journey."
           },
           "community": {
             "title": "Growing Community",
-            "description": "Building a thriving global community of Latin music enthusiasts, connecting students and instructors across borders."
+            "description": "Started building a thriving global community of Latin music enthusiasts, connecting students, instructors, and musicians across borders through a shared passion for rhythm, culture, and authentic musical expression."
           },
           "expanding": {
             "title": "Expanding Horizons",
@@ -1252,6 +1253,9 @@
         "yourInstructor": "Your Instructor",
         "previewLabel": "Preview",
         "previewHeading": "Course Preview",
+        "watchPreview": "Watch Preview",
+        "readFullBio": "Read full bio",
+        "showLess": "Show less",
         "allLevels": "All levels",
         "latinFallback": "Latin",
         "teacherBioFallback": "Expert instructor specializing in {style} with years of professional performance and teaching experience.",

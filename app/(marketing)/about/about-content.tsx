@@ -12,19 +12,9 @@ export default function AboutContent() {
 
   const milestones = [
     {
-      year: "2023",
+      year: "2025",
       title: t("marketing.pages.about.milestones.founded.title"),
       description: t("marketing.pages.about.milestones.founded.description"),
-    },
-    {
-      year: "2024",
-      title: t("marketing.pages.about.milestones.launch.title"),
-      description: t("marketing.pages.about.milestones.launch.description"),
-    },
-    {
-      year: "2024",
-      title: t("marketing.pages.about.milestones.playsense.title"),
-      description: t("marketing.pages.about.milestones.playsense.description"),
     },
     {
       year: "2025",
@@ -32,9 +22,14 @@ export default function AboutContent() {
       description: t("marketing.pages.about.milestones.community.description"),
     },
     {
+      year: "July 2026",
+      title: t("marketing.pages.about.milestones.launch.title"),
+      description: t("marketing.pages.about.milestones.launch.description"),
+    },
+    {
       year: "2026",
-      title: t("marketing.pages.about.milestones.expanding.title"),
-      description: t("marketing.pages.about.milestones.expanding.description"),
+      title: t("marketing.pages.about.milestones.playsense.title"),
+      description: t("marketing.pages.about.milestones.playsense.description"),
     },
   ];
 
@@ -90,6 +85,9 @@ export default function AboutContent() {
             </p>
             <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
               {t("marketing.pages.about.mission.paragraph3")}
+            </p>
+            <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+              {t("marketing.pages.about.mission.paragraph4")}
             </p>
           </div>
 

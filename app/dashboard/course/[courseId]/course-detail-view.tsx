@@ -3,13 +3,13 @@
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import {
   CheckCircle2,
   PlayCircle,
   ChevronLeft,
   Clock,
   BookOpen,
-  User,
   BarChart3,
   Target,
   Music,
@@ -19,12 +19,14 @@ import {
   Headphones,
   Lock,
   Plus,
+  Layers,
+  Video,
 } from 'lucide-react'
 import { EnterCourseModeButton } from '@/components/dashboard/enter-course-mode-button'
 import { CurriculumNavigator } from '@/components/course/curriculum-navigator'
 import { HeroStatsStrip } from '@/components/course/hero-stats-strip'
 import { MobileCourseBar } from '@/components/course/mobile-course-bar'
-import { getInstrumentColor } from '@/lib/instruments'
+import { InstructorBar } from '@/components/course/instructor-bar'
 import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
 import { useTranslation } from '@/components/language-provider'
 import { useTransition, useState } from 'react'
@@ -85,8 +87,17 @@ export function CourseDetailView({
   const difficultyLabel = t(`dashboard.pages.course.difficulty.${difficultyKey}`)
   const [pending, startTransition] = useTransition()
   const [addError, setAddError] = useState<string | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   const nextClassHref = nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : undefined
+
+  const totalLessons = sections.reduce((acc: number, s: any) => acc + (s.classes?.length ?? 0), 0)
+  const levelLabel = course.difficulty ? difficultyLabel : t('dashboard.pages.course.allLevels')
+  const teacherBio =
+    tiptapToPlainText(teacher?.bio) ||
+    t('dashboard.pages.course.teacherBioFallback', {
+      style: style?.name || t('dashboard.pages.course.latinFallback'),
+    })
 
   function handleAddToPlan() {
     setAddError(null)
@@ -116,9 +127,7 @@ export function CourseDetailView({
     {
       icon: BarChart3,
       text: t('dashboard.pages.course.included.difficulty', {
-        difficulty: course.difficulty
-          ? difficultyLabel
-          : t('dashboard.pages.course.allLevels'),
+        difficulty: course.difficulty ? difficultyLabel : t('dashboard.pages.course.allLevels'),
       }),
     },
   ]
@@ -135,29 +144,50 @@ export function CourseDetailView({
     { icon: Disc3, text: t('dashboard.pages.course.requirements.metronome') },
   ]
 
+  const eyebrowClass = 'text-xs font-bold uppercase tracking-[0.14em] text-primary'
+  const sectionTitleClass =
+    'mt-2 font-heading text-2xl md:text-[34px] font-extrabold tracking-[-0.025em] text-foreground'
+
+  const metaDot = <span className="h-1 w-1 rounded-full bg-white/30" aria-hidden />
+
   return (
-    <div className="pb-24 lg:pb-0">
+    <div className="-mx-6 -mt-[calc(56px+1.5rem)] pb-24 lg:pb-0">
       {/* ── Cinematic Hero ── */}
-      <div className="relative -mx-6 -mt-[calc(56px+1.5rem)] overflow-hidden">
+      <div className="relative overflow-hidden bg-[#0a0a0a]">
         {course.thumbnail_url && (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={course.thumbnail_url}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover animate-slow-zoom"
+            className="absolute inset-0 h-full w-full animate-slow-zoom object-cover"
+            style={{ objectPosition: '70% 30%' }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/50 via-transparent to-transparent" />
+        {/* Scrim — dark on the left for legibility, dark at the bottom for the fade */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.78) 30%, rgba(0,0,0,0.5) 58%, rgba(0,0,0,0.66) 100%)',
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 24%, transparent 46%, hsl(var(--background)) 100%)',
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.08] via-transparent to-terracotta/[0.05]" />
 
-        <div className="relative px-6 md:px-10 pt-[calc(56px+2rem)] pb-16 min-h-[480px] lg:min-h-[540px] flex flex-col justify-end">
+        <div className="relative mx-auto flex min-h-[560px] w-full max-w-[1240px] flex-col justify-end px-6 pb-16 pt-[calc(56px+3rem)] md:px-10 lg:min-h-[620px]">
           {/* Back button */}
-          <div className="absolute top-[calc(56px+1rem)] left-6 md:left-10">
+          <div className="absolute left-6 top-[calc(56px+1rem)] z-10 md:left-10">
             <Button
               size="sm"
               variant="ghost"
               asChild
-              className="gap-2 backdrop-blur-md bg-white/10 border border-white/20 text-white hover:bg-white/20 hover:text-white"
+              className="gap-2 rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md hover:bg-black/60 hover:text-white"
             >
               <Link href="/dashboard/courses">
                 <ChevronLeft className="h-4 w-4" />
@@ -166,253 +196,251 @@ export function CourseDetailView({
             </Button>
           </div>
 
-          {/* Badges */}
-          <div className="flex flex-wrap items-center gap-2 mb-5">
-            {style && (
-              <Badge
-                variant="outline"
-                className="animate-fade-in-up-delayed backdrop-blur-sm bg-white/10 border-white/20 text-white/90"
-                style={{ animationDelay: '0.1s' }}
-              >
-                <Music className="h-3 w-3 mr-1" />
-                {style.name}
-              </Badge>
-            )}
-            {teacher?.instrument && (
-              <Badge
-                variant="outline"
-                className="animate-fade-in-up-delayed backdrop-blur-sm bg-white/10 border-white/20 text-white/90"
-                style={{ animationDelay: '0.2s' }}
-              >
-                <Disc3 className="h-3 w-3 mr-1" />
-                {teacher.instrument}
-              </Badge>
-            )}
-            {country && (
-              <Badge
-                variant="outline"
-                className="animate-fade-in-up-delayed backdrop-blur-sm bg-white/10 border-white/20 text-white/90"
-                style={{ animationDelay: '0.3s' }}
-              >
-                <Globe className="h-3 w-3 mr-1" />
-                {country.name}
-              </Badge>
-            )}
-            {course.difficulty && (
-              <Badge
-                variant="outline"
-                className="animate-fade-in-up-delayed capitalize backdrop-blur-sm bg-white/10 border-white/20 text-white/90"
-                style={{ animationDelay: '0.4s' }}
-              >
-                {difficultyLabel}
-              </Badge>
-            )}
-          </div>
+          <div className="max-w-[680px]">
+            {/* Tags */}
+            <div className="mb-5 flex flex-wrap items-center gap-2">
+              {style && (
+                <Badge
+                  variant="outline"
+                  className="animate-fade-in-up-delayed border-white/15 bg-white/10 text-white/90 backdrop-blur-sm"
+                  style={{ animationDelay: '0.1s' }}
+                >
+                  <Music className="mr-1 h-3 w-3" />
+                  {style.name}
+                </Badge>
+              )}
+              {teacher?.instrument && (
+                <Badge
+                  variant="outline"
+                  className="animate-fade-in-up-delayed border-white/15 bg-white/10 text-white/90 backdrop-blur-sm"
+                  style={{ animationDelay: '0.2s' }}
+                >
+                  <Disc3 className="mr-1 h-3 w-3" />
+                  {teacher.instrument}
+                </Badge>
+              )}
+              {country && (
+                <Badge
+                  variant="outline"
+                  className="animate-fade-in-up-delayed border-white/15 bg-white/10 text-white/90 backdrop-blur-sm"
+                  style={{ animationDelay: '0.3s' }}
+                >
+                  <Globe className="mr-1 h-3 w-3" />
+                  {country.name}
+                </Badge>
+              )}
+            </div>
 
-          {/* Title */}
-          <h1
-            className="animate-fade-in-up-delayed text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight leading-[1.1] text-white max-w-4xl mb-4"
-            style={{ animationDelay: '0.15s' }}
-          >
-            {course.title}
-          </h1>
-
-          {/* Description */}
-          {course.description && (
-            <p
-              className="animate-fade-in-up-delayed text-lg md:text-xl text-white/70 leading-relaxed max-w-2xl mb-8"
-              style={{ animationDelay: '0.25s' }}
+            {/* Title */}
+            <h1
+              className="animate-fade-in-up-delayed font-heading text-[clamp(3rem,6.5vw,5.5rem)] font-extrabold leading-[0.95] tracking-[-0.035em] text-white"
+              style={{ animationDelay: '0.15s' }}
             >
-              {course.description}
-            </p>
-          )}
+              {course.title}
+            </h1>
 
-          {/* Instructor + CTA */}
-          <div
-            className="animate-fade-in-up-delayed flex flex-wrap items-center justify-between gap-6"
-            style={{ animationDelay: '0.35s' }}
-          >
-            {teacher && (
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  {teacher.image_url ? (
-                    <img
-                      src={teacher.image_url}
-                      alt={teacher.name}
-                      className="w-16 h-16 rounded-full object-cover ring-2 ring-primary/30"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-primary/30">
-                      <User className="w-7 h-7 text-primary" />
-                    </div>
+            {/* Description */}
+            {course.description && (
+              <p
+                className="animate-fade-in-up-delayed mt-5 max-w-[46ch] text-lg leading-[1.55] text-white/80"
+                style={{ animationDelay: '0.25s' }}
+              >
+                {course.description}
+              </p>
+            )}
+
+            {/* Meta row */}
+            <div
+              className="animate-fade-in-up-delayed mt-7 flex flex-wrap items-center gap-x-5 gap-y-2.5 text-sm font-medium text-white/80"
+              style={{ animationDelay: '0.3s' }}
+            >
+              <span className="inline-flex items-center gap-2">
+                <Layers className="h-[15px] w-[15px] text-primary" />
+                {sections.length} module{sections.length !== 1 ? 's' : ''}
+              </span>
+              {metaDot}
+              <span className="inline-flex items-center gap-2">
+                <BookOpen className="h-[15px] w-[15px] text-primary" />
+                {totalLessons} lesson{totalLessons !== 1 ? 's' : ''}
+              </span>
+              {metaDot}
+              <span className="inline-flex items-center gap-2">
+                <Target className="h-[15px] w-[15px] text-primary" />
+                {levelLabel}
+              </span>
+            </div>
+
+            {/* Actions */}
+            <div
+              className="animate-fade-in-up-delayed mt-8 flex flex-wrap items-center gap-3"
+              style={{ animationDelay: '0.4s' }}
+            >
+              {locked && canAddToPlan ? (
+                <div className="flex flex-col items-start gap-2">
+                  <Button
+                    size="lg"
+                    disabled={pending}
+                    onClick={handleAddToPlan}
+                    className="h-12 rounded-full px-8 text-base shadow-[0_0_40px_-8px_hsl(var(--primary)/0.4)]"
+                  >
+                    <Plus className="mr-2 h-5 w-5" />
+                    {pending ? 'Adding…' : `Add to my plan (+${formatCents(addonPriceCents)}/mo)`}
+                  </Button>
+                  {addError && (
+                    <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs text-destructive">
+                      {addError}
+                    </p>
                   )}
                 </div>
-                <div>
-                  <p className="text-[10px] text-white/50 uppercase tracking-widest font-medium mb-0.5">
-                    {t('dashboard.pages.course.instructor')}
-                  </p>
-                  <p className="font-semibold text-white text-lg">{teacher.name}</p>
-                  {teacher.instrument && <p className="text-sm text-white/60">{teacher.instrument}</p>}
-                </div>
-              </div>
-            )}
+              ) : locked ? (
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 rounded-full px-8 text-base shadow-[0_0_40px_-8px_hsl(var(--primary)/0.4)]"
+                >
+                  <Link
+                    href={`/dashboard/subscribe?instrument=${encodeURIComponent(course.instrument ?? '')}&course=${course.id}`}
+                  >
+                    <Lock className="mr-2 h-5 w-5" />
+                    {t('dashboard.pages.course.subscribeToUnlock')}
+                  </Link>
+                </Button>
+              ) : nextClassHref ? (
+                <EnterCourseModeButton
+                  courseId={course.id}
+                  href={nextClassHref}
+                  courseTitle={course.title}
+                  isNewCourse={!hasStarted}
+                  size="lg"
+                  className="h-12 rounded-full px-8 text-base shadow-[0_0_40px_-8px_hsl(var(--primary)/0.4)]"
+                >
+                  <PlayCircle className="mr-2 h-5 w-5" />
+                  {hasStarted
+                    ? t('dashboard.pages.course.continueCourse')
+                    : t('dashboard.pages.course.beginCourse')}
+                </EnterCourseModeButton>
+              ) : (
+                <Button size="lg" disabled className="h-12 rounded-full px-8 text-base">
+                  <Clock className="mr-2 h-5 w-5" />
+                  {t('dashboard.pages.course.comingSoon')}
+                </Button>
+              )}
 
-            {locked && canAddToPlan ? (
-              <div className="flex flex-col items-end gap-2">
+              {course.preview_video_url && (
                 <Button
                   size="lg"
-                  disabled={pending}
-                  onClick={handleAddToPlan}
-                  className="h-14 px-10 rounded-2xl shadow-[0_0_40px_-8px_hsl(var(--primary)/0.4)] text-base"
+                  variant="ghost"
+                  onClick={() => setPreviewOpen(true)}
+                  className="h-12 rounded-full border border-white/20 bg-white/10 px-6 text-base text-white backdrop-blur-md hover:bg-white/20 hover:text-white"
                 >
-                  <Plus className="h-5 w-5 mr-2" />
-                  {pending ? 'Adding…' : `Add to my plan (+${formatCents(addonPriceCents)}/mo)`}
+                  <Video className="mr-2 h-5 w-5" />
+                  {t('dashboard.pages.course.watchPreview')}
                 </Button>
-                {addError && (
-                  <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs text-destructive">
-                    {addError}
-                  </p>
-                )}
-              </div>
-            ) : locked ? (
-              <Button
-                asChild
-                size="lg"
-                className="h-14 px-10 rounded-2xl shadow-[0_0_40px_-8px_hsl(var(--primary)/0.4)] text-base"
-              >
-                <Link
-                  href={`/dashboard/subscribe?instrument=${encodeURIComponent(course.instrument ?? '')}&course=${course.id}`}
-                >
-                  <Lock className="h-5 w-5 mr-2" />
-                  {t('dashboard.pages.course.subscribeToUnlock')}
-                </Link>
-              </Button>
-            ) : nextClassHref ? (
-              <EnterCourseModeButton
-                courseId={course.id}
-                href={nextClassHref}
-                courseTitle={course.title}
-                isNewCourse={!hasStarted}
-                size="lg"
-                className="h-14 px-10 rounded-2xl shadow-[0_0_40px_-8px_hsl(var(--primary)/0.4)] text-base"
-              >
-                <PlayCircle className="h-5 w-5 mr-2" />
-                {hasStarted
-                  ? t('dashboard.pages.course.continueCourse')
-                  : t('dashboard.pages.course.beginCourse')}
-              </EnterCourseModeButton>
-            ) : (
-              <Button size="lg" disabled className="h-14 px-10 rounded-2xl text-base">
-                <Clock className="h-5 w-5 mr-2" />
-                {t('dashboard.pages.course.comingSoon')}
-              </Button>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Stats Strip ── */}
-      <div className="relative z-10 -mt-12 mx-4 md:mx-8 lg:mx-12 mb-12">
-        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl shadow-stripe p-6 md:p-8">
-          <HeroStatsStrip
-            progressPercentage={progressPercentage}
-            completedItems={completedItems}
-            totalItems={totalItems}
-            remainingDuration={remainingDuration}
-            difficulty={course.difficulty || 'All'}
-            difficultyColor={difficultyColor}
-          />
+      {/* ── Centered content column ── */}
+      <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
+        {/* Stats bar (overlaps hero) */}
+        <div className="relative z-10 -mt-14 mb-4">
+          <div className="overflow-hidden rounded-[20px] border border-border shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)]">
+            <HeroStatsStrip
+              progressPercentage={progressPercentage}
+              completedItems={completedItems}
+              totalItems={totalItems}
+              remainingDuration={remainingDuration}
+              difficulty={course.difficulty || 'All'}
+              difficultyColor={difficultyColor}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* ── Content Area (2-column grid) ── */}
-      <section className="px-4 md:px-8 lg:px-12 mb-16">
-        <div className="grid gap-10 lg:gap-14 lg:grid-cols-12">
-          {/* Left column */}
-          <div className="lg:col-span-7 space-y-10">
-            {/* Preview Video */}
-            {course.preview_video_url && (
+        {/* Instructor bar */}
+        {teacher && (
+          <InstructorBar
+            name={teacher.name}
+            instrument={teacher.instrument}
+            imageUrl={teacher.image_url}
+            bio={teacherBio}
+          />
+        )}
+
+        {/* ── Body (2-column) ── */}
+        <section className="mt-12 mb-16">
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_408px] lg:gap-14">
+            {/* Left column */}
+            <div className="space-y-12">
+              {/* What You'll Master */}
               <div>
-                <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-2">
-                  {t('dashboard.pages.course.previewLabel')}
-                </p>
-                <h2 className="text-2xl md:text-3xl font-heading font-bold mb-6">
-                  {t('dashboard.pages.course.previewHeading')}
-                </h2>
-                <div className="rounded-xl overflow-hidden">
-                  <div className="aspect-video bg-muted">
-                    <iframe
-                      src={course.preview_video_url}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
+                <span className={eyebrowClass}>{t('dashboard.pages.course.whatYoullMaster.label')}</span>
+                <h2 className={sectionTitleClass}>{t('dashboard.pages.course.whatYoullMaster.heading')}</h2>
+                <div className="mt-6 grid gap-x-9 gap-y-5 sm:grid-cols-2">
+                  {whatYouLearn.map((item, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <CheckCircle2 className="mt-0.5 h-[22px] w-[22px] flex-shrink-0 text-primary" />
+                      <p className="text-[15.5px] leading-relaxed text-foreground/80">{item}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-            )}
 
-            {/* What You'll Learn */}
-            <div>
-              <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-2">
-                {t('dashboard.pages.course.whatYoullMaster.label')}
-              </p>
-              <h2 className="text-2xl md:text-3xl font-heading font-bold mb-6">
-                {t('dashboard.pages.course.whatYoullMaster.heading')}
-              </h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {whatYouLearn.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-sm leading-relaxed">{item}</span>
-                  </div>
-                ))}
+              {/* This Course Includes */}
+              <div>
+                <span className={eyebrowClass}>{t('dashboard.pages.course.included.label')}</span>
+                <h2 className={sectionTitleClass}>{t('dashboard.pages.course.included.heading')}</h2>
+                <div className="mt-6 grid gap-3.5 sm:grid-cols-2">
+                  {includedItems.map((item, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3.5 rounded-[14px] border border-border bg-card p-4"
+                    >
+                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[11px] bg-primary/10 text-primary">
+                        <item.icon className="h-[19px] w-[19px]" />
+                      </span>
+                      <span className="text-[14.5px] font-medium capitalize text-foreground">{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Requirements */}
+              <div>
+                <span className={eyebrowClass}>{t('dashboard.pages.course.requirements.label')}</span>
+                <h2 className={sectionTitleClass}>{t('dashboard.pages.course.requirements.heading')}</h2>
+                <div className="mt-4 divide-y divide-border">
+                  {requirements.map((req, i) => (
+                    <div key={i} className="flex items-center gap-4 py-4">
+                      <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-border bg-muted text-primary">
+                        <req.icon className="h-5 w-5" />
+                      </span>
+                      <p className="text-[15.5px] leading-snug text-foreground/85">{req.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mobile Curriculum (inline, below content on small screens) */}
+              <div className="lg:hidden">
+                <div className="border-t border-border pt-10">
+                  <CurriculumNavigator
+                    sections={sections}
+                    nextClassId={nextClassId}
+                    courseId={courseId}
+                    progressPercentage={progressPercentage}
+                    totalItems={totalItems}
+                    totalDurationMinutes={totalDurationMinutes}
+                    hasStarted={hasStarted}
+                  />
+                </div>
               </div>
             </div>
 
-            {/* This Course Includes */}
-            <div>
-              <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-2">
-                {t('dashboard.pages.course.included.label')}
-              </p>
-              <h2 className="text-2xl md:text-3xl font-heading font-bold mb-6">
-                {t('dashboard.pages.course.included.heading')}
-              </h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {includedItems.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <item.icon className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="text-sm capitalize">{item.text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Requirements */}
-            <div>
-              <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-2">
-                {t('dashboard.pages.course.requirements.label')}
-              </p>
-              <h2 className="text-2xl md:text-3xl font-heading font-bold mb-6">
-                {t('dashboard.pages.course.requirements.heading')}
-              </h2>
-              <ul className="space-y-4">
-                {requirements.map((req, i) => (
-                  <li key={i} className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <req.icon className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <span className="text-sm leading-relaxed pt-1">{req.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Mobile Curriculum (inline, below content on small screens) */}
-            <div className="lg:hidden">
-              <div className="border-t border-border pt-10">
+            {/* Right column — Curriculum (desktop sticky) */}
+            <aside className="hidden lg:block">
+              <div className="sticky top-6">
                 <CurriculumNavigator
                   sections={sections}
                   nextClassId={nextClassId}
@@ -423,78 +451,45 @@ export function CourseDetailView({
                   hasStarted={hasStarted}
                 />
               </div>
-            </div>
+            </aside>
           </div>
+        </section>
 
-          {/* Right column — Curriculum Navigator (desktop sticky sidebar) */}
-          <div className="hidden lg:block lg:col-span-5">
-            <div className="sticky top-20 border-l border-border pl-8">
-              <CurriculumNavigator
-                sections={sections}
-                nextClassId={nextClassId}
-                courseId={courseId}
-                progressPercentage={progressPercentage}
-                totalItems={totalItems}
-                totalDurationMinutes={totalDurationMinutes}
-                hasStarted={hasStarted}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Teacher Spotlight ── */}
-      {teacher && (
-        <section className="mt-16 py-12 bg-muted/30 border-y border-border">
-          <div className="max-w-4xl mx-auto px-4 md:px-8 flex flex-col items-center text-center">
-            {teacher.image_url ? (
-              <img
-                src={teacher.image_url}
-                alt={teacher.name}
-                className="w-28 h-28 rounded-2xl object-cover mb-6"
-              />
-            ) : (
-              <div className="w-28 h-28 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
-                <User className="w-14 h-14 text-primary" />
+        {/* ── Subscription CTA (if not subscribed) ── */}
+        {!isStudent && (
+          <section className="mb-16">
+            <div className="marketing-gradient-warm relative overflow-hidden rounded-2xl p-8 text-center md:p-12">
+              <div className="relative z-10">
+                <h3 className="mb-3 font-heading text-2xl font-bold text-white md:text-3xl">
+                  {t('dashboard.pages.course.unlockAccess.title')}
+                </h3>
+                <p className="mx-auto mb-6 max-w-lg text-white/80">
+                  {t('dashboard.pages.course.unlockAccess.body')}
+                </p>
+                <Button asChild size="lg" variant="secondary" className="h-12 rounded-xl px-8 text-base font-semibold">
+                  <Link href="/dashboard/subscription">{t('dashboard.pages.course.unlockAccess.cta')}</Link>
+                </Button>
               </div>
-            )}
-            <p className="text-[10px] uppercase tracking-widest text-primary font-semibold mb-2">
-              {t('dashboard.pages.course.yourInstructor')}
-            </p>
-            <h3 className="text-2xl md:text-3xl font-heading font-bold mb-2">{teacher.name}</h3>
-            {teacher.instrument && (
-              <Badge variant="outline" className={`${getInstrumentColor(teacher.instrument)} mb-4`}>
-                <Disc3 className="h-3 w-3 mr-1" />
-                {teacher.instrument}
-              </Badge>
-            )}
-            <p className="text-muted-foreground leading-relaxed max-w-2xl">
-              {tiptapToPlainText(teacher.bio) ||
-                t('dashboard.pages.course.teacherBioFallback', {
-                  style: style?.name || t('dashboard.pages.course.latinFallback'),
-                })}
-            </p>
-          </div>
-        </section>
-      )}
-
-      {/* ── Subscription CTA (if not subscribed) ── */}
-      {!isStudent && (
-        <section className="mx-4 md:mx-8 lg:mx-12 mt-12 mb-16">
-          <div className="relative rounded-2xl marketing-gradient-warm p-8 md:p-12 text-center overflow-hidden">
-            <div className="relative z-10">
-              <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-3">
-                {t('dashboard.pages.course.unlockAccess.title')}
-              </h3>
-              <p className="text-white/80 mb-6 max-w-lg mx-auto">
-                {t('dashboard.pages.course.unlockAccess.body')}
-              </p>
-              <Button asChild size="lg" variant="secondary" className="h-12 px-8 rounded-xl text-base font-semibold">
-                <Link href="/dashboard/subscription">{t('dashboard.pages.course.unlockAccess.cta')}</Link>
-              </Button>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
+      </div>
+
+      {/* ── Preview modal ── */}
+      {course.preview_video_url && (
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-3xl overflow-hidden border-border bg-background p-0">
+            <DialogTitle className="sr-only">{t('dashboard.pages.course.previewHeading')}</DialogTitle>
+            <div className="aspect-video w-full bg-black">
+              <iframe
+                src={course.preview_video_url}
+                className="h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* ── Mobile Sticky CTA Bar ── */}

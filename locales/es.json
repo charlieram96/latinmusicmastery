@@ -314,32 +314,33 @@
         "mission": {
           "titlePrefix": "Nuestra",
           "titleHighlight": "Misión",
-          "paragraph1": "Latin Music Mastery nació de una creencia simple: las ricas tradiciones musicales de América Latina merecen ser compartidas con el mundo. Desde los ritmos sincopados del son cubano hasta las melodías llenas de alma de la bossa nova brasileña, estos géneros han marcado la música global por generaciones.",
-          "paragraph2": "Reunimos a músicos maestros, tecnología de vanguardia y pasión por la autenticidad cultural para crear la plataforma de aprendizaje de música latina más completa que existe. Cada lección está diseñada no solo para enseñar técnica, sino para sumergirte en la historia, la cultura y el alma de la música.",
-          "paragraph3": "Ya sea que tomes un instrumento por primera vez o busques profundizar tu dominio, nuestra plataforma te recibe donde estás y te acompaña en un camino musical transformador.",
+          "paragraph1": "Latin Music Mastery nació de un profundo respeto por la música, la cultura y las tradiciones de América Latina.",
+          "paragraph2": "Durante generaciones, la música latina ha movido al mundo con su ritmo, su alma y su energía inconfundible. Desde el lenguaje sincopado del son cubano hasta la elegancia de la bossa nova, el fuego de la salsa, la sofisticación del mambo y la profundidad de innumerables estilos regionales, estas tradiciones guardan historias, identidades y una sabiduría musical que merecen preservarse y compartirse.",
+          "paragraph3": "Nuestra misión es hacer que la educación en música latina auténtica sea accesible para estudiantes de todo el mundo. Reunimos a músicos maestros, lecciones cuidadosamente estructuradas y tecnología de aprendizaje moderna para crear una plataforma que enseña mucho más que notas y patrones. Cada curso está diseñado para ayudar a los estudiantes a comprender la técnica, la historia, el sentir y los cimientos culturales detrás de la música.",
+          "paragraph4": "Ya sea que estés comenzando tu camino musical o buscando profundizar tu arte, Latin Music Mastery te da las herramientas, la guía y la inspiración para crecer con confianza. Esto es más que aprender un instrumento. Es una invitación a conectar con las raíces, el lenguaje y el alma de la música latina.",
           "mediaPlaceholder": "Video / Imagen Próximamente"
         },
         "journey": {
           "titlePrefix": "Nuestro",
           "titleHighlight": "Recorrido",
-          "description": "Hitos clave en nuestra misión de democratizar la educación en música latina."
+          "description": "Latin Music Mastery nació para llenar un vacío en la educación musical: la necesidad de una forma estructurada, auténtica y culturalmente arraigada de aprender música latina. Lo que comenzó como una visión de preservar y compartir las tradiciones musicales de América Latina se ha convertido en una plataforma creada para estudiantes de todo el mundo. Al reunir a músicos maestros, herramientas de aprendizaje modernas y cursos cuidadosamente diseñados, estamos creando un espacio donde la técnica, el ritmo, la historia y la cultura se encuentran. Nuestro recorrido apenas comienza, pero nuestra misión es clara: ayudar a los estudiantes a conectar con la música latina a un nivel más profundo y a llevar su legado hacia adelante con conocimiento, respeto y pasión."
         },
         "milestones": {
           "founded": {
             "title": "Fundación",
-            "description": "Fundada con la visión de democratizar la educación en música latina y hacerla accesible para músicos en todas partes."
+            "description": "Fundada con la visión de expandir la educación en música latina y hacerla accesible para músicos en todas partes. Latin Music Mastery comenzó con la misión de preservar la riqueza de las tradiciones musicales latinas mientras crea una experiencia de aprendizaje estructurada y moderna para estudiantes de todo el mundo."
           },
           "launch": {
             "title": "Lanzamiento de la Plataforma",
-            "description": "Lanzada con más de 50 cursos que cubren 8 países y sus ricas tradiciones musicales."
+            "description": "Lanzamos la plataforma completa — lecciones en video HD para múltiples instrumentos y géneros, notación interactiva con PlaySense Studio y práctica guiada — llevando una educación en música latina estructurada a estudiantes de todo el mundo."
           },
           "playsense": {
             "title": "PlaySense IA",
-            "description": "Presentamos PlaySense IA para retroalimentación en tiempo real, ayudando a los estudiantes a practicar de manera más eficaz que nunca."
+            "description": "Presentamos PlaySense IA, una innovadora herramienta de retroalimentación en tiempo real diseñada para ayudar a los estudiantes a practicar de manera más eficaz, mejorar su tiempo y precisión, y recibir apoyo guiado a lo largo de su camino musical."
           },
           "community": {
             "title": "Comunidad en Crecimiento",
-            "description": "Construyendo una comunidad global vibrante de entusiastas de la música latina, conectando a estudiantes e instructores a través de las fronteras."
+            "description": "Comenzamos a construir una comunidad global vibrante de entusiastas de la música latina, conectando a estudiantes, instructores y músicos a través de las fronteras mediante una pasión compartida por el ritmo, la cultura y la expresión musical auténtica."
           },
           "expanding": {
             "title": "Ampliando Horizontes",
@@ -1252,6 +1253,9 @@
         "yourInstructor": "Tu instructor",
         "previewLabel": "Vista previa",
         "previewHeading": "Vista previa del curso",
+        "watchPreview": "Ver vista previa",
+        "readFullBio": "Leer biografía completa",
+        "showLess": "Ver menos",
         "allLevels": "Todos los niveles",
         "latinFallback": "latina",
         "teacherBioFallback": "Instructor experto especializado en música {style} con años de experiencia tocando y enseñando a nivel profesional.",

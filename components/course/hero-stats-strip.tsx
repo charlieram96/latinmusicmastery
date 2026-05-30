@@ -16,6 +16,32 @@ function formatDuration(mins: number): string {
   return remaining > 0 ? `${hours}h ${remaining}m` : `${hours}h`
 }
 
+function Stat({
+  value,
+  sub,
+  label,
+  valueClassName,
+}: {
+  value: string | number
+  sub?: string | number
+  label: string
+  valueClassName?: string
+}) {
+  return (
+    <div className="bg-card/80 px-4 py-7 text-center backdrop-blur-xl">
+      <div
+        className={`font-heading text-[40px] font-extrabold leading-none tracking-[-0.03em] text-foreground ${valueClassName ?? ''}`}
+      >
+        {value}
+        {sub != null && <span className="text-[22px] font-bold text-muted-foreground/70">/{sub}</span>}
+      </div>
+      <div className="mt-3 text-[11.5px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+        {label}
+      </div>
+    </div>
+  )
+}
+
 export function HeroStatsStrip({
   progressPercentage,
   completedItems,
@@ -25,40 +51,11 @@ export function HeroStatsStrip({
   difficultyColor,
 }: HeroStatsStripProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x divide-white/10">
-      {/* Progress */}
-      <div className="text-center py-2">
-        <p className="text-2xl lg:text-3xl font-bold font-heading">{progressPercentage}%</p>
-        <div className="w-16 h-0.5 bg-muted rounded-full mx-auto mt-2 mb-1.5 overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-500"
-            style={{ width: `${progressPercentage}%` }}
-          />
-        </div>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">Complete</p>
-      </div>
-
-      {/* Items */}
-      <div className="text-center py-2">
-        <p className="text-2xl lg:text-3xl font-bold font-heading">
-          {completedItems}<span className="text-muted-foreground text-lg">/{totalItems}</span>
-        </p>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground mt-3">Lessons</p>
-      </div>
-
-      {/* Remaining */}
-      <div className="text-center py-2">
-        <p className="text-2xl lg:text-3xl font-bold font-heading">{formatDuration(remainingDuration)}</p>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground mt-3">Remaining</p>
-      </div>
-
-      {/* Difficulty */}
-      <div className="text-center py-2">
-        <p className={`text-2xl lg:text-3xl font-bold font-heading capitalize ${difficultyColor}`}>
-          {difficulty || 'All'}
-        </p>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground mt-3">Level</p>
-      </div>
+    <div className="grid grid-cols-2 gap-px bg-border md:grid-cols-4">
+      <Stat value={`${progressPercentage}%`} label="Complete" />
+      <Stat value={completedItems} sub={totalItems} label="Lessons" />
+      <Stat value={formatDuration(remainingDuration)} label="Remaining" />
+      <Stat value={difficulty || 'All'} label="Level" valueClassName={`capitalize ${difficultyColor}`} />
     </div>
   )
 }
