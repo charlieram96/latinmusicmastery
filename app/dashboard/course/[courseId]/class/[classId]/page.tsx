@@ -1,13 +1,11 @@
 import { notFound, redirect } from 'next/navigation'
+import { Clock, BarChart3 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCourseStructureForStudent } from '@/app/actions/course-student'
 import { getComments } from '@/app/actions/comments'
-import { ClassViewerNav } from '@/components/class-viewer/class-viewer-nav'
-import { ClassStepIndicator } from '@/components/class-viewer/class-step-indicator'
 import { ClassItemRenderer } from '@/components/class-viewer/class-item-renderer'
-import { ClassNavigation } from '@/components/class-viewer/class-navigation'
-import { CourseSidebar } from '@/components/class-viewer/course-sidebar'
 import { CommentsSection } from '@/components/comments/comments-section'
+import { LessonShell } from '@/components/class-viewer/lesson-viewer/lesson-shell'
 import { canAccessCourse } from '@/lib/subscriptions'
 import { ClassViewerEmpty } from './class-viewer-empty'
 import { ClassViewerLocked } from './class-viewer-locked'
@@ -20,6 +18,13 @@ interface PageProps {
   searchParams: Promise<{
     item?: string
   }>
+}
+
+function formatDuration(seconds: number | null): string | null {
+  if (!seconds || seconds <= 0) return null
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
 }
 
 export default async function ClassViewerPage({ params, searchParams }: PageProps) {
@@ -49,6 +54,8 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           description,
           slug,
           instrument,
+          difficulty,
+          is_fundamentals,
           teacher:teachers (name),
           musical_style:musical_styles (name)
         )
@@ -61,7 +68,8 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     notFound()
   }
 
-  const course = (classData.section as any).course
+  const section = classData.section as any
+  const course = section.course
   if (!course) {
     notFound()
   }
@@ -85,7 +93,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     .eq('id', user.id)
     .single()
 
-  const isStudent = await canAccessCourse(supabase, user.id, course.instrument, profile?.is_admin ?? false)
+  const isStudent = await canAccessCourse(supabase, user.id, course, profile?.is_admin ?? false)
   const locked = !classData.is_free && !isStudent
 
   // Get course structure for sidebar
@@ -96,6 +104,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const sidebarSections = structure?.sections.map((s: any) => ({
     id: s.id,
     title: s.title,
+    description: s.description ?? null,
     totalItems: s.totalItems,
     completedItems: s.completedItems,
     classes: s.classes.map((c: any) => ({
@@ -106,40 +115,41 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     })),
   })) || []
 
+  const teacherName = (course.teacher as { name?: string } | null)?.name ?? null
+  const moduleTitle = section.title as string
+
   // Subscription-gated: show a paywall instead of the lesson content.
   if (locked) {
     return (
-      <div className="-m-6 flex h-[calc(100vh-3.5rem)]">
-        <aside className="hidden lg:flex w-80 flex-shrink-0 border-r bg-muted/30 flex-col overflow-y-auto">
-          <CourseSidebar
-            courseId={courseId}
-            currentClassId={classId}
-            sections={sidebarSections}
-            courseTitle={course.title}
-            courseDescription={course.description}
-          />
-        </aside>
-        <div className="flex-1 overflow-y-auto">
-          <ClassViewerNav
-            courseId={courseId}
-            courseTitle={course.title}
-            classTitle={classData.title}
-            classItemId={null}
-            isCompleted={false}
-          />
-          <div className="p-6">
+      <LessonShell
+        sidebar={{
+          courseId,
+          currentClassId: classId,
+          sections: sidebarSections,
+          courseTitle: course.title,
+          teacherName,
+        }}
+        header={{
+          moduleTitle,
+          title: classData.title,
+          subtitle: classData.description,
+        }}
+        parts={null}
+        footer={null}
+        body={
+          <div className="px-4 py-6 md:px-8">
             <ClassViewerLocked courseId={courseId} />
           </div>
-        </div>
-      </div>
+        }
+      />
     )
   }
 
   // Get progress for current class items
   const completedItemIds: string[] = []
   if (structure) {
-    for (const section of structure.sections) {
-      for (const cls of section.classes) {
+    for (const s of structure.sections) {
+      for (const cls of s.classes) {
         if (cls.id === classId) {
           completedItemIds.push(...(cls.completedItemIds || []))
         }
@@ -151,21 +161,22 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     ? completedItemIds.includes(activeItem.id)
     : false
 
-  // Find next class
+  // Find next class + its title
   let nextClassId: string | null = null
+  let nextClassTitle: string | null = null
   if (structure) {
     let foundCurrent = false
-    for (const section of structure.sections) {
-      for (const cls of section.classes) {
+    outer: for (const s of structure.sections) {
+      for (const cls of s.classes) {
         if (foundCurrent) {
           nextClassId = cls.id
-          break
+          nextClassTitle = cls.title
+          break outer
         }
         if (cls.id === classId) {
           foundCurrent = true
         }
       }
-      if (nextClassId) break
     }
   }
 
@@ -173,67 +184,56 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const commentsResult = await getComments(classId)
   const comments = commentsResult.data || []
 
-  return (
-    <div className="-m-6 flex h-[calc(100vh-3.5rem)]">
-      {/* Left Sidebar */}
-      <aside className="hidden lg:flex w-80 flex-shrink-0 border-r bg-muted/30 flex-col overflow-y-auto">
-        <CourseSidebar
-          courseId={courseId}
-          currentClassId={classId}
-          sections={sidebarSections}
-          courseTitle={course.title}
-          courseDescription={course.description}
-        />
-      </aside>
+  const durationLabel = formatDuration(activeItem?.video_duration_seconds ?? null)
+  const levelLabel = course.difficulty
+    ? String(course.difficulty).charAt(0).toUpperCase() + String(course.difficulty).slice(1)
+    : null
 
-      {/* Right Content */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Top Navigation */}
-        <ClassViewerNav
-          courseId={courseId}
-          courseTitle={course.title}
-          classTitle={classData.title}
-          classItemId={activeItem?.id || null}
-          isCompleted={isCurrentItemCompleted}
-        />
+  const body = (
+    <>
+      {activeItem ? (
+        <div className="px-4 pt-4 md:px-8">
+          <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" />
+        </div>
+      ) : (
+        <div className="px-4 pt-4 md:px-8">
+          <ClassViewerEmpty />
+        </div>
+      )}
 
-        <div className="p-6 space-y-6">
-          {/* Class Details Header */}
-          <div>
-            <h1 className="text-2xl font-bold">{classData.title}</h1>
-            {classData.description && (
-              <p className="text-muted-foreground mt-1">{classData.description}</p>
+      <div className="px-4 pb-12 pt-6 md:px-8">
+        {/* Compact meta strip */}
+        {(durationLabel || levelLabel || teacherName) && (
+          <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border pb-5">
+            {durationLabel && (
+              <span className="inline-flex items-center gap-2 text-[13px] font-medium text-[hsl(0_0%_78%)]">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                {durationLabel}
+              </span>
+            )}
+            {levelLabel && (
+              <>
+                {durationLabel && <span className="h-3.5 w-px bg-border" />}
+                <span className="inline-flex items-center gap-2 text-[13px] font-medium text-[hsl(0_0%_78%)]">
+                  <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
+                  {levelLabel}
+                </span>
+              </>
+            )}
+            {teacherName && (
+              <>
+                {(durationLabel || levelLabel) && (
+                  <span className="h-3.5 w-px bg-border" />
+                )}
+                <span className="inline-flex items-center gap-2 text-[13px] font-medium text-[hsl(0_0%_78%)]">
+                  {teacherName}
+                </span>
+              </>
             )}
           </div>
+        )}
 
-          {/* Step Indicator */}
-          {items.length > 1 && (
-            <ClassStepIndicator
-              items={items}
-              activeIndex={activeIndex}
-              completedItemIds={completedItemIds}
-              courseId={courseId}
-              classId={classId}
-            />
-          )}
-
-          {/* Item Content */}
-          {activeItem ? (
-            <ClassItemRenderer item={activeItem} userId={user.id} />
-          ) : (
-            <ClassViewerEmpty />
-          )}
-
-          {/* Navigation */}
-          <ClassNavigation
-            courseId={courseId}
-            classId={classId}
-            currentIndex={activeIndex}
-            totalItems={items.length}
-            nextClassId={nextClassId}
-          />
-
-          {/* Comments */}
+        <div className="max-w-[860px]">
           <CommentsSection
             classId={classId}
             initialComments={comments}
@@ -241,6 +241,49 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           />
         </div>
       </div>
-    </div>
+    </>
+  )
+
+  return (
+    <LessonShell
+      sidebar={{
+        courseId,
+        currentClassId: classId,
+        sections: sidebarSections,
+        courseTitle: course.title,
+        teacherName,
+      }}
+      header={{
+        moduleTitle,
+        title: classData.title,
+        subtitle: classData.description,
+      }}
+      parts={
+        items.length > 1
+          ? {
+              items: items.map((it: any) => ({
+                id: it.id,
+                title: it.title,
+                item_type: it.item_type,
+              })),
+              activeIndex,
+              completedItemIds,
+              courseId,
+              classId,
+            }
+          : null
+      }
+      footer={{
+        courseId,
+        classId,
+        currentIndex: activeIndex,
+        totalItems: items.length,
+        nextClassId,
+        activeItemId: activeItem?.id ?? null,
+        isCompleted: isCurrentItemCompleted,
+        nextLabel: nextClassTitle,
+      }}
+      body={body}
+    />
   )
 }

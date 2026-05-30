@@ -1,0 +1,90 @@
+/* Scoped styles for the redesigned lesson viewer.
+   Only the bits that are awkward in Tailwind live here — scrollbar hiding,
+   the diagonal resize knob, and the sidebar/footer width transitions. */
+
+.scrollHide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollHide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Sidebar width is driven by a CSS variable so the footer can mirror it. */
+.app {
+  --lesson-side-w: 340px;
+}
+.app[data-railed='true'] {
+  --lesson-side-w: 72px;
+}
+
+.side {
+  width: var(--lesson-side-w);
+  transition: width 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Fixed footer: offset by the dashboard icon rail (md = 64px) + the course
+   sidebar width, sliding in sync with the collapse. */
+.footer {
+  left: 0;
+  transition: left 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+/* md: dashboard icon rail (64px) visible, course sidebar still hidden. */
+@media (min-width: 768px) {
+  .footer {
+    left: 64px;
+  }
+}
+/* lg: course sidebar appears alongside the rail. */
+@media (min-width: 1024px) {
+  .footer {
+    left: calc(64px + var(--lesson-side-w));
+  }
+}
+
+/* Diagonal 2-axis resize knob that sits on the seam between the panes. */
+.knob {
+  position: absolute;
+  z-index: 12;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(0 0% 14%);
+  border: 1px solid hsl(0 0% 100% / 0.1);
+  color: hsl(0 0% 60%);
+  cursor: nwse-resize;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: background 130ms, color 130ms, border-color 130ms, box-shadow 130ms,
+    transform 130ms;
+}
+.knob:hover,
+.knob.dragging {
+  background: hsl(30 85% 55%);
+  border-color: hsl(30 85% 55%);
+  color: #fff;
+  box-shadow: 0 0 0 4px hsl(30 85% 55% / 0.18), 0 6px 16px rgba(0, 0, 0, 0.55);
+}
+.knobIcon {
+  transform: rotate(45deg);
+}
+.knobCol {
+  cursor: ns-resize;
+}
+.knobCol .knobIcon {
+  transform: rotate(90deg);
+}
+
+/* Left accent bar on the active lesson row. */
+.lessonAccent {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 28px;
+  border-radius: 9999px;
+  background: hsl(30 85% 55%);
+}

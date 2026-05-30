@@ -33,9 +33,11 @@ interface ClassItemRendererProps {
     description: string | null
   }
   userId: string
+  /** 'split' renders the PlaySense media player as a resizable video|notation workspace. */
+  playerLayout?: 'stack' | 'split'
 }
 
-export async function ClassItemRenderer({ item, userId }: ClassItemRendererProps) {
+export async function ClassItemRenderer({ item, userId, playerLayout = 'stack' }: ClassItemRendererProps) {
   // PlaySense Studio takes priority over the legacy Soundslice iframe whenever a
   // score_document is attached AND we have a media URL to drive the cursor
   // (video for VIDEO items, audio for JAM_SESSION).
@@ -71,42 +73,49 @@ export async function ClassItemRenderer({ item, userId }: ClassItemRendererProps
   return (
     <div className="space-y-6">
       {/* VIDEO */}
-      {item.item_type === 'VIDEO' && (
-        <Card>
-          <CardContent className="p-0">
-            {playsenseStudioData && playsenseStudioMediaUrl ? (
-              <PlaysenseStudioPlayer
-                classItemId={item.id}
-                videoUrl={playsenseStudioMediaUrl}
-                score={playsenseStudioData.scoreDocument.parsedScore}
-                tracks={playsenseStudioData.tracks}
-                activeTimeMap={playsenseStudioData.activeTimeMap}
-              />
-            ) : item.soundslice_embed_url ? (
-              <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                <iframe
-                  src={item.soundslice_embed_url}
-                  className="w-full h-full"
-                  allow="autoplay; fullscreen"
-                  allowFullScreen
+      {item.item_type === 'VIDEO' &&
+        (playsenseStudioData && playsenseStudioMediaUrl && playerLayout === 'split' ? (
+          // Split workspace renders edge-to-edge (the player draws its own frame).
+          <PlaysenseStudioPlayer
+            classItemId={item.id}
+            videoUrl={playsenseStudioMediaUrl}
+            score={playsenseStudioData.scoreDocument.parsedScore}
+            tracks={playsenseStudioData.tracks}
+            activeTimeMap={playsenseStudioData.activeTimeMap}
+            layout="split"
+          />
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              {playsenseStudioData && playsenseStudioMediaUrl ? (
+                <PlaysenseStudioPlayer
+                  classItemId={item.id}
+                  videoUrl={playsenseStudioMediaUrl}
+                  score={playsenseStudioData.scoreDocument.parsedScore}
+                  tracks={playsenseStudioData.tracks}
+                  activeTimeMap={playsenseStudioData.activeTimeMap}
                 />
-              </div>
-            ) : item.video_url ? (
-              <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                <video
-                  src={item.video_url}
-                  controls
-                  className="w-full h-full"
-                />
-              </div>
-            ) : (
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                <Video className="w-12 h-12 text-muted-foreground" />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              ) : item.soundslice_embed_url ? (
+                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                  <iframe
+                    src={item.soundslice_embed_url}
+                    className="w-full h-full"
+                    allow="autoplay; fullscreen"
+                    allowFullScreen
+                  />
+                </div>
+              ) : item.video_url ? (
+                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                  <video src={item.video_url} controls className="w-full h-full" />
+                </div>
+              ) : (
+                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                  <Video className="w-12 h-12 text-muted-foreground" />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
 
       {/* QUIZ */}
       {item.item_type === 'QUIZ' && item.question && item.correct_answer && (
@@ -187,6 +196,7 @@ export async function ClassItemRenderer({ item, userId }: ClassItemRendererProps
                 score={playsenseStudioData.scoreDocument.parsedScore}
                 tracks={playsenseStudioData.tracks}
                 activeTimeMap={playsenseStudioData.activeTimeMap}
+                layout={playerLayout}
               />
             ) : (
               <>

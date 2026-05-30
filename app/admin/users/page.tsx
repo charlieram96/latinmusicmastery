@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Users, Shield, GraduationCap, ChevronRight, CreditCard, DollarSign, UserX, CalendarClock } from 'lucide-react'
 import { getUsers, getUserStats } from '@/app/actions/admin'
-import { formatCurrency } from '@/lib/pricing'
+import { formatCurrency } from '@/lib/payments/pricing-types'
 import { UserFilters } from '@/components/admin/user-filters'
 
 export default async function AdminUsersPage({
@@ -16,7 +16,7 @@ export default async function AdminUsersPage({
   const search = params.search || ''
   const page = parseInt(params.page || '1')
   const status = (params.status || 'all') as 'all' | 'subscribed' | 'free'
-  const plan = (params.plan || 'all') as 'all' | 'instrument' | 'all_access'
+  const plan = (params.plan || 'all') as 'all' | 'month' | 'year'
   const limit = 20
   const offset = (page - 1) * limit
 
@@ -24,7 +24,7 @@ export default async function AdminUsersPage({
     getUsers({
       search: search || undefined,
       subscriptionStatus: status,
-      planType: plan,
+      interval: plan,
       limit,
       offset,
     }),
@@ -41,7 +41,7 @@ export default async function AdminUsersPage({
 
   const statCards = [
     { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Active Subscribers', value: stats.totalSubscribers, icon: CreditCard, color: 'text-green-500', bg: 'bg-green-500/10', sub: `${stats.instrumentCount} instrument · ${stats.allAccessCount} all-access` },
+    { label: 'Active Subscribers', value: stats.totalSubscribers, icon: CreditCard, color: 'text-green-500', bg: 'bg-green-500/10', sub: `${stats.monthlyCount} monthly · ${stats.annualCount} annual` },
     { label: 'Free Users', value: stats.freeUsers, icon: UserX, color: 'text-zinc-400', bg: 'bg-zinc-400/10' },
     { label: 'MRR', value: formatCurrency(stats.mrr), icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
   ]
@@ -89,7 +89,7 @@ export default async function AdminUsersPage({
         {users && users.length > 0 ? (
           <div className="divide-y">
             {users.map((user: any) => {
-              const activeSubs = (user.subscriptions || []).filter((s: any) => s.status === 'active')
+              const activeSubs = (user.instrument_subscriptions || []).filter((s: any) => s.status === 'active')
               return (
                 <Link
                   key={user.id}

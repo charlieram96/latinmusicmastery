@@ -16,6 +16,11 @@ import {
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/components/language-provider";
+import { formatCents, type PricingMap } from "@/lib/payments/pricing-types";
+
+interface PricingContentProps {
+  prices: PricingMap;
+}
 
 function ComparisonCell({ value }: { value: boolean | string }) {
   if (typeof value === "string") {
@@ -28,12 +33,17 @@ function ComparisonCell({ value }: { value: boolean | string }) {
   );
 }
 
-export default function PricingContent() {
+export default function PricingContent({ prices }: PricingContentProps) {
   const { t } = useTranslation();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const isAnnual = billing === "annual";
 
   const k = "marketing.pages.pricing";
+
+  // Derived display values from the DB-driven pricing.
+  const monthlyLabel = formatCents(prices.base_monthly.amount_cents);
+  const annualLabel = formatCents(prices.base_annual.amount_cents);
+  const yearlyAtMonthlyLabel = formatCents(prices.base_monthly.amount_cents * 12);
 
   const perInstrumentFeatures = [
     t(`${k}.plans.perInstrument.features.0`),
@@ -195,7 +205,7 @@ export default function PricingContent() {
             </div>
 
             <div className="mt-4 flex items-baseline gap-1">
-              <span className="text-5xl font-bold">{isAnnual ? "$199.99" : "$19.99"}</span>
+              <span className="text-5xl font-bold">{isAnnual ? annualLabel : monthlyLabel}</span>
               <span className="text-muted-foreground">
                 {isAnnual ? t(`${k}.billing.perYear`) : t(`${k}.billing.perMonth`)}
               </span>
@@ -204,7 +214,7 @@ export default function PricingContent() {
             {/* Annual savings — one cohesive offer pill with the discount nested as a tag */}
             {isAnnual ? (
               <div className="mt-2 flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground/50 line-through">$239.88</span>
+                <span className="text-muted-foreground/50 line-through">{yearlyAtMonthlyLabel}</span>
                 <span className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-primary-foreground">
                   {t(`${k}.billing.save`)}
                 </span>
@@ -220,10 +230,10 @@ export default function PricingContent() {
                   <span className="h-px flex-1 bg-border" />
                 </div>
                 <div className="mt-3">
-                  <p className="text-lg text-muted-foreground/70 line-through">$239.88</p>
+                  <p className="text-lg text-muted-foreground/70 line-through">{yearlyAtMonthlyLabel}</p>
                   <div className="mt-1 flex items-center gap-2.5">
                     <span className="flex items-baseline gap-1.5">
-                      <span className="text-2xl font-bold text-foreground">$199.99</span>
+                      <span className="text-2xl font-bold text-foreground">{annualLabel}</span>
                       <span className="text-sm text-muted-foreground">{t(`${k}.billing.perYear`)}</span>
                     </span>
                     <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-primary-foreground">

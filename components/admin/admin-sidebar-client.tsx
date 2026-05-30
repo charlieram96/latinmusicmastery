@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3,
   MessageSquare, DollarSign, Drum, ChevronLeft, ChevronRight,
-  LayoutDashboard, Guitar, ArrowLeft, Mail,
+  LayoutDashboard, Guitar, ArrowLeft, Mail, Tag,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -20,6 +20,7 @@ const navItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/financials', label: 'Financials', icon: DollarSign },
+  { href: '/admin/pricing', label: 'Pricing', icon: Tag },
   { href: '/admin/feedback', label: 'Feedback', icon: MessageSquare },
   { href: '/admin/countries', label: 'Countries', icon: Globe },
   { href: '/admin/styles', label: 'Musical Styles', icon: Music },

@@ -6,7 +6,7 @@ import {
   BarChart3, GraduationCap, Drum, Guitar, Dumbbell, ArrowRight,
 } from 'lucide-react'
 import { getUserStats } from '@/app/actions/admin'
-import { formatCurrency } from '@/lib/pricing'
+import { formatCurrency } from '@/lib/payments/pricing-types'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
@@ -26,7 +26,7 @@ export default async function AdminDashboard() {
     getUserStats(),
     supabase
       .from('profiles')
-      .select('*, subscriptions(status, plan_type, instrument)')
+      .select('*, instrument_subscriptions(status, instrument, billing_interval)')
       .order('created_at', { ascending: false })
       .limit(8),
   ])

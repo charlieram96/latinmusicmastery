@@ -18,9 +18,25 @@
 // Map on each render, so it tracks the right note across marker drags + zoom.
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { Accidental, Dot, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow';
+import {
+  Accidental,
+  Articulation,
+  Dot,
+  Formatter,
+  Renderer,
+  Stave,
+  StaveNote,
+  StaveTie,
+  Tuplet,
+  Voice,
+} from 'vexflow';
 import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
-import type { VexEventDescriptor } from '@/lib/playsense-studio/score-to-vexflow';
+import {
+  diatonicToMidi,
+  midiToDiatonic,
+  type VexEventDescriptor,
+} from '@/lib/playsense-studio/score-to-vexflow';
+import type { PercStroke } from '@/lib/playsense-studio/perc-strokes';
 
 export interface MeasureStripItem {
   /** 0-based index into the score track's measures (NOT the 1-based measureNumber). */
@@ -31,6 +47,7 @@ export interface MeasureStripItem {
   events: VexEventDescriptor[];
   timeSignature: [number, number];
   isFirst: boolean;
+  clef: 'treble' | 'percussion';
 }
 
 export interface SelectedEventRef {
@@ -54,6 +71,16 @@ export interface EditableMeasureStripProps {
   onSelectEvent: (ref: SelectedEventRef) => void;
   onClickMeasureEmpty: (measureIndex: number) => void;
   onRequestZoomTo: (measureIndex: number) => void;
+  /** Commit a pitch change after a drag (or click-drag) on a note. */
+  onSetPitch: (ref: SelectedEventRef, midi: number) => void;
+  /** Toolbar accidental (-1/0/+1), applied to staff drag for pitched tracks. */
+  accidental: number;
+  /** Key signature for spelling (fifths). */
+  keyFifths: number;
+  /** True when the active track is percussion (drag snaps to stroke lines). */
+  isPercussion: boolean;
+  /** Stroke palette for the active percussion track (null for pitched). */
+  percStrokes: PercStroke[] | null;
   height?: number;
 }
 
@@ -63,6 +90,19 @@ const LEFT_PAD = 6;
 const RIGHT_PAD = 6;
 /** Below this width a measure can't render notes legibly — show a zoom-in placeholder. */
 const MIN_RENDER_WIDTH = 46;
+/** Pixels per diatonic staff step (half of VexFlow's 10px line spacing). */
+const STEP_PX = 5;
+
+interface DragState {
+  measureIndex: number;
+  eventIndex: number;
+  originalMidi: number;
+  currentMidi: number;
+  /** Container-space Y of the note center at pointerdown (drag anchor). */
+  anchorY: number;
+  pointerId: number;
+  moved: boolean;
+}
 
 export function EditableMeasureStrip({
   measures,
@@ -72,10 +112,16 @@ export function EditableMeasureStrip({
   onSelectEvent,
   onClickMeasureEmpty,
   onRequestZoomTo,
+  onSetPitch,
+  accidental,
+  keyFifths,
+  isPercussion,
+  percStrokes,
   height = DEFAULT_HEIGHT,
 }: EditableMeasureStripProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
+  const [dragging, setDragging] = useState<DragState | null>(null);
 
   // Captured bboxes per measureIndex, refreshed by MiniStave on each draw.
   // A version counter forces the overlay to re-render after bboxes update.
@@ -101,6 +147,32 @@ export function EditableMeasureStrip({
     setBboxVersion((v) => v + 1);
   }, []);
 
+  // Map a cursor Y (container space) to a target MIDI, given the drag anchor.
+  const dragTargetMidi = useCallback(
+    (drag: DragState, cursorY: number): number => {
+      const deltaSteps = Math.round((drag.anchorY - cursorY) / STEP_PX);
+      if (deltaSteps === 0) return drag.originalMidi;
+      if (isPercussion && percStrokes && percStrokes.length > 0) {
+        const anchorDia = keyToDiatonic(
+          percStrokes.find((s) => s.midi === drag.originalMidi)?.staffLine ?? 'c/5'
+        );
+        const targetDia = anchorDia + deltaSteps;
+        let best = percStrokes[0];
+        let bestDist = Infinity;
+        for (const s of percStrokes) {
+          const d = Math.abs(keyToDiatonic(s.staffLine) - targetDia);
+          if (d < bestDist) {
+            bestDist = d;
+            best = s;
+          }
+        }
+        return best.midi;
+      }
+      return diatonicToMidi(midiToDiatonic(drag.originalMidi) + deltaSteps, accidental, keyFifths);
+    },
+    [isPercussion, percStrokes, accidental, keyFifths]
+  );
+
   const handlePointerDown = (e: React.PointerEvent, item: MeasureStripItem) => {
     // Local x within this measure's wrapper.
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -113,22 +185,75 @@ export function EditableMeasureStrip({
     // Find closest hit by horizontal distance to its center-x.
     let bestIdx = -1;
     let bestDist = Infinity;
+    let bestHit: MeasureHit | null = null;
     for (const h of hits) {
       const cx = h.x + h.w / 2;
       const d = Math.abs(cx - x);
       if (d < bestDist) {
         bestDist = d;
         bestIdx = h.eventIndex;
+        bestHit = h;
       }
     }
     // Tolerance: a click within ~40px of a note (or 1/n of the measure width)
     // selects it; outside that, treat as empty-measure click.
     const tolerance = Math.min(40, rect.width / Math.max(1, hits.length));
-    if (bestIdx >= 0 && bestDist <= tolerance) {
+    if (bestIdx >= 0 && bestHit && bestDist <= tolerance) {
       onSelectEvent({ measureIndex: item.measureIndex, eventIndex: bestIdx });
+      // Seed a drag if this event is a pitched/percussion note (has a midi).
+      const ev = item.events[bestIdx];
+      if (ev && ev.midi != null) {
+        const anchorY = bestHit.y + bestHit.h / 2;
+        setDragging({
+          measureIndex: item.measureIndex,
+          eventIndex: bestIdx,
+          originalMidi: ev.midi,
+          currentMidi: ev.midi,
+          anchorY,
+          pointerId: e.pointerId,
+          moved: false,
+        });
+        try {
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        } catch {
+          /* noop */
+        }
+      }
     } else {
       onClickMeasureEmpty(item.measureIndex);
     }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragging || dragging.pointerId !== e.pointerId) return;
+    const container = containerRef.current;
+    if (!container) return;
+    const cursorY = e.clientY - container.getBoundingClientRect().top;
+    const nextMidi = dragTargetMidi(dragging, cursorY);
+    if (nextMidi !== dragging.currentMidi || !dragging.moved) {
+      setDragging({ ...dragging, currentMidi: nextMidi, moved: true });
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!dragging || dragging.pointerId !== e.pointerId) return;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+    if (dragging.currentMidi !== dragging.originalMidi) {
+      onSetPitch(
+        { measureIndex: dragging.measureIndex, eventIndex: dragging.eventIndex },
+        dragging.currentMidi
+      );
+    }
+    setDragging(null);
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent) => {
+    if (dragging?.pointerId !== e.pointerId) return;
+    setDragging(null);
   };
 
   // Selection highlight position — recomputed every render (reads from the ref Map).
@@ -140,19 +265,48 @@ export function EditableMeasureStrip({
     const hit = hits?.find((h) => h.eventIndex === selected.eventIndex);
     if (!hit) return null;
     const startX = videoTimeToX(item.startVideoTimeSeconds);
+    // While dragging this note, lift the highlight by the live pitch delta so
+    // the feedback tracks the cursor before the model commits on release.
+    let dragOffsetY = 0;
+    if (dragging && dragging.measureIndex === selected.measureIndex && dragging.eventIndex === selected.eventIndex) {
+      const before = isPercussion && percStrokes
+        ? keyToDiatonic(percStrokes.find((s) => s.midi === dragging.originalMidi)?.staffLine ?? 'c/5')
+        : midiToDiatonic(dragging.originalMidi);
+      const after = isPercussion && percStrokes
+        ? keyToDiatonic(percStrokes.find((s) => s.midi === dragging.currentMidi)?.staffLine ?? 'c/5')
+        : midiToDiatonic(dragging.currentMidi);
+      dragOffsetY = (before - after) * STEP_PX;
+    }
     return {
       left: startX + hit.x - 3,
-      top: hit.y - 3,
+      top: hit.y - 3 + dragOffsetY,
       width: hit.w + 6,
       height: hit.h + 6,
     };
   })();
   void bboxVersion; // dep marker so the overlay re-renders when bboxes update
 
+  // Pitch chip text shown while dragging.
+  const dragChip = dragging
+    ? (() => {
+        const item = measures.find((m) => m.measureIndex === dragging.measureIndex);
+        if (!item) return null;
+        const hits = hitsByMeasure.current.get(dragging.measureIndex);
+        const hit = hits?.find((h) => h.eventIndex === dragging.eventIndex);
+        if (!hit) return null;
+        const startX = videoTimeToX(item.startVideoTimeSeconds);
+        const label =
+          isPercussion && percStrokes
+            ? percStrokes.find((s) => s.midi === dragging.currentMidi)?.label ?? ''
+            : midiToName(dragging.currentMidi);
+        return { left: startX + hit.x, top: (highlight?.top ?? hit.y) - 16, label };
+      })()
+    : null;
+
   return (
     <div
       ref={containerRef}
-      className="relative w-full overflow-hidden rounded-md border border-border bg-card"
+      className="playsense-studio-notation relative w-full overflow-hidden rounded-md border border-border bg-card"
       style={{ height }}
     >
       {measures.map((item) => {
@@ -181,8 +335,11 @@ export function EditableMeasureStrip({
           <div
             key={item.measureIndex}
             className="absolute top-0"
-            style={{ left: startX, width, cursor: 'pointer' }}
+            style={{ left: startX, width, cursor: dragging ? 'grabbing' : 'pointer' }}
             onPointerDown={(e) => handlePointerDown(e, item)}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerCancel}
           >
             <MiniStave
               measureIndex={item.measureIndex}
@@ -191,6 +348,7 @@ export function EditableMeasureStrip({
               height={height}
               timeSignature={item.timeSignature}
               isFirst={item.isFirst}
+              clef={item.clef}
               onHitsReady={handleHitsReady}
             />
             {/* Small measure-number chip in the top-left corner. */}
@@ -207,6 +365,15 @@ export function EditableMeasureStrip({
           style={highlight}
         />
       )}
+
+      {dragChip && dragChip.label && (
+        <div
+          className="pointer-events-none absolute z-10 rounded bg-foreground px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-background shadow"
+          style={{ left: dragChip.left, top: Math.max(0, dragChip.top) }}
+        >
+          {dragChip.label}
+        </div>
+      )}
     </div>
   );
 }
@@ -218,6 +385,7 @@ interface MiniStaveProps {
   height: number;
   timeSignature: [number, number];
   isFirst: boolean;
+  clef: 'treble' | 'percussion';
   onHitsReady: (measureIndex: number, hits: MeasureHit[] | null) => void;
 }
 
@@ -228,6 +396,7 @@ const MiniStave = memo(function MiniStave({
   height,
   timeSignature,
   isFirst,
+  clef,
   onHitsReady,
 }: MiniStaveProps) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -248,7 +417,7 @@ const MiniStave = memo(function MiniStave({
 
     const stave = new Stave(LEFT_PAD, STAVE_TOP, staveWidth);
     if (isFirst) {
-      stave.addClef('treble').addTimeSignature(`${timeSignature[0]}/${timeSignature[1]}`);
+      stave.addClef(clef).addTimeSignature(`${timeSignature[0]}/${timeSignature[1]}`);
     }
     stave.setContext(ctx).draw();
 
@@ -260,6 +429,42 @@ const MiniStave = memo(function MiniStave({
         voice.addTickables(vexNotes);
         new Formatter().joinVoices([voice]).format([voice], Math.max(20, staveWidth - 16));
         voice.draw(ctx, stave);
+
+        // Triplet brackets — group consecutive triplet-flagged events into
+        // runs of three and draw a tuplet over each complete group.
+        let run: StaveNote[] = [];
+        const flushRun = () => {
+          if (run.length === 3) {
+            new Tuplet(run, { numNotes: 3, notesOccupied: 2, bracketed: true })
+              .setContext(ctx)
+              .draw();
+          }
+          run = [];
+        };
+        events.forEach((d, i) => {
+          if (d.triplet) {
+            run.push(vexNotes[i]);
+            if (run.length === 3) flushRun();
+          } else {
+            flushRun();
+          }
+        });
+        flushRun();
+
+        // Ties — within this measure only (each measure is its own SVG, so
+        // cross-measure ties can't reference the next note object).
+        events.forEach((d, i) => {
+          if (d.tieToNext && i + 1 < vexNotes.length && !d.isRest && !events[i + 1].isRest) {
+            new StaveTie({
+              firstNote: vexNotes[i],
+              lastNote: vexNotes[i + 1],
+              firstIndexes: [0],
+              lastIndexes: [0],
+            })
+              .setContext(ctx)
+              .draw();
+          }
+        });
 
         // Capture per-event bboxes after a successful draw.
         const hits: MeasureHit[] = vexNotes.map((n, i) => {
@@ -279,19 +484,45 @@ const MiniStave = memo(function MiniStave({
       el.innerHTML = '';
       onHitsReady(measureIndex, null);
     };
-  }, [measureIndex, events, width, height, timeSignature, isFirst, onHitsReady]);
+  }, [measureIndex, events, width, height, timeSignature, isFirst, clef, onHitsReady]);
 
   return <div ref={ref} />;
 });
+
+const ARTICULATION_CODE: Record<'staccato' | 'accent' | 'tenuto', string> = {
+  staccato: 'a.',
+  accent: 'a>',
+  tenuto: 'a-',
+};
 
 function descriptorToStaveNote(d: VexEventDescriptor): StaveNote {
   const note = new StaveNote({
     keys: d.keys,
     duration: d.isRest ? `${d.durationCode}r` : d.durationCode,
+    ...(d.noteType ? { type: d.noteType } : {}),
   });
   if (d.dotted) Dot.buildAndAttach([note]);
   d.accidentals.forEach((acc, idx) => {
     if (acc) note.addModifier(new Accidental(acc), idx);
   });
+  if (!d.isRest && d.articulation) {
+    note.addModifier(new Articulation(ARTICULATION_CODE[d.articulation]), 0);
+  }
   return note;
+}
+
+// Parse a VexFlow key string ('g/5', 'c#/4') to a continuous diatonic index
+// (octave*7 + letterIndex). Used to snap percussion drags to stroke lines.
+const LETTER_TO_INDEX: Record<string, number> = { c: 0, d: 1, e: 2, f: 3, g: 4, a: 5, b: 6 };
+function keyToDiatonic(key: string): number {
+  const m = key.match(/^([a-gA-G])[#b]?\/(-?\d+)$/);
+  if (!m) return 0;
+  return Number(m[2]) * 7 + (LETTER_TO_INDEX[m[1].toLowerCase()] ?? 0);
+}
+
+function midiToName(midi: number): string {
+  const pc = ((midi % 12) + 12) % 12;
+  const octave = Math.floor(midi / 12) - 1;
+  const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+  return `${names[pc]}${octave}`;
 }

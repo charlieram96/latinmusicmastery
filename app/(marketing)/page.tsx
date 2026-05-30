@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { getServerTranslator } from '@/lib/i18n/server'
+import { getPricing } from '@/lib/payments/pricing-source'
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getServerTranslator()
@@ -62,6 +63,7 @@ export default async function MarketingHomePage() {
 
   const waitlistInstruments = (instruments ?? []).map(({ id, name }) => ({ id, name }))
   const waitlistStyles = musicalStyles ?? []
+  const prices = await getPricing()
 
   return (
     <div data-marketing>
@@ -77,7 +79,7 @@ export default async function MarketingHomePage() {
         <HomeInstructorsSection instructors={teachers} />
       )}
       <HomeTestimonialsSection />
-      <HomePricingPreview instruments={instruments ?? []} />
+      <HomePricingPreview instruments={instruments ?? []} prices={prices} />
       <HomeSocialSection />
       <section id="waitlist" className="relative overflow-hidden py-20 sm:py-28">
         <Image
