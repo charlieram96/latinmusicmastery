@@ -102,8 +102,44 @@ export async function updateStyle(id: string, formData: FormData) {
   redirect('/admin/styles')
 }
 
-export async function deleteStyle(id: string) {
+export async function deleteStyle(
+  id: string
+): Promise<{ error: string } | { success: true }> {
   const supabase = await createClient()
+
+  // Admin-only. The /admin layout and RLS already block non-admins; this gives
+  // a clean, explicit error instead of an opaque RLS failure.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.is_admin) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Defense in depth: the DB FK is ON DELETE CASCADE, but cascade-deleting
+  // courses (and their lessons, enrollments, and student progress) should
+  // never happen as a side effect of deleting a style. Block the delete and
+  // make the admin reassign or delete the courses first.
+  const { count, error: countError } = await supabase
+    .from('courses')
+    .select('id', { count: 'exact', head: true })
+    .eq('musical_style_id', id)
+  if (countError) {
+    return { error: countError.message }
+  }
+  if ((count ?? 0) > 0) {
+    return {
+      error: `Cannot delete: ${count} course${count === 1 ? '' : 's'} still reference this style. Reassign or delete them first.`,
+    }
+  }
 
   const { error } = await supabase.from('musical_styles').delete().eq('id', id)
 

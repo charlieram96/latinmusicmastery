@@ -12,6 +12,8 @@ interface PageProps {
   searchParams: Promise<{
     instrument?: string
     q?: string
+    /** Deep-link filter from the Musical Styles admin page. No visible UI. */
+    style?: string
   }>
 }
 
@@ -32,6 +34,10 @@ export default async function CoursesPage({ searchParams }: PageProps) {
 
   if (params.instrument) {
     query = query.eq('instrument', params.instrument)
+  }
+
+  if (params.style) {
+    query = query.eq('musical_style_id', params.style)
   }
 
   if (params.q) {

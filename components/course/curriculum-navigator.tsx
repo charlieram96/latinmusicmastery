@@ -1,8 +1,6 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import {
   Accordion,
@@ -10,7 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { CheckCircle2, PlayCircle, Circle, Clock, BookOpen } from 'lucide-react'
+import { Check, Play, BookOpen, Clock, Layers } from 'lucide-react'
 
 interface CurriculumNavigatorProps {
   sections: any[]
@@ -38,132 +36,137 @@ export function CurriculumNavigator({
   totalDurationMinutes,
   hasStarted,
 }: CurriculumNavigatorProps) {
-  const [hoveredLesson, setHoveredLesson] = useState<string | null>(null)
-
   const totalLessons = sections.reduce((acc: number, s: any) => acc + s.classes.length, 0)
 
   return (
     <div>
       {/* Header */}
-      <div className="mb-5">
-        <h3 className="text-lg font-heading font-bold mb-1">Curriculum</h3>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <BookOpen className="h-3 w-3" />
-            {sections.length} module{sections.length !== 1 ? 's' : ''}
-          </span>
-          <span>&middot;</span>
-          <span>{totalLessons} lesson{totalLessons !== 1 ? 's' : ''}</span>
-          <span>&middot;</span>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {formatDuration(totalDurationMinutes)}
-          </span>
-        </div>
+      <h2 className="font-heading text-2xl font-extrabold tracking-[-0.02em] text-foreground">
+        Curriculum
+      </h2>
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] font-medium text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <Layers className="h-3.5 w-3.5 opacity-80" />
+          {sections.length} module{sections.length !== 1 ? 's' : ''}
+        </span>
+        <span className="h-[3px] w-[3px] rounded-full bg-muted-foreground/40" />
+        <span className="inline-flex items-center gap-1.5">
+          <BookOpen className="h-3.5 w-3.5 opacity-80" />
+          {totalLessons} lesson{totalLessons !== 1 ? 's' : ''}
+        </span>
+        <span className="h-[3px] w-[3px] rounded-full bg-muted-foreground/40" />
+        <span className="inline-flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5 opacity-80" />
+          {formatDuration(totalDurationMinutes)}
+        </span>
       </div>
 
       {/* Progress */}
       {hasStarted && (
-        <div className="mb-5">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-sm font-medium">{progressPercentage}% complete</span>
-          </div>
+        <div className="mb-5 mt-5">
+          <div className="mb-1.5 text-sm font-medium text-foreground">{progressPercentage}% complete</div>
           <Progress value={progressPercentage} className="h-1.5" />
         </div>
       )}
 
-      {/* Scrollable sections */}
-      <div className="overflow-y-auto max-h-[calc(100vh-3rem)] scrollbar-thin">
-        <Accordion
-          type="multiple"
-          defaultValue={sections.map((s: any) => s.id)}
-          className="w-full space-y-1"
-        >
-          {sections.map((section: any, sectionIndex: number) => {
-            const sectionComplete = section.completedItems === section.totalItems && section.totalItems > 0
+      {/* Modules */}
+      <Accordion
+        type="multiple"
+        defaultValue={sections.map((s: any) => s.id)}
+        className="mt-5 flex w-full flex-col gap-3"
+      >
+        {sections.map((section: any, sectionIndex: number) => {
+          const sectionComplete =
+            section.completedItems === section.totalItems && section.totalItems > 0
 
-            return (
-              <AccordionItem
-                key={section.id}
-                value={section.id}
-                className="border-none"
-              >
-                <AccordionTrigger className="hover:no-underline py-3 px-0">
-                  <div className="flex items-center gap-3 text-left flex-1">
-                    {/* Numbered badge or checkmark */}
-                    <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-muted">
-                      {sectionComplete ? (
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                      ) : (
-                        <span className="text-muted-foreground">{sectionIndex + 1}</span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-semibold text-sm leading-tight block truncate">
-                        {section.title}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {section.completedItems}/{section.totalItems} completed
-                      </span>
-                    </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-0.5 ml-2 pb-2">
-                    {section.classes.map((cls: any) => {
-                      const isCompleted = cls.completedItems === cls.totalItems && cls.totalItems > 0
-                      const isNext = nextClassId === cls.id
+          return (
+            <AccordionItem
+              key={section.id}
+              value={section.id}
+              className="overflow-hidden rounded-[16px] border border-border bg-card"
+            >
+              <AccordionTrigger className="items-center gap-3.5 rounded-none px-4 py-4 hover:bg-muted/40 hover:no-underline">
+                <span className="flex flex-1 items-center gap-3.5 text-left">
+                  {/* Number badge or checkmark */}
+                  <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full bg-primary/15 font-heading text-sm font-bold text-primary">
+                    {sectionComplete ? <Check className="h-4 w-4" /> : sectionIndex + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-heading text-[15.5px] font-bold leading-tight tracking-[-0.01em] text-foreground">
+                      {section.title}
+                    </span>
+                    <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
+                      {section.completedItems}/{section.totalItems} completed
+                    </span>
+                  </span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-2.5 pb-3 pt-0">
+                <div className="flex flex-col gap-0.5">
+                  {section.classes.map((cls: any) => {
+                    const isCompleted =
+                      cls.completedItems === cls.totalItems && cls.totalItems > 0
+                    const isNext = nextClassId === cls.id
 
-                      return (
-                        <Link
-                          key={cls.id}
-                          href={`/dashboard/course/${courseId}/class/${cls.id}`}
-                          className={`flex items-center gap-3 py-2 px-3 rounded-lg text-sm transition-all duration-150 ${
+                    return (
+                      <Link
+                        key={cls.id}
+                        href={`/dashboard/course/${courseId}/class/${cls.id}`}
+                        className={`flex items-center gap-3 rounded-[11px] px-3 py-2.5 transition-colors ${
+                          isNext
+                            ? 'border border-primary/30 bg-primary/10'
+                            : 'hover:bg-muted/50'
+                        }`}
+                      >
+                        {/* Status dot */}
+                        <span
+                          className={`flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full border ${
                             isNext
-                              ? 'bg-primary/10 ring-1 ring-primary/20'
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : isCompleted
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-muted-foreground/30 text-transparent'
+                          }`}
+                        >
+                          {isNext ? (
+                            <Play className="h-2.5 w-2.5 fill-current" />
+                          ) : isCompleted ? (
+                            <Check className="h-3 w-3" />
+                          ) : null}
+                        </span>
+
+                        {/* Title */}
+                        <span
+                          className={`min-w-0 flex-1 truncate text-sm ${
+                            isNext
+                              ? 'font-semibold text-foreground'
                               : isCompleted
                               ? 'text-muted-foreground'
-                              : 'hover:bg-muted/50'
+                              : 'font-medium text-foreground/90'
                           }`}
-                          onMouseEnter={() => setHoveredLesson(cls.id)}
-                          onMouseLeave={() => setHoveredLesson(null)}
                         >
-                          {/* Status icon */}
-                          <div className="flex-shrink-0">
-                            {isCompleted ? (
-                              <CheckCircle2 className="h-4 w-4 text-primary" />
-                            ) : isNext ? (
-                              <PlayCircle className="h-4 w-4 text-primary" />
-                            ) : (
-                              <Circle className="h-4 w-4 text-muted-foreground/50" />
-                            )}
-                          </div>
+                          {cls.title}
+                        </span>
 
-                          {/* Title */}
-                          <span className={`flex-1 truncate ${isNext ? 'font-medium text-foreground' : ''}`}>
-                            {cls.title}
+                        {/* Badge or item count */}
+                        {isNext ? (
+                          <span className="flex-shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10.5px] font-bold tracking-[0.04em] text-primary-foreground">
+                            Next
                           </span>
-
-                          {/* Badge or item count */}
-                          {isNext && !isCompleted ? (
-                            <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">
-                              Next
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-muted-foreground flex-shrink-0">
-                              {cls.totalItems} item{cls.totalItems !== 1 ? 's' : ''}
-                            </span>
-                          )}
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )
-          })}
-        </Accordion>
-      </div>
+                        ) : (
+                          <span className="flex-shrink-0 text-xs text-muted-foreground">
+                            {cls.totalItems} item{cls.totalItems !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )
+        })}
+      </Accordion>
     </div>
   )
 }
