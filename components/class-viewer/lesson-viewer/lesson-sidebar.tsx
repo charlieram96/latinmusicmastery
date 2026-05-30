@@ -224,12 +224,7 @@ function SidebarModule({
 
       {open && (
         <>
-          {section.description && (
-            <p className="mx-3.5 my-3 text-[13px] leading-relaxed text-muted-foreground">
-              {section.description}
-            </p>
-          )}
-          <div className="mx-3.5 mb-2 mt-1 text-xs font-semibold text-muted-foreground">
+          <div className="mx-3.5 mb-2 mt-3 text-xs font-semibold text-muted-foreground">
             Lessons
           </div>
           {section.classes.map((c) => (

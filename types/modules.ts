@@ -67,6 +67,20 @@ export interface ClassItem {
   updated_at: string | null
 }
 
+// A quiz/exercise is a CONTAINER for a series of questions (quiz_questions table).
+export interface QuizQuestion {
+  id: string
+  class_item_id: string
+  order_index: number
+  question: string
+  question_type: QuestionType
+  options: QuestionOptions | null
+  correct_answer: string | null
+  explanation: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
 export interface ClassItemProgress {
   id: string
   user_id: string

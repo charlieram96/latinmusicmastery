@@ -55,7 +55,8 @@ export default async function CourseEditPage({ params }: CourseEditPageProps) {
   const { data: sections } = await getCourseStructure(id)
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-5xl">
+    <div className="px-6 py-8">
+      <div className="max-w-5xl">
       {/* Header */}
       <div className="mb-8">
         <Link href="/admin/courses" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
@@ -100,6 +101,7 @@ export default async function CourseEditPage({ params }: CourseEditPageProps) {
           courseId={course.id}
           initialSections={(sections || []) as any}
         />
+      </div>
       </div>
     </div>
   )

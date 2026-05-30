@@ -1,10 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Video, Dumbbell, Music } from 'lucide-react'
-import { ExerciseQuiz } from '@/components/exercise-quiz'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
 import { PlaysenseStudioPlayer } from '@/components/playsense-studio/player/playsense-studio-player'
 import { getScoreDocumentForClassItem, logPlaysenseStudioEvent } from '@/app/actions/playsense-studio'
+import { getQuizQuestions } from '@/app/actions/quiz'
+import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
+import { ExerciseView } from '@/components/class-viewer/lesson-viewer/exercise-view'
+import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise'
 
 // Feature flag — set PLAYSENSE_STUDIO_ENABLED=false in env to roll back to the legacy
 // iframe path even when a class item has a score attached. Default true so
@@ -37,7 +40,7 @@ interface ClassItemRendererProps {
   playerLayout?: 'stack' | 'split'
 }
 
-export async function ClassItemRenderer({ item, userId, playerLayout = 'stack' }: ClassItemRendererProps) {
+export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassItemRendererProps) {
   // PlaySense Studio takes priority over the legacy Soundslice iframe whenever a
   // score_document is attached AND we have a media URL to drive the cursor
   // (video for VIDEO items, audio for JAM_SESSION).
@@ -46,12 +49,28 @@ export async function ClassItemRenderer({ item, userId, playerLayout = 'stack' }
       ? item.video_url
       : item.item_type === 'JAM_SESSION'
         ? item.audio_url ?? item.video_url
-        : null
+        : item.item_type === 'QUIZ' || item.item_type === 'EXERCISE'
+          ? item.video_url
+          : null
+
+  // Exercises can be score-only (rhythm-highway test with no reference video), so
+  // they fetch the score whenever one is attached; other types need a media URL
+  // to drive the cursor.
+  const needsScore =
+    item.score_document_id &&
+    (playsenseStudioMediaUrl || item.item_type === 'EXERCISE')
 
   const playsenseStudioData =
-    playsenseStudioEnabled && item.score_document_id && playsenseStudioMediaUrl
+    playsenseStudioEnabled && needsScore
       ? (await getScoreDocumentForClassItem(item.id)).data ?? null
       : null
+
+  // Quizzes (and legacy quiz-style exercises) are a series of questions stored
+  // in quiz_questions. Fetch them server-side so the runner renders immediately.
+  const quizQuestions =
+    item.item_type === 'QUIZ' || item.item_type === 'EXERCISE'
+      ? (await getQuizQuestions(item.id)).data
+      : []
 
   // M9 cutover analytics — log when the legacy iframe is shown so we know
   // when zero traffic has migrated. Fire-and-forget; logPlaysenseStudioEvent
@@ -117,66 +136,75 @@ export async function ClassItemRenderer({ item, userId, playerLayout = 'stack' }
           </Card>
         ))}
 
-      {/* QUIZ */}
-      {item.item_type === 'QUIZ' && item.question && item.correct_answer && (
-        <ExerciseQuiz
-          exercise={{
-            id: item.id,
-            question: item.question,
-            question_type: (item.question_type === 'text_answer' ? 'text' :
-                           item.question_type === 'true_false' ? 'multiple_choice' :
-                           item.question_type || 'multiple_choice') as 'multiple_choice' | 'text' | 'audio',
-            options: item.question_type === 'true_false'
-              ? ['True', 'False']
-              : Array.isArray(item.options)
-                ? (item.options as { text?: string }[]).map((o) => typeof o === 'string' ? o : o?.text || '')
-                : null,
-            correct_answer: item.correct_answer,
-            explanation: item.explanation,
-          }}
-          userId={userId}
-        />
+      {/* QUIZ — optional intro video/notation above a multi-question runner */}
+      {item.item_type === 'QUIZ' && (
+        <>
+          {playsenseStudioData && playsenseStudioMediaUrl ? (
+            <Card>
+              <CardContent className="p-0">
+                <PlaysenseStudioPlayer
+                  classItemId={item.id}
+                  videoUrl={playsenseStudioMediaUrl}
+                  score={playsenseStudioData.scoreDocument.parsedScore}
+                  tracks={playsenseStudioData.tracks}
+                  activeTimeMap={playsenseStudioData.activeTimeMap}
+                />
+              </CardContent>
+            </Card>
+          ) : item.video_url ? (
+            <Card>
+              <CardContent className="p-0">
+                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                  <video src={item.video_url} controls className="w-full h-full" />
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+          <QuizRunner classItemId={item.id} questions={quizQuestions} kind="Quiz" />
+        </>
       )}
 
-      {/* EXERCISE */}
+      {/* EXERCISE — score-driven (video + staff + rhythm highway), with optional
+          comprehension questions. Falls back to a plain question card for legacy
+          exercises that have no score attached. */}
       {item.item_type === 'EXERCISE' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Dumbbell className="w-5 h-5 text-green-500" />
-              Exercise
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {item.question && (
-              <p className="text-lg font-medium mb-4">{item.question}</p>
-            )}
-            {item.description && (
-              <p className="text-muted-foreground whitespace-pre-wrap">{item.description}</p>
-            )}
-            {item.question && item.correct_answer && item.question_type && (
-              <div className="mt-4">
-                <ExerciseQuiz
-                  exercise={{
-                    id: item.id,
-                    question: item.question,
-                    question_type: (item.question_type === 'text_answer' ? 'text' :
-                                   item.question_type === 'true_false' ? 'multiple_choice' :
-                                   item.question_type || 'multiple_choice') as 'multiple_choice' | 'text' | 'audio',
-                    options: item.question_type === 'true_false'
-                      ? ['True', 'False']
-                      : Array.isArray(item.options)
-                        ? (item.options as { text?: string }[]).map((o) => typeof o === 'string' ? o : o?.text || '')
-                        : null,
-                    correct_answer: item.correct_answer,
-                    explanation: item.explanation,
-                  }}
-                  userId={userId}
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <>
+          {item.description && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Dumbbell className="w-5 h-5 text-green-500" />
+                  Exercise
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground whitespace-pre-wrap">{item.description}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {playsenseStudioData ? (
+            <ExerciseView
+              classItemId={item.id}
+              videoUrl={playsenseStudioMediaUrl}
+              score={playsenseStudioData.scoreDocument.parsedScore}
+              tracks={playsenseStudioData.tracks}
+              activeTimeMap={playsenseStudioData.activeTimeMap}
+              exercise={scoreToExerciseDefinition(playsenseStudioData.scoreDocument.parsedScore, {
+                id: item.id,
+                title: item.title,
+                description: item.description ?? undefined,
+                audioUrl: playsenseStudioMediaUrl ?? undefined,
+              })}
+              playerLayout={playerLayout}
+            />
+          ) : null}
+
+          {/* Optional comprehension questions authored for the exercise. */}
+          {quizQuestions.length > 0 && (
+            <QuizRunner classItemId={item.id} questions={quizQuestions} kind="Exercise" />
+          )}
+        </>
       )}
 
       {/* JAM_SESSION */}

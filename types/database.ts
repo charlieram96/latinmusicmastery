@@ -306,6 +306,53 @@ export type Database = {
           },
         ]
       }
+      quiz_questions: {
+        Row: {
+          class_item_id: string
+          correct_answer: string | null
+          created_at: string | null
+          explanation: string | null
+          id: string
+          options: Json | null
+          order_index: number
+          question: string
+          question_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          class_item_id: string
+          correct_answer?: string | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json | null
+          order_index?: number
+          question: string
+          question_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          class_item_id?: string
+          correct_answer?: string | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json | null
+          order_index?: number
+          question?: string
+          question_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_class_item_id_fkey"
+            columns: ["class_item_id"]
+            isOneToOne: false
+            referencedRelation: "class_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comment_reactions: {
         Row: {
           comment_id: string

@@ -151,7 +151,7 @@ export function StudioWorkspace({
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-6 px-6 py-6">
+      <main className="space-y-6 px-6 py-6">
         {errorMessage && (
           <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {errorMessage}
