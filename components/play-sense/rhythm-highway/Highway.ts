@@ -6,9 +6,11 @@ import {
   HIGHWAY_TOP_WIDTH,
   VANISHING_POINT_Y,
   RAIL_COLOR,
+  RAIL_COLOR_FAR,
   RAIL_GLOW_ALPHA,
   GRID_LINE_ALPHA,
   GRID_LINE_COLOR,
+  HIT_BAR_COLOR,
   BG_COLOR,
   ROAD_COLOR,
   ROAD_ALPHA,
@@ -214,17 +216,23 @@ export class Highway {
 
   private drawBackground() {
     this.bg.clear()
-    // Pure dark void
+    // Warm near-black void
     this.bg.rect(0, 0, this.width, this.height)
     this.bg.fill(BG_COLOR)
 
-    // Subtle blue fog at the vanishing point (distant glow)
     const cx = this.width / 2
     const vanishY = this.getVanishingY()
-    this.bg.ellipse(cx, vanishY, this.width * 0.25, this.height * 0.08)
-    this.bg.fill({ color: RAIL_COLOR, alpha: 0.06 })
-    this.bg.ellipse(cx, vanishY, this.width * 0.12, this.height * 0.03)
-    this.bg.fill({ color: RAIL_COLOR, alpha: 0.04 })
+    const hitY = this.getHitZoneY()
+
+    // Warm amber glow blooming from the vanishing point (distant stage haze)
+    this.bg.ellipse(cx, vanishY + this.height * 0.02, this.width * 0.32, this.height * 0.12)
+    this.bg.fill({ color: RAIL_COLOR, alpha: 0.07 })
+    this.bg.ellipse(cx, vanishY, this.width * 0.16, this.height * 0.05)
+    this.bg.fill({ color: RAIL_COLOR, alpha: 0.05 })
+
+    // Terracotta warmth pooling toward the floor (hit zone)
+    this.bg.ellipse(cx, hitY + (this.height - hitY) * 0.5, this.width * 0.42, (this.height - hitY) * 0.7)
+    this.bg.fill({ color: RAIL_COLOR_FAR, alpha: 0.05 })
   }
 
   /** Gradient overlay at the top of the board — notes/frets emerge from fog */
@@ -273,10 +281,10 @@ export class Highway {
     this.sideFog.ellipse(cx + halfBottom + 30, (vanishY + hitY) / 2, 60, (hitY - vanishY) * 0.4)
     this.sideFog.fill({ color: RAIL_COLOR, alpha: rightPulse })
 
-    // Hit zone floor glow
-    const floorPulse = 0.04 + Math.sin(time * 0.001) * 0.015
-    this.sideFog.ellipse(cx, hitY + 10, halfBottom * 0.8, 25)
-    this.sideFog.fill({ color: RAIL_COLOR, alpha: floorPulse })
+    // Hit zone floor glow — warm terracotta pool
+    const floorPulse = 0.05 + Math.sin(time * 0.001) * 0.02
+    this.sideFog.ellipse(cx, hitY + 10, halfBottom * 0.9, 30)
+    this.sideFog.fill({ color: RAIL_COLOR_FAR, alpha: floorPulse })
   }
 
   private drawRoad() {
@@ -300,19 +308,24 @@ export class Highway {
     this.road.closePath()
     this.road.fill({ color: ROAD_COLOR, alpha: ROAD_ALPHA })
 
-    // Timing line at hit zone — prominent yellow glow
+    // Warm floor wash just above the hit line (amber → terracotta pool)
+    const washTop = hitY - 90
+    this.road.rect(cx - halfBottom * 1.05, washTop, halfBottom * 2.1, this.height - washTop)
+    this.road.fill({ color: RAIL_COLOR_FAR, alpha: 0.05 })
+
+    // Timing line at hit zone — prominent gold glow
     // Wide glow
     this.road.moveTo(cx - halfBottom, hitY)
     this.road.lineTo(cx + halfBottom, hitY)
-    this.road.stroke({ color: 0xffea00, width: 12, alpha: 0.12 })
+    this.road.stroke({ color: HIT_BAR_COLOR, width: 13, alpha: 0.12 })
     // Mid glow
     this.road.moveTo(cx - halfBottom, hitY)
     this.road.lineTo(cx + halfBottom, hitY)
-    this.road.stroke({ color: 0xffea00, width: 5, alpha: 0.3 })
+    this.road.stroke({ color: HIT_BAR_COLOR, width: 5, alpha: 0.32 })
     // Core line
     this.road.moveTo(cx - halfBottom, hitY)
     this.road.lineTo(cx + halfBottom, hitY)
-    this.road.stroke({ color: 0xffea00, width: 1.5, alpha: 0.7 })
+    this.road.stroke({ color: HIT_BAR_COLOR, width: 2, alpha: 0.85 })
   }
 
   private drawRails() {
@@ -325,29 +338,37 @@ export class Highway {
     const widthGrowthRate = (halfBottom - halfTop) / (this.getHitZoneY() - vanishY)
     const halfEnd = halfBottom + widthGrowthRate * extraHeight
 
-    // Wide neon glow (outer) — full length to bottom
-    this.rails.moveTo(cx - halfTop, vanishY)
-    this.rails.lineTo(cx - halfEnd, this.height)
-    this.rails.stroke({ color: RAIL_COLOR, width: 10, alpha: RAIL_GLOW_ALPHA * 0.2 })
-    this.rails.moveTo(cx + halfTop, vanishY)
-    this.rails.lineTo(cx + halfEnd, this.height)
-    this.rails.stroke({ color: RAIL_COLOR, width: 10, alpha: RAIL_GLOW_ALPHA * 0.2 })
+    // Rails run amber (distant, at the vanishing point) → terracotta (near the floor).
+    // Drawn in segments so the colour can interpolate smoothly along the runway.
+    const SEG = 14
+    const railPoint = (side: 1 | -1, t: number): [number, number] => {
+      const half = halfTop + t * (halfEnd - halfTop)
+      const y = vanishY + t * (this.height - vanishY)
+      return [cx + side * half, y]
+    }
 
-    // Mid glow
-    this.rails.moveTo(cx - halfTop, vanishY)
-    this.rails.lineTo(cx - halfEnd, this.height)
-    this.rails.stroke({ color: RAIL_COLOR, width: 4, alpha: RAIL_GLOW_ALPHA * 0.5 })
-    this.rails.moveTo(cx + halfTop, vanishY)
-    this.rails.lineTo(cx + halfEnd, this.height)
-    this.rails.stroke({ color: RAIL_COLOR, width: 4, alpha: RAIL_GLOW_ALPHA * 0.5 })
+    const passes: Array<{ width: number; alpha: number; color: 'grad' | number }> = [
+      { width: 11, alpha: RAIL_GLOW_ALPHA * 0.18, color: 'grad' }, // wide outer glow
+      { width: 4.5, alpha: RAIL_GLOW_ALPHA * 0.5, color: 'grad' }, // mid glow
+      { width: 1.5, alpha: 0.7, color: 0xfff0dc },                 // warm cream core
+    ]
 
-    // Bright core line
-    this.rails.moveTo(cx - halfTop, vanishY)
-    this.rails.lineTo(cx - halfEnd, this.height)
-    this.rails.stroke({ color: 0xffffff, width: 1.5, alpha: 0.6 })
-    this.rails.moveTo(cx + halfTop, vanishY)
-    this.rails.lineTo(cx + halfEnd, this.height)
-    this.rails.stroke({ color: 0xffffff, width: 1.5, alpha: 0.6 })
+    for (const side of [-1, 1] as const) {
+      for (const pass of passes) {
+        for (let i = 0; i < SEG; i++) {
+          const t0 = i / SEG
+          const t1 = (i + 1) / SEG
+          const [x0, y0] = railPoint(side, t0)
+          const [x1, y1] = railPoint(side, t1)
+          const color = pass.color === 'grad'
+            ? lerpColor(RAIL_COLOR, RAIL_COLOR_FAR, (t0 + t1) / 2)
+            : pass.color
+          this.rails.moveTo(x0, y0)
+          this.rails.lineTo(x1, y1)
+          this.rails.stroke({ color, width: pass.width, alpha: pass.alpha })
+        }
+      }
+    }
   }
 
   private drawDividers() {
@@ -643,4 +664,14 @@ export class Highway {
     this.receptors.circle(cx, cy, 3)
     this.receptors.fill({ color, alpha: c.centerDotAlpha })
   }
+}
+
+/** Linear-interpolate between two 0xRRGGBB colors. t in [0,1]. */
+function lerpColor(a: number, b: number, t: number): number {
+  const ar = (a >> 16) & 0xff, ag = (a >> 8) & 0xff, ab = a & 0xff
+  const br = (b >> 16) & 0xff, bg = (b >> 8) & 0xff, bb = b & 0xff
+  const r = Math.round(ar + (br - ar) * t)
+  const g = Math.round(ag + (bg - ag) * t)
+  const bl = Math.round(ab + (bb - ab) * t)
+  return (r << 16) | (g << 8) | bl
 }

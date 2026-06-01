@@ -39,6 +39,8 @@ export interface NoteStyle {
   midRimAlpha: number
   verticalEdgeAlpha: number
   topFaceAlpha: number
+  /** Cream sheen highlight on the top face — gives the puck its lit, premium look */
+  topSheenAlpha: number
   topRimGlowAlpha: number
   topRimMainAlpha: number
   topRimWhiteAlpha: number
@@ -61,6 +63,7 @@ export const DEFAULT_NOTE_STYLE: NoteStyle = {
   midRimAlpha: 0,
   verticalEdgeAlpha: 0,
   topFaceAlpha: 0.8,
+  topSheenAlpha: 0.5,
   topRimGlowAlpha: 0.5,
   topRimMainAlpha: 0.4,
   topRimWhiteAlpha: 0.39,
@@ -297,6 +300,15 @@ export class NoteManager {
     // 10. Top face
     gfx.ellipse(x, y, rx, ry)
     gfx.fill({ color, alpha: s.topFaceAlpha })
+
+    // 10b. Cream sheen — a lit highlight offset toward the upper-left, fading the
+    // puck from warm-cream at the light to its core colour (the viz.js premium look).
+    if (s.topSheenAlpha > 0) {
+      gfx.ellipse(x - rx * 0.26, y - ry * 0.32, rx * 0.62, ry * 0.6)
+      gfx.fill({ color: 0xfff3df, alpha: s.topSheenAlpha * 0.5 })
+      gfx.ellipse(x - rx * 0.3, y - ry * 0.36, rx * 0.34, ry * 0.34)
+      gfx.fill({ color: 0xfffaf0, alpha: s.topSheenAlpha })
+    }
 
     // 11. Top rim glow
     gfx.ellipse(x, y, rx, ry)

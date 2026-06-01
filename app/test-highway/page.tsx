@@ -46,6 +46,7 @@ interface SliderDef { key: string; label: string; min: number; max: number; step
 const NOTE_SLIDERS: SliderDef[] = [
   { key: 'thickness', label: 'Puck Thickness', min: 0, max: 60, step: 1 },
   { key: 'topFaceAlpha', label: 'Top Face', min: 0, max: 1, step: 0.01 },
+  { key: 'topSheenAlpha', label: 'Top Sheen (cream)', min: 0, max: 1, step: 0.01 },
   { key: 'topRimGlowAlpha', label: 'Top Rim Glow', min: 0, max: 1, step: 0.01 },
   { key: 'topRimMainAlpha', label: 'Top Rim Main', min: 0, max: 1, step: 0.01 },
   { key: 'topRimWhiteAlpha', label: 'Top Rim White', min: 0, max: 1, step: 0.01 },

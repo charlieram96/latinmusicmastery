@@ -12,13 +12,14 @@
 // score's video clock lives inside SyncPanel (its only consumer), so playback
 // doesn't re-render this parent.
 
-import { ArrowLeft, Redo2, Save, Undo2 } from 'lucide-react';
+import { ArrowLeft, FileUp, Redo2, Save, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { saveScoreDocument } from '@/app/actions/playsense-studio';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
+import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta-editor';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
@@ -111,6 +112,20 @@ export function StudioWorkspace({
         <h1 className="text-base font-semibold">PlaySense Studio — {classItemTitle}</h1>
 
         <div className="ml-auto flex items-center gap-2">
+          <ScoreImportDialog
+            classItemId={classItemId}
+            mode="replace"
+            trigger={
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-2 text-sm transition hover:bg-muted"
+                title="Replace this lesson's score with a new import"
+              >
+                <FileUp className="h-4 w-4" />
+                Replace score
+              </button>
+            }
+          />
           <button
             onClick={undo}
             disabled={!canUndo}

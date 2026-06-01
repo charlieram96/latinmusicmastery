@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { ExercisePlayer } from '@/components/play-sense/exercise-player'
+import { StagePlayer } from '@/components/play-sense/stage/stage-player'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
-import { PlaySenseHeader } from './play-sense-header'
 
 export default async function PlaySensePage() {
   const supabase = await createClient()
@@ -32,17 +31,7 @@ export default async function PlaySensePage() {
     audioUrl: ex.audio_url || undefined,
   }))
 
-  return (
-    <div className="w-full">
-      <div className="mb-4 flex items-center justify-between">
-        <PlaySenseHeader />
-      </div>
-
-      <div className="w-full">
-        <div className="bg-card/50 dark:bg-card/80 rounded-2xl p-4 md:p-6 border border-border backdrop-blur-sm">
-          <ExercisePlayer exercises={exerciseDefinitions} />
-        </div>
-      </div>
-    </div>
-  )
+  // The Stage renders as a full-viewport fixed overlay (above the dashboard
+  // sidebar/header) for an immersive performance-mode experience.
+  return <StagePlayer exercises={exerciseDefinitions} />
 }

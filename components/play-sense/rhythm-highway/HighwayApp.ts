@@ -47,8 +47,12 @@ export class HighwayApp {
   paused = false
   private lastMetronomeBeat = 0
 
-  private constructor(app: Application) {
+  /** When false, the in-canvas stats HUD is not rendered (DOM chrome owns stats). */
+  private showHud = true
+
+  private constructor(app: Application, showHud: boolean) {
     this.app = app
+    this.showHud = showHud
 
     this.highway = new Highway()
     this.noteManager = new NoteManager(this.highway)
@@ -61,14 +65,15 @@ export class HighwayApp {
       this.noteManager.container,
       this.highway.overlayContainer,
       this.hitEffects.container,
-      this.hud.container,
     )
+    if (this.showHud) app.stage.addChild(this.hud.container)
   }
 
   /**
    * Factory: creates the PixiJS Application and attaches it to the given container.
+   * Pass `{ showHud: false }` to suppress the in-canvas HUD when DOM chrome renders stats.
    */
-  static async create(container: HTMLDivElement): Promise<HighwayApp> {
+  static async create(container: HTMLDivElement, options?: { showHud?: boolean }): Promise<HighwayApp> {
     const app = new Application()
     await app.init({
       resizeTo: container,
@@ -79,7 +84,7 @@ export class HighwayApp {
     })
     container.appendChild(app.canvas as HTMLCanvasElement)
 
-    const instance = new HighwayApp(app)
+    const instance = new HighwayApp(app, options?.showHud ?? true)
     instance.resize()
 
     // Watch for resizes
@@ -157,7 +162,7 @@ export class HighwayApp {
     const h = this.app.screen.height
     this.highway.resize(w, h)
     this.hitEffects.resize(w, h)
-    this.hud.resize(w, h)
+    if (this.showHud) this.hud.resize(w, h)
   }
 
   private update(dt: number) {
@@ -187,15 +192,17 @@ export class HighwayApp {
     }
     this.hitEffects.updateComboFire(combo)
     this.hitEffects.update(dt)
-    this.hud.update(
-      score,
-      combo,
-      accuracy,
-      progress,
-      elapsed,
-      this.exerciseDuration,
-      dt,
-    )
+    if (this.showHud) {
+      this.hud.update(
+        score,
+        combo,
+        accuracy,
+        progress,
+        elapsed,
+        this.exerciseDuration,
+        dt,
+      )
+    }
   }
 
   private getLaneConfig(exercise: ExerciseDefinition): { surfaces: string[]; labels: string[]; style: ReceptorStyle } {

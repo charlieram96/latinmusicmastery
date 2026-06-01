@@ -362,12 +362,27 @@ export async function attachScoreFromImport(
     }
   }
 
-  // 3. Wire to the class_item.
+  // 3. Wire to the class_item. If a score was already attached, this is a
+  //    REPLACE: point at the new doc and clear active_time_map_id (the old map
+  //    belongs to the previous score and would otherwise dangle / mis-sync).
+  const { data: prevItem } = await supabase
+    .from('class_items')
+    .select('score_document_id')
+    .eq('id', input.classItemId)
+    .single();
+  const prevScoreId = prevItem?.score_document_id ?? null;
+
   const { error: linkErr } = await supabase
     .from('class_items')
-    .update({ score_document_id: doc.id })
+    .update({ score_document_id: doc.id, active_time_map_id: null })
     .eq('id', input.classItemId);
   if (linkErr) return { error: linkErr.message };
+
+  // Best-effort cleanup of the replaced document (CASCADE removes its tracks +
+  // time maps). A failure here must not fail the import.
+  if (prevScoreId && prevScoreId !== doc.id) {
+    await supabase.from('score_documents').delete().eq('id', prevScoreId);
+  }
 
   revalidatePath('/dashboard');
   return { scoreDocumentId: doc.id };
