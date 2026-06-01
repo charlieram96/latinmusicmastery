@@ -43,6 +43,9 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
 
   return (
     <StudioWorkspace
+      // Remount when the attached score changes (e.g. after Replace), so the
+      // editor reseeds from the new document instead of keeping stale state.
+      key={classItem.score_document_id}
       classItemId={classItemId}
       classItemTitle={classItem.title}
       videoUrl={classItem.video_url}

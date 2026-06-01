@@ -7,6 +7,7 @@ import { getScoreDocumentForClassItem, logPlaysenseStudioEvent } from '@/app/act
 import { getQuizQuestions } from '@/app/actions/quiz'
 import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
 import { ExerciseView } from '@/components/class-viewer/lesson-viewer/exercise-view'
+import { VideoInfoSplit } from '@/components/class-viewer/lesson-viewer/video-info-split'
 import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise'
 
 // Feature flag — set PLAYSENSE_STUDIO_ENABLED=false in env to roll back to the legacy
@@ -65,6 +66,16 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
       ? (await getScoreDocumentForClassItem(item.id)).data ?? null
       : null
 
+  // A VIDEO with no score in the split viewer renders the resizable
+  // video + "About this lesson" workspace instead of a giant full-width video.
+  // The panel surfaces rich_content, so we skip the shared copy below it.
+  const noScoreVideoSplit =
+    item.item_type === 'VIDEO' &&
+    !playsenseStudioData &&
+    playerLayout === 'split' &&
+    !!item.video_url &&
+    !item.soundslice_embed_url
+
   // Quizzes (and legacy quiz-style exercises) are a series of questions stored
   // in quiz_questions. Fetch them server-side so the runner renders immediately.
   const quizQuestions =
@@ -102,6 +113,18 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
             tracks={playsenseStudioData.tracks}
             activeTimeMap={playsenseStudioData.activeTimeMap}
             layout="split"
+          />
+        ) : noScoreVideoSplit ? (
+          // No score: keep the resizable split feel with a video + info panel
+          // instead of a full-width 16:9 video that dwarfs the page.
+          <VideoInfoSplit
+            videoUrl={item.video_url!}
+            title={item.title}
+            description={item.description}
+            richContent={item.rich_content}
+            durationSeconds={item.video_duration_seconds}
+            bpm={item.bpm}
+            keySignature={item.key_signature}
           />
         ) : (
           <Card>
@@ -262,8 +285,9 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
         </Card>
       )}
 
-      {/* Rich Content (below any type) */}
-      {item.rich_content && (
+      {/* Rich Content (below any type) — skipped when already shown in the
+          no-score video panel. */}
+      {item.rich_content && !noScoreVideoSplit && (
         <Card>
           <CardContent className="pt-6">
             <TiptapReadOnly content={item.rich_content} />

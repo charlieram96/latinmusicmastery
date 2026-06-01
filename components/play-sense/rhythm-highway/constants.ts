@@ -8,56 +8,59 @@ export const HIGHWAY_TOP_WIDTH = 0.20
 export const VANISHING_POINT_Y = 0.08
 export const LOOK_AHEAD_SEC = 4.0
 
-// ── Lane colors (neon / Beat Saber palette) ──
+// ── Lane colors (warm brand palette — amber / gold / terracotta family) ──
+// Distinguishable hues that all stay in the warm earth-tone family, matching
+// the design's `viz.js` note palette rather than the old cold neon triad.
 export const LANE_COLORS: Record<string, number> = {
-  // Conga — vivid neon triad
-  quinto: 0xff1744,  // neon red
-  conga: 0x2979ff,   // neon blue
-  tumba: 0x00e676,   // neon green
+  // Conga — warm triad
+  quinto: 0xd54e3f,  // terracotta
+  conga: 0xf2a12c,   // amber
+  tumba: 0xe0a43b,   // gold
   // Timbale
-  macho: 0xff1744,
-  hembra: 0x2979ff,
-  campana: 0xffea00,
-  cencerro: 0xff9100,
-  jamblock: 0xd500f9,
-  cascara: 0x00e5ff,
+  macho: 0xd54e3f,   // terracotta
+  hembra: 0xf2a12c,  // amber
+  campana: 0xe2b23a, // warm yellow
+  cencerro: 0xe8771c,// orange
+  jamblock: 0xc84a5a,// rose
+  cascara: 0xb5683b, // clay
   // Fallback technique lanes
-  open: 0x2979ff,
-  slap: 0xff1744,
-  mute: 0xd500f9,
-  bass: 0x00e676,
-  touch: 0x00e5ff,
-  rim: 0xffea00,
-  shell: 0xff9100,
-  bell: 0xffea00,
-  tip: 0x2979ff,
-  heel: 0xd500f9,
+  open: 0xf2a12c,    // amber
+  slap: 0xd54e3f,    // terracotta
+  mute: 0xc84a5a,    // rose
+  bass: 0xe0a43b,    // gold
+  touch: 0xe8771c,   // orange
+  rim: 0xe2b23a,     // warm yellow
+  shell: 0xb5683b,   // clay
+  bell: 0xe2b23a,    // warm yellow
+  tip: 0xf2a12c,     // amber
+  heel: 0xc84a5a,    // rose
 }
 
-export const DEFAULT_LANE_COLOR = 0x2979ff
+export const DEFAULT_LANE_COLOR = 0xf2a12c
 
 // ── Melodic lane palette (cycled by lane index for piano / violin / guitar) ──
+// Warm-family spectrum — distinguishable but cohesive with the brand.
 export const MELODIC_LANE_COLORS: number[] = [
-  0xff1744, // neon red
-  0xff9100, // neon orange
-  0xffea00, // neon yellow
-  0x00e676, // neon green
-  0x00e5ff, // neon cyan
-  0x2979ff, // neon blue
-  0xd500f9, // neon magenta
-  0xff4081, // neon pink
+  0xf2a12c, // amber
+  0xe0a43b, // gold
+  0xe8771c, // orange
+  0xd54e3f, // terracotta
+  0xcb3145, // deep red
+  0xb5683b, // clay
+  0xe2b23a, // warm yellow
+  0xc84a5a, // rose
 ]
 
 // ── Open-string note names for fretted instruments (low → high) ──
 export const VIOLIN_OPEN_STRINGS = ['G', 'D', 'A', 'E']
 export const GUITAR_OPEN_STRINGS = ['E', 'A', 'D', 'G', 'B', 'E']
 
-// ── Grade colors ──
+// ── Grade colors (warm; miss stays semantic red) ──
 export const GRADE_COLORS_HEX: Record<HitGrade, number> = {
-  perfect: 0x00e5ff,
-  good: 0x00e676,
-  ok: 0xffea00,
-  miss: 0xff1744,
+  perfect: 0xf2c572, // warm gold/cream
+  good: 0xf2a12c,    // amber
+  ok: 0xc9543c,      // terracotta
+  miss: 0xcb3145,    // deep red
 }
 
 export const GRADE_LABELS: Record<HitGrade, string> = {
@@ -85,13 +88,15 @@ export const PARTICLE_COUNTS: Record<HitGrade, number> = {
 export const PARTICLE_LIFETIME_SEC = 0.6
 export const COMBO_FIRE_THRESHOLD = 10
 
-// ── Highway visual (Beat Saber neon void) ──
-export const RAIL_COLOR = 0x2979ff
+// ── Highway visual (warm cinematic stage) ──
+export const RAIL_COLOR = 0xed8a2c        // amber (rail core / glow base)
+export const RAIL_COLOR_FAR = 0xc9543c    // terracotta (rail near the floor)
 export const RAIL_GLOW_ALPHA = 0.5
 export const GRID_LINE_ALPHA = 0.12
-export const GRID_LINE_COLOR = 0x2979ff
-export const BG_COLOR = 0x020208
-export const ROAD_COLOR = 0x06060e
+export const GRID_LINE_COLOR = 0xed8a2c   // amber beat rungs
+export const HIT_BAR_COLOR = 0xf7c878      // gold timing line
+export const BG_COLOR = 0x0b0908          // warm near-black void
+export const ROAD_COLOR = 0x140f0c        // warm dark runway
 export const ROAD_ALPHA = 0.9
 export const NOTE_MIN_SCALE = 0.3
 export const NOTE_MAX_SCALE = 1.0

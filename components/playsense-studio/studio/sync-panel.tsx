@@ -102,7 +102,10 @@ export function SyncPanel({
   const [scrollLeft, setScrollLeft] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [selected, setSelected] = useState<MarkerRef | 'tail' | null>(null);
-  const [dragAll, setDragAll] = useState(false);
+  // Region drag is the easy default: grabbing a measure shifts it + everything
+  // after. Toolbar toggle / Alt switches to single. Applies to measure-block
+  // drags and the waveform markers alike.
+  const [dragAll, setDragAll] = useState(true);
 
   // --- Peaks decode ---
   const [peaks, setPeaks] = useState<WaveformPeaks | null>(null);
@@ -381,10 +384,10 @@ export function SyncPanel({
           className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 transition ${
             dragAll ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'
           }`}
-          title="Drag a marker and everything after it moves together"
+          title="Drag a measure (or marker) and everything after it moves together. Hold Option to move just one."
         >
           <ChevronsLeftRight className="h-4 w-4" />
-          Drag all
+          Drag region
         </button>
         <button
           onClick={toggleExpandSelected}
@@ -478,6 +481,11 @@ export function SyncPanel({
             setPps(clamp(nextPps, MIN_PPS, MAX_PPS));
             setScrollLeft(clampScroll(nextScroll));
           }}
+          dragAll={dragAll}
+          onMeasureDrag={(measureNumber, videoTimeSeconds, mode) =>
+            handleMarkerDrag({ measureNumber, beatInMeasure: 1 }, videoTimeSeconds, mode)
+          }
+          onMeasureDragEnd={() => setMarkers((s) => reinterpolateUnedited(s))}
         />
         <ScrollBar
           scrollLeft={scrollLeft}
@@ -517,9 +525,11 @@ export function SyncPanel({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Drag the numbered markers onto the audio downbeats. Select a measure and choose “Show/hide
-        beats” to refine individual beats, or “Loop measure” to check alignment by ear. Markers can’t
-        cross their neighbors, so Publish always produces a valid sync.
+        Drag a measure’s handle (the bar above each staff) onto the audio — by default it slides that
+        measure and everything after it, so you can place the whole score at once and refine from
+        there. Hold <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] text-foreground">Option</kbd>{' '}
+        to move just one measure, or use the numbered waveform markers for fine per-beat tweaks.
+        Markers can’t cross their neighbors, so Publish always produces a valid sync.
       </p>
     </div>
   );

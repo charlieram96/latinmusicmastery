@@ -33,6 +33,7 @@ import {
   type SelectedEventRef,
 } from './editable-measure-strip';
 import { PianoRollView } from './piano-roll-view';
+import type { DragMode } from '@/components/playsense-studio/sync/waveform-canvas';
 
 type Articulation = 'staccato' | 'accent' | 'tenuto';
 
@@ -95,6 +96,12 @@ export interface IntegratedEditorProps {
   viewportWidth: number;
   /** Strip asks SyncPanel to zoom in and center a tiny measure. */
   onRequestZoom: (pixelsPerSecond: number, scrollLeftPx: number) => void;
+  /** Default region/single mode for measure-block drags (true = all-after). */
+  dragAll: boolean;
+  /** A measure block was dragged to reposition its downbeat in video time. */
+  onMeasureDrag: (measureNumber: number, videoTimeSeconds: number, mode: DragMode) => void;
+  /** A measure-block drag ended (commit / reinterpolate unedited beats). */
+  onMeasureDragEnd: () => void;
 }
 
 export const IntegratedEditor = memo(function IntegratedEditor({
@@ -105,6 +112,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   scrollLeftPx,
   viewportWidth,
   onRequestZoom,
+  dragAll,
+  onMeasureDrag,
+  onMeasureDragEnd,
 }: IntegratedEditorProps) {
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
   const [editorTab, setEditorTab] = useState<EditorTab>('staff');
@@ -333,6 +343,15 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       setSelected(ref);
     },
     [activeTrackIndex, dispatch]
+  );
+
+  // Strip works in measureIndex; the marker model keys on measureNumber.
+  const handleMeasureDrag = useCallback(
+    (measureIndex: number, videoTimeSeconds: number, mode: DragMode) => {
+      const measureNumber = stripItems[measureIndex]?.measureNumber ?? measureIndex + 1;
+      onMeasureDrag(measureNumber, videoTimeSeconds, mode);
+    },
+    [stripItems, onMeasureDrag]
   );
 
   const handleRequestZoomTo = useCallback(
@@ -697,6 +716,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           keyFifths={score.initialKeyFifths}
           isPercussion={percussion}
           percStrokes={percStrokes}
+          dragAll={dragAll}
+          onMeasureDrag={handleMeasureDrag}
+          onMeasureDragEnd={onMeasureDragEnd}
         />
       )}
       {editorTab === 'piano-roll' && (

@@ -26,15 +26,13 @@
 // from M7's authoring tools.
 
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type MouseEvent as ReactMouseEvent,
-  type TouchEvent as ReactTouchEvent,
 } from 'react';
-import { Columns2, Rows2, Rows3, MoveHorizontal } from 'lucide-react';
+import { Rows3, MoveHorizontal } from 'lucide-react';
+import { SplitWorkspace, OrientationToggle } from './split-workspace';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
 import {
@@ -261,72 +259,9 @@ export function PlaysenseStudioPlayer({
     wasPlayingRef.current = clock.isPlaying;
   }, [clock.isPlaying, clock.currentSeconds, clock.playbackRate, classItemId, readOnly]);
 
-  // ---- Split-layout resize state (only used when layout === 'split') ----
-  const [orient, setOrient] = useState<'row' | 'column'>('row');
+  // Notation pane staff layout — stacked staves vs. single horizontal scroll
+  // (only used when layout === 'split'). Pane geometry lives in SplitWorkspace.
   const [notationLayout, setNotationLayout] = useState<'wrapped' | 'scroll'>('wrapped');
-  const [split, setSplit] = useState(55); // % given to the video pane
-  const [workspaceH, setWorkspaceH] = useState(560);
-  const [knobDragging, setKnobDragging] = useState(false);
-  const workspaceRef = useRef<HTMLDivElement | null>(null);
-  const isRow = orient === 'row';
-
-  const SPLIT_MIN = 28;
-  const SPLIT_MAX = 72;
-  const H_MIN = 360;
-  const hMax = () =>
-    Math.round((typeof window !== 'undefined' ? window.innerHeight : 1000) * 0.92);
-
-  const resetSize = useCallback(() => {
-    setSplit(isRow ? 55 : 60);
-    setWorkspaceH(560);
-  }, [isRow]);
-
-  // Delta-based 2-axis drag: primary axis rebalances the split, the other axis
-  // changes the overall workspace height.
-  const startKnob = useCallback(
-    (e: ReactMouseEvent | ReactTouchEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const rect = workspaceRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const point = 'touches' in e ? e.touches[0] : e;
-      const sx = point.clientX;
-      const sy = point.clientY;
-      const start = { sx, sy, split, h: workspaceH, w: rect.width, ht: rect.height };
-      setKnobDragging(true);
-      document.body.style.userSelect = 'none';
-
-      const onMove = (ev: MouseEvent | TouchEvent) => {
-        const p = 'touches' in ev ? ev.touches[0] : ev;
-        const dx = p.clientX - start.sx;
-        const dy = p.clientY - start.sy;
-        if (isRow) {
-          setSplit(
-            Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, start.split + (dx / start.w) * 100))
-          );
-          setWorkspaceH(Math.max(H_MIN, Math.min(hMax(), start.h + dy)));
-        } else {
-          setSplit(
-            Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, start.split + (dy / start.ht) * 100))
-          );
-          setWorkspaceH(Math.max(H_MIN, Math.min(hMax(), start.h + dx)));
-        }
-      };
-      const onUp = () => {
-        setKnobDragging(false);
-        document.body.style.userSelect = '';
-        window.removeEventListener('mousemove', onMove);
-        window.removeEventListener('mouseup', onUp);
-        window.removeEventListener('touchmove', onMove);
-        window.removeEventListener('touchend', onUp);
-      };
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup', onUp);
-      window.addEventListener('touchmove', onMove, { passive: false });
-      window.addEventListener('touchend', onUp);
-    },
-    [isRow, split, workspaceH]
-  );
 
   // ---- Shared building blocks (reused by both layouts) ----
   const videoEl = (
@@ -447,101 +382,48 @@ export function PlaysenseStudioPlayer({
 
     return (
       <div className="space-y-4">
-        <div
-          ref={workspaceRef}
-          className="relative overflow-visible rounded-xl border border-border bg-black"
-          style={{ height: workspaceH }}
-        >
-          <div
-            className="flex h-full items-stretch"
-            style={{ flexDirection: isRow ? 'row' : 'column' }}
-          >
-            {/* Video pane */}
-            <div
-              className="flex min-h-0 min-w-0 flex-col bg-black"
-              style={{ flex: `${split} 1 0` }}
-            >
+        <SplitWorkspace
+          primary={
+            <>
               <div className="flex flex-1 items-center justify-center overflow-hidden p-3">
                 {videoEl}
               </div>
               <div className="flex-shrink-0 border-t border-border bg-card px-3 py-2">
                 {transportEl}
               </div>
-            </div>
-
-            {/* Notation pane */}
-            <div
-              className="flex min-h-0 min-w-0 flex-col bg-[hsl(0_0%_5.5%)]"
-              style={{
-                flex: `${100 - split} 1 0`,
-                borderLeft: isRow ? '1px solid hsl(var(--border))' : 'none',
-                borderTop: isRow ? 'none' : '1px solid hsl(var(--border))',
-              }}
-            >
-              <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-border bg-gradient-to-b from-[hsl(0_0%_8%)] to-[hsl(0_0%_6.5%)] px-4 py-2.5">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(30_85%_55%/0.7)]" />
-                    PlaySense Studio
-                  </div>
-                  <div className="mt-1 truncate font-heading text-[13.5px] font-bold tracking-tight">
-                    {score.title || 'Notation'}
-                  </div>
-                  <div className="mt-0.5 truncate text-[10.5px] font-medium tracking-[0.02em] text-muted-foreground">
-                    {meta}
-                  </div>
+            </>
+          }
+          secondaryHeader={({ orient, setOrient }) => (
+            <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-border bg-gradient-to-b from-[hsl(0_0%_8%)] to-[hsl(0_0%_6.5%)] px-4 py-2.5">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(30_85%_55%/0.7)]" />
+                  PlaySense Studio
                 </div>
-                <div className="flex flex-shrink-0 items-center gap-2">
-                  <NotationLayoutToggle
-                    value={notationLayout}
-                    onChange={setNotationLayout}
-                  />
-                  <OrientationToggle value={orient} onChange={setOrient} />
+                <div className="mt-1 truncate font-heading text-[13.5px] font-bold tracking-tight">
+                  {score.title || 'Notation'}
+                </div>
+                <div className="mt-0.5 truncate text-[10.5px] font-medium tracking-[0.02em] text-muted-foreground">
+                  {meta}
                 </div>
               </div>
-              <div className="min-h-0 flex-1 space-y-2 overflow-auto p-3">
-                {tracksEl}
-                {staffEl}
-                {scrubEl}
+              <div className="flex flex-shrink-0 items-center gap-2">
+                <NotationLayoutToggle
+                  value={notationLayout}
+                  onChange={setNotationLayout}
+                />
+                <OrientationToggle value={orient} onChange={setOrient} />
               </div>
             </div>
-          </div>
-
-          {/* Single diagonal corner knob — resizes split + height together. */}
-          <button
-            type="button"
-            onMouseDown={startKnob}
-            onTouchStart={startKnob}
-            onDoubleClick={resetSize}
-            aria-label="Resize"
-            title="Drag to adjust the split and height · double-click to reset"
-            className={[
-              'absolute z-[12] grid h-[30px] w-[30px] place-items-center rounded-full border bg-[hsl(0_0%_14%)] text-[hsl(0_0%_60%)] shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-colors hover:border-primary hover:bg-primary hover:text-white',
-              isRow ? 'cursor-[nwse-resize]' : 'cursor-[ns-resize]',
-              knobDragging ? 'border-primary bg-primary text-white' : 'border-white/10',
-            ].join(' ')}
-            style={
-              isRow
-                ? { left: `${split}%`, bottom: -15, transform: 'translateX(-50%)' }
-                : { top: `${split}%`, right: -15, transform: 'translateY(-50%)' }
-            }
-          >
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ transform: isRow ? 'rotate(45deg)' : 'rotate(90deg)' }}
-            >
-              <polyline points="7 5 2 12 7 19" />
-              <polyline points="17 5 22 12 17 19" />
-            </svg>
-          </button>
-        </div>
+          )}
+          secondary={
+            <div className="min-h-0 flex-1 space-y-2 overflow-auto p-3">
+              {tracksEl}
+              {staffEl}
+              {scrubEl}
+            </div>
+          }
+        />
 
         {clipsEl}
       </div>
@@ -558,50 +440,6 @@ export function PlaysenseStudioPlayer({
         {scrubEl}
       </div>
       {clipsEl}
-    </div>
-  );
-}
-
-// Icon-only orientation toggle: side-by-side ↔ stacked.
-function OrientationToggle({
-  value,
-  onChange,
-}: {
-  value: 'row' | 'column';
-  onChange: (v: 'row' | 'column') => void;
-}) {
-  return (
-    <div
-      role="group"
-      aria-label="Layout"
-      className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full border border-border bg-[hsl(0_0%_10%)] p-0.5"
-    >
-      <button
-        type="button"
-        onClick={() => onChange('row')}
-        title="Side by side"
-        aria-label="Side by side"
-        className={`grid h-[30px] w-8 place-items-center rounded-full transition-colors ${
-          value === 'row'
-            ? 'bg-primary/[0.16] text-primary'
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-      >
-        <Columns2 className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('column')}
-        title="Stacked"
-        aria-label="Stacked"
-        className={`grid h-[30px] w-8 place-items-center rounded-full transition-colors ${
-          value === 'column'
-            ? 'bg-primary/[0.16] text-primary'
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-      >
-        <Rows2 className="h-4 w-4" />
-      </button>
     </div>
   );
 }

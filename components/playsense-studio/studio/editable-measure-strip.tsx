@@ -17,6 +17,7 @@
 // separate absolute <div> overlay (pointer-events:none) that reads from the
 // Map on each render, so it tracks the right note across marker drags + zoom.
 
+import { GripHorizontal } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Accidental,
@@ -37,6 +38,7 @@ import {
   type VexEventDescriptor,
 } from '@/lib/playsense-studio/score-to-vexflow';
 import type { PercStroke } from '@/lib/playsense-studio/perc-strokes';
+import type { DragMode } from '@/components/playsense-studio/sync/waveform-canvas';
 
 export interface MeasureStripItem {
   /** 0-based index into the score track's measures (NOT the 1-based measureNumber). */
@@ -81,6 +83,18 @@ export interface EditableMeasureStripProps {
   isPercussion: boolean;
   /** Stroke palette for the active percussion track (null for pitched). */
   percStrokes: PercStroke[] | null;
+  /**
+   * Default mode for measure-block time drags. When true, dragging a measure's
+   * handle shifts it and every later measure (region drag); holding Alt/Option
+   * inverts to single-measure. When false the defaults swap.
+   */
+  dragAll: boolean;
+  /** A measure-block time drag began (downbeat repositioning). */
+  onMeasureDragStart?: (measureIndex: number) => void;
+  /** Live measure-block time drag: move this measure's downbeat to `videoTimeSeconds`. */
+  onMeasureDrag: (measureIndex: number, videoTimeSeconds: number, mode: DragMode) => void;
+  /** A measure-block time drag ended (commit / reinterpolate). */
+  onMeasureDragEnd?: () => void;
   height?: number;
 }
 
@@ -88,6 +102,8 @@ const DEFAULT_HEIGHT = 150;
 const STAVE_TOP = 14;
 const LEFT_PAD = 6;
 const RIGHT_PAD = 6;
+/** Height of the grab-handle band at the top of each measure block. */
+const HANDLE_BAND_PX = 14;
 /** Below this width a measure can't render notes legibly — show a zoom-in placeholder. */
 const MIN_RENDER_WIDTH = 46;
 /** Pixels per diatonic staff step (half of VexFlow's 10px line spacing). */
@@ -104,6 +120,16 @@ interface DragState {
   moved: boolean;
 }
 
+/** Horizontal drag of a measure block's grab handle (repositions its downbeat in time). */
+interface TimeDragState {
+  measureIndex: number;
+  pointerId: number;
+  /** Seconds between the grab point and the measure's start, so the block stays under the cursor. */
+  grabOffsetSeconds: number;
+  mode: DragMode;
+  moved: boolean;
+}
+
 export function EditableMeasureStrip({
   measures,
   pixelsPerSecond,
@@ -117,11 +143,16 @@ export function EditableMeasureStrip({
   keyFifths,
   isPercussion,
   percStrokes,
+  dragAll,
+  onMeasureDragStart,
+  onMeasureDrag,
+  onMeasureDragEnd,
   height = DEFAULT_HEIGHT,
 }: EditableMeasureStripProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [dragging, setDragging] = useState<DragState | null>(null);
+  const [timeDrag, setTimeDrag] = useState<TimeDragState | null>(null);
 
   // Captured bboxes per measureIndex, refreshed by MiniStave on each draw.
   // A version counter forces the overlay to re-render after bboxes update.
@@ -140,6 +171,59 @@ export function EditableMeasureStrip({
   }, []);
 
   const videoTimeToX = (t: number) => t * pixelsPerSecond - scrollLeftPx;
+  const xToVideoTime = (x: number) => (x + scrollLeftPx) / pixelsPerSecond;
+
+  // ---- Measure-block time drag (the grab handle band) ----------------------
+  // Default mode is region (all-after) when `dragAll` is on; Alt/Option inverts.
+  const containerX = (e: React.PointerEvent) => {
+    const container = containerRef.current;
+    if (!container) return 0;
+    return e.clientX - container.getBoundingClientRect().left;
+  };
+
+  const handleHandleDown = (e: React.PointerEvent, item: MeasureStripItem) => {
+    e.stopPropagation(); // don't let the note pointerdown on the wrapper fire
+    e.preventDefault();
+    const grabTime = xToVideoTime(containerX(e));
+    const mode: DragMode = dragAll !== e.altKey ? 'all-after' : 'single';
+    setTimeDrag({
+      measureIndex: item.measureIndex,
+      pointerId: e.pointerId,
+      grabOffsetSeconds: grabTime - item.startVideoTimeSeconds,
+      mode,
+      moved: false,
+    });
+    onMeasureDragStart?.(item.measureIndex);
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+  };
+
+  const handleHandleMove = (e: React.PointerEvent) => {
+    if (!timeDrag || timeDrag.pointerId !== e.pointerId) return;
+    e.preventDefault();
+    const newStart = Math.max(0, xToVideoTime(containerX(e)) - timeDrag.grabOffsetSeconds);
+    if (!timeDrag.moved) setTimeDrag({ ...timeDrag, moved: true });
+    onMeasureDrag(timeDrag.measureIndex, newStart, timeDrag.mode);
+  };
+
+  const handleHandleUp = (e: React.PointerEvent) => {
+    if (!timeDrag || timeDrag.pointerId !== e.pointerId) return;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+    if (timeDrag.moved) onMeasureDragEnd?.();
+    setTimeDrag(null);
+  };
+
+  const handleHandleCancel = (e: React.PointerEvent) => {
+    if (timeDrag?.pointerId !== e.pointerId) return;
+    setTimeDrag(null);
+  };
 
   const handleHitsReady = useCallback((measureIndex: number, hits: MeasureHit[] | null) => {
     if (hits === null) hitsByMeasure.current.delete(measureIndex);
@@ -331,6 +415,7 @@ export function EditableMeasureStrip({
           );
         }
 
+        const isTimeDragging = timeDrag?.measureIndex === item.measureIndex;
         return (
           <div
             key={item.measureIndex}
@@ -341,6 +426,25 @@ export function EditableMeasureStrip({
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerCancel}
           >
+            {/* Grab-handle band: drag horizontally to reposition this measure in
+                time. Sits above the staff and stops propagation so note
+                selection / pitch-drag on the staff below is unaffected. */}
+            <div
+              className={`absolute inset-x-0 top-0 z-10 flex items-center gap-1 rounded-t-sm px-1 text-[10px] transition ${
+                isTimeDragging
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted/70 text-muted-foreground hover:bg-primary/15 hover:text-foreground'
+              }`}
+              style={{ height: HANDLE_BAND_PX, cursor: isTimeDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+              onPointerDown={(e) => handleHandleDown(e, item)}
+              onPointerMove={handleHandleMove}
+              onPointerUp={handleHandleUp}
+              onPointerCancel={handleHandleCancel}
+              title="Drag to move this measure (and everything after it). Hold Option for just this measure."
+            >
+              <GripHorizontal className="h-2.5 w-2.5 shrink-0 opacity-70" />
+              <span className="tabular-nums leading-none">{item.measureNumber}</span>
+            </div>
             <MiniStave
               measureIndex={item.measureIndex}
               events={item.events}
@@ -351,10 +455,6 @@ export function EditableMeasureStrip({
               clef={item.clef}
               onHitsReady={handleHitsReady}
             />
-            {/* Small measure-number chip in the top-left corner. */}
-            <span className="pointer-events-none absolute left-1 top-0 rounded-br bg-muted/70 px-1 text-[10px] text-muted-foreground">
-              {item.measureNumber}
-            </span>
           </div>
         );
       })}

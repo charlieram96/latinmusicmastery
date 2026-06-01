@@ -18,6 +18,10 @@ interface RhythmHighwayProps {
   eventResults: Array<{ eventIndex: number; grade: HitGrade }>
   /** Optional dim layer alpha (0..1) — used while a modal overlay is on top */
   dimAlpha?: number
+  /** Render the in-canvas stats HUD. Default true; pass false when DOM chrome owns stats. */
+  showHud?: boolean
+  /** Hide the built-in countdown overlay (e.g. when the immersive stage shows its own). */
+  hideCountdown?: boolean
 }
 
 /**
@@ -37,6 +41,8 @@ export function RhythmHighway({
   eventResultsLength,
   eventResults,
   dimAlpha = 0,
+  showHud = true,
+  hideCountdown = false,
 }: RhythmHighwayProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const appRef = useRef<HighwayApp | null>(null)
@@ -52,7 +58,7 @@ export function RhythmHighway({
 
     prevEventCountRef.current = 0
 
-    HighwayApp.create(container).then((instance) => {
+    HighwayApp.create(container, { showHud }).then((instance) => {
       if (!mounted) {
         instance.destroy()
         return
@@ -71,7 +77,7 @@ export function RhythmHighway({
         appRef.current = null
       }
     }
-  }, [exercise])
+  }, [exercise, showHud])
 
   // Sync reactive values to PixiJS refs every render — paused gates note scrolling
   useEffect(() => {
@@ -134,7 +140,7 @@ export function RhythmHighway({
 
       {/* Countdown overlay — drawn on top of the canvas */}
       <AnimatePresence>
-        {sessionState === 'countdown' && (
+        {sessionState === 'countdown' && !hideCountdown && (
           <motion.div
             key="countdown"
             initial={{ opacity: 0 }}
@@ -154,7 +160,7 @@ export function RhythmHighway({
                   style={{
                     color: 'white',
                     textShadow:
-                      '0 0 40px rgba(41,121,255,0.6), 0 0 100px rgba(41,121,255,0.3)',
+                      '0 0 40px rgba(237,138,44,0.6), 0 0 100px rgba(213,78,63,0.3)',
                   }}
                 >
                   {countdownBeat || '...'}
