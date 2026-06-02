@@ -135,6 +135,27 @@ export const TOLERANCE_BY_DIFFICULTY: Record<Difficulty, ToleranceWindows> = {
   advanced: { perfect: 20, good: 40, ok: 65 },
 }
 
+/**
+ * Pitch tolerance in cents per difficulty. A detected note within this many
+ * cents of the expected pitch counts as correct, so a slightly flat/sharp
+ * player is not zeroed out. 100 cents = one semitone.
+ */
+export const PITCH_TOLERANCE_CENTS: Record<Difficulty, number> = {
+  beginner: 80,
+  intermediate: 55,
+  advanced: 35,
+}
+
+/**
+ * When true, pitch is matched by pitch-class (ignoring octave) so common
+ * octave-detection errors don't zero an otherwise-correct note.
+ */
+export const PITCH_OCTAVE_AGNOSTIC: Record<Difficulty, boolean> = {
+  beginner: true,
+  intermediate: true,
+  advanced: false,
+}
+
 export const GRADE_POINTS: Record<HitGrade, number> = {
   perfect: 100,
   good: 70,

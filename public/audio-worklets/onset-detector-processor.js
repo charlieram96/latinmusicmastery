@@ -239,24 +239,46 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
       correlations[lag] = denom > 0 ? sum / denom : 0
     }
 
-    // Find first peak above 0.9 confidence
+    // Find the strongest local peak above a confidence threshold.
+    // (Kept in sync with autoCorrelate() in hooks/use-pitch-detection.ts.)
+    const CONFIDENCE_THRESHOLD = 0.8
     let bestLag = -1
-    let bestCorr = 0.9
+    let bestCorr = CONFIDENCE_THRESHOLD
 
     for (let lag = minLag; lag <= maxLag; lag++) {
-      if (correlations[lag] > bestCorr) {
-        if (
-          (lag === minLag || correlations[lag] > correlations[lag - 1]) &&
-          (lag === maxLag || correlations[lag] >= correlations[lag + 1])
-        ) {
-          bestCorr = correlations[lag]
+      const c = correlations[lag]
+      if (c > bestCorr) {
+        const isPeak =
+          (lag === minLag || c > correlations[lag - 1]) &&
+          (lag === maxLag || c >= correlations[lag + 1])
+        if (isPeak) {
+          bestCorr = c
           bestLag = lag
-          break // Take first peak above threshold
         }
       }
     }
 
     if (bestLag === -1) return -1
+
+    // Octave-down sanity check: prefer the true fundamental when a comparably
+    // strong peak exists near twice the lag (one octave lower).
+    const OCTAVE_RATIO = 0.85
+    const octaveLag = bestLag * 2
+    if (octaveLag <= maxLag) {
+      let subLag = -1
+      let subCorr = 0
+      const lo = Math.max(minLag, octaveLag - 2)
+      const hi = Math.min(maxLag, octaveLag + 2)
+      for (let lag = lo; lag <= hi; lag++) {
+        if (correlations[lag] > subCorr) {
+          subCorr = correlations[lag]
+          subLag = lag
+        }
+      }
+      if (subLag !== -1 && subCorr >= bestCorr * OCTAVE_RATIO) {
+        bestLag = subLag
+      }
+    }
 
     // Parabolic interpolation for sub-sample accuracy
     const prev = bestLag > 0 ? correlations[bestLag - 1] : correlations[bestLag]

@@ -8,7 +8,26 @@ import type {
   AttemptStats,
   ToleranceWindows,
 } from './types'
-import { TOLERANCE_BY_DIFFICULTY, GRADE_POINTS } from './types'
+import {
+  TOLERANCE_BY_DIFFICULTY,
+  GRADE_POINTS,
+  PITCH_TOLERANCE_CENTS,
+  PITCH_OCTAVE_AGNOSTIC,
+} from './types'
+
+/** Lower a hit grade by one level (perfect → good → ok → miss). */
+function downgradeGrade(grade: HitGrade): HitGrade {
+  switch (grade) {
+    case 'perfect':
+      return 'good'
+    case 'good':
+      return 'ok'
+    case 'ok':
+      return 'miss'
+    default:
+      return 'miss'
+  }
+}
 
 export interface ExpectedEvent {
   eventIndex: number
@@ -185,25 +204,44 @@ export function gradeSingleOnset(
   let grade = gradeHit(Math.abs(offsetMs), effectiveTolerance)
   const timing: TimingFeedback = offsetMs < -5 ? 'early' : offsetMs > 5 ? 'late' : 'on_time'
 
-  // Pitch scoring for pitched instruments
+  // Pitch scoring for pitched instruments — tolerant by cents + (optionally)
+  // octave-agnostic, so a slightly flat/sharp or octave-confused note is not
+  // automatically zeroed.
   let pitchCorrect: boolean | null = null
   let pitchCents: number | null = null
   if (instrumentCategory === 'pitched' && matched.expectedPitch != null) {
-    if (detectedMidiNote != null) {
-      pitchCorrect = detectedMidiNote === matched.expectedPitch
-      if (detectedFrequency != null) {
-        const expectedFreq = 440 * Math.pow(2, (matched.expectedPitch - 69) / 12)
-        pitchCents = Math.round(1200 * Math.log2(detectedFrequency / expectedFreq))
-        pitchCents = Math.max(-50, Math.min(50, pitchCents))
-      }
-      // Wrong note is always a miss
-      if (!pitchCorrect) {
-        grade = 'miss'
-      }
+    const toleranceCents = PITCH_TOLERANCE_CENTS[difficulty]
+    const octaveAgnostic = PITCH_OCTAVE_AGNOSTIC[difficulty]
+
+    if (detectedFrequency != null) {
+      const expectedFreq = 440 * Math.pow(2, (matched.expectedPitch - 69) / 12)
+      const rawCents = 1200 * Math.log2(detectedFrequency / expectedFreq)
+
+      // Display value: deviation to the nearest semitone, clamped to ±50 cents.
+      const semitoneCents = rawCents - 100 * Math.round(rawCents / 100)
+      pitchCents = Math.max(-50, Math.min(50, Math.round(semitoneCents)))
+
+      // Deviation to the nearest *matching* pitch. When octave-agnostic, fold
+      // out whole octaves so an octave error reads as in-tune, not wildly off.
+      const trueCents = octaveAgnostic
+        ? rawCents - 1200 * Math.round(rawCents / 1200)
+        : rawCents
+      pitchCorrect = Math.abs(trueCents) <= toleranceCents
+    } else if (detectedMidiNote != null) {
+      // No frequency available — fall back to MIDI comparison.
+      pitchCorrect = octaveAgnostic
+        ? detectedMidiNote % 12 === matched.expectedPitch % 12
+        : detectedMidiNote === matched.expectedPitch
     } else {
-      // Pitch expected but not detected — treat as miss
+      // Pitch expected but nothing detected — treat as a miss.
       pitchCorrect = false
       grade = 'miss'
+    }
+
+    // A clearly-wrong pitch downgrades the hit one level rather than zeroing a
+    // well-timed note. (A note with no detected pitch is already a miss above.)
+    if (pitchCorrect === false && (detectedFrequency != null || detectedMidiNote != null)) {
+      grade = downgradeGrade(grade)
     }
   }
 
