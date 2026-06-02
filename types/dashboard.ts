@@ -20,6 +20,9 @@ export interface CourseProgress {
   course: DashboardCourse
   total: number
   completed: number
+  teacherName: string | null
+  pct: number
+  nextLabel: string
 }
 
 export interface ContinueLearningData {
@@ -28,6 +31,20 @@ export interface ContinueLearningData {
   courseTitle: string
   courseThumbnail: string | null
   classId: string | null
+  teacherName: string | null
+  nextLessonTitle: string | null
+  pct: number
+}
+
+export interface WeekDay {
+  label: string
+  practiced: boolean
+  today: boolean
+}
+
+export interface WeekStripProps {
+  days: WeekDay[]
+  streak: number
 }
 
 export interface WelcomeSummaryProps {

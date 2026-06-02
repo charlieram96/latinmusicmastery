@@ -11,6 +11,7 @@ import { RecentActivity } from '@/components/dashboard/recent-activity'
 import { SubscriptionCta } from '@/components/dashboard/subscription-cta'
 import { DailyPracticeTip } from '@/components/dashboard/daily-practice-tip'
 import { FeaturedTeacherSpotlight } from '@/components/dashboard/featured-teacher-spotlight'
+import { WeekStrip } from '@/components/dashboard/week-strip'
 import type {
   ContinueLearningData,
   CourseProgress,
@@ -59,10 +60,14 @@ export default async function DashboardPage() {
           title,
           slug,
           thumbnail_url,
+          teacher:teachers(name),
           course_sections(
             id,
+            order_index,
             classes(
               id,
+              title,
+              order_index,
               items:class_items(id)
             )
           )
@@ -169,7 +174,48 @@ export default async function DashboardPage() {
     (p) => p.completed && p.completed_at && p.completed_at >= startOfWeekISO
   ).length
 
+  // ── This-week practice strip (Sun→Sat of the current week) ──────
+  const practicedDates = new Set<string>()
+  progressData.forEach((p) => {
+    if (p.completed && p.completed_at) {
+      practicedDates.add(new Date(p.completed_at).toISOString().split('T')[0])
+    }
+  })
+  const todayISO = now.toISOString().split('T')[0]
+  const dayLetters = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(startOfWeek)
+    d.setDate(startOfWeek.getDate() + i)
+    const iso = d.toISOString().split('T')[0]
+    return {
+      label: dayLetters[i],
+      practiced: practicedDates.has(iso),
+      today: iso === todayISO,
+    }
+  })
+
   // ── My Courses progress ─────────────────────────────────────────
+  // Finds the title of the first class with an incomplete item (ordered by
+  // section then class), or a "done"/"not started" label.
+  function nextClassLabel(course: any, completedCount: number): string {
+    if (completedCount === 0) return 'Not started'
+    const sections = [...(course.course_sections || [])].sort(
+      (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+    )
+    for (const section of sections) {
+      const classes = [...(section.classes || [])].sort(
+        (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+      )
+      for (const cls of classes) {
+        const hasIncomplete = (cls.items || []).some(
+          (it: any) => !completedItemIds.has(it.id)
+        )
+        if (hasIncomplete) return cls.title || 'Continue'
+      }
+    }
+    return 'Completed'
+  }
+
   const myCoursesArray: CourseProgress[] = []
   for (const enrollment of enrollments || []) {
     const course = enrollment.course as any
@@ -178,6 +224,7 @@ export default async function DashboardPage() {
     const completedCount = itemIds.filter((id) =>
       completedItemIds.has(id)
     ).length
+    const total = itemIds.length
     myCoursesArray.push({
       course: {
         id: course.id,
@@ -185,8 +232,11 @@ export default async function DashboardPage() {
         slug: course.slug,
         thumbnail_url: course.thumbnail_url,
       },
-      total: itemIds.length,
+      total,
       completed: completedCount,
+      teacherName: course.teacher?.name || null,
+      pct: total > 0 ? Math.round((completedCount / total) * 100) : 0,
+      nextLabel: nextClassLabel(course, completedCount),
     })
   }
 
@@ -210,12 +260,22 @@ export default async function DashboardPage() {
           for (const cls of section.classes || []) {
             for (const item of cls.items || []) {
               if (item.id === recentItemId) {
+                const itemIds = courseItemMap.get(course.id) || []
+                const completedCount = itemIds.filter((id) =>
+                  completedItemIds.has(id)
+                ).length
                 continueData = {
                   courseId: course.id,
                   courseSlug: course.slug,
                   courseTitle: course.title,
                   courseThumbnail: course.thumbnail_url,
                   classId: cls.id,
+                  teacherName: course.teacher?.name || null,
+                  nextLessonTitle: cls.title || null,
+                  pct:
+                    itemIds.length > 0
+                      ? Math.round((completedCount / itemIds.length) * 100)
+                      : 0,
                 }
               }
             }
@@ -383,6 +443,9 @@ export default async function DashboardPage() {
     )
     .slice(0, 8)
 
+  // New user with nothing in progress → empty-state layout.
+  const isEmpty = myCoursesArray.length === 0
+
   // ── Render ──────────────────────────────────────────────────────
   return (
     <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-6">
@@ -395,7 +458,7 @@ export default async function DashboardPage() {
           itemsCompletedThisWeek={itemsCompletedThisWeek}
         />
 
-        {/* 2. Continue Learning Hero */}
+        {/* 2. Continue Learning — resume bar / empty bar */}
         <ContinueLearningHero continueData={continueData} />
 
         {/* 3. Quick Actions — mobile only (grid variant) */}
@@ -403,13 +466,15 @@ export default async function DashboardPage() {
           <QuickActions variant="grid" />
         </div>
 
-        {/* 4. My Courses */}
+        {/* 4. My Courses (hidden when empty) */}
         <MyCoursesSection courses={myCoursesArray} />
 
         {/* 5. Learning Milestones — mobile only (cards variant) */}
-        <div className="lg:hidden">
-          <LearningMilestones milestones={milestones} variant="cards" />
-        </div>
+        {!isEmpty && (
+          <div className="lg:hidden">
+            <LearningMilestones milestones={milestones} variant="cards" />
+          </div>
+        )}
 
         {/* 6. Recommended + Featured */}
         <RecommendedFeatured
@@ -420,9 +485,11 @@ export default async function DashboardPage() {
         />
 
         {/* 7. Recent Activity — mobile only */}
-        <div className="lg:hidden">
-          <RecentActivity activities={activities} />
-        </div>
+        {!isEmpty && (
+          <div className="lg:hidden">
+            <RecentActivity activities={activities} />
+          </div>
+        )}
 
         {/* 8. Subscription CTA — mobile only */}
         <div className="lg:hidden">
@@ -433,28 +500,32 @@ export default async function DashboardPage() {
       {/* ── Sidebar (desktop only) ─────────────────────────────── */}
       <aside className="hidden lg:block">
         <div className="space-y-6">
-          {/* Quick Actions — list variant */}
-          <QuickActions variant="list" />
-
-          {/* Daily Practice Tip */}
-          <DailyPracticeTip />
-
-          {/* Learning Milestones — compact variant */}
-          <LearningMilestones milestones={milestones} variant="compact" />
-
-          {/* Featured Teacher Spotlight */}
-          {featuredTeacher && (
-            <FeaturedTeacherSpotlight teacher={featuredTeacher} />
+          {isEmpty ? (
+            <>
+              {/* New-user rail: orientation over stats */}
+              <QuickActions variant="list" />
+              <DailyPracticeTip />
+              {featuredTeacher && (
+                <FeaturedTeacherSpotlight teacher={featuredTeacher} />
+              )}
+              <SubscriptionCta
+                hasSubscription={!!subscription?.status}
+                variant="sidebar"
+              />
+            </>
+          ) : (
+            <>
+              {/* Returning-learner rail: momentum first */}
+              <WeekStrip days={weekDays} streak={streak} />
+              <QuickActions variant="list" />
+              <LearningMilestones milestones={milestones} variant="compact" />
+              <RecentActivity activities={activities} maxItems={5} />
+              <SubscriptionCta
+                hasSubscription={!!subscription?.status}
+                variant="sidebar"
+              />
+            </>
           )}
-
-          {/* Recent Activity — 5 items */}
-          <RecentActivity activities={activities} maxItems={5} />
-
-          {/* Subscription CTA — sidebar variant */}
-          <SubscriptionCta
-            hasSubscription={!!subscription?.status}
-            variant="sidebar"
-          />
         </div>
       </aside>
     </div>

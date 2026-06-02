@@ -4,9 +4,13 @@ import { useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { BookOpen, Users, ArrowRight, Sparkles } from 'lucide-react'
-import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/dashboard/animated-section'
+import { Users, ArrowRight, Sparkles } from 'lucide-react'
+import {
+  AnimatedSection,
+  StaggerContainer,
+  StaggerItem,
+} from '@/components/dashboard/animated-section'
+import { CourseCoverCard } from '@/components/dashboard/course-cover-card'
 import type { DashboardCourse, FeaturedTeacher } from '@/types/dashboard'
 import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
 
@@ -21,6 +25,21 @@ interface RecommendedFeaturedProps {
   allCourses: DashboardCourse[]
 }
 
+/** Difficulty → badge styling (green / amber / red), matching the design. */
+function difficultyBadge(
+  difficulty?: string | null
+): { text: string; className: string } | undefined {
+  if (!difficulty) return undefined
+  const d = difficulty.toLowerCase()
+  if (d === 'beginner')
+    return { text: 'Beginner', className: 'bg-emerald-500/85 text-white' }
+  if (d === 'intermediate')
+    return { text: 'Intermediate', className: 'bg-amber-500/90 text-neutral-900' }
+  if (d === 'advanced')
+    return { text: 'Advanced', className: 'bg-red-500/85 text-white' }
+  return { text: difficulty, className: 'bg-secondary text-foreground' }
+}
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
@@ -29,7 +48,6 @@ export function RecommendedFeatured({
   recommendedCourses,
   newCourseIds,
   featuredTeacher,
-  allCourses,
 }: RecommendedFeaturedProps) {
   const newIds = useMemo(() => new Set(newCourseIds), [newCourseIds])
 
@@ -38,52 +56,9 @@ export function RecommendedFeatured({
   return (
     <AnimatedSection delay={0.25}>
       <div className="space-y-6">
-        {/* ── Compact Browse Banner ─────────────────────────────── */}
-        <Link
-          href="/dashboard/courses"
-          className="group block rounded-2xl overflow-hidden"
-        >
-          <div className="relative bg-gradient-to-r from-terracotta/30 via-amber-900/20 to-gold/20 px-5 py-6 flex items-center justify-between gap-4">
-            {/* Decorative SVG wave pattern */}
-            <svg
-              className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.07]"
-              preserveAspectRatio="none"
-              viewBox="0 0 400 100"
-            >
-              <path
-                d="M0,60 C50,30 100,80 150,50 C200,20 250,70 300,40 C350,10 400,60 400,60 L400,100 L0,100 Z"
-                fill="currentColor"
-                className="text-gold"
-              />
-              <path
-                d="M0,75 C60,50 120,90 180,65 C240,40 300,80 400,55 L400,100 L0,100 Z"
-                fill="currentColor"
-                className="text-terracotta"
-              />
-            </svg>
-            <div className="relative">
-              <h3 className="text-lg font-heading font-semibold text-foreground">
-                Start Your Journey
-              </h3>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Explore our full library of Latin music courses
-              </p>
-            </div>
-            <Button
-              size="sm"
-              className="relative bg-terracotta hover:bg-terracotta/90 text-white flex-shrink-0"
-              tabIndex={-1}
-            >
-              Browse Courses
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </Link>
-
-        {/* ── Featured Teacher Spotlight (mobile only — desktop shows in sidebar) */}
+        {/* ── Featured Teacher (mobile only — desktop shows in sidebar) ── */}
         {featuredTeacher && (
-          <div className="warm-surface rounded-2xl border-l-4 border-l-terracotta p-4 sm:p-5 flex items-center gap-4 lg:hidden">
-            {/* Photo */}
+          <div className="flex items-center gap-4 rounded-2xl border-l-4 border-l-terracotta border-y border-r border-border bg-card p-4 sm:p-5 lg:hidden">
             <div className="flex-shrink-0">
               {featuredTeacher.image_url ? (
                 <Image
@@ -91,25 +66,24 @@ export function RecommendedFeatured({
                   alt={featuredTeacher.name}
                   width={80}
                   height={80}
-                  className="rounded-full w-16 h-16 sm:w-20 sm:h-20 object-cover"
+                  className="h-16 w-16 rounded-full object-cover sm:h-20 sm:w-20"
                 />
               ) : (
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-terracotta/20 flex items-center justify-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-terracotta/20 sm:h-20 sm:w-20">
                   <Users className="h-6 w-6 text-terracotta" />
                 </div>
               )}
             </div>
 
-            {/* Info */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-wrap items-center gap-2">
                 <h4 className="text-base font-semibold text-foreground">
                   {featuredTeacher.name}
                 </h4>
                 {featuredTeacher.instrument && (
                   <Badge
                     variant="outline"
-                    className="text-[10px] px-1.5 py-0 h-5 bg-gold/10 text-gold border-gold/30"
+                    className="h-5 border-gold/30 bg-gold/10 px-1.5 py-0 text-[10px] text-gold"
                   >
                     {featuredTeacher.instrument}
                   </Badge>
@@ -118,15 +92,14 @@ export function RecommendedFeatured({
               {(() => {
                 const bioPreview = tiptapToPlainText(featuredTeacher.bio)
                 return bioPreview ? (
-                  <p className="mt-1 text-sm text-muted-foreground leading-snug line-clamp-2">
+                  <p className="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground">
                     {bioPreview}
                   </p>
                 ) : null
               })()}
             </div>
 
-            {/* Sparkle accent */}
-            <Sparkles className="hidden sm:block h-5 w-5 text-gold/40 flex-shrink-0" />
+            <Sparkles className="hidden h-5 w-5 flex-shrink-0 text-gold/40 sm:block" />
           </div>
         )}
 
@@ -134,78 +107,38 @@ export function RecommendedFeatured({
         {displayed.length > 0 && (
           <div className="space-y-4">
             {/* Section header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-gold" />
-                <h3 className="text-lg font-heading font-semibold text-foreground">
-                  Recommended For You
-                </h3>
-              </div>
-              <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
-                <Link href="/dashboard/courses">
-                  View All
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </Link>
-              </Button>
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="inline-flex items-center gap-2.5 font-heading text-lg font-bold tracking-tight text-foreground">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Recommended for you
+              </h2>
+              <Link
+                href="/dashboard/courses"
+                className="inline-flex items-center gap-1 text-[13px] font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                View all
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
 
             {/* Course grid */}
             <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {displayed.map((course) => (
-                <StaggerItem key={course.id}>
-                  <Link href={`/dashboard/course/${course.slug}`} className="group block">
-                    <div className="warm-surface rounded-2xl overflow-hidden transition-all duration-200 hover:brightness-110 hover:warm-glow">
-                      {/* Thumbnail */}
-                      <div className="relative aspect-[4/3] bg-muted">
-                        {course.thumbnail_url ? (
-                          <Image
-                            src={course.thumbnail_url}
-                            alt={course.title}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <BookOpen className="h-8 w-8 text-muted-foreground/40" />
-                          </div>
-                        )}
-
-                        {/* NEW badge */}
-                        {newIds.has(course.id) && (
-                          <span className="absolute top-2 right-2 bg-gold text-[#161210] text-[10px] font-bold uppercase px-2 py-0.5 rounded-md shadow-sm">
-                            NEW
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      <div className="p-3 space-y-1.5">
-                        <h4 className="text-sm font-medium text-foreground leading-tight line-clamp-2 group-hover:text-gold transition-colors">
-                          {course.title}
-                        </h4>
-
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {course.musical_style?.name && (
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] px-1.5 py-0 h-5 bg-terracotta/10 text-terracotta border-terracotta/30"
-                            >
-                              {course.musical_style.name}
-                            </Badge>
-                          )}
-                        </div>
-
-                        {course.teacher?.name && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {course.teacher.name}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                </StaggerItem>
-              ))}
+              {displayed.map((course) => {
+                const badge = newIds.has(course.id)
+                  ? { text: 'New', className: 'bg-gold text-[#161210]' }
+                  : difficultyBadge(course.difficulty)
+                return (
+                  <StaggerItem key={course.id}>
+                    <CourseCoverCard
+                      href={`/dashboard/course/${course.slug}`}
+                      title={course.title}
+                      thumbnailUrl={course.thumbnail_url}
+                      teacherName={course.teacher?.name}
+                      badge={badge}
+                    />
+                  </StaggerItem>
+                )
+              })}
             </StaggerContainer>
           </div>
         )}

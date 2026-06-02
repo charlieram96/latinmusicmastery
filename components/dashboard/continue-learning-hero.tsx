@@ -1,46 +1,36 @@
 'use client'
 
 import Link from 'next/link'
-import { Play, ArrowRight } from 'lucide-react'
+import { Play, ArrowRight, Compass } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import { AnimatedSection } from '@/components/dashboard/animated-section'
 import type { ContinueLearningHeroProps } from '@/types/dashboard'
 
 export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps) {
+  /* ── New user / nothing in progress → quiet "pick a course" bar ── */
   if (!continueData) {
     return (
       <AnimatedSection delay={0.05}>
-        <div className="relative overflow-hidden rounded-2xl min-h-[240px] flex flex-col justify-center items-center text-center">
-          {/* Video background */}
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover"
-            src="/videos/band-performing.mp4"
-          />
-          {/* Dark overlay for text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30" />
-
-          <div className="relative z-10 flex flex-col items-center gap-4 px-6 py-10">
-            <div className="rounded-full bg-white/10 backdrop-blur-md p-4 ring-1 ring-white/20">
-              <Play className="h-8 w-8 text-white" />
+        <div className="flex flex-col items-start gap-4 rounded-2xl border border-dashed border-border bg-card p-5 sm:flex-row sm:items-center sm:gap-5">
+          <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary/12">
+            <Compass className="h-5 w-5 text-primary" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[15px] font-semibold text-foreground">
+              Pick your first course
             </div>
-            <h3 className="text-xl sm:text-2xl font-heading font-semibold text-white">
-              Start your first course
-            </h3>
-            <p className="text-sm text-white/80 max-w-md">
-              Explore our library of Latin music courses and begin your journey today.
+            <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">
+              Choose an instrument and a genre to start your journey — your
+              progress saves automatically.
             </p>
-            <Button asChild className="mt-2 bg-white text-neutral-900 hover:bg-white/90 hover:shadow-lg hover:-translate-y-0.5 transition-all">
-              <Link href="/dashboard/courses">
-                Browse Courses
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
-            </Button>
           </div>
+          <Button asChild className="flex-shrink-0 rounded-full">
+            <Link href="/dashboard/courses">
+              Browse courses
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </AnimatedSection>
     )
@@ -50,49 +40,60 @@ export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps
     ? `/dashboard/course/${continueData.courseSlug}/class/${continueData.classId}`
     : `/dashboard/course/${continueData.courseSlug}`
 
+  const meta = [continueData.nextLessonTitle, continueData.teacherName]
+    .filter(Boolean)
+    .join(' · ')
+
+  /* ── Returning learner → horizontal resume bar ── */
   return (
     <AnimatedSection delay={0.05}>
       <Link href={resumeHref} className="group block">
-        <div className="relative overflow-hidden rounded-2xl min-h-[180px] flex flex-col justify-end warm-glow">
-          {/* Thumbnail background */}
-          {continueData.courseThumbnail ? (
-            <img
-              src={continueData.courseThumbnail}
-              alt={continueData.courseTitle}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-warm-surface" />
-          )}
+        <div className="flex flex-col overflow-hidden rounded-[18px] border border-border bg-card transition-colors hover:border-primary/35 sm:flex-row">
+          {/* Cover art */}
+          <div className="relative h-44 w-full flex-shrink-0 overflow-hidden bg-black sm:h-auto sm:w-[220px]">
+            {continueData.courseThumbnail ? (
+              <img
+                src={continueData.courseThumbnail}
+                alt={continueData.courseTitle}
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-terracotta/15" />
+            )}
+            {/* Right-fading scrim blends cover into the card on desktop */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-black/5 sm:bg-gradient-to-r sm:from-transparent sm:via-transparent sm:to-card" />
+          </div>
 
-          {/* Warm gradient overlay with amber/terracotta tint */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-br from-terracotta/15 via-transparent to-amber-900/20 mix-blend-normal" />
-
-          {/* Content */}
-          <div className="relative z-10 p-4 sm:p-5 flex flex-col gap-3">
-            {/* Badge */}
-            <Badge className="w-fit border-amber-500/30 bg-amber-500/15 text-amber-300 backdrop-blur-sm">
-              Continue Learning
-            </Badge>
-
-            {/* Title */}
-            <h3 className="text-xl sm:text-2xl font-heading font-semibold text-white leading-tight line-clamp-2">
+          {/* Body */}
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-5 py-5 sm:px-6">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+              Continue learning
+            </span>
+            <h3 className="mt-1 line-clamp-2 font-heading text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl">
               {continueData.courseTitle}
             </h3>
+            {meta && (
+              <div className="mt-1 truncate text-[13.5px] text-muted-foreground">
+                {meta}
+              </div>
+            )}
 
-            {/* Resume button */}
-            <Button
-              size="lg"
-              className="w-fit mt-1 bg-terracotta hover:bg-terracotta/90 text-white gap-2 group/btn"
-              tabIndex={-1}
-            >
-              <span className="relative flex items-center justify-center h-6 w-6">
-                <span className="absolute inset-0 rounded-full ring-2 ring-white/20" />
-                <Play className="relative h-4 w-4 fill-white text-white" />
-              </span>
-              Resume Lesson
-            </Button>
+            <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+              <Button className="w-fit flex-shrink-0 rounded-full" tabIndex={-1}>
+                <Play className="h-4 w-4 fill-current" />
+                Resume lesson
+              </Button>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1.5 flex items-center justify-between text-[11.5px] tabular-nums text-muted-foreground">
+                  <span>Course progress</span>
+                  <span>{continueData.pct}%</span>
+                </div>
+                <Progress
+                  value={continueData.pct}
+                  className="h-2 bg-primary/15 [&>[data-slot=progress-indicator]]:bg-gradient-to-r [&>[data-slot=progress-indicator]]:from-amber-500 [&>[data-slot=progress-indicator]]:to-gold"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </Link>

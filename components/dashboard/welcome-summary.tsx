@@ -2,6 +2,7 @@
 
 import { Flame, CheckCircle2 } from 'lucide-react'
 import { AnimatedSection } from '@/components/dashboard/animated-section'
+import GradientText from '@/components/marketing/GradientText'
 import type { WelcomeSummaryProps } from '@/types/dashboard'
 
 function getGreeting(): string {
@@ -23,8 +24,7 @@ export function WelcomeSummary({
     <AnimatedSection delay={0}>
       <div className="relative py-2">
         <h2 className="text-2xl sm:text-3xl font-heading font-semibold text-foreground">
-          {greeting},{' '}
-          <span className="text-terracotta">{firstName}</span>
+          {greeting}, <GradientText>{firstName}</GradientText>
         </h2>
 
         {/* Stat pills */}
@@ -41,7 +41,7 @@ export function WelcomeSummary({
           <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
-              {itemsCompletedThisWeek} completed this week
+              {itemsCompletedThisWeek} lesson{itemsCompletedThisWeek !== 1 ? 's' : ''} this week
             </span>
           </div>
         </div>
