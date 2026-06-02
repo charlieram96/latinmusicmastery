@@ -10,10 +10,10 @@ interface DashboardLayoutClientProps {
 
 export function DashboardLayoutClient({ children, sidebar, header }: DashboardLayoutClientProps) {
   return (
-    <div className="min-h-screen w-full">
+    <div className="h-screen w-full overflow-hidden">
       {sidebar}
 
-      <div className="flex flex-col min-h-screen md:ml-16">
+      <div className="flex flex-col h-screen md:ml-16">
         {header}
 
         <main className="flex-1 overflow-y-auto pt-14">
