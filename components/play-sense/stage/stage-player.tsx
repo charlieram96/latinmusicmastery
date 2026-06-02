@@ -94,15 +94,6 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
     if (isPlaying) setPinned(false)
   }, [isPlaying])
 
-  // Lock body scroll while the immersive overlay is mounted
-  useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [])
-
   // Persist the attempt when results are ready
   useEffect(() => {
     if (session.sessionState === 'results' && session.attemptStats && session.exercise) {
@@ -185,7 +176,7 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
   const elapsed = session.playheadProgress * totalDuration
 
   return (
-    <div className="stage-overlay">
+    <div className="stage-host">
       <div className={rootCls}>
         {/* highway fills the stage */}
         <div className="sv-stage">

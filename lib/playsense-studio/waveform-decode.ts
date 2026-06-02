@@ -112,6 +112,20 @@ export async function loadOrComputePeaks(
   return peaks;
 }
 
+/**
+ * Cache-ONLY lookup: return previously-cached peaks for this class item/video,
+ * or null if none exist. Never decodes — cheap enough to run on page entry so a
+ * once-analyzed video shows its waveform automatically without re-clicking.
+ */
+export async function loadCachedPeaks(
+  classItemId: string,
+  videoUrl: string,
+  supabase: SupabaseClient<Database>,
+  signal?: AbortSignal
+): Promise<WaveformPeaks | null> {
+  return tryLoadCache(supabase, waveformPath(classItemId, videoUrl), signal);
+}
+
 export function waveformPath(classItemId: string, videoUrl: string): string {
   return `peaks/${classItemId}-${shortHash(videoUrl)}.json`;
 }

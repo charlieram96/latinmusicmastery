@@ -12,7 +12,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, ChevronsLeftRight, Maximize, Repeat, UploadCloud, Video, ZoomIn, ZoomOut } from 'lucide-react';
+import { AudioLines, ChevronsLeftRight, Loader2, Maximize, Repeat, UploadCloud, Video, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type Dispatch } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { publishTimeMap } from '@/app/actions/playsense-studio';
@@ -159,6 +159,34 @@ export function SyncPanel({
 
   // Cancel any in-flight decode on unmount.
   useEffect(() => () => { analyzeCancelRef.current = true; }, []);
+
+  // On entry: restore a previously-cached waveform instantly (cheap fetch, no
+  // decode). On a cache MISS, kick off the decode automatically so the first
+  // visit doesn't require a click — the UI shows an "analyzing" overlay while it
+  // runs, and the result is cached for next time.
+  const triedCacheRef = useRef(false);
+  useEffect(() => {
+    if (triedCacheRef.current || !videoUrl) return;
+    triedCacheRef.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { loadCachedPeaks } = await import('@/lib/playsense-studio/waveform-decode');
+        const supabase = createClient();
+        const cached = await loadCachedPeaks(classItemId, videoUrl, supabase);
+        if (cancelled) return;
+        if (cached) {
+          setPeaks(cached);
+          setDecodeState('ready');
+        } else {
+          runAnalysis(); // first time on this video — decode now
+        }
+      } catch {
+        if (!cancelled) runAnalysis();
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [classItemId, videoUrl, runAnalysis]);
 
   // Fit zoom once the viewport width + a duration are known.
   const didFitRef = useRef(false);
@@ -336,8 +364,16 @@ export function SyncPanel({
     );
   }
 
+  // While the first-time decode runs, lock the panel behind a loader so it's
+  // clear the page is analyzing (and nothing is half-interactive).
+  const analyzing = decodeState === 'loading';
+
   return (
-    <div className="space-y-4">
+    <div className="relative space-y-4">
+      <div
+        className={analyzing ? 'pointer-events-none select-none opacity-50' : undefined}
+        aria-busy={analyzing}
+      >
       <div className="flex items-center gap-3">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           Sync to audio
@@ -531,6 +567,20 @@ export function SyncPanel({
         to move just one measure, or use the numbered waveform markers for fine per-beat tweaks.
         Markers can’t cross their neighbors, so Publish always produces a valid sync.
       </p>
+      </div>
+
+      {analyzing && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 rounded-lg bg-background/75 backdrop-blur-sm">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm font-medium">
+            Analyzing audio…{progress > 0 ? ` ${Math.round(progress * 100)}%` : ''}
+          </p>
+          <p className="max-w-xs text-center text-xs text-muted-foreground">
+            Decoding this video’s audio so the waveform lines up with the score. This happens once —
+            the result is cached for next time.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
