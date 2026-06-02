@@ -377,6 +377,75 @@
           "secondaryLabel": "Explorar Cursos"
         }
       },
+      "playsense": {
+        "hero": {
+          "title": "Practica con PlaySense",
+          "subtitle": "Tu compañero de práctica con IA: retroalimentación en tiempo real en cada nota, junto con notación sincronizada que avanza mientras tocas."
+        },
+        "breadcrumbs": {
+          "home": "Inicio",
+          "playsense": "PlaySense"
+        },
+        "intro": {
+          "titlePrefix": "Conoce",
+          "titleHighlight": "PlaySense",
+          "paragraph1": "PlaySense es nuestra herramienta de práctica con IA que escucha cómo tocas en tiempo real. Te da retroalimentación instantánea y útil sobre afinación, ritmo, tempo y dinámica, como tener un maestro paciente y siempre disponible entre lecciones.",
+          "paragraph2": "Junto con PlaySense Studio, la notación avanza mientras ves cada lección, para que siempre sepas exactamente en qué parte de la música estás. Reduce la velocidad, repite los pasajes difíciles y domina cada nota a tu propio ritmo.",
+          "mediaPlaceholder": "Video / Imagen Próximamente"
+        },
+        "features": {
+          "titlePrefix": "Por qué los músicos aman",
+          "titleHighlight": "PlaySense",
+          "description": "Una herramienta de práctica diseñada para que cada sesión cuente.",
+          "realtime": {
+            "title": "Retroalimentación en tiempo real",
+            "description": "PlaySense escucha a través de tu micrófono o dispositivo PlaySense y responde al instante mientras tocas, sin esperas ni adivinanzas."
+          },
+          "accuracy": {
+            "title": "Precisión de afinación y ritmo",
+            "description": "Ve exactamente dónde se desvían tu tempo, afinación y dinámica, para corregir errores antes de que se vuelvan hábitos."
+          },
+          "notation": {
+            "title": "Notación sincronizada",
+            "description": "PlaySense Studio desplaza la partitura y la tablatura en sincronía con cada lección en video, manteniéndote al compás."
+          },
+          "practice": {
+            "title": "Practica a tu manera",
+            "description": "Reduce la velocidad de los pasajes, repite las secciones difíciles y repite hasta que te salga natural, todo a tu propio ritmo."
+          },
+          "progress": {
+            "title": "Sigue tu progreso",
+            "description": "Observa cómo mejoran tu precisión y consistencia con el tiempo mientras PlaySense resalta en qué trabajar a continuación."
+          },
+          "guided": {
+            "title": "Apoyo guiado",
+            "description": "Integrado en cada curso, PlaySense convierte la práctica individual en una mejora enfocada y estructurada."
+          }
+        },
+        "howItWorks": {
+          "titlePrefix": "Cómo",
+          "titleHighlight": "funciona",
+          "description": "Empieza en tres simples pasos.",
+          "step1": {
+            "title": "Abre una lección",
+            "description": "Elige cualquier curso y comienza una lección con notación sincronizada de PlaySense Studio."
+          },
+          "step2": {
+            "title": "Toca al ritmo",
+            "description": "Usa tu micrófono o dispositivo PlaySense. PlaySense escucha mientras tocas y sigue la partitura contigo."
+          },
+          "step3": {
+            "title": "Mejora más rápido",
+            "description": "Recibe retroalimentación instantánea sobre tempo, afinación y dinámica, luego repite y perfecciona hasta lograrlo."
+          }
+        },
+        "cta": {
+          "title": "¿Listo para escuchar la diferencia?",
+          "subtitle": "Empieza a practicar con PlaySense hoy y convierte cada sesión en progreso real.",
+          "primaryLabel": "Empezar Gratis",
+          "secondaryLabel": "Explorar Cursos"
+        }
+      },
       "contact": {
         "hero": {
           "title": "Contáctanos",
