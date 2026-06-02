@@ -22,6 +22,8 @@ interface RhythmHighwayProps {
   showHud?: boolean
   /** Hide the built-in countdown overlay (e.g. when the immersive stage shows its own). */
   hideCountdown?: boolean
+  /** Fill an absolutely-positioned parent (absolute inset-0) instead of relying on a flex parent. */
+  fill?: boolean
 }
 
 /**
@@ -43,6 +45,7 @@ export function RhythmHighway({
   dimAlpha = 0,
   showHud = true,
   hideCountdown = false,
+  fill = false,
 }: RhythmHighwayProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const appRef = useRef<HighwayApp | null>(null)
@@ -121,7 +124,13 @@ export function RhythmHighway({
   }, [eventResultsLength, eventResults, sessionState])
 
   return (
-    <div className="flex-1 min-h-0 relative bg-black rounded-lg overflow-hidden">
+    <div
+      className={
+        fill
+          ? 'absolute inset-0 overflow-hidden'
+          : 'flex-1 min-h-0 relative bg-black rounded-lg overflow-hidden'
+      }
+    >
       <div ref={containerRef} className="absolute inset-0" />
 
       {/* Soft dim layer for when a modal overlay is on top of the canvas */}

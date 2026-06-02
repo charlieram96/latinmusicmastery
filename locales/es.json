@@ -1192,6 +1192,13 @@
         "latinMusic": "música latina",
         "lessonCount": "{count} lecciones",
         "descriptionFallback": "Domina {style} con instrucción experta",
+        "eyebrow": "Biblioteca de cursos",
+        "subtitleBrowse": "Encuentra tu instrumento, elige una tradición y empieza a tocar. {count} cursos de toda América.",
+        "searchPlaceholder": "Buscar cursos…",
+        "clearAll": "Borrar todo",
+        "resultCourse": "curso",
+        "resultCourses": "cursos",
+        "facets": { "instrument": "Instrumento", "level": "Nivel", "genre": "Género" },
         "tabs": { "all": "Todos" },
         "difficulty": {
           "beginner": "Principiante",

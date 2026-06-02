@@ -37,7 +37,8 @@ import { RhythmHighway } from '../rhythm-highway/RhythmHighway'
 import { AudioModePrompt } from '../audio-mode-prompt'
 import { PlaysenseTestPanel } from '../playsense-test-panel'
 import { CalibrationWizard } from '../calibration-wizard'
-import { ResultsSummary } from '../results-summary'
+import { StageResults } from './stage-results'
+import { AccuracyRing, formatTime } from './stage-ui'
 
 interface StagePlayerProps {
   exercises: ExerciseDefinition[]
@@ -59,12 +60,6 @@ const DEFAULT_SETTINGS: StageSettings = {
   callouts: true,
   comboFlare: true,
   laneGuide: false,
-}
-
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-  const s = Math.floor(seconds % 60)
-  return `${m}:${s.toString().padStart(2, '0')}`
 }
 
 export function StagePlayer({ exercises }: StagePlayerProps) {
@@ -209,6 +204,7 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
               dimAlpha={showAudioModePrompt || showPlaysenseTest ? 0.55 : 0}
               showHud={false}
               hideCountdown
+              fill
             />
           ) : (
             <IdlePrompt />
@@ -472,14 +468,12 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
           )}
           {session.sessionState === 'results' && session.attemptStats && exercise && (
             <ModalHost key="results">
-              <div className="w-full max-w-2xl max-h-[88vh] overflow-y-auto">
-                <ResultsSummary
-                  stats={session.attemptStats}
-                  exerciseTitle={exercise.title}
-                  onRetry={session.retry}
-                  onNext={session.goToSelect}
-                />
-              </div>
+              <StageResults
+                stats={session.attemptStats}
+                exerciseTitle={exercise.title}
+                onRetry={session.retry}
+                onNext={session.goToSelect}
+              />
             </ModalHost>
           )}
         </AnimatePresence>
@@ -590,34 +584,6 @@ function ExerciseList({
         </div>
       ))}
     </>
-  )
-}
-
-function AccuracyRing({ pct, size = 46, sw = 4 }: { pct: number; size?: number; sw?: number }) {
-  const r = size / 2 - sw
-  const c = 2 * Math.PI * r
-  const clamped = Math.max(0, Math.min(100, pct))
-  return (
-    <div className="sv-acc-ring" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={sw} />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="#57B36B"
-          strokeWidth={sw}
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={c * (1 - clamped / 100)}
-          style={{ transition: 'stroke-dashoffset .4s' }}
-        />
-      </svg>
-      <span className="pct" style={{ fontSize: size * 0.28 }}>
-        {Math.round(clamped)}%
-      </span>
-    </div>
   )
 }
 

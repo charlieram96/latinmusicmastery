@@ -220,3 +220,36 @@
 
 /* generic centered glass modal host for re-homed flows */
 .stage-modal { position: absolute; inset: 0; z-index: 12; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(8,7,6,0.55); backdrop-filter: blur(3px); }
+
+/* ============================================================
+   Results panel
+   ============================================================ */
+.sv-results { width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; border-radius: 22px; padding: 30px 30px 26px; display: flex; flex-direction: column; gap: 22px; }
+.sv-results-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.sv-results .sv-acc-ring .pct { font-family: var(--head); }
+.sv-results-score { font-family: var(--mono); font-weight: 700; font-size: 30px; color: var(--text); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.sv-results-title { font-family: var(--head); font-weight: 700; font-size: 19px; color: var(--text); margin: 2px 0 0; text-align: center; letter-spacing: -0.01em; }
+.sv-results-stars { display: flex; gap: 8px; margin-top: 6px; }
+
+.sv-results-bar { display: flex; flex-direction: column; gap: 10px; }
+.sv-results-bar .track { display: flex; height: 20px; border-radius: 9999px; overflow: hidden; background: rgba(255,255,255,0.06); box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
+.sv-results-bar .seg { display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 800; min-width: 0; }
+.sv-results-bar .legend { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--dim); }
+.sv-results-bar .legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sv-results-bar .legend .sw { width: 8px; height: 8px; border-radius: 50%; }
+
+.sv-results-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.sv-stat { background: var(--panel-2); border: 1px solid var(--border); border-radius: 13px; padding: 13px 12px; display: flex; flex-direction: column; gap: 6px; }
+.sv-stat .v { font-family: var(--head); font-weight: 700; font-size: 18px; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1; }
+.sv-stat .k { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+
+.sv-results-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+.sv-results-meta .chip { font-size: 11px; padding: 4px 10px; border-radius: 9999px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--dim); }
+
+.sv-results-actions { display: flex; gap: 12px; }
+.sv-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; border-radius: 12px; font-size: 13.5px; font-weight: 600; border: 1px solid transparent; transition: filter .15s, background .15s, border-color .15s, color .15s; }
+.sv-btn.primary { color: #fff; background: linear-gradient(135deg, var(--amber-hi), var(--terra)); box-shadow: 0 8px 22px rgba(213,78,63,0.32); }
+.sv-btn.primary:hover { filter: brightness(1.06); }
+.sv-btn.primary:active { transform: scale(0.98); }
+.sv-btn.ghost { color: var(--text); background: rgba(255,255,255,0.04); border-color: var(--border-hi); }
+.sv-btn.ghost:hover { background: rgba(255,255,255,0.08); }
