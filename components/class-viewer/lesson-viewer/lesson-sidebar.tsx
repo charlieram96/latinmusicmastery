@@ -38,7 +38,9 @@ interface LessonSidebarProps {
   currentClassId: string
   sections: LessonSidebarSection[]
   courseTitle: string
+  courseImageUrl?: string | null
   teacherName?: string | null
+  teacherImageUrl?: string | null
   collapsed: boolean
   onToggle: () => void
 }
@@ -66,7 +68,9 @@ export function LessonSidebar({
   currentClassId,
   sections,
   courseTitle,
+  courseImageUrl,
   teacherName,
+  teacherImageUrl,
   collapsed,
   onToggle,
 }: LessonSidebarProps) {
@@ -83,18 +87,26 @@ export function LessonSidebar({
       <aside
         className={cn(
           styles.side,
-          'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-card dark:bg-[hsl(0_0%_5%)] sticky top-0 h-[calc(100vh-3.5rem)] overflow-hidden'
+          'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-card dark:bg-[hsl(0_0%_5%)] sticky top-14 h-[calc(100vh-3.5rem)] overflow-hidden'
         )}
       >
         <div
           className={cn(
             styles.scrollHide,
-            'flex flex-col items-center gap-3.5 px-2 py-3.5 overflow-y-auto h-full'
+            'flex flex-1 flex-col items-center gap-3.5 px-2 py-3.5 overflow-y-auto'
           )}
         >
-          <div className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-[10px] bg-secondary text-sm font-bold font-heading text-foreground">
-            {avatarInitials(teacherName)}
-          </div>
+          {courseImageUrl ? (
+            <img
+              src={courseImageUrl}
+              alt={courseTitle}
+              className="h-11 w-11 flex-shrink-0 rounded-[10px] object-cover"
+            />
+          ) : (
+            <div className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-[10px] bg-secondary text-sm font-bold font-heading text-foreground">
+              {avatarInitials(courseTitle)}
+            </div>
+          )}
           <button
             onClick={onToggle}
             aria-label="Expand menu"
@@ -127,6 +139,24 @@ export function LessonSidebar({
             })}
           </div>
         </div>
+        {teacherName && (
+          <div
+            className="flex flex-shrink-0 items-center justify-center border-t border-border px-2 py-3.5"
+            title={`Taught by ${teacherName}`}
+          >
+            {teacherImageUrl ? (
+              <img
+                src={teacherImageUrl}
+                alt={teacherName}
+                className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-secondary text-xs font-bold font-heading text-foreground">
+                {avatarInitials(teacherName)}
+              </div>
+            )}
+          </div>
+        )}
       </aside>
     )
   }
@@ -135,15 +165,23 @@ export function LessonSidebar({
     <aside
       className={cn(
         styles.side,
-        'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-card dark:bg-[hsl(0_0%_5%)] sticky top-0 h-[calc(100vh-3.5rem)] overflow-hidden'
+        'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-card dark:bg-[hsl(0_0%_5%)] sticky top-14 h-[calc(100vh-3.5rem)] overflow-hidden'
       )}
     >
       <div className="flex h-full w-[340px] flex-col">
         {/* Header */}
         <div className="flex flex-shrink-0 items-center gap-3 p-3.5">
-          <div className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-[10px] bg-secondary text-sm font-bold font-heading text-foreground">
-            {avatarInitials(teacherName)}
-          </div>
+          {courseImageUrl ? (
+            <img
+              src={courseImageUrl}
+              alt={courseTitle}
+              className="h-11 w-11 flex-shrink-0 rounded-[10px] object-cover"
+            />
+          ) : (
+            <div className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-[10px] bg-secondary text-sm font-bold font-heading text-foreground">
+              {avatarInitials(courseTitle)}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <div className="truncate font-heading text-base font-bold tracking-tight">
               {courseTitle}
@@ -181,6 +219,31 @@ export function LessonSidebar({
 
           <div className="h-4" />
         </div>
+
+        {/* Taught by */}
+        {teacherName && (
+          <div className="flex flex-shrink-0 items-center gap-3 border-t border-border p-3.5">
+            {teacherImageUrl ? (
+              <img
+                src={teacherImageUrl}
+                alt={teacherName}
+                className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-secondary text-xs font-bold font-heading text-foreground">
+                {avatarInitials(teacherName)}
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                Taught by
+              </div>
+              <div className="truncate text-sm font-semibold text-foreground">
+                {teacherName}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   )

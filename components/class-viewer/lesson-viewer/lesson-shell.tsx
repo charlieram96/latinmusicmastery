@@ -19,7 +19,9 @@ interface LessonShellProps {
     currentClassId: string
     sections: LessonSidebarSection[]
     courseTitle: string
+    courseImageUrl?: string | null
     teacherName?: string | null
+    teacherImageUrl?: string | null
   }
   header: {
     moduleTitle: string

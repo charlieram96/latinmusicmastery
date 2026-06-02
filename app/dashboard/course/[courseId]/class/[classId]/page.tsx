@@ -54,10 +54,11 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           title,
           description,
           slug,
+          thumbnail_url,
           instrument,
           difficulty,
           is_fundamentals,
-          teacher:teachers (name),
+          teacher:teachers (name, image_url),
           musical_style:musical_styles (name)
         )
       )
@@ -117,6 +118,9 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   })) || []
 
   const teacherName = (course.teacher as { name?: string } | null)?.name ?? null
+  const teacherImageUrl =
+    (course.teacher as { image_url?: string | null } | null)?.image_url ?? null
+  const courseImageUrl = (course.thumbnail_url as string | null) ?? null
   const moduleTitle = section.title as string
 
   // Subscription-gated: show a paywall instead of the lesson content.
@@ -128,7 +132,9 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           currentClassId: classId,
           sections: sidebarSections,
           courseTitle: course.title,
+          courseImageUrl,
           teacherName,
+          teacherImageUrl,
         }}
         header={{
           moduleTitle,
@@ -275,7 +281,9 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         currentClassId: classId,
         sections: sidebarSections,
         courseTitle: course.title,
+        courseImageUrl,
         teacherName,
+        teacherImageUrl,
       }}
       header={{
         moduleTitle,
