@@ -377,6 +377,75 @@
           "secondaryLabel": "Explore Courses"
         }
       },
+      "playsense": {
+        "hero": {
+          "title": "Practice with PlaySense",
+          "subtitle": "Your AI-powered practice partner — real-time feedback on every note, paired with synchronized notation that follows along as you play."
+        },
+        "breadcrumbs": {
+          "home": "Home",
+          "playsense": "PlaySense"
+        },
+        "intro": {
+          "titlePrefix": "Meet",
+          "titleHighlight": "PlaySense",
+          "paragraph1": "PlaySense is our AI-powered practice tool that listens to your playing in real time. It gives you instant, actionable feedback on pitch, rhythm, timing, and dynamics — like having a patient, always-available teacher between lessons.",
+          "paragraph2": "Paired with PlaySense Studio, the notation follows along as you watch each lesson, so you always know exactly where you are in the music. Slow down, loop tricky passages, and master every note at your own pace.",
+          "mediaPlaceholder": "Video / Image Coming Soon"
+        },
+        "features": {
+          "titlePrefix": "Why musicians love",
+          "titleHighlight": "PlaySense",
+          "description": "A practice tool built to make every session count.",
+          "realtime": {
+            "title": "Real-time feedback",
+            "description": "PlaySense listens through your microphone or PlaySense device and responds instantly as you play — no waiting, no guesswork."
+          },
+          "accuracy": {
+            "title": "Pitch & rhythm accuracy",
+            "description": "See exactly where your timing, pitch, and dynamics drift, so you can fix mistakes before they become habits."
+          },
+          "notation": {
+            "title": "Synchronized notation",
+            "description": "PlaySense Studio scrolls the sheet music and tablature in sync with each video lesson, keeping you locked to the beat."
+          },
+          "practice": {
+            "title": "Practice your way",
+            "description": "Slow passages down, loop difficult sections, and repeat until it feels effortless — all at your own pace."
+          },
+          "progress": {
+            "title": "Track your progress",
+            "description": "Watch your accuracy and consistency improve over time as PlaySense highlights what to work on next."
+          },
+          "guided": {
+            "title": "Guided support",
+            "description": "Built into every course, PlaySense turns solo practice into focused, structured improvement."
+          }
+        },
+        "howItWorks": {
+          "titlePrefix": "How it",
+          "titleHighlight": "works",
+          "description": "Get started in three simple steps.",
+          "step1": {
+            "title": "Open a lesson",
+            "description": "Pick any course and start a lesson with synchronized PlaySense Studio notation."
+          },
+          "step2": {
+            "title": "Play along",
+            "description": "Use your microphone or PlaySense device. PlaySense listens as you play and follows the score with you."
+          },
+          "step3": {
+            "title": "Improve faster",
+            "description": "Get instant feedback on timing, pitch, and dynamics, then loop and refine until you nail it."
+          }
+        },
+        "cta": {
+          "title": "Ready to hear the difference?",
+          "subtitle": "Start practicing with PlaySense today and turn every session into real progress.",
+          "primaryLabel": "Get Started Free",
+          "secondaryLabel": "Explore Courses"
+        }
+      },
       "contact": {
         "hero": {
           "title": "Contact Us",
