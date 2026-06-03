@@ -40,6 +40,12 @@ export interface ExerciseEvent {
   expectedNoteName?: string
   /** Expected drum surface for PlaySense scoring (e.g. 'quinto', 'macho') */
   surface?: string
+  /**
+   * Chord group id (pitched instruments only). All notes of one strummed chord
+   * share the same id so the scorer can grade them as a set. Single notes are
+   * undefined. Stays one event per note — only grading collapses the group.
+   */
+  chordId?: string
 }
 
 export interface ExerciseDefinition {
@@ -121,6 +127,11 @@ export interface OnsetEvent {
   midiNote?: number | null
   /** Which drum surface was hit — set by PlaySense BLE device only */
   surface?: string | null
+  /**
+   * 12-bin pitch-class chroma vector (normalized to max) computed from a short
+   * post-onset window. Set only for chordal instruments; used for chord scoring.
+   */
+  chroma?: number[] | null
 }
 
 export interface ToleranceWindows {
@@ -134,6 +145,41 @@ export const TOLERANCE_BY_DIFFICULTY: Record<Difficulty, ToleranceWindows> = {
   intermediate: { perfect: 30, good: 55, ok: 85 },
   advanced: { perfect: 20, good: 40, ok: 65 },
 }
+
+/**
+ * Pitch tolerance in cents per difficulty. A detected note within this many
+ * cents of the expected pitch counts as correct, so a slightly flat/sharp
+ * player is not zeroed out. 100 cents = one semitone.
+ */
+export const PITCH_TOLERANCE_CENTS: Record<Difficulty, number> = {
+  beginner: 80,
+  intermediate: 55,
+  advanced: 35,
+}
+
+/**
+ * When true, pitch is matched by pitch-class (ignoring octave) so common
+ * octave-detection errors don't zero an otherwise-correct note.
+ */
+export const PITCH_OCTAVE_AGNOSTIC: Record<Difficulty, boolean> = {
+  beginner: true,
+  intermediate: true,
+  advanced: false,
+}
+
+/**
+ * Fraction of a chord's distinct pitch classes that must be present (in the
+ * detected chroma) for the chord to count as a hit. Presence-only: extra/wrong
+ * notes are not penalized.
+ */
+export const CHORD_PRESENCE_RATIO: Record<Difficulty, number> = {
+  beginner: 0.66,
+  intermediate: 0.8,
+  advanced: 1.0,
+}
+
+/** A chroma bin counts as "present" when its energy is at least this fraction of the chroma max. */
+export const CHROMA_PRESENCE_THRESHOLD = 0.35
 
 export const GRADE_POINTS: Record<HitGrade, number> = {
   perfect: 100,

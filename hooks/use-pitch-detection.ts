@@ -48,25 +48,46 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number): number {
     correlations[lag] = denom > 0 ? sum / denom : 0
   }
 
-  // Find first peak above 0.9 confidence
+  // Find the strongest local peak above a confidence threshold.
+  const CONFIDENCE_THRESHOLD = 0.8
   let bestLag = -1
-  let bestCorr = 0.9
+  let bestCorr = CONFIDENCE_THRESHOLD
 
   for (let lag = minLag; lag <= maxLag; lag++) {
-    if (correlations[lag] > bestCorr) {
-      // Check it's a local peak
-      if (
-        (lag === minLag || correlations[lag] > correlations[lag - 1]) &&
-        (lag === maxLag || correlations[lag] >= correlations[lag + 1])
-      ) {
-        bestCorr = correlations[lag]
+    const c = correlations[lag]
+    if (c > bestCorr) {
+      const isPeak =
+        (lag === minLag || c > correlations[lag - 1]) &&
+        (lag === maxLag || c >= correlations[lag + 1])
+      if (isPeak) {
+        bestCorr = c
         bestLag = lag
-        break // Take first peak above threshold
       }
     }
   }
 
   if (bestLag === -1) return -1
+
+  // Octave-down sanity check: autocorrelation often latches onto a harmonic
+  // (a peak at a shorter lag = higher octave). If a comparably-strong peak
+  // exists near twice the lag (one octave lower), prefer the true fundamental.
+  const OCTAVE_RATIO = 0.85
+  const octaveLag = bestLag * 2
+  if (octaveLag <= maxLag) {
+    let subLag = -1
+    let subCorr = 0
+    const lo = Math.max(minLag, octaveLag - 2)
+    const hi = Math.min(maxLag, octaveLag + 2)
+    for (let lag = lo; lag <= hi; lag++) {
+      if (correlations[lag] > subCorr) {
+        subCorr = correlations[lag]
+        subLag = lag
+      }
+    }
+    if (subLag !== -1 && subCorr >= bestCorr * OCTAVE_RATIO) {
+      bestLag = subLag
+    }
+  }
 
   // Parabolic interpolation for sub-sample accuracy
   const prev = correlations[bestLag - 1] ?? correlations[bestLag]
@@ -126,20 +147,21 @@ export function usePitchDetection(
   const detect = useCallback(() => {
     if (!analyserRef.current || !audioContextRef.current) return
 
+    // Throttle BEFORE running the expensive autocorrelation — visualization
+    // only needs ~20fps, and the DSP must not run on every animation frame.
+    const now = performance.now()
+    if (now - lastUpdateRef.current < 50) {
+      rafIdRef.current = requestAnimationFrame(detect)
+      return
+    }
+    lastUpdateRef.current = now
+
     const analyser = analyserRef.current
     const sampleRate = audioContextRef.current.sampleRate
     const buffer = new Float32Array(analyser.fftSize)
     analyser.getFloatTimeDomainData(buffer)
 
     const detectedFreq = autoCorrelate(buffer, sampleRate)
-
-    const now = performance.now()
-    // Throttle updates to ~30fps
-    if (now - lastUpdateRef.current < 33) {
-      rafIdRef.current = requestAnimationFrame(detect)
-      return
-    }
-    lastUpdateRef.current = now
 
     if (detectedFreq > 0) {
       // Exponential smoothing

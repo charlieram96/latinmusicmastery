@@ -20,7 +20,13 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
       fftSize: 512,
       frameSize: 1024,
       hopSize: 512,
+      analyzeChroma: false,
     }
+
+    // Post-onset window (seconds) before computing chord chroma, so all strummed
+    // notes have sounded. Pending chroma analyses are queued here.
+    this.chordWindowSec = 0.08
+    this.pendingChromas = []
 
     // State
     this.inputBuffer = new Float32Array(this.config.frameSize)
@@ -239,24 +245,46 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
       correlations[lag] = denom > 0 ? sum / denom : 0
     }
 
-    // Find first peak above 0.9 confidence
+    // Find the strongest local peak above a confidence threshold.
+    // (Kept in sync with autoCorrelate() in hooks/use-pitch-detection.ts.)
+    const CONFIDENCE_THRESHOLD = 0.8
     let bestLag = -1
-    let bestCorr = 0.9
+    let bestCorr = CONFIDENCE_THRESHOLD
 
     for (let lag = minLag; lag <= maxLag; lag++) {
-      if (correlations[lag] > bestCorr) {
-        if (
-          (lag === minLag || correlations[lag] > correlations[lag - 1]) &&
-          (lag === maxLag || correlations[lag] >= correlations[lag + 1])
-        ) {
-          bestCorr = correlations[lag]
+      const c = correlations[lag]
+      if (c > bestCorr) {
+        const isPeak =
+          (lag === minLag || c > correlations[lag - 1]) &&
+          (lag === maxLag || c >= correlations[lag + 1])
+        if (isPeak) {
+          bestCorr = c
           bestLag = lag
-          break // Take first peak above threshold
         }
       }
     }
 
     if (bestLag === -1) return -1
+
+    // Octave-down sanity check: prefer the true fundamental when a comparably
+    // strong peak exists near twice the lag (one octave lower).
+    const OCTAVE_RATIO = 0.85
+    const octaveLag = bestLag * 2
+    if (octaveLag <= maxLag) {
+      let subLag = -1
+      let subCorr = 0
+      const lo = Math.max(minLag, octaveLag - 2)
+      const hi = Math.min(maxLag, octaveLag + 2)
+      for (let lag = lo; lag <= hi; lag++) {
+        if (correlations[lag] > subCorr) {
+          subCorr = correlations[lag]
+          subLag = lag
+        }
+      }
+      if (subLag !== -1 && subCorr >= bestCorr * OCTAVE_RATIO) {
+        bestLag = subLag
+      }
+    }
 
     // Parabolic interpolation for sub-sample accuracy
     const prev = bestLag > 0 ? correlations[bestLag - 1] : correlations[bestLag]
@@ -280,6 +308,42 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     return buf
   }
 
+  /**
+   * Compute a 12-bin pitch-class chroma vector (normalized to its max) from a
+   * Hann-windowed 4096-point FFT of the raw sample buffer. Used for chord
+   * verification — folds spectral magnitude (70–2000 Hz) into pitch classes.
+   */
+  computeChroma(buffer) {
+    const N = 4096
+    const real = new Float32Array(N)
+    const imag = new Float32Array(N)
+    const len = Math.min(buffer.length, N)
+    for (let i = 0; i < len; i++) {
+      const w = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (len - 1))
+      real[i] = buffer[i] * w
+    }
+
+    this.fft(real, imag)
+
+    const chroma = new Float32Array(12)
+    const sr = this.sampleRate
+    const minBin = Math.max(1, Math.floor((70 * N) / sr))
+    const maxBin = Math.min(N / 2 - 1, Math.ceil((2000 * N) / sr))
+    for (let k = minBin; k <= maxBin; k++) {
+      const mag = Math.sqrt(real[k] * real[k] + imag[k] * imag[k])
+      if (mag <= 0) continue
+      const freq = (k * sr) / N
+      const pc = (((Math.round(12 * Math.log2(freq / 440) + 69) % 12) + 12) % 12)
+      chroma[pc] += mag
+    }
+
+    let max = 0
+    for (let i = 0; i < 12; i++) if (chroma[i] > max) max = chroma[i]
+    const out = new Array(12)
+    for (let i = 0; i < 12; i++) out[i] = max > 0 ? chroma[i] / max : 0
+    return out
+  }
+
   process(inputs, outputs, parameters) {
     const input = inputs[0]
     if (!input || !input[0]) return true
@@ -291,6 +355,26 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
     for (let i = 0; i < channelData.length; i++) {
       this.pitchBuffer[this.pitchBufferWritePos] = channelData[i]
       this.pitchBufferWritePos = (this.pitchBufferWritePos + 1) % this.pitchBufferSize
+    }
+
+    // Fire any due chord-chroma analyses (now that the strum body is buffered).
+    if (this.pendingChromas.length > 0) {
+      const now = currentTime
+      let i = 0
+      while (i < this.pendingChromas.length) {
+        const pending = this.pendingChromas[i]
+        if (now >= pending.fireAt) {
+          const chroma = this.computeChroma(this.getPitchBufferSnapshot())
+          this.port.postMessage({
+            type: 'chord',
+            onsetTimestamp: pending.onsetTimestamp,
+            chroma,
+          })
+          this.pendingChromas.splice(i, 1)
+        } else {
+          i++
+        }
+      }
     }
 
     // Feed samples through band-pass and into buffer
@@ -374,6 +458,15 @@ class OnsetDetectorProcessor extends AudioWorkletProcessor {
           fluxConfirmed: fluxExceeds,
           frequency: detectedFreq > 0 ? detectedFreq : null,
         })
+
+        // For chordal instruments, schedule a chroma analysis after the strum
+        // window so all notes have sounded; it posts a separate 'chord' message.
+        if (this.config.analyzeChroma) {
+          this.pendingChromas.push({
+            onsetTimestamp: now,
+            fireAt: now + this.chordWindowSec,
+          })
+        }
       }
     }
   }

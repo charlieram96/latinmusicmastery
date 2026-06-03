@@ -67,6 +67,9 @@ export function generateExpectedTimestamps(
         expectedTechnique: event.technique,
         expectedDurationSec: event.duration * beatDuration,
         expectedSurface: event.surface,
+        // Make the chord group id loop-unique so notes from different loop
+        // iterations aren't grouped together.
+        chordId: event.chordId != null ? `${loop}:${event.chordId}` : undefined,
       })
     }
   }

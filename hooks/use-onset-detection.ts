@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import type { MutableRefObject } from 'react'
 import type { OnsetEvent, Instrument } from '@/lib/play-sense/types'
 import { getInstrumentConfig, type OnsetConfig } from '@/lib/play-sense/onset-config'
 
@@ -20,6 +21,8 @@ interface UseOnsetDetectionResult {
   recentOnsets: OnsetEvent[]
   audioContext: AudioContext | null
   workletNode: AudioWorkletNode | null
+  /** Chord chroma vectors keyed by rounded onset timestamp (ms). Read by the grader for chord events. */
+  chromaByOnsetRef: MutableRefObject<Map<number, number[]>>
   startListening: () => Promise<AudioContext | null>
   stopListening: () => void
   clearOnsets: () => void
@@ -40,6 +43,7 @@ export function useOnsetDetection(
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const workletNodeRef = useRef<AudioWorkletNode | null>(null)
   const levelUpdateRef = useRef<number>(0)
+  const chromaByOnsetRef = useRef<Map<number, number[]>>(new Map())
 
   const stopListening = useCallback(() => {
     if (workletNodeRef.current) {
@@ -60,6 +64,7 @@ export function useOnsetDetection(
 
   const clearOnsets = useCallback(() => {
     setRecentOnsets([])
+    chromaByOnsetRef.current.clear()
   }, [])
 
   const startListening = useCallback(async (): Promise<AudioContext | null> => {
@@ -125,6 +130,16 @@ export function useOnsetDetection(
             // Cap at 500 to prevent unbounded growth
             return next.length > 500 ? next.slice(-500) : next
           })
+        } else if (e.data.type === 'chord') {
+          // Post-strum chroma for chord scoring — key by rounded onset timestamp (ms).
+          const key = Math.round(e.data.onsetTimestamp * 1000)
+          const map = chromaByOnsetRef.current
+          map.set(key, e.data.chroma)
+          // Bound growth
+          if (map.size > 200) {
+            const oldest = map.keys().next().value
+            if (oldest !== undefined) map.delete(oldest)
+          }
         } else if (e.data.type === 'level') {
           // Throttle level updates to ~30fps
           const now = performance.now()
@@ -183,6 +198,7 @@ export function useOnsetDetection(
     recentOnsets,
     audioContext: audioContextRef.current,
     workletNode: workletNodeRef.current,
+    chromaByOnsetRef,
     startListening,
     stopListening,
     clearOnsets,
