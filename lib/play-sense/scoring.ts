@@ -13,6 +13,8 @@ import {
   GRADE_POINTS,
   PITCH_TOLERANCE_CENTS,
   PITCH_OCTAVE_AGNOSTIC,
+  CHORD_PRESENCE_RATIO,
+  CHROMA_PRESENCE_THRESHOLD,
 } from './types'
 
 /** Lower a hit grade by one level (perfect → good → ok → miss). */
@@ -40,6 +42,8 @@ export interface ExpectedEvent {
   expectedDurationSec?: number
   /** Expected drum surface for PlaySense scoring */
   expectedSurface?: string
+  /** Chord group id — all notes of one chord share it (pitched instruments only). */
+  chordId?: string
 }
 
 /**
@@ -278,6 +282,133 @@ export function gradeSingleOnset(
     surfaceCorrect,
     detectedSurface: detectedSurfaceResult,
   }
+}
+
+/**
+ * Find the nearest unmatched expected event within the Ok timing window, without
+ * consuming it. Read-only — used to decide whether an onset lands on a chord group
+ * (so the caller can route to chord scoring) before committing a grade.
+ */
+export function matchOnsetToExpected(
+  onsetTimestamp: number,
+  expectedEvents: ExpectedEvent[],
+  matchedIndices: Set<number>,
+  difficulty: Difficulty,
+  calibrationOffsetSec: number = 0,
+  widenMs: number = 0
+): ExpectedEvent | null {
+  const tolerance = TOLERANCE_BY_DIFFICULTY[difficulty]
+  const okWindow = tolerance.ok + widenMs
+  const correctedMs = (onsetTimestamp - calibrationOffsetSec) * 1000
+
+  let best: ExpectedEvent | null = null
+  let bestAbsOffset = Infinity
+  for (const ev of expectedEvents) {
+    if (matchedIndices.has(ev.eventIndex)) continue
+    const absOffset = Math.abs(correctedMs - ev.timestamp * 1000)
+    if (absOffset <= okWindow && absOffset < bestAbsOffset) {
+      bestAbsOffset = absOffset
+      best = ev
+    }
+  }
+  return best
+}
+
+/**
+ * Grade a strummed chord as a SET. Given the onset (timing) plus the strum's
+ * chroma vector, check how many of the chord's distinct pitch classes are present
+ * and grade the whole group at once. Returns one EventResult per group event (same
+ * grade) so expected/result cardinality — and computeStats normalization — is
+ * preserved. Presence-only: extra/wrong pitch classes do not penalize.
+ *
+ * If chroma is missing (analysis failed/late), grades leniently on timing alone so
+ * a real strum is never zeroed for a dropped analysis frame.
+ */
+export function gradeChordOnset(
+  onsetTimestamp: number,
+  onsetEnergy: number,
+  expectedEvents: ExpectedEvent[],
+  matchedIndices: Set<number>,
+  chordId: string,
+  difficulty: Difficulty,
+  calibrationOffsetSec: number = 0,
+  widenMs: number = 0,
+  chroma?: number[] | null
+): EventResult[] {
+  // Grade the whole chord group by id. The caller reserves the group's indices in
+  // matchedIndices when it schedules this, so we group by chordId alone here.
+  const group = expectedEvents.filter(e => e.chordId === chordId)
+  if (group.length === 0) return []
+
+  const tolerance = TOLERANCE_BY_DIFFICULTY[difficulty]
+  const effectiveTolerance: ToleranceWindows = {
+    perfect: tolerance.perfect + widenMs,
+    good: tolerance.good + widenMs,
+    ok: tolerance.ok + widenMs,
+  }
+
+  // Timing graded against the group's shared timestamp.
+  const expectedMs = group[0].timestamp * 1000
+  const correctedMs = (onsetTimestamp - calibrationOffsetSec) * 1000
+  const offsetMs = correctedMs - expectedMs
+  const timingGrade = gradeHit(Math.abs(offsetMs), effectiveTolerance)
+  const timing: TimingFeedback = offsetMs < -5 ? 'early' : offsetMs > 5 ? 'late' : 'on_time'
+
+  // Distinct expected pitch classes for this chord.
+  const pitchClasses = Array.from(
+    new Set(
+      group
+        .map(e => e.expectedPitch)
+        .filter((p): p is number => p != null)
+        .map(p => ((p % 12) + 12) % 12)
+    )
+  )
+
+  // Presence per pitch class. With no chroma, assume present (lenient fallback).
+  const present = new Set<number>()
+  if (chroma && chroma.length === 12) {
+    const max = Math.max(...chroma)
+    const floor = max > 0 ? max * CHROMA_PRESENCE_THRESHOLD : Infinity
+    for (const pc of pitchClasses) {
+      if (chroma[pc] >= floor) present.add(pc)
+    }
+  } else {
+    pitchClasses.forEach(pc => present.add(pc))
+  }
+
+  const ratio = pitchClasses.length > 0 ? present.size / pitchClasses.length : 1
+  const required = CHORD_PRESENCE_RATIO[difficulty]
+
+  // At/above the required ratio → full timing grade. Below → downgrade by how
+  // complete the chord is in absolute terms (fraction of tones present),
+  // bottoming out at a miss for under ~40% of the chord.
+  let chordGrade: HitGrade = timingGrade
+  if (ratio < required) {
+    let levels: number
+    if (ratio >= 0.6) levels = 1
+    else if (ratio >= 0.4) levels = 2
+    else levels = 3
+    for (let i = 0; i < levels; i++) chordGrade = downgradeGrade(chordGrade)
+  }
+
+  return group.map(ev => {
+    const pc = ev.expectedPitch != null ? ((ev.expectedPitch % 12) + 12) % 12 : null
+    const notePresent = pc != null ? present.has(pc) : null
+    matchedIndices.add(ev.eventIndex)
+    return {
+      eventIndex: ev.eventIndex,
+      grade: chordGrade,
+      offsetMs: Math.round(offsetMs * 100) / 100,
+      timing,
+      onsetEnergy,
+      detectedPitch: null,
+      pitchCorrect: notePresent,
+      pitchCents: null,
+      techniqueCorrect: null,
+      surfaceCorrect: null,
+      detectedSurface: null,
+    }
+  })
 }
 
 /**

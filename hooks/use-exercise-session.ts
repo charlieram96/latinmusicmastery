@@ -9,7 +9,8 @@ import type {
   InstrumentCategory,
 } from '@/lib/play-sense/types'
 import { TOLERANCE_BY_DIFFICULTY, getInstrumentCategory } from '@/lib/play-sense/types'
-import { gradeSingleOnset, computeStats, frequencyToMidi } from '@/lib/play-sense/scoring'
+import { gradeSingleOnset, gradeChordOnset, matchOnsetToExpected, computeStats, frequencyToMidi } from '@/lib/play-sense/scoring'
+import type { ExpectedEvent } from '@/lib/play-sense/scoring'
 import { generateExpectedTimestamps, getExerciseDuration, getCountInDuration } from '@/lib/play-sense/exercise-utils'
 import { useOnsetDetection } from './use-onset-detection'
 import { useMetronome } from './use-metronome'
@@ -21,6 +22,9 @@ import { usePlaysenseOnsets } from './use-playsense-onsets'
 export type AudioMode = 'headphones' | 'speaker-safe' | 'playsense'
 
 const AUDIO_MODE_STORAGE_KEY = 'playSenseAudioMode'
+
+// Wait for the worklet's post-strum chroma (~80 ms) to arrive before grading a chord.
+const CHORD_GRADE_DELAY_MS = 95
 
 function loadStoredAudioMode(): AudioMode | null {
   if (typeof window === 'undefined') return null
@@ -153,6 +157,7 @@ export function useExerciseSession(): UseExerciseSessionResult {
   } = activeOnsets
 
   const workletNode = micOnsets.workletNode
+  const chromaByOnsetRef = micOnsets.chromaByOnsetRef
 
   const countInBeats = exercise?.timeSignature?.[0] || 4
   const metronome = useMetronome({
@@ -263,6 +268,80 @@ export function useExerciseSession(): UseExerciseSessionResult {
     const category = getInstrumentCategory(exercise.instrument)
 
     for (const onset of newOnsets) {
+      // Chord routing: if this onset lands on a chord-group event, reserve the
+      // whole group now (so later onsets / miss-detection skip it) and defer
+      // grading briefly to await the worklet's post-strum chroma, then grade the
+      // group as a set.
+      if (category === 'pitched') {
+        const relTs = onset.timestamp - exerciseStartTimeRef.current
+        const cand = matchOnsetToExpected(
+          relTs,
+          expectedEventsRef.current as unknown as ExpectedEvent[],
+          matchedIndicesRef.current,
+          exercise.difficulty,
+          calibOffset,
+          widenMs
+        )
+        if (cand?.chordId) {
+          const chordId = cand.chordId
+          const onsetTs = onset.timestamp
+          const energy = onset.energy
+          // Reserve the group so subsequent onsets and the rAF miss-detector skip it.
+          const group = (expectedEventsRef.current as unknown as ExpectedEvent[]).filter(
+            e => e.chordId === chordId
+          )
+          for (const e of group) matchedIndicesRef.current.add(e.eventIndex)
+
+          const timer = setTimeout(() => {
+            pendingPitchTimersRef.current.delete(timer)
+            if (sessionStateRef.current !== 'playing') return
+
+            const chroma = chromaByOnsetRef.current.get(Math.round(onsetTs * 1000)) ?? null
+            const results = gradeChordOnset(
+              onsetTs - exerciseStartTimeRef.current,
+              energy,
+              expectedEventsRef.current as unknown as ExpectedEvent[],
+              matchedIndicesRef.current,
+              chordId,
+              exercise.difficulty,
+              calibOffset,
+              widenMs,
+              chroma
+            )
+            if (results.length === 0) return
+
+            // Replace any tentative misses recorded for these events.
+            for (const r of results) {
+              if (missDetectedIndicesRef.current.has(r.eventIndex)) {
+                missDetectedIndicesRef.current.delete(r.eventIndex)
+                eventResultsRef.current = eventResultsRef.current.filter(
+                  er => !(er.eventIndex === r.eventIndex && er.grade === 'miss')
+                )
+              }
+            }
+
+            eventResultsRef.current = [...eventResultsRef.current, ...results]
+            setEventResults([...eventResultsRef.current])
+            setLastHitGrade(results[0].grade)
+
+            // Combo: treat the chord as a single unit.
+            if (results.some(r => r.grade !== 'miss')) {
+              liveComboRef.current++
+            } else {
+              liveComboRef.current = 0
+            }
+            setCurrentCombo(liveComboRef.current)
+
+            const stats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
+            setCurrentScore(stats.score)
+            setCurrentAccuracy(stats.accuracy)
+            setTempoDrift(stats.tempoDriftMs)
+          }, CHORD_GRADE_DELAY_MS)
+          pendingPitchTimersRef.current.add(timer)
+          continue
+        }
+      }
+
       // For pitched instruments, use frequency from onset if available,
       // otherwise read the latest pitch detection value, then fall back to
       // the last MIDI note seen by the rAF loop so wrong notes are caught

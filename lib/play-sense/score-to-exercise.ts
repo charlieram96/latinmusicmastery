@@ -124,6 +124,7 @@ export function scoreToExerciseDefinition(
   let currentTimeSig = score.initialTimeSignature
   let currentKeyFifths = score.initialKeyFifths
   let hand: Hand = 'R'
+  let chordCounter = 0
 
   for (const measure of track.measures) {
     if (measure.timeSignature) currentTimeSig = measure.timeSignature
@@ -151,6 +152,12 @@ export function scoreToExerciseDefinition(
         ev.kind === 'chord'
           ? (ev as Chord).notes.map((n) => n.midi)
           : [(ev as Note).midi]
+
+      // Tag pitched chords so the scorer can grade the notes as one set. The
+      // notes still emit as separate events (cardinality/rendering unchanged) —
+      // only grading uses the shared id. Single notes and percussion get none.
+      const chordId =
+        ev.kind === 'chord' && !perc && midis.length > 1 ? `c${chordCounter++}` : undefined
 
       for (const midi of midis) {
         let vexKey: string
@@ -183,6 +190,7 @@ export function scoreToExerciseDefinition(
           expectedPitch,
           expectedNoteName,
           surface,
+          chordId,
         })
       }
 

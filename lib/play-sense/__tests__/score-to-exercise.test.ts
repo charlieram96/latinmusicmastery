@@ -84,4 +84,17 @@ describe('scoreToExerciseDefinition — track selection', () => {
     // each bar: 2 chords of 3 notes = 6 events, x4 bars = 24
     expect(ex.events).toHaveLength(24)
   })
+
+  it('tags the 3 notes of each chord with a shared chordId (count unchanged)', () => {
+    const ex = scoreToExerciseDefinition(SON_MONTUNO_FIXTURE)
+    // Every event belongs to a chord here, so all carry a chordId.
+    expect(ex.events.every((e) => e.chordId != null)).toBe(true)
+    // 24 events / 3 notes per chord = 8 distinct chord groups.
+    const groups = new Set(ex.events.map((e) => e.chordId))
+    expect(groups.size).toBe(8)
+    // Each group has exactly 3 notes.
+    for (const id of groups) {
+      expect(ex.events.filter((e) => e.chordId === id)).toHaveLength(3)
+    }
+  })
 })
