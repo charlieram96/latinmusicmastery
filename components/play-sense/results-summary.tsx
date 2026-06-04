@@ -8,13 +8,18 @@ import type { AttemptStats } from '@/lib/play-sense/types'
 import { GRADE_COLORS } from '@/lib/play-sense/types'
 import { getLetterGrade } from '@/lib/play-sense/exercise-utils'
 import { getStarCount } from '@/lib/play-sense/animations'
-import { RotateCcw, ChevronRight, Target, Flame, Zap, Trophy, Clock, Star, Music } from 'lucide-react'
+import { RotateCcw, ChevronRight, Eye, Target, Flame, Zap, Trophy, Clock, Star, Music } from 'lucide-react'
 
 interface ResultsSummaryProps {
   stats: AttemptStats
   exerciseTitle: string
   onRetry: () => void
-  onNext: () => void
+  /** Advance to the next item. Hidden when not provided. */
+  onNext?: () => void
+  /** Label for the "next" action (default "Next Track"). */
+  nextLabel?: string
+  /** Return to the instructional video. Shows a "Watch demo again" button when set. */
+  onWatchDemo?: () => void
 }
 
 // Confetti particle
@@ -184,7 +189,14 @@ function formatDuration(seconds: number): string {
   return m > 0 ? `${m}m ${s}s` : `${s}s`
 }
 
-export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: ResultsSummaryProps) {
+export function ResultsSummary({
+  stats,
+  exerciseTitle,
+  onRetry,
+  onNext,
+  nextLabel = 'Next Track',
+  onWatchDemo,
+}: ResultsSummaryProps) {
   const letterGrade = getLetterGrade(stats.score)
   const totalHits = stats.perfectCount + stats.goodCount + stats.okCount + stats.missCount
   const starCount = getStarCount(stats.score)
@@ -396,45 +408,50 @@ export function ResultsSummary({ stats, exerciseTitle, onRetry, onNext }: Result
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 3.2 }}
-        className="flex gap-3"
+        className="flex gap-3 flex-wrap"
       >
-        {lowScore ? (
-          <>
-            <Button
-              className="flex-1 bg-gradient-to-r from-primary to-[hsl(14,52%,48%)] hover:from-primary/90 hover:to-[hsl(14,52%,53%)] text-white border-0"
-              onClick={onRetry}
-            >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Play Again
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 border-border text-foreground dark:text-slate-300 hover:bg-secondary"
-              onClick={onNext}
-            >
-              Next Track
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              variant="outline"
-              className="flex-1 border-border text-foreground dark:text-slate-300 hover:bg-secondary"
-              onClick={onRetry}
-            >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Play Again
-            </Button>
-            <Button
-              className="flex-1 bg-gradient-to-r from-primary to-[hsl(14,52%,48%)] hover:from-primary/90 hover:to-[hsl(14,52%,53%)] text-white border-0"
-              onClick={onNext}
-            >
-              Next Track
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          </>
-        )}
+        {(() => {
+          const gradient =
+            'bg-gradient-to-r from-primary to-[hsl(14,52%,48%)] hover:from-primary/90 hover:to-[hsl(14,52%,53%)] text-white border-0'
+          const outline = 'border-border text-foreground dark:text-slate-300 hover:bg-secondary'
+          // Play Again is the hero action when the run was weak (or when there's no
+          // "next" to advance to); otherwise the next/continue action is the hero.
+          const retryIsHero = lowScore || !onNext
+          return (
+            <>
+              <Button
+                variant={retryIsHero ? undefined : 'outline'}
+                className={cn('flex-1', retryIsHero ? gradient : outline)}
+                onClick={onRetry}
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Play Again
+              </Button>
+
+              {onWatchDemo && (
+                <Button
+                  variant="outline"
+                  className={cn('flex-1', outline)}
+                  onClick={onWatchDemo}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Watch demo again
+                </Button>
+              )}
+
+              {onNext && (
+                <Button
+                  variant={retryIsHero ? 'outline' : undefined}
+                  className={cn('flex-1', retryIsHero ? outline : gradient)}
+                  onClick={onNext}
+                >
+                  {nextLabel}
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
+              )}
+            </>
+          )
+        })()}
       </motion.div>
     </motion.div>
   )

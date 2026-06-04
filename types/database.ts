@@ -306,53 +306,6 @@ export type Database = {
           },
         ]
       }
-      quiz_questions: {
-        Row: {
-          class_item_id: string
-          correct_answer: string | null
-          created_at: string | null
-          explanation: string | null
-          id: string
-          options: Json | null
-          order_index: number
-          question: string
-          question_type: string
-          updated_at: string | null
-        }
-        Insert: {
-          class_item_id: string
-          correct_answer?: string | null
-          created_at?: string | null
-          explanation?: string | null
-          id?: string
-          options?: Json | null
-          order_index?: number
-          question: string
-          question_type: string
-          updated_at?: string | null
-        }
-        Update: {
-          class_item_id?: string
-          correct_answer?: string | null
-          created_at?: string | null
-          explanation?: string | null
-          id?: string
-          options?: Json | null
-          order_index?: number
-          question?: string
-          question_type?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_questions_class_item_id_fkey"
-            columns: ["class_item_id"]
-            isOneToOne: false
-            referencedRelation: "class_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       comment_reactions: {
         Row: {
           comment_id: string
@@ -385,48 +338,6 @@ export type Database = {
           },
           {
             foreignKeyName: "comment_reactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      playsense_studio_events: {
-        Row: {
-          class_item_id: string | null
-          created_at: string | null
-          event_type: string
-          id: string
-          metadata: Json | null
-          user_id: string | null
-        }
-        Insert: {
-          class_item_id?: string | null
-          created_at?: string | null
-          event_type: string
-          id?: string
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Update: {
-          class_item_id?: string | null
-          created_at?: string | null
-          event_type?: string
-          id?: string
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "playsense_studio_events_class_item_id_fkey"
-            columns: ["class_item_id"]
-            isOneToOne: false
-            referencedRelation: "class_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "playsense_studio_events_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -622,9 +533,9 @@ export type Database = {
           difficulty: string | null
           id: string
           instrument: string | null
+          is_fundamentals: boolean
           is_master_class: boolean
           is_published: boolean | null
-          is_fundamentals: boolean
           musical_style_id: string | null
           order_index: number | null
           preview_video_url: string | null
@@ -643,9 +554,9 @@ export type Database = {
           difficulty?: string | null
           id?: string
           instrument?: string | null
+          is_fundamentals?: boolean
           is_master_class?: boolean
           is_published?: boolean | null
-          is_fundamentals?: boolean
           musical_style_id?: string | null
           order_index?: number | null
           preview_video_url?: string | null
@@ -664,9 +575,9 @@ export type Database = {
           difficulty?: string | null
           id?: string
           instrument?: string | null
+          is_fundamentals?: boolean
           is_master_class?: boolean
           is_published?: boolean | null
-          is_fundamentals?: boolean
           musical_style_id?: string | null
           order_index?: number | null
           preview_video_url?: string | null
@@ -692,142 +603,6 @@ export type Database = {
             columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "teachers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      instrument_subscriptions: {
-        Row: {
-          id: string
-          user_id: string
-          instrument: string
-          billing_interval: string
-          stripe_customer_id: string | null
-          stripe_base_subscription_id: string | null
-          stripe_addon_subscription_id: string | null
-          status: string
-          base_current_period_end: string | null
-          addon_current_period_end: string | null
-          cancel_at_period_end: boolean
-          pending_interval: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          instrument: string
-          billing_interval: string
-          stripe_customer_id?: string | null
-          stripe_base_subscription_id?: string | null
-          stripe_addon_subscription_id?: string | null
-          status?: string
-          base_current_period_end?: string | null
-          addon_current_period_end?: string | null
-          cancel_at_period_end?: boolean
-          pending_interval?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          instrument?: string
-          billing_interval?: string
-          stripe_customer_id?: string | null
-          stripe_base_subscription_id?: string | null
-          stripe_addon_subscription_id?: string | null
-          status?: string
-          base_current_period_end?: string | null
-          addon_current_period_end?: string | null
-          cancel_at_period_end?: boolean
-          pending_interval?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "instrument_subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      subscription_courses: {
-        Row: {
-          id: string
-          instrument_subscription_id: string
-          user_id: string
-          course_id: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          instrument_subscription_id: string
-          user_id: string
-          course_id: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          instrument_subscription_id?: string
-          user_id?: string
-          course_id?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscription_courses_instrument_subscription_id_fkey"
-            columns: ["instrument_subscription_id"]
-            isOneToOne: false
-            referencedRelation: "instrument_subscriptions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subscription_courses_course_id_fkey"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pricing: {
-        Row: {
-          key: string
-          amount_cents: number
-          currency: string
-          stripe_price_id: string
-          description: string | null
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          key: string
-          amount_cents: number
-          currency?: string
-          stripe_price_id?: string
-          description?: string | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          key?: string
-          amount_cents?: number
-          currency?: string
-          stripe_price_id?: string
-          description?: string | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pricing_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1007,6 +782,65 @@ export type Database = {
             columns: ["style_id"]
             isOneToOne: false
             referencedRelation: "musical_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instrument_subscriptions: {
+        Row: {
+          addon_current_period_end: string | null
+          base_current_period_end: string | null
+          billing_interval: string
+          cancel_at_period_end: boolean
+          created_at: string
+          id: string
+          instrument: string
+          pending_interval: string | null
+          status: string
+          stripe_addon_subscription_id: string | null
+          stripe_base_subscription_id: string | null
+          stripe_customer_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          addon_current_period_end?: string | null
+          base_current_period_end?: string | null
+          billing_interval: string
+          cancel_at_period_end?: boolean
+          created_at?: string
+          id?: string
+          instrument: string
+          pending_interval?: string | null
+          status?: string
+          stripe_addon_subscription_id?: string | null
+          stripe_base_subscription_id?: string | null
+          stripe_customer_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          addon_current_period_end?: string | null
+          base_current_period_end?: string | null
+          billing_interval?: string
+          cancel_at_period_end?: boolean
+          created_at?: string
+          id?: string
+          instrument?: string
+          pending_interval?: string | null
+          status?: string
+          stripe_addon_subscription_id?: string | null
+          stripe_base_subscription_id?: string | null
+          stripe_customer_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instrument_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1279,13 +1113,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "play_sense_attempts_exercise_id_fkey"
-            columns: ["exercise_id"]
-            isOneToOne: false
-            referencedRelation: "play_sense_exercises"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "play_sense_attempts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1294,62 +1121,139 @@ export type Database = {
           },
         ]
       }
-      play_sense_exercises: {
+      play_sense_songs: {
         Row: {
-          audio_url: string | null
-          bpm: number
-          created_at: string | null
-          description: string | null
+          created_at: string
+          created_by: string | null
           difficulty: string
-          events: Json
           id: string
-          instrument: string
           is_published: boolean
-          loop_count: number
-          measures: number
           order_index: number
-          swing: number
-          time_signature: Json
+          score_document_id: string
           title: string
-          updated_at: string | null
+          track_index: number
+          updated_at: string
         }
         Insert: {
-          audio_url?: string | null
-          bpm: number
-          created_at?: string | null
-          description?: string | null
+          created_at?: string
+          created_by?: string | null
           difficulty?: string
-          events: Json
           id?: string
-          instrument: string
           is_published?: boolean
-          loop_count?: number
-          measures?: number
           order_index?: number
-          swing?: number
-          time_signature?: Json
+          score_document_id: string
           title: string
-          updated_at?: string | null
+          track_index?: number
+          updated_at?: string
         }
         Update: {
-          audio_url?: string | null
-          bpm?: number
-          created_at?: string | null
-          description?: string | null
+          created_at?: string
+          created_by?: string | null
           difficulty?: string
-          events?: Json
           id?: string
-          instrument?: string
           is_published?: boolean
-          loop_count?: number
-          measures?: number
           order_index?: number
-          swing?: number
-          time_signature?: Json
+          score_document_id?: string
           title?: string
-          updated_at?: string | null
+          track_index?: number
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "play_sense_songs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "play_sense_songs_score_document_id_fkey"
+            columns: ["score_document_id"]
+            isOneToOne: true
+            referencedRelation: "score_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      playsense_studio_events: {
+        Row: {
+          class_item_id: string | null
+          created_at: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          class_item_id?: string | null
+          created_at?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          class_item_id?: string | null
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playsense_studio_events_class_item_id_fkey"
+            columns: ["class_item_id"]
+            isOneToOne: false
+            referencedRelation: "class_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "playsense_studio_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing: {
+        Row: {
+          amount_cents: number
+          currency: string
+          description: string | null
+          key: string
+          stripe_price_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amount_cents: number
+          currency?: string
+          description?: string | null
+          key: string
+          stripe_price_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          currency?: string
+          description?: string | null
+          key?: string
+          stripe_price_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1380,6 +1284,53 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      quiz_questions: {
+        Row: {
+          class_item_id: string
+          correct_answer: string | null
+          created_at: string | null
+          explanation: string | null
+          id: string
+          options: Json | null
+          order_index: number
+          question: string
+          question_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          class_item_id: string
+          correct_answer?: string | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json | null
+          order_index?: number
+          question: string
+          question_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          class_item_id?: string
+          correct_answer?: string | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json | null
+          order_index?: number
+          question?: string
+          question_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_class_item_id_fkey"
+            columns: ["class_item_id"]
+            isOneToOne: false
+            referencedRelation: "class_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       score_clips: {
         Row: {
@@ -1655,52 +1606,45 @@ export type Database = {
           },
         ]
       }
-      subscriptions: {
+      subscription_courses: {
         Row: {
-          cancel_at_period_end: boolean | null
-          created_at: string | null
-          current_period_end: string
-          current_period_start: string
+          course_id: string
+          created_at: string
           id: string
-          instrument: string | null
-          plan_type: string
-          status: string
-          stripe_customer_id: string
-          stripe_subscription_id: string
-          updated_at: string | null
+          instrument_subscription_id: string
           user_id: string
         }
         Insert: {
-          cancel_at_period_end?: boolean | null
-          created_at?: string | null
-          current_period_end: string
-          current_period_start: string
+          course_id: string
+          created_at?: string
           id?: string
-          instrument?: string | null
-          plan_type?: string
-          status: string
-          stripe_customer_id: string
-          stripe_subscription_id: string
-          updated_at?: string | null
+          instrument_subscription_id: string
           user_id: string
         }
         Update: {
-          cancel_at_period_end?: boolean | null
-          created_at?: string | null
-          current_period_end?: string
-          current_period_start?: string
+          course_id?: string
+          created_at?: string
           id?: string
-          instrument?: string | null
-          plan_type?: string
-          status?: string
-          stripe_customer_id?: string
-          stripe_subscription_id?: string
-          updated_at?: string | null
+          instrument_subscription_id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "subscriptions_user_id_fkey"
+            foreignKeyName: "subscription_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_courses_instrument_subscription_id_fkey"
+            columns: ["instrument_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "instrument_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_courses_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -1874,7 +1818,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_course_access: { Args: { p_course_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
