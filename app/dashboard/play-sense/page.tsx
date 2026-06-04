@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { StagePlayer } from '@/components/play-sense/stage/stage-player'
+import { getPublishedSongs } from '@/app/actions/playsense-studio'
+import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
 
 export default async function PlaySensePage() {
@@ -9,27 +11,18 @@ export default async function PlaySensePage() {
 
   if (!user) redirect('/login')
 
-  const { data: exercises } = await supabase
-    .from('play_sense_exercises')
-    .select('*')
-    .eq('is_published', true)
-    .order('order_index', { ascending: true })
+  // Songs are score-backed: the highway is derived from the ScoreDocument at
+  // runtime (single source of truth, fixed-BPM clock — no video).
+  const { data: songs } = await getPublishedSongs()
 
-  // Transform DB rows to ExerciseDefinition type
-  const exerciseDefinitions: ExerciseDefinition[] = (exercises || []).map((ex) => ({
-    id: ex.id,
-    title: ex.title,
-    description: ex.description || '',
-    instrument: ex.instrument as ExerciseDefinition['instrument'],
-    bpm: ex.bpm,
-    timeSignature: (ex.time_signature as [number, number]) || [4, 4],
-    swing: Number(ex.swing),
-    difficulty: ex.difficulty as ExerciseDefinition['difficulty'],
-    measures: ex.measures,
-    loopCount: ex.loop_count,
-    events: ex.events as unknown as ExerciseDefinition['events'],
-    audioUrl: ex.audio_url || undefined,
-  }))
+  const exerciseDefinitions: ExerciseDefinition[] = (songs || []).map((song) =>
+    scoreToExerciseDefinition(song.parsedScore, {
+      id: song.id,
+      title: song.title,
+      difficulty: song.difficulty,
+      trackIndex: song.trackIndex,
+    })
+  )
 
   // The Stage renders as a full-viewport fixed overlay (above the dashboard
   // sidebar/header) for an immersive performance-mode experience.

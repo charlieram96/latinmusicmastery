@@ -1,18 +1,13 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent } from '@/components/ui/card'
+import { redirect } from 'next/navigation'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
-import { deleteExercise } from '@/app/actions/play-sense'
+import { listSongs, createBlankScoreForSong, deleteSong } from '@/app/actions/playsense-studio'
 
 export default async function AdminPlaySensePage() {
-  const supabase = await createClient()
-
-  const { data: exercises } = await supabase
-    .from('play_sense_exercises')
-    .select('*')
-    .order('order_index', { ascending: true })
+  const { data: songs, error } = await listSongs()
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -23,30 +18,40 @@ export default async function AdminPlaySensePage() {
     }
   }
 
+  async function addSong() {
+    'use server'
+    const res = await createBlankScoreForSong({})
+    if (res.songId) redirect(`/admin/playsense-studio/song/${res.songId}`)
+  }
+
   return (
     <div className="p-6 lg:p-8">
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-1">Play Sense</h1>
-          <p className="text-muted-foreground">Create and manage percussion practice exercises</p>
+          <h1 className="text-4xl font-bold tracking-tight mb-1">Play Sense Songs</h1>
+          <p className="text-muted-foreground">
+            Author score-backed songs in the studio. The rhythm highway is derived from the score.
+          </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/play-sense/new">
+        <form action={addSong}>
+          <Button type="submit">
             <Plus className="w-4 h-4 mr-2" />
-            Add Exercise
-          </Link>
-        </Button>
+            Add Song
+          </Button>
+        </form>
       </div>
 
-      {exercises && exercises.length > 0 ? (
+      {error ? (
+        <Card className="p-6 text-sm text-destructive">Failed to load songs: {error}</Card>
+      ) : songs && songs.length > 0 ? (
         <div className="space-y-3">
-          {exercises.map((exercise) => (
-            <Card key={exercise.id} className="p-4">
+          {songs.map((song) => (
+            <Card key={song.id} className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-medium">{exercise.title}</h3>
-                    {exercise.is_published ? (
+                    <h3 className="font-medium">{song.title}</h3>
+                    {song.isPublished ? (
                       <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
                         Published
                       </Badge>
@@ -54,37 +59,25 @@ export default async function AdminPlaySensePage() {
                       <Badge variant="secondary">Draft</Badge>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-1">
-                    {exercise.description}
-                  </p>
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {exercise.instrument}
+                    <Badge variant="outline" className={`text-xs ${getDifficultyColor(song.difficulty)}`}>
+                      {song.difficulty}
                     </Badge>
-                    <Badge variant="outline" className={`text-xs ${getDifficultyColor(exercise.difficulty)}`}>
-                      {exercise.difficulty}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground font-mono">
-                      {exercise.bpm} BPM
-                    </span>
                     <span className="text-xs text-muted-foreground">
-                      {exercise.measures} bars
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {(exercise.events as unknown[])?.length || 0} events
+                      track {song.trackIndex}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   <Button asChild variant="outline" size="sm">
-                    <Link href={`/admin/play-sense/${exercise.id}`}>
+                    <Link href={`/admin/playsense-studio/song/${song.id}`}>
                       <Pencil className="w-3 h-3 mr-1" />
-                      Edit
+                      Open studio
                     </Link>
                   </Button>
                   <form action={async () => {
                     'use server'
-                    await deleteExercise(exercise.id)
+                    await deleteSong(song.id)
                   }}>
                     <Button variant="ghost" size="sm" type="submit" className="text-destructive hover:text-destructive">
                       <Trash2 className="w-3 h-3" />
@@ -98,11 +91,11 @@ export default async function AdminPlaySensePage() {
       ) : (
         <Card className="p-8 text-center">
           <p className="text-muted-foreground mb-4">
-            No exercises yet. Create your first percussion exercise.
+            No songs yet. Create your first score-backed song.
           </p>
-          <Button asChild>
-            <Link href="/admin/play-sense/new">Add Exercise</Link>
-          </Button>
+          <form action={addSong}>
+            <Button type="submit">Add Song</Button>
+          </form>
         </Card>
       )}
     </div>

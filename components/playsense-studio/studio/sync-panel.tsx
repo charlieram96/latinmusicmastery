@@ -12,7 +12,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, ChevronsLeftRight, Loader2, Maximize, Repeat, UploadCloud, Video, ZoomIn, ZoomOut } from 'lucide-react';
+import { AudioLines, ChevronsLeftRight, Loader2, Maximize, Repeat, UploadCloud, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type Dispatch } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { publishTimeMap } from '@/app/actions/playsense-studio';
@@ -76,6 +76,9 @@ export function SyncPanel({
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const clock = useVideoTransportClock(videoRef);
+  // When there's no waveform (video-less songs) the canvas can't report the
+  // viewport width, so we measure the editor area directly to drive layout/zoom.
+  const editorAreaRef = useRef<HTMLDivElement | null>(null);
 
   // --- Marker state (seed from a published map, else a default tempo grid) ---
   const [markers, setMarkers] = useState<MarkerState>(() => {
@@ -197,6 +200,19 @@ export function SyncPanel({
       setPps(clamp(viewportWidth / timelineDuration, MIN_PPS, MAX_PPS));
     }
   }, [viewportWidth, timelineDuration]);
+
+  // Without a video, the waveform canvas isn't mounted to report the viewport
+  // width — measure the editor area ourselves so fit-zoom + scrollbar work.
+  useEffect(() => {
+    if (videoUrl) return;
+    const el = editorAreaRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const update = () => setViewportWidth(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [videoUrl]);
 
   // Auto-scroll so the playhead stays in view during playback.
   useEffect(() => {
@@ -351,18 +367,14 @@ export function SyncPanel({
   };
 
   if (!track) {
-    return <p className="text-sm text-muted-foreground">This score has no tracks to sync.</p>;
+    return <p className="text-sm text-muted-foreground">This score has no tracks to edit.</p>;
   }
 
-  // No video yet — the score can still be built below; sync needs audio.
-  if (!videoUrl) {
-    return (
-      <div className="flex items-center gap-3 rounded-lg border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
-        <Video className="h-5 w-5" />
-        Upload a video to this class item to sync the score to its audio.
-      </div>
-    );
-  }
+  // Video is OPTIONAL. With a video, the full "sync to audio" experience renders
+  // (waveform + draggable markers + transport + Publish). Without one (standalone
+  // songs), only the staff editor renders, laid out on the fixed-BPM grid the
+  // markers were seeded from — no waveform, no transport, no time-map publishing.
+  const showSync = !!videoUrl;
 
   // While the first-time decode runs, lock the panel behind a loader so it's
   // clear the page is analyzing (and nothing is half-interactive).
@@ -374,72 +386,80 @@ export function SyncPanel({
         className={analyzing ? 'pointer-events-none select-none opacity-50' : undefined}
         aria-busy={analyzing}
       >
-      <div className="flex items-center gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Sync to audio
-        </h2>
-        <button
-          onClick={handlePublish}
-          disabled={isPublishing}
-          className="ml-auto inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <UploadCloud className="h-4 w-4" />
-          {isPublishing ? 'Publishing…' : 'Publish sync'}
-        </button>
-      </div>
+      {showSync && (
+        <>
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Sync to audio
+            </h2>
+            <button
+              onClick={handlePublish}
+              disabled={isPublishing}
+              className="ml-auto inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <UploadCloud className="h-4 w-4" />
+              {isPublishing ? 'Publishing…' : 'Publish sync'}
+            </button>
+          </div>
 
-      {error && (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      )}
-      {published && (
-        <p className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-primary">
-          Time map published. Students will see the new sync on this lesson.
-        </p>
-      )}
-      {decodeState === 'error' && (
-        <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-600">
-          Couldn&apos;t read this video&apos;s audio, so the waveform is unavailable. You can still sync
-          against the measure grid below.
-        </p>
-      )}
+          {error && (
+            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          {published && (
+            <p className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-primary">
+              Time map published. Students will see the new sync on this lesson.
+            </p>
+          )}
+          {decodeState === 'error' && (
+            <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-600">
+              Couldn&apos;t read this video&apos;s audio, so the waveform is unavailable. You can still sync
+              against the measure grid below.
+            </p>
+          )}
 
-      <SeedControls
-        initialBpm={score.initialTempo}
-        hasEdits={dirty}
-        getCurrentSeconds={clock.getCurrentSeconds}
-        onApplyTempoSeed={applyTempoSeed}
-        onApplyTapSeed={applyTapSeed}
-      />
+          <SeedControls
+            initialBpm={score.initialTempo}
+            hasEdits={dirty}
+            getCurrentSeconds={clock.getCurrentSeconds}
+            onApplyTempoSeed={applyTempoSeed}
+            onApplyTapSeed={applyTapSeed}
+          />
+        </>
+      )}
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <button
-          onClick={() => setDragAll((v) => !v)}
-          className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 transition ${
-            dragAll ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'
-          }`}
-          title="Drag a measure (or marker) and everything after it moves together. Hold Option to move just one."
-        >
-          <ChevronsLeftRight className="h-4 w-4" />
-          Drag region
-        </button>
-        <button
-          onClick={toggleExpandSelected}
-          disabled={!selected || selected === 'tail'}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Show/hide beats
-        </button>
-        <button
-          onClick={loopSelectedMeasure}
-          disabled={!selected || selected === 'tail'}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Repeat className="h-4 w-4" />
-          Loop measure
-        </button>
+        {showSync && (
+          <>
+            <button
+              onClick={() => setDragAll((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 transition ${
+                dragAll ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'
+              }`}
+              title="Drag a measure (or marker) and everything after it moves together. Hold Option to move just one."
+            >
+              <ChevronsLeftRight className="h-4 w-4" />
+              Drag region
+            </button>
+            <button
+              onClick={toggleExpandSelected}
+              disabled={!selected || selected === 'tail'}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Show/hide beats
+            </button>
+            <button
+              onClick={loopSelectedMeasure}
+              disabled={!selected || selected === 'tail'}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Repeat className="h-4 w-4" />
+              Loop measure
+            </button>
+          </>
+        )}
 
         <div className="ml-auto flex items-center gap-1">
           <button onClick={() => zoomBy(0.5)} className="rounded-md border border-border p-1.5 transition hover:bg-muted" title="Zoom out">
@@ -466,46 +486,50 @@ export function SyncPanel({
       </div>
 
       {/* Waveform + notation */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-3">
-          {decodeState !== 'loading' && (
-            <button
-              onClick={runAnalysis}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm transition hover:bg-muted"
-              title="Decode this video's audio to show the waveform"
-            >
-              <AudioLines className="h-4 w-4" />
-              {decodeState === 'idle'
-                ? 'Analyze audio'
-                : decodeState === 'error'
-                  ? 'Retry analysis'
-                  : 'Re-analyze'}
-            </button>
-          )}
-          {decodeState === 'loading' && (
-            <p className="text-xs text-muted-foreground">
-              Analyzing audio… {progress > 0 ? `${Math.round(progress * 100)}%` : ''}
-            </p>
-          )}
-        </div>
-        <WaveformCanvas
-          peaks={peaks}
-          durationSeconds={timelineDuration}
-          handles={handles}
-          tailVideoTimeSeconds={markers.tailVideoTimeSeconds}
-          pixelsPerSecond={pps}
-          scrollLeftPx={scrollLeft}
-          dragAll={dragAll}
-          selected={selected}
-          getCurrentSeconds={clock.getCurrentSeconds}
-          onSeek={clock.seek}
-          onSelect={handleSelect}
-          onMarkerDrag={handleMarkerDrag}
-          onTailDrag={handleTailDrag}
-          onDragEnd={() => setMarkers((s) => reinterpolateUnedited(s))}
-          onScrollByPx={handleScrollByPx}
-          onViewportWidth={setViewportWidth}
-        />
+      <div className="space-y-1" ref={editorAreaRef}>
+        {showSync && (
+          <>
+            <div className="flex items-center gap-3">
+              {decodeState !== 'loading' && (
+                <button
+                  onClick={runAnalysis}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm transition hover:bg-muted"
+                  title="Decode this video's audio to show the waveform"
+                >
+                  <AudioLines className="h-4 w-4" />
+                  {decodeState === 'idle'
+                    ? 'Analyze audio'
+                    : decodeState === 'error'
+                      ? 'Retry analysis'
+                      : 'Re-analyze'}
+                </button>
+              )}
+              {decodeState === 'loading' && (
+                <p className="text-xs text-muted-foreground">
+                  Analyzing audio… {progress > 0 ? `${Math.round(progress * 100)}%` : ''}
+                </p>
+              )}
+            </div>
+            <WaveformCanvas
+              peaks={peaks}
+              durationSeconds={timelineDuration}
+              handles={handles}
+              tailVideoTimeSeconds={markers.tailVideoTimeSeconds}
+              pixelsPerSecond={pps}
+              scrollLeftPx={scrollLeft}
+              dragAll={dragAll}
+              selected={selected}
+              getCurrentSeconds={clock.getCurrentSeconds}
+              onSeek={clock.seek}
+              onSelect={handleSelect}
+              onMarkerDrag={handleMarkerDrag}
+              onTailDrag={handleTailDrag}
+              onDragEnd={() => setMarkers((s) => reinterpolateUnedited(s))}
+              onScrollByPx={handleScrollByPx}
+              onViewportWidth={setViewportWidth}
+            />
+          </>
+        )}
         <IntegratedEditor
           score={score}
           dispatch={dispatch}
@@ -518,10 +542,13 @@ export function SyncPanel({
             setScrollLeft(clampScroll(nextScroll));
           }}
           dragAll={dragAll}
-          onMeasureDrag={(measureNumber, videoTimeSeconds, mode) =>
-            handleMarkerDrag({ measureNumber, beatInMeasure: 1 }, videoTimeSeconds, mode)
+          onMeasureDrag={
+            showSync
+              ? (measureNumber, videoTimeSeconds, mode) =>
+                  handleMarkerDrag({ measureNumber, beatInMeasure: 1 }, videoTimeSeconds, mode)
+              : () => {}
           }
-          onMeasureDragEnd={() => setMarkers((s) => reinterpolateUnedited(s))}
+          onMeasureDragEnd={showSync ? () => setMarkers((s) => reinterpolateUnedited(s)) : () => {}}
         />
         <ScrollBar
           scrollLeft={scrollLeft}
@@ -533,39 +560,50 @@ export function SyncPanel({
       </div>
 
       {/* Video + transport */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]">
-        <TransportBar
-          currentSeconds={clock.currentSeconds}
-          durationSeconds={clock.durationSeconds}
-          isPlaying={clock.isPlaying}
-          playbackRate={clock.playbackRate}
-          onToggle={clock.toggle}
-          onRestart={() => clock.seek(0)}
-          onSeek={clock.seek}
-          onRateChange={clock.setPlaybackRate}
-          loopA={clock.loopA}
-          loopB={clock.loopB}
-          loopEnabled={clock.loopEnabled}
-          onToggleLoop={() => clock.setLoopEnabled(!clock.loopEnabled)}
-          onClearLoop={clock.clearLoop}
-          bpm={score.initialTempo}
-          beatsPerMeasure={score.initialTimeSignature[0]}
-        />
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          playsInline
-          preload="metadata"
-          className="max-h-48 w-full rounded-md bg-black md:w-72"
-        />
-      </div>
+      {showSync && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]">
+          <TransportBar
+            currentSeconds={clock.currentSeconds}
+            durationSeconds={clock.durationSeconds}
+            isPlaying={clock.isPlaying}
+            playbackRate={clock.playbackRate}
+            onToggle={clock.toggle}
+            onRestart={() => clock.seek(0)}
+            onSeek={clock.seek}
+            onRateChange={clock.setPlaybackRate}
+            loopA={clock.loopA}
+            loopB={clock.loopB}
+            loopEnabled={clock.loopEnabled}
+            onToggleLoop={() => clock.setLoopEnabled(!clock.loopEnabled)}
+            onClearLoop={clock.clearLoop}
+            bpm={score.initialTempo}
+            beatsPerMeasure={score.initialTimeSignature[0]}
+          />
+          <video
+            ref={videoRef}
+            src={videoUrl ?? undefined}
+            playsInline
+            preload="metadata"
+            className="max-h-48 w-full rounded-md bg-black md:w-72"
+          />
+        </div>
+      )}
 
       <p className="text-xs text-muted-foreground">
-        Drag a measure’s handle (the bar above each staff) onto the audio — by default it slides that
-        measure and everything after it, so you can place the whole score at once and refine from
-        there. Hold <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] text-foreground">Option</kbd>{' '}
-        to move just one measure, or use the numbered waveform markers for fine per-beat tweaks.
-        Markers can’t cross their neighbors, so Publish always produces a valid sync.
+        {showSync ? (
+          <>
+            Drag a measure’s handle (the bar above each staff) onto the audio — by default it slides that
+            measure and everything after it, so you can place the whole score at once and refine from
+            there. Hold <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] text-foreground">Option</kbd>{' '}
+            to move just one measure, or use the numbered waveform markers for fine per-beat tweaks.
+            Markers can’t cross their neighbors, so Publish always produces a valid sync.
+          </>
+        ) : (
+          <>
+            Click a note to select it, drag it up/down to change pitch, or click empty space in a measure
+            to add one. Notes are laid out on a fixed-BPM grid (set the tempo in the score settings above).
+          </>
+        )}
       </p>
       </div>
 

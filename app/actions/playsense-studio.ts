@@ -285,6 +285,116 @@ export async function logPlaysenseStudioEvent(input: {
 
 import { parseScoreDocument } from '@/components/playsense-studio/shared/score-model/serialization';
 
+// ============================================
+// Shared helpers — a ScoreDocument can be owned by EITHER a class_item (course
+// content) OR a play_sense_songs row (standalone song). These helpers are the
+// single insert/auth path both owners share.
+// ============================================
+
+/** Discriminated owner of a score document. */
+export type ScoreOwner =
+  | { kind: 'classItem'; classItemId: string }
+  | { kind: 'song'; songId: string };
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+/** Resolve the current user and assert admin. Returns userId or an error. */
+async function requireAdmin(
+  supabase: SupabaseServerClient
+): Promise<{ userId: string } | { error: string }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single();
+  if (!profile?.is_admin) return { error: 'Admin only' };
+  return { userId: user.id };
+}
+
+/** Validate + insert a score_documents row and its score_tracks. Cleans up the
+ *  document if track insertion fails. Returns the new score_document id. */
+async function insertScore(
+  supabase: SupabaseServerClient,
+  score: ScoreDocument,
+  userId: string
+): Promise<{ docId: string } | { error: string }> {
+  let parsed: ScoreDocument;
+  try {
+    parsed = parseScoreDocument(score as unknown);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'invalid score document';
+    return { error: `Score validation failed: ${message}` };
+  }
+
+  const { data: doc, error: docErr } = await supabase
+    .from('score_documents')
+    .insert({
+      title: parsed.title,
+      composer: parsed.composer ?? null,
+      source_format: parsed.sourceFormat,
+      parsed_score: parsed as unknown as never,
+      schema_version: parsed.schemaVersion,
+      created_by: userId,
+    })
+    .select('id')
+    .single();
+  if (docErr || !doc) return { error: docErr?.message ?? 'Insert failed' };
+
+  if (parsed.tracks.length > 0) {
+    const { error: trackErr } = await supabase.from('score_tracks').insert(
+      parsed.tracks.map((t) => ({
+        score_document_id: doc.id,
+        track_index: t.index,
+        instrument: t.instrument,
+        display_name: t.displayName,
+        tuning: t.tuning as unknown as never,
+        string_multiplicity: t.stringMultiplicity,
+        channel: t.channel,
+        default_view: t.defaultView,
+      }))
+    );
+    if (trackErr) {
+      // Don't leave an orphan score_document behind.
+      await supabase.from('score_documents').delete().eq('id', doc.id);
+      return { error: trackErr.message };
+    }
+  }
+
+  return { docId: doc.id };
+}
+
+/** A default-shape empty score: 4 bars of 4/4 at 120 BPM, single staff track,
+ *  each measure a whole-note rest. Shared by class-item + song blank creation. */
+function buildBlankScore(title: string): ScoreDocument {
+  return {
+    schemaVersion: 1,
+    title: title.trim() || 'New score',
+    sourceFormat: 'native',
+    initialTempo: 120,
+    initialTimeSignature: [4, 4],
+    initialKeyFifths: 0,
+    tracks: [
+      {
+        index: 0,
+        instrument: 'staff',
+        displayName: 'Staff',
+        tuning: null,
+        stringMultiplicity: 1,
+        channel: null,
+        defaultView: 'staff',
+        measures: [1, 2, 3, 4].map((number) => ({
+          number,
+          voices: [{ number: 1, events: [{ kind: 'rest' as const, durationQN: 4 }] }],
+        })),
+      },
+    ],
+  };
+}
+
 export interface AttachScoreFromImportInput {
   classItemId: string;
   /** A ScoreDocument produced by one of the parsers (already validated client-side; we re-validate here). */
@@ -302,69 +412,17 @@ export async function attachScoreFromImport(
   input: AttachScoreFromImportInput
 ): Promise<AttachScoreFromImportResult> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single();
-  if (!profile?.is_admin) return { error: 'Admin only' };
+  // Insert the score (re-validates + writes score_documents + score_tracks).
+  const inserted = await insertScore(supabase, input.scoreDocument, admin.userId);
+  if ('error' in inserted) return { error: inserted.error };
+  const docId = inserted.docId;
 
-  // Re-validate at the storage boundary. A bad/corrupt payload from the
-  // browser shouldn't be able to insert junk JSON into the DB.
-  let parsed: ScoreDocument;
-  try {
-    parsed = parseScoreDocument(input.scoreDocument as unknown);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'invalid score document';
-    return { error: `Score validation failed: ${message}` };
-  }
-
-  // 1. Insert the score_documents row.
-  const { data: doc, error: docErr } = await supabase
-    .from('score_documents')
-    .insert({
-      title: parsed.title,
-      composer: parsed.composer ?? null,
-      source_format: parsed.sourceFormat,
-      parsed_score: parsed as unknown as never,
-      schema_version: parsed.schemaVersion,
-      created_by: user.id,
-    })
-    .select('id')
-    .single();
-
-  if (docErr || !doc) return { error: docErr?.message ?? 'Insert failed' };
-
-  // 2. Insert score_tracks rows mirroring parsed_score.tracks[].
-  if (parsed.tracks.length > 0) {
-    const trackRows = parsed.tracks.map((t) => ({
-      score_document_id: doc.id,
-      track_index: t.index,
-      instrument: t.instrument,
-      display_name: t.displayName,
-      tuning: t.tuning as unknown as never,
-      string_multiplicity: t.stringMultiplicity,
-      channel: t.channel,
-      default_view: t.defaultView,
-    }));
-    const { error: trackErr } = await supabase
-      .from('score_tracks')
-      .insert(trackRows);
-    if (trackErr) {
-      // Best-effort cleanup so we don't leave an orphan score_document row.
-      await supabase.from('score_documents').delete().eq('id', doc.id);
-      return { error: trackErr.message };
-    }
-  }
-
-  // 3. Wire to the class_item. If a score was already attached, this is a
-  //    REPLACE: point at the new doc and clear active_time_map_id (the old map
-  //    belongs to the previous score and would otherwise dangle / mis-sync).
+  // Wire to the class_item. If a score was already attached, this is a REPLACE:
+  // point at the new doc and clear active_time_map_id (the old map belongs to the
+  // previous score and would otherwise dangle / mis-sync).
   const { data: prevItem } = await supabase
     .from('class_items')
     .select('score_document_id')
@@ -374,18 +432,18 @@ export async function attachScoreFromImport(
 
   const { error: linkErr } = await supabase
     .from('class_items')
-    .update({ score_document_id: doc.id, active_time_map_id: null })
+    .update({ score_document_id: docId, active_time_map_id: null })
     .eq('id', input.classItemId);
   if (linkErr) return { error: linkErr.message };
 
   // Best-effort cleanup of the replaced document (CASCADE removes its tracks +
   // time maps). A failure here must not fail the import.
-  if (prevScoreId && prevScoreId !== doc.id) {
+  if (prevScoreId && prevScoreId !== docId) {
     await supabase.from('score_documents').delete().eq('id', prevScoreId);
   }
 
   revalidatePath('/dashboard');
-  return { scoreDocumentId: doc.id };
+  return { scoreDocumentId: docId };
 }
 
 // ============================================
@@ -495,17 +553,8 @@ export async function createBlankScoreForClassItem(input: {
   title?: string;
 }): Promise<{ scoreDocumentId?: string; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single();
-  if (!profile?.is_admin) return { error: 'Admin only' };
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
 
   // Check the class item exists and isn't already attached.
   const { data: classItem } = await supabase
@@ -518,88 +567,19 @@ export async function createBlankScoreForClassItem(input: {
     return { error: 'A score is already attached. Detach it first.' };
   }
 
-  // Default-shape empty score: 4 bars of 4/4 at 120 BPM, single staff track,
-  // each measure holding one whole-note rest (durationQN = 4).
-  const blank: ScoreDocument = {
-    schemaVersion: 1,
-    title: input.title?.trim() || classItem.title || 'New score',
-    sourceFormat: 'native',
-    initialTempo: 120,
-    initialTimeSignature: [4, 4],
-    initialKeyFifths: 0,
-    tracks: [
-      {
-        index: 0,
-        instrument: 'staff',
-        displayName: 'Staff',
-        tuning: null,
-        stringMultiplicity: 1,
-        channel: null,
-        defaultView: 'staff',
-        measures: [1, 2, 3, 4].map((number) => ({
-          number,
-          voices: [
-            {
-              number: 1,
-              events: [{ kind: 'rest' as const, durationQN: 4 }],
-            },
-          ],
-        })),
-      },
-    ],
-  };
-
-  // Re-validate so we never insert junk even from our own builder.
-  let parsed: ScoreDocument;
-  try {
-    parsed = parseScoreDocument(blank as unknown);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'invalid score document';
-    return { error: `Score validation failed: ${message}` };
-  }
-
-  // Insert score_documents.
-  const { data: doc, error: docErr } = await supabase
-    .from('score_documents')
-    .insert({
-      title: parsed.title,
-      composer: parsed.composer ?? null,
-      source_format: parsed.sourceFormat,
-      parsed_score: parsed as unknown as never,
-      schema_version: parsed.schemaVersion,
-      created_by: user.id,
-    })
-    .select('id')
-    .single();
-  if (docErr || !doc) return { error: docErr?.message ?? 'Insert failed' };
-
-  // Insert score_tracks.
-  const { error: trackErr } = await supabase.from('score_tracks').insert(
-    parsed.tracks.map((t) => ({
-      score_document_id: doc.id,
-      track_index: t.index,
-      instrument: t.instrument,
-      display_name: t.displayName,
-      tuning: t.tuning as unknown as never,
-      string_multiplicity: t.stringMultiplicity,
-      channel: t.channel,
-      default_view: t.defaultView,
-    }))
-  );
-  if (trackErr) {
-    await supabase.from('score_documents').delete().eq('id', doc.id);
-    return { error: trackErr.message };
-  }
+  const blank = buildBlankScore(input.title || classItem.title || 'New score');
+  const inserted = await insertScore(supabase, blank, admin.userId);
+  if ('error' in inserted) return { error: inserted.error };
 
   // Attach to the class item.
   const { error: linkErr } = await supabase
     .from('class_items')
-    .update({ score_document_id: doc.id })
+    .update({ score_document_id: inserted.docId })
     .eq('id', input.classItemId);
   if (linkErr) return { error: linkErr.message };
 
   revalidatePath('/dashboard');
-  return { scoreDocumentId: doc.id };
+  return { scoreDocumentId: inserted.docId };
 }
 
 // ============================================
@@ -691,5 +671,286 @@ export async function detachScoreFromClassItem(
 
   if (error) return { error: error.message };
   revalidatePath('/dashboard');
+  return { success: true };
+}
+
+// ============================================
+// Standalone songs — play_sense_songs owns a ScoreDocument (the single source of
+// truth). The rhythm highway derives its events at runtime via
+// scoreToExerciseDefinition(); nothing is persisted as events. Authored in the
+// SAME studio as course items, just with a 'song' owner (no video, no time map).
+// ============================================
+
+export type SongDifficulty = 'beginner' | 'intermediate' | 'advanced';
+
+export interface SongSummary {
+  id: string;
+  scoreDocumentId: string;
+  title: string;
+  difficulty: SongDifficulty;
+  trackIndex: number;
+  isPublished: boolean;
+  orderIndex: number;
+}
+
+/** Admin list of all songs (published or not). */
+export async function listSongs(): Promise<{ data?: SongSummary[]; error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('play_sense_songs')
+    .select('id, score_document_id, title, difficulty, track_index, is_published, order_index')
+    .order('order_index', { ascending: true })
+    .order('created_at', { ascending: false });
+  if (error) return { error: error.message };
+  return {
+    data: (data ?? []).map((s) => ({
+      id: s.id,
+      scoreDocumentId: s.score_document_id,
+      title: s.title,
+      difficulty: s.difficulty as SongDifficulty,
+      trackIndex: s.track_index,
+      isPublished: s.is_published,
+      orderIndex: s.order_index,
+    })),
+  };
+}
+
+export interface PublishedSong {
+  id: string;
+  title: string;
+  difficulty: SongDifficulty;
+  trackIndex: number;
+  parsedScore: ScoreDocument;
+}
+
+/** Published songs for the student stage. Returns parsed scores; the caller maps
+ *  each through scoreToExerciseDefinition() to feed the highway. */
+export async function getPublishedSongs(): Promise<{ data?: PublishedSong[]; error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('play_sense_songs')
+    .select('id, title, difficulty, track_index, is_published, order_index, score_documents(parsed_score)')
+    .eq('is_published', true)
+    .order('order_index', { ascending: true });
+  if (error) return { error: error.message };
+  return {
+    data: (data ?? [])
+      .filter((s) => s.score_documents)
+      .map((s) => ({
+        id: s.id,
+        title: s.title,
+        difficulty: s.difficulty as SongDifficulty,
+        trackIndex: s.track_index,
+        parsedScore: (s.score_documents as unknown as { parsed_score: ScoreDocument })
+          .parsed_score,
+      })),
+  };
+}
+
+export interface SongScorePayload extends ClassItemScorePayload {
+  song: {
+    id: string;
+    title: string;
+    difficulty: SongDifficulty;
+    trackIndex: number;
+    isPublished: boolean;
+    orderIndex: number;
+  };
+}
+
+/** Studio read path for a song — score + tracks + song meta. No time map (songs
+ *  are always fixed-BPM, no video). */
+export async function getScoreDocumentForSong(
+  songId: string
+): Promise<{ data?: SongScorePayload; error?: string }> {
+  const supabase = await createClient();
+
+  const { data: song, error: songErr } = await supabase
+    .from('play_sense_songs')
+    .select('id, score_document_id, title, difficulty, track_index, is_published, order_index')
+    .eq('id', songId)
+    .single();
+  if (songErr) return { error: songErr.message };
+  if (!song?.score_document_id) return { error: 'Song has no score document' };
+
+  const { data: doc, error: docErr } = await supabase
+    .from('score_documents')
+    .select('id, title, composer, parsed_score')
+    .eq('id', song.score_document_id)
+    .single();
+  if (docErr || !doc) return { error: docErr?.message ?? 'Score not found' };
+
+  const { data: tracks, error: tracksErr } = await supabase
+    .from('score_tracks')
+    .select('id, track_index, instrument, display_name, tuning, string_multiplicity, default_view')
+    .eq('score_document_id', song.score_document_id)
+    .order('track_index', { ascending: true });
+  if (tracksErr) return { error: tracksErr.message };
+
+  return {
+    data: {
+      scoreDocument: {
+        id: doc.id,
+        title: doc.title,
+        composer: doc.composer,
+        parsedScore: doc.parsed_score as unknown as ScoreDocument,
+      },
+      tracks: (tracks ?? []).map((t) => ({
+        id: t.id,
+        trackIndex: t.track_index,
+        instrument: t.instrument,
+        displayName: t.display_name,
+        tuning: t.tuning as string[] | null,
+        stringMultiplicity: t.string_multiplicity ?? 1,
+        defaultView: t.default_view,
+      })),
+      activeTimeMap: null,
+      song: {
+        id: song.id,
+        title: song.title,
+        difficulty: song.difficulty as SongDifficulty,
+        trackIndex: song.track_index,
+        isPublished: song.is_published,
+        orderIndex: song.order_index,
+      },
+    },
+  };
+}
+
+/** Create a new song from a blank score (opens straight into the studio). */
+export async function createBlankScoreForSong(input: {
+  title?: string;
+  difficulty?: SongDifficulty;
+}): Promise<{ songId?: string; scoreDocumentId?: string; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const title = input.title?.trim() || 'New song';
+  const inserted = await insertScore(supabase, buildBlankScore(title), admin.userId);
+  if ('error' in inserted) return { error: inserted.error };
+
+  const { data: song, error: songErr } = await supabase
+    .from('play_sense_songs')
+    .insert({
+      score_document_id: inserted.docId,
+      title,
+      difficulty: input.difficulty ?? 'intermediate',
+      created_by: admin.userId,
+    })
+    .select('id')
+    .single();
+  if (songErr || !song) {
+    // Don't leave an orphan score_document behind.
+    await supabase.from('score_documents').delete().eq('id', inserted.docId);
+    return { error: songErr?.message ?? 'Failed to create song' };
+  }
+
+  revalidatePath('/admin/play-sense');
+  return { songId: song.id, scoreDocumentId: inserted.docId };
+}
+
+/** Create a new song from an imported MusicXML/MIDI score. */
+export async function createSongFromImport(input: {
+  scoreDocument: ScoreDocument;
+  title?: string;
+  difficulty?: SongDifficulty;
+}): Promise<{ songId?: string; scoreDocumentId?: string; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const inserted = await insertScore(supabase, input.scoreDocument, admin.userId);
+  if ('error' in inserted) return { error: inserted.error };
+
+  const title = input.title?.trim() || input.scoreDocument.title || 'New song';
+  const { data: song, error: songErr } = await supabase
+    .from('play_sense_songs')
+    .insert({
+      score_document_id: inserted.docId,
+      title,
+      difficulty: input.difficulty ?? 'intermediate',
+      created_by: admin.userId,
+    })
+    .select('id')
+    .single();
+  if (songErr || !song) {
+    await supabase.from('score_documents').delete().eq('id', inserted.docId);
+    return { error: songErr?.message ?? 'Failed to create song' };
+  }
+
+  revalidatePath('/admin/play-sense');
+  return { songId: song.id, scoreDocumentId: inserted.docId };
+}
+
+/** Update song-level metadata (difficulty / publish / order / title / graded track). */
+export async function updateSongMeta(input: {
+  songId: string;
+  title?: string;
+  difficulty?: SongDifficulty;
+  isPublished?: boolean;
+  trackIndex?: number;
+  orderIndex?: number;
+}): Promise<{ success?: true; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const patch: Record<string, unknown> = {};
+  if (input.title !== undefined) patch.title = input.title.trim();
+  if (input.difficulty !== undefined) patch.difficulty = input.difficulty;
+  if (input.isPublished !== undefined) patch.is_published = input.isPublished;
+  if (input.trackIndex !== undefined) patch.track_index = input.trackIndex;
+  if (input.orderIndex !== undefined) patch.order_index = input.orderIndex;
+  if (Object.keys(patch).length === 0) return { success: true };
+
+  const { error } = await supabase
+    .from('play_sense_songs')
+    .update(patch)
+    .eq('id', input.songId);
+  if (error) return { error: error.message };
+
+  revalidatePath('/admin/play-sense');
+  revalidatePath('/dashboard/play-sense');
+  return { success: true };
+}
+
+/** Delete a song and its owned score document. Surfaces a failure to clean up the
+ *  score rather than silently leaving an ownerless score_document. */
+export async function deleteSong(
+  songId: string
+): Promise<{ success?: true; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const { data: song, error: songErr } = await supabase
+    .from('play_sense_songs')
+    .select('score_document_id')
+    .eq('id', songId)
+    .single();
+  if (songErr) return { error: songErr.message };
+
+  const { error: delSongErr } = await supabase
+    .from('play_sense_songs')
+    .delete()
+    .eq('id', songId);
+  if (delSongErr) return { error: delSongErr.message };
+
+  // Remove the now-ownerless score document. Surface a failure — don't swallow it.
+  if (song?.score_document_id) {
+    const { error: delScoreErr } = await supabase
+      .from('score_documents')
+      .delete()
+      .eq('id', song.score_document_id);
+    if (delScoreErr) {
+      return {
+        error: `Song deleted, but its score document could not be removed (${delScoreErr.message}). Score ${song.score_document_id} is now ownerless.`,
+      };
+    }
+  }
+
+  revalidatePath('/admin/play-sense');
+  revalidatePath('/dashboard/play-sense');
   return { success: true };
 }

@@ -29,7 +29,6 @@ import { GRADE_COLORS } from '@/lib/play-sense/types'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
 import { getExerciseDuration, getInstrumentLabel } from '@/lib/play-sense/exercise-utils'
 import { GRADE_LABELS } from '@/lib/play-sense/animations'
-import { MELODIC_EXERCISES } from '@/lib/play-sense/melodic-exercises'
 import { PLAYSENSE_INSTRUMENTS } from '@/lib/play-sense/playsense-mappings'
 import { saveAttempt } from '@/app/actions/play-sense'
 import { cn } from '@/lib/utils'
@@ -64,7 +63,7 @@ const DEFAULT_SETTINGS: StageSettings = {
 
 export function StagePlayer({ exercises }: StagePlayerProps) {
   const router = useRouter()
-  const allExercises = useMemo(() => [...exercises, ...MELODIC_EXERCISES], [exercises])
+  const allExercises = useMemo(() => exercises, [exercises])
   const session = useExerciseSession()
   const [settings, setSettings] = useState<StageSettings>(DEFAULT_SETTINGS)
   const setSetting = <K extends keyof StageSettings>(k: K, v: StageSettings[K]) =>

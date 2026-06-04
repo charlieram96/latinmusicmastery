@@ -17,6 +17,9 @@ import { ArrowLeft } from 'lucide-react'
 interface ScoreExerciseGameProps {
   /** The exercise derived from the authored score (see lib/play-sense/score-to-exercise). */
   exercise: ExerciseDefinition
+  /** When set (video lessons), the results screen offers "Watch demo again" which
+   *  flips the parent back to the instructional video. */
+  onWatchDemo?: () => void
 }
 
 /**
@@ -24,9 +27,9 @@ interface ScoreExerciseGameProps {
  * engine, fed by an ExerciseDefinition derived from the lesson's PlaySense score.
  *
  * This is a focused, playlist-free embedding of the same engine that powers
- * the standalone /play-sense exercises (components/play-sense/exercise-player.tsx).
+ * the standalone /play-sense stage (components/play-sense/stage/stage-player.tsx).
  */
-export function ScoreExerciseGame({ exercise }: ScoreExerciseGameProps) {
+export function ScoreExerciseGame({ exercise, onWatchDemo }: ScoreExerciseGameProps) {
   const session = useExerciseSession()
   const stableExercise = useMemo(() => exercise, [exercise])
 
@@ -116,7 +119,7 @@ export function ScoreExerciseGame({ exercise }: ScoreExerciseGameProps) {
           stats={session.attemptStats}
           exerciseTitle={session.exercise.title}
           onRetry={session.retry}
-          onNext={session.retry}
+          onWatchDemo={onWatchDemo}
         />
       </div>
     )
