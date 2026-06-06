@@ -12,8 +12,8 @@
 //   - Tempo and time signature lifted from the header start, not tracked
 //     across the piece (we'll add tempoChange events when we surface a
 //     real "tempo follow" UX)
-//   - Drum/percussion programs map to 'staff' for now since the staff
-//     renderer is the only one we render
+//   - Channel-10 drum tracks map to a percussion instrument (inferred from the
+//     GM drum keys used) and their notes are remapped to our stroke midis
 
 import { Midi } from '@tonejs/midi';
 import type {
@@ -28,6 +28,8 @@ import type {
   Voice,
 } from '@/components/playsense-studio/shared/score-model/types';
 import { measureLengthInQN } from '../time-mapping';
+import { gmToStrokeMidi, inferPercInstrument } from '../gm-percussion';
+import { isPercussion } from '../perc-strokes';
 
 const SUPPORTED_DURATIONS_QN: number[] = [
   4, // whole
@@ -69,8 +71,13 @@ export async function parseMidi(
     .map((t, idx) => {
       const instrument: Instrument =
         options.forceInstrument ??
-        guessInstrument(t.instrument?.number ?? 0, t.channel ?? 0);
-      const events = midiNotesToEvents(t.notes, ppq);
+        guessInstrument(t.instrument?.number ?? 0, t.channel ?? 0, t.notes.map((n) => n.midi));
+      // Drum tracks store General-MIDI percussion keys; remap them to our
+      // per-instrument stroke midis so they render on the percussion staff.
+      const sourceNotes = isPercussion(instrument)
+        ? t.notes.map((n) => ({ midi: gmToStrokeMidi(n.midi, instrument), ticks: n.ticks, durationTicks: n.durationTicks }))
+        : t.notes;
+      const events = midiNotesToEvents(sourceNotes, ppq);
       const measures = groupIntoMeasures(events, measureQN);
       return {
         index: idx,
@@ -254,8 +261,10 @@ function snapDuration(qn: number): number {
 }
 
 /** GM program-number / channel → PlaySense Studio instrument bucket. */
-function guessInstrument(programNumber: number, channel: number): Instrument {
-  if (channel === 9) return 'staff'; // drum channel — no dedicated renderer yet
+function guessInstrument(programNumber: number, channel: number, gmNotes: number[] = []): Instrument {
+  // Channel 10 (0-based 9) is the GM drum channel — infer the percussion family
+  // from the actual drum keys the track uses.
+  if (channel === 9) return inferPercInstrument(gmNotes);
   if (programNumber >= 24 && programNumber <= 31) return 'guitar';
   if (programNumber >= 32 && programNumber <= 39) return 'bass';
   if (programNumber === 105 || programNumber === 106) return 'mandolin';

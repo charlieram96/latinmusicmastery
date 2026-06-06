@@ -11,7 +11,7 @@
 // (buildWaypoints / buildTapSeed) and seeds the marker state.
 
 import { useEffect, useState } from 'react';
-import { Grid3x3, Hand, RotateCcw } from 'lucide-react';
+import { Grid3x3, Hand, Maximize2, RotateCcw } from 'lucide-react';
 
 export interface SeedControlsProps {
   initialBpm: number;
@@ -21,6 +21,8 @@ export interface SeedControlsProps {
   getCurrentSeconds: () => number;
   onApplyTempoSeed: (bpm: number, offsetSeconds: number) => void;
   onApplyTapSeed: (tapTimes: number[]) => void;
+  /** Stretch the measures evenly across the entire audio. */
+  onApplyFitSeed: () => void;
 }
 
 export function SeedControls({
@@ -29,6 +31,7 @@ export function SeedControls({
   getCurrentSeconds,
   onApplyTempoSeed,
   onApplyTapSeed,
+  onApplyFitSeed,
 }: SeedControlsProps) {
   const [bpm, setBpm] = useState(initialBpm);
   const [offset, setOffset] = useState(0);
@@ -62,6 +65,11 @@ export function SeedControls({
     onApplyTapSeed(taps);
     setTapMode(false);
     setTaps([]);
+  };
+
+  const applyFit = () => {
+    if (!confirmOverwrite()) return;
+    onApplyFitSeed();
   };
 
   return (
@@ -100,6 +108,18 @@ export function SeedControls({
           Seed tempo grid
         </button>
       </div>
+
+      <div className="h-9 w-px bg-border" />
+
+      {/* Fit to audio — stretch the measures across the whole video. */}
+      <button
+        onClick={applyFit}
+        title="Spread the measures evenly across the entire audio so they span the whole video."
+        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm transition hover:bg-muted"
+      >
+        <Maximize2 className="h-4 w-4" />
+        Fit to audio
+      </button>
 
       <div className="h-9 w-px bg-border" />
 
