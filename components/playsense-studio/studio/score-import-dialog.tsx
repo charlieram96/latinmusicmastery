@@ -85,7 +85,9 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onImported }: Sc
       setIsParsing(false);
       setParsed(score);
       setFilename(file.name);
-      setSelectedTrack(0);
+      // Pre-select the part that actually has notes (avoids landing on an empty
+      // accompaniment/percussion-map part and seeing nothing).
+      setSelectedTrack(richestTrackIndex(score));
       setStep('review');
     } catch (err) {
       setIsParsing(false);
@@ -190,27 +192,40 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onImported }: Sc
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Choose one instrument
                 </p>
+                <p className="text-xs text-muted-foreground">
+                  Each sync covers one instrument. Pick the part you want to teach — import other
+                  instruments into their own lessons.
+                </p>
                 <div className="max-h-56 space-y-1 overflow-y-auto">
-                  {parsed.tracks.map((t, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setSelectedTrack(i)}
-                      className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition ${
-                        i === selectedTrack
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border hover:bg-muted'
-                      }`}
-                    >
-                      <span className="truncate font-medium">{t.displayName}</span>
-                      <span className="ml-2 shrink-0 text-xs text-muted-foreground">{t.instrument}</span>
-                    </button>
-                  ))}
+                  {parsed.tracks.map((t, i) => {
+                    const noteCount = countTrackNotes(t);
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setSelectedTrack(i)}
+                        className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition ${
+                          i === selectedTrack
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:bg-muted'
+                        }`}
+                      >
+                        <span className="truncate font-medium">{t.displayName}</span>
+                        <span className="ml-2 flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                          <span>{t.instrument}</span>
+                          <span className={noteCount === 0 ? 'text-amber-600' : undefined}>
+                            {noteCount === 0 ? 'no notes' : `${noteCount} notes`}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Instrument: <span className="font-medium text-foreground">{parsed.tracks[0].displayName}</span>
+                Instrument: <span className="font-medium text-foreground">{parsed.tracks[0].displayName}</span>{' '}
+                <span className="text-xs">({countTrackNotes(parsed.tracks[0])} notes)</span>
               </p>
             )}
 
@@ -250,4 +265,31 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onImported }: Sc
 
 function stripExt(filename: string): string {
   return filename.replace(/\.[^.]+$/, '');
+}
+
+/** Count playable events (notes + chords, ignoring rests) in a track. */
+function countTrackNotes(track: ScoreDocument['tracks'][number]): number {
+  let n = 0;
+  for (const measure of track.measures) {
+    for (const voice of measure.voices) {
+      for (const event of voice.events) {
+        if (event.kind === 'note' || event.kind === 'chord') n++;
+      }
+    }
+  }
+  return n;
+}
+
+/** Index of the track with the most notes (the most likely one to teach). */
+function richestTrackIndex(score: ScoreDocument): number {
+  let best = 0;
+  let bestCount = -1;
+  score.tracks.forEach((t, i) => {
+    const count = countTrackNotes(t);
+    if (count > bestCount) {
+      bestCount = count;
+      best = i;
+    }
+  });
+  return best;
 }

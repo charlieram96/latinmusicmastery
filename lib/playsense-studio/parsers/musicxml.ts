@@ -33,6 +33,8 @@ import type {
   Track,
   Voice,
 } from '@/components/playsense-studio/shared/score-model/types';
+import { gmToStrokeMidi, inferPercInstrument } from '../gm-percussion';
+import { getPercStrokes } from '../perc-strokes';
 
 const TYPE_TO_QN: Record<string, number> = {
   whole: 4,
@@ -93,24 +95,49 @@ export function parseMusicXmlString(
   const partList = Array.from(
     doc.querySelectorAll('part-list > score-part')
   ) as Element[];
-  const partInfo = new Map<string, { name: string; instrument: Instrument }>();
+  const partInfo = new Map<
+    string,
+    { name: string; instrument: Instrument; instrumentGm: Map<string, number> }
+  >();
   for (const sp of partList) {
     const id = sp.getAttribute('id') ?? '';
     const name = sp.querySelector('part-name')?.textContent?.trim() || id;
     const programEl = sp.querySelector('midi-instrument > midi-program');
-    const channelEl = sp.querySelector('midi-instrument > midi-channel');
     const program = programEl ? Number(programEl.textContent) : NaN;
-    const channel = channelEl ? Number(channelEl.textContent) : NaN;
-    const instrument = guessInstrument(program, channel, name);
-    partInfo.set(id, { name, instrument });
+
+    // Percussion parts declare one or more <midi-instrument> entries, each
+    // optionally carrying a <midi-unpitched> General-MIDI key (1-based) and a
+    // <midi-channel> (10 = drums). Collect them so each unpitched note can
+    // resolve its GM key via the note's <instrument id> reference.
+    const instrumentGm = new Map<string, number>();
+    const gmNotes: number[] = [];
+    let anyDrumChannel = false;
+    for (const mi of Array.from(sp.querySelectorAll('midi-instrument'))) {
+      const miId = mi.getAttribute('id') ?? '';
+      if (Number(mi.querySelector('midi-channel')?.textContent) === 10) anyDrumChannel = true;
+      const unpitchedEl = mi.querySelector('midi-unpitched');
+      if (unpitchedEl) {
+        const gm = Number(unpitchedEl.textContent) - 1; // MusicXML is 1-based
+        if (Number.isFinite(gm) && gm >= 0) {
+          if (miId) instrumentGm.set(miId, gm);
+          gmNotes.push(gm);
+        }
+      }
+    }
+
+    const isUnpitched = instrumentGm.size > 0 || anyDrumChannel;
+    const instrument = guessInstrument(program, name, { isUnpitched, gmNotes });
+    partInfo.set(id, { name, instrument, instrumentGm });
   }
 
   const tracks: Track[] = [];
   const partEls = Array.from(doc.querySelectorAll('part')) as Element[];
   partEls.forEach((part, idx) => {
     const id = part.getAttribute('id') ?? '';
-    const info = partInfo.get(id) ?? { name: `Part ${idx + 1}`, instrument: 'staff' as const };
-    const measures = parsePartMeasures(part, initialTimeSignature);
+    const info =
+      partInfo.get(id) ??
+      { name: `Part ${idx + 1}`, instrument: 'staff' as const, instrumentGm: new Map<string, number>() };
+    const measures = parsePartMeasures(part, initialTimeSignature, info.instrument, info.instrumentGm);
     tracks.push({
       index: idx,
       instrument: info.instrument,
@@ -176,8 +203,11 @@ async function extractMxl(data: ArrayBuffer): Promise<string> {
 
 function parsePartMeasures(
   part: Element,
-  initialTimeSignature: [number, number]
+  initialTimeSignature: [number, number],
+  instrument: Instrument,
+  instrumentGm: Map<string, number>
 ): Measure[] {
+  const midiCtx: NoteMidiContext = { instrument, instrumentGm };
   let timeSignature: [number, number] = initialTimeSignature;
   let divisions = 1; // ticks per quarter, set by <attributes><divisions>
   const measureEls = Array.from(part.querySelectorAll(':scope > measure')) as Element[];
@@ -220,7 +250,7 @@ function parsePartMeasures(
         // Merge into the previous event as a chord pitch.
         const prev = events[events.length - 1];
         if (prev && (prev.kind === 'note' || prev.kind === 'chord')) {
-          const midi = isRest ? null : pitchToMidi(noteEl);
+          const midi = isRest ? null : noteToMidi(noteEl, midiCtx);
           if (midi !== null) {
             if (prev.kind === 'note') {
               const chord: Chord = {
@@ -248,7 +278,7 @@ function parsePartMeasures(
           dotted,
         } satisfies Rest);
       } else {
-        const midi = pitchToMidi(noteEl);
+        const midi = noteToMidi(noteEl, midiCtx);
         if (midi === null) continue;
         events.push({
           kind: 'note',
@@ -305,6 +335,45 @@ function readTempoChange(measure: Element): number | null {
   return Number.isFinite(t) && t > 0 ? t : null;
 }
 
+interface NoteMidiContext {
+  /** Resolved track instrument (drives GM → stroke mapping for unpitched notes). */
+  instrument: Instrument;
+  /** This part's <midi-instrument id> → General-MIDI key (0-based). */
+  instrumentGm: Map<string, number>;
+}
+
+/**
+ * Resolve a <note> to a stored MIDI value, handling both pitched (<pitch>) and
+ * unpitched percussion (<unpitched>) notes. Returns null when there's no usable
+ * pitch (e.g. a malformed note).
+ *
+ * Unpitched notes carry their sound via the part's GM "drum map": the note's
+ * <instrument id> points at a <midi-instrument> whose <midi-unpitched> gives the
+ * GM key. We convert that GM key into a stroke midi valid for the track's
+ * percussion instrument so the renderer places it on the right staff line.
+ */
+function noteToMidi(noteEl: Element, ctx: NoteMidiContext): number | null {
+  if (noteEl.querySelector(':scope > pitch')) return pitchToMidi(noteEl);
+
+  const unpitched = noteEl.querySelector(':scope > unpitched');
+  if (unpitched) {
+    const instrId = noteEl.querySelector(':scope > instrument')?.getAttribute('id') ?? '';
+    let gm = ctx.instrumentGm.get(instrId);
+    // Single-instrument percussion parts often omit the per-note ref — use the
+    // sole mapping when there's exactly one.
+    if (gm === undefined && ctx.instrumentGm.size === 1) {
+      gm = ctx.instrumentGm.values().next().value;
+    }
+    if (gm === undefined) {
+      // No GM info at all — drop the note onto the instrument's first stroke so
+      // it still appears on the staff rather than vanishing.
+      return getPercStrokes(ctx.instrument)?.[0]?.midi ?? 60;
+    }
+    return gmToStrokeMidi(gm, ctx.instrument);
+  }
+  return null;
+}
+
 function pitchToMidi(noteEl: Element): number | null {
   const pitch = noteEl.querySelector(':scope > pitch');
   if (!pitch) return null;
@@ -323,8 +392,8 @@ function pitchToMidi(noteEl: Element): number | null {
 
 function guessInstrument(
   program: number,
-  channel: number,
-  name: string
+  name: string,
+  perc?: { isUnpitched: boolean; gmNotes: number[] }
 ): Instrument {
   const lower = name.toLowerCase();
   if (lower.includes('tres')) return 'tres';
@@ -339,8 +408,11 @@ function guessInstrument(
   if (lower.includes('bongo')) return 'perc-bongo';
   if (lower.includes('timbal')) return 'perc-timbal';
   if (lower.includes('clave')) return 'perc-clave';
-  if (lower.includes('drum') || lower.includes('kit')) return 'perc-kit';
-  if (Number.isFinite(channel) && channel === 9) return 'staff';
+  if (lower.includes('drum') || lower.includes('kit') || lower.includes('bater')) return 'perc-kit';
+
+  // Unpitched part with no telltale name → infer the family from its GM keys.
+  if (perc?.isUnpitched) return inferPercInstrument(perc.gmNotes);
+
   if (Number.isFinite(program)) {
     if (program >= 24 && program <= 31) return 'guitar';
     if (program >= 32 && program <= 39) return 'bass';

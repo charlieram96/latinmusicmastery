@@ -19,7 +19,7 @@ import { publishTimeMap } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
-import { buildWaypoints, buildTapSeed } from '@/lib/playsense-studio/sync-seed';
+import { buildWaypoints, buildTapSeed, buildFitWaypoints } from '@/lib/playsense-studio/sync-seed';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
@@ -80,14 +80,28 @@ export function SyncPanel({
   // viewport width, so we measure the editor area directly to drive layout/zoom.
   const editorAreaRef = useRef<HTMLDivElement | null>(null);
 
-  // --- Marker state (seed from a published map, else a default tempo grid) ---
+  // --- Marker state ---
+  // Priority: a published map > measures stretched across the whole audio (so
+  // they always span the video) > a default fixed-tempo grid when no duration
+  // is known yet.
   const [markers, setMarkers] = useState<MarkerState>(() => {
     if (activeTimeMap && activeTimeMap.waypoints.length >= 2) {
       return seedMarkerState(track, score, activeTimeMap.waypoints);
     }
+    if (videoUrl && (videoDurationSeconds ?? 0) > 0) {
+      return seedMarkerState(track, score, buildFitWaypoints(score, videoDurationSeconds as number));
+    }
     return seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, 0));
   });
   const [dirty, setDirty] = useState(false);
+
+  // Auto-fit measures across the whole audio ONCE the real duration is known.
+  // Covers the case where video_duration_seconds wasn't stored at mount — we
+  // wait for the video clock to report it, then stretch the markers (unless the
+  // admin already dragged them or a published map is in play).
+  const didAutoFitRef = useRef<boolean>(
+    (activeTimeMap != null && activeTimeMap.waypoints.length >= 2) || (videoDurationSeconds ?? 0) > 0
+  );
 
   // Reconcile markers when the score's MEASURE STRUCTURE changes (add/delete
   // measure, time-signature/tempo change). Note edits don't change the
@@ -99,6 +113,15 @@ export function SyncPanel({
     prevSig.current = sig;
     setMarkers((prev) => reconcileMarkers(prev, score.tracks[0], score));
   }, [sig, score]);
+
+  useEffect(() => {
+    if (didAutoFitRef.current || dirty || !videoUrl) return;
+    const dur = clock.durationSeconds;
+    if (dur > 0) {
+      didAutoFitRef.current = true;
+      setMarkers(seedMarkerState(track, score, buildFitWaypoints(score, dur)));
+    }
+  }, [clock.durationSeconds, dirty, videoUrl, track, score]);
 
   // --- View state ---
   const [pps, setPps] = useState(40);
@@ -298,6 +321,16 @@ export function SyncPanel({
     [track, score]
   );
 
+  const applyFitSeed = useCallback(() => {
+    const dur = clock.durationSeconds > 0 ? clock.durationSeconds : videoDurationSeconds ?? 0;
+    if (dur <= 0) return;
+    const seed = buildFitWaypoints(score, dur);
+    if (seed.length < 2) return;
+    setMarkers(seedMarkerState(track, score, seed));
+    setDirty(true);
+    setSelected(null);
+  }, [clock, videoDurationSeconds, track, score]);
+
   const toggleExpandSelected = () => {
     if (!selected || selected === 'tail') return;
     const measureNumber = selected.measureNumber;
@@ -425,6 +458,7 @@ export function SyncPanel({
             getCurrentSeconds={clock.getCurrentSeconds}
             onApplyTempoSeed={applyTempoSeed}
             onApplyTapSeed={applyTapSeed}
+            onApplyFitSeed={applyFitSeed}
           />
         </>
       )}

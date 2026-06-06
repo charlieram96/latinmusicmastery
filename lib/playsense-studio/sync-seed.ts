@@ -72,6 +72,53 @@ export function buildWaypoints(
 }
 
 /**
+ * Lay the score's measures evenly across the WHOLE audio so they always span the
+ * entire video, regardless of the score's notated tempo. Each measure downbeat
+ * is placed in proportion to its cumulative quarter-note position, with the tail
+ * landing exactly at `totalDurationSeconds`.
+ *
+ * Unlike buildWaypoints (fixed BPM from t=0), this ignores per-measure tempo
+ * changes so the fit is a clean linear stretch — the admin can still drag
+ * individual markers afterward to bend the timeline.
+ */
+export function buildFitWaypoints(
+  score: ScoreDocument,
+  totalDurationSeconds: number
+): Waypoint[] {
+  const track = score.tracks[0];
+  if (!track || track.measures.length === 0 || totalDurationSeconds <= 0) return [];
+
+  // Cumulative QN at each measure downbeat, honoring time-signature changes.
+  const positions: Array<{ qn: number; measureNumber: number }> = [];
+  let cumulativeQN = 0;
+  let timeSignature = score.initialTimeSignature;
+  for (const measure of track.measures) {
+    if (measure.timeSignature) timeSignature = measure.timeSignature;
+    positions.push({ qn: cumulativeQN, measureNumber: measure.number });
+    cumulativeQN += measureLengthInQN(timeSignature);
+  }
+  const totalQN = cumulativeQN;
+  if (totalQN <= 0) return [];
+
+  const out: Waypoint[] = positions.map((p) => ({
+    musicalPositionQN: p.qn,
+    videoTimeSeconds: (p.qn / totalQN) * totalDurationSeconds,
+    measureNumber: p.measureNumber,
+    beatInMeasure: 1,
+  }));
+
+  // Tail boundary at the end of the last measure (== full duration).
+  out.push({
+    musicalPositionQN: totalQN,
+    videoTimeSeconds: totalDurationSeconds,
+    measureNumber: null,
+    beatInMeasure: null,
+  });
+
+  return out;
+}
+
+/**
  * Map tap timestamps to measure-downbeat waypoints. `tapTimes[i]` is the video
  * time (seconds) of the (i+1)th measure's downbeat, tapped in order from bar 1.
  * The position past the last measure is the tail boundary (measureNumber null).

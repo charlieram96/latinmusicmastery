@@ -1,7 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { buildWaypoints, buildTapSeed } from '../sync-seed';
+import { buildWaypoints, buildTapSeed, buildFitWaypoints } from '../sync-seed';
 import { GUITAR_LICK_FIXTURE, SON_MONTUNO_FIXTURE } from '../score-fixtures';
 import { WaypointTimeMap } from '@/components/playsense-studio/shared/time-map/time-map';
+
+describe('buildFitWaypoints (stretch across whole audio)', () => {
+  it('spans the entire duration with the first downbeat at 0 and tail at the end', () => {
+    // GUITAR_LICK is 4/4, 2 measures (8 QN total). Fit to a 10s clip.
+    const wps = buildFitWaypoints(GUITAR_LICK_FIXTURE, 10);
+    expect(wps).toHaveLength(3); // 2 downbeats + tail
+
+    expect(wps[0]).toMatchObject({ musicalPositionQN: 0, measureNumber: 1, beatInMeasure: 1 });
+    expect(wps[0].videoTimeSeconds).toBeCloseTo(0, 6);
+
+    // Measure 2 downbeat sits at QN 4 of 8 → halfway through the audio.
+    expect(wps[1].musicalPositionQN).toBe(4);
+    expect(wps[1].videoTimeSeconds).toBeCloseTo(5, 6);
+
+    // Tail lands exactly at the full duration.
+    expect(wps[2].measureNumber).toBeNull();
+    expect(wps[2].videoTimeSeconds).toBeCloseTo(10, 6);
+  });
+
+  it('is strictly increasing in video time', () => {
+    const wps = buildFitWaypoints(SON_MONTUNO_FIXTURE, 30);
+    for (let i = 1; i < wps.length; i++) {
+      expect(wps[i].videoTimeSeconds).toBeGreaterThan(wps[i - 1].videoTimeSeconds);
+    }
+    expect(wps[wps.length - 1].videoTimeSeconds).toBeCloseTo(30, 6);
+  });
+
+  it('returns nothing for a non-positive duration', () => {
+    expect(buildFitWaypoints(GUITAR_LICK_FIXTURE, 0)).toEqual([]);
+    expect(buildFitWaypoints(GUITAR_LICK_FIXTURE, -5)).toEqual([]);
+  });
+});
 
 describe('buildWaypoints (tempo + offset seed)', () => {
   it('emits one waypoint per measure downbeat plus a tail boundary', () => {
