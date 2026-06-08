@@ -71,7 +71,10 @@ export function AdminSidebarClient() {
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
       className={cn(
+        // z-index must beat <main> (a later sibling): the hover overlay lives in
+        // this aside's stacking context, so the aside itself has to sit on top.
         'relative hidden md:block h-screen sticky top-0 flex-shrink-0',
+        overlay ? 'z-50' : 'z-30',
         collapsed ? 'w-16' : 'w-[206px]'
       )}
     >

@@ -30,10 +30,14 @@ import type { ScoreDocument } from '@/components/playsense-studio/shared/score-m
 
 export interface ScoreImportDialogProps {
   classItemId: string;
-  /** "fresh" = no score yet; "replace" = swap out an existing score + sync. */
-  mode: 'fresh' | 'replace';
+  /** "fresh" = no score yet; "replace" = swap an existing score; "section" = add
+   *  the imported score as a new scored section on a video. */
+  mode: 'fresh' | 'replace' | 'section';
   /** The element that opens the dialog. */
   trigger: ReactNode;
+  /** Override the default attach behavior — e.g. create/replace a section. Receives
+   *  the single-instrument score + filename; returns an error or nothing. */
+  onConfirm?: (score: ScoreDocument, filename: string) => Promise<{ error?: string }>;
   /** Called after a successful import (defaults to router.refresh()). */
   onImported?: () => void;
 }
@@ -42,7 +46,7 @@ type Step = 'choose' | 'review';
 
 const ACCEPT = '.mid,.midi,.musicxml,.xml,.mxl';
 
-export function ScoreImportDialog({ classItemId, mode, trigger, onImported }: ScoreImportDialogProps) {
+export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImported }: ScoreImportDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>('choose');
@@ -109,11 +113,13 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onImported }: Sc
     const single: ScoreDocument = { ...parsed, tracks: [{ ...chosen, index: 0 }] };
     setError(null);
     startTransition(async () => {
-      const result = await attachScoreFromImport({
-        classItemId,
-        scoreDocument: single,
-        sourceFilename: filename,
-      });
+      const result = onConfirm
+        ? await onConfirm(single, filename)
+        : await attachScoreFromImport({
+            classItemId,
+            scoreDocument: single,
+            sourceFilename: filename,
+          });
       if (result.error) {
         setError(result.error);
         return;
@@ -138,11 +144,15 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onImported }: Sc
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{mode === 'replace' ? 'Replace score' : 'Import a score'}</DialogTitle>
+          <DialogTitle>
+            {mode === 'replace' ? 'Replace score' : mode === 'section' ? 'Import as new section' : 'Import a score'}
+          </DialogTitle>
           <DialogDescription>
             {mode === 'replace'
               ? 'Drop a new MusicXML or MIDI file. This replaces the current score and its sync.'
-              : 'Import a MusicXML or MIDI file. Pick one instrument if the file has several.'}
+              : mode === 'section'
+                ? 'Import a MusicXML or MIDI file as a new scored section. Pick one instrument if the file has several.'
+                : 'Import a MusicXML or MIDI file. Pick one instrument if the file has several.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -251,7 +261,7 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onImported }: Sc
                 className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-1.5 text-sm text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
               >
                 {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {mode === 'replace' ? 'Replace score' : 'Import'}
+                {mode === 'replace' ? 'Replace score' : mode === 'section' ? 'Add section' : 'Import'}
               </button>
             </div>
           </div>

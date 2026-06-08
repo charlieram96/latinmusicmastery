@@ -52,6 +52,8 @@ import type { ScoreDocument } from '@/components/playsense-studio/shared/score-m
 export interface SyncPanelProps {
   classItemId: string;
   scoreDocumentId: string;
+  /** When set, Publish writes into this section (its active map + video range). */
+  sectionId?: string;
   /** 'video' = sync the score to the audio; 'exercise' = no sync, demo + highway. */
   mode: 'video' | 'exercise';
   videoUrl: string | null;
@@ -59,6 +61,8 @@ export interface SyncPanelProps {
   dispatch: Dispatch<EditorAction>;
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
   videoDurationSeconds: number | null;
+  /** Fired after a successful Publish (e.g. so a section list can refresh ranges). */
+  onPublished?: () => void;
 }
 
 const PPS_PRESETS = [20, 40, 80, 160];
@@ -68,12 +72,14 @@ const MAX_PPS = 600;
 export function SyncPanel({
   classItemId,
   scoreDocumentId,
+  sectionId,
   mode,
   videoUrl,
   score,
   dispatch,
   activeTimeMap,
   videoDurationSeconds,
+  onPublished,
 }: SyncPanelProps) {
   const track = score.tracks[0];
 
@@ -354,6 +360,7 @@ export function SyncPanel({
       const result = await publishTimeMap({
         classItemId,
         scoreDocumentId,
+        sectionId,
         method: 'drag',
         params: { editedBeats, pps, peaksCached: decodeState === 'ready', version: 1 },
         waypoints,
@@ -365,6 +372,7 @@ export function SyncPanel({
       }
       setPublished(true);
       setDirty(false);
+      onPublished?.();
     });
   };
 

@@ -3,7 +3,11 @@ import { Badge } from '@/components/ui/badge'
 import { Video, Dumbbell, Music } from 'lucide-react'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
 import { PlaysenseStudioPlayer } from '@/components/playsense-studio/player/playsense-studio-player'
-import { getScoreDocumentForClassItem, logPlaysenseStudioEvent } from '@/app/actions/playsense-studio'
+import {
+  getScoreDocumentForClassItem,
+  getScoreSectionsForClassItem,
+  logPlaysenseStudioEvent,
+} from '@/app/actions/playsense-studio'
 import { getQuizQuestions } from '@/app/actions/quiz'
 import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
 import { ExerciseView } from '@/components/class-viewer/lesson-viewer/exercise-view'
@@ -66,12 +70,32 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
       ? (await getScoreDocumentForClassItem(item.id)).data ?? null
       : null
 
-  // A VIDEO with no score in the split viewer renders the resizable
+  // VIDEO lessons carry MULTIPLE scored sections, each active over a video
+  // time-range. Fetch them and keep the ones that are placed + published.
+  const videoSections =
+    item.item_type === 'VIDEO' && playsenseStudioEnabled && !!item.video_url
+      ? (await getScoreSectionsForClassItem(item.id)).data ?? []
+      : []
+  const playerSections = videoSections
+    .filter((s) => s.videoStartSeconds != null && s.activeTimeMap != null)
+    .map((s) => ({
+      id: s.sectionId,
+      label: s.label,
+      videoStartSeconds: s.videoStartSeconds,
+      videoEndSeconds: s.videoEndSeconds,
+      score: s.scoreDocument.parsedScore,
+      tracks: s.tracks,
+      activeTimeMap: s.activeTimeMap,
+    }))
+  const firstSection = playerSections[0] ?? null
+  const hasVideoSections = playerSections.length > 0
+
+  // A VIDEO with no scored sections in the split viewer renders the resizable
   // video + "About this lesson" workspace instead of a giant full-width video.
   // The panel surfaces rich_content, so we skip the shared copy below it.
   const noScoreVideoSplit =
     item.item_type === 'VIDEO' &&
-    !playsenseStudioData &&
+    !hasVideoSections &&
     playerLayout === 'split' &&
     !!item.video_url &&
     !item.soundslice_embed_url
@@ -87,7 +111,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
   // when zero traffic has migrated. Fire-and-forget; logPlaysenseStudioEvent
   // swallows errors.
   const renderingLegacyIframe =
-    !playsenseStudioData && item.soundslice_embed_url !== null
+    !playsenseStudioData && !hasVideoSections && item.soundslice_embed_url !== null
   if (renderingLegacyIframe) {
     void logPlaysenseStudioEvent({
       eventType: 'playsense_studio_legacy_iframe_shown',
@@ -104,14 +128,15 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
     <div className="space-y-6">
       {/* VIDEO */}
       {item.item_type === 'VIDEO' &&
-        (playsenseStudioData && playsenseStudioMediaUrl && playerLayout === 'split' ? (
+        (hasVideoSections && firstSection && item.video_url && playerLayout === 'split' ? (
           // Split workspace renders edge-to-edge (the player draws its own frame).
           <PlaysenseStudioPlayer
             classItemId={item.id}
-            videoUrl={playsenseStudioMediaUrl}
-            score={playsenseStudioData.scoreDocument.parsedScore}
-            tracks={playsenseStudioData.tracks}
-            activeTimeMap={playsenseStudioData.activeTimeMap}
+            videoUrl={item.video_url}
+            score={firstSection.score}
+            tracks={firstSection.tracks}
+            activeTimeMap={firstSection.activeTimeMap}
+            sections={playerSections}
             layout="split"
           />
         ) : noScoreVideoSplit ? (
@@ -129,13 +154,14 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
         ) : (
           <Card>
             <CardContent className="p-0">
-              {playsenseStudioData && playsenseStudioMediaUrl ? (
+              {hasVideoSections && firstSection && item.video_url ? (
                 <PlaysenseStudioPlayer
                   classItemId={item.id}
-                  videoUrl={playsenseStudioMediaUrl}
-                  score={playsenseStudioData.scoreDocument.parsedScore}
-                  tracks={playsenseStudioData.tracks}
-                  activeTimeMap={playsenseStudioData.activeTimeMap}
+                  videoUrl={item.video_url}
+                  score={firstSection.score}
+                  tracks={firstSection.tracks}
+                  activeTimeMap={firstSection.activeTimeMap}
+                  sections={playerSections}
                 />
               ) : item.soundslice_embed_url ? (
                 <div className="aspect-video bg-black rounded-lg overflow-hidden">

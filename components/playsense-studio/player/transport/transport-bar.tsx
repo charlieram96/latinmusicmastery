@@ -34,6 +34,10 @@ interface TransportBarProps {
   // Click-track context
   bpm: number;
   beatsPerMeasure: number;
+
+  // Scored-section regions drawn on the scrub bar (clickable to jump). Used by
+  // multi-section video lessons; omitted elsewhere.
+  sectionMarkers?: Array<{ startSeconds: number; endSeconds: number | null; label?: string | null }>;
 }
 
 export function TransportBar({
@@ -52,6 +56,7 @@ export function TransportBar({
   onClearLoop,
   bpm,
   beatsPerMeasure,
+  sectionMarkers,
 }: TransportBarProps) {
   const safeDuration = Math.max(durationSeconds, 0.001);
   const loopAPct = loopA !== null ? (loopA / safeDuration) * 100 : null;
@@ -60,6 +65,24 @@ export function TransportBar({
   return (
     <div className="space-y-2">
       <div className="relative">
+        {/* Scored-section regions (tint + clickable start ticks) */}
+        {sectionMarkers?.map((m, i) => {
+          const startPct = (m.startSeconds / safeDuration) * 100;
+          const endPct = ((m.endSeconds ?? m.startSeconds) / safeDuration) * 100;
+          return (
+            <div
+              key={`sec-tint-${i}`}
+              aria-hidden
+              className="absolute top-1/2 -translate-y-1/2 h-2 rounded pointer-events-none"
+              style={{
+                left: `${startPct}%`,
+                width: `${Math.max(0.6, endPct - startPct)}%`,
+                background: 'hsl(var(--secondary) / 0.55)',
+              }}
+            />
+          );
+        })}
+
         {/* Loop range tint */}
         {loopAPct !== null && loopBPct !== null && loopBPct > loopAPct && (
           <div
@@ -85,6 +108,22 @@ export function TransportBar({
           className="w-full accent-primary"
           aria-label="Scrub"
         />
+
+        {/* Clickable section start ticks (sit above the range input). */}
+        {sectionMarkers?.map((m, i) => {
+          const startPct = (m.startSeconds / safeDuration) * 100;
+          return (
+            <button
+              key={`sec-tick-${i}`}
+              type="button"
+              onClick={() => onSeek(m.startSeconds)}
+              title={m.label ? `Jump to ${m.label}` : 'Jump to scored section'}
+              aria-label={m.label ? `Jump to ${m.label}` : 'Jump to scored section'}
+              className="absolute top-1/2 z-10 h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-sm bg-secondary transition hover:bg-secondary/70"
+              style={{ left: `${startPct}%` }}
+            />
+          );
+        })}
 
         {/* A / B markers */}
         {loopAPct !== null && (

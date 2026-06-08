@@ -49,6 +49,7 @@ import {
   type Waypoint,
 } from '@/components/playsense-studio/shared/time-map/time-map';
 import { qnToTrackMs, trackDurationQN } from '@/lib/playsense-studio/time-mapping';
+import { pickActiveSection } from '@/lib/playsense-studio/active-section';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import type { SeekTarget } from '@/lib/playsense-studio/renderer';
 import { updateClassItemPosition } from '@/app/actions/progress';
@@ -74,6 +75,18 @@ export interface PlaysenseStudioPlayerTimeMap {
   }>;
 }
 
+/** One scored section of a video: a score + sync valid over a video time-range. */
+export interface PlayerSection {
+  id: string;
+  label?: string | null;
+  /** null = no fixed start (the synthetic single-section case → always active). */
+  videoStartSeconds: number | null;
+  videoEndSeconds: number | null;
+  score: ScoreDocument;
+  tracks: PlaysenseStudioPlayerScoreTrack[];
+  activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
+}
+
 export interface PlaysenseStudioPlayerProps {
   classItemId: string;
   videoUrl: string;
@@ -81,6 +94,13 @@ export interface PlaysenseStudioPlayerProps {
   score: ScoreDocument;
   tracks: PlaysenseStudioPlayerScoreTrack[];
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
+  /**
+   * Multiple scored sections, each active over a video time-range. When provided,
+   * the player swaps the displayed score by the current video time and shows a
+   * placeholder during gaps. Omit for the single-score case (uses score/tracks/
+   * activeTimeMap above). Pass only PLACED sections (non-null start + a time map).
+   */
+  sections?: PlayerSection[];
   /** When true, cursor + render proceed but the position-tracking server action is skipped. */
   readOnly?: boolean;
   /**
@@ -97,17 +117,48 @@ export function PlaysenseStudioPlayer({
   classItemId,
   videoUrl,
   posterUrl,
-  score,
-  tracks,
-  activeTimeMap,
+  score: singleScore,
+  tracks: singleTracks,
+  activeTimeMap: singleTimeMap,
+  sections,
   readOnly,
   layout = 'stack',
 }: PlaysenseStudioPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const clock = useVideoTransportClock(videoRef);
 
+  // Normalize to a list of sections. With none provided, the single score becomes
+  // one always-active section (start = null) so the rest of the player is unchanged.
+  const normalizedSections = useMemo<PlayerSection[]>(() => {
+    if (sections && sections.length > 0) return sections;
+    return [
+      {
+        id: '__single__',
+        label: null,
+        videoStartSeconds: null,
+        videoEndSeconds: null,
+        score: singleScore,
+        tracks: singleTracks,
+        activeTimeMap: singleTimeMap,
+      },
+    ];
+  }, [sections, singleScore, singleTracks, singleTimeMap]);
+
+  // Which section is active at the current video time (-1 = none → placeholder).
+  const activeSectionIndex = pickActiveSection(normalizedSections, clock.currentSeconds);
+  const activeSection = activeSectionIndex >= 0 ? normalizedSections[activeSectionIndex] : null;
+  const hasNotation = activeSection !== null;
+
+  // Effective score/tracks/time-map drive all the existing logic below. When no
+  // section is active we fall back to the first section's score so the hooks stay
+  // stable, but render the placeholder instead of the staff (hasNotation === false).
+  const score = activeSection?.score ?? normalizedSections[0].score;
+  const tracks = activeSection?.tracks ?? normalizedSections[0].tracks;
+  const activeTimeMap = hasNotation ? activeSection!.activeTimeMap : null;
+
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
+  const activeSectionId = activeSection?.id ?? null;
 
   // Track view-switch events. We only count it as a switch after the
   // first render so the initial mount doesn't create a spurious event.
@@ -171,6 +222,17 @@ export function PlaysenseStudioPlayer({
     setIsFollowing(true);
     setViewMs(0);
   }, [activeTrackIndex]);
+
+  // When the active section changes (a different score swaps in), reset the
+  // track selection and staff view so nothing carries over from the last section.
+  const prevSectionIdRef = useRef(activeSectionId);
+  useEffect(() => {
+    if (prevSectionIdRef.current === activeSectionId) return;
+    prevSectionIdRef.current = activeSectionId;
+    setActiveTrackIndex(0);
+    setIsFollowing(true);
+    setViewMs(0);
+  }, [activeSectionId]);
 
   // Click-on-staff → seek the video. Importantly we do NOT re-engage
   // follow here: the user wants the orange line to land at the click
@@ -278,6 +340,18 @@ export function PlaysenseStudioPlayer({
     />
   );
 
+  // Scrubber markers for the scored sections (only in the multi-section case).
+  const sectionMarkers =
+    sections && sections.length > 0
+      ? sections
+          .filter((s) => s.videoStartSeconds != null)
+          .map((s) => ({
+            startSeconds: s.videoStartSeconds as number,
+            endSeconds: s.videoEndSeconds,
+            label: s.label,
+          }))
+      : undefined;
+
   const transportEl = (
     <TransportBar
       currentSeconds={clock.currentSeconds}
@@ -295,11 +369,12 @@ export function PlaysenseStudioPlayer({
       onClearLoop={clock.clearLoop}
       bpm={score.initialTempo}
       beatsPerMeasure={score.initialTimeSignature[0]}
+      sectionMarkers={sectionMarkers}
     />
   );
 
   const tracksEl =
-    tracks.length > 1 ? (
+    hasNotation && tracks.length > 1 ? (
       <div className="flex flex-wrap gap-2">
         <span className="text-xs uppercase tracking-wider text-muted-foreground self-center mr-1">
           Track
@@ -418,9 +493,15 @@ export function PlaysenseStudioPlayer({
           )}
           secondary={
             <div className="min-h-0 flex-1 space-y-2 overflow-auto p-3">
-              {tracksEl}
-              {staffEl}
-              {scrubEl}
+              {hasNotation ? (
+                <>
+                  {tracksEl}
+                  {staffEl}
+                  {scrubEl}
+                </>
+              ) : (
+                <NotationPlaceholder />
+              )}
             </div>
           }
         />
@@ -436,10 +517,29 @@ export function PlaysenseStudioPlayer({
       {transportEl}
       {tracksEl}
       <div className="bg-card border border-border rounded-lg p-4 overflow-hidden space-y-3">
-        {staffEl}
-        {scrubEl}
+        {hasNotation ? (
+          <>
+            {staffEl}
+            {scrubEl}
+          </>
+        ) : (
+          <NotationPlaceholder />
+        )}
       </div>
       {clipsEl}
+    </div>
+  );
+}
+
+// Shown in the notation pane while the video is between scored sections (the
+// instructor is talking). Keeps the layout stable — no staff, just a hint.
+function NotationPlaceholder() {
+  return (
+    <div className="flex min-h-[120px] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border bg-muted/20 px-4 py-8 text-center">
+      <p className="text-sm font-medium text-muted-foreground">No notation in this part of the video</p>
+      <p className="text-xs text-muted-foreground/80">
+        The score appears here when the instructor starts playing.
+      </p>
     </div>
   );
 }
