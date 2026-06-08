@@ -28,10 +28,14 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
 
   const { data: classItem } = await supabase
     .from('class_items')
-    .select('id, title, video_url, video_duration_seconds, score_document_id')
+    .select('id, title, item_type, video_url, video_duration_seconds, score_document_id')
     .eq('id', classItemId)
     .single();
   if (!classItem) notFound();
+
+  // EXERCISE items don't sync the score to the video — the demo plays through,
+  // then the student plays the graded highway. Everything else uses video sync.
+  const mode = classItem.item_type === 'EXERCISE' ? 'exercise' : 'video';
 
   // No score yet → setup (import/create) lives here in the Studio.
   if (!classItem.score_document_id) {
@@ -47,6 +51,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
       // editor reseeds from the new document instead of keeping stale state.
       key={classItem.score_document_id}
       owner={{ kind: 'classItem', classItemId }}
+      mode={mode}
       title={classItem.title}
       videoUrl={classItem.video_url}
       scoreDocumentId={classItem.score_document_id}

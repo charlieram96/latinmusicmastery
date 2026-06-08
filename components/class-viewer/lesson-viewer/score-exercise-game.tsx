@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
+import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
 import { RhythmHighway } from '@/components/play-sense/rhythm-highway/RhythmHighway'
+import { StaffRenderer } from '@/components/playsense-studio/player/notation/renderers/staff-renderer'
 import { NowPlayingBar } from '@/components/play-sense/now-playing-bar'
 import { CalibrationWizard } from '@/components/play-sense/calibration-wizard'
 import { ResultsSummary } from '@/components/play-sense/results-summary'
@@ -17,6 +19,8 @@ import { ArrowLeft } from 'lucide-react'
 interface ScoreExerciseGameProps {
   /** The exercise derived from the authored score (see lib/play-sense/score-to-exercise). */
   exercise: ExerciseDefinition
+  /** The lesson's score — rendered as staff notation alongside the highway while playing. */
+  score?: ScoreDocument
   /** When set (video lessons), the results screen offers "Watch demo again" which
    *  flips the parent back to the instructional video. */
   onWatchDemo?: () => void
@@ -29,9 +33,19 @@ interface ScoreExerciseGameProps {
  * This is a focused, playlist-free embedding of the same engine that powers
  * the standalone /play-sense stage (components/play-sense/stage/stage-player.tsx).
  */
-export function ScoreExerciseGame({ exercise, onWatchDemo }: ScoreExerciseGameProps) {
+export function ScoreExerciseGame({ exercise, score, onWatchDemo }: ScoreExerciseGameProps) {
   const session = useExerciseSession()
   const stableExercise = useMemo(() => exercise, [exercise])
+
+  // The staff renderer reports the active track's single-pass duration; the
+  // playhead progress (0..1 across all loops) maps back onto one pass so the
+  // cursor cycles through the notation once per loop.
+  const [staffDurationMs, setStaffDurationMs] = useState<number | null>(null)
+  const loopCount = Math.max(1, exercise.loopCount || 1)
+  const staffMs =
+    staffDurationMs != null
+      ? ((session.playheadProgress * loopCount) % 1) * staffDurationMs
+      : 0
 
   // Auto-select this exercise so the session is ready to configure + play.
   useEffect(() => {
@@ -127,6 +141,15 @@ export function ScoreExerciseGame({ exercise, onWatchDemo }: ScoreExerciseGamePr
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
+      {isActive && (
+        <div className="border-b border-border bg-primary/5 px-4 py-2.5">
+          <p className="text-sm font-semibold text-foreground">Now it&apos;s your turn</p>
+          <p className="text-xs text-muted-foreground">
+            Play along with the highway — you&apos;ll be graded on your timing.
+          </p>
+        </div>
+      )}
+
       <div className="relative min-h-[360px] flex">
         {showCanvas && session.exercise ? (
           <div className="flex-1 relative min-h-[360px] flex">
@@ -203,6 +226,18 @@ export function ScoreExerciseGame({ exercise, onWatchDemo }: ScoreExerciseGamePr
           </div>
         )}
       </div>
+
+      {showCanvas && score && (
+        <div className="max-h-64 overflow-y-auto border-t border-border bg-background/40 px-3 py-2">
+          <StaffRenderer
+            score={score}
+            trackIndex={0}
+            currentMs={staffMs}
+            layoutMode="wrapped"
+            onDurationKnown={setStaffDurationMs}
+          />
+        </div>
+      )}
 
       {session.exercise && isActive && (
         <NowPlayingBar

@@ -1,14 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, Gamepad2 } from 'lucide-react'
+import { ArrowLeft, Gamepad2 } from 'lucide-react'
 import {
   PlaysenseStudioPlayer,
   type PlaysenseStudioPlayerScoreTrack,
   type PlaysenseStudioPlayerTimeMap,
 } from '@/components/playsense-studio/player/playsense-studio-player'
 import { ScoreExerciseGame } from './score-exercise-game'
-import { cn } from '@/lib/utils'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
 
@@ -26,11 +25,10 @@ interface ExerciseViewProps {
 type Mode = 'watch' | 'play'
 
 /**
- * Exercise lesson. When there's an instructional video, the student starts in
- * "Watch & Learn" (the video + synced staff) and switches to "Play the Exercise"
- * (the fixed-BPM rhythm highway + grading) when ready — a REVERSIBLE toggle, so
- * they can rewatch the demo between attempts (also reachable from the results
- * screen's "Watch demo again"). With no video, only the graded highway shows.
+ * Exercise lesson. The student watches the instructor's demo at their own pace —
+ * play, rewind, loop, slow down — then proceeds to "Now it's your turn": the
+ * fixed-BPM rhythm highway + staff, where they're graded. "Watch again" returns
+ * to the demo. With no video, only the graded highway shows.
  */
 export function ExerciseView({
   classItemId,
@@ -41,33 +39,17 @@ export function ExerciseView({
   exercise,
   playerLayout = 'stack',
 }: ExerciseViewProps) {
-  // Demo first: default to Watch when there's a video to watch.
+  // Demo first: start in Watch when there's a video; otherwise go straight to play.
   const [mode, setMode] = useState<Mode>(videoUrl ? 'watch' : 'play')
 
-  // No video → no Watch mode; just the graded highway.
+  // No video → no Watch mode; just the graded highway + staff.
   if (!videoUrl) {
-    return (
-      <div>
-        <h3 className="text-sm font-semibold text-muted-foreground mb-2">Play the Exercise</h3>
-        <ScoreExerciseGame exercise={exercise} />
-      </div>
-    )
+    return <ScoreExerciseGame exercise={exercise} score={score} />
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="inline-flex rounded-lg border border-border bg-muted/40 p-1">
-        <ToggleTab active={mode === 'watch'} onClick={() => setMode('watch')}>
-          <Eye className="w-4 h-4" />
-          Watch &amp; Learn
-        </ToggleTab>
-        <ToggleTab active={mode === 'play'} onClick={() => setMode('play')}>
-          <Gamepad2 className="w-4 h-4" />
-          Play the Exercise
-        </ToggleTab>
-      </div>
-
-      {mode === 'watch' ? (
+  if (mode === 'watch') {
+    return (
+      <div className="space-y-4">
         <PlaysenseStudioPlayer
           classItemId={classItemId}
           videoUrl={videoUrl}
@@ -76,33 +58,33 @@ export function ExerciseView({
           activeTimeMap={activeTimeMap}
           layout={playerLayout}
         />
-      ) : (
-        <ScoreExerciseGame exercise={exercise} onWatchDemo={() => setMode('watch')} />
-      )}
-    </div>
-  )
-}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setMode('play')}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
+          >
+            <Gamepad2 className="h-4 w-4" />
+            Now it&apos;s your turn
+          </button>
+        </div>
+      </div>
+    )
+  }
 
-function ToggleTab({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition',
-        active
-          ? 'bg-card text-foreground shadow-sm'
-          : 'text-muted-foreground hover:text-foreground'
-      )}
-    >
-      {children}
-    </button>
+    <div className="space-y-3">
+      <button
+        onClick={() => setMode('watch')}
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Watch again
+      </button>
+      <ScoreExerciseGame
+        exercise={exercise}
+        score={score}
+        onWatchDemo={() => setMode('watch')}
+      />
+    </div>
   )
 }

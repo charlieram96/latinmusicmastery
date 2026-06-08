@@ -19,7 +19,7 @@ import { publishTimeMap } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
-import { buildWaypoints, buildTapSeed, buildFitWaypoints } from '@/lib/playsense-studio/sync-seed';
+import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
@@ -46,12 +46,14 @@ import {
   IntegratedEditor,
   type IntegratedEditorMeasureTiming,
 } from '@/components/playsense-studio/studio/integrated-editor';
-import { SeedControls } from '@/components/playsense-studio/sync/seed-controls';
+import { ImportAtPlayheadControl } from '@/components/playsense-studio/sync/import-at-playhead-control';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 export interface SyncPanelProps {
   classItemId: string;
   scoreDocumentId: string;
+  /** 'video' = sync the score to the audio; 'exercise' = no sync, demo + highway. */
+  mode: 'video' | 'exercise';
   videoUrl: string | null;
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
@@ -66,6 +68,7 @@ const MAX_PPS = 600;
 export function SyncPanel({
   classItemId,
   scoreDocumentId,
+  mode,
   videoUrl,
   score,
   dispatch,
@@ -74,6 +77,11 @@ export function SyncPanel({
 }: SyncPanelProps) {
   const track = score.tracks[0];
 
+  // The full "sync to audio" experience (waveform + draggable markers + transport
+  // + Publish) only renders for VIDEO lessons with a video. Exercises and songs
+  // edit the staff on a fixed-BPM grid with no time map.
+  const showSync = mode === 'video' && !!videoUrl;
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const clock = useVideoTransportClock(videoRef);
   // When there's no waveform (video-less songs) the canvas can't report the
@@ -81,27 +89,16 @@ export function SyncPanel({
   const editorAreaRef = useRef<HTMLDivElement | null>(null);
 
   // --- Marker state ---
-  // Priority: a published map > measures stretched across the whole audio (so
-  // they always span the video) > a default fixed-tempo grid when no duration
-  // is known yet.
+  // A published map wins; otherwise lay the measures from 0 at the score's tempo.
+  // The admin repositions them with Import-at-playhead and by dragging — the video
+  // has no single tempo, so there's no auto-fit across the audio.
   const [markers, setMarkers] = useState<MarkerState>(() => {
     if (activeTimeMap && activeTimeMap.waypoints.length >= 2) {
       return seedMarkerState(track, score, activeTimeMap.waypoints);
     }
-    if (videoUrl && (videoDurationSeconds ?? 0) > 0) {
-      return seedMarkerState(track, score, buildFitWaypoints(score, videoDurationSeconds as number));
-    }
     return seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, 0));
   });
   const [dirty, setDirty] = useState(false);
-
-  // Auto-fit measures across the whole audio ONCE the real duration is known.
-  // Covers the case where video_duration_seconds wasn't stored at mount — we
-  // wait for the video clock to report it, then stretch the markers (unless the
-  // admin already dragged them or a published map is in play).
-  const didAutoFitRef = useRef<boolean>(
-    (activeTimeMap != null && activeTimeMap.waypoints.length >= 2) || (videoDurationSeconds ?? 0) > 0
-  );
 
   // Reconcile markers when the score's MEASURE STRUCTURE changes (add/delete
   // measure, time-signature/tempo change). Note edits don't change the
@@ -113,15 +110,6 @@ export function SyncPanel({
     prevSig.current = sig;
     setMarkers((prev) => reconcileMarkers(prev, score.tracks[0], score));
   }, [sig, score]);
-
-  useEffect(() => {
-    if (didAutoFitRef.current || dirty || !videoUrl) return;
-    const dur = clock.durationSeconds;
-    if (dur > 0) {
-      didAutoFitRef.current = true;
-      setMarkers(seedMarkerState(track, score, buildFitWaypoints(score, dur)));
-    }
-  }, [clock.durationSeconds, dirty, videoUrl, track, score]);
 
   // --- View state ---
   const [pps, setPps] = useState(40);
@@ -192,7 +180,7 @@ export function SyncPanel({
   // runs, and the result is cached for next time.
   const triedCacheRef = useRef(false);
   useEffect(() => {
-    if (triedCacheRef.current || !videoUrl) return;
+    if (triedCacheRef.current || !showSync) return;
     triedCacheRef.current = true;
     let cancelled = false;
     (async () => {
@@ -212,7 +200,7 @@ export function SyncPanel({
       }
     })();
     return () => { cancelled = true; };
-  }, [classItemId, videoUrl, runAnalysis]);
+  }, [classItemId, showSync, runAnalysis]);
 
   // Fit zoom once the viewport width + a duration are known.
   const didFitRef = useRef(false);
@@ -224,10 +212,10 @@ export function SyncPanel({
     }
   }, [viewportWidth, timelineDuration]);
 
-  // Without a video, the waveform canvas isn't mounted to report the viewport
-  // width — measure the editor area ourselves so fit-zoom + scrollbar work.
+  // Without the waveform (exercises + songs), the canvas isn't mounted to report
+  // the viewport width — measure the editor area ourselves so fit-zoom + scrollbar work.
   useEffect(() => {
-    if (videoUrl) return;
+    if (showSync) return;
     const el = editorAreaRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
     const update = () => setViewportWidth(el.clientWidth);
@@ -235,7 +223,7 @@ export function SyncPanel({
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [videoUrl]);
+  }, [showSync]);
 
   // Auto-scroll so the playhead stays in view during playback.
   useEffect(() => {
@@ -301,35 +289,16 @@ export function SyncPanel({
     [clampScroll]
   );
 
-  const applyTempoSeed = useCallback(
-    (bpm: number, offset: number) => {
-      setMarkers(seedMarkerState(track, score, buildWaypoints(score, bpm, offset)));
+  // Import at playhead: lay the score's measures starting at `offsetSeconds` (the
+  // current video time), spaced by `bpm`. The admin then drags them to align.
+  const importAtPlayhead = useCallback(
+    (bpm: number, offsetSeconds: number) => {
+      setMarkers(seedMarkerState(track, score, buildWaypoints(score, bpm, offsetSeconds)));
       setDirty(true);
       setSelected(null);
     },
     [track, score]
   );
-
-  const applyTapSeed = useCallback(
-    (tapTimes: number[]) => {
-      const seed = buildTapSeed(score, tapTimes);
-      if (seed.length < 2) return;
-      setMarkers(seedMarkerState(track, score, seed));
-      setDirty(true);
-      setSelected(null);
-    },
-    [track, score]
-  );
-
-  const applyFitSeed = useCallback(() => {
-    const dur = clock.durationSeconds > 0 ? clock.durationSeconds : videoDurationSeconds ?? 0;
-    if (dur <= 0) return;
-    const seed = buildFitWaypoints(score, dur);
-    if (seed.length < 2) return;
-    setMarkers(seedMarkerState(track, score, seed));
-    setDirty(true);
-    setSelected(null);
-  }, [clock, videoDurationSeconds, track, score]);
 
   const toggleExpandSelected = () => {
     if (!selected || selected === 'tail') return;
@@ -403,12 +372,6 @@ export function SyncPanel({
     return <p className="text-sm text-muted-foreground">This score has no tracks to edit.</p>;
   }
 
-  // Video is OPTIONAL. With a video, the full "sync to audio" experience renders
-  // (waveform + draggable markers + transport + Publish). Without one (standalone
-  // songs), only the staff editor renders, laid out on the fixed-BPM grid the
-  // markers were seeded from — no waveform, no transport, no time-map publishing.
-  const showSync = !!videoUrl;
-
   // While the first-time decode runs, lock the panel behind a loader so it's
   // clear the page is analyzing (and nothing is half-interactive).
   const analyzing = decodeState === 'loading';
@@ -452,13 +415,11 @@ export function SyncPanel({
             </p>
           )}
 
-          <SeedControls
+          <ImportAtPlayheadControl
             initialBpm={score.initialTempo}
             hasEdits={dirty}
             getCurrentSeconds={clock.getCurrentSeconds}
-            onApplyTempoSeed={applyTempoSeed}
-            onApplyTapSeed={applyTapSeed}
-            onApplyFitSeed={applyFitSeed}
+            onImport={importAtPlayhead}
           />
         </>
       )}
@@ -620,6 +581,24 @@ export function SyncPanel({
             preload="metadata"
             className="max-h-48 w-full rounded-md bg-black md:w-72"
           />
+        </div>
+      )}
+
+      {/* Exercises don't sync — show a plain demo preview so the admin can sanity-check it. */}
+      {mode === 'exercise' && videoUrl && (
+        <div className="space-y-1">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Demo video</h2>
+          <video
+            src={videoUrl}
+            controls
+            playsInline
+            preload="metadata"
+            className="max-h-64 w-full rounded-md bg-black md:w-96"
+          />
+          <p className="text-xs text-muted-foreground">
+            Exercises don’t sync to the video — the student watches this demo, then plays the graded
+            highway at the tempo set in the score settings above.
+          </p>
         </div>
       )}
 
