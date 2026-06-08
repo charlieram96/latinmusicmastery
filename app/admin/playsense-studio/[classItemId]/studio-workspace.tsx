@@ -36,8 +36,13 @@ export type StudioOwner =
       trackIndex: number;
     };
 
+/** Video lessons sync the score to the audio; exercises skip syncing entirely. */
+export type StudioMode = 'video' | 'exercise';
+
 export interface StudioWorkspaceProps {
   owner: StudioOwner;
+  /** Class-item authoring mode. Songs (no video) ignore this — defaults to 'video'. */
+  mode?: StudioMode;
   title: string;
   videoUrl: string | null;
   scoreDocumentId: string;
@@ -50,6 +55,7 @@ const AUTOSAVE_INTERVAL_MS = 5000;
 
 export function StudioWorkspace({
   owner,
+  mode = 'video',
   title,
   videoUrl,
   scoreDocumentId,
@@ -200,6 +206,7 @@ export function StudioWorkspace({
         <SyncPanel
           classItemId={mediaOwnerId}
           scoreDocumentId={scoreDocumentId}
+          mode={mode}
           videoUrl={videoUrl}
           score={state.score}
           dispatch={dispatch}
