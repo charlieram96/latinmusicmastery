@@ -45,24 +45,17 @@ export interface ClassItemScorePayload {
   } | null;
 }
 
-export async function getScoreDocumentForClassItem(
-  classItemId: string
+/** Load a score document + tracks + (optional) one time map's waypoints. Shared by
+ *  the single-score class-item path, the section path, and songs. */
+async function fetchScorePayload(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  scoreDocumentId: string,
+  activeTimeMapId: string | null
 ): Promise<{ data?: ClassItemScorePayload; error?: string }> {
-  const supabase = await createClient();
-
-  const { data: item, error: itemErr } = await supabase
-    .from('class_items')
-    .select('id, score_document_id, active_time_map_id')
-    .eq('id', classItemId)
-    .single();
-
-  if (itemErr) return { error: itemErr.message };
-  if (!item?.score_document_id) return { error: 'No score document attached' };
-
   const { data: doc, error: docErr } = await supabase
     .from('score_documents')
     .select('id, title, composer, parsed_score')
-    .eq('id', item.score_document_id)
+    .eq('id', scoreDocumentId)
     .single();
 
   if (docErr || !doc) return { error: docErr?.message ?? 'Score not found' };
@@ -70,17 +63,17 @@ export async function getScoreDocumentForClassItem(
   const { data: tracks, error: tracksErr } = await supabase
     .from('score_tracks')
     .select('id, track_index, instrument, display_name, tuning, string_multiplicity, default_view')
-    .eq('score_document_id', item.score_document_id)
+    .eq('score_document_id', scoreDocumentId)
     .order('track_index', { ascending: true });
 
   if (tracksErr) return { error: tracksErr.message };
 
   let activeTimeMap: ClassItemScorePayload['activeTimeMap'] = null;
-  if (item.active_time_map_id) {
+  if (activeTimeMapId) {
     const { data: tm, error: tmErr } = await supabase
       .from('score_time_maps')
       .select('id, method')
-      .eq('id', item.active_time_map_id)
+      .eq('id', activeTimeMapId)
       .single();
 
     if (tmErr) return { error: tmErr.message };
@@ -88,7 +81,7 @@ export async function getScoreDocumentForClassItem(
     const { data: waypoints, error: wpErr } = await supabase
       .from('score_time_waypoints')
       .select('musical_position_qn, video_time_seconds, measure_number, beat_in_measure')
-      .eq('time_map_id', item.active_time_map_id)
+      .eq('time_map_id', activeTimeMapId)
       .order('musical_position_qn', { ascending: true });
 
     if (wpErr) return { error: wpErr.message };
@@ -125,6 +118,70 @@ export async function getScoreDocumentForClassItem(
       activeTimeMap,
     },
   };
+}
+
+export async function getScoreDocumentForClassItem(
+  classItemId: string
+): Promise<{ data?: ClassItemScorePayload; error?: string }> {
+  const supabase = await createClient();
+
+  const { data: item, error: itemErr } = await supabase
+    .from('class_items')
+    .select('id, score_document_id, active_time_map_id')
+    .eq('id', classItemId)
+    .single();
+
+  if (itemErr) return { error: itemErr.message };
+  if (!item?.score_document_id) return { error: 'No score document attached' };
+
+  return fetchScorePayload(supabase, item.score_document_id, item.active_time_map_id);
+}
+
+// ============================================
+// Multiple scored sections per VIDEO class item. Each section OWNS one score
+// document + points at one time map; its video range (start/end) is derived from
+// the published waypoints. Lives in class_item_score_sections.
+// ============================================
+
+export interface ClassItemScoreSection extends ClassItemScorePayload {
+  sectionId: string;
+  sectionIndex: number;
+  label: string | null;
+  videoStartSeconds: number | null;
+  videoEndSeconds: number | null;
+}
+
+/** All scored sections for a class item, ordered by section_index. */
+export async function getScoreSectionsForClassItem(
+  classItemId: string
+): Promise<{ data?: ClassItemScoreSection[]; error?: string }> {
+  const supabase = await createClient();
+
+  const { data: rows, error } = await supabase
+    .from('class_item_score_sections')
+    .select('id, section_index, label, score_document_id, active_time_map_id, video_start_seconds, video_end_seconds')
+    .eq('class_item_id', classItemId)
+    .order('section_index', { ascending: true });
+
+  if (error) return { error: error.message };
+
+  const out: ClassItemScoreSection[] = [];
+  for (const row of rows ?? []) {
+    const payload = await fetchScorePayload(supabase, row.score_document_id, row.active_time_map_id);
+    if (payload.error || !payload.data) {
+      return { error: payload.error ?? 'Failed to load a section score' };
+    }
+    out.push({
+      ...payload.data,
+      sectionId: row.id,
+      sectionIndex: row.section_index,
+      label: row.label,
+      videoStartSeconds: row.video_start_seconds,
+      videoEndSeconds: row.video_end_seconds,
+    });
+  }
+
+  return { data: out };
 }
 
 // ============================================
@@ -466,6 +523,9 @@ export interface PublishTimeMapInput {
   }>;
   /** When true, also set this class_item's active_time_map_id to the new map. */
   makeActive?: boolean;
+  /** When set, publish into this SECTION (sets its active map + derived video
+   *  range) instead of the class_item's single active_time_map_id. */
+  sectionId?: string;
 }
 
 export async function publishTimeMap(
@@ -531,8 +591,23 @@ export async function publishTimeMap(
     return { error: wpErr.message };
   }
 
-  // 3. Optionally point the class_item at this new map.
-  if (input.makeActive ?? true) {
+  // 3. Point the owner at this new map. A section publish updates the section row
+  //    (active map + the video range derived from the waypoints); otherwise the
+  //    legacy single-score path updates the class_item.
+  if (input.sectionId) {
+    const start = sorted[0].videoTimeSeconds;
+    const end = sorted[sorted.length - 1].videoTimeSeconds;
+    const { error: secErr } = await supabase
+      .from('class_item_score_sections')
+      .update({
+        active_time_map_id: tmRow.id,
+        video_start_seconds: start,
+        video_end_seconds: end,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', input.sectionId);
+    if (secErr) return { error: secErr.message };
+  } else if (input.makeActive ?? true) {
     const { error: linkErr } = await supabase
       .from('class_items')
       .update({ active_time_map_id: tmRow.id })
@@ -670,6 +745,166 @@ export async function detachScoreFromClassItem(
     .eq('id', classItemId);
 
   if (error) return { error: error.message };
+  revalidatePath('/dashboard');
+  return { success: true };
+}
+
+// ============================================
+// Section mutations (multiple scores per VIDEO class item)
+// ============================================
+
+/** Next free section_index for a class item (max + 1, or 0 when empty). */
+async function nextSectionIndex(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  classItemId: string
+): Promise<number> {
+  const { data } = await supabase
+    .from('class_item_score_sections')
+    .select('section_index')
+    .eq('class_item_id', classItemId)
+    .order('section_index', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data?.section_index ?? -1) + 1;
+}
+
+/** Insert a new section owning the given score, appended after existing sections.
+ *  Cleans up the score document if the section row fails. */
+async function insertSection(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  classItemId: string,
+  scoreDocumentId: string,
+  label: string | null
+): Promise<{ sectionId: string } | { error: string }> {
+  const sectionIndex = await nextSectionIndex(supabase, classItemId);
+  const { data: section, error: secErr } = await supabase
+    .from('class_item_score_sections')
+    .insert({
+      class_item_id: classItemId,
+      score_document_id: scoreDocumentId,
+      section_index: sectionIndex,
+      label,
+    })
+    .select('id')
+    .single();
+  if (secErr || !section) {
+    await supabase.from('score_documents').delete().eq('id', scoreDocumentId);
+    return { error: secErr?.message ?? 'Failed to create section' };
+  }
+  return { sectionId: section.id };
+}
+
+/** Create a new blank-score section on a class item. */
+export async function createBlankSection(input: {
+  classItemId: string;
+  title?: string;
+}): Promise<{ sectionId?: string; scoreDocumentId?: string; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const inserted = await insertScore(supabase, buildBlankScore(input.title || 'New section'), admin.userId);
+  if ('error' in inserted) return { error: inserted.error };
+
+  const section = await insertSection(supabase, input.classItemId, inserted.docId, input.title?.trim() || null);
+  if ('error' in section) return { error: section.error };
+
+  revalidatePath('/dashboard');
+  return { sectionId: section.sectionId, scoreDocumentId: inserted.docId };
+}
+
+/** Create a new section from an imported MusicXML/MIDI score. */
+export async function createSectionFromImport(input: {
+  classItemId: string;
+  scoreDocument: ScoreDocument;
+  sourceFilename?: string;
+}): Promise<{ sectionId?: string; scoreDocumentId?: string; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const inserted = await insertScore(supabase, input.scoreDocument, admin.userId);
+  if ('error' in inserted) return { error: inserted.error };
+
+  const section = await insertSection(
+    supabase,
+    input.classItemId,
+    inserted.docId,
+    input.scoreDocument.title?.trim() || null
+  );
+  if ('error' in section) return { error: section.error };
+
+  revalidatePath('/dashboard');
+  return { sectionId: section.sectionId, scoreDocumentId: inserted.docId };
+}
+
+/** Swap a section's score for a freshly-imported one. Clears its sync (time map +
+ *  derived range) and removes the previous score document. */
+export async function replaceSectionScore(input: {
+  sectionId: string;
+  scoreDocument: ScoreDocument;
+  sourceFilename?: string;
+}): Promise<{ scoreDocumentId?: string; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const { data: section, error: secErr } = await supabase
+    .from('class_item_score_sections')
+    .select('id, score_document_id')
+    .eq('id', input.sectionId)
+    .single();
+  if (secErr) return { error: secErr.message };
+
+  const inserted = await insertScore(supabase, input.scoreDocument, admin.userId);
+  if ('error' in inserted) return { error: inserted.error };
+  const prevScoreId = section?.score_document_id ?? null;
+
+  const { error: updErr } = await supabase
+    .from('class_item_score_sections')
+    .update({
+      score_document_id: inserted.docId,
+      active_time_map_id: null,
+      video_start_seconds: null,
+      video_end_seconds: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', input.sectionId);
+  if (updErr) return { error: updErr.message };
+
+  if (prevScoreId && prevScoreId !== inserted.docId) {
+    await supabase.from('score_documents').delete().eq('id', prevScoreId);
+  }
+
+  revalidatePath('/dashboard');
+  return { scoreDocumentId: inserted.docId };
+}
+
+/** Delete a section and its owned score document (CASCADE removes tracks + maps). */
+export async function deleteSection(
+  sectionId: string
+): Promise<{ success?: true; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const { data: section, error: secErr } = await supabase
+    .from('class_item_score_sections')
+    .select('id, score_document_id')
+    .eq('id', sectionId)
+    .single();
+  if (secErr) return { error: secErr.message };
+
+  const { error: delErr } = await supabase
+    .from('class_item_score_sections')
+    .delete()
+    .eq('id', sectionId);
+  if (delErr) return { error: delErr.message };
+
+  if (section?.score_document_id) {
+    await supabase.from('score_documents').delete().eq('id', section.score_document_id);
+  }
+
   revalidatePath('/dashboard');
   return { success: true };
 }

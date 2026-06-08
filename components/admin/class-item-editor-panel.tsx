@@ -169,6 +169,7 @@ export function ClassItemEditorPanel({
 
                   <PlaysenseStudioScoreAttach
                     classItemId={item.id}
+                    itemType={item.item_type}
                     currentScoreDocumentId={
                       (item as ClassItem & { score_document_id?: string | null })
                         .score_document_id ?? null

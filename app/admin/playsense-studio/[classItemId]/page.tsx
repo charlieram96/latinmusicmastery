@@ -1,7 +1,11 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getScoreDocumentForClassItem } from '@/app/actions/playsense-studio';
+import {
+  getScoreDocumentForClassItem,
+  getScoreSectionsForClassItem,
+} from '@/app/actions/playsense-studio';
 import { StudioWorkspace } from './studio-workspace';
+import { VideoSectionsWorkspace } from './video-sections-workspace';
 import { StudioSetup } from '@/components/playsense-studio/studio/studio-setup';
 
 interface PageProps {
@@ -32,6 +36,23 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
     .eq('id', classItemId)
     .single();
   if (!classItem) notFound();
+
+  // VIDEO lessons support MULTIPLE scored sections (each anchored at a different
+  // point in the video). They're authored in their own sections workspace, which
+  // handles the empty list itself — no page-level setup screen.
+  if (classItem.item_type === 'VIDEO') {
+    const sections = await getScoreSectionsForClassItem(classItemId);
+    if (sections.error) notFound();
+    return (
+      <VideoSectionsWorkspace
+        classItemId={classItemId}
+        title={classItem.title}
+        videoUrl={classItem.video_url}
+        videoDurationSeconds={classItem.video_duration_seconds}
+        initialSections={sections.data ?? []}
+      />
+    );
+  }
 
   // EXERCISE items don't sync the score to the video — the demo plays through,
   // then the student plays the graded highway. Everything else uses video sync.

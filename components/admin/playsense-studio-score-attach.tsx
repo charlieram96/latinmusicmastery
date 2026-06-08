@@ -13,6 +13,9 @@ interface PlaysenseStudioScoreAttachProps {
   classItemId: string;
   /** Current score_document_id from the class_item, if attached. */
   currentScoreDocumentId: string | null;
+  /** Class-item type. VIDEO lessons use multiple scored sections (managed in the
+   *  Studio), so the single-score attach/detach UI doesn't apply to them. */
+  itemType?: string;
   /** Called after a successful detach so the parent sheet can refresh. */
   onChanged?: () => void;
 }
@@ -20,6 +23,7 @@ interface PlaysenseStudioScoreAttachProps {
 export function PlaysenseStudioScoreAttach({
   classItemId,
   currentScoreDocumentId,
+  itemType,
   onChanged,
 }: PlaysenseStudioScoreAttachProps) {
   const [hasAttached, setHasAttached] = useState(currentScoreDocumentId !== null);
@@ -27,6 +31,30 @@ export function PlaysenseStudioScoreAttach({
   const [isPending, startTransition] = useTransition();
 
   const studioHref = `/admin/playsense-studio/${classItemId}`;
+
+  // VIDEO lessons hold MULTIPLE scored sections, authored inside the Studio.
+  if (itemType === 'VIDEO') {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <FileMusic className="w-4 h-4 text-muted-foreground" />
+          <h4 className="font-medium">PlaySense Studio Sections</h4>
+        </div>
+        <Link
+          href={studioHref}
+          className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 rounded-md border border-border hover:bg-muted transition text-sm"
+        >
+          <ExternalLink className="w-4 h-4" />
+          Open PlaySense Studio — manage scored sections
+        </Link>
+        <p className="text-xs text-muted-foreground">
+          A video can have multiple scored sections, each placed where the instructor plays. Add,
+          build, and sync them in PlaySense Studio; students see each section&apos;s notation only
+          while the video is inside its range.
+        </p>
+      </div>
+    );
+  }
 
   const handleDetach = () => {
     setError(null);

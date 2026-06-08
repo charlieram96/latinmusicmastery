@@ -168,6 +168,67 @@ export type Database = {
           },
         ]
       }
+      class_item_score_sections: {
+        Row: {
+          active_time_map_id: string | null
+          class_item_id: string
+          created_at: string | null
+          id: string
+          label: string | null
+          score_document_id: string
+          section_index: number
+          updated_at: string | null
+          video_end_seconds: number | null
+          video_start_seconds: number | null
+        }
+        Insert: {
+          active_time_map_id?: string | null
+          class_item_id: string
+          created_at?: string | null
+          id?: string
+          label?: string | null
+          score_document_id: string
+          section_index: number
+          updated_at?: string | null
+          video_end_seconds?: number | null
+          video_start_seconds?: number | null
+        }
+        Update: {
+          active_time_map_id?: string | null
+          class_item_id?: string
+          created_at?: string | null
+          id?: string
+          label?: string | null
+          score_document_id?: string
+          section_index?: number
+          updated_at?: string | null
+          video_end_seconds?: number | null
+          video_start_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_item_score_sections_class_item_id_fkey"
+            columns: ["class_item_id"]
+            isOneToOne: false
+            referencedRelation: "class_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_item_score_sections_score_document_id_fkey"
+            columns: ["score_document_id"]
+            isOneToOne: false
+            referencedRelation: "score_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_item_score_sections_active_time_map_id_fkey"
+            columns: ["active_time_map_id"]
+            isOneToOne: false
+            referencedRelation: "score_time_maps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_items: {
         Row: {
           active_time_map_id: string | null
