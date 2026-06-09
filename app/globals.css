@@ -270,3 +270,290 @@
 html:has([data-marketing]) {
   scroll-behavior: smooth;
 }
+
+/* ============================================================
+   PlaySense Studio — admin authoring app-shell chrome (.st-*)
+   Dark, cinematic "pro-tool / DAW" surface. Wired to the global
+   brand tokens, so the chrome follows the app's light/dark theme.
+   The audio/notation STAGE stays cinematic-dark in BOTH themes via
+   local CSS-var overrides on .st-stage (the waveform canvas + VexFlow
+   read --card/--border/--primary/--playsense-studio-notation off
+   their container, so overriding them here recolors them for free).
+   ============================================================ */
+
+/* App-bar (top) + transport dock (bottom) — flat panels on the card surface. */
+.st-appbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 0 16px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+}
+.st-transport {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 70px;
+  padding: 10px 18px;
+  border-top: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+}
+
+/* Side rails — faintly tinted relative to the page background. */
+.st-rail {
+  flex-shrink: 0;
+  background: color-mix(in srgb, hsl(var(--card)) 55%, hsl(var(--background)));
+  min-height: 0;
+  overflow-y: auto;
+}
+.st-rail-left { border-right: 1px solid hsl(var(--border)); }
+.st-rail-right { border-left: 1px solid hsl(var(--border)); }
+
+/* Uppercase section overline used throughout the studio chrome. */
+.st-sec-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Segmented control (view tabs, rate, duration, zoom presets). */
+.st-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+}
+.st-seg button {
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  background: none;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.st-seg button:hover { color: hsl(var(--foreground)); }
+.st-seg button.is-on {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* Toggle chip (drag-region, beats, loop, articulation). */
+.st-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: border-color 0.14s, background 0.14s, color 0.14s;
+}
+.st-chip:hover { border-color: color-mix(in srgb, hsl(var(--foreground)) 22%, transparent); }
+.st-chip.is-on {
+  background: color-mix(in srgb, hsl(var(--primary)) 16%, transparent);
+  border-color: color-mix(in srgb, hsl(var(--primary)) 36%, transparent);
+  color: hsl(var(--primary));
+}
+.st-chip:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Inspector cards (right rail). */
+.st-icard {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.st-prop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.st-prop .k { font-size: 12px; color: hsl(var(--muted-foreground)); }
+.st-prop .v {
+  font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--foreground));
+  white-space: nowrap;
+}
+.st-prop .v.accent { color: hsl(var(--primary)); }
+
+/* Circular gradient transport play button. */
+.st-play-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--terracotta)));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px -3px hsl(var(--primary) / 0.5);
+  transition: transform 0.1s, filter 0.14s;
+}
+.st-play-btn:hover { filter: brightness(1.06); }
+.st-play-btn:active { transform: scale(0.95); }
+
+/* Reference video monitor frame. */
+.st-monitor {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  background: #000;
+}
+.st-monitor .st-monitor-badge {
+  position: absolute;
+  top: 8px;
+  left: 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f1ece6;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding: 3px 8px;
+  backdrop-filter: blur(6px);
+}
+.st-monitor .st-monitor-badge .pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(var(--destructive));
+  box-shadow: 0 0 6px hsl(var(--destructive));
+}
+
+/* Status pips (sync status card). */
+.st-pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: hsl(142 45% 52%);
+  box-shadow: 0 0 7px hsl(142 45% 52% / 0.8);
+}
+.st-pip.warn {
+  background: hsl(var(--gold-highlight));
+  box-shadow: 0 0 7px hsl(var(--gold-highlight) / 0.8);
+}
+
+/* ---- THE STAGE — unified waveform + notation surface --------------------
+   Local var overrides keep it cinematic-dark regardless of the page theme. */
+.st-stage {
+  /* A full dark-token island so EVERY nested Tailwind utility (text-foreground,
+     bg-background, bg-secondary, the waveform canvas, VexFlow…) renders on the
+     cinematic-dark stage in BOTH page themes. --primary / --ring stay amber. */
+  --background: 20 14% 5%;
+  --foreground: 40 30% 92%;
+  --card: 22 14% 8%;
+  --card-foreground: 40 30% 92%;
+  --popover: 22 14% 8%;
+  --popover-foreground: 40 30% 92%;
+  --muted: 24 12% 13%;
+  --muted-foreground: 30 10% 56%;
+  --secondary: 24 12% 16%;
+  --secondary-foreground: 40 30% 92%;
+  --accent: 24 12% 16%;
+  --accent-foreground: 40 30% 92%;
+  --border: 0 0% 100% / 0.09;
+  --input: 0 0% 100% / 0.12;
+  --primary-foreground: 26 45% 8%;
+  --playsense-studio-notation: 40 30% 92%;
+  --playsense-studio-notation-muted: 30 8% 58%;
+
+  position: relative;
+  display: flex;
+  min-height: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid hsl(0 0% 100% / 0.1);
+  background:
+    radial-gradient(130% 80% at 50% -10%, hsl(var(--primary) / 0.09), transparent 60%),
+    hsl(20 14% 5%);
+  box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.5);
+  color: hsl(var(--foreground));
+}
+
+/* Left gutter column with per-lane labels (sits OUTSIDE the timeline track
+   so it never shifts the x = t*pps - scrollLeft origin). */
+.st-stage-gutter {
+  width: 60px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid hsl(var(--border));
+}
+.st-stage-gutter .cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.st-stage-gutter .cell.notation { flex: 1; border-top: 1px solid hsl(var(--border)); }
+
+.st-stage-track {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Lane divider between the waveform and the notation lane. */
+.st-lane-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-height: 42px;
+  padding: 5px 10px;
+  border-top: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+  background: rgba(255, 255, 255, 0.018);
+}
+
+/* Highway preview drawer (slides up over the transport). */
+.st-drawer {
+  flex-shrink: 0;
+  border-top: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+}

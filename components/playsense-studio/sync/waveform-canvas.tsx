@@ -39,6 +39,8 @@ export interface WaveformCanvasProps {
   dragAll: boolean;
   selected: MarkerRef | 'tail' | null;
   height?: number;
+  /** Drop the canvas's own border + rounding (e.g. when nested in the stage). */
+  bare?: boolean;
   getCurrentSeconds: () => number;
   onSeek: (seconds: number) => void;
   onSelect: (target: DragTarget) => void;
@@ -80,7 +82,7 @@ function readTheme(el: HTMLElement): ThemeColors {
     measureFill: v('--primary', '#e11d48'),
     measureText: v('--primary-foreground', '#ffffff'),
     selected: v('--gold-highlight', '#d4a017'),
-    playhead: 'hsl(30 85% 55%)',
+    playhead: v('--primary', 'hsl(30 85% 55%)'),
     tail: v('--muted-foreground', '#9ca3af'),
   };
 }
@@ -96,6 +98,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     dragAll,
     selected,
     height = DEFAULT_HEIGHT,
+    bare = false,
     getCurrentSeconds,
     onSeek,
     onSelect,
@@ -424,7 +427,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full select-none rounded-md border border-border overflow-hidden"
+      className={`relative w-full select-none overflow-hidden${bare ? '' : ' rounded-md border border-border'}`}
       style={{ height, touchAction: 'none' }}
     >
       <canvas ref={waveRef} className="absolute inset-0" />

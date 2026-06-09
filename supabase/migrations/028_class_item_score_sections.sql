@@ -35,11 +35,13 @@ CREATE INDEX IF NOT EXISTS idx_sections_class_item
 -- RLS — mirror score_time_maps: everyone authenticated can read; only admins write.
 ALTER TABLE class_item_score_sections ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "class_item_score_sections_select_authenticated" ON class_item_score_sections;
 CREATE POLICY "class_item_score_sections_select_authenticated"
   ON class_item_score_sections
   FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "class_item_score_sections_admin_all" ON class_item_score_sections;
 CREATE POLICY "class_item_score_sections_admin_all"
   ON class_item_score_sections
   FOR ALL
@@ -48,6 +50,7 @@ CREATE POLICY "class_item_score_sections_admin_all"
 
 -- ============================================
 -- Backfill: each VIDEO class_item that already has a score becomes section 0.
+-- Guarded by NOT EXISTS so it is safe to re-run.
 -- ============================================
 
 INSERT INTO class_item_score_sections (
@@ -70,7 +73,10 @@ LEFT JOIN LATERAL (
   WHERE time_map_id = ci.active_time_map_id
 ) wp ON TRUE
 WHERE ci.item_type = 'VIDEO'
-  AND ci.score_document_id IS NOT NULL;
+  AND ci.score_document_id IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM class_item_score_sections s WHERE s.class_item_id = ci.id
+  );
 
 -- Sections are now the single source of truth for VIDEO items — clear the legacy
 -- single-score pointers so nothing reads them by accident.

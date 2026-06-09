@@ -122,9 +122,19 @@ export function useVideoTransportClock(
     }
   }, []);
 
+  // Track the underlying element in state so the wiring effect re-runs when the
+  // video mounts LATE — e.g. rendered through a React portal a render after the
+  // hook's owner mounted (the studio inspector does exactly this). A no-dep
+  // effect polls the ref each commit; the updater bails when the element is
+  // unchanged, so no extra renders once it's bound.
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
+  useEffect(() => {
+    setVideoEl((prev) => (prev === videoRef.current ? prev : videoRef.current));
+  });
+
   // Wire video element events.
   useEffect(() => {
-    const video = videoRef.current;
+    const video = videoEl;
     if (!video) return;
 
     const onLoadedMetadata = () => {
@@ -183,7 +193,7 @@ export function useVideoTransportClock(
       video.removeEventListener('ratechange', onRateChange);
       stopRaf();
     };
-  }, [videoRef, reanchor, startRaf, stopRaf]);
+  }, [videoEl, reanchor, startRaf, stopRaf]);
 
   const play = useCallback(() => {
     const video = videoRef.current;
