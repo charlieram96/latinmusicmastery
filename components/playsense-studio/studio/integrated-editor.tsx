@@ -102,6 +102,9 @@ export interface IntegratedEditorProps {
   onMeasureDrag: (measureNumber: number, videoTimeSeconds: number, mode: DragMode) => void;
   /** A measure-block drag ended (commit / reinterpolate unedited beats). */
   onMeasureDragEnd: () => void;
+  /** Mirrors the current note selection out to the right-rail inspector. The
+   *  editor stays the source of truth; pass a stable callback to keep the memo. */
+  onSelectionChange?: (selection: { ref: SelectedEventRef; trackIndex: number } | null) => void;
 }
 
 export const IntegratedEditor = memo(function IntegratedEditor({
@@ -115,6 +118,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   dragAll,
   onMeasureDrag,
   onMeasureDragEnd,
+  onSelectionChange,
 }: IntegratedEditorProps) {
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
   const [editorTab, setEditorTab] = useState<EditorTab>('staff');
@@ -168,6 +172,12 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     const event = measure?.voices[0]?.events[selected.eventIndex];
     if (!event) setSelected(null);
   }, [selected, activeTrack]);
+
+  // Mirror the selection out to the right-rail inspector (display only). Fires
+  // only on user-paced selection / track changes, so the memo stays effective.
+  useEffect(() => {
+    onSelectionChange?.(selected ? { ref: selected, trackIndex: activeTrackIndex } : null);
+  }, [selected, activeTrackIndex, onSelectionChange]);
 
   const currentMidi = useMemo(() => {
     if (percussion) return percMidi ?? percStrokes?.[0]?.midi ?? 60;

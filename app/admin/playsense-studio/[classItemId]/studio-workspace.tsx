@@ -6,11 +6,14 @@
 // songs (no video, fixed-BPM only). The owner prop discriminates the two.
 //
 // This parent owns the SCORE (useEditor — the single source of truth), autosave,
-// undo/redo, and the shared header. The score's video clock lives inside SyncPanel.
-// Below the editor, HighwayPreview shows the same falling-notes view the student
-// gets, derived from the live score on a fixed-BPM clock.
+// undo/redo, and the app-shell chrome. The score's video clock lives inside
+// SyncPanel, which renders the stage in the center column and PORTALS its
+// inspector (right rail) and transport (bottom dock) into slots this shell
+// provides — that keeps the <video> + clock inside SyncPanel's React tree while
+// they appear in sibling regions. HighwayPreview (the student falling-notes view)
+// lives in a collapsible bottom drawer toggled from the app-bar.
 
-import { ArrowLeft, FileUp, Redo2, Save, Undo2 } from 'lucide-react';
+import { ArrowLeft, FileUp, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState, useTransition } from 'react';
 import {
@@ -69,6 +72,14 @@ export function StudioWorkspace({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  // Portal targets the SyncPanel renders its inspector + transport into. State
+  // (not refs) so the portal re-renders once the slot nodes mount.
+  const [rightRailEl, setRightRailEl] = useState<HTMLElement | null>(null);
+  const [transportEl, setTransportEl] = useState<HTMLElement | null>(null);
+
+  // Student "highway" preview, as a collapsible bottom drawer.
+  const [highwayOpen, setHighwayOpen] = useState(false);
+
   // SyncPanel uses this only on video paths (waveform cache key + publish). For
   // songs there's no video, so the value is never read.
   const mediaOwnerId = owner.kind === 'classItem' ? owner.classItemId : owner.songId;
@@ -123,21 +134,38 @@ export function StudioWorkspace({
   }, [undo, redo]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-border bg-card px-6 py-3">
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background text-foreground md:h-[100dvh]">
+      {/* ---- App bar ---- */}
+      <header className="st-appbar">
         <Link
           href={backHref}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          {owner.kind === 'classItem' ? 'Admin' : 'Songs'}
+          <span className="hidden sm:inline">{owner.kind === 'classItem' ? 'Admin' : 'Songs'}</span>
         </Link>
-        <span className="text-muted-foreground">/</span>
-        <h1 className="text-base font-semibold">PlaySense Studio — {title}</h1>
+        <span className="hidden text-muted-foreground/40 sm:inline">/</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-sm font-semibold">{title}</span>
+          <span className="hidden shrink-0 rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-[10.5px] text-muted-foreground md:inline">
+            PlaySense Studio
+          </span>
+        </div>
 
         {owner.kind === 'song' && <SongMetaControls owner={owner} />}
 
         <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setHighwayOpen((o) => !o)}
+            className={`st-chip${highwayOpen ? ' is-on' : ''}`}
+            title="Toggle the student highway preview"
+            aria-pressed={highwayOpen}
+          >
+            <PanelBottom className="h-4 w-4" />
+            <span className="hidden sm:inline">Preview</span>
+          </button>
+
           {owner.kind === 'classItem' && (
             <ScoreImportDialog
               classItemId={owner.classItemId}
@@ -145,19 +173,22 @@ export function StudioWorkspace({
               trigger={
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-2 text-sm transition hover:bg-muted"
+                  className="st-chip"
                   title="Replace this lesson's score with a new import"
                 >
                   <FileUp className="h-4 w-4" />
-                  Replace score
+                  <span className="hidden lg:inline">Replace score</span>
                 </button>
               }
             />
           )}
+
+          <span className="mx-0.5 h-6 w-px bg-border" />
+
           <button
             onClick={undo}
             disabled={!canUndo}
-            className="rounded border border-border p-2 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md border border-transparent p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
             title="Undo (Cmd/Ctrl+Z)"
             aria-label="Undo"
           >
@@ -166,14 +197,14 @@ export function StudioWorkspace({
           <button
             onClick={redo}
             disabled={!canRedo}
-            className="rounded border border-border p-2 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md border border-transparent p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
             title="Redo (Cmd/Ctrl+Shift+Z)"
             aria-label="Redo"
           >
             <Redo2 className="h-4 w-4" />
           </button>
 
-          <span className="w-32 text-right text-xs tabular-nums text-muted-foreground">
+          <span className="hidden w-28 text-right text-xs tabular-nums text-muted-foreground lg:inline">
             {savingState === 'saving' || isPending
               ? 'Saving…'
               : state.isDirty
@@ -186,42 +217,64 @@ export function StudioWorkspace({
           <button
             onClick={persist}
             disabled={!state.isDirty || isPending}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save className="h-4 w-4" />
-            Save score
+            <span className="hidden sm:inline">Save score</span>
           </button>
         </div>
       </header>
 
-      <main className="space-y-6 px-6 py-6">
-        {errorMessage && (
-          <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {errorMessage}
-          </p>
-        )}
+      {/* ---- Body: left meta rail · center stage · right inspector rail ---- */}
+      <div className="flex min-h-0 flex-1">
+        <aside className="st-rail st-rail-left hidden w-64 shrink-0 flex-col gap-4 p-4 lg:flex">
+          <span className="st-sec-label">Score</span>
+          <ScoreMetaEditor score={state.score} dispatch={dispatch} />
+        </aside>
 
-        <ScoreMetaEditor score={state.score} dispatch={dispatch} />
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 md:p-4">
+          {errorMessage && (
+            <p className="mb-3 shrink-0 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {errorMessage}
+            </p>
+          )}
 
-        <SyncPanel
-          classItemId={mediaOwnerId}
-          scoreDocumentId={scoreDocumentId}
-          mode={mode}
-          videoUrl={videoUrl}
-          score={state.score}
-          dispatch={dispatch}
-          activeTimeMap={activeTimeMap}
-          videoDurationSeconds={videoDurationSeconds}
+          <SyncPanel
+            classItemId={mediaOwnerId}
+            scoreDocumentId={scoreDocumentId}
+            mode={mode}
+            videoUrl={videoUrl}
+            score={state.score}
+            dispatch={dispatch}
+            activeTimeMap={activeTimeMap}
+            videoDurationSeconds={videoDurationSeconds}
+            rightRailEl={rightRailEl}
+            transportEl={transportEl}
+          />
+        </main>
+
+        <aside
+          ref={setRightRailEl}
+          className="st-rail st-rail-right hidden w-72 shrink-0 flex-col gap-3 p-4 md:flex"
         />
+      </div>
 
-        <HighwayPreview
-          score={state.score}
-          scoreDocumentId={scoreDocumentId}
-          title={state.score.title}
-          difficulty={owner.kind === 'song' ? owner.difficulty : undefined}
-          trackIndex={owner.kind === 'song' ? owner.trackIndex : 0}
-        />
-      </main>
+      {/* ---- Bottom: transport dock + highway drawer ---- */}
+      <div ref={setTransportEl} className="shrink-0" />
+
+      {highwayOpen && (
+        <div className="st-drawer" style={{ height: 380 }}>
+          <div className="h-full overflow-y-auto px-4 py-3">
+            <HighwayPreview
+              score={state.score}
+              scoreDocumentId={scoreDocumentId}
+              title={state.score.title}
+              difficulty={owner.kind === 'song' ? owner.difficulty : undefined}
+              trackIndex={owner.kind === 'song' ? owner.trackIndex : 0}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -251,18 +304,20 @@ function SongMetaControls({
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <label className="text-xs uppercase tracking-wider text-muted-foreground">Difficulty</label>
-      <select
-        value={difficulty}
-        onChange={(e) => onDifficulty(e.target.value as SongDifficulty)}
-        className="rounded border border-border bg-background px-2 py-1 text-xs"
-        aria-label="Difficulty"
-      >
-        <option value="beginner">Beginner</option>
-        <option value="intermediate">Intermediate</option>
-        <option value="advanced">Advanced</option>
-      </select>
+    <div className="ml-2 hidden items-center gap-2 md:flex">
+      <label className="st-sec-label">Difficulty</label>
+      <div className="st-select-wrap relative inline-flex items-center">
+        <select
+          value={difficulty}
+          onChange={(e) => onDifficulty(e.target.value as SongDifficulty)}
+          className="rounded-md border border-border bg-card px-2 py-1 text-xs"
+          aria-label="Difficulty"
+        >
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </div>
       <button
         onClick={() => onPublish(!isPublished)}
         className={`rounded-md border px-2.5 py-1 text-xs transition ${

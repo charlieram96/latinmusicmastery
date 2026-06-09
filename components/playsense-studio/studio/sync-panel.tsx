@@ -12,8 +12,9 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, ChevronsLeftRight, Loader2, Maximize, Repeat, UploadCloud, ZoomIn, ZoomOut } from 'lucide-react';
+import { AudioLines, ChevronsLeftRight, Loader2, Maximize, Repeat, Trash2, UploadCloud, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type Dispatch } from 'react';
+import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { publishTimeMap } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
@@ -46,8 +47,18 @@ import {
   IntegratedEditor,
   type IntegratedEditorMeasureTiming,
 } from '@/components/playsense-studio/studio/integrated-editor';
+import type { SelectedEventRef } from '@/components/playsense-studio/studio/editable-measure-strip';
 import { ImportAtPlayheadControl } from '@/components/playsense-studio/sync/import-at-playhead-control';
-import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { getPercStrokes, isPercussion } from '@/lib/playsense-studio/perc-strokes';
+import type { MusicalEvent, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+
+/** A note selection, mirrored out of the editor so the right rail can show it. */
+export interface StudioNoteSelection {
+  ref: SelectedEventRef;
+  trackIndex: number;
+}
+
+const WAVE_H = 150; // waveform lane height (matches WaveformCanvas default)
 
 export interface SyncPanelProps {
   classItemId: string;
@@ -63,6 +74,10 @@ export interface SyncPanelProps {
   videoDurationSeconds: number | null;
   /** Fired after a successful Publish (e.g. so a section list can refresh ranges). */
   onPublished?: () => void;
+  /** App-shell slot the inspector (video + note + sync status) portals into. */
+  rightRailEl?: HTMLElement | null;
+  /** App-shell slot the transport bar portals into (video mode only). */
+  transportEl?: HTMLElement | null;
 }
 
 const PPS_PRESETS = [20, 40, 80, 160];
@@ -80,8 +95,16 @@ export function SyncPanel({
   activeTimeMap,
   videoDurationSeconds,
   onPublished,
+  rightRailEl,
+  transportEl,
 }: SyncPanelProps) {
   const track = score.tracks[0];
+
+  // Note selection, mirrored out of the (memoized) IntegratedEditor so the right
+  // rail inspector can show the selected note. The editor stays the source of
+  // truth; this is a display mirror updated via a stable callback.
+  const [selection, setSelection] = useState<StudioNoteSelection | null>(null);
+  const handleSelectionChange = useCallback((s: StudioNoteSelection | null) => setSelection(s), []);
 
   // The full "sync to audio" experience (waveform + draggable markers + transport
   // + Publish) only renders for VIDEO lessons with a video. Exercises and songs
@@ -384,264 +407,418 @@ export function SyncPanel({
   // clear the page is analyzing (and nothing is half-interactive).
   const analyzing = decodeState === 'loading';
 
+  // Resolve the mirrored note selection into a concrete event for the inspector.
+  const selTrack = selection ? score.tracks[selection.trackIndex] : null;
+  const selEvent =
+    selection && selTrack
+      ? selTrack.measures[selection.ref.measureIndex]?.voices[0]?.events[selection.ref.eventIndex] ?? null
+      : null;
+
+  const anchorSeconds = markers.measures[0]?.beats[0]?.videoTimeSeconds ?? 0;
+
   return (
-    <div className="relative space-y-4">
-      <div
-        className={analyzing ? 'pointer-events-none select-none opacity-50' : undefined}
-        aria-busy={analyzing}
-      >
-      {showSync && (
-        <>
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Sync to audio
-            </h2>
-            <button
-              onClick={handlePublish}
-              disabled={isPublishing}
-              className="ml-auto inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <UploadCloud className="h-4 w-4" />
-              {isPublishing ? 'Publishing…' : 'Publish sync'}
-            </button>
-          </div>
-
-          {error && (
-            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
-            </p>
-          )}
-          {published && (
-            <p className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-primary">
-              Time map published. Students will see the new sync on this lesson.
-            </p>
-          )}
-          {decodeState === 'error' && (
-            <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-600">
-              Couldn&apos;t read this video&apos;s audio, so the waveform is unavailable. You can still sync
-              against the measure grid below.
-            </p>
-          )}
-
-          <ImportAtPlayheadControl
-            initialBpm={score.initialTempo}
-            hasEdits={dirty}
-            getCurrentSeconds={clock.getCurrentSeconds}
-            onImport={importAtPlayhead}
-          />
-        </>
-      )}
-
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        {showSync && (
-          <>
-            <button
-              onClick={() => setDragAll((v) => !v)}
-              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 transition ${
-                dragAll ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'
-              }`}
-              title="Drag a measure (or marker) and everything after it moves together. Hold Option to move just one."
-            >
-              <ChevronsLeftRight className="h-4 w-4" />
-              Drag region
-            </button>
-            <button
-              onClick={toggleExpandSelected}
-              disabled={!selected || selected === 'tail'}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Show/hide beats
-            </button>
-            <button
-              onClick={loopSelectedMeasure}
-              disabled={!selected || selected === 'tail'}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Repeat className="h-4 w-4" />
-              Loop measure
-            </button>
-          </>
-        )}
-
-        <div className="ml-auto flex items-center gap-1">
-          <button onClick={() => zoomBy(0.5)} className="rounded-md border border-border p-1.5 transition hover:bg-muted" title="Zoom out">
-            <ZoomOut className="h-4 w-4" />
-          </button>
-          {PPS_PRESETS.map((preset) => (
-            <button
-              key={preset}
-              onClick={() => setPps(preset)}
-              className={`rounded px-2 py-1 text-xs ${
-                Math.abs(pps - preset) < 0.5 ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
-              }`}
-            >
-              {preset}
-            </button>
-          ))}
-          <button onClick={() => zoomBy(2)} className="rounded-md border border-border p-1.5 transition hover:bg-muted" title="Zoom in">
-            <ZoomIn className="h-4 w-4" />
-          </button>
-          <button onClick={fitZoom} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1.5 transition hover:bg-muted" title="Fit to width">
-            <Maximize className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Waveform + notation */}
-      <div className="space-y-1" ref={editorAreaRef}>
-        {showSync && (
-          <>
-            <div className="flex items-center gap-3">
+    <>
+      {/* ============ CENTER: context bar + unified stage ============ */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+        {/* Context bar — sync actions · view toggles · zoom */}
+        <div className="flex flex-shrink-0 flex-wrap items-center gap-2 text-sm">
+          {showSync && (
+            <>
+              <ImportAtPlayheadControl
+                initialBpm={score.initialTempo}
+                hasEdits={dirty}
+                getCurrentSeconds={clock.getCurrentSeconds}
+                onImport={importAtPlayhead}
+              />
+              <span className="h-6 w-px bg-border" />
+              <button
+                onClick={() => setDragAll((v) => !v)}
+                className={`st-chip${dragAll ? ' is-on' : ''}`}
+                title="Drag a measure (or marker) and everything after it moves together. Hold Option to move just one."
+              >
+                <ChevronsLeftRight className="h-4 w-4" />
+                Drag region
+              </button>
+              <button
+                onClick={toggleExpandSelected}
+                disabled={!selected || selected === 'tail'}
+                className="st-chip"
+              >
+                Show/hide beats
+              </button>
+              <button
+                onClick={loopSelectedMeasure}
+                disabled={!selected || selected === 'tail'}
+                className="st-chip"
+              >
+                <Repeat className="h-4 w-4" />
+                Loop measure
+              </button>
               {decodeState !== 'loading' && (
-                <button
-                  onClick={runAnalysis}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm transition hover:bg-muted"
-                  title="Decode this video's audio to show the waveform"
-                >
+                <button onClick={runAnalysis} className="st-chip" title="Decode this video's audio to show the waveform">
                   <AudioLines className="h-4 w-4" />
-                  {decodeState === 'idle'
-                    ? 'Analyze audio'
-                    : decodeState === 'error'
-                      ? 'Retry analysis'
-                      : 'Re-analyze'}
+                  {decodeState === 'idle' ? 'Analyze audio' : decodeState === 'error' ? 'Retry analysis' : 'Re-analyze'}
                 </button>
               )}
               {decodeState === 'loading' && (
-                <p className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   Analyzing audio… {progress > 0 ? `${Math.round(progress * 100)}%` : ''}
+                </span>
+              )}
+            </>
+          )}
+
+          <div className="ml-auto flex items-center gap-1">
+            <button onClick={() => zoomBy(0.5)} className="rounded-md border border-border p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground" title="Zoom out">
+              <ZoomOut className="h-4 w-4" />
+            </button>
+            <div className="st-seg">
+              {PPS_PRESETS.map((preset) => (
+                <button
+                  key={preset}
+                  onClick={() => setPps(preset)}
+                  className={Math.abs(pps - preset) < 0.5 ? 'is-on' : ''}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => zoomBy(2)} className="rounded-md border border-border p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground" title="Zoom in">
+              <ZoomIn className="h-4 w-4" />
+            </button>
+            <button onClick={fitZoom} className="rounded-md border border-border p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground" title="Fit to width">
+              <Maximize className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* The unified stage — waveform lane + notation lane share one grid */}
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <div className={`st-stage flex-1${analyzing ? ' pointer-events-none select-none opacity-50' : ''}`} aria-busy={analyzing}>
+            {/* Left gutter (sibling column — never shifts the timeline origin) */}
+            <div className="st-stage-gutter">
+              {showSync && (
+                <div className="cell" style={{ height: WAVE_H }}>
+                  Audio
+                </div>
+              )}
+              <div className="cell notation" style={!showSync ? { borderTop: 'none' } : undefined}>
+                Notation
+              </div>
+            </div>
+
+            {/* Timeline track — measured for the no-waveform width fallback */}
+            <div className="st-stage-track" ref={editorAreaRef}>
+              {showSync && (
+                <div className="relative flex-shrink-0">
+                  <WaveformCanvas
+                    bare
+                    height={WAVE_H}
+                    peaks={peaks}
+                    durationSeconds={timelineDuration}
+                    handles={handles}
+                    tailVideoTimeSeconds={markers.tailVideoTimeSeconds}
+                    pixelsPerSecond={pps}
+                    scrollLeftPx={scrollLeft}
+                    dragAll={dragAll}
+                    selected={selected}
+                    getCurrentSeconds={clock.getCurrentSeconds}
+                    onSeek={clock.seek}
+                    onSelect={handleSelect}
+                    onMarkerDrag={handleMarkerDrag}
+                    onTailDrag={handleTailDrag}
+                    onDragEnd={() => setMarkers((s) => reinterpolateUnedited(s))}
+                    onScrollByPx={handleScrollByPx}
+                    onViewportWidth={setViewportWidth}
+                  />
+                </div>
+              )}
+
+              {/* No horizontal padding here — the staff strip must share x=0
+                  with the waveform canvas above so the measure grid stays aligned. */}
+              <div className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3${showSync ? ' border-t border-border' : ''}`}>
+                <IntegratedEditor
+                  score={score}
+                  dispatch={dispatch}
+                  measureTimings={measureTimings}
+                  pixelsPerSecond={pps}
+                  scrollLeftPx={scrollLeft}
+                  viewportWidth={viewportWidth}
+                  onRequestZoom={(nextPps, nextScroll) => {
+                    setPps(clamp(nextPps, MIN_PPS, MAX_PPS));
+                    setScrollLeft(clampScroll(nextScroll));
+                  }}
+                  dragAll={dragAll}
+                  onSelectionChange={handleSelectionChange}
+                  onMeasureDrag={
+                    showSync
+                      ? (measureNumber, videoTimeSeconds, mode) =>
+                          handleMarkerDrag({ measureNumber, beatInMeasure: 1 }, videoTimeSeconds, mode)
+                      : () => {}
+                  }
+                  onMeasureDragEnd={showSync ? () => setMarkers((s) => reinterpolateUnedited(s)) : () => {}}
+                />
+              </div>
+
+              <div className="flex-shrink-0 border-t border-border px-3 py-2">
+                <ScrollBar
+                  scrollLeft={scrollLeft}
+                  maxScroll={maxScroll}
+                  viewportWidth={viewportWidth}
+                  contentWidth={timelineDuration * pps}
+                  onScroll={(v) => setScrollLeft(clampScroll(v))}
+                />
+              </div>
+            </div>
+          </div>
+
+          {analyzing && (
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 rounded-[14px] bg-background/75 backdrop-blur-sm">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm font-medium">
+                Analyzing audio…{progress > 0 ? ` ${Math.round(progress * 100)}%` : ''}
+              </p>
+              <p className="max-w-xs text-center text-xs text-muted-foreground">
+                Decoding this video’s audio so the waveform lines up with the score. This happens once —
+                the result is cached for next time.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <p className="flex-shrink-0 text-xs text-muted-foreground">
+          {showSync ? (
+            <>
+              Drag a measure’s handle (the bar above each staff) onto the audio — by default it slides that
+              measure and everything after it. Hold{' '}
+              <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] text-foreground">Option</kbd> to move just
+              one, or use the numbered waveform markers for per-beat tweaks.
+            </>
+          ) : (
+            <>
+              Click a note to select it, drag it up/down to change pitch, or click empty space in a measure to
+              add one. Notes are on a fixed-BPM grid (tempo is set in the score settings).
+            </>
+          )}
+        </p>
+      </div>
+
+      {/* ============ RIGHT RAIL (portal): inspector ============ */}
+      {rightRailEl &&
+        createPortal(
+          <>
+            {showSync ? (
+              <div>
+                <span className="st-sec-label">Reference video</span>
+                <div className="st-monitor mt-2">
+                  <div className="st-monitor-badge">
+                    <span className="pip" /> Reference
+                  </div>
+                  <video
+                    ref={videoRef}
+                    src={videoUrl ?? undefined}
+                    playsInline
+                    preload="metadata"
+                    className="aspect-video w-full bg-black"
+                  />
+                </div>
+              </div>
+            ) : (
+              // Keep the video element mounted for the clock even off the sync path.
+              <video ref={videoRef} src={videoUrl ?? undefined} preload="metadata" className="hidden" />
+            )}
+
+            {mode === 'exercise' && videoUrl && (
+              <div>
+                <span className="st-sec-label">Demo video</span>
+                <video
+                  src={videoUrl}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="mt-2 w-full rounded-lg bg-black"
+                />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Exercises don’t sync — the student watches this demo, then plays the graded highway at the
+                  tempo set in the score settings.
+                </p>
+              </div>
+            )}
+
+            {/* Selected note */}
+            <div className="st-icard">
+              <span className="st-sec-label">Selected note</span>
+              {selEvent && selection ? (
+                <NoteDetails
+                  event={selEvent}
+                  measureIndex={selection.ref.measureIndex}
+                  percussion={!!selTrack && isPercussion(selTrack.instrument)}
+                  percLabel={
+                    selTrack
+                      ? getPercStrokes(selTrack.instrument)?.find(
+                          (s) =>
+                            selEvent.kind === 'note' && s.midi === selEvent.midi,
+                        )?.label ?? null
+                      : null
+                  }
+                  onDelete={() => {
+                    dispatch({
+                      type: 'delete-event',
+                      trackIndex: selection.trackIndex,
+                      measureIndex: selection.ref.measureIndex,
+                      eventIndex: selection.ref.eventIndex,
+                    });
+                  }}
+                />
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Click a note on the staff to inspect it.
                 </p>
               )}
             </div>
-            <WaveformCanvas
-              peaks={peaks}
-              durationSeconds={timelineDuration}
-              handles={handles}
-              tailVideoTimeSeconds={markers.tailVideoTimeSeconds}
-              pixelsPerSecond={pps}
-              scrollLeftPx={scrollLeft}
-              dragAll={dragAll}
-              selected={selected}
-              getCurrentSeconds={clock.getCurrentSeconds}
+
+            {/* Sync status */}
+            {showSync && (
+              <div className="st-icard">
+                <div className="flex items-center justify-between">
+                  <span className="st-sec-label">Sync status</span>
+                  <button
+                    onClick={handlePublish}
+                    disabled={isPublishing}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <UploadCloud className="h-3.5 w-3.5" />
+                    {isPublishing ? 'Publishing…' : 'Publish'}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="st-pip" /> {markers.measures.length} measure
+                  {markers.measures.length === 1 ? '' : 's'} on the grid
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="st-pip warn" /> Anchor at{' '}
+                  <b className="font-mono tabular-nums text-foreground">{anchorSeconds.toFixed(1)}s</b> ·{' '}
+                  {score.initialTempo} BPM
+                </div>
+                {error && (
+                  <p className="rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
+                    {error}
+                  </p>
+                )}
+                {published && (
+                  <p className="rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs text-primary">
+                    Published — students will see the new sync.
+                  </p>
+                )}
+                {decodeState === 'error' && (
+                  <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-600">
+                    Couldn’t read this video’s audio. You can still sync against the measure grid.
+                  </p>
+                )}
+              </div>
+            )}
+          </>,
+          rightRailEl,
+        )}
+
+      {/* ============ BOTTOM (portal): transport ============ */}
+      {showSync &&
+        transportEl &&
+        createPortal(
+          <div className="st-transport">
+            <TransportBar
+              currentSeconds={clock.currentSeconds}
+              durationSeconds={clock.durationSeconds}
+              isPlaying={clock.isPlaying}
+              playbackRate={clock.playbackRate}
+              onToggle={clock.toggle}
+              onRestart={() => clock.seek(0)}
               onSeek={clock.seek}
-              onSelect={handleSelect}
-              onMarkerDrag={handleMarkerDrag}
-              onTailDrag={handleTailDrag}
-              onDragEnd={() => setMarkers((s) => reinterpolateUnedited(s))}
-              onScrollByPx={handleScrollByPx}
-              onViewportWidth={setViewportWidth}
+              onRateChange={clock.setPlaybackRate}
+              loopA={clock.loopA}
+              loopB={clock.loopB}
+              loopEnabled={clock.loopEnabled}
+              onToggleLoop={() => clock.setLoopEnabled(!clock.loopEnabled)}
+              onClearLoop={clock.clearLoop}
+              bpm={score.initialTempo}
+              beatsPerMeasure={score.initialTimeSignature[0]}
             />
-          </>
+          </div>,
+          transportEl,
         )}
-        <IntegratedEditor
-          score={score}
-          dispatch={dispatch}
-          measureTimings={measureTimings}
-          pixelsPerSecond={pps}
-          scrollLeftPx={scrollLeft}
-          viewportWidth={viewportWidth}
-          onRequestZoom={(nextPps, nextScroll) => {
-            setPps(clamp(nextPps, MIN_PPS, MAX_PPS));
-            setScrollLeft(clampScroll(nextScroll));
-          }}
-          dragAll={dragAll}
-          onMeasureDrag={
-            showSync
-              ? (measureNumber, videoTimeSeconds, mode) =>
-                  handleMarkerDrag({ measureNumber, beatInMeasure: 1 }, videoTimeSeconds, mode)
-              : () => {}
-          }
-          onMeasureDragEnd={showSync ? () => setMarkers((s) => reinterpolateUnedited(s)) : () => {}}
-        />
-        <ScrollBar
-          scrollLeft={scrollLeft}
-          maxScroll={maxScroll}
-          viewportWidth={viewportWidth}
-          contentWidth={timelineDuration * pps}
-          onScroll={(v) => setScrollLeft(clampScroll(v))}
-        />
-      </div>
-
-      {/* Video + transport */}
-      {showSync && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]">
-          <TransportBar
-            currentSeconds={clock.currentSeconds}
-            durationSeconds={clock.durationSeconds}
-            isPlaying={clock.isPlaying}
-            playbackRate={clock.playbackRate}
-            onToggle={clock.toggle}
-            onRestart={() => clock.seek(0)}
-            onSeek={clock.seek}
-            onRateChange={clock.setPlaybackRate}
-            loopA={clock.loopA}
-            loopB={clock.loopB}
-            loopEnabled={clock.loopEnabled}
-            onToggleLoop={() => clock.setLoopEnabled(!clock.loopEnabled)}
-            onClearLoop={clock.clearLoop}
-            bpm={score.initialTempo}
-            beatsPerMeasure={score.initialTimeSignature[0]}
-          />
-          <video
-            ref={videoRef}
-            src={videoUrl ?? undefined}
-            playsInline
-            preload="metadata"
-            className="max-h-48 w-full rounded-md bg-black md:w-72"
-          />
-        </div>
-      )}
-
-      {/* Exercises don't sync — show a plain demo preview so the admin can sanity-check it. */}
-      {mode === 'exercise' && videoUrl && (
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Demo video</h2>
-          <video
-            src={videoUrl}
-            controls
-            playsInline
-            preload="metadata"
-            className="max-h-64 w-full rounded-md bg-black md:w-96"
-          />
-          <p className="text-xs text-muted-foreground">
-            Exercises don’t sync to the video — the student watches this demo, then plays the graded
-            highway at the tempo set in the score settings above.
-          </p>
-        </div>
-      )}
-
-      <p className="text-xs text-muted-foreground">
-        {showSync ? (
-          <>
-            Drag a measure’s handle (the bar above each staff) onto the audio — by default it slides that
-            measure and everything after it, so you can place the whole score at once and refine from
-            there. Hold <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] text-foreground">Option</kbd>{' '}
-            to move just one measure, or use the numbered waveform markers for fine per-beat tweaks.
-            Markers can’t cross their neighbors, so Publish always produces a valid sync.
-          </>
-        ) : (
-          <>
-            Click a note to select it, drag it up/down to change pitch, or click empty space in a measure
-            to add one. Notes are laid out on a fixed-BPM grid (set the tempo in the score settings above).
-          </>
-        )}
-      </p>
-      </div>
-
-      {analyzing && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 rounded-lg bg-background/75 backdrop-blur-sm">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm font-medium">
-            Analyzing audio…{progress > 0 ? ` ${Math.round(progress * 100)}%` : ''}
-          </p>
-          <p className="max-w-xs text-center text-xs text-muted-foreground">
-            Decoding this video’s audio so the waveform lines up with the score. This happens once —
-            the result is cached for next time.
-          </p>
-        </div>
-      )}
-    </div>
+    </>
   );
+}
+
+// Read-only details for the selected note, shown in the right-rail inspector.
+// Editing happens via the staff toolbar; this offers a quick Delete.
+function NoteDetails({
+  event,
+  measureIndex,
+  percussion,
+  percLabel,
+  onDelete,
+}: {
+  event: MusicalEvent;
+  measureIndex: number;
+  percussion: boolean;
+  percLabel: string | null;
+  onDelete: () => void;
+}) {
+  const durLabel = formatDurationQN(event.durationQN) + (event.dotted ? '.' : '') + (event.triplet ? ' ³' : '');
+  let primary: string;
+  if (event.kind === 'rest') {
+    primary = 'Rest';
+  } else if (percussion) {
+    primary = percLabel ?? 'Stroke';
+  } else if (event.kind === 'note') {
+    primary = midiToName(event.midi);
+  } else {
+    primary = 'Chord';
+  }
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-foreground">{primary}</span>
+        <span className="font-mono text-xs tabular-nums text-muted-foreground">m.{measureIndex + 1}</span>
+      </div>
+      <div className="st-prop">
+        <span className="k">Kind</span>
+        <span className="v capitalize">{event.kind}</span>
+      </div>
+      <div className="st-prop">
+        <span className="k">Duration</span>
+        <span className="v">{durLabel}</span>
+      </div>
+      <button
+        onClick={onDelete}
+        className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs transition hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+        Delete note
+      </button>
+    </>
+  );
+}
+
+function formatDurationQN(qn: number): string {
+  const map: Record<string, string> = {
+    '4': 'whole',
+    '2': 'half',
+    '1': 'quarter',
+    '0.5': '8th',
+    '0.25': '16th',
+    '0.125': '32nd',
+    '0.0625': '64th',
+  };
+  return map[String(qn)] ?? `${qn} QN`;
+}
+
+function midiToName(midi: number): string {
+  const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+  const pc = ((midi % 12) + 12) % 12;
+  const octave = Math.floor(midi / 12) - 1;
+  return `${names[pc]}${octave}`;
 }
 
 // A thin custom horizontal scrollbar over the canvas coordinate space.
