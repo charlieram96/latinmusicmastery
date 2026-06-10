@@ -6,15 +6,23 @@
 // autosave, undo/redo, a per-section "Replace score", and the video-sync panel.
 // One of these is mounted at a time inside VideoSectionsWorkspace, keyed by the
 // section + its score document so switching/replacing remounts cleanly.
+//
+// It renders the SyncPanel stage in the center column and PORTALS its chrome into
+// the app-shell slots VideoSectionsWorkspace provides: the score-action cluster →
+// the app-bar, the score-meta form → the left rail, and (when open) the highway
+// preview → the bottom drawer. SyncPanel itself portals its inspector + transport
+// into the right rail + bottom dock.
 
 import { FileUp, Redo2, Save, Undo2 } from 'lucide-react';
 import { useEffect, useState, useTransition } from 'react';
+import { createPortal } from 'react-dom';
 import { saveScoreDocument, replaceSectionScore } from '@/app/actions/playsense-studio';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta-editor';
+import { HighwayPreview } from '@/components/playsense-studio/studio/highway-preview';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 export interface ScoreSectionEditorProps {
@@ -27,6 +35,13 @@ export interface ScoreSectionEditorProps {
   videoDurationSeconds: number | null;
   /** Re-fetch sections (ranges / score swapped). Called after publish or replace. */
   onChanged: () => void;
+  // App-shell slots provided by VideoSectionsWorkspace (portal targets).
+  appBarEl: HTMLElement | null;
+  metaEl: HTMLElement | null;
+  rightRailEl: HTMLElement | null;
+  transportEl: HTMLElement | null;
+  drawerEl: HTMLElement | null;
+  highwayOpen: boolean;
 }
 
 const AUTOSAVE_INTERVAL_MS = 5000;
@@ -40,6 +55,12 @@ export function ScoreSectionEditor({
   videoUrl,
   videoDurationSeconds,
   onChanged,
+  appBarEl,
+  metaEl,
+  rightRailEl,
+  transportEl,
+  drawerEl,
+  highwayOpen,
 }: ScoreSectionEditorProps) {
   const { state, dispatch, undo, redo, canUndo, canRedo, markClean } = useEditor(initialScore);
 
@@ -96,70 +117,13 @@ export function ScoreSectionEditor({
   }, [undo, redo]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <ScoreImportDialog
-          classItemId={classItemId}
-          mode="replace"
-          onConfirm={(score, filename) => replaceSectionScore({ sectionId, scoreDocument: score, sourceFilename: filename })}
-          onImported={onChanged}
-          trigger={
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-2 text-sm transition hover:bg-muted"
-              title="Replace this section's score with a new import"
-            >
-              <FileUp className="h-4 w-4" />
-              Replace score
-            </button>
-          }
-        />
-        <button
-          onClick={undo}
-          disabled={!canUndo}
-          className="rounded border border-border p-2 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-          title="Undo (Cmd/Ctrl+Z)"
-          aria-label="Undo"
-        >
-          <Undo2 className="h-4 w-4" />
-        </button>
-        <button
-          onClick={redo}
-          disabled={!canRedo}
-          className="rounded border border-border p-2 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-          title="Redo (Cmd/Ctrl+Shift+Z)"
-          aria-label="Redo"
-        >
-          <Redo2 className="h-4 w-4" />
-        </button>
-
-        <span className="w-32 text-right text-xs tabular-nums text-muted-foreground">
-          {savingState === 'saving' || isPending
-            ? 'Saving…'
-            : state.isDirty
-              ? 'Unsaved changes'
-              : savingState === 'saved'
-                ? 'All changes saved'
-                : ' '}
-        </span>
-
-        <button
-          onClick={persist}
-          disabled={!state.isDirty || isPending}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Save className="h-4 w-4" />
-          Save score
-        </button>
-      </div>
-
+    <>
+      {/* Center: error banner + the SyncPanel stage. */}
       {errorMessage && (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="mb-3 shrink-0 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {errorMessage}
         </p>
       )}
-
-      <ScoreMetaEditor score={state.score} dispatch={dispatch} />
 
       <SyncPanel
         classItemId={classItemId}
@@ -172,7 +136,85 @@ export function ScoreSectionEditor({
         activeTimeMap={activeTimeMap}
         videoDurationSeconds={videoDurationSeconds}
         onPublished={onChanged}
+        rightRailEl={rightRailEl}
+        transportEl={transportEl}
       />
-    </div>
+
+      {/* App-bar: score action cluster. */}
+      {appBarEl &&
+        createPortal(
+          <>
+            <ScoreImportDialog
+              classItemId={classItemId}
+              mode="replace"
+              onConfirm={(score, filename) =>
+                replaceSectionScore({ sectionId, scoreDocument: score, sourceFilename: filename })
+              }
+              onImported={onChanged}
+              trigger={
+                <button type="button" className="st-chip" title="Replace this section's score with a new import">
+                  <FileUp className="h-4 w-4" />
+                  <span className="hidden lg:inline">Replace score</span>
+                </button>
+              }
+            />
+            <span className="mx-0.5 h-6 w-px bg-border" />
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              className="rounded-md border border-transparent p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+              title="Undo (Cmd/Ctrl+Z)"
+              aria-label="Undo"
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              className="rounded-md border border-transparent p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+              title="Redo (Cmd/Ctrl+Shift+Z)"
+              aria-label="Redo"
+            >
+              <Redo2 className="h-4 w-4" />
+            </button>
+            <span className="hidden w-28 text-right text-xs tabular-nums text-muted-foreground lg:inline">
+              {savingState === 'saving' || isPending
+                ? 'Saving…'
+                : state.isDirty
+                  ? 'Unsaved changes'
+                  : savingState === 'saved'
+                    ? 'All changes saved'
+                    : ' '}
+            </span>
+            <button
+              onClick={persist}
+              disabled={!state.isDirty || isPending}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Save className="h-4 w-4" />
+              <span className="hidden sm:inline">Save score</span>
+            </button>
+          </>,
+          appBarEl,
+        )}
+
+      {/* Left rail: score meta form. */}
+      {metaEl && createPortal(<ScoreMetaEditor score={state.score} dispatch={dispatch} />, metaEl)}
+
+      {/* Bottom drawer: student highway preview. */}
+      {highwayOpen &&
+        drawerEl &&
+        createPortal(
+          <div className="h-full overflow-y-auto px-4 py-3">
+            <HighwayPreview
+              score={state.score}
+              scoreDocumentId={scoreDocumentId}
+              title={state.score.title}
+              trackIndex={0}
+            />
+          </div>,
+          drawerEl,
+        )}
+    </>
   );
 }
