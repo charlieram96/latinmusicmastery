@@ -74,7 +74,7 @@ export function StudioWorkspace({
 
   // Portal targets the SyncPanel renders its inspector + transport into. State
   // (not refs) so the portal re-renders once the slot nodes mount.
-  const [rightRailEl, setRightRailEl] = useState<HTMLElement | null>(null);
+  const [inspectorEl, setInspectorEl] = useState<HTMLElement | null>(null);
   const [transportEl, setTransportEl] = useState<HTMLElement | null>(null);
 
   // Student "highway" preview, as a collapsible bottom drawer.
@@ -225,11 +225,22 @@ export function StudioWorkspace({
         </div>
       </header>
 
-      {/* ---- Body: left meta rail · center stage · right inspector rail ---- */}
+      {/* ---- Body: left rail (meta + inspector) · center stage ---- */}
       <div className="flex min-h-0 flex-1">
-        <aside className="st-rail st-rail-left hidden w-64 shrink-0 flex-col gap-4 p-4 lg:flex">
-          <span className="st-sec-label">Score</span>
-          <ScoreMetaEditor score={state.score} dispatch={dispatch} />
+        <aside className="st-rail st-rail-left hidden w-64 shrink-0 flex-col lg:flex">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+            <div>
+              <span className="st-sec-label">Score</span>
+              <div className="mt-3">
+                <ScoreMetaEditor score={state.score} dispatch={dispatch} />
+              </div>
+            </div>
+            {/* Inspector: monitor/demo + selected note + sync status (SyncPanel portals here). */}
+            <div
+              ref={setInspectorEl}
+              className="flex flex-col gap-3 border-t border-border pt-4 empty:hidden"
+            />
+          </div>
         </aside>
 
         <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 md:p-4">
@@ -248,15 +259,10 @@ export function StudioWorkspace({
             dispatch={dispatch}
             activeTimeMap={activeTimeMap}
             videoDurationSeconds={videoDurationSeconds}
-            rightRailEl={rightRailEl}
+            inspectorEl={inspectorEl}
             transportEl={transportEl}
           />
         </main>
-
-        <aside
-          ref={setRightRailEl}
-          className="st-rail st-rail-right hidden w-72 shrink-0 flex-col gap-3 p-4 md:flex"
-        />
       </div>
 
       {/* ---- Bottom: transport dock + highway drawer ---- */}

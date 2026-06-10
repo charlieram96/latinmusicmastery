@@ -42,7 +42,7 @@ export interface ScoreSectionEditorProps {
   // App-shell slots provided by VideoSectionsWorkspace (portal targets).
   appBarEl: HTMLElement | null;
   metaEl: HTMLElement | null;
-  rightRailEl: HTMLElement | null;
+  inspectorEl: HTMLElement | null;
   transportEl: HTMLElement | null;
   monitorEl: HTMLElement | null;
   drawerEl: HTMLElement | null;
@@ -64,7 +64,7 @@ export function ScoreSectionEditor({
   onSelectSection,
   appBarEl,
   metaEl,
-  rightRailEl,
+  inspectorEl,
   transportEl,
   monitorEl,
   drawerEl,
@@ -144,7 +144,7 @@ export function ScoreSectionEditor({
         activeTimeMap={activeTimeMap}
         videoDurationSeconds={videoDurationSeconds}
         onPublished={onChanged}
-        rightRailEl={rightRailEl}
+        inspectorEl={inspectorEl}
         transportEl={transportEl}
         monitorEl={monitorEl}
         sectionsContext={{ sections, activeSectionId: sectionId, onSelectSection }}
