@@ -33,7 +33,13 @@ export interface EditorState {
 }
 
 export type EditorAction =
-  | { type: 'set-score-meta'; title?: string; composer?: string }
+  | {
+      type: 'set-score-meta';
+      title?: string;
+      composer?: string;
+      initialTempo?: number;
+      initialTimeSignature?: [number, number];
+    }
   | { type: 'set-track-name'; trackIndex: number; name: string }
   | { type: 'set-track-instrument'; trackIndex: number; instrument: Track['instrument'] }
   | { type: 'add-track' }
@@ -116,6 +122,12 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const next = clone(state.score);
       if (action.title !== undefined) next.title = action.title;
       if (action.composer !== undefined) next.composer = action.composer;
+      if (action.initialTempo !== undefined) {
+        next.initialTempo = Math.min(400, Math.max(20, Math.round(action.initialTempo)));
+      }
+      if (action.initialTimeSignature !== undefined) {
+        next.initialTimeSignature = action.initialTimeSignature;
+      }
       return withHistory(state, next);
     }
     case 'set-track-name': {

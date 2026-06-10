@@ -80,7 +80,6 @@ export interface SyncPanelProps {
   transportEl?: HTMLElement | null;
 }
 
-const PPS_PRESETS = [20, 40, 80, 160];
 const MIN_PPS = 8;
 const MAX_PPS = 600;
 
@@ -366,6 +365,16 @@ export function SyncPanel({
     setScrollLeft(0);
   };
 
+  // Set an absolute zoom (used by the drag slider), keeping the timeline centered.
+  const zoomTo = (nextPps: number) => {
+    setPps((p) => {
+      const np = clamp(nextPps, MIN_PPS, MAX_PPS);
+      const centerTime = (scrollLeft + viewportWidth / 2) / p;
+      setScrollLeft(Math.max(0, centerTime * np - viewportWidth / 2));
+      return np;
+    });
+  };
+
   const handlePublish = () => {
     const waypoints = enforceMonotonic(markerStateToWaypoints(markers, { includeBeats: 'edited-beats' }));
     if (waypoints.length < 2) {
@@ -468,27 +477,13 @@ export function SyncPanel({
             </>
           )}
 
-          <div className="ml-auto flex items-center gap-1">
-            <button onClick={() => zoomBy(0.5)} className="rounded-md border border-border p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground" title="Zoom out">
-              <ZoomOut className="h-4 w-4" />
-            </button>
-            <div className="st-seg">
-              {PPS_PRESETS.map((preset) => (
-                <button
-                  key={preset}
-                  onClick={() => setPps(preset)}
-                  className={Math.abs(pps - preset) < 0.5 ? 'is-on' : ''}
-                >
-                  {preset}
-                </button>
-              ))}
-            </div>
-            <button onClick={() => zoomBy(2)} className="rounded-md border border-border p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground" title="Zoom in">
-              <ZoomIn className="h-4 w-4" />
-            </button>
-            <button onClick={fitZoom} className="rounded-md border border-border p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground" title="Fit to width">
-              <Maximize className="h-4 w-4" />
-            </button>
+          <div className="ml-auto">
+            <ZoomSlider
+              pps={pps}
+              onZoomTo={zoomTo}
+              onZoomBy={zoomBy}
+              onFit={fitZoom}
+            />
           </div>
         </div>
 
@@ -865,4 +860,76 @@ function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(v, hi));
+}
+
+/**
+ * Drag-to-zoom timeline control. The knob position is a log mapping of the
+ * current pixels-per-second between MIN_PPS and MAX_PPS, so dragging feels even
+ * across the whole zoom range. The −/＋ buttons nudge by a fixed factor and the
+ * last button fits the whole timeline to the viewport.
+ */
+function ZoomSlider({
+  pps,
+  onZoomTo,
+  onZoomBy,
+  onFit,
+}: {
+  pps: number;
+  onZoomTo: (pps: number) => void;
+  onZoomBy: (factor: number) => void;
+  onFit: () => void;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const span = Math.log(MAX_PPS / MIN_PPS);
+  const fraction = clamp(Math.log(pps / MIN_PPS) / span, 0, 1);
+
+  const setFromClientX = (clientX: number) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const f = clamp((clientX - r.left) / r.width, 0, 1);
+    onZoomTo(MIN_PPS * Math.exp(f * span));
+  };
+  const onDown = (e: React.PointerEvent) => {
+    dragging.current = true;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    setFromClientX(e.clientX);
+  };
+  const onMove = (e: React.PointerEvent) => {
+    if (dragging.current) setFromClientX(e.clientX);
+  };
+  const onUp = (e: React.PointerEvent) => {
+    dragging.current = false;
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+  };
+
+  return (
+    <div className="st-zoom" title="Zoom timeline (drag)">
+      <button type="button" className="st-zoom-btn" onClick={() => onZoomBy(1 / 1.5)} aria-label="Zoom out">
+        <ZoomOut className="h-[15px] w-[15px]" />
+      </button>
+      <div
+        ref={trackRef}
+        className="st-zoom-track"
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        role="slider"
+        aria-label="Zoom level"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(fraction * 100)}
+      >
+        <div className="fill" style={{ width: `${fraction * 100}%` }} />
+        <div className="knob" style={{ left: `${fraction * 100}%` }} />
+      </div>
+      <button type="button" className="st-zoom-btn" onClick={() => onZoomBy(1.5)} aria-label="Zoom in">
+        <ZoomIn className="h-[15px] w-[15px]" />
+      </button>
+      <button type="button" className="st-iconbtn" onClick={onFit} title="Fit to width" style={{ marginLeft: 2 }}>
+        <Maximize className="h-[15px] w-[15px]" />
+      </button>
+    </div>
+  );
 }
