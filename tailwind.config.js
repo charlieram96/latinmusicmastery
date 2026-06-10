@@ -1,3 +1,12 @@
+// The sidebar CSS vars hold FULL color values (hsl(...), hex, some with embedded
+// alpha) rather than bare HSL channels, so the usual "hsl(var(--x))" pattern can't
+// be used. The function form keeps opacity modifiers (e.g. text-sidebar-foreground/60,
+// bg-sidebar-primary/10) working via color-mix.
+const cssVarColor = (variable) => ({ opacityValue }) =>
+  opacityValue === undefined
+    ? `var(${variable})`
+    : `color-mix(in srgb, var(${variable}) calc(${opacityValue} * 100%), transparent)`;
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
@@ -62,6 +71,20 @@ module.exports = {
         },
         gold: {
           DEFAULT: "hsl(var(--gold-highlight))",
+        },
+        sidebar: {
+          DEFAULT: cssVarColor('--sidebar'),
+          foreground: cssVarColor('--sidebar-foreground'),
+          primary: {
+            DEFAULT: cssVarColor('--sidebar-primary'),
+            foreground: cssVarColor('--sidebar-primary-foreground'),
+          },
+          accent: {
+            DEFAULT: cssVarColor('--sidebar-accent'),
+            foreground: cssVarColor('--sidebar-accent-foreground'),
+          },
+          border: cssVarColor('--sidebar-border'),
+          ring: cssVarColor('--sidebar-ring'),
         },
       },
       borderRadius: {

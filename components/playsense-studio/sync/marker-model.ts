@@ -423,6 +423,46 @@ export function enforceMonotonic(waypoints: Waypoint[]): Waypoint[] {
 }
 
 // ---------------------------------------------------------------------------
+// Section overlap (sibling scored sections may not share video time)
+// ---------------------------------------------------------------------------
+
+export interface TimeRange {
+  startSeconds: number;
+  endSeconds: number;
+}
+
+/** Current video-time footprint of the marker state: first downbeat → tail. */
+export function markerSpan(state: MarkerState): TimeRange {
+  const first = state.measures[0]?.beats[0]?.videoTimeSeconds ?? state.tailVideoTimeSeconds;
+  return {
+    startSeconds: first,
+    endSeconds: Math.max(state.tailVideoTimeSeconds, first),
+  };
+}
+
+export function rangesOverlap(a: TimeRange, b: TimeRange): boolean {
+  return a.startSeconds < b.endSeconds && a.endSeconds > b.startSeconds;
+}
+
+/**
+ * The open corridor `span` may move within without entering a blocked range:
+ * `lo` = max end of blocked ranges entirely at/left of the span (else -Infinity),
+ * `hi` = min start of blocked ranges entirely at/right of it (else +Infinity).
+ * Blocked ranges that ALREADY intersect the span (legacy overlapping data) are
+ * ignored so the admin can always drag their way OUT of a pre-existing overlap.
+ */
+export function freeCorridor(span: TimeRange, blocked: TimeRange[]): { lo: number; hi: number } {
+  let lo = -Infinity;
+  let hi = Infinity;
+  for (const r of blocked) {
+    if (rangesOverlap(span, r)) continue;
+    if (r.endSeconds <= span.startSeconds) lo = Math.max(lo, r.endSeconds);
+    else if (r.startSeconds >= span.endSeconds) hi = Math.min(hi, r.startSeconds);
+  }
+  return { lo, hi };
+}
+
+// ---------------------------------------------------------------------------
 // Reconciliation with score edits
 // ---------------------------------------------------------------------------
 

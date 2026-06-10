@@ -12,7 +12,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, ChevronsLeftRight, Loader2, Maximize, Repeat, Trash2, UploadCloud, ZoomIn, ZoomOut } from 'lucide-react';
+import { AudioLines, ChevronsLeftRight, Loader2, Maximize, Move, Repeat, Trash2, UploadCloud, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type Dispatch } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
@@ -24,9 +24,13 @@ import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
+  EPS,
   enforceMonotonic,
+  freeCorridor,
+  markerSpan,
   markerStateToWaypoints,
   orderedMarkers,
+  rangesOverlap,
   reconcileMarkers,
   reinterpolateUnedited,
   seedMarkerState,
@@ -36,6 +40,7 @@ import {
   structuralSignature,
   type MarkerRef,
   type MarkerState,
+  type TimeRange,
 } from '@/components/playsense-studio/sync/marker-model';
 import {
   WaveformCanvas,
@@ -48,7 +53,8 @@ import {
   type IntegratedEditorMeasureTiming,
 } from '@/components/playsense-studio/studio/integrated-editor';
 import type { SelectedEventRef } from '@/components/playsense-studio/studio/editable-measure-strip';
-import { ImportAtPlayheadControl } from '@/components/playsense-studio/sync/import-at-playhead-control';
+import { PlaceScoreControl } from '@/components/playsense-studio/sync/place-score-control';
+import { SectionsLane, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { getPercStrokes, isPercussion } from '@/lib/playsense-studio/perc-strokes';
 import type { MusicalEvent, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
@@ -58,7 +64,7 @@ export interface StudioNoteSelection {
   trackIndex: number;
 }
 
-const WAVE_H = 150; // waveform lane height (matches WaveformCanvas default)
+const WAVE_H = 240; // waveform lane height — the sync centerpiece, so it's tall
 
 export interface SyncPanelProps {
   classItemId: string;
@@ -74,10 +80,18 @@ export interface SyncPanelProps {
   videoDurationSeconds: number | null;
   /** Fired after a successful Publish (e.g. so a section list can refresh ranges). */
   onPublished?: () => void;
-  /** App-shell slot the inspector (video + note + sync status) portals into. */
+  /** App-shell slot the inspector (note + sync status) portals into. */
   rightRailEl?: HTMLElement | null;
   /** App-shell slot the transport bar portals into (video mode only). */
   transportEl?: HTMLElement | null;
+  /** App-shell slot the reference-video monitor portals into (left rail). Falls back to the right rail. */
+  monitorEl?: HTMLElement | null;
+  /** Sibling scored sections — drives the sections lane + overlap prevention. */
+  sectionsContext?: {
+    sections: LaneSection[];
+    activeSectionId: string;
+    onSelectSection: (sectionId: string) => void;
+  };
 }
 
 const MIN_PPS = 8;
@@ -96,6 +110,8 @@ export function SyncPanel({
   onPublished,
   rightRailEl,
   transportEl,
+  monitorEl,
+  sectionsContext,
 }: SyncPanelProps) {
   const track = score.tracks[0];
 
@@ -148,6 +164,44 @@ export function SyncPanel({
   // after. Toolbar toggle / Alt switches to single. Applies to measure-block
   // drags and the waveform markers alike.
   const [dragAll, setDragAll] = useState(true);
+
+  // --- Sibling sections (overlap prevention + sections lane) ---
+  // The active section's own stored range is excluded: re-syncing over its old
+  // footprint is always allowed, and its live span renders from the markers.
+  const siblingRanges: TimeRange[] = useMemo(
+    () =>
+      (sectionsContext?.sections ?? [])
+        .filter(
+          (s) =>
+            s.sectionId !== sectionsContext!.activeSectionId &&
+            s.startSeconds != null &&
+            s.endSeconds != null
+        )
+        .map((s) => ({ startSeconds: s.startSeconds!, endSeconds: s.endSeconds! }))
+        .sort((a, b) => a.startSeconds - b.startSeconds),
+    [sectionsContext]
+  );
+
+  // The open corridor the current span may move within, mirrored into a ref so
+  // the canvas's pointer listeners (which depend on the drag callbacks) never
+  // re-bind mid-drag.
+  const corridor = useMemo(() => freeCorridor(markerSpan(markers), siblingRanges), [markers, siblingRanges]);
+  const corridorRef = useRef(corridor);
+  corridorRef.current = corridor;
+
+  // --- Place-at-playhead (two-step, with a live ghost preview) ---
+  const [placeArmed, setPlaceArmed] = useState(false);
+  // How long the score runs at its own tempo (honors per-measure tempo changes)
+  // — i.e. how much waveform the placed section will occupy.
+  const scoreSpanSeconds = useMemo(() => {
+    const wps = buildWaypoints(score, score.initialTempo, 0);
+    return wps.length ? wps[wps.length - 1].videoTimeSeconds : 0;
+  }, [score]);
+  // clock.currentSeconds is React state, so the ghost tracks scrubbing/playback.
+  const ghostRange: TimeRange | null = placeArmed
+    ? { startSeconds: clock.currentSeconds, endSeconds: clock.currentSeconds + scoreSpanSeconds }
+    : null;
+  const ghostConflict = ghostRange !== null && siblingRanges.some((r) => rangesOverlap(ghostRange, r));
 
   // --- Peaks decode ---
   const [peaks, setPeaks] = useState<WaveformPeaks | null>(null);
@@ -291,20 +345,30 @@ export function SyncPanel({
   }, [markers]);
 
   // --- Marker interaction handlers ---
+  // Both drags clamp against the sibling-section corridor so a section can
+  // never be dragged into a neighbor's video range.
   const handleMarkerDrag = useCallback((ref: MarkerRef, videoTimeSeconds: number, mode: DragMode) => {
     setMarkers((s) => {
+      const { lo, hi } = corridorRef.current;
       if (mode === 'all-after') {
         const current = findBeatTime(s, ref);
         if (current === null) return s;
-        return shiftMarkersFrom(s, ref, videoTimeSeconds - current);
+        const span = markerSpan(s);
+        let delta = videoTimeSeconds - current;
+        delta = Math.min(delta, hi - EPS - span.endSeconds); // right wall via the tail
+        delta = Math.max(delta, lo + EPS - span.startSeconds); // left wall via the first downbeat
+        return shiftMarkersFrom(s, ref, delta);
       }
-      return setMarkerTime(s, ref, videoTimeSeconds);
+      // Single drags only reach a wall at the span's edges; interior markers are
+      // already clamped against their neighbors inside setMarkerTime.
+      const clamped = Math.min(Math.max(videoTimeSeconds, lo + EPS), hi - EPS);
+      return setMarkerTime(s, ref, clamped);
     });
     setDirty(true);
   }, []);
 
   const handleTailDrag = useCallback((videoTimeSeconds: number) => {
-    setMarkers((s) => setTailTime(s, videoTimeSeconds));
+    setMarkers((s) => setTailTime(s, Math.min(videoTimeSeconds, corridorRef.current.hi - EPS)));
     setDirty(true);
   }, []);
 
@@ -317,27 +381,35 @@ export function SyncPanel({
     [clampScroll]
   );
 
-  // Import at playhead: lay the score's measures starting at `offsetSeconds` (the
-  // current video time), spaced by `bpm`. The admin then drags them to align.
-  const importAtPlayhead = useCallback(
-    (bpm: number, offsetSeconds: number) => {
-      setMarkers(seedMarkerState(track, score, buildWaypoints(score, bpm, offsetSeconds)));
-      setDirty(true);
-      setSelected(null);
-    },
-    [track, score]
-  );
+  // Confirm a placement: lay the score's measures from the playhead, spaced at
+  // the score's own tempo (the single tempo source). The admin then drags to align.
+  const confirmPlacement = useCallback(() => {
+    if (ghostConflict) return;
+    if (
+      dirty &&
+      !window.confirm('Placing re-lays the measures from the playhead and replaces your dragged positions. Continue?')
+    ) {
+      return;
+    }
+    setMarkers(seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, clock.getCurrentSeconds())));
+    setDirty(true);
+    setSelected(null);
+    setPlaceArmed(false);
+  }, [track, score, dirty, ghostConflict, clock]);
 
-  const toggleExpandSelected = () => {
-    if (!selected || selected === 'tail') return;
-    const measureNumber = selected.measureNumber;
-    setMarkers((s) => ({
-      ...s,
-      measures: s.measures.map((m) =>
-        m.measureNumber === measureNumber ? { ...m, expanded: !m.expanded } : m
-      ),
-    }));
-  };
+  // Per-beat handles follow the selection: selecting a measure (or one of its
+  // beats) reveals that measure's beat markers; everything else stays collapsed.
+  // Edited beats are anchors regardless of visibility, so nothing is lost.
+  useEffect(() => {
+    const num = selected && selected !== 'tail' ? selected.measureNumber : null;
+    setMarkers((s) => {
+      if (s.measures.every((m) => m.expanded === (m.measureNumber === num))) return s;
+      return {
+        ...s,
+        measures: s.measures.map((m) => ({ ...m, expanded: m.measureNumber === num })),
+      };
+    });
+  }, [selected]);
 
   const loopSelectedMeasure = () => {
     if (!selected || selected === 'tail') return;
@@ -429,79 +501,79 @@ export function SyncPanel({
     <>
       {/* ============ CENTER: context bar + unified stage ============ */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-        {/* Context bar — sync actions · view toggles · zoom */}
-        <div className="flex flex-shrink-0 flex-wrap items-center gap-2 text-sm">
-          {showSync && (
-            <>
-              <ImportAtPlayheadControl
-                initialBpm={score.initialTempo}
-                hasEdits={dirty}
-                getCurrentSeconds={clock.getCurrentSeconds}
-                onImport={importAtPlayhead}
-              />
-              <span className="h-6 w-px bg-border" />
+        {/* Context bar — placement · drag mode · loop/analyze (sync only) */}
+        {showSync && (
+          <div className="flex flex-shrink-0 flex-wrap items-center gap-2 text-sm">
+            <PlaceScoreControl
+              armed={placeArmed}
+              conflict={ghostConflict}
+              spanLabel={ghostRange ? `${formatTime(ghostRange.startSeconds)} – ${formatTime(ghostRange.endSeconds)}` : null}
+              onArm={() => setPlaceArmed(true)}
+              onConfirm={confirmPlacement}
+              onCancel={() => setPlaceArmed(false)}
+            />
+
+            <span className="st-divline" />
+
+            <div className="st-seg" role="radiogroup" aria-label="Drag mode">
               <button
-                onClick={() => setDragAll((v) => !v)}
-                className={`st-chip${dragAll ? ' is-on' : ''}`}
-                title="Drag a measure (or marker) and everything after it moves together. Hold Option to move just one."
+                type="button"
+                className={dragAll ? 'is-on' : ''}
+                onClick={() => setDragAll(true)}
+                title="Ripple — dragging a measure moves it and everything after it (hold Option to move just one)"
               >
-                <ChevronsLeftRight className="h-4 w-4" />
-                Drag region
+                <ChevronsLeftRight className="h-3.5 w-3.5" />
+                Ripple
               </button>
               <button
-                onClick={toggleExpandSelected}
-                disabled={!selected || selected === 'tail'}
-                className="st-chip"
+                type="button"
+                className={!dragAll ? 'is-on' : ''}
+                onClick={() => setDragAll(false)}
+                title="Single — dragging moves only that measure or marker (hold Option to ripple)"
               >
-                Show/hide beats
+                <Move className="h-3.5 w-3.5" />
+                Single
               </button>
-              <button
-                onClick={loopSelectedMeasure}
-                disabled={!selected || selected === 'tail'}
-                className="st-chip"
-              >
-                <Repeat className="h-4 w-4" />
-                Loop measure
-              </button>
-              {decodeState !== 'loading' && (
-                <button onClick={runAnalysis} className="st-chip" title="Decode this video's audio to show the waveform">
-                  <AudioLines className="h-4 w-4" />
-                  {decodeState === 'idle' ? 'Analyze audio' : decodeState === 'error' ? 'Retry analysis' : 'Re-analyze'}
-                </button>
-              )}
+            </div>
+
+            <div className="ml-auto flex items-center gap-1.5">
               {decodeState === 'loading' && (
                 <span className="text-xs text-muted-foreground">
                   Analyzing audio… {progress > 0 ? `${Math.round(progress * 100)}%` : ''}
                 </span>
               )}
-            </>
-          )}
-
-          <div className="ml-auto">
-            <ZoomSlider
-              pps={pps}
-              onZoomTo={zoomTo}
-              onZoomBy={zoomBy}
-              onFit={fitZoom}
-            />
+              <button
+                type="button"
+                onClick={loopSelectedMeasure}
+                disabled={!selected || selected === 'tail'}
+                className="st-iconbtn"
+                title="Loop the selected measure"
+              >
+                <Repeat className="h-4 w-4" />
+              </button>
+              {decodeState !== 'loading' && (
+                <button
+                  type="button"
+                  onClick={runAnalysis}
+                  className="st-iconbtn"
+                  title={
+                    decodeState === 'idle'
+                      ? 'Analyze audio — decode this video so the waveform appears'
+                      : decodeState === 'error'
+                        ? 'Retry audio analysis'
+                        : 'Re-analyze audio'
+                  }
+                >
+                  <AudioLines className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* The unified stage — waveform lane + notation lane share one grid */}
         <div className="relative flex min-h-0 flex-1 flex-col">
           <div className={`st-stage flex-1${analyzing ? ' pointer-events-none select-none opacity-50' : ''}`} aria-busy={analyzing}>
-            {/* Left gutter (sibling column — never shifts the timeline origin) */}
-            <div className="st-stage-gutter">
-              {showSync && (
-                <div className="cell" style={{ height: WAVE_H }}>
-                  Audio
-                </div>
-              )}
-              <div className="cell notation" style={!showSync ? { borderTop: 'none' } : undefined}>
-                Notation
-              </div>
-            </div>
-
             {/* Timeline track — measured for the no-waveform width fallback */}
             <div className="st-stage-track" ref={editorAreaRef}>
               {showSync && (
@@ -526,6 +598,30 @@ export function SyncPanel({
                     onScrollByPx={handleScrollByPx}
                     onViewportWidth={setViewportWidth}
                   />
+
+                  {sectionsContext && (
+                    <SectionsLane
+                      sections={sectionsContext.sections}
+                      activeSectionId={sectionsContext.activeSectionId}
+                      activeRange={markerSpan(markers)}
+                      ghostRange={ghostRange}
+                      ghostConflict={ghostConflict}
+                      pixelsPerSecond={pps}
+                      scrollLeftPx={scrollLeft}
+                      onSelectSection={sectionsContext.onSelectSection}
+                    />
+                  )}
+
+                  {/* Ghost of the armed placement, across the waveform + lane. */}
+                  {ghostRange && (
+                    <div
+                      className={`st-ghost-overlay${ghostConflict ? ' is-conflict' : ''}`}
+                      style={{
+                        left: ghostRange.startSeconds * pps - scrollLeft,
+                        width: Math.max((ghostRange.endSeconds - ghostRange.startSeconds) * pps, 2),
+                      }}
+                    />
+                  )}
                 </div>
               )}
 
@@ -545,6 +641,7 @@ export function SyncPanel({
                   }}
                   dragAll={dragAll}
                   onSelectionChange={handleSelectionChange}
+                  onScrollByPx={handleScrollByPx}
                   onMeasureDrag={
                     showSync
                       ? (measureNumber, videoTimeSeconds, mode) =>
@@ -555,14 +652,18 @@ export function SyncPanel({
                 />
               </div>
 
-              <div className="flex-shrink-0 border-t border-border px-3 py-2">
-                <ScrollBar
-                  scrollLeft={scrollLeft}
-                  maxScroll={maxScroll}
-                  viewportWidth={viewportWidth}
-                  contentWidth={timelineDuration * pps}
-                  onScroll={(v) => setScrollLeft(clampScroll(v))}
-                />
+              {/* Stage bottom bar — scrollbar + zoom live together, DAW-style. */}
+              <div className="st-stage-bottombar">
+                <div className="min-w-0 flex-1">
+                  <ScrollBar
+                    scrollLeft={scrollLeft}
+                    maxScroll={maxScroll}
+                    viewportWidth={viewportWidth}
+                    contentWidth={timelineDuration * pps}
+                    onScroll={(v) => setScrollLeft(clampScroll(v))}
+                  />
+                </div>
+                <ZoomSlider pps={pps} onZoomTo={zoomTo} onZoomBy={zoomBy} onFit={fitZoom} />
               </div>
             </div>
           </div>
@@ -581,43 +682,22 @@ export function SyncPanel({
           )}
         </div>
 
-        <p className="flex-shrink-0 text-xs text-muted-foreground">
-          {showSync ? (
-            <>
-              Drag a measure’s handle (the bar above each staff) onto the audio — by default it slides that
-              measure and everything after it. Hold{' '}
-              <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] text-foreground">Option</kbd> to move just
-              one, or use the numbered waveform markers for per-beat tweaks.
-            </>
-          ) : (
-            <>
-              Click a note to select it, drag it up/down to change pitch, or click empty space in a measure to
-              add one. Notes are on a fixed-BPM grid (tempo is set in the score settings).
-            </>
-          )}
-        </p>
       </div>
+
+      {/* ============ MONITOR (portal): left rail when a slot exists, else right rail ============ */}
+      {showSync &&
+        monitorEl &&
+        createPortal(
+          <ReferenceMonitor videoRef={videoRef} videoUrl={videoUrl} />,
+          monitorEl,
+        )}
 
       {/* ============ RIGHT RAIL (portal): inspector ============ */}
       {rightRailEl &&
         createPortal(
           <>
             {showSync ? (
-              <div>
-                <span className="st-sec-label">Reference video</span>
-                <div className="st-monitor mt-2">
-                  <div className="st-monitor-badge">
-                    <span className="pip" /> Reference
-                  </div>
-                  <video
-                    ref={videoRef}
-                    src={videoUrl ?? undefined}
-                    playsInline
-                    preload="metadata"
-                    className="aspect-video w-full bg-black"
-                  />
-                </div>
-              </div>
+              !monitorEl && <ReferenceMonitor videoRef={videoRef} videoUrl={videoUrl} />
             ) : (
               // Keep the video element mounted for the clock even off the sync path.
               <video ref={videoRef} src={videoUrl ?? undefined} preload="metadata" className="hidden" />
@@ -737,12 +817,52 @@ export function SyncPanel({
               onClearLoop={clock.clearLoop}
               bpm={score.initialTempo}
               beatsPerMeasure={score.initialTimeSignature[0]}
+              sectionMarkers={sectionsContext?.sections
+                .filter((s) => s.startSeconds != null)
+                .map((s) => ({ startSeconds: s.startSeconds!, endSeconds: s.endSeconds, label: s.label }))}
             />
           </div>,
           transportEl,
         )}
     </>
   );
+}
+
+// The reference-video monitor. Kept as a tiny component so SyncPanel can portal
+// it to the left rail (sections workspace) or the right rail (single-score
+// fallback) — the <video> stays in SyncPanel's React tree either way, so the
+// transport clock keeps driving it.
+function ReferenceMonitor({
+  videoRef,
+  videoUrl,
+}: {
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  videoUrl: string | null;
+}) {
+  return (
+    <div>
+      <span className="st-sec-label">Reference video</span>
+      <div className="st-monitor mt-2">
+        <div className="st-monitor-badge">
+          <span className="pip" /> Reference
+        </div>
+        <video
+          ref={videoRef}
+          src={videoUrl ?? undefined}
+          playsInline
+          preload="metadata"
+          className="aspect-video w-full bg-black"
+        />
+      </div>
+    </div>
+  );
+}
+
+function formatTime(seconds: number): string {
+  const s = Math.max(0, seconds);
+  const m = Math.floor(s / 60);
+  const rest = s - m * 60;
+  return `${m}:${rest.toFixed(1).padStart(4, '0')}`;
 }
 
 // Read-only details for the selected note, shown in the right-rail inspector.

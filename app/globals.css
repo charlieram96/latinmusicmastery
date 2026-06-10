@@ -137,17 +137,6 @@
   --sidebar-ring: hsl(30 85% 55%);
 }
 
-@theme inline {
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -302,6 +291,8 @@ html:has([data-marketing]) {
   border-top: 1px solid hsl(var(--border));
   background: hsl(var(--card));
 }
+/* The transport bar must span the whole dock, not shrink to its content. */
+.st-transport > * { flex: 1 1 auto; min-width: 0; }
 
 /* Side rails — faintly tinted relative to the page background. */
 .st-rail {
@@ -509,28 +500,6 @@ html:has([data-marketing]) {
   color: hsl(var(--foreground));
 }
 
-/* Left gutter column with per-lane labels (sits OUTSIDE the timeline track
-   so it never shifts the x = t*pps - scrollLeft origin). */
-.st-stage-gutter {
-  width: 60px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid hsl(var(--border));
-}
-.st-stage-gutter .cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: hsl(var(--muted-foreground));
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-.st-stage-gutter .cell.notation { flex: 1; border-top: 1px solid hsl(var(--border)); }
-
 .st-stage-track {
   flex: 1;
   min-width: 0;
@@ -549,6 +518,86 @@ html:has([data-marketing]) {
   border-top: 1px solid hsl(var(--border));
   border-bottom: 1px solid hsl(var(--border));
   background: rgba(255, 255, 255, 0.018);
+}
+
+/* Stage bottom bar — the timeline scrollbar + zoom cluster, DAW-style. */
+.st-stage-bottombar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  border-top: 1px solid hsl(var(--border));
+  padding: 6px 10px;
+}
+.st-stage-bottombar .st-zoom { height: 28px; padding: 0 6px; }
+
+/* ---- Scored-sections lane (under the waveform) ---- */
+.st-sections-lane {
+  position: relative;
+  height: 30px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-top: 1px solid hsl(var(--border));
+  background: rgba(255, 255, 255, 0.015);
+}
+.st-section-block {
+  --block-color: hsl(var(--primary));
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--block-color) 55%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--block-color) 22%, transparent);
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  overflow: hidden;
+  transition: background 0.12s, border-color 0.12s;
+}
+.st-section-block:hover { background: color-mix(in srgb, var(--block-color) 34%, transparent); }
+.st-section-block.is-active {
+  border-width: 1.5px;
+  border-color: var(--block-color);
+  background: color-mix(in srgb, var(--block-color) 30%, transparent);
+  cursor: default;
+}
+.st-section-block-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.st-section-block.is-ghost {
+  border-style: dashed;
+  border-width: 1.5px;
+  border-color: color-mix(in srgb, hsl(var(--primary)) 80%, transparent);
+  background: color-mix(in srgb, hsl(var(--primary)) 16%, transparent);
+  pointer-events: none;
+}
+.st-section-block.is-ghost.is-conflict {
+  border-color: color-mix(in srgb, hsl(var(--destructive)) 85%, transparent);
+  background: color-mix(in srgb, hsl(var(--destructive)) 18%, transparent);
+  color: hsl(var(--destructive));
+}
+
+/* Full-height ghost of an armed "place at playhead" over the waveform + lane. */
+.st-ghost-overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 5;
+  border-left: 1.5px dashed hsl(var(--primary) / 0.8);
+  border-right: 1.5px dashed hsl(var(--primary) / 0.8);
+  background: hsl(var(--primary) / 0.07);
+}
+.st-ghost-overlay.is-conflict {
+  border-left-color: hsl(var(--destructive) / 0.85);
+  border-right-color: hsl(var(--destructive) / 0.85);
+  background: hsl(var(--destructive) / 0.08);
 }
 
 /* Highway preview drawer (slides up over the transport). */
@@ -774,6 +823,10 @@ html:has([data-marketing]) {
   color: hsl(var(--primary-foreground));
 }
 .st-glyphseg button:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Music-notation glyphs need larger type to read at toolbar size. */
+.st-glyphseg button.note-glyph { width: 32px; font-size: 17px; line-height: 1; }
+/* One-click pitch letters (C–B) — compact, centered. */
+.st-seg.pitch button { width: 26px; padding: 0; justify-content: center; }
 .st-nb-pop {
   position: absolute;
   top: calc(100% + 8px);
@@ -941,6 +994,28 @@ html:has([data-marketing]) {
   transition: background 0.12s, color 0.12s;
 }
 .st-stepper button:hover { background: hsl(var(--card)); color: hsl(var(--foreground)); }
+/* Large stepper variant — the score-meta tempo control (the studio's single
+   tempo source) gets prominence + bigger hit targets. */
+.st-stepper.lg { height: 44px; width: 100%; border-radius: 11px; }
+.st-stepper.lg input { flex: 1; min-width: 0; font-size: 19px; font-weight: 600; }
+.st-stepper.lg input::-webkit-outer-spin-button,
+.st-stepper.lg input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.st-stepper.lg input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+.st-stepper.lg button {
+  width: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.st-stepper.lg .unit {
+  flex-shrink: 0;
+  padding-right: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted-foreground));
+}
 .st-select { position: relative; display: inline-flex; align-items: center; width: 100%; }
 .st-select select {
   height: 34px;
