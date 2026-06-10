@@ -4,8 +4,11 @@
 // that's active until a measure overrides it. Laid out as a vertical form for the
 // studio's left rail. Tempo and time-signature edits flow through the editor's
 // 'set-score-meta' reducer action (which clamps tempo and keeps history).
+//
+// This is the ONLY tempo input in the studio — placing a score on the timeline
+// spaces its measures at this tempo.
 
-import { ChevronDown } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import type { Dispatch } from 'react';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -26,7 +29,6 @@ const TIME_SIGNATURES: Array<[number, number]> = [
 
 export function ScoreMetaEditor({ score, dispatch }: ScoreMetaEditorProps) {
   const [num, den] = score.initialTimeSignature;
-  const sigValue = `${num}/${den}`;
 
   const nudgeTempo = (delta: number) =>
     dispatch({ type: 'set-score-meta', initialTempo: score.initialTempo + delta });
@@ -45,55 +47,55 @@ export function ScoreMetaEditor({ score, dispatch }: ScoreMetaEditorProps) {
         />
       </label>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-            Tempo
-          </span>
-          <div className="st-stepper">
-            <button type="button" onClick={() => nudgeTempo(-1)} aria-label="Decrease tempo">
-              –
-            </button>
-            <input
-              type="number"
-              min={20}
-              max={400}
-              value={score.initialTempo}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                if (Number.isFinite(v)) dispatch({ type: 'set-score-meta', initialTempo: v });
-              }}
-              aria-label="Tempo (BPM)"
-            />
-            <button type="button" onClick={() => nudgeTempo(1)} aria-label="Increase tempo">
-              +
-            </button>
-          </div>
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          Tempo
+        </span>
+        <div className="st-stepper lg">
+          <button type="button" onClick={() => nudgeTempo(-1)} aria-label="Decrease tempo">
+            <Minus className="h-4 w-4" />
+          </button>
+          <input
+            type="number"
+            min={20}
+            max={400}
+            value={score.initialTempo}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              if (Number.isFinite(v)) dispatch({ type: 'set-score-meta', initialTempo: v });
+            }}
+            aria-label="Tempo (BPM)"
+          />
+          <span className="unit">BPM</span>
+          <button type="button" onClick={() => nudgeTempo(1)} aria-label="Increase tempo">
+            <Plus className="h-4 w-4" />
+          </button>
         </div>
+        <p className="text-[11px] leading-snug text-muted-foreground">
+          Sets how the score is spaced when you place it on the timeline.
+        </p>
+      </div>
 
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-            Time sig.
-          </span>
-          <div className="st-select">
-            <select
-              value={sigValue}
-              onChange={(e) => {
-                const [n, d] = e.target.value.split('/').map(Number);
-                dispatch({ type: 'set-score-meta', initialTimeSignature: [n, d] });
-              }}
-              aria-label="Time signature"
-            >
-              {TIME_SIGNATURES.map(([n, d]) => (
-                <option key={`${n}/${d}`} value={`${n}/${d}`}>
-                  {n}/{d}
-                </option>
-              ))}
-            </select>
-            <span className="caret">
-              <ChevronDown className="h-3.5 w-3.5" />
-            </span>
-          </div>
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          Time signature
+        </span>
+        <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Time signature">
+          {TIME_SIGNATURES.map(([n, d]) => {
+            const isOn = n === num && d === den;
+            return (
+              <button
+                key={`${n}/${d}`}
+                type="button"
+                onClick={() => dispatch({ type: 'set-score-meta', initialTimeSignature: [n, d] })}
+                className={`st-chip justify-center font-mono tabular-nums${isOn ? ' is-on' : ''}`}
+                role="radio"
+                aria-checked={isOn}
+              >
+                {n}/{d}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -95,6 +95,8 @@ export interface EditableMeasureStripProps {
   onMeasureDrag: (measureIndex: number, videoTimeSeconds: number, mode: DragMode) => void;
   /** A measure-block time drag ended (commit / reinterpolate). */
   onMeasureDragEnd?: () => void;
+  /** Horizontal wheel/trackpad pan over the staff (shared timeline scroll). */
+  onScrollByPx?: (dx: number) => void;
   height?: number;
 }
 
@@ -108,16 +110,28 @@ const HANDLE_BAND_PX = 14;
 const MIN_RENDER_WIDTH = 46;
 /** Pixels per diatonic staff step (half of VexFlow's 10px line spacing). */
 const STEP_PX = 5;
+/** A press must travel this far vertically before a pitch drag starts, so a
+ *  slightly-wobbly click never transposes the note. */
+const DRAG_THRESHOLD_PX = 4;
 
 interface DragState {
   measureIndex: number;
   eventIndex: number;
   originalMidi: number;
   currentMidi: number;
-  /** Container-space Y of the note center at pointerdown (drag anchor). */
-  anchorY: number;
+  /** Container-space Y of the POINTER at pointerdown — deltas are measured from
+   *  the grab point, not the glyph center, so a click can't jump the pitch. */
+  startY: number;
   pointerId: number;
   moved: boolean;
+}
+
+/** A press on empty measure space; becomes an insert only if released in place. */
+interface PendingEmptyInsert {
+  measureIndex: number;
+  pointerId: number;
+  startX: number;
+  startY: number;
 }
 
 /** Horizontal drag of a measure block's grab handle (repositions its downbeat in time). */
@@ -147,12 +161,28 @@ export function EditableMeasureStrip({
   onMeasureDragStart,
   onMeasureDrag,
   onMeasureDragEnd,
+  onScrollByPx,
   height = DEFAULT_HEIGHT,
 }: EditableMeasureStripProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [dragging, setDragging] = useState<DragState | null>(null);
   const [timeDrag, setTimeDrag] = useState<TimeDragState | null>(null);
+  const pendingEmptyRef = useRef<PendingEmptyInsert | null>(null);
+  // Which note the cursor is over (cursor feedback only) — state for the CSS
+  // cursor, mirrored in a ref so pointermove only re-renders on identity change.
+  const [hovered, setHovered] = useState<{ measureIndex: number; eventIndex: number } | null>(null);
+  const hoveredRef = useRef(hovered);
+  const setHover = (next: { measureIndex: number; eventIndex: number } | null) => {
+    const prev = hoveredRef.current;
+    if (
+      (prev === null) !== (next === null) ||
+      (prev && next && (prev.measureIndex !== next.measureIndex || prev.eventIndex !== next.eventIndex))
+    ) {
+      hoveredRef.current = next;
+      setHovered(next);
+    }
+  };
 
   // Captured bboxes per measureIndex, refreshed by MiniStave on each draw.
   // A version counter forces the overlay to re-render after bboxes update.
@@ -172,6 +202,27 @@ export function EditableMeasureStrip({
 
   const videoTimeToX = (t: number) => t * pixelsPerSecond - scrollLeftPx;
   const xToVideoTime = (x: number) => (x + scrollLeftPx) / pixelsPerSecond;
+
+  // Horizontal wheel/trackpad pans the shared timeline, exactly like over the
+  // waveform. Native listener (passive:false) because React's onWheel can't
+  // preventDefault. Plain vertical wheel falls through so the notation column
+  // keeps page-scrolling.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !onScrollByPx) return;
+    const onWheel = (e: WheelEvent) => {
+      // Horizontal intent: trackpad x-deltas, or shift+wheel (Chrome/Safari remap
+      // shift+wheel to deltaX; Firefox keeps deltaY with shiftKey set).
+      const horizontal = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
+      if (!horizontal) return;
+      const dx = e.deltaX !== 0 ? e.deltaX : e.deltaY;
+      if (dx === 0) return;
+      e.preventDefault();
+      onScrollByPx(dx);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [onScrollByPx]);
 
   // ---- Measure-block time drag (the grab handle band) ----------------------
   // Default mode is region (all-after) when `dragAll` is on; Alt/Option inverts.
@@ -231,10 +282,10 @@ export function EditableMeasureStrip({
     setBboxVersion((v) => v + 1);
   }, []);
 
-  // Map a cursor Y (container space) to a target MIDI, given the drag anchor.
+  // Map a cursor Y (container space) to a target MIDI, given the drag's grab point.
   const dragTargetMidi = useCallback(
     (drag: DragState, cursorY: number): number => {
-      const deltaSteps = Math.round((drag.anchorY - cursorY) / STEP_PX);
+      const deltaSteps = Math.round((drag.startY - cursorY) / STEP_PX);
       if (deltaSteps === 0) return drag.originalMidi;
       if (isPercussion && percStrokes && percStrokes.length > 0) {
         const anchorDia = keyToDiatonic(
@@ -257,43 +308,42 @@ export function EditableMeasureStrip({
     [isPercussion, percStrokes, accidental, keyFifths]
   );
 
-  const handlePointerDown = (e: React.PointerEvent, item: MeasureStripItem) => {
-    // Local x within this measure's wrapper.
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = e.clientX - rect.left;
+  // Closest note to a local x, within tolerance (~40px or 1/n of the measure).
+  const hitAt = (item: MeasureStripItem, localX: number, measureWidth: number): MeasureHit | null => {
     const hits = hitsByMeasure.current.get(item.measureIndex);
-    if (!hits || hits.length === 0) {
-      onClickMeasureEmpty(item.measureIndex);
-      return;
-    }
-    // Find closest hit by horizontal distance to its center-x.
-    let bestIdx = -1;
+    if (!hits || hits.length === 0) return null;
+    let best: MeasureHit | null = null;
     let bestDist = Infinity;
-    let bestHit: MeasureHit | null = null;
     for (const h of hits) {
       const cx = h.x + h.w / 2;
-      const d = Math.abs(cx - x);
+      const d = Math.abs(cx - localX);
       if (d < bestDist) {
         bestDist = d;
-        bestIdx = h.eventIndex;
-        bestHit = h;
+        best = h;
       }
     }
-    // Tolerance: a click within ~40px of a note (or 1/n of the measure width)
-    // selects it; outside that, treat as empty-measure click.
-    const tolerance = Math.min(40, rect.width / Math.max(1, hits.length));
-    if (bestIdx >= 0 && bestHit && bestDist <= tolerance) {
-      onSelectEvent({ measureIndex: item.measureIndex, eventIndex: bestIdx });
+    const tolerance = Math.min(40, measureWidth / Math.max(1, hits.length));
+    return best && bestDist <= tolerance ? best : null;
+  };
+
+  const handlePointerDown = (e: React.PointerEvent, item: MeasureStripItem) => {
+    // Stop native selection/drag gestures before they start (the blue-highlight bug).
+    e.preventDefault();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const containerTop = containerRef.current?.getBoundingClientRect().top ?? rect.top;
+    const hit = hitAt(item, e.clientX - rect.left, rect.width);
+
+    if (hit) {
+      onSelectEvent({ measureIndex: item.measureIndex, eventIndex: hit.eventIndex });
       // Seed a drag if this event is a pitched/percussion note (has a midi).
-      const ev = item.events[bestIdx];
+      const ev = item.events[hit.eventIndex];
       if (ev && ev.midi != null) {
-        const anchorY = bestHit.y + bestHit.h / 2;
         setDragging({
           measureIndex: item.measureIndex,
-          eventIndex: bestIdx,
+          eventIndex: hit.eventIndex,
           originalMidi: ev.midi,
           currentMidi: ev.midi,
-          anchorY,
+          startY: e.clientY - containerTop,
           pointerId: e.pointerId,
           moved: false,
         });
@@ -304,22 +354,44 @@ export function EditableMeasureStrip({
         }
       }
     } else {
-      onClickMeasureEmpty(item.measureIndex);
+      // Empty space: insert only if the press RELEASES in place (pointer-up),
+      // so a stray drag across the staff doesn't drop notes.
+      pendingEmptyRef.current = {
+        measureIndex: item.measureIndex,
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+      };
     }
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!dragging || dragging.pointerId !== e.pointerId) return;
-    const container = containerRef.current;
-    if (!container) return;
-    const cursorY = e.clientY - container.getBoundingClientRect().top;
-    const nextMidi = dragTargetMidi(dragging, cursorY);
-    if (nextMidi !== dragging.currentMidi || !dragging.moved) {
-      setDragging({ ...dragging, currentMidi: nextMidi, moved: true });
+  const handlePointerMove = (e: React.PointerEvent, item: MeasureStripItem) => {
+    if (dragging && dragging.pointerId === e.pointerId) {
+      const container = containerRef.current;
+      if (!container) return;
+      const cursorY = e.clientY - container.getBoundingClientRect().top;
+      // Dead zone: ignore sub-threshold wobble so clicks never transpose.
+      if (!dragging.moved && Math.abs(dragging.startY - cursorY) < DRAG_THRESHOLD_PX) return;
+      const nextMidi = dragTargetMidi(dragging, cursorY);
+      if (nextMidi !== dragging.currentMidi || !dragging.moved) {
+        setDragging({ ...dragging, currentMidi: nextMidi, moved: true });
+      }
+      return;
     }
+    // Not dragging: hover feedback for the cursor.
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const hit = hitAt(item, e.clientX - rect.left, rect.width);
+    setHover(hit ? { measureIndex: item.measureIndex, eventIndex: hit.eventIndex } : null);
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    const pending = pendingEmptyRef.current;
+    if (pending && pending.pointerId === e.pointerId) {
+      pendingEmptyRef.current = null;
+      const movedPx = Math.hypot(e.clientX - pending.startX, e.clientY - pending.startY);
+      if (movedPx < DRAG_THRESHOLD_PX) onClickMeasureEmpty(pending.measureIndex);
+      return;
+    }
     if (!dragging || dragging.pointerId !== e.pointerId) return;
     try {
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
@@ -336,7 +408,13 @@ export function EditableMeasureStrip({
   };
 
   const handlePointerCancel = (e: React.PointerEvent) => {
+    if (pendingEmptyRef.current?.pointerId === e.pointerId) pendingEmptyRef.current = null;
     if (dragging?.pointerId !== e.pointerId) return;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
     setDragging(null);
   };
 
@@ -390,7 +468,7 @@ export function EditableMeasureStrip({
   return (
     <div
       ref={containerRef}
-      className="playsense-studio-notation relative w-full overflow-hidden rounded-md border border-border bg-card"
+      className="playsense-studio-notation relative w-full select-none overflow-hidden rounded-md border border-border bg-card"
       style={{ height }}
     >
       {measures.map((item) => {
@@ -416,15 +494,23 @@ export function EditableMeasureStrip({
         }
 
         const isTimeDragging = timeDrag?.measureIndex === item.measureIndex;
+        const cursor = dragging
+          ? 'grabbing'
+          : hovered?.measureIndex === item.measureIndex
+            ? 'ns-resize' // a note is under the cursor — drag ↕ changes its pitch
+            : 'pointer'; // empty space — click to add
         return (
           <div
             key={item.measureIndex}
             className="absolute top-0"
-            style={{ left: startX, width, cursor: dragging ? 'grabbing' : 'pointer' }}
+            style={{ left: startX, width, cursor, touchAction: 'none' }}
             onPointerDown={(e) => handlePointerDown(e, item)}
-            onPointerMove={handlePointerMove}
+            onPointerMove={(e) => handlePointerMove(e, item)}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerCancel}
+            onPointerLeave={() => {
+              if (hovered?.measureIndex === item.measureIndex) setHover(null);
+            }}
           >
             {/* Grab-handle band: drag horizontally to reposition this measure in
                 time. Sits above the staff and stops propagation so note

@@ -51,7 +51,7 @@ export interface WaveformCanvasProps {
   onViewportWidth: (w: number) => void;
 }
 
-const DEFAULT_HEIGHT = 150;
+const DEFAULT_HEIGHT = 240;
 const LABEL_BAND = 22; // top strip reserved for measure-number chips
 const HANDLE_HIT_PX = 9; // pointer must be within this of a handle's x to grab it
 const DRAG_THRESHOLD_PX = 4;

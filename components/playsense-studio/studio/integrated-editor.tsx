@@ -18,7 +18,7 @@
 
 import { ChevronDown, MoreHorizontal, Music, Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState, type Dispatch } from 'react';
-import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
+import { diatonicToMidi, extractTrackEvents, midiToDiatonic } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion } from '@/lib/playsense-studio/perc-strokes';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type {
@@ -37,15 +37,15 @@ import type { DragMode } from '@/components/playsense-studio/sync/waveform-canva
 
 type Articulation = 'staccato' | 'accent' | 'tenuto';
 
-const DURATION_OPTIONS: Array<{ value: number; label: string }> = [
-  { value: 4, label: 'whole' },
-  { value: 2, label: 'half' },
-  { value: 1, label: 'quarter' },
-  { value: 0.5, label: '8th' },
-  { value: 0.25, label: '16th' },
-  { value: 0.125, label: '32nd' },
-  { value: 0.0625, label: '64th' },
-  { value: 0.03125, label: '128th' },
+const DURATION_OPTIONS: Array<{ value: number; label: string; glyph: string; key?: string }> = [
+  { value: 4, label: 'Whole', glyph: '𝅝', key: '1' },
+  { value: 2, label: 'Half', glyph: '𝅗𝅥', key: '2' },
+  { value: 1, label: 'Quarter', glyph: '♩', key: '3' },
+  { value: 0.5, label: '8th', glyph: '♪', key: '4' },
+  { value: 0.25, label: '16th', glyph: '𝅘𝅥𝅯', key: '5' },
+  { value: 0.125, label: '32nd', glyph: '𝅘𝅥𝅰' },
+  { value: 0.0625, label: '64th', glyph: '𝅘𝅥𝅱' },
+  { value: 0.03125, label: '128th', glyph: '𝅘𝅥𝅲' },
 ];
 // The Insert toolbar shows the common durations inline; the rest live behind "more".
 const COMMON_DURATIONS = DURATION_OPTIONS.slice(0, 5); // whole … 16th
@@ -108,6 +108,8 @@ export interface IntegratedEditorProps {
   /** Mirrors the current note selection out to the right-rail inspector. The
    *  editor stays the source of truth; pass a stable callback to keep the memo. */
   onSelectionChange?: (selection: { ref: SelectedEventRef; trackIndex: number } | null) => void;
+  /** Horizontal wheel/trackpad pan over the staff (shared timeline scroll). */
+  onScrollByPx?: (dx: number) => void;
 }
 
 export const IntegratedEditor = memo(function IntegratedEditor({
@@ -122,8 +124,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   onMeasureDrag,
   onMeasureDragEnd,
   onSelectionChange,
+  onScrollByPx,
 }: IntegratedEditorProps) {
-  const [activeTrackIndex, setActiveTrackIndex] = useState(0);
+  // Single-track studio: the score model still holds Track[], but the editor
+  // always authors track 0.
+  const activeTrackIndex = 0;
   const [editorTab, setEditorTab] = useState<EditorTab>('staff');
   const [selected, setSelected] = useState<SelectedEventRef | null>(null);
   const [duration, setDuration] = useState<number>(1);
@@ -143,19 +148,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
   const percussion = activeTrack ? isPercussion(activeTrack.instrument) : false;
   const percStrokes = activeTrack ? getPercStrokes(activeTrack.instrument) : null;
-
-  // Keep active track in range when tracks are deleted.
-  useEffect(() => {
-    if (activeTrackIndex >= score.tracks.length) {
-      setActiveTrackIndex(Math.max(0, score.tracks.length - 1));
-    }
-  }, [score.tracks.length, activeTrackIndex]);
-
-  // Reset selection when switching tracks (an event index from track A isn't
-  // meaningful on track B).
-  useEffect(() => {
-    setSelected(null);
-  }, [activeTrackIndex]);
 
   // Default the percussion stroke to the first stroke whenever the active
   // track's stroke set changes (e.g. switching instrument).
@@ -251,12 +243,14 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const pitchedMidiFrom = (letter: string, acc: number, octave: number) =>
     Math.max(0, Math.min(127, (octave + 1) * 12 + STEP_MAP[letter] + acc));
 
-  // Keyboard: Delete/Backspace → delete selected event, Esc → clear.
+  // Keyboard editing — Esc clear · Del remove · ⏎ add · ↑/↓ pitch (⇧ = octave /
+  // stroke) · ←/→ walk the selection · 1-5 durations · "." dot · "t" triplet ·
+  // "r" rest. Declared below the handlers it calls via function refs would be
+  // noisier; instead this effect lives after the toolbar handlers are defined
+  // (see the second keydown effect further down). This one keeps Esc/Delete.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) return;
-      if (e.target instanceof HTMLTextAreaElement) return;
-      if (e.target instanceof HTMLSelectElement) return;
+      if (isTypingTarget(e.target)) return;
       if (e.key === 'Escape') {
         if (selected) {
           e.preventDefault();
@@ -477,30 +471,118 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const tieActive =
     !!selectedEvent && selectedEvent.kind !== 'rest' && !!selectedEvent.tieToNext;
 
-  const trackCountMismatch = activeTrack && measureTimings.length !== activeTrack.measures.length;
+  // ---- Fast keyboard entry (depends on the toolbar handlers above) ----------
+
+  const stepSelectedPitch = (dir: 1 | -1, byOctave: boolean) => {
+    if (!selected || !selectedEvent || selectedEvent.kind === 'rest') return;
+    const midi =
+      selectedEvent.kind === 'note'
+        ? (selectedEvent as Note).midi
+        : (selectedEvent as Chord).notes[0]?.midi ?? 60;
+    let next: number;
+    if (percussion) {
+      const list = percStrokes ?? [];
+      const idx = list.findIndex((s) => s.midi === midi);
+      next = list[Math.min(Math.max(idx + dir, 0), list.length - 1)]?.midi ?? midi;
+    } else if (byOctave) {
+      next = Math.max(0, Math.min(127, midi + 12 * dir));
+    } else {
+      next = diatonicToMidi(midiToDiatonic(midi) + dir, 0, score.initialKeyFifths);
+    }
+    applyPitchToSelection(next);
+  };
+
+  const walkSelection = (dir: 1 | -1) => {
+    if (!activeTrack) return;
+    const measures = activeTrack.measures;
+    const eventsAt = (mi: number) => measures[mi]?.voices[0]?.events ?? [];
+    if (!selected) {
+      // No selection: enter the strip at its first (or last) event.
+      const range = dir === 1 ? measures.map((_, i) => i) : measures.map((_, i) => measures.length - 1 - i);
+      for (const mi of range) {
+        const events = eventsAt(mi);
+        if (events.length) {
+          setSelected({ measureIndex: mi, eventIndex: dir === 1 ? 0 : events.length - 1 });
+          return;
+        }
+      }
+      return;
+    }
+    let mi = selected.measureIndex;
+    let ei = selected.eventIndex + dir;
+    while (mi >= 0 && mi < measures.length) {
+      const events = eventsAt(mi);
+      if (ei >= 0 && ei < events.length) {
+        setSelected({ measureIndex: mi, eventIndex: ei });
+        return;
+      }
+      mi += dir;
+      ei = dir === 1 ? 0 : eventsAt(mi).length - 1;
+    }
+  };
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleAddNote();
+        return;
+      }
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        if (!selected) return;
+        e.preventDefault();
+        stepSelectedPitch(e.key === 'ArrowUp' ? 1 : -1, e.shiftKey);
+        return;
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        walkSelection(e.key === 'ArrowRight' ? 1 : -1);
+        return;
+      }
+      const byKey = COMMON_DURATIONS.find((d) => d.key === e.key);
+      if (byKey) {
+        e.preventDefault();
+        onDurationClick(byKey.value);
+        return;
+      }
+      if (e.key === '.') {
+        e.preventDefault();
+        onToggleDotted();
+      } else if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        onToggleTriplet();
+      } else if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        onToggleRest();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  });
 
   return (
     <div className="space-y-3">
-      {/* Compact track bar — tabs + management (add/delete/rename/instrument) */}
+      {/* Editor bar — view tabs · instrument/name · add measure (single track) */}
       <div className="flex flex-wrap items-center gap-2.5">
-        <span className="st-sec-label">Track</span>
-        {score.tracks.length > 1 && (
-          <div className="st-seg">
-            {score.tracks.map((t, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveTrackIndex(i)}
-                className={i === activeTrackIndex ? 'is-on' : ''}
-              >
-                {t.displayName}
-              </button>
-            ))}
-          </div>
-        )}
-        <button onClick={() => dispatch({ type: 'add-track' })} className="st-chip" title="Add a track">
-          <Plus className="h-3.5 w-3.5" />
-          Track
-        </button>
+        <div className="st-seg">
+          {(
+            [
+              { id: 'staff' as const, label: 'Staff' },
+              { id: 'piano-roll' as const, label: 'Piano-roll' },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setEditorTab(t.id)}
+              className={editorTab === t.id ? 'is-on' : ''}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
 
         <span className="st-divline" />
 
@@ -539,44 +621,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             </div>
           </>
         )}
-        {score.tracks.length > 1 && (
-          <button
-            onClick={() => dispatch({ type: 'delete-track', trackIndex: activeTrackIndex })}
-            className="st-iconbtn hover:!border-destructive/40 hover:!bg-destructive/10 hover:!text-destructive"
-            title="Delete this track"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        )}
-        {trackCountMismatch && (
-          <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-600">
-            Track measure count differs from track 1 — alignment is approximate.
-          </span>
-        )}
-      </div>
 
-      {/* View-mode tabs + add measure */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="st-seg">
-          {(
-            [
-              { id: 'staff' as const, label: 'Staff' },
-              { id: 'piano-roll' as const, label: 'Piano-roll' },
-            ] as const
-          ).map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setEditorTab(t.id)}
-              className={editorTab === t.id ? 'is-on' : ''}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
         <button
           onClick={() => dispatch({ type: 'add-measure', trackIndex: activeTrackIndex })}
-          className="st-chip"
-          title="Add a measure to the end of this track"
+          className="st-chip ml-auto"
+          title="Add a measure to the end of the score"
         >
           <Plus className="h-3.5 w-3.5" />
           Add measure
@@ -601,6 +650,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           dragAll={dragAll}
           onMeasureDrag={handleMeasureDrag}
           onMeasureDragEnd={onMeasureDragEnd}
+          onScrollByPx={onScrollByPx}
         />
       )}
       {editorTab === 'piano-roll' && (
@@ -619,25 +669,26 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         </div>
         <span className="st-divline" style={{ height: 38 }} />
 
-        {/* Duration (common inline · rare + dots/articulations behind "more") */}
+        {/* Duration (glyphs inline · rare durations + articulations behind "more") */}
         <div className="st-nb-mod">
           <span className="st-nb-lab">Duration</span>
           <div className="st-nb-grp">
-            <div className="st-seg">
+            <div className="st-glyphseg">
               {COMMON_DURATIONS.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => onDurationClick(opt.value)}
-                  className={Math.abs(duration - opt.value) < 1e-7 ? 'is-on' : ''}
+                  className={`note-glyph${Math.abs(duration - opt.value) < 1e-7 ? ' is-on' : ''}`}
+                  title={opt.key ? `${opt.label} — ${opt.key}` : opt.label}
                 >
-                  {opt.label}
+                  {opt.glyph}
                 </button>
               ))}
             </div>
             <button
               className={`st-iconbtn${moreOpen ? ' is-on' : ''}`}
               onClick={() => setMoreOpen((m) => !m)}
-              title="More durations, dots & articulations"
+              title="More durations & articulations"
             >
               <MoreHorizontal className="h-4 w-4" />
             </button>
@@ -645,32 +696,19 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               <>
                 <div className="st-pop-scrim" onClick={() => setMoreOpen(false)} />
                 <div className="st-nb-pop">
-                  <div className="st-seg">
+                  <div className="st-glyphseg">
                     {RARE_DURATIONS.map((opt) => (
                       <button
                         key={opt.value}
                         onClick={() => onDurationClick(opt.value)}
-                        className={Math.abs(duration - opt.value) < 1e-7 ? 'is-on' : ''}
+                        className={`note-glyph${Math.abs(duration - opt.value) < 1e-7 ? ' is-on' : ''}`}
+                        title={opt.label}
                       >
-                        {opt.label}
+                        {opt.glyph}
                       </button>
                     ))}
                   </div>
                   <div className="st-glyphseg">
-                    <button className={dotted ? 'is-on' : ''} onClick={onToggleDotted} title="Dotted (1.5×)">
-                      •
-                    </button>
-                    <button className={triplet ? 'is-on' : ''} onClick={onToggleTriplet} title="Triplet (3:2)">
-                      ³
-                    </button>
-                    <button
-                      className={tieActive ? 'is-on' : ''}
-                      onClick={onToggleTie}
-                      disabled={!selected}
-                      title="Tie to next"
-                    >
-                      ⌣
-                    </button>
                     {ARTICULATION_OPTIONS.map((a) => (
                       <button
                         key={a.value}
@@ -685,6 +723,27 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 </div>
               </>
             )}
+          </div>
+        </div>
+
+        {/* Modifiers — dot/triplet/tie inline; core to Latin rhythm, so one click */}
+        <div className="st-nb-mod">
+          <span className="st-nb-lab">Modifiers</span>
+          <div className="st-glyphseg">
+            <button className={dotted ? 'is-on' : ''} onClick={onToggleDotted} title="Dotted (1.5×) — .">
+              •
+            </button>
+            <button className={triplet ? 'is-on' : ''} onClick={onToggleTriplet} title="Triplet (3:2) — t">
+              ³
+            </button>
+            <button
+              className={tieActive ? 'is-on' : ''}
+              onClick={onToggleTie}
+              disabled={!selected}
+              title="Tie to next"
+            >
+              ⌣
+            </button>
           </div>
         </div>
 
@@ -715,38 +774,35 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               ))}
             </div>
           ) : (
-            <div className="st-nb-grp">
-              <div className="st-select" style={{ width: 64 }}>
-                <select
-                  value={pitchLetter}
-                  onChange={(e) => onPitchPartChange({ letter: e.target.value })}
-                  aria-label="Note letter"
-                >
-                  {PITCH_LETTERS.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-                <span className="caret">
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </span>
+            <div className="st-nb-grp" title={`midi ${currentMidi}`}>
+              <div className="st-seg pitch" role="radiogroup" aria-label="Note letter">
+                {PITCH_LETTERS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => onPitchPartChange({ letter: p })}
+                    className={pitchLetter === p ? 'is-on' : ''}
+                    role="radio"
+                    aria-checked={pitchLetter === p}
+                  >
+                    {p}
+                  </button>
+                ))}
               </div>
-              <div className="st-select" style={{ width: 60 }}>
-                <select
-                  value={pitchAcc}
-                  onChange={(e) => onPitchPartChange({ acc: Number(e.target.value) })}
-                  aria-label="Accidental"
-                >
-                  {ACCIDENTAL_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-                <span className="caret">
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </span>
+              <div className="st-glyphseg" role="radiogroup" aria-label="Accidental">
+                {ACCIDENTAL_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => onPitchPartChange({ acc: o.value })}
+                    className={pitchAcc === o.value ? 'is-on' : ''}
+                    role="radio"
+                    aria-checked={pitchAcc === o.value}
+                    title={o.value === 0 ? 'Natural' : o.value === 1 ? 'Sharp' : 'Flat'}
+                  >
+                    {o.label}
+                  </button>
+                ))}
               </div>
               <div className="st-stepper">
                 <button
@@ -772,7 +828,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                   +
                 </button>
               </div>
-              <span className="font-mono text-[11px] tabular-nums text-muted-foreground">midi {currentMidi}</span>
             </div>
           )}
         </div>
@@ -816,13 +871,23 @@ export const IntegratedEditor = memo(function IntegratedEditor({
 
       {/* Help */}
       <p className="st-help">
-        Click a note to select it · <span className="k">drag ↕</span> changes pitch · click empty
-        space or <span className="k">Add note</span> to insert · <span className="k">Del</span>{' '}
-        removes.
+        <span className="k">drag ↕</span> pitch · <span className="k">↑/↓</span> step (
+        <span className="k">⇧</span> octave) · <span className="k">←/→</span> walk notes ·{' '}
+        <span className="k">⏎</span> add · <span className="k">1–5</span> duration ·{' '}
+        <span className="k">Del</span> remove.
       </p>
     </div>
   );
 });
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+  );
+}
 
 function midiToParts(midi: number): { letter: string; accidental: number; octave: number } {
   const pc = ((midi % 12) + 12) % 12;

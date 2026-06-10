@@ -22,6 +22,7 @@ import {
 } from '@/app/actions/playsense-studio';
 import { ScoreSectionEditor } from '@/components/playsense-studio/studio/score-section-editor';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
+import { sectionColor, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { cn } from '@/lib/utils';
 
 export interface VideoSectionsWorkspaceProps {
@@ -58,6 +59,7 @@ export function VideoSectionsWorkspace({
   const [metaEl, setMetaEl] = useState<HTMLElement | null>(null);
   const [rightRailEl, setRightRailEl] = useState<HTMLElement | null>(null);
   const [transportEl, setTransportEl] = useState<HTMLElement | null>(null);
+  const [monitorEl, setMonitorEl] = useState<HTMLElement | null>(null);
   const [drawerEl, setDrawerEl] = useState<HTMLElement | null>(null);
   const [highwayOpen, setHighwayOpen] = useState(false);
   // "New section" popover (Build measures / Import score at playhead).
@@ -104,6 +106,15 @@ export function VideoSectionsWorkspace({
 
   const selected = sections.find((s) => s.sectionId === selectedId) ?? null;
 
+  // Timeline-lane view of the sections (the active one renders live from its
+  // markers inside SyncPanel; siblings use their published video ranges).
+  const laneSections: LaneSection[] = sections.map((s) => ({
+    sectionId: s.sectionId,
+    label: s.label || s.scoreDocument.title,
+    startSeconds: s.videoStartSeconds,
+    endSeconds: s.videoEndSeconds,
+  }));
+
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background text-foreground md:h-[100dvh]">
       {/* ---- App bar ---- */}
@@ -144,6 +155,9 @@ export function VideoSectionsWorkspace({
       <div className="flex min-h-0 flex-1">
         <aside className="st-rail st-rail-left hidden w-72 shrink-0 flex-col lg:flex">
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+            {/* Reference video monitor (SyncPanel portals it into this slot). */}
+            <div ref={setMonitorEl} className="shrink-0 empty:hidden" />
+
             {/* Scored sections */}
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
@@ -206,8 +220,8 @@ export function VideoSectionsWorkspace({
                               <FileUp className="h-[17px] w-[17px]" />
                             </span>
                             <span className="tx">
-                              <span className="t">Import score at playhead</span>
-                              <span className="d">Drop a MusicXML / MIDI file</span>
+                              <span className="t">Import a score</span>
+                              <span className="d">Drop a MusicXML / MIDI file, then place it on the timeline</span>
                             </span>
                           </button>
                         }
@@ -248,13 +262,10 @@ export function VideoSectionsWorkspace({
                             className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                           >
                             <span
-                              className={cn(
-                                'font-mono text-xs',
-                                isSel ? 'text-primary' : 'text-muted-foreground'
-                              )}
-                            >
-                              {i + 1}
-                            </span>
+                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{ background: sectionColor(i) }}
+                              aria-hidden
+                            />
                             <span className="min-w-0 flex-1">
                               <span
                                 className={cn(
@@ -265,7 +276,14 @@ export function VideoSectionsWorkspace({
                                 {name}
                               </span>
                               <span className="block truncate font-mono text-[10px] text-muted-foreground">
-                                {instrument} · {fmt(s.videoStartSeconds)}–{fmt(s.videoEndSeconds)}
+                                {instrument} ·{' '}
+                                {s.videoStartSeconds == null ? (
+                                  <span className="rounded bg-muted px-1 py-px text-[9px] font-semibold uppercase tracking-wide">
+                                    Not placed
+                                  </span>
+                                ) : (
+                                  <>{fmt(s.videoStartSeconds)}–{fmt(s.videoEndSeconds)}</>
+                                )}
                               </span>
                             </span>
                           </button>
@@ -308,10 +326,13 @@ export function VideoSectionsWorkspace({
               videoUrl={videoUrl}
               videoDurationSeconds={videoDurationSeconds}
               onChanged={() => void refetch(selected.sectionId)}
+              sections={laneSections}
+              onSelectSection={setSelectedId}
               appBarEl={appBarEl}
               metaEl={metaEl}
               rightRailEl={rightRailEl}
               transportEl={transportEl}
+              monitorEl={monitorEl}
               drawerEl={drawerEl}
               highwayOpen={highwayOpen}
             />
@@ -319,7 +340,7 @@ export function VideoSectionsWorkspace({
             <div className="flex flex-1 items-center justify-center">
               <p className="max-w-sm rounded-lg border border-dashed border-border px-6 py-10 text-center text-sm text-muted-foreground">
                 No scored section selected. Add a blank section or import a score from the left, then
-                scrub the video and use “Import at playhead” to place it where the instructor plays.
+                scrub the video and use “Place score at playhead” to drop it where the instructor plays.
               </p>
             </div>
           )}
@@ -328,7 +349,7 @@ export function VideoSectionsWorkspace({
         {/* Right rail: inspector (SyncPanel portals into this node). */}
         <aside
           ref={setRightRailEl}
-          className="st-rail st-rail-right hidden w-72 shrink-0 flex-col gap-3 overflow-y-auto p-4 md:flex"
+          className="st-rail st-rail-right hidden w-64 shrink-0 flex-col gap-3 overflow-y-auto p-4 md:flex"
         />
       </div>
 

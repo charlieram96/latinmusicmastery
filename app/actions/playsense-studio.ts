@@ -561,6 +561,34 @@ export async function publishTimeMap(
     }
   }
 
+  // Sections may not overlap on the video timeline. Checked BEFORE any insert so
+  // a rejected publish leaves no orphan time-map row.
+  if (input.sectionId) {
+    const start = sorted[0].videoTimeSeconds;
+    const end = sorted[sorted.length - 1].videoTimeSeconds;
+    const { data: siblings, error: sibErr } = await supabase
+      .from('class_item_score_sections')
+      .select('id, label, video_start_seconds, video_end_seconds')
+      .eq('class_item_id', input.classItemId)
+      .neq('id', input.sectionId)
+      .not('video_start_seconds', 'is', null);
+    if (sibErr) return { error: sibErr.message };
+    const hit = siblings?.find(
+      (s) =>
+        s.video_end_seconds != null &&
+        start < s.video_end_seconds &&
+        end > s.video_start_seconds!
+    );
+    if (hit) {
+      const fmtSec = (v: number) => `${Math.floor(v / 60)}:${(v % 60).toFixed(1).padStart(4, '0')}`;
+      return {
+        error: `This sync (${fmtSec(start)}–${fmtSec(end)}) overlaps the section "${
+          hit.label ?? 'untitled'
+        }" (${fmtSec(hit.video_start_seconds!)}–${fmtSec(hit.video_end_seconds!)}). Move it off that section before publishing.`,
+      };
+    }
+  }
+
   // 1. Insert the time map header.
   const { data: tmRow, error: tmErr } = await supabase
     .from('score_time_maps')

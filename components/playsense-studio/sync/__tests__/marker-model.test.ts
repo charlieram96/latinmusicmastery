@@ -10,8 +10,12 @@ import {
   reinterpolateUnedited,
   reconcileMarkers,
   enforceMonotonic,
+  markerSpan,
+  rangesOverlap,
+  freeCorridor,
   EPS,
   type MarkerState,
+  type TimeRange,
 } from '../marker-model';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { GUITAR_LICK_FIXTURE } from '@/lib/playsense-studio/score-fixtures';
@@ -395,5 +399,45 @@ describe('reconcileMarkers', () => {
     const next = reconcileMarkers(empty, GUITAR_TRACK, GUITAR);
     expect(next.measures).toHaveLength(2);
     expect(next.measures[0].beats[0].videoTimeSeconds).toBeCloseTo(0, 6);
+  });
+});
+
+describe('section overlap math', () => {
+  const range = (startSeconds: number, endSeconds: number): TimeRange => ({ startSeconds, endSeconds });
+
+  it('markerSpan covers first downbeat through tail', () => {
+    const state = seededGuitar(); // 2 bars of 4/4 @120 -> 0..4s
+    const span = markerSpan(state);
+    expect(span.startSeconds).toBeCloseTo(0, 6);
+    expect(span.endSeconds).toBeCloseTo(4, 6);
+  });
+
+  it('markerSpan includes an edited (shifted) first downbeat', () => {
+    const state = setMarkerTime(seededGuitar(), { measureNumber: 1, beatInMeasure: 1 }, -2);
+    const span = markerSpan(state);
+    expect(span.startSeconds).toBeCloseTo(-2, 6);
+  });
+
+  it('rangesOverlap detects intersection and ignores mere touching', () => {
+    expect(rangesOverlap(range(0, 4), range(3, 6))).toBe(true);
+    expect(rangesOverlap(range(0, 4), range(4, 6))).toBe(false);
+    expect(rangesOverlap(range(4, 6), range(0, 4))).toBe(false);
+    expect(rangesOverlap(range(1, 2), range(0, 5))).toBe(true);
+  });
+
+  it('freeCorridor is unbounded with no siblings', () => {
+    expect(freeCorridor(range(2, 6), [])).toEqual({ lo: -Infinity, hi: Infinity });
+  });
+
+  it('freeCorridor walls off the nearest sibling on each side', () => {
+    const corridor = freeCorridor(range(10, 14), [range(0, 4), range(5, 8), range(20, 25), range(16, 18)]);
+    expect(corridor.lo).toBe(8);
+    expect(corridor.hi).toBe(16);
+  });
+
+  it('freeCorridor ignores a sibling that already intersects the span (legacy data)', () => {
+    const corridor = freeCorridor(range(10, 14), [range(12, 20), range(0, 4)]);
+    expect(corridor.lo).toBe(4);
+    expect(corridor.hi).toBe(Infinity);
   });
 });

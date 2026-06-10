@@ -20,6 +20,7 @@ import { saveScoreDocument, replaceSectionScore } from '@/app/actions/playsense-
 import { useEditor } from '@/lib/playsense-studio/editor-state';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
+import type { LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta-editor';
 import { HighwayPreview } from '@/components/playsense-studio/studio/highway-preview';
@@ -35,11 +36,15 @@ export interface ScoreSectionEditorProps {
   videoDurationSeconds: number | null;
   /** Re-fetch sections (ranges / score swapped). Called after publish or replace. */
   onChanged: () => void;
+  /** All of this class item's sections — drives the timeline lane + overlap guard. */
+  sections: LaneSection[];
+  onSelectSection: (sectionId: string) => void;
   // App-shell slots provided by VideoSectionsWorkspace (portal targets).
   appBarEl: HTMLElement | null;
   metaEl: HTMLElement | null;
   rightRailEl: HTMLElement | null;
   transportEl: HTMLElement | null;
+  monitorEl: HTMLElement | null;
   drawerEl: HTMLElement | null;
   highwayOpen: boolean;
 }
@@ -55,10 +60,13 @@ export function ScoreSectionEditor({
   videoUrl,
   videoDurationSeconds,
   onChanged,
+  sections,
+  onSelectSection,
   appBarEl,
   metaEl,
   rightRailEl,
   transportEl,
+  monitorEl,
   drawerEl,
   highwayOpen,
 }: ScoreSectionEditorProps) {
@@ -138,6 +146,8 @@ export function ScoreSectionEditor({
         onPublished={onChanged}
         rightRailEl={rightRailEl}
         transportEl={transportEl}
+        monitorEl={monitorEl}
+        sectionsContext={{ sections, activeSectionId: sectionId, onSelectSection }}
       />
 
       {/* App-bar: score action cluster. */}
