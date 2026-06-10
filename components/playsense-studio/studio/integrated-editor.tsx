@@ -37,16 +37,60 @@ import type { DragMode } from '@/components/playsense-studio/sync/waveform-canva
 
 type Articulation = 'staccato' | 'accent' | 'tenuto';
 
-const DURATION_OPTIONS: Array<{ value: number; label: string; glyph: string; key?: string }> = [
-  { value: 4, label: 'Whole', glyph: '𝅝', key: '1' },
-  { value: 2, label: 'Half', glyph: '𝅗𝅥', key: '2' },
-  { value: 1, label: 'Quarter', glyph: '♩', key: '3' },
-  { value: 0.5, label: '8th', glyph: '♪', key: '4' },
-  { value: 0.25, label: '16th', glyph: '𝅘𝅥𝅯', key: '5' },
-  { value: 0.125, label: '32nd', glyph: '𝅘𝅥𝅰' },
-  { value: 0.0625, label: '64th', glyph: '𝅘𝅥𝅱' },
-  { value: 0.03125, label: '128th', glyph: '𝅘𝅥𝅲' },
+const DURATION_OPTIONS: Array<{ value: number; label: string; key?: string }> = [
+  { value: 4, label: 'Whole', key: '1' },
+  { value: 2, label: 'Half', key: '2' },
+  { value: 1, label: 'Quarter', key: '3' },
+  { value: 0.5, label: '8th', key: '4' },
+  { value: 0.25, label: '16th', key: '5' },
+  { value: 0.125, label: '32nd' },
+  { value: 0.0625, label: '64th' },
+  { value: 0.03125, label: '128th' },
 ];
+
+/** Note-duration icon drawn inline — Unicode music glyphs (𝅝, 𝅗𝅥, 𝅘𝅥𝅯…) are tofu in
+ *  most system fonts, so the toolbar renders its own SVG noteheads/stems/flags. */
+function NoteIcon({ durationQN }: { durationQN: number }) {
+  const hollow = durationQN >= 2; // whole + half
+  const stem = durationQN < 4;
+  // 0.5 → 1 flag, 0.25 → 2 … 0.03125 → 5.
+  const flags = durationQN <= 0.5 ? Math.round(Math.log2(0.5 / durationQN)) + 1 : 0;
+  return (
+    <svg viewBox="0 0 16 22" width="13" height="19" aria-hidden focusable="false">
+      <ellipse
+        cx="6"
+        cy="17.6"
+        rx="4.3"
+        ry="3"
+        transform="rotate(-18 6 17.6)"
+        fill={hollow ? 'none' : 'currentColor'}
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      {stem && <rect x="9.5" y="2.5" width="1.4" height="15" rx="0.7" fill="currentColor" />}
+      {Array.from({ length: flags }, (_, i) => (
+        <path
+          key={i}
+          d={`M10.9 ${2.8 + i * 2.6} c3.2 1.5 3.7 3.2 2.5 5.6`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** Simple half-rest-on-a-line icon (the 𝄽 glyph is also tofu-prone). */
+function RestIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden focusable="false">
+      <line x1="2" y1="11.5" x2="14" y2="11.5" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="5" y="7.2" width="6" height="4.3" rx="0.6" fill="currentColor" />
+    </svg>
+  );
+}
 // The Insert toolbar shows the common durations inline; the rest live behind "more".
 const COMMON_DURATIONS = DURATION_OPTIONS.slice(0, 5); // whole … 16th
 const RARE_DURATIONS = DURATION_OPTIONS.slice(5); // 32nd … 128th
@@ -659,97 +703,90 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         </div>
       )}
 
-      {/* Insert toolbar — the note-entry "add note options" bar */}
+      {/* Insert toolbar — note entry, one compact row */}
       <div className="st-notebar">
         <div className="st-nb-lead">
           <span className="st-nb-glyph">
             <Music className="h-4 w-4" />
           </span>
-          <span className="st-nb-title">Insert</span>
         </div>
-        <span className="st-divline" style={{ height: 38 }} />
 
-        {/* Duration (glyphs inline · rare durations + articulations behind "more") */}
-        <div className="st-nb-mod">
-          <span className="st-nb-lab">Duration</span>
-          <div className="st-nb-grp">
-            <div className="st-glyphseg">
-              {COMMON_DURATIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => onDurationClick(opt.value)}
-                  className={`note-glyph${Math.abs(duration - opt.value) < 1e-7 ? ' is-on' : ''}`}
-                  title={opt.key ? `${opt.label} — ${opt.key}` : opt.label}
-                >
-                  {opt.glyph}
-                </button>
-              ))}
-            </div>
-            <button
-              className={`st-iconbtn${moreOpen ? ' is-on' : ''}`}
-              onClick={() => setMoreOpen((m) => !m)}
-              title="More durations & articulations"
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </button>
-            {moreOpen && (
-              <>
-                <div className="st-pop-scrim" onClick={() => setMoreOpen(false)} />
-                <div className="st-nb-pop">
-                  <div className="st-glyphseg">
-                    {RARE_DURATIONS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => onDurationClick(opt.value)}
-                        className={`note-glyph${Math.abs(duration - opt.value) < 1e-7 ? ' is-on' : ''}`}
-                        title={opt.label}
-                      >
-                        {opt.glyph}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="st-glyphseg">
-                    {ARTICULATION_OPTIONS.map((a) => (
-                      <button
-                        key={a.value}
-                        className={articulation === a.value ? 'is-on' : ''}
-                        onClick={() => onArticulationClick(a.value)}
-                        title={a.title}
-                      >
-                        {a.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
+        {/* Duration (icons inline · rare durations + articulations behind "more") */}
+        <div className="st-nb-grp" aria-label="Duration">
+          <div className="st-glyphseg">
+            {COMMON_DURATIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => onDurationClick(opt.value)}
+                className={`note-glyph${Math.abs(duration - opt.value) < 1e-7 ? ' is-on' : ''}`}
+                title={opt.key ? `${opt.label} note — ${opt.key}` : `${opt.label} note`}
+              >
+                <NoteIcon durationQN={opt.value} />
+              </button>
+            ))}
           </div>
+          <button
+            className={`st-iconbtn${moreOpen ? ' is-on' : ''}`}
+            onClick={() => setMoreOpen((m) => !m)}
+            title="More durations & articulations"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+          {moreOpen && (
+            <>
+              <div className="st-pop-scrim" onClick={() => setMoreOpen(false)} />
+              <div className="st-nb-pop">
+                <div className="st-glyphseg">
+                  {RARE_DURATIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => onDurationClick(opt.value)}
+                      className={`note-glyph${Math.abs(duration - opt.value) < 1e-7 ? ' is-on' : ''}`}
+                      title={`${opt.label} note`}
+                    >
+                      <NoteIcon durationQN={opt.value} />
+                    </button>
+                  ))}
+                </div>
+                <div className="st-glyphseg">
+                  {ARTICULATION_OPTIONS.map((a) => (
+                    <button
+                      key={a.value}
+                      className={articulation === a.value ? 'is-on' : ''}
+                      onClick={() => onArticulationClick(a.value)}
+                      title={a.title}
+                    >
+                      {a.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Modifiers — dot/triplet/tie inline; core to Latin rhythm, so one click */}
-        <div className="st-nb-mod">
-          <span className="st-nb-lab">Modifiers</span>
-          <div className="st-glyphseg">
-            <button className={dotted ? 'is-on' : ''} onClick={onToggleDotted} title="Dotted (1.5×) — .">
-              •
-            </button>
-            <button className={triplet ? 'is-on' : ''} onClick={onToggleTriplet} title="Triplet (3:2) — t">
-              ³
-            </button>
-            <button
-              className={tieActive ? 'is-on' : ''}
-              onClick={onToggleTie}
-              disabled={!selected}
-              title="Tie to next"
-            >
-              ⌣
-            </button>
-          </div>
+        <div className="st-glyphseg" aria-label="Modifiers">
+          <button className={dotted ? 'is-on' : ''} onClick={onToggleDotted} title="Dotted (1.5×) — .">
+            •
+          </button>
+          <button className={triplet ? 'is-on' : ''} onClick={onToggleTriplet} title="Triplet (3:2) — t">
+            ³
+          </button>
+          <button
+            className={tieActive ? 'is-on' : ''}
+            onClick={onToggleTie}
+            disabled={!selected}
+            title="Tie to next"
+          >
+            ⌣
+          </button>
         </div>
 
+        <span className="st-divline" />
+
         {/* Stroke (percussion) / pitch (pitched) */}
-        <div className="st-nb-mod">
-          <span className="st-nb-lab">{percussion ? 'Stroke' : 'Pitch'}</span>
+        <div aria-label={percussion ? 'Stroke' : 'Pitch'}>
           {percussion ? (
             <div className="st-seg" style={{ gap: 3 }}>
               {(percStrokes ?? []).map((s) => (
@@ -837,9 +874,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           <button
             className={`st-nb-rest${insertRest ? ' is-on' : ''}`}
             onClick={onToggleRest}
-            title="Insert a rest instead of a note"
+            title="Insert a rest instead of a note — r"
           >
-            <span className="glyph">𝄽</span> Rest
+            <RestIcon /> Rest
           </button>
           <button
             className="st-btn-primary st-nb-add"

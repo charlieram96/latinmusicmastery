@@ -57,7 +57,7 @@ export function VideoSectionsWorkspace({
   // App-shell portal slots (filled by the active ScoreSectionEditor).
   const [appBarEl, setAppBarEl] = useState<HTMLElement | null>(null);
   const [metaEl, setMetaEl] = useState<HTMLElement | null>(null);
-  const [rightRailEl, setRightRailEl] = useState<HTMLElement | null>(null);
+  const [inspectorEl, setInspectorEl] = useState<HTMLElement | null>(null);
   const [transportEl, setTransportEl] = useState<HTMLElement | null>(null);
   const [monitorEl, setMonitorEl] = useState<HTMLElement | null>(null);
   const [drawerEl, setDrawerEl] = useState<HTMLElement | null>(null);
@@ -310,6 +310,14 @@ export function VideoSectionsWorkspace({
                 <div ref={setMetaEl} className="mt-3" />
               </div>
             )}
+
+            {/* Inspector: selected note + sync status (SyncPanel portals here). */}
+            {selected && (
+              <div
+                ref={setInspectorEl}
+                className="flex flex-col gap-3 border-t border-border pt-4 empty:hidden"
+              />
+            )}
           </div>
         </aside>
 
@@ -330,7 +338,7 @@ export function VideoSectionsWorkspace({
               onSelectSection={setSelectedId}
               appBarEl={appBarEl}
               metaEl={metaEl}
-              rightRailEl={rightRailEl}
+              inspectorEl={inspectorEl}
               transportEl={transportEl}
               monitorEl={monitorEl}
               drawerEl={drawerEl}
@@ -346,11 +354,6 @@ export function VideoSectionsWorkspace({
           )}
         </main>
 
-        {/* Right rail: inspector (SyncPanel portals into this node). */}
-        <aside
-          ref={setRightRailEl}
-          className="st-rail st-rail-right hidden w-64 shrink-0 flex-col gap-3 overflow-y-auto p-4 md:flex"
-        />
       </div>
 
       {/* ---- Bottom: transport dock + highway drawer ---- */}
