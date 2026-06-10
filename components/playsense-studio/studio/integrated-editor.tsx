@@ -16,7 +16,7 @@
 // here — note edits don't change `structuralSignature`, so the markers above stay
 // put while you edit pitches/durations.
 
-import { Music, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, MoreHorizontal, Music, Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState, type Dispatch } from 'react';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion } from '@/lib/playsense-studio/perc-strokes';
@@ -47,6 +47,9 @@ const DURATION_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 0.0625, label: '64th' },
   { value: 0.03125, label: '128th' },
 ];
+// The Insert toolbar shows the common durations inline; the rest live behind "more".
+const COMMON_DURATIONS = DURATION_OPTIONS.slice(0, 5); // whole … 16th
+const RARE_DURATIONS = DURATION_OPTIONS.slice(5); // 32nd … 128th
 
 const INSTRUMENT_OPTIONS: Array<{ value: Instrument; label: string }> = [
   { value: 'staff', label: 'Staff' },
@@ -134,6 +137,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [insertRest, setInsertRest] = useState(false);
   // Percussion: the currently chosen stroke's MIDI.
   const [percMidi, setPercMidi] = useState<number | null>(null);
+  // "More durations & articulations" popover in the Insert toolbar.
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
   const percussion = activeTrack ? isPercussion(activeTrack.instrument) : false;
@@ -477,31 +482,27 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   return (
     <div className="space-y-3">
       {/* Compact track bar — tabs + management (add/delete/rename/instrument) */}
-      <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-2">
-        <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Track</span>
-        {score.tracks.map((t, i) => (
-          <button
-            key={i}
-            onClick={() => setActiveTrackIndex(i)}
-            className={`rounded-md px-2.5 py-1 text-xs transition ${
-              i === activeTrackIndex
-                ? 'bg-secondary text-secondary-foreground'
-                : 'hover:bg-muted'
-            }`}
-          >
-            {t.displayName}
-          </button>
-        ))}
-        <button
-          onClick={() => dispatch({ type: 'add-track' })}
-          className="inline-flex items-center gap-1 rounded border border-dashed border-border px-2 py-1 text-xs transition hover:bg-muted"
-          title="Add a track"
-        >
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="st-sec-label">Track</span>
+        {score.tracks.length > 1 && (
+          <div className="st-seg">
+            {score.tracks.map((t, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTrackIndex(i)}
+                className={i === activeTrackIndex ? 'is-on' : ''}
+              >
+                {t.displayName}
+              </button>
+            ))}
+          </div>
+        )}
+        <button onClick={() => dispatch({ type: 'add-track' })} className="st-chip" title="Add a track">
           <Plus className="h-3.5 w-3.5" />
           Track
         </button>
 
-        <span className="mx-1 h-5 w-px bg-border" />
+        <span className="st-divline" />
 
         {activeTrack && (
           <>
@@ -511,48 +512,52 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               onChange={(e) =>
                 dispatch({ type: 'set-track-name', trackIndex: activeTrackIndex, name: e.target.value })
               }
-              className="w-32 rounded border border-border bg-background px-2 py-1 text-xs"
+              className="st-input w-36"
               aria-label="Track name"
             />
-            <select
-              value={activeTrack.instrument}
-              onChange={(e) =>
-                dispatch({
-                  type: 'set-track-instrument',
-                  trackIndex: activeTrackIndex,
-                  instrument: e.target.value as Instrument,
-                })
-              }
-              className="rounded border border-border bg-background px-2 py-1 text-xs"
-              aria-label="Instrument"
-            >
-              {INSTRUMENT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            <div className="st-select" style={{ width: 150 }}>
+              <select
+                value={activeTrack.instrument}
+                onChange={(e) =>
+                  dispatch({
+                    type: 'set-track-instrument',
+                    trackIndex: activeTrackIndex,
+                    instrument: e.target.value as Instrument,
+                  })
+                }
+                aria-label="Instrument"
+              >
+                {INSTRUMENT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <span className="caret">
+                <ChevronDown className="h-3.5 w-3.5" />
+              </span>
+            </div>
           </>
         )}
         {score.tracks.length > 1 && (
           <button
             onClick={() => dispatch({ type: 'delete-track', trackIndex: activeTrackIndex })}
-            className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-xs transition hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+            className="st-iconbtn hover:!border-destructive/40 hover:!bg-destructive/10 hover:!text-destructive"
             title="Delete this track"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
           </button>
         )}
         {trackCountMismatch && (
-          <span className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-600">
+          <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-600">
             Track measure count differs from track 1 — alignment is approximate.
           </span>
         )}
       </div>
 
-      {/* View-mode tabs */}
-      <div className="flex items-center justify-between border-b border-border">
-        <div className="flex items-center gap-1">
+      {/* View-mode tabs + add measure */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="st-seg">
           {(
             [
               { id: 'staff' as const, label: 'Staff' },
@@ -562,11 +567,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             <button
               key={t.id}
               onClick={() => setEditorTab(t.id)}
-              className={`-mb-px border-b-2 px-3 py-1.5 text-xs transition ${
-                editorTab === t.id
-                  ? 'border-primary text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
+              className={editorTab === t.id ? 'is-on' : ''}
             >
               {t.label}
             </button>
@@ -574,7 +575,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         </div>
         <button
           onClick={() => dispatch({ type: 'add-measure', trackIndex: activeTrackIndex })}
-          className="mb-1 inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 text-xs transition hover:bg-muted"
+          className="st-chip"
           title="Add a measure to the end of this track"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -582,136 +583,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         </button>
       </div>
 
-      {/* Editing toolbar (values drive both insertion and selected edits) */}
-      <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2">
-        <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Duration</span>
-        {DURATION_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => onDurationClick(opt.value)}
-            className={`rounded border px-2 py-0.5 text-[11px] transition ${
-              Math.abs(duration - opt.value) < 1e-7
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border hover:bg-muted'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-
-        {/* Modifier toggles */}
-        <span className="ml-2 h-5 w-px bg-border" />
-        <ToggleButton active={dotted} onClick={onToggleDotted} title="Dotted (1.5×)">
-          ＝•
-        </ToggleButton>
-        <ToggleButton active={triplet} onClick={onToggleTriplet} title="Triplet (3:2)">
-          ³
-        </ToggleButton>
-        <ToggleButton active={insertRest} onClick={onToggleRest} title="Rest (toggle note/rest)">
-          𝄽
-        </ToggleButton>
-        <ToggleButton active={tieActive} onClick={onToggleTie} title="Tie to next" disabled={!selected}>
-          ⌣
-        </ToggleButton>
-        {ARTICULATION_OPTIONS.map((a) => (
-          <ToggleButton
-            key={a.value}
-            active={articulation === a.value}
-            onClick={() => onArticulationClick(a.value)}
-            title={a.title}
-          >
-            {a.label}
-          </ToggleButton>
-        ))}
-
-        {/* Pitch / stroke picker */}
-        <span className="ml-3 text-[11px] uppercase tracking-wider text-muted-foreground">
-          {percussion ? 'Stroke' : 'Pitch'}
-        </span>
-        {percussion ? (
-          <div className="flex flex-wrap items-center gap-1">
-            {(percStrokes ?? []).map((s) => (
-              <button
-                key={s.id}
-                onClick={() => onStrokeClick(s.midi)}
-                className={`rounded border px-2 py-0.5 text-[11px] transition ${
-                  currentMidi === s.midi
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border hover:bg-muted'
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <>
-            <select
-              value={pitchLetter}
-              onChange={(e) => onPitchPartChange({ letter: e.target.value })}
-              className="rounded border border-border bg-background px-2 py-0.5 text-sm"
-              aria-label="Note letter"
-            >
-              {PITCH_LETTERS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-            <select
-              value={pitchAcc}
-              onChange={(e) => onPitchPartChange({ acc: Number(e.target.value) })}
-              className="rounded border border-border bg-background px-1.5 py-0.5 text-sm"
-              aria-label="Accidental"
-            >
-              {ACCIDENTAL_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              min={0}
-              max={9}
-              value={pitchOctave}
-              onChange={(e) => onPitchPartChange({ octave: Number(e.target.value) || 0 })}
-              className="w-12 rounded border border-border bg-background px-2 py-0.5 text-sm tabular-nums"
-              aria-label="Octave"
-            />
-            <span className="text-[11px] tabular-nums text-muted-foreground">midi {currentMidi}</span>
-          </>
-        )}
-
-        {/* Add note + delete selected */}
-        <button
-          onClick={handleAddNote}
-          className="ml-auto inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground transition hover:bg-primary/90"
-          title="Add a note/rest with the current toolbar values"
-        >
-          <Music className="h-3.5 w-3.5" />
-          Add {insertRest ? 'rest' : 'note'}
-        </button>
-        {selected && (
-          <button
-            onClick={() => {
-              dispatch({
-                type: 'delete-event',
-                trackIndex: activeTrackIndex,
-                measureIndex: selected.measureIndex,
-                eventIndex: selected.eventIndex,
-              });
-              setSelected(null);
-            }}
-            className="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 text-[11px] hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete
-          </button>
-        )}
-      </div>
-
-      {/* Active view */}
+      {/* Active view — the audio-aligned staff (or piano-roll) */}
       {editorTab === 'staff' && (
         <EditableMeasureStrip
           measures={stripItems}
@@ -737,44 +609,220 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         </div>
       )}
 
-      <p className="text-[11px] text-muted-foreground">
-        Click a note to select it; <strong>drag it up/down to change its pitch</strong>. Click empty
-        space inside a measure (or <em>Add note</em>) to insert with the toolbar values. Press{' '}
-        <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] text-foreground">Delete</kbd> to
-        remove the selected note.
+      {/* Insert toolbar — the note-entry "add note options" bar */}
+      <div className="st-notebar">
+        <div className="st-nb-lead">
+          <span className="st-nb-glyph">
+            <Music className="h-4 w-4" />
+          </span>
+          <span className="st-nb-title">Insert</span>
+        </div>
+        <span className="st-divline" style={{ height: 38 }} />
+
+        {/* Duration (common inline · rare + dots/articulations behind "more") */}
+        <div className="st-nb-mod">
+          <span className="st-nb-lab">Duration</span>
+          <div className="st-nb-grp">
+            <div className="st-seg">
+              {COMMON_DURATIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => onDurationClick(opt.value)}
+                  className={Math.abs(duration - opt.value) < 1e-7 ? 'is-on' : ''}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <button
+              className={`st-iconbtn${moreOpen ? ' is-on' : ''}`}
+              onClick={() => setMoreOpen((m) => !m)}
+              title="More durations, dots & articulations"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+            {moreOpen && (
+              <>
+                <div className="st-pop-scrim" onClick={() => setMoreOpen(false)} />
+                <div className="st-nb-pop">
+                  <div className="st-seg">
+                    {RARE_DURATIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => onDurationClick(opt.value)}
+                        className={Math.abs(duration - opt.value) < 1e-7 ? 'is-on' : ''}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="st-glyphseg">
+                    <button className={dotted ? 'is-on' : ''} onClick={onToggleDotted} title="Dotted (1.5×)">
+                      •
+                    </button>
+                    <button className={triplet ? 'is-on' : ''} onClick={onToggleTriplet} title="Triplet (3:2)">
+                      ³
+                    </button>
+                    <button
+                      className={tieActive ? 'is-on' : ''}
+                      onClick={onToggleTie}
+                      disabled={!selected}
+                      title="Tie to next"
+                    >
+                      ⌣
+                    </button>
+                    {ARTICULATION_OPTIONS.map((a) => (
+                      <button
+                        key={a.value}
+                        className={articulation === a.value ? 'is-on' : ''}
+                        onClick={() => onArticulationClick(a.value)}
+                        title={a.title}
+                      >
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Stroke (percussion) / pitch (pitched) */}
+        <div className="st-nb-mod">
+          <span className="st-nb-lab">{percussion ? 'Stroke' : 'Pitch'}</span>
+          {percussion ? (
+            <div className="st-seg" style={{ gap: 3 }}>
+              {(percStrokes ?? []).map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => onStrokeClick(s.midi)}
+                  className={currentMidi === s.midi ? 'is-on' : ''}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
+                >
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 2,
+                      background: 'hsl(var(--primary))',
+                      transform: 'rotate(45deg)',
+                      flexShrink: 0,
+                    }}
+                  />
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="st-nb-grp">
+              <div className="st-select" style={{ width: 64 }}>
+                <select
+                  value={pitchLetter}
+                  onChange={(e) => onPitchPartChange({ letter: e.target.value })}
+                  aria-label="Note letter"
+                >
+                  {PITCH_LETTERS.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+                <span className="caret">
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </span>
+              </div>
+              <div className="st-select" style={{ width: 60 }}>
+                <select
+                  value={pitchAcc}
+                  onChange={(e) => onPitchPartChange({ acc: Number(e.target.value) })}
+                  aria-label="Accidental"
+                >
+                  {ACCIDENTAL_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="caret">
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </span>
+              </div>
+              <div className="st-stepper">
+                <button
+                  type="button"
+                  onClick={() => onPitchPartChange({ octave: Math.max(0, pitchOctave - 1) })}
+                  aria-label="Octave down"
+                >
+                  –
+                </button>
+                <input
+                  type="number"
+                  min={0}
+                  max={9}
+                  value={pitchOctave}
+                  onChange={(e) => onPitchPartChange({ octave: Number(e.target.value) || 0 })}
+                  aria-label="Octave"
+                />
+                <button
+                  type="button"
+                  onClick={() => onPitchPartChange({ octave: Math.min(9, pitchOctave + 1) })}
+                  aria-label="Octave up"
+                >
+                  +
+                </button>
+              </div>
+              <span className="font-mono text-[11px] tabular-nums text-muted-foreground">midi {currentMidi}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="st-nb-actions">
+          <button
+            className={`st-nb-rest${insertRest ? ' is-on' : ''}`}
+            onClick={onToggleRest}
+            title="Insert a rest instead of a note"
+          >
+            <span className="glyph">𝄽</span> Rest
+          </button>
+          <button
+            className="st-btn-primary st-nb-add"
+            onClick={handleAddNote}
+            title="Add a note/rest with the current toolbar values"
+          >
+            <Plus className="h-[15px] w-[15px]" /> Add {insertRest ? 'rest' : 'note'}{' '}
+            <span className="kbd">⏎</span>
+          </button>
+          {selected && (
+            <button
+              onClick={() => {
+                dispatch({
+                  type: 'delete-event',
+                  trackIndex: activeTrackIndex,
+                  measureIndex: selected.measureIndex,
+                  eventIndex: selected.eventIndex,
+                });
+                setSelected(null);
+              }}
+              className="st-iconbtn hover:!border-destructive/40 hover:!bg-destructive/10 hover:!text-destructive"
+              title="Delete selected note"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Help */}
+      <p className="st-help">
+        Click a note to select it · <span className="k">drag ↕</span> changes pitch · click empty
+        space or <span className="k">Add note</span> to insert · <span className="k">Del</span>{' '}
+        removes.
       </p>
     </div>
   );
 });
-
-function ToggleButton({
-  active,
-  onClick,
-  title,
-  disabled,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  title: string;
-  disabled?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={`min-w-7 rounded border px-2 py-0.5 text-[12px] leading-none transition disabled:cursor-not-allowed disabled:opacity-40 ${
-        active
-          ? 'border-primary bg-primary text-primary-foreground'
-          : 'border-border hover:bg-muted'
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
 
 function midiToParts(midi: number): { letter: string; accidental: number; octave: number } {
   const pc = ((midi % 12) + 12) % 12;

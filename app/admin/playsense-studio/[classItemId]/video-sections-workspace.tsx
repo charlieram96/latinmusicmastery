@@ -10,7 +10,7 @@
 // at the bottom. ScoreSectionEditor (keyed, one at a time) owns the score state
 // and portals its chrome into these shell slots.
 
-import { ArrowLeft, FileUp, Loader2, PanelBottom, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileUp, Loader2, PanelBottom, Plus, Rows3, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRef, useState, useTransition } from 'react';
 import {
@@ -60,6 +60,8 @@ export function VideoSectionsWorkspace({
   const [transportEl, setTransportEl] = useState<HTMLElement | null>(null);
   const [drawerEl, setDrawerEl] = useState<HTMLElement | null>(null);
   const [highwayOpen, setHighwayOpen] = useState(false);
+  // "New section" popover (Build measures / Import score at playhead).
+  const [newSecOpen, setNewSecOpen] = useState(false);
 
   const refetch = async (selectId?: string) => {
     const res = await getScoreSectionsForClassItem(classItemId);
@@ -148,39 +150,71 @@ export function VideoSectionsWorkspace({
                 <span className="st-sec-label">Scored sections</span>
                 <span className="font-mono text-xs text-muted-foreground">{sections.length}</span>
               </div>
-              <div className="flex gap-2">
+              <div className="relative">
                 <button
-                  onClick={addBlank}
+                  type="button"
+                  onClick={() => setNewSecOpen((v) => !v)}
                   disabled={isPending}
-                  className="st-chip flex-1 justify-center disabled:opacity-50"
+                  className="st-btn-primary st-newsec-btn"
+                  aria-expanded={newSecOpen}
                 >
                   {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  Blank
+                  New section
                 </button>
-                <ScoreImportDialog
-                  classItemId={classItemId}
-                  mode="section"
-                  onConfirm={async (score, filename) => {
-                    const res = await createSectionFromImport({
-                      classItemId,
-                      scoreDocument: score,
-                      sourceFilename: filename,
-                    });
-                    if (res.sectionId) pendingSelectRef.current = res.sectionId;
-                    return res;
-                  }}
-                  onImported={() => {
-                    const id = pendingSelectRef.current;
-                    pendingSelectRef.current = undefined;
-                    void refetch(id);
-                  }}
-                  trigger={
-                    <button type="button" className="st-chip flex-1 justify-center">
-                      <FileUp className="h-4 w-4" />
-                      Import
-                    </button>
-                  }
-                />
+                {newSecOpen && (
+                  <>
+                    <div className="st-pop-scrim" onClick={() => setNewSecOpen(false)} />
+                    <div className="st-pop">
+                      <span className="st-pop-label">Create a section by…</span>
+                      <button
+                        type="button"
+                        className="st-pop-item"
+                        onClick={() => {
+                          setNewSecOpen(false);
+                          addBlank();
+                        }}
+                      >
+                        <span className="ic">
+                          <Rows3 className="h-[17px] w-[17px]" />
+                        </span>
+                        <span className="tx">
+                          <span className="t">Build measures</span>
+                          <span className="d">Start empty and add bars by hand</span>
+                        </span>
+                      </button>
+                      <ScoreImportDialog
+                        classItemId={classItemId}
+                        mode="section"
+                        onConfirm={async (score, filename) => {
+                          const res = await createSectionFromImport({
+                            classItemId,
+                            scoreDocument: score,
+                            sourceFilename: filename,
+                          });
+                          if (res.sectionId) pendingSelectRef.current = res.sectionId;
+                          return res;
+                        }}
+                        onImported={() => {
+                          const id = pendingSelectRef.current;
+                          pendingSelectRef.current = undefined;
+                          setNewSecOpen(false);
+                          void refetch(id);
+                        }}
+                        trigger={
+                          <button type="button" className="st-pop-item">
+                            <span className="ic">
+                              <FileUp className="h-[17px] w-[17px]" />
+                            </span>
+                            <span className="tx">
+                              <span className="t">Import score at playhead</span>
+                              <span className="d">Drop a MusicXML / MIDI file</span>
+                            </span>
+                          </button>
+                        }
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
               {error && (

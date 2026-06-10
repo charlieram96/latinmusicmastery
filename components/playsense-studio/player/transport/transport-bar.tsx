@@ -137,24 +137,20 @@ export function TransportBar({
       <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
         <button
           onClick={onToggle}
-          className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md bg-primary text-primary-foreground hover:opacity-90 transition"
+          className="st-play-btn"
           aria-label={isPlaying ? 'Pause' : 'Play'}
         >
-          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          <span className="hidden sm:inline">{isPlaying ? 'Pause' : 'Play'}</span>
+          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
         </button>
 
-        <button
-          onClick={onRestart}
-          className="inline-flex items-center gap-2 px-2 sm:px-3 py-2 rounded-md border border-border hover:bg-muted transition"
-          aria-label="Restart"
-        >
-          <RotateCcw className="w-4 h-4" />
+        <button onClick={onRestart} className="st-iconbtn" aria-label="Restart">
+          <RotateCcw className="h-4 w-4" />
         </button>
 
-        <span className="font-mono text-xs sm:text-sm tabular-nums">
+        <span className="st-tp-time">
           {formatSeconds(currentSeconds)}
-          <span className="text-muted-foreground"> / {formatSeconds(durationSeconds)}</span>
+          <span className="sep">/</span>
+          {formatSeconds(durationSeconds)}
         </span>
 
         {/* Loop control cluster — endpoints are set by dragging on the staff;
@@ -163,11 +159,15 @@ export function TransportBar({
           <button
             onClick={onToggleLoop}
             disabled={loopA === null || loopB === null}
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs border transition ${
+            className="st-iconbtn"
+            style={
               loopEnabled
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed'
-            }`}
+                ? {
+                    color: 'hsl(var(--primary))',
+                    background: 'color-mix(in srgb, hsl(var(--primary)) 12%, transparent)',
+                  }
+                : undefined
+            }
             title={
               loopA === null || loopB === null
                 ? 'Drag on the staff to set a loop range'
@@ -177,50 +177,30 @@ export function TransportBar({
             }
             aria-pressed={loopEnabled}
           >
-            <Repeat className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Loop</span>
+            <Repeat className="h-4 w-4" />
           </button>
           {(loopA !== null || loopB !== null) && (
-            <button
-              onClick={onClearLoop}
-              className="p-1.5 rounded text-xs border border-border hover:bg-muted"
-              title="Clear loop"
-              aria-label="Clear loop"
-            >
-              <X className="w-3.5 h-3.5" />
+            <button onClick={onClearLoop} className="st-iconbtn" title="Clear loop" aria-label="Clear loop">
+              <X className="h-4 w-4" />
             </button>
           )}
-          <ClickTrackToggle
-            bpm={bpm}
-            beatsPerMeasure={beatsPerMeasure}
-            isPlaying={isPlaying}
-          />
+          <ClickTrackToggle bpm={bpm} beatsPerMeasure={beatsPerMeasure} isPlaying={isPlaying} />
         </div>
 
-        <div className="flex items-center gap-1 ml-auto">
-          <span className="hidden sm:inline text-xs uppercase tracking-wider text-muted-foreground mr-1">
-            Rate
-          </span>
-          {RATE_PRESETS.map((rate, i) => (
-            <button
-              key={rate}
-              onClick={() => onRateChange(rate)}
-              // Hide some rates on narrow screens so the row fits.
-              className={`px-2 py-1 rounded text-xs ${
-                i === 0 || i === 5
-                  ? 'hidden md:inline-flex'
-                  : i === 1 || i === 4
-                    ? 'hidden sm:inline-flex'
-                    : 'inline-flex'
-              } items-center ${
-                Math.abs(playbackRate - rate) < 0.001
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted hover:bg-muted/80'
-              }`}
-            >
-              {rate}x
-            </button>
-          ))}
+        <span className="st-divline ml-auto hidden sm:block" />
+        <div className="st-tp-rate">
+          <span className="lab hidden sm:inline">Rate</span>
+          <div className="st-seg mono">
+            {RATE_PRESETS.map((rate) => (
+              <button
+                key={rate}
+                onClick={() => onRateChange(rate)}
+                className={Math.abs(playbackRate - rate) < 0.001 ? 'is-on' : ''}
+              >
+                {rate}×
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
