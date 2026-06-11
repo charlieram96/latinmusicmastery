@@ -720,8 +720,8 @@ export function SyncPanel({
                   className="mt-2 w-full rounded-lg bg-black"
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Exercises don’t sync — the student watches this demo, then plays the graded highway at the
-                  tempo set in the score settings.
+                  Reference only — synced notation for this demo is authored in the Watch part. This
+                  score plays at fixed BPM in the graded highway.
                 </p>
               </div>
             )}

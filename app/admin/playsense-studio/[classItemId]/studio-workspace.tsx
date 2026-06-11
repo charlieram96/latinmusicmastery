@@ -52,6 +52,8 @@ export interface StudioWorkspaceProps {
   initialScore: ScoreDocument;
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
   videoDurationSeconds: number | null;
+  /** Extra app-bar content (e.g. the exercise Watch/Exercise part toggle). */
+  appBarExtra?: React.ReactNode;
 }
 
 const AUTOSAVE_INTERVAL_MS = 5000;
@@ -65,6 +67,7 @@ export function StudioWorkspace({
   initialScore,
   activeTimeMap,
   videoDurationSeconds,
+  appBarExtra,
 }: StudioWorkspaceProps) {
   const { state, dispatch, undo, redo, canUndo, canRedo, markClean } = useEditor(initialScore);
 
@@ -152,6 +155,7 @@ export function StudioWorkspace({
           </span>
         </div>
 
+        {appBarExtra}
         {owner.kind === 'song' && <SongMetaControls owner={owner} />}
 
         <div className="ml-auto flex items-center gap-2">
