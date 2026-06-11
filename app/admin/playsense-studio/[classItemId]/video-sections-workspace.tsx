@@ -31,6 +31,8 @@ export interface VideoSectionsWorkspaceProps {
   videoUrl: string | null;
   videoDurationSeconds: number | null;
   initialSections: ClassItemScoreSection[];
+  /** Extra app-bar content (e.g. the exercise Watch/Exercise part toggle). */
+  appBarExtra?: React.ReactNode;
 }
 
 function fmt(s: number | null): string {
@@ -46,6 +48,7 @@ export function VideoSectionsWorkspace({
   videoUrl,
   videoDurationSeconds,
   initialSections,
+  appBarExtra,
 }: VideoSectionsWorkspaceProps) {
   const [sections, setSections] = useState(initialSections);
   const [selectedId, setSelectedId] = useState<string | null>(initialSections[0]?.sectionId ?? null);
@@ -133,6 +136,8 @@ export function VideoSectionsWorkspace({
             PlaySense Studio
           </span>
         </div>
+
+        {appBarExtra}
 
         <div className="ml-auto flex items-center gap-2">
           <button

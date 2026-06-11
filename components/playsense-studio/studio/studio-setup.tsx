@@ -15,9 +15,11 @@ import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-im
 export interface StudioSetupProps {
   classItemId: string;
   classItemTitle: string;
+  /** Extra header content (e.g. the exercise Watch/Exercise part toggle). */
+  appBarExtra?: React.ReactNode;
 }
 
-export function StudioSetup({ classItemId, classItemTitle }: StudioSetupProps) {
+export function StudioSetup({ classItemId, classItemTitle, appBarExtra }: StudioSetupProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -46,6 +48,7 @@ export function StudioSetup({ classItemId, classItemTitle }: StudioSetupProps) {
         </Link>
         <span className="text-muted-foreground">/</span>
         <h1 className="text-base font-semibold">PlaySense Studio — {classItemTitle}</h1>
+        {appBarExtra && <div className="ml-2">{appBarExtra}</div>}
       </header>
 
       <main className="mx-auto max-w-2xl px-6 py-10">

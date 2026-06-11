@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ArrowLeft, Gamepad2 } from 'lucide-react'
 import {
   PlaysenseStudioPlayer,
+  type PlayerSection,
   type PlaysenseStudioPlayerScoreTrack,
   type PlaysenseStudioPlayerTimeMap,
 } from '@/components/playsense-studio/player/playsense-studio-player'
@@ -19,6 +20,10 @@ interface ExerciseViewProps {
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null
   /** Derived from `score` server-side via scoreToExerciseDefinition. */
   exercise: ExerciseDefinition
+  /** Published, placed WATCH-part sections (scored notation synced to the demo
+   *  video). When non-empty, Watch mode uses the sectioned player; otherwise it
+   *  falls back to the graded score over the video. */
+  sections?: PlayerSection[]
   playerLayout?: 'stack' | 'split'
 }
 
@@ -37,6 +42,7 @@ export function ExerciseView({
   tracks,
   activeTimeMap,
   exercise,
+  sections,
   playerLayout = 'stack',
 }: ExerciseViewProps) {
   // Demo first: start in Watch when there's a video; otherwise go straight to play.
@@ -48,16 +54,31 @@ export function ExerciseView({
   }
 
   if (mode === 'watch') {
+    // The authored WATCH part (sections synced to the demo) when it exists;
+    // otherwise fall back to the graded score over the video.
+    const hasSections = !!sections && sections.length > 0
     return (
       <div className="space-y-4">
-        <PlaysenseStudioPlayer
-          classItemId={classItemId}
-          videoUrl={videoUrl}
-          score={score}
-          tracks={tracks}
-          activeTimeMap={activeTimeMap}
-          layout={playerLayout}
-        />
+        {hasSections ? (
+          <PlaysenseStudioPlayer
+            classItemId={classItemId}
+            videoUrl={videoUrl}
+            score={sections[0].score}
+            tracks={sections[0].tracks}
+            activeTimeMap={sections[0].activeTimeMap}
+            sections={sections}
+            layout={playerLayout}
+          />
+        ) : (
+          <PlaysenseStudioPlayer
+            classItemId={classItemId}
+            videoUrl={videoUrl}
+            score={score}
+            tracks={tracks}
+            activeTimeMap={activeTimeMap}
+            layout={playerLayout}
+          />
+        )}
         <div className="flex justify-end">
           <button
             onClick={() => setMode('play')}

@@ -4,6 +4,7 @@ import {
   getScoreDocumentForClassItem,
   getScoreSectionsForClassItem,
 } from '@/app/actions/playsense-studio';
+import { ExerciseStudio } from './exercise-studio';
 import { StudioWorkspace } from './studio-workspace';
 import { VideoSectionsWorkspace } from './video-sections-workspace';
 import { StudioSetup } from '@/components/playsense-studio/studio/studio-setup';
@@ -54,9 +55,35 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
     );
   }
 
-  // EXERCISE items don't sync the score to the video — the demo plays through,
-  // then the student plays the graded highway. Everything else uses video sync.
-  const mode = classItem.item_type === 'EXERCISE' ? 'exercise' : 'video';
+  // EXERCISE items have TWO parts: scored sections synced to the demo video
+  // (the student's Watch & Learn) and a separate graded score for the rhythm
+  // highway. ExerciseStudio shells both workspaces behind a part toggle.
+  if (classItem.item_type === 'EXERCISE') {
+    const sections = await getScoreSectionsForClassItem(classItemId);
+    if (sections.error) notFound();
+    const scoreResult = classItem.score_document_id
+      ? await getScoreDocumentForClassItem(classItemId)
+      : null;
+    return (
+      <ExerciseStudio
+        // Remount when the graded score is attached/replaced, so the editor
+        // reseeds from the new document instead of keeping stale state.
+        key={classItem.score_document_id ?? 'no-score'}
+        classItemId={classItemId}
+        title={classItem.title}
+        videoUrl={classItem.video_url}
+        videoDurationSeconds={classItem.video_duration_seconds}
+        initialSections={sections.data ?? []}
+        scoreDocumentId={classItem.score_document_id}
+        initialScore={scoreResult?.data?.scoreDocument.parsedScore ?? null}
+        activeTimeMap={scoreResult?.data?.activeTimeMap ?? null}
+        // Bound server actions — ExerciseStudio must not import the actions
+        // module itself (deadlocks the Turbopack production build; see its note).
+        fetchSections={getScoreSectionsForClassItem.bind(null, classItemId)}
+        fetchExercise={getScoreDocumentForClassItem.bind(null, classItemId)}
+      />
+    );
+  }
 
   // No score yet → setup (import/create) lives here in the Studio.
   if (!classItem.score_document_id) {
@@ -72,7 +99,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
       // editor reseeds from the new document instead of keeping stale state.
       key={classItem.score_document_id}
       owner={{ kind: 'classItem', classItemId }}
-      mode={mode}
+      mode="video"
       title={classItem.title}
       videoUrl={classItem.video_url}
       scoreDocumentId={classItem.score_document_id}

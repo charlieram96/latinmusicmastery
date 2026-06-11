@@ -71,9 +71,13 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
       : null
 
   // VIDEO lessons carry MULTIPLE scored sections, each active over a video
-  // time-range. Fetch them and keep the ones that are placed + published.
+  // time-range. EXERCISE items reuse the same model for their WATCH part (the
+  // demo video synced to notation). Fetch them and keep the ones that are
+  // placed + published.
   const videoSections =
-    item.item_type === 'VIDEO' && playsenseStudioEnabled && !!item.video_url
+    (item.item_type === 'VIDEO' || item.item_type === 'EXERCISE') &&
+    playsenseStudioEnabled &&
+    !!item.video_url
       ? (await getScoreSectionsForClassItem(item.id)).data ?? []
       : []
   const playerSections = videoSections
@@ -245,6 +249,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
                 description: item.description ?? undefined,
                 audioUrl: playsenseStudioMediaUrl ?? undefined,
               })}
+              sections={playerSections}
               playerLayout={playerLayout}
             />
           ) : null}
