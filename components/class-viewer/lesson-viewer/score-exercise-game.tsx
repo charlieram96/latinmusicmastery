@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
+import type { BackingTrack } from '@/app/actions/playsense-studio'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
+import { getExerciseDuration } from '@/lib/play-sense/exercise-utils'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
 import { RhythmHighway } from '@/components/play-sense/rhythm-highway/RhythmHighway'
 import { StaffRenderer } from '@/components/playsense-studio/player/notation/renderers/staff-renderer'
@@ -24,6 +26,13 @@ interface ScoreExerciseGameProps {
   /** When set (video lessons), the results screen offers "Watch demo again" which
    *  flips the parent back to the instructional video. */
   onWatchDemo?: () => void
+  /** Instrument backing tracks the student can choose to hear. When provided
+   *  (even empty), the selection — not the legacy exercise.audioUrl — drives the
+   *  engine's backing audio. Tracks are equal-length and pre-synced. */
+  backingTracks?: BackingTrack[]
+  /** Optional exercise-part video: plays MUTED in sync with the engine clock,
+   *  starting at its crop offset (window length = the score's length). */
+  exerciseVideo?: { url: string; startSeconds: number } | null
 }
 
 /**
@@ -33,9 +42,56 @@ interface ScoreExerciseGameProps {
  * This is a focused, playlist-free embedding of the same engine that powers
  * the standalone /play-sense stage (components/play-sense/stage/stage-player.tsx).
  */
-export function ScoreExerciseGame({ exercise, score, onWatchDemo }: ScoreExerciseGameProps) {
-  const session = useExerciseSession()
+export function ScoreExerciseGame({
+  exercise,
+  score,
+  onWatchDemo,
+  backingTracks,
+  exerciseVideo,
+}: ScoreExerciseGameProps) {
+  // Which backing tracks the student wants to hear — all of them by default.
+  const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
+    () => new Set((backingTracks ?? []).map((t) => t.id))
+  )
+  const selectedUrls = useMemo(
+    () => (backingTracks ?? []).filter((t) => selectedTrackIds.has(t.id)).map((t) => t.audioUrl),
+    [backingTracks, selectedTrackIds]
+  )
+
+  // An explicit (possibly empty) selection only when backing tracks are
+  // authored; otherwise the legacy path (exercise.audioUrl) stays in charge.
+  const session = useExerciseSession(backingTracks ? { backingTrackUrls: selectedUrls } : {})
   const stableExercise = useMemo(() => exercise, [exercise])
+
+  // --- Optional exercise video, synced to the engine clock ---
+  // Muted visual reference: seek to the crop start on countdown, play during
+  // 'playing', and re-seek only when drifted (>0.35s) so it stays smooth.
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const exerciseDurationSec = useMemo(() => getExerciseDuration(exercise), [exercise])
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v || !exerciseVideo) return
+    const start = exerciseVideo.startSeconds
+    if (session.sessionState === 'playing') {
+      const expected = start + session.playheadProgress * exerciseDurationSec
+      if (Math.abs(v.currentTime - expected) > 0.35) v.currentTime = expected
+      if (v.paused) void v.play().catch(() => {})
+    } else if (session.sessionState === 'countdown') {
+      if (!v.paused) v.pause()
+      if (Math.abs(v.currentTime - start) > 0.05) v.currentTime = start
+    } else if (!v.paused) {
+      v.pause()
+    }
+  }, [session.sessionState, session.playheadProgress, exerciseVideo, exerciseDurationSec])
+
+  const toggleTrack = (id: string) => {
+    setSelectedTrackIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   // The staff renderer reports the active track's single-pass duration; the
   // playhead progress (0..1 across all loops) maps back onto one pass so the
@@ -150,7 +206,58 @@ export function ScoreExerciseGame({ exercise, score, onWatchDemo }: ScoreExercis
         </div>
       )}
 
-      <div className="relative min-h-[360px] flex">
+      {/* Backing-track selection — pick the instruments to hear before starting. */}
+      {session.sessionState === 'selecting' && backingTracks && backingTracks.length > 0 && (
+        <div className="border-b border-border bg-background/60 px-4 py-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Play along with
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {backingTracks.map((t) => {
+              const on = selectedTrackIds.has(t.id)
+              return (
+                <label
+                  key={t.id}
+                  className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                    on
+                      ? 'border-primary/40 bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={on}
+                    onChange={() => toggleTrack(t.id)}
+                  />
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-primary' : 'bg-muted-foreground/40'}`}
+                  />
+                  {t.label}
+                </label>
+              )
+            })}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Selected tracks play in sync with the notes while you&apos;re graded.
+          </p>
+        </div>
+      )}
+
+      <div className="relative flex min-h-[360px] flex-col md:flex-row">
+        {/* Optional exercise video — muted, follows the engine clock. */}
+        {showCanvas && exerciseVideo && (
+          <div className="flex shrink-0 items-center justify-center border-b border-border bg-black md:w-2/5 md:border-b-0 md:border-r">
+            <video
+              ref={videoRef}
+              src={exerciseVideo.url}
+              muted
+              playsInline
+              preload="auto"
+              className="max-h-[360px] w-full object-contain"
+            />
+          </div>
+        )}
         {showCanvas && session.exercise ? (
           <div className="flex-1 relative min-h-[360px] flex">
             <RhythmHighway

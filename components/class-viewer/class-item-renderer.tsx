@@ -4,10 +4,12 @@ import { Video, Dumbbell, Music } from 'lucide-react'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
 import { PlaysenseStudioPlayer } from '@/components/playsense-studio/player/playsense-studio-player'
 import {
+  getExerciseMedia,
   getScoreDocumentForClassItem,
   getScoreSectionsForClassItem,
   logPlaysenseStudioEvent,
 } from '@/app/actions/playsense-studio'
+import { resolveLegacyAudioUrl } from '@/lib/play-sense/exercise-media'
 import { getQuizQuestions } from '@/app/actions/quiz'
 import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
 import { ExerciseView } from '@/components/class-viewer/lesson-viewer/exercise-view'
@@ -103,6 +105,15 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
     playerLayout === 'split' &&
     !!item.video_url &&
     !item.soundslice_embed_url
+
+  // EXERCISE play-part media: optional cropped video + instrument backing
+  // tracks the student selects before playing.
+  const exerciseMedia =
+    item.item_type === 'EXERCISE' ? (await getExerciseMedia(item.id)).data ?? null : null
+  const backingTracks = exerciseMedia?.backingTracks ?? []
+  const exerciseVideo = exerciseMedia?.videoUrl
+    ? { url: exerciseMedia.videoUrl, startSeconds: exerciseMedia.videoStartSeconds }
+    : null
 
   // Quizzes (and legacy quiz-style exercises) are a series of questions stored
   // in quiz_questions. Fetch them server-side so the runner renders immediately.
@@ -247,10 +258,18 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
                 id: item.id,
                 title: item.title,
                 description: item.description ?? undefined,
-                audioUrl: playsenseStudioMediaUrl ?? undefined,
+                // Legacy play-along (demo-video audio as backing) only until
+                // explicit backing tracks / an exercise video are authored.
+                audioUrl: resolveLegacyAudioUrl({
+                  legacyMediaUrl: playsenseStudioMediaUrl,
+                  hasBackingTracks: backingTracks.length > 0,
+                  hasExerciseVideo: !!exerciseVideo,
+                }),
               })}
               sections={playerSections}
               playerLayout={playerLayout}
+              backingTracks={backingTracks}
+              exerciseVideo={exerciseVideo}
             />
           ) : null}
 
