@@ -29,6 +29,7 @@ import type {
 } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { StudioSetup } from '@/components/playsense-studio/studio/studio-setup';
+import { WatchVideoSetup } from '@/components/playsense-studio/studio/watch-video-setup';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { StudioWorkspace } from './studio-workspace';
 import { VideoSectionsWorkspace } from './video-sections-workspace';
@@ -90,16 +91,18 @@ export function ExerciseStudio({
 
   const switchPart = (next: Part) => {
     if (next === part || isSwitching) return;
-    if (next === 'watch' && !videoUrl) return;
     setError(null);
     startSwitch(async () => {
       if (next === 'watch') {
-        const res = await fetchSections();
-        if (res.error || !res.data) {
-          setError(res.error ?? 'Failed to load the watch sections.');
-          return;
+        // No video yet → the Watch part renders the upload screen; nothing to fetch.
+        if (videoUrl) {
+          const res = await fetchSections();
+          if (res.error || !res.data) {
+            setError(res.error ?? 'Failed to load the watch sections.');
+            return;
+          }
+          setSections(res.data);
         }
-        setSections(res.data);
       } else {
         // "No score document attached" just means StudioSetup should render.
         // The media panel seeds from props on mount, so refresh it alongside.
@@ -128,12 +131,11 @@ export function ExerciseStudio({
           className={part === 'watch' ? 'is-on' : ''}
           role="radio"
           aria-checked={part === 'watch'}
-          disabled={!videoUrl}
           onClick={() => switchPart('watch')}
           title={
             videoUrl
               ? 'Watch part — sync scored sections to the demo video'
-              : 'Upload a demo video to this lesson first to author the watch part'
+              : 'Watch part — upload the demo video, then sync scored sections to it'
           }
         >
           <MonitorPlay className="h-3.5 w-3.5" />
@@ -156,7 +158,13 @@ export function ExerciseStudio({
     </div>
   );
 
-  if (part === 'watch' && videoUrl) {
+  if (part === 'watch') {
+    if (!videoUrl) {
+      // No demo video yet — upload it here; router.refresh() re-enters with it.
+      return (
+        <WatchVideoSetup classItemId={classItemId} classItemTitle={title} appBarExtra={toggle} />
+      );
+    }
     return (
       <VideoSectionsWorkspace
         key={`watch-${switchCount}`}
