@@ -709,22 +709,8 @@ export function SyncPanel({
               <video ref={videoRef} src={videoUrl ?? undefined} preload="metadata" className="hidden" />
             )}
 
-            {mode === 'exercise' && videoUrl && (
-              <div>
-                <span className="st-sec-label">Demo video</span>
-                <video
-                  src={videoUrl}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  className="mt-2 w-full rounded-lg bg-black"
-                />
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Reference only — synced notation for this demo is authored in the Watch part. This
-                  score plays at fixed BPM in the graded highway.
-                </p>
-              </div>
-            )}
+            {/* (Exercise mode: the demo video lives in the Watch part; the play-part
+                video + backing tracks are authored in the rail's media panel.) */}
 
             {/* Selected note */}
             <div className="st-icard">

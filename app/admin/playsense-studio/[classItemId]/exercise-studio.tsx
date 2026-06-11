@@ -25,6 +25,7 @@ import { useState, useTransition } from 'react';
 import type {
   ClassItemScorePayload,
   ClassItemScoreSection,
+  ExerciseMedia,
 } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { StudioSetup } from '@/components/playsense-studio/studio/studio-setup';
@@ -51,9 +52,12 @@ export interface ExerciseStudioProps {
   scoreDocumentId: string | null;
   initialScore: ScoreDocument | null;
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
+  /** Exercise play-part media (optional cropped video + backing tracks). */
+  initialExerciseMedia: ExerciseMedia | null;
   /** Bound server actions (see module note) used to refresh a part on switch. */
   fetchSections: () => Promise<{ data?: ClassItemScoreSection[]; error?: string }>;
   fetchExercise: () => Promise<{ data?: ClassItemScorePayload; error?: string }>;
+  fetchExerciseMedia: () => Promise<{ data?: ExerciseMedia; error?: string }>;
 }
 
 export function ExerciseStudio({
@@ -65,8 +69,10 @@ export function ExerciseStudio({
   scoreDocumentId,
   initialScore,
   activeTimeMap,
+  initialExerciseMedia,
   fetchSections,
   fetchExercise,
+  fetchExerciseMedia,
 }: ExerciseStudioProps) {
   // Default to the graded score — it's the item's reason to exist, and the
   // setup/replace flows (which remount this component) land there too.
@@ -78,6 +84,7 @@ export function ExerciseStudio({
   const [exercisePayload, setExercisePayload] = useState<ExercisePayload | null>(
     scoreDocumentId && initialScore ? { scoreDocumentId, initialScore, activeTimeMap } : null
   );
+  const [exerciseMedia, setExerciseMedia] = useState(initialExerciseMedia);
   // Bump on every refetch so the remounting workspace reseeds from fresh data.
   const [switchCount, setSwitchCount] = useState(0);
 
@@ -95,7 +102,8 @@ export function ExerciseStudio({
         setSections(res.data);
       } else {
         // "No score document attached" just means StudioSetup should render.
-        const res = await fetchExercise();
+        // The media panel seeds from props on mount, so refresh it alongside.
+        const [res, mediaRes] = await Promise.all([fetchExercise(), fetchExerciseMedia()]);
         setExercisePayload(
           res.data
             ? {
@@ -105,6 +113,7 @@ export function ExerciseStudio({
               }
             : null
         );
+        if (mediaRes.data) setExerciseMedia(mediaRes.data);
       }
       setSwitchCount((c) => c + 1);
       setPart(next);
@@ -177,6 +186,7 @@ export function ExerciseStudio({
       activeTimeMap={exercisePayload.activeTimeMap}
       videoDurationSeconds={videoDurationSeconds}
       appBarExtra={toggle}
+      exerciseMedia={exerciseMedia}
     />
   );
 }
