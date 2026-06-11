@@ -41,7 +41,7 @@ export function useAdminPlayback(exercise: ExerciseDefinition | null): UseAdminP
   })
 
   const backingTrack = useBackingTrack({
-    audioUrl: exercise?.audioUrl,
+    audioUrls: exercise?.audioUrl ? [exercise.audioUrl] : [],
   })
 
   const stopPlayback = useCallback(() => {
