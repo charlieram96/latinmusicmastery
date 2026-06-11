@@ -168,6 +168,41 @@ export type Database = {
           },
         ]
       }
+      class_item_backing_tracks: {
+        Row: {
+          audio_url: string
+          class_item_id: string
+          created_at: string | null
+          id: string
+          label: string
+          order_index: number
+        }
+        Insert: {
+          audio_url: string
+          class_item_id: string
+          created_at?: string | null
+          id?: string
+          label: string
+          order_index?: number
+        }
+        Update: {
+          audio_url?: string
+          class_item_id?: string
+          created_at?: string | null
+          id?: string
+          label?: string
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_item_backing_tracks_class_item_id_fkey"
+            columns: ["class_item_id"]
+            isOneToOne: false
+            referencedRelation: "class_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_item_score_sections: {
         Row: {
           active_time_map_id: string | null
@@ -238,6 +273,8 @@ export type Database = {
           correct_answer: string | null
           created_at: string | null
           description: string | null
+          exercise_video_start_seconds: number
+          exercise_video_url: string | null
           explanation: string | null
           id: string
           item_type: string
@@ -262,6 +299,8 @@ export type Database = {
           correct_answer?: string | null
           created_at?: string | null
           description?: string | null
+          exercise_video_start_seconds?: number
+          exercise_video_url?: string | null
           explanation?: string | null
           id?: string
           item_type: string
@@ -286,6 +325,8 @@ export type Database = {
           correct_answer?: string | null
           created_at?: string | null
           description?: string | null
+          exercise_video_start_seconds?: number
+          exercise_video_url?: string | null
           explanation?: string | null
           id?: string
           item_type?: string
