@@ -10,12 +10,16 @@ interface CourseThumbnailUploadProps {
   courseId: string
   currentImageUrl: string | null
   onImageUploaded: (url: string) => void
+  /** Renders a small row (thumbnail + actions) instead of the full-width
+      aspect-video dropzone — for tight layouts like the studio drawer. */
+  compact?: boolean
 }
 
 export function CourseThumbnailUpload({
   courseId,
   currentImageUrl,
   onImageUploaded,
+  compact = false,
 }: CourseThumbnailUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl)
@@ -106,6 +110,80 @@ export function CourseThumbnailUpload({
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
+  }
+
+  if (compact) {
+    return (
+      <div className="space-y-2">
+        <Input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onChange={handleInputChange}
+          disabled={uploading}
+          className="hidden"
+          id="course-thumbnail-input"
+        />
+
+        <div className="flex items-center gap-3">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            className={`
+              relative h-[72px] w-32 flex-shrink-0 cursor-pointer overflow-hidden rounded-lg border
+              transition-all duration-200
+              ${isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}
+              ${uploading ? 'pointer-events-none opacity-50' : ''}
+            `}
+          >
+            {previewUrl ? (
+              <img src={previewUrl} alt="Course thumbnail" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center gap-1 border-dashed bg-muted/40">
+                <ImageIcon className="h-4 w-4 text-muted-foreground/60" />
+                <span className="text-[10px] text-muted-foreground">16:9 image</span>
+              </div>
+            )}
+            {uploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/60">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2.5 text-xs"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              <Upload className="mr-1.5 h-3 w-3" />
+              {previewUrl ? 'Replace' : 'Upload'}
+            </Button>
+            {previewUrl && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2.5 text-xs text-muted-foreground hover:text-destructive"
+                onClick={handleRemoveImage}
+                disabled={uploading}
+              >
+                <X className="mr-1.5 h-3 w-3" />
+                Remove
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {error && <p className="text-xs text-destructive">{error}</p>}
+      </div>
+    )
   }
 
   return (
