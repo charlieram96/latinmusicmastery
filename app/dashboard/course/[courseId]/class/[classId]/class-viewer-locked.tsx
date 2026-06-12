@@ -9,8 +9,8 @@ export function ClassViewerLocked({ courseId }: { courseId: string }) {
   const { t } = useTranslation()
 
   return (
-    <div className="flex flex-col items-center justify-center text-center py-16 px-6 max-w-md mx-auto">
-      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+    <div className="mx-auto flex max-w-md flex-col items-center justify-center rounded-2xl border border-border bg-raised px-6 py-16 text-center shadow-warm">
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 ring-8 ring-primary/5">
         <Lock className="h-7 w-7 text-primary" />
       </div>
       <h2 className="text-2xl font-bold mb-2">

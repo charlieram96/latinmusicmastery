@@ -167,7 +167,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
             keySignature={item.key_signature}
           />
         ) : (
-          <Card>
+          <Card className="overflow-hidden rounded-2xl border-border shadow-warm">
             <CardContent className="p-0">
               {hasVideoSections && firstSection && item.video_url ? (
                 <PlaysenseStudioPlayer
@@ -179,7 +179,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
                   sections={playerSections}
                 />
               ) : item.soundslice_embed_url ? (
-                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                <div className="aspect-video overflow-hidden bg-black">
                   <iframe
                     src={item.soundslice_embed_url}
                     className="w-full h-full"
@@ -188,11 +188,11 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
                   />
                 </div>
               ) : item.video_url ? (
-                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                <div className="aspect-video overflow-hidden bg-black">
                   <video src={item.video_url} controls className="w-full h-full" />
                 </div>
               ) : (
-                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                <div className="aspect-video flex items-center justify-center bg-muted">
                   <Video className="w-12 h-12 text-muted-foreground" />
                 </div>
               )}
@@ -216,9 +216,9 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
               </CardContent>
             </Card>
           ) : item.video_url ? (
-            <Card>
+            <Card className="overflow-hidden rounded-2xl border-border shadow-warm">
               <CardContent className="p-0">
-                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                <div className="aspect-video overflow-hidden bg-black">
                   <video src={item.video_url} controls className="w-full h-full" />
                 </div>
               </CardContent>

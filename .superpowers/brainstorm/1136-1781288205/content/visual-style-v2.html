@@ -1,0 +1,166 @@
+<h2>Which art direction for the new rhythm highway?</h2>
+<p class="subtitle">All three keep the warm Latin Music Mastery palette (amber / terracotta / gold) and the Rock Band feel — they differ in mood and texture. Click the one that feels right. These are rough mood mockups, not final renders.</p>
+
+<style>
+  .card-image { padding: 0 !important; display: block !important; }
+  .hw-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 280px;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+    background: #0b0908;
+  }
+  .hw-road {
+    position: absolute;
+    left: 50%;
+    bottom: -10px;
+    width: 75%;
+    height: 130%;
+    transform: translateX(-50%) perspective(420px) rotateX(52deg);
+    transform-origin: 50% 100%;
+  }
+  .hw-lane-lines {
+    position: absolute;
+    inset: 0;
+    display: flex;
+  }
+  .hw-lane-lines > div { flex: 1; border-right: 2px solid rgba(255, 165, 36, 0.18); }
+  .hw-lane-lines > div:first-child { border-left: 2px solid rgba(255, 165, 36, 0.18); }
+  .hw-hitbar {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: 14%;
+    height: 4px;
+    border-radius: 4px;
+  }
+  .hw-note {
+    position: absolute;
+    width: 44px;
+    height: 18px;
+    border-radius: 50%;
+    transform: translateX(-50%);
+  }
+  .hw-label {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+  .hw-chip {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+</style>
+
+<div class="cards">
+
+  <!-- A: NEON CANTINA -->
+  <div class="card" data-choice="neon-cantina" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;">
+      <div class="hw-stage" style="background: radial-gradient(120% 70% at 50% 0%, #1a120c 0%, #0b0908 55%);">
+        <!-- scanline grain -->
+        <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0 1px, transparent 1px 3px);"></div>
+        <div class="hw-road">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(20,15,12,0) 0%, #140f0c 60%);"></div>
+          <div class="hw-lane-lines"><div></div><div></div><div></div></div>
+          <!-- neon rails -->
+          <div style="position:absolute;left:-3px;top:0;bottom:0;width:3px;background:#ED8A2C;box-shadow:0 0 14px 3px rgba(237,138,44,0.9);"></div>
+          <div style="position:absolute;right:-3px;top:0;bottom:0;width:3px;background:#ED8A2C;box-shadow:0 0 14px 3px rgba(237,138,44,0.9);"></div>
+        </div>
+        <!-- hit bar: hot neon -->
+        <div class="hw-hitbar" style="background:#F7C878;box-shadow:0 0 18px 4px rgba(247,200,120,0.8), 0 0 50px 12px rgba(237,138,44,0.35);"></div>
+        <!-- glossy neon pucks -->
+        <div class="hw-note" style="left:38%;top:30%;width:26px;height:11px;background:radial-gradient(ellipse at 35% 30%, #ffd9a0, #F2A12C 60%, #8a4d12);box-shadow:0 0 16px 4px rgba(242,161,44,0.75);"></div>
+        <div class="hw-note" style="left:55%;top:50%;width:34px;height:14px;background:radial-gradient(ellipse at 35% 30%, #ffc4b2, #D54E3F 60%, #6e1f16);box-shadow:0 0 16px 4px rgba(213,78,63,0.75);"></div>
+        <div class="hw-note" style="left:45%;top:72%;width:44px;height:18px;background:radial-gradient(ellipse at 35% 30%, #ffe9b8, #E0A43B 60%, #7d5413);box-shadow:0 0 22px 6px rgba(224,164,59,0.8);"></div>
+        <!-- glass HUD chip -->
+        <div class="hw-chip" style="background:rgba(17,14,13,0.55);border:1px solid rgba(255,255,255,0.12);color:#F7C878;backdrop-filter:blur(4px);font-weight:600;">×12 COMBO</div>
+        <div class="hw-label" style="color:#ED8A2C;">A — Neon Cantina</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Neon Cantina</h3>
+      <p>Late-night Latin club energy. Smoky black stage, hot amber <strong>neon rails and receptors</strong>, glossy glass note pucks with strong bloom, glassmorphism HUD chips, subtle film grain. The most "arcade Rock Band" of the three — high contrast, reads instantly.</p>
+    </div>
+  </div>
+
+  <!-- B: GOLDEN HOUR STADIUM -->
+  <div class="card" data-choice="golden-stadium" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;">
+      <div class="hw-stage" style="background: linear-gradient(180deg, #0a0706 0%, #160d07 45%, #2a1408 100%);">
+        <!-- volumetric beams -->
+        <div style="position:absolute;left:18%;top:-20%;width:14%;height:90%;background:linear-gradient(180deg, rgba(242,161,44,0.22), transparent 80%);transform:rotate(14deg);filter:blur(6px);"></div>
+        <div style="position:absolute;right:18%;top:-20%;width:14%;height:90%;background:linear-gradient(180deg, rgba(224,164,59,0.18), transparent 80%);transform:rotate(-14deg);filter:blur(6px);"></div>
+        <!-- horizon haze -->
+        <div style="position:absolute;left:0;right:0;top:18%;height:30%;background:radial-gradient(60% 100% at 50% 0%, rgba(237,138,44,0.30), transparent 70%);filter:blur(8px);"></div>
+        <!-- embers -->
+        <div style="position:absolute;left:28%;top:55%;width:3px;height:3px;border-radius:50%;background:#F7C878;box-shadow:0 0 6px 2px rgba(247,200,120,0.8);"></div>
+        <div style="position:absolute;left:70%;top:40%;width:2px;height:2px;border-radius:50%;background:#F2A12C;box-shadow:0 0 5px 2px rgba(242,161,44,0.8);"></div>
+        <div style="position:absolute;left:60%;top:68%;width:3px;height:3px;border-radius:50%;background:#E0A43B;box-shadow:0 0 6px 2px rgba(224,164,59,0.8);"></div>
+        <div class="hw-road">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(26,17,12,0) 0%, #1a110c 55%);"></div>
+          <div class="hw-lane-lines" style="opacity:0.7;"><div></div><div></div><div></div></div>
+          <div style="position:absolute;left:-3px;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#C9543C,#ED8A2C);box-shadow:0 0 10px 2px rgba(237,138,44,0.5);"></div>
+          <div style="position:absolute;right:-3px;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#C9543C,#ED8A2C);box-shadow:0 0 10px 2px rgba(237,138,44,0.5);"></div>
+        </div>
+        <div class="hw-hitbar" style="background:linear-gradient(90deg, rgba(247,200,120,0.2), #F7C878 30%, #F7C878 70%, rgba(247,200,120,0.2));box-shadow:0 0 14px 3px rgba(247,200,120,0.55);"></div>
+        <!-- softer ember pucks -->
+        <div class="hw-note" style="left:40%;top:32%;width:24px;height:10px;background:radial-gradient(ellipse at 40% 30%, #ffe3b0, #E0A43B 65%, #5c3a0e);box-shadow:0 0 12px 3px rgba(224,164,59,0.5);"></div>
+        <div class="hw-note" style="left:58%;top:52%;width:32px;height:13px;background:radial-gradient(ellipse at 40% 30%, #ffd0a8, #ED8A2C 65%, #6e3a10);box-shadow:0 0 14px 3px rgba(237,138,44,0.55);"></div>
+        <div class="hw-note" style="left:47%;top:73%;width:44px;height:18px;background:radial-gradient(ellipse at 40% 30%, #ffc9ae, #C9543C 65%, #571f12);box-shadow:0 0 16px 4px rgba(201,84,60,0.6);"></div>
+        <div class="hw-label" style="color:#E0A43B;">B — Golden Hour Stadium</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Golden Hour Stadium</h3>
+      <p>Cinematic concert stage at sunset. <strong>Volumetric light beams, warm haze at the horizon, drifting embers</strong>, softer organic glow instead of hard neon. Feels like standing on stage at an open-air show. The most atmospheric and "MasterClass premium" of the three.</p>
+    </div>
+  </div>
+
+  <!-- C: VINYL HEAT -->
+  <div class="card" data-choice="vinyl-heat" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;">
+      <div class="hw-stage" style="background:#120c08;">
+        <!-- sunburst at vanishing point -->
+        <div style="position:absolute;left:50%;top:6%;width:160%;height:60%;transform:translateX(-50%);background:repeating-conic-gradient(from 180deg at 50% 0%, rgba(224,164,59,0.10) 0deg 7deg, transparent 7deg 14deg);"></div>
+        <!-- print grain -->
+        <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg, rgba(241,236,230,0.012) 0 2px, transparent 2px 4px);"></div>
+        <div class="hw-road">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(24,16,10,0) 0%, #181009 55%);"></div>
+          <div class="hw-lane-lines" style="opacity:0.9;"><div style="border-color:rgba(241,236,230,0.14);"></div><div style="border-color:rgba(241,236,230,0.14);"></div><div style="border-color:rgba(241,236,230,0.14);"></div></div>
+          <!-- brass rails -->
+          <div style="position:absolute;left:-4px;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#8a5a22,#E0A43B 55%,#f4d28a);"></div>
+          <div style="position:absolute;right:-4px;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#8a5a22,#E0A43B 55%,#f4d28a);"></div>
+        </div>
+        <!-- cream ink hit bar -->
+        <div class="hw-hitbar" style="background:#F1ECE6;height:3px;box-shadow:0 0 0 2px rgba(241,236,230,0.15), 0 0 12px 2px rgba(241,236,230,0.3);"></div>
+        <!-- enamel badge notes with cream rims -->
+        <div class="hw-note" style="left:39%;top:31%;width:25px;height:11px;background:#F2A12C;border:2px solid #F1ECE6;box-shadow:0 2px 0 1px rgba(0,0,0,0.45);"></div>
+        <div class="hw-note" style="left:57%;top:51%;width:33px;height:14px;background:#C9543C;border:2px solid #F1ECE6;box-shadow:0 2px 0 1px rgba(0,0,0,0.45);"></div>
+        <div class="hw-note" style="left:46%;top:72%;width:44px;height:19px;background:#E0A43B;border:2.5px solid #F1ECE6;box-shadow:0 3px 0 1px rgba(0,0,0,0.5);"></div>
+        <!-- retro type chip -->
+        <div class="hw-chip" style="background:#F1ECE6;color:#1a120c;font-weight:800;letter-spacing:1px;">¡SABOR! ×12</div>
+        <div class="hw-label" style="color:#F1ECE6;">C — Vinyl Heat</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Vinyl Heat</h3>
+      <p>Retro Fania-records poster energy. <strong>Sunburst rays from the vanishing point, brass rails, enamel-badge notes with cream ink rims</strong>, screen-print grain, bold retro type for combos ("¡SABOR!"). The most distinctive and least "video game default" — a riskier, more editorial look.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="section">
+  <p class="subtitle">Mixing is allowed — e.g. "A's neon notes on B's atmospheric stage." Tell me in the terminal what you picked and anything you'd blend.</p>
+</div>

@@ -1,7 +1,7 @@
 'use client'
 
 // Redesigned, collapsible course sidebar for the lesson viewer.
-// Expanded: 340px module accordion with text-first lesson rows.
+// Expanded: 340px module accordion with chip-labelled lesson rows.
 // Collapsed: 72px rail with the teacher avatar, an expand button, and
 // numbered lesson dots so navigation still works.
 
@@ -11,8 +11,11 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ChevronDown,
+  ChevronRight,
+  LayoutGrid,
   Play,
   Check,
+  Lock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import styles from './lesson-viewer.module.css'
@@ -22,6 +25,7 @@ export interface LessonSidebarClass {
   title: string
   totalItems: number
   completedItems: number
+  isFree: boolean
 }
 
 export interface LessonSidebarSection {
@@ -41,15 +45,24 @@ interface LessonSidebarProps {
   courseImageUrl?: string | null
   teacherName?: string | null
   teacherImageUrl?: string | null
+  /** Whether the viewer can access subscription-gated classes. */
+  hasAccess: boolean
   collapsed: boolean
   onToggle: () => void
 }
 
-function classState(cls: LessonSidebarClass, currentClassId: string) {
-  if (cls.id === currentClassId) return 'active' as const
+type RowState = 'active' | 'completed' | 'locked' | 'available'
+
+function classState(
+  cls: LessonSidebarClass,
+  currentClassId: string,
+  hasAccess: boolean
+): RowState {
+  if (cls.id === currentClassId) return 'active'
+  if (!cls.isFree && !hasAccess) return 'locked'
   if (cls.totalItems > 0 && cls.completedItems === cls.totalItems)
-    return 'completed' as const
-  return 'available' as const
+    return 'completed'
+  return 'available'
 }
 
 function avatarInitials(name?: string | null) {
@@ -71,6 +84,7 @@ export function LessonSidebar({
   courseImageUrl,
   teacherName,
   teacherImageUrl,
+  hasAccess,
   collapsed,
   onToggle,
 }: LessonSidebarProps) {
@@ -87,7 +101,7 @@ export function LessonSidebar({
       <aside
         className={cn(
           styles.side,
-          'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-card dark:bg-[hsl(0_0%_5%)] sticky top-14 h-[calc(100vh-3.5rem)] overflow-hidden'
+          'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-sunken sticky top-14 h-[calc(100vh-3.5rem)] overflow-hidden'
         )}
       >
         <div
@@ -100,7 +114,7 @@ export function LessonSidebar({
             <img
               src={courseImageUrl}
               alt={courseTitle}
-              className="h-11 w-11 flex-shrink-0 rounded-[10px] object-cover"
+              className="h-11 w-11 flex-shrink-0 rounded-[10px] object-cover ring-1 ring-border"
             />
           ) : (
             <div className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-[10px] bg-secondary text-sm font-bold font-heading text-foreground">
@@ -110,30 +124,36 @@ export function LessonSidebar({
           <button
             onClick={onToggle}
             aria-label="Expand menu"
-            className="grid h-9 w-9 place-items-center rounded-[9px] border border-border bg-muted text-foreground hover:bg-muted/70 dark:bg-[hsl(0_0%_9%)] dark:hover:bg-[hsl(0_0%_13%)]"
+            className="grid h-9 w-9 place-items-center rounded-[9px] border border-border bg-raised text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <ChevronsRight className="h-4 w-4" />
           </button>
           <div className="h-px w-7 bg-border" />
           <div className="mt-0.5 flex flex-col items-center gap-1.5">
             {flat.map((c) => {
-              const state = classState(c, currentClassId)
+              const state = classState(c, currentClassId, hasAccess)
               return (
                 <Link
                   key={c.id}
                   href={`/dashboard/course/${courseId}/class/${c.id}`}
                   title={`Lesson ${c.n} — ${c.title}`}
                   className={cn(
-                    'grid h-9 w-9 place-items-center rounded-[9px] border text-[13px] font-bold font-heading transition-colors',
+                    'grid h-9 w-9 place-items-center rounded-[9px] border text-[13px] font-bold font-heading transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                     state === 'active' &&
                       'border-primary bg-primary text-white',
                     state === 'completed' &&
-                      'border-green-600/40 text-green-600 dark:text-green-400 hover:bg-muted',
+                      'border-success/40 text-success hover:bg-muted',
+                    state === 'locked' &&
+                      'border-border text-muted-foreground/60 opacity-70 hover:bg-muted',
                     state === 'available' &&
                       'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
-                  {String(c.n).padStart(2, '0')}
+                  {state === 'locked' ? (
+                    <Lock className="h-3.5 w-3.5" />
+                  ) : (
+                    String(c.n).padStart(2, '0')
+                  )}
                 </Link>
               )
             })}
@@ -165,35 +185,35 @@ export function LessonSidebar({
     <aside
       className={cn(
         styles.side,
-        'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-card dark:bg-[hsl(0_0%_5%)] sticky top-14 h-[calc(100vh-3.5rem)] overflow-hidden'
+        'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-sunken sticky top-14 h-[calc(100vh-3.5rem)] overflow-hidden'
       )}
     >
       <div className="flex h-full w-[340px] flex-col">
-        {/* Header */}
+        {/* Course identity */}
         <div className="flex flex-shrink-0 items-center gap-3 p-3.5">
           {courseImageUrl ? (
             <img
               src={courseImageUrl}
               alt={courseTitle}
-              className="h-11 w-11 flex-shrink-0 rounded-[10px] object-cover"
+              className="h-12 w-12 flex-shrink-0 rounded-xl object-cover ring-1 ring-border"
             />
           ) : (
-            <div className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-[10px] bg-secondary text-sm font-bold font-heading text-foreground">
+            <div className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl bg-secondary text-sm font-bold font-heading text-foreground">
               {avatarInitials(courseTitle)}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <div className="truncate font-heading text-base font-bold tracking-tight">
+            <div className="truncate font-heading text-[15px] font-extrabold tracking-tight">
               {courseTitle}
             </div>
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              Learning path
+            <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
+              Learning pathway
             </div>
           </div>
           <button
             onClick={onToggle}
             aria-label="Collapse menu"
-            className="grid h-[30px] w-[30px] place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="grid h-[30px] w-[30px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <ChevronsLeft className="h-4 w-4" />
           </button>
@@ -203,17 +223,21 @@ export function LessonSidebar({
         <div className={cn(styles.scrollHide, 'flex-1 overflow-y-auto')}>
           <Link
             href={`/dashboard/course/${courseId}`}
-            className="mx-3.5 mb-3.5 mt-1 block rounded-xl border border-border bg-card px-3.5 py-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted"
+            className="group mx-3.5 mb-3.5 mt-1 flex items-center gap-2.5 rounded-xl border border-border bg-raised px-3.5 py-3 text-[13px] font-medium text-foreground shadow-warm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            Course overview
+            <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+            <span className="flex-1">Class overview</span>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
           </Link>
 
-          {numbered.map((section) => (
+          {numbered.map((section, i) => (
             <SidebarModule
               key={section.id}
               courseId={courseId}
               currentClassId={currentClassId}
               section={section}
+              moduleIndex={i}
+              hasAccess={hasAccess}
             />
           ))}
 
@@ -253,28 +277,58 @@ function SidebarModule({
   courseId,
   currentClassId,
   section,
+  moduleIndex,
+  hasAccess,
 }: {
   courseId: string
   currentClassId: string
   section: Omit<LessonSidebarSection, 'classes'> & {
     classes: (LessonSidebarClass & { n: number })[]
   }
+  moduleIndex: number
+  hasAccess: boolean
 }) {
   const containsActive = section.classes.some((c) => c.id === currentClassId)
   const [open, setOpen] = useState(containsActive)
+
+  const pct =
+    section.totalItems > 0
+      ? Math.round((section.completedItems / section.totalItems) * 100)
+      : 0
+  const complete = section.totalItems > 0 && pct === 100
 
   return (
     <div className="pb-3.5">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="mx-3.5 flex w-[calc(100%-28px)] items-start justify-between gap-3 rounded-xl border border-border px-4 py-3.5 text-left"
+        aria-expanded={open}
+        className="mx-3.5 flex w-[calc(100%-28px)] items-start justify-between gap-3 rounded-2xl border border-border bg-raised px-4 py-3.5 text-left shadow-warm transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <div className="min-w-0">
-          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary">
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
+            Module {moduleIndex + 1}
+          </div>
+          <div className="mt-1 font-heading text-[14px] font-bold leading-snug tracking-tight">
             {section.title}
           </div>
-          <div className="mt-1 font-heading text-base font-bold tracking-tight">
-            {section.completedItems}/{section.totalItems} complete
+          {section.description && (
+            <div className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+              {section.description}
+            </div>
+          )}
+          <div className="mt-3 flex items-center gap-2.5">
+            <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+              <div
+                className={cn(
+                  'h-full rounded-full transition-[width] duration-500',
+                  complete ? 'bg-gold' : 'bg-primary'
+                )}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="text-[10.5px] font-semibold tabular-nums text-muted-foreground">
+              {section.completedItems}/{section.totalItems}
+            </span>
           </div>
         </div>
         <ChevronDown
@@ -295,7 +349,7 @@ function SidebarModule({
               key={c.id}
               courseId={courseId}
               cls={c}
-              state={classState(c, currentClassId)}
+              state={classState(c, currentClassId, hasAccess)}
             />
           ))}
         </>
@@ -311,36 +365,37 @@ function LessonRow({
 }: {
   courseId: string
   cls: LessonSidebarClass & { n: number }
-  state: 'active' | 'completed' | 'available'
+  state: RowState
 }) {
   return (
     <Link
       href={`/dashboard/course/${courseId}/class/${cls.id}`}
       className={cn(
-        'relative mx-3.5 mb-0.5 flex items-center gap-3 rounded-[10px] py-2.5 pl-3.5 pr-3 transition-colors',
-        state === 'active'
-          ? 'bg-primary/[0.08]'
-          : 'hover:bg-muted'
+        'group relative mx-3.5 mb-0.5 flex items-center gap-3 rounded-xl py-2.5 pl-3.5 pr-3 transition-[background-color,transform] duration-150',
+        state === 'active' ? 'bg-primary/[0.08]' : 'hover:translate-x-[2px] hover:bg-muted',
+        state === 'locked' && 'opacity-70',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
       )}
     >
       {state === 'active' && <span className={styles.lessonAccent} aria-hidden />}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span
-          className={cn(
-            'text-[10.5px] font-semibold uppercase leading-none tracking-[0.08em]',
-            state === 'active' ? 'text-primary' : 'text-muted-foreground'
-          )}
-        >
-          Lesson {String(cls.n).padStart(2, '0')}
-        </span>
-        <span
-          className={cn(
-            'text-sm leading-tight tracking-[-0.005em]',
-            state === 'active' ? 'font-semibold' : 'font-medium'
-          )}
-        >
-          {cls.title}
-        </span>
+      <span
+        className={cn(
+          'inline-flex h-6 flex-shrink-0 items-center rounded-md border px-2 font-heading text-[10.5px] font-bold tabular-nums transition-colors',
+          state === 'active' && 'border-primary/50 bg-primary/10 text-primary',
+          state === 'completed' && 'border-success/40 text-success',
+          (state === 'locked' || state === 'available') &&
+            'border-border text-muted-foreground group-hover:border-primary/40'
+        )}
+      >
+        Lesson {String(cls.n).padStart(2, '0')}
+      </span>
+      <span
+        className={cn(
+          'min-w-0 flex-1 truncate text-sm leading-tight tracking-[-0.005em]',
+          state === 'active' ? 'font-semibold' : 'font-medium'
+        )}
+      >
+        {cls.title}
       </span>
       {state === 'active' && (
         <span className="grid h-[22px] w-[22px] flex-shrink-0 place-items-center rounded-full bg-primary">
@@ -348,8 +403,13 @@ function LessonRow({
         </span>
       )}
       {state === 'completed' && (
-        <span className="grid h-[22px] w-[22px] flex-shrink-0 place-items-center rounded-full bg-green-600">
+        <span className="grid h-[22px] w-[22px] flex-shrink-0 place-items-center rounded-full bg-success">
           <Check className="h-3 w-3 text-white" />
+        </span>
+      )}
+      {state === 'locked' && (
+        <span className="grid h-[22px] w-[22px] flex-shrink-0 place-items-center rounded-full border border-border text-muted-foreground">
+          <Lock className="h-3 w-3" />
         </span>
       )}
     </Link>

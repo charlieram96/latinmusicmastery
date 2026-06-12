@@ -42,6 +42,12 @@
     --terracotta: 14 52% 48%;
     --gold-highlight: 38 58% 50%;
 
+    /* Lesson viewer surfaces & states — light mode */
+    --surface-sunken: 30 22% 96.5%;
+    --surface-raised: 30 20% 99%;
+    --success: 145 55% 38%;
+    --shadow-warm: 24 30% 20%;
+
     /* PlaySense Studio notation palette — light mode */
     --playsense-studio-notation: 20 10% 15%;          /* note glyphs, staff lines */
     --playsense-studio-notation-muted: 20 8% 42%;     /* secondary text (e.g. measure labels) */
@@ -82,6 +88,12 @@
     --warm-surface: 16 14% 8%; /* #161210 */
     --terracotta: 14 52% 53%; /* #C4654A */
     --gold-highlight: 38 58% 58%; /* #D4A854 */
+
+    /* Lesson viewer surfaces & states — dark mode */
+    --surface-sunken: 0 0% 5%;
+    --surface-raised: 0 0% 9%;
+    --success: 145 50% 45%;
+    --shadow-warm: 0 0% 0%;
 
     /* PlaySense Studio notation palette — dark mode */
     --playsense-studio-notation: 0 0% 88%;            /* near-white note glyphs */
