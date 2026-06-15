@@ -4,10 +4,12 @@ import { Video, Dumbbell, Music } from 'lucide-react'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
 import { PlaysenseStudioPlayer } from '@/components/playsense-studio/player/playsense-studio-player'
 import {
+  getExerciseMedia,
   getScoreDocumentForClassItem,
   getScoreSectionsForClassItem,
   logPlaysenseStudioEvent,
 } from '@/app/actions/playsense-studio'
+import { resolveLegacyAudioUrl } from '@/lib/play-sense/exercise-media'
 import { getQuizQuestions } from '@/app/actions/quiz'
 import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
 import { ExerciseView } from '@/components/class-viewer/lesson-viewer/exercise-view'
@@ -104,6 +106,15 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
     !!item.video_url &&
     !item.soundslice_embed_url
 
+  // EXERCISE play-part media: optional cropped video + instrument backing
+  // tracks the student selects before playing.
+  const exerciseMedia =
+    item.item_type === 'EXERCISE' ? (await getExerciseMedia(item.id)).data ?? null : null
+  const backingTracks = exerciseMedia?.backingTracks ?? []
+  const exerciseVideo = exerciseMedia?.videoUrl
+    ? { url: exerciseMedia.videoUrl, startSeconds: exerciseMedia.videoStartSeconds }
+    : null
+
   // Quizzes (and legacy quiz-style exercises) are a series of questions stored
   // in quiz_questions. Fetch them server-side so the runner renders immediately.
   const quizQuestions =
@@ -156,7 +167,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
             keySignature={item.key_signature}
           />
         ) : (
-          <Card>
+          <Card className="overflow-hidden rounded-2xl border-border shadow-warm">
             <CardContent className="p-0">
               {hasVideoSections && firstSection && item.video_url ? (
                 <PlaysenseStudioPlayer
@@ -168,7 +179,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
                   sections={playerSections}
                 />
               ) : item.soundslice_embed_url ? (
-                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                <div className="aspect-video overflow-hidden bg-black">
                   <iframe
                     src={item.soundslice_embed_url}
                     className="w-full h-full"
@@ -177,11 +188,11 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
                   />
                 </div>
               ) : item.video_url ? (
-                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                <div className="aspect-video overflow-hidden bg-black">
                   <video src={item.video_url} controls className="w-full h-full" />
                 </div>
               ) : (
-                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                <div className="aspect-video flex items-center justify-center bg-muted">
                   <Video className="w-12 h-12 text-muted-foreground" />
                 </div>
               )}
@@ -205,9 +216,9 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
               </CardContent>
             </Card>
           ) : item.video_url ? (
-            <Card>
+            <Card className="overflow-hidden rounded-2xl border-border shadow-warm">
               <CardContent className="p-0">
-                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                <div className="aspect-video overflow-hidden bg-black">
                   <video src={item.video_url} controls className="w-full h-full" />
                 </div>
               </CardContent>
@@ -247,10 +258,18 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
                 id: item.id,
                 title: item.title,
                 description: item.description ?? undefined,
-                audioUrl: playsenseStudioMediaUrl ?? undefined,
+                // Legacy play-along (demo-video audio as backing) only until
+                // explicit backing tracks / an exercise video are authored.
+                audioUrl: resolveLegacyAudioUrl({
+                  legacyMediaUrl: playsenseStudioMediaUrl,
+                  hasBackingTracks: backingTracks.length > 0,
+                  hasExerciseVideo: !!exerciseVideo,
+                }),
               })}
               sections={playerSections}
               playerLayout={playerLayout}
+              backingTracks={backingTracks}
+              exerciseVideo={exerciseVideo}
             />
           ) : null}
 

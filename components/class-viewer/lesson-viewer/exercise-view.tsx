@@ -9,6 +9,7 @@ import {
   type PlaysenseStudioPlayerTimeMap,
 } from '@/components/playsense-studio/player/playsense-studio-player'
 import { ScoreExerciseGame } from './score-exercise-game'
+import type { BackingTrack } from '@/app/actions/playsense-studio'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
 
@@ -25,6 +26,10 @@ interface ExerciseViewProps {
    *  falls back to the graded score over the video. */
   sections?: PlayerSection[]
   playerLayout?: 'stack' | 'split'
+  /** Instrument backing tracks for the play part (student selects before starting). */
+  backingTracks?: BackingTrack[]
+  /** Optional exercise-part video, cropped to the score's length. */
+  exerciseVideo?: { url: string; startSeconds: number } | null
 }
 
 type Mode = 'watch' | 'play'
@@ -44,13 +49,22 @@ export function ExerciseView({
   exercise,
   sections,
   playerLayout = 'stack',
+  backingTracks,
+  exerciseVideo,
 }: ExerciseViewProps) {
   // Demo first: start in Watch when there's a video; otherwise go straight to play.
   const [mode, setMode] = useState<Mode>(videoUrl ? 'watch' : 'play')
 
   // No video → no Watch mode; just the graded highway + staff.
   if (!videoUrl) {
-    return <ScoreExerciseGame exercise={exercise} score={score} />
+    return (
+      <ScoreExerciseGame
+        exercise={exercise}
+        score={score}
+        backingTracks={backingTracks}
+        exerciseVideo={exerciseVideo}
+      />
+    )
   }
 
   if (mode === 'watch') {
@@ -105,6 +119,8 @@ export function ExerciseView({
         exercise={exercise}
         score={score}
         onWatchDemo={() => setMode('watch')}
+        backingTracks={backingTracks}
+        exerciseVideo={exerciseVideo}
       />
     </div>
   )

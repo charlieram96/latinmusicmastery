@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { Clock, BarChart3 } from 'lucide-react'
+import styles from '@/components/class-viewer/lesson-viewer/lesson-viewer.module.css'
 import { createClient } from '@/lib/supabase/server'
 import { getCourseStructureForStudent } from '@/app/actions/course-student'
 import { getComments } from '@/app/actions/comments'
@@ -114,6 +115,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
       title: c.title,
       totalItems: c.totalItems,
       completedItems: c.completedItems,
+      isFree: c.is_free ?? false,
     })),
   })) || []
 
@@ -135,6 +137,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           courseImageUrl,
           teacherName,
           teacherImageUrl,
+          hasAccess: isStudent,
         }}
         header={{
           moduleTitle,
@@ -205,7 +208,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const body = (
     <>
       {activeItem ? (
-        <div className="px-4 pt-4 md:px-8">
+        <div className={`px-4 pt-4 md:px-8 ${styles.rise}`} style={{ animationDelay: '80ms' }}>
           <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" />
         </div>
       ) : (
@@ -215,51 +218,72 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
       )}
 
       <div className="px-4 pb-12 pt-6 md:px-8">
-        {/* Compact meta strip */}
+        {/* Meta pills */}
         {(durationLabel || levelLabel || teacherName) && (
-          <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border pb-5">
+          <div
+            className={`mb-6 flex flex-wrap items-center gap-2 border-b border-border pb-5 ${styles.rise}`}
+            style={{ animationDelay: '120ms' }}
+          >
             {durationLabel && (
-              <span className="inline-flex items-center gap-2 text-[13px] font-medium text-foreground/80">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-raised px-3 py-1 text-xs font-medium text-foreground/80">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                 {durationLabel}
               </span>
             )}
             {levelLabel && (
-              <>
-                {durationLabel && <span className="h-3.5 w-px bg-border" />}
-                <span className="inline-flex items-center gap-2 text-[13px] font-medium text-foreground/80">
-                  <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
-                  {levelLabel}
-                </span>
-              </>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-raised px-3 py-1 text-xs font-medium text-foreground/80">
+                <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
+                {levelLabel}
+              </span>
             )}
             {teacherName && (
-              <>
-                {(durationLabel || levelLabel) && (
-                  <span className="h-3.5 w-px bg-border" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-raised py-1 pl-1 pr-3 text-xs font-medium text-foreground/80">
+                {teacherImageUrl ? (
+                  <img
+                    src={teacherImageUrl}
+                    alt={teacherName}
+                    className="h-5 w-5 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-secondary text-[9px] font-bold font-heading">
+                    {teacherName
+                      .split(' ')
+                      .map((p) => p[0])
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase()}
+                  </span>
                 )}
-                <span className="inline-flex items-center gap-2 text-[13px] font-medium text-foreground/80">
-                  {teacherName}
-                </span>
-              </>
+                {teacherName}
+              </span>
             )}
           </div>
         )}
 
         {/* Lesson description — below the video, not in the sidebar/header */}
         {lessonDescription && (
-          <div className="mb-8 max-w-[820px] space-y-3">
-            {lessonDescription
-              .split(/\n{2,}/)
-              .filter((p) => p.trim().length > 0)
-              .map((para, i) => (
-                <p
-                  key={i}
-                  className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/80"
-                >
-                  {para}
-                </p>
-              ))}
+          <div className="mb-10 max-w-[820px]">
+            <div className="mb-3 font-heading text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground">
+              About this lesson
+            </div>
+            <div className="space-y-3">
+              {lessonDescription
+                .split(/\n{2,}/)
+                .filter((p) => p.trim().length > 0)
+                .map((para, i) => (
+                  <p
+                    key={i}
+                    className={
+                      i === 0
+                        ? 'whitespace-pre-wrap text-[15.5px] leading-[1.7] text-foreground'
+                        : 'whitespace-pre-wrap text-[15.5px] leading-[1.7] text-foreground/75'
+                    }
+                  >
+                    {para}
+                  </p>
+                ))}
+            </div>
           </div>
         )}
 
@@ -284,6 +308,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         courseImageUrl,
         teacherName,
         teacherImageUrl,
+        hasAccess: isStudent,
       }}
       header={{
         moduleTitle,

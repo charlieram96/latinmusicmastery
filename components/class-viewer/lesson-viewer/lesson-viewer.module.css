@@ -1,6 +1,6 @@
 /* Scoped styles for the redesigned lesson viewer.
    Only the bits that are awkward in Tailwind live here — scrollbar hiding,
-   the diagonal resize knob, and the sidebar/footer width transitions. */
+   entrance animation, and the sidebar/footer width transitions. */
 
 .scrollHide {
   scrollbar-width: none;
@@ -42,41 +42,6 @@
   }
 }
 
-/* Diagonal 2-axis resize knob that sits on the seam between the panes. */
-.knob {
-  position: absolute;
-  z-index: 12;
-  width: 30px;
-  height: 30px;
-  border-radius: 9999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: hsl(0 0% 14%);
-  border: 1px solid hsl(0 0% 100% / 0.1);
-  color: hsl(0 0% 60%);
-  cursor: nwse-resize;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  transition: background 130ms, color 130ms, border-color 130ms, box-shadow 130ms,
-    transform 130ms;
-}
-.knob:hover,
-.knob.dragging {
-  background: hsl(30 85% 55%);
-  border-color: hsl(30 85% 55%);
-  color: #fff;
-  box-shadow: 0 0 0 4px hsl(30 85% 55% / 0.18), 0 6px 16px rgba(0, 0, 0, 0.55);
-}
-.knobIcon {
-  transform: rotate(45deg);
-}
-.knobCol {
-  cursor: ns-resize;
-}
-.knobCol .knobIcon {
-  transform: rotate(90deg);
-}
-
 /* Left accent bar on the active lesson row. */
 .lessonAccent {
   position: absolute;
@@ -86,5 +51,25 @@
   width: 3px;
   height: 28px;
   border-radius: 9999px;
-  background: hsl(30 85% 55%);
+  background: hsl(var(--primary));
+}
+
+/* Staggered entrance — opacity + a 6px rise. The global
+   prefers-reduced-motion rule in globals.css neutralizes this. */
+@keyframes lessonRise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.rise {
+  animation: lessonRise 360ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* Horizontal scroll-snap for the parts stepper on small screens. */
+.snapX {
+  scroll-snap-type: x proximity;
+}
+.snapStart {
+  scroll-snap-align: start;
 }

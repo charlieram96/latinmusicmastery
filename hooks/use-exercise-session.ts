@@ -96,7 +96,17 @@ interface UseExerciseSessionResult {
   setNoisyRoomMode: (enabled: boolean) => void
 }
 
-export function useExerciseSession(): UseExerciseSessionResult {
+export interface UseExerciseSessionOptions {
+  /**
+   * Explicit backing-track URLs (course exercises: the student's selected
+   * instrument tracks). When provided — even as an empty array — this wins over
+   * the legacy single `exercise.audioUrl`. All tracks start together at the
+   * engine's t0; they're assumed equal-length and pre-synced with the notes.
+   */
+  backingTrackUrls?: string[]
+}
+
+export function useExerciseSession(options: UseExerciseSessionOptions = {}): UseExerciseSessionResult {
   const [sessionState, setSessionState] = useState<SessionState>('idle')
   const [audioMode, setAudioModeState] = useState<AudioMode | null>(null)
   const [exercise, setExercise] = useState<ExerciseDefinition | null>(null)
@@ -176,7 +186,9 @@ export function useExerciseSession(): UseExerciseSessionResult {
   const calibration = useCalibration()
 
   const backingTrackAudioMode = (audioMode === 'headphones' || audioMode === 'speaker-safe') ? audioMode : undefined
-  const backingTrack = useBackingTrack({ audioUrl: exercise?.audioUrl, audioMode: backingTrackAudioMode })
+  const backingTrackUrls =
+    options.backingTrackUrls ?? (exercise?.audioUrl ? [exercise.audioUrl] : [])
+  const backingTrack = useBackingTrack({ audioUrls: backingTrackUrls, audioMode: backingTrackAudioMode })
 
   // Pitch detection for melodic instruments
   const pitchDetection = usePitchDetection()

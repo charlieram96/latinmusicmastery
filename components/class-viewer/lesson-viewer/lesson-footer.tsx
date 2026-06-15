@@ -70,13 +70,20 @@ export function LessonFooter({
     <div
       className={cn(
         styles.footer,
-        'fixed bottom-0 right-0 z-40 flex items-center justify-between gap-4 border-t border-border bg-[hsl(30_20%_99%/0.9)] dark:bg-[hsl(0_0%_5%/0.92)] px-8 py-3 backdrop-blur-xl'
+        'fixed bottom-0 right-0 z-40 flex items-center justify-between gap-4 border-t border-border bg-sunken/90 px-8 py-3 backdrop-blur-xl'
       )}
     >
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-[2px] origin-left bg-primary transition-transform duration-300"
+        style={{
+          transform: `scaleX(${totalItems > 0 ? (currentIndex + 1) / totalItems : 0})`,
+        }}
+      />
       {prevHref ? (
         <Link
           href={prevHref}
-          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <ChevronLeft className="h-3.5 w-3.5" /> Previous
         </Link>
@@ -88,10 +95,10 @@ export function LessonFooter({
         onClick={handleComplete}
         disabled={saving || done || !activeItemId}
         className={cn(
-          'inline-flex h-[42px] items-center gap-2 rounded-full px-6 text-sm font-semibold transition-colors',
+          'inline-flex h-[42px] items-center gap-2 rounded-full px-6 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           done
-            ? 'cursor-default bg-green-600 text-white'
-            : 'bg-primary text-white hover:bg-[hsl(30_85%_50%)] disabled:opacity-60'
+            ? 'cursor-default bg-success text-white'
+            : 'bg-primary text-white hover:bg-primary/90 disabled:opacity-60'
         )}
       >
         <Check className="h-3.5 w-3.5" />
@@ -101,7 +108,7 @@ export function LessonFooter({
       {nextHref ? (
         <Link
           href={nextHref}
-          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:bg-muted"
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {nextText} <ChevronRight className="h-3.5 w-3.5" />
         </Link>

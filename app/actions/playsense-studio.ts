@@ -1217,3 +1217,169 @@ export async function deleteSong(
   revalidatePath('/dashboard/play-sense');
   return { success: true };
 }
+
+// ============================================
+// EXERCISE play-part media — optional cropped video + backing tracks
+// ============================================
+
+export interface BackingTrack {
+  id: string;
+  label: string;
+  audioUrl: string;
+  orderIndex: number;
+}
+
+export interface ExerciseMedia {
+  /** Optional exercise-part video (independent of the Watch demo video). */
+  videoUrl: string | null;
+  /** Crop start offset — the visible window is exactly the score's length. */
+  videoStartSeconds: number;
+  backingTracks: BackingTrack[];
+}
+
+/** Read the exercise part's media. Any authenticated user (students included). */
+export async function getExerciseMedia(
+  classItemId: string
+): Promise<{ data?: ExerciseMedia; error?: string }> {
+  const supabase = await createClient();
+
+  const { data: item, error: itemErr } = await supabase
+    .from('class_items')
+    .select('exercise_video_url, exercise_video_start_seconds')
+    .eq('id', classItemId)
+    .single();
+  if (itemErr || !item) return { error: itemErr?.message ?? 'Class item not found' };
+
+  const { data: tracks, error: tracksErr } = await supabase
+    .from('class_item_backing_tracks')
+    .select('id, label, audio_url, order_index')
+    .eq('class_item_id', classItemId)
+    .order('order_index', { ascending: true });
+  if (tracksErr) return { error: tracksErr.message };
+
+  return {
+    data: {
+      videoUrl: item.exercise_video_url,
+      videoStartSeconds: item.exercise_video_start_seconds ?? 0,
+      backingTracks: (tracks ?? []).map((t) => ({
+        id: t.id,
+        label: t.label,
+        audioUrl: t.audio_url,
+        orderIndex: t.order_index,
+      })),
+    },
+  };
+}
+
+/** Set or clear the exercise-part video + its crop start. Clearing resets the crop. */
+export async function updateExerciseVideo(input: {
+  classItemId: string;
+  videoUrl: string | null;
+  startSeconds: number;
+}): Promise<{ success?: true; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const { error } = await supabase
+    .from('class_items')
+    .update({
+      exercise_video_url: input.videoUrl,
+      exercise_video_start_seconds: input.videoUrl ? Math.max(0, input.startSeconds) : 0,
+    })
+    .eq('id', input.classItemId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/playsense-studio/${input.classItemId}`);
+  return { success: true };
+}
+
+/** Set the class item's demo (Watch-part) video from inside the studio. */
+export async function updateClassItemVideo(input: {
+  classItemId: string;
+  videoUrl: string;
+  videoDurationSeconds: number | null;
+}): Promise<{ success?: true; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const { error } = await supabase
+    .from('class_items')
+    .update({
+      video_url: input.videoUrl,
+      video_duration_seconds: input.videoDurationSeconds,
+    })
+    .eq('id', input.classItemId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/playsense-studio/${input.classItemId}`);
+  return { success: true };
+}
+
+export async function addBackingTrack(input: {
+  classItemId: string;
+  label: string;
+  audioUrl: string;
+}): Promise<{ data?: BackingTrack; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const { data: last } = await supabase
+    .from('class_item_backing_tracks')
+    .select('order_index')
+    .eq('class_item_id', input.classItemId)
+    .order('order_index', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const orderIndex = (last?.order_index ?? -1) + 1;
+
+  const { data, error } = await supabase
+    .from('class_item_backing_tracks')
+    .insert({
+      class_item_id: input.classItemId,
+      label: input.label.trim() || 'Backing track',
+      audio_url: input.audioUrl,
+      order_index: orderIndex,
+    })
+    .select('id, label, audio_url, order_index')
+    .single();
+  if (error || !data) return { error: error?.message ?? 'Insert failed' };
+
+  revalidatePath(`/admin/playsense-studio/${input.classItemId}`);
+  return {
+    data: { id: data.id, label: data.label, audioUrl: data.audio_url, orderIndex: data.order_index },
+  };
+}
+
+export async function updateBackingTrackLabel(input: {
+  trackId: string;
+  label: string;
+}): Promise<{ success?: true; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const { error } = await supabase
+    .from('class_item_backing_tracks')
+    .update({ label: input.label.trim() || 'Backing track' })
+    .eq('id', input.trackId);
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function deleteBackingTrack(input: {
+  trackId: string;
+}): Promise<{ success?: true; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const { error } = await supabase
+    .from('class_item_backing_tracks')
+    .delete()
+    .eq('id', input.trackId);
+  if (error) return { error: error.message };
+  return { success: true };
+}

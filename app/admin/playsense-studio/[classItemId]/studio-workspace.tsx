@@ -15,18 +15,21 @@
 
 import { ArrowLeft, FileUp, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import {
   saveScoreDocument,
   updateSongMeta,
+  type ExerciseMedia,
   type SongDifficulty,
 } from '@/app/actions/playsense-studio';
+import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta-editor';
 import { HighwayPreview } from '@/components/playsense-studio/studio/highway-preview';
+import { ExerciseMediaPanel } from '@/components/playsense-studio/studio/exercise-media-panel';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 export type StudioOwner =
@@ -54,6 +57,8 @@ export interface StudioWorkspaceProps {
   videoDurationSeconds: number | null;
   /** Extra app-bar content (e.g. the exercise Watch/Exercise part toggle). */
   appBarExtra?: React.ReactNode;
+  /** EXERCISE class items: the play-part media (optional cropped video + backing tracks). */
+  exerciseMedia?: ExerciseMedia | null;
 }
 
 const AUTOSAVE_INTERVAL_MS = 5000;
@@ -68,8 +73,20 @@ export function StudioWorkspace({
   activeTimeMap,
   videoDurationSeconds,
   appBarExtra,
+  exerciseMedia,
 }: StudioWorkspaceProps) {
   const { state, dispatch, undo, redo, canUndo, canRedo, markClean } = useEditor(initialScore);
+
+  // The exercise studio shows the highway inline (under the notation) and the
+  // play-part media panel in the rail; other modes keep the preview drawer.
+  const isExercise = mode === 'exercise' && owner.kind === 'classItem';
+
+  // How long the graded score runs at its own tempo — the exercise video's crop
+  // window size. Tracks live edits (add/remove measures, tempo changes).
+  const scoreLengthSeconds = useMemo(() => {
+    const wps = buildWaypoints(state.score, state.score.initialTempo, 0);
+    return wps.length ? wps[wps.length - 1].videoTimeSeconds : 0;
+  }, [state.score]);
 
   const [savingState, setSavingState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -159,16 +176,19 @@ export function StudioWorkspace({
         {owner.kind === 'song' && <SongMetaControls owner={owner} />}
 
         <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setHighwayOpen((o) => !o)}
-            className={`st-chip${highwayOpen ? ' is-on' : ''}`}
-            title="Toggle the student highway preview"
-            aria-pressed={highwayOpen}
-          >
-            <PanelBottom className="h-4 w-4" />
-            <span className="hidden sm:inline">Preview</span>
-          </button>
+          {/* Exercise mode shows the highway inline under the notation instead. */}
+          {!isExercise && (
+            <button
+              type="button"
+              onClick={() => setHighwayOpen((o) => !o)}
+              className={`st-chip${highwayOpen ? ' is-on' : ''}`}
+              title="Toggle the student highway preview"
+              aria-pressed={highwayOpen}
+            >
+              <PanelBottom className="h-4 w-4" />
+              <span className="hidden sm:inline">Preview</span>
+            </button>
+          )}
 
           {owner.kind === 'classItem' && (
             <ScoreImportDialog
@@ -239,6 +259,16 @@ export function StudioWorkspace({
                 <ScoreMetaEditor score={state.score} dispatch={dispatch} />
               </div>
             </div>
+            {/* Exercise play-part media: optional cropped video + backing tracks. */}
+            {isExercise && exerciseMedia && owner.kind === 'classItem' && (
+              <div className="border-t border-border pt-4">
+                <ExerciseMediaPanel
+                  classItemId={owner.classItemId}
+                  scoreLengthSeconds={scoreLengthSeconds}
+                  initialMedia={exerciseMedia}
+                />
+              </div>
+            )}
             {/* Inspector: monitor/demo + selected note + sync status (SyncPanel portals here). */}
             <div
               ref={setInspectorEl}
@@ -266,13 +296,26 @@ export function StudioWorkspace({
             inspectorEl={inspectorEl}
             transportEl={transportEl}
           />
+
+          {/* Exercise mode: the student's falling-notes view lives right under
+              the notation — the author sees both at once. */}
+          {isExercise && (
+            <div className="mt-3 shrink-0">
+              <HighwayPreview
+                score={state.score}
+                scoreDocumentId={scoreDocumentId}
+                title={state.score.title}
+                trackIndex={0}
+              />
+            </div>
+          )}
         </main>
       </div>
 
       {/* ---- Bottom: transport dock + highway drawer ---- */}
       <div ref={setTransportEl} className="shrink-0" />
 
-      {highwayOpen && (
+      {!isExercise && highwayOpen && (
         <div className="st-drawer" style={{ height: 380 }}>
           <div className="h-full overflow-y-auto px-4 py-3">
             <HighwayPreview

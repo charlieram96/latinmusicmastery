@@ -110,14 +110,14 @@ export function CommentsSection({
   }
 
   return (
-    <Card>
+    <Card className="rounded-2xl border-border bg-raised shadow-warm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <MessageSquare className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-2.5 font-heading text-lg font-bold tracking-tight">
+          <MessageSquare className="h-5 w-5 text-muted-foreground" />
           Discussion
           {comments.length > 0 && (
-            <span className="text-sm font-normal text-muted-foreground">
-              ({comments.length})
+            <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-border bg-background px-2 text-xs font-semibold tabular-nums text-muted-foreground">
+              {comments.length}
             </span>
           )}
         </CardTitle>

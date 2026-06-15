@@ -1,9 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-import { CourseBuilderV2 } from '@/components/admin/course-builder-v2'
-import { CourseEditForm } from '@/components/admin/course-edit-form'
+import { CourseStudio } from '@/components/admin/course-studio/course-studio'
 import { getCourseStructure } from '@/app/actions/course-builder'
 
 interface CourseEditPageProps {
@@ -55,54 +52,30 @@ export default async function CourseEditPage({ params }: CourseEditPageProps) {
   const { data: sections } = await getCourseStructure(id)
 
   return (
-    <div className="px-6 py-8">
-      <div className="max-w-5xl">
-      {/* Header */}
-      <div className="mb-8">
-        <Link href="/admin/courses" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Courses
-        </Link>
-        <h1 className="text-3xl font-bold">Edit Course</h1>
-        <p className="text-muted-foreground mt-2">
-          Update course details and manage content
-        </p>
-      </div>
-
-      {/* Edit Form */}
-      <CourseEditForm
-        course={{
-          id: course.id,
-          title: course.title,
-          slug: course.slug,
-          description: course.description,
-          musical_style_id: course.musical_style_id,
-          teacher_id: course.teacher_id,
-          is_published: course.is_published,
-          thumbnail_url: course.thumbnail_url,
-          instrument: course.instrument,
-          is_fundamentals: course.is_fundamentals ?? false,
-        }}
-        musicalStyles={(musicalStyles || []).map((style: any) => ({
-          id: style.id,
-          name: style.name,
-          country: style.country,
-        }))}
-        teachers={(teachers || []).map((teacher: any) => ({
-          id: teacher.id,
-          name: teacher.name,
-          instrument: teacher.instrument,
-        }))}
-      />
-
-      {/* Course Builder V2 */}
-      <div className="mt-8">
-        <CourseBuilderV2
-          courseId={course.id}
-          initialSections={(sections || []) as any}
-        />
-      </div>
-      </div>
-    </div>
+    <CourseStudio
+      course={{
+        id: course.id,
+        title: course.title,
+        slug: course.slug,
+        description: course.description,
+        musical_style_id: course.musical_style_id,
+        teacher_id: course.teacher_id,
+        is_published: course.is_published ?? false,
+        thumbnail_url: course.thumbnail_url,
+        instrument: course.instrument,
+        is_fundamentals: course.is_fundamentals ?? false,
+      }}
+      musicalStyles={(musicalStyles || []).map((style: any) => ({
+        id: style.id,
+        name: style.name,
+        country: style.country,
+      }))}
+      teachers={(teachers || []).map((teacher: any) => ({
+        id: teacher.id,
+        name: teacher.name,
+        instrument: teacher.instrument,
+      }))}
+      initialSections={(sections || []) as any}
+    />
   )
 }

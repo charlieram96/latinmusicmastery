@@ -22,6 +22,7 @@ interface LessonShellProps {
     courseImageUrl?: string | null
     teacherName?: string | null
     teacherImageUrl?: string | null
+    hasAccess: boolean
   }
   header: {
     moduleTitle: string

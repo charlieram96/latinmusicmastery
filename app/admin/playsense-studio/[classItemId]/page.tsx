@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import {
+  getExerciseMedia,
   getScoreDocumentForClassItem,
   getScoreSectionsForClassItem,
 } from '@/app/actions/playsense-studio';
@@ -64,6 +65,11 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
     const scoreResult = classItem.score_document_id
       ? await getScoreDocumentForClassItem(classItemId)
       : null;
+    const exerciseMedia = (await getExerciseMedia(classItemId)).data ?? {
+      videoUrl: null,
+      videoStartSeconds: 0,
+      backingTracks: [],
+    };
     return (
       <ExerciseStudio
         // Remount when the graded score is attached/replaced, so the editor
@@ -77,10 +83,12 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
         scoreDocumentId={classItem.score_document_id}
         initialScore={scoreResult?.data?.scoreDocument.parsedScore ?? null}
         activeTimeMap={scoreResult?.data?.activeTimeMap ?? null}
+        initialExerciseMedia={exerciseMedia}
         // Bound server actions — ExerciseStudio must not import the actions
         // module itself (deadlocks the Turbopack production build; see its note).
         fetchSections={getScoreSectionsForClassItem.bind(null, classItemId)}
         fetchExercise={getScoreDocumentForClassItem.bind(null, classItemId)}
+        fetchExerciseMedia={getExerciseMedia.bind(null, classItemId)}
       />
     );
   }

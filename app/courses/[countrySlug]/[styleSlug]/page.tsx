@@ -44,7 +44,7 @@ export default async function StyleCoursesPage({ params }: PageProps) {
     .from('courses')
     .select(`
       *,
-      course_modules:course_modules(id)
+      course_modules:course_modules_legacy(id)
     `)
     .eq('musical_style_id', style.id)
     .eq('is_published', true)

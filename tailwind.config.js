@@ -72,6 +72,9 @@ module.exports = {
         gold: {
           DEFAULT: "hsl(var(--gold-highlight))",
         },
+        sunken: "hsl(var(--surface-sunken))",
+        raised: "hsl(var(--surface-raised))",
+        success: "hsl(var(--success))",
         sidebar: {
           DEFAULT: cssVarColor('--sidebar'),
           foreground: cssVarColor('--sidebar-foreground'),
@@ -97,6 +100,7 @@ module.exports = {
         'stripe-sm': '0 2px 4px rgba(0, 0, 0, 0.1)',
         'stripe-md': '0 4px 8px rgba(0, 0, 0, 0.12)',
         'stripe-lg': '0 8px 16px rgba(0, 0, 0, 0.15)',
+        'warm': '0 1px 2px hsl(var(--shadow-warm) / 0.06), 0 8px 24px -12px hsl(var(--shadow-warm) / 0.12)',
       },
       keyframes: {
         "accordion-down": {

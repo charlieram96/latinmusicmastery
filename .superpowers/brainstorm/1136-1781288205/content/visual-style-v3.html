@@ -1,0 +1,308 @@
+<h2>Round 2 — three new directions, now animated</h2>
+<p class="subtitle">Each panel is a tall, live-animated loop of notes dropping toward the hit line. Watch a few loops of each. Click the one that feels right — or tell me what to blend / change.</p>
+
+<style>
+  .stage-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .stage-card {
+    aspect-ratio: auto !important;
+    display: flex; flex-direction: column;
+    border-radius: 14px; overflow: hidden;
+    cursor: pointer;
+  }
+  .stage-card .scene {
+    position: relative; width: 100%; height: 72vh; min-height: 560px;
+    overflow: hidden; flex: none;
+  }
+  .stage-card .meta { padding: 14px 16px; }
+  .stage-card .meta h3 { margin: 0 0 6px; }
+  .stage-card .meta p { margin: 0; font-size: 13px; line-height: 1.45; }
+
+  /* ============ A — STAGE LIGHTS (true Rock Band heir) ============ */
+  .a-scene { background: #0a0807; }
+  .a-bokeh { position: absolute; border-radius: 50%; filter: blur(10px); }
+  .a-beam {
+    position: absolute; top: -5%; width: 26%; height: 55%;
+    background: linear-gradient(180deg, rgba(242,161,44,0.16), transparent 85%);
+    filter: blur(5px);
+  }
+  .a-runway {
+    position: absolute; left: 50%; top: 8%; bottom: 0; width: 86%;
+    transform: translateX(-50%);
+    clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+    background: linear-gradient(180deg, #120d0a 0%, #1a120d 70%, #201510 100%);
+  }
+  .a-rail { position: absolute; top: 8%; bottom: 0; width: 3px; background: linear-gradient(180deg, #7a3d1c, #ED8A2C 70%, #FFC46B); box-shadow: 0 0 12px 2px rgba(237,138,44,0.55); }
+  .a-div { position: absolute; top: 8%; bottom: 0; width: 2px; background: linear-gradient(180deg, transparent, rgba(247,200,120,0.22) 60%, rgba(247,200,120,0.4)); }
+  .a-hitline {
+    position: absolute; left: 9%; right: 9%; bottom: 13%; height: 5px; border-radius: 5px;
+    background: linear-gradient(90deg, rgba(247,200,120,0.25), #F7C878 25%, #FFE8BF 50%, #F7C878 75%, rgba(247,200,120,0.25));
+    box-shadow: 0 0 16px 4px rgba(247,200,120,0.55), 0 0 60px 14px rgba(237,138,44,0.25);
+    animation: a-hum 1.2s ease-in-out infinite;
+  }
+  @keyframes a-hum { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.25); } }
+  .a-receptor {
+    position: absolute; bottom: 11.2%; width: 54px; height: 22px; border-radius: 50%;
+    border: 2.5px solid rgba(247,200,120,0.85); transform: translateX(-50%);
+    box-shadow: 0 0 10px 2px rgba(247,200,120,0.3), inset 0 0 8px rgba(247,200,120,0.25);
+  }
+  .a-receptor.rl { animation: a-flash 3.2s linear infinite; }
+  .a-receptor.rc { animation: a-flash 3.2s linear infinite 1.05s; }
+  .a-receptor.rr { animation: a-flash 3.2s linear infinite 2.1s; }
+  @keyframes a-flash {
+    0%, 87% { box-shadow: 0 0 10px 2px rgba(247,200,120,0.3), inset 0 0 8px rgba(247,200,120,0.25); }
+    90% { box-shadow: 0 0 26px 10px rgba(255,220,150,0.95), inset 0 0 16px rgba(255,232,191,0.9); }
+    100% { box-shadow: 0 0 10px 2px rgba(247,200,120,0.3), inset 0 0 8px rgba(247,200,120,0.25); }
+  }
+  .a-gem {
+    position: absolute; width: 52px; height: 24px; border-radius: 8px;
+    transform: translateX(-50%) scale(0.2);
+    opacity: 0; animation-duration: 3.2s; animation-iteration-count: infinite;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.8, 0.6);
+  }
+  .a-gem::before {
+    content: ""; position: absolute; inset: 3px; border-radius: 5px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.55), transparent 45%);
+  }
+  .a-gem.amber { background: linear-gradient(180deg, #FFC46B, #F2A12C 45%, #9a5c12); border: 2px solid #FFE3AE; box-shadow: 0 0 18px 3px rgba(242,161,44,0.65); }
+  .a-gem.terra { background: linear-gradient(180deg, #F08A76, #D54E3F 45%, #7c241a); border: 2px solid #FFC9B8; box-shadow: 0 0 18px 3px rgba(213,78,63,0.65); }
+  .a-gem.gold  { background: linear-gradient(180deg, #FFE3A0, #E0A43B 45%, #8a5e14); border: 2px solid #FFF0C8; box-shadow: 0 0 18px 3px rgba(224,164,59,0.65); }
+  @keyframes a-fall-l {
+    0% { top: 9%; left: 45.5%; transform: translateX(-50%) scale(0.18); opacity: 0; }
+    10% { opacity: 1; }
+    88% { top: 84.5%; left: 21%; transform: translateX(-50%) scale(1); opacity: 1; }
+    100% { top: 86%; left: 20%; transform: translateX(-50%) scale(1.06); opacity: 0; }
+  }
+  @keyframes a-fall-c {
+    0% { top: 9%; left: 50%; transform: translateX(-50%) scale(0.18); opacity: 0; }
+    10% { opacity: 1; }
+    88% { top: 84.5%; left: 50%; transform: translateX(-50%) scale(1); opacity: 1; }
+    100% { top: 86%; left: 50%; transform: translateX(-50%) scale(1.06); opacity: 0; }
+  }
+  @keyframes a-fall-r {
+    0% { top: 9%; left: 54.5%; transform: translateX(-50%) scale(0.18); opacity: 0; }
+    10% { opacity: 1; }
+    88% { top: 84.5%; left: 79%; transform: translateX(-50%) scale(1); opacity: 1; }
+    100% { top: 86%; left: 80%; transform: translateX(-50%) scale(1.06); opacity: 0; }
+  }
+  .a-combo {
+    position: absolute; top: 16px; right: 16px; padding: 6px 14px; border-radius: 999px;
+    background: rgba(17,14,13,0.6); border: 1px solid rgba(255,255,255,0.14);
+    color: #F7C878; font-weight: 700; font-size: 13px; letter-spacing: 1px;
+    backdrop-filter: blur(6px);
+  }
+
+  /* ============ B — OBSIDIAN GLASS (premium minimal) ============ */
+  .b-scene { background: radial-gradient(140% 90% at 50% -10%, #161210 0%, #0a0808 60%, #060505 100%); }
+  .b-lane { position: absolute; top: 0; bottom: 18%; width: 1px; background: linear-gradient(180deg, transparent, rgba(224,164,59,0.35) 70%, rgba(224,164,59,0.6)); }
+  .b-hitline {
+    position: absolute; left: 8%; right: 8%; bottom: 18%; height: 2px;
+    background: linear-gradient(90deg, transparent, #FFE8BF 20%, #FFF6E6 50%, #FFE8BF 80%, transparent);
+    box-shadow: 0 0 12px 2px rgba(255,232,191,0.7), 0 0 44px 10px rgba(237,138,44,0.22);
+  }
+  .b-floor {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 18%;
+    background: linear-gradient(180deg, rgba(255,232,191,0.07), transparent 65%);
+  }
+  .b-note {
+    position: absolute; width: 38px; height: 14px; border-radius: 999px;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, #FFF1D6, #F2A12C 60%, #c97f1d);
+    box-shadow: 0 0 14px 2px rgba(242,161,44,0.7);
+    animation-duration: 2.6s; animation-iteration-count: infinite; animation-timing-function: linear;
+    opacity: 0;
+  }
+  .b-note::after {
+    content: ""; position: absolute; left: 50%; bottom: 100%; width: 8px; height: 90px;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, transparent, rgba(242,161,44,0.45));
+    border-radius: 999px;
+  }
+  .b-note.cream { background: linear-gradient(180deg, #FFFFFF, #FFE8BF 60%, #d9b27a); box-shadow: 0 0 14px 2px rgba(255,232,191,0.8); }
+  .b-note.cream::after { background: linear-gradient(180deg, transparent, rgba(255,232,191,0.5)); }
+  .b-note.terra { background: linear-gradient(180deg, #FFD2C4, #D5634F 60%, #93392a); box-shadow: 0 0 14px 2px rgba(213,99,79,0.7); }
+  .b-note.terra::after { background: linear-gradient(180deg, transparent, rgba(213,99,79,0.45)); }
+  @keyframes b-fall {
+    0% { top: -6%; opacity: 0; }
+    8% { opacity: 1; }
+    93% { top: 80.5%; opacity: 1; }
+    100% { top: 82%; opacity: 0; }
+  }
+  .b-pool {
+    position: absolute; bottom: 14.5%; width: 60px; height: 10px; border-radius: 50%;
+    transform: translateX(-50%); background: radial-gradient(ellipse, rgba(255,232,191,0.5), transparent 70%);
+    opacity: 0; filter: blur(2px);
+  }
+  .b-pool.p1 { animation: b-pulse 2.6s linear infinite; }
+  .b-pool.p2 { animation: b-pulse 2.6s linear infinite 0.65s; }
+  .b-pool.p3 { animation: b-pulse 2.6s linear infinite 1.3s; }
+  .b-pool.p4 { animation: b-pulse 2.6s linear infinite 1.95s; }
+  @keyframes b-pulse { 0%, 88% { opacity: 0; transform: translateX(-50%) scale(0.6); } 93% { opacity: 1; transform: translateX(-50%) scale(1.4); } 100% { opacity: 0; transform: translateX(-50%) scale(1.8); } }
+  .b-score { position: absolute; top: 18px; left: 0; right: 0; text-align: center; color: #FFF6E6; font-weight: 200; font-size: 30px; letter-spacing: 6px; }
+
+  /* ============ C — CONGA FUEGO (visceral ember energy) ============ */
+  .c-scene { background: linear-gradient(180deg, #070504 0%, #120a06 55%, #241007 100%); }
+  .c-smoke {
+    position: absolute; inset: 0;
+    background: radial-gradient(70% 40% at 50% 100%, rgba(237,108,44,0.18), transparent 70%);
+  }
+  .c-runway {
+    position: absolute; left: 50%; top: 6%; bottom: 0; width: 92%;
+    transform: translateX(-50%);
+    clip-path: polygon(41% 0, 59% 0, 100% 100%, 0 100%);
+    background: linear-gradient(180deg, #150c07 0%, #1d1009 60%, #2b150a 100%);
+    box-shadow: inset 0 -60px 80px -40px rgba(203,73,20,0.35);
+  }
+  .c-rail { position: absolute; top: 6%; bottom: 0; width: 4px; background: linear-gradient(180deg, #3d1a08, #CB4914 55%, #FF8C42); box-shadow: 0 0 16px 3px rgba(203,73,20,0.7); filter: blur(0.3px); }
+  .c-hitline {
+    position: absolute; left: 6%; right: 6%; bottom: 12%; height: 6px; border-radius: 6px;
+    background: linear-gradient(90deg, rgba(255,140,66,0.3), #FFD9A8 30%, #FFF3DE 50%, #FFD9A8 70%, rgba(255,140,66,0.3));
+    box-shadow: 0 0 20px 6px rgba(255,170,90,0.6), 0 0 70px 18px rgba(203,73,20,0.35);
+    animation: c-forge 0.8s ease-in-out infinite;
+  }
+  @keyframes c-forge { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
+  .c-drum {
+    position: absolute; bottom: 9%; width: 64px; height: 26px; border-radius: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at 50% 35%, #2b1a10, #170d07 70%);
+    border: 3px solid rgba(255,170,90,0.75);
+    box-shadow: 0 0 14px 3px rgba(255,140,66,0.35), inset 0 2px 6px rgba(255,210,160,0.25);
+  }
+  .c-drum.dl { animation: c-ripple 2.9s linear infinite; }
+  .c-drum.dc { animation: c-ripple 2.9s linear infinite 0.95s; }
+  .c-drum.dr { animation: c-ripple 2.9s linear infinite 1.9s; }
+  @keyframes c-ripple {
+    0%, 86% { transform: translateX(-50%) scale(1); border-color: rgba(255,170,90,0.75); }
+    90% { transform: translateX(-50%) scale(1.18); border-color: rgba(255,243,222,1); }
+    100% { transform: translateX(-50%) scale(1); border-color: rgba(255,170,90,0.75); }
+  }
+  .c-orb {
+    position: absolute; width: 34px; height: 34px; border-radius: 50%;
+    transform: translateX(-50%) scale(0.2); opacity: 0;
+    background: radial-gradient(circle at 38% 32%, #FFF3DE, #FFAA5A 40%, #E2581E 75%, #8a2a0c);
+    box-shadow: 0 0 22px 6px rgba(255,140,66,0.75), 0 0 60px 16px rgba(203,73,20,0.3);
+    animation-duration: 2.9s; animation-iteration-count: infinite;
+    animation-timing-function: cubic-bezier(0.5, 0, 0.85, 0.6);
+  }
+  .c-orb::after {
+    content: ""; position: absolute; left: 50%; bottom: 90%; width: 6px; height: 70px;
+    transform: translateX(-50%); border-radius: 999px;
+    background: linear-gradient(180deg, transparent, rgba(255,140,66,0.6));
+    filter: blur(1px);
+  }
+  @keyframes c-fall-l {
+    0% { top: 7%; left: 47%; transform: translateX(-50%) scale(0.16); opacity: 0; }
+    12% { opacity: 1; }
+    87% { top: 83%; left: 20%; transform: translateX(-50%) scale(1); opacity: 1; }
+    100% { top: 85.5%; left: 19%; transform: translateX(-50%) scale(1.25); opacity: 0; }
+  }
+  @keyframes c-fall-c {
+    0% { top: 7%; left: 50%; transform: translateX(-50%) scale(0.16); opacity: 0; }
+    12% { opacity: 1; }
+    87% { top: 83%; left: 50%; transform: translateX(-50%) scale(1); opacity: 1; }
+    100% { top: 85.5%; left: 50%; transform: translateX(-50%) scale(1.25); opacity: 0; }
+  }
+  @keyframes c-fall-r {
+    0% { top: 7%; left: 53%; transform: translateX(-50%) scale(0.16); opacity: 0; }
+    12% { opacity: 1; }
+    87% { top: 83%; left: 80%; transform: translateX(-50%) scale(1); opacity: 1; }
+    100% { top: 85.5%; left: 81%; transform: translateX(-50%) scale(1.25); opacity: 0; }
+  }
+  .c-ember { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #FFAA5A; box-shadow: 0 0 8px 2px rgba(255,140,66,0.8); animation: c-rise 4s linear infinite; opacity: 0; }
+  @keyframes c-rise {
+    0% { transform: translateY(0); opacity: 0; }
+    15% { opacity: 0.9; }
+    100% { transform: translateY(-46vh) translateX(14px); opacity: 0; }
+  }
+</style>
+
+<div class="cards stage-row">
+
+  <!-- A — STAGE LIGHTS -->
+  <div class="card stage-card" data-choice="stage-lights" onclick="toggleSelect(this)">
+    <div class="scene a-scene">
+      <div class="a-bokeh" style="left:8%;top:12%;width:46px;height:46px;background:rgba(242,161,44,0.25);"></div>
+      <div class="a-bokeh" style="right:10%;top:8%;width:30px;height:30px;background:rgba(224,164,59,0.22);"></div>
+      <div class="a-bokeh" style="right:20%;top:24%;width:18px;height:18px;background:rgba(213,78,63,0.25);"></div>
+      <div class="a-beam" style="left:6%;transform:rotate(16deg);"></div>
+      <div class="a-beam" style="right:6%;transform:rotate(-16deg);"></div>
+      <div class="a-runway"></div>
+      <div class="a-rail" style="left:9%;transform:skewX(14deg);transform-origin:bottom;"></div>
+      <div class="a-rail" style="right:9%;transform:skewX(-14deg);transform-origin:bottom;"></div>
+      <div class="a-div" style="left:36.5%;transform:skewX(9deg);transform-origin:bottom;"></div>
+      <div class="a-div" style="right:36.5%;transform:skewX(-9deg);transform-origin:bottom;"></div>
+      <div class="a-hitline"></div>
+      <div class="a-receptor rl" style="left:21%;"></div>
+      <div class="a-receptor rc" style="left:50%;"></div>
+      <div class="a-receptor rr" style="left:79%;"></div>
+      <!-- gems: 3 lanes, staggered like a tumbao -->
+      <div class="a-gem terra" style="animation-name:a-fall-l;"></div>
+      <div class="a-gem amber" style="animation-name:a-fall-c;animation-delay:1.05s;"></div>
+      <div class="a-gem gold"  style="animation-name:a-fall-r;animation-delay:2.1s;"></div>
+      <div class="a-gem amber" style="animation-name:a-fall-l;animation-delay:1.6s;"></div>
+      <div class="a-gem gold"  style="animation-name:a-fall-c;animation-delay:2.65s;"></div>
+      <div class="a-combo">×16 STREAK</div>
+    </div>
+    <div class="meta">
+      <h3>A — Stage Lights</h3>
+      <p>The direct Rock Band heir: deep 3D runway, faceted <strong>gem notes with bright rims</strong>, receptor rings that flash on the hit, bokeh stage lights and beams behind the venue darkness. Arcade-readable, concert atmosphere.</p>
+    </div>
+  </div>
+
+  <!-- B — OBSIDIAN GLASS -->
+  <div class="card stage-card" data-choice="obsidian-glass" onclick="toggleSelect(this)">
+    <div class="scene b-scene">
+      <div class="b-lane" style="left:20%;"></div>
+      <div class="b-lane" style="left:40%;"></div>
+      <div class="b-lane" style="left:60%;"></div>
+      <div class="b-lane" style="left:80%;"></div>
+      <div class="b-hitline"></div>
+      <div class="b-floor"></div>
+      <div class="b-note cream" style="left:20%;animation-name:b-fall;"></div>
+      <div class="b-note"       style="left:40%;animation-name:b-fall;animation-delay:0.65s;"></div>
+      <div class="b-note terra" style="left:60%;animation-name:b-fall;animation-delay:1.3s;"></div>
+      <div class="b-note"       style="left:80%;animation-name:b-fall;animation-delay:1.95s;"></div>
+      <div class="b-note terra" style="left:20%;animation-name:b-fall;animation-delay:1.5s;"></div>
+      <div class="b-note cream" style="left:60%;animation-name:b-fall;animation-delay:2.3s;"></div>
+      <div class="b-pool p1" style="left:20%;"></div>
+      <div class="b-pool p2" style="left:40%;"></div>
+      <div class="b-pool p3" style="left:60%;"></div>
+      <div class="b-pool p4" style="left:80%;"></div>
+      <div class="b-score">128,450</div>
+    </div>
+    <div class="meta">
+      <h3>B — Obsidian Glass</h3>
+      <p>Premium-minimal: straight vertical waterfall on black glass, <strong>luminous pill notes with light trails</strong>, hairline lanes, impact pools of light where notes land. Quiet luxury — closest fit to the piano's 88-key waterfall, scales to any lane count.</p>
+    </div>
+  </div>
+
+  <!-- C — CONGA FUEGO -->
+  <div class="card stage-card" data-choice="conga-fuego" onclick="toggleSelect(this)">
+    <div class="scene c-scene">
+      <div class="c-smoke"></div>
+      <div class="c-runway"></div>
+      <div class="c-rail" style="left:5%;transform:skewX(17deg);transform-origin:bottom;"></div>
+      <div class="c-rail" style="right:5%;transform:skewX(-17deg);transform-origin:bottom;"></div>
+      <div class="c-hitline"></div>
+      <div class="c-drum dl" style="left:20%;"></div>
+      <div class="c-drum dc" style="left:50%;"></div>
+      <div class="c-drum dr" style="left:80%;"></div>
+      <div class="c-orb" style="animation-name:c-fall-l;"></div>
+      <div class="c-orb" style="animation-name:c-fall-c;animation-delay:0.95s;"></div>
+      <div class="c-orb" style="animation-name:c-fall-r;animation-delay:1.9s;"></div>
+      <div class="c-orb" style="animation-name:c-fall-c;animation-delay:2.4s;"></div>
+      <div class="c-ember" style="left:18%;bottom:14%;"></div>
+      <div class="c-ember" style="left:72%;bottom:12%;animation-delay:1.2s;"></div>
+      <div class="c-ember" style="left:46%;bottom:10%;animation-delay:2.4s;"></div>
+      <div class="c-ember" style="left:86%;bottom:16%;animation-delay:3.1s;"></div>
+    </div>
+    <div class="meta">
+      <h3>C — Conga Fuego</h3>
+      <p>Visceral heat: molten <strong>ember-orb notes with spark trails</strong>, a white-hot forge hit line, drumhead receptors that ripple on impact, embers drifting up through smoke. The loudest and most percussive — built around the feeling of striking a drum.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="section">
+  <p class="subtitle">Note: these are CSS sketches — the real PixiJS build gets proper perspective, particles, and hit effects far beyond this. Judge the <em>direction</em>, not the fidelity. Blends welcome (e.g. "B's notes on A's stage").</p>
+</div>

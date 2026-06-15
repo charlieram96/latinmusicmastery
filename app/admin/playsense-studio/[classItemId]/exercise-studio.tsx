@@ -25,9 +25,11 @@ import { useState, useTransition } from 'react';
 import type {
   ClassItemScorePayload,
   ClassItemScoreSection,
+  ExerciseMedia,
 } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { StudioSetup } from '@/components/playsense-studio/studio/studio-setup';
+import { WatchVideoSetup } from '@/components/playsense-studio/studio/watch-video-setup';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { StudioWorkspace } from './studio-workspace';
 import { VideoSectionsWorkspace } from './video-sections-workspace';
@@ -51,9 +53,12 @@ export interface ExerciseStudioProps {
   scoreDocumentId: string | null;
   initialScore: ScoreDocument | null;
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
+  /** Exercise play-part media (optional cropped video + backing tracks). */
+  initialExerciseMedia: ExerciseMedia | null;
   /** Bound server actions (see module note) used to refresh a part on switch. */
   fetchSections: () => Promise<{ data?: ClassItemScoreSection[]; error?: string }>;
   fetchExercise: () => Promise<{ data?: ClassItemScorePayload; error?: string }>;
+  fetchExerciseMedia: () => Promise<{ data?: ExerciseMedia; error?: string }>;
 }
 
 export function ExerciseStudio({
@@ -65,8 +70,10 @@ export function ExerciseStudio({
   scoreDocumentId,
   initialScore,
   activeTimeMap,
+  initialExerciseMedia,
   fetchSections,
   fetchExercise,
+  fetchExerciseMedia,
 }: ExerciseStudioProps) {
   // Default to the graded score — it's the item's reason to exist, and the
   // setup/replace flows (which remount this component) land there too.
@@ -78,24 +85,28 @@ export function ExerciseStudio({
   const [exercisePayload, setExercisePayload] = useState<ExercisePayload | null>(
     scoreDocumentId && initialScore ? { scoreDocumentId, initialScore, activeTimeMap } : null
   );
+  const [exerciseMedia, setExerciseMedia] = useState(initialExerciseMedia);
   // Bump on every refetch so the remounting workspace reseeds from fresh data.
   const [switchCount, setSwitchCount] = useState(0);
 
   const switchPart = (next: Part) => {
     if (next === part || isSwitching) return;
-    if (next === 'watch' && !videoUrl) return;
     setError(null);
     startSwitch(async () => {
       if (next === 'watch') {
-        const res = await fetchSections();
-        if (res.error || !res.data) {
-          setError(res.error ?? 'Failed to load the watch sections.');
-          return;
+        // No video yet → the Watch part renders the upload screen; nothing to fetch.
+        if (videoUrl) {
+          const res = await fetchSections();
+          if (res.error || !res.data) {
+            setError(res.error ?? 'Failed to load the watch sections.');
+            return;
+          }
+          setSections(res.data);
         }
-        setSections(res.data);
       } else {
         // "No score document attached" just means StudioSetup should render.
-        const res = await fetchExercise();
+        // The media panel seeds from props on mount, so refresh it alongside.
+        const [res, mediaRes] = await Promise.all([fetchExercise(), fetchExerciseMedia()]);
         setExercisePayload(
           res.data
             ? {
@@ -105,6 +116,7 @@ export function ExerciseStudio({
               }
             : null
         );
+        if (mediaRes.data) setExerciseMedia(mediaRes.data);
       }
       setSwitchCount((c) => c + 1);
       setPart(next);
@@ -119,12 +131,11 @@ export function ExerciseStudio({
           className={part === 'watch' ? 'is-on' : ''}
           role="radio"
           aria-checked={part === 'watch'}
-          disabled={!videoUrl}
           onClick={() => switchPart('watch')}
           title={
             videoUrl
               ? 'Watch part — sync scored sections to the demo video'
-              : 'Upload a demo video to this lesson first to author the watch part'
+              : 'Watch part — upload the demo video, then sync scored sections to it'
           }
         >
           <MonitorPlay className="h-3.5 w-3.5" />
@@ -147,7 +158,13 @@ export function ExerciseStudio({
     </div>
   );
 
-  if (part === 'watch' && videoUrl) {
+  if (part === 'watch') {
+    if (!videoUrl) {
+      // No demo video yet — upload it here; router.refresh() re-enters with it.
+      return (
+        <WatchVideoSetup classItemId={classItemId} classItemTitle={title} appBarExtra={toggle} />
+      );
+    }
     return (
       <VideoSectionsWorkspace
         key={`watch-${switchCount}`}
@@ -177,6 +194,7 @@ export function ExerciseStudio({
       activeTimeMap={exercisePayload.activeTimeMap}
       videoDurationSeconds={videoDurationSeconds}
       appBarExtra={toggle}
+      exerciseMedia={exerciseMedia}
     />
   );
 }
