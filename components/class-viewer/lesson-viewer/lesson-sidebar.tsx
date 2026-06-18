@@ -223,12 +223,14 @@ export function LessonSidebar({
         <div className={cn(styles.scrollHide, 'flex-1 overflow-y-auto')}>
           <Link
             href={`/dashboard/course/${courseId}`}
-            className="group mx-3.5 mb-3.5 mt-1 flex items-center gap-2.5 rounded-xl border border-border bg-raised px-3.5 py-3 text-[13px] font-medium text-foreground shadow-warm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="group mx-2 mb-1 mt-1 flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium text-foreground transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <LayoutGrid className="h-4 w-4 text-muted-foreground" />
             <span className="flex-1">Class overview</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
           </Link>
+
+          <div className="mx-3 my-1.5 h-px bg-border/60" />
 
           {numbered.map((section, i) => (
             <SidebarModule
@@ -298,11 +300,11 @@ function SidebarModule({
   const complete = section.totalItems > 0 && pct === 100
 
   return (
-    <div className="pb-3.5">
+    <div className="pb-1">
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="mx-3.5 flex w-[calc(100%-28px)] items-start justify-between gap-3 rounded-2xl border border-border bg-raised px-4 py-3.5 text-left shadow-warm transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="mx-2 flex w-[calc(100%-16px)] items-start justify-between gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <div className="min-w-0 flex-1">
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
@@ -333,27 +335,31 @@ function SidebarModule({
         </div>
         <ChevronDown
           className={cn(
-            'mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform',
+            'mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-300',
             !open && '-rotate-90'
           )}
         />
       </button>
 
-      {open && (
-        <>
-          <div className="mx-3.5 mb-2 mt-3 text-xs font-semibold text-muted-foreground">
-            Lessons
+      {/* Lessons nest directly under the module — a hairline guide ties them
+          together. The grid-rows trick animates the height open/closed. */}
+      <div className={styles.collapse} data-open={open}>
+        <div className="overflow-hidden">
+          <div className="ml-5 mr-2 mt-2 border-l border-border/60 pl-2">
+            <div className="mb-1 pl-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/80">
+              Lessons
+            </div>
+            {section.classes.map((c) => (
+              <LessonRow
+                key={c.id}
+                courseId={courseId}
+                cls={c}
+                state={classState(c, currentClassId, hasAccess)}
+              />
+            ))}
           </div>
-          {section.classes.map((c) => (
-            <LessonRow
-              key={c.id}
-              courseId={courseId}
-              cls={c}
-              state={classState(c, currentClassId, hasAccess)}
-            />
-          ))}
-        </>
-      )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -371,8 +377,8 @@ function LessonRow({
     <Link
       href={`/dashboard/course/${courseId}/class/${cls.id}`}
       className={cn(
-        'group relative mx-3.5 mb-0.5 flex items-center gap-3 rounded-xl py-2.5 pl-3.5 pr-3 transition-[background-color,transform] duration-150',
-        state === 'active' ? 'bg-primary/[0.08]' : 'hover:translate-x-[2px] hover:bg-muted',
+        'group relative mb-0.5 flex items-center gap-3 rounded-lg py-2 pl-2 pr-2.5 transition-[background-color,transform] duration-150',
+        state === 'active' ? 'bg-primary/[0.08]' : 'hover:translate-x-[2px] hover:bg-muted/60',
         state === 'locked' && 'opacity-70',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
       )}
@@ -380,14 +386,14 @@ function LessonRow({
       {state === 'active' && <span className={styles.lessonAccent} aria-hidden />}
       <span
         className={cn(
-          'inline-flex h-6 flex-shrink-0 items-center rounded-md border px-2 font-heading text-[10.5px] font-bold tabular-nums transition-colors',
+          'grid h-7 w-7 flex-shrink-0 place-items-center rounded-md border font-heading text-[11px] font-bold tabular-nums transition-colors',
           state === 'active' && 'border-primary/50 bg-primary/10 text-primary',
           state === 'completed' && 'border-success/40 text-success',
           (state === 'locked' || state === 'available') &&
             'border-border text-muted-foreground group-hover:border-primary/40'
         )}
       >
-        Lesson {String(cls.n).padStart(2, '0')}
+        {String(cls.n).padStart(2, '0')}
       </span>
       <span
         className={cn(
