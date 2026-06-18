@@ -7,7 +7,7 @@ import type { BackingTrack } from '@/app/actions/playsense-studio'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import { getExerciseDuration } from '@/lib/play-sense/exercise-utils'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
-import { RhythmHighway } from '@/components/play-sense/rhythm-highway/RhythmHighway'
+import { GlassHighway } from '@/components/play-sense/glass-highway'
 import { StaffRenderer } from '@/components/playsense-studio/player/notation/renderers/staff-renderer'
 import { NowPlayingBar } from '@/components/play-sense/now-playing-bar'
 import { CalibrationWizard } from '@/components/play-sense/calibration-wizard'
@@ -260,7 +260,7 @@ export function ScoreExerciseGame({
         )}
         {showCanvas && session.exercise ? (
           <div className="flex-1 relative min-h-[360px] flex">
-            <RhythmHighway
+            <GlassHighway
               exercise={session.exercise}
               sessionState={session.sessionState}
               playheadProgress={session.playheadProgress}

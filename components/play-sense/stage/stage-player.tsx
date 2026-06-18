@@ -32,7 +32,7 @@ import { GRADE_LABELS } from '@/lib/play-sense/animations'
 import { PLAYSENSE_INSTRUMENTS } from '@/lib/play-sense/playsense-mappings'
 import { saveAttempt } from '@/app/actions/play-sense'
 import { cn } from '@/lib/utils'
-import { RhythmHighway } from '../rhythm-highway/RhythmHighway'
+import { GlassHighway } from '../glass-highway'
 import { AudioModePrompt } from '../audio-mode-prompt'
 import { PlaysenseTestPanel } from '../playsense-test-panel'
 import { CalibrationWizard } from '../calibration-wizard'
@@ -180,7 +180,7 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
         {/* highway fills the stage */}
         <div className="sv-stage">
           {showCanvas && exercise ? (
-            <RhythmHighway
+            <GlassHighway
               exercise={exercise}
               sessionState={session.sessionState}
               playheadProgress={session.playheadProgress}
