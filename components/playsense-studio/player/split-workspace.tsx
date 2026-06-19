@@ -115,7 +115,7 @@ export function SplitWorkspace({
   return (
     <div
       ref={workspaceRef}
-      className="relative overflow-visible rounded-xl border border-border bg-black"
+      className="relative overflow-visible rounded-xl border border-border bg-card"
       style={{ height: workspaceH }}
     >
       <div
@@ -132,7 +132,7 @@ export function SplitWorkspace({
 
         {/* Secondary pane */}
         <div
-          className="flex min-h-0 min-w-0 flex-col bg-[hsl(0_0%_5.5%)]"
+          className="flex min-h-0 min-w-0 flex-col bg-card"
           style={{
             flex: `${100 - split} 1 0`,
             borderLeft: isRow ? '1px solid hsl(var(--border))' : 'none',
@@ -153,9 +153,9 @@ export function SplitWorkspace({
         aria-label="Resize"
         title="Drag to adjust the split and height · double-click to reset"
         className={[
-          'absolute z-[12] grid h-[30px] w-[30px] place-items-center rounded-full border bg-[hsl(0_0%_14%)] text-[hsl(0_0%_60%)] shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-colors hover:border-primary hover:bg-primary hover:text-white',
+          'absolute z-[12] grid h-[30px] w-[30px] place-items-center rounded-full border bg-secondary text-muted-foreground shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-colors hover:border-primary hover:bg-primary hover:text-white',
           isRow ? 'cursor-[nwse-resize]' : 'cursor-[ns-resize]',
-          knobDragging ? 'border-primary bg-primary text-white' : 'border-white/10',
+          knobDragging ? 'border-primary bg-primary text-white' : 'border-border',
         ].join(' ')}
         style={
           isRow
@@ -195,7 +195,7 @@ export function OrientationToggle({
     <div
       role="group"
       aria-label="Layout"
-      className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full border border-border bg-[hsl(0_0%_10%)] p-0.5"
+      className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full border border-border bg-secondary p-0.5"
     >
       <button
         type="button"

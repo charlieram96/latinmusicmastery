@@ -11,8 +11,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ChevronDown,
-  ChevronRight,
-  LayoutGrid,
   Play,
   Check,
   Lock,
@@ -101,7 +99,7 @@ export function LessonSidebar({
       <aside
         className={cn(
           styles.side,
-          'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-sunken sticky top-14 h-[calc(100vh-3.5rem)] overflow-hidden'
+          'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-sunken sticky top-0 h-[calc(100vh-3.5rem)] overflow-hidden'
         )}
       >
         <div
@@ -185,10 +183,10 @@ export function LessonSidebar({
     <aside
       className={cn(
         styles.side,
-        'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-sunken sticky top-14 h-[calc(100vh-3.5rem)] overflow-hidden'
+        'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-sunken sticky top-0 h-[calc(100vh-3.5rem)] overflow-hidden'
       )}
     >
-      <div className="flex h-full w-[340px] flex-col">
+      <div className="flex h-full w-[360px] flex-col">
         {/* Course identity */}
         <div className="flex flex-shrink-0 items-center gap-3 p-3.5">
           {courseImageUrl ? (
@@ -220,18 +218,7 @@ export function LessonSidebar({
         </div>
 
         {/* Scroll area */}
-        <div className={cn(styles.scrollHide, 'flex-1 overflow-y-auto')}>
-          <Link
-            href={`/dashboard/course/${courseId}`}
-            className="group mx-2 mb-1 mt-1 flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium text-foreground transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            <LayoutGrid className="h-4 w-4 text-muted-foreground" />
-            <span className="flex-1">Class overview</span>
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-          </Link>
-
-          <div className="mx-3 my-1.5 h-px bg-border/60" />
-
+        <div className={cn(styles.scrollHide, 'flex-1 overflow-y-auto pt-1')}>
           {numbered.map((section, i) => (
             <SidebarModule
               key={section.id}
@@ -300,11 +287,16 @@ function SidebarModule({
   const complete = section.totalItems > 0 && pct === 100
 
   return (
-    <div className="pb-1">
+    <div
+      className={cn(
+        'mx-2 mb-1 mt-5 rounded-2xl border border-transparent transition-colors',
+        containsActive ? 'bg-foreground/[0.02]' : 'border-foreground/[0.05]'
+      )}
+    >
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="mx-2 flex w-[calc(100%-16px)] items-start justify-between gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="flex w-full items-start justify-between gap-3 rounded-2xl px-3 py-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <div className="min-w-0 flex-1">
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
@@ -313,7 +305,7 @@ function SidebarModule({
           <div className="mt-1 font-heading text-[14px] font-bold leading-snug tracking-tight">
             {section.title}
           </div>
-          {section.description && (
+          {section.description && open && (
             <div className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
               {section.description}
             </div>
@@ -341,12 +333,12 @@ function SidebarModule({
         />
       </button>
 
-      {/* Lessons nest directly under the module — a hairline guide ties them
-          together. The grid-rows trick animates the height open/closed. */}
+      {/* Lessons nest inside the module block so they share its background.
+          The grid-rows trick animates the height open/closed. */}
       <div className={styles.collapse} data-open={open}>
         <div className="overflow-hidden">
-          <div className="ml-5 mr-2 mt-2 border-l border-border/60 pl-2">
-            <div className="mb-1 pl-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/80">
+          <div className="pb-3 pl-3 pr-1.5">
+            <div className="mb-1.5 px-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/80">
               Lessons
             </div>
             {section.classes.map((c) => (
@@ -373,51 +365,131 @@ function LessonRow({
   cls: LessonSidebarClass & { n: number }
   state: RowState
 }) {
+  const progress =
+    cls.totalItems > 0
+      ? Math.max(0, Math.min(1, cls.completedItems / cls.totalItems))
+      : 0
+
   return (
-    <Link
-      href={`/dashboard/course/${courseId}/class/${cls.id}`}
-      className={cn(
-        'group relative mb-0.5 flex items-center gap-3 rounded-lg py-2 pl-2 pr-2.5 transition-[background-color,transform] duration-150',
-        state === 'active' ? 'bg-primary/[0.08]' : 'hover:translate-x-[2px] hover:bg-muted/60',
-        state === 'locked' && 'opacity-70',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
-      )}
-    >
-      {state === 'active' && <span className={styles.lessonAccent} aria-hidden />}
+    <div className="group relative mb-2.5 flex items-stretch">
+      {/* Left accent bar — a separate element beside the button. It has zero
+          width by default (button is full-width), then expands on the active
+          lesson or on hover, gently shrinking the button to make room. */}
       <span
+        aria-hidden
         className={cn(
-          'grid h-7 w-7 flex-shrink-0 place-items-center rounded-md border font-heading text-[11px] font-bold tabular-nums transition-colors',
-          state === 'active' && 'border-primary/50 bg-primary/10 text-primary',
-          state === 'completed' && 'border-success/40 text-success',
-          (state === 'locked' || state === 'available') &&
-            'border-border text-muted-foreground group-hover:border-primary/40'
+          'h-8 flex-shrink-0 self-center rounded-full bg-primary transition-all duration-300 ease-out',
+          state === 'active'
+            ? 'w-[4px] opacity-100 mr-2'
+            : 'w-0 opacity-0 group-hover:w-[4px] group-hover:opacity-100 group-hover:mr-2'
+        )}
+      />
+
+      <Link
+        href={`/dashboard/course/${courseId}/class/${cls.id}`}
+        className={cn(
+          'flex flex-1 items-center gap-3 rounded-xl pr-2 transition-colors duration-150',
+          state === 'active'
+            ? 'bg-primary/[0.1]'
+            : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
+          state === 'locked' && 'opacity-70',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
         )}
       >
-        {String(cls.n).padStart(2, '0')}
+        {/* Number box — flush to the button, sharing its corner radius. */}
+        <span
+          className={cn(
+            'grid h-12 w-14 flex-shrink-0 place-items-center rounded-xl font-heading text-[15px] font-bold tabular-nums transition-colors',
+            state === 'active'
+              ? 'bg-primary/15 text-primary'
+              : 'bg-foreground/[0.06] text-foreground group-hover:bg-foreground/[0.09]',
+            state === 'completed' && 'text-success',
+            state === 'locked' && 'text-muted-foreground'
+          )}
+        >
+          {state === 'locked' ? (
+            <Lock className="h-4 w-4" />
+          ) : (
+            String(cls.n).padStart(2, '0')
+          )}
+        </span>
+
+        <span
+          className={cn(
+            'min-w-0 flex-1 truncate text-[14px] leading-tight tracking-[-0.005em]',
+            state === 'active'
+              ? 'font-semibold text-foreground'
+              : 'font-medium text-foreground/90'
+          )}
+        >
+          {cls.title}
+        </span>
+
+        <LessonProgressButton state={state} progress={progress} />
+      </Link>
+    </div>
+  )
+}
+
+// Circular play button whose ring fills with the lesson's completion progress.
+function LessonProgressButton({
+  state,
+  progress,
+}: {
+  state: RowState
+  progress: number
+}) {
+  if (state === 'locked') {
+    return (
+      <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full border border-border text-muted-foreground">
+        <Lock className="h-3.5 w-3.5" />
       </span>
+    )
+  }
+
+  const stroke = 2.5
+  const r = (32 - stroke) / 2
+  const circ = 2 * Math.PI * r
+  const pct = state === 'completed' ? 1 : progress
+
+  return (
+    <span className="relative grid h-8 w-8 flex-shrink-0 place-items-center">
+      <svg viewBox="0 0 32 32" className="absolute inset-0 h-full w-full -rotate-90">
+        <circle
+          cx="16"
+          cy="16"
+          r={r}
+          fill="none"
+          strokeWidth={stroke}
+          className={state === 'active' ? 'stroke-primary/25' : 'stroke-foreground/15'}
+        />
+        {pct > 0 && (
+          <circle
+            cx="16"
+            cy="16"
+            r={r}
+            fill="none"
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={`${circ * pct} ${circ}`}
+            className={state === 'completed' ? 'stroke-success' : 'stroke-primary'}
+          />
+        )}
+      </svg>
       <span
         className={cn(
-          'min-w-0 flex-1 truncate text-sm leading-tight tracking-[-0.005em]',
-          state === 'active' ? 'font-semibold' : 'font-medium'
+          'grid h-[26px] w-[26px] place-items-center rounded-full transition-colors',
+          state === 'active'
+            ? 'bg-primary text-white'
+            : 'text-primary group-hover:bg-primary/10'
         )}
       >
-        {cls.title}
+        {state === 'completed' ? (
+          <Check className="h-3.5 w-3.5 text-success" />
+        ) : (
+          <Play className="ml-0.5 h-3 w-3" fill="currentColor" />
+        )}
       </span>
-      {state === 'active' && (
-        <span className="grid h-[22px] w-[22px] flex-shrink-0 place-items-center rounded-full bg-primary">
-          <Play className="ml-px h-2.5 w-2.5 text-white" fill="#fff" />
-        </span>
-      )}
-      {state === 'completed' && (
-        <span className="grid h-[22px] w-[22px] flex-shrink-0 place-items-center rounded-full bg-success">
-          <Check className="h-3 w-3 text-white" />
-        </span>
-      )}
-      {state === 'locked' && (
-        <span className="grid h-[22px] w-[22px] flex-shrink-0 place-items-center rounded-full border border-border text-muted-foreground">
-          <Lock className="h-3 w-3" />
-        </span>
-      )}
-    </Link>
+    </span>
   )
 }

@@ -469,7 +469,7 @@ export function PlaysenseStudioPlayer({
             </>
           }
           secondaryHeader={({ orient, setOrient }) => (
-            <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-border bg-gradient-to-b from-[hsl(0_0%_8%)] to-[hsl(0_0%_6.5%)] px-4 py-2.5">
+            <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-border bg-secondary px-4 py-2.5">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(30_85%_55%/0.7)]" />
@@ -556,7 +556,7 @@ function NotationLayoutToggle({
     <div
       role="group"
       aria-label="Notation layout"
-      className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full border border-border bg-[hsl(0_0%_10%)] p-0.5"
+      className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full border border-border bg-secondary p-0.5"
     >
       <button
         type="button"
