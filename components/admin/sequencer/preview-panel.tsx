@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { RhythmHighway } from '@/components/play-sense/rhythm-highway/RhythmHighway'
+import { GlassHighway } from '@/components/play-sense/glass-highway'
 import { VisualMetronome } from '@/components/play-sense/visual-metronome'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
 import type { UseAdminPlaybackResult } from '@/hooks/use-admin-playback'
@@ -54,7 +54,7 @@ export function PreviewPanel({ exercise, playback }: PreviewPanelProps) {
 
       {/* Canvas preview — the same PixiJS highway used in PlaySense */}
       <div className="flex-1 relative rounded-lg overflow-hidden border border-slate-800/50 flex">
-        <RhythmHighway
+        <GlassHighway
           exercise={exercise}
           sessionState={mode === 'animated' && playback.isPlaying ? 'playing' : 'selecting'}
           playheadProgress={mode === 'animated' ? playback.playheadProgress : 0}

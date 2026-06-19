@@ -13,7 +13,7 @@ import { resolveLegacyAudioUrl } from '@/lib/play-sense/exercise-media'
 import { getQuizQuestions } from '@/app/actions/quiz'
 import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
 import { ExerciseView } from '@/components/class-viewer/lesson-viewer/exercise-view'
-import { VideoInfoSplit } from '@/components/class-viewer/lesson-viewer/video-info-split'
+import { LessonVideoPlayer } from '@/components/class-viewer/lesson-viewer/lesson-video-player'
 import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise'
 
 // Feature flag — set PLAYSENSE_STUDIO_ENABLED=false in env to roll back to the legacy
@@ -96,15 +96,11 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
   const firstSection = playerSections[0] ?? null
   const hasVideoSections = playerSections.length > 0
 
-  // A VIDEO with no scored sections in the split viewer renders the resizable
-  // video + "About this lesson" workspace instead of a giant full-width video.
-  // The panel surfaces rich_content, so we skip the shared copy below it.
-  const noScoreVideoSplit =
-    item.item_type === 'VIDEO' &&
-    !hasVideoSections &&
-    playerLayout === 'split' &&
-    !!item.video_url &&
-    !item.soundslice_embed_url
+  // Notation that exists but was never placed/sync-mapped (no video start time +
+  // no time map). We still show it on the right: the player synthesizes a
+  // tempo-based cursor from the score so the staff is visible immediately. The
+  // accurate cursor appears once the lesson is sync-authored in PlaySense Studio.
+  const firstUnplacedSection = !hasVideoSections ? videoSections[0] ?? null : null
 
   // EXERCISE play-part media: optional cropped video + instrument backing
   // tracks the student selects before playing.
@@ -144,7 +140,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
       {/* VIDEO */}
       {item.item_type === 'VIDEO' &&
         (hasVideoSections && firstSection && item.video_url && playerLayout === 'split' ? (
-          // Split workspace renders edge-to-edge (the player draws its own frame).
+          // Placed + sync-mapped notation → split workspace with an accurate cursor.
           <PlaysenseStudioPlayer
             classItemId={item.id}
             videoUrl={item.video_url}
@@ -154,31 +150,25 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
             sections={playerSections}
             layout="split"
           />
-        ) : noScoreVideoSplit ? (
-          // No score: keep the resizable split feel with a video + info panel
-          // instead of a full-width 16:9 video that dwarfs the page.
-          <VideoInfoSplit
-            videoUrl={item.video_url!}
-            title={item.title}
-            description={item.description}
-            richContent={item.rich_content}
-            durationSeconds={item.video_duration_seconds}
-            bpm={item.bpm}
-            keySignature={item.key_signature}
+        ) : firstUnplacedSection && item.video_url && playerLayout === 'split' ? (
+          // Notation exists but isn't sync-mapped yet → still show it on the right.
+          // No sections/timeMap: the player synthesizes a tempo-based cursor.
+          <PlaysenseStudioPlayer
+            classItemId={item.id}
+            videoUrl={item.video_url}
+            score={firstUnplacedSection.scoreDocument.parsedScore}
+            tracks={firstUnplacedSection.tracks}
+            activeTimeMap={null}
+            layout="split"
           />
+        ) : item.video_url && !item.soundslice_embed_url ? (
+          // No notation → polished full-width player. Description + notes render
+          // below the workspace (page body + rich-content card), not on the side.
+          <LessonVideoPlayer src={item.video_url} />
         ) : (
           <Card className="overflow-hidden rounded-2xl border-border shadow-warm">
             <CardContent className="p-0">
-              {hasVideoSections && firstSection && item.video_url ? (
-                <PlaysenseStudioPlayer
-                  classItemId={item.id}
-                  videoUrl={item.video_url}
-                  score={firstSection.score}
-                  tracks={firstSection.tracks}
-                  activeTimeMap={firstSection.activeTimeMap}
-                  sections={playerSections}
-                />
-              ) : item.soundslice_embed_url ? (
+              {item.soundslice_embed_url ? (
                 <div className="aspect-video overflow-hidden bg-black">
                   <iframe
                     src={item.soundslice_embed_url}
@@ -186,10 +176,6 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
                     allow="autoplay; fullscreen"
                     allowFullScreen
                   />
-                </div>
-              ) : item.video_url ? (
-                <div className="aspect-video overflow-hidden bg-black">
-                  <video src={item.video_url} controls className="w-full h-full" />
                 </div>
               ) : (
                 <div className="aspect-video flex items-center justify-center bg-muted">
@@ -335,9 +321,8 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
         </Card>
       )}
 
-      {/* Rich Content (below any type) — skipped when already shown in the
-          no-score video panel. */}
-      {item.rich_content && !noScoreVideoSplit && (
+      {/* Rich Content (below any type). */}
+      {item.rich_content && (
         <Card>
           <CardContent className="pt-6">
             <TiptapReadOnly content={item.rich_content} />

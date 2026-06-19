@@ -190,12 +190,12 @@ export function PlaysenseTestPanel({ instrument, onReady, onBack }: PlaysenseTes
                   sizeClass,
                 )}
                 style={{
-                  borderColor: isActive ? color : everHit ? `${color}77` : '#2a2a2a',
-                  backgroundColor: isActive ? `${color}1a` : '#0a0a10',
+                  borderColor: isActive ? color : everHit ? `${color}77` : 'hsl(var(--border))',
+                  backgroundColor: isActive ? `${color}1a` : 'hsl(var(--secondary))',
                 }}
               >
                 <div className="text-center">
-                  <div className="text-[10px] tracking-wide" style={{ color: isActive ? color : '#666' }}>
+                  <div className="text-[10px] tracking-wide" style={{ color: isActive ? color : 'hsl(var(--muted-foreground))' }}>
                     Piezo {Number(piezoIdx) + 1}
                   </div>
                   <div className={cn(

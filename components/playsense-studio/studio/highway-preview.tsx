@@ -1,7 +1,7 @@
 'use client';
 
 // In-studio rhythm-highway PREVIEW. Shows the author the exact falling-notes view
-// the student gets — the SAME <RhythmHighway> component — derived from the score
+// the student gets — the SAME <GlassHighway> component — derived from the score
 // they're editing (scoreToExerciseDefinition), driven by an internal FIXED-BPM
 // clock (never a video clock). Purely visual: no mic, no grading, no audio-mode
 // prompt. The exercise re-derives from the live score while PAUSED so edits show;
@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
-import { RhythmHighway } from '@/components/play-sense/rhythm-highway/RhythmHighway';
+import { GlassHighway } from '@/components/play-sense/glass-highway';
 import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise';
 import { getExerciseDuration } from '@/lib/play-sense/exercise-utils';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -127,7 +127,7 @@ export function HighwayPreview({
 
       <div className="relative flex min-h-[360px] overflow-hidden rounded-xl border border-border bg-card">
         {hasEvents ? (
-          <RhythmHighway
+          <GlassHighway
             exercise={exercise}
             sessionState="playing"
             playheadProgress={progress}

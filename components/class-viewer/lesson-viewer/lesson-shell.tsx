@@ -66,7 +66,7 @@ export function LessonShell({
     <div
       className={cn(
         styles.app,
-        '-m-6 flex min-h-[calc(100vh-3.5rem)] w-full items-stretch bg-background text-foreground'
+        '-m-6 flex min-h-[calc(100vh-3.5rem)] items-stretch bg-background text-foreground'
       )}
       data-railed={collapsed}
     >
