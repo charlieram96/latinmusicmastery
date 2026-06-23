@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -10,8 +9,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { Layers, ListMusic, Lock, Trash2, Unlock } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Layers, ListMusic, Unlock } from 'lucide-react'
 import styles from './course-studio.module.css'
 import { AddItemBar } from './add-item-bar'
 import { ClassItemRow } from './class-item-row'
@@ -25,11 +23,6 @@ interface ClassCanvasProps {
   classIndex: number
   hasModules: boolean
   activeItemId: string | null
-  onUpdateClass: (
-    classId: string,
-    updates: { title?: string; description?: string; is_free?: boolean }
-  ) => void
-  onDeleteClass: (classId: string) => void
   onAddItem: (classId: string, type: ClassItemType) => Promise<void> | void
   onSelectItem: (itemId: string) => void
   onDeleteItem: (itemId: string) => void
@@ -43,8 +36,6 @@ export function ClassCanvas({
   classIndex,
   hasModules,
   activeItemId,
-  onUpdateClass,
-  onDeleteClass,
   onAddItem,
   onSelectItem,
   onDeleteItem,
@@ -86,14 +77,7 @@ export function ClassCanvas({
 
   return (
     <div className="mx-auto w-full max-w-[760px] px-5 py-7 md:px-8">
-      <ClassHeader
-        key={cls.id}
-        cls={cls}
-        moduleIndex={moduleIndex}
-        classIndex={classIndex}
-        onUpdateClass={onUpdateClass}
-        onDeleteClass={onDeleteClass}
-      />
+      <ClassHeader cls={cls} moduleIndex={moduleIndex} classIndex={classIndex} />
 
       <div className="mt-6 space-y-2">
         {cls.items.length === 0 ? (
@@ -144,95 +128,31 @@ interface ClassHeaderProps {
   cls: ClassWithItems
   moduleIndex: number
   classIndex: number
-  onUpdateClass: ClassCanvasProps['onUpdateClass']
-  onDeleteClass: (classId: string) => void
 }
 
-/** Keyed by class id so drafts reset cleanly when the selection changes. */
-function ClassHeader({ cls, moduleIndex, classIndex, onUpdateClass, onDeleteClass }: ClassHeaderProps) {
-  const [title, setTitle] = useState(cls.title)
-  const [description, setDescription] = useState(cls.description ?? '')
-  const descriptionRef = useRef<HTMLTextAreaElement>(null)
-
-  // Auto-grow the description to fit its content.
-  useEffect(() => {
-    const el = descriptionRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
-  }, [description])
-
-  const commitTitle = () => {
-    const next = title.trim()
-    if (!next) {
-      setTitle(cls.title)
-      return
-    }
-    if (next !== cls.title) onUpdateClass(cls.id, { title: next })
-  }
-
-  const commitDescription = () => {
-    if (description.trim() !== (cls.description ?? '')) {
-      onUpdateClass(cls.id, { description: description.trim() })
-    }
-  }
-
+/** Read-only header — title/description/free/delete are edited in the drawer. */
+function ClassHeader({ cls, moduleIndex, classIndex }: ClassHeaderProps) {
   return (
     <header className={styles.rise}>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
         <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gold">
           Module {moduleIndex + 1} · Class {classIndex + 1}
         </span>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => onUpdateClass(cls.id, { is_free: !cls.is_free })}
-            title={cls.is_free ? 'Free preview — visible without enrolling' : 'Members only'}
-            className={cn(
-              'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
-              cls.is_free
-                ? 'border-gold/40 bg-gold/10 text-gold'
-                : 'border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground'
-            )}
-          >
-            {cls.is_free ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-            {cls.is_free ? 'Free preview' : 'Members only'}
-          </button>
-          <button
-            type="button"
-            onClick={() => onDeleteClass(cls.id)}
-            title="Delete class"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
+        {cls.is_free && (
+          <span className="flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] font-medium text-gold">
+            <Unlock className="h-2.5 w-2.5" />
+            Free preview
+          </span>
+        )}
       </div>
 
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        onBlur={commitTitle}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') e.currentTarget.blur()
-          if (e.key === 'Escape') {
-            setTitle(cls.title)
-            e.currentTarget.blur()
-          }
-        }}
-        placeholder="Class title"
-        className="mt-2 w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-heading text-2xl font-bold tracking-tight text-foreground outline-none transition-colors -mx-2 hover:border-border focus:border-primary/40 focus:bg-card"
-      />
+      <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight text-foreground">
+        {cls.title || 'Untitled class'}
+      </h2>
 
-      <textarea
-        ref={descriptionRef}
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        onBlur={commitDescription}
-        rows={1}
-        placeholder="Add a short description for this class…"
-        className="mt-1 w-full resize-none rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm leading-relaxed text-muted-foreground outline-none transition-colors -mx-2 hover:border-border focus:border-primary/40 focus:bg-card focus:text-foreground"
-      />
+      {cls.description && (
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{cls.description}</p>
+      )}
     </header>
   )
 }

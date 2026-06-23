@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,6 +13,8 @@ import { PlaysenseStudioScoreAttach } from '../playsense-studio-score-attach'
 import type { ClassItem } from '@/types/modules'
 import { useAutosave } from './use-autosave'
 import { useSaveStatus } from './save-status'
+import { ItemSaveProvider, useItemSave } from './item-save-context'
+import { ItemSaveBar } from './item-save-bar'
 
 interface ItemEditorProps {
   item: ClassItem
@@ -29,12 +31,39 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 /** Drawer form for a single class item. Mount keyed by item id — local drafts
     initialize from the item once, and the autosave hook flushes pending edits
-    on unmount so switching items mid-debounce never loses keystrokes. */
-export function ItemEditor({ item, onPatched }: ItemEditorProps) {
+    on unmount so switching items mid-debounce never loses keystrokes. The
+    ItemSaveProvider scopes the explicit Save button + status footer across both
+    these fields and the nested quiz editor. */
+export function ItemEditor(props: ItemEditorProps) {
+  return (
+    <ItemSaveProvider>
+      <ItemEditorBody {...props} />
+    </ItemSaveProvider>
+  )
+}
+
+function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
   const { track } = useSaveStatus()
-  const { queue, saveNow } = useAutosave<Record<string, unknown>>({
-    save: (patch) => track(updateClassItem(item.id, patch)),
+  const { setDirty, registerFlush } = useItemSave()
+  const { queue: queueRaw, saveNow: saveNowRaw, flush } = useAutosave<Record<string, unknown>>({
+    save: async (patch) => {
+      const res = await track(updateClassItem(item.id, patch))
+      setDirty('fields', false)
+      return res
+    },
   })
+
+  // Mark this editor dirty as soon as edits are queued; cleared when the save
+  // resolves. Register the field flush so the Save button persists immediately.
+  const queue = (patch: Record<string, unknown>) => {
+    setDirty('fields', true)
+    queueRaw(patch)
+  }
+  const saveNow = (patch?: Record<string, unknown>) => {
+    setDirty('fields', true)
+    saveNowRaw(patch)
+  }
+  useEffect(() => registerFlush(flush), [registerFlush, flush])
 
   const [title, setTitle] = useState(item.title)
   const [description, setDescription] = useState(item.description ?? '')
@@ -88,6 +117,7 @@ export function ItemEditor({ item, onPatched }: ItemEditorProps) {
   }
 
   return (
+    <>
     <div className="space-y-6 px-5 py-5">
       {/* Basics */}
       <div className="space-y-4">
@@ -253,5 +283,7 @@ export function ItemEditor({ item, onPatched }: ItemEditorProps) {
         />
       </div>
     </div>
+    <ItemSaveBar />
+    </>
   )
 }

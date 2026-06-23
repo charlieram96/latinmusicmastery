@@ -16,7 +16,13 @@ import type {
   Track,
   Voice,
 } from '@/components/playsense-studio/shared/score-model/types';
-import { measureLengthInQN } from './time-mapping';
+import {
+  QN_EPS,
+  effectiveDurationQN,
+  isFillerRest,
+  measureLengthInQN,
+  occupiedQN,
+} from './time-mapping';
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -84,6 +90,36 @@ const HISTORY_LIMIT = 100;
 
 function clone<T>(x: T): T {
   return JSON.parse(JSON.stringify(x)) as T;
+}
+
+/**
+ * The time signature in effect AT a measure, honoring any per-measure overrides
+ * carried forward from earlier measures (falls back to the score's initial).
+ */
+function effectiveTimeSignatureAt(
+  track: Track,
+  initialTimeSignature: [number, number],
+  measureIndex: number
+): [number, number] {
+  let ts = initialTimeSignature;
+  for (let i = 0; i <= measureIndex && i < track.measures.length; i++) {
+    if (track.measures[i].timeSignature) ts = track.measures[i].timeSignature!;
+  }
+  return ts;
+}
+
+/** True if changing one event's length to `nextDuration` would overfill its measure. */
+function overflowsMeasure(
+  track: Track,
+  initialTimeSignature: [number, number],
+  measureIndex: number,
+  events: MusicalEvent[],
+  eventIndex: number,
+  nextDuration: number
+): boolean {
+  const ts = effectiveTimeSignatureAt(track, initialTimeSignature, measureIndex);
+  const others = occupiedQN(events) - (events[eventIndex]?.durationQN ?? 0);
+  return others + nextDuration > measureLengthInQN(ts) + QN_EPS;
 }
 
 function withHistory(state: EditorState, nextScore: ScoreDocument): EditorState {
@@ -154,7 +190,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         stringMultiplicity: 1,
         channel: null,
         defaultView: 'staff',
-        measures: [emptyMeasure(1, next.initialTimeSignature)],
+        measures: [emptyMeasure(1)],
       });
       return withHistory(state, next);
     }
@@ -170,7 +206,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const t = next.tracks[action.trackIndex];
       if (!t) return state;
       const lastNumber = t.measures[t.measures.length - 1]?.number ?? 0;
-      t.measures.push(emptyMeasure(lastNumber + 1, next.initialTimeSignature));
+      t.measures.push(emptyMeasure(lastNumber + 1));
       return withHistory(state, next);
     }
     case 'delete-measure': {
@@ -183,12 +219,20 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     }
     case 'add-note': {
       const next = clone(state.score);
-      const measure = next.tracks[action.trackIndex]?.measures[action.measureIndex];
-      if (!measure) return state;
+      const track = next.tracks[action.trackIndex];
+      const measure = track?.measures[action.measureIndex];
+      if (!track || !measure) return state;
+      const ts = effectiveTimeSignatureAt(track, next.initialTimeSignature, action.measureIndex);
+      // A lone full-measure placeholder rest is replaced by the first real event.
+      if (isFillerRest(measure.voices[0].events, ts)) measure.voices[0].events = [];
+      const need = effectiveDurationQN(action.durationQN, action);
+      if (occupiedQN(measure.voices[0].events) + need > measureLengthInQN(ts) + QN_EPS) {
+        return state; // measure full — block (UI also disables the control)
+      }
       const note: Note = {
         kind: 'note',
         midi: action.midi,
-        durationQN: action.durationQN,
+        durationQN: need,
         ...(action.dotted ? { dotted: true } : {}),
         ...(action.triplet ? { triplet: true } : {}),
         ...(action.articulation ? { articulation: action.articulation } : {}),
@@ -198,11 +242,18 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     }
     case 'add-rest': {
       const next = clone(state.score);
-      const measure = next.tracks[action.trackIndex]?.measures[action.measureIndex];
-      if (!measure) return state;
+      const track = next.tracks[action.trackIndex];
+      const measure = track?.measures[action.measureIndex];
+      if (!track || !measure) return state;
+      const ts = effectiveTimeSignatureAt(track, next.initialTimeSignature, action.measureIndex);
+      if (isFillerRest(measure.voices[0].events, ts)) measure.voices[0].events = [];
+      const need = effectiveDurationQN(action.durationQN, action);
+      if (occupiedQN(measure.voices[0].events) + need > measureLengthInQN(ts) + QN_EPS) {
+        return state; // measure full — block
+      }
       const rest: Rest = {
         kind: 'rest',
-        durationQN: action.durationQN,
+        durationQN: need,
         ...(action.dotted ? { dotted: true } : {}),
         ...(action.triplet ? { triplet: true } : {}),
       };
@@ -224,26 +275,54 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     }
     case 'set-event-duration': {
       const next = clone(state.score);
-      const event = next.tracks[action.trackIndex]?.measures[action.measureIndex]
-        ?.voices[0].events[action.eventIndex];
-      if (!event) return state;
-      event.durationQN = action.durationQN;
+      const track = next.tracks[action.trackIndex];
+      const events = track?.measures[action.measureIndex]?.voices[0].events;
+      const event = events?.[action.eventIndex];
+      if (!track || !events || !event) return state;
+      const nextDuration = effectiveDurationQN(action.durationQN, {
+        dotted: event.dotted,
+        triplet: event.triplet,
+      });
+      if (overflowsMeasure(track, next.initialTimeSignature, action.measureIndex, events, action.eventIndex, nextDuration)) {
+        return state; // would exceed the measure — keep it valid
+      }
+      event.durationQN = nextDuration;
       return withHistory(state, next);
     }
     case 'set-event-dotted': {
       const next = clone(state.score);
-      const event = next.tracks[action.trackIndex]?.measures[action.measureIndex]
-        ?.voices[0].events[action.eventIndex];
-      if (!event) return state;
+      const track = next.tracks[action.trackIndex];
+      const events = track?.measures[action.measureIndex]?.voices[0].events;
+      const event = events?.[action.eventIndex];
+      if (!track || !events || !event) return state;
+      if (!!event.dotted === action.dotted) {
+        event.dotted = action.dotted;
+        return withHistory(state, next);
+      }
+      const nextDuration = event.durationQN * (action.dotted ? 1.5 : 1 / 1.5);
+      if (overflowsMeasure(track, next.initialTimeSignature, action.measureIndex, events, action.eventIndex, nextDuration)) {
+        return state;
+      }
       event.dotted = action.dotted;
+      event.durationQN = nextDuration;
       return withHistory(state, next);
     }
     case 'set-event-triplet': {
       const next = clone(state.score);
-      const event = next.tracks[action.trackIndex]?.measures[action.measureIndex]
-        ?.voices[0].events[action.eventIndex];
-      if (!event) return state;
+      const track = next.tracks[action.trackIndex];
+      const events = track?.measures[action.measureIndex]?.voices[0].events;
+      const event = events?.[action.eventIndex];
+      if (!track || !events || !event) return state;
+      if (!!event.triplet === action.triplet) {
+        event.triplet = action.triplet;
+        return withHistory(state, next);
+      }
+      const nextDuration = event.durationQN * (action.triplet ? 2 / 3 : 3 / 2);
+      if (overflowsMeasure(track, next.initialTimeSignature, action.measureIndex, events, action.eventIndex, nextDuration)) {
+        return state;
+      }
       event.triplet = action.triplet;
+      event.durationQN = nextDuration;
       return withHistory(state, next);
     }
     case 'set-event-tie': {
@@ -295,13 +374,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const measure = next.tracks[action.trackIndex]?.measures[action.measureIndex];
       if (!measure) return state;
       measure.voices[0].events.splice(action.eventIndex, 1);
-      // Backfill with a rest so the measure stays time-aligned visually.
-      if (measure.voices[0].events.length === 0) {
-        measure.voices[0].events.push({
-          kind: 'rest',
-          durationQN: measureLengthInQN(state.score.initialTimeSignature),
-        } satisfies Rest);
-      }
+      // Leave the measure empty (a blank staff) rather than backfilling a rest —
+      // the author adds the next note straight into the free space.
       return withHistory(state, next);
     }
     default:
@@ -309,13 +383,10 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
   }
 }
 
-function emptyMeasure(number: number, timeSignature: [number, number]): Measure {
-  const voice: Voice = {
-    number: 1,
-    events: [
-      { kind: 'rest', durationQN: measureLengthInQN(timeSignature) } satisfies Rest,
-    ] as MusicalEvent[],
-  };
+function emptyMeasure(number: number): Measure {
+  // A blank measure starts empty — the author drops the first note straight in,
+  // with no placeholder rest to delete first.
+  const voice: Voice = { number: 1, events: [] as MusicalEvent[] };
   return { number, voices: [voice] };
 }
 

@@ -49,6 +49,8 @@ export interface WaveformCanvasProps {
   onDragEnd: () => void;
   onScrollByPx: (dx: number) => void;
   onViewportWidth: (w: number) => void;
+  /** Pinch / ctrl-wheel zoom by a multiplicative factor (>1 in, <1 out). */
+  onZoomBy?: (factor: number) => void;
 }
 
 const DEFAULT_HEIGHT = 240;
@@ -107,7 +109,11 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     onDragEnd,
     onScrollByPx,
     onViewportWidth,
+    onZoomBy,
   } = props;
+
+  const onZoomByRef = useRef(onZoomBy);
+  onZoomByRef.current = onZoomBy;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const waveRef = useRef<HTMLCanvasElement | null>(null);
@@ -402,7 +408,14 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     };
 
     const onWheel = (e: WheelEvent) => {
-      // Horizontal scroll (trackpads send deltaX; mice send deltaY).
+      // Pinch-to-zoom: browsers map trackpad pinch to ctrl+wheel. Zoom around
+      // the pointer-agnostic center (SyncPanel keeps the timeline centered).
+      if (e.ctrlKey && onZoomByRef.current) {
+        e.preventDefault();
+        onZoomByRef.current(Math.exp(-e.deltaY * 0.01));
+        return;
+      }
+      // Otherwise: horizontal scroll (trackpads send deltaX; mice send deltaY).
       const dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       if (dx !== 0) {
         e.preventDefault();
@@ -410,17 +423,35 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       }
     };
 
+    // Safari/macOS pinch fires gesture events (no ctrl+wheel). Track the scale
+    // delta between frames and translate it into multiplicative zoom steps.
+    let lastScale = 1;
+    const onGestureStart = (e: Event) => {
+      e.preventDefault();
+      lastScale = 1;
+    };
+    const onGestureChange = (e: Event) => {
+      e.preventDefault();
+      const scale = (e as unknown as { scale: number }).scale || 1;
+      if (onZoomByRef.current && lastScale > 0) onZoomByRef.current(scale / lastScale);
+      lastScale = scale;
+    };
+
     overlay.addEventListener('pointerdown', onDown);
     overlay.addEventListener('pointermove', onMove);
     overlay.addEventListener('pointerup', onUp);
     overlay.addEventListener('pointercancel', onUp);
     overlay.addEventListener('wheel', onWheel, { passive: false });
+    overlay.addEventListener('gesturestart', onGestureStart as EventListener);
+    overlay.addEventListener('gesturechange', onGestureChange as EventListener);
     return () => {
       overlay.removeEventListener('pointerdown', onDown);
       overlay.removeEventListener('pointermove', onMove);
       overlay.removeEventListener('pointerup', onUp);
       overlay.removeEventListener('pointercancel', onUp);
       overlay.removeEventListener('wheel', onWheel);
+      overlay.removeEventListener('gesturestart', onGestureStart as EventListener);
+      overlay.removeEventListener('gesturechange', onGestureChange as EventListener);
     };
   }, [onSeek, onSelect, onMarkerDrag, onTailDrag, onDragEnd, onScrollByPx, videoTimeToX, xToVideoTime]);
 

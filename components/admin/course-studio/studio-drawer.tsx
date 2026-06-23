@@ -1,74 +1,48 @@
 'use client'
 
-import { Settings2, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ClassItem } from '@/types/modules'
 import styles from './course-studio.module.css'
-import { itemMeta } from './item-meta'
+
+interface StudioDrawerHeader {
+  label?: string
+  title: string
+  icon: React.ReactNode
+}
 
 interface StudioDrawerProps {
-  open: boolean
   widthPx: number
-  onClose: () => void
-  mode: 'item' | 'settings' | null
-  item: ClassItem | null
+  header: StudioDrawerHeader
+  /** Closes the mobile overlay; the panel is always open on desktop. */
+  onMobileClose: () => void
   children: React.ReactNode
 }
 
-/** In-page push drawer: part of the flex row, animating its width so the
-    canvas yields space instead of being covered. Below lg it becomes a
-    fixed overlay (see course-studio.module.css). */
-export function StudioDrawer({ open, widthPx, onClose, mode, item, children }: StudioDrawerProps) {
-  const meta = mode === 'item' && item ? itemMeta(item.item_type) : null
-  const Icon = meta?.icon
-
+/** Always-open inspector panel: part of the flex row on desktop (its width
+    animates so the canvas yields space), and a slide-in overlay below lg
+    (see course-studio.module.css). Filled with the current selection's editor. */
+export function StudioDrawer({ widthPx, header, onMobileClose, children }: StudioDrawerProps) {
   return (
-    <aside
-      className={cn(styles.drawer, 'bg-card', open && 'border-l border-border')}
-      aria-hidden={!open}
-    >
+    <aside className={cn(styles.drawer, 'border-l border-border bg-card')}>
       <div className={styles.drawerInner} style={{ width: widthPx }}>
         <div className="flex h-full flex-col">
           <header className="flex h-12 flex-shrink-0 items-center gap-2.5 border-b border-border px-4">
-            {mode === 'settings' ? (
-              <>
-                <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Settings2 className="h-3.5 w-3.5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold text-foreground">
-                    Course settings
-                  </p>
-                </div>
-              </>
-            ) : meta && Icon ? (
-              <>
-                <span
-                  className={cn(
-                    'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg',
-                    meta.bg,
-                    meta.fg
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[9.5px] font-semibold uppercase leading-3 tracking-[0.14em] text-muted-foreground/70">
-                    {meta.label}
-                  </p>
-                  <p className="truncate text-[13px] font-semibold leading-4 text-foreground">
-                    {item?.title || 'Untitled'}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1" />
-            )}
+            {header.icon}
+            <div className="min-w-0 flex-1">
+              {header.label && (
+                <p className="text-[9.5px] font-semibold uppercase leading-3 tracking-[0.14em] text-muted-foreground/70">
+                  {header.label}
+                </p>
+              )}
+              <p className="truncate text-[13px] font-semibold leading-4 text-foreground">
+                {header.title}
+              </p>
+            </div>
             <button
               type="button"
-              onClick={onClose}
+              onClick={onMobileClose}
               title="Close"
-              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground lg:hidden"
             >
               <X className="h-4 w-4" />
             </button>

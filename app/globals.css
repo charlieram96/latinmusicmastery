@@ -508,7 +508,8 @@ html:has([data-marketing]) {
   min-height: 0;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid hsl(0 0% 100% / 0.1);
+  /* No outer border — controls (zoom, analyze) used to crowd it. The waveform
+     gets its own dedicated border via .st-wave-lane instead. */
   background:
     radial-gradient(130% 80% at 50% -10%, hsl(var(--primary) / 0.09), transparent 60%),
     hsl(20 14% 5%);
@@ -521,6 +522,58 @@ html:has([data-marketing]) {
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* Per-measure left/right edge resize handles in the notation strip. Subtle by
+   default, brighter on hover; the cursor signals a horizontal stretch. */
+.st-measure-edge {
+  position: absolute;
+  bottom: 0;
+  z-index: 11;
+  cursor: ew-resize;
+  touch-action: none;
+  background: transparent;
+  transition: background 0.12s;
+}
+.st-measure-edge-l:hover {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, hsl(var(--primary)) 45%, transparent),
+    transparent
+  );
+}
+.st-measure-edge-r:hover {
+  background: linear-gradient(
+    270deg,
+    color-mix(in srgb, hsl(var(--primary)) 45%, transparent),
+    transparent
+  );
+}
+
+/* The waveform lane — its own bordered surface inside the (borderless) stage. */
+.st-wave-lane {
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* No-waveform / decode-error state shown over the lane. The wrapper is
+   click-through so it never blocks the canvas; only the button is interactive. */
+.st-wave-empty {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  pointer-events: none;
+}
+.st-wave-empty > * { pointer-events: auto; }
+.st-wave-empty-text {
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
 }
 
 /* Lane divider between the waveform and the notation lane. */
@@ -886,6 +939,24 @@ html:has([data-marketing]) {
   color: hsl(var(--primary));
 }
 .st-nb-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+
+/* Measure capacity readout in the toolbar (used/total beats for the target measure). */
+.st-nb-cap {
+  font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  border: 1px solid hsl(var(--border));
+}
+.st-nb-cap.is-full {
+  background: color-mix(in srgb, hsl(var(--primary)) 16%, transparent);
+  border-color: color-mix(in srgb, hsl(var(--primary)) 34%, transparent);
+  color: hsl(var(--primary));
+}
 
 /* Help strip under the toolbar. */
 .st-help {

@@ -22,6 +22,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Accidental,
   Articulation,
+  Beam,
   Dot,
   Formatter,
   Renderer,
@@ -32,6 +33,7 @@ import {
   Voice,
 } from 'vexflow';
 import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
+import { beatLengthInQN, measureLengthInQN, occupiedQN } from '@/lib/playsense-studio/time-mapping';
 import {
   diatonicToMidi,
   midiToDiatonic,
@@ -95,13 +97,18 @@ export interface EditableMeasureStripProps {
   onMeasureDrag: (measureIndex: number, videoTimeSeconds: number, mode: DragMode) => void;
   /** A measure-block time drag ended (commit / reinterpolate). */
   onMeasureDragEnd?: () => void;
+  /** Move the tail boundary (right edge of the LAST measure) in video time. */
+  onTailDrag?: (videoTimeSeconds: number) => void;
+  /** Show the per-measure left/right edge resize handles (sync mode only). */
+  resizable?: boolean;
+  /** MIDI a click on empty space will insert (for the hover preview); null = rest. */
+  previewMidi?: number | null;
   /** Horizontal wheel/trackpad pan over the staff (shared timeline scroll). */
   onScrollByPx?: (dx: number) => void;
   height?: number;
 }
 
-const DEFAULT_HEIGHT = 150;
-const STAVE_TOP = 14;
+const DEFAULT_HEIGHT = 220;
 const LEFT_PAD = 6;
 const RIGHT_PAD = 6;
 /** Height of the grab-handle band at the top of each measure block. */
@@ -144,6 +151,17 @@ interface TimeDragState {
   moved: boolean;
 }
 
+/** Drag of a measure's left/right edge — stretches that one boundary in time. */
+interface EdgeDragState {
+  measureIndex: number;
+  edge: 'left' | 'right';
+  pointerId: number;
+  moved: boolean;
+}
+
+/** Width (px) of the left/right edge resize handles. */
+const EDGE_PX = 7;
+
 export function EditableMeasureStrip({
   measures,
   pixelsPerSecond,
@@ -161,6 +179,9 @@ export function EditableMeasureStrip({
   onMeasureDragStart,
   onMeasureDrag,
   onMeasureDragEnd,
+  onTailDrag,
+  resizable,
+  previewMidi,
   onScrollByPx,
   height = DEFAULT_HEIGHT,
 }: EditableMeasureStripProps) {
@@ -168,7 +189,12 @@ export function EditableMeasureStrip({
   const [viewportWidth, setViewportWidth] = useState(0);
   const [dragging, setDragging] = useState<DragState | null>(null);
   const [timeDrag, setTimeDrag] = useState<TimeDragState | null>(null);
+  const [edgeDrag, setEdgeDrag] = useState<EdgeDragState | null>(null);
   const pendingEmptyRef = useRef<PendingEmptyInsert | null>(null);
+  // Cursor preview: where (container x) over empty measure space a click would
+  // drop a note. The note's identity comes from `previewMidi` (the toolbar).
+  const [ghost, setGhost] = useState<{ measureIndex: number; x: number } | null>(null);
+  const ghostXRef = useRef(0);
   // Which note the cursor is over (cursor feedback only) — state for the CSS
   // cursor, mirrored in a ref so pointermove only re-renders on identity change.
   const [hovered, setHovered] = useState<{ measureIndex: number; eventIndex: number } | null>(null);
@@ -274,6 +300,53 @@ export function EditableMeasureStrip({
   const handleHandleCancel = (e: React.PointerEvent) => {
     if (timeDrag?.pointerId !== e.pointerId) return;
     setTimeDrag(null);
+  };
+
+  // ---- Edge resize (left/right boundary of a single measure) ----------------
+  // Left edge moves this measure's downbeat; right edge moves the next measure's
+  // downbeat (or the tail, for the last measure). Always 'single' so only that
+  // one boundary moves — the measure stretches/squeezes on the dragged side.
+  const lastMeasureIndex = measures.length ? measures[measures.length - 1].measureIndex : -1;
+
+  const handleEdgeDown = (e: React.PointerEvent, item: MeasureStripItem, edge: 'left' | 'right') => {
+    e.stopPropagation();
+    e.preventDefault();
+    setEdgeDrag({ measureIndex: item.measureIndex, edge, pointerId: e.pointerId, moved: false });
+    onMeasureDragStart?.(item.measureIndex);
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+  };
+
+  const handleEdgeMove = (e: React.PointerEvent) => {
+    if (!edgeDrag || edgeDrag.pointerId !== e.pointerId) return;
+    e.preventDefault();
+    const t = Math.max(0, xToVideoTime(containerX(e)));
+    if (!edgeDrag.moved) setEdgeDrag({ ...edgeDrag, moved: true });
+    if (edgeDrag.edge === 'left') {
+      onMeasureDrag(edgeDrag.measureIndex, t, 'single');
+    } else if (edgeDrag.measureIndex === lastMeasureIndex) {
+      onTailDrag?.(t);
+    } else {
+      onMeasureDrag(edgeDrag.measureIndex + 1, t, 'single');
+    }
+  };
+
+  const handleEdgeUp = (e: React.PointerEvent) => {
+    if (!edgeDrag || edgeDrag.pointerId !== e.pointerId) return;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+    if (edgeDrag.moved) onMeasureDragEnd?.();
+    setEdgeDrag(null);
+  };
+
+  const handleEdgeCancel = (e: React.PointerEvent) => {
+    if (edgeDrag?.pointerId === e.pointerId) setEdgeDrag(null);
   };
 
   const handleHitsReady = useCallback((measureIndex: number, hits: MeasureHit[] | null) => {
@@ -382,6 +455,16 @@ export function EditableMeasureStrip({
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const hit = hitAt(item, e.clientX - rect.left, rect.width);
     setHover(hit ? { measureIndex: item.measureIndex, eventIndex: hit.eventIndex } : null);
+    // Over empty space: show the cursor preview note (throttled to ~2px moves).
+    if (!hit && !timeDrag && !edgeDrag) {
+      const cx = containerX(e);
+      if (!ghost || ghost.measureIndex !== item.measureIndex || Math.abs(cx - ghostXRef.current) >= 2) {
+        ghostXRef.current = cx;
+        setGhost({ measureIndex: item.measureIndex, x: cx });
+      }
+    } else if (ghost) {
+      setGhost(null);
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -494,6 +577,14 @@ export function EditableMeasureStrip({
         }
 
         const isTimeDragging = timeDrag?.measureIndex === item.measureIndex;
+        // Capacity for the measure's time signature, shown as used/total beats
+        // (e.g. "0/4", "4/4") so the author sees how full the measure is.
+        const beatQN = beatLengthInQN(item.timeSignature);
+        const usedBeats = occupiedQN(item.events) / beatQN;
+        const totalBeats = measureLengthInQN(item.timeSignature) / beatQN;
+        const isFull = usedBeats >= totalBeats - 1e-6;
+        const capLabel = `${formatBeatsShort(usedBeats)}/${formatBeatsShort(totalBeats)}`;
+        const showCap = width >= 64;
         const cursor = dragging
           ? 'grabbing'
           : hovered?.measureIndex === item.measureIndex
@@ -510,8 +601,33 @@ export function EditableMeasureStrip({
             onPointerCancel={handlePointerCancel}
             onPointerLeave={() => {
               if (hovered?.measureIndex === item.measureIndex) setHover(null);
+              if (ghost?.measureIndex === item.measureIndex) setGhost(null);
             }}
           >
+            {/* Left/right edge handles — drag to stretch this measure's start or
+                end boundary (sync mode only; meaningless on the fixed-BPM grid). */}
+            {resizable && (
+              <>
+                <div
+                  className="st-measure-edge st-measure-edge-l"
+                  style={{ left: 0, top: HANDLE_BAND_PX, width: EDGE_PX }}
+                  onPointerDown={(e) => handleEdgeDown(e, item, 'left')}
+                  onPointerMove={handleEdgeMove}
+                  onPointerUp={handleEdgeUp}
+                  onPointerCancel={handleEdgeCancel}
+                  title="Drag to move this measure's left edge"
+                />
+                <div
+                  className="st-measure-edge st-measure-edge-r"
+                  style={{ right: 0, top: HANDLE_BAND_PX, width: EDGE_PX }}
+                  onPointerDown={(e) => handleEdgeDown(e, item, 'right')}
+                  onPointerMove={handleEdgeMove}
+                  onPointerUp={handleEdgeUp}
+                  onPointerCancel={handleEdgeCancel}
+                  title="Drag to move this measure's right edge"
+                />
+              </>
+            )}
             {/* Grab-handle band: drag horizontally to reposition this measure in
                 time. Sits above the staff and stops propagation so note
                 selection / pitch-drag on the staff below is unaffected. */}
@@ -530,6 +646,16 @@ export function EditableMeasureStrip({
             >
               <GripHorizontal className="h-2.5 w-2.5 shrink-0 opacity-70" />
               <span className="tabular-nums leading-none">{item.measureNumber}</span>
+              {showCap && (
+                <span
+                  className={`ml-auto shrink-0 tabular-nums leading-none ${
+                    isFull ? 'text-[hsl(var(--primary))] opacity-90' : 'opacity-60'
+                  }`}
+                  title={`${formatBeatsShort(usedBeats)} of ${formatBeatsShort(totalBeats)} beats filled`}
+                >
+                  {capLabel}
+                </span>
+              )}
             </div>
             <MiniStave
               measureIndex={item.measureIndex}
@@ -560,6 +686,48 @@ export function EditableMeasureStrip({
           {dragChip.label}
         </div>
       )}
+
+      {/* Cursor preview: the note a click would add, shown next to the cursor at
+          its staff pitch (B4 sits on the middle line at height/2). */}
+      {ghost && !dragging && previewMidi !== undefined && (() => {
+        const isRest = previewMidi === null;
+        const stroke = !isRest && isPercussion && percStrokes
+          ? percStrokes.find((s) => s.midi === previewMidi)
+          : null;
+        const diatonic = isRest
+          ? 34
+          : stroke
+            ? keyToDiatonic(stroke.staffLine)
+            : midiToDiatonic(previewMidi as number);
+        const topY = Math.max(
+          HANDLE_BAND_PX + 8,
+          Math.min(height - 8, height / 2 - (diatonic - 34) * STEP_PX)
+        );
+        const label = isRest ? 'rest' : stroke ? stroke.label : midiToName(previewMidi as number);
+        return (
+          <div
+            className="pointer-events-none absolute z-20 flex items-center gap-1.5"
+            style={{ left: ghost.x, top: topY, transform: 'translateY(-50%)' }}
+          >
+            {!isRest && (
+              <span
+                style={{
+                  width: 11,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: 'hsl(var(--gold-highlight))',
+                  opacity: 0.6,
+                  transform: 'rotate(-18deg)',
+                  flexShrink: 0,
+                }}
+              />
+            )}
+            <span className="rounded bg-foreground/85 px-1.5 py-0.5 text-[10px] font-medium leading-none text-background shadow">
+              {label}
+            </span>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -601,10 +769,13 @@ const MiniStave = memo(function MiniStave({
     renderer.resize(width, height);
     const ctx = renderer.getContext();
 
-    const stave = new Stave(LEFT_PAD, STAVE_TOP, staveWidth);
+    const stave = new Stave(LEFT_PAD, 0, staveWidth);
     if (isFirst) {
       stave.addClef(clef).addTimeSignature(`${timeSignature[0]}/${timeSignature[1]}`);
     }
+    // Center the staff vertically: put the middle line (line 2 = B4) at the
+    // box's vertical center so notes/stems have even headroom above and below.
+    stave.setY(Math.round(height / 2 - stave.getYForLine(2)));
     stave.setContext(ctx).draw();
 
     if (events.length > 0) {
@@ -614,7 +785,13 @@ const MiniStave = memo(function MiniStave({
         voice.setStrict(false);
         voice.addTickables(vexNotes);
         new Formatter().joinVoices([voice]).format([voice], Math.max(20, staveWidth - 16));
+
+        // Beam connectable notes (eighths and shorter); rests break the beam.
+        // Generated BEFORE the draw so beamed notes drop their individual flags
+        // and each note's bounding box (captured below) stays a single-note box.
+        const beams = Beam.generateBeams(vexNotes, { beamRests: false });
         voice.draw(ctx, stave);
+        beams.forEach((beam) => beam.setContext(ctx).draw());
 
         // Triplet brackets — group consecutive triplet-flagged events into
         // runs of three and draw a tuplet over each complete group.
@@ -711,4 +888,10 @@ function midiToName(midi: number): string {
   const octave = Math.floor(midi / 12) - 1;
   const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
   return `${names[pc]}${octave}`;
+}
+
+/** Short beat count for the per-measure capacity chip (e.g. "2", "1.5"). */
+function formatBeatsShort(beats: number): string {
+  const rounded = Math.round(beats * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
 }

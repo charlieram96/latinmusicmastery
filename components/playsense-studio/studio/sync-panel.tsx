@@ -12,7 +12,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, ChevronsLeftRight, Loader2, Maximize, Move, Repeat, Trash2, UploadCloud, ZoomIn, ZoomOut } from 'lucide-react';
+import { AudioLines, Loader2, Maximize, Repeat, Trash2, UploadCloud, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type Dispatch } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
@@ -513,29 +513,6 @@ export function SyncPanel({
               onCancel={() => setPlaceArmed(false)}
             />
 
-            <span className="st-divline" />
-
-            <div className="st-seg" role="radiogroup" aria-label="Drag mode">
-              <button
-                type="button"
-                className={dragAll ? 'is-on' : ''}
-                onClick={() => setDragAll(true)}
-                title="Ripple — dragging a measure moves it and everything after it (hold Option to move just one)"
-              >
-                <ChevronsLeftRight className="h-3.5 w-3.5" />
-                Ripple
-              </button>
-              <button
-                type="button"
-                className={!dragAll ? 'is-on' : ''}
-                onClick={() => setDragAll(false)}
-                title="Single — dragging moves only that measure or marker (hold Option to ripple)"
-              >
-                <Move className="h-3.5 w-3.5" />
-                Single
-              </button>
-            </div>
-
             <div className="ml-auto flex items-center gap-1.5">
               {decodeState === 'loading' && (
                 <span className="text-xs text-muted-foreground">
@@ -555,7 +532,7 @@ export function SyncPanel({
                 <button
                   type="button"
                   onClick={runAnalysis}
-                  className="st-iconbtn"
+                  className="st-chip"
                   title={
                     decodeState === 'idle'
                       ? 'Analyze audio — decode this video so the waveform appears'
@@ -565,6 +542,11 @@ export function SyncPanel({
                   }
                 >
                   <AudioLines className="h-4 w-4" />
+                  {decodeState === 'idle'
+                    ? 'Analyze audio'
+                    : decodeState === 'error'
+                      ? 'Retry analysis'
+                      : 'Re-analyze'}
                 </button>
               )}
             </div>
@@ -577,7 +559,7 @@ export function SyncPanel({
             {/* Timeline track — measured for the no-waveform width fallback */}
             <div className="st-stage-track" ref={editorAreaRef}>
               {showSync && (
-                <div className="relative flex-shrink-0">
+                <div className="st-wave-lane relative flex-shrink-0">
                   <WaveformCanvas
                     bare
                     height={WAVE_H}
@@ -597,7 +579,24 @@ export function SyncPanel({
                     onDragEnd={() => setMarkers((s) => reinterpolateUnedited(s))}
                     onScrollByPx={handleScrollByPx}
                     onViewportWidth={setViewportWidth}
+                    onZoomBy={zoomBy}
                   />
+
+                  {/* No-waveform / error state, shown right over the lane so it's
+                      visible even when the left-rail inspector is hidden. */}
+                  {decodeState !== 'loading' && (!peaks || decodeState === 'error') && (
+                    <div className="st-wave-empty" style={{ height: WAVE_H }}>
+                      <p className="st-wave-empty-text">
+                        {decodeState === 'error'
+                          ? "Couldn't read this video's audio."
+                          : 'No waveform yet.'}
+                      </p>
+                      <button type="button" onClick={runAnalysis} className="st-btn-primary">
+                        <AudioLines className="h-4 w-4" />
+                        {decodeState === 'error' ? 'Retry analysis' : 'Analyze audio'}
+                      </button>
+                    </div>
+                  )}
 
                   {sectionsContext && (
                     <SectionsLane
@@ -645,6 +644,8 @@ export function SyncPanel({
                     setScrollLeft(clampScroll(nextScroll));
                   }}
                   dragAll={dragAll}
+                  showDragMode={showSync}
+                  onSetDragAll={setDragAll}
                   onSelectionChange={handleSelectionChange}
                   onScrollByPx={handleScrollByPx}
                   onMeasureDrag={
@@ -654,6 +655,7 @@ export function SyncPanel({
                       : () => {}
                   }
                   onMeasureDragEnd={showSync ? () => setMarkers((s) => reinterpolateUnedited(s)) : () => {}}
+                  onTailDrag={showSync ? handleTailDrag : undefined}
                 />
               </div>
 
