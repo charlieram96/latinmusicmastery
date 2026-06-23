@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   DEFAULT_LOCALE,
   LANGUAGE_COOKIE,
@@ -38,6 +39,7 @@ function writeCookie(value: Locale) {
 }
 
 export function LanguageProvider({ initialLocale, children }: LanguageProviderProps) {
+  const router = useRouter()
   const [locale, setLocaleState] = useState<Locale>(initialLocale ?? DEFAULT_LOCALE)
 
   useEffect(() => {
@@ -48,6 +50,9 @@ export function LanguageProvider({ initialLocale, children }: LanguageProviderPr
       if (stored !== locale) {
         setLocaleState(stored)
         writeCookie(stored)
+        // SSR rendered with the previous cookie locale; refresh so server-rendered
+        // DB content matches the restored preference.
+        router.refresh()
       }
       return () => {
         cancelled = true
@@ -62,6 +67,7 @@ export function LanguageProvider({ initialLocale, children }: LanguageProviderPr
         setLocaleState(pref)
         writeCookie(pref)
         window.localStorage.setItem(LANGUAGE_STORAGE_KEY, pref)
+        router.refresh()
       }
     })
 
@@ -83,13 +89,16 @@ export function LanguageProvider({ initialLocale, children }: LanguageProviderPr
       window.localStorage.setItem(LANGUAGE_STORAGE_KEY, next)
       writeCookie(next)
     }
+    // The cookie is written above, so re-rendering server components now picks
+    // up the new locale and re-localizes DB-backed content (course titles, etc).
+    router.refresh()
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         supabase.auth.updateUser({ data: { preferred_language: next } }).catch(() => {})
       }
     })
-  }, [])
+  }, [router])
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>) => getTranslation(locale, key, params),

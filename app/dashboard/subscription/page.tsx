@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getPricing } from '@/lib/payments/pricing-source'
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeRow, COURSE_FIELDS } from '@/lib/i18n/localize'
 import { SubscriptionView } from './subscription-view'
 
 export default async function MySubscriptionPage() {
@@ -24,23 +26,33 @@ export default async function MySubscriptionPage() {
       stripe_addon_subscription_id,
       subscription_courses (
         id,
-        course:courses ( id, title, slug, instrument )
+        course:courses ( id, title, title_es, slug, instrument )
       )
     `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
+  const locale = await getServerLocale()
+  for (const s of subs ?? []) {
+    for (const sc of ((s as any).subscription_courses ?? []) as any[]) {
+      if (sc.course) localizeRow(sc.course as Record<string, unknown>, locale, COURSE_FIELDS)
+    }
+  }
+
   // Fundamentals courses for each instrument (shown as "included" in each card).
   const instruments = (subs ?? []).map((s) => s.instrument)
   const { data: fundamentals } = await supabase
     .from('courses')
-    .select('id, title, slug, instrument')
+    .select('id, title, title_es, slug, instrument')
     .eq('is_fundamentals', true)
     .in('instrument', instruments.length > 0 ? instruments : [''])
 
   const fundamentalsByInstrument: Record<string, { id: string; title: string; slug: string }> = {}
   for (const f of fundamentals ?? []) {
-    if (f.instrument) fundamentalsByInstrument[f.instrument] = { id: f.id, title: f.title, slug: f.slug }
+    if (f.instrument) {
+      localizeRow(f as Record<string, unknown>, locale, COURSE_FIELDS)
+      fundamentalsByInstrument[f.instrument] = { id: f.id, title: f.title, slug: f.slug }
+    }
   }
 
   const prices = await getPricing()

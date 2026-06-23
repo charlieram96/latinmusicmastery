@@ -19,6 +19,8 @@ export interface CourseSection {
   course_id: string
   title: string
   description: string | null
+  title_es: string | null
+  description_es: string | null
   order_index: number
   created_at: string | null
   updated_at: string | null
@@ -30,6 +32,8 @@ export interface ClassRecord {
   section_id: string
   title: string
   description: string | null
+  title_es: string | null
+  description_es: string | null
   order_index: number
   is_free: boolean | null
   created_at: string | null
@@ -43,6 +47,8 @@ export interface ClassItem {
   item_type: string
   title: string
   description: string | null
+  title_es: string | null
+  description_es: string | null
   order_index: number
   rich_content: Record<string, unknown> | null
 
@@ -57,6 +63,8 @@ export interface ClassItem {
   options: QuestionOptions | null
   correct_answer: string | null
   explanation: string | null
+  question_es: string | null
+  explanation_es: string | null
 
   // JAM_SESSION fields
   audio_url: string | null
@@ -77,6 +85,9 @@ export interface QuizQuestion {
   options: QuestionOptions | null
   correct_answer: string | null
   explanation: string | null
+  question_es: string | null
+  explanation_es: string | null
+  options_es: QuestionOptions | null
   created_at: string | null
   updated_at: string | null
 }

@@ -56,13 +56,11 @@ async function getLastClass(userId: string): Promise<LastClass | null> {
     return null
   }
 
-  const locale = await getServerLocale()
-
   return {
     classId: cls.id,
     courseId: course.slug || course.id,
-    classTitle: pick(locale, cls.title, cls.title_es) ?? cls.title,
-    courseTitle: pick(locale, course.title, course.title_es) ?? course.title,
+    classTitle: cls.title,
+    courseTitle: course.title,
   }
 }
 

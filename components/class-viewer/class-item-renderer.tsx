@@ -11,6 +11,8 @@ import {
 } from '@/app/actions/playsense-studio'
 import { resolveLegacyAudioUrl } from '@/lib/play-sense/exercise-media'
 import { getQuizQuestions } from '@/app/actions/quiz'
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeRows, QUIZ_FIELDS } from '@/lib/i18n/localize'
 import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
 import { ExerciseView } from '@/components/class-viewer/lesson-viewer/exercise-view'
 import { LessonVideoPlayer } from '@/components/class-viewer/lesson-viewer/lesson-video-player'
@@ -115,7 +117,11 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
   // in quiz_questions. Fetch them server-side so the runner renders immediately.
   const quizQuestions =
     item.item_type === 'QUIZ' || item.item_type === 'EXERCISE'
-      ? (await getQuizQuestions(item.id)).data
+      ? localizeRows(
+          (await getQuizQuestions(item.id)).data as unknown as Record<string, unknown>[],
+          await getServerLocale(),
+          QUIZ_FIELDS
+        ) as unknown as Awaited<ReturnType<typeof getQuizQuestions>>['data']
       : []
 
   // M9 cutover analytics — log when the legacy iframe is shown so we know

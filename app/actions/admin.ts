@@ -15,6 +15,8 @@ export async function createCountry(formData: FormData) {
     name: formData.get('name') as string,
     slug: formData.get('slug') as string,
     description: formData.get('description') as string,
+    name_es: (formData.get('name_es') as string) || null,
+    description_es: (formData.get('description_es') as string) || null,
     image_url: formData.get('image_url') as string || null,
   }
 
@@ -35,6 +37,8 @@ export async function updateCountry(id: string, formData: FormData) {
     name: formData.get('name') as string,
     slug: formData.get('slug') as string,
     description: formData.get('description') as string,
+    name_es: (formData.get('name_es') as string) || null,
+    description_es: (formData.get('description_es') as string) || null,
     image_url: formData.get('image_url') as string || null,
   }
 
@@ -70,6 +74,8 @@ export async function createStyle(formData: FormData) {
     name: formData.get('name') as string,
     slug: formData.get('slug') as string,
     description: formData.get('description') as string || null,
+    name_es: (formData.get('name_es') as string) || null,
+    description_es: (formData.get('description_es') as string) || null,
   }
 
   const { error } = await supabase.from('musical_styles').insert(data)
@@ -90,6 +96,8 @@ export async function updateStyle(id: string, formData: FormData) {
     name: formData.get('name') as string,
     slug: formData.get('slug') as string,
     description: formData.get('description') as string || null,
+    name_es: (formData.get('name_es') as string) || null,
+    description_es: (formData.get('description_es') as string) || null,
   }
 
   const { error } = await supabase.from('musical_styles').update(data).eq('id', id)

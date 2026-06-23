@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/command'
 import { createClient } from '@/lib/supabase/client'
 import { SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
+import { useTranslation } from '@/components/language-provider'
+import { pick } from '@/lib/i18n/localize'
 
 interface SearchResult {
   id: string
@@ -25,6 +27,7 @@ interface SearchResult {
 
 export function HeaderSearch() {
   const router = useRouter()
+  const { locale } = useTranslation()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
@@ -59,14 +62,14 @@ export function HeaderSearch() {
       const [coursesRes, classesRes, teachersRes, stylesRes] = await Promise.allSettled([
         supabase
           .from('courses')
-          .select('id, title, slug, teacher_name, instrument')
-          .ilike('title', `%${searchQuery}%`)
+          .select('id, title, title_es, slug, teacher_name, instrument')
+          .or(`title.ilike.%${searchQuery}%,title_es.ilike.%${searchQuery}%`)
           .eq('is_published', true)
           .limit(3),
         supabase
           .from('classes')
-          .select('id, title, section:course_sections(id, course:courses(id, slug, title))')
-          .ilike('title', `%${searchQuery}%`)
+          .select('id, title, title_es, section:course_sections(id, course:courses(id, slug, title, title_es))')
+          .or(`title.ilike.%${searchQuery}%,title_es.ilike.%${searchQuery}%`)
           .limit(3),
         supabase
           .from('teachers')
@@ -75,17 +78,17 @@ export function HeaderSearch() {
           .limit(3),
         supabase
           .from('musical_styles')
-          .select('id, name, slug, countries(name)')
-          .ilike('name', `%${searchQuery}%`)
+          .select('id, name, name_es, slug, countries(name, name_es)')
+          .or(`name.ilike.%${searchQuery}%,name_es.ilike.%${searchQuery}%`)
           .limit(3),
       ])
 
       // Process courses
       if (coursesRes.status === 'fulfilled' && coursesRes.value.data) {
-        coursesRes.value.data.forEach((course) => {
+        coursesRes.value.data.forEach((course: any) => {
           searchResults.push({
             id: course.id,
-            title: course.title,
+            title: pick(locale, course.title, course.title_es) ?? course.title,
             type: 'course',
             href: `/dashboard/course/${course.slug}`,
             subtitle: [course.teacher_name, course.instrument].filter(Boolean).join(' · ') || undefined,
@@ -100,10 +103,10 @@ export function HeaderSearch() {
           if (course) {
             searchResults.push({
               id: cls.id,
-              title: cls.title,
+              title: pick(locale, cls.title, cls.title_es) ?? cls.title,
               type: 'lesson',
               href: `/dashboard/course/${course.slug || course.id}`,
-              subtitle: course.title || undefined,
+              subtitle: (pick(locale, course.title, course.title_es) ?? course.title) || undefined,
             })
           }
         })
@@ -127,10 +130,10 @@ export function HeaderSearch() {
         stylesRes.value.data.forEach((style: any) => {
           searchResults.push({
             id: style.id,
-            title: style.name,
+            title: pick(locale, style.name, style.name_es) ?? style.name,
             type: 'style',
             href: `/dashboard/courses?style=${style.slug}`,
-            subtitle: style.countries?.name || undefined,
+            subtitle: (pick(locale, style.countries?.name, style.countries?.name_es) ?? style.countries?.name) || undefined,
           })
         })
       }
@@ -155,7 +158,7 @@ export function HeaderSearch() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [locale])
 
   // Debounced search
   useEffect(() => {

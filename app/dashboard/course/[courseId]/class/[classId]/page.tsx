@@ -2,6 +2,8 @@ import { notFound, redirect } from 'next/navigation'
 import { Clock, BarChart3 } from 'lucide-react'
 import styles from '@/components/class-viewer/lesson-viewer/lesson-viewer.module.css'
 import { createClient } from '@/lib/supabase/server'
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeRow, localizeRows, CLASS_FIELDS, SECTION_FIELDS, COURSE_FIELDS, STYLE_FIELDS, ITEM_FIELDS } from '@/lib/i18n/localize'
 import { getCourseStructureForStudent } from '@/app/actions/course-student'
 import { getComments } from '@/app/actions/comments'
 import { ClassItemRenderer } from '@/components/class-viewer/class-item-renderer'
@@ -48,19 +50,23 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
       section:course_sections (
         id,
         title,
+        title_es,
         description,
+        description_es,
         course_id,
         course:courses (
           id,
           title,
+          title_es,
           description,
+          description_es,
           slug,
           thumbnail_url,
           instrument,
           difficulty,
           is_fundamentals,
           teacher:teachers (name, image_url),
-          musical_style:musical_styles (name)
+          musical_style:musical_styles (name, name_es)
         )
       )
     `)
@@ -70,6 +76,15 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   if (!classData || !classData.section) {
     notFound()
   }
+
+  // Localize the directly-fetched class/section/course to the viewer's language.
+  // (The sidebar structure is localized separately in getCourseStructureForStudent.)
+  const locale = await getServerLocale()
+  localizeRow(classData as Record<string, unknown>, locale, CLASS_FIELDS)
+  localizeRows(classData.items as Record<string, unknown>[], locale, ITEM_FIELDS)
+  localizeRow(classData.section as Record<string, unknown>, locale, SECTION_FIELDS)
+  localizeRow((classData.section as any).course as Record<string, unknown>, locale, COURSE_FIELDS)
+  localizeRow((classData.section as any).course?.musical_style as Record<string, unknown>, locale, STYLE_FIELDS)
 
   const section = classData.section as any
   const course = section.course
@@ -208,7 +223,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const body = (
     <>
       {activeItem ? (
-        <div className={`px-4 pt-4 md:px-8 ${styles.rise}`} style={{ animationDelay: '80ms' }}>
+        <div className={`px-4 md:px-8 ${styles.rise}`} style={{ animationDelay: '80ms' }}>
           <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" />
         </div>
       ) : (

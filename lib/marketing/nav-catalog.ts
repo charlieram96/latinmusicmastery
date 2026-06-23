@@ -1,6 +1,8 @@
 import 'server-only'
 
 import { createClient } from '@/lib/supabase/server'
+import { getServerLocale } from '@/lib/i18n/server'
+import { pick } from '@/lib/i18n/localize'
 
 export type NavCatalogItem = { slug: string; name: string }
 
@@ -20,9 +22,10 @@ export interface NavCatalog {
 export async function getNavCatalog(): Promise<NavCatalog> {
   const supabase = await createClient()
 
+  const locale = await getServerLocale()
   const [{ data: courseInstruments }, { data: styles }] = await Promise.all([
     supabase.from('courses').select('instrument').not('instrument', 'is', null),
-    supabase.from('musical_styles').select('slug, name').order('name'),
+    supabase.from('musical_styles').select('slug, name, name_es').order('name'),
   ])
 
   const instrumentNames = Array.from(
@@ -35,6 +38,9 @@ export async function getNavCatalog(): Promise<NavCatalog> {
 
   return {
     instruments: instrumentNames.map((name) => ({ slug: name, name })),
-    styles: styles ?? [],
+    styles: (styles ?? []).map((s) => ({
+      slug: s.slug,
+      name: pick(locale, s.name, (s as { name_es?: string | null }).name_es ?? null) ?? s.name,
+    })),
   }
 }

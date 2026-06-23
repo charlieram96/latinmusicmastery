@@ -106,6 +106,21 @@ export function CourseSettingsEditor({
         </div>
 
         <div className="grid gap-1.5">
+          <Label htmlFor="course-title-es" className="text-xs text-muted-foreground">
+            Title (Español)
+          </Label>
+          <Input
+            id="course-title-es"
+            value={settings.title_es ?? ''}
+            onChange={(e) => {
+              onPatched({ title_es: e.target.value || null })
+              queue({ title_es: e.target.value || null })
+            }}
+            placeholder="Título del curso (opcional)"
+          />
+        </div>
+
+        <div className="grid gap-1.5">
           <Label htmlFor="course-slug" className="text-xs">
             Slug
           </Label>
@@ -137,6 +152,22 @@ export function CourseSettingsEditor({
             }}
             rows={4}
             placeholder="What students will learn in this course…"
+          />
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="course-description-es" className="text-xs text-muted-foreground">
+            Description (Español)
+          </Label>
+          <Textarea
+            id="course-description-es"
+            value={settings.description_es ?? ''}
+            onChange={(e) => {
+              onPatched({ description_es: e.target.value || null })
+              queue({ description_es: e.target.value || null })
+            }}
+            rows={4}
+            placeholder="Lo que aprenderán los estudiantes (opcional)…"
           />
         </div>
       </div>

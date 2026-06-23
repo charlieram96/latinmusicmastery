@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeRow, localizeRows, localizeCourse, COURSE_FIELDS } from '@/lib/i18n/localize'
 import { ACHIEVEMENTS } from '@/lib/achievements'
 import { WelcomeSummary } from '@/components/dashboard/welcome-summary'
 import { ContinueLearningHero } from '@/components/dashboard/continue-learning-hero'
@@ -58,6 +60,7 @@ export default async function DashboardPage() {
         course:courses(
           id,
           title,
+          title_es,
           slug,
           thumbnail_url,
           teacher:teachers(name),
@@ -67,6 +70,7 @@ export default async function DashboardPage() {
             classes(
               id,
               title,
+              title_es,
               order_index,
               items:class_items(id)
             )
@@ -92,6 +96,21 @@ export default async function DashboardPage() {
       .limit(1)
       .single(),
   ])
+
+  // Localize enrolled-course titles (+ nested class titles) to the viewer's language.
+  const locale = await getServerLocale()
+  for (const enrollment of enrollments ?? []) {
+    const course = (enrollment as any).course as Record<string, unknown> | null
+    if (!course) continue
+    localizeRow(course, locale, COURSE_FIELDS)
+    const sections = course['course_sections'] as Record<string, unknown>[] | undefined
+    if (Array.isArray(sections)) {
+      for (const s of sections) {
+        const classes = s['classes'] as Record<string, unknown>[] | undefined
+        if (Array.isArray(classes)) localizeRows(classes, locale, ['title'])
+      }
+    }
+  }
 
   // ── Build course → item ID map ──────────────────────────────────
   const allItemIds: string[] = []
@@ -299,7 +318,7 @@ export default async function DashboardPage() {
       .select(
         `
         *,
-        musical_style:musical_styles(name),
+        musical_style:musical_styles(name, name_es),
         teacher:teachers(name)
       `
       )
@@ -325,17 +344,22 @@ export default async function DashboardPage() {
         `
         id,
         title,
+        title_es,
         slug,
         description,
+        description_es,
         thumbnail_url,
         difficulty,
-        musical_style:musical_styles(name),
+        musical_style:musical_styles(name, name_es),
         teacher:teachers(name)
       `
       )
       .eq('is_published', true)
       .limit(12),
   ])
+
+  for (const c of recommendedCourses ?? []) localizeCourse(c as Record<string, unknown>, locale)
+  for (const c of allCourses ?? []) localizeCourse(c as Record<string, unknown>, locale)
 
   const newCourseIds = (newCoursesRaw || []).map((c: any) => c.id)
 

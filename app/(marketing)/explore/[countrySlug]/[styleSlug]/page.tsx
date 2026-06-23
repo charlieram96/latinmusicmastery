@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getServerLocale } from "@/lib/i18n/server";
+import { localizeRow, localizeRows } from "@/lib/i18n/localize";
 
 export async function generateMetadata({ params }: { params: Promise<{ countrySlug: string; styleSlug: string }> }): Promise<Metadata> {
   const { countrySlug, styleSlug } = await params
@@ -23,20 +25,22 @@ export default async function StylePage({
 }) {
   const { countrySlug, styleSlug } = await params;
   const supabase = await createClient();
+  const locale = await getServerLocale();
 
   const { data: country } = await supabase
     .from("countries")
-    .select("id, name, slug")
+    .select("id, name, name_es, slug")
     .eq("slug", countrySlug)
     .single();
 
   if (!country) {
     notFound();
   }
+  localizeRow(country as Record<string, unknown>, locale, ['name']);
 
   const { data: style } = await supabase
     .from("musical_styles")
-    .select("id, name, slug, description")
+    .select("id, name, name_es, slug, description, description_es")
     .eq("slug", styleSlug)
     .eq("country_id", country.id)
     .single();
@@ -44,14 +48,17 @@ export default async function StylePage({
   if (!style) {
     notFound();
   }
+  localizeRow(style as Record<string, unknown>, locale, ['name', 'description']);
 
   const { data: courses } = await supabase
     .from("courses")
     .select(
-      "id, title, slug, description, instrument, difficulty, thumbnail_url"
+      "id, title, title_es, slug, description, description_es, instrument, difficulty, thumbnail_url"
     )
     .eq("musical_style_id", style.id)
     .order("title");
+
+  localizeRows(courses as Record<string, unknown>[] | null, locale, ['title', 'description']);
 
   return (
     <>

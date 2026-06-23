@@ -38,6 +38,8 @@ export function ItemEditor({ item, onPatched }: ItemEditorProps) {
 
   const [title, setTitle] = useState(item.title)
   const [description, setDescription] = useState(item.description ?? '')
+  const [titleEs, setTitleEs] = useState(item.title_es ?? '')
+  const [descriptionEs, setDescriptionEs] = useState(item.description_es ?? '')
   const [soundslice, setSoundslice] = useState(item.soundslice_embed_url ?? '')
 
   const scoreDocumentId =
@@ -55,6 +57,18 @@ export function ItemEditor({ item, onPatched }: ItemEditorProps) {
     setDescription(value)
     onPatched({ description: value || null })
     queue({ description: value || null })
+  }
+
+  const handleTitleEsChange = (value: string) => {
+    setTitleEs(value)
+    onPatched({ title_es: value || null } as Partial<ClassItem>)
+    queue({ title_es: value || null })
+  }
+
+  const handleDescriptionEsChange = (value: string) => {
+    setDescriptionEs(value)
+    onPatched({ description_es: value || null } as Partial<ClassItem>)
+    queue({ description_es: value || null })
   }
 
   const handleVideoUploaded = (url: string) => {
@@ -89,6 +103,17 @@ export function ItemEditor({ item, onPatched }: ItemEditorProps) {
           />
         </div>
         <div className="grid gap-1.5">
+          <Label htmlFor="item-title-es" className="text-xs text-muted-foreground">
+            Title (Español)
+          </Label>
+          <Input
+            id="item-title-es"
+            value={titleEs}
+            onChange={(e) => handleTitleEsChange(e.target.value)}
+            placeholder="Título en español (opcional)"
+          />
+        </div>
+        <div className="grid gap-1.5">
           <Label htmlFor="item-description" className="text-xs">
             Description
           </Label>
@@ -98,6 +123,18 @@ export function ItemEditor({ item, onPatched }: ItemEditorProps) {
             onChange={(e) => handleDescriptionChange(e.target.value)}
             rows={2}
             placeholder="Brief description…"
+          />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="item-description-es" className="text-xs text-muted-foreground">
+            Description (Español)
+          </Label>
+          <Textarea
+            id="item-description-es"
+            value={descriptionEs}
+            onChange={(e) => handleDescriptionEsChange(e.target.value)}
+            rows={2}
+            placeholder="Descripción en español (opcional)…"
           />
         </div>
       </div>

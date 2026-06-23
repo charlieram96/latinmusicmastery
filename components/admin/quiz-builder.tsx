@@ -11,23 +11,29 @@ import { QuestionType } from '@/types/modules'
 interface QuizBuilderProps {
   questionType: QuestionType
   question: string
+  questionEs?: string
   options: any
   correctAnswer: string
   explanation: string
+  explanationEs?: string
   onChange: (data: {
     question?: string
+    question_es?: string | null
     options?: any
     correct_answer?: string
     explanation?: string
+    explanation_es?: string | null
   }) => void
 }
 
 export function QuizBuilder({
   questionType,
   question,
+  questionEs = '',
   options,
   correctAnswer,
   explanation,
+  explanationEs = '',
   onChange,
 }: QuizBuilderProps) {
   const renderOptionsBuilder = () => {
@@ -78,6 +84,17 @@ export function QuizBuilder({
         />
       </div>
 
+      <div className="grid gap-2">
+        <Label htmlFor="question-es" className="text-muted-foreground">Question (Español)</Label>
+        <Textarea
+          id="question-es"
+          value={questionEs}
+          onChange={(e) => onChange({ question_es: e.target.value || null })}
+          rows={3}
+          placeholder="Escribe la pregunta en español (opcional)…"
+        />
+      </div>
+
       {renderOptionsBuilder()}
 
       <div className="grid gap-2">
@@ -88,6 +105,17 @@ export function QuizBuilder({
           onChange={(e) => onChange({ explanation: e.target.value })}
           rows={2}
           placeholder="Explain the correct answer..."
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="explanation-es" className="text-muted-foreground">Explanation (Español)</Label>
+        <Textarea
+          id="explanation-es"
+          value={explanationEs}
+          onChange={(e) => onChange({ explanation_es: e.target.value || null })}
+          rows={2}
+          placeholder="Explica la respuesta correcta (opcional)…"
         />
       </div>
     </div>

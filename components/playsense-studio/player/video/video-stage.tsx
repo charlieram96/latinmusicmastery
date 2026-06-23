@@ -48,11 +48,11 @@ export const VideoStage = forwardRef<HTMLVideoElement, VideoStageProps>(
           <button
             type="button"
             onClick={handleOverlayClick}
-            className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/30 transition cursor-pointer group"
+            className="group absolute inset-0 flex cursor-pointer items-center justify-center bg-black/40 backdrop-blur-[2px] transition hover:bg-black/30"
             aria-label="Play video"
           >
-            <span className="w-16 h-16 rounded-full bg-primary/90 group-hover:bg-primary text-primary-foreground flex items-center justify-center shadow-lg transition">
-              <Play className="w-8 h-8 ml-1" fill="currentColor" />
+            <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-primary/90 text-primary-foreground shadow-[0_8px_30px_-4px_hsl(var(--primary)/0.6)] ring-1 ring-white/15 transition-transform duration-150 group-hover:scale-105 group-hover:bg-primary group-active:scale-95">
+              <Play className="ml-1 h-8 w-8" fill="currentColor" />
             </span>
           </button>
         )}

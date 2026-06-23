@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
-import { getServerTranslator } from '@/lib/i18n/server'
+import { getServerTranslator, getServerLocale } from '@/lib/i18n/server'
+import { localizeRows, localizeRow, COUNTRY_FIELDS, STYLE_FIELDS } from '@/lib/i18n/localize'
 import { getPricing } from '@/lib/payments/pricing-source'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -36,14 +37,18 @@ export default async function MarketingHomePage() {
       .select(`
         id,
         name,
+        name_es,
         slug,
         description,
+        description_es,
         image_url,
         musical_styles (
           id,
           name,
+          name_es,
           slug,
-          description
+          description,
+          description_es
         )
       `)
       .order('name'),
@@ -57,9 +62,16 @@ export default async function MarketingHomePage() {
       .order('name'),
     supabase
       .from('musical_styles')
-      .select('id, name')
+      .select('id, name, name_es')
       .order('name'),
   ])
+
+  const locale = await getServerLocale()
+  for (const country of countries ?? []) {
+    localizeRow(country as Record<string, unknown>, locale, COUNTRY_FIELDS)
+    localizeRows((country as any).musical_styles as Record<string, unknown>[] | null, locale, STYLE_FIELDS)
+  }
+  localizeRows(musicalStyles as Record<string, unknown>[] | null, locale, STYLE_FIELDS)
 
   const waitlistInstruments = (instruments ?? []).map(({ id, name }) => ({ id, name }))
   const waitlistStyles = musicalStyles ?? []

@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getServerLocale } from "@/lib/i18n/server";
+import { localizeRow, localizeRows } from "@/lib/i18n/localize";
 import PageHero from "@/components/marketing/PageHero";
 import SectionWrapper from "@/components/marketing/SectionWrapper";
 import CourseCard from "@/components/marketing/CourseCard";
@@ -46,7 +48,7 @@ type CourseRow = {
   thumbnail_url: string | null;
 };
 
-const COURSE_FIELDS = "id, title, slug, description, instrument, difficulty, thumbnail_url";
+const COURSE_FIELDS = "id, title, title_es, slug, description, description_es, instrument, difficulty, thumbnail_url";
 
 function FilteredCourses({
   title,
@@ -110,6 +112,7 @@ interface ExplorePageProps {
 export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   const { instrument: instrumentParam, style: styleSlug } = await searchParams;
   const supabase = await createClient();
+  const locale = await getServerLocale();
 
   // ── Filtered view: courses for a single instrument ──────────────────────
   // courses.instrument is free text (e.g. "Conga"), so we match it directly.
@@ -119,6 +122,8 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
       .select(COURSE_FIELDS)
       .eq("instrument", instrumentParam)
       .order("title");
+
+    localizeRows(courses as Record<string, unknown>[] | null, locale, ['title', 'description']);
 
     return (
       <FilteredCourses
@@ -134,17 +139,20 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   if (styleSlug) {
     const { data: style } = await supabase
       .from("musical_styles")
-      .select("id, name, slug, description")
+      .select("id, name, name_es, slug, description, description_es")
       .eq("slug", styleSlug)
       .single();
 
     if (!style) notFound();
+    localizeRow(style as Record<string, unknown>, locale, ['name', 'description']);
 
     const { data: courses } = await supabase
       .from("courses")
       .select(COURSE_FIELDS)
       .eq("musical_style_id", style.id)
       .order("title");
+
+    localizeRows(courses as Record<string, unknown>[] | null, locale, ['title', 'description']);
 
     return (
       <FilteredCourses
@@ -159,8 +167,13 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   // ── Default view: browse by country ─────────────────────────────────────
   const { data: countries } = await supabase
     .from("countries")
-    .select("id, name, slug, description, image_url, musical_styles(id, name, slug)")
+    .select("id, name, name_es, slug, description, description_es, image_url, musical_styles(id, name, name_es, slug)")
     .order("name");
+
+  for (const country of countries ?? []) {
+    localizeRow(country as Record<string, unknown>, locale, ['name', 'description']);
+    localizeRows((country as any).musical_styles as Record<string, unknown>[] | null, locale, ['name']);
+  }
 
   return (
     <>

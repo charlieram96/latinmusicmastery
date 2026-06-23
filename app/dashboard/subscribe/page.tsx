@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getPricing } from '@/lib/payments/pricing-source'
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeRows, COURSE_FIELDS } from '@/lib/i18n/localize'
 import { SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
 import { SubscribeClient } from './subscribe-client'
 
@@ -18,11 +20,14 @@ export default async function SubscribePage({ searchParams }: PageProps) {
   // Load published genre courses (not fundamentals), grouped by instrument.
   const { data: genreCourses } = await supabase
     .from('courses')
-    .select('id, title, slug, instrument, description')
+    .select('id, title, title_es, slug, instrument, description, description_es')
     .eq('is_published', true)
     .eq('is_fundamentals', false)
     .not('instrument', 'is', null)
     .order('title')
+
+  const locale = await getServerLocale()
+  localizeRows(genreCourses as Record<string, unknown>[] | null, locale, COURSE_FIELDS)
 
   // The user's existing instrument subscriptions — those instruments are not
   // offered on the "Subscribe" step (use Add to Plan there instead).

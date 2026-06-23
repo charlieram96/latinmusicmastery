@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeCourse } from '@/lib/i18n/localize'
 import { TeachersView } from './teachers-view'
 
 export default async function TeachersPage() {
@@ -12,18 +14,23 @@ export default async function TeachersPage() {
       courses(
         id,
         title,
+        title_es,
         slug,
         thumbnail_url,
         is_published,
-        musical_style:musical_styles(name)
+        musical_style:musical_styles(name, name_es)
       )
     `)
     .order('name')
 
+  const locale = await getServerLocale()
+
   // Filter to only published courses
   const teachersWithCourses = (teachers || []).map(teacher => ({
     ...teacher,
-    courses: (teacher.courses || []).filter((c: any) => c.is_published)
+    courses: (teacher.courses || [])
+      .filter((c: any) => c.is_published)
+      .map((c: any) => localizeCourse(c, locale))
   }))
 
   // Get total stats

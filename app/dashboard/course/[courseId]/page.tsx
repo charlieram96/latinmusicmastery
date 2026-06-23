@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getCourseStructureForStudent } from '@/app/actions/course-student'
 import { canAccessCourse, hasInstrumentSubscription } from '@/lib/subscriptions'
 import { getPricing } from '@/lib/payments/pricing-source'
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeCourse } from '@/lib/i18n/localize'
 import { CourseDetailView } from './course-detail-view'
 
 interface PageProps {
@@ -28,8 +30,8 @@ export default async function CoursePage({ params }: PageProps) {
     .select(`
       *,
       musical_style:musical_styles(
-        id, name, slug,
-        country:countries(id, name, slug)
+        id, name, name_es, slug,
+        country:countries(id, name, name_es, slug)
       ),
       teacher:teachers(id, name, instrument, image_url, bio)
     `)
@@ -45,6 +47,9 @@ export default async function CoursePage({ params }: PageProps) {
   if (!course) {
     notFound()
   }
+
+  const locale = await getServerLocale()
+  localizeCourse(course as Record<string, unknown>, locale)
 
   // Check admin status
   const { data: profile } = await supabase

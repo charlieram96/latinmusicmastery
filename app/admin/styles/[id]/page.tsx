@@ -90,6 +90,16 @@ export default async function StyleFormPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="name_es" className="text-muted-foreground">Name (Español)</Label>
+              <Input
+                id="name_es"
+                name="name_es"
+                defaultValue={style?.name_es || ''}
+                placeholder="Nombre en español (opcional)"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="slug">Slug *</Label>
               <Input
                 id="slug"
@@ -110,6 +120,17 @@ export default async function StyleFormPage({ params }: PageProps) {
                 name="description"
                 defaultValue={style?.description || ''}
                 placeholder="Brief description of this musical style..."
+                rows={4}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description_es" className="text-muted-foreground">Description (Español)</Label>
+              <Textarea
+                id="description_es"
+                name="description_es"
+                defaultValue={style?.description_es || ''}
+                placeholder="Descripción en español (opcional)..."
                 rows={4}
               />
             </div>

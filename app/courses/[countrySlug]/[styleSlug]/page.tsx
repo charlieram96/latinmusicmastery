@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeRow, localizeRows, STYLE_FIELDS, COUNTRY_FIELDS, COURSE_FIELDS } from '@/lib/i18n/localize'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,6 +17,7 @@ interface PageProps {
 export default async function StyleCoursesPage({ params }: PageProps) {
   const { countrySlug, styleSlug } = await params
   const supabase = await createClient()
+  const locale = await getServerLocale()
 
   // Get the country
   const { data: country } = await supabase
@@ -26,6 +29,7 @@ export default async function StyleCoursesPage({ params }: PageProps) {
   if (!country) {
     notFound()
   }
+  localizeRow(country as Record<string, unknown>, locale, COUNTRY_FIELDS)
 
   // Get the musical style
   const { data: style } = await supabase
@@ -38,6 +42,7 @@ export default async function StyleCoursesPage({ params }: PageProps) {
   if (!style) {
     notFound()
   }
+  localizeRow(style as Record<string, unknown>, locale, STYLE_FIELDS)
 
   // Get all published courses for this style
   const { data: courses } = await supabase
@@ -49,6 +54,8 @@ export default async function StyleCoursesPage({ params }: PageProps) {
     .eq('musical_style_id', style.id)
     .eq('is_published', true)
     .order('order_index')
+
+  localizeRows(courses as Record<string, unknown>[] | null, locale, COURSE_FIELDS)
 
   return (
     <div className="container mx-auto px-4 py-8">
