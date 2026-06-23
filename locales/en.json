@@ -927,28 +927,63 @@
     "pages": {
       "tuner": {
         "title": "Instrument Tuner",
+        "subtitle": "Play a note and tune to the center. Works for any pitched instrument.",
         "chromatic": "Chromatic",
-        "flat": "Flat",
-        "sharp": "Sharp",
-        "startTuner": "Start tuner",
-        "stopTuner": "Stop tuner",
-        "micAccessDenied": "Microphone Access Denied",
-        "micAccessHelp": "Please allow microphone access in your browser settings to use the tuner.",
-        "tryAgain": "Try Again",
+        "chromaticHint": "Chromatic mode — play any single key and tune it to the center.",
+        "openStrings": "Open strings",
+        "target": "Target",
+        "startTuner": "Start tuning",
+        "stopTuner": "Stop",
+        "micAccessDenied": "Microphone access denied",
+        "micAccessHelp": "Allow microphone access in your browser settings, then try again.",
+        "micError": "Couldn't start the tuner",
+        "tryAgain": "Try again",
         "status": {
-          "waiting": "Waiting...",
-          "inTune": "In Tune",
+          "idle": "Ready",
+          "waiting": "Listening…",
+          "inTune": "In tune",
           "sharp": "Sharp",
-          "slightlySharp": "Slightly Sharp",
+          "slightlySharp": "Slightly sharp",
           "flat": "Flat",
-          "slightlyFlat": "Slightly Flat"
+          "slightlyFlat": "Slightly flat"
+        },
+        "signal": {
+          "title": "Listening",
+          "live": "Live",
+          "off": "Off",
+          "level": "Level",
+          "hintLive": "Play a note — keep the level out of the red.",
+          "hintIdle": "Allow your mic to begin."
+        },
+        "settings": {
+          "title": "Settings",
+          "reference": "Reference (A4)",
+          "referenceHelp": "Concert pitch. Standard is 440 Hz; some ensembles tune to 442.",
+          "sensitivity": "Sensitivity",
+          "sensitivityHelp": "Higher picks up quiet notes; lower ignores background noise.",
+          "sensitivityLevels": { "low": "Low", "medium": "Medium", "high": "High" }
+        },
+        "guide": {
+          "title": "How to tune",
+          "howto": {
+            "q": "How do I tune?",
+            "a": "Press Start and play one note. Read the note name, then watch the strobe band: it drifts left when you're flat and right when you're sharp. Adjust your instrument until it settles in the center and locks gold — that's in tune."
+          },
+          "cents": {
+            "q": "What are cents and Hz?",
+            "a": "Hz (hertz) is the raw pitch of the note you're playing. Cents measure how far that pitch sits from the nearest correct note — 100 cents make one semitone. Anything within ±5 cents reads as in tune."
+          },
+          "reference": {
+            "q": "Why A440 (reference pitch)?",
+            "a": "Every note is tuned relative to the A above middle C. The modern standard sets that A to 440 Hz. Raising or lowering it shifts every target pitch, so match the reference the rest of your group is using."
+          }
         },
         "instruments": {
-          "guitar": { "description": "Play each open string and tune to match." },
-          "bass": { "description": "Play each open string and tune to match." },
-          "piano": { "description": "Play individual keys and compare to the target pitch. Use for spot-checking after a full tuning." },
-          "violin": { "description": "Tune each string by bowing or plucking gently." },
-          "tres": { "description": "Tune each course (doubled strings) to match." }
+          "guitar": { "name": "Guitar", "description": "Play each open string and tune to match." },
+          "bass": { "name": "Bass", "description": "Play each open string and tune to match." },
+          "piano": { "name": "Piano", "description": "Play individual keys and compare to the target pitch." },
+          "violin": { "name": "Violin", "description": "Tune each string by bowing or plucking gently." },
+          "tres": { "name": "Tres", "description": "Tune each course (doubled strings) to match." }
         }
       },
       "community": {

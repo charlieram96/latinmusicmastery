@@ -6,6 +6,10 @@ const NOTE_NAMES = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', '
 
 interface PitchDetectionOptions {
   referencePitch?: number
+  /** RMS below this is treated as silence (default 0.01). Lower = more sensitive. */
+  silenceThreshold?: number
+  /** Minimum normalized autocorrelation peak to accept (default 0.8). Lower = more permissive. */
+  clarityThreshold?: number
 }
 
 interface PitchDetectionResult {
@@ -13,22 +17,31 @@ interface PitchDetectionResult {
   note: string | null
   octave: number | null
   cents: number | null
+  /** Smoothed input level, 0..1, for a signal meter. */
+  level: number
   isListening: boolean
   hasPermission: boolean | null
   error: string | null
   getFrequency: () => number | null
+  /** Live AnalyserNode for component-side visualizers (waveform). Null when not listening. */
+  getAnalyser: () => AnalyserNode | null
   startListening: () => Promise<void>
   stopListening: () => void
 }
 
-function autoCorrelate(buffer: Float32Array, sampleRate: number): number {
+function autoCorrelate(
+  buffer: Float32Array,
+  sampleRate: number,
+  silenceThreshold: number,
+  clarityThreshold: number
+): number {
   // RMS silence gate
   let rms = 0
   for (let i = 0; i < buffer.length; i++) {
     rms += buffer[i] * buffer[i]
   }
   rms = Math.sqrt(rms / buffer.length)
-  if (rms < 0.01) return -1
+  if (rms < silenceThreshold) return -1
 
   // Autocorrelation
   const minLag = Math.floor(sampleRate / 1500) // ~1500 Hz
@@ -49,9 +62,8 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number): number {
   }
 
   // Find the strongest local peak above a confidence threshold.
-  const CONFIDENCE_THRESHOLD = 0.8
   let bestLag = -1
-  let bestCorr = CONFIDENCE_THRESHOLD
+  let bestCorr = clarityThreshold
 
   for (let lag = minLag; lag <= maxLag; lag++) {
     const c = correlations[lag]
@@ -102,12 +114,13 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number): number {
 export function usePitchDetection(
   options: PitchDetectionOptions = {}
 ): PitchDetectionResult {
-  const { referencePitch = 440 } = options
+  const { referencePitch = 440, silenceThreshold = 0.01, clarityThreshold = 0.8 } = options
 
   const [frequency, setFrequency] = useState<number | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [octave, setOctave] = useState<number | null>(null)
   const [cents, setCents] = useState<number | null>(null)
+  const [level, setLevel] = useState(0)
   const [isListening, setIsListening] = useState(false)
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -117,13 +130,22 @@ export function usePitchDetection(
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const rafIdRef = useRef<number | null>(null)
   const smoothedFreqRef = useRef<number | null>(null)
+  const smoothedLevelRef = useRef(0)
   const lastUpdateRef = useRef<number>(0)
   const referencePitchRef = useRef(referencePitch)
+  const silenceThresholdRef = useRef(silenceThreshold)
+  const clarityThresholdRef = useRef(clarityThreshold)
 
-  // Keep reference pitch ref in sync
+  // Keep tuning/sensitivity refs in sync so the detect loop reads fresh values
   useEffect(() => {
     referencePitchRef.current = referencePitch
   }, [referencePitch])
+  useEffect(() => {
+    silenceThresholdRef.current = silenceThreshold
+  }, [silenceThreshold])
+  useEffect(() => {
+    clarityThresholdRef.current = clarityThreshold
+  }, [clarityThreshold])
 
   const mapFrequencyToNote = useCallback((freq: number, refPitch: number) => {
     const semitones = 12 * Math.log2(freq / refPitch)
@@ -161,7 +183,20 @@ export function usePitchDetection(
     const buffer = new Float32Array(analyser.fftSize)
     analyser.getFloatTimeDomainData(buffer)
 
-    const detectedFreq = autoCorrelate(buffer, sampleRate)
+    // Input level (RMS) for the signal meter — mapped to a perceptual 0..1.
+    let rms = 0
+    for (let i = 0; i < buffer.length; i++) rms += buffer[i] * buffer[i]
+    rms = Math.sqrt(rms / buffer.length)
+    const scaled = Math.min(1, rms * 8) // RMS rarely exceeds ~0.12 for normal play
+    smoothedLevelRef.current = smoothedLevelRef.current * 0.6 + scaled * 0.4
+    setLevel(Math.round(smoothedLevelRef.current * 1000) / 1000)
+
+    const detectedFreq = autoCorrelate(
+      buffer,
+      sampleRate,
+      silenceThresholdRef.current,
+      clarityThresholdRef.current
+    )
 
     if (detectedFreq > 0) {
       // Exponential smoothing
@@ -207,11 +242,13 @@ export function usePitchDetection(
     }
     analyserRef.current = null
     smoothedFreqRef.current = null
+    smoothedLevelRef.current = 0
     setIsListening(false)
     setFrequency(null)
     setNote(null)
     setOctave(null)
     setCents(null)
+    setLevel(0)
   }, [])
 
   const startListening = useCallback(async () => {
@@ -274,16 +311,19 @@ export function usePitchDetection(
   }, [])
 
   const getFrequency = useCallback(() => smoothedFreqRef.current, [])
+  const getAnalyser = useCallback(() => analyserRef.current, [])
 
   return {
     frequency,
     note,
     octave,
     cents,
+    level,
     isListening,
     hasPermission,
     error,
     getFrequency,
+    getAnalyser,
     startListening,
     stopListening,
   }

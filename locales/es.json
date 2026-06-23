@@ -927,28 +927,63 @@
     "pages": {
       "tuner": {
         "title": "Afinador de instrumentos",
+        "subtitle": "Toca una nota y afínala al centro. Funciona con cualquier instrumento de tono.",
         "chromatic": "Cromático",
-        "flat": "Bajo",
-        "sharp": "Alto",
-        "startTuner": "Iniciar afinador",
-        "stopTuner": "Detener afinador",
+        "chromaticHint": "Modo cromático: toca cualquier tecla y afínala al centro.",
+        "openStrings": "Cuerdas al aire",
+        "target": "Objetivo",
+        "startTuner": "Empezar a afinar",
+        "stopTuner": "Detener",
         "micAccessDenied": "Acceso al micrófono denegado",
-        "micAccessHelp": "Permite el acceso al micrófono en la configuración de tu navegador para usar el afinador.",
+        "micAccessHelp": "Permite el acceso al micrófono en la configuración de tu navegador y vuelve a intentarlo.",
+        "micError": "No se pudo iniciar el afinador",
         "tryAgain": "Reintentar",
         "status": {
-          "waiting": "Esperando...",
+          "idle": "Listo",
+          "waiting": "Escuchando…",
           "inTune": "Afinado",
-          "sharp": "Muy alto",
+          "sharp": "Alto",
           "slightlySharp": "Ligeramente alto",
-          "flat": "Muy bajo",
+          "flat": "Bajo",
           "slightlyFlat": "Ligeramente bajo"
         },
+        "signal": {
+          "title": "Escuchando",
+          "live": "En vivo",
+          "off": "Apagado",
+          "level": "Nivel",
+          "hintLive": "Toca una nota; mantén el nivel fuera del rojo.",
+          "hintIdle": "Permite el micrófono para empezar."
+        },
+        "settings": {
+          "title": "Ajustes",
+          "reference": "Referencia (La4)",
+          "referenceHelp": "Tono de concierto. El estándar es 440 Hz; algunos grupos afinan a 442.",
+          "sensitivity": "Sensibilidad",
+          "sensitivityHelp": "Más alta capta notas suaves; más baja ignora el ruido de fondo.",
+          "sensitivityLevels": { "low": "Baja", "medium": "Media", "high": "Alta" }
+        },
+        "guide": {
+          "title": "Cómo afinar",
+          "howto": {
+            "q": "¿Cómo afino?",
+            "a": "Pulsa Empezar y toca una nota. Lee el nombre de la nota y observa la banda estroboscópica: se desplaza a la izquierda cuando estás bajo y a la derecha cuando estás alto. Ajusta tu instrumento hasta que se detenga en el centro y se ilumine en dorado: eso es estar afinado."
+          },
+          "cents": {
+            "q": "¿Qué son los cents y los Hz?",
+            "a": "Los Hz (hercios) son el tono real de la nota que tocas. Los cents miden qué tan lejos está ese tono de la nota correcta más cercana: 100 cents forman un semitono. Cualquier valor dentro de ±5 cents se considera afinado."
+          },
+          "reference": {
+            "q": "¿Por qué La440 (tono de referencia)?",
+            "a": "Cada nota se afina en relación con el La sobre el do central. El estándar moderno fija ese La en 440 Hz. Subirlo o bajarlo desplaza todos los tonos objetivo, así que usa la misma referencia que el resto de tu grupo."
+          }
+        },
         "instruments": {
-          "guitar": { "description": "Toca cada cuerda al aire y afínala hasta que coincida." },
-          "bass": { "description": "Toca cada cuerda al aire y afínala hasta que coincida." },
-          "piano": { "description": "Toca notas individuales y compáralas con el tono objetivo. Útil para revisiones puntuales después de una afinación completa." },
-          "violin": { "description": "Afina cada cuerda tocando con el arco o pulsándola suavemente." },
-          "tres": { "description": "Afina cada orden (cuerdas dobles) hasta que coincidan." }
+          "guitar": { "name": "Guitarra", "description": "Toca cada cuerda al aire y afínala hasta que coincida." },
+          "bass": { "name": "Bajo", "description": "Toca cada cuerda al aire y afínala hasta que coincida." },
+          "piano": { "name": "Piano", "description": "Toca notas individuales y compáralas con el tono objetivo." },
+          "violin": { "name": "Violín", "description": "Afina cada cuerda tocando con el arco o pulsándola suavemente." },
+          "tres": { "name": "Tres", "description": "Afina cada orden (cuerdas dobles) hasta que coincidan." }
         }
       },
       "community": {

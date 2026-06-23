@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { getServerLocale } from '@/lib/i18n/server'
+import { pick } from '@/lib/i18n/localize'
 import { HeaderContinueClient } from './header-continue'
 
 interface LastClass {
@@ -22,11 +24,13 @@ async function getLastClass(userId: string): Promise<LastClass | null> {
         classes (
           id,
           title,
+          title_es,
           section:course_sections (
             course_id,
             courses (
               id,
               title,
+              title_es,
               slug
             )
           )
@@ -52,11 +56,13 @@ async function getLastClass(userId: string): Promise<LastClass | null> {
     return null
   }
 
+  const locale = await getServerLocale()
+
   return {
     classId: cls.id,
     courseId: course.slug || course.id,
-    classTitle: cls.title,
-    courseTitle: course.title,
+    classTitle: pick(locale, cls.title, cls.title_es) ?? cls.title,
+    courseTitle: pick(locale, course.title, course.title_es) ?? course.title,
   }
 }
 

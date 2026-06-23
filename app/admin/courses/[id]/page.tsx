@@ -56,8 +56,10 @@ export default async function CourseEditPage({ params }: CourseEditPageProps) {
       course={{
         id: course.id,
         title: course.title,
+        title_es: course.title_es,
         slug: course.slug,
         description: course.description,
+        description_es: course.description_es,
         musical_style_id: course.musical_style_id,
         teacher_id: course.teacher_id,
         is_published: course.is_published ?? false,

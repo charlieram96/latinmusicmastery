@@ -64,6 +64,8 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
         options: q.options,
         correct_answer: q.correct_answer,
         explanation: q.explanation,
+        question_es: q.question_es,
+        explanation_es: q.explanation_es,
       })
     }, 600)
   }
@@ -196,9 +198,11 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
             <QuizBuilder
               questionType={q.question_type}
               question={q.question}
+              questionEs={q.question_es ?? ''}
               options={q.options}
               correctAnswer={q.correct_answer ?? ''}
               explanation={q.explanation ?? ''}
+              explanationEs={q.explanation_es ?? ''}
               onChange={(data) => patchQuestion(q.id, data as Partial<QuizQuestion>)}
             />
           </div>

@@ -10,8 +10,10 @@ import { validateCourseKind } from '@/lib/courses/fundamentals'
 
 export interface CourseSettingsPatch {
   title?: string
+  title_es?: string | null
   slug?: string
   description?: string | null
+  description_es?: string | null
   musical_style_id?: string | null
   is_fundamentals?: boolean
   teacher_id?: string | null
@@ -155,7 +157,17 @@ export async function createCourseDraft(input: CreateCourseDraftInput) {
 // Course Sections (Modules)
 // ============================================
 
-export async function createSection(courseId: string, title: string, description?: string) {
+export interface SectionTextPatch {
+  title_es?: string | null
+  description_es?: string | null
+}
+
+export async function createSection(
+  courseId: string,
+  title: string,
+  description?: string,
+  es?: SectionTextPatch
+) {
   const supabase = await createClient()
 
   const { data: existing } = await supabase
@@ -173,6 +185,8 @@ export async function createSection(courseId: string, title: string, description
       course_id: courseId,
       title,
       description: description || null,
+      title_es: es?.title_es ?? null,
+      description_es: es?.description_es ?? null,
       order_index: nextOrder,
     })
     .select()
@@ -184,12 +198,22 @@ export async function createSection(courseId: string, title: string, description
   return { data }
 }
 
-export async function updateSection(sectionId: string, title: string, description?: string) {
+export async function updateSection(
+  sectionId: string,
+  title: string,
+  description?: string,
+  es?: SectionTextPatch
+) {
   const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('course_sections')
-    .update({ title, description: description || null })
+    .update({
+      title,
+      description: description || null,
+      ...(es?.title_es !== undefined && { title_es: es.title_es || null }),
+      ...(es?.description_es !== undefined && { description_es: es.description_es || null }),
+    })
     .eq('id', sectionId)
     .select()
     .single()
@@ -234,7 +258,12 @@ export async function reorderSections(courseId: string, sectionIds: string[]) {
 // Classes
 // ============================================
 
-export async function createClass(sectionId: string, title: string, description?: string) {
+export async function createClass(
+  sectionId: string,
+  title: string,
+  description?: string,
+  es?: { title_es?: string | null; description_es?: string | null }
+) {
   const supabase = await createClient()
 
   const { data: existing } = await supabase
@@ -252,6 +281,8 @@ export async function createClass(sectionId: string, title: string, description?
       section_id: sectionId,
       title,
       description: description || null,
+      title_es: es?.title_es ?? null,
+      description_es: es?.description_es ?? null,
       order_index: nextOrder,
     })
     .select()
@@ -263,7 +294,16 @@ export async function createClass(sectionId: string, title: string, description?
   return { data }
 }
 
-export async function updateClass(classId: string, updates: { title?: string; description?: string; is_free?: boolean }) {
+export async function updateClass(
+  classId: string,
+  updates: {
+    title?: string
+    description?: string
+    is_free?: boolean
+    title_es?: string | null
+    description_es?: string | null
+  }
+) {
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -272,6 +312,8 @@ export async function updateClass(classId: string, updates: { title?: string; de
       ...(updates.title !== undefined && { title: updates.title }),
       ...(updates.description !== undefined && { description: updates.description || null }),
       ...(updates.is_free !== undefined && { is_free: updates.is_free }),
+      ...(updates.title_es !== undefined && { title_es: updates.title_es || null }),
+      ...(updates.description_es !== undefined && { description_es: updates.description_es || null }),
     })
     .eq('id', classId)
     .select()

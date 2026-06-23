@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeCourse, localizeSectionTree } from '@/lib/i18n/localize'
 import { MyCoursesView } from './my-courses-view'
 
 interface PageProps {
@@ -26,20 +28,29 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
       course:courses(
         *,
         course_sections(
-          id, title, order_index,
+          id, title, title_es, order_index,
           classes(
-            id, title, order_index,
+            id, title, title_es, order_index,
             items:class_items(id)
           )
         ),
         musical_style:musical_styles(
           name,
-          country:countries(name)
+          name_es,
+          country:countries(name, name_es)
         ),
         teacher:teachers(name, image_url)
       )
     `)
     .eq('user_id', user.id)
+
+  const locale = await getServerLocale()
+  for (const enrollment of enrollments ?? []) {
+    const course = (enrollment as any).course as Record<string, unknown> | null
+    if (!course) continue
+    localizeCourse(course, locale)
+    localizeSectionTree(course['course_sections'] as Record<string, unknown>[] | undefined, locale)
+  }
 
   // Collect all item IDs across all enrolled courses
   const allItemIds: string[] = []

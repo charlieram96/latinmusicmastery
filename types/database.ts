@@ -120,6 +120,41 @@ export type Database = {
           },
         ]
       }
+      class_item_backing_tracks: {
+        Row: {
+          audio_url: string
+          class_item_id: string
+          created_at: string | null
+          id: string
+          label: string
+          order_index: number
+        }
+        Insert: {
+          audio_url: string
+          class_item_id: string
+          created_at?: string | null
+          id?: string
+          label: string
+          order_index?: number
+        }
+        Update: {
+          audio_url?: string
+          class_item_id?: string
+          created_at?: string | null
+          id?: string
+          label?: string
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_item_backing_tracks_class_item_id_fkey"
+            columns: ["class_item_id"]
+            isOneToOne: false
+            referencedRelation: "class_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_item_progress: {
         Row: {
           class_item_id: string
@@ -168,41 +203,6 @@ export type Database = {
           },
         ]
       }
-      class_item_backing_tracks: {
-        Row: {
-          audio_url: string
-          class_item_id: string
-          created_at: string | null
-          id: string
-          label: string
-          order_index: number
-        }
-        Insert: {
-          audio_url: string
-          class_item_id: string
-          created_at?: string | null
-          id?: string
-          label: string
-          order_index?: number
-        }
-        Update: {
-          audio_url?: string
-          class_item_id?: string
-          created_at?: string | null
-          id?: string
-          label?: string
-          order_index?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "class_item_backing_tracks_class_item_id_fkey"
-            columns: ["class_item_id"]
-            isOneToOne: false
-            referencedRelation: "class_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       class_item_score_sections: {
         Row: {
           active_time_map_id: string | null
@@ -242,6 +242,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "class_item_score_sections_active_time_map_id_fkey"
+            columns: ["active_time_map_id"]
+            isOneToOne: false
+            referencedRelation: "score_time_maps"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "class_item_score_sections_class_item_id_fkey"
             columns: ["class_item_id"]
             isOneToOne: false
@@ -255,13 +262,6 @@ export type Database = {
             referencedRelation: "score_documents"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "class_item_score_sections_active_time_map_id_fkey"
-            columns: ["active_time_map_id"]
-            isOneToOne: false
-            referencedRelation: "score_time_maps"
-            referencedColumns: ["id"]
-          },
         ]
       }
       class_items: {
@@ -273,6 +273,7 @@ export type Database = {
           correct_answer: string | null
           created_at: string | null
           description: string | null
+          description_es: string | null
           exercise_video_start_seconds: number
           exercise_video_url: string | null
           explanation: string | null
@@ -287,6 +288,7 @@ export type Database = {
           score_document_id: string | null
           soundslice_embed_url: string | null
           title: string
+          title_es: string | null
           updated_at: string | null
           video_duration_seconds: number | null
           video_url: string | null
@@ -299,6 +301,7 @@ export type Database = {
           correct_answer?: string | null
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           exercise_video_start_seconds?: number
           exercise_video_url?: string | null
           explanation?: string | null
@@ -313,6 +316,7 @@ export type Database = {
           score_document_id?: string | null
           soundslice_embed_url?: string | null
           title: string
+          title_es?: string | null
           updated_at?: string | null
           video_duration_seconds?: number | null
           video_url?: string | null
@@ -325,6 +329,7 @@ export type Database = {
           correct_answer?: string | null
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           exercise_video_start_seconds?: number
           exercise_video_url?: string | null
           explanation?: string | null
@@ -339,6 +344,7 @@ export type Database = {
           score_document_id?: string | null
           soundslice_embed_url?: string | null
           title?: string
+          title_es?: string | null
           updated_at?: string | null
           video_duration_seconds?: number | null
           video_url?: string | null
@@ -371,31 +377,37 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          description_es: string | null
           id: string
           is_free: boolean | null
           order_index: number
           section_id: string
           title: string
+          title_es: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           id?: string
           is_free?: boolean | null
           order_index?: number
           section_id: string
           title: string
+          title_es?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           id?: string
           is_free?: boolean | null
           order_index?: number
           section_id?: string
           title?: string
+          title_es?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -451,27 +463,33 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          description_es: string | null
           id: string
           image_url: string | null
           name: string
+          name_es: string | null
           slug: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           id?: string
           image_url?: string | null
           name: string
+          name_es?: string | null
           slug: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           id?: string
           image_url?: string | null
           name?: string
+          name_es?: string | null
           slug?: string
           updated_at?: string | null
         }
@@ -595,27 +613,33 @@ export type Database = {
           course_id: string
           created_at: string | null
           description: string | null
+          description_es: string | null
           id: string
           order_index: number
           title: string
+          title_es: string | null
           updated_at: string | null
         }
         Insert: {
           course_id: string
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           id?: string
           order_index?: number
           title: string
+          title_es?: string | null
           updated_at?: string | null
         }
         Update: {
           course_id?: string
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           id?: string
           order_index?: number
           title?: string
+          title_es?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -632,6 +656,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          description_es: string | null
           difficulty: string | null
           id: string
           instrument: string | null
@@ -648,11 +673,13 @@ export type Database = {
           teacher_name: string | null
           thumbnail_url: string | null
           title: string
+          title_es: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           difficulty?: string | null
           id?: string
           instrument?: string | null
@@ -669,11 +696,13 @@ export type Database = {
           teacher_name?: string | null
           thumbnail_url?: string | null
           title: string
+          title_es?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           difficulty?: string | null
           id?: string
           instrument?: string | null
@@ -690,6 +719,7 @@ export type Database = {
           teacher_name?: string | null
           thumbnail_url?: string | null
           title?: string
+          title_es?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -756,42 +786,54 @@ export type Database = {
           correct_answer: string
           created_at: string | null
           description: string | null
+          description_es: string | null
           explanation: string | null
+          explanation_es: string | null
           id: string
           lesson_id: string
           options: Json | null
           order_index: number | null
           question: string
+          question_es: string | null
           question_type: string
           title: string
+          title_es: string | null
           updated_at: string | null
         }
         Insert: {
           correct_answer: string
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           explanation?: string | null
+          explanation_es?: string | null
           id?: string
           lesson_id: string
           options?: Json | null
           order_index?: number | null
           question: string
+          question_es?: string | null
           question_type: string
           title: string
+          title_es?: string | null
           updated_at?: string | null
         }
         Update: {
           correct_answer?: string
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           explanation?: string | null
+          explanation_es?: string | null
           id?: string
           lesson_id?: string
           options?: Json | null
           order_index?: number | null
           question?: string
+          question_es?: string | null
           question_type?: string
           title?: string
+          title_es?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -990,6 +1032,7 @@ export type Database = {
           course_id: string
           created_at: string | null
           description: string | null
+          description_es: string | null
           duration_minutes: number | null
           id: string
           is_free: boolean | null
@@ -997,6 +1040,7 @@ export type Database = {
           slug: string
           soundslice_embed_url: string | null
           title: string
+          title_es: string | null
           updated_at: string | null
           video_url: string | null
         }
@@ -1004,6 +1048,7 @@ export type Database = {
           course_id: string
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           duration_minutes?: number | null
           id?: string
           is_free?: boolean | null
@@ -1011,6 +1056,7 @@ export type Database = {
           slug: string
           soundslice_embed_url?: string | null
           title: string
+          title_es?: string | null
           updated_at?: string | null
           video_url?: string | null
         }
@@ -1018,6 +1064,7 @@ export type Database = {
           course_id?: string
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           duration_minutes?: number | null
           id?: string
           is_free?: boolean | null
@@ -1025,6 +1072,7 @@ export type Database = {
           slug?: string
           soundslice_embed_url?: string | null
           title?: string
+          title_es?: string | null
           updated_at?: string | null
           video_url?: string | null
         }
@@ -1043,8 +1091,10 @@ export type Database = {
           country_id: string
           created_at: string | null
           description: string | null
+          description_es: string | null
           id: string
           name: string
+          name_es: string | null
           slug: string
           updated_at: string | null
         }
@@ -1052,8 +1102,10 @@ export type Database = {
           country_id: string
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           id?: string
           name: string
+          name_es?: string | null
           slug: string
           updated_at?: string | null
         }
@@ -1061,8 +1113,10 @@ export type Database = {
           country_id?: string
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           id?: string
           name?: string
+          name_es?: string | null
           slug?: string
           updated_at?: string | null
         }
@@ -1233,6 +1287,7 @@ export type Database = {
           order_index: number
           score_document_id: string
           title: string
+          title_es: string | null
           track_index: number
           updated_at: string
         }
@@ -1245,6 +1300,7 @@ export type Database = {
           order_index?: number
           score_document_id: string
           title: string
+          title_es?: string | null
           track_index?: number
           updated_at?: string
         }
@@ -1257,6 +1313,7 @@ export type Database = {
           order_index?: number
           score_document_id?: string
           title?: string
+          title_es?: string | null
           track_index?: number
           updated_at?: string
         }
@@ -1393,10 +1450,13 @@ export type Database = {
           correct_answer: string | null
           created_at: string | null
           explanation: string | null
+          explanation_es: string | null
           id: string
           options: Json | null
+          options_es: Json | null
           order_index: number
           question: string
+          question_es: string | null
           question_type: string
           updated_at: string | null
         }
@@ -1405,10 +1465,13 @@ export type Database = {
           correct_answer?: string | null
           created_at?: string | null
           explanation?: string | null
+          explanation_es?: string | null
           id?: string
           options?: Json | null
+          options_es?: Json | null
           order_index?: number
           question: string
+          question_es?: string | null
           question_type: string
           updated_at?: string | null
         }
@@ -1417,10 +1480,13 @@ export type Database = {
           correct_answer?: string | null
           created_at?: string | null
           explanation?: string | null
+          explanation_es?: string | null
           id?: string
           options?: Json | null
+          options_es?: Json | null
           order_index?: number
           question?: string
+          question_es?: string | null
           question_type?: string
           updated_at?: string | null
         }

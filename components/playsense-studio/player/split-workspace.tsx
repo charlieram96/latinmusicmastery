@@ -13,6 +13,7 @@
 
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -42,8 +43,14 @@ export interface SplitWorkspaceProps {
   secondaryHeader: (ctx: SplitWorkspaceSecondaryHeaderCtx) => ReactNode;
   /** % of the workspace given to the primary pane (default 55). */
   initialSplit?: number;
-  /** Workspace height in px (default 560). */
+  /** Workspace height in px (default 560). Ignored when frame='bleed'. */
   initialHeight?: number;
+  /**
+   * 'card' (default) — rounded, bordered box at a fixed height.
+   * 'bleed' — full-bleed: no border/radius, height grows to fill the viewport
+   * below the workspace's top edge (still resizable via the knob).
+   */
+  frame?: 'card' | 'bleed';
 }
 
 export function SplitWorkspace({
@@ -52,18 +59,38 @@ export function SplitWorkspace({
   secondaryHeader,
   initialSplit = 55,
   initialHeight = 560,
+  frame = 'card',
 }: SplitWorkspaceProps) {
+  const bleed = frame === 'bleed';
   const [orient, setOrient] = useState<'row' | 'column'>('row');
   const [split, setSplit] = useState(initialSplit); // % given to the primary pane
   const [workspaceH, setWorkspaceH] = useState(initialHeight);
+  const [userSized, setUserSized] = useState(false);
   const [knobDragging, setKnobDragging] = useState(false);
   const workspaceRef = useRef<HTMLDivElement | null>(null);
   const isRow = orient === 'row';
 
+  // In bleed mode, fill the viewport from the workspace's top edge down to a
+  // small bottom gap — recomputed on mount + resize until the user drags to
+  // override (then we respect their chosen height).
+  useEffect(() => {
+    if (!bleed || userSized) return;
+    const fit = () => {
+      const top = workspaceRef.current?.getBoundingClientRect().top ?? 0;
+      const gap = 16;
+      const h = Math.max(H_MIN, Math.min(hMax(), window.innerHeight - top - gap));
+      setWorkspaceH(h);
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [bleed, userSized]);
+
   const resetSize = useCallback(() => {
     setSplit(isRow ? 55 : 60);
-    setWorkspaceH(560);
-  }, [isRow]);
+    setUserSized(false);
+    if (!bleed) setWorkspaceH(560);
+  }, [isRow, bleed]);
 
   // Delta-based 2-axis drag: primary axis rebalances the split, the other axis
   // changes the overall workspace height.
@@ -78,6 +105,7 @@ export function SplitWorkspace({
       const sy = point.clientY;
       const start = { sx, sy, split, h: workspaceH, w: rect.width, ht: rect.height };
       setKnobDragging(true);
+      setUserSized(true);
       document.body.style.userSelect = 'none';
 
       const onMove = (ev: MouseEvent | TouchEvent) => {
@@ -115,7 +143,11 @@ export function SplitWorkspace({
   return (
     <div
       ref={workspaceRef}
-      className="relative overflow-visible rounded-xl border border-border bg-card"
+      className={
+        bleed
+          ? 'relative overflow-visible border-y border-border bg-card'
+          : 'relative overflow-visible rounded-xl border border-border bg-card'
+      }
       style={{ height: workspaceH }}
     >
       <div

@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeCourse } from '@/lib/i18n/localize'
 import { CoursesView } from './courses-view'
 
 export default async function BrowseCoursesPage() {
@@ -18,13 +20,17 @@ export default async function BrowseCoursesPage() {
       *,
       musical_style:musical_styles(
         name,
-        country:countries(name, slug)
+        name_es,
+        country:countries(name, name_es, slug)
       ),
       teacher:teachers(id, name, instrument, image_url),
       course_sections(classes(id))
     `)
     .eq('is_published', true)
     .order('created_at', { ascending: false })
+
+  const locale = await getServerLocale()
+  for (const c of courses ?? []) localizeCourse(c as Record<string, unknown>, locale)
 
   return <CoursesView courses={courses || []} />
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getServerLocale } from "@/lib/i18n/server";
+import { localizeRow, localizeRows } from "@/lib/i18n/localize";
 
 export async function generateMetadata({ params }: { params: Promise<{ countrySlug: string }> }): Promise<Metadata> {
   const { countrySlug } = await params
@@ -23,11 +25,12 @@ export default async function CountryPage({
 }) {
   const { countrySlug } = await params;
   const supabase = await createClient();
+  const locale = await getServerLocale();
 
   const { data: country } = await supabase
     .from("countries")
     .select(
-      "id, name, slug, description, image_url, musical_styles(id, name, slug, description)"
+      "id, name, name_es, slug, description, description_es, image_url, musical_styles(id, name, name_es, slug, description, description_es)"
     )
     .eq("slug", countrySlug)
     .single();
@@ -35,6 +38,9 @@ export default async function CountryPage({
   if (!country) {
     notFound();
   }
+
+  localizeRow(country as Record<string, unknown>, locale, ['name', 'description']);
+  localizeRows(country.musical_styles as Record<string, unknown>[] | null, locale, ['name', 'description']);
 
   // Get style IDs for this country
   const styleIds = (country.musical_styles ?? []).map((s) => s.id);
@@ -44,11 +50,18 @@ export default async function CountryPage({
     ? await supabase
         .from("courses")
         .select(
-          "id, title, slug, description, instrument, difficulty, thumbnail_url, musical_style_id, musical_styles(name)"
+          "id, title, title_es, slug, description, description_es, instrument, difficulty, thumbnail_url, musical_style_id, musical_styles(name, name_es)"
         )
         .in("musical_style_id", styleIds)
         .order("title")
     : { data: [] as never[] };
+
+  for (const course of courses ?? []) {
+    localizeRow(course as Record<string, unknown>, locale, ['title', 'description']);
+    if ((course as any).musical_styles && !Array.isArray((course as any).musical_styles)) {
+      localizeRow((course as any).musical_styles as Record<string, unknown>, locale, ['name']);
+    }
+  }
 
   // Count courses per style
   const courseCountByStyle: Record<string, number> = {};

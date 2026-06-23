@@ -11,8 +11,10 @@ export interface SectionWithClasses extends CourseSection {
 export interface CourseStudioCourse {
   id: string
   title: string
+  title_es: string | null
   slug: string
   description: string | null
+  description_es: string | null
   musical_style_id: string | null
   teacher_id: string | null
   is_published: boolean

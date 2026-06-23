@@ -27,6 +27,10 @@ type QuestionInput = {
   options?: unknown
   correct_answer?: string | null
   explanation?: string | null
+  // Spanish overlays (fall back to the English columns when empty)
+  question_es?: string | null
+  explanation_es?: string | null
+  options_es?: unknown
 }
 
 export async function createQuizQuestion(classItemId: string, input: QuestionInput) {
@@ -51,6 +55,9 @@ export async function createQuizQuestion(classItemId: string, input: QuestionInp
       options: (input.options ?? null) as never,
       correct_answer: input.correct_answer ?? null,
       explanation: input.explanation ?? null,
+      question_es: input.question_es ?? null,
+      explanation_es: input.explanation_es ?? null,
+      options_es: (input.options_es ?? null) as never,
     })
     .select()
     .single()
@@ -69,6 +76,9 @@ export async function updateQuizQuestion(questionId: string, input: QuestionInpu
   if (input.options !== undefined) updates.options = input.options
   if (input.correct_answer !== undefined) updates.correct_answer = input.correct_answer
   if (input.explanation !== undefined) updates.explanation = input.explanation
+  if (input.question_es !== undefined) updates.question_es = input.question_es
+  if (input.explanation_es !== undefined) updates.explanation_es = input.explanation_es
+  if (input.options_es !== undefined) updates.options_es = input.options_es
 
   const { data, error } = await supabase
     .from('quiz_questions')

@@ -7,10 +7,22 @@
 // span, with vertical markers at A and B. When loop is enabled but the user
 // scrubs outside the range, the wrap kicks in on the next RAF tick.
 
-import { Pause, Play, Repeat, RotateCcw, X } from 'lucide-react';
+import { Gauge, Pause, Play, Repeat, RotateCcw, X } from 'lucide-react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { ClickTrackToggle } from './click-track-toggle';
 
 const RATE_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+// Accent for scored-notation regions on the seek bar — a saturated green that
+// stays distinct from the warm amber played-fill and reads clearly in both
+// light and dark themes (the transport sits on the page-themed card surface).
+const NOTATION_HUE = '150 58% 42%';
+const NOTATION_HUE_TEXT = '0 0% 100%';
 
 interface TransportBarProps {
   currentSeconds: number;
@@ -61,77 +73,132 @@ export function TransportBar({
   const safeDuration = Math.max(durationSeconds, 0.001);
   const loopAPct = loopA !== null ? (loopA / safeDuration) * 100 : null;
   const loopBPct = loopB !== null ? (loopB / safeDuration) * 100 : null;
+  const playedPct = (currentSeconds / safeDuration) * 100;
+
+  // --- pointer-driven scrubbing (replaces the native range input) ---
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const [scrubbing, setScrubbing] = useState(false);
+  const [hoverPct, setHoverPct] = useState<number | null>(null);
+
+  const pctFromEvent = (clientX: number) => {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0) return 0;
+    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  };
+  const onTrackPointerDown = (e: ReactPointerEvent) => {
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    setScrubbing(true);
+    onSeek(pctFromEvent(e.clientX) * safeDuration);
+  };
+  const onTrackPointerMove = (e: ReactPointerEvent) => {
+    const pct = pctFromEvent(e.clientX);
+    setHoverPct(pct);
+    if (scrubbing) onSeek(pct * safeDuration);
+  };
+  const onTrackPointerUp = (e: ReactPointerEvent) => {
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    setScrubbing(false);
+  };
 
   return (
     <div className="space-y-2">
-      <div className="relative">
-        {/* Scored-section regions (tint + clickable start ticks) */}
-        {sectionMarkers?.map((m, i) => {
-          const startPct = (m.startSeconds / safeDuration) * 100;
-          const endPct = ((m.endSeconds ?? m.startSeconds) / safeDuration) * 100;
-          return (
+      {/* Scrubber */}
+      <div
+        ref={trackRef}
+        onPointerDown={onTrackPointerDown}
+        onPointerMove={onTrackPointerMove}
+        onPointerUp={onTrackPointerUp}
+        onPointerLeave={() => !scrubbing && setHoverPct(null)}
+        className="group/track relative flex h-[34px] cursor-pointer touch-none items-start"
+      >
+        <div className="relative mt-1 h-[11px] w-full overflow-visible rounded-full bg-foreground/30">
+          {/* Loop range tint */}
+          {loopAPct !== null && loopBPct !== null && loopBPct > loopAPct && (
             <div
-              key={`sec-tint-${i}`}
               aria-hidden
-              className="absolute top-1/2 -translate-y-1/2 h-2 rounded pointer-events-none"
+              className="absolute inset-y-0 rounded-full pointer-events-none"
               style={{
-                left: `${startPct}%`,
-                width: `${Math.max(0.6, endPct - startPct)}%`,
-                background: 'hsl(var(--secondary) / 0.55)',
+                left: `${loopAPct}%`,
+                width: `${loopBPct - loopAPct}%`,
+                background: loopEnabled
+                  ? 'hsl(var(--primary) / 0.35)'
+                  : 'hsl(var(--primary) / 0.16)',
               }}
             />
-          );
-        })}
+          )}
 
-        {/* Loop range tint */}
-        {loopAPct !== null && loopBPct !== null && loopBPct > loopAPct && (
+          {/* Played */}
           <div
-            aria-hidden
-            className="absolute top-1/2 -translate-y-1/2 h-2 rounded pointer-events-none"
-            style={{
-              left: `${loopAPct}%`,
-              width: `${loopBPct - loopAPct}%`,
-              background: loopEnabled
-                ? 'hsl(var(--primary) / 0.25)'
-                : 'hsl(var(--primary) / 0.12)',
-            }}
+            className="absolute inset-y-0 left-0 rounded-full bg-primary"
+            style={{ width: `${playedPct}%` }}
           />
-        )}
 
-        <input
-          type="range"
-          min={0}
-          max={safeDuration}
-          step={0.05}
-          value={currentSeconds}
-          onChange={(e) => onSeek(Number(e.target.value))}
-          className="w-full accent-primary"
-          aria-label="Scrub"
-        />
+          {/* Scored-notation regions — drawn above the played fill so they stay
+              legible whether or not playback has passed them. */}
+          {sectionMarkers?.map((m, i) => {
+            const startPct = (m.startSeconds / safeDuration) * 100;
+            const endPct = ((m.endSeconds ?? m.startSeconds) / safeDuration) * 100;
+            return (
+              <div
+                key={`sec-tint-${i}`}
+                aria-hidden
+                className="absolute inset-y-0 rounded-[4px] pointer-events-none"
+                style={{
+                  left: `${startPct}%`,
+                  width: `${Math.max(0.6, endPct - startPct)}%`,
+                  background: `hsl(${NOTATION_HUE} / 0.85)`,
+                  boxShadow: `inset 0 0 0 1px hsl(${NOTATION_HUE})`,
+                }}
+              />
+            );
+          })}
 
-        {/* Clickable section start ticks (sit above the range input). */}
-        {sectionMarkers?.map((m, i) => {
-          const startPct = (m.startSeconds / safeDuration) * 100;
-          return (
-            <button
-              key={`sec-tick-${i}`}
-              type="button"
-              onClick={() => onSeek(m.startSeconds)}
-              title={m.label ? `Jump to ${m.label}` : 'Jump to scored section'}
-              aria-label={m.label ? `Jump to ${m.label}` : 'Jump to scored section'}
-              className="absolute top-1/2 z-10 h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-sm bg-secondary transition hover:bg-secondary/70"
-              style={{ left: `${startPct}%` }}
-            />
-          );
-        })}
+          {/* Hover preview tick */}
+          {hoverPct !== null && (
+            <div
+              className="absolute -top-7 -translate-x-1/2 rounded bg-black/90 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white pointer-events-none"
+              style={{ left: `${hoverPct * 100}%` }}
+            >
+              {formatSeconds(hoverPct * safeDuration)}
+            </div>
+          )}
 
-        {/* A / B markers */}
-        {loopAPct !== null && (
-          <LoopMarker label="A" pct={loopAPct} />
-        )}
-        {loopBPct !== null && (
-          <LoopMarker label="B" pct={loopBPct} />
-        )}
+          {/* Notation tags — sit underneath the bar, left-aligned to the start
+              of each scored section, and jump there on click. */}
+          {sectionMarkers?.map((m, i) => {
+            const startPct = (m.startSeconds / safeDuration) * 100;
+            const label = m.label || 'Notation';
+            return (
+              <button
+                key={`sec-tag-${i}`}
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => onSeek(m.startSeconds)}
+                title={`Jump to ${label}`}
+                aria-label={`Jump to ${label}`}
+                className="absolute top-full z-20 mt-1 block max-w-[100px] truncate whitespace-nowrap rounded px-1 py-px text-[7px] font-bold uppercase leading-none tracking-[0.04em] transition-opacity hover:opacity-80"
+                style={{
+                  left: `${startPct}%`,
+                  background: `hsl(${NOTATION_HUE})`,
+                  color: `hsl(${NOTATION_HUE_TEXT})`,
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+
+          {/* A / B markers */}
+          {loopAPct !== null && <LoopMarker label="A" pct={loopAPct} />}
+          {loopBPct !== null && <LoopMarker label="B" pct={loopBPct} />}
+
+          {/* Playhead — vertical line */}
+          <div
+            className="absolute top-1/2 z-30 h-[18px] w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow ring-1 ring-black/40 transition-transform group-hover/track:scale-y-110"
+            style={{ left: `${playedPct}%` }}
+          />
+        </div>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -188,21 +255,89 @@ export function TransportBar({
         </div>
 
         <span className="st-divline ml-auto hidden sm:block" />
-        <div className="st-tp-rate">
-          <span className="lab hidden sm:inline">Rate</span>
-          <div className="st-seg mono">
-            {RATE_PRESETS.map((rate) => (
+        <RateControl playbackRate={playbackRate} onRateChange={onRateChange} />
+      </div>
+    </div>
+  );
+}
+
+// Single button → popover for playback speed (replaces the old segment row).
+function RateControl({
+  playbackRate,
+  onRateChange,
+}: {
+  playbackRate: number;
+  onRateChange: (rate: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    window.addEventListener('pointerdown', onDown);
+    return () => window.removeEventListener('pointerdown', onDown);
+  }, [open]);
+
+  const active = Math.abs(playbackRate - 1) > 0.001;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="st-iconbtn"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="Playback speed"
+        style={
+          active
+            ? {
+                width: 'auto',
+                paddingInline: 8,
+                color: 'hsl(var(--primary))',
+                background: 'color-mix(in srgb, hsl(var(--primary)) 12%, transparent)',
+              }
+            : { width: 'auto', paddingInline: 8 }
+        }
+      >
+        <span className="flex items-center gap-1.5">
+          <Gauge className="h-4 w-4" />
+          <span className="font-mono text-[12px] font-semibold tabular-nums">
+            {playbackRate}×
+          </span>
+        </span>
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute bottom-full right-0 z-20 mb-2 min-w-[92px] overflow-hidden rounded-lg border border-border bg-popover/95 p-1 shadow-[0_8px_24px_rgba(0,0,0,0.5)] backdrop-blur-md"
+        >
+          {RATE_PRESETS.map((rate) => {
+            const on = Math.abs(playbackRate - rate) < 0.001;
+            return (
               <button
                 key={rate}
-                onClick={() => onRateChange(rate)}
-                className={Math.abs(playbackRate - rate) < 0.001 ? 'is-on' : ''}
+                type="button"
+                role="menuitemradio"
+                aria-checked={on}
+                onClick={() => {
+                  onRateChange(rate);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left font-mono text-xs font-medium tabular-nums transition-colors hover:bg-muted ${
+                  on ? 'text-primary' : 'text-foreground'
+                }`}
               >
-                {rate}×
+                {rate}×{on && <span className="text-primary">•</span>}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -75,6 +75,16 @@ export default async function CountryFormPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="name_es" className="text-muted-foreground">Name (Español)</Label>
+              <Input
+                id="name_es"
+                name="name_es"
+                defaultValue={country?.name_es || ''}
+                placeholder="Nombre en español (opcional)"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="slug">Slug *</Label>
               <Input
                 id="slug"
@@ -95,6 +105,17 @@ export default async function CountryFormPage({ params }: PageProps) {
                 name="description"
                 defaultValue={country?.description || ''}
                 placeholder="Brief description of the country's musical heritage"
+                rows={4}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description_es" className="text-muted-foreground">Description (Español)</Label>
+              <Textarea
+                id="description_es"
+                name="description_es"
+                defaultValue={country?.description_es || ''}
+                placeholder="Descripción en español (opcional)"
                 rows={4}
               />
             </div>

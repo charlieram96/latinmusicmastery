@@ -2,19 +2,24 @@ import type { Metadata } from 'next'
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { getServerLocale } from "@/lib/i18n/server";
+import { localizeRow, localizeSectionTree, pick, COURSE_FIELDS, STYLE_FIELDS, COUNTRY_FIELDS } from "@/lib/i18n/localize";
 
 export async function generateMetadata({ params }: { params: Promise<{ courseId: string }> }): Promise<Metadata> {
   const { courseId } = await params
   const { createClient: createServerClient } = await import('@/lib/supabase/server')
   const supabase = await createServerClient()
+  const locale = await getServerLocale()
   const { data: course } = await supabase
     .from('courses')
-    .select('title, description')
+    .select('title, title_es, description, description_es')
     .eq('id', courseId)
     .single()
+  const title = course ? pick(locale, course.title, course.title_es) : null
+  const description = course ? pick(locale, course.description, course.description_es) : null
   return {
-    title: course ? `${course.title} - Latin Music Mastery` : 'Course Preview - Latin Music Mastery',
-    description: course?.description ?? 'Preview this Latin music course and explore the curriculum, instructor, and lessons.',
+    title: title ? `${title} - Latin Music Mastery` : 'Course Preview - Latin Music Mastery',
+    description: description ?? 'Preview this Latin music course and explore the curriculum, instructor, and lessons.',
   }
 }
 import { Lock, BookOpen, BarChart3, User, Music } from "lucide-react";
@@ -37,10 +42,12 @@ export default async function CoursePreviewPage({
   const { courseId } = await params;
   const supabase = await createClient();
 
+  const locale = await getServerLocale();
+
   const { data: course } = await supabase
     .from("courses")
     .select(
-      "*, musical_styles(name, slug, countries(name, slug)), teachers(id, name, instrument, bio, image_url)"
+      "*, musical_styles(name, name_es, slug, countries(name, name_es, slug)), teachers(id, name, instrument, bio, image_url)"
     )
     .eq("id", courseId)
     .single();
@@ -49,12 +56,22 @@ export default async function CoursePreviewPage({
     notFound();
   }
 
+  // Localize course + joined style/country to the viewer's language.
+  localizeRow(course as Record<string, unknown>, locale, COURSE_FIELDS);
+  if (course.musical_styles && !Array.isArray(course.musical_styles)) {
+    localizeRow(course.musical_styles as Record<string, unknown>, locale, STYLE_FIELDS);
+    const c = (course.musical_styles as any).countries;
+    if (c && !Array.isArray(c)) localizeRow(c as Record<string, unknown>, locale, COUNTRY_FIELDS);
+  }
+
   // Fetch course sections with classes for curriculum preview
   const { data: sections } = await supabase
     .from("course_sections")
-    .select("id, title, description, order_index, classes(id, title, order_index, is_free)")
+    .select("id, title, title_es, description, description_es, order_index, classes(id, title, title_es, order_index, is_free)")
     .eq("course_id", courseId)
     .order("order_index");
+
+  localizeSectionTree(sections as Record<string, unknown>[] | null, locale);
 
   // Build breadcrumbs
   const breadcrumbs: { label: string; href?: string }[] = [

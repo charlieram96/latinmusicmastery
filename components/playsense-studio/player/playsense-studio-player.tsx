@@ -30,13 +30,16 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from 'react';
-import { Rows3, MoveHorizontal } from 'lucide-react';
+import { Rows3, MoveHorizontal, Minus, Plus } from 'lucide-react';
 import { SplitWorkspace, OrientationToggle } from './split-workspace';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
 import {
   StaffRenderer,
+  ZOOM_MIN,
+  ZOOM_MAX,
   type SelectedRange,
 } from './notation/renderers/staff-renderer';
 import { StaffScrubBar } from './notation/staff-scrub-bar';
@@ -144,21 +147,56 @@ export function PlaysenseStudioPlayer({
     ];
   }, [sections, singleScore, singleTracks, singleTimeMap]);
 
-  // Which section is active at the current video time (-1 = none → placeholder).
+  // Which section is active at the current video time (-1 = none → gap).
   const activeSectionIndex = pickActiveSection(normalizedSections, clock.currentSeconds);
   const activeSection = activeSectionIndex >= 0 ? normalizedSections[activeSectionIndex] : null;
   const hasNotation = activeSection !== null;
 
-  // Effective score/tracks/time-map drive all the existing logic below. When no
-  // section is active we fall back to the first section's score so the hooks stay
-  // stable, but render the placeholder instead of the staff (hasNotation === false).
-  const score = activeSection?.score ?? normalizedSections[0].score;
-  const tracks = activeSection?.tracks ?? normalizedSections[0].tracks;
-  const activeTimeMap = hasNotation ? activeSection!.activeTimeMap : null;
+  // Placed sections in time order — used to resolve the current gap.
+  const placedSections = useMemo(
+    () =>
+      normalizedSections
+        .filter((s) => s.videoStartSeconds != null)
+        .sort(
+          (a, b) => (a.videoStartSeconds as number) - (b.videoStartSeconds as number)
+        ),
+    [normalizedSections]
+  );
+
+  // The section whose trailing gap we're sitting in (the one that just ended).
+  const prevSection = useMemo(() => {
+    let p: PlayerSection | null = null;
+    for (const s of placedSections) {
+      const end = s.videoEndSeconds ?? s.videoStartSeconds;
+      if (end != null && (end as number) <= clock.currentSeconds) p = s;
+    }
+    return p;
+  }, [placedSections, clock.currentSeconds]);
+
+  const upcomingSection = useMemo(
+    () =>
+      placedSections.find(
+        (s) => (s.videoStartSeconds as number) > clock.currentSeconds + 0.05
+      ) ?? null,
+    [placedSections, clock.currentSeconds]
+  );
+
+  // The staff is never blank: during a gap we keep showing the section we just
+  // finished (so its trailing gap box + playhead are visible); before the first
+  // section we preview the upcoming one.
+  const displaySection =
+    activeSection ?? prevSection ?? upcomingSection ?? normalizedSections[0];
+  const inTrailingGap = !activeSection && prevSection !== null && displaySection === prevSection;
+
+  // Effective score/tracks/time-map drive all the existing logic below — now
+  // always sourced from the displayed section so the staff is never blank.
+  const score = displaySection.score;
+  const tracks = displaySection.tracks;
+  const activeTimeMap = displaySection.activeTimeMap;
 
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
-  const activeSectionId = activeSection?.id ?? null;
+  const activeSectionId = displaySection.id;
 
   // Track view-switch events. We only count it as a switch after the
   // first render so the initial mount doesn't create a spurious event.
@@ -183,12 +221,49 @@ export function PlaysenseStudioPlayer({
     return buildTimeMap(score, activeTrackIndex, activeTimeMap, clock.durationSeconds);
   }, [score, activeTrackIndex, activeTimeMap, clock.durationSeconds]);
 
-  // Convert video seconds → score-internal ms for the staff cursor.
+  // Total score-internal ms of the displayed section's notation — the point the
+  // trailing gap box begins.
+  const sectionTotalMs = useMemo(() => {
+    const tr = score.tracks[activeTrackIndex] ?? score.tracks[0];
+    if (!tr) return 0;
+    return qnToTrackMs(tr, score, trackDurationQN(tr, score));
+  }, [score, activeTrackIndex]);
+
+  // The no-notation gap following the displayed section → drawn as a gray box.
+  const trailingGap = useMemo(() => {
+    const end = displaySection.videoEndSeconds;
+    if (end == null) return null;
+    const nextStart = placedSections.find(
+      (s) => (s.videoStartSeconds as number) > (end as number) + 0.01
+    )?.videoStartSeconds as number | undefined;
+    const gapEnd = nextStart ?? clock.durationSeconds;
+    const gapSec = gapEnd - (end as number);
+    if (gapSec <= 0.75) return null;
+    return { ms: gapSec * 1000, label: fmtClock(gapSec) };
+  }, [displaySection, placedSections, clock.durationSeconds]);
+
+  // Convert video seconds → score-internal ms for the staff cursor. While we're
+  // in the trailing gap, advance the cursor into the gap box at video rate.
   const cursorMs = useMemo(() => {
     if (!timeMap) return 0;
+    if (inTrailingGap && displaySection.videoEndSeconds != null) {
+      const gapElapsedMs = Math.max(
+        0,
+        (clock.currentSeconds - (displaySection.videoEndSeconds as number)) * 1000
+      );
+      return sectionTotalMs + gapElapsedMs;
+    }
     const qn = timeMap.toMusicalPosition(clock.currentSeconds);
     return qnToTrackMs(activeTrack, score, qn);
-  }, [clock.currentSeconds, timeMap, activeTrack, score]);
+  }, [
+    clock.currentSeconds,
+    timeMap,
+    activeTrack,
+    score,
+    inTrailingGap,
+    displaySection,
+    sectionTotalMs,
+  ]);
 
   // Loop markers in the staff are placed at the score-internal ms
   // corresponding to the (video-time) loop endpoints — same translation
@@ -325,6 +400,9 @@ export function PlaysenseStudioPlayer({
   // (only used when layout === 'split'). Pane geometry lives in SplitWorkspace.
   const [notationLayout, setNotationLayout] = useState<'wrapped' | 'scroll'>('wrapped');
 
+  // Notation zoom (split layout) — pinch or slider scales the staff. 1 = default.
+  const [zoom, setZoom] = useState(1);
+
   // ---- Shared building blocks (reused by both layouts) ----
   const videoEl = (
     <VideoStage
@@ -409,6 +487,10 @@ export function PlaysenseStudioPlayer({
       loopAMs={loopAMs}
       loopBMs={loopBMs}
       layoutMode={staffLayout}
+      zoom={layout === 'split' ? zoom : 1}
+      showCursor={hasNotation || inTrailingGap}
+      trailingGapMs={trailingGap?.ms ?? 0}
+      trailingGapLabel={trailingGap?.label ?? ''}
       onSeek={handleSeek}
       onSelectRange={handleSelectRange}
       onDurationKnown={setTrackDurationMs}
@@ -457,10 +539,14 @@ export function PlaysenseStudioPlayer({
 
     return (
       <div className="space-y-4">
-        <SplitWorkspace
-          primary={
+        {/* Break out of the lesson page's px-4/md:px-8 padding for an
+            edge-to-edge, viewport-filling workspace. */}
+        <div className="-mx-4 md:-mx-8">
+          <SplitWorkspace
+            frame="bleed"
+            primary={
             <>
-              <div className="flex flex-1 items-center justify-center overflow-hidden p-3">
+              <div className="flex flex-1 items-center justify-center overflow-hidden">
                 {videoEl}
               </div>
               <div className="flex-shrink-0 border-t border-border bg-card px-3 py-2">
@@ -491,20 +577,22 @@ export function PlaysenseStudioPlayer({
               </div>
             </div>
           )}
-          secondary={
-            <div className="min-h-0 flex-1 space-y-2 overflow-auto p-3">
-              {hasNotation ? (
-                <>
+            secondary={
+              <div className="relative min-h-0 flex-1">
+                <NotationZoomLayer
+                  zoom={zoom}
+                  onZoom={setZoom}
+                  className="h-full space-y-2 overflow-auto p-3"
+                >
                   {tracksEl}
                   {staffEl}
                   {scrubEl}
-                </>
-              ) : (
-                <NotationPlaceholder />
-              )}
-            </div>
-          }
-        />
+                </NotationZoomLayer>
+                <NotationZoomControl zoom={zoom} onZoom={setZoom} />
+              </div>
+            }
+          />
+        </div>
 
         {clipsEl}
       </div>
@@ -516,30 +604,152 @@ export function PlaysenseStudioPlayer({
       {videoEl}
       {transportEl}
       {tracksEl}
-      <div className="bg-card border border-border rounded-lg p-4 overflow-hidden space-y-3">
-        {hasNotation ? (
-          <>
-            {staffEl}
-            {scrubEl}
-          </>
-        ) : (
-          <NotationPlaceholder />
-        )}
+      <div className="relative bg-card border border-border rounded-lg p-4 overflow-hidden space-y-3">
+        {staffEl}
+        {scrubEl}
       </div>
       {clipsEl}
     </div>
   );
 }
 
-// Shown in the notation pane while the video is between scored sections (the
-// instructor is talking). Keeps the layout stable — no staff, just a hint.
-function NotationPlaceholder() {
+function fmtClock(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
+  const total = Math.round(seconds);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function clampZoom(z: number): number {
+  return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+}
+
+// Wraps the scrolling notation area and turns trackpad/Safari pinch gestures
+// into zoom changes. Plain mouse-wheel still scrolls; only ctrl+wheel (the
+// trackpad pinch signal) and Safari gesture events zoom. rAF-coalesced so a
+// fast pinch doesn't rebuild the staff more than once per frame.
+function NotationZoomLayer({
+  zoom,
+  onZoom,
+  className,
+  children,
+}: {
+  zoom: number;
+  onZoom: (z: number) => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const zoomRef = useRef(zoom);
+  const onZoomRef = useRef(onZoom);
+  useEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
+  useEffect(() => {
+    onZoomRef.current = onZoom;
+  }, [onZoom]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    let raf = 0;
+    let pending: number | null = null;
+    const flush = () => {
+      raf = 0;
+      if (pending !== null) {
+        onZoomRef.current(pending);
+        pending = null;
+      }
+    };
+    const queue = (z: number) => {
+      pending = clampZoom(z);
+      if (!raf) raf = requestAnimationFrame(flush);
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return; // trackpad pinch / ctrl+wheel only
+      e.preventDefault();
+      queue(zoomRef.current * Math.exp(-e.deltaY * 0.0032));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+
+    let gestureStart = 1;
+    const onGestureStart = (e: Event) => {
+      e.preventDefault();
+      gestureStart = zoomRef.current;
+    };
+    const onGestureChange = (e: Event) => {
+      e.preventDefault();
+      const scale = (e as unknown as { scale: number }).scale;
+      // Square the pinch ratio so the zoom rate is ~2× the raw gesture.
+      queue(gestureStart * scale * scale);
+    };
+    el.addEventListener('gesturestart', onGestureStart as EventListener);
+    el.addEventListener('gesturechange', onGestureChange as EventListener);
+
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('gesturestart', onGestureStart as EventListener);
+      el.removeEventListener('gesturechange', onGestureChange as EventListener);
+    };
+  }, []);
+
   return (
-    <div className="flex min-h-[120px] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border bg-muted/20 px-4 py-8 text-center">
-      <p className="text-sm font-medium text-muted-foreground">No notation in this part of the video</p>
-      <p className="text-xs text-muted-foreground/80">
-        The score appears here when the instructor starts playing.
-      </p>
+    <div ref={ref} className={className}>
+      {children}
+    </div>
+  );
+}
+
+// Floating zoom slider pinned to the notation pane's corner.
+function NotationZoomControl({
+  zoom,
+  onZoom,
+}: {
+  zoom: number;
+  onZoom: (z: number) => void;
+}) {
+  return (
+    <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1 rounded-full border border-border bg-popover/90 px-1.5 py-1 shadow-lg backdrop-blur">
+      <button
+        type="button"
+        onClick={() => onZoom(clampZoom(zoom - 0.2))}
+        title="Zoom out"
+        aria-label="Zoom out"
+        className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <Minus className="h-3.5 w-3.5" />
+      </button>
+      <input
+        type="range"
+        min={ZOOM_MIN}
+        max={ZOOM_MAX}
+        step={0.05}
+        value={zoom}
+        onChange={(e) => onZoom(Number(e.target.value))}
+        aria-label="Notation zoom"
+        className="h-1 w-20 cursor-pointer accent-primary sm:w-24"
+      />
+      <button
+        type="button"
+        onClick={() => onZoom(clampZoom(zoom + 0.2))}
+        title="Zoom in"
+        aria-label="Zoom in"
+        className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <Plus className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => onZoom(1)}
+        title="Reset zoom"
+        className="min-w-[34px] rounded-full px-1 text-center text-[10px] font-semibold tabular-nums text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {Math.round(zoom * 100)}%
+      </button>
     </div>
   );
 }
