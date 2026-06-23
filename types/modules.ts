@@ -63,8 +63,6 @@ export interface ClassItem {
   options: QuestionOptions | null
   correct_answer: string | null
   explanation: string | null
-  question_es: string | null
-  explanation_es: string | null
 
   // JAM_SESSION fields
   audio_url: string | null

@@ -38,7 +38,7 @@ export function SignalWaveform({ getAnalyser, level, isListening, onStart, onSto
     const ro = new ResizeObserver(resize)
     ro.observe(canvas)
 
-    let buf: Float32Array | null = null
+    let buf: Float32Array<ArrayBuffer> | null = null
 
     const draw = () => {
       const rect = canvas.getBoundingClientRect()
