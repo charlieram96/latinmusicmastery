@@ -1,15 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
+import { Layers, ListMusic, Settings2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import type { ClassItem, ClassItemType } from '@/types/modules'
 import {
   createSection,
-  updateSection,
   deleteSection,
   reorderSections,
   createClass,
-  updateClass,
   deleteClass,
   reorderClasses,
   createClassItem,
@@ -17,18 +16,24 @@ import {
   reorderClassItems,
   updateCourseSettings,
 } from '@/app/actions/course-builder'
+import { cn } from '@/lib/utils'
 import styles from './course-studio.module.css'
 import { SaveStatusProvider, useSaveStatus } from './save-status'
 import { StudioAppBar } from './studio-app-bar'
 import { OutlineRail } from './outline-rail'
 import { ClassCanvas } from './class-canvas'
+import { ModuleOverview } from './module-overview'
 import { StudioDrawer } from './studio-drawer'
 import { ItemEditor } from './item-editor'
+import { ModuleEditor } from './module-editor'
+import { ClassEditor } from './class-editor'
 import { CourseSettingsEditor } from './course-settings-editor'
+import { itemMeta } from './item-meta'
 import type {
+  CenterSelection,
   ClassWithItems,
   CourseStudioCourse,
-  DrawerState,
+  DrawerSelection,
   MusicalStyleOption,
   SectionWithClasses,
   TeacherOption,
@@ -51,57 +56,38 @@ export function CourseStudio(props: CourseStudioProps) {
 
 const DRAWER_WIDTHS = { narrow: 420, wide: 660 } as const
 
-function drawerSizeFor(state: DrawerState, item: ClassItem | null): 'narrow' | 'wide' {
-  if (state?.mode === 'item' && (item?.item_type === 'QUIZ' || item?.item_type === 'EXERCISE')) {
-    return 'wide'
-  }
-  return 'narrow'
-}
-
 function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: CourseStudioProps) {
   const { track } = useSaveStatus()
 
   const [sections, setSections] = useState<SectionWithClasses[]>(initialSections)
   const [settings, setSettings] = useState<CourseStudioCourse>(course)
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(
-    initialSections[0]?.classes[0]?.id ?? null
-  )
-  const [drawer, setDrawer] = useState<DrawerState>(null)
-  // Retained through the close animation so the drawer doesn't empty mid-slide.
-  const [lastDrawer, setLastDrawer] = useState<DrawerState>(null)
+
+  // The first class is the most useful landing spot; fall back to the first
+  // module, then to course settings.
+  const firstClass = initialSections.find((s) => s.classes.length > 0)?.classes[0] ?? null
+  const firstModule = initialSections[0] ?? null
+  const initialCenter: CenterSelection = firstClass
+    ? { type: 'class', id: firstClass.id }
+    : firstModule
+      ? { type: 'module', id: firstModule.id }
+      : null
+  const initialDrawer: DrawerSelection = firstClass
+    ? { type: 'class', id: firstClass.id }
+    : firstModule
+      ? { type: 'module', id: firstModule.id }
+      : { type: 'course' }
+
+  const [centerSelection, setCenterSelection] = useState<CenterSelection>(initialCenter)
+  const [drawerSelection, setDrawerSelection] = useState<DrawerSelection>(initialDrawer)
   const [outlineSheetOpen, setOutlineSheetOpen] = useState(false)
-
-  const openDrawer = useCallback((state: Exclude<DrawerState, null>) => {
-    setDrawer(state)
-    setLastDrawer(state)
-  }, [])
-  const closeDrawer = useCallback(() => setDrawer(null), [])
-
-  // Unmount drawer content once the close animation finishes (this also
-  // triggers the editors' flush-on-unmount for any pending autosave patch).
-  useEffect(() => {
-    if (drawer) return
-    const timer = setTimeout(() => setLastDrawer(null), 280)
-    return () => clearTimeout(timer)
-  }, [drawer])
-
-  // ── Derived selection ────────────────────────────────────────────────
-  const selected = useMemo(() => {
-    for (let si = 0; si < sections.length; si++) {
-      const ci = sections[si].classes.findIndex((c) => c.id === selectedClassId)
-      if (ci !== -1) {
-        return { section: sections[si], cls: sections[si].classes[ci], moduleIndex: si, classIndex: ci }
-      }
-    }
-    return null
-  }, [sections, selectedClassId])
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
 
   const findItem = useCallback(
-    (itemId: string): ClassItem | null => {
+    (itemId: string): { item: ClassItem; classId: string } | null => {
       for (const s of sections) {
         for (const c of s.classes) {
           const item = c.items.find((i) => i.id === itemId)
-          if (item) return item
+          if (item) return { item, classId: c.id }
         }
       }
       return null
@@ -109,10 +95,59 @@ function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: C
     [sections]
   )
 
-  const renderedDrawer = drawer ?? lastDrawer
-  const renderedItem =
-    renderedDrawer?.mode === 'item' ? findItem(renderedDrawer.itemId) : null
-  const drawerSize = drawerSizeFor(renderedDrawer, renderedItem)
+  // ── Derived center context (React Compiler memoizes these) ───────────
+  const centerModuleId = centerSelection?.type === 'module' ? centerSelection.id : null
+  const centerClassId = centerSelection?.type === 'class' ? centerSelection.id : null
+
+  const activeModuleIndex = centerModuleId ? sections.findIndex((s) => s.id === centerModuleId) : -1
+  const activeModule =
+    activeModuleIndex === -1
+      ? null
+      : { section: sections[activeModuleIndex], moduleIndex: activeModuleIndex }
+
+  const activeClassModuleIndex = centerClassId
+    ? sections.findIndex((s) => s.classes.some((c) => c.id === centerClassId))
+    : -1
+  const activeClass =
+    activeClassModuleIndex === -1 || !centerClassId
+      ? null
+      : (() => {
+          const section = sections[activeClassModuleIndex]
+          const classIndex = section.classes.findIndex((c) => c.id === centerClassId)
+          return { section, cls: section.classes[classIndex], moduleIndex: activeClassModuleIndex, classIndex }
+        })()
+
+  // ── Derived drawer entity ────────────────────────────────────────────
+  const drawerItem =
+    drawerSelection.type === 'item' ? (findItem(drawerSelection.id)?.item ?? null) : null
+
+  const drawerSize =
+    drawerItem && (drawerItem.item_type === 'QUIZ' || drawerItem.item_type === 'EXERCISE')
+      ? 'wide'
+      : 'narrow'
+
+  // ── Selection handlers ───────────────────────────────────────────────
+  const handleSelectModule = useCallback((sectionId: string) => {
+    setCenterSelection({ type: 'module', id: sectionId })
+    setDrawerSelection({ type: 'module', id: sectionId })
+    setOutlineSheetOpen(false)
+  }, [])
+
+  const handleSelectClass = useCallback((classId: string) => {
+    setCenterSelection({ type: 'class', id: classId })
+    setDrawerSelection({ type: 'class', id: classId })
+    setOutlineSheetOpen(false)
+  }, [])
+
+  const handleSelectItem = useCallback((itemId: string) => {
+    setDrawerSelection({ type: 'item', id: itemId })
+    setMobileDrawerOpen(true)
+  }, [])
+
+  const handleSelectCourse = useCallback(() => {
+    setDrawerSelection({ type: 'course' })
+    setMobileDrawerOpen(true)
+  }, [])
 
   // ── Module handlers ──────────────────────────────────────────────────
   const handleAddModule = useCallback(
@@ -120,33 +155,50 @@ function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: C
       const result = await track(createSection(course.id, title))
       if (result.data) {
         setSections((prev) => [...prev, { ...result.data, classes: [] } as SectionWithClasses])
+        handleSelectModule(result.data.id)
       }
     },
-    [course.id, track]
+    [course.id, track, handleSelectModule]
   )
 
-  const handleRenameModule = useCallback(
-    (sectionId: string, title: string) => {
-      const description = sections.find((s) => s.id === sectionId)?.description
-      setSections((prev) => prev.map((s) => (s.id === sectionId ? { ...s, title } : s)))
-      void track(updateSection(sectionId, title, description ?? undefined))
-    },
-    [sections, track]
-  )
+  const handlePatchModule = useCallback((sectionId: string, patch: Partial<SectionWithClasses>) => {
+    setSections((prev) => prev.map((s) => (s.id === sectionId ? { ...s, ...patch } : s)))
+  }, [])
 
   const handleDeleteModule = useCallback(
     (sectionId: string) => {
       if (!confirm('Delete this module and all its classes? This cannot be undone.')) return
-      const removed = sections.find((s) => s.id === sectionId)
       const next = sections.filter((s) => s.id !== sectionId)
-      if (removed?.classes.some((c) => c.id === selectedClassId)) {
-        setSelectedClassId(next[0]?.classes[0]?.id ?? null)
-        setDrawer((d) => (d?.mode === 'item' ? null : d))
-      }
       setSections(next)
+
+      const fallbackClass = next.find((s) => s.classes.length > 0)?.classes[0] ?? null
+      const fallbackCenter: CenterSelection = fallbackClass
+        ? { type: 'class', id: fallbackClass.id }
+        : next[0]
+          ? { type: 'module', id: next[0].id }
+          : null
+      const removedItemIds = new Set(
+        sections.find((s) => s.id === sectionId)?.classes.flatMap((c) => c.items.map((i) => i.id)) ?? []
+      )
+      const removedClassIds = new Set(
+        sections.find((s) => s.id === sectionId)?.classes.map((c) => c.id) ?? []
+      )
+
+      setCenterSelection((cur) => {
+        if (cur?.type === 'module' && cur.id === sectionId) return fallbackCenter
+        if (cur?.type === 'class' && removedClassIds.has(cur.id)) return fallbackCenter
+        return cur
+      })
+      setDrawerSelection((cur) => {
+        if (cur.type === 'module' && cur.id === sectionId) return fallbackCenter ?? { type: 'course' }
+        if (cur.type === 'class' && removedClassIds.has(cur.id)) return fallbackCenter ?? { type: 'course' }
+        if (cur.type === 'item' && removedItemIds.has(cur.id)) return fallbackCenter ?? { type: 'course' }
+        return cur
+      })
+
       void track(deleteSection(sectionId))
     },
-    [sections, selectedClassId, track]
+    [sections, track]
   )
 
   const handleReorderModules = useCallback(
@@ -166,53 +218,55 @@ function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: C
         setSections((prev) =>
           prev.map((s) => (s.id === sectionId ? { ...s, classes: [...s.classes, newClass] } : s))
         )
-        setSelectedClassId(newClass.id)
+        handleSelectClass(newClass.id)
       }
     },
-    [track]
+    [track, handleSelectClass]
   )
 
-  const handleUpdateClass = useCallback(
-    (classId: string, updates: { title?: string; description?: string; is_free?: boolean }) => {
-      setSections((prev) =>
-        prev.map((s) => ({
-          ...s,
-          classes: s.classes.map((c) =>
-            c.id === classId
-              ? {
-                  ...c,
-                  ...(updates.title !== undefined && { title: updates.title }),
-                  ...(updates.description !== undefined && { description: updates.description || null }),
-                  ...(updates.is_free !== undefined && { is_free: updates.is_free }),
-                }
-              : c
-          ),
-        }))
-      )
-      void track(updateClass(classId, updates))
-    },
-    [track]
-  )
+  const handlePatchClass = useCallback((classId: string, patch: Partial<ClassWithItems>) => {
+    setSections((prev) =>
+      prev.map((s) => ({
+        ...s,
+        classes: s.classes.map((c) => (c.id === classId ? { ...c, ...patch } : c)),
+      }))
+    )
+  }, [])
 
   const handleDeleteClass = useCallback(
     (classId: string) => {
       if (!confirm('Delete this class and all its items? This cannot be undone.')) return
+      const owner = sections.find((s) => s.classes.some((c) => c.id === classId))
+      const removedItemIds = new Set(
+        owner?.classes.find((c) => c.id === classId)?.items.map((i) => i.id) ?? []
+      )
       const next = sections.map((s) => ({
         ...s,
         classes: s.classes.filter((c) => c.id !== classId),
       }))
-      if (selectedClassId === classId) {
-        const owner = sections.find((s) => s.classes.some((c) => c.id === classId))
-        const ownerNext = next.find((s) => s.id === owner?.id)
-        setSelectedClassId(
-          ownerNext?.classes[0]?.id ?? next.flatMap((s) => s.classes)[0]?.id ?? null
-        )
-        setDrawer((d) => (d?.mode === 'item' ? null : d))
-      }
       setSections(next)
+
+      const ownerNext = next.find((s) => s.id === owner?.id)
+      const fallbackClass =
+        ownerNext?.classes[0] ?? next.flatMap((s) => s.classes)[0] ?? null
+      const fallbackCenter: CenterSelection = fallbackClass
+        ? { type: 'class', id: fallbackClass.id }
+        : owner
+          ? { type: 'module', id: owner.id }
+          : null
+
+      setCenterSelection((cur) =>
+        cur?.type === 'class' && cur.id === classId ? fallbackCenter : cur
+      )
+      setDrawerSelection((cur) => {
+        if (cur.type === 'class' && cur.id === classId) return fallbackCenter ?? { type: 'course' }
+        if (cur.type === 'item' && removedItemIds.has(cur.id)) return fallbackCenter ?? { type: 'course' }
+        return cur
+      })
+
       void track(deleteClass(classId))
     },
-    [sections, selectedClassId, track]
+    [sections, track]
   )
 
   const handleReorderClasses = useCallback(
@@ -243,10 +297,10 @@ function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: C
             ),
           }))
         )
-        openDrawer({ mode: 'item', itemId: newItem.id })
+        handleSelectItem(newItem.id)
       }
     },
-    [openDrawer, track]
+    [track, handleSelectItem]
   )
 
   const handleDeleteItem = useCallback(
@@ -261,10 +315,17 @@ function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: C
           })),
         }))
       )
-      setDrawer((d) => (d?.mode === 'item' && d.itemId === itemId ? null : d))
+      setDrawerSelection((cur) => {
+        if (cur.type === 'item' && cur.id === itemId) {
+          return centerSelection?.type === 'class'
+            ? { type: 'class', id: centerSelection.id }
+            : { type: 'course' }
+        }
+        return cur
+      })
       void track(deleteClassItem(itemId))
     },
-    [track]
+    [track, centerSelection]
   )
 
   const handleReorderItems = useCallback(
@@ -280,7 +341,7 @@ function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: C
     [track]
   )
 
-  // Keeps the outline/canvas in sync while the drawer editor autosaves.
+  // Keeps the outline/center in sync while the drawer item editor autosaves.
   const handleItemPatched = useCallback((itemId: string, patch: Partial<ClassItem>) => {
     setSections((prev) =>
       prev.map((s) => ({
@@ -306,19 +367,14 @@ function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: C
     [course.id, track]
   )
 
-  const handleSelectClass = useCallback((classId: string) => {
-    setSelectedClassId(classId)
-    setOutlineSheetOpen(false)
-    setDrawer((d) => (d?.mode === 'item' ? null : d))
-  }, [])
-
   const outline = (
     <OutlineRail
       sections={sections}
-      selectedClassId={selectedClassId}
+      selectedClassId={centerSelection?.type === 'class' ? centerSelection.id : null}
+      selectedModuleId={drawerSelection.type === 'module' ? drawerSelection.id : null}
       onSelectClass={handleSelectClass}
+      onSelectModule={handleSelectModule}
       onAddModule={handleAddModule}
-      onRenameModule={handleRenameModule}
       onDeleteModule={handleDeleteModule}
       onReorderModules={handleReorderModules}
       onAddClass={handleAddClass}
@@ -326,20 +382,129 @@ function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: C
     />
   )
 
+  // ── Drawer header + body by selection ────────────────────────────────
+  const drawerModule =
+    drawerSelection.type === 'module'
+      ? sections.find((s) => s.id === drawerSelection.id) ?? null
+      : null
+  const drawerClass =
+    drawerSelection.type === 'class'
+      ? sections.flatMap((s) => s.classes).find((c) => c.id === drawerSelection.id) ?? null
+      : null
+
+  let drawerHeader: { label?: string; title: string; icon: React.ReactNode }
+  let drawerBody: React.ReactNode
+
+  if (drawerSelection.type === 'course') {
+    drawerHeader = {
+      title: 'Course settings',
+      icon: (
+        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Settings2 className="h-3.5 w-3.5" />
+        </span>
+      ),
+    }
+    drawerBody = (
+      <CourseSettingsEditor
+        key={course.id}
+        settings={settings}
+        musicalStyles={musicalStyles}
+        teachers={teachers}
+        onPatched={handleSettingsPatched}
+      />
+    )
+  } else if (drawerSelection.type === 'module' && drawerModule) {
+    drawerHeader = {
+      label: 'Module',
+      title: drawerModule.title || 'Untitled module',
+      icon: (
+        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gold/10 text-gold">
+          <Layers className="h-3.5 w-3.5" />
+        </span>
+      ),
+    }
+    drawerBody = (
+      <ModuleEditor
+        key={drawerModule.id}
+        section={drawerModule}
+        onPatched={(patch) => handlePatchModule(drawerModule.id, patch)}
+        onDelete={() => handleDeleteModule(drawerModule.id)}
+      />
+    )
+  } else if (drawerSelection.type === 'class' && drawerClass) {
+    drawerHeader = {
+      label: 'Class',
+      title: drawerClass.title || 'Untitled class',
+      icon: (
+        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <ListMusic className="h-3.5 w-3.5" />
+        </span>
+      ),
+    }
+    drawerBody = (
+      <ClassEditor
+        key={drawerClass.id}
+        cls={drawerClass}
+        onPatched={(patch) => handlePatchClass(drawerClass.id, patch)}
+        onDelete={() => handleDeleteClass(drawerClass.id)}
+      />
+    )
+  } else if (drawerSelection.type === 'item' && drawerItem) {
+    const meta = itemMeta(drawerItem.item_type)
+    const Icon = meta.icon
+    drawerHeader = {
+      label: meta.label,
+      title: drawerItem.title || 'Untitled',
+      icon: (
+        <span
+          className={cn(
+            'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg',
+            meta.bg,
+            meta.fg
+          )}
+        >
+          <Icon className="h-3.5 w-3.5" />
+        </span>
+      ),
+    }
+    drawerBody = (
+      <ItemEditor
+        key={drawerItem.id}
+        item={drawerItem}
+        onPatched={(patch) => handleItemPatched(drawerItem.id, patch)}
+      />
+    )
+  } else {
+    // Nothing resolvable (e.g. mid-delete) — show a neutral placeholder.
+    drawerHeader = {
+      title: 'Inspector',
+      icon: (
+        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground">
+          <Settings2 className="h-3.5 w-3.5" />
+        </span>
+      ),
+    }
+    drawerBody = (
+      <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
+        Select a module, class, or item to edit.
+      </div>
+    )
+  }
+
   return (
     <div
       className={`${styles.studio} flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background md:h-dvh`}
-      data-drawer={drawer ? drawerSize : undefined}
+      data-drawer={drawerSize}
+      data-mobile-drawer={mobileDrawerOpen ? 'open' : undefined}
     >
       <StudioAppBar
         title={settings.title}
         isPublished={settings.is_published}
+        courseSelected={drawerSelection.type === 'course'}
         onTogglePublish={handleTogglePublish}
-        settingsOpen={drawer?.mode === 'settings'}
-        onToggleSettings={() =>
-          drawer?.mode === 'settings' ? closeDrawer() : openDrawer({ mode: 'settings' })
-        }
+        onSelectCourse={handleSelectCourse}
         onOpenOutline={() => setOutlineSheetOpen(true)}
+        onOpenDrawer={() => setMobileDrawerOpen(true)}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -350,56 +515,59 @@ function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: C
           {outline}
         </aside>
 
-        {/* Class canvas */}
+        {/* Center */}
         <main className="min-w-0 flex-1 overflow-y-auto">
-          <ClassCanvas
-            section={selected?.section ?? null}
-            cls={selected?.cls ?? null}
-            moduleIndex={selected?.moduleIndex ?? 0}
-            classIndex={selected?.classIndex ?? 0}
-            hasModules={sections.length > 0}
-            activeItemId={drawer?.mode === 'item' ? drawer.itemId : null}
-            onUpdateClass={handleUpdateClass}
-            onDeleteClass={handleDeleteClass}
-            onAddItem={handleAddItem}
-            onSelectItem={(itemId) => openDrawer({ mode: 'item', itemId })}
-            onDeleteItem={handleDeleteItem}
-            onReorderItems={handleReorderItems}
-          />
+          {activeClass ? (
+            <ClassCanvas
+              section={activeClass.section}
+              cls={activeClass.cls}
+              moduleIndex={activeClass.moduleIndex}
+              classIndex={activeClass.classIndex}
+              hasModules={sections.length > 0}
+              activeItemId={drawerSelection.type === 'item' ? drawerSelection.id : null}
+              onAddItem={handleAddItem}
+              onSelectItem={handleSelectItem}
+              onDeleteItem={handleDeleteItem}
+              onReorderItems={handleReorderItems}
+            />
+          ) : activeModule ? (
+            <ModuleOverview
+              section={activeModule.section}
+              moduleIndex={activeModule.moduleIndex}
+              onSelectClass={handleSelectClass}
+              onAddClass={(title) => handleAddClass(activeModule.section.id, title)}
+            />
+          ) : (
+            <ClassCanvas
+              section={null}
+              cls={null}
+              moduleIndex={0}
+              classIndex={0}
+              hasModules={sections.length > 0}
+              activeItemId={null}
+              onAddItem={handleAddItem}
+              onSelectItem={handleSelectItem}
+              onDeleteItem={handleDeleteItem}
+              onReorderItems={handleReorderItems}
+            />
+          )}
         </main>
 
         {/* Mobile drawer backdrop */}
-        {drawer && (
+        {mobileDrawerOpen && (
           <div
             className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] lg:hidden"
-            onClick={closeDrawer}
+            onClick={() => setMobileDrawerOpen(false)}
           />
         )}
 
-        {/* In-page push drawer */}
+        {/* Always-open inspector drawer */}
         <StudioDrawer
-          open={drawer !== null}
           widthPx={DRAWER_WIDTHS[drawerSize]}
-          onClose={closeDrawer}
-          mode={renderedDrawer?.mode ?? null}
-          item={renderedItem}
+          header={drawerHeader}
+          onMobileClose={() => setMobileDrawerOpen(false)}
         >
-          {renderedDrawer?.mode === 'settings' && (
-            <CourseSettingsEditor
-              key={course.id}
-              settings={settings}
-              musicalStyles={musicalStyles}
-              teachers={teachers}
-              onPatched={handleSettingsPatched}
-            />
-          )}
-          {renderedDrawer?.mode === 'item' && renderedItem && (
-            <ItemEditor
-              key={renderedItem.id}
-              item={renderedItem}
-              onPatched={(patch) => handleItemPatched(renderedItem.id, patch)}
-            />
-          )}
+          {drawerBody}
         </StudioDrawer>
       </div>
 

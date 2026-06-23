@@ -14,6 +14,7 @@
 //     unit used everywhere else (TimeMap waypoints, score events, etc.).
 
 import type {
+  MusicalEvent,
   ScoreDocument,
   Track,
   Measure,
@@ -29,6 +30,48 @@ export function measureLengthInQN(timeSignature: [number, number]): number {
 export function beatLengthInQN(timeSignature: [number, number]): number {
   const [, denominator] = timeSignature;
   return 4 / denominator;
+}
+
+/** Floating-point slack for QN capacity comparisons. */
+export const QN_EPS = 1e-7;
+
+/**
+ * The TRUE occupied length of a note/rest in quarter notes, given a base
+ * duration and its modifiers. A dot adds half (×1.5); a triplet member occupies
+ * two-thirds of its nominal value (×2/3). This is the single source of truth for
+ * how much room an event takes in a measure — the reducer stores this value as
+ * `durationQN` so `occupiedQN` (and `extractTrackEvents`, which positions by raw
+ * `durationQN`) stay consistent.
+ */
+export function effectiveDurationQN(
+  baseDurationQN: number,
+  modifiers?: { dotted?: boolean; triplet?: boolean }
+): number {
+  let qn = baseDurationQN;
+  if (modifiers?.dotted) qn *= 1.5;
+  if (modifiers?.triplet) qn *= 2 / 3;
+  return qn;
+}
+
+/** Total quarter notes occupied by a measure's events (their stored durations). */
+export function occupiedQN(events: Pick<MusicalEvent, 'durationQN'>[]): number {
+  return events.reduce((sum, e) => sum + e.durationQN, 0);
+}
+
+/**
+ * True when a measure holds nothing but a single full-measure rest — the
+ * placeholder older scores were seeded with. Such a rest should be replaced
+ * (not appended to) when the first real note is added.
+ */
+export function isFillerRest(
+  events: MusicalEvent[],
+  timeSignature: [number, number]
+): boolean {
+  return (
+    events.length === 1 &&
+    events[0].kind === 'rest' &&
+    Math.abs(events[0].durationQN - measureLengthInQN(timeSignature)) < QN_EPS
+  );
 }
 
 /** Milliseconds per quarter note at the given quarter-note BPM. */

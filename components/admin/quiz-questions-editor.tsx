@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import {
@@ -20,6 +20,8 @@ import {
   deleteQuizQuestion,
   reorderQuizQuestions,
 } from '@/app/actions/quiz'
+import { useSaveStatus } from './course-studio/save-status'
+import { useItemSave } from './course-studio/item-save-context'
 
 interface QuizQuestionsEditorProps {
   classItemId: string
@@ -37,10 +39,15 @@ const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
 }
 
 export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorProps) {
+  const { track } = useSaveStatus()
+  const { setDirty, registerFlush } = useItemSave()
+
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  // Latest unsaved snapshot per question id, so a flush persists current values.
+  const pending = useRef<Record<string, QuizQuestion>>({})
 
   useEffect(() => {
     let active = true
@@ -55,20 +62,44 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
     }
   }, [classItemId])
 
-  const scheduleSave = (q: QuizQuestion) => {
-    clearTimeout(saveTimers.current[q.id])
-    saveTimers.current[q.id] = setTimeout(() => {
-      updateQuizQuestion(q.id, {
-        question: q.question,
-        question_type: q.question_type,
-        options: q.options,
-        correct_answer: q.correct_answer,
-        explanation: q.explanation,
-        question_es: q.question_es,
-        explanation_es: q.explanation_es,
+  const saveQuestion = useCallback(
+    (id: string) => {
+      const q = pending.current[id]
+      if (!q) return
+      delete pending.current[id]
+      clearTimeout(saveTimers.current[id])
+      const promise = track(
+        updateQuizQuestion(q.id, {
+          question: q.question,
+          question_type: q.question_type,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          explanation: q.explanation,
+          question_es: q.question_es,
+          explanation_es: q.explanation_es,
+        })
+      )
+      promise.finally(() => {
+        if (Object.keys(pending.current).length === 0) setDirty('quiz', false)
       })
-    }, 600)
+    },
+    [track, setDirty]
+  )
+
+  const scheduleSave = (q: QuizQuestion) => {
+    pending.current[q.id] = q
+    setDirty('quiz', true)
+    clearTimeout(saveTimers.current[q.id])
+    saveTimers.current[q.id] = setTimeout(() => saveQuestion(q.id), 600)
   }
+
+  // Flush every pending question immediately (Save button / item switch).
+  const flush = useCallback(() => {
+    Object.keys(pending.current).forEach((id) => saveQuestion(id))
+  }, [saveQuestion])
+
+  useEffect(() => registerFlush(flush), [registerFlush, flush])
+  useEffect(() => () => flush(), [flush])
 
   const patchQuestion = (id: string, patch: Partial<QuizQuestion>) => {
     setQuestions((prev) => {
@@ -81,20 +112,24 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
 
   const addQuestion = async () => {
     setBusy(true)
-    const res = await createQuizQuestion(classItemId, {
-      question: '',
-      question_type: 'multiple_choice',
-      options: { choices: [] },
-      correct_answer: '',
-      explanation: '',
-    })
+    const res = await track(
+      createQuizQuestion(classItemId, {
+        question: '',
+        question_type: 'multiple_choice',
+        options: { choices: [] },
+        correct_answer: '',
+        explanation: '',
+      })
+    )
     if (res.data) setQuestions((prev) => [...prev, res.data as QuizQuestion])
     setBusy(false)
   }
 
   const removeQuestion = async (id: string) => {
+    delete pending.current[id]
+    clearTimeout(saveTimers.current[id])
     setQuestions((prev) => prev.filter((q) => q.id !== id))
-    await deleteQuizQuestion(id)
+    await track(deleteQuizQuestion(id))
   }
 
   const move = async (index: number, dir: -1 | 1) => {
@@ -104,7 +139,7 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
     ;[next[index], next[to]] = [next[to], next[index]]
     const reindexed = next.map((q, i) => ({ ...q, order_index: i }))
     setQuestions(reindexed)
-    await reorderQuizQuestions(classItemId, reindexed.map((q) => q.id))
+    await track(reorderQuizQuestions(classItemId, reindexed.map((q) => q.id)))
   }
 
   if (loading) {

@@ -35,7 +35,15 @@ export interface TeacherOption {
   instrument: string
 }
 
-export type DrawerState =
-  | { mode: 'item'; itemId: string }
-  | { mode: 'settings' }
+/** What the center (main) area renders. */
+export type CenterSelection =
+  | { type: 'module'; id: string }
+  | { type: 'class'; id: string }
   | null
+
+/** What the always-open inspector drawer edits. */
+export type DrawerSelection =
+  | { type: 'course' }
+  | { type: 'module'; id: string }
+  | { type: 'class'; id: string }
+  | { type: 'item'; id: string }

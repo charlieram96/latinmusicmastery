@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, ListTree, Settings2 } from 'lucide-react'
+import { ArrowLeft, ListTree, Settings2, SlidersHorizontal } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { SaveIndicator } from './save-status'
@@ -9,19 +9,21 @@ import { SaveIndicator } from './save-status'
 interface StudioAppBarProps {
   title: string
   isPublished: boolean
+  courseSelected: boolean
   onTogglePublish: (published: boolean) => void
-  settingsOpen: boolean
-  onToggleSettings: () => void
+  onSelectCourse: () => void
   onOpenOutline: () => void
+  onOpenDrawer: () => void
 }
 
 export function StudioAppBar({
   title,
   isPublished,
+  courseSelected,
   onTogglePublish,
-  settingsOpen,
-  onToggleSettings,
+  onSelectCourse,
   onOpenOutline,
+  onOpenDrawer,
 }: StudioAppBarProps) {
   return (
     <header className="flex h-14 flex-shrink-0 items-center gap-2.5 border-b border-border bg-card/70 px-3 backdrop-blur-sm md:px-4">
@@ -44,14 +46,32 @@ export function StudioAppBar({
 
       <div className="hidden h-6 w-px flex-shrink-0 bg-border sm:block" />
 
-      <div className="flex min-w-0 flex-col">
-        <span className="text-[10px] font-semibold uppercase leading-3 tracking-[0.16em] text-gold">
-          Course Studio
-        </span>
-        <h1 className="truncate font-heading text-[15px] font-semibold leading-5 text-foreground">
-          {title || 'Untitled course'}
-        </h1>
-      </div>
+      <button
+        type="button"
+        onClick={onSelectCourse}
+        title="Course settings"
+        className={cn(
+          'group flex min-w-0 items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors',
+          courseSelected ? 'bg-primary/10' : 'hover:bg-accent/10'
+        )}
+      >
+        <div className="flex min-w-0 flex-col">
+          <span className="text-[10px] font-semibold uppercase leading-3 tracking-[0.16em] text-gold">
+            Course Studio
+          </span>
+          <h1 className="truncate font-heading text-[15px] font-semibold leading-5 text-foreground">
+            {title || 'Untitled course'}
+          </h1>
+        </div>
+        <Settings2
+          className={cn(
+            'h-3.5 w-3.5 flex-shrink-0 transition-colors',
+            courseSelected
+              ? 'text-primary'
+              : 'text-muted-foreground/0 group-hover:text-muted-foreground'
+          )}
+        />
+      </button>
 
       <span
         className={cn(
@@ -75,17 +95,11 @@ export function StudioAppBar({
 
         <button
           type="button"
-          onClick={onToggleSettings}
-          title="Course settings"
-          className={cn(
-            'flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors',
-            settingsOpen
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground'
-          )}
+          onClick={onOpenDrawer}
+          title="Inspector"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground lg:hidden"
         >
-          <Settings2 className="h-4 w-4" />
-          <span className="hidden md:inline">Settings</span>
+          <SlidersHorizontal className="h-4 w-4" />
         </button>
 
         <div className="h-6 w-px bg-border" />

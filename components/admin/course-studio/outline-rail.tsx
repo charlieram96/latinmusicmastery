@@ -18,9 +18,10 @@ import type { ClassWithItems, SectionWithClasses } from './types'
 interface OutlineRailProps {
   sections: SectionWithClasses[]
   selectedClassId: string | null
+  selectedModuleId: string | null
   onSelectClass: (classId: string) => void
+  onSelectModule: (sectionId: string) => void
   onAddModule: (title: string) => Promise<void> | void
-  onRenameModule: (sectionId: string, title: string) => void
   onDeleteModule: (sectionId: string) => void
   onReorderModules: (sections: SectionWithClasses[]) => void
   onAddClass: (sectionId: string, title: string) => Promise<void> | void
@@ -30,9 +31,10 @@ interface OutlineRailProps {
 export function OutlineRail({
   sections,
   selectedClassId,
+  selectedModuleId,
   onSelectClass,
+  onSelectModule,
   onAddModule,
-  onRenameModule,
   onDeleteModule,
   onReorderModules,
   onAddClass,
@@ -81,14 +83,14 @@ export function OutlineRail({
           onDragEnd={handleModuleDragEnd}
         >
           <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-            {sections.map((section, i) => (
+            {sections.map((section) => (
               <OutlineModule
                 key={section.id}
                 section={section}
-                index={i}
                 selectedClassId={selectedClassId}
+                selectedModuleId={selectedModuleId}
                 onSelectClass={onSelectClass}
-                onRename={(title) => onRenameModule(section.id, title)}
+                onSelectModule={() => onSelectModule(section.id)}
                 onDelete={() => onDeleteModule(section.id)}
                 onAddClass={(title) => onAddClass(section.id, title)}
                 onReorderClasses={(classes) => onReorderClasses(section.id, classes)}

@@ -16,10 +16,18 @@
 // here — note edits don't change `structuralSignature`, so the markers above stay
 // put while you edit pitches/durations.
 
-import { ChevronDown, MoreHorizontal, Music, Plus, Trash2 } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useState, type Dispatch } from 'react';
+import { ChevronDown, ChevronsLeftRight, MoreHorizontal, Move, Music, Plus, Trash2 } from 'lucide-react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type Dispatch } from 'react';
 import { diatonicToMidi, extractTrackEvents, midiToDiatonic } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion } from '@/lib/playsense-studio/perc-strokes';
+import {
+  QN_EPS,
+  beatLengthInQN,
+  effectiveDurationQN,
+  isFillerRest,
+  measureLengthInQN,
+  occupiedQN,
+} from '@/lib/playsense-studio/time-mapping';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type {
   Chord,
@@ -145,10 +153,16 @@ export interface IntegratedEditorProps {
   onRequestZoom: (pixelsPerSecond: number, scrollLeftPx: number) => void;
   /** Default region/single mode for measure-block drags (true = all-after). */
   dragAll: boolean;
+  /** Show the Ripple/Single drag-mode toggle in the editor bar (sync only). */
+  showDragMode?: boolean;
+  /** Change the drag mode (true = Ripple/all-after, false = Single). */
+  onSetDragAll?: (dragAll: boolean) => void;
   /** A measure block was dragged to reposition its downbeat in video time. */
   onMeasureDrag: (measureNumber: number, videoTimeSeconds: number, mode: DragMode) => void;
   /** A measure-block drag ended (commit / reinterpolate unedited beats). */
   onMeasureDragEnd: () => void;
+  /** Move the tail boundary (right edge of the last measure) in video time. */
+  onTailDrag?: (videoTimeSeconds: number) => void;
   /** Mirrors the current note selection out to the right-rail inspector. The
    *  editor stays the source of truth; pass a stable callback to keep the memo. */
   onSelectionChange?: (selection: { ref: SelectedEventRef; trackIndex: number } | null) => void;
@@ -165,8 +179,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   viewportWidth,
   onRequestZoom,
   dragAll,
+  showDragMode,
+  onSetDragAll,
   onMeasureDrag,
   onMeasureDragEnd,
+  onTailDrag,
   onSelectionChange,
   onScrollByPx,
 }: IntegratedEditorProps) {
@@ -188,6 +205,20 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [percMidi, setPercMidi] = useState<number | null>(null);
   // "More durations & articulations" popover in the Insert toolbar.
   const [moreOpen, setMoreOpen] = useState(false);
+
+  // The staff grows to fill the space between the editor bar and the toolbar —
+  // measure the wrapper and feed its height to the strip (min keeps it usable).
+  const staffWrapRef = useRef<HTMLDivElement | null>(null);
+  const [staffHeight, setStaffHeight] = useState(220);
+  useEffect(() => {
+    const el = staffWrapRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const update = () => setStaffHeight(Math.max(180, Math.round(el.clientHeight)));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [editorTab]);
 
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
   const percussion = activeTrack ? isPercussion(activeTrack.instrument) : false;
@@ -339,6 +370,29 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     return out;
   }, [activeTrack, score.initialTimeSignature, score.initialKeyFifths, measureTimings]);
 
+  // The measure "Add note" targets: the selected event's measure, else the last.
+  const targetMeasureIndex = selected
+    ? selected.measureIndex
+    : Math.max(0, (activeTrack?.measures.length ?? 1) - 1);
+
+  // Capacity of the target measure for its time signature — drives the readout
+  // and disables "Add note" once the measure is full (a filler rest counts as
+  // empty since the first real note replaces it).
+  const capacity = useMemo(() => {
+    const ts = stripItems[targetMeasureIndex]?.timeSignature ?? score.initialTimeSignature;
+    const total = measureLengthInQN(ts);
+    const events = activeTrack?.measures[targetMeasureIndex]?.voices[0]?.events ?? [];
+    const used = isFillerRest(events, ts) ? 0 : occupiedQN(events);
+    const need = effectiveDurationQN(duration, { dotted, triplet });
+    const beatQN = beatLengthInQN(ts);
+    return {
+      measureNumber: stripItems[targetMeasureIndex]?.measureNumber ?? targetMeasureIndex + 1,
+      full: used + need > total + QN_EPS,
+      usedBeats: used / beatQN,
+      totalBeats: total / beatQN,
+    };
+  }, [activeTrack, targetMeasureIndex, stripItems, score.initialTimeSignature, duration, dotted, triplet]);
+
   const handleSelectEvent = useCallback((ref: SelectedEventRef) => setSelected(ref), []);
 
   // Insert a note (or rest) into a given measure using the toolbar values.
@@ -377,11 +431,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
 
   // Add-note button: target the selected event's measure, else the last measure.
   const handleAddNote = useCallback(() => {
-    const measureIndex = selected
-      ? selected.measureIndex
-      : Math.max(0, (activeTrack?.measures.length ?? 1) - 1);
-    insertIntoMeasure(measureIndex);
-  }, [selected, activeTrack, insertIntoMeasure]);
+    if (capacity.full) return; // measure full — the reducer would no-op anyway
+    insertIntoMeasure(targetMeasureIndex);
+  }, [capacity.full, targetMeasureIndex, insertIntoMeasure]);
 
   // Pitch from staff drag commits here.
   const handleSetPitch = useCallback(
@@ -608,9 +660,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   });
 
   return (
-    <div className="space-y-3">
+    <div className="flex h-full min-h-0 flex-col gap-3">
       {/* Editor bar — view tabs · instrument/name · add measure (single track) */}
-      <div className="flex flex-wrap items-center gap-2.5">
+      <div className="flex flex-shrink-0 flex-wrap items-center gap-2.5">
         <div className="st-seg">
           {(
             [
@@ -666,9 +718,32 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           </>
         )}
 
+        {showDragMode && onSetDragAll && (
+          <div className="st-seg ml-auto" role="radiogroup" aria-label="Drag mode">
+            <button
+              type="button"
+              className={dragAll ? 'is-on' : ''}
+              onClick={() => onSetDragAll(true)}
+              title="Ripple — dragging a measure moves it and everything after it (hold Option to move just one)"
+            >
+              <ChevronsLeftRight className="h-3.5 w-3.5" />
+              Ripple
+            </button>
+            <button
+              type="button"
+              className={!dragAll ? 'is-on' : ''}
+              onClick={() => onSetDragAll(false)}
+              title="Single — dragging moves only that measure or marker (hold Option to ripple)"
+            >
+              <Move className="h-3.5 w-3.5" />
+              Single
+            </button>
+          </div>
+        )}
+
         <button
           onClick={() => dispatch({ type: 'add-measure', trackIndex: activeTrackIndex })}
-          className="st-chip ml-auto"
+          className={`st-chip${showDragMode && onSetDragAll ? '' : ' ml-auto'}`}
           title="Add a measure to the end of the score"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -676,35 +751,42 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         </button>
       </div>
 
-      {/* Active view — the audio-aligned staff (or piano-roll) */}
+      {/* Active view — the audio-aligned staff (or piano-roll). The staff fills
+          the available height between the editor bar and the toolbar. */}
       {editorTab === 'staff' && (
-        <EditableMeasureStrip
-          measures={stripItems}
-          pixelsPerSecond={pixelsPerSecond}
-          scrollLeftPx={scrollLeftPx}
-          selected={selected}
-          onSelectEvent={handleSelectEvent}
-          onClickMeasureEmpty={handleClickEmpty}
-          onRequestZoomTo={handleRequestZoomTo}
-          onSetPitch={handleSetPitch}
-          accidental={pitchAcc}
-          keyFifths={score.initialKeyFifths}
-          isPercussion={percussion}
-          percStrokes={percStrokes}
-          dragAll={dragAll}
-          onMeasureDrag={handleMeasureDrag}
-          onMeasureDragEnd={onMeasureDragEnd}
-          onScrollByPx={onScrollByPx}
-        />
+        <div ref={staffWrapRef} className="min-h-0 flex-1">
+          <EditableMeasureStrip
+            measures={stripItems}
+            pixelsPerSecond={pixelsPerSecond}
+            scrollLeftPx={scrollLeftPx}
+            selected={selected}
+            onSelectEvent={handleSelectEvent}
+            onClickMeasureEmpty={handleClickEmpty}
+            onRequestZoomTo={handleRequestZoomTo}
+            onSetPitch={handleSetPitch}
+            accidental={pitchAcc}
+            keyFifths={score.initialKeyFifths}
+            isPercussion={percussion}
+            percStrokes={percStrokes}
+            dragAll={dragAll}
+            onMeasureDrag={handleMeasureDrag}
+            onMeasureDragEnd={onMeasureDragEnd}
+            onTailDrag={onTailDrag}
+            resizable={showDragMode}
+            previewMidi={insertRest ? null : currentMidi}
+            onScrollByPx={onScrollByPx}
+            height={staffHeight}
+          />
+        </div>
       )}
       {editorTab === 'piano-roll' && (
-        <div className="rounded-md border border-border bg-card p-3">
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-card p-3">
           <PianoRollView score={score} activeTrackIndex={activeTrackIndex} dispatch={dispatch} />
         </div>
       )}
 
       {/* Insert toolbar — note entry, one compact row */}
-      <div className="st-notebar">
+      <div className="st-notebar flex-shrink-0">
         <div className="st-nb-lead">
           <span className="st-nb-glyph">
             <Music className="h-4 w-4" />
@@ -871,6 +953,12 @@ export const IntegratedEditor = memo(function IntegratedEditor({
 
         {/* Actions */}
         <div className="st-nb-actions">
+          <span
+            className={`st-nb-cap${capacity.full ? ' is-full' : ''}`}
+            title={`Measure ${capacity.measureNumber} — ${formatBeats(capacity.usedBeats)}/${formatBeats(capacity.totalBeats)} beats filled`}
+          >
+            m.{capacity.measureNumber} · {formatBeats(capacity.usedBeats)}/{formatBeats(capacity.totalBeats)}
+          </span>
           <button
             className={`st-nb-rest${insertRest ? ' is-on' : ''}`}
             onClick={onToggleRest}
@@ -881,7 +969,12 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           <button
             className="st-btn-primary st-nb-add"
             onClick={handleAddNote}
-            title="Add a note/rest with the current toolbar values"
+            disabled={capacity.full}
+            title={
+              capacity.full
+                ? `Measure ${capacity.measureNumber} is full — add a measure or pick a shorter duration`
+                : 'Add a note/rest with the current toolbar values'
+            }
           >
             <Plus className="h-[15px] w-[15px]" /> Add {insertRest ? 'rest' : 'note'}{' '}
             <span className="kbd">⏎</span>
@@ -907,7 +1000,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       </div>
 
       {/* Help */}
-      <p className="st-help">
+      <p className="st-help flex-shrink-0">
         <span className="k">drag ↕</span> pitch · <span className="k">↑/↓</span> step (
         <span className="k">⇧</span> octave) · <span className="k">←/→</span> walk notes ·{' '}
         <span className="k">⏎</span> add · <span className="k">1–5</span> duration ·{' '}
@@ -916,6 +1009,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     </div>
   );
 });
+
+/** Compact beat count: whole numbers show plain, fractions to one decimal. */
+function formatBeats(beats: number): string {
+  return Number.isInteger(beats) ? String(beats) : beats.toFixed(1);
+}
 
 function isTypingTarget(target: EventTarget | null): boolean {
   return (
