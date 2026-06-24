@@ -86,11 +86,10 @@ export function LessonSidebar({
   collapsed,
   onToggle,
 }: LessonSidebarProps) {
-  // Global 1-based lesson numbering across the whole course.
-  let counter = 0
+  // 1-based lesson numbering that restarts at 01 within each module.
   const numbered = sections.map((s) => ({
     ...s,
-    classes: s.classes.map((c) => ({ ...c, n: ++counter })),
+    classes: s.classes.map((c, i) => ({ ...c, n: i + 1 })),
   }))
 
   if (collapsed) {

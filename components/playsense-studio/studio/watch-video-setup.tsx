@@ -56,8 +56,8 @@ export function WatchVideoSetup({ classItemId, classItemTitle, appBarExtra }: Wa
       setError('Use an MP4, WebM, or MOV video.');
       return;
     }
-    if (file.size > 500 * 1024 * 1024) {
-      setError('Video must be less than 500MB.');
+    if (file.size > 1024 * 1024 * 1024) {
+      setError('Video must be less than 1GB.');
       return;
     }
     setError(null);
@@ -132,7 +132,7 @@ export function WatchVideoSetup({ classItemId, classItemTitle, appBarExtra }: Wa
               <>
                 <Upload className="h-6 w-6 text-muted-foreground" />
                 <span className="font-medium">Upload the demo video</span>
-                <span className="text-xs text-muted-foreground">MP4, WebM, or MOV (max 500MB)</span>
+                <span className="text-xs text-muted-foreground">MP4, WebM, or MOV (max 1GB)</span>
               </>
             )}
           </div>

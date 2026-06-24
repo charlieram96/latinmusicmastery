@@ -327,13 +327,11 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
         </Card>
       )}
 
-      {/* Rich Content (below any type). */}
+      {/* Rich Content (below any type) — plain prose, no card/background. */}
       {item.rich_content && (
-        <Card>
-          <CardContent className="pt-6">
-            <TiptapReadOnly content={item.rich_content} />
-          </CardContent>
-        </Card>
+        <div className="text-[15.5px] leading-[1.7] text-foreground/90">
+          <TiptapReadOnly content={item.rich_content} />
+        </div>
       )}
     </div>
   )

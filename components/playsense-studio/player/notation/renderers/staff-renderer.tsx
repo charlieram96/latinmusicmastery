@@ -131,6 +131,8 @@ interface MeasurePlacement {
   y: number;
   width: number;
   firstInRow: boolean;
+  /** True only for the very first measure — gets the clef + time signature. */
+  showHeader: boolean;
   system: number;
   /** True for the trailing no-notation gap box (not a real measure). */
   isGap?: boolean;
@@ -333,6 +335,7 @@ class StaffRendererImpl implements ScoreRenderer {
           y: STAVE_TOP,
           width: measureWidth,
           firstInRow: i === 0,
+          showHeader: i === 0,
           system: 0,
         };
         x += measureWidth;
@@ -345,6 +348,7 @@ class StaffRendererImpl implements ScoreRenderer {
           y: STAVE_TOP,
           width: GAP_BOX_W,
           firstInRow: false,
+          showHeader: false,
           system: 0,
           isGap: true,
         });
@@ -380,6 +384,7 @@ class StaffRendererImpl implements ScoreRenderer {
         y: STAVE_TOP + system * systemPitch,
         width: w,
         firstInRow: col === 0,
+        showHeader: i === 0,
         system,
       };
       placements.push(
@@ -485,7 +490,7 @@ class StaffRendererImpl implements ScoreRenderer {
       if (p.isGap) continue; // the gap box is drawn separately, below
       const block = measureBlocks[p.blockIndex];
       const stave = new Stave(p.x, p.y, p.width);
-      if (p.firstInRow) {
+      if (p.showHeader) {
         stave.addClef('treble').addTimeSignature(
           `${block.timeSignature[0]}/${block.timeSignature[1]}`
         );
@@ -508,7 +513,7 @@ class StaffRendererImpl implements ScoreRenderer {
       // time signature consume the lead-in, so we keep the formatter inside
       // that span and notes never spill past the barline.
       const justify =
-        p.width - (p.firstInRow ? FIRST_MEASURE_EXTRA_WIDTH : 0) - 20;
+        p.width - (p.showHeader ? FIRST_MEASURE_EXTRA_WIDTH : 0) - 20;
       new Formatter().joinVoices([voice]).format([voice], Math.max(40, justify));
 
       // Beam connectable notes (eighths and shorter); rests break the beam.
