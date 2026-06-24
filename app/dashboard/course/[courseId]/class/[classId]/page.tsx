@@ -278,7 +278,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
 
         {/* Lesson description — below the video, not in the sidebar/header */}
         {lessonDescription && (
-          <div className="mb-10 max-w-[820px]">
+          <div className="mb-10">
             <div className="mb-3 font-heading text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground">
               About this lesson
             </div>
@@ -302,7 +302,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           </div>
         )}
 
-        <div className="max-w-[860px]">
+        <div>
           <CommentsSection
             classId={classId}
             initialComments={comments}

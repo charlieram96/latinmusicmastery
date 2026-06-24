@@ -94,8 +94,8 @@ export function ExerciseMediaPanel({
       setError('Use an MP4, WebM, or MOV video.');
       return;
     }
-    if (file.size > 500 * 1024 * 1024) {
-      setError('Video must be less than 500MB.');
+    if (file.size > 1024 * 1024 * 1024) {
+      setError('Video must be less than 1GB.');
       return;
     }
     setError(null);

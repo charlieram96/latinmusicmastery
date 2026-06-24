@@ -11,7 +11,7 @@
 // user taps, we hand control back to the transport bar.
 
 import { Play } from 'lucide-react';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
 interface VideoStageProps {
   src: string;
@@ -28,6 +28,28 @@ interface VideoStageProps {
 export const VideoStage = forwardRef<HTMLVideoElement, VideoStageProps>(
   function VideoStage({ src, poster, className, onFirstPlay }, ref) {
     const [hasPlayed, setHasPlayed] = useState(false);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+
+    // Merge our local ref with the forwarded ref so the parent still drives
+    // play/seek while we can attach our own listeners.
+    const setVideoRef = useCallback(
+      (node: HTMLVideoElement | null) => {
+        videoRef.current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+      },
+      [ref]
+    );
+
+    // Hide the overlay once playback actually begins — from any source
+    // (overlay tap, transport bar, or keyboard), not just the overlay click.
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video) return;
+      const onPlay = () => setHasPlayed(true);
+      video.addEventListener('play', onPlay);
+      return () => video.removeEventListener('play', onPlay);
+    }, []);
 
     const handleOverlayClick = () => {
       setHasPlayed(true);
@@ -37,7 +59,7 @@ export const VideoStage = forwardRef<HTMLVideoElement, VideoStageProps>(
     return (
       <div className={`relative bg-black rounded-lg overflow-hidden ${className ?? ''}`}>
         <video
-          ref={ref}
+          ref={setVideoRef}
           src={src}
           poster={poster}
           playsInline

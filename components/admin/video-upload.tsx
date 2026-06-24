@@ -34,9 +34,9 @@ export function VideoUpload({
       return
     }
 
-    // Validate file size (500MB max)
-    if (file.size > 500 * 1024 * 1024) {
-      setError('Video must be less than 500MB')
+    // Validate file size (1GB max)
+    if (file.size > 1024 * 1024 * 1024) {
+      setError('Video must be less than 1GB')
       return
     }
 
@@ -121,7 +121,7 @@ export function VideoUpload({
             <div>
               <p className="font-medium">Click to upload video</p>
               <p className="text-sm text-muted-foreground">
-                MP4, WebM, or MOV (max 500MB)
+                MP4, WebM, or MOV (max 1GB)
               </p>
             </div>
           </div>
