@@ -274,6 +274,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           description_es: string | null
+          exercise_time_map_id: string | null
           exercise_video_start_seconds: number
           exercise_video_url: string | null
           explanation: string | null
@@ -302,6 +303,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           description_es?: string | null
+          exercise_time_map_id?: string | null
           exercise_video_start_seconds?: number
           exercise_video_url?: string | null
           explanation?: string | null
@@ -330,6 +332,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           description_es?: string | null
+          exercise_time_map_id?: string | null
           exercise_video_start_seconds?: number
           exercise_video_url?: string | null
           explanation?: string | null
@@ -353,6 +356,13 @@ export type Database = {
           {
             foreignKeyName: "class_items_active_time_map_id_fkey"
             columns: ["active_time_map_id"]
+            isOneToOne: false
+            referencedRelation: "score_time_maps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_items_exercise_time_map_id_fkey"
+            columns: ["exercise_time_map_id"]
             isOneToOne: false
             referencedRelation: "score_time_maps"
             referencedColumns: ["id"]

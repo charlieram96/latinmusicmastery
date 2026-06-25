@@ -13,7 +13,7 @@
 // they appear in sibling regions. HighwayPreview (the student falling-notes view)
 // lives in a collapsible bottom drawer toggled from the app-bar.
 
-import { ArrowLeft, FileUp, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
+import { ArrowLeft, FileUp, Film, Music, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import {
@@ -100,6 +100,26 @@ export function StudioWorkspace({
   // Student "highway" preview, as a collapsible bottom drawer.
   const [highwayOpen, setHighwayOpen] = useState(false);
 
+  // Exercise center-stage sub-view: edit the score, or sync the optional
+  // play-along video to it. The video URL + its time map are lifted here (seeded
+  // from props, updated by ExerciseMediaPanel) so the toggle + sync stage react
+  // immediately to an upload/removal without a remount.
+  const [exerciseStage, setExerciseStage] = useState<'score' | 'syncVideo'>('score');
+  const [exerciseVideoUrl, setExerciseVideoUrl] = useState<string | null>(
+    exerciseMedia?.videoUrl ?? null
+  );
+  const [exerciseTimeMap, setExerciseTimeMap] = useState<PlaysenseStudioPlayerTimeMap | null>(
+    exerciseMedia?.timeMap ?? null
+  );
+  const showExerciseSync = isExercise && exerciseStage === 'syncVideo' && !!exerciseVideoUrl;
+
+  // Uploading/removing the play-along video invalidates any prior sync map.
+  const handleExerciseVideoChange = (url: string | null) => {
+    setExerciseVideoUrl(url);
+    setExerciseTimeMap(null);
+    if (!url) setExerciseStage('score');
+  };
+
   // SyncPanel uses this only on video paths (waveform cache key + publish). For
   // songs there's no video, so the value is never read.
   const mediaOwnerId = owner.kind === 'classItem' ? owner.classItemId : owner.songId;
@@ -173,6 +193,35 @@ export function StudioWorkspace({
         </div>
 
         {appBarExtra}
+
+        {/* Exercise: switch the center stage between the graded score and syncing
+            the optional play-along video to it. Only shown once a video exists. */}
+        {isExercise && exerciseVideoUrl && (
+          <div className="st-seg" role="radiogroup" aria-label="Exercise stage">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={exerciseStage === 'score'}
+              className={exerciseStage === 'score' ? 'is-on' : ''}
+              onClick={() => setExerciseStage('score')}
+              title="Edit the graded score students play on the highway"
+            >
+              <Music className="h-3.5 w-3.5" />
+              Score
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={exerciseStage === 'syncVideo'}
+              className={exerciseStage === 'syncVideo' ? 'is-on' : ''}
+              onClick={() => setExerciseStage('syncVideo')}
+              title="Sync the play-along video to the score's beats"
+            >
+              <Film className="h-3.5 w-3.5" />
+              Sync video
+            </button>
+          </div>
+        )}
         {owner.kind === 'song' && <SongMetaControls owner={owner} />}
 
         <div className="ml-auto flex items-center gap-2">
@@ -266,6 +315,8 @@ export function StudioWorkspace({
                   classItemId={owner.classItemId}
                   scoreLengthSeconds={scoreLengthSeconds}
                   initialMedia={exerciseMedia}
+                  hasTimeMap={!!exerciseTimeMap}
+                  onVideoChange={handleExerciseVideoChange}
                 />
               </div>
             )}
@@ -284,30 +335,50 @@ export function StudioWorkspace({
             </p>
           )}
 
-          <SyncPanel
-            classItemId={mediaOwnerId}
-            scoreDocumentId={scoreDocumentId}
-            mode={mode}
-            videoUrl={videoUrl}
-            score={state.score}
-            dispatch={dispatch}
-            activeTimeMap={activeTimeMap}
-            videoDurationSeconds={videoDurationSeconds}
-            inspectorEl={inspectorEl}
-            transportEl={transportEl}
-          />
-
-          {/* Exercise mode: the student's falling-notes view lives right under
-              the notation — the author sees both at once. */}
-          {isExercise && (
-            <div className="mt-3 shrink-0">
-              <HighwayPreview
-                score={state.score}
+          {showExerciseSync ? (
+            // Sync the play-along video to the graded score → exercise_time_map_id.
+            <SyncPanel
+              classItemId={mediaOwnerId}
+              scoreDocumentId={scoreDocumentId}
+              mode="video"
+              publishTarget="exercise"
+              videoUrl={exerciseVideoUrl}
+              score={state.score}
+              dispatch={dispatch}
+              activeTimeMap={exerciseTimeMap}
+              videoDurationSeconds={null}
+              inspectorEl={inspectorEl}
+              transportEl={transportEl}
+              onPublished={() => setExerciseStage('syncVideo')}
+            />
+          ) : (
+            <>
+              <SyncPanel
+                classItemId={mediaOwnerId}
                 scoreDocumentId={scoreDocumentId}
-                title={state.score.title}
-                trackIndex={0}
+                mode={mode}
+                videoUrl={videoUrl}
+                score={state.score}
+                dispatch={dispatch}
+                activeTimeMap={activeTimeMap}
+                videoDurationSeconds={videoDurationSeconds}
+                inspectorEl={inspectorEl}
+                transportEl={transportEl}
               />
-            </div>
+
+              {/* Exercise mode: the student's falling-notes view lives right under
+                  the notation — the author sees both at once. */}
+              {isExercise && (
+                <div className="mt-3 shrink-0">
+                  <HighwayPreview
+                    score={state.score}
+                    scoreDocumentId={scoreDocumentId}
+                    title={state.score.title}
+                    trackIndex={0}
+                  />
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>

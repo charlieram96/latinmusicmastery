@@ -28,8 +28,13 @@ interface ExerciseViewProps {
   playerLayout?: 'stack' | 'split'
   /** Instrument backing tracks for the play part (student selects before starting). */
   backingTracks?: BackingTrack[]
-  /** Optional exercise-part video, cropped to the score's length. */
-  exerciseVideo?: { url: string; startSeconds: number } | null
+  /** Optional exercise-part video. Cropped to the score's length, or synced to
+   *  the notation via `timeMap` when one is published. */
+  exerciseVideo?: {
+    url: string
+    startSeconds: number
+    timeMap: PlaysenseStudioPlayerTimeMap | null
+  } | null
 }
 
 type Mode = 'watch' | 'play'

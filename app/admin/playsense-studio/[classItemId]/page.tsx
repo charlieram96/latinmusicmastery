@@ -68,6 +68,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
     const exerciseMedia = (await getExerciseMedia(classItemId)).data ?? {
       videoUrl: null,
       videoStartSeconds: 0,
+      timeMap: null,
       backingTracks: [],
     };
     return (

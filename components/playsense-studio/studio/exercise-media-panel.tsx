@@ -28,6 +28,11 @@ export interface ExerciseMediaPanelProps {
   /** The graded score's length at its own tempo — the crop window's size. */
   scoreLengthSeconds: number;
   initialMedia: ExerciseMedia;
+  /** True when a sync time map is published for this video — crop is then ignored. */
+  hasTimeMap?: boolean;
+  /** Notifies the workspace when the play-along video is added/removed, so the
+   *  "Sync video" stage toggle and sync stage react without a remount. */
+  onVideoChange?: (url: string | null) => void;
 }
 
 const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
@@ -37,6 +42,8 @@ export function ExerciseMediaPanel({
   classItemId,
   scoreLengthSeconds,
   initialMedia,
+  hasTimeMap,
+  onVideoChange,
 }: ExerciseMediaPanelProps) {
   const [videoUrl, setVideoUrl] = useState(initialMedia.videoUrl);
   const [startSeconds, setStartSeconds] = useState(initialMedia.videoStartSeconds);
@@ -107,6 +114,7 @@ export function ExerciseMediaPanel({
       setVideoUrl(url);
       setStartSeconds(0);
       setVideoDuration(null); // re-read from the new file's metadata
+      onVideoChange?.(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Video upload failed.');
     } finally {
@@ -125,6 +133,7 @@ export function ExerciseMediaPanel({
     setVideoUrl(null);
     setStartSeconds(0);
     setVideoDuration(null);
+    onVideoChange?.(null);
   };
 
   const onAudioFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -209,12 +218,20 @@ export function ExerciseMediaPanel({
                 aria-label="Crop start"
               />
               <p className="text-[11px] leading-snug text-muted-foreground">
-                {crop.maxStart === null
-                  ? 'Loading video length…'
-                  : crop.maxStart === 0
-                    ? 'Video is not longer than the score — it plays from the top.'
-                    : `Window length = score length (${formatSeconds(scoreLengthSeconds)}).`}
+                {hasTimeMap
+                  ? 'Synced to the notation — the crop is ignored. Edit it from “Sync video”.'
+                  : crop.maxStart === null
+                    ? 'Loading video length…'
+                    : crop.maxStart === 0
+                      ? 'Video is not longer than the score — it plays from the top.'
+                      : `Window length = score length (${formatSeconds(scoreLengthSeconds)}).`}
               </p>
+              {!hasTimeMap && (
+                <p className="text-[11px] leading-snug text-muted-foreground">
+                  Need it beat-accurate? Use <span className="font-medium text-foreground">“Sync
+                  video”</span> in the top bar to place waypoints against the notation.
+                </p>
+              )}
             </div>
             <button
               type="button"

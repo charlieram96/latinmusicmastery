@@ -71,6 +71,10 @@ export interface SyncPanelProps {
   scoreDocumentId: string;
   /** When set, Publish writes into this section (its active map + video range). */
   sectionId?: string;
+  /** Which owner pointer Publish updates. Defaults to 'section' when sectionId is
+   *  set, else 'classItem'. 'exercise' targets class_items.exercise_time_map_id —
+   *  the play-along video synced to the graded score. */
+  publishTarget?: 'classItem' | 'section' | 'exercise';
   /** 'video' = sync the score to the audio; 'exercise' = no sync, demo + highway. */
   mode: 'video' | 'exercise';
   videoUrl: string | null;
@@ -101,6 +105,7 @@ export function SyncPanel({
   classItemId,
   scoreDocumentId,
   sectionId,
+  publishTarget,
   mode,
   videoUrl,
   score,
@@ -465,6 +470,7 @@ export function SyncPanel({
         classItemId,
         scoreDocumentId,
         sectionId,
+        target: publishTarget,
         method: 'drag',
         params: { editedBeats, pps, peaksCached: decodeState === 'ready', version: 1 },
         waypoints,

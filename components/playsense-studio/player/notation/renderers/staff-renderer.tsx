@@ -467,7 +467,7 @@ class StaffRendererImpl implements ScoreRenderer {
     rendererDiv.style.width = `${this.totalWidth * this.scale}px`;
     rendererDiv.style.height = `${scaledStageHeight}px`;
     rendererDiv.style.willChange = 'transform';
-    rendererDiv.style.cursor = 'pointer';
+    rendererDiv.style.cursor = 'text';
     rendererDiv.style.userSelect = 'none';
     (rendererDiv.style as CSSStyleDeclaration & { webkitUserSelect?: string }).webkitUserSelect =
       'none';
@@ -621,7 +621,7 @@ class StaffRendererImpl implements ScoreRenderer {
       svg.setAttribute('height', `${scaledHeight}`);
       svg.style.width = `${scaledWidth}px`;
       svg.style.height = `${scaledHeight}px`;
-      svg.style.cursor = 'pointer';
+      svg.style.cursor = 'text';
       svg.style.userSelect = 'none';
       (svg.style as CSSStyleDeclaration & { webkitUserSelect?: string }).webkitUserSelect =
         'none';
@@ -1073,7 +1073,7 @@ class StaffRendererImpl implements ScoreRenderer {
 
   private systemFromY(y: number): number {
     if (this.layoutMode !== 'wrapped' || this.systemPitch <= 0) return 0;
-    const s = Math.round((y - STAVE_TOP) / this.systemPitch);
+    const s = Math.floor((y - STAVE_TOP) / this.systemPitch);
     return Math.max(0, Math.min(this.systemCount - 1, s));
   }
 
