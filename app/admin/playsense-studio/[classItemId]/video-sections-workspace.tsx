@@ -350,10 +350,19 @@ export function VideoSectionsWorkspace({
               highwayOpen={highwayOpen}
             />
           ) : (
-            <div className="flex flex-1 items-center justify-center">
-              <p className="max-w-sm rounded-lg border border-dashed border-border px-6 py-10 text-center text-sm text-muted-foreground">
-                No scored section selected. Add a blank section or import a score from the left, then
-                scrub the video and use “Place score at playhead” to drop it where the instructor plays.
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4">
+              {/* No scored sections yet — still let the author watch the demo. */}
+              <video
+                src={videoUrl ?? undefined}
+                controls
+                playsInline
+                preload="metadata"
+                className="max-h-[60vh] w-full max-w-3xl rounded-lg bg-black"
+              />
+              <p className="max-w-sm text-center text-sm text-muted-foreground">
+                This is the demo video. Add a blank section or import a score from the left, then
+                scrub the video and use “Place score at playhead” to drop notation where the
+                instructor plays.
               </p>
             </div>
           )}

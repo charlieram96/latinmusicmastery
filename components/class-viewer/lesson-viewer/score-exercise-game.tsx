@@ -6,6 +6,11 @@ import type { ExerciseDefinition } from '@/lib/play-sense/types'
 import type { BackingTrack } from '@/app/actions/playsense-studio'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import { getExerciseDuration } from '@/lib/play-sense/exercise-utils'
+import {
+  WaypointTimeMap,
+  type SyncMethod,
+} from '@/components/playsense-studio/shared/time-map/time-map'
+import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
 import { GlassHighway } from '@/components/play-sense/glass-highway'
 import { StaffRenderer } from '@/components/playsense-studio/player/notation/renderers/staff-renderer'
@@ -30,9 +35,14 @@ interface ScoreExerciseGameProps {
    *  (even empty), the selection — not the legacy exercise.audioUrl — drives the
    *  engine's backing audio. Tracks are equal-length and pre-synced. */
   backingTracks?: BackingTrack[]
-  /** Optional exercise-part video: plays MUTED in sync with the engine clock,
-   *  starting at its crop offset (window length = the score's length). */
-  exerciseVideo?: { url: string; startSeconds: number } | null
+  /** Optional exercise-part video: plays MUTED in sync with the engine clock.
+   *  Positioned by `timeMap` (beat-accurate) when published, else by its crop
+   *  offset (window length = the score's length). */
+  exerciseVideo?: {
+    url: string
+    startSeconds: number
+    timeMap: PlaysenseStudioPlayerTimeMap | null
+  } | null
 }
 
 /**
@@ -64,25 +74,51 @@ export function ScoreExerciseGame({
   const stableExercise = useMemo(() => exercise, [exercise])
 
   // --- Optional exercise video, synced to the engine clock ---
-  // Muted visual reference: seek to the crop start on countdown, play during
+  // Muted visual reference: seek to the start on countdown, play during
   // 'playing', and re-seek only when drifted (>0.35s) so it stays smooth.
+  // When a time map is published the video is positioned by musical position
+  // (beat-accurate); otherwise it falls back to the linear crop offset.
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const exerciseDurationSec = useMemo(() => getExerciseDuration(exercise), [exercise])
+  const videoMap = useMemo(() => {
+    const tm = exerciseVideo?.timeMap
+    if (!tm || tm.waypoints.length < 2) return null
+    try {
+      return new WaypointTimeMap(tm.id, tm.method as SyncMethod, tm.waypoints)
+    } catch {
+      return null
+    }
+  }, [exerciseVideo])
   useEffect(() => {
     const v = videoRef.current
     if (!v || !exerciseVideo) return
-    const start = exerciseVideo.startSeconds
+    // The map covers one pass; progress spans all loops — fold it back per pass.
+    const loops = Math.max(1, exercise.loopCount || 1)
+    const videoStart = videoMap ? videoMap.videoStart : exerciseVideo.startSeconds
     if (session.sessionState === 'playing') {
-      const expected = start + session.playheadProgress * exerciseDurationSec
+      let expected: number
+      if (videoMap) {
+        const withinPass = (session.playheadProgress * loops) % 1
+        expected = videoMap.toVideoTime(withinPass * videoMap.totalQN)
+      } else {
+        expected = videoStart + session.playheadProgress * exerciseDurationSec
+      }
       if (Math.abs(v.currentTime - expected) > 0.35) v.currentTime = expected
       if (v.paused) void v.play().catch(() => {})
     } else if (session.sessionState === 'countdown') {
       if (!v.paused) v.pause()
-      if (Math.abs(v.currentTime - start) > 0.05) v.currentTime = start
+      if (Math.abs(v.currentTime - videoStart) > 0.05) v.currentTime = videoStart
     } else if (!v.paused) {
       v.pause()
     }
-  }, [session.sessionState, session.playheadProgress, exerciseVideo, exerciseDurationSec])
+  }, [
+    session.sessionState,
+    session.playheadProgress,
+    exerciseVideo,
+    exerciseDurationSec,
+    videoMap,
+    exercise.loopCount,
+  ])
 
   const toggleTrack = (id: string) => {
     setSelectedTrackIds((prev) => {

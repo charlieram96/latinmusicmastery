@@ -110,7 +110,11 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
     item.item_type === 'EXERCISE' ? (await getExerciseMedia(item.id)).data ?? null : null
   const backingTracks = exerciseMedia?.backingTracks ?? []
   const exerciseVideo = exerciseMedia?.videoUrl
-    ? { url: exerciseMedia.videoUrl, startSeconds: exerciseMedia.videoStartSeconds }
+    ? {
+        url: exerciseMedia.videoUrl,
+        startSeconds: exerciseMedia.videoStartSeconds,
+        timeMap: exerciseMedia.timeMap,
+      }
     : null
 
   // Quizzes (and legacy quiz-style exercises) are a series of questions stored

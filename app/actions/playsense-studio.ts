@@ -526,6 +526,10 @@ export interface PublishTimeMapInput {
   /** When set, publish into this SECTION (sets its active map + derived video
    *  range) instead of the class_item's single active_time_map_id. */
   sectionId?: string;
+  /** Which owner pointer to update. Defaults to 'section' when sectionId is set,
+   *  else 'classItem'. 'exercise' points class_items.exercise_time_map_id at the
+   *  new map — the EXERCISE play-along video synced to the graded score. */
+  target?: 'classItem' | 'section' | 'exercise';
 }
 
 export async function publishTimeMap(
@@ -561,9 +565,11 @@ export async function publishTimeMap(
     }
   }
 
+  const target = input.target ?? (input.sectionId ? 'section' : 'classItem');
+
   // Sections may not overlap on the video timeline. Checked BEFORE any insert so
   // a rejected publish leaves no orphan time-map row.
-  if (input.sectionId) {
+  if (target === 'section' && input.sectionId) {
     const start = sorted[0].videoTimeSeconds;
     const end = sorted[sorted.length - 1].videoTimeSeconds;
     const { data: siblings, error: sibErr } = await supabase
@@ -620,9 +626,10 @@ export async function publishTimeMap(
   }
 
   // 3. Point the owner at this new map. A section publish updates the section row
-  //    (active map + the video range derived from the waypoints); otherwise the
-  //    legacy single-score path updates the class_item.
-  if (input.sectionId) {
+  //    (active map + the video range derived from the waypoints); an exercise
+  //    publish points class_items.exercise_time_map_id at it; otherwise the legacy
+  //    single-score path updates the class_item's active_time_map_id.
+  if (target === 'section' && input.sectionId) {
     const start = sorted[0].videoTimeSeconds;
     const end = sorted[sorted.length - 1].videoTimeSeconds;
     const { error: secErr } = await supabase
@@ -635,6 +642,12 @@ export async function publishTimeMap(
       })
       .eq('id', input.sectionId);
     if (secErr) return { error: secErr.message };
+  } else if (target === 'exercise') {
+    const { error: exErr } = await supabase
+      .from('class_items')
+      .update({ exercise_time_map_id: tmRow.id })
+      .eq('id', input.classItemId);
+    if (exErr) return { error: exErr.message };
   } else if (input.makeActive ?? true) {
     const { error: linkErr } = await supabase
       .from('class_items')
@@ -1232,8 +1245,13 @@ export interface BackingTrack {
 export interface ExerciseMedia {
   /** Optional exercise-part video (independent of the Watch demo video). */
   videoUrl: string | null;
-  /** Crop start offset — the visible window is exactly the score's length. */
+  /** Crop start offset — the visible window is exactly the score's length.
+   *  Ignored when `timeMap` is set (the map fully positions the video). */
   videoStartSeconds: number;
+  /** Optional time map syncing the play-along video to the graded score's beats.
+   *  When present, consumers position the video by musical position; otherwise
+   *  they fall back to the linear crop (videoStartSeconds). */
+  timeMap: ClassItemScorePayload['activeTimeMap'];
   backingTracks: BackingTrack[];
 }
 
@@ -1245,7 +1263,7 @@ export async function getExerciseMedia(
 
   const { data: item, error: itemErr } = await supabase
     .from('class_items')
-    .select('exercise_video_url, exercise_video_start_seconds')
+    .select('exercise_video_url, exercise_video_start_seconds, exercise_time_map_id')
     .eq('id', classItemId)
     .single();
   if (itemErr || !item) return { error: itemErr?.message ?? 'Class item not found' };
@@ -1257,10 +1275,40 @@ export async function getExerciseMedia(
     .order('order_index', { ascending: true });
   if (tracksErr) return { error: tracksErr.message };
 
+  // Load the exercise video's time map (same waypoint shape as fetchScorePayload).
+  let timeMap: ExerciseMedia['timeMap'] = null;
+  if (item.exercise_video_url && item.exercise_time_map_id) {
+    const { data: tm, error: tmErr } = await supabase
+      .from('score_time_maps')
+      .select('id, method')
+      .eq('id', item.exercise_time_map_id)
+      .single();
+    if (tmErr) return { error: tmErr.message };
+
+    const { data: waypoints, error: wpErr } = await supabase
+      .from('score_time_waypoints')
+      .select('musical_position_qn, video_time_seconds, measure_number, beat_in_measure')
+      .eq('time_map_id', item.exercise_time_map_id)
+      .order('musical_position_qn', { ascending: true });
+    if (wpErr) return { error: wpErr.message };
+
+    timeMap = {
+      id: tm.id,
+      method: tm.method,
+      waypoints: (waypoints ?? []).map((w) => ({
+        musicalPositionQN: w.musical_position_qn,
+        videoTimeSeconds: w.video_time_seconds,
+        measureNumber: w.measure_number,
+        beatInMeasure: w.beat_in_measure,
+      })),
+    };
+  }
+
   return {
     data: {
       videoUrl: item.exercise_video_url,
       videoStartSeconds: item.exercise_video_start_seconds ?? 0,
+      timeMap,
       backingTracks: (tracks ?? []).map((t) => ({
         id: t.id,
         label: t.label,
@@ -1286,6 +1334,8 @@ export async function updateExerciseVideo(input: {
     .update({
       exercise_video_url: input.videoUrl,
       exercise_video_start_seconds: input.videoUrl ? Math.max(0, input.startSeconds) : 0,
+      // Removing the video orphans its sync map — drop the pointer too.
+      ...(input.videoUrl ? {} : { exercise_time_map_id: null }),
     })
     .eq('id', input.classItemId);
   if (error) return { error: error.message };
