@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, Gamepad2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Gamepad2 } from 'lucide-react'
 import {
   PlaysenseStudioPlayer,
   type PlayerSection,
@@ -9,6 +10,7 @@ import {
   type PlaysenseStudioPlayerTimeMap,
 } from '@/components/playsense-studio/player/playsense-studio-player'
 import { ScoreExerciseGame } from './score-exercise-game'
+import { useLessonShell } from './lesson-shell-context'
 import type { BackingTrack } from '@/app/actions/playsense-studio'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
@@ -59,6 +61,15 @@ export function ExerciseView({
 }: ExerciseViewProps) {
   // Demo first: start in Watch when there's a video; otherwise go straight to play.
   const [mode, setMode] = useState<Mode>(videoUrl ? 'watch' : 'play')
+  // Surfaces the big centered CTA once the demo has played to the end.
+  const [videoEnded, setVideoEnded] = useState(false)
+  const { setCollapsed } = useLessonShell()
+
+  // Entering the immersive play view: collapse the lesson sidebar for room.
+  const goToPlay = () => {
+    setCollapsed(true)
+    setMode('play')
+  }
 
   // No video → no Watch mode; just the graded highway + staff.
   if (!videoUrl) {
@@ -78,29 +89,59 @@ export function ExerciseView({
     const hasSections = !!sections && sections.length > 0
     return (
       <div className="space-y-4">
-        {hasSections ? (
-          <PlaysenseStudioPlayer
-            classItemId={classItemId}
-            videoUrl={videoUrl}
-            score={sections[0].score}
-            tracks={sections[0].tracks}
-            activeTimeMap={sections[0].activeTimeMap}
-            sections={sections}
-            layout={playerLayout}
-          />
-        ) : (
-          <PlaysenseStudioPlayer
-            classItemId={classItemId}
-            videoUrl={videoUrl}
-            score={score}
-            tracks={tracks}
-            activeTimeMap={activeTimeMap}
-            layout={playerLayout}
-          />
-        )}
+        <div className="relative">
+          {hasSections ? (
+            <PlaysenseStudioPlayer
+              classItemId={classItemId}
+              videoUrl={videoUrl}
+              score={sections[0].score}
+              tracks={sections[0].tracks}
+              activeTimeMap={sections[0].activeTimeMap}
+              sections={sections}
+              layout={playerLayout}
+              onEnded={() => setVideoEnded(true)}
+            />
+          ) : (
+            <PlaysenseStudioPlayer
+              classItemId={classItemId}
+              videoUrl={videoUrl}
+              score={score}
+              tracks={tracks}
+              activeTimeMap={activeTimeMap}
+              layout={playerLayout}
+              onEnded={() => setVideoEnded(true)}
+            />
+          )}
+
+          {/* Demo finished → big centered CTA over the player. */}
+          <AnimatePresence>
+            {videoEnded && (
+              <motion.div
+                key="turn-cta"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-black/60 backdrop-blur-[2px]"
+              >
+                <motion.button
+                  onClick={goToPlay}
+                  initial={{ scale: 0.92 }}
+                  animate={{ scale: [1, 1.04, 1] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                  className="inline-flex items-center gap-2.5 rounded-2xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground shadow-2xl ring-4 ring-primary/30 transition hover:opacity-90"
+                >
+                  <Gamepad2 className="h-5 w-5" />
+                  Now it&apos;s your turn
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         <div className="flex justify-end">
           <button
-            onClick={() => setMode('play')}
+            onClick={goToPlay}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
           >
             <Gamepad2 className="h-4 w-4" />
@@ -111,22 +152,19 @@ export function ExerciseView({
     )
   }
 
+  const goToWatch = () => {
+    setVideoEnded(false)
+    setMode('watch')
+  }
+
+  // "Watch again" now lives inside the game's header strip (via onWatchDemo).
   return (
-    <div className="space-y-3">
-      <button
-        onClick={() => setMode('watch')}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Watch again
-      </button>
-      <ScoreExerciseGame
-        exercise={exercise}
-        score={score}
-        onWatchDemo={() => setMode('watch')}
-        backingTracks={backingTracks}
-        exerciseVideo={exerciseVideo}
-      />
-    </div>
+    <ScoreExerciseGame
+      exercise={exercise}
+      score={score}
+      onWatchDemo={goToWatch}
+      backingTracks={backingTracks}
+      exerciseVideo={exerciseVideo}
+    />
   )
 }

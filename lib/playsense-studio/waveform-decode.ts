@@ -137,7 +137,12 @@ async function tryLoadCache(
 ): Promise<WaveformPeaks | null> {
   try {
     const { data } = supabase.storage.from(WAVEFORM_BUCKET).getPublicUrl(path);
-    const res = await fetch(data.publicUrl, { signal, cache: 'force-cache' });
+    // `no-store`, not `force-cache`: the first read for a brand-new video
+    // happens BEFORE its peaks are uploaded, so it 404s. `force-cache` would pin
+    // that miss and every later read would keep returning it, re-triggering a
+    // full re-decode forever. Always asking the network keeps an already-cached
+    // video loading instantly (~48 KB) instead of re-analyzing.
+    const res = await fetch(data.publicUrl, { signal, cache: 'no-store' });
     if (!res.ok) return null;
     return deserializePeaks(await res.text());
   } catch {

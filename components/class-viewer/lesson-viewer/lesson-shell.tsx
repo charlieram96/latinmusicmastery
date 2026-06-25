@@ -11,6 +11,7 @@ import { LessonSidebar, type LessonSidebarSection } from './lesson-sidebar'
 import { LessonHeader } from './lesson-header'
 import { LessonPartsNav, type LessonPart } from './lesson-parts-nav'
 import { LessonFooter } from './lesson-footer'
+import { LessonShellProvider } from './lesson-shell-context'
 import styles from './lesson-viewer.module.css'
 
 interface LessonShellProps {
@@ -63,29 +64,31 @@ export function LessonShell({
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div
-      className={cn(
-        styles.app,
-        '-m-6 flex min-h-[calc(100vh-3.5rem)] items-stretch bg-background text-foreground'
-      )}
-      data-railed={collapsed}
-    >
-      <LessonSidebar
-        {...sidebar}
-        collapsed={collapsed}
-        onToggle={() => setCollapsed((c) => !c)}
-      />
-
+    <LessonShellProvider collapsed={collapsed} setCollapsed={setCollapsed}>
       <div
-        className="relative flex min-w-0 flex-1 flex-col"
-        style={{ paddingBottom: footer ? 68 : 0 }}
+        className={cn(
+          styles.app,
+          '-m-6 flex min-h-[calc(100vh-3.5rem)] items-stretch bg-background text-foreground'
+        )}
+        data-railed={collapsed}
       >
-        <LessonHeader {...header} />
-        {parts && <LessonPartsNav {...parts} />}
-        {workspace}
-        {body}
-        {footer && <LessonFooter {...footer} />}
+        <LessonSidebar
+          {...sidebar}
+          collapsed={collapsed}
+          onToggle={() => setCollapsed((c) => !c)}
+        />
+
+        <div
+          className="relative flex min-w-0 flex-1 flex-col"
+          style={{ paddingBottom: footer ? 68 : 0 }}
+        >
+          <LessonHeader {...header} />
+          {parts && <LessonPartsNav {...parts} />}
+          {workspace}
+          {body}
+          {footer && <LessonFooter {...footer} />}
+        </div>
       </div>
-    </div>
+    </LessonShellProvider>
   )
 }

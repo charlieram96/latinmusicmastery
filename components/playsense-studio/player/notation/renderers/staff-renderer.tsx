@@ -98,8 +98,10 @@ const PER_NOTE_MIN_WIDTH = 22;
  * signature is the same size regardless of how many notes it holds.
  */
 const QN_WIDTH = 90;
-/** Vertical gap between stacked systems in wrapped mode (model units). */
-const WRAP_V_GAP = 14;
+/** Gap between a row's bottom staff line and the next row's top staff line
+ *  (model units). The staff's unused top padding overlaps the row above, so
+ *  this is much smaller than STAVE_HEIGHT — rows sit close together. */
+const WRAP_ROW_GAP = 44;
 /** Measures per row in wrapped mode. */
 const WRAP_MEASURES_PER_ROW = 2;
 /** Fallback model width when the container hasn't been measured yet. */
@@ -152,6 +154,7 @@ class StaffRendererImpl implements ScoreRenderer {
   private viewportEl: HTMLDivElement | null = null;
   private rendererDiv: HTMLDivElement | null = null;
   private cursorEl: HTMLDivElement | null = null;
+  private hoverCursorEl: HTMLDivElement | null = null;
   private dragOverlayEl: SVGRectElement | null = null;
   private aMarkerLineEl: SVGLineElement | null = null;
   private aMarkerLabelEl: SVGTextElement | null = null;
@@ -159,8 +162,25 @@ class StaffRendererImpl implements ScoreRenderer {
   private bMarkerLabelEl: SVGTextElement | null = null;
   // Live "time remaining in this gap" text inside the gap box.
   private gapCountdownEl: SVGTextElement | null = null;
+  // Lit-up backing rect for the measure the playhead is currently in.
+  private measureHighlightEl: SVGRectElement | null = null;
   private hits: NoteHit[] = [];
+  // The rendered `<g>` per note (parallel to `hits`) so the active note can light
+  // up (orange tint + soft glow). We don't scale geometry: a beamed note's stem
+  // is joined to a separately-drawn beam, so any resize detaches it.
+  private noteEls: Array<{ group: SVGElement | null; isRest: boolean }> = [];
+  // Per-measure geometry + start time, used to light the current measure.
+  private measureGeoms: Array<{
+    x: number;
+    y: number;
+    width: number;
+    startMs: number;
+  }> = [];
+  private activeNoteIdx = -1;
+  private activeMeasureIdx = -1;
   private systemRanges: Array<{ start: number; end: number }> = [];
+  /** Right-edge model-x of each system's row (for end-of-row playhead sweep). */
+  private systemRowEndX: number[] = [];
   // The staff's own playhead is hidden during no-notation gaps (a slow overlay
   // playhead takes over there); the staff itself stays visible.
   private cursorVisible = true;
@@ -169,6 +189,7 @@ class StaffRendererImpl implements ScoreRenderer {
   private downHandler: ((e: PointerEvent) => void) | null = null;
   private moveHandler: ((e: PointerEvent) => void) | null = null;
   private upHandler: ((e: PointerEvent) => void) | null = null;
+  private leaveHandler: ((e: PointerEvent) => void) | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private resizeTimer: ReturnType<typeof setTimeout> | null = null;
   private totalWidth = 0;
@@ -286,23 +307,33 @@ class StaffRendererImpl implements ScoreRenderer {
         this.rendererDiv.removeEventListener('pointerup', this.upHandler);
         this.rendererDiv.removeEventListener('pointercancel', this.upHandler);
       }
+      if (this.leaveHandler)
+        this.rendererDiv.removeEventListener('pointerleave', this.leaveHandler);
     }
     this.downHandler = null;
     this.moveHandler = null;
     this.upHandler = null;
+    this.leaveHandler = null;
     if (this.container) this.container.innerHTML = '';
     this.renderer = null;
     this.viewportEl = null;
     this.rendererDiv = null;
     this.cursorEl = null;
+    this.hoverCursorEl = null;
     this.dragOverlayEl = null;
     this.aMarkerLineEl = null;
     this.aMarkerLabelEl = null;
     this.bMarkerLineEl = null;
     this.bMarkerLabelEl = null;
     this.gapCountdownEl = null;
+    this.measureHighlightEl = null;
     this.hits = [];
+    this.noteEls = [];
+    this.measureGeoms = [];
+    this.activeNoteIdx = -1;
+    this.activeMeasureIdx = -1;
     this.systemRanges = [];
+    this.systemRowEndX = [];
     this.lastSystem = -1;
   }
 
@@ -369,7 +400,7 @@ class StaffRendererImpl implements ScoreRenderer {
     // width so there's never empty space.
     const maxPerRow = Math.min(WRAP_MEASURES_PER_ROW, measureBlocks.length);
     const perRow = avail >= measureWidth * 2 ? maxPerRow : 1;
-    const systemPitch = STAVE_HEIGHT + WRAP_V_GAP;
+    const systemPitch = STAFF_LINE_SPAN + WRAP_ROW_GAP;
     const itemCount = measureBlocks.length + (hasGap ? 1 : 0);
     const systemCount = Math.max(1, Math.ceil(itemCount / perRow));
 
@@ -397,7 +428,9 @@ class StaffRendererImpl implements ScoreRenderer {
     return {
       placements,
       totalWidth: SYSTEM_PADDING_X * 2 + avail,
-      stageHeight: STAVE_TOP + systemCount * systemPitch + 20,
+      // Reserve a full staff footprint for the LAST row (pitch is tighter than
+      // one staff, so earlier rows overlap their neighbour's top padding).
+      stageHeight: STAVE_TOP + (systemCount - 1) * systemPitch + STAVE_HEIGHT + 20,
       systemPitch,
       systemCount,
     };
@@ -445,6 +478,14 @@ class StaffRendererImpl implements ScoreRenderer {
       this.gapBoxW = 0;
     }
 
+    // Right-edge model-x of each row (rows fill the full width). Used so the
+    // playhead can sweep to the barline at a row break instead of freezing.
+    this.systemRowEndX = Array.from({ length: this.systemCount }, () => 0);
+    for (const p of plan.placements) {
+      const right = p.x + p.width;
+      if (right > this.systemRowEndX[p.system]) this.systemRowEndX[p.system] = right;
+    }
+
     const scaledStageHeight = this.stageHeight * this.scale;
 
     // ---- DOM scaffold ----
@@ -467,7 +508,7 @@ class StaffRendererImpl implements ScoreRenderer {
     rendererDiv.style.width = `${this.totalWidth * this.scale}px`;
     rendererDiv.style.height = `${scaledStageHeight}px`;
     rendererDiv.style.willChange = 'transform';
-    rendererDiv.style.cursor = 'text';
+    rendererDiv.style.cursor = 'default';
     rendererDiv.style.userSelect = 'none';
     (rendererDiv.style as CSSStyleDeclaration & { webkitUserSelect?: string }).webkitUserSelect =
       'none';
@@ -486,9 +527,16 @@ class StaffRendererImpl implements ScoreRenderer {
       system: number;
     }> = [];
 
+    this.measureGeoms = [];
     for (const p of plan.placements) {
       if (p.isGap) continue; // the gap box is drawn separately, below
       const block = measureBlocks[p.blockIndex];
+      this.measureGeoms.push({
+        x: p.x,
+        y: p.y,
+        width: p.width,
+        startMs: qnToTrackMs(track, score, block.events[0]?.qnStart ?? 0),
+      });
       const stave = new Stave(p.x, p.y, p.width);
       if (p.showHeader) {
         stave.addClef('treble').addTimeSignature(
@@ -551,6 +599,16 @@ class StaffRendererImpl implements ScoreRenderer {
       };
     });
 
+    // Prep each note so it can smoothly light up while the playhead is on it:
+    // the group color drives the currentColor of its glyphs, and a drop-shadow
+    // adds a soft glow. No geometry changes — those detach beamed notes.
+    this.activeNoteIdx = -1;
+    this.noteEls = allNotes.map(({ vexNote, descriptor }) => {
+      const group = vexNote.getSVGElement() ?? null;
+      if (group) group.style.transition = 'color 120ms ease, filter 120ms ease';
+      return { group, isRest: descriptor.isRest };
+    });
+
     // Contiguous hit ranges per system (hits are pushed row-by-row, left to right).
     this.systemRanges = Array.from({ length: this.systemCount }, () => ({
       start: -1,
@@ -580,6 +638,22 @@ class StaffRendererImpl implements ScoreRenderer {
     // In scroll mode the cursor lives in the viewport (fixed anchor, clipped).
     // In wrapped mode it lives in the scrolling content so it tracks the row.
     (wrapped ? rendererDiv : viewport).appendChild(this.cursorEl);
+
+    // ---- Hover-preview cursor (ghost playhead showing where a click lands) ----
+    this.hoverCursorEl = document.createElement('div');
+    Object.assign(this.hoverCursorEl.style, {
+      position: 'absolute',
+      top: `${(STAVE_TOP + STAFF_LINE_TOP - CURSOR_OVERHANG) * this.scale}px`,
+      left: '0px',
+      width: `${2 * this.scale}px`,
+      height: `${(STAFF_LINE_SPAN + 2 * CURSOR_OVERHANG) * this.scale}px`,
+      background: 'hsl(30 85% 55%)',
+      pointerEvents: 'none',
+      transform: 'translateX(0px)',
+      willChange: 'transform',
+      opacity: '0',
+    } as CSSStyleDeclaration);
+    (wrapped ? rendererDiv : viewport).appendChild(this.hoverCursorEl);
 
     // ---- Resize handling ----
     const onResize = () => {
@@ -621,7 +695,7 @@ class StaffRendererImpl implements ScoreRenderer {
       svg.setAttribute('height', `${scaledHeight}`);
       svg.style.width = `${scaledWidth}px`;
       svg.style.height = `${scaledHeight}px`;
-      svg.style.cursor = 'text';
+      svg.style.cursor = 'default';
       svg.style.userSelect = 'none';
       (svg.style as CSSStyleDeclaration & { webkitUserSelect?: string }).webkitUserSelect =
         'none';
@@ -639,6 +713,15 @@ class StaffRendererImpl implements ScoreRenderer {
       bg.setAttribute('fill', 'transparent');
       svg.insertBefore(bg, svg.firstChild);
 
+      // ---- Current-measure highlight (sits just above the bg, behind notes) ----
+      const measureHl = document.createElementNS(NS, 'rect');
+      measureHl.setAttribute('data-playsense-studio-active-measure', 'true');
+      measureHl.setAttribute('rx', '7');
+      measureHl.setAttribute('opacity', '0');
+      measureHl.setAttribute('pointer-events', 'none');
+      svg.insertBefore(measureHl, bg.nextSibling);
+      this.measureHighlightEl = measureHl;
+
       // ---- Trailing gap box (gray fill + continuing staff lines + label) ----
       if (this.gapMs > 0 && this.gapBoxW > 0) {
         const x = this.gapBoxX;
@@ -648,6 +731,7 @@ class StaffRendererImpl implements ScoreRenderer {
         const boxH = STAFF_LINE_SPAN + 24;
 
         const box = document.createElementNS(NS, 'rect');
+        box.setAttribute('data-playsense-studio-gap-box', 'true');
         box.setAttribute('x', `${x}`);
         box.setAttribute('y', `${boxTop}`);
         box.setAttribute('width', `${w}`);
@@ -660,6 +744,7 @@ class StaffRendererImpl implements ScoreRenderer {
         for (let i = 0; i < 5; i++) {
           const y = lineTop + i * 10;
           const ln = document.createElementNS(NS, 'line');
+          ln.setAttribute('data-playsense-studio-gap-line', 'true');
           ln.setAttribute('x1', `${x}`);
           ln.setAttribute('y1', `${y}`);
           ln.setAttribute('x2', `${x + w}`);
@@ -673,31 +758,32 @@ class StaffRendererImpl implements ScoreRenderer {
         const cx = x + w / 2;
         const midY = lineTop + STAFF_LINE_SPAN / 2;
 
-        // Live countdown (time remaining in this gap) — updated each frame.
+        // Live countdown (time remaining in this gap, m:ss) — updated each frame.
         const countdown = document.createElementNS(NS, 'text');
+        countdown.setAttribute('data-playsense-studio-gap-text', 'true');
         countdown.setAttribute('x', `${cx}`);
         countdown.setAttribute('y', `${midY - 1}`);
         countdown.setAttribute('text-anchor', 'middle');
         countdown.setAttribute('font-size', '16');
         countdown.setAttribute('font-family', 'Inter, system-ui, sans-serif');
         countdown.setAttribute('font-weight', '700');
-        countdown.setAttribute('fill', 'hsl(0 0% 86%)');
         countdown.setAttribute('pointer-events', 'none');
-        countdown.textContent = this.gapLabel;
+        countdown.textContent = this.gapLabel || formatGapTime(this.gapMs);
         svg.appendChild(countdown);
         this.gapCountdownEl = countdown;
 
         // Total gap length (static).
         const total = document.createElementNS(NS, 'text');
+        total.setAttribute('data-playsense-studio-gap-text', 'true');
         total.setAttribute('x', `${cx}`);
         total.setAttribute('y', `${midY + 16}`);
         total.setAttribute('text-anchor', 'middle');
         total.setAttribute('font-size', '10.5');
         total.setAttribute('font-family', 'Inter, system-ui, sans-serif');
         total.setAttribute('font-weight', '600');
-        total.setAttribute('fill', 'hsl(0 0% 58%)');
+        total.setAttribute('opacity', '0.7');
         total.setAttribute('pointer-events', 'none');
-        total.textContent = `of ${this.gapLabel}`;
+        total.textContent = `of ${this.gapLabel || formatGapTime(this.gapMs)}`;
         svg.appendChild(total);
       }
 
@@ -750,6 +836,7 @@ class StaffRendererImpl implements ScoreRenderer {
       const target = rendererDiv;
       this.downHandler = (event: PointerEvent) => {
         event.preventDefault();
+        this.hideHoverCursor();
         const rect = target.getBoundingClientRect();
         this.dragStartModelX = (event.clientX - rect.left) / this.scale;
         this.dragStartModelY = (event.clientY - rect.top) / this.scale;
@@ -764,11 +851,16 @@ class StaffRendererImpl implements ScoreRenderer {
         }
       };
       this.moveHandler = (event: PointerEvent) => {
-        if (
-          this.dragStartModelX === null ||
-          this.boundPointerId !== event.pointerId
-        )
+        // Not in a drag: show the ghost playhead where a click would land.
+        if (this.dragStartModelX === null) {
+          const rect = target.getBoundingClientRect();
+          this.updateHoverCursor(
+            (event.clientX - rect.left) / this.scale,
+            (event.clientY - rect.top) / this.scale
+          );
           return;
+        }
+        if (this.boundPointerId !== event.pointerId) return;
         event.preventDefault();
         const rect = target.getBoundingClientRect();
         const x = (event.clientX - rect.left) / this.scale;
@@ -836,10 +928,13 @@ class StaffRendererImpl implements ScoreRenderer {
         this.hideDragOverlay();
       };
 
+      this.leaveHandler = () => this.hideHoverCursor();
+
       target.addEventListener('pointerdown', this.downHandler);
       target.addEventListener('pointermove', this.moveHandler);
       target.addEventListener('pointerup', this.upHandler);
       target.addEventListener('pointercancel', this.upHandler);
+      target.addEventListener('pointerleave', this.leaveHandler);
     }
 
     // Re-apply playback position + loop markers (rebuild keeps the time state).
@@ -933,10 +1028,83 @@ class StaffRendererImpl implements ScoreRenderer {
     this.gapCountdownEl.textContent = formatGapTime(remainMs);
   }
 
+  /** Rightmost index in `arr` whose `.startMs`/`.ms` is <= ms, or -1. */
+  private indexAtOrBefore(
+    arr: ReadonlyArray<{ startMs: number } | { ms: number }>,
+    ms: number,
+    key: 'startMs' | 'ms'
+  ): number {
+    if (arr.length === 0) return -1;
+    const at = (i: number) => (arr[i] as Record<string, number>)[key];
+    if (ms < at(0)) return 0; // playhead clamps to the start
+    let lo = 0;
+    let hi = arr.length - 1;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >>> 1;
+      if (at(mid) <= ms) lo = mid;
+      else hi = mid;
+    }
+    return at(hi) <= ms ? hi : lo;
+  }
+
+  /** Light up the measure the playhead is currently inside. */
+  private updateActiveMeasure(): void {
+    if (!this.measureHighlightEl) return;
+    const inGap = this.lastPlaybackMs >= this.gapStartMs;
+    const idx =
+      this.cursorVisible && !inGap
+        ? this.indexAtOrBefore(this.measureGeoms, this.lastPlaybackMs, 'startMs')
+        : -1;
+    if (idx === this.activeMeasureIdx) return;
+    this.activeMeasureIdx = idx;
+    if (idx < 0) {
+      this.measureHighlightEl.setAttribute('opacity', '0');
+      return;
+    }
+    const g = this.measureGeoms[idx];
+    // Keep the bright core a little inside the staff and barlines; the heavy CSS
+    // blur spreads it outward into a soft glow.
+    const padY = 4;
+    const inset = 10;
+    this.measureHighlightEl.setAttribute('x', `${g.x + inset}`);
+    this.measureHighlightEl.setAttribute('y', `${g.y + STAFF_LINE_TOP - padY}`);
+    this.measureHighlightEl.setAttribute('width', `${Math.max(g.width - inset * 2, 1)}`);
+    this.measureHighlightEl.setAttribute('height', `${STAFF_LINE_SPAN + padY * 2}`);
+    this.measureHighlightEl.setAttribute('opacity', '1');
+  }
+
+  /** Grow + tint the note the playhead is currently on; reset the previous. */
+  private updateActiveNote(): void {
+    if (this.noteEls.length === 0) return;
+    const inGap = this.lastPlaybackMs >= this.gapStartMs;
+    let idx =
+      this.cursorVisible && !inGap
+        ? this.indexAtOrBefore(this.hits, this.lastPlaybackMs, 'ms')
+        : -1;
+    if (idx >= 0 && this.noteEls[idx]?.isRest) idx = -1; // rests don't animate
+    if (idx === this.activeNoteIdx) return;
+
+    const prev = this.noteEls[this.activeNoteIdx]?.group;
+    if (prev) {
+      prev.style.color = '';
+      prev.style.filter = '';
+    }
+    const next = this.noteEls[idx]?.group;
+    if (next) {
+      next.style.color = 'hsl(var(--primary))';
+      next.style.filter = 'drop-shadow(0 0 2.5px hsl(var(--primary) / 0.9))';
+    }
+    this.activeNoteIdx = idx;
+  }
+
   private applyLayout(): void {
     if (!this.rendererDiv || !this.cursorEl) return;
 
     this.updateGapCountdown();
+    // These live inside the SVG (model coords), so they work in both modes
+    // without per-mode handling.
+    this.updateActiveMeasure();
+    this.updateActiveNote();
 
     if (this.layoutMode === 'wrapped') {
       this.rendererDiv.style.transform = 'none';
@@ -975,6 +1143,31 @@ class StaffRendererImpl implements ScoreRenderer {
     this.cursorEl.style.transform = `translateX(${cursorX}px)`;
     const visible = cursorX >= -2 && cursorX <= this.viewportWidth + 2;
     this.cursorEl.style.opacity = this.cursorVisible && visible ? '0.85' : '0';
+  }
+
+  /** Place the translucent ghost playhead at the click-landing position for a
+   *  hovered (model-space) point. Reuses the exact click → seek math. */
+  private updateHoverCursor(modelX: number, modelY: number): void {
+    if (!this.hoverCursorEl || this.hits.length === 0) return;
+    const pos = this.xToTimePosition(modelX, modelY);
+    const cur = this.msToCursorPos(pos.ms);
+    if (this.layoutMode === 'wrapped') {
+      const top =
+        (STAVE_TOP + cur.system * this.systemPitch + STAFF_LINE_TOP - CURSOR_OVERHANG) *
+        this.scale;
+      this.hoverCursorEl.style.top = `${top}px`;
+      this.hoverCursorEl.style.transform = `translateX(${cur.x * this.scale}px)`;
+    } else {
+      const hoverX =
+        this.cursorAnchorPx +
+        (this.msToCursorX(pos.ms) - this.msToCursorX(this.lastViewMs)) * this.scale;
+      this.hoverCursorEl.style.transform = `translateX(${hoverX}px)`;
+    }
+    this.hoverCursorEl.style.opacity = '0.45';
+  }
+
+  private hideHoverCursor(): void {
+    if (this.hoverCursorEl) this.hoverCursorEl.style.opacity = '0';
   }
 
   onSeek(listener: SeekListener): () => void {
@@ -1065,8 +1258,15 @@ class StaffRendererImpl implements ScoreRenderer {
     }
     const a = this.hits[lo];
     const b = this.hits[hi];
-    // If the interval spans a row break, snap to the start-of-segment note.
-    if (a.system !== b.system) return { x: a.x, system: a.system };
+    // If the interval spans a row break, sweep from the last note of the row to
+    // that row's right edge over the interval, then the next bracket (first note
+    // of the next row) takes over — so the playhead glides to the barline and
+    // jumps down at the downbeat instead of freezing on the last note.
+    if (a.system !== b.system) {
+      const rowEnd = this.systemRowEndX[a.system] ?? a.x;
+      const t = (clamped - a.ms) / Math.max(b.ms - a.ms, 1);
+      return { x: a.x + t * (rowEnd - a.x), system: a.system };
+    }
     const t = (clamped - a.ms) / Math.max(b.ms - a.ms, 1);
     return { x: a.x + t * (b.x - a.x), system: a.system };
   }
