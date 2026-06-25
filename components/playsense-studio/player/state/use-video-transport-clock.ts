@@ -43,8 +43,15 @@ const MIN_RATE = 0.25;
 const MAX_RATE = 4;
 
 export function useVideoTransportClock(
-  videoRef: RefObject<HTMLVideoElement | null>
+  videoRef: RefObject<HTMLVideoElement | null>,
+  options?: { onEnded?: () => void }
 ): VideoTransportClock {
+  // Keep the callback in a ref so the wiring effect never re-binds listeners
+  // when the parent passes a fresh closure.
+  const onEndedRef = useRef(options?.onEnded);
+  useEffect(() => {
+    onEndedRef.current = options?.onEnded;
+  });
   const [currentSeconds, setCurrentSeconds] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRateState] = useState(1);
@@ -163,6 +170,7 @@ export function useVideoTransportClock(
       setIsPlaying(false);
       stopRaf();
       reanchor(video);
+      onEndedRef.current?.();
     };
     const onRateChange = () => {
       rateRef.current = video.playbackRate;

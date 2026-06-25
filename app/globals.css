@@ -51,6 +51,9 @@
     /* PlaySense Studio notation palette — light mode */
     --playsense-studio-notation: 20 10% 15%;          /* note glyphs, staff lines */
     --playsense-studio-notation-muted: 20 8% 42%;     /* secondary text (e.g. measure labels) */
+    --playsense-studio-gap-fill: 28 90% 91%;          /* no-notation gap box — light orange */
+    --playsense-studio-gap-line: 28 55% 78%;          /* gap box staff lines */
+    --playsense-studio-gap-text: 24 65% 42%;          /* gap box time label */
 
     --spacing-section: 2rem;
     --spacing-card: 1.5rem;
@@ -98,6 +101,9 @@
     /* PlaySense Studio notation palette — dark mode */
     --playsense-studio-notation: 0 0% 88%;            /* near-white note glyphs */
     --playsense-studio-notation-muted: 0 0% 60%;
+    --playsense-studio-gap-fill: 0 0% 26%;            /* no-notation gap box — low-contrast gray */
+    --playsense-studio-gap-line: 0 0% 40%;            /* gap box staff lines */
+    --playsense-studio-gap-text: 0 0% 80%;            /* gap box time label */
 
     --spacing-section: 2rem;
     --spacing-card: 1.5rem;
@@ -262,6 +268,30 @@
 .playsense-studio-notation svg [data-playsense-studio-loop-marker] {
   fill: hsl(var(--gold-highlight)) !important;
   stroke: hsl(var(--gold-highlight)) !important;
+}
+/* Trailing no-notation gap box — a low-contrast fill (gray in dark mode, light
+   orange in light mode) with its own staff lines and time label, opting out of
+   the global currentColor force above. */
+.playsense-studio-notation svg [data-playsense-studio-gap-box] {
+  fill: hsl(var(--playsense-studio-gap-fill)) !important;
+  stroke: none !important;
+}
+.playsense-studio-notation svg [data-playsense-studio-gap-line] {
+  fill: none !important;
+  stroke: hsl(var(--playsense-studio-gap-line)) !important;
+}
+.playsense-studio-notation svg [data-playsense-studio-gap-text] {
+  fill: hsl(var(--playsense-studio-gap-text)) !important;
+  stroke: none !important;
+}
+/* Current-measure highlight — a soft warm glow radiating from behind the active
+   measure (no hard box): a filled rect, heavily blurred so its edges melt into
+   light, so the user can see where the playhead is. */
+.playsense-studio-notation svg [data-playsense-studio-active-measure] {
+  fill: hsl(var(--primary) / 0.22) !important;
+  stroke: none !important;
+  filter: blur(9px);
+  transition: opacity 200ms ease;
 }
 .playsense-studio-notation .playsense-studio-notation-muted {
   color: hsl(var(--playsense-studio-notation-muted));

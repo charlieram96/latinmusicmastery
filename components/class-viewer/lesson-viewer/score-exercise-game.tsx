@@ -21,7 +21,10 @@ import { AudioModePrompt } from '@/components/play-sense/audio-mode-prompt'
 import { PlaysenseTestPanel } from '@/components/play-sense/playsense-test-panel'
 import { saveAttempt } from '@/app/actions/play-sense'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Badge } from '@/components/ui/badge'
+import { ArrowLeft, ChevronDown } from 'lucide-react'
 
 interface ScoreExerciseGameProps {
   /** The exercise derived from the authored score (see lib/play-sense/score-to-exercise). */
@@ -234,68 +237,88 @@ export function ScoreExerciseGame({
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
       {isActive && (
-        <div className="border-b border-border bg-primary/5 px-4 py-2.5">
-          <p className="text-sm font-semibold text-foreground">Now it&apos;s your turn</p>
-          <p className="text-xs text-muted-foreground">
-            Play along with the highway — you&apos;ll be graded on your timing.
-          </p>
-        </div>
-      )}
-
-      {/* Backing-track selection — pick the instruments to hear before starting. */}
-      {session.sessionState === 'selecting' && backingTracks && backingTracks.length > 0 && (
-        <div className="border-b border-border bg-background/60 px-4 py-3">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Play along with
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {backingTracks.map((t) => {
-              const on = selectedTrackIds.has(t.id)
-              return (
-                <label
-                  key={t.id}
-                  className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                    on
-                      ? 'border-primary/40 bg-primary/10 text-primary'
-                      : 'border-border text-muted-foreground hover:bg-muted'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={on}
-                    onChange={() => toggleTrack(t.id)}
-                  />
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-primary' : 'bg-muted-foreground/40'}`}
-                  />
-                  {t.label}
-                </label>
-              )
-            })}
+        <div className="flex items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-2.5">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">Now it&apos;s your turn</p>
+            <p className="truncate text-xs text-muted-foreground">
+              Play along with the highway — you&apos;ll be graded on your timing.
+            </p>
           </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Selected tracks play in sync with the notes while you&apos;re graded.
-          </p>
+
+          <div className="flex shrink-0 items-center gap-2">
+            {onWatchDemo && (
+              <button
+                onClick={onWatchDemo}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Watch again
+              </button>
+            )}
+
+            {/* Backing-track selection — compact popover, only before starting. */}
+            {session.sessionState === 'selecting' && backingTracks && backingTracks.length > 0 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    Play along with
+                    <Badge variant="secondary" className="ml-0.5">
+                      {selectedTrackIds.size}/{backingTracks.length}
+                    </Badge>
+                    <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-60 p-3">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Play along with
+                  </p>
+                  <div className="flex max-h-[260px] flex-col gap-0.5 overflow-y-auto">
+                    {backingTracks.map((t) => (
+                      <label
+                        key={t.id}
+                        className="flex cursor-pointer select-none items-center gap-2.5 rounded-md px-2 py-1.5 text-sm hover:bg-secondary/50"
+                      >
+                        <Checkbox
+                          checked={selectedTrackIds.has(t.id)}
+                          onCheckedChange={() => toggleTrack(t.id)}
+                        />
+                        <span className="flex-1">{t.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Selected tracks play in sync with the notes while you&apos;re graded.
+                  </p>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
         </div>
       )}
 
-      <div className="relative flex min-h-[360px] flex-col md:flex-row">
-        {/* Optional exercise video — muted, follows the engine clock. */}
-        {showCanvas && exerciseVideo && (
-          <div className="flex shrink-0 items-center justify-center border-b border-border bg-black md:w-2/5 md:border-b-0 md:border-r">
-            <video
-              ref={videoRef}
-              src={exerciseVideo.url}
-              muted
-              playsInline
-              preload="auto"
-              className="max-h-[360px] w-full object-contain"
+      {/* Notation band — a thin staff strip directly ABOVE the highway (its own
+          band, NOT superposed on the falling notes). In scroll mode the staff
+          sits below ~100px of empty SVG padding, so the inner layer is pulled up
+          to crop the band to just the staff. */}
+      {showCanvas && score && (
+        <div className="relative flex h-[136px] items-center overflow-hidden border-b border-white/10 bg-[#120d0a]">
+          <div className="w-full -translate-y-5 opacity-95">
+            <StaffRenderer
+              score={score}
+              trackIndex={0}
+              currentMs={staffMs}
+              layoutMode="scroll"
+              onDurationKnown={setStaffDurationMs}
             />
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Immersive stage: a tall, full-width highway with the demo video as a
+          small PiP. */}
+      <div className="relative h-[76vh] min-h-[460px] bg-black">
         {showCanvas && session.exercise ? (
-          <div className="flex-1 relative min-h-[360px] flex">
+          <>
             <GlassHighway
               exercise={session.exercise}
               sessionState={session.sessionState}
@@ -308,7 +331,23 @@ export function ScoreExerciseGame({
               eventResultsLength={session.eventResults.length}
               eventResults={session.eventResults}
               dimAlpha={showAudioModePrompt || showPlaysenseTest ? 0.55 : 0}
+              fill
             />
+
+            {/* Demo video — small floating picture-in-picture, muted, follows
+                the engine clock. */}
+            {exerciseVideo && (
+              <div className="absolute right-3 top-3 z-20 w-44 overflow-hidden rounded-lg bg-black shadow-2xl ring-1 ring-white/15 sm:w-52">
+                <video
+                  ref={videoRef}
+                  src={exerciseVideo.url}
+                  muted
+                  playsInline
+                  preload="auto"
+                  className="aspect-video w-full object-contain"
+                />
+              </div>
+            )}
 
             <AnimatePresence>
               {showAudioModePrompt && (
@@ -318,7 +357,7 @@ export function ScoreExerciseGame({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute inset-0 z-20 flex items-center justify-center p-4"
+                  className="absolute inset-0 z-30 flex items-center justify-center p-4"
                 >
                   <div className="w-full max-w-md">
                     <AudioModePrompt
@@ -338,7 +377,7 @@ export function ScoreExerciseGame({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute inset-0 z-20 flex items-center justify-center p-4"
+                  className="absolute inset-0 z-30 flex items-center justify-center p-4"
                 >
                   <div className="w-full max-w-lg">
                     <PlaysenseTestPanel
@@ -352,7 +391,7 @@ export function ScoreExerciseGame({
             </AnimatePresence>
 
             {session.sessionState === 'playing' && (
-              <div className="absolute top-3 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
+              <div className="absolute left-4 top-3 z-20 flex flex-col gap-0.5 pointer-events-none">
                 <span className="text-xs font-semibold text-white/60 tracking-wide drop-shadow-sm">
                   {session.exercise.title}
                 </span>
@@ -362,25 +401,13 @@ export function ScoreExerciseGame({
                 </span>
               </div>
             )}
-          </div>
+          </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground min-h-[360px]">
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             Preparing the test…
           </div>
         )}
       </div>
-
-      {showCanvas && score && (
-        <div className="max-h-64 overflow-y-auto border-t border-border bg-background/40 px-3 py-2">
-          <StaffRenderer
-            score={score}
-            trackIndex={0}
-            currentMs={staffMs}
-            layoutMode="wrapped"
-            onDurationKnown={setStaffDurationMs}
-          />
-        </div>
-      )}
 
       {session.exercise && isActive && (
         <NowPlayingBar

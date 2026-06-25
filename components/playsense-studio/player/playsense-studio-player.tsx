@@ -112,6 +112,8 @@ export interface PlaysenseStudioPlayerProps {
    * diagonal corner knob and a side-by-side ↔ stacked orientation toggle.
    */
   layout?: 'stack' | 'split';
+  /** Fired when the demo video plays to its end. */
+  onEnded?: () => void;
 }
 
 const POSITION_SAVE_INTERVAL_MS = 5000;
@@ -126,9 +128,10 @@ export function PlaysenseStudioPlayer({
   sections,
   readOnly,
   layout = 'stack',
+  onEnded,
 }: PlaysenseStudioPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const clock = useVideoTransportClock(videoRef);
+  const clock = useVideoTransportClock(videoRef, { onEnded });
 
   // Normalize to a list of sections. With none provided, the single score becomes
   // one always-active section (start = null) so the rest of the player is unchanged.
