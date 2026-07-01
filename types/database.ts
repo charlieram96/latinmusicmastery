@@ -208,6 +208,7 @@ export type Database = {
           active_time_map_id: string | null
           class_item_id: string
           created_at: string | null
+          draft_time_map_id: string | null
           id: string
           label: string | null
           score_document_id: string
@@ -220,6 +221,7 @@ export type Database = {
           active_time_map_id?: string | null
           class_item_id: string
           created_at?: string | null
+          draft_time_map_id?: string | null
           id?: string
           label?: string | null
           score_document_id: string
@@ -232,6 +234,7 @@ export type Database = {
           active_time_map_id?: string | null
           class_item_id?: string
           created_at?: string | null
+          draft_time_map_id?: string | null
           id?: string
           label?: string | null
           score_document_id?: string
@@ -244,6 +247,13 @@ export type Database = {
           {
             foreignKeyName: "class_item_score_sections_active_time_map_id_fkey"
             columns: ["active_time_map_id"]
+            isOneToOne: false
+            referencedRelation: "score_time_maps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_item_score_sections_draft_time_map_id_fkey"
+            columns: ["draft_time_map_id"]
             isOneToOne: false
             referencedRelation: "score_time_maps"
             referencedColumns: ["id"]
