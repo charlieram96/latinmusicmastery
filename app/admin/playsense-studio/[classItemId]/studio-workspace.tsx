@@ -15,7 +15,7 @@
 
 import { ArrowLeft, FileUp, Film, Music, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
   saveScoreDocument,
   updateSongMeta,
@@ -125,30 +125,49 @@ export function StudioWorkspace({
   const mediaOwnerId = owner.kind === 'classItem' ? owner.classItemId : owner.songId;
   const backHref = owner.kind === 'classItem' ? '/admin/courses' : '/admin/play-sense';
 
-  const persist = () => {
-    if (!state.isDirty) return;
+  // Latest editor state mirrored into refs so timers/handlers/unmount always
+  // read the newest score (never a stale closure). savingRef blocks overlap.
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  });
+  const savingRef = useRef(false);
+
+  const persist = useCallback(() => {
+    const snap = stateRef.current;
+    if (!snap.isDirty || savingRef.current) return;
+    savingRef.current = true;
     setSavingState('saving');
     setErrorMessage(null);
     startTransition(async () => {
-      const result = await saveScoreDocument({ scoreDocumentId, scoreDocument: state.score });
+      const result = await saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score });
+      savingRef.current = false;
       if (result.error) {
         setSavingState('error');
         setErrorMessage(result.error);
-      } else {
-        setSavingState('saved');
-        markClean();
+        return;
       }
+      setSavingState('saved');
+      // Only clean if no edit landed during the save (reducer clones per edit).
+      if (stateRef.current.score === snap.score) markClean();
     });
-  };
+  }, [scoreDocumentId, markClean]);
 
-  // Autosave every 5s when dirty.
+  // Autosave every 5s (persist no-ops when clean / already saving).
   useEffect(() => {
-    const id = setInterval(() => {
-      if (state.isDirty && !isPending) persist();
-    }, AUTOSAVE_INTERVAL_MS);
+    const id = setInterval(persist, AUTOSAVE_INTERVAL_MS);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.isDirty, isPending]);
+  }, [persist]);
+
+  // Flush a pending edit on unmount so nothing in the autosave window is lost.
+  useEffect(() => {
+    return () => {
+      const snap = stateRef.current;
+      if (snap.isDirty && !savingRef.current) {
+        void saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score });
+      }
+    };
+  }, [scoreDocumentId]);
 
   // Cmd/Ctrl+Z = undo, +Shift = redo (or Ctrl+Y), Cmd/Ctrl+S = save now.
   useEffect(() => {
@@ -170,8 +189,7 @@ export function StudioWorkspace({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [undo, redo]);
+  }, [undo, redo, persist]);
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background text-foreground md:h-[100dvh]">

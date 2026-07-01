@@ -113,7 +113,9 @@ export function VideoSectionsWorkspace({
   // markers inside SyncPanel; siblings use their published video ranges).
   const laneSections: LaneSection[] = sections.map((s) => ({
     sectionId: s.sectionId,
-    label: s.label || s.scoreDocument.title,
+    // The section name is the score title (the only name field); `label` is a
+    // stale creation-time snapshot and is intentionally ignored.
+    label: s.scoreDocument.title,
     startSeconds: s.videoStartSeconds,
     endSeconds: s.videoEndSeconds,
   }));
@@ -251,7 +253,7 @@ export function VideoSectionsWorkspace({
                   {sections.map((s, i) => {
                     const isSel = s.sectionId === selectedId;
                     const instrument = s.tracks[0]?.instrument ?? '—';
-                    const name = s.label || s.scoreDocument.title;
+                    const name = s.scoreDocument.title;
                     return (
                       <li key={s.sectionId}>
                         <div
@@ -335,7 +337,10 @@ export function VideoSectionsWorkspace({
               sectionId={selected.sectionId}
               scoreDocumentId={selected.scoreDocument.id}
               initialScore={selected.scoreDocument.parsedScore}
-              activeTimeMap={selected.activeTimeMap}
+              // Seed the sync markers from the admin's autosaved draft when present,
+              // else the last Published map. Students only ever get activeTimeMap.
+              activeTimeMap={selected.draftTimeMap ?? selected.activeTimeMap}
+              hasDraft={selected.draftTimeMap != null}
               videoUrl={videoUrl}
               videoDurationSeconds={videoDurationSeconds}
               onChanged={() => void refetch(selected.sectionId)}

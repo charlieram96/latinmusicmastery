@@ -95,6 +95,21 @@ export function StudioAppBar({
 
         <button
           type="button"
+          onClick={onSelectCourse}
+          title="Course settings"
+          className={cn(
+            'flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors',
+            courseSelected
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground'
+          )}
+        >
+          <Settings2 className="h-4 w-4" />
+          <span className="hidden sm:inline">Settings</span>
+        </button>
+
+        <button
+          type="button"
           onClick={onOpenDrawer}
           title="Inspector"
           className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground lg:hidden"

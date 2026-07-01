@@ -12,11 +12,11 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, Loader2, Maximize, Repeat, Trash2, UploadCloud, ZoomIn, ZoomOut } from 'lucide-react';
+import { AudioLines, Loader2, Maximize, Music2, Repeat, Trash2, UploadCloud, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type Dispatch } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
-import { publishTimeMap } from '@/app/actions/playsense-studio';
+import { publishTimeMap, saveSectionDraftTimeMap } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
@@ -56,6 +56,7 @@ import type { SelectedEventRef } from '@/components/playsense-studio/studio/edit
 import { PlaceScoreControl } from '@/components/playsense-studio/sync/place-score-control';
 import { SectionsLane, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { getPercStrokes, isPercussion } from '@/lib/playsense-studio/perc-strokes';
+import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import type { MusicalEvent, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 /** A note selection, mirrored out of the editor so the right rail can show it. */
@@ -81,6 +82,8 @@ export interface SyncPanelProps {
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
+  /** True when this section already has an autosaved sync draft not yet Published. */
+  hasDraft?: boolean;
   videoDurationSeconds: number | null;
   /** Fired after a successful Publish (e.g. so a section list can refresh ranges). */
   onPublished?: () => void;
@@ -100,6 +103,7 @@ export interface SyncPanelProps {
 
 const MIN_PPS = 8;
 const MAX_PPS = 600;
+const DRAFT_DEBOUNCE_MS = 1500;
 
 export function SyncPanel({
   classItemId,
@@ -111,6 +115,7 @@ export function SyncPanel({
   score,
   dispatch,
   activeTimeMap,
+  hasDraft,
   videoDurationSeconds,
   onPublished,
   inspectorEl,
@@ -148,6 +153,8 @@ export function SyncPanel({
     return seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, 0));
   });
   const [dirty, setDirty] = useState(false);
+  // Faint note-onset ticks over the waveform — default on (they're low-opacity).
+  const [showNotes, setShowNotes] = useState(true);
 
   // Reconcile markers when the score's MEASURE STRUCTURE changes (add/delete
   // measure, time-signature/tempo change). Note edits don't change the
@@ -213,10 +220,17 @@ export function SyncPanel({
   const [decodeState, setDecodeState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
 
-  // --- Publish ---
+  // --- Publish / draft autosave ---
   const [error, setError] = useState<string | null>(null);
   const [published, setPublished] = useState(false);
   const [isPublishing, startPublish] = useTransition();
+  // Draft autosave state (section path only). `dirty` = not yet written to the
+  // draft; `hasUnpublished` = a saved draft differs from what students see live.
+  const [hasUnpublished, setHasUnpublished] = useState(!!hasDraft);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const savingDraftRef = useRef(false);
+  // Autosave only the section sync path (not the legacy classItem / exercise sync).
+  const draftAutosave = showSync && !!sectionId && (publishTarget ?? 'section') === 'section';
 
   const timelineDuration = Math.max(
     peaks?.durationSeconds ?? 0,
@@ -348,6 +362,44 @@ export function SyncPanel({
       };
     });
   }, [markers]);
+
+  // Note onsets (video seconds) across ALL tracks, for the faint waveform ticks.
+  // Each note's cumulative QN is interpolated into its measure's audio span; all
+  // tracks share the same measure grid (measureTimings, matched by measureNumber).
+  const noteOnsets: number[] = useMemo(() => {
+    const timingByMeasure = new Map(measureTimings.map((t) => [t.measureNumber, t]));
+    const onsets: number[] = [];
+    for (const t of score.tracks) {
+      const blocks = extractTrackEvents(t, score.initialTimeSignature, score.initialKeyFifths ?? 0);
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+        const timing = timingByMeasure.get(block.measure.number);
+        if (!timing) continue;
+        const next = blocks[i + 1];
+        const measureLenQN = next
+          ? next.cumulativeQN - block.cumulativeQN
+          : (block.timeSignature[0] * 4) / block.timeSignature[1];
+        if (measureLenQN <= 0) continue;
+        const span = timing.endVideoTimeSeconds - timing.startVideoTimeSeconds;
+        for (const ev of block.events) {
+          if (ev.isRest) continue;
+          const fraction = (ev.qnStart - block.cumulativeQN) / measureLenQN;
+          onsets.push(timing.startVideoTimeSeconds + fraction * span);
+        }
+      }
+    }
+    // Dedupe near-coincident onsets (multi-track hits on the same beat) → one tick.
+    const seen = new Set<number>();
+    const out: number[] = [];
+    for (const s of onsets) {
+      const key = Math.round(s * 1000);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(s);
+    }
+    out.sort((a, b) => a - b);
+    return out;
+  }, [score, measureTimings]);
 
   // --- Marker interaction handlers ---
   // Both drags clamp against the sibling-section corridor so a section can
@@ -482,9 +534,68 @@ export function SyncPanel({
       }
       setPublished(true);
       setDirty(false);
+      setHasUnpublished(false); // server consumed the draft; this is now live
       onPublished?.();
     });
   };
+
+  // Save the current markers to the hidden draft (silent — no publish, no
+  // student-facing change). Shared by the debounce + the unmount flush.
+  const saveDraft = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!draftAutosave || !sectionId || savingDraftRef.current) return;
+      const waypoints = enforceMonotonic(markerStateToWaypoints(markers, { includeBeats: 'edited-beats' }));
+      if (waypoints.length < 2) return;
+      savingDraftRef.current = true;
+      if (!opts?.silent) setSavingDraft(true);
+      const editedBeats = markers.measures.flatMap((m) =>
+        m.beats
+          .filter((b) => b.edited && b.beatInMeasure !== 1)
+          .map((b) => ({ measure: m.measureNumber, beat: b.beatInMeasure }))
+      );
+      const result = await saveSectionDraftTimeMap({
+        classItemId,
+        scoreDocumentId,
+        sectionId,
+        method: 'drag',
+        params: { editedBeats, pps, peaksCached: decodeState === 'ready', version: 1 },
+        waypoints,
+      });
+      savingDraftRef.current = false;
+      // On the unmount flush the component is gone — skip all state updates.
+      if (opts?.silent) return;
+      setSavingDraft(false);
+      if (!result.error) {
+        setDirty(false);
+        setHasUnpublished(true);
+      }
+    },
+    [draftAutosave, sectionId, markers, classItemId, scoreDocumentId, pps, decodeState]
+  );
+
+  // Debounced draft autosave: after the drag settles (and not while placing /
+  // publishing), persist the markers to the draft.
+  useEffect(() => {
+    if (!draftAutosave || !dirty || isPublishing || placeArmed) return;
+    const id = setTimeout(() => { void saveDraft(); }, DRAFT_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [draftAutosave, dirty, isPublishing, placeArmed, saveDraft]);
+
+  // Flush a pending draft on unmount (e.g. switching sections mid-debounce) so
+  // nothing in the autosave window is lost. Reads the latest markers via a ref.
+  const saveDraftRef = useRef(saveDraft);
+  useEffect(() => {
+    saveDraftRef.current = saveDraft;
+  });
+  const dirtyRef = useRef(dirty);
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  });
+  useEffect(() => {
+    return () => {
+      if (dirtyRef.current) void saveDraftRef.current({ silent: true });
+    };
+  }, []);
 
   if (!track) {
     return <p className="text-sm text-muted-foreground">This score has no tracks to edit.</p>;
@@ -525,6 +636,15 @@ export function SyncPanel({
                   Analyzing audio… {progress > 0 ? `${Math.round(progress * 100)}%` : ''}
                 </span>
               )}
+              <button
+                type="button"
+                onClick={() => setShowNotes((v) => !v)}
+                className={`st-iconbtn${showNotes ? ' text-primary' : ''}`}
+                title={showNotes ? 'Hide note overlay on the waveform' : 'Show note overlay on the waveform'}
+                aria-pressed={showNotes}
+              >
+                <Music2 className="h-4 w-4" />
+              </button>
               <button
                 type="button"
                 onClick={loopSelectedMeasure}
@@ -572,6 +692,8 @@ export function SyncPanel({
                     peaks={peaks}
                     durationSeconds={timelineDuration}
                     handles={handles}
+                    noteOnsets={noteOnsets}
+                    showNotes={showNotes}
                     tailVideoTimeSeconds={markers.tailVideoTimeSeconds}
                     pixelsPerSecond={pps}
                     scrollLeftPx={scrollLeft}
@@ -642,6 +764,7 @@ export function SyncPanel({
                   score={score}
                   dispatch={dispatch}
                   measureTimings={measureTimings}
+                  getCurrentSeconds={clock.getCurrentSeconds}
                   pixelsPerSecond={pps}
                   scrollLeftPx={scrollLeft}
                   viewportWidth={viewportWidth}
@@ -759,7 +882,7 @@ export function SyncPanel({
                   <span className="st-sec-label">Sync status</span>
                   <button
                     onClick={handlePublish}
-                    disabled={isPublishing}
+                    disabled={isPublishing || (draftAutosave && !hasUnpublished && !dirty)}
                     className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <UploadCloud className="h-3.5 w-3.5" />
@@ -775,12 +898,25 @@ export function SyncPanel({
                   <b className="font-mono tabular-nums text-foreground">{anchorSeconds.toFixed(1)}s</b> ·{' '}
                   {score.initialTempo} BPM
                 </div>
+                {/* Draft autosave status (section path). Students keep the last
+                    Published sync until Publish promotes the draft. */}
+                {draftAutosave && (
+                  <div className="flex items-center gap-2 text-xs">
+                    {savingDraft || dirty ? (
+                      <><span className="st-pip warn" /> <span className="text-muted-foreground">Saving draft…</span></>
+                    ) : hasUnpublished ? (
+                      <><span className="st-pip warn" /> <span className="text-foreground">Draft saved · not live — Publish to go live</span></>
+                    ) : (
+                      <><span className="st-pip" /> <span className="text-muted-foreground">Live — students see this sync</span></>
+                    )}
+                  </div>
+                )}
                 {error && (
                   <p className="rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
                     {error}
                   </p>
                 )}
-                {published && (
+                {published && !draftAutosave && (
                   <p className="rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs text-primary">
                     Published — students will see the new sync.
                   </p>

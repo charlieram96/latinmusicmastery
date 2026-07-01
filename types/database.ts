@@ -361,17 +361,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "class_items_exercise_time_map_id_fkey"
-            columns: ["exercise_time_map_id"]
-            isOneToOne: false
-            referencedRelation: "score_time_maps"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "class_items_class_id_fkey"
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_items_exercise_time_map_id_fkey"
+            columns: ["exercise_time_map_id"]
+            isOneToOne: false
+            referencedRelation: "score_time_maps"
             referencedColumns: ["id"]
           },
           {
@@ -1456,12 +1456,14 @@ export type Database = {
       }
       quiz_questions: {
         Row: {
+          audio_url: string | null
           class_item_id: string
           correct_answer: string | null
           created_at: string | null
           explanation: string | null
           explanation_es: string | null
           id: string
+          image_url: string | null
           options: Json | null
           options_es: Json | null
           order_index: number
@@ -1471,12 +1473,14 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          audio_url?: string | null
           class_item_id: string
           correct_answer?: string | null
           created_at?: string | null
           explanation?: string | null
           explanation_es?: string | null
           id?: string
+          image_url?: string | null
           options?: Json | null
           options_es?: Json | null
           order_index?: number
@@ -1486,12 +1490,14 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          audio_url?: string | null
           class_item_id?: string
           correct_answer?: string | null
           created_at?: string | null
           explanation?: string | null
           explanation_es?: string | null
           id?: string
+          image_url?: string | null
           options?: Json | null
           options_es?: Json | null
           order_index?: number

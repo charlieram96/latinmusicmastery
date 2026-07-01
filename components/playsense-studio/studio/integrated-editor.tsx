@@ -146,6 +146,8 @@ export interface IntegratedEditorProps {
   dispatch: Dispatch<EditorAction>;
   /** Per-measure audio span from the markers (track 0). */
   measureTimings: IntegratedEditorMeasureTiming[];
+  /** Live playback position (video seconds) for the staff-lane playhead. */
+  getCurrentSeconds?: () => number;
   pixelsPerSecond: number;
   scrollLeftPx: number;
   viewportWidth: number;
@@ -174,6 +176,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   score,
   dispatch,
   measureTimings,
+  getCurrentSeconds,
   pixelsPerSecond,
   scrollLeftPx,
   viewportWidth,
@@ -757,6 +760,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         <div ref={staffWrapRef} className="min-h-0 flex-1">
           <EditableMeasureStrip
             measures={stripItems}
+            getCurrentSeconds={getCurrentSeconds}
             pixelsPerSecond={pixelsPerSecond}
             scrollLeftPx={scrollLeftPx}
             selected={selected}

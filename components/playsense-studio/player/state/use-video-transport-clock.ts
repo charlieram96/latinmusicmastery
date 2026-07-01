@@ -39,7 +39,7 @@ export interface VideoTransportClock {
   loadLoop: (a: number, b: number, options?: { rate?: number }) => void;
 }
 
-const MIN_RATE = 0.25;
+const MIN_RATE = 0.1;
 const MAX_RATE = 4;
 
 export function useVideoTransportClock(

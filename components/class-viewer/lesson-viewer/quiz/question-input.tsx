@@ -1,13 +1,71 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
+import { ChevronDown, ChevronUp, GripVertical, Pause, Play } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { norm, shuffleStable, type Blank, type Choice, type OrderItem, type Pair } from '@/lib/quiz/grading'
+import {
+  norm,
+  shuffleStable,
+  type AssemblyPart,
+  type AssemblyZone,
+  type AudioChoice,
+  type Blank,
+  type Choice,
+  type OrderItem,
+  type Pair,
+} from '@/lib/quiz/grading'
 import type { QuizQuestion } from '@/types/modules'
+import { InstrumentAssemblyInput } from './instrument-assembly-input'
 import { OptionTile, type TileState } from './option-tile'
+
+/** Play/pause control for an audio answer choice. Renders as a span (not a
+ *  button) so it can live inside the OptionTile button without nesting. */
+function AudioChoicePlayer({ url, label }: { url?: string; label: string }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [playing, setPlaying] = useState(false)
+  const toggle = (e: React.SyntheticEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    const el = audioRef.current
+    if (!el) return
+    if (playing) {
+      el.pause()
+    } else {
+      el.currentTime = 0
+      void el.play()
+    }
+  }
+  return (
+    <span className="flex items-center gap-3">
+      <span
+        role="button"
+        tabIndex={0}
+        aria-label={playing ? 'Pause clip' : 'Play clip'}
+        onClick={toggle}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') toggle(e)
+        }}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors hover:bg-primary/25"
+      >
+        {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+      </span>
+      <span className="flex-1">{label}</span>
+      {url && (
+        <audio
+          ref={audioRef}
+          src={url}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+          className="hidden"
+        />
+      )}
+    </span>
+  )
+}
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 
@@ -40,6 +98,52 @@ export function QuestionInput({
             )
           })}
         </div>
+      )
+    }
+
+    case 'audio_choice': {
+      const mode = (opts.optionMode as 'text' | 'audio') ?? 'text'
+      const choices = (opts.choices as AudioChoice[]) ?? []
+      return (
+        <div className="space-y-4">
+          {q.audio_url && (
+            <div className="rounded-2xl border border-border bg-muted/50 p-3">
+              <audio src={q.audio_url} controls className="w-full" />
+            </div>
+          )}
+          <div className="space-y-3">
+            {choices.map((c, i) => {
+              const selected = answer === c.id
+              let state: TileState = selected ? 'selected' : 'idle'
+              if (isGraded) state = q.correct_answer === c.id ? 'correct' : selected ? 'incorrect' : 'idle'
+              return (
+                <OptionTile key={c.id} label={LETTERS[i]} state={state} disabled={isGraded} onClick={() => onChange(c.id)}>
+                  {mode === 'audio' ? (
+                    <AudioChoicePlayer url={c.audioUrl} label={c.text?.trim() || `Clip ${i + 1}`} />
+                  ) : (
+                    c.text
+                  )}
+                </OptionTile>
+              )
+            })}
+          </div>
+        </div>
+      )
+    }
+
+    case 'instrument_assembly': {
+      const zones = (opts.zones as AssemblyZone[]) ?? []
+      const parts = (opts.parts as AssemblyPart[]) ?? []
+      const placement = (answer as Record<string, string>) ?? {}
+      return (
+        <InstrumentAssemblyInput
+          imageUrl={q.image_url}
+          zones={zones}
+          parts={parts}
+          placement={placement}
+          isGraded={isGraded}
+          onChange={(v) => onChange(v)}
+        />
       )
     }
 

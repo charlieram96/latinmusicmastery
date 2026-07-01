@@ -20,6 +20,8 @@ export interface CourseSettingsPatch {
   instrument?: string | null
   is_published?: boolean
   thumbnail_url?: string | null
+  difficulty?: string | null
+  is_master_class?: boolean
 }
 
 export async function updateCourseSettings(courseId: string, patch: CourseSettingsPatch) {

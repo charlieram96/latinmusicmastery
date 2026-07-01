@@ -36,6 +36,8 @@ const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   fill_in_blank: 'Fill in the Blank',
   ordering_sequence: 'Ordering/Sequence',
   audio: 'Audio Response',
+  audio_choice: 'Audio — Listen & Choose',
+  instrument_assembly: 'Instrument Assembly (drag & drop)',
 }
 
 export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorProps) {
@@ -75,6 +77,8 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
           options: q.options,
           correct_answer: q.correct_answer,
           explanation: q.explanation,
+          audio_url: q.audio_url,
+          image_url: q.image_url,
           question_es: q.question_es,
           explanation_es: q.explanation_es,
         })
@@ -214,6 +218,8 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
                     question_type: v as QuestionType,
                     options: null,
                     correct_answer: '',
+                    audio_url: null,
+                    image_url: null,
                   })
                 }
               >
@@ -231,11 +237,14 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
             </div>
 
             <QuizBuilder
+              questionId={q.id}
               questionType={q.question_type}
               question={q.question}
               questionEs={q.question_es ?? ''}
               options={q.options}
               correctAnswer={q.correct_answer ?? ''}
+              audioUrl={q.audio_url ?? ''}
+              imageUrl={q.image_url ?? ''}
               explanation={q.explanation ?? ''}
               explanationEs={q.explanation_es ?? ''}
               onChange={(data) => patchQuestion(q.id, data as Partial<QuizQuestion>)}

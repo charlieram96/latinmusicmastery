@@ -21,6 +21,8 @@ export interface CourseStudioCourse {
   thumbnail_url: string | null
   instrument: string | null
   is_fundamentals: boolean
+  difficulty: string | null
+  is_master_class: boolean
 }
 
 export interface MusicalStyleOption {

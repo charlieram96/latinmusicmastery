@@ -9,6 +9,8 @@ export type QuestionType =
   | 'multiple_choice'
   | 'text_answer'
   | 'audio'
+  | 'audio_choice'
+  | 'instrument_assembly'
   | 'matching_pairs'
   | 'fill_in_blank'
   | 'ordering_sequence'
@@ -86,6 +88,10 @@ export interface QuizQuestion {
   question_es: string | null
   explanation_es: string | null
   options_es: QuestionOptions | null
+  // Primary media (per-option/per-part media lives inside `options`):
+  // audio_choice → prompt clip; instrument_assembly → background image.
+  audio_url: string | null
+  image_url: string | null
   created_at: string | null
   updated_at: string | null
 }
@@ -119,11 +125,28 @@ export interface OrderingSequenceOptions {
   items: { id: string; text: string; correctPosition: number }[]
 }
 
+// Audio question: student listens to `QuizQuestion.audio_url`, then picks a
+// choice. Choices are text OR playable clips depending on `optionMode`.
+export interface AudioChoiceOptions {
+  optionMode: 'text' | 'audio'
+  choices: { id: string; text?: string; audioUrl?: string }[]
+}
+
+// Instrument assembly: student drags labeled parts onto labeled drop zones
+// overlaid on `QuizQuestion.image_url`. Zone geometry is in percentages of the
+// image so it scales responsively. Each part has one correct zone.
+export interface InstrumentAssemblyOptions {
+  zones: { id: string; label: string; x: number; y: number; width: number; height: number }[]
+  parts: { id: string; label: string; imageUrl: string; correctZoneId: string }[]
+}
+
 export type QuestionOptions =
   | MultipleChoiceOptions
   | MatchingPairsOptions
   | FillInBlankOptions
   | OrderingSequenceOptions
+  | AudioChoiceOptions
+  | InstrumentAssemblyOptions
   | { answer: boolean } // for true_false
   | null
 

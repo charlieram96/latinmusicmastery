@@ -4,6 +4,9 @@ export type Choice = { id: string; text: string }
 export type Pair = { id: string; left: string; right: string }
 export type Blank = { id: string; answer: string }
 export type OrderItem = { id: string; text: string; correctPosition: number }
+export type AudioChoice = { id: string; text?: string; audioUrl?: string }
+export type AssemblyZone = { id: string; label: string; x: number; y: number; width: number; height: number }
+export type AssemblyPart = { id: string; label: string; imageUrl: string; correctZoneId: string }
 
 export function norm(s: string): string {
   return s.toLowerCase().trim()
@@ -27,7 +30,13 @@ export function gradeQuestion(q: QuizQuestion, answer: unknown): boolean {
   const opts = (q.options ?? {}) as Record<string, unknown>
   switch (q.question_type) {
     case 'multiple_choice':
+    case 'audio_choice':
       return typeof answer === 'string' && !!q.correct_answer && answer === q.correct_answer
+    case 'instrument_assembly': {
+      const parts = (opts.parts as AssemblyPart[]) ?? []
+      const placed = (answer as Record<string, string>) ?? {}
+      return parts.length > 0 && parts.every((p) => placed[p.id] === p.correctZoneId)
+    }
     case 'true_false':
       return typeof answer === 'string' && norm(answer) === norm(q.correct_answer ?? '')
     case 'text_answer':
@@ -57,7 +66,11 @@ export function gradeQuestion(q: QuizQuestion, answer: unknown): boolean {
 
 /** Whether the student has provided enough of an answer to allow grading. */
 export function hasAnswer(q: QuizQuestion, answer: unknown): boolean {
-  if (q.question_type === 'fill_in_blank' || q.question_type === 'matching_pairs') {
+  if (
+    q.question_type === 'fill_in_blank' ||
+    q.question_type === 'matching_pairs' ||
+    q.question_type === 'instrument_assembly'
+  ) {
     return !!answer && Object.keys(answer as object).length > 0
   }
   if (q.question_type === 'ordering_sequence') return true
@@ -70,6 +83,18 @@ export function correctAnswerLabel(q: QuizQuestion): string {
   if (q.question_type === 'multiple_choice') {
     const choices = (opts.choices as Choice[]) ?? []
     return choices.find((c) => c.id === q.correct_answer)?.text ?? q.correct_answer ?? ''
+  }
+  if (q.question_type === 'audio_choice') {
+    const choices = (opts.choices as AudioChoice[]) ?? []
+    const idx = choices.findIndex((c) => c.id === q.correct_answer)
+    if (idx < 0) return q.correct_answer ?? ''
+    return choices[idx].text?.trim() || `Clip ${idx + 1}`
+  }
+  if (q.question_type === 'instrument_assembly') {
+    const parts = (opts.parts as AssemblyPart[]) ?? []
+    const zones = (opts.zones as AssemblyZone[]) ?? []
+    const zoneLabel = new Map(zones.map((z) => [z.id, z.label]))
+    return parts.map((p) => `${p.label} → ${zoneLabel.get(p.correctZoneId) ?? '?'}`).join(', ')
   }
   return q.correct_answer ?? ''
 }
