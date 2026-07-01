@@ -32,6 +32,10 @@ export interface WaveformCanvasProps {
   /** Fallback timeline length before peaks finish decoding. */
   durationSeconds: number;
   handles: MarkerHandle[];
+  /** Note onset times (video seconds, all tracks) for the faint overlay ticks. */
+  noteOnsets: number[];
+  /** Toggle the faint note-onset ticks over the waveform. */
+  showNotes: boolean;
   tailVideoTimeSeconds: number;
   pixelsPerSecond: number;
   scrollLeftPx: number;
@@ -94,6 +98,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     peaks,
     durationSeconds,
     handles,
+    noteOnsets,
+    showNotes,
     tailVideoTimeSeconds,
     pixelsPerSecond,
     scrollLeftPx,
@@ -125,11 +131,13 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   const ppsRef = useRef(pixelsPerSecond);
   const scrollRef = useRef(scrollLeftPx);
   const handlesRef = useRef(handles);
+  const onsetsRef = useRef(noteOnsets);
   const tailRef = useRef(tailVideoTimeSeconds);
   const dragAllRef = useRef(dragAll);
   ppsRef.current = pixelsPerSecond;
   scrollRef.current = scrollLeftPx;
   handlesRef.current = handles;
+  onsetsRef.current = noteOnsets;
   tailRef.current = tailVideoTimeSeconds;
   dragAllRef.current = dragAll;
 
@@ -190,6 +198,23 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       ctx.moveTo(0, mid);
       ctx.lineTo(w, mid);
       ctx.stroke();
+    }
+
+    // Note-onset ticks (faint, all tracks) — drawn over the peaks but under the
+    // grid so measure lines/chips stay legible. Toggleable via showNotes.
+    if (showNotes && onsetsRef.current.length) {
+      ctx.strokeStyle = theme.wave;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.18;
+      ctx.beginPath();
+      for (const t of onsetsRef.current) {
+        const x = videoTimeToX(t);
+        if (x < -2 || x > w + 2) continue;
+        ctx.moveTo(x + 0.5, waveTop);
+        ctx.lineTo(x + 0.5, h);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
     }
 
     // Beat gridlines (faint) for non-downbeat handles in view.
@@ -258,7 +283,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       ctx.stroke();
       ctx.setLineDash([]);
     }
-  }, [peaks, durationSeconds, selected, height, videoTimeToX, xToVideoTime]);
+  }, [peaks, durationSeconds, selected, height, showNotes, videoTimeToX, xToVideoTime]);
 
   // ---- Sizing + DPR --------------------------------------------------------
   useEffect(() => {
@@ -297,7 +322,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   // Redraw the wave layer whenever inputs change.
   useEffect(() => {
     drawWave();
-  }, [drawWave, handles, tailVideoTimeSeconds, pixelsPerSecond, scrollLeftPx]);
+  }, [drawWave, handles, noteOnsets, tailVideoTimeSeconds, pixelsPerSecond, scrollLeftPx]);
 
   // ---- Playhead overlay RAF -----------------------------------------------
   useEffect(() => {

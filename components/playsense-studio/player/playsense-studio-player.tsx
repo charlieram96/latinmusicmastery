@@ -446,7 +446,9 @@ export function PlaysenseStudioPlayer({
       loopA={clock.loopA}
       loopB={clock.loopB}
       loopEnabled={clock.loopEnabled}
-      onToggleLoop={() => clock.setLoopEnabled(!clock.loopEnabled)}
+      onToggleLoop={() =>
+        clock.loopEnabled ? clock.clearLoop() : clock.setLoopEnabled(true)
+      }
       onClearLoop={clock.clearLoop}
       bpm={score.initialTempo}
       beatsPerMeasure={score.initialTimeSignature[0]}

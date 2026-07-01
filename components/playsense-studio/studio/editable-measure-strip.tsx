@@ -69,6 +69,8 @@ interface MeasureHit {
 
 export interface EditableMeasureStripProps {
   measures: MeasureStripItem[];
+  /** Live playback position (video seconds) for the playhead; omit to hide it. */
+  getCurrentSeconds?: () => number;
   pixelsPerSecond: number;
   scrollLeftPx: number;
   selected: SelectedEventRef | null;
@@ -164,6 +166,7 @@ const EDGE_PX = 7;
 
 export function EditableMeasureStrip({
   measures,
+  getCurrentSeconds,
   pixelsPerSecond,
   scrollLeftPx,
   selected,
@@ -228,6 +231,33 @@ export function EditableMeasureStrip({
 
   const videoTimeToX = (t: number) => t * pixelsPerSecond - scrollLeftPx;
   const xToVideoTime = (x: number) => (x + scrollLeftPx) / pixelsPerSecond;
+
+  // Playhead — a thin --primary line matching the waveform's, positioned
+  // imperatively on a RAF loop so 60fps playback never re-renders this strip.
+  // pps/scroll change only on zoom/scroll, so restarting on those is cheap; the
+  // getter reads the live clock each frame (same pattern as the waveform).
+  const playheadRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!getCurrentSeconds) return;
+    let raf = 0;
+    const draw = () => {
+      const el = playheadRef.current;
+      const container = containerRef.current;
+      if (el && container) {
+        const w = container.clientWidth;
+        const x = getCurrentSeconds() * pixelsPerSecond - scrollLeftPx;
+        if (x >= -1 && x <= w + 1) {
+          el.style.visibility = 'visible';
+          el.style.transform = `translateX(${x}px)`;
+        } else {
+          el.style.visibility = 'hidden';
+        }
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    raf = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(raf);
+  }, [getCurrentSeconds, pixelsPerSecond, scrollLeftPx]);
 
   // Horizontal wheel/trackpad pans the shared timeline, exactly like over the
   // waveform. Native listener (passive:false) because React's onWheel can't
@@ -728,6 +758,16 @@ export function EditableMeasureStrip({
           </div>
         );
       })()}
+
+      {/* Playback playhead — mirrors the waveform's 2px --primary line. Positioned
+          via RAF (see effect above); starts hidden until the loop places it. */}
+      {getCurrentSeconds && (
+        <div
+          ref={playheadRef}
+          className="pointer-events-none absolute left-0 top-0 z-10 w-0.5 bg-[hsl(var(--primary))]"
+          style={{ height: '100%', visibility: 'hidden', willChange: 'transform' }}
+        />
+      )}
     </div>
   );
 }

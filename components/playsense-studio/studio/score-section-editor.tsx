@@ -14,7 +14,7 @@
 // into the right rail + bottom dock.
 
 import { FileUp, Redo2, Save, Undo2 } from 'lucide-react';
-import { useEffect, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { saveScoreDocument, replaceSectionScore } from '@/app/actions/playsense-studio';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
@@ -32,6 +32,8 @@ export interface ScoreSectionEditorProps {
   scoreDocumentId: string;
   initialScore: ScoreDocument;
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
+  /** True when this section has an autosaved sync draft not yet Published. */
+  hasDraft?: boolean;
   videoUrl: string | null;
   videoDurationSeconds: number | null;
   /** Re-fetch sections (ranges / score swapped). Called after publish or replace. */
@@ -57,6 +59,7 @@ export function ScoreSectionEditor({
   scoreDocumentId,
   initialScore,
   activeTimeMap,
+  hasDraft,
   videoUrl,
   videoDurationSeconds,
   onChanged,
@@ -76,30 +79,59 @@ export function ScoreSectionEditor({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const persist = () => {
-    if (!state.isDirty) return;
+  // Latest editor state, mirrored so timers/handlers/unmount always read the
+  // newest score (never a stale closure). savingRef prevents overlapping saves.
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  });
+  const savingRef = useRef(false);
+  // The section name shown in the sidebar/lane IS the score title; refetch to
+  // refresh it only when the title actually changed (renames are rare).
+  const lastSyncedTitleRef = useRef(initialScore.title);
+
+  const persist = useCallback(() => {
+    const snap = stateRef.current;
+    if (!snap.isDirty || savingRef.current) return;
+    savingRef.current = true;
     setSavingState('saving');
     setErrorMessage(null);
     startTransition(async () => {
-      const result = await saveScoreDocument({ scoreDocumentId, scoreDocument: state.score });
+      const result = await saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score });
+      savingRef.current = false;
       if (result.error) {
         setSavingState('error');
         setErrorMessage(result.error);
-      } else {
-        setSavingState('saved');
-        markClean();
+        return;
+      }
+      setSavingState('saved');
+      // Only clean if no edit landed during the save; the reducer clones on every
+      // edit, so an unchanged reference means nothing newer is pending.
+      if (stateRef.current.score === snap.score) markClean();
+      if (snap.score.title !== lastSyncedTitleRef.current) {
+        lastSyncedTitleRef.current = snap.score.title;
+        onChanged();
       }
     });
-  };
+  }, [scoreDocumentId, markClean, onChanged]);
 
-  // Autosave every 5s when dirty.
+  // Autosave every 5s (persist itself no-ops when clean / already saving).
   useEffect(() => {
-    const id = setInterval(() => {
-      if (state.isDirty && !isPending) persist();
-    }, AUTOSAVE_INTERVAL_MS);
+    const id = setInterval(persist, AUTOSAVE_INTERVAL_MS);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.isDirty, isPending]);
+  }, [persist]);
+
+  // Flush a pending edit on unmount (e.g. switching sections) so nothing within
+  // the autosave window is lost. Fire-and-forget: no local state / no onChanged
+  // (the closed-over onChanged would reselect the section we just left).
+  useEffect(() => {
+    return () => {
+      const snap = stateRef.current;
+      if (snap.isDirty && !savingRef.current) {
+        void saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score });
+      }
+    };
+  }, [scoreDocumentId]);
 
   // Cmd/Ctrl+Z = undo, +Shift = redo (or Ctrl+Y), Cmd/Ctrl+S = save now.
   useEffect(() => {
@@ -121,8 +153,7 @@ export function ScoreSectionEditor({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [undo, redo]);
+  }, [undo, redo, persist]);
 
   return (
     <>
@@ -142,6 +173,7 @@ export function ScoreSectionEditor({
         score={state.score}
         dispatch={dispatch}
         activeTimeMap={activeTimeMap}
+        hasDraft={hasDraft}
         videoDurationSeconds={videoDurationSeconds}
         onPublished={onChanged}
         inspectorEl={inspectorEl}

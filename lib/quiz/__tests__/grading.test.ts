@@ -80,6 +80,20 @@ describe('gradeQuestion', () => {
     expect(gradeQuestion(question, ['b', 'a', 'c'])).toBe(false)
     expect(gradeQuestion(question, ['a', 'b'])).toBe(false)
   })
+
+  it('audio_choice: correct when answer id matches correct_answer', () => {
+    const question = q({ question_type: 'audio_choice', correct_answer: 'c2', options: { optionMode: 'text', choices: [{ id: 'c1', text: 'Clave' }, { id: 'c2', text: 'Conga' }] } })
+    expect(gradeQuestion(question, 'c2')).toBe(true)
+    expect(gradeQuestion(question, 'c1')).toBe(false)
+    expect(gradeQuestion(question, undefined)).toBe(false)
+  })
+
+  it('instrument_assembly: every part must land in its correct zone', () => {
+    const question = q({ question_type: 'instrument_assembly', options: { zones: [{ id: 'z1', label: 'Top', x: 0, y: 0, width: 10, height: 10 }, { id: 'z2', label: 'Bottom', x: 0, y: 50, width: 10, height: 10 }], parts: [{ id: 'p1', label: 'Head', imageUrl: '', correctZoneId: 'z1' }, { id: 'p2', label: 'Shell', imageUrl: '', correctZoneId: 'z2' }] } })
+    expect(gradeQuestion(question, { p1: 'z1', p2: 'z2' })).toBe(true)
+    expect(gradeQuestion(question, { p1: 'z2', p2: 'z1' })).toBe(false)
+    expect(gradeQuestion(question, { p1: 'z1' })).toBe(false) // unplaced part
+  })
 })
 
 describe('hasAnswer', () => {
@@ -96,5 +110,15 @@ describe('hasAnswer', () => {
   })
   it('ordering_sequence always has an order', () => {
     expect(hasAnswer(q({ question_type: 'ordering_sequence' }), undefined)).toBe(true)
+  })
+  it('audio_choice needs a non-empty string', () => {
+    const question = q({ question_type: 'audio_choice' })
+    expect(hasAnswer(question, 'c1')).toBe(true)
+    expect(hasAnswer(question, '')).toBe(false)
+  })
+  it('instrument_assembly needs at least one placed part', () => {
+    const question = q({ question_type: 'instrument_assembly' })
+    expect(hasAnswer(question, { p1: 'z1' })).toBe(true)
+    expect(hasAnswer(question, {})).toBe(false)
   })
 })

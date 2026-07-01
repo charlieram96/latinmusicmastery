@@ -7,16 +7,13 @@
 // span, with vertical markers at A and B. When loop is enabled but the user
 // scrubs outside the range, the wrap kicks in on the next RAF tick.
 
-import { Gauge, Pause, Play, Repeat, RotateCcw, X } from 'lucide-react';
+import { Pause, Play, Repeat, RotateCcw, X } from 'lucide-react';
 import {
-  useEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import { ClickTrackToggle } from './click-track-toggle';
-
-const RATE_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+import { ChronometerControl } from './chronometer-control';
 
 // Accent for scored-notation regions on the seek bar — a saturated green that
 // stays distinct from the warm amber played-fill and reads clearly in both
@@ -251,93 +248,17 @@ export function TransportBar({
               <X className="h-4 w-4" />
             </button>
           )}
-          <ClickTrackToggle bpm={bpm} beatsPerMeasure={beatsPerMeasure} isPlaying={isPlaying} />
         </div>
 
         <span className="st-divline ml-auto hidden sm:block" />
-        <RateControl playbackRate={playbackRate} onRateChange={onRateChange} />
+        <ChronometerControl
+          baseBpm={bpm}
+          beatsPerMeasure={beatsPerMeasure}
+          playbackRate={playbackRate}
+          isPlaying={isPlaying}
+          onRateChange={onRateChange}
+        />
       </div>
-    </div>
-  );
-}
-
-// Single button → popover for playback speed (replaces the old segment row).
-function RateControl({
-  playbackRate,
-  onRateChange,
-}: {
-  playbackRate: number;
-  onRateChange: (rate: number) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    window.addEventListener('pointerdown', onDown);
-    return () => window.removeEventListener('pointerdown', onDown);
-  }, [open]);
-
-  const active = Math.abs(playbackRate - 1) > 0.001;
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="st-iconbtn"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        title="Playback speed"
-        style={
-          active
-            ? {
-                width: 'auto',
-                paddingInline: 8,
-                color: 'hsl(var(--primary))',
-                background: 'color-mix(in srgb, hsl(var(--primary)) 12%, transparent)',
-              }
-            : { width: 'auto', paddingInline: 8 }
-        }
-      >
-        <span className="flex items-center gap-1.5">
-          <Gauge className="h-4 w-4" />
-          <span className="font-mono text-[12px] font-semibold tabular-nums">
-            {playbackRate}×
-          </span>
-        </span>
-      </button>
-
-      {open && (
-        <div
-          role="menu"
-          className="absolute bottom-full right-0 z-20 mb-2 min-w-[92px] overflow-hidden rounded-lg border border-border bg-popover/95 p-1 shadow-[0_8px_24px_rgba(0,0,0,0.5)] backdrop-blur-md"
-        >
-          {RATE_PRESETS.map((rate) => {
-            const on = Math.abs(playbackRate - rate) < 0.001;
-            return (
-              <button
-                key={rate}
-                type="button"
-                role="menuitemradio"
-                aria-checked={on}
-                onClick={() => {
-                  onRateChange(rate);
-                  setOpen(false);
-                }}
-                className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left font-mono text-xs font-medium tabular-nums transition-colors hover:bg-muted ${
-                  on ? 'text-primary' : 'text-foreground'
-                }`}
-              >
-                {rate}×{on && <span className="text-primary">•</span>}
-              </button>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

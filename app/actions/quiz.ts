@@ -27,6 +27,9 @@ type QuestionInput = {
   options?: unknown
   correct_answer?: string | null
   explanation?: string | null
+  // Primary media for audio_choice (prompt clip) / instrument_assembly (bg image)
+  audio_url?: string | null
+  image_url?: string | null
   // Spanish overlays (fall back to the English columns when empty)
   question_es?: string | null
   explanation_es?: string | null
@@ -55,6 +58,8 @@ export async function createQuizQuestion(classItemId: string, input: QuestionInp
       options: (input.options ?? null) as never,
       correct_answer: input.correct_answer ?? null,
       explanation: input.explanation ?? null,
+      audio_url: input.audio_url ?? null,
+      image_url: input.image_url ?? null,
       question_es: input.question_es ?? null,
       explanation_es: input.explanation_es ?? null,
       options_es: (input.options_es ?? null) as never,
@@ -76,6 +81,8 @@ export async function updateQuizQuestion(questionId: string, input: QuestionInpu
   if (input.options !== undefined) updates.options = input.options
   if (input.correct_answer !== undefined) updates.correct_answer = input.correct_answer
   if (input.explanation !== undefined) updates.explanation = input.explanation
+  if (input.audio_url !== undefined) updates.audio_url = input.audio_url
+  if (input.image_url !== undefined) updates.image_url = input.image_url
   if (input.question_es !== undefined) updates.question_es = input.question_es
   if (input.explanation_es !== undefined) updates.explanation_es = input.explanation_es
   if (input.options_es !== undefined) updates.options_es = input.options_es

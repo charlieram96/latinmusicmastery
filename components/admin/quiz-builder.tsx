@@ -5,15 +5,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Plus, Trash2, GripVertical } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { QuestionType } from '@/types/modules'
+import { QuizMediaUpload } from './quiz-media-upload'
+import { InstrumentAssemblyBuilder } from './instrument-assembly-builder'
 
 interface QuizBuilderProps {
+  questionId: string
   questionType: QuestionType
   question: string
   questionEs?: string
   options: any
   correctAnswer: string
+  audioUrl?: string
+  imageUrl?: string
   explanation: string
   explanationEs?: string
   onChange: (data: {
@@ -21,17 +26,22 @@ interface QuizBuilderProps {
     question_es?: string | null
     options?: any
     correct_answer?: string
+    audio_url?: string | null
+    image_url?: string | null
     explanation?: string
     explanation_es?: string | null
   }) => void
 }
 
 export function QuizBuilder({
+  questionId,
   questionType,
   question,
   questionEs = '',
   options,
   correctAnswer,
+  audioUrl = '',
+  imageUrl = '',
   explanation,
   explanationEs = '',
   onChange,
@@ -59,6 +69,25 @@ export function QuizBuilder({
       case 'text_answer':
         return (
           <TextAnswerBuilder correctAnswer={correctAnswer} onChange={onChange} />
+        )
+      case 'audio_choice':
+        return (
+          <AudioChoiceBuilder
+            questionId={questionId}
+            options={options}
+            correctAnswer={correctAnswer}
+            audioUrl={audioUrl}
+            onChange={onChange}
+          />
+        )
+      case 'instrument_assembly':
+        return (
+          <InstrumentAssemblyBuilder
+            questionId={questionId}
+            options={options}
+            imageUrl={imageUrl}
+            onChange={onChange}
+          />
         )
       case 'audio':
         return (
@@ -526,6 +555,103 @@ function TextAnswerBuilder({
       <p className="text-xs text-muted-foreground">
         Student answers will be compared to this text (case-insensitive).
       </p>
+    </div>
+  )
+}
+
+// Audio — Listen & Choose Builder
+// Author uploads a prompt clip; answer choices are either text or audio clips.
+function AudioChoiceBuilder({
+  questionId,
+  options,
+  correctAnswer,
+  audioUrl,
+  onChange,
+}: {
+  questionId: string
+  options: any
+  correctAnswer: string
+  audioUrl: string
+  onChange: (data: any) => void
+}) {
+  const mode: 'text' | 'audio' = options?.optionMode ?? 'text'
+  const choices = options?.choices ?? []
+
+  const setOptions = (next: { optionMode?: 'text' | 'audio'; choices?: any[] }) => {
+    onChange({ options: { optionMode: mode, choices, ...next } })
+  }
+
+  const addChoice = () => setOptions({ choices: [...choices, { id: crypto.randomUUID(), text: '', audioUrl: '' }] })
+  const updateChoice = (id: string, patch: any) =>
+    setOptions({ choices: choices.map((c: any) => (c.id === id ? { ...c, ...patch } : c)) })
+  const removeChoice = (id: string) => setOptions({ choices: choices.filter((c: any) => c.id !== id) })
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-2">
+        <Label>Prompt clip (students listen to this)</Label>
+        <QuizMediaUpload
+          kind="audio"
+          slug={`${questionId}-prompt`}
+          value={audioUrl}
+          onChange={(url) => onChange({ audio_url: url || null })}
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <Label>Answer choices are…</Label>
+        <RadioGroup
+          value={mode}
+          onValueChange={(v) => setOptions({ optionMode: v as 'text' | 'audio' })}
+          className="flex gap-4"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="text" id={`${questionId}-mode-text`} />
+            <Label htmlFor={`${questionId}-mode-text`} className="font-normal">Text</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="audio" id={`${questionId}-mode-audio`} />
+            <Label htmlFor={`${questionId}-mode-audio`} className="font-normal">Audio clips</Label>
+          </div>
+        </RadioGroup>
+      </div>
+
+      <div className="space-y-3">
+        <Label>Choices (select the correct one)</Label>
+        {choices.map((choice: any, index: number) => (
+          <div key={choice.id} className="flex items-start gap-2">
+            <input
+              type="radio"
+              name={`correct-${questionId}`}
+              checked={correctAnswer === choice.id}
+              onChange={() => onChange({ correct_answer: choice.id })}
+              className="mt-3 h-4 w-4"
+            />
+            <div className="flex-1 space-y-2">
+              <Input
+                value={choice.text ?? ''}
+                onChange={(e) => updateChoice(choice.id, { text: e.target.value })}
+                placeholder={mode === 'audio' ? `Optional label for clip ${index + 1}` : `Option ${index + 1}`}
+              />
+              {mode === 'audio' && (
+                <QuizMediaUpload
+                  kind="audio"
+                  slug={`${questionId}-choice-${choice.id}`}
+                  value={choice.audioUrl ?? ''}
+                  onChange={(url) => updateChoice(choice.id, { audioUrl: url })}
+                  compact
+                />
+              )}
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={() => removeChoice(choice.id)} className="mt-1 h-8 w-8 p-0">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        <Button type="button" variant="outline" size="sm" onClick={addChoice}>
+          <Plus className="mr-2 h-4 w-4" /> Add Choice
+        </Button>
+      </div>
     </div>
   )
 }

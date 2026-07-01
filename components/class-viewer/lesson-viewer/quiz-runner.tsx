@@ -17,6 +17,8 @@ const TYPE_LABELS: Record<string, string> = {
   true_false: 'True or false',
   text_answer: 'Short answer',
   audio: 'Listening',
+  audio_choice: 'Listen & choose',
+  instrument_assembly: 'Build the instrument',
   fill_in_blank: 'Fill in the blank',
   matching_pairs: 'Match the pairs',
   ordering_sequence: 'Put in order',
@@ -36,6 +38,8 @@ function seedAnswers(questions: QuizQuestion[]): Record<string, unknown> {
     if (qq.question_type === 'ordering_sequence') {
       const items = ((qq.options ?? {}) as Record<string, unknown>).items as OrderItem[] | undefined
       init[qq.id] = shuffleStable((items ?? []).map((it) => it.id), qq.id)
+    } else if (qq.question_type === 'instrument_assembly') {
+      init[qq.id] = {} // partId -> zoneId, filled as parts are dragged
     }
   }
   return init

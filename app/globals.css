@@ -759,6 +759,124 @@ html:has([data-marketing]) {
 /* Mono variant of the segmented control (transport rate). */
 .st-seg.mono button { font-family: var(--font-mono, ui-monospace, Menlo, monospace); }
 
+/* ── Chronometer (unified tempo + speed + click-track control) ──────────── */
+
+/* A little metronome glyph: triangular body, pivoting arm, sliding weight.
+   The arm swings via CSS at the effective tempo (duration set inline). */
+.st-chrono {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+/* Trapezoidal body built from a bottom-heavy triangle. */
+.st-chrono-body {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  width: 78%;
+  height: 84%;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, hsl(var(--primary)) 22%, transparent);
+  border: 1px solid hsl(var(--primary));
+  border-radius: 8% 8% 14% 14%;
+  clip-path: polygon(38% 0%, 62% 0%, 100% 100%, 0% 100%);
+}
+/* The swinging arm, pivoting at the base center. */
+.st-chrono-arm {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  width: 7%;
+  min-width: 1.5px;
+  height: 74%;
+  background: hsl(var(--primary));
+  border-radius: 2px;
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(0deg);
+  animation-name: st-chrono-swing;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+/* The weight riding on the arm. */
+.st-chrono-weight {
+  position: absolute;
+  left: 50%;
+  top: 24%;
+  width: 320%;
+  min-width: 4px;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  background: hsl(var(--primary));
+  border-radius: 2px;
+}
+.st-chrono-pivot {
+  position: absolute;
+  left: 50%;
+  bottom: 10%;
+  width: 12%;
+  min-width: 3px;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  background: hsl(var(--primary));
+  border-radius: 50%;
+}
+@keyframes st-chrono-swing {
+  from { transform: translateX(-50%) rotate(-26deg); }
+  to   { transform: translateX(-50%) rotate(26deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .st-chrono-arm { animation: none !important; }
+}
+
+/* Small +/- steppers in the chronometer popover. */
+.st-chrono-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  background: none;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s, border-color 0.14s;
+}
+.st-chrono-step:hover:not(:disabled) {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+.st-chrono-step:disabled { opacity: 0.35; cursor: default; }
+
+/* Rate slider in the chronometer popover. */
+.st-chrono-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: hsl(var(--muted));
+  outline: none;
+  cursor: pointer;
+}
+.st-chrono-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  border: 2px solid hsl(var(--popover));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.st-chrono-range::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  border: 2px solid hsl(var(--popover));
+}
+
 /* Gradient primary button shared by New-section + Add-note. */
 .st-btn-primary {
   display: inline-flex;

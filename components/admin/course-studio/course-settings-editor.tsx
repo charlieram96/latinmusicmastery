@@ -274,6 +274,44 @@ export function CourseSettingsEditor({
             </SelectContent>
           </Select>
         </div>
+
+        <div className="grid gap-1.5">
+          <Label className="text-xs">Difficulty</Label>
+          <Select
+            value={settings.difficulty ?? 'all'}
+            onValueChange={(value) => {
+              const difficulty = value === 'all' ? null : value
+              onPatched({ difficulty })
+              saveNow({ difficulty })
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All levels</SelectItem>
+              <SelectItem value="beginner">Beginner</SelectItem>
+              <SelectItem value="intermediate">Intermediate</SelectItem>
+              <SelectItem value="advanced">Advanced</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-border bg-warm-surface/60 px-3.5 py-3">
+          <span className="space-y-0.5">
+            <span className="block text-[13px] font-medium text-foreground">Master class</span>
+            <span className="block text-xs leading-relaxed text-muted-foreground">
+              Feature this course as a master class.
+            </span>
+          </span>
+          <Switch
+            checked={settings.is_master_class}
+            onCheckedChange={(checked) => {
+              onPatched({ is_master_class: checked })
+              saveNow({ is_master_class: checked })
+            }}
+          />
+        </label>
       </div>
     </div>
   )
