@@ -10,10 +10,10 @@ const ACCEPT = {
   image: 'image/jpeg,image/png,image/webp,image/gif',
 } as const
 
-const ALLOWED = {
+const ALLOWED: Record<'audio' | 'image', readonly string[]> = {
   audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm'],
   image: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-} as const
+}
 
 const MAX_BYTES = { audio: 50 * 1024 * 1024, image: 10 * 1024 * 1024 } as const
 
