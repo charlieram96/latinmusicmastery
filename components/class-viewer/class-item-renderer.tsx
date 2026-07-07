@@ -17,6 +17,7 @@ import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
 import { ExerciseView } from '@/components/class-viewer/lesson-viewer/exercise-view'
 import { LessonVideoPlayer } from '@/components/class-viewer/lesson-viewer/lesson-video-player'
 import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise'
+import type { SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt'
 
 // Feature flag — set PLAYSENSE_STUDIO_ENABLED=false in env to roll back to the legacy
 // iframe path even when a class item has a score attached. Default true so
@@ -30,6 +31,8 @@ interface ClassItemRendererProps {
     item_type: string
     soundslice_embed_url: string | null
     video_url: string | null
+    subtitles_en_url: string | null
+    subtitles_es_url: string | null
     score_document_id: string | null
     active_time_map_id: string | null
     question: string | null
@@ -50,6 +53,19 @@ interface ClassItemRendererProps {
 }
 
 export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassItemRendererProps) {
+  const locale = await getServerLocale()
+
+  // Subtitle tracks for the demo video. Both languages are passed to the
+  // players (the student can switch independently of the UI locale); the
+  // locale only picks which one starts showing.
+  const subtitleTracks: SubtitleTrackDef[] = []
+  if (item.subtitles_en_url) {
+    subtitleTracks.push({ lang: 'en', label: 'English', src: item.subtitles_en_url })
+  }
+  if (item.subtitles_es_url) {
+    subtitleTracks.push({ lang: 'es', label: 'Español', src: item.subtitles_es_url })
+  }
+
   // PlaySense Studio takes priority over the legacy Soundslice iframe whenever a
   // score_document is attached AND we have a media URL to drive the cursor
   // (video for VIDEO items, audio for JAM_SESSION).
@@ -123,7 +139,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
     item.item_type === 'QUIZ' || item.item_type === 'EXERCISE'
       ? localizeRows(
           (await getQuizQuestions(item.id)).data as unknown as Record<string, unknown>[],
-          await getServerLocale(),
+          locale,
           QUIZ_FIELDS
         ) as unknown as Awaited<ReturnType<typeof getQuizQuestions>>['data']
       : []
@@ -159,6 +175,8 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
             activeTimeMap={firstSection.activeTimeMap}
             sections={playerSections}
             layout="split"
+            subtitles={subtitleTracks}
+            defaultSubtitleLang={locale}
           />
         ) : firstUnplacedSection && item.video_url && playerLayout === 'split' ? (
           // Notation exists but isn't sync-mapped yet → still show it on the right.
@@ -170,11 +188,17 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
             tracks={firstUnplacedSection.tracks}
             activeTimeMap={null}
             layout="split"
+            subtitles={subtitleTracks}
+            defaultSubtitleLang={locale}
           />
         ) : item.video_url && !item.soundslice_embed_url ? (
           // No notation → polished full-width player. Description + notes render
           // below the workspace (page body + rich-content card), not on the side.
-          <LessonVideoPlayer src={item.video_url} />
+          <LessonVideoPlayer
+            src={item.video_url}
+            subtitles={subtitleTracks}
+            defaultSubtitleLang={locale}
+          />
         ) : (
           <Card className="overflow-hidden rounded-2xl border-border shadow-warm">
             <CardContent className="p-0">
@@ -208,6 +232,8 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
                   score={playsenseStudioData.scoreDocument.parsedScore}
                   tracks={playsenseStudioData.tracks}
                   activeTimeMap={playsenseStudioData.activeTimeMap}
+                  subtitles={subtitleTracks}
+                  defaultSubtitleLang={locale}
                 />
               </CardContent>
             </Card>
@@ -215,7 +241,23 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
             <Card className="overflow-hidden rounded-2xl border-border shadow-warm">
               <CardContent className="p-0">
                 <div className="aspect-video overflow-hidden bg-black">
-                  <video src={item.video_url} controls className="w-full h-full" />
+                  <video
+                    src={item.video_url}
+                    controls
+                    crossOrigin={subtitleTracks.length > 0 ? 'anonymous' : undefined}
+                    className="w-full h-full"
+                  >
+                    {subtitleTracks.map((t) => (
+                      <track
+                        key={t.src}
+                        kind="subtitles"
+                        src={t.src}
+                        srcLang={t.lang}
+                        label={t.label}
+                        default={t.lang === locale}
+                      />
+                    ))}
+                  </video>
                 </div>
               </CardContent>
             </Card>

@@ -1340,3 +1340,12 @@ html:has([data-marketing]) {
   text-transform: uppercase;
   color: hsl(var(--muted-foreground));
 }
+
+/* Lesson video subtitles — legible cue box over any footage. Cue vertical
+   position is nudged above the custom control bar in use-subtitle-tracks. */
+video::cue {
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: clamp(14px, 2.4vw, 22px);
+  line-height: 1.35;
+}

@@ -45,6 +45,8 @@ import {
 import { StaffScrubBar } from './notation/staff-scrub-bar';
 import { ClipsPanel } from './clips/clips-panel';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
+import { useSubtitleTracks } from './state/use-subtitle-tracks';
+import type { SubtitleLang, SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt';
 import { logPlaysenseStudioEvent, type PlaysenseStudioClip } from '@/app/actions/playsense-studio';
 import {
   WaypointTimeMap,
@@ -114,6 +116,10 @@ export interface PlaysenseStudioPlayerProps {
   layout?: 'stack' | 'split';
   /** Fired when the demo video plays to its end. */
   onEnded?: () => void;
+  /** WebVTT subtitle tracks for the demo video (rendered by VideoStage). */
+  subtitles?: SubtitleTrackDef[];
+  /** UI locale — the matching track starts showing; user can switch/turn off. */
+  defaultSubtitleLang?: SubtitleLang;
 }
 
 const POSITION_SAVE_INTERVAL_MS = 5000;
@@ -129,9 +135,14 @@ export function PlaysenseStudioPlayer({
   readOnly,
   layout = 'stack',
   onEnded,
+  subtitles,
+  defaultSubtitleLang,
 }: PlaysenseStudioPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const clock = useVideoTransportClock(videoRef, { onEnded });
+  const subtitleTracks = subtitles ?? [];
+  const { activeLang: activeSubtitleLang, setActiveLang: setActiveSubtitleLang } =
+    useSubtitleTracks(videoRef, subtitleTracks, defaultSubtitleLang);
 
   // Normalize to a list of sections. With none provided, the single score becomes
   // one always-active section (start = null) so the rest of the player is unchanged.
@@ -412,6 +423,7 @@ export function PlaysenseStudioPlayer({
       ref={videoRef}
       src={videoUrl}
       poster={posterUrl}
+      tracks={subtitleTracks}
       className={
         layout === 'split'
           ? 'h-full w-full [&_video]:object-contain'
@@ -453,6 +465,9 @@ export function PlaysenseStudioPlayer({
       bpm={score.initialTempo}
       beatsPerMeasure={score.initialTimeSignature[0]}
       sectionMarkers={sectionMarkers}
+      subtitleOptions={subtitleTracks.length > 0 ? subtitleTracks : undefined}
+      activeSubtitleLang={activeSubtitleLang}
+      onSubtitleLangChange={setActiveSubtitleLang}
     />
   );
 
