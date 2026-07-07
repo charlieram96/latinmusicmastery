@@ -1,0 +1,10 @@
+{
+  "parts": [
+    { "id": "pt1", "label": "Bell", "imageUrl": "https://example.com/bell.png", "correctZoneId": "z1" },
+    { "id": "pt2", "label": "Skin", "imageUrl": "https://example.com/skin.png", "correctZoneId": "z2" }
+  ],
+  "zones": [
+    { "id": "z1", "label": "Top mount", "x": 10, "y": 20, "width": 15, "height": 15 },
+    { "id": "z2", "label": "Shell", "x": 40, "y": 50, "width": 25, "height": 25 }
+  ]
+}

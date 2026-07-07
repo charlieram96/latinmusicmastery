@@ -1,0 +1,7 @@
+{
+  "choices": [
+    { "id": "c1", "text": "Congas" },
+    { "id": "c2", "text": "Timbales" },
+    { "id": "c3", "audioUrl": "https://audio.example.com/clip3.mp3" }
+  ]
+}

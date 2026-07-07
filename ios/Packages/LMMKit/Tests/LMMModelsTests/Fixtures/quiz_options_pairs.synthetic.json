@@ -1,0 +1,6 @@
+{
+  "pairs": [
+    { "id": "p1", "left": "Clave", "right": "The rhythmic key pattern" },
+    { "id": "p2", "left": "Tumbao", "right": "The bass rhythmic pattern" }
+  ]
+}
