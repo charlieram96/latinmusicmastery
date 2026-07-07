@@ -17,8 +17,23 @@ jobs:
         working-directory: ios/Packages/LMMKit
     steps:
       - uses: actions/checkout@v4
-      - name: swift test
-        run: swift test
+      # Package.swift declares iOS-only (.iOS(.v17)), so a bare `swift test`
+      # falls back to building LMMData for the macOS host (SwiftPM's macOS 10.13
+      # baseline), which conflicts with Supabase's macOS 13 minimum. Run the
+      # tests through the auto-synthesized package scheme on an iOS simulator
+      # instead (Xcode synthesizes "LMMKit-Package" for any SPM package dir,
+      # no xcodegen needed here). Verified locally: `xcodebuild -list` in this
+      # directory reports the "LMMKit-Package" scheme, and `xcodebuild test`
+      # against it passes on iPhone 16 (iOS 18.3.1). OS=latest is used here
+      # (instead of pinning 18.3.1) since the exact simulator runtime
+      # preinstalled on GitHub's macos-15 image can drift between Xcode
+      # updates; "iPhone 16" is available on Xcode 16.x+ images.
+      - name: xcodebuild test (iOS Simulator)
+        run: |
+          xcodebuild test \
+            -scheme LMMKit-Package \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -skipPackagePluginValidation
 
   swiftlint:
     name: SwiftLint
