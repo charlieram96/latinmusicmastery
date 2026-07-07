@@ -1,0 +1,51 @@
+name: iOS
+
+on:
+  push:
+    paths:
+      - "ios/**"
+  pull_request:
+    paths:
+      - "ios/**"
+
+jobs:
+  package-tests:
+    name: Swift Package Tests
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: ios/Packages/LMMKit
+    steps:
+      - uses: actions/checkout@v4
+      - name: swift test
+        run: swift test
+
+  swiftlint:
+    name: SwiftLint
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      - name: Run SwiftLint
+        working-directory: ios
+        run: swiftlint lint --strict
+
+  # TODO(ios-app): re-enable once xcodegen is available on the CI runner (and the
+  # LMMKit dependency graph is past the scaffold stage). Wire fully in a later task.
+  # simulator-build:
+  #   name: App Build (iOS Simulator)
+  #   runs-on: macos-15
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Install XcodeGen
+  #       run: brew install xcodegen
+  #     - name: Generate project
+  #       working-directory: ios
+  #       run: xcodegen generate
+  #     - name: Build for simulator
+  #       working-directory: ios
+  #       run: |
+  #         xcodebuild -scheme LatinMusicMastery \
+  #           -destination 'platform=iOS Simulator,name=iPhone 16' \
+  #           build
