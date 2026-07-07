@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { updateClassItem } from '@/app/actions/course-builder'
 import { VideoUpload } from '../video-upload'
+import { SubtitleUpload } from '../subtitle-upload'
 import { QuizQuestionsEditor } from '../quiz-questions-editor'
 import { JamSessionEditor } from '../jam-session-editor'
 import { TiptapEditor } from '../tiptap-editor'
@@ -105,6 +106,12 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
     saveNow({ video_url: url })
   }
 
+  const handleSubtitleChanged = (lang: 'en' | 'es') => (url: string | null) => {
+    const col = lang === 'en' ? 'subtitles_en_url' : 'subtitles_es_url'
+    onPatched({ [col]: url } as Partial<ClassItem>)
+    saveNow({ [col]: url })
+  }
+
   const handleJamChange = (data: {
     audio_url?: string
     bpm?: number | null
@@ -178,6 +185,23 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
             currentVideoUrl={item.video_url}
             onVideoUploaded={handleVideoUploaded}
           />
+          {item.video_url && (
+            <div className="space-y-2">
+              <SectionLabel>Subtitles</SectionLabel>
+              <SubtitleUpload
+                itemId={item.id}
+                lang="en"
+                currentUrl={item.subtitles_en_url}
+                onChanged={handleSubtitleChanged('en')}
+              />
+              <SubtitleUpload
+                itemId={item.id}
+                lang="es"
+                currentUrl={item.subtitles_es_url}
+                onChanged={handleSubtitleChanged('es')}
+              />
+            </div>
+          )}
           <PlaysenseStudioScoreAttach
             classItemId={item.id}
             itemType={item.item_type}
@@ -218,6 +242,23 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
                 currentVideoUrl={item.video_url}
                 onVideoUploaded={handleVideoUploaded}
               />
+              {item.video_url && (
+                <div className="space-y-2">
+                  <SectionLabel>Subtitles</SectionLabel>
+                  <SubtitleUpload
+                    itemId={item.id}
+                    lang="en"
+                    currentUrl={item.subtitles_en_url}
+                    onChanged={handleSubtitleChanged('en')}
+                  />
+                  <SubtitleUpload
+                    itemId={item.id}
+                    lang="es"
+                    currentUrl={item.subtitles_es_url}
+                    onChanged={handleSubtitleChanged('es')}
+                  />
+                </div>
+              )}
               <PlaysenseStudioScoreAttach
                 classItemId={item.id}
                 currentScoreDocumentId={scoreDocumentId}

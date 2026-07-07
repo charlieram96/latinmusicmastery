@@ -30,14 +30,19 @@ import {
   Gauge,
   Repeat,
   RotateCcw,
+  Captions,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock'
+import { useSubtitleTracks } from '@/components/playsense-studio/player/state/use-subtitle-tracks'
+import type { SubtitleLang, SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt'
 
 interface LessonVideoPlayerProps {
   src: string
   poster?: string
   className?: string
+  subtitles?: SubtitleTrackDef[]
+  defaultSubtitleLang?: SubtitleLang
 }
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2]
@@ -52,10 +57,18 @@ function fmt(seconds: number): string {
   return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
 }
 
-export function LessonVideoPlayer({ src, poster, className }: LessonVideoPlayerProps) {
+export function LessonVideoPlayer({
+  src,
+  poster,
+  className,
+  subtitles,
+  defaultSubtitleLang,
+}: LessonVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const clock = useVideoTransportClock(videoRef)
+  const tracks = subtitles ?? []
+  const { activeLang, setActiveLang } = useSubtitleTracks(videoRef, tracks, defaultSubtitleLang)
 
   const [hasPlayed, setHasPlayed] = useState(false)
   const [volume, setVolume] = useState(1)
@@ -64,6 +77,7 @@ export function LessonVideoPlayer({ src, poster, className }: LessonVideoPlayerP
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [controlsVisible, setControlsVisible] = useState(true)
   const [speedOpen, setSpeedOpen] = useState(false)
+  const [captionsOpen, setCaptionsOpen] = useState(false)
   const [hoverPct, setHoverPct] = useState<number | null>(null)
   const [scrubbing, setScrubbing] = useState(false)
 
@@ -112,9 +126,9 @@ export function LessonVideoPlayer({ src, poster, className }: LessonVideoPlayerP
     setControlsVisible(true)
     if (hideTimer.current) clearTimeout(hideTimer.current)
     hideTimer.current = setTimeout(() => {
-      if (clock.isPlaying && !speedOpen) setControlsVisible(false)
+      if (clock.isPlaying && !speedOpen && !captionsOpen) setControlsVisible(false)
     }, 2600)
-  }, [clock.isPlaying, speedOpen])
+  }, [clock.isPlaying, speedOpen, captionsOpen])
 
   useEffect(() => {
     if (!clock.isPlaying) setControlsVisible(true)
@@ -218,7 +232,7 @@ export function LessonVideoPlayer({ src, poster, className }: LessonVideoPlayerP
       onKeyDown={onKeyDown}
       onPointerMove={bumpControls}
       onMouseLeave={() => {
-        if (clock.isPlaying && !speedOpen) setControlsVisible(false)
+        if (clock.isPlaying && !speedOpen && !captionsOpen) setControlsVisible(false)
         setHoverPct(null)
       }}
       className={cn(
@@ -233,9 +247,14 @@ export function LessonVideoPlayer({ src, poster, className }: LessonVideoPlayerP
         poster={poster}
         playsInline
         preload="metadata"
+        crossOrigin={tracks.length > 0 ? 'anonymous' : undefined}
         onClick={() => (hasPlayed ? clock.toggle() : firstPlay())}
         className="absolute inset-0 h-full w-full bg-black"
-      />
+      >
+        {tracks.map((t) => (
+          <track key={t.src} kind="subtitles" src={t.src} srcLang={t.lang} label={t.label} />
+        ))}
+      </video>
 
       {/* First-play overlay (also handles the mobile user-gesture requirement) */}
       {!hasPlayed && (
@@ -403,6 +422,46 @@ export function LessonVideoPlayer({ src, poster, className }: LessonVideoPlayerP
               </div>
             )}
           </div>
+
+          {/* Subtitles */}
+          {tracks.length > 0 && (
+            <div className="relative">
+              <ControlButton
+                onClick={() => setCaptionsOpen((o) => !o)}
+                label="Subtitles"
+                active={activeLang !== 'off'}
+              >
+                <Captions className="h-5 w-5" />
+              </ControlButton>
+              {captionsOpen && (
+                <div
+                  className="absolute bottom-full right-0 mb-2 min-w-[110px] overflow-hidden rounded-lg border border-border bg-sunken/95 p-1 shadow-warm backdrop-blur-md"
+                  onMouseLeave={() => setCaptionsOpen(false)}
+                >
+                  {[
+                    { value: 'off' as const, label: 'Off' },
+                    ...tracks.map((t) => ({ value: t.lang, label: t.label })),
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setActiveLang(opt.value)
+                        setCaptionsOpen(false)
+                      }}
+                      className={cn(
+                        'flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-xs font-medium transition-colors hover:bg-muted',
+                        activeLang === opt.value ? 'text-primary' : 'text-foreground'
+                      )}
+                    >
+                      {opt.label}
+                      {activeLang === opt.value && <span className="text-primary">•</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <ControlButton onClick={toggleFullscreen} label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
             {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}

@@ -56,6 +56,8 @@ export function localizeRows<T extends Record<string, unknown>>(
 export const COURSE_FIELDS = ['title', 'description'] as const
 export const SECTION_FIELDS = ['title', 'description'] as const
 export const CLASS_FIELDS = ['title', 'description'] as const
+// NOTE: never add subtitle fields here — subtitles_en_url/subtitles_es_url are
+// not a base/_es overlay pair; the players need both languages simultaneously.
 export const ITEM_FIELDS = ['title', 'description', 'question', 'explanation', 'options'] as const
 export const QUIZ_FIELDS = ['question', 'explanation', 'options'] as const
 export const STYLE_FIELDS = ['name', 'description'] as const

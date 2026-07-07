@@ -12,11 +12,15 @@
 
 import { Play } from 'lucide-react';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
+import type { SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt';
 
 interface VideoStageProps {
   src: string;
   poster?: string;
   className?: string;
+  /** Subtitle tracks rendered as <track> children; the parent's
+      useSubtitleTracks hook drives which one is showing. */
+  tracks?: SubtitleTrackDef[];
   /**
    * Called after the user dismisses the tap-to-play overlay. Use this to
    * trigger play() (we cannot call it ourselves — must come from the gesture
@@ -26,7 +30,7 @@ interface VideoStageProps {
 }
 
 export const VideoStage = forwardRef<HTMLVideoElement, VideoStageProps>(
-  function VideoStage({ src, poster, className, onFirstPlay }, ref) {
+  function VideoStage({ src, poster, className, tracks, onFirstPlay }, ref) {
     const [hasPlayed, setHasPlayed] = useState(false);
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -64,8 +68,13 @@ export const VideoStage = forwardRef<HTMLVideoElement, VideoStageProps>(
           poster={poster}
           playsInline
           preload="metadata"
+          crossOrigin={tracks && tracks.length > 0 ? 'anonymous' : undefined}
           className="w-full h-full block"
-        />
+        >
+          {tracks?.map((t) => (
+            <track key={t.src} kind="subtitles" src={t.src} srcLang={t.lang} label={t.label} />
+          ))}
+        </video>
         {!hasPlayed && (
           <button
             type="button"

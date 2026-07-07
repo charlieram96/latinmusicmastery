@@ -298,6 +298,8 @@ export type Database = {
           rich_content: Json | null
           score_document_id: string | null
           soundslice_embed_url: string | null
+          subtitles_en_url: string | null
+          subtitles_es_url: string | null
           title: string
           title_es: string | null
           updated_at: string | null
@@ -327,6 +329,8 @@ export type Database = {
           rich_content?: Json | null
           score_document_id?: string | null
           soundslice_embed_url?: string | null
+          subtitles_en_url?: string | null
+          subtitles_es_url?: string | null
           title: string
           title_es?: string | null
           updated_at?: string | null
@@ -356,6 +360,8 @@ export type Database = {
           rich_content?: Json | null
           score_document_id?: string | null
           soundslice_embed_url?: string | null
+          subtitles_en_url?: string | null
+          subtitles_es_url?: string | null
           title?: string
           title_es?: string | null
           updated_at?: string | null

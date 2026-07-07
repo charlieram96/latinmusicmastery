@@ -7,13 +7,15 @@
 // span, with vertical markers at A and B. When loop is enabled but the user
 // scrubs outside the range, the wrap kicks in on the next RAF tick.
 
-import { Pause, Play, Repeat, RotateCcw, X } from 'lucide-react';
+import { Captions, Pause, Play, Repeat, RotateCcw, X } from 'lucide-react';
 import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { ChronometerControl } from './chronometer-control';
+import type { ActiveSubtitleLang } from '../state/use-subtitle-tracks';
+import type { SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt';
 
 // Accent for scored-notation regions on the seek bar — a saturated green that
 // stays distinct from the warm amber played-fill and reads clearly in both
@@ -47,6 +49,12 @@ interface TransportBarProps {
   // Scored-section regions drawn on the scrub bar (clickable to jump). Used by
   // multi-section video lessons; omitted elsewhere.
   sectionMarkers?: Array<{ startSeconds: number; endSeconds: number | null; label?: string | null }>;
+
+  // Subtitles — present only when the lesson has caption tracks. The CC button
+  // opens a small Off/English/Español picker.
+  subtitleOptions?: SubtitleTrackDef[];
+  activeSubtitleLang?: ActiveSubtitleLang;
+  onSubtitleLangChange?: (lang: ActiveSubtitleLang) => void;
 }
 
 export function TransportBar({
@@ -66,7 +74,11 @@ export function TransportBar({
   bpm,
   beatsPerMeasure,
   sectionMarkers,
+  subtitleOptions,
+  activeSubtitleLang = 'off',
+  onSubtitleLangChange,
 }: TransportBarProps) {
+  const [captionsOpen, setCaptionsOpen] = useState(false);
   const safeDuration = Math.max(durationSeconds, 0.001);
   const loopAPct = loopA !== null ? (loopA / safeDuration) * 100 : null;
   const loopBPct = loopB !== null ? (loopB / safeDuration) * 100 : null;
@@ -249,6 +261,59 @@ export function TransportBar({
             </button>
           )}
         </div>
+
+        {/* Subtitles */}
+        {subtitleOptions && subtitleOptions.length > 0 && onSubtitleLangChange && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setCaptionsOpen((o) => !o)}
+              className="st-iconbtn"
+              style={
+                activeSubtitleLang !== 'off'
+                  ? {
+                      color: 'hsl(var(--primary))',
+                      background: 'color-mix(in srgb, hsl(var(--primary)) 12%, transparent)',
+                    }
+                  : undefined
+              }
+              title="Subtitles"
+              aria-label="Subtitles"
+              aria-pressed={activeSubtitleLang !== 'off'}
+            >
+              <Captions className="h-4 w-4" />
+            </button>
+            {captionsOpen && (
+              <div
+                className="absolute bottom-full right-0 z-40 mb-2 min-w-[110px] overflow-hidden rounded-lg border border-border bg-popover/95 p-1 shadow-lg backdrop-blur"
+                onMouseLeave={() => setCaptionsOpen(false)}
+              >
+                {[
+                  { value: 'off' as ActiveSubtitleLang, label: 'Off' },
+                  ...subtitleOptions.map((t) => ({
+                    value: t.lang as ActiveSubtitleLang,
+                    label: t.label,
+                  })),
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      onSubtitleLangChange(opt.value);
+                      setCaptionsOpen(false);
+                    }}
+                    className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-xs font-medium transition-colors hover:bg-muted ${
+                      activeSubtitleLang === opt.value ? 'text-primary' : 'text-foreground'
+                    }`}
+                  >
+                    {opt.label}
+                    {activeSubtitleLang === opt.value && <span className="text-primary">•</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <span className="st-divline ml-auto hidden sm:block" />
         <ChronometerControl
