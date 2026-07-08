@@ -128,6 +128,15 @@ let package = Package(
             ]
         ),
         .testTarget(
+            name: "PlaySenseHighwayTests",
+            dependencies: [
+                "PlaySenseHighway",
+                "PlaySenseCore",
+                "ScoreModel",
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+            ]
+        ),
+        .testTarget(
             name: "TimeMapKitTests",
             dependencies: [
                 "TimeMapKit",
