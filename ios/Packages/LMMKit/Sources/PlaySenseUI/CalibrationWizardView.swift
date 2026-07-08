@@ -9,7 +9,11 @@ import SwiftUI
 /// stored confirmation. Drives a real `GameAudioEngine` + mic tap; in DEBUG builds a "simulate taps"
 /// control lets the wizard be exercised on the Simulator, which has no usable mic input.
 public struct CalibrationWizardView: View {
-    @StateObject private var model: CalibrationWizardModel
+    // Not `private`: `CalibrationWizardView+Interrupted.swift` (a same-module, different-file extension
+    // covering the `.interrupted` step — split out purely to stay under SwiftLint's `type_body_length`
+    // cap, same reason `CalibrationWizardModel` lives in its own file) needs to reach `model.retry()`.
+    @StateObject var model: CalibrationWizardModel
+    @Environment(\.scenePhase) private var scenePhase
     private let onFinished: (() -> Void)?
 
     public init(
@@ -33,6 +37,13 @@ public struct CalibrationWizardView: View {
         .background(LMMColor.background)
         .navigationTitle("Calibration")
         .onDisappear { model.cancel() }
+        .onChange(of: scenePhase) { _, phase in
+            // A phone call or Bluetooth route change surfaces as an `AudioSessionController` event and
+            // is handled by the model directly; simply being backgrounded (home button / app switcher /
+            // a full-screen system UI) does not, so the view forwards that transition explicitly — same
+            // "never silently complete/persist a partial take" rationale, see `handleBackgrounding()`.
+            if phase == .background { model.handleBackgrounding() }
+        }
     }
 
     // MARK: - Header
@@ -88,6 +99,8 @@ public struct CalibrationWizardView: View {
             resultContent(outcome)
         case let .stored(record):
             storedContent(record)
+        case let .interrupted(reason):
+            interruptedContent(reason)
         }
     }
 
@@ -186,7 +199,10 @@ public struct CalibrationWizardView: View {
             return "Count-in… get ready to tap!"
         case let .tapping(beat):
             return "Tap along! \(beat) / \(LatencyCalibrator.measuredBeats)"
-        case .result:
+        case .result, .interrupted:
+            // `.interrupted` is pulled up to its own top-level `CalibrationWizardStep` (see
+            // `CalibrationWizardModel`'s `onPhaseChange`), so `runningContent` never actually renders it
+            // — this case only exists to keep the switch exhaustive over `CalibrationPhase`.
             return ""
         }
     }
@@ -241,36 +257,6 @@ public struct CalibrationWizardView: View {
                 Button("Recalibrate") { model.retry() }.buttonStyle(.lmmSecondary)
                 Button("Continue") { model.accept() }.buttonStyle(.lmmPrimary)
             }
-        }
-    }
-
-    private func failureResult(_ failure: CalibrationFailure) -> some View {
-        VStack(spacing: LMMSpacing.md) {
-            ZStack {
-                Circle().fill(LMMColor.destructive.opacity(0.15)).frame(width: 56, height: 56)
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 20))
-                    .foregroundStyle(LMMColor.destructive)
-            }
-            Text(Self.failureMessage(failure))
-                .font(LMMFont.subheadline)
-                .foregroundStyle(LMMColor.destructive)
-                .multilineTextAlignment(.center)
-            Button("Try Again") { model.retry() }.buttonStyle(.lmmPrimary)
-        }
-    }
-
-    /// Ported 1:1 from `use-calibration.ts`'s three `calibrationError` messages.
-    private static func failureMessage(_ failure: CalibrationFailure) -> String {
-        switch failure {
-        case let .notEnoughTaps(detected, minimum):
-            return "Not enough taps detected (\(detected) of \(minimum) minimum). "
-                + "Make sure your mic is registering taps and try again."
-        case let .notEnoughValidTaps(valid, minimum):
-            return "Not enough valid taps detected (\(valid) of \(minimum) minimum). "
-                + "Tap more closely to the beat and try again."
-        case .tooInconsistent:
-            return "Tap timing was too inconsistent. Try tapping more steadily with the beat."
         }
     }
 

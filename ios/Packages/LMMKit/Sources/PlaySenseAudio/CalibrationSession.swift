@@ -2,7 +2,9 @@ import Foundation
 import PlaySenseCore
 
 /// The calibration wizard's UI-facing phase — `intro` (before the take has been scheduled) →
-/// `countingIn` (the 4-beat lead-in) → `tapping` (the 16 measured beats) → `result` (computed, terminal).
+/// `countingIn` (the 4-beat lead-in) → `tapping` (the 16 measured beats) → `result` (computed, terminal)
+/// — with `interrupted` reachable from `intro`/`countingIn`/`tapping` (via `interrupt(reason:)`) as a
+/// SEPARATE terminal outcome: an audio-session disruption mid-take, not a computed result.
 public enum CalibrationPhase: Equatable, Sendable {
     case intro
     /// `beat` is `0` before the first count-in click has sounded, else `1...countInBeats`.
@@ -10,6 +12,11 @@ public enum CalibrationPhase: Equatable, Sendable {
     /// `beat` is `1...measuredBeats` — the most recent measured click that has sounded.
     case tapping(beat: Int)
     case result(CalibrationOutcome)
+    /// The take was aborted by an audio-session disruption before a result could be computed — see
+    /// `interrupt(reason:)`. Terminal, like `.result`, but deliberately distinct from it: no
+    /// `CalibrationOutcome` (successful or otherwise) exists for an interrupted take, so there is
+    /// nothing a wizard could offer to persist.
+    case interrupted(CalibrationInterruptionReason)
 }
 
 /// Pure state machine driving one calibration take: given a resolved `t0` (host-seconds, from
@@ -49,21 +56,39 @@ public final class CalibrationSession {
     }
 
     /// Record an onset timestamp (host-seconds). Taps are collected throughout the count-in and tapping
-    /// phases (matching the web's listener lifetime); once `phase` is `.intro` (not yet started) or
-    /// `.result` (finished), taps are ignored.
+    /// phases (matching the web's listener lifetime); once `phase` is `.intro` (not yet started),
+    /// `.result` (finished), or `.interrupted` (aborted), taps are ignored.
     public func recordOnset(_ event: OnsetEvent) {
         switch phase {
-        case .intro, .result:
+        case .intro, .result, .interrupted:
             return
         case .countingIn, .tapping:
             onsetTimestamps.append(event.timestamp)
         }
     }
 
+    /// Abort the take because of an audio-session disruption (a phone-call-style interruption
+    /// beginning, a route change, or the app backgrounding — see `CalibrationInterruptionReason`),
+    /// moving to the terminal `.interrupted` phase instead of letting `tick`/`recordOnset` keep running
+    /// against audio that may no longer be playing. A no-op once `.result` has already been reached: a
+    /// completed outcome — and anything the wizard has since persisted from it — is NEVER retroactively
+    /// discarded by an interruption arriving after the fact.
+    public func interrupt(reason: CalibrationInterruptionReason) {
+        guard case .result = phase else {
+            phase = .interrupted(reason)
+            return
+        }
+    }
+
     /// Advance the state machine to reflect the current host-seconds clock reading. Idempotent once
-    /// `.result` is reached (a `CalibrationSession` computes its outcome exactly once).
+    /// `.result` or `.interrupted` is reached (both are terminal).
     public func tick(now: Double) {
-        if case .result = phase { return }
+        switch phase {
+        case .result, .interrupted:
+            return
+        default:
+            break
+        }
 
         guard now >= countInStart else {
             phase = .intro
@@ -100,12 +125,35 @@ public final class CalibrationSession {
     }
 
     /// `Int((elapsed / beatDuration).rounded(.down))`, but nudged by a microsecond-scale epsilon first.
-    /// Host-seconds "now" readings are often large-magnitude doubles (seconds since boot, easily in the
-    /// tens of thousands on a real device), so subtracting two close-in-magnitude large doubles to get
-    /// `elapsed` can round DOWN by a fraction of a ULP even when the true elapsed time is exactly on a
-    /// beat boundary — which would floor to one beat EARLY. The epsilon (1 µs — far below any timing
-    /// granularity that matters for a UI beat counter, far above the ~1e-11s rounding noise at even
-    /// million-second magnitudes) makes the floor robust to that without affecting real inputs.
+    ///
+    /// ## Why this exists — a genuine algorithmic divergence from the web, not just a "large `t0`" quirk
+    /// The web's beat counter (`hooks/use-calibration.ts`'s `setInterval` callback) is an INCREMENTAL
+    /// ACCUMULATOR: `nextBeatTimeRef` starts at `recordStart` and each tick only compares `now` against
+    /// that single running target, advancing it by exactly one `beatDuration` (`nextBeatTimeRef.current
+    /// += beatDuration`) when crossed. It never recomputes a beat INDEX from scratch, so it structurally
+    /// cannot floor to the wrong beat — each step is a fresh `>=` comparison against a value built by
+    /// repeated addition, not a division.
+    ///
+    /// This port is STATELESS by design instead (`tick(now:)` derives the beat fresh from `now` every
+    /// call, with no per-beat mutable target to drift) — which is what makes `CalibrationSession`
+    /// idempotent/backwards-tick-safe (see `testResultIsTerminalAndIdempotent`) but ALSO means it must
+    /// floor a division (`elapsed / beatDuration`) instead of accumulate. `elapsed = now - countInStart`
+    /// (or `- recordStart`) is a subtraction of two close-in-magnitude doubles; when `beatDuration`
+    /// (0.6s here) isn't exactly representable in binary floating point, that division can land a
+    /// fraction of a ULP under an exact beat boundary and floor one beat EARLY. This is NOT specific to
+    /// large `t0` magnitudes (it can happen at `t0 == 0` too) — it is an inherent property of
+    /// "stateless recompute via floor-division" versus "stateful accumulate via repeated addition"; large
+    /// `t0` (seconds-since-boot on a real device) just makes the affected ULP fraction larger and thus
+    /// more likely to matter, which is how `testCountingInAdvancesPerBeatAcrossFourBeats`'s `t0 = 100.0`
+    /// fixture happened to surface it during TDD.
+    ///
+    /// The epsilon (1 µs — far below any timing granularity that matters for a UI beat counter, far
+    /// above the floating-point noise this is guarding against even at large magnitudes) makes the floor
+    /// robust to that without affecting real inputs. It does NOT change which architecture this is: still
+    /// a stateless recompute, just one nudged to tolerate its own rounding noise. Switching to the web's
+    /// accumulator style would sidestep the class of bug entirely, but was judged not worth the added
+    /// mutable state here given this only drives a UI beat counter (never `LatencyCalibrator.compute`'s
+    /// grading math, which does no floor/rounding on timestamps at all).
     private static func beatIndex(elapsed: Double, beatDuration: Double) -> Int {
         Int(((elapsed + 1e-6) / beatDuration).rounded(.down))
     }

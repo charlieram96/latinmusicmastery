@@ -10,6 +10,12 @@ import Foundation
 /// (input+output port types/names). `routeKey(for:)` folds the ENTIRE route into the storage key, so a
 /// route change (new headphones, BLE mic, etc.) naturally reads back `nil` for the new key — there is no
 /// separate "invalidate" step to run, storing under a route-scoped key IS the invalidation.
+///
+/// ## Schema versioning
+/// `CalibrationRecord.schemaVersion` lives in the encoded PAYLOAD, not the key. `load`/`allRecords`
+/// treat any blob that fails to decode (corrupt, wrong shape, or a future schema this build doesn't
+/// understand) as unreadable and remove it — a legacy pre-versioning record with no `schemaVersion` key
+/// at all is NOT one of those (see `CalibrationRecord.init(from:)`); it still decodes as `1`.
 public enum CalibrationStore {
     private static let keyPrefix = "com.lmm.playsense.calibration."
 
@@ -23,7 +29,10 @@ public enum CalibrationStore {
         return "in[\(inputs)]_out[\(outputs)]"
     }
 
-    private static func storageKey(sourceType: CalibrationSourceType, routeKey: String) -> String {
+    /// `internal` (not `private`) specifically so `@testable`-imported tests can reconstruct the exact
+    /// key a legacy/corrupt blob would live under (see `CalibrationStoreTests`'s decode-fallback and
+    /// schema-version tests) — still not exposed as part of this module's PUBLIC API.
+    static func storageKey(sourceType: CalibrationSourceType, routeKey: String) -> String {
         "\(keyPrefix)\(sourceType.rawValue).\(routeKey)"
     }
 
@@ -39,10 +48,18 @@ public enum CalibrationStore {
         routeKey: String,
         defaults: UserDefaults = .standard
     ) -> CalibrationRecord? {
-        guard let data = defaults.data(forKey: storageKey(sourceType: sourceType, routeKey: routeKey)) else {
+        let key = storageKey(sourceType: sourceType, routeKey: routeKey)
+        guard let data = defaults.data(forKey: key) else { return nil }
+        guard let record = try? JSONDecoder().decode(CalibrationRecord.self, from: data) else {
+            // Unreadable — corrupt bytes, an unexpected shape, or a FUTURE `schemaVersion` this build
+            // doesn't know how to decode (a legacy record with no `schemaVersion` key at all still
+            // decodes fine, see `CalibrationRecord.init(from:)`). Clean it up rather than leaving a
+            // permanently-dead blob that every future `load`/`allRecords` call re-attempts and silently
+            // swallows — the caller falls back to a seeded record either way (`effectiveCalibration`).
+            defaults.removeObject(forKey: key)
             return nil
         }
-        return try? JSONDecoder().decode(CalibrationRecord.self, from: data)
+        return record
     }
 
     public static func clear(sourceType: CalibrationSourceType, routeKey: String, defaults: UserDefaults = .standard) {
@@ -57,7 +74,12 @@ public enum CalibrationStore {
             .filter { $0.hasPrefix(keyPrefix) }
             .compactMap { key -> CalibrationRecord? in
                 guard let data = defaults.data(forKey: key) else { return nil }
-                return try? JSONDecoder().decode(CalibrationRecord.self, from: data)
+                guard let record = try? JSONDecoder().decode(CalibrationRecord.self, from: data) else {
+                    // Same decode-fallback cleanup as `load` — see its doc comment.
+                    defaults.removeObject(forKey: key)
+                    return nil
+                }
+                return record
             }
             .sorted { $0.date > $1.date }
     }

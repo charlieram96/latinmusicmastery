@@ -166,4 +166,59 @@ final class CalibrationStoreTests: XCTestCase {
         XCTAssertNil(CalibrationStore.load(sourceType: .mic, routeKey: "a", defaults: defaults))
         XCTAssertNotNil(CalibrationStore.load(sourceType: .mic, routeKey: "b", defaults: defaults))
     }
+
+    // MARK: - Schema versioning
+
+    func testNewRecordsStampTheCurrentSchemaVersionAndRoundTrip() {
+        let record = CalibrationRecord(
+            offsetMs: 1, iqrMs: 0, widenMs: 0, sampleCount: 4, date: Date(), routeKey: "r", sourceType: .mic
+        )
+        XCTAssertEqual(record.schemaVersion, CalibrationRecord.currentSchemaVersion)
+        XCTAssertEqual(record.schemaVersion, 1)
+
+        CalibrationStore.save(record, defaults: defaults)
+        let loaded = CalibrationStore.load(sourceType: .mic, routeKey: "r", defaults: defaults)
+        XCTAssertEqual(loaded?.schemaVersion, 1)
+    }
+
+    func testLegacyRecordWithNoSchemaVersionKeyDecodesAsVersion1() {
+        // A record persisted BEFORE `schemaVersion` existed has no such key in its JSON at all —
+        // reconstruct that exact pre-fix shape by hand rather than relying on `CalibrationRecord`'s
+        // (post-fix) encoder, which now always includes the key.
+        let key = CalibrationStore.storageKey(sourceType: .mic, routeKey: "legacy-route")
+        let legacyJSON = """
+        {"offsetMs":12.5,"iqrMs":3,"widenMs":0,"sampleCount":5,
+        "date":700000000,"routeKey":"legacy-route","sourceType":"mic"}
+        """
+        defaults.set(Data(legacyJSON.utf8), forKey: key)
+
+        let loaded = CalibrationStore.load(sourceType: .mic, routeKey: "legacy-route", defaults: defaults)
+        XCTAssertEqual(loaded?.schemaVersion, 1, "a missing schemaVersion key must be treated as legacy v1")
+        XCTAssertEqual(loaded?.offsetMs, 12.5)
+        XCTAssertEqual(loaded?.routeKey, "legacy-route")
+    }
+
+    // MARK: - Decode-fallback cleanup of unreadable blobs
+
+    func testUnreadableBlobIsRemovedByLoadNotJustSkipped() {
+        let key = CalibrationStore.storageKey(sourceType: .mic, routeKey: "corrupt-route")
+        defaults.set(Data([0xFF, 0x00, 0x01, 0x02]), forKey: key)
+
+        XCTAssertNil(CalibrationStore.load(sourceType: .mic, routeKey: "corrupt-route", defaults: defaults))
+        XCTAssertNil(defaults.data(forKey: key), "an unreadable blob must be cleaned up, not left dangling")
+    }
+
+    func testUnreadableBlobIsRemovedByAllRecordsButGoodRecordsSurvive() {
+        let goodRecord = CalibrationRecord(
+            offsetMs: 5, iqrMs: 0, widenMs: 0, sampleCount: 4, date: Date(), routeKey: "good-route", sourceType: .mic
+        )
+        CalibrationStore.save(goodRecord, defaults: defaults)
+        let badKey = CalibrationStore.storageKey(sourceType: .ble, routeKey: "corrupt-route")
+        defaults.set(Data([0xDE, 0xAD, 0xBE, 0xEF]), forKey: badKey)
+
+        let all = CalibrationStore.allRecords(defaults: defaults)
+
+        XCTAssertEqual(all.map(\.routeKey), ["good-route"])
+        XCTAssertNil(defaults.data(forKey: badKey), "the corrupt blob must be cleaned up during allRecords()")
+    }
 }

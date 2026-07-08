@@ -85,6 +85,21 @@ public final class CalibrationRunner {
         session.recordOnset(OnsetEvent(timestamp: timestamp, energy: 1))
     }
 
+    /// Abort the in-flight take because of an audio-session disruption — see
+    /// `AudioSessionController.onEvent` (interruption/route-change) and SwiftUI `scenePhase`
+    /// backgrounding, both wired up by `CalibrationWizardModel`. Mirrors the `.result` path in
+    /// `pollTick()`: mutate the pure session's phase first, THEN notify `onPhaseChange`, THEN stop —
+    /// so observers always see the terminal phase that caused the stop, not a stale one. A no-op if
+    /// there's no active session (nothing to abort); `CalibrationSession.interrupt` itself is a no-op
+    /// once `.result` has already been reached, so a take that already completed is never retroactively
+    /// discarded even if this is called after the fact.
+    public func interrupt(reason: CalibrationInterruptionReason) {
+        guard let session else { return }
+        session.interrupt(reason: reason)
+        onPhaseChange?(session.phase)
+        stop()
+    }
+
     private func pollTick() {
         guard let session else { return }
         session.tick(now: GameClock.hostSeconds(fromTicks: GameClock.now()))

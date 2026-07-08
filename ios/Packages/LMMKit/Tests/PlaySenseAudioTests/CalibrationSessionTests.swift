@@ -121,4 +121,79 @@ final class CalibrationSessionTests: XCTestCase {
         session.tick(now: 110.2)
         XCTAssertEqual(session.phase, .result(.failure(.notEnoughTaps(detected: 3, minimum: 4))))
     }
+
+    // MARK: - Interruption matrix (review fix: interruption/backgrounding mid-wizard must not silently
+    // persist a corrupted calibration)
+
+    func testInterruptDuringCountingInProducesNoOutcomeAndLandsInInterrupted() {
+        let session = makeSession()
+        session.tick(now: 97.6) // .countingIn(beat: 1)
+
+        session.interrupt(reason: .audioInterruption)
+
+        XCTAssertEqual(session.phase, .interrupted(.audioInterruption))
+        // Ticking after an interruption must not resurrect the take or compute a result.
+        session.tick(now: 110.2)
+        XCTAssertEqual(session.phase, .interrupted(.audioInterruption))
+    }
+
+    func testInterruptDuringTappingProducesNoOutcomeAndLandsInInterrupted() {
+        let session = makeSession()
+        session.tick(now: 97.6) // enter .countingIn
+        for beat in 0..<4 {
+            session.recordOnset(OnsetEvent(timestamp: session.expectedTimes[beat] + 0.02, energy: 1))
+        }
+        session.tick(now: 101.2) // .tapping(beat: 3) — well inside the recording window
+
+        session.interrupt(reason: .routeChanged)
+
+        guard case .interrupted(.routeChanged) = session.phase else {
+            return XCTFail("expected .interrupted(.routeChanged), got \(session.phase)")
+        }
+        // Even with 4 perfectly-valid taps already recorded, no CalibrationOutcome is ever produced —
+        // ticking through what WOULD have been the completion time must not compute one retroactively.
+        session.tick(now: 110.2)
+        XCTAssertEqual(session.phase, .interrupted(.routeChanged))
+    }
+
+    func testInterruptBeforeCountInStartProducesInterruptedNotIntro() {
+        let session = makeSession()
+        // Still .intro (tick(now:) never called) — an interruption arriving in this window (the runner
+        // has a live session the instant `start()` returns, before the first poll tick) must still abort.
+        session.interrupt(reason: .backgrounded)
+        XCTAssertEqual(session.phase, .interrupted(.backgrounded))
+    }
+
+    func testInterruptIgnoresFurtherOnsetsAfterAborting() {
+        let session = makeSession()
+        session.tick(now: 97.6)
+        session.interrupt(reason: .audioInterruption)
+
+        // Must not crash, and must not somehow feed a later `.result` if the session were ever revived.
+        session.recordOnset(OnsetEvent(timestamp: 200, energy: 1))
+        session.tick(now: 200)
+        XCTAssertEqual(session.phase, .interrupted(.audioInterruption))
+    }
+
+    func testPostResultInterruptionDoesNotDiscardCompletedOutcome() {
+        let session = makeSession()
+        session.tick(now: 97.6) // enter .countingIn — recordOnset is a no-op before the session starts
+        for beat in 0..<4 {
+            session.recordOnset(OnsetEvent(timestamp: session.expectedTimes[beat] + 0.025, energy: 1))
+        }
+        session.tick(now: 110.2)
+        guard case let .result(.success(recordBefore)) = session.phase else {
+            return XCTFail("expected a successful result before the interruption")
+        }
+
+        // An interruption arriving AFTER a take has already completed (e.g. the wizard is sitting on the
+        // result screen and a phone call comes in) must NOT discard the already-computed outcome — there
+        // is no "corrupted" take to protect against here; the record is done.
+        session.interrupt(reason: .audioInterruption)
+
+        guard case let .result(.success(recordAfter)) = session.phase else {
+            return XCTFail("expected the result to survive a post-result interruption, got \(session.phase)")
+        }
+        XCTAssertEqual(recordAfter, recordBefore)
+    }
 }
