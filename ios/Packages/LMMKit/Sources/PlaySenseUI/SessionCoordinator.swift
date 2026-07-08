@@ -249,6 +249,20 @@ public final class SessionCoordinator {
         guard machine.isActive else { return }
         // Track the last confidently-detected note (hook's `lastDetectedMidiRef`) as the last-resort
         // wrong-note catch when a later onset carries neither a frequency nor a live pitch reading.
+        //
+        // FIDELITY GAP vs. web: this only updates on an onset that itself carried a frequency, so between
+        // onsets `lastDetectedMidiNote` can go stale. The web hook refreshes `lastDetectedMidiRef` at
+        // ~60 Hz from the live pitch stream inside its rAF loop (`updatePlayhead`,
+        // hooks/use-exercise-session.ts ~line 496: `pitchDetectionRef.current.getFrequency()` on every
+        // frame while `instrumentCategory === 'pitched'`), so its fallback value at grade time
+        // (~line 362) is generally fresher than what onset-only updates give us here. In practice this
+        // rarely matters: `LiveScorer`'s `pitchFrequencyProvider` (this source's `currentPitch()`) already
+        // covers the same +100 ms deferred re-read the web does first, so `lastDetectedMidiNote` is only
+        // the LAST-resort fallback when that re-read also comes back nil. If pitched-exercise QA on
+        // device shows stale fallback values causing wrong-note misgrades, the fix is to feed
+        // `lastDetectedMidiNote` from a periodic `onsetSource?.currentPitch()` read on the
+        // `CADisplayLink` tick (`onFrame()`, mirroring the web's rAF cadence) in addition to this
+        // onset-driven update — not implemented here; this comment is a marker for that follow-up.
         if let frequency = event.frequency {
             scorer?.lastDetectedMidiNote = frequencyToMidi(frequency)
         }

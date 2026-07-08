@@ -64,9 +64,29 @@ final class MicOnsetEventSourceTests: XCTestCase {
             source.handle(.chord(onsetTimestamp: Double(index), chroma: chroma))
         }
         XCTAssertNil(source.chroma(forOnsetKey: 0), "oldest entry evicted past the 64-entry cap")
-        XCTAssertNil(source.chroma(forOnsetKey: 5), "sixth-oldest entry evicted")
+        XCTAssertNil(source.chroma(forOnsetKey: 5_000), "sixth-oldest entry evicted")
         XCTAssertNotNil(source.chroma(forOnsetKey: 6_000), "key round(6*1000) still present")
         XCTAssertNotNil(source.chroma(forOnsetKey: 69_000), "newest entry present")
+    }
+
+    // MARK: - Pre-filtering (no main-actor hop for `.level`)
+
+    /// `GameAudioEngine`/`MicTap` are concrete, hardware-backed types with no synthetic-message injection
+    /// seam, so there's no way to drive `start()` itself through a counting executor or hop-counter and
+    /// observe actor hops directly in a fast unit test. Instead this asserts against
+    /// `needsMainActorHop(_:)` — the exact predicate `start()`'s `installMicTap` callback evaluates, on the
+    /// drain queue, before ever constructing a `Task`. If `.level` ever starts requiring a hop again (or
+    /// `.onset`/`.chord` stop requiring one), this fails.
+    func testLevelMessageNeverRequiresMainActorHop() {
+        XCTAssertFalse(MicOnsetEventSource.needsMainActorHop(.level(0.42)),
+                       "`.level` fires ~375/sec and is unused here — it must be filtered before any Task hop")
+    }
+
+    func testOnsetAndChordMessagesRequireMainActorHop() {
+        XCTAssertTrue(
+            MicOnsetEventSource.needsMainActorHop(.onset(timestamp: 0, energy: 0, fluxConfirmed: true, frequency: nil))
+        )
+        XCTAssertTrue(MicOnsetEventSource.needsMainActorHop(.chord(onsetTimestamp: 0, chroma: [])))
     }
 }
 
