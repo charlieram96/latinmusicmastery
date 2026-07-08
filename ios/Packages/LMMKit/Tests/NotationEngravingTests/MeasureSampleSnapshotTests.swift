@@ -45,6 +45,55 @@ final class MeasureSampleSnapshotTests: XCTestCase {
         try assertMeasure(fixture: guitar, scale: largeScale, color: .lightDefault)
     }
 
+    // MARK: Rhythm-rich synthetic measure (C15: beams, secondary stubs, triplet, tie)
+
+    func testRhythmMeasureSmallLight() {
+        assertRhythmMeasure(scale: smallScale, color: .lightDefault)
+    }
+
+    func testRhythmMeasureSmallDark() {
+        assertRhythmMeasure(scale: smallScale, color: .darkDefault)
+    }
+
+    func testRhythmMeasureLargeLight() {
+        assertRhythmMeasure(scale: largeScale, color: .lightDefault)
+    }
+
+    func testRhythmMeasureLargeDark() {
+        assertRhythmMeasure(scale: largeScale, color: .darkDefault)
+    }
+
+    private func assertRhythmMeasure(
+        scale: ScaleContext,
+        color: NotationColor,
+        file: StaticString = #file,
+        testName: String = #function,
+        line: UInt = #line
+    ) {
+        let background: UIColor = color == .lightDefault ? .white : .black
+        let context = MeasureContext(
+            clef: .treble, timeSignature: TimeSignature(numerator: 4, denominator: 4),
+            showClef: true, showTimeSignature: true
+        )
+        let space = scale.staffSpacePoints
+        let origin = CGPoint(x: space * 1.5, y: space * 5)
+        let frame = MeasureLayoutEngine.layout(
+            events: rhythmRichSampleEvents(), context: context, origin: origin, scale: scale
+        )
+        let size = CGSize(width: origin.x + frame.width + space * 1.5, height: space * 16)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let image = renderer.image { rendererContext in
+            let ctx = rendererContext.cgContext
+            ctx.setFillColor(background.cgColor)
+            ctx.fill(CGRect(origin: .zero, size: size))
+            drawMeasureFrame(frame, in: ctx, size: size, notationColor: color)
+        }
+        assertSnapshot(
+            of: image, as: .image(precision: 0.98, perceptualPrecision: 0.97),
+            file: file, testName: testName, line: line
+        )
+    }
+
     // MARK: Helper
 
     private func assertMeasure(

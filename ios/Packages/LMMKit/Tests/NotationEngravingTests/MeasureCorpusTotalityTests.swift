@@ -22,22 +22,34 @@ final class MeasureCorpusTotalityTests: XCTestCase {
 
         var tally = Tally()
         var failures: [String] = []
+        var beamsByTitle: [String: Int] = [:]
         for row in rows {
-            processRow(row, tally: &tally, failures: &failures)
+            processRow(row, tally: &tally, beamsByTitle: &beamsByTitle, failures: &failures)
         }
 
         XCTAssertTrue(failures.isEmpty, "Corpus totality failures:\n" + failures.joined(separator: "\n"))
         XCTAssertGreaterThan(tally.measures, 0)
         XCTAssertGreaterThan(tally.events, 0)
-        print("C14 corpus totality: \(rows.count) documents, \(tally.measures) measures, \(tally.events) events.")
+        print("C15 corpus totality: \(rows.count) documents, \(tally.measures) measures, "
+            + "\(tally.events) events, \(tally.beamedGroups) beamed groups, \(tally.ties) ties.")
+        for title in beamsByTitle.keys.sorted() {
+            print("  beamed groups [\(title)] = \(beamsByTitle[title] ?? 0)")
+        }
     }
 
     private struct Tally {
         var measures = 0
         var events = 0
+        var beamedGroups = 0
+        var ties = 0
     }
 
-    private func processRow(_ row: [String: Any], tally: inout Tally, failures: inout [String]) {
+    private func processRow(
+        _ row: [String: Any],
+        tally: inout Tally,
+        beamsByTitle: inout [String: Int],
+        failures: inout [String]
+    ) {
         let id = (row["id"] as? String) ?? "<unknown>"
         let title = (row["title"] as? String) ?? "<unknown>"
         guard let parsed = row["parsed_score"] else {
@@ -55,8 +67,15 @@ final class MeasureCorpusTotalityTests: XCTestCase {
                 for (index, descriptor) in measures.enumerated() {
                     tally.measures += 1
                     tally.events += descriptor.events.count
+                    // Exact beamed-group count straight from the grouper.
+                    let groups = BeamGrouper.beamGroups(
+                        events: descriptor.events, timeSignature: descriptor.timeSignature
+                    )
+                    tally.beamedGroups += groups.count
+                    beamsByTitle[title, default: 0] += groups.count
                     let label = "\(title) track \(track.index) measure \(index)"
-                    checkMeasure(descriptor, isFirst: index == 0, label: label, failures: &failures)
+                    let frame = checkMeasure(descriptor, isFirst: index == 0, label: label, failures: &failures)
+                    tally.ties += frame.ties.count
                 }
             }
         } catch {
@@ -64,12 +83,13 @@ final class MeasureCorpusTotalityTests: XCTestCase {
         }
     }
 
+    @discardableResult
     private func checkMeasure(
         _ descriptor: MeasureDescriptor,
         isFirst: Bool,
         label: String,
         failures: inout [String]
-    ) {
+    ) -> MeasureFrame {
         // Every qnStart is finite and monotonic within the measure.
         var previousQN = -Double.greatestFiniteMagnitude
         for event in descriptor.events {
@@ -92,6 +112,7 @@ final class MeasureCorpusTotalityTests: XCTestCase {
             scale: scale
         )
         assertFiniteGeometry(frame, label: label, failures: &failures)
+        return frame
     }
 
     private func assertFiniteGeometry(_ frame: MeasureFrame, label: String, failures: inout [String]) {
@@ -108,6 +129,20 @@ final class MeasureCorpusTotalityTests: XCTestCase {
         }
         for stem in frame.stems where !(stem.start.x.isFinite && stem.end.y.isFinite) {
             failures.append("\(label): non-finite stem")
+            return
+        }
+        for beam in frame.beams where !(beam.start.x.isFinite && beam.start.y.isFinite
+            && beam.end.x.isFinite && beam.end.y.isFinite && beam.thickness.isFinite) {
+            failures.append("\(label): non-finite beam \(beam)")
+            return
+        }
+        for tie in frame.ties where !(tie.start.x.isFinite && tie.start.y.isFinite
+            && tie.end.x.isFinite && tie.end.y.isFinite) {
+            failures.append("\(label): non-finite tie")
+            return
+        }
+        for tuplet in frame.tuplets where !(tuplet.digit.origin.x.isFinite && tuplet.digit.origin.y.isFinite) {
+            failures.append("\(label): non-finite tuplet digit")
             return
         }
     }

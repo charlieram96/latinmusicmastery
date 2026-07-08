@@ -61,6 +61,42 @@ struct MeasureSampleView: View {
     }
 }
 
+/// Debug view for the C15 rhythm-rich sample measure (beams, secondary stubs, a triplet, a
+/// tie) — laid out from `rhythmRichSampleEvents()` and drawn directly, since its triplet/tie
+/// content isn't expressible as a plain `Track`.
+struct RhythmMeasureSampleView: View {
+    var staffSpacePoints: CGFloat = 14
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        GeometryReader { proxy in
+            Image(uiImage: renderedImage(size: proxy.size))
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        }
+        .frame(height: staffSpacePoints * 16)
+    }
+
+    private func renderedImage(size: CGSize) -> UIImage {
+        let scale = ScaleContext(staffSpacePoints: staffSpacePoints)
+        let notationColor: NotationColor = colorScheme == .dark ? .darkDefault : .lightDefault
+        let backgroundColor: CGColor = colorScheme == .dark ? .init(gray: 0, alpha: 1) : .init(gray: 1, alpha: 1)
+        let context = MeasureContext(
+            clef: .treble, timeSignature: fourFour, showClef: true, showTimeSignature: true
+        )
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { rendererContext in
+            let ctx = rendererContext.cgContext
+            ctx.setFillColor(backgroundColor)
+            ctx.fill(CGRect(origin: .zero, size: size))
+            drawMeasureSample(
+                events: rhythmRichSampleEvents(), context: context, in: ctx,
+                size: size, scale: scale, notationColor: notationColor
+            )
+        }
+    }
+}
+
 // MARK: - Sample tracks (corpus-shaped)
 
 private let fourFour = TimeSignature(numerator: 4, denominator: 4)
@@ -110,4 +146,9 @@ private func percussionSampleTrack() -> Track {
         .padding()
         .background(Color.black)
         .preferredColorScheme(.dark)
+}
+
+#Preview("Measure — rhythm (beams/triplet/tie)") {
+    RhythmMeasureSampleView()
+        .padding()
 }

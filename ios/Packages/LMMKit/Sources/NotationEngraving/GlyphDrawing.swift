@@ -68,6 +68,35 @@ func strokeSegment(_ segment: LineSegment, render: RenderContext) {
     ctx.restoreGState()
 }
 
+/// Fills one beam bar as a parallelogram: the `start`/`end` center-line offset vertically by
+/// half the thickness on each side. (Beams are filled shapes, not strokes.)
+func fillBeam(_ segment: BeamSegment, render: RenderContext) {
+    let ctx = render.ctx
+    let half = segment.thickness / 2
+    ctx.saveGState()
+    ctx.beginPath()
+    ctx.move(to: CGPoint(x: segment.start.x, y: segment.start.y - half))
+    ctx.addLine(to: CGPoint(x: segment.end.x, y: segment.end.y - half))
+    ctx.addLine(to: CGPoint(x: segment.end.x, y: segment.end.y + half))
+    ctx.addLine(to: CGPoint(x: segment.start.x, y: segment.start.y + half))
+    ctx.closePath()
+    ctx.fillPath()
+    ctx.restoreGState()
+}
+
+/// Strokes a tie/slur cubic as a round-capped curve at its midpoint thickness — a faithful arc
+/// for the debug renderer (a production tie would be a tapered filled lens).
+func strokeTie(_ tie: TieShape, render: RenderContext) {
+    let ctx = render.ctx
+    ctx.saveGState()
+    ctx.setLineWidth(tie.thickness)
+    ctx.setLineCap(.round)
+    ctx.move(to: tie.start)
+    ctx.addCurve(to: tie.end, control1: tie.control1, control2: tie.control2)
+    ctx.strokePath()
+    ctx.restoreGState()
+}
+
 /// Draws the 5 staff lines of `geometry`.
 func drawStaffLines(geometry: StaffGeometry, render: RenderContext) {
     let ctx = render.ctx

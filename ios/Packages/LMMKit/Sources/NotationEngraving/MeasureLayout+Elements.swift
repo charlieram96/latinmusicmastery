@@ -39,31 +39,54 @@ extension MeasureLayoutEngine {
 
     // MARK: Pitched note / chord
 
-    static func appendPitchedEvent(
+    /// Deferred stem geometry + tie/tuplet anchors captured while a pitched event is laid out,
+    /// so a later pass can extend beamed stems to the beam and drop their flags.
+    struct EventLayout {
+        let stemUp: Bool
+        let code: DurationCode
+        /// Canvas x of the stem.
+        let stemX: CGFloat
+        /// Canvas y where the stem meets its near notehead.
+        let stemBaseY: CGFloat
+        let lowestPosition: Int
+        let highestPosition: Int
+        /// y of the notehead nearest the beam (highest for stem-up, lowest for stem-down).
+        let beamSideNoteheadY: CGFloat
+        /// Each notehead's staff position + origin, for same-pitch tie matching.
+        let noteOrigins: [(position: Int, origin: CGPoint)]
+        let columnX: CGFloat
+    }
+
+    /// Places a pitched event's noteheads/accidentals/dots/ledgers + anchor, and returns its
+    /// stem geometry (or `nil` for a stemless whole note). The stem itself is emitted later —
+    /// by `appendUnbeamedStem` for a lone note or by the beam pass for a beamed one — so beaming
+    /// can set the stem length and suppress the flag. `forcedStemUp` overrides the per-note
+    /// direction with the beam group's unified direction.
+    static func layoutPitchedEvent(
         _ event: EventDescriptor,
         x eventX: CGFloat,
+        forcedStemUp: Bool?,
         env: LayoutEnv,
         into elements: inout ElementBucket
-    ) {
+    ) -> EventLayout? {
         // Sort low→high (by staff position) for stacking + stem/second logic; ties keep order.
         let sorted = event.notes.sorted { $0.staffPosition < $1.staffPosition }
         let positions = sorted.map(\.staffPosition)
-        let stemUp = stemPointsUp(positions: positions)
+        let stemUp = forcedStemUp ?? stemPointsUp(positions: positions)
         let displaced = secondDisplacement(sortedPositions: positions, stemUp: stemUp)
         let glyph = noteheadGlyph(for: event.durationCode, isCross: sorted.first?.isCross ?? false)
 
         var minY = CGFloat.greatestFiniteMagnitude
         var maxY = -CGFloat.greatestFiniteMagnitude
+        var noteOrigins: [(position: Int, origin: CGPoint)] = []
         for (index, note) in sorted.enumerated() {
             let noteX = eventX + sideShift(displaced: displaced[index], stemUp: stemUp, env: env)
             let noteY = env.yPosition(note.staffPosition)
             minY = min(minY, noteY)
             maxY = max(maxY, noteY)
+            noteOrigins.append((note.staffPosition, CGPoint(x: noteX, y: noteY)))
             appendNotehead(note, event: event, origin: CGPoint(x: noteX, y: noteY), env: env, into: &elements)
         }
-
-        let plan = StemPlan(positions: positions, stemUp: stemUp, glyph: glyph, columnX: eventX)
-        appendStemAndFlag(event: event, plan: plan, env: env, into: &elements)
 
         let anchorX = eventX + env.points(env.metrics.boundingBox(for: glyph)?.swX ?? 0)
         let frame = CGRect(
@@ -73,6 +96,17 @@ extension MeasureLayoutEngine {
             height: (maxY - minY) + env.noteheadWidth
         )
         elements.anchors.append(NoteAnchor(qnStart: event.qnStart, frame: frame))
+
+        guard !event.durationCode.isStemless, let lowest = positions.min(), let highest = positions.max() else {
+            return nil
+        }
+        let base = stemBase(positions: positions, stemUp: stemUp, glyph: glyph, columnX: eventX, env: env)
+        return EventLayout(
+            stemUp: stemUp, code: event.durationCode, stemX: base.stemX, stemBaseY: base.baseY,
+            lowestPosition: lowest, highestPosition: highest,
+            beamSideNoteheadY: env.yPosition(stemUp ? highest : lowest),
+            noteOrigins: noteOrigins, columnX: eventX
+        )
     }
 
     /// One notehead plus its accidental, augmentation dot, and any ledger lines.
@@ -180,58 +214,44 @@ extension MeasureLayoutEngine {
 
     // MARK: Stem + flag
 
-    /// The inputs a stem needs: the chord's staff positions, direction, notehead glyph, and the
-    /// event's column x.
-    struct StemPlan {
-        let positions: [Int]
-        let stemUp: Bool
-        let glyph: Glyph
-        let columnX: CGFloat
-    }
-
-    private static func appendStemAndFlag(
-        event: EventDescriptor,
-        plan: StemPlan,
-        env: LayoutEnv,
-        into elements: inout ElementBucket
-    ) {
-        guard !event.durationCode.isStemless,
-              let lowest = plan.positions.min(),
-              let highest = plan.positions.max() else { return }
-        let stem = layoutStem(plan: plan, lowest: lowest, highest: highest, env: env)
-        elements.stems.append(stem.segment)
-        if event.durationCode.hasFlag,
-           let flag = flagGlyph(for: event.durationCode, stemUp: plan.stemUp, tip: stem.tip) {
-            elements.flags.append(flag)
+    /// Where a stem attaches to its near notehead: the SMuFL stem anchor applied to the lowest
+    /// notehead (stem-up) or highest (stem-down). Shared by beamed and unbeamed stems so both
+    /// start from the identical point.
+    private static func stemBase(
+        positions: [Int],
+        stemUp: Bool,
+        glyph: Glyph,
+        columnX: CGFloat,
+        env: LayoutEnv
+    ) -> (stemX: CGFloat, baseY: CGFloat) {
+        if stemUp {
+            let anchor = env.metrics.stemUpSE(for: glyph)
+            let stemX = columnX + env.points(anchor?.x ?? env.noteheadWidthSpaces)
+            let baseY = env.yPosition(positions.min() ?? 0) - env.points(anchor?.y ?? 0)
+            return (stemX, baseY)
         }
+        let anchor = env.metrics.stemDownNW(for: glyph)
+        let stemX = columnX + env.points(anchor?.x ?? 0)
+        let baseY = env.yPosition(positions.max() ?? 0) - env.points(anchor?.y ?? 0)
+        return (stemX, baseY)
     }
 
-    private struct StemResult {
-        let segment: LineSegment
-        let tip: CGPoint
-    }
-
-    private static func layoutStem(plan: StemPlan, lowest: Int, highest: Int, env: LayoutEnv) -> StemResult {
+    /// Emits the stem + flag for a note that is NOT beamed — the C14 behavior, unchanged: a
+    /// 3.5-space stem extended to at least the middle line, with the duration's flag at the tip.
+    static func appendUnbeamedStem(_ layout: EventLayout, env: LayoutEnv, into elements: inout ElementBucket) {
         let stemLength = env.points(MeasureLayoutMetrics.stemLengthSpaces)
         let middleY = env.yPosition(MeasureLayoutMetrics.middleLinePosition)
         let thickness = env.points(env.defaults.stemThickness)
-
-        if plan.stemUp {
-            let anchor = env.metrics.stemUpSE(for: plan.glyph)
-            let stemX = plan.columnX + env.points(anchor?.x ?? env.noteheadWidthSpaces)
-            let baseY = env.yPosition(lowest) - env.points(anchor?.y ?? 0)
-            // Tip 3.5 spaces above the highest note, extended to at least the middle line.
-            let tip = CGPoint(x: stemX, y: min(env.yPosition(highest) - stemLength, middleY))
-            let segment = LineSegment(start: CGPoint(x: stemX, y: baseY), end: tip, thickness: thickness)
-            return StemResult(segment: segment, tip: tip)
+        let tipY = layout.stemUp
+            ? min(env.yPosition(layout.highestPosition) - stemLength, middleY)
+            : max(env.yPosition(layout.lowestPosition) + stemLength, middleY)
+        let tip = CGPoint(x: layout.stemX, y: tipY)
+        elements.stems.append(LineSegment(
+            start: CGPoint(x: layout.stemX, y: layout.stemBaseY), end: tip, thickness: thickness
+        ))
+        if layout.code.hasFlag, let flag = flagGlyph(for: layout.code, stemUp: layout.stemUp, tip: tip) {
+            elements.flags.append(flag)
         }
-        let anchor = env.metrics.stemDownNW(for: plan.glyph)
-        let stemX = plan.columnX + env.points(anchor?.x ?? 0)
-        let baseY = env.yPosition(highest) - env.points(anchor?.y ?? 0)
-        // Tip 3.5 spaces below the lowest note, extended to at least the middle line.
-        let tip = CGPoint(x: stemX, y: max(env.yPosition(lowest) + stemLength, middleY))
-        let segment = LineSegment(start: CGPoint(x: stemX, y: baseY), end: tip, thickness: thickness)
-        return StemResult(segment: segment, tip: tip)
     }
 
     // MARK: Glyph selection

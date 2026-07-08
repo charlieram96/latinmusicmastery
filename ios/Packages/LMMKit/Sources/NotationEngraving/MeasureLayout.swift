@@ -41,8 +41,8 @@ public struct NoteAnchor: Equatable, Sendable {
 }
 
 /// Everything needed to draw one measure. Pure geometry (CoreGraphics value types only) — no
-/// font, no context, no beaming/ties (C15) and no system breaks (C16). Flags are emitted as
-/// standalone elements so C15 can drop the ones it beams without touching stems.
+/// font, no context, no system breaks (C16). Beam bars, ties, and tuplet indications (C15) are
+/// their own element arrays; flags are only emitted for the notes C15 does NOT beam.
 public struct MeasureFrame: Equatable, Sendable {
     /// Total measure width in points (from the ported spacing model), measured from `originX`.
     public let width: CGFloat
@@ -62,6 +62,12 @@ public struct MeasureFrame: Equatable, Sendable {
     public let ledgerLines: [LineSegment]
     public let barline: LineSegment
     public let noteAnchors: [NoteAnchor]
+    /// Beam bars (primary + secondary/partial) for every beamed group. See `BeamGeometry`.
+    public let beams: [BeamSegment]
+    /// Tie arcs between same-pitch adjacent noteheads. See `TieGeometry`.
+    public let ties: [TieShape]
+    /// Tuplet numbers + (when not fully beamed) brackets. See `TupletBracket`.
+    public let tuplets: [TupletShape]
 
     /// The `StaffGeometry` these elements were laid out against (rebuilt from the stored
     /// origin/space + width) — convenience for a renderer that wants to draw the 5 lines.
@@ -206,8 +212,15 @@ public enum MeasureLayoutEngine {
             noteheadWidthSpaces: noteheadWidthSpaces
         )
 
+        // Beam grouping decides, up front, which events share a beam (and therefore a single
+        // unified stem direction) — everything else keys off this.
+        let beamPlan = BeamPlan.make(events: events, timeSignature: context.timeSignature)
+
+        // Pass 1: place noteheads/rests/accidentals/dots/ledgers, capturing each pitched event's
+        // stem geometry (deferred so beamed stems can reach the beam and beamed notes lose flags).
         var elements = ElementBucket()
-        for event in events {
+        var layouts: [Int: EventLayout] = [:]
+        for (index, event) in events.enumerated() {
             let fraction = min(
                 max(qnInMeasure(event, measureStartQN: context.measureStartQN, measureQN: measureQN), 0),
                 1
@@ -215,12 +228,16 @@ public enum MeasureLayoutEngine {
             let eventX = plan.noteStartX + scale.points(fraction * plan.noteAreaSpaces)
             if event.isRest {
                 appendRest(event, x: eventX, env: env, into: &elements)
-            } else {
-                appendPitchedEvent(event, x: eventX, env: env, into: &elements)
+            } else if let layout = layoutPitchedEvent(
+                event, x: eventX, forcedStemUp: beamPlan.forcedStemUp(forEvent: index), env: env, into: &elements
+            ) {
+                layouts[index] = layout
             }
         }
 
-        return assemble(elements, context: context, env: env, plan: plan)
+        // Passes 2–5: stems, beams, ties, tuplets.
+        let rhythm = resolveRhythm(events: events, layouts: layouts, plan: beamPlan, env: env, into: &elements)
+        return assemble(elements, context: context, env: env, plan: plan, rhythm: rhythm)
     }
 
     // MARK: Width plan (ported spacing model)
@@ -294,7 +311,8 @@ public enum MeasureLayoutEngine {
         _ elements: ElementBucket,
         context: MeasureContext,
         env: LayoutEnv,
-        plan: WidthPlan
+        plan: WidthPlan,
+        rhythm: RhythmElements
     ) -> MeasureFrame {
         let clef = context.showClef ? clefGlyph(context: context, env: env) : nil
         let timeSignature = context.showTimeSignature
@@ -323,7 +341,10 @@ public enum MeasureLayoutEngine {
             stems: elements.stems,
             ledgerLines: elements.ledgerLines,
             barline: barline,
-            noteAnchors: elements.anchors
+            noteAnchors: elements.anchors,
+            beams: rhythm.beams,
+            ties: rhythm.ties,
+            tuplets: rhythm.tuplets
         )
     }
 }
