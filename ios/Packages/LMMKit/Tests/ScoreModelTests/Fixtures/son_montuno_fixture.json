@@ -1,0 +1,539 @@
+{
+  "schemaVersion": 1,
+  "title": "Son Montuno (C / F / G / C)",
+  "composer": "PlaySense Studio Test Fixture",
+  "sourceFormat": "native",
+  "initialTempo": 96,
+  "initialTimeSignature": [
+    4,
+    4
+  ],
+  "initialKeyFifths": 0,
+  "tracks": [
+    {
+      "index": 0,
+      "instrument": "tres",
+      "displayName": "Tres",
+      "tuning": [
+        "G3",
+        "C4",
+        "E4"
+      ],
+      "stringMultiplicity": 2,
+      "channel": 0,
+      "defaultView": "tab",
+      "measures": [
+        {
+          "number": 1,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "chord",
+                  "durationQN": 1,
+                  "notes": [
+                    {
+                      "midi": 60
+                    },
+                    {
+                      "midi": 64
+                    },
+                    {
+                      "midi": 67
+                    }
+                  ]
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 2
+                },
+                {
+                  "kind": "chord",
+                  "durationQN": 1,
+                  "notes": [
+                    {
+                      "midi": 60
+                    },
+                    {
+                      "midi": 64
+                    },
+                    {
+                      "midi": 67
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": 2,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "chord",
+                  "durationQN": 1,
+                  "notes": [
+                    {
+                      "midi": 60
+                    },
+                    {
+                      "midi": 65
+                    },
+                    {
+                      "midi": 69
+                    }
+                  ]
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 2
+                },
+                {
+                  "kind": "chord",
+                  "durationQN": 1,
+                  "notes": [
+                    {
+                      "midi": 60
+                    },
+                    {
+                      "midi": 65
+                    },
+                    {
+                      "midi": 69
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": 3,
+          "tempoChange": 110,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "chord",
+                  "durationQN": 1,
+                  "notes": [
+                    {
+                      "midi": 62
+                    },
+                    {
+                      "midi": 67
+                    },
+                    {
+                      "midi": 71
+                    }
+                  ]
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 2
+                },
+                {
+                  "kind": "chord",
+                  "durationQN": 1,
+                  "notes": [
+                    {
+                      "midi": 62
+                    },
+                    {
+                      "midi": 67
+                    },
+                    {
+                      "midi": 71
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": 4,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "chord",
+                  "durationQN": 1,
+                  "notes": [
+                    {
+                      "midi": 60
+                    },
+                    {
+                      "midi": 64
+                    },
+                    {
+                      "midi": 67
+                    }
+                  ]
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 2
+                },
+                {
+                  "kind": "chord",
+                  "durationQN": 1,
+                  "notes": [
+                    {
+                      "midi": 60
+                    },
+                    {
+                      "midi": 64
+                    },
+                    {
+                      "midi": 67
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "instrument": "bass",
+      "displayName": "Bass",
+      "tuning": [
+        "E1",
+        "A1",
+        "D2",
+        "G2"
+      ],
+      "stringMultiplicity": 1,
+      "channel": 1,
+      "defaultView": "tab",
+      "measures": [
+        {
+          "number": 1,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 36,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 1
+                },
+                {
+                  "kind": "note",
+                  "midi": 43,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": 2,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 41,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 1
+                },
+                {
+                  "kind": "note",
+                  "midi": 48,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": 3,
+          "tempoChange": 110,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 43,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 1
+                },
+                {
+                  "kind": "note",
+                  "midi": 50,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": 4,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 36,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 1
+                },
+                {
+                  "kind": "note",
+                  "midi": 43,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "instrument": "perc-conga",
+      "displayName": "Conga",
+      "tuning": null,
+      "stringMultiplicity": 1,
+      "channel": 9,
+      "defaultView": "rhythm-grid",
+      "measures": [
+        {
+          "number": 1,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 62,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 63,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": 2,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 62,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 63,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": 3,
+          "tempoChange": 110,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 62,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 63,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": 4,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 62,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 63,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

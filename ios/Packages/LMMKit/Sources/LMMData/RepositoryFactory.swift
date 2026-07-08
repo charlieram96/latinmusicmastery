@@ -8,6 +8,7 @@ public struct LiveRepositories: Sendable {
     public let progress: ProgressRepository
     public let entitlements: EntitlementsRepository
     public let quiz: QuizRepository
+    public let score: ScoreRepository
     public let cache: ResponseCache
     public let mediaResolver: MediaURLResolver
 
@@ -16,6 +17,7 @@ public struct LiveRepositories: Sendable {
         progress: ProgressRepository,
         entitlements: EntitlementsRepository,
         quiz: QuizRepository,
+        score: ScoreRepository,
         cache: ResponseCache,
         mediaResolver: MediaURLResolver = PassthroughMediaURLResolver()
     ) {
@@ -23,6 +25,7 @@ public struct LiveRepositories: Sendable {
         self.progress = progress
         self.entitlements = entitlements
         self.quiz = quiz
+        self.score = score
         self.cache = cache
         self.mediaResolver = mediaResolver
     }
@@ -38,6 +41,7 @@ public extension SupabaseService {
             progress: LiveProgressRepository(client: client, sessionUserProvider: session, cache: cache),
             entitlements: LiveEntitlementsRepository(client: client, sessionUserProvider: session),
             quiz: LiveQuizRepository(client: client, cache: cache),
+            score: LiveScoreRepository(client: client, cache: cache),
             cache: cache,
             mediaResolver: PassthroughMediaURLResolver()
         )

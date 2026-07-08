@@ -53,6 +53,11 @@ final class LiveRepositoriesCompileTests: XCTestCase {
         XCTAssertNotNil(repository)
     }
 
+    func testScoreRepositoryConformsToProtocol() {
+        let repository: ScoreRepository = LiveScoreRepository(client: makeClient(), cache: ResponseCache())
+        XCTAssertNotNil(repository)
+    }
+
     func testSupabaseSessionUserProviderConformsToProtocol() {
         let provider: SessionUserProvider = SupabaseSessionUserProvider(client: makeClient())
         XCTAssertNotNil(provider)

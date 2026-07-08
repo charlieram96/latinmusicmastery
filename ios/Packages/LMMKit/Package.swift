@@ -26,6 +26,8 @@ let package = Package(
             dependencies: [
                 "LMMModels",
                 "LMMLocalization",
+                "ScoreModel",
+                "TimeMapKit",
                 .product(name: "Supabase", package: "supabase-swift")
             ]
         ),
@@ -76,8 +78,24 @@ let package = Package(
             dependencies: [
                 "LMMData",
                 "LMMModels",
+                "ScoreModel",
+                "TimeMapKit",
                 .product(name: "Supabase", package: "supabase-swift"),
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+            ]
+        ),
+        .testTarget(
+            name: "ScoreModelTests",
+            dependencies: [
+                "ScoreModel",
+                "LMMModels"
+            ]
+        ),
+        .testTarget(
+            name: "TimeMapKitTests",
+            dependencies: [
+                "TimeMapKit",
+                "ScoreModel"
             ]
         ),
         .testTarget(

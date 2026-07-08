@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "title": "C Major Scale Ascending",
+  "composer": "PlaySense Studio Test Fixture",
+  "sourceFormat": "native",
+  "initialTempo": 120,
+  "initialTimeSignature": [
+    4,
+    4
+  ],
+  "initialKeyFifths": 0,
+  "tracks": [
+    {
+      "index": 0,
+      "instrument": "guitar",
+      "displayName": "Guitar",
+      "tuning": [
+        "E2",
+        "A2",
+        "D3",
+        "G3",
+        "B3",
+        "E4"
+      ],
+      "stringMultiplicity": 1,
+      "channel": 0,
+      "defaultView": "staff",
+      "measures": [
+        {
+          "number": 1,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 60,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "note",
+                  "midi": 62,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "note",
+                  "midi": 65,
+                  "durationQN": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": 2,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 67,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "note",
+                  "midi": 69,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "note",
+                  "midi": 71,
+                  "durationQN": 1
+                },
+                {
+                  "kind": "note",
+                  "midi": 72,
+                  "durationQN": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

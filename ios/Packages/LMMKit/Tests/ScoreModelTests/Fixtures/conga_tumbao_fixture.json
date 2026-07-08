@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "title": "Conga Tumbao 2-3",
+  "composer": "PlaySense Studio Test Fixture",
+  "sourceFormat": "native",
+  "initialTempo": 100,
+  "initialTimeSignature": [
+    4,
+    4
+  ],
+  "initialKeyFifths": 0,
+  "tracks": [
+    {
+      "index": 0,
+      "instrument": "perc-conga",
+      "displayName": "Conga",
+      "tuning": null,
+      "stringMultiplicity": 1,
+      "channel": 9,
+      "defaultView": "rhythm-grid",
+      "measures": [
+        {
+          "number": 1,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 62,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 63,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": 2,
+          "voices": [
+            {
+              "number": 1,
+              "events": [
+                {
+                  "kind": "note",
+                  "midi": 62,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 63,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "rest",
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                },
+                {
+                  "kind": "note",
+                  "midi": 64,
+                  "durationQN": 0.5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
