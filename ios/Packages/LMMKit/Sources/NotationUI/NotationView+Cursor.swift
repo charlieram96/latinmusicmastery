@@ -11,7 +11,10 @@ public extension NotationView {
     /// there is no per-frame view invalidation.
     func setCursorTime(scoreMs: Double) {
         cursorScoreMs = scoreMs
-        applyCursor(animated: false)
+        // Allow animation: the wrapped auto-follow only actually animates a single-row advance
+        // (see `autoFollow`); every other update — scroll mode, multi-row jumps, the cursor/measure
+        // layers — stays instant regardless of this flag.
+        applyCursor(animated: true)
     }
 
     /// Show/hide the playhead (hidden in gaps between sections and before any notation begins).
@@ -103,10 +106,17 @@ extension NotationView {
         switch mode {
         case .wrapped:
             guard system != lastFollowedSystem else { return }
+            let previous = lastFollowedSystem
             lastFollowedSystem = system
+            // Animate the ordinary playback advance of ONE row (glides to the next line); a
+            // multi-row jump (a seek, or the first placement from -1) snaps instantly so the view
+            // isn't seen sweeping across several systems. A programmatic `setContentOffset` never
+            // triggers `scrollViewWillBeginDragging` (that fires for user touch drags only), so an
+            // animated follow can't be misread as a user drag suspending auto-follow.
+            let singleSystemJump = previous >= 0 && abs(system - previous) == 1
             let maxOffsetY = max(0, scrollView.contentSize.height - scrollView.bounds.height)
             let targetY = min(max(0, systemFrame.topLineY - 24), maxOffsetY)
-            scrollView.setContentOffset(CGPoint(x: 0, y: targetY), animated: animated)
+            scrollView.setContentOffset(CGPoint(x: 0, y: targetY), animated: animated && singleSystemJump)
         case .scroll:
             let anchor = scrollView.bounds.width * Self.cursorAnchorFraction
             let maxOffsetX = max(0, scrollView.contentSize.width - scrollView.bounds.width)

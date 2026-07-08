@@ -58,4 +58,34 @@ final class SectionResolverTests: XCTestCase {
         let result = resolveSection(sections, at: 15)
         XCTAssertEqual(result.activeIndex, 1, "the later-starting eligible section wins")
     }
+
+    // MARK: - Precomputed resolver (per-frame path)
+
+    /// The precomputed ``SectionResolver`` (placed array built once in init) must match the
+    /// one-shot free function at every time — it is the per-frame form the driver holds so the
+    /// display-link tick allocates nothing.
+    func testPrecomputedResolverMatchesFreeFunctionAcrossTimeline() {
+        let sections = [range(0, 10), range(20, 30), range(nil, nil), range(40, nil)]
+        let resolver = SectionResolver(sections)
+        for tenths in 0...500 {
+            let time = Double(tenths) / 10
+            let precomputed = resolver.resolve(at: time)
+            let oneShot = resolveSection(sections, at: time)
+            XCTAssertEqual(precomputed, oneShot, "mismatch at t=\(time)")
+        }
+    }
+
+    func testPrecomputedResolverEmptyIsInert() {
+        let resolver = SectionResolver([])
+        let result = resolver.resolve(at: 7)
+        XCTAssertEqual(result, SectionResolution(activeIndex: -1, displayIndex: 0, inTrailingGap: false))
+    }
+
+    func testPrecomputedResolverHoldsPrevInTrailingGap() {
+        let resolver = SectionResolver([range(0, 10), range(20, 30)])
+        let result = resolver.resolve(at: 15)
+        XCTAssertEqual(result.activeIndex, -1)
+        XCTAssertEqual(result.displayIndex, 0)
+        XCTAssertTrue(result.inTrailingGap)
+    }
 }

@@ -31,7 +31,8 @@ final class NotationSyncDriver {
 
     private weak var notationView: NotationView?
     private let sections: [SyncSection]
-    private let ranges: [SectionRange]
+    /// Precomputed once from the fixed sections — the per-frame `resolve(at:)` allocates nothing.
+    private let resolver: SectionResolver
     private let mode: StaffLayoutMode
 
     private var loadedIndex = -1
@@ -51,7 +52,7 @@ final class NotationSyncDriver {
                 activeTimeMap: $0.activeTimeMap
             )
         }
-        self.ranges = self.sections.map(\.range)
+        self.resolver = SectionResolver(self.sections.map(\.range))
     }
 
     /// Bind the view and route its taps to `onSeek` via the current section's time map.
@@ -69,7 +70,7 @@ final class NotationSyncDriver {
     func onVideoTime(_ seconds: Double, videoDuration: Double) {
         guard !sections.isEmpty, let view = notationView else { return }
 
-        let resolution = resolveSection(ranges, at: seconds)
+        let resolution = resolver.resolve(at: seconds)
         loadIfNeeded(index: resolution.displayIndex, videoDuration: videoDuration, view: view)
 
         guard let timeMap = currentTimeMap, resolution.displayIndex < sections.count else {

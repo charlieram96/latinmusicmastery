@@ -316,6 +316,11 @@ public final class NotationView: UIView {
 
 extension NotationView: UIScrollViewDelegate {
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // Fires on every frame of the scroll-mode auto-follow translation — cheap by design.
+        // `updateVisibleSystems` only re-draws or releases a tile whose visible/hidden state
+        // actually flipped (`renderIfNeeded` no-ops on an already-drawn tile, `releaseContents`
+        // on an already-released one), so a steady follow that keeps the same tiles on screen does
+        // no rendering work; it just walks the tile list comparing frames.
         updateVisibleSystems()
     }
 

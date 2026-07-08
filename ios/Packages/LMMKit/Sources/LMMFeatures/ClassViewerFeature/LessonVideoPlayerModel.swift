@@ -72,7 +72,16 @@ final class LessonVideoPlayerModel {
 
     static let speeds: [Double] = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
+    #if DEBUG
+    /// Count of models constructed this process — the test seam for the "opening a scored lesson
+    /// builds exactly ONE model" behaviour test (a section-load remount would bump this to 2).
+    static var debugInitCount = 0
+    #endif
+
     init(url: URL, resumeSeconds: Int?, alreadyComplete: Bool, defaultSubtitle: SubtitleLang?) {
+        #if DEBUG
+        Self.debugInitCount += 1
+        #endif
         self.resumeSeconds = resumeSeconds
         self.tracker = VideoProgressTracker(resumeSecond: resumeSeconds, alreadyComplete: alreadyComplete)
         self.activeSubtitle = defaultSubtitle

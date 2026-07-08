@@ -27,53 +27,76 @@ struct VideoNotationBody: View {
 
     @State private var model: LessonVideoPlayerModel?
     @State private var sections: [HydratedScoreSection] = []
+    /// Committed video/notation split (regular width). Updated only when a divider drag ENDS.
     @State private var splitFraction: CGFloat = 0.5
-    @State private var dragStartFraction: CGFloat?
+    /// The container's measured width, read via a zero-impact background reader so the divider's
+    /// fraction math has a total width without wrapping the whole body in a greedy `GeometryReader`
+    /// (that ancestor would differ between the plain and split shapes → remount the player).
+    @State private var containerWidth: CGFloat = 0
+    /// Live divider translation, held in gesture state so a cancelled/interrupted drag auto-resets
+    /// to zero (no stale anchor left behind — the old `dragStartFraction` was only cleared in
+    /// `onEnded`, so a cancelled gesture stranded it).
+    @GestureState private var dragTranslation: CGFloat = 0
 
     private var isRegular: Bool { horizontalSizeClass == .regular }
+    private var showNotation: Bool { !sections.isEmpty && model != nil }
+    /// Split side-by-side only when there's notation to show AND the width is regular (iPad).
+    private var isSplit: Bool { showNotation && isRegular }
+
+    private static let dividerWidth: CGFloat = 12
 
     var body: some View {
-        Group {
-            if !sections.isEmpty, let model {
-                if isRegular {
-                    splitLayout(model: model)
-                } else {
-                    stackedLayout(model: model)
+        content
+            // Measure width without a layout-shaping ancestor (background never affects size).
+            .background(
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { containerWidth = proxy.size.width }
+                        .onChange(of: proxy.size.width) { _, width in containerWidth = width }
                 }
-            } else {
-                videoPlayer
-            }
-        }
-        .task(id: item.id) { await loadSections() }
+            )
+            .task(id: item.id) { await loadSections() }
     }
 
-    // MARK: Layouts
-
-    private func stackedLayout(model: LessonVideoPlayerModel) -> some View {
-        VStack(spacing: LMMSpacing.sm) {
+    /// The player lives at ONE structural position (always the first child) so it is NEVER
+    /// remounted when sections arrive — an `AnyLayout` swaps the container between vertical (stack)
+    /// and horizontal (split) shapes while preserving every child's identity, and the notation is
+    /// simply appended as a second child. A remount here would re-resolve the URL and visibly
+    /// reload/re-buffer the video the instant a scored lesson's sections finished loading.
+    @ViewBuilder
+    private var content: some View {
+        let layout = isSplit
+            ? AnyLayout(HStackLayout(spacing: 0))
+            : AnyLayout(VStackLayout(spacing: showNotation ? LMMSpacing.sm : 0))
+        layout {
             videoPlayer
-            notationPanel(model: model, mode: .scroll)
-                .frame(height: 220)
-        }
-    }
-
-    private func splitLayout(model: LessonVideoPlayerModel) -> some View {
-        GeometryReader { proxy in
-            let dividerWidth: CGFloat = 12
-            let available = proxy.size.width - dividerWidth
-            let videoWidth = max(0, available * splitFraction)
-            HStack(spacing: 0) {
-                videoPlayer
-                    .frame(width: videoWidth)
-                divider(totalWidth: available)
-                notationPanel(model: model, mode: .wrapped)
-                    .frame(maxWidth: .infinity)
+                .frame(width: isSplit ? videoWidth : nil)
+            if showNotation, let model {
+                if isSplit { divider }
+                notationPanel(model: model, mode: isSplit ? .wrapped : .scroll)
+                    .frame(height: isSplit ? nil : 220)
+                    .frame(maxWidth: isSplit ? .infinity : nil)
             }
         }
-        .frame(height: 360)
+        .frame(height: isSplit ? 360 : nil)
     }
 
-    private func divider(totalWidth: CGFloat) -> some View {
+    // MARK: Split geometry
+
+    /// Available width for the two panes (container minus the divider gutter).
+    private var splitAvailable: CGFloat { max(0, containerWidth - Self.dividerWidth) }
+
+    /// Effective split fraction while a drag is in flight = committed fraction + live translation,
+    /// clamped 0.3–0.7. When the drag ends the committed `splitFraction` absorbs it; when it is
+    /// cancelled `dragTranslation` auto-resets, so the panes snap cleanly back — no stale anchor.
+    private var effectiveFraction: CGFloat {
+        guard splitAvailable > 0 else { return splitFraction }
+        return min(0.7, max(0.3, splitFraction + dragTranslation / splitAvailable))
+    }
+
+    private var videoWidth: CGFloat { max(0, splitAvailable * effectiveFraction) }
+
+    private var divider: some View {
         RoundedRectangle(cornerRadius: 2)
             .fill(LMMColor.border)
             .frame(width: 4)
@@ -82,15 +105,13 @@ struct VideoNotationBody: View {
             .contentShape(Rectangle())
             .gesture(
                 DragGesture()
-                    .onChanged { value in
-                        guard totalWidth > 0 else { return }
-                        // `translation` is cumulative from the drag's start, so anchor to the
-                        // fraction captured when the drag began (clamped 0.3–0.7).
-                        let start = dragStartFraction ?? splitFraction
-                        dragStartFraction = start
-                        splitFraction = min(0.7, max(0.3, start + value.translation.width / totalWidth))
+                    // `translation` is cumulative from the drag's start; holding it in gesture
+                    // state means an interrupted/cancelled drag resets it to 0 automatically.
+                    .updating($dragTranslation) { value, state, _ in state = value.translation.width }
+                    .onEnded { value in
+                        guard splitAvailable > 0 else { return }
+                        splitFraction = min(0.7, max(0.3, splitFraction + value.translation.width / splitAvailable))
                     }
-                    .onEnded { _ in dragStartFraction = nil }
             )
             .accessibilityLabel(Text(verbatim: "Resize video and notation"))
     }
@@ -108,6 +129,8 @@ struct VideoNotationBody: View {
             onReachedCompletion: onReachedCompletion,
             onModelReady: { model = $0 }
         )
+        // Stable explicit identity keyed on the item — preserves (does not defeat) identity across
+        // the AnyLayout shape change, since the id is constant for a given lesson item.
         .id(item.id)
     }
 
@@ -132,6 +155,11 @@ struct VideoNotationBody: View {
     private func loadSections() async {
         sections = []
         guard item.itemType == .video else { return }
+        // This fires for EVERY video item, including the many plain (unscored) ones — deliberate.
+        // The catalog rows carry no "has sections" flag, so there is no cheap existence signal to
+        // gate on; the query itself is the check. It's cheap after the first hit: the repository
+        // caches the result under the 5-min `catalogTTL`, so re-opening an item (or a plain video
+        // with an empty result) is served from memory, not the network.
         let loaded = (try? await services.score.scoreSections(classItemId: item.id)) ?? []
         // Only sections that actually have notation are worth showing.
         sections = loaded.filter { !$0.scoreDocument.tracks.isEmpty }
