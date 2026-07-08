@@ -785,6 +785,102 @@
         }
       }
     },
+    "viewer.about.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "About this lesson" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Acerca de esta lección" } }
+      }
+    },
+    "viewer.completed": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Completed" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Completada" } }
+      }
+    },
+    "viewer.empty.message": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "This class doesn't have any content yet." } },
+        "es": { "stringUnit": { "state": "translated", "value": "Esta clase aún no tiene contenido." } }
+      }
+    },
+    "viewer.empty.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Nothing here yet" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Aún no hay nada aquí" } }
+      }
+    },
+    "viewer.exercise.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Exercise" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Ejercicio" } }
+      }
+    },
+    "viewer.jam.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Jam Session" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Sesión de improvisación" } }
+      }
+    },
+    "viewer.markComplete": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Mark complete" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Marcar completada" } }
+      }
+    },
+    "viewer.meta.bpm": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "BPM %lld" } },
+        "es": { "stringUnit": { "state": "translated", "value": "BPM %lld" } }
+      }
+    },
+    "viewer.meta.key": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Key %@" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Tono %@" } }
+      }
+    },
+    "viewer.part.a11y": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Part %1$lld of %2$lld" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Parte %1$lld de %2$lld" } }
+      }
+    },
+    "viewer.part.label": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Part %1$lld of %2$lld" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Parte %1$lld de %2$lld" } }
+      }
+    },
+    "viewer.playsense.comingSoon": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Interactive practice coming soon" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Práctica interactiva próximamente" } }
+      }
+    },
+    "viewer.quiz.comingSoon": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "The interactive quiz opens here soon." } },
+        "es": { "stringUnit": { "state": "translated", "value": "El cuestionario interactivo se abrirá aquí pronto." } }
+      }
+    },
+    "viewer.quiz.questionCount": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%lld questions" } },
+        "es": { "stringUnit": { "state": "translated", "value": "%lld preguntas" } }
+      }
+    },
+    "viewer.quiz.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Quiz" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Cuestionario" } }
+      }
+    },
+    "viewer.video.unavailable": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "This video couldn't be loaded." } },
+        "es": { "stringUnit": { "state": "translated", "value": "No se pudo cargar este video." } }
+      }
+    },
     "viewer.comingSoon.message": {
       "localizations": {
         "en": {

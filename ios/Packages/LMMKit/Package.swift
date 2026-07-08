@@ -91,7 +91,9 @@ let package = Package(
             name: "LMMFeaturesTests",
             dependencies: [
                 "LMMFeatures",
-                "LMMData"
+                "LMMData",
+                "LMMModels",
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ]
         ),
         .testTarget(

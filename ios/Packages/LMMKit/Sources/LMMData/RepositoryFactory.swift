@@ -7,18 +7,24 @@ public struct LiveRepositories: Sendable {
     public let catalog: CatalogRepository
     public let progress: ProgressRepository
     public let entitlements: EntitlementsRepository
+    public let quiz: QuizRepository
     public let cache: ResponseCache
+    public let mediaResolver: MediaURLResolver
 
     public init(
         catalog: CatalogRepository,
         progress: ProgressRepository,
         entitlements: EntitlementsRepository,
-        cache: ResponseCache
+        quiz: QuizRepository,
+        cache: ResponseCache,
+        mediaResolver: MediaURLResolver = PassthroughMediaURLResolver()
     ) {
         self.catalog = catalog
         self.progress = progress
         self.entitlements = entitlements
+        self.quiz = quiz
         self.cache = cache
+        self.mediaResolver = mediaResolver
     }
 }
 
@@ -31,7 +37,9 @@ public extension SupabaseService {
             catalog: LiveCatalogRepository(client: client, sessionUserProvider: session, cache: cache),
             progress: LiveProgressRepository(client: client, sessionUserProvider: session, cache: cache),
             entitlements: LiveEntitlementsRepository(client: client, sessionUserProvider: session),
-            cache: cache
+            quiz: LiveQuizRepository(client: client, cache: cache),
+            cache: cache,
+            mediaResolver: PassthroughMediaURLResolver()
         )
     }
 }

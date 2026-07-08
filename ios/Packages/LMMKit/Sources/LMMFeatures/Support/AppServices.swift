@@ -13,13 +13,19 @@ public final class AppServices {
     public let catalog: CatalogRepository
     public let progress: ProgressRepository
     public let entitlements: EntitlementsRepository
+    public let quiz: QuizRepository
     public let cache: ResponseCache
+    /// The seam every playback URL passes through before it reaches an `AVPlayer` (v1 is a
+    /// passthrough; the signed-URL Edge Function drops in here later).
+    public let mediaResolver: MediaURLResolver
 
     public init(_ repositories: LiveRepositories) {
         self.catalog = repositories.catalog
         self.progress = repositories.progress
         self.entitlements = repositories.entitlements
+        self.quiz = repositories.quiz
         self.cache = repositories.cache
+        self.mediaResolver = repositories.mediaResolver
     }
 
     /// Test / preview seam — inject fakes without touching Supabase.
@@ -27,11 +33,15 @@ public final class AppServices {
         catalog: CatalogRepository,
         progress: ProgressRepository,
         entitlements: EntitlementsRepository,
-        cache: ResponseCache
+        quiz: QuizRepository,
+        cache: ResponseCache,
+        mediaResolver: MediaURLResolver = PassthroughMediaURLResolver()
     ) {
         self.catalog = catalog
         self.progress = progress
         self.entitlements = entitlements
+        self.quiz = quiz
         self.cache = cache
+        self.mediaResolver = mediaResolver
     }
 }

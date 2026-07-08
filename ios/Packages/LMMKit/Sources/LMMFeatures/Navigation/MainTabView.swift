@@ -83,7 +83,7 @@ struct CatalogDestinations: ViewModifier {
             case .course(let courseId):
                 CourseDetailView(courseId: courseId)
             case .classViewer(let courseId, let classId):
-                ClassViewerPlaceholderView(courseId: courseId, classId: classId)
+                ClassViewerView(courseId: courseId, classId: classId)
             }
         }
     }
