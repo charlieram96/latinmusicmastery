@@ -50,7 +50,7 @@ let package = Package(
                 .copy("Resources/OFL.txt")
             ]
         ),
-        .target(name: "NotationUI", dependencies: ["NotationEngraving", "TimeMapKit"]),
+        .target(name: "NotationUI", dependencies: ["NotationEngraving", "TimeMapKit", "ScoreModel"]),
 
         // MARK: - PlaySense
 
@@ -110,6 +110,7 @@ let package = Package(
             name: "NotationEngravingTests",
             dependencies: [
                 "NotationEngraving",
+                "ScoreModel",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ]
         ),
