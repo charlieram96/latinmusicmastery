@@ -86,6 +86,15 @@ public final class MicTap {
     /// Buffers dropped because the ring was full (overrun diagnostics).
     public var dropCount: UInt64 { ring?.dropCount ?? 0 }
 
+    /// On-demand current-pitch read (Hz) from the detector's ring buffer, serialized onto the drain queue
+    /// so it never races ``OnsetDetector/process(_:blockTime:emit:)`` (which mutates the same snapshot
+    /// scratch). Off the realtime hot path — invoked only by the deferred pitched-grade re-read. Returns
+    /// `nil` when the tap isn't installed or no confident pitch is present.
+    public func currentPitch() -> Double? {
+        guard installed else { return nil }
+        return drainQueue.sync { detector.currentPitch() }
+    }
+
     // MARK: - Drain
 
     private func drain() {

@@ -1,9 +1,10 @@
 import Foundation
 import Supabase
 
-/// Reads the published `play_sense_songs` catalog. Mirrors the RLS on migration 027 (authenticated read),
-/// so any signed-in student sees the published list; admin-only rows (`is_published = false`) are filtered
-/// out here as well as by the server.
+/// Reads the published `play_sense_songs` catalog. Migration 027's select policy is `TO authenticated
+/// USING (true)` — the server returns EVERY row (published or not) to any signed-in user and does NOT
+/// filter on `is_published`. Publication is enforced client-side only, by the `.eq("is_published", true)`
+/// below, so unpublished rows never reach the student UI even though they are readable by the API.
 public protocol PlaySenseSongRepository: Sendable {
     /// Published songs, ordered by `order_index`.
     func publishedSongs() async throws -> [PlaySenseSong]

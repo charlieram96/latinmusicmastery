@@ -208,8 +208,9 @@ public final class SessionCoordinator {
         startFrameLoop()
     }
 
-    /// Build the ``LiveScorer`` for the resolved `t0` and wire the mic tap → onset source into it. Count-in
-    /// taps (before t0) are dropped by the scorer; a live pitch/chroma stream is D24+'s concern.
+    /// Build the ``LiveScorer`` for the resolved `t0` and wire the mic tap → onset source into it, including
+    /// the live pitch/chroma path so pitched notes and chords grade against real detection. Count-in taps
+    /// (before t0) are dropped by the scorer.
     private func installScorerAndMic(
         exercise: ExerciseDefinition,
         calibration: CalibrationRecord,
@@ -218,7 +219,7 @@ public final class SessionCoordinator {
     ) {
         let realScheduler = RealDeferredScheduler(callbackQueue: .main)
         scheduler = realScheduler
-        scorer = LiveScorer(
+        let liveScorer = LiveScorer(
             expectedEvents: expected,
             difficulty: exercise.difficulty,
             instrumentCategory: getInstrumentCategory(exercise.instrument),
@@ -227,15 +228,30 @@ public final class SessionCoordinator {
             t0Seconds: t0Seconds,
             scheduler: realScheduler
         )
+        scorer = liveScorer
         let config = getInstrumentConfig(exercise.instrument, noisyRoom: false, speakerSafe: audioMode.isSpeakerSafe)
         let source = MicOnsetEventSource(engine: engine, config: config)
         source.onOnset = { [weak self] event in self?.ingestOnset(event) }
+
+        // Wire the live pitch/chroma path end-to-end (D23 fix round 1). Without this, on a real mic every
+        // pitched note whose onset carried no detected frequency would hard-miss, and every chord would
+        // grade with `nil` chroma. `pitchFrequencyProvider` is the +100 ms deferred re-read (the web's
+        // `getFrequency()` at grade time); `chromaProvider` is the deferred post-strum chroma keyed by
+        // `round(onsetTimestamp * 1000)` (the web's `chromaByOnsetRef`). Percussion never invokes these.
+        liveScorer.pitchFrequencyProvider = { [weak source] in source?.currentPitch() }
+        liveScorer.chromaProvider = { [weak source] key in source?.chroma(forOnsetKey: key) }
+
         source.start()
         onsetSource = source
     }
 
     private func ingestOnset(_ event: OnsetEvent) {
         guard machine.isActive else { return }
+        // Track the last confidently-detected note (hook's `lastDetectedMidiRef`) as the last-resort
+        // wrong-note catch when a later onset carries neither a frequency nor a live pitch reading.
+        if let frequency = event.frequency {
+            scorer?.lastDetectedMidiNote = frequencyToMidi(frequency)
+        }
         scorer?.ingest(event)
         inputLevel = min(1, event.energy)
     }

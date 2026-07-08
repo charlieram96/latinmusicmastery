@@ -92,6 +92,11 @@ public final class GameAudioEngine {
     /// Buffers dropped by the tap ring (overrun diagnostics); 0 when no tap is installed.
     public var micDropCount: UInt64 { micTap?.dropCount ?? 0 }
 
+    /// On-demand current-pitch read (Hz) from the installed mic tap's detector (drain-queue serialized);
+    /// `nil` when no tap is installed or no confident pitch is present. Backs the ``LiveScorer``'s
+    /// `pitchFrequencyProvider` for the deferred pitched re-read path.
+    public func currentMicPitch() -> Double? { micTap?.currentPitch() }
+
     /// Stop everything and detach all nodes — no engine or node leaks across sessions.
     public func teardown() {
         micTap?.remove()

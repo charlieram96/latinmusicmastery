@@ -306,6 +306,20 @@ public final class OnsetDetector {
         block.withUnsafeBufferPointer { process($0, blockTime: blockTime, emit: emit) }
     }
 
+    /// On-demand fundamental-frequency read (Hz) of the CURRENT raw pitch ring buffer — the most recent
+    /// `pitchBufferSize` samples (~85 ms at 48 kHz), independent of the onset path. The web hook re-reads
+    /// `pitchDetection.getFrequency()` at grade time (the +100 ms deferred pitched path); iOS has no
+    /// continuous pitch stream, so this snapshots the same ring the onset detector fills and runs the NAC
+    /// detector over it. Returns `nil` on RMS-silence / low clarity (the detector's own gate).
+    ///
+    /// Reuses the `snapshotPitchBuffer` / `pitchDetector` scratch that ``process(_:blockTime:emit:)`` also
+    /// touches, so it MUST run on the same serial context as `process` (the mic drain queue) —
+    /// ``MicTap/currentPitch()`` guarantees that with a `drainQueue.sync`.
+    public func currentPitch() -> Double? {
+        snapshotPitchBuffer()
+        return pitchSnapshotD.withUnsafeBufferPointer { pitchDetector.detect($0) }
+    }
+
     // MARK: - Frame analysis
 
     private func analyzeFrame(_ frame: UnsafeMutableBufferPointer<Float>, now: Double,

@@ -124,11 +124,12 @@ final class SessionPhaseMachineTests: XCTestCase {
         XCTAssertFalse(machine.isPracticeMode)
     }
 
-    func testAlreadyPracticingSkipsBlockOnRestart() {
+    func testRetryClearsPracticeModeAndReturnsToReady() {
         var machine = readyMachine()
         machine.requestStart(isBluetoothOutput: true)
         machine.acceptPracticeMode()
-        // Interrupt, retry — retry clears practice mode so the block re-evaluates.
+        // A practice-mode take that's interrupted and retried must NOT stay in practice mode: retry
+        // returns to `.ready` and clears the flag, so the Bluetooth block re-evaluates from scratch.
         machine.beginPlaying()
         machine.interrupt(.routeChanged)
         machine.retry()
