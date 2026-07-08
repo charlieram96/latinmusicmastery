@@ -55,4 +55,16 @@ final class VideoProgressTrackerTests: XCTestCase {
         var tracker = VideoProgressTracker(resumeSecond: 0)
         XCTAssertFalse(tracker.tick(currentSeconds: 500, durationSeconds: 0).markComplete)
     }
+
+    func testAlreadyCompleteAtConstructionNeverRefiresButHeartbeatsStillFire() {
+        // A lesson resumed after it was already marked complete (e.g. a rewatch) must not
+        // re-trigger the completion callback — neither past the 90% threshold nor at the end —
+        // while position heartbeats keep persisting normally.
+        var tracker = VideoProgressTracker(resumeSecond: 0, alreadyComplete: true)
+        let past90 = tracker.tick(currentSeconds: 95, durationSeconds: 100)
+        XCTAssertFalse(past90.markComplete)
+        XCTAssertEqual(past90.writePosition, 95)
+        let ended = tracker.end(durationSeconds: 100)
+        XCTAssertFalse(ended.markComplete)
+    }
 }

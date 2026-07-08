@@ -74,4 +74,15 @@ final class WebVTTParserTests: XCTestCase {
         XCTAssertTrue(WebVTTParser.parse("").isEmpty)
         XCTAssertTrue(WebVTTParser.parse("WEBVTT\n").isEmpty)
     }
+
+    func testHourLessMMSSTimingIsAccepted() {
+        // Defensive-only branch: srt-to-vtt.ts always emits HH:MM:SS, but the parser tolerates a
+        // bare MM:SS.mmm cue in case a sidecar was hand-authored or came from a third party.
+        let raw = "WEBVTT\n\n1\n01:02.500 --> 01:05.000\nShort-form timing.\n"
+        let cues = WebVTTParser.parse(raw)
+        XCTAssertEqual(cues.count, 1)
+        XCTAssertEqual(cues[0].start, 62.5, accuracy: 0.001)
+        XCTAssertEqual(cues[0].end, 65.0, accuracy: 0.001)
+        XCTAssertEqual(cues[0].text, "Short-form timing.")
+    }
 }

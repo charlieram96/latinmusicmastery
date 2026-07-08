@@ -100,6 +100,8 @@ public enum WebVTTParser {
 
         switch values.count {
         case 3: return values[0] * 3600 + values[1] * 60 + values[2] + millis
+        // Defensive only: `lib/subtitles/srt-to-vtt.ts` always emits HH:MM:SS, so this hour-less
+        // MM:SS.mmm branch exists solely to tolerate a hand-authored or third-party sidecar.
         case 2: return values[0] * 60 + values[1] + millis
         case 1: return values[0] + millis
         default: return nil

@@ -218,19 +218,24 @@ final class LessonVideoPlayerModel {
             MainActor.assumeIsolated { self.onTick(seconds: time.seconds) }
         }
 
+        // AVFoundation fires raw NSKeyValueObservation callbacks on whatever thread the KVO'd
+        // property actually changed on — unlike the periodic time observer / notification
+        // observer above (both pinned to queue .main), there's no guarantee this is the main
+        // thread. `MainActor.assumeIsolated` would trap the moment that assumption is wrong, so
+        // hop explicitly instead.
         statusObservation = item.observe(\.status, options: [.new]) { [weak self] item, _ in
             guard let self else { return }
-            MainActor.assumeIsolated { self.onStatusChange(item) }
+            Task { @MainActor in self.onStatusChange(item) }
         }
 
         bufferObservation = item.observe(\.loadedTimeRanges, options: [.new]) { [weak self] item, _ in
             guard let self else { return }
-            MainActor.assumeIsolated { self.onBufferChange(item) }
+            Task { @MainActor in self.onBufferChange(item) }
         }
 
         timeControlObservation = player.observe(\.timeControlStatus, options: [.new]) { [weak self] player, _ in
             guard let self else { return }
-            MainActor.assumeIsolated { self.isPlaying = player.timeControlStatus == .playing }
+            Task { @MainActor in self.isPlaying = player.timeControlStatus == .playing }
         }
 
         endObserver = NotificationCenter.default.addObserver(

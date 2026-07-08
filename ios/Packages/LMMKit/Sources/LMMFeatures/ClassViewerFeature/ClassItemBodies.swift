@@ -34,6 +34,7 @@ struct ExerciseJamFallbackCard: View {
     let item: ClassItem
     let resolver: MediaURLResolver
     @Environment(\.appLocale) private var locale
+    @State private var audioURL: URL?
 
     private var isJam: Bool { item.itemType == .jamSession }
 
@@ -73,10 +74,17 @@ struct ExerciseJamFallbackCard: View {
                 }
             }
         }
+        .task(id: item.id) {
+            audioURL = await Self.resolvedAudioURL(item: item, resolver: resolver)
+        }
     }
 
-    private var audioURL: URL? {
-        item.audioUrl.flatMap(URL.init(string:))
+    /// Resolves the backing-audio URL through the injected ``MediaURLResolver`` — never
+    /// `item.audioUrl` directly — so a future signed-URL resolver applies here too, matching how
+    /// ``LessonVideoPlayerView`` resolves the video URL. `nil` when the item has no audio or the
+    /// resolver fails; the card simply omits the player.
+    static func resolvedAudioURL(item: ClassItem, resolver: MediaURLResolver) async -> URL? {
+        try? await resolver.resolveAudio(item)
     }
 }
 
