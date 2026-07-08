@@ -67,14 +67,16 @@ public struct T0Anchor: Equatable, Sendable {
     public let hostTicks: UInt64
     /// The same instant in seconds (host-tick interval since kernel boot) — a monotonic reference.
     public let hostSeconds: Double
-    /// The output-node sample position at the exercise-start boundary.
-    public let outputSampleTime: Int64
+    /// The sample position at the exercise-start boundary on the MAIN-MIXER render timeline (the clock
+    /// `resolveAnchor()` samples from `mainMixerNode.lastRenderTime`). Named for that timeline so a
+    /// downstream stage cannot mistake it for the input-node or output-node sample domain.
+    public let mixerSampleTime: Int64
     public let sampleRate: Double
 
-    public init(hostTicks: UInt64, hostSeconds: Double, outputSampleTime: Int64, sampleRate: Double) {
+    public init(hostTicks: UInt64, hostSeconds: Double, mixerSampleTime: Int64, sampleRate: Double) {
         self.hostTicks = hostTicks
         self.hostSeconds = hostSeconds
-        self.outputSampleTime = outputSampleTime
+        self.mixerSampleTime = mixerSampleTime
         self.sampleRate = sampleRate
     }
 }
@@ -146,9 +148,17 @@ public enum GameClock {
         return T0Anchor(
             hostTicks: targetHostTicks,
             hostSeconds: timebase.seconds(fromTicks: targetHostTicks),
-            outputSampleTime: Int64(sample.rounded()),
+            mixerSampleTime: Int64(sample.rounded()),
             sampleRate: anchor.sampleRate
         )
+    }
+
+    /// Absolute host-clock seconds for a host-tick reading — the same monotonic domain as
+    /// `T0Anchor.hostSeconds`. D21's mic tap converts each input buffer's `AVAudioTime.hostTime`
+    /// through this so onset timestamps line up with `t0` (and therefore with D23 grading) without
+    /// ever touching a raw sample-time integer.
+    public static func hostSeconds(fromTicks ticks: UInt64, timebase: HostTimebase = .system) -> Double {
+        timebase.seconds(fromTicks: ticks)
     }
 }
 

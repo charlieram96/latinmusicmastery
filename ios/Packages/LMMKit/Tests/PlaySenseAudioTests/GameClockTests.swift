@@ -65,7 +65,7 @@ final class GameClockTests: XCTestCase {
         let resolved = GameClock.resolveT0(atHostTicks: targetTicks, anchor: anchor, timebase: identity)
         XCTAssertEqual(resolved.hostTicks, targetTicks)
         XCTAssertEqual(resolved.hostSeconds, identity.seconds(fromTicks: targetTicks), accuracy: 1e-9)
-        XCTAssertEqual(resolved.outputSampleTime, 9_600) // 0.2 s × 48 kHz
+        XCTAssertEqual(resolved.mixerSampleTime, 9_600) // 0.2 s × 48 kHz
         XCTAssertEqual(resolved.sampleRate, 48_000)
     }
 
@@ -85,6 +85,29 @@ final class GameClockTests: XCTestCase {
         let offset = base.offset(bySeconds: 0.5, timebase: identity)
         XCTAssertTrue(offset.isHostTimeValid)
         XCTAssertEqual(offset.hostTime, 1_000_000 + identity.ticks(fromSeconds: 0.5))
+    }
+
+    func testAVAudioTimeOffsetHostDomainNegativeAndCountInSequence() {
+        // The scheduling branch actually taken for a count-in: `t0.offset(bySeconds:)` with NEGATIVE
+        // offsets (clicks before t0) and positive offsets (exercise beats after). Always-on, synthetic
+        // timebase — no live audio. Verifies the host branch is chosen and matches GameClock math for
+        // both signs, and that a monotonically increasing offset sequence stays monotonic in host ticks.
+        let baseTime = AVAudioTime(hostTime: 5_000_000_000) // arbitrary host instant (t0)
+
+        let minus = baseTime.offset(bySeconds: -0.25, timebase: identity)
+        XCTAssertTrue(minus.isHostTimeValid, "host time is valid → host branch taken")
+        XCTAssertEqual(minus.hostTime, 5_000_000_000 - identity.ticks(fromSeconds: 0.25))
+
+        let plus = baseTime.offset(bySeconds: 0.5, timebase: identity)
+        XCTAssertEqual(plus.hostTime, 5_000_000_000 + identity.ticks(fromSeconds: 0.5))
+
+        // A 4-beat count-in at 120 BPM (0.5 s/beat): offsets −2.0 … −0.5, then beat at 0.
+        let offsets = [-2.0, -1.5, -1.0, -0.5, 0.0]
+        let hostTimes = offsets.map { baseTime.offset(bySeconds: $0, timebase: identity).hostTime }
+        for pair in zip(hostTimes, hostTimes.dropFirst()) {
+            XCTAssertLessThan(pair.0, pair.1, "count-in host times must increase with the offset")
+        }
+        XCTAssertEqual(hostTimes.last, baseTime.hostTime, "the 0-offset click lands exactly at t0")
     }
 
     func testAVAudioTimeOffsetSampleDomainForOfflineRendering() {

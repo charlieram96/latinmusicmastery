@@ -1,5 +1,6 @@
 import AVFoundation
 import Foundation
+import PlaySenseCore
 
 /// Owns the single `AVAudioEngine` for a PlaySense take and wires the whole graph:
 ///
@@ -22,6 +23,7 @@ public final class GameAudioEngine {
     private let backing = BackingTrackPlayer()
     private let timebase: HostTimebase
     private var isPrepared = false
+    private var micTap: MicTap?
 
     public init(sampleRate: Double = 48_000, timebase: HostTimebase = .system) {
         self.metronome = Metronome(sampleRate: sampleRate)
@@ -71,8 +73,29 @@ public final class GameAudioEngine {
         return resolved
     }
 
+    // MARK: - Mic tap (D21)
+
+    /// Install the realtime-safe mic tap + onset detector on the input node. `onMessage` is delivered on
+    /// the drain queue (not the main actor). Call after `start()` so the engine is running.
+    public func installMicTap(config: OnsetConfig, onMessage: @escaping (OnsetDetectorMessage) -> Void) {
+        if micTap == nil {
+            micTap = MicTap(engine: engine, onMessage: onMessage)
+        }
+        micTap?.install(config: config)
+    }
+
+    /// Remove the mic tap (if any).
+    public func removeMicTap() {
+        micTap?.remove()
+    }
+
+    /// Buffers dropped by the tap ring (overrun diagnostics); 0 when no tap is installed.
+    public var micDropCount: UInt64 { micTap?.dropCount ?? 0 }
+
     /// Stop everything and detach all nodes — no engine or node leaks across sessions.
     public func teardown() {
+        micTap?.remove()
+        micTap = nil
         metronome.stop()
         backing.stop()
         if engine.isRunning { engine.stop() }

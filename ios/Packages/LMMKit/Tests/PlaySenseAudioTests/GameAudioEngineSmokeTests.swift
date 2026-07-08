@@ -37,7 +37,7 @@ final class GameAudioEngineSmokeTests: XCTestCase {
 
         NSLog("[AudioSmoke] scheduled \(clicks.count) clicks + 1 stem")
         NSLog("[AudioSmoke] t0 hostSeconds: \(resolved.hostSeconds)")
-        NSLog("[AudioSmoke] t0 outputSampleTime: \(resolved.outputSampleTime)")
+        NSLog("[AudioSmoke] t0 mixerSampleTime: \(resolved.mixerSampleTime)")
         NSLog("[AudioSmoke] engine running: \(engine.engine.isRunning)")
 
         NSLog("[AudioSmoke] resolved.sampleRate: \(resolved.sampleRate) (mixer output \(sampleRate))")

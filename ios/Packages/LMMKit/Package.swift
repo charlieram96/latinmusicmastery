@@ -55,7 +55,8 @@ let package = Package(
         // MARK: - PlaySense
 
         .target(name: "PlaySenseCore", dependencies: ["ScoreModel"]),
-        .target(name: "PlaySenseAudio", dependencies: ["PlaySenseCore"]),
+        .target(name: "PlaySenseRealtime"),
+        .target(name: "PlaySenseAudio", dependencies: ["PlaySenseCore", "PlaySenseRealtime"]),
         .target(name: "PlaySenseBLE", dependencies: ["PlaySenseCore"]),
         .target(name: "PlaySenseHighway", dependencies: ["PlaySenseCore"]),
         .target(
