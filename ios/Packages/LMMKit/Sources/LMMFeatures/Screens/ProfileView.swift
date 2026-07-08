@@ -74,13 +74,16 @@ struct ProfileView: View {
     }
 
     #if DEBUG
-    /// Developer-only entry points, compiled out of release builds: the native notation preview (C16)
-    /// and the PlaySense audio-foundation harness (D20). No content wiring needed.
+    /// Developer-only entry points, compiled out of release builds: the native notation preview (C16),
+    /// the PlaySense audio-foundation harness (D20), and the latency-calibration wizard (D22). No
+    /// content wiring needed.
     private var debugRows: some View {
         VStack(spacing: 0) {
             debugRow(icon: "music.note.list", title: "Notation Debug") { NotationDebugView() }
             Divider().overlay(LMMColor.border)
             debugRow(icon: "waveform", title: "Audio Debug") { PlaySenseAudioDebugView() }
+            Divider().overlay(LMMColor.border)
+            debugRow(icon: "timer", title: "Calibration Debug") { CalibrationDebugView() }
         }
         .background(
             RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
