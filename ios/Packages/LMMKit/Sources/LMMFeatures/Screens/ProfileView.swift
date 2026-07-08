@@ -85,7 +85,9 @@ struct ProfileView: View {
             Divider().overlay(LMMColor.border)
             debugRow(icon: "timer", title: "Calibration Debug") { CalibrationDebugView() }
             Divider().overlay(LMMColor.border)
-            debugRow(icon: "gamecontroller", title: "PlaySense Stage") { DebugStageView() }
+            debugRow(icon: "gamecontroller", title: "PlaySense Stage") { StagePlayerView() }
+            Divider().overlay(LMMColor.border)
+            debugRow(icon: "number", title: "PlaySense Stage (numbers)") { DebugStageView() }
         }
         .background(
             RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
