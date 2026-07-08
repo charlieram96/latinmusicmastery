@@ -59,17 +59,56 @@ final class MeasureLayoutTests: XCTestCase {
     }
 
     func testDenseBarUsesPerNoteFloor() {
-        // A degenerate bar with more events than the beat-based width covers: the floor
-        // count*2.2 wins. 200 sixteenths → 200*2.2 = 440 spaces = 4400 pt >> 4*9.
+        // A bar with far more events than the beat-based width covers: the note-count floor
+        // count*2.2 wins. 200 notes → 200*2.2 = 440 spaces = 4400 pt >> 4*9. The events are packed
+        // WITHIN the 4-QN bar (qnStart 0…~4, small durations) so the bar is NOT over-full — this
+        // isolates the per-note floor from the over-full widening exercised separately below.
         let events = (0..<200).map { index -> EventDescriptor in
             let head = NoteDescriptor(staffPosition: 0, accidental: nil, midi: 64, isCross: false, keyString: "e/4")
             return EventDescriptor(
-                kind: .note, qnStart: Double(index) * 0.25, durationQN: 0.25, beatInMeasure: 1,
+                kind: .note, qnStart: Double(index) * 0.02, durationQN: 0.02, beatInMeasure: 1,
                 durationCode: .sixteenth, isRest: false, dotted: false, notes: [head], midi: 64,
                 triplet: false, tieToNext: false, articulation: nil
             )
         }
         XCTAssertEqual(layout(events, context: bareContext()).width, 4400, accuracy: acc)
+    }
+
+    // MARK: Over-full bar (more content than the meter admits)
+
+    func testOverFullBarSpreadsEventsWithDistinctIncreasingPositions() {
+        // 17 quarter notes crammed into a 4/4 bar — the corpus doc `1613b8d9` pathology. The
+        // nominal measureQN is 4, but the actual content is 17 QN. The layout denominator must
+        // widen to 17 so every event lands at a distinct, strictly-increasing x rather than piling
+        // onto the right barline (which is what clamping the fraction to [0,1] against 4 QN did).
+        let events = (0..<17).map { index -> EventDescriptor in
+            let head = NoteDescriptor(staffPosition: 0, accidental: nil, midi: 64, isCross: false, keyString: "e/4")
+            return EventDescriptor(
+                kind: .note, qnStart: Double(index), durationQN: 1, beatInMeasure: 1,
+                durationCode: .quarter, isRest: false, dotted: false, notes: [head], midi: 64,
+                triplet: false, tieToNext: false, articulation: nil
+            )
+        }
+        let frame = layout(events, context: bareContext())
+        let noteXs = frame.noteheads.map(\.origin.x)
+        XCTAssertEqual(noteXs.count, 17)
+        // Adjacent x's strictly increasing by more than an epsilon (a full staff space). On a
+        // monotonic run this also proves NO two noteheads collapse within that epsilon.
+        for (left, right) in zip(noteXs, noteXs.dropFirst()) {
+            XCTAssertGreaterThan(right - left, 1.0, "events must spread, not clamp onto the barline")
+        }
+        // The natural width widened ~17/4× vs a nominal 4/4 bar (max(4*9, 17*2.2) × 17/4).
+        XCTAssertEqual(frame.width, max(4.0 * 9.0, 17.0 * 2.2) * (17.0 / 4.0) * 10, accuracy: 1e-3)
+        // Every notehead sits left of the (widened) barline.
+        XCTAssertTrue(noteXs.allSatisfy { $0 < frame.barline.start.x })
+    }
+
+    func testWellFormedFullBarIsNotWidened() {
+        // A brim-full 4/4 bar (contentQN == measureQN == 4) must NOT trip the over-full path — its
+        // width and note x's stay exactly nominal, so no well-formed golden shifts.
+        let frame = layout(quarterNotes([60, 62, 64, 65]), context: bareContext())
+        XCTAssertEqual(frame.width, 360, accuracy: acc)
+        XCTAssertEqual(frame.noteheads.map(\.origin.x), [10, 92.5, 175, 257.5])
     }
 
     // MARK: Golden x/y for four quarters

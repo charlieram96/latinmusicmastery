@@ -143,6 +143,81 @@ final class NotationViewTests: XCTestCase {
                        "wrapped mode keeps one column tile per system")
     }
 
+    // MARK: Tile-boundary regression (C17 fix round)
+
+    /// A measure straddling a column-tile boundary must render identically whether drawn as one
+    /// wide tile or as two column tiles composited back together. This guards the scroll-strip
+    /// tiling seam: the split draws the straddling measure (clipped) into BOTH neighbouring tiles,
+    /// and — with the column boundary snapped to the device-pixel grid — the composite must be
+    /// pixel-for-pixel the single-tile render, with no seam artifact.
+    func testMultiTileRenderMatchesSingleTileAcrossColumnBoundary() {
+        let scale = ScaleContext(staffSpacePoints: 13)
+        let bar: [MusicalEvent] = [60, 64, 67, 72].map { .note(Note(durationQN: 1, midi: $0)) }
+        let measures = (1...4).map { Measure(number: $0, voices: [Voice(number: 1, events: bar)]) }
+        let track = Track(
+            index: 0, instrument: .guitar, displayName: "G", tuning: nil,
+            stringMultiplicity: 0, channel: 0, defaultView: .staff, measures: measures
+        )
+        let descriptors = EventDescriptorBuilder.extractTrackEvents(
+            track: track, initialTimeSignature: TimeSignature(numerator: 4, denominator: 4)
+        )
+        let layout = SystemLayout.layout(measures: descriptors, availableWidth: 390, mode: .scroll, scale: scale)
+        guard let system = layout.systems.first, system.measures.count >= 2 else {
+            return XCTFail("expected a multi-measure scroll strip")
+        }
+        let band = system.frame
+        let contentHeight = layout.totalSize.height
+        let displayScale: CGFloat = 2
+
+        // A boundary in the MIDDLE of measure index 1 (not on a barline) so the bar straddles it,
+        // snapped to the device-pixel grid exactly as `columnRects` does in production.
+        let straddled = system.measures[1]
+        let boundary = ((straddled.originX + straddled.width / 2) * displayScale).rounded() / displayScale
+
+        let format = UIGraphicsImageRendererFormat.preferred()
+        format.opaque = false
+        format.scale = displayScale
+
+        func render(_ column: CGRect) -> UIImage {
+            UIGraphicsImageRenderer(size: column.size, format: format).image { ctx in
+                drawSystem(system, in: ctx.cgContext, contentHeight: contentHeight,
+                           column: column, notationColor: .lightDefault)
+            }
+        }
+
+        let single = render(band)
+        let colA = CGRect(x: band.minX, y: band.minY, width: boundary - band.minX, height: band.height)
+        let colB = CGRect(x: boundary, y: band.minY, width: band.maxX - boundary, height: band.height)
+        let tileA = render(colA)
+        let tileB = render(colB)
+        let composite = UIGraphicsImageRenderer(size: band.size, format: format).image { _ in
+            tileA.draw(at: CGPoint(x: colA.minX - band.minX, y: 0))
+            tileB.draw(at: CGPoint(x: colB.minX - band.minX, y: 0))
+        }
+
+        let diff = maxChannelDifference(single, composite)
+        XCTAssertLessThanOrEqual(diff, 1, "two-tile composite diverges from single-tile at the seam (Δ \(diff))")
+    }
+
+    /// Max per-channel absolute difference between two images, normalized through a common
+    /// device-RGB bitmap so scale/format metadata can't skew the comparison. `0` == pixel-equal.
+    private func maxChannelDifference(_ first: UIImage, _ second: UIImage) -> Int {
+        guard let cgFirst = first.cgImage, let cgSecond = second.cgImage else { return 255 }
+        let width = min(cgFirst.width, cgSecond.width)
+        let height = min(cgFirst.height, cgSecond.height)
+        func bytes(_ image: CGImage) -> [UInt8] {
+            var data = [UInt8](repeating: 0, count: width * height * 4)
+            let context = CGContext(
+                data: &data, width: width, height: height, bitsPerComponent: 8,
+                bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            )
+            context?.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+            return data
+        }
+        return zip(bytes(cgFirst), bytes(cgSecond)).reduce(0) { max($0, abs(Int($1.0) - Int($1.1))) }
+    }
+
     func testEmptyScoreLoadsWithoutCrashing() {
         let empty = ScoreDocument(
             title: "Empty", sourceFormat: .native, initialTempo: 120,

@@ -146,7 +146,9 @@ public enum SystemLayout {
         // reads evenly (scroll: uniform; wrapped: the per-row justified width is >= this floor).
         let naturalWidthSpaces = measures
             .map { MeasureLayoutEngine.naturalWidthSpaces(
-                eventCount: $0.events.count, measureQN: ScoreTime.measureLengthInQN($0.timeSignature)
+                eventCount: $0.events.count,
+                measureQN: ScoreTime.measureLengthInQN($0.timeSignature),
+                contentQN: MeasureLayoutEngine.contentQN(events: $0.events, measureStartQN: $0.cumulativeQN)
             ) }
             .max() ?? MeasureLayoutMetrics.minNoteAreaSpaces
 

@@ -167,7 +167,7 @@ public final class NotationView: UIView {
         let displayScale = currentDisplayScale
         let maxTilePoints = maxTilePointWidth(displayScale: displayScale)
         tiles = layout.systems.flatMap { system -> [SystemTileLayer] in
-            columnRects(for: system, maxWidth: maxTilePoints).map { column in
+            columnRects(for: system, maxWidth: maxTilePoints, displayScale: displayScale).map { column in
                 let tile = SystemTileLayer(system: system, column: column, contentHeight: layout.totalSize.height)
                 tile.frame = column
                 tile.contentsScale = displayScale
@@ -193,15 +193,23 @@ public final class NotationView: UIView {
 
     /// Split a system's band into fixed-width column tiles (each ≤ `maxWidth` points). Wide scroll
     /// strips fan out into several; a within-limit system stays a single full-band tile.
-    private func columnRects(for system: SystemFrame, maxWidth: CGFloat) -> [CGRect] {
+    ///
+    /// Column boundaries are snapped to the device-pixel grid (multiples of `1/displayScale`): the
+    /// step advanced between tiles is floored to a whole number of device pixels, so — because a
+    /// scroll band starts at x = 0 (itself on the grid) — every interior boundary lands exactly on
+    /// a pixel edge. A fractional-pixel boundary would split a device pixel between two tiles and
+    /// leave a faint anti-aliased seam where they meet; snapping eliminates it.
+    private func columnRects(for system: SystemFrame, maxWidth: CGFloat, displayScale: CGFloat) -> [CGRect] {
         let band = system.frame
         guard band.width > maxWidth else { return [band] }
+        let pixel = 1 / max(displayScale, 1)
+        let step = max((maxWidth / pixel).rounded(.down) * pixel, pixel)
         var rects: [CGRect] = []
         var cursorX = band.minX
         while cursorX < band.maxX {
-            let tileWidth = min(maxWidth, band.maxX - cursorX)
+            let tileWidth = min(step, band.maxX - cursorX)
             rects.append(CGRect(x: cursorX, y: band.minY, width: tileWidth, height: band.height))
-            cursorX += maxWidth
+            cursorX += step
         }
         return rects
     }

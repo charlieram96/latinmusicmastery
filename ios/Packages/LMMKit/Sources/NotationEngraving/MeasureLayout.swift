@@ -194,8 +194,19 @@ public enum MeasureLayoutEngine {
     ) -> MeasureFrame {
         let metrics = GlyphMetrics.shared
         let measureQN = measureLength(context.timeSignature)
+        // An OVER-FULL bar holds more content than the meter admits (e.g. 17 QN crammed into a 4/4
+        // measure — corpus doc `1613b8d9`). Spacing it against the nominal `measureQN` would clamp
+        // every event past the nominal barline onto fraction 1, piling them illegibly at the right
+        // edge. The web does NOT: `staff-renderer.tsx` calls `voice.setStrict(false)` and VexFlow's
+        // Formatter spaces proportionally by the ACTUAL accumulated ticks. We mirror that by widening
+        // the layout denominator (and the natural width) to the actual content QN when it exceeds the
+        // nominal length; a well-formed bar keeps its nominal denominator/width, so nothing changes.
+        let contentQN = contentQN(events: events, measureStartQN: context.measureStartQN)
+        let layoutDenominatorQN = contentQN > measureQN + overfullToleranceQN ? contentQN : measureQN
         let plan = widthPlan(
-            naturalWidthSpaces: naturalWidthSpaces(eventCount: events.count, measureQN: measureQN),
+            naturalWidthSpaces: naturalWidthSpaces(
+                eventCount: events.count, measureQN: measureQN, contentQN: contentQN
+            ),
             context: context,
             scale: scale,
             originX: origin.x,
@@ -228,7 +239,7 @@ public enum MeasureLayoutEngine {
         var layouts: [Int: EventLayout] = [:]
         for (index, event) in events.enumerated() {
             let fraction = min(
-                max(qnInMeasure(event, measureStartQN: context.measureStartQN, measureQN: measureQN), 0),
+                max(qnInMeasure(event, measureStartQN: context.measureStartQN, measureQN: layoutDenominatorQN), 0),
                 1
             )
             let eventX = plan.noteStartX + scale.points(fraction * plan.noteAreaSpaces)
@@ -255,18 +266,43 @@ public enum MeasureLayoutEngine {
         let noteAreaSpaces: StaffSpaces
     }
 
+    /// QN slack below which a measure is NOT treated as over-full — guards the exact-full common
+    /// case (`contentQN == measureQN`, and floating-point sums a hair over it) from being widened,
+    /// which would spuriously perturb every well-formed golden. Only genuine over-fill (content
+    /// meaningfully past the nominal length) triggers the proportional spread.
+    static let overfullToleranceQN: Double = 1e-6
+
     private static func measureLength(_ timeSignature: TimeSignature) -> Double {
         max(4.0 * Double(timeSignature.numerator) / Double(timeSignature.denominator), 1e-9)
     }
 
+    /// The measure's actual content length in QN — the furthest event end (measure-relative
+    /// `qnStart` + `durationQN`) across its events, `0` for an empty measure. For a well-formed
+    /// bar this is `<=` the nominal `measureLength`; for an OVER-FULL bar (e.g. 17 QN crammed into
+    /// 4/4) it exceeds it, and callers widen both the layout denominator and the natural width to
+    /// it so events spread proportionally. The web has no explicit analogue — VexFlow's Formatter
+    /// simply spaces by the actual accumulated ticks (`setStrict(false)`), which this reconstructs.
+    static func contentQN(events: [EventDescriptor], measureStartQN: Double) -> Double {
+        events.reduce(0.0) { furthest, event in
+            max(furthest, (event.qnStart - measureStartQN) + max(event.durationQN, 0))
+        }
+    }
+
     /// The measure's own content-derived width (widest of its beat- and note-count floors), in
     /// staff spaces — the same figure `SystemLayout` maxes across a row/score for uniform bars.
-    static func naturalWidthSpaces(eventCount: Int, measureQN: Double) -> StaffSpaces {
+    /// An over-full bar (`contentQN` past the nominal `measureQN`) is scaled up by
+    /// `contentQN / measureQN`, mirroring how the web Formatter spreads a bar wider when it holds
+    /// more ticks; a well-formed bar (`contentQN <= measureQN`, or the default `0`) is unscaled.
+    static func naturalWidthSpaces(eventCount: Int, measureQN: Double, contentQN: Double = 0) -> StaffSpaces {
         let count = max(eventCount, 1)
-        return max(
+        let base = max(
             measureQN * MeasureLayoutMetrics.quarterNoteWidthSpaces,
             Double(count) * MeasureLayoutMetrics.perNoteMinWidthSpaces
         )
+        let overfill = measureQN > 0 && contentQN > measureQN + overfullToleranceQN
+            ? contentQN / measureQN
+            : 1
+        return base * overfill
     }
 
     private static func widthPlan(
