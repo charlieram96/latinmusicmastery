@@ -84,26 +84,6 @@ public func drawStaffSample(
     ctx.restoreGState()
 }
 
-/// Bundles what every drawing helper below needs, so none of them has to take more than a
-/// couple of parameters on top of it.
-private struct RenderContext {
-    let ctx: CGContext
-    let canvasHeight: CGFloat
-    let scale: ScaleContext
-    let metrics = GlyphMetrics.shared
-    let font = BravuraFont.shared
-}
-
-private func drawStaffLines(geometry: StaffGeometry, render: RenderContext) {
-    let ctx = render.ctx
-    ctx.setLineWidth(render.scale.points(render.metrics.engravingDefaults.staffLineThickness))
-    for lineY in geometry.lineYPositions {
-        ctx.move(to: CGPoint(x: geometry.originX, y: lineY))
-        ctx.addLine(to: CGPoint(x: geometry.originX + geometry.width, y: lineY))
-    }
-    ctx.strokePath()
-}
-
 private func drawLedgerLines(
     centerX: CGFloat,
     forPosition position: Int,
@@ -112,7 +92,13 @@ private func drawLedgerLines(
 ) {
     let scale = render.scale
     let defaults = render.metrics.engravingDefaults
-    let noteheadWidth: StaffSpaces = render.metrics.boundingBox(for: .noteheadBlack)?.width ?? 1.18
+    // `?? …fallback`: only reached if the bundled metadata is missing `noteheadBlack`'s bbox,
+    // which `GlyphMetricsTests` proves never happens for a catalog glyph — it exists purely to
+    // keep this function total. The magic number is the shared, named
+    // `MeasureLayoutMetrics.noteheadWidthFallback` (Bravura's noteheadBlack advance, 1.18
+    // staff spaces), not a bare literal.
+    let noteheadWidth: StaffSpaces = render.metrics.boundingBox(for: .noteheadBlack)?.width
+        ?? MeasureLayoutMetrics.noteheadWidthFallback
     let halfLength = scale.points(noteheadWidth) / 2 + scale.points(defaults.legerLineExtension)
 
     let ctx = render.ctx
@@ -122,32 +108,4 @@ private func drawLedgerLines(
         ctx.addLine(to: CGPoint(x: centerX + halfLength, y: ledgerY))
     }
     ctx.strokePath()
-}
-
-/// Draws one glyph with its origin at `origin` (canvas-space, y-down).
-///
-/// Core Text glyph painting (`CTFontDrawGlyphs`) always expects a Quartz-native (y-up,
-/// origin-bottom-left) transform, regardless of how the incoming context is flipped, so this
-/// temporarily cancels the caller's y-down flip — scoped to just this glyph draw via
-/// save/restore — around the call.
-private func drawGlyph(_ glyph: Glyph, origin: CGPoint, render: RenderContext) {
-    guard let glyphIndex = render.font.glyphIndex(for: glyph.codepoint) else { return }
-    let ctFont = render.font.ctFont(size: render.scale.fontPointSize)
-    let canvasHeight = render.canvasHeight
-    let ctx = render.ctx
-
-    ctx.saveGState()
-    ctx.textMatrix = .identity
-    ctx.translateBy(x: 0, y: canvasHeight)
-    ctx.scaleBy(x: 1, y: -1)
-
-    var cgGlyph = glyphIndex
-    var position = CGPoint(x: origin.x, y: canvasHeight - origin.y)
-    withUnsafePointer(to: &cgGlyph) { glyphPointer in
-        withUnsafePointer(to: &position) { positionPointer in
-            CTFontDrawGlyphs(ctFont, glyphPointer, positionPointer, 1, ctx)
-        }
-    }
-
-    ctx.restoreGState()
 }
