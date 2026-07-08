@@ -28,6 +28,7 @@ struct AppConfig {
 
 @main
 struct LMMApp: App {
+    @State private var supabaseService: SupabaseService
     @State private var authService: AuthService
 
     init() {
@@ -36,6 +37,7 @@ struct LMMApp: App {
             supabaseURL: config.supabaseURL,
             supabaseAnonKey: config.supabaseAnonKey
         )
+        _supabaseService = State(initialValue: supabaseService)
         _authService = State(initialValue: AuthService(client: supabaseService.client))
     }
 
@@ -43,6 +45,7 @@ struct LMMApp: App {
         WindowGroup {
             RootView()
                 .environment(authService)
+                .environment(supabaseService)
                 .onOpenURL { url in
                     authService.handle(url: url)
                 }

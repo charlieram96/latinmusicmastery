@@ -1,3 +1,4 @@
+import AuthenticationServices
 import Supabase
 import XCTest
 
@@ -58,6 +59,17 @@ final class AuthServiceErrorMappingTests: XCTestCase {
         XCTAssertEqual(AuthServiceError.map(urlError), .network)
     }
 
+    /// Cancelling the Google sign-in `ASWebAuthenticationSession` sheet surfaces as this system
+    /// error, not as a Supabase `AuthError` — it must map to `.cancelled`, not fall through to
+    /// `.unknown`, so callers can treat it as a silent no-op.
+    func testMapsWebAuthenticationSessionCancelToCancelled() {
+        let cancelledError = NSError(
+            domain: ASWebAuthenticationSessionErrorDomain,
+            code: ASWebAuthenticationSessionError.canceledLogin.rawValue
+        )
+        XCTAssertEqual(AuthServiceError.map(cancelledError), .cancelled)
+    }
+
     func testAllCasesProvideNonEmptyLocalizedDescription() {
         let cases: [AuthServiceError] = [
             .invalidCredentials,
@@ -67,6 +79,7 @@ final class AuthServiceErrorMappingTests: XCTestCase {
             .weakPassword(reasons: []),
             .network,
             .appleSignInFailed,
+            .cancelled,
             .unknown(message: "some server message")
         ]
         for authCase in cases {

@@ -34,6 +34,7 @@ public struct AuthLandingView: View {
 
             VStack(spacing: 12) {
                 SignInWithAppleButton(.continue) { request in
+                    errorMessage = nil
                     let nonce = AppleNonceGenerator.randomNonceString()
                     currentAppleNonce = nonce
                     request.requestedScopes = [.fullName, .email]
@@ -61,6 +62,7 @@ public struct AuthLandingView: View {
                 .disabled(isSigningInWithGoogle)
 
                 Button {
+                    errorMessage = nil
                     showSignIn = true
                 } label: {
                     Text("Sign in with email")
@@ -125,12 +127,16 @@ public struct AuthLandingView: View {
     }
 
     private func signInWithGoogle() {
+        errorMessage = nil
         isSigningInWithGoogle = true
         Task {
             defer { isSigningInWithGoogle = false }
             do {
                 try await authService.signInWithGoogle()
                 errorMessage = nil
+            } catch AuthServiceError.cancelled {
+                // The user dismissed the sheet themselves — same silent UX as an Apple-cancel.
+                return
             } catch {
                 errorMessage = message(for: error)
             }

@@ -1,3 +1,4 @@
+import AuthenticationServices
 import Foundation
 import Supabase
 
@@ -15,6 +16,10 @@ public enum AuthServiceError: LocalizedError, Equatable, Sendable {
     case weakPassword(reasons: [String])
     case network
     case appleSignInFailed
+    /// The user dismissed the sign-in sheet themselves (Google's `ASWebAuthenticationSession`,
+    /// or a future OAuth provider using the same presentation). Callers should treat this as a
+    /// silent no-op, the same way an Apple-cancel is already handled — never shown as an error.
+    case cancelled
     case unknown(message: String)
 
     public var errorDescription: String? {
@@ -34,6 +39,8 @@ public enum AuthServiceError: LocalizedError, Equatable, Sendable {
             return "Couldn't reach the server. Check your connection and try again."
         case .appleSignInFailed:
             return "Sign in with Apple failed. Please try again."
+        case .cancelled:
+            return "Sign-in was cancelled."
         case .unknown(let message):
             return message
         }
@@ -62,7 +69,17 @@ public enum AuthServiceError: LocalizedError, Equatable, Sendable {
             }
         }
 
-        if (error as NSError).domain == NSURLErrorDomain {
+        let nsError = error as NSError
+
+        // Cancelling the `ASWebAuthenticationSession` sheet (e.g. Google sign-in) surfaces as
+        // this system error rather than anything from `AuthError` above — map it to `.cancelled`
+        // so callers can treat it as a silent no-op instead of a real failure.
+        if nsError.domain == ASWebAuthenticationSessionErrorDomain,
+           nsError.code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
+            return .cancelled
+        }
+
+        if nsError.domain == NSURLErrorDomain {
             return .network
         }
 

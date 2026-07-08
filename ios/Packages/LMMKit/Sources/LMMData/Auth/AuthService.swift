@@ -104,8 +104,13 @@ public final class AuthService {
         try? await client.auth.signOut()
     }
 
-    /// Completes an OAuth (Google) redirect from `onOpenURL`. Failures are swallowed after the
-    /// SDK logs them — the user simply stays wherever `state` already has them, since a failed
+    /// Completes an OAuth (Google) redirect from `onOpenURL`. This is a secondary, defensive
+    /// route: the primary resolution is the awaited `signInWithOAuth` call inside
+    /// `signInWithGoogle()`, which already surfaces failures to its caller as a typed
+    /// `AuthServiceError`. By the time this redirect reaches `onOpenURL`, that call has
+    /// generally already resolved (successfully or not), so `session(from:)` failing here isn't
+    /// a distinct failure mode worth surfacing again — it's swallowed with `try?` after the SDK
+    /// logs it, and the user simply stays wherever `state` already has them, since a failed
     /// exchange never produces a session.
     public func handle(url: URL) {
         Task {
