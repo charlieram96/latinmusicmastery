@@ -100,6 +100,13 @@ let package = Package(
             ]
         ),
         .testTarget(
+            name: "PlaySenseCoreTests",
+            dependencies: [
+                "PlaySenseCore",
+                "ScoreModel"
+            ]
+        ),
+        .testTarget(
             name: "TimeMapKitTests",
             dependencies: [
                 "TimeMapKit",

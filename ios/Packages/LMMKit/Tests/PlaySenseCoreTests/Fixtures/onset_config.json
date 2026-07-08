@@ -1,0 +1,1643 @@
+{
+ "seed": 190719,
+ "getInstrumentConfig": [
+  {
+   "name": "conga-noisyfalse-safefalse",
+   "input": {
+    "instrument": "conga",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 120,
+    "bandPassHigh": 2000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 60,
+    "minOnsetEnergy": 0.01,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "conga-noisyfalse-safetrue",
+   "input": {
+    "instrument": "conga",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "conga-noisytrue-safefalse",
+   "input": {
+    "instrument": "conga",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 2000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 60,
+    "minOnsetEnergy": 0.02,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "conga-noisytrue-safetrue",
+   "input": {
+    "instrument": "conga",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "timbale-noisyfalse-safefalse",
+   "input": {
+    "instrument": "timbale",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 4000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 60,
+    "minOnsetEnergy": 0.01,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "timbale-noisyfalse-safetrue",
+   "input": {
+    "instrument": "timbale",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "timbale-noisytrue-safefalse",
+   "input": {
+    "instrument": "timbale",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 4000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 60,
+    "minOnsetEnergy": 0.02,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "timbale-noisytrue-safetrue",
+   "input": {
+    "instrument": "timbale",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "bongo-noisyfalse-safefalse",
+   "input": {
+    "instrument": "bongo",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 2000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 60,
+    "minOnsetEnergy": 0.01,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "bongo-noisyfalse-safetrue",
+   "input": {
+    "instrument": "bongo",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "bongo-noisytrue-safefalse",
+   "input": {
+    "instrument": "bongo",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 2000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 60,
+    "minOnsetEnergy": 0.02,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "bongo-noisytrue-safetrue",
+   "input": {
+    "instrument": "bongo",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "clave-noisyfalse-safefalse",
+   "input": {
+    "instrument": "clave",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 800,
+    "bandPassHigh": 3000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 60,
+    "minOnsetEnergy": 0.01,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "clave-noisyfalse-safetrue",
+   "input": {
+    "instrument": "clave",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "clave-noisytrue-safefalse",
+   "input": {
+    "instrument": "clave",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 800,
+    "bandPassHigh": 3000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 60,
+    "minOnsetEnergy": 0.02,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "clave-noisytrue-safetrue",
+   "input": {
+    "instrument": "clave",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "cowbell-noisyfalse-safefalse",
+   "input": {
+    "instrument": "cowbell",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 400,
+    "bandPassHigh": 4000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 60,
+    "minOnsetEnergy": 0.01,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "cowbell-noisyfalse-safetrue",
+   "input": {
+    "instrument": "cowbell",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "cowbell-noisytrue-safefalse",
+   "input": {
+    "instrument": "cowbell",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 400,
+    "bandPassHigh": 4000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 60,
+    "minOnsetEnergy": 0.02,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "cowbell-noisytrue-safetrue",
+   "input": {
+    "instrument": "cowbell",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "guiro-noisyfalse-safefalse",
+   "input": {
+    "instrument": "guiro",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 3000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 40,
+    "minOnsetEnergy": 0.01,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "guiro-noisyfalse-safetrue",
+   "input": {
+    "instrument": "guiro",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "guiro-noisytrue-safefalse",
+   "input": {
+    "instrument": "guiro",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 3000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 40,
+    "minOnsetEnergy": 0.02,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "guiro-noisytrue-safetrue",
+   "input": {
+    "instrument": "guiro",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 200,
+    "bandPassHigh": 1800,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 50,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 512,
+    "frameSize": 1024,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "guitar-noisyfalse-safefalse",
+   "input": {
+    "instrument": "guitar",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 80,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 5,
+    "envelopeReleaseMs": 80,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 80,
+    "minOnsetEnergy": 0.008,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "guitar-noisyfalse-safetrue",
+   "input": {
+    "instrument": "guitar",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 80,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 5,
+    "envelopeReleaseMs": 80,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "guitar-noisytrue-safefalse",
+   "input": {
+    "instrument": "guitar",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 80,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 5,
+    "envelopeReleaseMs": 80,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 80,
+    "minOnsetEnergy": 0.008,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "guitar-noisytrue-safetrue",
+   "input": {
+    "instrument": "guitar",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 80,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 5,
+    "envelopeReleaseMs": 80,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "bass-noisyfalse-safefalse",
+   "input": {
+    "instrument": "bass",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 30,
+    "bandPassHigh": 2000,
+    "envelopeAttackMs": 8,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.008,
+    "fftSize": 4096,
+    "frameSize": 4096,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "bass-noisyfalse-safetrue",
+   "input": {
+    "instrument": "bass",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 30,
+    "bandPassHigh": 2000,
+    "envelopeAttackMs": 8,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 4096,
+    "frameSize": 4096,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "bass-noisytrue-safefalse",
+   "input": {
+    "instrument": "bass",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 30,
+    "bandPassHigh": 2000,
+    "envelopeAttackMs": 8,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.008,
+    "fftSize": 4096,
+    "frameSize": 4096,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "bass-noisytrue-safetrue",
+   "input": {
+    "instrument": "bass",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 30,
+    "bandPassHigh": 2000,
+    "envelopeAttackMs": 8,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 4096,
+    "frameSize": 4096,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "piano-noisyfalse-safefalse",
+   "input": {
+    "instrument": "piano",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 27,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 60,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 50,
+    "minOnsetEnergy": 0.006,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "piano-noisyfalse-safetrue",
+   "input": {
+    "instrument": "piano",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 27,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 60,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "piano-noisytrue-safefalse",
+   "input": {
+    "instrument": "piano",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 27,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 60,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 50,
+    "minOnsetEnergy": 0.006,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "piano-noisytrue-safetrue",
+   "input": {
+    "instrument": "piano",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 27,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 3,
+    "envelopeReleaseMs": 60,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "tres-noisyfalse-safefalse",
+   "input": {
+    "instrument": "tres",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 120,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 4,
+    "envelopeReleaseMs": 70,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 70,
+    "minOnsetEnergy": 0.008,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "tres-noisyfalse-safetrue",
+   "input": {
+    "instrument": "tres",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 120,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 4,
+    "envelopeReleaseMs": 70,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "tres-noisytrue-safefalse",
+   "input": {
+    "instrument": "tres",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 120,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 4,
+    "envelopeReleaseMs": 70,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 70,
+    "minOnsetEnergy": 0.008,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "tres-noisytrue-safetrue",
+   "input": {
+    "instrument": "tres",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 120,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 4,
+    "envelopeReleaseMs": 70,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "cuatro-noisyfalse-safefalse",
+   "input": {
+    "instrument": "cuatro",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 120,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 4,
+    "envelopeReleaseMs": 70,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 70,
+    "minOnsetEnergy": 0.008,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "cuatro-noisyfalse-safetrue",
+   "input": {
+    "instrument": "cuatro",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 120,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 4,
+    "envelopeReleaseMs": 70,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "cuatro-noisytrue-safefalse",
+   "input": {
+    "instrument": "cuatro",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 120,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 4,
+    "envelopeReleaseMs": 70,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 70,
+    "minOnsetEnergy": 0.008,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "cuatro-noisytrue-safetrue",
+   "input": {
+    "instrument": "cuatro",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 120,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 4,
+    "envelopeReleaseMs": 70,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": true
+   }
+  },
+  {
+   "name": "trumpet-noisyfalse-safefalse",
+   "input": {
+    "instrument": "trumpet",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 160,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 10,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.005,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "trumpet-noisyfalse-safetrue",
+   "input": {
+    "instrument": "trumpet",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 160,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 10,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "trumpet-noisytrue-safefalse",
+   "input": {
+    "instrument": "trumpet",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 160,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 10,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.005,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "trumpet-noisytrue-safetrue",
+   "input": {
+    "instrument": "trumpet",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 160,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 10,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "saxophone-noisyfalse-safefalse",
+   "input": {
+    "instrument": "saxophone",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 100,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 10,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 90,
+    "minOnsetEnergy": 0.005,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "saxophone-noisyfalse-safetrue",
+   "input": {
+    "instrument": "saxophone",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 100,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 10,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "saxophone-noisytrue-safefalse",
+   "input": {
+    "instrument": "saxophone",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 100,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 10,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 90,
+    "minOnsetEnergy": 0.005,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "saxophone-noisytrue-safetrue",
+   "input": {
+    "instrument": "saxophone",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 100,
+    "bandPassHigh": 5000,
+    "envelopeAttackMs": 10,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "flute-noisyfalse-safefalse",
+   "input": {
+    "instrument": "flute",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 250,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 12,
+    "envelopeReleaseMs": 120,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 80,
+    "minOnsetEnergy": 0.004,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "flute-noisyfalse-safetrue",
+   "input": {
+    "instrument": "flute",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 250,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 12,
+    "envelopeReleaseMs": 120,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "flute-noisytrue-safefalse",
+   "input": {
+    "instrument": "flute",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 250,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 12,
+    "envelopeReleaseMs": 120,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 80,
+    "minOnsetEnergy": 0.004,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "flute-noisytrue-safetrue",
+   "input": {
+    "instrument": "flute",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 250,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 12,
+    "envelopeReleaseMs": 120,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "violin-noisyfalse-safefalse",
+   "input": {
+    "instrument": "violin",
+    "noisyRoom": false,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 180,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 8,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 1.8,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 80,
+    "minOnsetEnergy": 0.005,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "violin-noisyfalse-safetrue",
+   "input": {
+    "instrument": "violin",
+    "noisyRoom": false,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 180,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 8,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.005,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "violin-noisytrue-safefalse",
+   "input": {
+    "instrument": "violin",
+    "noisyRoom": true,
+    "speakerSafe": false
+   },
+   "output": {
+    "bandPassLow": 180,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 8,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.5,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 80,
+    "minOnsetEnergy": 0.005,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  },
+  {
+   "name": "violin-noisytrue-safetrue",
+   "input": {
+    "instrument": "violin",
+    "noisyRoom": true,
+    "speakerSafe": true
+   },
+   "output": {
+    "bandPassLow": 180,
+    "bandPassHigh": 6000,
+    "envelopeAttackMs": 8,
+    "envelopeReleaseMs": 100,
+    "adaptiveMedianFrames": 15,
+    "adaptiveThresholdMultiplier": 2.2,
+    "adaptiveThresholdOffset": 0.01,
+    "refractoryPeriodMs": 100,
+    "minOnsetEnergy": 0.015,
+    "fftSize": 2048,
+    "frameSize": 2048,
+    "hopSize": 512,
+    "analyzeChroma": false
+   }
+  }
+ ],
+ "instrumentNeedsPitchDetection": [
+  {
+   "input": "conga",
+   "output": false
+  },
+  {
+   "input": "timbale",
+   "output": false
+  },
+  {
+   "input": "bongo",
+   "output": false
+  },
+  {
+   "input": "clave",
+   "output": false
+  },
+  {
+   "input": "cowbell",
+   "output": false
+  },
+  {
+   "input": "guiro",
+   "output": false
+  },
+  {
+   "input": "guitar",
+   "output": true
+  },
+  {
+   "input": "bass",
+   "output": true
+  },
+  {
+   "input": "piano",
+   "output": true
+  },
+  {
+   "input": "tres",
+   "output": true
+  },
+  {
+   "input": "cuatro",
+   "output": true
+  },
+  {
+   "input": "trumpet",
+   "output": true
+  },
+  {
+   "input": "saxophone",
+   "output": true
+  },
+  {
+   "input": "flute",
+   "output": true
+  },
+  {
+   "input": "violin",
+   "output": true
+  }
+ ],
+ "getInstrumentCategory": [
+  {
+   "input": "conga",
+   "output": "percussion"
+  },
+  {
+   "input": "timbale",
+   "output": "percussion"
+  },
+  {
+   "input": "bongo",
+   "output": "percussion"
+  },
+  {
+   "input": "clave",
+   "output": "percussion"
+  },
+  {
+   "input": "cowbell",
+   "output": "percussion"
+  },
+  {
+   "input": "guiro",
+   "output": "percussion"
+  },
+  {
+   "input": "guitar",
+   "output": "pitched"
+  },
+  {
+   "input": "bass",
+   "output": "pitched"
+  },
+  {
+   "input": "piano",
+   "output": "pitched"
+  },
+  {
+   "input": "tres",
+   "output": "pitched"
+  },
+  {
+   "input": "cuatro",
+   "output": "pitched"
+  },
+  {
+   "input": "trumpet",
+   "output": "pitched"
+  },
+  {
+   "input": "saxophone",
+   "output": "pitched"
+  },
+  {
+   "input": "flute",
+   "output": "pitched"
+  },
+  {
+   "input": "violin",
+   "output": "pitched"
+  }
+ ],
+ "getInstrumentLabel": [
+  {
+   "input": "conga",
+   "output": "Congas"
+  },
+  {
+   "input": "timbale",
+   "output": "Timbales"
+  },
+  {
+   "input": "bongo",
+   "output": "Bongos"
+  },
+  {
+   "input": "clave",
+   "output": "Clave"
+  },
+  {
+   "input": "cowbell",
+   "output": "Cowbell"
+  },
+  {
+   "input": "guiro",
+   "output": "Guiro"
+  },
+  {
+   "input": "guitar",
+   "output": "Guitar"
+  },
+  {
+   "input": "bass",
+   "output": "Bass"
+  },
+  {
+   "input": "piano",
+   "output": "Piano"
+  },
+  {
+   "input": "tres",
+   "output": "Tres"
+  },
+  {
+   "input": "cuatro",
+   "output": "Cuatro"
+  },
+  {
+   "input": "trumpet",
+   "output": "Trumpet"
+  },
+  {
+   "input": "saxophone",
+   "output": "Saxophone"
+  },
+  {
+   "input": "flute",
+   "output": "Flute"
+  },
+  {
+   "input": "violin",
+   "output": "Violin"
+  },
+  {
+   "input": "unknown-thing",
+   "output": "unknown-thing"
+  }
+ ],
+ "getPlaySenseMapping": [
+  {
+   "input": "conga",
+   "output": {
+    "instrument": "conga",
+    "piezoMap": {
+     "0": "quinto",
+     "1": "conga",
+     "2": "tumba"
+    },
+    "useMic": true
+   }
+  },
+  {
+   "input": "congas",
+   "output": {
+    "instrument": "conga",
+    "piezoMap": {
+     "0": "quinto",
+     "1": "conga",
+     "2": "tumba"
+    },
+    "useMic": true
+   }
+  },
+  {
+   "input": "timbale",
+   "output": {
+    "instrument": "timbale",
+    "piezoMap": {
+     "0": "macho",
+     "1": "hembra",
+     "2": "campana",
+     "3": "cencerro",
+     "4": "jamblock",
+     "5": "cascara"
+    },
+    "useMic": false
+   }
+  },
+  {
+   "input": "timbales",
+   "output": {
+    "instrument": "timbale",
+    "piezoMap": {
+     "0": "macho",
+     "1": "hembra",
+     "2": "campana",
+     "3": "cencerro",
+     "4": "jamblock",
+     "5": "cascara"
+    },
+    "useMic": false
+   }
+  },
+  {
+   "input": "guitar",
+   "output": null
+  },
+  {
+   "input": "bongo",
+   "output": null
+  },
+  {
+   "input": "",
+   "output": null
+  }
+ ]
+}
