@@ -21,7 +21,15 @@ public struct StagePlayerView: View {
     // content lives in `CalibrationWizardView+Errors.swift`) needs to reach these.
     @State var coordinator = SessionCoordinator()
     let exercise: ExerciseDefinition
+    #if DEBUG
+    /// D25 debug-picker demo seam (`Profile → "PlaySense BLE (device picker)"`): bypasses `selectMode`'s
+    /// real scan in favor of `SessionCoordinator.debugShowPlaysenseDevicePicker()` (see `choosePlaysenseMode()`
+    /// in `StagePlayerView+PlaysenseMode.swift`). Fix round 1 (D25's review, finding 5) moved this — and
+    /// `debugForceSyntheticBLE` below — behind `#if DEBUG` via a dual initializer: release builds carry no
+    /// inert stored property/init parameter for either, instead of existing but never being read (every
+    /// site that reads them was ALREADY `#if DEBUG`-gated).
     let debugForceMultipleDevices: Bool
+    #endif
 
     @State private var scene: HighwayScene
     @State private var bridge: HighwayBridge?
@@ -41,13 +49,16 @@ public struct StagePlayerView: View {
     /// `modeSelectOverlay` instead (D25's new debug entry point uses this to exercise/screenshot the
     /// PlaySense option) — additive, so default behavior for headphones/speaker-safe callers is unchanged.
     private let startMode: SessionAudioMode?
+    #if DEBUG
     /// D25 Simulator seam: forces `SessionCoordinator.debugSyntheticBLESession` before selecting
     /// `.playsense`, so a synthetic BLE session can be screenshotted (CoreBluetooth has no radio on the
-    /// Simulator). Kept as a plain (non-`#if DEBUG`) stored property — only DEBUG's `SessionCoordinator`
-    /// API is actually invoked with it (see `setUpIfNeeded`) — so this initializer's parameter list
-    /// doesn't need release/DEBUG conditional compilation branching (fragile inside a parameter list).
+    /// Simulator). See `debugForceMultipleDevices` above for why this moved behind `#if DEBUG` in fix
+    /// round 1 (an earlier revision deliberately kept it release-visible to avoid parameter-list
+    /// conditional-compilation branching — the review called that inert-in-release surface out instead).
     private let debugForceSyntheticBLE: Bool
+    #endif
 
+    #if DEBUG
     public init(
         exercise: ExerciseDefinition = StagePlayerView.sampleExercise,
         showsDebugOverlay: Bool = false,
@@ -62,6 +73,18 @@ public struct StagePlayerView: View {
         self.debugForceMultipleDevices = debugForceMultipleDevices
         _scene = State(initialValue: HighwayScene(size: CGSize(width: 402, height: 874)))
     }
+    #else
+    public init(
+        exercise: ExerciseDefinition = StagePlayerView.sampleExercise,
+        showsDebugOverlay: Bool = false,
+        startMode: SessionAudioMode? = .headphones
+    ) {
+        self.exercise = exercise
+        self.showsDebugOverlay = showsDebugOverlay
+        self.startMode = startMode
+        _scene = State(initialValue: HighwayScene(size: CGSize(width: 402, height: 874)))
+    }
+    #endif
 
     public var body: some View {
         ZStack {

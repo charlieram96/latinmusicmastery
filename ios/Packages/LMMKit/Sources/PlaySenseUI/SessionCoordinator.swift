@@ -70,6 +70,23 @@ public final class SessionCoordinator {
     /// session via synthetic readings injected through the REAL `BLEOnsetSource` mapping pipeline. See
     /// `beginBLEModeSelect()` and `injectDueSyntheticBLEReadings(elapsed:)`.
     public var debugSyntheticBLESession = false
+    /// Fix round 1 test seam: when set (before `selectMode(.playsense)`), `makeBLEManager()` constructs the
+    /// manager with THIS central instead of a real `CBCentralManager` — generalizes
+    /// `debugSyntheticBLESession`'s fixed `NoOpBLECentralManager` swap to any `PlaySenseBLECentralManaging`
+    /// fake, so `SessionCoordinatorBLERetryTests` can observe the scan/connect calls a retry's reconnect
+    /// flow issues with zero real CoreBluetooth involved. Ignored whenever `debugSyntheticBLESession` is
+    /// set (that seam already picks its own `NoOpBLECentralManager`).
+    public var debugBLECentral: (any PlaySenseBLECentralManaging)?
+    /// Fix round 1 test seam: when set, `makeBLEManager()` constructs the manager with THIS scheduler
+    /// instead of a real `RealDeferredScheduler`, so a test can deterministically advance the manager's
+    /// scan-timeout (`PlaySenseDeviceManager.startScanning()`) via a `ManualDeferredScheduler` instead of
+    /// waiting on a real ~15s timer.
+    public var debugBLEScheduler: DeferredScheduler?
+    /// Fix round 1 test seam: when set, `makeBLEManager()` constructs the manager with THIS `UserDefaults`
+    /// instead of `.standard`, so `SessionCoordinatorBLERetryTests` never reads/writes the REAL
+    /// `UserDefaults.standard`'s persisted-peripheral-identifier key — the same isolation
+    /// `PlaySenseDeviceManagerTests` gets via its own scoped `UserDefaults(suiteName:)`.
+    public var debugBLEDefaults: UserDefaults?
     #endif
 
     /// The live BLE connection status, for a `.playsense`-mode UI to render (connect progress / errors).
@@ -88,12 +105,20 @@ public final class SessionCoordinator {
     /// so the DEBUG synthetic-BLE injector can reach `debugInject(reading:)`, which isn't part of the
     /// shared `OnsetEventSource` protocol.
     private var bleOnsetSource: BLEOnsetSource?
-    private var bleManager: PlaySenseDeviceManager?
+    /// `internal` (not `private`) specifically so `@testable`-imported coordinator tests
+    /// (`SessionCoordinatorBLERetryTests`) can drive its `handle*` chain directly (the same fakes-only
+    /// technique `PlaySenseDeviceManagerTests` uses) to reach `.connected`/`.error` without any real
+    /// CoreBluetooth — same rationale as that type's own `handle*` methods being `internal`.
+    var bleManager: PlaySenseDeviceManager?
     private var scorer: LiveScorer?
     private var scheduler: RealDeferredScheduler?
     private var frameDriver: DisplayLinkDriver?
 
-    private var machine = SessionPhaseMachine() {
+    /// `internal` (not `private`) for the same testability reason as `bleManager` above: coordinator tests
+    /// drive phase transitions directly through the pure, audio-free `SessionPhaseMachine` API (e.g. forcing
+    /// `.playing → .interrupted(.bleDisconnected)`) instead of spinning up a real `GameAudioEngine`/
+    /// `AVAudioSession` take, which `SessionEndToEndSmokeTests` shows is unavoidably environment-sensitive.
+    var machine = SessionPhaseMachine() {
         didSet { phase = machine.phase }
     }
 
@@ -123,9 +148,12 @@ public final class SessionCoordinator {
 
     /// Choose the audio mode. Mic modes evaluate the calibration gate immediately; `.playsense` instead
     /// kicks off the BLE connect flow (`beginBLEModeSelect()`), which reaches the calibration gate only
-    /// once a device is connected.
+    /// once a device is connected. Clears any stale `errorMessage` from a previous failed attempt (fix
+    /// round 1 for D25's review — `modeSelectOverlay` now renders this, so a fresh mode choice must not
+    /// still be showing the LAST attempt's error).
     public func selectMode(_ mode: SessionAudioMode) {
         audioMode = mode
+        errorMessage = nil
         if mode == .playsense {
             beginBLEModeSelect()
         } else {
@@ -170,17 +198,67 @@ public final class SessionCoordinator {
         }
         #endif
 
+        reconnectBLE()
+    }
+
+    /// Kick off (or resume) the BLE connect flow — shared by `beginBLEModeSelect()` (the FIRST connect,
+    /// already in `.connectingDevice` by the time this runs) and `retry()`/`startSession()`'s
+    /// `needsBLEReconnectBeforeProceeding` branch (fix round 1: a LATER reconnect, also already in
+    /// `.connectingDevice` via `SessionPhaseMachine.beginDeviceReconnect()` by the time this runs). Once
+    /// `PlaySenseDeviceManager` reports `.connected` again, `handleBLEStatusChange`'s existing `.connected`
+    /// case advances the rest of the way on its own (it only checks `machine.phase == .connectingDevice`,
+    /// never how the phase got there) — no separate "reconnected" transition needed here.
+    private func reconnectBLE() {
         let manager = bleManager ?? makeBLEManager()
         bleManager = manager
         manager.wantsConnection = true
         manager.connectUsingPersistedIdentifierOrScan()
     }
 
+    /// Whether `retry()`/`startSession()` must detour through `.connectingDevice` before proceeding: only
+    /// in `.playsense` mode, and only when the connection genuinely isn't `.connected` (an exhausted
+    /// mid-take reconnect, or a drop that happened while just sitting at `.ready`/`.results`/`.interrupted`
+    /// with no active take to abort). Web parity: `use-playsense-onsets.ts`'s `startListening()` performs
+    /// this exact "reconnect if not connected" check at the top of EVERY `startExercise()` call, retries
+    /// included.
+    ///
+    /// Always `false` under `debugSyntheticBLESession`: that seam's `NoOpBLECentralManager`-backed manager
+    /// never reports `.connected` at all (synthetic readings are injected directly into `BLEOnsetSource`,
+    /// bypassing the manager's notify path entirely — see `injectDueSyntheticBLEReadings`), so without this
+    /// exclusion every synthetic-session retry would misfire into a reconnect it doesn't need.
+    private var needsBLEReconnectBeforeProceeding: Bool {
+        guard audioMode == .playsense else { return false }
+        #if DEBUG
+        if debugSyntheticBLESession { return false }
+        #endif
+        return bleConnectionStatus != .connected
+    }
+
     private func makeBLEManager(central: (any PlaySenseBLECentralManaging)? = nil) -> PlaySenseDeviceManager {
+        #if DEBUG
+        let resolvedCentral = central ?? debugBLECentral
+        let manager = PlaySenseDeviceManager(
+            central: resolvedCentral,
+            defaults: debugBLEDefaults ?? .standard,
+            scheduler: debugBLEScheduler ?? RealDeferredScheduler()
+        )
+        #else
         let manager = PlaySenseDeviceManager(central: central)
+        #endif
         manager.onConnectionStatusChange = { [weak self] status in self?.handleBLEStatusChange(status) }
         manager.onDiscoveredDevicesChange = { [weak self] devices in self?.handleBLEDevicesChange(devices) }
         return manager
+    }
+
+    /// Cancel button on `connectingDeviceOverlay` (fix round 1: the flow previously had no escape from an
+    /// in-flight scan/connect). Tears down the attempt the same way `exitSession()` tears down BLE when
+    /// leaving the flow entirely, and returns to `.modeSelect` — a deliberate cancel, not a reported
+    /// failure, so `errorMessage` is cleared rather than set.
+    public func cancelBLEConnect() {
+        guard case .connectingDevice = machine.phase else { return }
+        bleManager?.disconnect()
+        errorMessage = nil
+        machine.deviceConnectFailed()
     }
 
     /// Reacts to `PlaySenseDeviceManager.connectionStatus` changes pushed via its `onConnectionStatusChange`
@@ -234,6 +312,7 @@ public final class SessionCoordinator {
     /// multi-device path.
     public func debugShowPlaysenseDevicePicker() {
         audioMode = .playsense
+        errorMessage = nil
         guard case .modeSelect = machine.phase else { return }
         machine.beginDeviceConnect()
         let manager = bleManager ?? makeBLEManager(central: NoOpBLECentralManager())
@@ -244,6 +323,16 @@ public final class SessionCoordinator {
             PlaySenseDeviceManager.DiscoveredDevice(id: UUID(), name: "PlaySense")
         ])
     }
+
+    /// Screenshot/testing seam for fix round 1 (D25's review, finding 2): forces `errorMessage` while
+    /// sitting at `.modeSelect` — a deterministic stand-in for a real BLE connect failure bouncing back
+    /// from `.connectingDevice` (`handleBLEStatusChange`'s `.error` branch), without needing a real or
+    /// `NoOpBLECentralManager`-backed central to actually fail. Exercises/screenshots `modeSelectOverlay`'s
+    /// newly-added error rendering.
+    public func debugForceModeSelectError(_ message: String) {
+        guard case .modeSelect = machine.phase else { return }
+        errorMessage = message
+    }
     #endif
 
     // MARK: - Start / stop
@@ -251,9 +340,22 @@ public final class SessionCoordinator {
     /// Request mic permission (BEFORE configuring the session — D20 carry-forward), configure audio, and —
     /// unless a Bluetooth output route diverts to the blocking sheet — schedule the count-in + clicks,
     /// resolve `t0`, spin up the ``LiveScorer``, and begin the frame loop.
+    ///
+    /// Fix round 1 (D25's review, finding 1): in `.playsense` mode, first verifies the BLE connection is
+    /// still `.connected` — a drop can happen silently while just sitting at the ready screen (no active
+    /// take to abort into `.interrupted(.bleDisconnected)`). If it isn't, detours through `.connectingDevice`
+    /// and re-kicks the connect flow instead of arming a take with `installBLEOnsetSource()` reading from a
+    /// dead connection.
     public func startSession() async {
         guard case .ready = machine.phase, let exercise else { return }
         errorMessage = nil
+
+        if needsBLEReconnectBeforeProceeding {
+            machine.beginDeviceReconnect()
+            guard case .connectingDevice = machine.phase else { return }
+            reconnectBLE()
+            return
+        }
 
         // PlaySense mode never taps the mic (input comes over BLE) — matches the web's `startCalibrationFlow`/
         // `startExercise`, which only ever request mic listening for the two mic `AudioMode`s.
@@ -397,6 +499,11 @@ public final class SessionCoordinator {
     /// connected by the time a take starts — this method never itself scans/connects); the mic tap is
     /// never installed in this mode, matching `use-exercise-session.ts`'s `activeOnsets = isPlaysenseMode
     /// ? bleOnsets : micOnsets` split (mutually exclusive, never both).
+    ///
+    /// Fix round 1: "already connected" is now an enforced invariant, not an assumption — `startSession()`'s
+    /// `needsBLEReconnectBeforeProceeding` check runs before `machine.requestStart(...)` even attempts
+    /// `.countdown`, so this method only ever runs once `bleConnectionStatus == .connected` (or the DEBUG
+    /// synthetic-session bypass, which never touches this path's manager at all).
     private func installBLEOnsetSource(instrument: Instrument) {
         let manager = bleManager ?? makeBLEManager()
         bleManager = manager
@@ -465,8 +572,23 @@ public final class SessionCoordinator {
     }
 
     /// Retry after results/interruption — re-arm to `ready`.
+    ///
+    /// Fix round 1 (D25's review, finding 1): in `.playsense` mode, first verifies the BLE connection is
+    /// still `.connected` — most commonly reached via an exhausted-reconnect `.interrupted(.bleDisconnected)`,
+    /// but any disruption could coincide with a drop. If it isn't, detours through `.connectingDevice` and
+    /// re-kicks the connect flow instead of landing on `.ready` with no live input source at all (the bug:
+    /// "Retry runs a take that silently grades nothing"). Web parity: `use-playsense-onsets.ts`'s
+    /// `startListening()` performs this exact check at the top of EVERY `startExercise()` call, retries
+    /// included. Clears any stale `errorMessage` either way (mirrors `startSession()`'s same clear).
     public func retry() {
-        machine.retry()
+        errorMessage = nil
+        guard needsBLEReconnectBeforeProceeding else {
+            machine.retry()
+            return
+        }
+        machine.beginDeviceReconnect()
+        guard case .connectingDevice = machine.phase else { return }
+        reconnectBLE()
     }
 
     /// Leave the flow entirely.

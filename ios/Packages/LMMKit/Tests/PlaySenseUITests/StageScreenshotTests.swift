@@ -1,4 +1,5 @@
 import Metal
+import PlaySenseBLE
 import PlaySenseCore
 import PlaySenseHighway
 import ScoreModel
@@ -74,6 +75,18 @@ final class StageScreenshotTests: XCTestCase {
                 stats: Self.sampleStats, results: Self.sampleResults, isPractice: false,
                 onRetry: {}, onExit: {}
             ))
+        )
+
+        // 5) Fix round 1 (D25's review, finding 2): mode-select with a surfaced BLE connect-failure error —
+        // previously rendered NOWHERE. `debugForceModeSelectError` deterministically forces the state a
+        // real Simulator's `.unsupported` CoreBluetooth stack would otherwise reach on its own.
+        let modeSelectView = StagePlayerView(exercise: exercise, startMode: nil)
+        modeSelectView.coordinator.present(exercise: exercise)
+        modeSelectView.coordinator.debugForceModeSelectError(PlaySenseBLEErrorMessage.bluetoothUnsupported)
+        try shoot(
+            name: "05-modeselect-error",
+            highway: highway(exercise: exercise, playhead: 0, warm: 0),
+            chrome: AnyView(modeSelectView.modeSelectOverlay)
         )
     }
 

@@ -15,6 +15,11 @@ public struct CalibrationDebugView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: LMMSpacing.md) {
                 NavigationLink {
+                    // Defaults to `sourceType: .mic` — the `.ble` wizard path D25 fixed (it used to
+                    // silently calibrate against the mic even when asked for BLE) is currently UNREACHABLE
+                    // from this production debug row, or any other live UI, since nothing passes
+                    // `sourceType: .ble` here. It becomes reachable once D26/D27 wire a real BLE-mode
+                    // calibration entry point into the live session.
                     CalibrationWizardView()
                 } label: {
                     Text("Run calibration wizard").frame(maxWidth: .infinity)

@@ -138,6 +138,7 @@ let package = Package(
             dependencies: [
                 "PlaySenseUI",
                 "PlaySenseCore",
+                "PlaySenseBLE",
                 "PlaySenseHighway",
                 "ScoreModel"
             ]

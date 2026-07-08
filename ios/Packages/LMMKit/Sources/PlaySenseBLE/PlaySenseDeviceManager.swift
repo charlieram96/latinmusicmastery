@@ -1,6 +1,7 @@
 import CoreBluetooth
 import Foundation
 import Observation
+import PlaySenseCore
 
 /// CoreBluetooth lifecycle for the PlaySense hardware device — port of `playsense-context.tsx`'s
 /// `PlaysenseProvider` (scan/connect/subscribe/reconnect state machine) onto `CBCentralManager`.
@@ -11,8 +12,14 @@ import Observation
 /// `PlaySenseDeviceManagerTests` via `PlaySenseBLECentralManaging`/`PlaySenseBLEPeripheral` fakes — no real
 /// CoreBluetooth object involved. The only code that touches REAL `CBCentralManager`/`CBPeripheral` APIs
 /// and is NOT unit-tested is:
-/// 1. The `CBCentralManagerDelegate`/`CBPeripheralDelegate` conformances at the bottom of this file — each
-///    is a one-line extract-and-forward into a `handle*` method (no branching).
+/// 1. The `CBCentralManagerDelegate`/`CBPeripheralDelegate` conformances (fix round 1: moved to
+///    `PlaySenseDeviceManager+CoreBluetoothDelegate.swift` to stay under `file_length` — no behavioral
+///    change) — each is a one-line extract-and-forward into a `handle*` method. A few extract the
+///    forwarded value with a ternary/`&&` keyed on `error == nil` (e.g. `didDiscoverServices`'s
+///    `error == nil ? ... : []`) — that's shaping the SAME callback's own payload before forwarding it,
+///    not a DECISION about what to do next (the `handle*` method it forwards into makes that decision,
+///    and IS unit-tested); no conformance here branches into different coordinator/manager behavior on
+///    its own.
 /// 2. The five adapter methods in `PlaySenseBLEShims.swift` (`connect`/`cancelConnection`/
 ///    `retrieveKnownPeripheral`/`discoverCharacteristics(uuid:inServiceWithUUID:)`/
 ///    `setNotify(_:forCharacteristicUUID:inServiceWithUUID:)`) — each is a 1-2 line downcast-or-lookup,
@@ -67,6 +74,17 @@ public final class PlaySenseDeviceManager: NSObject {
     private var reconnectAttempts = 0
     private var scanRequestedWhenPoweredOn = false
     private let defaults: UserDefaults
+    private let scheduler: DeferredScheduler
+    /// Fix round 1 (D25's review, finding 3): the in-flight scan-timeout, if any — cancelled at every real
+    /// exit from `.scanning` (`beginConnecting`, `stopScanning`, `disconnect`) so a stale timeout never
+    /// fires after the scan has already resolved one way or another.
+    private var scanTimeoutHandle: DeferredHandle?
+    /// No product spec pins an exact value; 15s is long enough for a real scan/advertise cycle to complete
+    /// but short enough that "nothing found" doesn't read as a hang — matches this module's other web-parity
+    /// error strings in spirit (a typed, bounded failure) even though the web has no scan phase of its own
+    /// to time out (`navigator.bluetooth.requestDevice()`'s browser-native picker has its own UI for "no
+    /// device found", entirely outside app code).
+    private static let scanTimeoutMilliseconds: Double = 15_000
 
     /// `internal` (not `private`) specifically so `@testable`-imported tests can assert against the exact
     /// key without duplicating the literal — same rationale as `CalibrationStore.storageKey(...)`.
@@ -76,8 +94,16 @@ public final class PlaySenseDeviceManager: NSObject {
     ///   constructs a real `CBCentralManager` with this instance as its delegate, callbacks on the main
     ///   queue (`queue: nil`) — which is what makes the `MainActor.assumeIsolated` calls in the delegate
     ///   conformances below safe (see their doc comments).
-    public init(central: (any PlaySenseBLECentralManaging)? = nil, defaults: UserDefaults = .standard) {
+    /// - Parameter scheduler: fix round 1 seam for the scan-timeout above — production wires the default
+    ///   real `RealDeferredScheduler()`; `PlaySenseDeviceManagerTests` wires a `ManualDeferredScheduler` to
+    ///   advance the timeout deterministically instead of waiting on a real ~15s timer.
+    public init(
+        central: (any PlaySenseBLECentralManaging)? = nil,
+        defaults: UserDefaults = .standard,
+        scheduler: DeferredScheduler = RealDeferredScheduler()
+    ) {
         self.defaults = defaults
+        self.scheduler = scheduler
         super.init()
         self.central = central ?? CBCentralManager(delegate: self, queue: nil)
     }
@@ -107,6 +133,7 @@ public final class PlaySenseDeviceManager: NSObject {
         errorMessage = nil
         setDiscoveredDevices([])
         pendingPeripherals.removeAll()
+        scanTimeoutHandle?.cancel()
         guard central.state == .poweredOn else {
             scanRequestedWhenPoweredOn = true
             handleCentralStateUpdate(central.state) // surfaces an immediate error for a terminal state
@@ -115,10 +142,16 @@ public final class PlaySenseDeviceManager: NSObject {
         scanRequestedWhenPoweredOn = false
         setStatus(.scanning)
         central.scanForPeripherals(withServices: nil, options: nil)
+        // Fix round 1 (D25's review, finding 3): a scan that never finds anything used to hang forever —
+        // stop it and surface a typed "no device found" error after a bounded wait.
+        scanTimeoutHandle = scheduler.schedule(afterMilliseconds: Self.scanTimeoutMilliseconds) { [weak self] in
+            self?.handleScanTimeout()
+        }
     }
 
     public func stopScanning() {
         scanRequestedWhenPoweredOn = false
+        scanTimeoutHandle?.cancel()
         central.stopScan()
         if connectionStatus == .scanning { setStatus(.disconnected) }
     }
@@ -136,6 +169,7 @@ public final class PlaySenseDeviceManager: NSObject {
     public func disconnect() {
         wantsConnection = false
         reconnectAttempts = 0
+        scanTimeoutHandle?.cancel()
         central.stopScan()
         if let connectedPeripheral { central.cancelConnection(connectedPeripheral) }
         connectedPeripheral = nil
@@ -164,6 +198,7 @@ public final class PlaySenseDeviceManager: NSObject {
     #endif
 
     private func beginConnecting(to peripheral: any PlaySenseBLEPeripheral) {
+        scanTimeoutHandle?.cancel()
         central.stopScan()
         reconnectAttempts = 0
         connectedPeripheral = peripheral
@@ -224,6 +259,17 @@ public final class PlaySenseDeviceManager: NSObject {
         }
     }
 
+    /// Fix round 1 (D25's review, finding 3): fires ~`scanTimeoutMilliseconds` after `startScanning()` if
+    /// nothing has connected/discovered-and-auto-connected by then. Guards `connectionStatus == .scanning`
+    /// so a timeout scheduled just before the scan legitimately resolved (a connect began, the scan was
+    /// stopped) is a harmless no-op rather than clobbering a later, unrelated state — belt-and-suspenders
+    /// alongside the `scanTimeoutHandle?.cancel()` calls at every real exit from `.scanning`.
+    func handleScanTimeout() {
+        guard connectionStatus == .scanning else { return }
+        central.stopScan()
+        setError(PlaySenseBLEErrorMessage.noDeviceFound)
+    }
+
     func handleDiscovered(peripheral: any PlaySenseBLEPeripheral, advertisementData: [String: Any]) {
         guard connectionStatus == .scanning else { return }
         guard PlaySenseBLEProtocol.matches(name: peripheral.name, advertisementData: advertisementData) else { return }
@@ -232,6 +278,11 @@ public final class PlaySenseDeviceManager: NSObject {
         let name = peripheral.name ?? PlaySenseBLEProtocol.deviceName
         let device = DiscoveredDevice(id: peripheral.identifier, name: name)
         setDiscoveredDevices(discoveredDevices + [device])
+        // A match was found — the scan timeout's "device not found" framing no longer applies, even if
+        // this is the multi-device case and `DevicePickerSheet` is now waiting on a user choice rather than
+        // on discovery. (The single-match auto-connect path also cancels it, redundantly but harmlessly, via
+        // `beginConnecting`.)
+        scanTimeoutHandle?.cancel()
     }
 
     func handleConnected(peripheral: any PlaySenseBLEPeripheral) {
@@ -309,73 +360,6 @@ public final class PlaySenseDeviceManager: NSObject {
     }
 }
 
-// MARK: - Real CoreBluetooth delegate glue (thin — see the untested-glue inventory in the type doc above)
-
-extension PlaySenseDeviceManager: CBCentralManagerDelegate {
-    /// `nonisolated` + `MainActor.assumeIsolated`: `CBCentralManager(delegate:queue: nil)` guarantees
-    /// every delegate callback arrives on the main queue, so it's safe to synchronously re-enter this
-    /// `@MainActor` instance here (same pattern as `AudioSessionController`'s NotificationCenter
-    /// observers) instead of hopping through an async `Task`.
-    public nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        MainActor.assumeIsolated { self.handleCentralStateUpdate(central.state) }
-    }
-
-    public nonisolated func centralManager(
-        _ central: CBCentralManager,
-        didDiscover peripheral: CBPeripheral,
-        advertisementData: [String: Any],
-        rssi RSSI: NSNumber
-    ) {
-        MainActor.assumeIsolated {
-            self.handleDiscovered(peripheral: peripheral, advertisementData: advertisementData)
-        }
-    }
-
-    public nonisolated func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        MainActor.assumeIsolated { self.handleConnected(peripheral: peripheral) }
-    }
-
-    public nonisolated func centralManager(
-        _ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?
-    ) {
-        MainActor.assumeIsolated { self.handleFailedToConnect(peripheral: peripheral, error: error) }
-    }
-
-    public nonisolated func centralManager(
-        _ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?
-    ) {
-        MainActor.assumeIsolated { self.handleDisconnected(peripheral: peripheral) }
-    }
-}
-
-extension PlaySenseDeviceManager: CBPeripheralDelegate {
-    public nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        let uuids = error == nil ? (peripheral.services ?? []).map(\.uuid) : []
-        MainActor.assumeIsolated { self.handleDiscoveredServiceUUIDs(uuids, peripheral: peripheral) }
-    }
-
-    public nonisolated func peripheral(
-        _ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?
-    ) {
-        let uuids = error == nil ? (service.characteristics ?? []).map(\.uuid) : []
-        MainActor.assumeIsolated { self.handleDiscoveredCharacteristicUUIDs(uuids, peripheral: peripheral) }
-    }
-
-    public nonisolated func peripheral(
-        _ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?
-    ) {
-        let isNotifying = error == nil && characteristic.isNotifying
-        MainActor.assumeIsolated {
-            self.handleNotificationStateUpdate(isNotifying: isNotifying, peripheral: peripheral)
-        }
-    }
-
-    public nonisolated func peripheral(
-        _ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?
-    ) {
-        guard error == nil else { return }
-        let uuid = characteristic.uuid
-        let data = characteristic.value
-        MainActor.assumeIsolated { self.handleCharacteristicValueUpdate(uuid: uuid, data: data) }
-    }
-}
+// The real `CBCentralManagerDelegate`/`CBPeripheralDelegate` conformances (thin — see the untested-glue
+// inventory in the type doc above) live in `PlaySenseDeviceManager+CoreBluetoothDelegate.swift`, split out
+// purely to stay under SwiftLint's `file_length` cap — no behavioral significance.

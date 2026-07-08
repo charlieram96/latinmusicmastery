@@ -97,8 +97,9 @@ public struct SessionPhaseMachine: Equatable, Sendable {
         phase = .calibrationCheck(hasRecord: hasCalibrationRecord)
     }
 
-    /// The BLE connect flow failed (Bluetooth unavailable, no device found, connect error) — back to mode
-    /// select so the player can retry or pick a different mode.
+    /// The BLE connect flow ended without success: Bluetooth unavailable, no device found, a connect
+    /// error, a scan timeout, or a user-initiated cancel (`connectingDeviceOverlay`'s Cancel button) — back
+    /// to mode select so the player can retry or pick a different mode.
     public mutating func deviceConnectFailed() {
         guard phase == .connectingDevice else { return }
         phase = .modeSelect
@@ -170,6 +171,24 @@ public struct SessionPhaseMachine: Equatable, Sendable {
         case .results, .interrupted:
             isPracticeMode = false
             phase = .ready
+        default:
+            break
+        }
+    }
+
+    /// PlaySense-only retry variant (fix round 1 for D25's review): `SessionCoordinator.retry()` calls this
+    /// instead of `retry()` when the BLE connection isn't currently `.connected` — routes back through
+    /// `.connectingDevice` so the coordinator can re-kick the connect flow (persisted-identifier fast path
+    /// included) before the next take arms, rather than landing on `.ready` with no live input source.
+    /// Also reachable from `.ready` itself (`SessionCoordinator.startSession()`'s belt-and-suspenders check
+    /// for a connection that dropped silently while just sitting at the ready screen, never triggering an
+    /// active-take interruption at all). Same guard set as `retry()` plus `.ready`; same practice-mode
+    /// clear.
+    public mutating func beginDeviceReconnect() {
+        switch phase {
+        case .ready, .results, .interrupted:
+            isPracticeMode = false
+            phase = .connectingDevice
         default:
             break
         }

@@ -94,6 +94,50 @@ final class SessionPhaseMachineTests: XCTestCase {
         XCTAssertEqual(machine.phase, .interrupted(.bleDisconnected))
     }
 
+    // MARK: - D25 fix round 1: `beginDeviceReconnect()` (retry()/startSession()'s "BLE isn't connected" branch)
+
+    func testBeginDeviceReconnectFromInterruptedRoutesThroughConnectingDevice() {
+        var machine = readyMachine()
+        machine.requestStart(isBluetoothOutput: false)
+        machine.beginPlaying()
+        machine.interrupt(.bleDisconnected)
+        machine.beginDeviceReconnect()
+        XCTAssertEqual(machine.phase, .connectingDevice)
+    }
+
+    func testBeginDeviceReconnectFromResultsRoutesThroughConnectingDevice() {
+        var machine = readyMachine()
+        machine.requestStart(isBluetoothOutput: false)
+        machine.beginPlaying()
+        machine.finish(stats: stats())
+        machine.beginDeviceReconnect()
+        XCTAssertEqual(machine.phase, .connectingDevice)
+    }
+
+    func testBeginDeviceReconnectFromReadyRoutesThroughConnectingDevice() {
+        // The "sitting at .ready, BLE quietly dropped" case `startSession()` guards against.
+        var machine = readyMachine()
+        machine.beginDeviceReconnect()
+        XCTAssertEqual(machine.phase, .connectingDevice)
+    }
+
+    func testBeginDeviceReconnectClearsPracticeMode() {
+        var machine = readyMachine()
+        machine.requestStart(isBluetoothOutput: true)
+        machine.acceptPracticeMode()
+        machine.beginPlaying()
+        machine.interrupt(.bleDisconnected)
+        machine.beginDeviceReconnect()
+        XCTAssertFalse(machine.isPracticeMode, "reconnecting re-evaluates from scratch, same as retry()")
+    }
+
+    func testBeginDeviceReconnectIgnoredOutsideReadyResultsInterrupted() {
+        var machine = readyMachine()
+        machine.requestStart(isBluetoothOutput: false)
+        machine.beginDeviceReconnect() // .countdown isn't one of the three source phases
+        XCTAssertEqual(machine.phase, .countdown(beat: 0))
+    }
+
     // MARK: - Interruption from each active phase
 
     func testInterruptFromCountdown() {

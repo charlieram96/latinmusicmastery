@@ -19,6 +19,14 @@ extension StagePlayerView {
                     .multilineTextAlignment(.center)
                 Text("Choose your input").font(LMMFont.caption).foregroundStyle(.white.opacity(0.6))
             }
+            // Fix round 1 (D25's review, finding 2): a BLE connect failure bounces back to `.modeSelect`
+            // (`SessionCoordinator.handleBLEStatusChange`'s `.error` branch sets `errorMessage` THEN
+            // `deviceConnectFailed()`) — this used to render nowhere, so the failure was silently swallowed.
+            // Same `setupOverlay` styling (StagePlayerView.swift). Cleared on the next mode pick/retry by
+            // `SessionCoordinator.selectMode(_:)`.
+            if let error = coordinator.errorMessage {
+                Text(error).font(LMMFont.caption).foregroundStyle(LMMColor.destructive).multilineTextAlignment(.center)
+            }
             VStack(spacing: LMMSpacing.xs) {
                 Button("Headphones") { chooseMicMode(.headphones) }.buttonStyle(.lmmPrimary)
                 Button("Speaker-safe") { chooseMicMode(.speakerSafe) }.buttonStyle(.lmmSecondary)
@@ -68,6 +76,11 @@ extension StagePlayerView {
                 Text(error)
                     .font(LMMFont.caption).foregroundStyle(LMMColor.destructive).multilineTextAlignment(.center)
             }
+            // Fix round 1 (D25's review, finding 3): the scan/connect flow previously had no escape hatch —
+            // stuck on a real device that's slow/never found meant no way back to `.modeSelect` short of
+            // leaving the screen entirely. Stops the scan (`SessionCoordinator.cancelBLEConnect()`) rather
+            // than reporting a failure.
+            Button("Cancel") { coordinator.cancelBLEConnect() }.buttonStyle(.lmmSecondary)
             Spacer()
         }
         .padding(LMMSpacing.screen)
