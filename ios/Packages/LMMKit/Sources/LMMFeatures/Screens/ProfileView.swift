@@ -84,6 +84,8 @@ struct ProfileView: View {
             debugRow(icon: "waveform", title: "Audio Debug") { PlaySenseAudioDebugView() }
             Divider().overlay(LMMColor.border)
             debugRow(icon: "timer", title: "Calibration Debug") { CalibrationDebugView() }
+            Divider().overlay(LMMColor.border)
+            debugRow(icon: "gamecontroller", title: "PlaySense Stage") { DebugStageView() }
         }
         .background(
             RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)

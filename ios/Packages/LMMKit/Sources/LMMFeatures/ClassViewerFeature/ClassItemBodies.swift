@@ -45,9 +45,22 @@ struct ExerciseJamFallbackCard: View {
                 }
 
                 if item.scoreDocumentId != nil {
+                    #if DEBUG
+                    // D23 beta: EXERCISE items with an attached score route to the grading stage (behind
+                    // DEBUG until D24's highway replaces the plain stage). Release builds still show the
+                    // "coming soon" note.
+                    NavigationLink {
+                        PlaySenseExerciseLauncher(item: item)
+                    } label: {
+                        Label("Play (beta)", systemImage: "waveform.path")
+                            .font(LMMFont.caption)
+                            .foregroundStyle(LMMColor.primary)
+                    }
+                    #else
                     Label(lmmString("viewer.playsense.comingSoon"), systemImage: "waveform.path")
                         .font(LMMFont.caption)
                         .foregroundStyle(LMMColor.mutedForeground)
+                    #endif
                 }
             }
         }
