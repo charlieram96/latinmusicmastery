@@ -16,7 +16,14 @@ import SwiftUI
 /// `bulletList`/`orderedList`/`listItem` (recursively nested), `blockquote`, `horizontalRule`,
 /// `hardBreak`, `image`, `youtube`.
 /// Supported marks: `bold`, `italic`, `strike`, `link` (tappable via `AttributedString`'s
-/// native `.link` attribute).
+/// native `.link` attribute, restricted to `http`/`https`/`mailto` hrefs — anything else,
+/// including this app's own `lmm://` deep-link scheme, renders as plain styled text instead of
+/// becoming tappable; CMS-authored content is untrusted input and shouldn't be able to mint new
+/// tappable deep links).
+///
+/// Parsing also caps recursion depth (``TipTapBlockParser`` / ``TipTapInline``) so a
+/// pathologically deep or malformed document degrades gracefully instead of overflowing the
+/// stack.
 public struct TipTapView: View {
     private let blocks: [TipTapBlock]
 
@@ -33,184 +40,12 @@ public struct TipTapView: View {
     }
 }
 
-// MARK: - Parsed model
-
-/// A parsed, renderable block-level node. Parsing (`TipTapBlockParser`) is pure Swift — no
-/// SwiftUI — so it's unit-testable without hosting a view.
-enum TipTapBlock: Equatable {
-    case paragraph(AttributedString)
-    case heading(level: Int, text: AttributedString)
-    /// Each inner array is one list item's block children (usually a single paragraph, but a
-    /// list item may itself contain a nested list).
-    case bulletList([[TipTapBlock]])
-    case orderedList(start: Int, items: [[TipTapBlock]])
-    case blockquote([TipTapBlock])
-    case horizontalRule
-    case image(src: String, alt: String?)
-    case youtube(src: String)
-    /// Graceful fallback for a node type outside the bounded rendering set (e.g. `codeBlock`):
-    /// its text descendants still show, just unstyled.
-    case unknown(text: AttributedString)
-}
-
-/// Parses a TipTap/ProseMirror JSON document (`JSONValue`) into ``TipTapBlock``s.
-enum TipTapBlockParser {
-    static func blocks(from content: JSONValue?) -> [TipTapBlock] {
-        guard let content else { return [] }
-        return childBlocks(of: content)
-    }
-
-    /// Parses every element of `node`'s `content` array as a block. Used for the document root
-    /// (whose own `type` — normally `"doc"` — we don't need to check) and for `listItem`.
-    private static func childBlocks(of node: JSONValue) -> [TipTapBlock] {
-        guard case .object(let dict) = node else { return [] }
-        return arrayContent(dict["content"]).compactMap(parseBlock)
-    }
-
-    private static func parseBlock(_ node: JSONValue) -> TipTapBlock? {
-        guard case .object(let dict) = node, case .string(let type)? = dict["type"] else { return nil }
-        let children = arrayContent(dict["content"])
-
-        switch type {
-        case "paragraph":
-            return .paragraph(TipTapInline.attributedString(from: children))
-
-        case "heading":
-            let level = intAttr(dict["attrs"], key: "level") ?? 1
-            return .heading(level: min(max(level, 1), 3), text: TipTapInline.attributedString(from: children))
-
-        case "bulletList":
-            return .bulletList(children.map(childBlocks(of:)))
-
-        case "orderedList":
-            let start = intAttr(dict["attrs"], key: "start") ?? 1
-            return .orderedList(start: start, items: children.map(childBlocks(of:)))
-
-        case "blockquote":
-            return .blockquote(children.compactMap(parseBlock))
-
-        case "horizontalRule":
-            return .horizontalRule
-
-        case "image":
-            return parseImage(attrs: dict["attrs"])
-
-        case "youtube":
-            return parseYoutube(attrs: dict["attrs"])
-
-        default:
-            TipTapLog.unknownNode(type)
-            return .unknown(text: TipTapInline.attributedString(from: children))
-        }
-    }
-
-    private static func parseImage(attrs attrsValue: JSONValue?) -> TipTapBlock? {
-        guard case .object(let attrs)? = attrsValue, case .string(let src)? = attrs["src"] else { return nil }
-        return .image(src: src, alt: attrs["alt"]?.stringValue)
-    }
-
-    private static func parseYoutube(attrs attrsValue: JSONValue?) -> TipTapBlock? {
-        guard case .object(let attrs)? = attrsValue, case .string(let src)? = attrs["src"] else { return nil }
-        return .youtube(src: src)
-    }
-
-    private static func intAttr(_ attrsValue: JSONValue?, key: String) -> Int? {
-        guard case .object(let attrs)? = attrsValue, case .number(let value)? = attrs[key] else { return nil }
-        return Int(value)
-    }
-
-    private static func arrayContent(_ value: JSONValue?) -> [JSONValue] {
-        guard case .array(let array)? = value else { return [] }
-        return array
-    }
-}
-
-/// Builds the inline `AttributedString` for a block's `content` array (`text` / `hardBreak`
-/// nodes, with `marks` applied per run).
-private enum TipTapInline {
-    static func attributedString(from nodes: [JSONValue]) -> AttributedString {
-        nodes.reduce(into: AttributedString()) { result, node in
-            result += run(for: node)
-        }
-    }
-
-    private static func run(for node: JSONValue) -> AttributedString {
-        guard case .object(let dict) = node else { return AttributedString() }
-        let type = dict["type"]?.stringValue
-
-        switch type {
-        case "text":
-            guard case .string(let text)? = dict["text"] else { return AttributedString() }
-            var attributed = AttributedString(text)
-            applyMarks(dict["marks"], to: &attributed)
-            return attributed
-
-        case "hardBreak":
-            return AttributedString("\n")
-
-        default:
-            // Not itself renderable inline — degrade to any nested text (graceful degradation).
-            TipTapLog.unknownNode(type ?? "<missing type>")
-            if case .array(let children)? = dict["content"] {
-                return attributedString(from: children)
-            }
-            return AttributedString()
-        }
-    }
-
-    private static func applyMarks(_ marksValue: JSONValue?, to attributed: inout AttributedString) {
-        guard case .array(let marks)? = marksValue else { return }
-        for markValue in marks {
-            guard
-                case .object(let markDict) = markValue,
-                case .string(let markType)? = markDict["type"]
-            else { continue }
-
-            switch markType {
-            case "bold":
-                attributed.inlinePresentationIntent = (attributed.inlinePresentationIntent ?? [])
-                    .union(.stronglyEmphasized)
-            case "italic":
-                attributed.inlinePresentationIntent = (attributed.inlinePresentationIntent ?? [])
-                    .union(.emphasized)
-            case "strike":
-                attributed.strikethroughStyle = .single
-            case "link":
-                if
-                    case .object(let linkAttrs)? = markDict["attrs"],
-                    case .string(let href)? = linkAttrs["href"],
-                    let url = URL(string: href) {
-                    attributed.link = url
-                    attributed.foregroundColor = LMMColor.primary
-                }
-            default:
-                // Unknown mark (e.g. the editor has no `underline` extension to ever emit one,
-                // or an inline `code` mark this renderer doesn't style specially) — ignored;
-                // the run's text still renders, just without that styling.
-                break
-            }
-        }
-    }
-}
-
-private extension JSONValue {
-    var stringValue: String? {
-        if case .string(let value) = self { return value }
-        return nil
-    }
-}
-
-/// Debug-only visibility into documents that carry node types outside the bounded rendering
-/// set, so gaps show up during development without crashing or dropping content in release.
-enum TipTapLog {
-    static func unknownNode(_ type: String) {
-        #if DEBUG
-        print("TipTapView: unknown node type \"\(type)\" — rendering its text children only")
-        #endif
-    }
-}
-
 // MARK: - Rendering
+//
+// The parsed model (`TipTapBlock`), the parser (`TipTapBlockParser`/`TipTapInline`), and debug
+// logging (`TipTapLog`) live in `TipTapParsing.swift` — split out to keep this file to the
+// SwiftUI-facing view and its rendering, and because that half is pure Swift (no SwiftUI),
+// unit-testable without hosting a view.
 
 private struct TipTapBlockView: View {
     let block: TipTapBlock

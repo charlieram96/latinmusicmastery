@@ -90,6 +90,95 @@ enum TipTapFixtures {
     ]}
     """)
 
+    /// A `link` mark carrying the app's own `lmm://` deep-link scheme — CMS-authored content is
+    /// untrusted input and shouldn't be able to mint a new tappable deep link into the app, so
+    /// this must degrade to plain (non-tappable) text.
+    static let linkWithAppSchemeHref = doc("""
+    { "type": "doc", "content": [
+      { "type": "paragraph", "content": [
+        {
+          "type": "text",
+          "text": "Suspicious deep link",
+          "marks": [{ "type": "link", "attrs": { "href": "lmm://admin/grant-access" } }]
+        }
+      ]}
+    ]}
+    """)
+
+    /// A `link` mark carrying a `javascript:` href — must also degrade to plain text.
+    static let linkWithJavascriptHref = doc("""
+    { "type": "doc", "content": [
+      { "type": "paragraph", "content": [
+        {
+          "type": "text",
+          "text": "Suspicious script link",
+          "marks": [{ "type": "link", "attrs": { "href": "javascript:alert(1)" } }]
+        }
+      ]}
+    ]}
+    """)
+
+    /// A text node carrying a mark type this renderer doesn't style (`underline`, which the
+    /// admin editor's extension config can never actually emit, and `code`, which it can) —
+    /// both should degrade to unstyled text without error.
+    static let unknownMarks = doc("""
+    { "type": "doc", "content": [
+      { "type": "paragraph", "content": [
+        { "type": "text", "text": "Underlined? ", "marks": [{ "type": "underline" }] },
+        { "type": "text", "text": "Coded?", "marks": [{ "type": "code" }] }
+      ]}
+    ]}
+    """)
+
+    /// An `image` node missing `attrs.src`, alongside a valid paragraph — the malformed node
+    /// should be dropped (silently in terms of output, but logged) while the valid sibling
+    /// content still renders.
+    static let malformedImageMissingSrc = doc("""
+    { "type": "doc", "content": [
+      { "type": "image", "attrs": { "alt": "no src here" } },
+      { "type": "paragraph", "content": [{ "type": "text", "text": "Still here" }] }
+    ]}
+    """)
+
+    /// A `youtube` node missing `attrs.src`, alongside a valid paragraph.
+    static let malformedYoutubeMissingSrc = doc("""
+    { "type": "doc", "content": [
+      { "type": "youtube", "attrs": { "start": 0 } },
+      { "type": "paragraph", "content": [{ "type": "text", "text": "Still here" }] }
+    ]}
+    """)
+
+    /// A pathologically deep nested list — 80 levels of `bulletList` > `listItem`, well past the
+    /// parser's recursion-depth guard (``TipTapBlockParser/maxDepth`` = 50) — proving the parser
+    /// degrades gracefully instead of overflowing the stack on a crafted or corrupted document.
+    static let deeplyNestedLists: JSONValue = {
+        let depth = 80
+        let oneLevel = #"{"type":"bulletList","content":[{"type":"listItem","content":["#
+        let opening = String(repeating: oneLevel, count: depth)
+        let innermost = #"{"type":"paragraph","content":[{"type":"text","text":"Bottom"}]}"#
+        let closing = String(repeating: "]}]}", count: depth)
+        return doc(#"{"type":"doc","content":["# + opening + innermost + closing + "]}")
+    }()
+
+    /// Nodes whose shapes don't match what any real TipTap/ProseMirror document would produce —
+    /// a numeric `type`, a node with no `type` at all, `content`/`marks`/`attrs` holding the
+    /// wrong JSON kind entirely — mixed in around one valid paragraph. Proves the parser's
+    /// pattern-matching guards degrade each garbage shape instead of crashing, while the valid
+    /// sibling content still comes through.
+    static let garbageShapedNodes = doc("""
+    { "type": "doc", "content": [
+      { "type": 42, "content": "not-an-array" },
+      { "content": [ "just-a-string", 5, true, null,
+        { "type": "paragraph", "content": [ { "type": "text", "text": "Ignored, wrong shape" } ] }
+      ]},
+      {
+        "type": "paragraph",
+        "attrs": "oops-not-an-object",
+        "content": [ { "type": "text", "text": "Survives", "marks": "not-an-array-either" } ]
+      }
+    ]}
+    """)
+
     /// `hardBreak` inside a single paragraph becomes a literal newline in the rendered text.
     static let hardBreak = doc("""
     { "type": "doc", "content": [
