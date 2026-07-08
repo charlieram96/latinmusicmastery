@@ -24,24 +24,46 @@ jobs:
       # instead (Xcode synthesizes "LMMKit-Package" for any SPM package dir,
       # no xcodegen needed here). Verified locally: `xcodebuild -list` in this
       # directory reports the "LMMKit-Package" scheme, and `xcodebuild test`
-      # against it passes on iPhone 16 (iOS 18.3.1). OS=latest is used here
-      # (instead of pinning 18.3.1) since the exact simulator runtime
-      # preinstalled on GitHub's macos-15 image can drift between Xcode
-      # updates; "iPhone 16" is available on Xcode 16.x+ images.
+      # against it passes on iPhone 16 (iOS 18.3.1).
+      #
+      # Destination is pinned to a concrete OS (18.3.1, matching this project's
+      # local verification device) rather than `OS=latest`: this repo's own iOS
+      # tasks hit `xcodebuild` destination-matching failures with the `latest`
+      # keyword before (A1 carry-forward), and a pinned pairing is something we
+      # can actually confirm exists ahead of time (`xcodebuild -showdestinations`)
+      # instead of trusting whatever the runner's default happens to resolve to.
+      # macos-15's preinstalled Xcode ships iOS 18.x simulator runtimes with an
+      # "iPhone 16" device, so this pairing is expected to resolve the same way
+      # there as it does locally; revisit this pin if GitHub's image moves past
+      # that runtime.
       - name: xcodebuild test (iOS Simulator)
         run: |
           xcodebuild test \
             -scheme LMMKit-Package \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.3.1' \
             -skipPackagePluginValidation
 
   swiftlint:
     name: SwiftLint
     runs-on: macos-15
+    env:
+      # Pinned to the version verified locally (`swiftlint version` → 0.65.0) so a
+      # newer SwiftLint release can't start failing CI on rules this repo hasn't
+      # opted into or vetted yet.
+      SWIFTLINT_VERSION: "0.65.0"
     steps:
       - uses: actions/checkout@v4
-      - name: Install SwiftLint
-        run: brew install swiftlint
+      - name: Install SwiftLint (pinned)
+        run: |
+          curl -sSL -o swiftlint.zip \
+            "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/SwiftLintBinary.artifactbundle.zip"
+          unzip -q swiftlint.zip -d swiftlint-bin
+          sudo mv "swiftlint-bin/SwiftLintBinary.artifactbundle/macos/swiftlint" /usr/local/bin/swiftlint
+          installed="$(swiftlint version)"
+          if [ "$installed" != "$SWIFTLINT_VERSION" ]; then
+            echo "Expected SwiftLint $SWIFTLINT_VERSION, got $installed" >&2
+            exit 1
+          fi
       - name: Run SwiftLint
         working-directory: ios
         run: swiftlint lint --strict

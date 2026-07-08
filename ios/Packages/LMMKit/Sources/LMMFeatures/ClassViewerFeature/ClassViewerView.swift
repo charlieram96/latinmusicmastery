@@ -138,16 +138,8 @@ struct ClassViewerView: View {
                 aboutSection(description)
             }
 
-            let paragraphs = RichContentText.paragraphs(from: item.richContent)
-            if !paragraphs.isEmpty {
-                VStack(alignment: .leading, spacing: LMMSpacing.sm) {
-                    ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, para in
-                        Text(para)
-                            .font(LMMFont.body)
-                            .foregroundStyle(LMMColor.foreground.opacity(0.9))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
+            if item.richContent != nil {
+                TipTapView(content: item.richContent)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

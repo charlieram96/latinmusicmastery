@@ -82,6 +82,7 @@ public struct AuthLandingView: View {
             }
 
             Button {
+                errorMessage = nil
                 showSignUp = true
             } label: {
                 (Text("Don't have an account? ").foregroundStyle(.secondary)

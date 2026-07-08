@@ -31,7 +31,7 @@ let package = Package(
         ),
         .target(
             name: "LMMDesignSystem",
-            dependencies: [],
+            dependencies: ["LMMModels"],
             resources: [.process("Resources")]
         ),
 
@@ -100,6 +100,7 @@ let package = Package(
             name: "LMMDesignSystemTests",
             dependencies: [
                 "LMMDesignSystem",
+                "LMMModels",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ]
         )

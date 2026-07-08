@@ -48,6 +48,24 @@ final class ContentModelDecodingTests: XCTestCase {
         XCTAssertEqual(first.title, "Course Introduction and Platform Overview")
         XCTAssertEqual(first.isFree, false)
         XCTAssertNotNil(first.createdAt)
+
+        // Exact-value check (not just non-nil): the fixture's `created_at` is
+        // "2026-06-23T14:34:42.305486+00:00" — pin every component in UTC so a decoder
+        // regression that silently shifts by a timezone or truncates fractional seconds
+        // to the wrong second would actually fail this test.
+        let createdAt = try XCTUnwrap(first.createdAt)
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = try XCTUnwrap(TimeZone(identifier: "UTC"))
+        let components = utc.dateComponents([.year, .month, .day, .hour, .minute, .second], from: createdAt)
+        XCTAssertEqual(components.year, 2026)
+        XCTAssertEqual(components.month, 6)
+        XCTAssertEqual(components.day, 23)
+        XCTAssertEqual(components.hour, 14)
+        XCTAssertEqual(components.minute, 34)
+        XCTAssertEqual(components.second, 42)
+
+        let withSpanishTitle = try XCTUnwrap(classes.first { $0.titleEs != nil })
+        XCTAssertEqual(withSpanishTitle.titleEs, "Ritmo básico de la cáscara (mano derecha)")
     }
 
     func testCourseSectionsDecodeWithEmbeddedClassesAndItems() throws {

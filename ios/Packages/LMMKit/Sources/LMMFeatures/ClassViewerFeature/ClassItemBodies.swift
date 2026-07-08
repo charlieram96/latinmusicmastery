@@ -52,6 +52,11 @@ struct ExerciseJamFallbackCard: View {
             }
         }
         .task(id: item.id) {
+            // Reset first: without this, a slow-resolving future item can still be awaiting
+            // when the user has already navigated on, and its eventual result would land on
+            // whatever the *next* `.task(id:)` run left behind (or worse, momentarily keep
+            // showing the *previous* item's player while this one resolves).
+            audioURL = nil
             audioURL = await Self.resolvedAudioURL(item: item, resolver: resolver)
         }
     }
