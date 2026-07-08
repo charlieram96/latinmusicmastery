@@ -115,6 +115,14 @@ let package = Package(
             ]
         ),
         .testTarget(
+            name: "NotationUITests",
+            dependencies: [
+                "NotationUI",
+                "NotationEngraving",
+                "ScoreModel"
+            ]
+        ),
+        .testTarget(
             name: "LMMLocalizationTests",
             dependencies: [
                 "LMMLocalization",

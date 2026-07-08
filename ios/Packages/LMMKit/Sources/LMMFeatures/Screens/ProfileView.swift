@@ -1,5 +1,6 @@
 import LMMData
 import LMMDesignSystem
+import NotationUI
 import SwiftUI
 
 /// The Profile tab: identity, a couple of placeholder rows, and sign-out.
@@ -15,6 +16,9 @@ struct ProfileView: View {
             VStack(spacing: LMMSpacing.lg) {
                 identity
                 rows
+                #if DEBUG
+                debugRows
+                #endif
                 signOutButton
             }
             .padding(.horizontal, LMMSpacing.screen)
@@ -67,6 +71,41 @@ struct ProfileView: View {
                 .strokeBorder(LMMColor.border, lineWidth: 1)
         )
     }
+
+    #if DEBUG
+    /// Developer-only entry points, compiled out of release builds. Currently the native
+    /// notation preview (C16) so full-score wrapped/scroll rendering can be checked on-device
+    /// without any content wiring.
+    private var debugRows: some View {
+        NavigationLink {
+            NotationDebugView()
+        } label: {
+            HStack(spacing: LMMSpacing.sm) {
+                Image(systemName: "music.note.list")
+                    .font(.system(size: 16))
+                    .foregroundStyle(LMMColor.primary)
+                    .frame(width: 24)
+                Text("Notation Debug")
+                    .font(LMMFont.body)
+                    .foregroundStyle(LMMColor.foreground)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(LMMColor.mutedForeground)
+            }
+            .padding(.horizontal, LMMSpacing.md)
+            .padding(.vertical, LMMSpacing.sm)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
+                .fill(LMMColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
+                .strokeBorder(LMMColor.border, lineWidth: 1)
+        )
+    }
+    #endif
 
     private func row(icon: String, title: String) -> some View {
         HStack(spacing: LMMSpacing.sm) {
