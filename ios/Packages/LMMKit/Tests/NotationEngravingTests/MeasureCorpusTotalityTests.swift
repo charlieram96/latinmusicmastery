@@ -82,7 +82,8 @@ final class MeasureCorpusTotalityTests: XCTestCase {
             clef: descriptor.clef,
             timeSignature: descriptor.timeSignature,
             showClef: isFirst,
-            showTimeSignature: isFirst
+            showTimeSignature: isFirst,
+            measureStartQN: descriptor.cumulativeQN
         )
         let frame = MeasureLayoutEngine.layout(
             events: descriptor.events,

@@ -36,7 +36,13 @@ struct MeasureSampleView: View {
         )
         let events = measures.first?.events ?? []
         let clef = measures.first?.clef ?? .treble
-        let context = MeasureContext(clef: clef, timeSignature: timeSignature, showClef: true, showTimeSignature: true)
+        let context = MeasureContext(
+            clef: clef,
+            timeSignature: timeSignature,
+            showClef: true,
+            showTimeSignature: true,
+            measureStartQN: measures.first?.cumulativeQN ?? 0
+        )
 
         let renderer = UIGraphicsImageRenderer(size: size)
         return renderer.image { rendererContext in

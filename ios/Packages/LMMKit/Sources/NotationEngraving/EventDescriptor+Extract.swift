@@ -126,6 +126,12 @@ extension EventDescriptorBuilder {
                 staffPosition: staffPosition(forKeyString: key),
                 accidental: nil,
                 midi: midi,
+                // Deliberate improvement over the web renderer, which resolves x-vs-normal
+                // notehead once per CHORD (from the first note's stroke type) and applies it to
+                // every notehead in that chord. Resolving it per NOTE here means a mixed-stroke
+                // percussion chord (e.g. an open tone plus a slap) engraves each notehead with
+                // its own correct glyph instead of forcing the whole chord to match the first
+                // note. Documented in the C14 report.
                 isCross: stroke?.noteType == .xNotehead,
                 keyString: key
             )

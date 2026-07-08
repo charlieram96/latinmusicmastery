@@ -68,7 +68,8 @@ final class MeasureSampleSnapshotTests: XCTestCase {
             clef: measure.clef,
             timeSignature: measure.timeSignature,
             showClef: true,
-            showTimeSignature: true
+            showTimeSignature: true,
+            measureStartQN: measure.cumulativeQN
         )
 
         let space = scale.staffSpacePoints

@@ -118,13 +118,30 @@ extension MeasureLayoutEngine {
     ) {
         let half = env.noteheadWidth / 2 + env.points(env.defaults.legerLineExtension)
         for ledgerY in env.geometry.ledgerLineYPositions(forPosition: position) {
-            if elements.ledgerLines.contains(where: { abs($0.start.y - ledgerY) < 0.01 }) { continue }
+            // Dedup by rounded (x, y), not y alone: y depends only on staff position, so two
+            // separate EVENTS at the same out-of-staff pitch share a ledgerY while sitting at
+            // different x — each still needs its own ledger. Comparing x too fixes that while
+            // staying correct within a chord column: every non-displaced notehead in a chord
+            // shares the exact same x, so a ledgerY they both need still collapses to one line.
+            // Rounding (rather than a raw `==`) absorbs floating-point noise from the upstream
+            // point-space math.
+            let startX = noteX - half
+            if elements.ledgerLines.contains(where: {
+                roundedForLedgerDedup($0.start.x) == roundedForLedgerDedup(startX) &&
+                    roundedForLedgerDedup($0.start.y) == roundedForLedgerDedup(ledgerY)
+            }) { continue }
             elements.ledgerLines.append(LineSegment(
-                start: CGPoint(x: noteX - half, y: ledgerY),
+                start: CGPoint(x: startX, y: ledgerY),
                 end: CGPoint(x: noteX + half, y: ledgerY),
                 thickness: env.points(env.defaults.legerLineThickness)
             ))
         }
+    }
+
+    /// Rounds to the nearest 1/100 point for ledger-line dedup — small enough to never conflate
+    /// two genuinely distinct columns, large enough to absorb floating-point noise.
+    private static func roundedForLedgerDedup(_ value: CGFloat) -> CGFloat {
+        (value * 100).rounded() / 100
     }
 
     // MARK: Stem direction + second-interval displacement

@@ -94,6 +94,47 @@ final class MeasureLayoutTests: XCTestCase {
         XCTAssertFalse(frame.timeSignature.isEmpty)
     }
 
+    // MARK: Meter change (measureStartQN anchor)
+
+    func testDownbeatAfterMeterChangeLandsAtFractionZero() {
+        // A 4/4 measure (4 quarters) followed by a 3/4 measure (3 quarters): the second measure
+        // starts at cumulative QN 4, which is NOT a multiple of its own 3-QN length — exactly
+        // the case a naive `qnStart % measureQN` gets wrong (4 % 3 = 1 → fraction 1/3 instead
+        // of the correct 0).
+        let threeFour = TimeSignature(numerator: 3, denominator: 4)
+        let firstMeasureEvents: [MusicalEvent] = [60, 62, 64, 65].map { .note(Note(durationQN: 1, midi: $0)) }
+        let secondMeasureEvents: [MusicalEvent] = [67, 69, 71].map { .note(Note(durationQN: 1, midi: $0)) }
+        let track = Track(
+            index: 0, instrument: .guitar, displayName: "G", tuning: nil, stringMultiplicity: 1,
+            channel: 0, defaultView: .staff,
+            measures: [
+                Measure(number: 1, voices: [Voice(number: 1, events: firstMeasureEvents)]),
+                Measure(number: 2, timeSignature: threeFour, voices: [Voice(number: 1, events: secondMeasureEvents)])
+            ]
+        )
+        let measures = EventDescriptorBuilder.extractTrackEvents(track: track, initialTimeSignature: fourFour)
+        XCTAssertEqual(measures.count, 2)
+        let second = measures[1]
+        XCTAssertEqual(second.cumulativeQN, 4, accuracy: acc) // anchor: measure 1 is 4 QN long
+        XCTAssertEqual(second.timeSignature, threeFour)
+
+        let context = MeasureContext(
+            clef: .treble, timeSignature: threeFour, showClef: false, showTimeSignature: false,
+            measureStartQN: second.cumulativeQN
+        )
+        let frame = layout(second.events, context: context)
+
+        // measureWidth(3/4) = max(3*9, 3*2.2) = 27 spaces = 270pt; bare lead-in 1, trailing pad 2
+        // → noteArea = 27-1-2 = 24 spaces = 240pt; noteStartX = 10.
+        XCTAssertEqual(frame.width, 270, accuracy: acc)
+        // Downbeat (qnStart=4=measureStartQN) → fraction 0 → x = noteStartX = 10.
+        XCTAssertEqual(frame.noteheads.first?.origin.x ?? -1, 10, accuracy: acc)
+        // Mid-measure note (qnStart=5) → fraction (5-4)/3 = 1/3.
+        XCTAssertEqual(frame.noteheads[1].origin.x, 10 + (1.0 / 3.0) * 240, accuracy: 1e-3)
+        // Last beat (qnStart=6) → fraction 2/3.
+        XCTAssertEqual(frame.noteheads[2].origin.x, 10 + (2.0 / 3.0) * 240, accuracy: 1e-3)
+    }
+
     // MARK: Stem direction matrix
 
     /// One row of the stem-direction matrix.
@@ -164,6 +205,42 @@ final class MeasureLayoutTests: XCTestCase {
         // half = noteheadWidth(1.18)*10/2 + legerLineExtension(0.4)*10 = 5.9 + 4 = 9.9. Centered at x=10.
         XCTAssertEqual(ledger.start.x, 10 - 9.9, accuracy: 1e-3)
         XCTAssertEqual(ledger.end.x, 10 + 9.9, accuracy: 1e-3)
+    }
+
+    func testLedgerLinesNotDedupedAcrossRepeatedPitchEvents() {
+        // Two consecutive C4s (pos -2, one ledger each at y(-2)=90) followed by two in-staff
+        // notes. A prior bug deduped ledgers by y alone, so the second C4's ledger — sharing y
+        // with the first but sitting at a different x — was silently dropped. Both must survive,
+        // at their own (distinct) event x.
+        let frame = layout(quarterNotes([60, 60, 64, 65]), context: bareContext())
+        XCTAssertEqual(frame.ledgerLines.count, 2, "each C4 should get its own ledger line")
+        guard frame.ledgerLines.count == 2 else { return }
+        let sortedByX = frame.ledgerLines.sorted { $0.start.x < $1.start.x }
+        XCTAssertEqual(sortedByX[0].start.y, 90, accuracy: acc)
+        XCTAssertEqual(sortedByX[1].start.y, 90, accuracy: acc)
+        XCTAssertGreaterThan(sortedByX[1].start.x, sortedByX[0].start.x + 1, "ledgers should sit at distinct x")
+    }
+
+    func testChordSharedLedgerCollapsesToOneLine() {
+        // Chord of C4 (pos -2, needs 1 ledger at y(-2)=90) + A3 (pos -4, needs 2 ledgers at
+        // y(-2)=90 and y(-4)=100). The positions differ by 2 (not a stepwise second), so neither
+        // notehead is displaced — both sit at the same (undisplaced) column x. The shared
+        // y(-2) ledger must still collapse to a single line for that column: 2 total ledgers
+        // (90, 100), not 3.
+        let upper = NoteDescriptor(staffPosition: -2, accidental: nil, midi: 60, isCross: false, keyString: "c/4")
+        let lower = NoteDescriptor(staffPosition: -4, accidental: nil, midi: 57, isCross: false, keyString: "a/3")
+        let chord = EventDescriptor(
+            kind: .chord, qnStart: 0, durationQN: 1, beatInMeasure: 1, durationCode: .quarter,
+            isRest: false, dotted: false, notes: [upper, lower], midi: 57,
+            triplet: false, tieToNext: false, articulation: nil
+        )
+        let frame = layout([chord], context: bareContext())
+        XCTAssertEqual(frame.ledgerLines.count, 2, "shared ledger should collapse, not double up")
+        guard frame.ledgerLines.count == 2 else { return }
+        let sortedByY = frame.ledgerLines.sorted { $0.start.y < $1.start.y }
+        XCTAssertEqual(sortedByY.map(\.start.y), [90, 100])
+        // Both ledgers sit at the same (undisplaced) chord column x.
+        XCTAssertEqual(sortedByY[0].start.x, sortedByY[1].start.x, accuracy: acc)
     }
 
     // MARK: Accidental offset

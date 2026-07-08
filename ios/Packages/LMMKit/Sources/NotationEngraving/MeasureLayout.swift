@@ -78,12 +78,26 @@ public struct MeasureContext: Equatable, Sendable {
     public let timeSignature: TimeSignature
     public let showClef: Bool
     public let showTimeSignature: Bool
+    /// Cumulative QN at the START of this measure — `MeasureDescriptor.cumulativeQN` from the
+    /// descriptor pipeline (`EventDescriptor+Extract.swift`). This is the anchor `qnInMeasure`
+    /// subtracts before dividing by the measure length, so within-measure fraction is correct
+    /// even when the measure doesn't start on a multiple of its own length (e.g. right after a
+    /// 4/4 → 3/4 meter change). Defaults to `0` for the common case of laying out a single
+    /// measure whose events are already measure-relative (`qnStart` starting at `0`).
+    public let measureStartQN: Double
 
-    public init(clef: Clef, timeSignature: TimeSignature, showClef: Bool, showTimeSignature: Bool) {
+    public init(
+        clef: Clef,
+        timeSignature: TimeSignature,
+        showClef: Bool,
+        showTimeSignature: Bool,
+        measureStartQN: Double = 0
+    ) {
         self.clef = clef
         self.timeSignature = timeSignature
         self.showClef = showClef
         self.showTimeSignature = showTimeSignature
+        self.measureStartQN = measureStartQN
     }
 
     /// True when a clef or time signature is drawn — drives the wider lead-in.
@@ -104,6 +118,13 @@ public enum MeasureLayoutMetrics {
     public static let quarterNoteWidthSpaces: StaffSpaces = 9.0
     public static let perNoteMinWidthSpaces: StaffSpaces = 2.2
     public static let headerLeadInSpaces: StaffSpaces = 8.0
+    /// Non-header (bare) measure lead-in — **not** a web port. The web formatter gives a bare
+    /// measure no left-side lead-in at all; it only ever subtracts the trailing `-20`px
+    /// (`trailingPadSpaces`) inset before the barline, so its note area effectively starts at
+    /// x=0. This 1-space value is a deliberate C14 addition: under the linear-taper width
+    /// approximation (no real VexFlow formatter to derive spacing from), a bare measure's first
+    /// notehead sitting flush against the previous barline reads as visually cramped, so a small
+    /// fixed gap is inserted for breathing room. Documented in the C14 report.
     public static let bareLeadInSpaces: StaffSpaces = 1.0
     public static let trailingPadSpaces: StaffSpaces = 2.0
     /// Floor on the note area, mirroring the web `Math.max(40, justify)` (40 px = 4 spaces).
@@ -187,7 +208,10 @@ public enum MeasureLayoutEngine {
 
         var elements = ElementBucket()
         for event in events {
-            let fraction = min(max(qnInMeasure(event, measureQN: measureQN), 0), 1)
+            let fraction = min(
+                max(qnInMeasure(event, measureStartQN: context.measureStartQN, measureQN: measureQN), 0),
+                1
+            )
             let eventX = plan.noteStartX + scale.points(fraction * plan.noteAreaSpaces)
             if event.isRest {
                 appendRest(event, x: eventX, env: env, into: &elements)
@@ -239,13 +263,17 @@ public enum MeasureLayoutEngine {
     }
 
     /// Fraction of the measure this event starts at, from its qnStart relative to the measure.
-    /// `qnStart` is track-cumulative; the remainder against the measure length recovers the
-    /// within-measure offset (measures are whole multiples of `measureQN` for the corpus, and
-    /// layout is called per measure anyway).
-    private static func qnInMeasure(_ event: EventDescriptor, measureQN: Double) -> Double {
-        let offset = event.qnStart.truncatingRemainder(dividingBy: measureQN)
-        let normalized = offset < 0 ? offset + measureQN : offset
-        return normalized / measureQN
+    /// `qnStart` is track-cumulative; subtracting `measureStartQN` (the descriptor pipeline's
+    /// `MeasureDescriptor.cumulativeQN` anchor, threaded through `MeasureContext`) recovers the
+    /// within-measure offset directly.
+    ///
+    /// This used to take `qnStart.truncatingRemainder(dividingBy: measureQN)`, which silently
+    /// assumed every measure starts on a whole multiple of its own length — true for a constant
+    /// meter, but wrong the instant a measure doesn't (e.g. right after a 4/4 → 3/4 change: the
+    /// 3/4 measure starts at cumulative QN 4, and `4 % 3 = 1` misplaces its downbeat at fraction
+    /// 1/3 instead of 0). Subtracting the real anchor is correct in both cases.
+    private static func qnInMeasure(_ event: EventDescriptor, measureStartQN: Double, measureQN: Double) -> Double {
+        (event.qnStart - measureStartQN) / measureQN
     }
 
     // MARK: Assembly

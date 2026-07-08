@@ -215,7 +215,10 @@ public enum EventDescriptorBuilder {
             accidental = String(chars[index])
             index += 1
         }
-        var octave = midi / 12 - 1
+        // `.rounded(.down)` (not `/`, which truncates toward zero) to match `midiToKeyString`'s
+        // floor semantics above — identical result for any valid (non-negative) MIDI number, but
+        // consistent so neither reads as a copy/paste divergence.
+        var octave = Int((Double(midi) / 12).rounded(.down)) - 1
         if index < chars.count, chars[index].isNumber {
             octave = Int(String(chars[index])) ?? octave
             index += 1
