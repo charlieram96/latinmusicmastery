@@ -27,7 +27,10 @@ public enum LMMSpacing {
 }
 
 /// Corner-radius scale, anchored on the web's `--radius` (0.5rem = 8pt) and the studio
-/// card radii (12–14pt).
+/// card radii (12–14pt). Only `sm` (8pt) is a literal 1:1 port of the web's `--radius` token —
+/// unlike `LMMColor`, which mirrors the web's tailwind values exactly, `md`/`lg`/`xl`
+/// (12/16/20) are SwiftUI-side extrapolations of that same 0.5rem base for larger surfaces,
+/// not literal tailwind values.
 public enum LMMRadius {
     /// 8pt — the base `--radius`; small controls and chips.
     public static let sm: CGFloat = 8

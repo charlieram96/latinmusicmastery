@@ -75,6 +75,12 @@ struct ClassRowContent: View {
         case .completed: stateText = lmmString("class.state.completed")
         case .locked: stateText = lmmString("class.state.locked")
         }
-        return "\(title). \(subtitle). \(stateText)"
+        // `.accessibilityElement(children: .combine)` gets overridden by the explicit label
+        // below, so the Free badge (visible only) must be folded back in here or VoiceOver
+        // never hears it.
+        let freeText = isFree ? lmmString("class.state.free") : ""
+        return [title, subtitle, freeText, stateText]
+            .filter { !$0.isEmpty }
+            .joined(separator: ". ")
     }
 }

@@ -155,6 +155,9 @@ struct CourseDetailView: View {
                 eyebrow: lmmString("course.curriculum.eyebrow"),
                 title: lmmString("course.curriculum.title")
             )
+            if structure.sections.isEmpty {
+                curriculumEmptyState
+            }
             ForEach(structure.sections) { section in
                 VStack(alignment: .leading, spacing: LMMSpacing.sm) {
                     if structure.sections.count > 1 {
@@ -181,6 +184,33 @@ struct CourseDetailView: View {
                 }
             }
         }
+    }
+
+    /// A compact placeholder for a course whose curriculum hasn't been authored yet — keeps
+    /// the section from rendering as a bare header with no rows underneath.
+    private var curriculumEmptyState: some View {
+        VStack(spacing: LMMSpacing.xxs) {
+            Image(systemName: "text.book.closed")
+                .font(.system(size: 22))
+                .foregroundStyle(LMMColor.mutedForeground)
+            Text(lmmString("course.curriculum.empty.title"))
+                .font(LMMFont.subheadline.weight(.medium))
+                .foregroundStyle(LMMColor.foreground)
+            Text(lmmString("course.curriculum.empty.message"))
+                .font(LMMFont.caption)
+                .foregroundStyle(LMMColor.mutedForeground)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, LMMSpacing.lg)
+        .background(
+            RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
+                .fill(LMMColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
+                .strokeBorder(LMMColor.border, lineWidth: 1)
+        )
     }
 
     @ViewBuilder

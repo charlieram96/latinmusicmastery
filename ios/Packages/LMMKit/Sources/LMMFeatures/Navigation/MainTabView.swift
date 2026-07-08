@@ -12,29 +12,42 @@ public struct MainTabView: View {
     @Environment(EntitlementsStore.self) private var entitlements
     @Environment(\.scenePhase) private var scenePhase
 
+    /// Backs the `TabView` selection so other tabs (e.g. My Courses' empty state) can switch
+    /// the shell to a different tab programmatically.
+    private enum Tab: Hashable {
+        case home, courses, myCourses, profile
+    }
+
+    @State private var selectedTab: Tab = .home
+
     public init() {}
 
     public var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             NavigationStack {
                 HomeView().catalogDestinations()
             }
             .tabItem { Label(lmmString("tab.home"), systemImage: "house.fill") }
+            .tag(Tab.home)
 
             NavigationStack {
                 CoursesView().catalogDestinations()
             }
             .tabItem { Label(lmmString("tab.courses"), systemImage: "square.grid.2x2.fill") }
+            .tag(Tab.courses)
 
             NavigationStack {
                 MyCoursesView().catalogDestinations()
             }
             .tabItem { Label(lmmString("tab.myCourses"), systemImage: "bookmark.fill") }
+            .tag(Tab.myCourses)
+            .environment(\.selectCoursesTab) { selectedTab = .courses }
 
             NavigationStack {
                 ProfileView()
             }
             .tabItem { Label(lmmString("tab.profile"), systemImage: "person.crop.circle.fill") }
+            .tag(Tab.profile)
         }
         .tint(LMMColor.primary)
         .environment(\.appLocale, .current)
@@ -44,6 +57,20 @@ public struct MainTabView: View {
                 Task { await entitlements.refresh() }
             }
         }
+    }
+}
+
+private struct SelectCoursesTabKey: EnvironmentKey {
+    static let defaultValue: () -> Void = {}
+}
+
+extension EnvironmentValues {
+    /// Lets a tab's content switch `MainTabView`'s selection to the Courses tab — used by My
+    /// Courses' empty state "Browse courses" action. Defaults to a no-op so anything rendered
+    /// outside `MainTabView` (previews, tests) doesn't need to supply it.
+    var selectCoursesTab: () -> Void {
+        get { self[SelectCoursesTabKey.self] }
+        set { self[SelectCoursesTabKey.self] = newValue }
     }
 }
 

@@ -10,6 +10,7 @@ struct MyCoursesView: View {
     @Environment(AppServices.self) private var services
     @Environment(EntitlementsStore.self) private var entitlements
     @Environment(\.appLocale) private var locale
+    @Environment(\.selectCoursesTab) private var selectCoursesTab
 
     @State private var items: [EnrolledCourse] = []
     @State private var styleNames: [UUID: String] = [:]
@@ -47,7 +48,9 @@ struct MyCoursesView: View {
             EmptyStateView(
                 systemImage: "bookmark",
                 title: lmmString("myCourses.empty.title"),
-                message: lmmString("myCourses.empty.message")
+                message: lmmString("myCourses.empty.message"),
+                actionTitle: lmmString("myCourses.empty.action"),
+                action: selectCoursesTab
             )
         } else {
             ScrollView {

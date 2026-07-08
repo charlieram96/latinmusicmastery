@@ -49,12 +49,21 @@ struct CoursesView: View {
                     instrumentFilter
                 }
                 if filteredCourses.isEmpty {
-                    EmptyStateView(
-                        systemImage: "magnifyingglass",
-                        title: lmmString("courses.empty.title"),
-                        message: lmmString("courses.empty.message")
-                    )
-                    .padding(.top, LMMSpacing.xxl)
+                    if courses.isEmpty {
+                        EmptyStateView(
+                            systemImage: "tray",
+                            title: lmmString("courses.emptyCatalog.title"),
+                            message: lmmString("courses.emptyCatalog.message")
+                        )
+                        .padding(.top, LMMSpacing.xxl)
+                    } else {
+                        EmptyStateView(
+                            systemImage: "magnifyingglass",
+                            title: lmmString("courses.empty.title"),
+                            message: lmmString("courses.empty.message")
+                        )
+                        .padding(.top, LMMSpacing.xxl)
+                    }
                 } else {
                     LazyVGrid(columns: columns, alignment: .leading, spacing: LMMSpacing.md) {
                         ForEach(filteredCourses) { course in

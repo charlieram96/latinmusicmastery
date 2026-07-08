@@ -17,6 +17,22 @@
         }
       }
     },
+    "class.state.free": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gratis"
+          }
+        }
+      }
+    },
     "class.state.inProgress": {
       "localizations": {
         "en": {
@@ -77,6 +93,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Continuar"
+          }
+        }
+      }
+    },
+    "course.curriculum.empty.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classes for this course haven't been added yet."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las clases de este curso aún no se han agregado."
+          }
+        }
+      }
+    },
+    "course.curriculum.empty.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Curriculum coming soon"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contenido próximamente"
           }
         }
       }
@@ -173,6 +221,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "No se encontraron cursos"
+          }
+        }
+      }
+    },
+    "courses.emptyCatalog.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check back soon."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve pronto."
+          }
+        }
+      }
+    },
+    "courses.emptyCatalog.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No courses yet"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no hay cursos"
           }
         }
       }
