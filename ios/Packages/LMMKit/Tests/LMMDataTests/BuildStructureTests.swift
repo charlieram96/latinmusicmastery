@@ -8,10 +8,13 @@ import LMMModels
 ///
 /// Fixture shape (`course_structure_sections.json`): two sections.
 ///   Section A (order 0): Class A0 (order 0, EMPTY — no items) then Class A1 (order 1, a QUIZ
-///     item at order 0 and a VIDEO item — duration 100s — at order 1; both are listed in the
-///     fixture in reverse order_index to prove the nested sort).
+///     item at order 0 and a VIDEO item — duration 100s — at order 1; the fixture happens to list
+///     these two items in ascending `order_index` already, so Class A1 alone doesn't prove the
+///     nested item sort — see Class B1 below for that).
 ///   Section B (order 1): Class B1 (order 0, a VIDEO item — duration 50s — at order 0 and an
-///     EXERCISE item at order 1, also listed reversed in the fixture).
+///     EXERCISE item at order 1; the fixture lists the EXERCISE item FIRST and the VIDEO item
+///     SECOND, i.e. genuinely reversed, so asserting B1's sorted item order is what actually
+///     exercises ``CourseStructure/buildStructure(sections:progress:)``'s `.sorted` call).
 final class BuildStructureTests: XCTestCase {
     private func loadSections() throws -> [CourseSection] {
         try DataFixtureLoader.decode([CourseSection].self, from: "course_structure_sections.json")
@@ -27,9 +30,18 @@ final class BuildStructureTests: XCTestCase {
         XCTAssertEqual(sectionA.classes.map(\.courseClass.title), ["Class A0 (empty)", "Class A1"])
 
         let classA1 = try XCTUnwrap(sectionA.classes.first { $0.courseClass.title == "Class A1" })
-        // The Quiz item (order_index 0) must sort before the Video item (order_index 1), even
-        // though the fixture lists the Video item first.
+        // The Quiz item (order_index 0) must sort before the Video item (order_index 1). Note:
+        // the fixture already lists them in this order, so this assertion alone would still pass
+        // without the `.sorted` call — see Class B1 below, whose items are genuinely reversed in
+        // the fixture, for the assertion that actually proves the nested item sort.
         XCTAssertEqual(classA1.items.map(\.title), ["A1 Quiz", "A1 Video"])
+
+        let sectionB = structure.sections[1]
+        let classB1 = try XCTUnwrap(sectionB.classes.first { $0.courseClass.title == "Class B1" })
+        // The Video item (order_index 0) must sort before the Exercise item (order_index 1),
+        // even though the fixture lists the Exercise item first — deleting the `.sorted` call in
+        // `enrichClass` would make this fail (it would come back as ["B1 Exercise", "B1 Video"]).
+        XCTAssertEqual(classB1.items.map(\.title), ["B1 Video", "B1 Exercise"])
     }
 
     func testEmptyClassReportsZeroTotalsAndIsNeverChosenAsNextClass() throws {

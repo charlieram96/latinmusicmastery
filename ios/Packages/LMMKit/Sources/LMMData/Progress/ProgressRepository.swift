@@ -113,6 +113,10 @@ public struct LiveProgressRepository: ProgressRepository {
 
     public func achievements() async throws -> [UserAchievement] {
         let userId = try await sessionUserProvider.currentUserId()
+        // Unlike `enrollments:`, this cache key has no write-triggered `invalidate(prefix:)` call
+        // anywhere — there's no client write path to `user_achievements` (rows only ever appear
+        // via a server-side trigger), so a fresh unlock is picked up purely by `progressTTL`
+        // expiry. Revisit if achievements ever gain a client-initiated write/unlock flow.
         let key = "achievements:\(userId)"
         if let cache, let cached: [UserAchievement] = await cache.get(key) {
             return cached
