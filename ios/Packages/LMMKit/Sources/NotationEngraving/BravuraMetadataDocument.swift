@@ -11,8 +11,63 @@ struct BravuraMetadataDocument: Decodable {
     /// string — despite the misleading "Version" name, so it's decoded as `Double`.
     let fontVersion: Double
     let engravingDefaults: EngravingDefaultsDocument
+    /// Only the entries for `Glyph` catalog glyphs — see the custom `init(from:)`.
     let glyphBBoxes: [String: GlyphBBoxDocument]
+    /// Only the entries for `Glyph` catalog glyphs — see the custom `init(from:)`.
     let glyphsWithAnchors: [String: [String: [Double]]]
+
+    private enum CodingKeys: String, CodingKey {
+        case fontName
+        case fontVersion
+        case engravingDefaults
+        case glyphBBoxes
+        case glyphsWithAnchors
+    }
+
+    /// Dynamic key for the per-glyph maps, so individual entries can be pulled by SMuFL name.
+    private struct GlyphNameKey: CodingKey {
+        let stringValue: String
+        init(stringValue: String) { self.stringValue = stringValue }
+        var intValue: Int? { nil }
+        init?(intValue: Int) { nil }
+    }
+
+    /// Decodes the whole document, but scopes the two large per-glyph maps
+    /// (`glyphBBoxes` ~3k entries, `glyphsWithAnchors` ~1k) to just the ~40 glyphs the `Glyph`
+    /// catalog draws — and decodes each of those entries *permissively*: a single malformed
+    /// entry is skipped rather than failing the whole document. This keeps NotationEngraving
+    /// robust to unrelated churn or corruption elsewhere in `bravura_metadata.json` and avoids
+    /// materializing thousands of dictionary entries it never reads.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        fontName = try container.decode(String.self, forKey: .fontName)
+        fontVersion = try container.decode(Double.self, forKey: .fontVersion)
+        engravingDefaults = try container.decode(EngravingDefaultsDocument.self, forKey: .engravingDefaults)
+
+        let catalogNames = Glyph.allCases.map(\.smuflName)
+
+        var boxes: [String: GlyphBBoxDocument] = [:]
+        if let bboxes = try? container.nestedContainer(keyedBy: GlyphNameKey.self, forKey: .glyphBBoxes) {
+            for name in catalogNames {
+                let key = GlyphNameKey(stringValue: name)
+                if let box = try? bboxes.decode(GlyphBBoxDocument.self, forKey: key) {
+                    boxes[name] = box
+                }
+            }
+        }
+        glyphBBoxes = boxes
+
+        var anchors: [String: [String: [Double]]] = [:]
+        if let anchorMap = try? container.nestedContainer(keyedBy: GlyphNameKey.self, forKey: .glyphsWithAnchors) {
+            for name in catalogNames {
+                let key = GlyphNameKey(stringValue: name)
+                if let entry = try? anchorMap.decode([String: [Double]].self, forKey: key) {
+                    anchors[name] = entry
+                }
+            }
+        }
+        glyphsWithAnchors = anchors
+    }
 }
 
 /// Mirrors `engravingDefaults`. Only the numeric fields `EngravingDefaults` exposes are
