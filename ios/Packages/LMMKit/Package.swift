@@ -28,6 +28,7 @@ let package = Package(
                 "LMMLocalization",
                 "ScoreModel",
                 "TimeMapKit",
+                "PlaySenseCore",
                 .product(name: "Supabase", package: "supabase-swift")
             ]
         ),
@@ -61,14 +62,18 @@ let package = Package(
         .target(name: "PlaySenseHighway", dependencies: ["PlaySenseCore"]),
         .target(
             name: "PlaySenseUI",
-            dependencies: ["PlaySenseCore", "PlaySenseAudio", "PlaySenseBLE", "PlaySenseHighway", "LMMDesignSystem"]
+            dependencies: [
+                "PlaySenseCore", "PlaySenseAudio", "PlaySenseBLE", "PlaySenseHighway", "ScoreModel", "LMMDesignSystem"
+            ]
         ),
 
         // MARK: - App layer
 
         .target(
             name: "LMMFeatures",
-            dependencies: ["LMMData", "LMMDesignSystem", "NotationUI", "PlaySenseUI", "LMMLocalization"],
+            dependencies: [
+                "LMMData", "LMMDesignSystem", "NotationUI", "PlaySenseUI", "PlaySenseCore", "LMMLocalization"
+            ],
             resources: [.process("Resources")]
         ),
         .target(name: "LMMTestSupport", dependencies: ["LMMModels"]),
@@ -89,6 +94,7 @@ let package = Package(
                 "LMMModels",
                 "ScoreModel",
                 "TimeMapKit",
+                "PlaySenseCore",
                 .product(name: "Supabase", package: "supabase-swift"),
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ]
@@ -111,6 +117,13 @@ let package = Package(
             name: "PlaySenseAudioTests",
             dependencies: [
                 "PlaySenseAudio",
+                "PlaySenseCore"
+            ]
+        ),
+        .testTarget(
+            name: "PlaySenseUITests",
+            dependencies: [
+                "PlaySenseUI",
                 "PlaySenseCore"
             ]
         ),
