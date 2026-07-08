@@ -19,6 +19,11 @@ targets:
     configFiles:
       Debug: App/Config/Debug.xcconfig
       Release: App/Config/Release.xcconfig
+    entitlements:
+      path: App/LatinMusicMastery.entitlements
+      properties:
+        com.apple.developer.applesignin:
+          - Default
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.latinmusicmastery.app

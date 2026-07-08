@@ -1,3 +1,4 @@
+import LMMData
 import LMMFeatures
 import SwiftUI
 
@@ -27,11 +28,24 @@ struct AppConfig {
 
 @main
 struct LMMApp: App {
-    let config = AppConfig.loadFromInfoPlist()
+    @State private var authService: AuthService
+
+    init() {
+        let config = AppConfig.loadFromInfoPlist()
+        let supabaseService = SupabaseService(
+            supabaseURL: config.supabaseURL,
+            supabaseAnonKey: config.supabaseAnonKey
+        )
+        _authService = State(initialValue: AuthService(client: supabaseService.client))
+    }
 
     var body: some Scene {
         WindowGroup {
-            RootPlaceholderView()
+            RootView()
+                .environment(authService)
+                .onOpenURL { url in
+                    authService.handle(url: url)
+                }
         }
     }
 }
