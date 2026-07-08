@@ -161,6 +161,15 @@ extension MeasureLayoutEngine {
 
     /// Tuplet indications for every maximal run of contiguous `triplet` events. The reference
     /// edge (which the bracket clears / the digit sits over) is each note's natural stem tip.
+    ///
+    /// LIMITATION (C15 carry-forward, documented for C16): "contiguous run of `triplet` events"
+    /// is the whole grouping key — two *musically separate* triplet groups that happen to sit
+    /// back-to-back with no non-triplet event between them (e.g. two eighth-note triplets filling
+    /// beats 2 and 3) collapse into a SINGLE 6-long run here, drawing one bracket/`3` spanning
+    /// both instead of two. The corpus authors no `triplet` events at all (see the C15 report),
+    /// so this never manifests on real content; a faithful fix needs a per-group tuplet id on the
+    /// event (which neither the web descriptor nor `EventDescriptor` currently carries), so it is
+    /// left as-is and isolated to this grouping loop rather than guessed at.
     static func tupletShapes(
         events: [EventDescriptor],
         layouts: [Int: EventLayout],

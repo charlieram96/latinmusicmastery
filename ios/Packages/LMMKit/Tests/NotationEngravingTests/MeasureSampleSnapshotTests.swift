@@ -31,6 +31,13 @@ final class MeasureSampleSnapshotTests: XCTestCase {
         try assertMeasure(fixture: conga, scale: largeScale, color: .lightDefault)
     }
 
+    /// C15 carry-forward: the large/dark conga variant was missing (only Small/Dark and
+    /// Large/Light existed), leaving the beamed-eighths percussion measure un-covered at the
+    /// large size in dark ink — recorded here for parity with the other three combinations.
+    func testCongaMeasureLargeDark() throws {
+        try assertMeasure(fixture: conga, scale: largeScale, color: .darkDefault)
+    }
+
     // MARK: Pitched (C-major scale, measure 1)
 
     func testGuitarMeasureSmallLight() throws {

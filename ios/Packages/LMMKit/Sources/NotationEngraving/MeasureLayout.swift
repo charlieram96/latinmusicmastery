@@ -180,20 +180,26 @@ public enum MeasureLayoutEngine {
     ///   - origin: top-left staff anchor — `x` is the staff's left edge, `y` is the **top**
     ///     staff line (matching `StaffGeometry.topLineY`).
     ///   - scale: staff-space → point conversion.
+    ///   - targetWidthSpaces: when non-`nil`, the measure is stretched (or, at minimum,
+    ///     natural-note-area-clamped) to this total width instead of its own content-derived
+    ///     width. `SystemLayout` supplies it so every measure in a wrapped row shares one width
+    ///     (web `w = avail / itemsInRow`) and scroll-mode bars share the widest measure's width
+    ///     (web uniform `measureWidth`). `nil` preserves the pre-C16 single-measure behavior.
     public static func layout(
         events: [EventDescriptor],
         context: MeasureContext,
         origin: CGPoint,
-        scale: ScaleContext
+        scale: ScaleContext,
+        targetWidthSpaces: StaffSpaces? = nil
     ) -> MeasureFrame {
         let metrics = GlyphMetrics.shared
         let measureQN = measureLength(context.timeSignature)
         let plan = widthPlan(
-            eventCount: events.count,
-            measureQN: measureQN,
+            naturalWidthSpaces: naturalWidthSpaces(eventCount: events.count, measureQN: measureQN),
             context: context,
             scale: scale,
-            originX: origin.x
+            originX: origin.x,
+            targetWidthSpaces: targetWidthSpaces
         )
 
         let geometry = StaffGeometry(
@@ -253,18 +259,26 @@ public enum MeasureLayoutEngine {
         max(4.0 * Double(timeSignature.numerator) / Double(timeSignature.denominator), 1e-9)
     }
 
-    private static func widthPlan(
-        eventCount: Int,
-        measureQN: Double,
-        context: MeasureContext,
-        scale: ScaleContext,
-        originX: CGFloat
-    ) -> WidthPlan {
+    /// The measure's own content-derived width (widest of its beat- and note-count floors), in
+    /// staff spaces — the same figure `SystemLayout` maxes across a row/score for uniform bars.
+    static func naturalWidthSpaces(eventCount: Int, measureQN: Double) -> StaffSpaces {
         let count = max(eventCount, 1)
-        let measureWidthSpaces = max(
+        return max(
             measureQN * MeasureLayoutMetrics.quarterNoteWidthSpaces,
             Double(count) * MeasureLayoutMetrics.perNoteMinWidthSpaces
         )
+    }
+
+    private static func widthPlan(
+        naturalWidthSpaces: StaffSpaces,
+        context: MeasureContext,
+        scale: ScaleContext,
+        originX: CGFloat,
+        targetWidthSpaces: StaffSpaces?
+    ) -> WidthPlan {
+        // A caller-supplied target (justification) overrides the content-derived width; the note
+        // area still floors at `minNoteAreaSpaces`, so an over-tight target never collapses notes.
+        let measureWidthSpaces = targetWidthSpaces ?? naturalWidthSpaces
         let leadInSpaces = context.showsHeader
             ? MeasureLayoutMetrics.headerLeadInSpaces
             : MeasureLayoutMetrics.bareLeadInSpaces
