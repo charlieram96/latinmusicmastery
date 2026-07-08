@@ -1,0 +1,10 @@
+{
+  "index": 0,
+  "instrument": "perc-conga",
+  "displayName": "Conga",
+  "tuning": null,
+  "stringMultiplicity": 0,
+  "channel": null,
+  "defaultView": "rhythm-grid",
+  "measures": []
+}
