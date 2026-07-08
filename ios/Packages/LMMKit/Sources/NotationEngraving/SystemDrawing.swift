@@ -11,16 +11,28 @@ import Foundation
 /// glyph-flip reference (both the directly-stroked staff/stem paths and the internally-flipped
 /// glyph draws then shift by the same amount, staying registered). Ink only — no background
 /// fill, so a renderer can composite systems over any backing color.
+///
+/// `column` (default: the whole system band) is the GLOBAL-coordinate rectangle this render
+/// covers — a horizontal sub-strip of the system. It lets a wide scroll strip be rendered as
+/// several fixed-width column tiles (each its own bounded bitmap) instead of one texture-limit-
+/// busting image: the context is translated by the column's origin (so the column lands at local
+/// 0,0) and only the measures overlapping the column's x-range are drawn (the rest are clipped by
+/// the context bounds anyway — the filter is a perf skip, and a measure straddling a column edge
+/// is drawn, partially clipped, in both neighbours so the seam is invisible).
 public func drawSystem(
     _ system: SystemFrame,
     in ctx: CGContext,
     contentHeight: CGFloat,
+    column: CGRect? = nil,
     notationColor: NotationColor = .lightDefault
 ) {
+    let col = column ?? system.frame
     ctx.saveGState()
-    ctx.translateBy(x: 0, y: -system.frame.origin.y)
+    ctx.translateBy(x: -col.origin.x, y: -col.origin.y)
     let size = CGSize(width: system.frame.width, height: contentHeight)
-    for measure in system.measures {
+    let minX = col.minX
+    let maxX = col.maxX
+    for measure in system.measures where measure.originX + measure.width >= minX && measure.originX <= maxX {
         drawMeasureFrame(measure, in: ctx, size: size, notationColor: notationColor)
     }
     ctx.restoreGState()

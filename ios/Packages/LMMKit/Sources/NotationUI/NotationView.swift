@@ -40,6 +40,13 @@ public final class NotationView: UIView {
     private var lastLayoutWidth: CGFloat = 0
     private var reflowWorkItem: DispatchWorkItem?
     private var pinchStartZoom: CGFloat = 1
+    /// The zoom the current tiles were laid out at — the reference for the transient pinch scale
+    /// applied to `contentView` before a re-layout snaps in.
+    private var renderedZoom: CGFloat = 1
+
+    /// A tile's bitmap must stay well under the CGImage/Metal 8192 px per-axis texture limit; we
+    /// cap each column tile at this many device pixels wide, giving ample headroom.
+    private static let maxTilePixelWidth: CGFloat = 4096
 
     /// Ink color for the current trait collection.
     private var notationColor: NotationColor {
@@ -132,6 +139,9 @@ public final class NotationView: UIView {
 
     private func relayout() {
         reflowWorkItem?.cancel()
+        // Any transient pinch scale is superseded by the fresh layout.
+        contentView.layer.transform = CATransform3DIdentity
+        renderedZoom = zoom
         let width = bounds.width
         guard width > 0, !measures.isEmpty, let track, let score else {
             tiles.forEach { $0.removeFromSuperlayer() }
@@ -154,14 +164,46 @@ public final class NotationView: UIView {
         tiles.forEach { $0.removeFromSuperlayer() }
         contentView.frame = CGRect(origin: .zero, size: layout.totalSize)
         scrollView.contentSize = layout.totalSize
-        let displayScale = traitCollection.displayScale > 0 ? traitCollection.displayScale : 2
-        tiles = layout.systems.map { system in
-            let tile = SystemTileLayer(system: system, contentHeight: layout.totalSize.height)
-            tile.frame = system.frame
-            tile.contentsScale = displayScale
-            contentView.layer.addSublayer(tile)
-            return tile
+        let displayScale = currentDisplayScale
+        let maxTilePoints = maxTilePointWidth(displayScale: displayScale)
+        tiles = layout.systems.flatMap { system -> [SystemTileLayer] in
+            columnRects(for: system, maxWidth: maxTilePoints).map { column in
+                let tile = SystemTileLayer(system: system, column: column, contentHeight: layout.totalSize.height)
+                tile.frame = column
+                tile.contentsScale = displayScale
+                contentView.layer.addSublayer(tile)
+                return tile
+            }
         }
+    }
+
+    private var currentDisplayScale: CGFloat {
+        traitCollection.displayScale > 0 ? traitCollection.displayScale : 2
+    }
+
+    /// The maximum tile width in POINTS such that the rendered bitmap stays under the texture
+    /// limit at `displayScale`: `points × scale ≤ maxTilePixelWidth (4096) < 8192`. Also capped at
+    /// ~two screen widths so a tile is never needlessly larger than the visible window. A system
+    /// narrower than this (every wrapped system, a short scroll strip) yields a single tile.
+    private func maxTilePointWidth(displayScale: CGFloat) -> CGFloat {
+        let byTexture = Self.maxTilePixelWidth / max(displayScale, 1)
+        let byScreen = max(bounds.width, 1) * 2
+        return max(min(byTexture, byScreen), 1)
+    }
+
+    /// Split a system's band into fixed-width column tiles (each ≤ `maxWidth` points). Wide scroll
+    /// strips fan out into several; a within-limit system stays a single full-band tile.
+    private func columnRects(for system: SystemFrame, maxWidth: CGFloat) -> [CGRect] {
+        let band = system.frame
+        guard band.width > maxWidth else { return [band] }
+        var rects: [CGRect] = []
+        var cursorX = band.minX
+        while cursorX < band.maxX {
+            let tileWidth = min(maxWidth, band.maxX - cursorX)
+            rects.append(CGRect(x: cursorX, y: band.minY, width: tileWidth, height: band.height))
+            cursorX += maxWidth
+        }
+        return rects
     }
 
     // MARK: Windowing (draw once; release outside visible rect + 1 screen)
@@ -171,12 +213,23 @@ public final class NotationView: UIView {
         Set(tiles.filter { $0.contents != nil }.map(\.system.index))
     }
 
-    /// Re-evaluate which system tiles should be drawn: any intersecting the visible rect expanded
-    /// by one screen height are rendered; the rest release their `contents`.
+    /// All column tiles' global rectangles — the tiling test seam.
+    var tileColumns: [CGRect] { tiles.map(\.column) }
+
+    /// Column rectangles of tiles currently holding drawn `contents` — the windowing test seam.
+    var renderedTileColumns: [CGRect] { tiles.filter { $0.contents != nil }.map(\.column) }
+
+    /// Every tile's bitmap size in device pixels — asserts the texture-limit bound in tests.
+    var tilePixelSizes: [CGSize] { tiles.map { $0.pixelSize(scale: currentDisplayScale) } }
+
+    /// Re-evaluate which column tiles should be drawn: any intersecting the visible rect expanded
+    /// by one screen in BOTH axes is rendered; the rest release their `contents`. The horizontal
+    /// expansion windows the scroll strip's column tiles the same way the vertical one windows
+    /// wrapped systems.
     func updateVisibleSystems() {
         guard !tiles.isEmpty else { return }
         let visible = CGRect(origin: scrollView.contentOffset, size: scrollView.bounds.size)
-        let window = visible.insetBy(dx: 0, dy: -visible.height)
+        let window = visible.insetBy(dx: -visible.width, dy: -visible.height)
         let color = notationColor
         for tile in tiles {
             if tile.frame.intersects(window) {
@@ -195,6 +248,11 @@ public final class NotationView: UIView {
             pinchStartZoom = zoom
         case .changed:
             zoom = clampedZoom(pinchStartZoom * recognizer.scale)
+            // Transient visual feedback: scale the already-drawn tiles relative to the zoom they
+            // were laid out at, so the pinch tracks the fingers immediately; the debounced
+            // `relayout` then snaps in a crisp re-engraved layout at the settled zoom.
+            let ratio = renderedZoom > 0 ? zoom / renderedZoom : 1
+            contentView.layer.transform = CATransform3DMakeScale(ratio, ratio, 1)
             scheduleReflow()
         case .ended, .cancelled, .failed:
             zoom = clampedZoom(pinchStartZoom * recognizer.scale)

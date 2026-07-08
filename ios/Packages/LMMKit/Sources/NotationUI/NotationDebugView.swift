@@ -1,3 +1,4 @@
+#if DEBUG
 import NotationEngraving
 import ScoreModel
 import SwiftUI
@@ -95,7 +96,6 @@ enum NotationDebugSamples {
     }
 }
 
-#if DEBUG
 #Preview("Notation Debug") {
     NavigationStack { NotationDebugView() }
 }
