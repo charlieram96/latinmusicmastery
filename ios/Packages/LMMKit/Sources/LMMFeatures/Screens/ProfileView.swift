@@ -1,6 +1,7 @@
 import LMMData
 import LMMDesignSystem
 import NotationUI
+import PlaySenseUI
 import SwiftUI
 
 /// The Profile tab: identity, a couple of placeholder rows, and sign-out.
@@ -73,19 +74,38 @@ struct ProfileView: View {
     }
 
     #if DEBUG
-    /// Developer-only entry points, compiled out of release builds. Currently the native
-    /// notation preview (C16) so full-score wrapped/scroll rendering can be checked on-device
-    /// without any content wiring.
+    /// Developer-only entry points, compiled out of release builds: the native notation preview (C16)
+    /// and the PlaySense audio-foundation harness (D20). No content wiring needed.
     private var debugRows: some View {
+        VStack(spacing: 0) {
+            debugRow(icon: "music.note.list", title: "Notation Debug") { NotationDebugView() }
+            Divider().overlay(LMMColor.border)
+            debugRow(icon: "waveform", title: "Audio Debug") { PlaySenseAudioDebugView() }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
+                .fill(LMMColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
+                .strokeBorder(LMMColor.border, lineWidth: 1)
+        )
+    }
+
+    private func debugRow<Destination: View>(
+        icon: String,
+        title: String,
+        @ViewBuilder destination: @escaping () -> Destination
+    ) -> some View {
         NavigationLink {
-            NotationDebugView()
+            destination()
         } label: {
             HStack(spacing: LMMSpacing.sm) {
-                Image(systemName: "music.note.list")
+                Image(systemName: icon)
                     .font(.system(size: 16))
                     .foregroundStyle(LMMColor.primary)
                     .frame(width: 24)
-                Text("Notation Debug")
+                Text(title)
                     .font(LMMFont.body)
                     .foregroundStyle(LMMColor.foreground)
                 Spacer()
@@ -96,14 +116,6 @@ struct ProfileView: View {
             .padding(.horizontal, LMMSpacing.md)
             .padding(.vertical, LMMSpacing.sm)
         }
-        .background(
-            RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
-                .fill(LMMColor.surface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
-                .strokeBorder(LMMColor.border, lineWidth: 1)
-        )
     }
     #endif
 
