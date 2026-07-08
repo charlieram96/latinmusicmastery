@@ -204,6 +204,9 @@ public final class NoteField {
         return exerciseEvents[eventIndex % exerciseEvents.count]
     }
 
+    /// Web parity: `NoteField.ts`'s `ensurePoolSize` also grows unboundedly in +12 chunks past its initial
+    /// sizing (never shrinks, never caps) — matched here rather than introducing a bound the web doesn't
+    /// have.
     private func ensurePool(_ size: Int) {
         while pool.count < size {
             let body = SKSpriteNode()

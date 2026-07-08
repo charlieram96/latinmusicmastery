@@ -8,9 +8,15 @@ import XCTest
 /// Frame-budget check for the pooled highway. Sweeps a full synthetic session through
 /// `HighwayScene.update(_:)` (the per-frame CPU work: note selection + pooled-sprite transforms,
 /// effects, receptors, dust) and records the average/max cost per frame. The 120 fps ProMotion
-/// budget is 8.3 ms/frame and the 60 fps floor is 16.6 ms; the pooled design keeps the CPU cost a
-/// small fraction of either, leaving the frame almost entirely to the GPU (which only re-transforms
-/// a few hundred cached-texture sprites — no per-frame tessellation or allocation).
+/// budget is 8.3 ms/frame and the 60 fps floor is 16.6 ms.
+///
+/// SCOPE OF THE CLAIM (D24 fix round 1): what this measures is the `update(_:)` CPU cost only, on
+/// whatever host runs the suite (typically the Simulator on a dev Mac). It says nothing about GPU
+/// render cost, SpriteKit's own culling/batching overhead, or real frame pacing on device — those
+/// remain unverified until D27's on-device pass. Within that scope, "no allocation" applies to the
+/// sprite/texture layer (fully pooled, stamped from baked textures — no per-frame tessellation or
+/// sprite/texture allocation); the pure `NoteFieldModel.frame()` DOES allocate its small output
+/// arrays each frame (see the `NoteFrame` doc comment for why that's accepted).
 final class HighwayPerformanceTests: XCTestCase {
 
     @MainActor

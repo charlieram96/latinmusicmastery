@@ -20,9 +20,10 @@ final class NoteFieldModelTests: XCTestCase {
         XCTAssertEqual(noteY(timeToHit: approach, hitY: hitY, approachSec: approach), 0, accuracy: 1e-9)
         // Half an approach before → halfway down.
         XCTAssertEqual(noteY(timeToHit: approach / 2, hitY: hitY, approachSec: approach), 400, accuracy: 1e-9)
-        // Past the line → below it.
+        // Past the line → below it. Literal (not `800 + 0.5 * (800 / 1.7)`, which just restates the
+        // formula under test) so this is an actual golden value, not a tautology.
         XCTAssertEqual(noteY(timeToHit: -0.5, hitY: hitY, approachSec: approach),
-                       800 + 0.5 * (800 / 1.7), accuracy: 1e-9)
+                       1035.2941176470588, accuracy: 1e-9)
     }
 
     private func expected(_ timestamps: [Double]) -> [ExpectedEvent] {

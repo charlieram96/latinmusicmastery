@@ -18,6 +18,11 @@ public struct StagePlayerView: View {
     @State private var scene: HighwayScene
     @State private var bridge: HighwayBridge?
     @State private var didPresent = false
+    /// Set once a take actually runs (countdown/playing), so the `.ready` re-configure only fires when the
+    /// scene has stale hit/miss state to clear (post-retry) — not on the initial `.idle → .ready`
+    /// transition, where `setUpIfNeeded()` already configured the scene and a second `configure` would be
+    /// redundant work (rebuilding receptors + regenerating the expected timeline back-to-back).
+    @State private var sceneNeedsReconfigure = false
     @State private var comboFlare = false
     @Environment(\.scenePhase) private var scenePhase
 
@@ -71,10 +76,17 @@ public struct StagePlayerView: View {
 
     private func handlePhaseChange(_ phase: SessionPhase) {
         switch phase {
+        case .countdown, .playing:
+            sceneNeedsReconfigure = true
         case .ready:
             // A fresh take (initial or post-retry) — clear the once-per-event visual latch.
             bridge?.reset()
-            scene.configure(exercise: exercise)
+            // Only re-configure when a previous take left stale hit/miss state on the scene; the initial
+            // `.idle → .ready` arrives right after `setUpIfNeeded()`'s configure (see `sceneNeedsReconfigure`).
+            if sceneNeedsReconfigure {
+                sceneNeedsReconfigure = false
+                scene.configure(exercise: exercise)
+            }
         default:
             break
         }

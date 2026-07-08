@@ -31,6 +31,17 @@ public struct VisibleNote: Equatable, Sendable {
 }
 
 /// The per-frame output of ``NoteFieldModel/frame(elapsedSec:hitY:approachSec:)``.
+///
+/// NOTE on allocation: this struct's three arrays are freshly built every call — `frame()` does allocate
+/// per frame. That's distinct from (and shouldn't be confused with) the SpriteKit ``NoteField``'s sprite
+/// layer, which genuinely allocates zero sprites/textures during play (pooled, stamped from baked
+/// textures — see `HighwayPerformanceTests`'s doc comment). A pooled visitor-callback API instead of
+/// returning arrays was considered to eliminate this, but `NoteFrame`'s value semantics are relied on by
+/// callers/tests that keep multiple frames alive at once (e.g. `NoteFieldModelTests` asserts across
+/// several retained `frame()` results) — reusing an internal buffer in place would silently mutate
+/// already-returned frames out from under them. Not worth destabilizing the model API for what's a small,
+/// infrequent (one call per SpriteKit `update(_:)`, i.e. once per display frame, not per note) allocation;
+/// `reserveCapacity` below at least avoids repeated reallocation while a frame's `visible` array grows.
 public struct NoteFrame: Equatable, Sendable {
     public var visible: [VisibleNote] = []
     /// Events auto-missed this frame (passed the line unjudged) — fire onAutoMiss.
@@ -99,6 +110,10 @@ public final class NoteFieldModel {
     public func frame(elapsedSec: Double, hitY: Double, approachSec: Double) -> NoteFrame {
         var out = NoteFrame()
         guard hitY > 0, !expectedEvents.isEmpty else { return out }
+        // Cheap allocation win (no API/semantics change): a handful of notes are visible at once in
+        // practice (the visible window is only ~missLifeSec + approachSec*1.15 wide), so a small reserve
+        // avoids most of the append-driven reallocation without over-allocating for the common case.
+        out.visible.reserveCapacity(8)
 
         let pxPerSec = hitY / approachSec
         let windowStart = elapsedSec - missLifeSec

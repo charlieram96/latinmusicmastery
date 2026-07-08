@@ -8,17 +8,21 @@ import QuartzCore
 /// Each display frame (its own ``DisplayLinkDriver``, so the scene's SpriteKit render loop and the
 /// coordinator's grading loop both stay untouched) the bridge:
 ///   1. pushes the live per-frame inputs (playhead / score / combo / accuracy) onto the scene, and
-///   2. diffs the coordinator's graded-results timeline and fires `triggerHitEffect` / `triggerMiss`
-///      once per newly-graded event, so the note choreography matches the real scoring.
+///   2. diffs the coordinator's graded-results timeline (via ``HighwayResultVisualizer``) and fires
+///      `triggerHitEffect` / `triggerMiss` once per newly-graded event, so the note choreography matches
+///      the real scoring.
 ///
 /// The ≤100 ms HUD throttle means a hit's visual flash lands a beat after the grade; the note is
 /// still at the line then, so it reads correctly and keeps the scorer authoritative.
+///
+/// A tentative miss that `LiveScorer` later corrects to a real hit is deliberately NOT re-visualized —
+/// see ``HighwayResultVisualizer``'s doc comment for the web-parity verification behind that call.
 @MainActor
 final class HighwayBridge {
     let scene: HighwayScene
     private weak var coordinator: SessionCoordinator?
     private var driver: DisplayLinkDriver?
-    private var visualized = Set<Int>()
+    private var visualizer = HighwayResultVisualizer()
 
     init(scene: HighwayScene, coordinator: SessionCoordinator) {
         self.scene = scene
@@ -39,7 +43,7 @@ final class HighwayBridge {
 
     /// Reset the once-per-event visual latch (a fresh take reuses event indices).
     func reset() {
-        visualized.removeAll()
+        visualizer.reset()
     }
 
     private func tick() {
@@ -49,18 +53,20 @@ final class HighwayBridge {
         scene.currentCombo = coordinator.hudCombo
         scene.currentAccuracy = coordinator.hudAccuracy
 
-        for result in coordinator.hudResults where !visualized.contains(result.eventIndex) {
-            visualized.insert(result.eventIndex)
-            let kind = Self.kind(for: result.grade)
+        // `diff` short-circuits to `[]` when `hudResults` hasn't grown/shrunk since the last tick — the
+        // common case — so most frames never touch the (potentially long) results array at all.
+        for (eventIndex, kind) in visualizer.diff(coordinator.hudResults) {
             if kind == .miss {
-                scene.triggerMiss(eventIndex: result.eventIndex)
+                scene.triggerMiss(eventIndex: eventIndex)
             } else {
-                scene.triggerHitEffect(eventIndex: result.eventIndex, grade: kind)
+                scene.triggerHitEffect(eventIndex: eventIndex, grade: kind)
             }
         }
     }
 
-    static func kind(for grade: HitGrade) -> HitGradeKind {
+    /// Pure `HitGrade` → renderer-grade mapping; `nonisolated` so the (also pure)
+    /// ``HighwayResultVisualizer`` can call it outside the main actor.
+    nonisolated static func kind(for grade: HitGrade) -> HitGradeKind {
         switch grade {
         case .perfect: return .perfect
         case .good: return .good

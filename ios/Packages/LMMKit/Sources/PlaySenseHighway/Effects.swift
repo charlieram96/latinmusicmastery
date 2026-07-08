@@ -72,6 +72,10 @@ public final class Effects {
             return p
         }
 
+        // Web parity: `Effects.ts`'s pools are also fixed-size (`makePool<T>(count, make)`), never grown.
+        // When a pool is exhausted, `spawn*`'s `for p in pool where !p.active` loop simply finds nothing
+        // free and drops the extra spawn — both platforms silently drop-on-exhaustion rather than queueing
+        // or growing, since these are cosmetic flourishes sized generously for realistic note density.
         droplets = (0..<64).map { _ in makeParticle(above) }
         chunks = (0..<24).map { _ in makeParticle(above) }
         mists = (0..<12).map { _ in makeParticle(above) }
