@@ -1,0 +1,42 @@
+[
+  {
+    "id": "11111111-1111-4111-8111-111111111101",
+    "user_id": "99999999-9999-4999-8999-999999999999",
+    "class_item_id": "eeeeeeee-0001-4eee-8eee-eeeeeeeeeeee",
+    "completed": true,
+    "completed_at": "2026-01-10T08:00:00+00:00",
+    "last_position_seconds": 100,
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": "11111111-1111-4111-8111-111111111102",
+    "user_id": "99999999-9999-4999-8999-999999999999",
+    "class_item_id": "eeeeeeee-0002-4eee-8eee-eeeeeeeeeeee",
+    "completed": true,
+    "completed_at": "2026-01-10T08:05:00+00:00",
+    "last_position_seconds": null,
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": "11111111-1111-4111-8111-111111111103",
+    "user_id": "99999999-9999-4999-8999-999999999999",
+    "class_item_id": "eeeeeeee-0003-4eee-8eee-eeeeeeeeeeee",
+    "completed": true,
+    "completed_at": "2026-01-11T09:00:00+00:00",
+    "last_position_seconds": 50,
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": "11111111-1111-4111-8111-111111111104",
+    "user_id": "99999999-9999-4999-8999-999999999999",
+    "class_item_id": "eeeeeeee-0004-4eee-8eee-eeeeeeeeeeee",
+    "completed": true,
+    "completed_at": "2026-01-11T09:05:00+00:00",
+    "last_position_seconds": null,
+    "created_at": null,
+    "updated_at": null
+  }
+]

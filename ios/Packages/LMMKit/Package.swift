@@ -70,8 +70,16 @@ let package = Package(
             name: "LMMDataTests",
             dependencies: [
                 "LMMData",
+                "LMMModels",
                 .product(name: "Supabase", package: "supabase-swift"),
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+            ]
+        ),
+        .testTarget(
+            name: "LMMLocalizationTests",
+            dependencies: [
+                "LMMLocalization",
+                "LMMModels"
             ]
         ),
         .testTarget(
