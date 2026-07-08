@@ -15,9 +15,12 @@ final class GlyphMetricsParsingTests: XCTestCase {
         "staffLineThickness": 0.13,
         "stemThickness": 0.12,
         "beamThickness": 0.5,
+        "beamSpacing": 0.25,
         "legerLineThickness": 0.16,
         "legerLineExtension": 0.4,
         "thinBarlineThickness": 0.16,
+        "tupletBracketThickness": 0.16,
+        "tieMidpointThickness": 0.22,
         "textFontFamily": ["Academico", "Edwin", "serif"]
       },
       "glyphBBoxes": {
@@ -53,6 +56,9 @@ final class GlyphMetricsParsingTests: XCTestCase {
         XCTAssertEqual(metrics.engravingDefaults.legerLineThickness, 0.16)
         XCTAssertEqual(metrics.engravingDefaults.legerLineExtension, 0.4)
         XCTAssertEqual(metrics.engravingDefaults.thinBarlineThickness, 0.16)
+        XCTAssertEqual(metrics.engravingDefaults.beamSpacing, 0.25)
+        XCTAssertEqual(metrics.engravingDefaults.tupletBracketThickness, 0.16)
+        XCTAssertEqual(metrics.engravingDefaults.tieMidpointThickness, 0.22)
     }
 
     func testIgnoresNonNumericEngravingDefaultsFields() throws {

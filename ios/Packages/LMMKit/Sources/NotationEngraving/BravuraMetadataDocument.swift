@@ -77,18 +77,24 @@ struct EngravingDefaultsDocument: Decodable {
     let staffLineThickness: Double
     let stemThickness: Double
     let beamThickness: Double
+    let beamSpacing: Double
     let legerLineThickness: Double
     let legerLineExtension: Double
     let thinBarlineThickness: Double
+    let tupletBracketThickness: Double
+    let tieMidpointThickness: Double
 
     var engravingDefaults: EngravingDefaults {
         EngravingDefaults(
             staffLineThickness: staffLineThickness,
             stemThickness: stemThickness,
             beamThickness: beamThickness,
+            beamSpacing: beamSpacing,
             legerLineThickness: legerLineThickness,
             legerLineExtension: legerLineExtension,
-            thinBarlineThickness: thinBarlineThickness
+            thinBarlineThickness: thinBarlineThickness,
+            tupletBracketThickness: tupletBracketThickness,
+            tieMidpointThickness: tieMidpointThickness
         )
     }
 }

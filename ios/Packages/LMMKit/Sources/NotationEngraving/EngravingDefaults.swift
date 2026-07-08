@@ -8,23 +8,36 @@ public struct EngravingDefaults: Equatable {
     public let staffLineThickness: StaffSpaces
     public let stemThickness: StaffSpaces
     public let beamThickness: StaffSpaces
+    /// Vertical gap between the near edges of two stacked beams (primary → secondary), staff
+    /// spaces. SMuFL's `beamSpacing`.
+    public let beamSpacing: StaffSpaces
     public let legerLineThickness: StaffSpaces
     public let legerLineExtension: StaffSpaces
     public let thinBarlineThickness: StaffSpaces
+    /// Thickness of a tuplet bracket, staff spaces. SMuFL's `tupletBracketThickness`.
+    public let tupletBracketThickness: StaffSpaces
+    /// Thickness at the fat middle of a tie/slur, staff spaces. SMuFL's `tieMidpointThickness`.
+    public let tieMidpointThickness: StaffSpaces
 
     public init(
         staffLineThickness: StaffSpaces,
         stemThickness: StaffSpaces,
         beamThickness: StaffSpaces,
+        beamSpacing: StaffSpaces,
         legerLineThickness: StaffSpaces,
         legerLineExtension: StaffSpaces,
-        thinBarlineThickness: StaffSpaces
+        thinBarlineThickness: StaffSpaces,
+        tupletBracketThickness: StaffSpaces,
+        tieMidpointThickness: StaffSpaces
     ) {
         self.staffLineThickness = staffLineThickness
         self.stemThickness = stemThickness
         self.beamThickness = beamThickness
+        self.beamSpacing = beamSpacing
         self.legerLineThickness = legerLineThickness
         self.legerLineExtension = legerLineExtension
         self.thinBarlineThickness = thinBarlineThickness
+        self.tupletBracketThickness = tupletBracketThickness
+        self.tieMidpointThickness = tieMidpointThickness
     }
 }

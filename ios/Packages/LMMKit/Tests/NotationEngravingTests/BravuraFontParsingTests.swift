@@ -29,7 +29,8 @@ final class BravuraFontParsingTests: XCTestCase {
           "fontVersion": 1.392,
           "engravingDefaults": {
             "staffLineThickness": 0.13, "stemThickness": 0.12, "beamThickness": 0.5,
-            "legerLineThickness": 0.16, "legerLineExtension": 0.4, "thinBarlineThickness": 0.16
+            "legerLineThickness": 0.16, "legerLineExtension": 0.4, "thinBarlineThickness": 0.16,
+            "beamSpacing": 0.25, "tupletBracketThickness": 0.16, "tieMidpointThickness": 0.22
           },
           "glyphBBoxes": {
             "noteheadBlack": { "bBoxNE": [1.18, 0.5], "bBoxSW": [0.0, -0.5] },
@@ -57,7 +58,8 @@ final class BravuraFontParsingTests: XCTestCase {
           "fontVersion": 1.392,
           "engravingDefaults": {
             "staffLineThickness": 0.13, "stemThickness": 0.12, "beamThickness": 0.5,
-            "legerLineThickness": 0.16, "legerLineExtension": 0.4, "thinBarlineThickness": 0.16
+            "legerLineThickness": 0.16, "legerLineExtension": 0.4, "thinBarlineThickness": 0.16,
+            "beamSpacing": 0.25, "tupletBracketThickness": 0.16, "tieMidpointThickness": 0.22
           },
           "glyphBBoxes": {
             "noteheadBlack": { "bBoxNE": [1.18, 0.5], "bBoxSW": [0.0, -0.5] },

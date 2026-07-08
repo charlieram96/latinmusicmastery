@@ -40,6 +40,22 @@ public enum DurationCode: String, Equatable, Hashable, Sendable, CaseIterable {
 
     /// True for `w` — the one code with no stem (and, in practice, no flag).
     public var isStemless: Bool { self == .whole }
+
+    /// Number of beams (equivalently, flag hooks) this duration carries: `1` for an eighth,
+    /// `2` for a sixteenth, up to `5` for a 128th; `0` for a quarter or longer (which cannot be
+    /// beamed). This is the beam-level count `BeamGeometry` draws and the "beamable" predicate
+    /// `BeamGrouper` uses (`beamCount >= 1`) — the Swift mirror of VexFlow's
+    /// `getBeamCount()` / `durationToNumber(...) < 8` test.
+    public var beamCount: Int {
+        switch self {
+        case .whole, .half, .quarter: return 0
+        case .eighth: return 1
+        case .sixteenth: return 2
+        case .thirtySecond: return 3
+        case .sixtyFourth: return 4
+        case .oneTwentyEighth: return 5
+        }
+    }
 }
 
 /// One notehead within an event — a single note is one `NoteDescriptor`, a chord is several.
