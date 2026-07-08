@@ -15,6 +15,9 @@ struct LessonVideoPlayerView: View {
     let defaultSubtitle: SubtitleLang?
     var onPersistPosition: (@MainActor (Int) -> Void)?
     var onReachedCompletion: (@MainActor () -> Void)?
+    /// Handed the player model once it's built, so a container (C18 video-synced notation) can
+    /// drive the notation cursor off the very same `AVPlayer` — the player keeps owning the model.
+    var onModelReady: (@MainActor (LessonVideoPlayerModel) -> Void)?
 
     @State private var model: LessonVideoPlayerModel?
     @State private var loadFailed = false
@@ -91,6 +94,7 @@ struct LessonVideoPlayerView: View {
             created.onPersistPosition = onPersistPosition
             created.onReachedCompletion = onReachedCompletion
             model = created
+            onModelReady?(created)
             await created.loadSubtitles(subtitleTracks())
         } catch {
             loadFailed = true

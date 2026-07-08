@@ -150,7 +150,7 @@ struct ClassViewerView: View {
         switch item.itemType {
         case .video:
             if item.videoUrl != nil {
-                LessonVideoPlayerView(
+                VideoNotationBody(
                     item: item,
                     resolver: services.mediaResolver,
                     resumeSeconds: resumePosition(item),

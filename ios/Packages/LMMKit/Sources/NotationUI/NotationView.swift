@@ -11,8 +11,9 @@ import UIKit
 /// re-lays-out at the new scale (debounced); a trait (light/dark) change re-renders the drawn
 /// tiles' ink without re-laying-out; a wrapped-mode width change reflows (debounced).
 ///
-/// No cursor / playhead yet — that (and click-to-seek off `scoreLayout.noteAnchors`) lands in
-/// C18. `setContentOffset(_:animated:)` is exposed now so the future auto-scroll can drive it.
+/// A ``CursorGeometry``-driven playhead (C18) rides above the tiles: `setCursorTime(scoreMs:)`
+/// positions it per video frame (transform/frame-only, no re-render), auto-follow scrolls the
+/// active row/strip into view, and a tap hit-tests `noteAnchors` for tap-to-seek (`onSeekQN`).
 public final class NotationView: UIView {
     // MARK: Zoom bounds (ported from staff-renderer.tsx)
 
@@ -26,20 +27,43 @@ public final class NotationView: UIView {
 
     // MARK: State
 
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    // `scrollView`/`contentView` are module-internal (not `private`) so the C18 cursor extension
+    // in `NotationView+Cursor.swift` can drive the scroll offset and host the playhead layers.
+    let scrollView = UIScrollView()
+    let contentView = UIView()
     private var tiles: [SystemTileLayer] = []
 
     private var score: ScoreDocument?
     private var track: Track?
     private var measures: [MeasureDescriptor] = []
-    private var mode: StaffLayoutMode = .wrapped
-    private var zoom: CGFloat = 1
+    private(set) var mode: StaffLayoutMode = .wrapped
+    private(set) var zoom: CGFloat = 1
 
     private(set) var scoreLayout: ScoreLayout?
     private var lastLayoutWidth: CGFloat = 0
     private var reflowWorkItem: DispatchWorkItem?
     private var pinchStartZoom: CGFloat = 1
+
+    // MARK: Cursor / video-sync state (C18)
+
+    // These back the C18 cursor extension (`NotationView+Cursor.swift`) so they are module-internal
+    // rather than `private`.
+    /// Fraction of the viewport width the playhead anchors at in scroll mode (port of the web's
+    /// `CURSOR_ANCHOR_FRACTION`).
+    static let cursorAnchorFraction: CGFloat = 0.08
+    /// The playhead line + current-measure glow — transform/frame-only updates (no re-render).
+    let cursorLine = CALayer()
+    let measureHighlight = CALayer()
+    var cursorGeometry: CursorGeometry?
+    var cursorScoreMs: Double = 0
+    var cursorIsVisible = false
+    /// Last system the auto-scroll settled on, so a wrapped row jump only fires on change.
+    var lastFollowedSystem = -1
+    var followController = AutoFollowController()
+
+    /// Tap-to-seek callback carrying the tapped position in quarter notes (the driver maps it to
+    /// video time and seeks). Set by the sync layer.
+    public var onSeekQN: ((Double) -> Void)?
     /// The zoom the current tiles were laid out at — the reference for the transient pinch scale
     /// applied to `contentView` before a re-layout snaps in.
     private var renderedZoom: CGFloat = 1
@@ -80,6 +104,12 @@ public final class NotationView: UIView {
         let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
         addGestureRecognizer(pinch)
 
+        // Tap-to-seek: coexists with the scroll pan / pinch (a discrete tap never starts a scroll).
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        scrollView.addGestureRecognizer(tap)
+
+        setUpCursorLayers()
+
         // Ink color follows light/dark — re-render the drawn tiles when the style flips (no
         // relayout, geometry is unchanged). iOS 17 trait-change registration (not the deprecated
         // `traitCollectionDidChange`).
@@ -104,6 +134,9 @@ public final class NotationView: UIView {
             )
         } ?? []
         scrollView.showsHorizontalScrollIndicator = mode == .scroll
+        // A fresh score/section starts following again (nothing carries over from the last one).
+        followController.reset()
+        lastFollowedSystem = -1
         relayout()
     }
 
@@ -147,6 +180,8 @@ public final class NotationView: UIView {
             tiles.forEach { $0.removeFromSuperlayer() }
             tiles = []
             scoreLayout = nil
+            cursorGeometry = nil
+            applyCursor(animated: false)
             return
         }
         lastLayoutWidth = width
@@ -157,6 +192,7 @@ public final class NotationView: UIView {
         )
         scoreLayout = layout
         rebuildTiles(for: layout)
+        rebuildCursorGeometry(for: layout, track: track, score: score)
         updateVisibleSystems()
     }
 
@@ -281,5 +317,10 @@ public final class NotationView: UIView {
 extension NotationView: UIScrollViewDelegate {
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
         updateVisibleSystems()
+    }
+
+    /// A user drag suspends auto-follow; it resumes after ~2 s idle (in `applyCursor`) or on a seek.
+    public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        followController.userInteracted(now: CACurrentMediaTime())
     }
 }

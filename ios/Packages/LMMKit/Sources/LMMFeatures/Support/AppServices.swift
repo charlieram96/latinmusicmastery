@@ -14,6 +14,8 @@ public final class AppServices {
     public let progress: ProgressRepository
     public let entitlements: EntitlementsRepository
     public let quiz: QuizRepository
+    /// Reads score documents + video-synced score sections (C18 notation).
+    public let score: ScoreRepository
     public let cache: ResponseCache
     /// The seam every playback URL passes through before it reaches an `AVPlayer` (v1 is a
     /// passthrough; the signed-URL Edge Function drops in here later).
@@ -24,6 +26,7 @@ public final class AppServices {
         self.progress = repositories.progress
         self.entitlements = repositories.entitlements
         self.quiz = repositories.quiz
+        self.score = repositories.score
         self.cache = repositories.cache
         self.mediaResolver = repositories.mediaResolver
     }
@@ -34,6 +37,7 @@ public final class AppServices {
         progress: ProgressRepository,
         entitlements: EntitlementsRepository,
         quiz: QuizRepository,
+        score: ScoreRepository,
         cache: ResponseCache,
         mediaResolver: MediaURLResolver = PassthroughMediaURLResolver()
     ) {
@@ -41,6 +45,7 @@ public final class AppServices {
         self.progress = progress
         self.entitlements = entitlements
         self.quiz = quiz
+        self.score = score
         self.cache = cache
         self.mediaResolver = mediaResolver
     }
