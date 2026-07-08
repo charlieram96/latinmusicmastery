@@ -107,6 +107,13 @@ let package = Package(
             ]
         ),
         .testTarget(
+            name: "PlaySenseAudioTests",
+            dependencies: [
+                "PlaySenseAudio",
+                "PlaySenseCore"
+            ]
+        ),
+        .testTarget(
             name: "TimeMapKitTests",
             dependencies: [
                 "TimeMapKit",
