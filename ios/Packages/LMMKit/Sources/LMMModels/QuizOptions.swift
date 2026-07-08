@@ -52,6 +52,8 @@ public struct QuizOptions: Codable, Equatable, Sendable {
 
     public let choices: [Choice]?
     public let pairs: [Pair]?
+    /// fill_in_blank's inline sentence, e.g. `"{{x}} and {{y}}"` — paired with `blanks` below.
+    public let text: String?
     public let blanks: [Blank]?
     public let items: [OrderItem]?
     public let parts: [AssemblyPart]?

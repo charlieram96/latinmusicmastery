@@ -5,29 +5,6 @@ import LMMLocalization
 import LMMModels
 import SwiftUI
 
-/// QUIZ item placeholder (the runner is Task B7). Shows the question count from `QuizRepository`.
-struct QuizPlaceholderCard: View {
-    let itemId: UUID
-    @Environment(AppServices.self) private var services
-    @State private var questionCount: Int?
-
-    var body: some View {
-        InfoCard(systemImage: "checklist", iconColor: LMMColor.primary, title: lmmString("viewer.quiz.title")) {
-            VStack(alignment: .leading, spacing: LMMSpacing.xs) {
-                Text(lmmString("viewer.quiz.comingSoon"))
-                    .font(LMMFont.callout)
-                    .foregroundStyle(LMMColor.mutedForeground)
-                if let questionCount, questionCount > 0 {
-                    Badge(.style(lmmFormat("viewer.quiz.questionCount", questionCount)))
-                }
-            }
-        }
-        .task {
-            questionCount = try? await services.quiz.questions(classItemId: itemId).count
-        }
-    }
-}
-
 /// EXERCISE / JAM_SESSION fallback (web's non-PlaySense branch): description, bpm/key badges, an
 /// audio player when `audio_url` is present, and a "coming soon" note when a score is attached.
 struct ExerciseJamFallbackCard: View {

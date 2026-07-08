@@ -172,7 +172,8 @@ struct ClassViewerView: View {
                 videoUnavailable
             }
         case .quiz:
-            QuizPlaceholderCard(itemId: item.id)
+            QuizRunnerView(itemId: item.id)
+                .id(item.id)
         case .exercise, .jamSession:
             ExerciseJamFallbackCard(item: item, resolver: services.mediaResolver)
         case .unknown:
