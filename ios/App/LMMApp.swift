@@ -30,6 +30,8 @@ struct AppConfig {
 struct LMMApp: App {
     @State private var supabaseService: SupabaseService
     @State private var authService: AuthService
+    @State private var appServices: AppServices
+    @State private var entitlements: EntitlementsStore
 
     init() {
         let config = AppConfig.loadFromInfoPlist()
@@ -37,8 +39,11 @@ struct LMMApp: App {
             supabaseURL: config.supabaseURL,
             supabaseAnonKey: config.supabaseAnonKey
         )
+        let repositories = supabaseService.makeLiveRepositories()
         _supabaseService = State(initialValue: supabaseService)
         _authService = State(initialValue: AuthService(client: supabaseService.client))
+        _appServices = State(initialValue: AppServices(repositories))
+        _entitlements = State(initialValue: EntitlementsStore(repository: repositories.entitlements))
     }
 
     var body: some Scene {
@@ -46,6 +51,8 @@ struct LMMApp: App {
             RootView()
                 .environment(authService)
                 .environment(supabaseService)
+                .environment(appServices)
+                .environment(entitlements)
                 .onOpenURL { url in
                     authService.handle(url: url)
                 }

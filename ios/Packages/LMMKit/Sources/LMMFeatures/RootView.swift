@@ -5,17 +5,28 @@ import SwiftUI
 /// lives in the pure, testable `RootRoute.route(for:)`.
 public struct RootView: View {
     @Environment(AuthService.self) private var authService
+    @Environment(AppServices.self) private var services
+    @Environment(EntitlementsStore.self) private var entitlements
 
     public init() {}
 
     public var body: some View {
-        switch RootRoute.route(for: authService.state) {
-        case .splash:
-            SplashView()
-        case .authLanding:
-            AuthLandingView()
-        case .main:
-            MainPlaceholderView()
+        Group {
+            switch RootRoute.route(for: authService.state) {
+            case .splash:
+                SplashView()
+            case .authLanding:
+                AuthLandingView()
+            case .main:
+                MainTabView()
+            }
+        }
+        .onChange(of: authService.state) { _, newState in
+            if newState == .signedOut {
+                // A different account must not inherit this session's access or cached data.
+                entitlements.clear()
+                Task { await services.cache.clearOnSignOut() }
+            }
         }
     }
 }

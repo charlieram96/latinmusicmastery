@@ -29,7 +29,11 @@ let package = Package(
                 .product(name: "Supabase", package: "supabase-swift")
             ]
         ),
-        .target(name: "LMMDesignSystem", dependencies: []),
+        .target(
+            name: "LMMDesignSystem",
+            dependencies: [],
+            resources: [.process("Resources")]
+        ),
 
         // MARK: - Notation
 
@@ -53,7 +57,8 @@ let package = Package(
 
         .target(
             name: "LMMFeatures",
-            dependencies: ["LMMData", "LMMDesignSystem", "NotationUI", "PlaySenseUI", "LMMLocalization"]
+            dependencies: ["LMMData", "LMMDesignSystem", "NotationUI", "PlaySenseUI", "LMMLocalization"],
+            resources: [.process("Resources")]
         ),
         .target(name: "LMMTestSupport", dependencies: ["LMMModels"]),
 
@@ -87,6 +92,13 @@ let package = Package(
             dependencies: [
                 "LMMFeatures",
                 "LMMData"
+            ]
+        ),
+        .testTarget(
+            name: "LMMDesignSystemTests",
+            dependencies: [
+                "LMMDesignSystem",
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ]
         )
     ]
