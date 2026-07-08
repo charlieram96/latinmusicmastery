@@ -15,18 +15,16 @@ struct StageResultsView: View {
     var body: some View {
         VStack {
             Spacer(minLength: LMMSpacing.xl)
-            ScrollView {
-                VStack(alignment: .leading, spacing: LMMSpacing.lg) {
-                    header
-                    statGrid
-                    perEventStrip
-                    HStack(spacing: LMMSpacing.sm) {
-                        Button("Exit", action: onExit).buttonStyle(.lmmSecondary)
-                        Button("Retry", action: onRetry).buttonStyle(.lmmPrimary)
-                    }
+            VStack(alignment: .leading, spacing: LMMSpacing.lg) {
+                header
+                statGrid
+                perEventStrip
+                HStack(spacing: LMMSpacing.sm) {
+                    Button("Exit", action: onExit).buttonStyle(.lmmSecondary)
+                    Button("Retry", action: onRetry).buttonStyle(.lmmPrimary)
                 }
-                .padding(LMMSpacing.lg)
             }
+            .padding(LMMSpacing.lg)
             .background(
                 RoundedRectangle(cornerRadius: LMMRadius.xl, style: .continuous)
                     .fill(LMMColor.surface)
@@ -91,13 +89,13 @@ struct StageResultsView: View {
         VStack(alignment: .leading, spacing: LMMSpacing.xs) {
             Text("PER-EVENT")
                 .font(.system(size: 10, weight: .semibold)).tracking(2).foregroundStyle(LMMColor.mutedForeground)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 3) {
-                    ForEach(results, id: \.eventIndex) { result in
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(color(for: result.grade))
-                            .frame(width: 7, height: 22)
-                    }
+            // Capped to a card-width run of bars (mirrors DebugStageView's strip).
+            HStack(spacing: 3) {
+                ForEach(results.prefix(32), id: \.eventIndex) { result in
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(color(for: result.grade))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 22)
                 }
             }
         }

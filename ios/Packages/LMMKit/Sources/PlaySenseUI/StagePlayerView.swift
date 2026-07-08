@@ -171,78 +171,14 @@ public struct StagePlayerView: View {
     // MARK: - Playing chrome
 
     private var playingOverlay: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .top) {
-                hudStat(label: "SCORE", value: String(format: "%.0f", coordinator.hudScore))
-                Spacer()
-                comboBadge
-                Spacer()
-                hudStat(label: "ACC", value: String(format: "%.0f%%", coordinator.hudAccuracy))
-            }
-            .padding(.horizontal, LMMSpacing.lg)
-            .padding(.top, LMMSpacing.sm)
-
-            gradeCallout
-
-            Spacer()
-
-            HStack {
-                Spacer()
-                Button {
-                    coordinator.stopSession()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.85))
-                        .frame(width: 40, height: 40)
-                        .background(Circle().fill(.black.opacity(0.4)))
-                }
-                .padding(LMMSpacing.md)
-            }
-        }
-    }
-
-    private func hudStat(label: String, value: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.system(size: 26, weight: .light, design: .rounded)).foregroundStyle(.white)
-                .monospacedDigit()
-            Text(label)
-                .font(.system(size: 9, weight: .semibold)).tracking(2).foregroundStyle(.white.opacity(0.5))
-        }
-    }
-
-    @ViewBuilder
-    private var comboBadge: some View {
-        if coordinator.hudCombo > 1 {
-            Text("×\(coordinator.hudCombo)")
-                .font(.system(size: 30, weight: .heavy, design: .rounded))
-                .foregroundStyle(LMMColor.primary)
-                .scaleEffect(comboFlare ? 1.25 : 1)
-                .shadow(color: LMMColor.primary.opacity(comboFlare ? 0.8 : 0.3), radius: comboFlare ? 16 : 6)
-        }
-    }
-
-    @ViewBuilder
-    private var gradeCallout: some View {
-        if let grade = coordinator.hudLastGrade {
-            Text(grade.uppercased())
-                .font(.system(size: 22, weight: .black, design: .rounded)).tracking(3)
-                .foregroundStyle(gradeColor(grade))
-                .padding(.top, LMMSpacing.md)
-                .id(grade + String(format: "%.1f", coordinator.hudScore))
-                .transition(.scale.combined(with: .opacity))
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: coordinator.hudLastGrade)
-        }
-    }
-
-    private func gradeColor(_ grade: String) -> Color {
-        switch grade {
-        case "perfect": return LMMColor.success
-        case "good": return LMMColor.gold
-        case "ok": return LMMColor.terracotta
-        default: return LMMColor.destructive
-        }
+        StagePlayingChrome(
+            score: coordinator.hudScore,
+            combo: coordinator.hudCombo,
+            accuracy: coordinator.hudAccuracy,
+            lastGrade: coordinator.hudLastGrade,
+            comboFlare: comboFlare,
+            onQuit: { coordinator.stopSession() }
+        )
     }
 
     // MARK: - Message overlays
@@ -292,9 +228,91 @@ extension StagePlayerView {
     }()
 }
 
+// MARK: - Playing chrome
+
+/// The in-play HUD overlay (score / combo / accuracy, grade callout, quit) — a standalone view over
+/// the highway so it can be driven from plain values (the live stage, and the screenshot harness).
+struct StagePlayingChrome: View {
+    let score: Double
+    let combo: Int
+    let accuracy: Double
+    let lastGrade: String?
+    let comboFlare: Bool
+    let onQuit: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .top) {
+                stat(label: "SCORE", value: String(format: "%.0f", score))
+                Spacer()
+                comboBadge
+                Spacer()
+                stat(label: "ACC", value: String(format: "%.0f%%", accuracy))
+            }
+            .padding(.horizontal, LMMSpacing.lg)
+            .padding(.top, LMMSpacing.sm)
+
+            gradeCallout
+            Spacer()
+
+            HStack {
+                Spacer()
+                Button(action: onQuit) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .frame(width: 40, height: 40)
+                        .background(Circle().fill(.black.opacity(0.4)))
+                }
+                .padding(LMMSpacing.md)
+            }
+        }
+    }
+
+    private func stat(label: String, value: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.system(size: 26, weight: .light, design: .rounded)).foregroundStyle(.white)
+                .monospacedDigit()
+            Text(label)
+                .font(.system(size: 9, weight: .semibold)).tracking(2).foregroundStyle(.white.opacity(0.5))
+        }
+    }
+
+    @ViewBuilder
+    private var comboBadge: some View {
+        if combo > 1 {
+            Text("×\(combo)")
+                .font(.system(size: 30, weight: .heavy, design: .rounded))
+                .foregroundStyle(LMMColor.primary)
+                .scaleEffect(comboFlare ? 1.25 : 1)
+                .shadow(color: LMMColor.primary.opacity(comboFlare ? 0.8 : 0.3), radius: comboFlare ? 16 : 6)
+        }
+    }
+
+    @ViewBuilder
+    private var gradeCallout: some View {
+        if let grade = lastGrade {
+            Text(grade.uppercased())
+                .font(.system(size: 22, weight: .black, design: .rounded)).tracking(3)
+                .foregroundStyle(Self.gradeColor(grade))
+                .padding(.top, LMMSpacing.md)
+        }
+    }
+
+    static func gradeColor(_ grade: String) -> Color {
+        switch grade {
+        case "perfect": return LMMColor.success
+        case "good": return LMMColor.gold
+        case "ok": return LMMColor.terracotta
+        default: return LMMColor.destructive
+        }
+    }
+}
+
 // MARK: - Countdown overlay
 
-private struct CountdownOverlay: View {
+struct CountdownOverlay: View {
     let beat: Int
     let onCancel: () -> Void
     @State private var pulse = false

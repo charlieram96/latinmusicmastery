@@ -124,7 +124,9 @@ let package = Package(
             name: "PlaySenseUITests",
             dependencies: [
                 "PlaySenseUI",
-                "PlaySenseCore"
+                "PlaySenseCore",
+                "PlaySenseHighway",
+                "ScoreModel"
             ]
         ),
         .testTarget(
