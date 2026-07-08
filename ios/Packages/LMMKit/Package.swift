@@ -41,7 +41,15 @@ let package = Package(
 
         .target(name: "ScoreModel", dependencies: []),
         .target(name: "TimeMapKit", dependencies: ["ScoreModel"]),
-        .target(name: "NotationEngraving", dependencies: ["ScoreModel"]),
+        .target(
+            name: "NotationEngraving",
+            dependencies: ["ScoreModel"],
+            resources: [
+                .copy("Resources/Bravura.otf"),
+                .copy("Resources/bravura_metadata.json"),
+                .copy("Resources/OFL.txt")
+            ]
+        ),
         .target(name: "NotationUI", dependencies: ["NotationEngraving", "TimeMapKit"]),
 
         // MARK: - PlaySense
@@ -96,6 +104,13 @@ let package = Package(
             dependencies: [
                 "TimeMapKit",
                 "ScoreModel"
+            ]
+        ),
+        .testTarget(
+            name: "NotationEngravingTests",
+            dependencies: [
+                "NotationEngraving",
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ]
         ),
         .testTarget(
