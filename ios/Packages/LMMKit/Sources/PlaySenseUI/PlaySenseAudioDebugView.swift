@@ -2,6 +2,7 @@
 import AVFoundation
 import Combine
 import LMMDesignSystem
+import os
 import PlaySenseAudio
 import PlaySenseCore
 import SwiftUI
@@ -9,25 +10,43 @@ import SwiftUI
 /// Observes the mic-tap `OnsetDetector` output for the debug screen: a throttled input level (≈15 fps)
 /// for a meter, plus the most recent onset. `ingest(_:)` is called from the drain queue and hops to the
 /// main actor.
+///
+/// D22 carry-forward: `.level` messages arrive at render-block rate (~375/s at 48 kHz / 128-sample
+/// blocks) — throttling happens HERE, in the `nonisolated` drain-queue context, BEFORE scheduling a
+/// `Task` hop to the main actor, rather than hopping unconditionally and throttling on arrival. The old
+/// order scheduled hundreds of Task allocations per second that would immediately no-op; this order
+/// only ever hops for the ~15/s of level updates (plus onsets/chords) that actually apply.
 @MainActor
 final class PlaySenseInputMonitor: ObservableObject {
     @Published var level: Double = 0
     @Published var lastOnset: String = "—"
     @Published var onsetCount = 0
-    private var lastLevelUpdate = Date.distantPast
+
+    /// Guards the throttle timestamp from the `nonisolated` drain-queue context. A plain `Date` var
+    /// would be a data race under strict concurrency (read/written off the main actor); the lock keeps
+    /// the check-and-set atomic without needing a main-actor round trip just to decide whether to hop.
+    private let levelThrottle = OSAllocatedUnfairLock(initialState: Date.distantPast)
+    private let levelInterval: TimeInterval = 1.0 / 15.0
 
     nonisolated func ingest(_ message: OnsetDetectorMessage) {
+        if case let .level(value) = message {
+            let shouldApply = levelThrottle.withLock { last -> Bool in
+                let now = Date()
+                guard now.timeIntervalSince(last) >= levelInterval else { return false }
+                last = now
+                return true
+            }
+            guard shouldApply else { return }
+            Task { @MainActor in self.level = value }
+            return
+        }
         Task { @MainActor in self.apply(message) }
     }
 
     private func apply(_ message: OnsetDetectorMessage) {
         switch message {
-        case let .level(value):
-            let now = Date()
-            if now.timeIntervalSince(lastLevelUpdate) >= 1.0 / 15.0 {
-                level = value
-                lastLevelUpdate = now
-            }
+        case .level:
+            break // handled in `ingest` before the hop (see above)
         case let .onset(timestamp, energy, fluxConfirmed, frequency):
             onsetCount += 1
             let freqText = frequency.map { String(format: "%.1f Hz", $0) } ?? "—"

@@ -46,6 +46,7 @@ int psr_ring_push(psr_ring *ring, const float *src, uint32_t frames, uint64_t ho
         atomic_fetch_add_explicit(&ring->dropCount, 1, memory_order_relaxed);
         return 0; /* full — drop rather than block the audio thread */
     }
+    /* Silently truncates if frames > slotFrames — see the header's psr_ring_push doc. */
     uint32_t n = frames < ring->slotFrames ? frames : ring->slotFrames;
     memcpy(ring->samples + (size_t)w * ring->slotFrames, src, (size_t)n * sizeof(float));
     ring->frameCounts[w] = n;

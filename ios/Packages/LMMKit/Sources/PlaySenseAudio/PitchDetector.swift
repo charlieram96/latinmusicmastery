@@ -24,6 +24,14 @@ public final class PitchDetector {
     private let maxBufferSize: Int
     private var sampleRate: Double
     private var prefixSq: [Double]
+    /// Divergence (D22 carry-forward, documented not matched): the reference stores its normalized
+    /// correlation curve in a `Float32Array` (`autoCorrelate`'s `correlations`), so every lag's value is
+    /// quantized to `Float` precision before the peak search, octave check, and parabolic interpolation
+    /// read it back. This port keeps `correlations` in full `Double` precision throughout. The residual
+    /// (~1e-7 relative, i.e. `Float` ULP) is far below the confidence threshold's and octave ratio's
+    /// granularity and never flipped the peak/octave decision across the D21 goldens (which include an
+    /// octave-down latch case), so matching the `Float32` truncation was judged not worth the extra
+    /// quantize/dequantize step on this hot loop — see the D22 report for the parity discussion.
     private var correlations: [Double]
     private var floatToDoubleScratch: [Double]
 

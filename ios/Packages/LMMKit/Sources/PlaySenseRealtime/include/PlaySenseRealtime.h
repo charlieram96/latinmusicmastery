@@ -34,7 +34,13 @@ psr_ring *psr_ring_create(uint32_t capacity, uint32_t slotFrames);
 void psr_ring_destroy(psr_ring *ring);
 
 /* Producer (realtime tap thread). Copies min(frames, slotFrames) samples + hostTime into the next
- * slot. Returns 1 on success, 0 if the ring was full (buffer dropped, dropCount incremented). */
+ * slot. Returns 1 on success, 0 if the ring was full (buffer dropped, dropCount incremented).
+ *
+ * IMPORTANT: if frames > slotFrames, this SILENTLY TRUNCATES to slotFrames — the extra samples at the
+ * tail of `src` are dropped with no signal to the caller (no return-code distinction from the
+ * full-ring case). This is safe today because the tap buffer size is always configured well under
+ * slotFrames (see AudioSampleRing.push's debug-only assert in Swift, which guards this at the call
+ * site), but it is a silent-data-loss footgun for any future caller that changes that relationship. */
 int psr_ring_push(psr_ring *ring, const float *src, uint32_t frames, uint64_t hostTime);
 
 /* Consumer (drain thread). If a slot is available, copies its samples into `dst` (must hold at least

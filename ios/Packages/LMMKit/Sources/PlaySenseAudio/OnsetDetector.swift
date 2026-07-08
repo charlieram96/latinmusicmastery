@@ -101,17 +101,7 @@ public final class OnsetDetector {
         self.config = config
         self.sampleRate = sampleRate
 
-        // Band-pass coefficients (RBJ band-pass, constant per config — computed once here rather than
-        // per-sample as the worklet does; identical values, cheaper).
-        let f0 = (config.bandPassLow * config.bandPassHigh).squareRoot()
-        let bw = config.bandPassHigh - config.bandPassLow
-        let omega = 2 * Double.pi * f0 / sampleRate
-        let sinW = sin(omega)
-        let cosW = cos(omega)
-        let alpha = sinW * sinh((0.6931471805599453 / 2) * (bw / f0) * (omega / sinW))
-        let b0 = alpha, b2 = -alpha
-        let a0 = 1 + alpha, a1 = -2 * cosW, a2 = 1 - alpha
-        b0n = b0 / a0; b2n = b2 / a0; a1n = a1 / a0; a2n = a2 / a0
+        recomputeBandPassCoefficients()
         bpX1 = 0; bpX2 = 0; bpY1 = 0; bpY2 = 0
 
         let frameSize = config.frameSize
@@ -146,6 +136,105 @@ public final class OnsetDetector {
         pendingChromas.removeAll(keepingCapacity: true)
         pendingChromas.reserveCapacity(64)
     }
+
+    // MARK: - Update config (PARTIAL reset; mirrors the worklet's `{type:'config'}` message handler)
+
+    /// Apply a patch to the live config — the D22 carry-forward port of the worklet's
+    /// `port.onmessage`/`case 'config'` handler:
+    /// ```js
+    /// Object.assign(this.config, e.data.config)
+    /// this.inputBuffer = new Float32Array(this.config.frameSize)
+    /// this.bufferIndex = 0
+    /// this.energyHistory = []
+    /// this.fluxHistory = []
+    /// this.prevMagnitudes = null
+    /// ```
+    /// That handler does NOT touch `envelope`, `lastOnsetTime`, the band-pass `bpState` (only ITS
+    /// coefficients depend on config and are recomputed — the worklet recomputes them from `this.config`
+    /// on every sample, so a config change is "live" there without any explicit reset), the raw pitch
+    /// ring buffer, or `pendingChromas`. This method reproduces exactly that split, unlike
+    /// ``configure(config:sampleRate:)`` (construct-time only — a FULL reset, including the band-pass
+    /// memory, envelope, and onset refractory clock).
+    ///
+    /// Use this for a live profile/instrument switch mid-session (e.g. re-tuning during calibration or a
+    /// noisy-room toggle) where an in-flight onset train and any pending post-onset chroma should survive
+    /// the change; use `configure` only when (re)starting a take from scratch.
+    public func updateConfig(_ patch: OnsetConfigPatch) {
+        config = patch.applied(to: config)
+
+        // Coefficients depend on config and are recomputed; the x1/x2/y1/y2 filter MEMORY survives
+        // (matches the worklet recomputing `bandPassSample`'s coefficients from `this.config` every call
+        // while never resetting `this.bpState`).
+        recomputeBandPassCoefficients()
+
+        // `this.inputBuffer = new Float32Array(this.config.frameSize); this.bufferIndex = 0`.
+        let frameSize = config.frameSize
+        inputBuffer = [Float](repeating: 0, count: frameSize)
+        bufferIndex = 0
+
+        // Envelope-follower coefficients depend on frameSize/ms constants — recomputed; `envelope`
+        // itself (the running value) is NOT reset, matching the worklet (never touched by the handler).
+        attackCoeff = 1 - exp(-Double(frameSize) / ((config.envelopeAttackMs / 1000) * sampleRate))
+        releaseCoeff = 1 - exp(-Double(frameSize) / ((config.envelopeReleaseMs / 1000) * sampleRate))
+
+        // `this.energyHistory = []; this.fluxHistory = []` — cleared, resized to the (possibly changed)
+        // adaptive-median window.
+        let cap = config.adaptiveMedianFrames
+        energyHistory = [Double](repeating: 0, count: cap)
+        energyCount = 0; energyHead = 0
+        fluxHistory = [Double](repeating: 0, count: cap)
+        fluxCount = 0; fluxHead = 0
+        medianScratch = [Double](repeating: 0, count: cap)
+
+        // `this.prevMagnitudes = null` — cleared (not merely resized); resize the FFT scratch to the
+        // (possibly changed) fftSize.
+        let fftMax = max(config.fftSize, 4096)
+        if fftReal.count < fftMax {
+            fftReal = [Float](repeating: 0, count: fftMax)
+            fftImag = [Float](repeating: 0, count: fftMax)
+        }
+        magnitudes = [Float](repeating: 0, count: config.fftSize / 2)
+        prevMagnitudes = [Float](repeating: 0, count: config.fftSize / 2)
+        hasPrevMagnitudes = false
+
+        // NOT reset (mirrors the worklet exactly): envelope, lastOnsetTime, bpX1/X2/Y1/Y2, the raw pitch
+        // ring buffer (pitchBuffer/pitchWritePos/pitchSnapshot*), pendingChromas.
+    }
+
+    /// RBJ band-pass coefficients (constant per config) — factored out so both the full `configure`
+    /// reset and the partial `updateConfig` patch recompute them identically without duplicating the
+    /// derivation.
+    private func recomputeBandPassCoefficients() {
+        let f0 = (config.bandPassLow * config.bandPassHigh).squareRoot()
+        let bw = config.bandPassHigh - config.bandPassLow
+        let omega = 2 * Double.pi * f0 / sampleRate
+        let sinW = sin(omega)
+        let cosW = cos(omega)
+        let alpha = sinW * sinh((0.6931471805599453 / 2) * (bw / f0) * (omega / sinW))
+        let b0 = alpha, b2 = -alpha
+        let a0 = 1 + alpha, a1 = -2 * cosW, a2 = 1 - alpha
+        b0n = b0 / a0; b2n = b2 / a0; a1n = a1 / a0; a2n = a2 / a0
+    }
+
+    // MARK: - Test hooks (internal; read via `@testable import` in PlaySenseAudioTests)
+
+    /// The updateConfig partial-reset matrix needs to observe internal state that has no other public
+    /// surface. These are intentionally NOT `public` — they exist only for
+    /// `OnsetDetectorUpdateConfigTests`.
+    var debugEnvelope: Double { envelope }
+    var debugLastOnsetTime: Double { lastOnsetTime }
+    // Four scalars rather than one tuple (large_tuple caps tuples at 2 members).
+    var debugBandPassX1: Double { bpX1 }
+    var debugBandPassX2: Double { bpX2 }
+    var debugBandPassY1: Double { bpY1 }
+    var debugBandPassY2: Double { bpY2 }
+    var debugPitchWritePos: Int { pitchWritePos }
+    var debugPendingChromaCount: Int { pendingChromas.count }
+    var debugEnergyHistoryCount: Int { energyCount }
+    var debugFluxHistoryCount: Int { fluxCount }
+    var debugHasPrevMagnitudes: Bool { hasPrevMagnitudes }
+    var debugInputBufferSize: Int { inputBuffer.count }
+    var debugBufferIndex: Int { bufferIndex }
 
     // MARK: - Process one render block
 

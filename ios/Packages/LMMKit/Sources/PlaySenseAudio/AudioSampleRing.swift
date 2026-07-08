@@ -17,9 +17,16 @@ final class AudioSampleRing {
     deinit { psr_ring_destroy(ring) }
 
     /// Producer side (realtime tap thread). Returns false if the ring was full (buffer dropped).
+    ///
+    /// `psr_ring_push` SILENTLY TRUNCATES to `slotFrames` if `frames` exceeds it (see the C header) —
+    /// this assert (debug-only, compiled out of release, so it costs nothing on the audio thread in
+    /// production) catches a misconfigured tap buffer size in development rather than silently losing
+    /// samples on device.
     @discardableResult
     func push(_ src: UnsafePointer<Float>, frames: Int, hostTime: UInt64) -> Bool {
-        psr_ring_push(ring, src, UInt32(frames), hostTime) == 1
+        assert(frames <= slotFrames,
+               "AudioSampleRing.push: frames (\(frames)) exceeds slotFrames (\(slotFrames)) — would truncate")
+        return psr_ring_push(ring, src, UInt32(frames), hostTime) == 1
     }
 
     /// Consumer side (drain thread). Copies the next slot into `dst` (must hold ≥ `slotFrames` floats);
