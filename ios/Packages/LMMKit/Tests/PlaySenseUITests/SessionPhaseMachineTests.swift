@@ -51,6 +51,49 @@ final class SessionPhaseMachineTests: XCTestCase {
         XCTAssertEqual(machine.phase, .ready)
     }
 
+    // MARK: - D25: PlaySense BLE device-connect flow
+
+    func testPlaysenseModeRoutesThroughConnectingDeviceInsteadOfStraightToCalibrationCheck() {
+        var machine = SessionPhaseMachine()
+        machine.beginModeSelect()
+        machine.beginDeviceConnect()
+        XCTAssertEqual(machine.phase, .connectingDevice)
+
+        machine.deviceConnected(hasCalibrationRecord: false)
+        XCTAssertEqual(machine.phase, .calibrationCheck(hasRecord: false))
+
+        machine.calibrationResolved()
+        XCTAssertEqual(machine.phase, .ready)
+    }
+
+    func testDeviceConnectFailedReturnsToModeSelect() {
+        var machine = SessionPhaseMachine()
+        machine.beginModeSelect()
+        machine.beginDeviceConnect()
+        machine.deviceConnectFailed()
+        XCTAssertEqual(machine.phase, .modeSelect)
+    }
+
+    func testBeginDeviceConnectIgnoredOutsideModeSelect() {
+        var machine = SessionPhaseMachine() // still .idle
+        machine.beginDeviceConnect()
+        XCTAssertEqual(machine.phase, .idle, "only reachable from .modeSelect")
+    }
+
+    func testDeviceConnectedIgnoredOutsideConnectingDevice() {
+        var machine = readyMachine() // already .ready
+        machine.deviceConnected(hasCalibrationRecord: true)
+        XCTAssertEqual(machine.phase, .ready)
+    }
+
+    func testBleDisconnectedInterruptsAnActiveTakeLikeAnyOtherDisruption() {
+        var machine = readyMachine()
+        machine.requestStart(isBluetoothOutput: false)
+        machine.beginPlaying()
+        machine.interrupt(.bleDisconnected)
+        XCTAssertEqual(machine.phase, .interrupted(.bleDisconnected))
+    }
+
     // MARK: - Interruption from each active phase
 
     func testInterruptFromCountdown() {

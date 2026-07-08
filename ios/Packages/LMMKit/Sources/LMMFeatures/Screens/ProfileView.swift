@@ -75,8 +75,10 @@ struct ProfileView: View {
 
     #if DEBUG
     /// Developer-only entry points, compiled out of release builds: the native notation preview (C16),
-    /// the PlaySense audio-foundation harness (D20), and the latency-calibration wizard (D22). No
-    /// content wiring needed.
+    /// the PlaySense audio-foundation harness (D20), the latency-calibration wizard (D22), and the D25
+    /// PlaySense BLE demos (mode select, device picker, and a full synthetic-BLE graded session — real
+    /// CoreBluetooth has no radio on the Simulator, see `PlaySenseDeviceManager`'s module doc). No content
+    /// wiring needed.
     private var debugRows: some View {
         VStack(spacing: 0) {
             debugRow(icon: "music.note.list", title: "Notation Debug") { NotationDebugView() }
@@ -88,6 +90,18 @@ struct ProfileView: View {
             debugRow(icon: "gamecontroller", title: "PlaySense Stage") { StagePlayerView() }
             Divider().overlay(LMMColor.border)
             debugRow(icon: "number", title: "PlaySense Stage (numbers)") { DebugStageView() }
+            Divider().overlay(LMMColor.border)
+            debugRow(icon: "dot.radiowaves.left.and.right", title: "PlaySense BLE (mode select)") {
+                StagePlayerView(startMode: nil)
+            }
+            Divider().overlay(LMMColor.border)
+            debugRow(icon: "list.bullet", title: "PlaySense BLE (device picker)") {
+                StagePlayerView(startMode: nil, debugForceMultipleDevices: true)
+            }
+            Divider().overlay(LMMColor.border)
+            debugRow(icon: "waveform.badge.mic", title: "PlaySense BLE (synthetic session)") {
+                StagePlayerView(startMode: .playsense, debugForceSyntheticBLE: true)
+            }
         }
         .background(
             RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)

@@ -17,6 +17,11 @@ public enum SessionInterruption: Equatable, Sendable {
     case audioInterruption
     case routeChanged
     case backgrounded
+    /// D25: the PlaySense BLE device disconnected mid-take and the one auto-reconnect attempt (mirroring
+    /// `playsense-context.tsx`'s `onDisconnected`) failed. Reconnecting successfully does NOT reach this
+    /// case at all — grading just resumes as new BLE readings arrive; only an EXHAUSTED reconnect aborts
+    /// the take (see `SessionCoordinator.handleBLEStatusChange`).
+    case bleDisconnected
 }
 
 /// The session state machine's phase — the D23 exit-gate flow:
@@ -26,6 +31,10 @@ public enum SessionInterruption: Equatable, Sendable {
 public enum SessionPhase: Equatable, Sendable {
     case idle
     case modeSelect
+    /// D25: `.playsense` mode only — between `modeSelect` and `calibrationCheck`, covering the whole BLE
+    /// scan/connect/subscribe flow (and the device-picker sheet, if more than one match is found). The mic
+    /// modes skip this phase entirely (`selectMode` goes straight to `calibrationCheck`).
+    case connectingDevice
     /// Offer the calibration wizard when no record exists for the current route; `hasRecord` lets the UI
     /// auto-advance when one already does.
     case calibrationCheck(hasRecord: Bool)
@@ -73,6 +82,26 @@ public struct SessionPhaseMachine: Equatable, Sendable {
     public mutating func selectMode(hasCalibrationRecord: Bool) {
         guard phase == .modeSelect else { return }
         phase = .calibrationCheck(hasRecord: hasCalibrationRecord)
+    }
+
+    /// `.playsense` mode chosen → move to the BLE connect flow instead of straight to the calibration
+    /// gate (the mic modes' path via `selectMode(hasCalibrationRecord:)` above).
+    public mutating func beginDeviceConnect() {
+        guard phase == .modeSelect else { return }
+        phase = .connectingDevice
+    }
+
+    /// The BLE device connected → move to the calibration gate, same as the mic modes.
+    public mutating func deviceConnected(hasCalibrationRecord: Bool) {
+        guard phase == .connectingDevice else { return }
+        phase = .calibrationCheck(hasRecord: hasCalibrationRecord)
+    }
+
+    /// The BLE connect flow failed (Bluetooth unavailable, no device found, connect error) — back to mode
+    /// select so the player can retry or pick a different mode.
+    public mutating func deviceConnectFailed() {
+        guard phase == .connectingDevice else { return }
+        phase = .modeSelect
     }
 
     /// Calibration satisfied (a record already existed, or the wizard was just completed/skipped).

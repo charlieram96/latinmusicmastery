@@ -1,4 +1,5 @@
 import LMMDesignSystem
+import PlaySenseBLE
 import PlaySenseCore
 import PlaySenseHighway
 import ScoreModel
@@ -14,7 +15,14 @@ import SwiftUI
 /// each frame and never touches `LiveScorer`. ``DebugStageView`` stays available behind `#if DEBUG`
 /// as the numbers-only harness.
 public struct StagePlayerView: View {
-    @State private var coordinator = SessionCoordinator()
+    // Not `private`: `StagePlayerView+PlaysenseMode.swift` (a same-module, different-file extension
+    // covering the D25 mode-select/BLE-connect overlays — split out purely to stay under SwiftLint's
+    // `type_body_length`/`file_length` caps, same reason `CalibrationWizardView`'s `.failure`/`.interrupted`
+    // content lives in `CalibrationWizardView+Errors.swift`) needs to reach these.
+    @State var coordinator = SessionCoordinator()
+    let exercise: ExerciseDefinition
+    let debugForceMultipleDevices: Bool
+
     @State private var scene: HighwayScene
     @State private var bridge: HighwayBridge?
     @State private var didPresent = false
@@ -26,12 +34,32 @@ public struct StagePlayerView: View {
     @State private var comboFlare = false
     @Environment(\.scenePhase) private var scenePhase
 
-    private let exercise: ExerciseDefinition
     private let showsDebugOverlay: Bool
+    /// Which mode to auto-select on appear, bypassing the interactive mode-select screen — matches every
+    /// EXISTING call site's behavior exactly (D23/D24 never showed a real mode picker; `selectMode` +
+    /// `calibrationResolved` ran synchronously in `setUpIfNeeded`). `nil` shows the real, interactive
+    /// `modeSelectOverlay` instead (D25's new debug entry point uses this to exercise/screenshot the
+    /// PlaySense option) — additive, so default behavior for headphones/speaker-safe callers is unchanged.
+    private let startMode: SessionAudioMode?
+    /// D25 Simulator seam: forces `SessionCoordinator.debugSyntheticBLESession` before selecting
+    /// `.playsense`, so a synthetic BLE session can be screenshotted (CoreBluetooth has no radio on the
+    /// Simulator). Kept as a plain (non-`#if DEBUG`) stored property — only DEBUG's `SessionCoordinator`
+    /// API is actually invoked with it (see `setUpIfNeeded`) — so this initializer's parameter list
+    /// doesn't need release/DEBUG conditional compilation branching (fragile inside a parameter list).
+    private let debugForceSyntheticBLE: Bool
 
-    public init(exercise: ExerciseDefinition = StagePlayerView.sampleExercise, showsDebugOverlay: Bool = false) {
+    public init(
+        exercise: ExerciseDefinition = StagePlayerView.sampleExercise,
+        showsDebugOverlay: Bool = false,
+        startMode: SessionAudioMode? = .headphones,
+        debugForceSyntheticBLE: Bool = false,
+        debugForceMultipleDevices: Bool = false
+    ) {
         self.exercise = exercise
         self.showsDebugOverlay = showsDebugOverlay
+        self.startMode = startMode
+        self.debugForceSyntheticBLE = debugForceSyntheticBLE
+        self.debugForceMultipleDevices = debugForceMultipleDevices
         _scene = State(initialValue: HighwayScene(size: CGSize(width: 402, height: 874)))
     }
 
@@ -70,8 +98,37 @@ public struct StagePlayerView: View {
         bridge.start()
         self.bridge = bridge
         coordinator.present(exercise: exercise)
-        coordinator.selectMode(.headphones)
-        coordinator.calibrationResolved()
+
+        #if DEBUG
+        if debugForceSyntheticBLE { coordinator.debugSyntheticBLESession = true }
+        #endif
+
+        if let startMode {
+            #if DEBUG
+            if startMode == .playsense, debugForceMultipleDevices {
+                // The multi-device-picker demo entry point auto-selecting `.playsense` needs the SAME
+                // bypass `choosePlaysenseMode()` uses from the interactive mode-select screen — otherwise
+                // `selectMode(.playsense)` would kick off a real (inert-on-Simulator) scan instead.
+                coordinator.debugShowPlaysenseDevicePicker()
+            } else {
+                coordinator.selectMode(startMode)
+            }
+            #else
+            coordinator.selectMode(startMode)
+            #endif
+            if startMode != .playsense { coordinator.calibrationResolved() }
+        }
+        // else: stay at `.modeSelect` — `modeSelectOverlay` lets the player choose, including PlaySense.
+
+        #if DEBUG
+        // The synthetic-BLE demo entry point (Profile → "PlaySense BLE (synthetic session)") has no other
+        // way to reach a live graded take without a real device — `beginBLEModeSelect`'s synthetic bypass
+        // above resolves synchronously to `.ready`, so auto-starting here gives a deterministic,
+        // no-interaction screenshot target for the whole BLE grading pipeline.
+        if debugForceSyntheticBLE, case .ready = coordinator.phase {
+            start(offsetMs: 0)
+        }
+        #endif
     }
 
     private func handlePhaseChange(_ phase: SessionPhase) {
@@ -102,8 +159,12 @@ public struct StagePlayerView: View {
     @ViewBuilder
     private var overlay: some View {
         switch coordinator.phase {
-        case .idle, .modeSelect, .calibrationCheck, .ready:
+        case .idle, .calibrationCheck, .ready:
             setupOverlay
+        case .modeSelect:
+            modeSelectOverlay
+        case .connectingDevice:
+            connectingDeviceOverlay
         case let .countdown(beat):
             CountdownOverlay(beat: beat) { coordinator.stopSession() }
         case .playing:
@@ -172,9 +233,17 @@ public struct StagePlayerView: View {
             + " · \(exercise.events.count) events · \(exercise.difficulty.rawValue)"
     }
 
+    // MARK: - Mode select / connecting device (D25) — see `StagePlayerView+PlaysenseMode.swift`
+
     private func start(offsetMs: Double?) {
         #if DEBUG
-        coordinator.debugAutoPlayOffsetMs = offsetMs
+        // PlaySense mode's synthetic evidence goes through `debugSyntheticBLESession`/`BLEOnsetSource`
+        // instead (set once, in `setUpIfNeeded`/`modeSelectOverlay`) — setting BOTH seams at once would
+        // double-inject every event (once here via the mic seam's direct `scorer.ingest`, once via the
+        // real BLE mapping pipeline).
+        if coordinator.audioMode != .playsense {
+            coordinator.debugAutoPlayOffsetMs = offsetMs
+        }
         #endif
         bridge?.reset()
         Task { await coordinator.startSession() }
@@ -240,113 +309,5 @@ extension StagePlayerView {
     }()
 }
 
-// MARK: - Playing chrome
-
-/// The in-play HUD overlay (score / combo / accuracy, grade callout, quit) — a standalone view over
-/// the highway so it can be driven from plain values (the live stage, and the screenshot harness).
-struct StagePlayingChrome: View {
-    let score: Double
-    let combo: Int
-    let accuracy: Double
-    let lastGrade: String?
-    let comboFlare: Bool
-    let onQuit: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .top) {
-                stat(label: "SCORE", value: String(format: "%.0f", score))
-                Spacer()
-                comboBadge
-                Spacer()
-                stat(label: "ACC", value: String(format: "%.0f%%", accuracy))
-            }
-            .padding(.horizontal, LMMSpacing.lg)
-            .padding(.top, LMMSpacing.sm)
-
-            gradeCallout
-            Spacer()
-
-            HStack {
-                Spacer()
-                Button(action: onQuit) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.85))
-                        .frame(width: 40, height: 40)
-                        .background(Circle().fill(.black.opacity(0.4)))
-                }
-                .padding(LMMSpacing.md)
-            }
-        }
-    }
-
-    private func stat(label: String, value: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.system(size: 26, weight: .light, design: .rounded)).foregroundStyle(.white)
-                .monospacedDigit()
-            Text(label)
-                .font(.system(size: 9, weight: .semibold)).tracking(2).foregroundStyle(.white.opacity(0.5))
-        }
-    }
-
-    @ViewBuilder
-    private var comboBadge: some View {
-        if combo > 1 {
-            Text("×\(combo)")
-                .font(.system(size: 30, weight: .heavy, design: .rounded))
-                .foregroundStyle(LMMColor.primary)
-                .scaleEffect(comboFlare ? 1.25 : 1)
-                .shadow(color: LMMColor.primary.opacity(comboFlare ? 0.8 : 0.3), radius: comboFlare ? 16 : 6)
-        }
-    }
-
-    @ViewBuilder
-    private var gradeCallout: some View {
-        if let grade = lastGrade {
-            Text(grade.uppercased())
-                .font(.system(size: 22, weight: .black, design: .rounded)).tracking(3)
-                .foregroundStyle(Self.gradeColor(grade))
-                .padding(.top, LMMSpacing.md)
-        }
-    }
-
-    static func gradeColor(_ grade: String) -> Color {
-        switch grade {
-        case "perfect": return LMMColor.success
-        case "good": return LMMColor.gold
-        case "ok": return LMMColor.terracotta
-        default: return LMMColor.destructive
-        }
-    }
-}
-
-// MARK: - Countdown overlay
-
-struct CountdownOverlay: View {
-    let beat: Int
-    let onCancel: () -> Void
-    @State private var pulse = false
-
-    var body: some View {
-        VStack(spacing: LMMSpacing.lg) {
-            Text("GET READY")
-                .font(.system(size: 13, weight: .semibold)).tracking(4).foregroundStyle(.white.opacity(0.6))
-            Text(beat > 0 ? "\(beat)" : "•")
-                .font(.system(size: 120, weight: .heavy, design: .rounded))
-                .foregroundStyle(LMMColor.primary)
-                .contentTransition(.numericText())
-                .scaleEffect(pulse ? 1.12 : 0.92)
-                .shadow(color: LMMColor.primary.opacity(0.5), radius: 24)
-                .animation(.spring(response: 0.25, dampingFraction: 0.55), value: beat)
-            Button("Cancel", action: onCancel).buttonStyle(.lmmSecondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.black.opacity(0.35))
-        .onChange(of: beat) { _, _ in
-            pulse = true
-            withAnimation(.easeOut(duration: 0.3)) { pulse = false }
-        }
-    }
-}
+// `StagePlayingChrome`/`CountdownOverlay` live in `StageChrome.swift` (split out to stay under
+// SwiftLint's `file_length` cap).

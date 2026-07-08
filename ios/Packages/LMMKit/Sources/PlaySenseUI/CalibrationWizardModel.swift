@@ -1,4 +1,5 @@
 import PlaySenseAudio
+import PlaySenseBLE
 import PlaySenseCore
 import SwiftUI
 
@@ -32,12 +33,20 @@ final class CalibrationWizardModel: ObservableObject {
     private let engine = GameAudioEngine()
     private let sourceType: CalibrationSourceType
     private let instrumentConfig: OnsetConfig
+    /// Only consulted when `sourceType == .ble` — an ALREADY-CONNECTED manager (this wizard doesn't own a
+    /// connect flow of its own; `SessionCoordinator`'s BLE mode-select does that before ever presenting a
+    /// calibration screen). `nil` with `.ble` surfaces `.engineError` rather than silently calibrating
+    /// against the mic, which is what this type used to do before D25 (a latent bug: it accepted `.ble` as
+    /// a `sourceType` — used only to key the STORED record — while unconditionally building a
+    /// `MicOnsetEventSource` regardless).
+    private let bleDeviceManager: PlaySenseDeviceManager?
     private var runner: CalibrationRunner?
 
     init(
         sessionController: AudioSessionController? = nil,
         sourceType: CalibrationSourceType = .mic,
-        instrumentConfig: OnsetConfig = getInstrumentConfig(.conga)
+        instrumentConfig: OnsetConfig = getInstrumentConfig(.conga),
+        bleDeviceManager: PlaySenseDeviceManager? = nil
     ) {
         // `AudioSessionController()` is a MainActor-isolated initializer; a default PARAMETER value is
         // evaluated at the (possibly non-isolated) call site, not inside this init's body, so it cannot
@@ -46,6 +55,7 @@ final class CalibrationWizardModel: ObservableObject {
         self.sessionController = sessionController ?? AudioSessionController()
         self.sourceType = sourceType
         self.instrumentConfig = instrumentConfig
+        self.bleDeviceManager = bleDeviceManager
 
         // Wired here (not just inside `start()`) so it's in place for the ENTIRE wizard presentation,
         // covering every take the user runs (including retries) without re-wiring per-take. All stored
@@ -55,17 +65,34 @@ final class CalibrationWizardModel: ObservableObject {
         }
     }
 
-    /// Request mic permission, configure the session, and start a fresh calibration take.
+    /// Request mic permission (skipped for `.ble` — input comes over BLE, not the mic; mirrors
+    /// `SessionCoordinator.startSession()`'s same skip), configure the session (still needed for the
+    /// count-in click track either way — mirrors the web's "we still need an AudioContext for the
+    /// count-in metronome" even in BLE mode), and start a fresh calibration take.
     func start() async {
-        let granted = await sessionController.requestMicrophonePermission()
-        guard granted else {
-            step = .permissionDenied
-            return
+        if sourceType != .ble {
+            let granted = await sessionController.requestMicrophonePermission()
+            guard granted else {
+                step = .permissionDenied
+                return
+            }
         }
         do {
             let actual = try sessionController.configure()
             engine.prepare()
-            let onsetSource = MicOnsetEventSource(engine: engine, config: instrumentConfig)
+            let onsetSource: OnsetEventSource
+            if sourceType == .ble {
+                guard let bleDeviceManager else {
+                    step = .engineError("No PlaySense device connected.")
+                    return
+                }
+                // Calibration only cares about onset TIMING, not surface identity — `instrument: nil`
+                // mirrors the web's separate always-on `subscribeToHits` path (ANY piezo > 0 counts,
+                // regardless of instrument mapping). See `BLEOnsetSource`'s doc comment.
+                onsetSource = BLEOnsetSource(deviceManager: bleDeviceManager, instrument: nil)
+            } else {
+                onsetSource = MicOnsetEventSource(engine: engine, config: instrumentConfig)
+            }
             let routeKey = CalibrationStore.routeKey(for: sessionController.currentRouteInfo)
             let newRunner = CalibrationRunner(
                 engine: engine, onsetSource: onsetSource, routeKey: routeKey, sourceType: sourceType

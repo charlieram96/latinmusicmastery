@@ -1,20 +1,30 @@
 import Foundation
 import Observation
 import PlaySenseAudio
+import PlaySenseBLE
 import PlaySenseCore
 import QuartzCore
 
 // The one cohesive orchestration unit (a faithful port of the 837-line `use-exercise-session.ts` lifecycle);
 // its methods share private engine/scorer/machine state, so splitting across files would force that state
-// internal. Kept in one file with a documented length exception instead.
+// internal. Kept in one file with a documented length exception instead. D25's BLE mode-select/status
+// handling (`beginBLEModeSelect`/`handleBLEStatusChange`/`handleBLEDevicesChange`/`installBLEOnsetSource`)
+// touches the same private `machine`/`bleManager`/`onsetSource` state for the same reason, pushing the
+// primary class body over `type_body_length`'s default too — same call, same rationale. `file_length`
+// stays disabled for the whole file (inherent — there's no "this declaration" to scope it to);
+// `type_body_length` is disabled/re-enabled around just the primary class body below (closing brace),
+// rather than left as an indefinite blanket disable.
 // swiftlint:disable file_length
+// swiftlint:disable type_body_length
 
 /// The playable core of PlaySense: orchestrates ``GameAudioEngine`` + ``AudioSessionController`` +
 /// ``MicOnsetEventSource`` + ``LiveScorer`` into a graded exercise session, driving the pure
 /// ``SessionPhaseMachine`` from real audio/clock events. Port of `hooks/use-exercise-session.ts`'s
-/// lifecycle (`startExercise`/`updatePlayhead`/`finishExercise`) minus the highway (D24), BLE (D25), and
-/// attempt persistence (D26). One `CADisplayLink` drives the count-in beat, playhead, tentative-miss loop,
-/// and the ~10 Hz HUD throttle — the analogue of the hook's `requestAnimationFrame(updatePlayhead)`.
+/// lifecycle (`startExercise`/`updatePlayhead`/`finishExercise`) minus attempt persistence (D26). D24 added
+/// the highway bridge (unwired here — `HighwayBridge` sits outside, feeding from `SessionCoordinator`'s
+/// published state); D25 added the PlaySense BLE mode. One `CADisplayLink` drives the count-in beat,
+/// playhead, tentative-miss loop, and the ~10 Hz HUD throttle — the analogue of the hook's
+/// `requestAnimationFrame(updatePlayhead)`.
 @MainActor
 @Observable
 public final class SessionCoordinator {
@@ -55,13 +65,30 @@ public final class SessionCoordinator {
     /// Simulator seam: when set before `startSession()`, synthetic onsets are injected for each expected
     /// event as its time passes, so a full session grades deterministically with no mic (Simulator has none).
     public var debugAutoPlayOffsetMs: Double?
+    /// D25 simulator seam: set together with `selectMode(.playsense)` to bypass real CoreBluetooth
+    /// (inert on the Simulator — see `PlaySenseDeviceManager`'s module doc) and drive a full graded BLE
+    /// session via synthetic readings injected through the REAL `BLEOnsetSource` mapping pipeline. See
+    /// `beginBLEModeSelect()` and `injectDueSyntheticBLEReadings(elapsed:)`.
+    public var debugSyntheticBLESession = false
     #endif
+
+    /// The live BLE connection status, for a `.playsense`-mode UI to render (connect progress / errors).
+    /// `.disconnected` before any BLE mode selection has happened.
+    public var bleConnectionStatus: BLEConnectionStatus { bleManager?.connectionStatus ?? .disconnected }
+    /// Devices found by the current scan — `DevicePickerSheet` renders this when more than one match is
+    /// found (a single match auto-connects, see `handleBLEDevicesChange`).
+    public var bleDiscoveredDevices: [PlaySenseDeviceManager.DiscoveredDevice] { bleManager?.discoveredDevices ?? [] }
 
     // MARK: - Collaborators
 
     private let sessionController: AudioSessionController
     private var engine: GameAudioEngine?
-    private var onsetSource: MicOnsetEventSource?
+    private var onsetSource: OnsetEventSource?
+    /// Narrow-typed alias to the SAME instance as `onsetSource` while a BLE take is running — only needed
+    /// so the DEBUG synthetic-BLE injector can reach `debugInject(reading:)`, which isn't part of the
+    /// shared `OnsetEventSource` protocol.
+    private var bleOnsetSource: BLEOnsetSource?
+    private var bleManager: PlaySenseDeviceManager?
     private var scorer: LiveScorer?
     private var scheduler: RealDeferredScheduler?
     private var frameDriver: DisplayLinkDriver?
@@ -94,10 +121,16 @@ public final class SessionCoordinator {
         machine.beginModeSelect()
     }
 
-    /// Choose the audio mode and evaluate the calibration gate for the current route.
+    /// Choose the audio mode. Mic modes evaluate the calibration gate immediately; `.playsense` instead
+    /// kicks off the BLE connect flow (`beginBLEModeSelect()`), which reaches the calibration gate only
+    /// once a device is connected.
     public func selectMode(_ mode: SessionAudioMode) {
         audioMode = mode
-        machine.selectMode(hasCalibrationRecord: hasCalibrationRecord(for: mode))
+        if mode == .playsense {
+            beginBLEModeSelect()
+        } else {
+            machine.selectMode(hasCalibrationRecord: hasCalibrationRecord(for: mode))
+        }
     }
 
     /// Calibration satisfied (record already existed, or wizard finished/skipped) → armed and ready.
@@ -112,6 +145,107 @@ public final class SessionCoordinator {
         return CalibrationStore.load(sourceType: sourceType, routeKey: key) != nil
     }
 
+    // MARK: - PlaySense BLE connect flow (D25)
+
+    /// Enter `.connectingDevice` and start (or fast-path resume) the BLE scan/connect flow. No wizard is
+    /// wired into the live session for ANY source type yet (mic modes bypass `calibrationCheck` the same
+    /// way today — see `StagePlayerView.setUpIfNeeded()`), so once connected this resolves calibration the
+    /// same way the mic path currently does: immediately, matching existing precedent rather than adding
+    /// asymmetric BLE-only wizard wiring.
+    private func beginBLEModeSelect() {
+        machine.beginDeviceConnect()
+
+        #if DEBUG
+        // A REAL `CBCentralManager` reports its state asynchronously as soon as it's constructed —
+        // regardless of whether scanning ever starts — and the Simulator's real (typically unusable)
+        // state would race with and override this forced synthetic state a beat later (see
+        // `NoOpBLECentralManager`'s doc comment). Route through the no-op central instead of the real one.
+        if debugSyntheticBLESession {
+            let manager = bleManager ?? makeBLEManager(central: NoOpBLECentralManager())
+            bleManager = manager
+            manager.wantsConnection = true
+            machine.deviceConnected(hasCalibrationRecord: hasCalibrationRecord(for: .playsense))
+            machine.calibrationResolved()
+            return
+        }
+        #endif
+
+        let manager = bleManager ?? makeBLEManager()
+        bleManager = manager
+        manager.wantsConnection = true
+        manager.connectUsingPersistedIdentifierOrScan()
+    }
+
+    private func makeBLEManager(central: (any PlaySenseBLECentralManaging)? = nil) -> PlaySenseDeviceManager {
+        let manager = PlaySenseDeviceManager(central: central)
+        manager.onConnectionStatusChange = { [weak self] status in self?.handleBLEStatusChange(status) }
+        manager.onDiscoveredDevicesChange = { [weak self] devices in self?.handleBLEDevicesChange(devices) }
+        return manager
+    }
+
+    /// Reacts to `PlaySenseDeviceManager.connectionStatus` changes pushed via its `onConnectionStatusChange`
+    /// callback. Guarded to `.playsense` mode so a stale callback from a manager retained across a mode
+    /// switch (there isn't one today, but the guard is cheap insurance) never touches the wrong flow.
+    private func handleBLEStatusChange(_ status: BLEConnectionStatus) {
+        guard audioMode == .playsense else { return }
+        switch status {
+        case .connected:
+            if case .connectingDevice = machine.phase {
+                machine.deviceConnected(hasCalibrationRecord: hasCalibrationRecord(for: .playsense))
+                machine.calibrationResolved()
+            }
+            // else: reconnected mid-take (or between takes) — nothing further to do, grading just
+            // resumes as new BLE readings arrive again.
+        case .error:
+            if machine.isActive {
+                // The one auto-reconnect attempt (mirroring `playsense-context.tsx`'s `onDisconnected`)
+                // was exhausted — web parity: pause (no further grading input arrives during the gap
+                // above) then interrupt, offering `retry()` like any other disruption.
+                abortTake(.bleDisconnected)
+            } else if case .connectingDevice = machine.phase {
+                errorMessage = bleManager?.errorMessage
+                machine.deviceConnectFailed()
+            }
+        case .disconnected, .scanning, .connecting, .reconnecting:
+            break
+        }
+    }
+
+    /// Reacts to `PlaySenseDeviceManager.discoveredDevices` changes: a single match auto-connects (no
+    /// picker); more than one leaves it for `DevicePickerSheet` (bound to `bleDiscoveredDevices`) via
+    /// `selectBLEDevice(_:)`.
+    private func handleBLEDevicesChange(_ devices: [PlaySenseDeviceManager.DiscoveredDevice]) {
+        guard audioMode == .playsense, case .connectingDevice = machine.phase else { return }
+        if let single = PlaySenseDeviceManager.autoSelectableDevice(among: devices) {
+            bleManager?.connect(to: single)
+        }
+    }
+
+    /// The user's choice from `DevicePickerSheet` (shown when more than one PlaySense device is found).
+    public func selectBLEDevice(_ device: PlaySenseDeviceManager.DiscoveredDevice) {
+        bleManager?.connect(to: device)
+    }
+
+    #if DEBUG
+    /// Screenshot/testing seam: drives straight to `.connectingDevice` with two synthetic devices already
+    /// "discovered" — self-contained, independent of `beginBLEModeSelect()`'s real scan. Uses
+    /// `NoOpBLECentralManager` (not a real `CBCentralManager`) for the same reason `debugSyntheticBLESession`
+    /// does — see its doc comment. Deterministically exercises/screenshots `DevicePickerSheet`'s
+    /// multi-device path.
+    public func debugShowPlaysenseDevicePicker() {
+        audioMode = .playsense
+        guard case .modeSelect = machine.phase else { return }
+        machine.beginDeviceConnect()
+        let manager = bleManager ?? makeBLEManager(central: NoOpBLECentralManager())
+        bleManager = manager
+        manager.wantsConnection = true
+        manager.debugInjectDiscoveredDevices([
+            PlaySenseDeviceManager.DiscoveredDevice(id: UUID(), name: "PlaySense"),
+            PlaySenseDeviceManager.DiscoveredDevice(id: UUID(), name: "PlaySense")
+        ])
+    }
+    #endif
+
     // MARK: - Start / stop
 
     /// Request mic permission (BEFORE configuring the session — D20 carry-forward), configure audio, and —
@@ -121,10 +255,14 @@ public final class SessionCoordinator {
         guard case .ready = machine.phase, let exercise else { return }
         errorMessage = nil
 
-        let granted = await sessionController.requestMicrophonePermission()
-        guard granted else {
-            errorMessage = "Microphone access is required to play."
-            return
+        // PlaySense mode never taps the mic (input comes over BLE) — matches the web's `startCalibrationFlow`/
+        // `startExercise`, which only ever request mic listening for the two mic `AudioMode`s.
+        if audioMode != .playsense {
+            let granted = await sessionController.requestMicrophonePermission()
+            guard granted else {
+                errorMessage = "Microphone access is required to play."
+                return
+            }
         }
 
         let actual: AudioSessionController.ActualConfig
@@ -204,14 +342,14 @@ public final class SessionCoordinator {
 
         t0Seconds = anchor.hostSeconds
         engine = newEngine
-        installScorerAndMic(exercise: exercise, calibration: calibration, expected: expected, engine: newEngine)
+        installScorerAndOnsetSource(exercise: exercise, calibration: calibration, expected: expected, engine: newEngine)
         startFrameLoop()
     }
 
-    /// Build the ``LiveScorer`` for the resolved `t0` and wire the mic tap → onset source into it, including
-    /// the live pitch/chroma path so pitched notes and chords grade against real detection. Count-in taps
-    /// (before t0) are dropped by the scorer.
-    private func installScorerAndMic(
+    /// Build the ``LiveScorer`` for the resolved `t0`, then wire in whichever onset source this take's
+    /// `audioMode` calls for — the mic tap (D21/D23) or, D25, the PlaySense BLE device. Count-in taps
+    /// (before t0) are dropped by the scorer either way.
+    private func installScorerAndOnsetSource(
         exercise: ExerciseDefinition,
         calibration: CalibrationRecord,
         expected: [ExpectedEvent],
@@ -229,6 +367,15 @@ public final class SessionCoordinator {
             scheduler: realScheduler
         )
         scorer = liveScorer
+
+        if audioMode == .playsense {
+            installBLEOnsetSource(instrument: exercise.instrument)
+        } else {
+            installMicOnsetSource(exercise: exercise, engine: engine, liveScorer: liveScorer)
+        }
+    }
+
+    private func installMicOnsetSource(exercise: ExerciseDefinition, engine: GameAudioEngine, liveScorer: LiveScorer) {
         let config = getInstrumentConfig(exercise.instrument, noisyRoom: false, speakerSafe: audioMode.isSpeakerSafe)
         let source = MicOnsetEventSource(engine: engine, config: config)
         source.onOnset = { [weak self] event in self?.ingestOnset(event) }
@@ -243,6 +390,24 @@ public final class SessionCoordinator {
 
         source.start()
         onsetSource = source
+        bleOnsetSource = nil
+    }
+
+    /// D25: PlaySense BLE input path. `bleManager` is reused from `beginBLEModeSelect()` (already
+    /// connected by the time a take starts — this method never itself scans/connects); the mic tap is
+    /// never installed in this mode, matching `use-exercise-session.ts`'s `activeOnsets = isPlaysenseMode
+    /// ? bleOnsets : micOnsets` split (mutually exclusive, never both).
+    private func installBLEOnsetSource(instrument: Instrument) {
+        let manager = bleManager ?? makeBLEManager()
+        bleManager = manager
+        manager.wantsConnection = true
+
+        let source = BLEOnsetSource(deviceManager: manager, instrument: instrument)
+        source.onOnset = { [weak self] event in self?.ingestOnset(event) }
+        source.onInputLevel = { [weak self] level in self?.inputLevel = level }
+        source.start()
+        onsetSource = source
+        bleOnsetSource = source
     }
 
     private func ingestOnset(_ event: OnsetEvent) {
@@ -263,11 +428,19 @@ public final class SessionCoordinator {
         // `lastDetectedMidiNote` from a periodic `onsetSource?.currentPitch()` read on the
         // `CADisplayLink` tick (`onFrame()`, mirroring the web's rAF cadence) in addition to this
         // onset-driven update — not implemented here; this comment is a marker for that follow-up.
+        // (Percussion, including every PlaySense BLE exercise, never sets `frequency`, so this is a
+        // mic/pitched-instrument-only concern.)
         if let frequency = event.frequency {
             scorer?.lastDetectedMidiNote = frequencyToMidi(frequency)
         }
         scorer?.ingest(event)
-        inputLevel = min(1, event.energy)
+        // BLE's `energy` is a raw piezo ADC value (0-4095), not the mic path's already-normalized
+        // envelope — `min(1, event.energy)` would read ~1.0 for nearly every real hit. `inputLevel` for
+        // PlaySense mode is instead driven by `BLEOnsetSource.onInputLevel`'s throttled `maxPiezo / 4095`
+        // meter (wired in `installBLEOnsetSource`), computed on EVERY reading, not just onsets.
+        if audioMode != .playsense {
+            inputLevel = min(1, event.energy)
+        }
     }
 
     /// Stop the current take and compute results (manual stop, or progress ≥ 1). Idempotent.
@@ -299,10 +472,17 @@ public final class SessionCoordinator {
     /// Leave the flow entirely.
     public func exitSession() {
         teardownAudio()
+        if audioMode == .playsense {
+            // Port of the web's `disconnect()` — leaving the flow entirely (not just finishing/retrying a
+            // take) is the one point BLE actually disconnects; `teardownAudio()` between takes only
+            // unsubscribes `BLEOnsetSource` from readings; see its doc comment.
+            bleManager?.disconnect()
+        }
         machine.reset()
         exercise = nil
     }
 }
+// swiftlint:enable type_body_length
 
 // MARK: - Frame loop (CADisplayLink), session events, teardown
 
@@ -348,6 +528,7 @@ extension SessionCoordinator {
 
             #if DEBUG
             injectDueSyntheticOnsets(elapsed: elapsed)
+            injectDueSyntheticBLEReadings(elapsed: elapsed)
             #endif
 
             scorer?.checkTentativeMisses(elapsedSeconds: elapsed)
@@ -387,6 +568,36 @@ extension SessionCoordinator {
                 surface: event.expectedSurface
             ))
         }
+    }
+
+    /// D25 simulator seam: the BLE analogue of `injectDueSyntheticOnsets` above, but — unlike that
+    /// method, which hand-builds an `OnsetEvent` directly (bypassing any onset source) — this drives the
+    /// REAL `BLEOnsetSource.debugInject(reading:)` path, so the surface-mapping code that would run for a
+    /// live hardware hit actually runs here too. Only fires perfect-timed hits (no offset parameter, unlike
+    /// the mic seam's `debugAutoPlayOffsetMs`): the injection happens the instant `elapsed` crosses the
+    /// expected timestamp, and `BLEOnsetSource` stamps the resulting `OnsetEvent` with `GameClock.now()` at
+    /// that exact moment — i.e. the real "notification arrival time" stamping path, not a hand-computed
+    /// offset.
+    private func injectDueSyntheticBLEReadings(elapsed: Double) {
+        guard debugSyntheticBLESession, let bleOnsetSource, let instrument = exercise?.instrument else { return }
+        for event in expectedForSimulation where !injectedSimulationIndices.contains(event.eventIndex) {
+            guard elapsed >= event.timestamp else { continue }
+            injectedSimulationIndices.insert(event.eventIndex)
+            guard
+                let surface = event.expectedSurface,
+                let index = Self.piezoIndex(forSurface: surface, instrument: instrument)
+            else { continue }
+            var piezos = [Double](repeating: 0, count: index + 1)
+            piezos[index] = 2000 // representative mid-scale ADC hit value
+            bleOnsetSource.debugInject(reading: PlaySenseBLEReading(piezos: piezos))
+        }
+    }
+
+    /// Reverse lookup into `PlaySenseMapping.piezoMap` (surface name → piezo channel index) — the debug
+    /// injector needs to go the OPPOSITE direction from `BLEOnsetSource`'s real forward mapping, since it's
+    /// synthesizing the RAW reading a real hit on that surface would have produced.
+    private static func piezoIndex(forSurface surface: String, instrument: Instrument) -> Int? {
+        getPlaySenseMapping(instrument.rawValue)?.piezoMap.first(where: { $0.value == surface })?.key
     }
     #endif
 
@@ -441,11 +652,16 @@ extension SessionCoordinator {
     }
     #endif
 
+    /// Ends the CURRENT TAKE's engine/scorer/onset-source lifecycle. For BLE, `onsetSource?.stop()` only
+    /// unsubscribes `BLEOnsetSource` from `bleManager`'s readings — it does NOT disconnect the underlying
+    /// CoreBluetooth connection, which persists across retries (matching the mic path not re-requesting
+    /// permission every take). The BLE connection itself is only torn down by `exitSession()`.
     private func teardownAudio() {
         stopFrameLoop()
         scheduler?.cancelAll()
         onsetSource?.stop()
         onsetSource = nil
+        bleOnsetSource = nil
         engine?.teardown()
         engine = nil
         scheduler = nil

@@ -45,7 +45,9 @@ public struct DebugStageView: View {
     @ViewBuilder
     private var content: some View {
         switch coordinator.phase {
-        case .idle, .modeSelect, .calibrationCheck, .ready:
+        case .idle, .modeSelect, .connectingDevice, .calibrationCheck, .ready:
+            // This numbers-only harness doesn't build BLE connect/picker UI — see `StagePlayerView` for
+            // the D25 interactive mode-select + device-connect screens.
             setup
         case let .countdown(beat):
             countdown(beat: beat)

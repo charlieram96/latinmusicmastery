@@ -1,5 +1,6 @@
 import LMMDesignSystem
 import PlaySenseAudio
+import PlaySenseBLE
 import PlaySenseCore
 import SwiftUI
 
@@ -14,13 +15,18 @@ public struct CalibrationWizardView: View {
     // cap, same reason `CalibrationWizardModel` lives in its own file) needs to reach `model.retry()`.
     @StateObject var model: CalibrationWizardModel
     @Environment(\.scenePhase) private var scenePhase
+    private let sourceType: CalibrationSourceType
     private let onFinished: (() -> Void)?
 
     public init(
         sourceType: CalibrationSourceType = .mic,
+        bleDeviceManager: PlaySenseDeviceManager? = nil,
         onFinished: (() -> Void)? = nil
     ) {
-        _model = StateObject(wrappedValue: CalibrationWizardModel(sourceType: sourceType))
+        _model = StateObject(wrappedValue: CalibrationWizardModel(
+            sourceType: sourceType, bleDeviceManager: bleDeviceManager
+        ))
+        self.sourceType = sourceType
         self.onFinished = onFinished
     }
 
@@ -48,11 +54,15 @@ public struct CalibrationWizardView: View {
 
     // MARK: - Header
 
+    /// D25: label/icon now reflect `sourceType` — this used to always read "Microphone" even when
+    /// calibrating BLE (harmless before D25, since `CalibrationWizardModel` silently used the mic for
+    /// `.ble` too; now that `.ble` really does calibrate against the PlaySense device, the header would
+    /// have been actively misleading left as-is).
     private var header: some View {
         VStack(spacing: LMMSpacing.sm) {
             HStack(spacing: LMMSpacing.xxs) {
-                Image(systemName: "mic.fill")
-                Text("Calibrating: Microphone")
+                Image(systemName: sourceIcon)
+                Text("Calibrating: \(sourceLabel)")
             }
             .font(LMMFont.eyebrow)
             .foregroundStyle(LMMColor.primary)
@@ -61,7 +71,7 @@ public struct CalibrationWizardView: View {
             .background(Capsule().fill(LMMColor.primary.opacity(0.1)))
             .overlay(Capsule().strokeBorder(LMMColor.primary.opacity(0.3), lineWidth: 1))
 
-            Image(systemName: "mic.fill")
+            Image(systemName: sourceIcon)
                 .font(.system(size: 22))
                 .foregroundStyle(LMMColor.primary)
                 .frame(width: 56, height: 56)
@@ -72,6 +82,14 @@ public struct CalibrationWizardView: View {
                 .font(LMMFont.title2)
                 .foregroundStyle(LMMColor.foreground)
         }
+    }
+
+    private var sourceIcon: String {
+        sourceType == .ble ? "dot.radiowaves.left.and.right" : "mic.fill"
+    }
+
+    private var sourceLabel: String {
+        sourceType == .ble ? "PlaySense Device" : "Microphone"
     }
 
     // MARK: - Step content

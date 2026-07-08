@@ -58,7 +58,12 @@ let package = Package(
         .target(name: "PlaySenseCore", dependencies: ["ScoreModel"]),
         .target(name: "PlaySenseRealtime"),
         .target(name: "PlaySenseAudio", dependencies: ["PlaySenseCore", "PlaySenseRealtime"]),
-        .target(name: "PlaySenseBLE", dependencies: ["PlaySenseCore"]),
+        // `PlaySenseAudio` dependency: `BLEOnsetSource` stamps onsets with `GameClock.hostSeconds` (the
+        // same host-time domain `t0`/mic onsets use) — `GameClock` is a pure, stateless enum living in
+        // PlaySenseAudio (D20). Rather than duplicate/relocate it behind a new seam, PlaySenseBLE takes
+        // the same dependency PlaySenseUI already has on PlaySenseAudio; `GameClock` itself has zero
+        // dependency back on anything audio-engine-specific, so this doesn't pull in unwanted coupling.
+        .target(name: "PlaySenseBLE", dependencies: ["PlaySenseCore", "PlaySenseAudio"]),
         .target(name: "PlaySenseHighway", dependencies: ["PlaySenseCore"]),
         .target(
             name: "PlaySenseUI",
@@ -118,6 +123,14 @@ let package = Package(
             dependencies: [
                 "PlaySenseAudio",
                 "PlaySenseCore"
+            ]
+        ),
+        .testTarget(
+            name: "PlaySenseBLETests",
+            dependencies: [
+                "PlaySenseBLE",
+                "PlaySenseCore",
+                "PlaySenseAudio"
             ]
         ),
         .testTarget(
