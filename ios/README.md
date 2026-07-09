@@ -6,6 +6,8 @@ Native SwiftUI student app (iPhone + iPad, iOS 17+).
 - `cd ios && xcodegen generate`
 - `open LatinMusicMastery.xcodeproj`
 - Select `LatinMusicMastery` scheme, run on a simulator or device
+- See [`DEVICE_TESTING.md`](DEVICE_TESTING.md) for the physical-device checklist (mic/BLE hardware,
+  GPU frame pacing, TestFlight signing) — none of it runs in the Simulator.
 
 ## Tests
 
