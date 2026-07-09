@@ -24,15 +24,15 @@ public final class PitchDetector {
     private let maxBufferSize: Int
     private var sampleRate: Double
     private var prefixSq: [Double]
-    /// Divergence (D22 carry-forward, documented not matched): the reference stores its normalized
-    /// correlation curve in a `Float32Array` (`autoCorrelate`'s `correlations`), so every lag's value is
-    /// quantized to `Float` precision before the peak search, octave check, and parabolic interpolation
-    /// read it back. This port keeps `correlations` in full `Double` precision throughout. The residual
-    /// (~1e-7 relative, i.e. `Float` ULP) is far below the confidence threshold's and octave ratio's
-    /// granularity and never flipped the peak/octave decision across the D21 goldens (which include an
-    /// octave-down latch case), so matching the `Float32` truncation was judged not worth the extra
-    /// quantize/dequantize step on this hot loop — see the D22 report for the parity discussion.
-    private var correlations: [Double]
+    /// Honest parity (D27 ledger cleanup, was a documented D22 divergence): the reference stores its
+    /// normalized correlation curve in a `Float32Array` (`autoCorrelate`'s `correlations`), so every
+    /// lag's value is quantized to `Float` precision before the peak search, octave check, and
+    /// parabolic interpolation read it back (JS itself does that arithmetic in double precision — only
+    /// the STORED array element is `Float32` — so this port writes `Float` here and promotes back to
+    /// `Double` at every read site, matching that exactly). D21/D22's DSP goldens (`onset_dsp.json`,
+    /// `OnsetDetectorGoldenTests`, ±0.5 Hz frequency tolerance, includes an octave-down latch case) still
+    /// pass byte-for-byte with this change (verified for D27) — see the D27 report.
+    private var correlations: [Float]
     private var floatToDoubleScratch: [Double]
 
     public init(maxBufferSize: Int = 4096, sampleRate: Double = 48_000) {
@@ -41,14 +41,14 @@ public final class PitchDetector {
         self.prefixSq = [Double](repeating: 0, count: maxBufferSize + 1)
         self.floatToDoubleScratch = [Double](repeating: 0, count: maxBufferSize)
         let maxLag = Int((sampleRate / 27).rounded(.down))
-        self.correlations = [Double](repeating: 0, count: maxLag + 1)
+        self.correlations = [Float](repeating: 0, count: maxLag + 1)
     }
 
     public func configure(sampleRate: Double) {
         self.sampleRate = sampleRate
         let maxLag = Int((sampleRate / 27).rounded(.down))
         if correlations.count < maxLag + 1 {
-            correlations = [Double](repeating: 0, count: maxLag + 1)
+            correlations = [Float](repeating: 0, count: maxLag + 1)
         }
     }
 
@@ -78,7 +78,10 @@ public final class PitchDetector {
             let sumSq1 = prefixSq[count]
             let sumSq2 = prefixSq[n] - prefixSq[lag]
             let denom = (sumSq1 * sumSq2).squareRoot()
-            correlations[lag] = denom > 0 ? dot / denom : 0
+            // Quantized to Float on write — matches the reference's Float32Array storage exactly; every
+            // read site below promotes back to Double, matching JS's double-precision arithmetic over
+            // those same quantized values.
+            correlations[lag] = denom > 0 ? Float(dot / denom) : 0
             lag += 1
         }
 
@@ -87,10 +90,10 @@ public final class PitchDetector {
         var bestCorr = confidenceThreshold
         lag = minLag
         while lag <= maxLag {
-            let c = correlations[lag]
+            let c = Double(correlations[lag])
             if c > bestCorr {
-                let isPeak = (lag == minLag || c > correlations[lag - 1])
-                    && (lag == maxLag || c >= correlations[lag + 1])
+                let isPeak = (lag == minLag || c > Double(correlations[lag - 1]))
+                    && (lag == maxLag || c >= Double(correlations[lag + 1]))
                 if isPeak { bestCorr = c; bestLag = lag }
             }
             lag += 1
@@ -106,15 +109,16 @@ public final class PitchDetector {
             let hi = min(maxLag, octaveLag + 2)
             var l = lo
             while l <= hi {
-                if correlations[l] > subCorr { subCorr = correlations[l]; subLag = l }
+                let cl = Double(correlations[l])
+                if cl > subCorr { subCorr = cl; subLag = l }
                 l += 1
             }
             if subLag != -1 && subCorr >= bestCorr * octaveRatio { bestLag = subLag }
         }
 
-        let prev = bestLag > 0 ? correlations[bestLag - 1] : correlations[bestLag]
-        let curr = correlations[bestLag]
-        let next = bestLag < maxLag ? correlations[bestLag + 1] : correlations[bestLag]
+        let prev = bestLag > 0 ? Double(correlations[bestLag - 1]) : Double(correlations[bestLag])
+        let curr = Double(correlations[bestLag])
+        let next = bestLag < maxLag ? Double(correlations[bestLag + 1]) : Double(correlations[bestLag])
         let shift = (prev - next) / (2 * (prev - 2 * curr + next))
         let truePeak = Double(bestLag) + (shift.isFinite ? shift : 0)
         return sampleRate / truePeak

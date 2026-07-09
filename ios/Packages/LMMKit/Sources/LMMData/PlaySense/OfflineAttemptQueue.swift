@@ -145,6 +145,11 @@ public actor OfflineAttemptQueue: PlaySenseAttemptSink {
     /// `persistedAttemptId`, when non-`nil`, means a PREVIOUS call already got the attempt row
     /// inserted (its id) and only `insertEvents` needs retrying — `insertAttempt` is skipped
     /// entirely so a resumed retry can never produce a second attempt row for the same take.
+    /// D27 ledger: no circuit breaker exists for a STALE `persistedAttemptId` (e.g. if that row were
+    /// ever deleted server-side between insert and retry) — `insertEvents` would fail against it
+    /// forever, retried on every future drain with no cap beyond `maxQueueSize`'s unrelated
+    /// drop-oldest policy. Unreachable today: nothing in this app or schema ever deletes a
+    /// `play_sense_attempts` row post-insert (verified against the migrations).
     private func attemptLiveSave(
         exerciseId: String,
         stats: AttemptStats,

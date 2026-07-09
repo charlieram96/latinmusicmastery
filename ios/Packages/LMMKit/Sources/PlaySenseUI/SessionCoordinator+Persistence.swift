@@ -37,6 +37,11 @@ extension SessionCoordinator {
     /// the app-wide trigger that covers every other screen; this method is left in place (harmless,
     /// idempotent — `drainPending()` no-ops on an empty queue) for the zero-latency case where a
     /// stage session happens to be the one being foregrounded.
+    ///
+    /// Single source of truth (D27 ledger): `RootView` is the PRIMARY drain trigger — it alone is
+    /// guaranteed to fire regardless of which screen is on-screen. This method is in-session
+    /// belt-and-suspenders only, not a second authority; if the two ever disagree on behavior, trust
+    /// `RootView`.
     public func handleForegrounding() {
         guard let attemptSink else { return }
         Task { @MainActor in await attemptSink.drainPending() }

@@ -77,8 +77,13 @@ public final class PlaySenseDeviceManager: NSObject {
     private let scheduler: DeferredScheduler
     /// Fix round 1 (D25's review, finding 3): the in-flight scan-timeout, if any — cancelled at every real
     /// exit from `.scanning` (`beginConnecting`, `stopScanning`, `disconnect`) so a stale timeout never
-    /// fires after the scan has already resolved one way or another.
-    private var scanTimeoutHandle: DeferredHandle?
+    /// fires after the scan has already resolved one way or another. `nonisolated(unsafe)` (D27 ledger
+    /// cleanup): this class subclasses `NSObject` for `CBCentralManagerDelegate`, so its `deinit` — unlike
+    /// a plain Swift class's — can never be actor-isolated (Objective-C's `dealloc` may run on any thread);
+    /// `deinit` below needs direct, synchronous access to cancel a stale handle. `DeferredHandle.cancel()`
+    /// is documented idempotent, and `RealDeferredScheduler`'s conformance is itself lock-protected, so a
+    /// deinit-time call from an arbitrary thread is safe.
+    private nonisolated(unsafe) var scanTimeoutHandle: DeferredHandle?
     /// No product spec pins an exact value; 15s is long enough for a real scan/advertise cycle to complete
     /// but short enough that "nothing found" doesn't read as a hang — matches this module's other web-parity
     /// error strings in spirit (a typed, bounded failure) even though the web has no scan phase of its own
@@ -106,6 +111,16 @@ public final class PlaySenseDeviceManager: NSObject {
         self.scheduler = scheduler
         super.init()
         self.central = central ?? CBCentralManager(delegate: self, queue: nil)
+    }
+
+    /// D27 ledger cleanup: closes a latent trap. `scanTimeoutHandle`'s own closure already captures
+    /// `self` weakly (see `startScanning()`), so a manager deallocating mid-scan without this deinit
+    /// was never a crash risk — but nothing cancelled the in-flight ~15s timer either, leaving it to
+    /// fire uselessly (a harmless no-op against a nil `self`) instead of being cleaned up promptly like
+    /// every other real exit from `.scanning` (`beginConnecting`, `stopScanning`, `disconnect` all call
+    /// `scanTimeoutHandle?.cancel()`). Belt-and-suspenders, same rationale as those three call sites.
+    deinit {
+        scanTimeoutHandle?.cancel()
     }
 
     // MARK: - Public flow

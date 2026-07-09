@@ -1493,18 +1493,6 @@
         "es": { "stringUnit": { "state": "translated", "value": "Reproducir ejercicio" } }
       }
     },
-    "viewer.quiz.comingSoon": {
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "The interactive quiz opens here soon." } },
-        "es": { "stringUnit": { "state": "translated", "value": "El cuestionario interactivo se abrirá aquí pronto." } }
-      }
-    },
-    "viewer.quiz.questionCount": {
-      "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "%lld questions" } },
-        "es": { "stringUnit": { "state": "translated", "value": "%lld preguntas" } }
-      }
-    },
     "viewer.quiz.title": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Quiz" } },

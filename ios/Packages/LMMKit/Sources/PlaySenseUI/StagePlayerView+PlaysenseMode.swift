@@ -72,10 +72,14 @@ extension StagePlayerView {
                 Text(connectingStatusText)
                     .font(LMMFont.subheadline).foregroundStyle(.white.opacity(0.8))
             }
-            if let error = coordinator.errorMessage {
-                Text(error)
-                    .font(LMMFont.caption).foregroundStyle(LMMColor.destructive).multilineTextAlignment(.center)
-            }
+            // D27 ledger cleanup: this overlay does NOT render `coordinator.errorMessage` — it can't ever be
+            // non-nil while this overlay is showing. `handleBLEStatusChange`'s `.error` case sets
+            // `errorMessage` and calls `machine.deviceConnectFailed()` synchronously, in the same call, which
+            // moves `machine.phase` away from `.connectingDevice` before SwiftUI's next render; `overlay`
+            // (`StagePlayerView.swift`) switches on that same phase, so by the time a render happens with the
+            // new `errorMessage`, `.connectingDevice`'s branch (this overlay) is no longer selected —
+            // `modeSelectOverlay` (where phase lands instead) is what actually renders it, and does. Verified
+            // by grepping every `errorMessage =` assignment: the BLE flow's only write site is the one above.
             // Fix round 1 (D25's review, finding 3): the scan/connect flow previously had no escape hatch —
             // stuck on a real device that's slow/never found meant no way back to `.modeSelect` short of
             // leaving the screen entirely. Stops the scan (`SessionCoordinator.cancelBLEConnect()`) rather

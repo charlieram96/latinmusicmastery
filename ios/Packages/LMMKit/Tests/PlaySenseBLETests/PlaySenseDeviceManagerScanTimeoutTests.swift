@@ -108,4 +108,22 @@ final class PlaySenseDeviceManagerScanTimeoutTests: XCTestCase {
 
         XCTAssertEqual(manager.connectionStatus, .disconnected, "an explicit disconnect must not later flip to .error")
     }
+
+    /// D27 ledger cleanup: a manager deallocating mid-scan (no explicit `disconnect()`/`stopScanning()`
+    /// call first — e.g. `SessionCoordinator` simply dropping its reference) used to leave the scan
+    /// timeout scheduled with nothing to cancel it. `deinit` now cancels it like every other real exit
+    /// from `.scanning`, closing the latent (if harmless, since the handle's own closure captures `self`
+    /// weakly) trap.
+    func testDeinitCancelsTheScanTimeout() {
+        let central = FakeCentralManager()
+        let scheduler = ManualDeferredScheduler()
+        var manager: PlaySenseDeviceManager? = makeManager(central: central, scheduler: scheduler)
+
+        manager?.startScanning()
+        XCTAssertEqual(scheduler.pendingCount, 1, "the scan timeout should be scheduled")
+
+        manager = nil
+
+        XCTAssertEqual(scheduler.pendingCount, 0, "deinit must cancel the pending scan timeout")
+    }
 }
