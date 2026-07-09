@@ -65,6 +65,12 @@
         }
       }
     },
+    "common.cancel": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Cancel" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Cancelar" } }
+      }
+    },
     "common.comingSoon": {
       "localizations": {
         "en": {
@@ -735,6 +741,48 @@
             "value": "Cerrar sesión"
           }
         }
+      }
+    },
+    "profile.delete.confirmButton": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Email deletion request" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Enviar solicitud por correo" } }
+      }
+    },
+    "profile.delete.confirmMessage": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Account deletion is handled by our support team. We'll open an email addressed to support with your account details — send it and we'll permanently delete your account and data." } },
+        "es": { "stringUnit": { "state": "translated", "value": "La eliminación de la cuenta la gestiona nuestro equipo de soporte. Abriremos un correo dirigido a soporte con los datos de tu cuenta; envíalo y eliminaremos tu cuenta y tus datos de forma permanente." } }
+      }
+    },
+    "profile.delete.confirmTitle": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Delete your account?" } },
+        "es": { "stringUnit": { "state": "translated", "value": "¿Eliminar tu cuenta?" } }
+      }
+    },
+    "profile.delete.emailBody": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Please permanently delete my Latin Music Mastery account and all associated data.\n\nAccount email: %@\n" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Por favor, eliminen de forma permanente mi cuenta de Latin Music Mastery y todos los datos asociados.\n\nCorreo de la cuenta: %@\n" } }
+      }
+    },
+    "profile.delete.emailSubject": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Account deletion request" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Solicitud de eliminación de cuenta" } }
+      }
+    },
+    "profile.delete.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Delete account" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Eliminar cuenta" } }
+      }
+    },
+    "profile.delete.unknownEmail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "(not signed in)" } },
+        "es": { "stringUnit": { "state": "translated", "value": "(sesión no iniciada)" } }
       }
     },
     "profile.title": {

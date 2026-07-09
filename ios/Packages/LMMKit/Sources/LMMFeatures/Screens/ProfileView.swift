@@ -7,10 +7,12 @@ import SwiftUI
 /// The Profile tab: identity, a couple of placeholder rows, and sign-out.
 struct ProfileView: View {
     @Environment(AuthService.self) private var auth
+    @Environment(\.openURL) private var openURL
 
     @State private var fullName: String?
     @State private var email: String?
     @State private var isSigningOut = false
+    @State private var showDeleteConfirm = false
 
     var body: some View {
         ScrollView {
@@ -21,12 +23,25 @@ struct ProfileView: View {
                 debugRows
                 #endif
                 signOutButton
+                deleteAccountRow
             }
             .padding(.horizontal, LMMSpacing.screen)
             .padding(.vertical, LMMSpacing.md)
         }
         .background(LMMColor.background)
         .navigationTitle(lmmString("profile.title"))
+        .confirmationDialog(
+            lmmString("profile.delete.confirmTitle"),
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button(lmmString("profile.delete.confirmButton"), role: .destructive) {
+                requestAccountDeletion()
+            }
+            Button(lmmString("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(lmmString("profile.delete.confirmMessage"))
+        }
         .task { await loadProfile() }
     }
 
@@ -171,6 +186,45 @@ struct ProfileView: View {
         }
         .buttonStyle(.lmmSecondary)
         .disabled(isSigningOut)
+    }
+
+    /// App Review §5.1.1(v): a destructive account-deletion entry point. v1 routes through support
+    /// (a prefilled email); a server-side Edge Function delete is a Stage E task. See
+    /// ``AccountDeletionRequest``.
+    private var deleteAccountRow: some View {
+        Button(role: .destructive) {
+            showDeleteConfirm = true
+        } label: {
+            HStack(spacing: LMMSpacing.sm) {
+                Image(systemName: "trash.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(LMMColor.destructive)
+                    .frame(width: 24)
+                Text(lmmString("profile.delete.title"))
+                    .font(LMMFont.body)
+                    .foregroundStyle(LMMColor.destructive)
+                Spacer()
+            }
+            .padding(.horizontal, LMMSpacing.md)
+            .padding(.vertical, LMMSpacing.sm)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
+                .fill(LMMColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
+                .strokeBorder(LMMColor.border, lineWidth: 1)
+        )
+    }
+
+    private func requestAccountDeletion() {
+        let subject = lmmString("profile.delete.emailSubject")
+        let accountEmail = (email?.isEmpty == false ? email : nil) ?? lmmString("profile.delete.unknownEmail")
+        let body = lmmFormat("profile.delete.emailBody", accountEmail)
+        if let url = AccountDeletionRequest.mailtoURL(subject: subject, body: body) {
+            openURL(url)
+        }
     }
 
     private var initials: String {
