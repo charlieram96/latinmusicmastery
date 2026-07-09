@@ -1,4 +1,5 @@
 import LMMData
+import PlaySenseCore
 import SwiftUI
 
 /// Environment-injected container for the app's repositories and shared cache. Constructed
@@ -20,6 +21,11 @@ public final class AppServices {
     /// The seam every playback URL passes through before it reaches an `AVPlayer` (v1 is a
     /// passthrough; the signed-URL Edge Function drops in here later).
     public let mediaResolver: MediaURLResolver
+    /// Plain read/write access to `play_sense_attempts`/`play_sense_attempt_events` (D26).
+    public let attempts: AttemptRepository
+    /// Injected into `StagePlayerView`'s `SessionCoordinator` so a finished ranked take persists
+    /// (or queues offline) without PlaySenseUI depending on Supabase (D26).
+    public let attemptSink: PlaySenseAttemptSink
 
     public init(_ repositories: LiveRepositories) {
         self.catalog = repositories.catalog
@@ -29,6 +35,8 @@ public final class AppServices {
         self.score = repositories.score
         self.cache = repositories.cache
         self.mediaResolver = repositories.mediaResolver
+        self.attempts = repositories.attempts
+        self.attemptSink = repositories.attemptSink
     }
 
     /// Test / preview seam — inject fakes without touching Supabase.
@@ -39,7 +47,9 @@ public final class AppServices {
         quiz: QuizRepository,
         score: ScoreRepository,
         cache: ResponseCache,
-        mediaResolver: MediaURLResolver = PassthroughMediaURLResolver()
+        mediaResolver: MediaURLResolver = PassthroughMediaURLResolver(),
+        attempts: AttemptRepository = NoOpAttemptRepository(),
+        attemptSink: PlaySenseAttemptSink = NoOpAttemptSink()
     ) {
         self.catalog = catalog
         self.progress = progress
@@ -48,5 +58,7 @@ public final class AppServices {
         self.score = score
         self.cache = cache
         self.mediaResolver = mediaResolver
+        self.attempts = attempts
+        self.attemptSink = attemptSink
     }
 }

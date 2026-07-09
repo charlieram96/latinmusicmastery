@@ -1,3 +1,4 @@
+import PlaySenseCore
 import Supabase
 
 /// A bundle of the app's live repositories, all sharing one `ResponseCache` and one
@@ -11,6 +12,11 @@ public struct LiveRepositories: Sendable {
     public let score: ScoreRepository
     public let cache: ResponseCache
     public let mediaResolver: MediaURLResolver
+    /// Plain read/write access to `play_sense_attempts`/`play_sense_attempt_events` (D26).
+    public let attempts: AttemptRepository
+    /// The injected `SessionCoordinator.attemptSink` — an `OfflineAttemptQueue` wrapping
+    /// `attempts` with an on-disk retry queue (D26).
+    public let attemptSink: PlaySenseAttemptSink
 
     public init(
         catalog: CatalogRepository,
@@ -19,7 +25,9 @@ public struct LiveRepositories: Sendable {
         quiz: QuizRepository,
         score: ScoreRepository,
         cache: ResponseCache,
-        mediaResolver: MediaURLResolver = PassthroughMediaURLResolver()
+        mediaResolver: MediaURLResolver = PassthroughMediaURLResolver(),
+        attempts: AttemptRepository,
+        attemptSink: PlaySenseAttemptSink
     ) {
         self.catalog = catalog
         self.progress = progress
@@ -28,6 +36,8 @@ public struct LiveRepositories: Sendable {
         self.score = score
         self.cache = cache
         self.mediaResolver = mediaResolver
+        self.attempts = attempts
+        self.attemptSink = attemptSink
     }
 }
 
@@ -36,6 +46,8 @@ public extension SupabaseService {
     func makeLiveRepositories() -> LiveRepositories {
         let cache = ResponseCache()
         let session = SupabaseSessionUserProvider(client: client)
+        let attempts = LiveAttemptRepository(client: client, sessionUserProvider: session)
+        let attemptQueue = OfflineAttemptQueue(repository: attempts, store: FileAttemptQueueStore())
         return LiveRepositories(
             catalog: LiveCatalogRepository(client: client, sessionUserProvider: session, cache: cache),
             progress: LiveProgressRepository(client: client, sessionUserProvider: session, cache: cache),
@@ -43,7 +55,9 @@ public extension SupabaseService {
             quiz: LiveQuizRepository(client: client, cache: cache),
             score: LiveScoreRepository(client: client, cache: cache),
             cache: cache,
-            mediaResolver: PassthroughMediaURLResolver()
+            mediaResolver: PassthroughMediaURLResolver(),
+            attempts: attempts,
+            attemptSink: attemptQueue
         )
     }
 }

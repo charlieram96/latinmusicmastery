@@ -21,6 +21,10 @@ public struct StagePlayerView: View {
     // content lives in `CalibrationWizardView+Errors.swift`) needs to reach these.
     @State var coordinator = SessionCoordinator()
     let exercise: ExerciseDefinition
+    /// D26: forwarded to `coordinator.attemptSink` in `setUpIfNeeded()`. `nil` (the default) in
+    /// every DEBUG harness/preview that doesn't care about persistence — a finished take then
+    /// simply stays `.idle`.
+    let attemptSink: PlaySenseAttemptSink?
     #if DEBUG
     /// D25 debug-picker demo seam (`Profile → "PlaySense BLE (device picker)"`): bypasses `selectMode`'s
     /// real scan in favor of `SessionCoordinator.debugShowPlaysenseDevicePicker()` (see `choosePlaysenseMode()`
@@ -63,12 +67,14 @@ public struct StagePlayerView: View {
         exercise: ExerciseDefinition = StagePlayerView.sampleExercise,
         showsDebugOverlay: Bool = false,
         startMode: SessionAudioMode? = .headphones,
+        attemptSink: PlaySenseAttemptSink? = nil,
         debugForceSyntheticBLE: Bool = false,
         debugForceMultipleDevices: Bool = false
     ) {
         self.exercise = exercise
         self.showsDebugOverlay = showsDebugOverlay
         self.startMode = startMode
+        self.attemptSink = attemptSink
         self.debugForceSyntheticBLE = debugForceSyntheticBLE
         self.debugForceMultipleDevices = debugForceMultipleDevices
         _scene = State(initialValue: HighwayScene(size: CGSize(width: 402, height: 874)))
@@ -77,11 +83,13 @@ public struct StagePlayerView: View {
     public init(
         exercise: ExerciseDefinition = StagePlayerView.sampleExercise,
         showsDebugOverlay: Bool = false,
-        startMode: SessionAudioMode? = .headphones
+        startMode: SessionAudioMode? = .headphones,
+        attemptSink: PlaySenseAttemptSink? = nil
     ) {
         self.exercise = exercise
         self.showsDebugOverlay = showsDebugOverlay
         self.startMode = startMode
+        self.attemptSink = attemptSink
         _scene = State(initialValue: HighwayScene(size: CGSize(width: 402, height: 874)))
     }
     #endif
@@ -107,7 +115,11 @@ public struct StagePlayerView: View {
             if new > old, new > 1 { flareCombo() }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .background { coordinator.handleBackgrounding() }
+            if phase == .background {
+                coordinator.handleBackgrounding()
+            } else if phase == .active {
+                coordinator.handleForegrounding()
+            }
         }
     }
 
@@ -116,6 +128,7 @@ public struct StagePlayerView: View {
     private func setUpIfNeeded() {
         guard !didPresent else { return }
         didPresent = true
+        coordinator.attemptSink = attemptSink
         scene.configure(exercise: exercise)
         let bridge = HighwayBridge(scene: scene, coordinator: coordinator)
         bridge.start()
@@ -197,6 +210,7 @@ public struct StagePlayerView: View {
                 stats: stats,
                 results: coordinator.finalResults,
                 isPractice: coordinator.isPracticeMode,
+                persistState: coordinator.attemptPersistState,
                 onRetry: { coordinator.retry() },
                 onExit: { coordinator.exitSession() }
             )

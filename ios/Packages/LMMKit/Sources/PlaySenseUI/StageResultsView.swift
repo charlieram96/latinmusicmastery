@@ -9,6 +9,10 @@ struct StageResultsView: View {
     let stats: AttemptStats
     let results: [EventResult]
     let isPractice: Bool
+    /// D26: the sink's live persistence state — `.idle` (nothing to show: practice mode, or no
+    /// sink injected) by default so every existing call site (screenshots, previews) keeps
+    /// rendering exactly as before.
+    var persistState: AttemptPersistState = .idle
     let onRetry: () -> Void
     let onExit: () -> Void
 
@@ -19,6 +23,7 @@ struct StageResultsView: View {
                 header
                 statGrid
                 perEventStrip
+                persistNote
                 HStack(spacing: LMMSpacing.sm) {
                     Button("Exit", action: onExit).buttonStyle(.lmmSecondary)
                     Button("Retry", action: onRetry).buttonStyle(.lmmPrimary)
@@ -98,6 +103,28 @@ struct StageResultsView: View {
                         .frame(height: 22)
                 }
             }
+        }
+    }
+
+    /// D26: a single subtle line reflecting `persistState` — a spinner while saving, a "will sync"
+    /// note when queued offline. `.idle`/`.saved` render nothing (no new chrome for the common
+    /// case, matching the "no new visual work beyond the persistence states" constraint).
+    @ViewBuilder
+    private var persistNote: some View {
+        switch persistState {
+        case .idle, .saved:
+            EmptyView()
+        case .saving:
+            HStack(spacing: LMMSpacing.xs) {
+                ProgressView().controlSize(.small)
+                Text("Saving…").font(.caption2).foregroundStyle(LMMColor.mutedForeground)
+            }
+        case .queued:
+            HStack(spacing: LMMSpacing.xs) {
+                Image(systemName: "icloud.and.arrow.up")
+                Text("Offline — will sync automatically").font(.caption2)
+            }
+            .foregroundStyle(LMMColor.mutedForeground)
         }
     }
 

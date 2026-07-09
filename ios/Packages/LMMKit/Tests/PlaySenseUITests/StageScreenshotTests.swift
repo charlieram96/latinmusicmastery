@@ -77,6 +77,8 @@ final class StageScreenshotTests: XCTestCase {
             ))
         )
 
+        try shootResultsPersistStates(exercise: exercise)
+
         // 5) Fix round 1 (D25's review, finding 2): mode-select with a surfaced BLE connect-failure error —
         // previously rendered NOWHERE. `debugForceModeSelectError` deterministically forces the state a
         // real Simulator's `.unsupported` CoreBluetooth stack would otherwise reach on its own.
@@ -87,6 +89,29 @@ final class StageScreenshotTests: XCTestCase {
             name: "05-modeselect-error",
             highway: highway(exercise: exercise, playhead: 0, warm: 0),
             chrome: AnyView(modeSelectView.modeSelectOverlay)
+        )
+    }
+
+    /// D26: the results panel while the attempt is saving, and after it's been queued offline
+    /// (`AttemptPersistState` — see `SessionCoordinator.persistAttemptIfNeeded`). Split out of
+    /// `testRenderStageScreenshots` to stay under SwiftLint's `function_body_length`.
+    @MainActor
+    private func shootResultsPersistStates(exercise: ExerciseDefinition) throws {
+        try shoot(
+            name: "04b-results-saving",
+            highway: highway(exercise: exercise, playhead: 1, warm: 0.5),
+            chrome: AnyView(StageResultsView(
+                stats: Self.sampleStats, results: Self.sampleResults, isPractice: false,
+                persistState: .saving, onRetry: {}, onExit: {}
+            ))
+        )
+        try shoot(
+            name: "04c-results-queued",
+            highway: highway(exercise: exercise, playhead: 1, warm: 0.5),
+            chrome: AnyView(StageResultsView(
+                stats: Self.sampleStats, results: Self.sampleResults, isPractice: false,
+                persistState: .queued, onRetry: {}, onExit: {}
+            ))
         )
     }
 

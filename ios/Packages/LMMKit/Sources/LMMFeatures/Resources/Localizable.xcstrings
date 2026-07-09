@@ -1475,10 +1475,10 @@
         "es": { "stringUnit": { "state": "translated", "value": "Parte %1$lld de %2$lld" } }
       }
     },
-    "viewer.playsense.comingSoon": {
+    "viewer.playsense.play": {
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Interactive practice coming soon" } },
-        "es": { "stringUnit": { "state": "translated", "value": "Práctica interactiva próximamente" } }
+        "en": { "stringUnit": { "state": "translated", "value": "Play exercise" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Reproducir ejercicio" } }
       }
     },
     "viewer.quiz.comingSoon": {
