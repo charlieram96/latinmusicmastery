@@ -25,8 +25,8 @@ struct StageResultsView: View {
                 perEventStrip
                 persistNote
                 HStack(spacing: LMMSpacing.sm) {
-                    Button("Exit", action: onExit).buttonStyle(.lmmSecondary)
-                    Button("Retry", action: onRetry).buttonStyle(.lmmPrimary)
+                    Button(lmmString("stage.exit"), action: onExit).buttonStyle(.lmmSecondary)
+                    Button(lmmString("common.retry"), action: onRetry).buttonStyle(.lmmPrimary)
                 }
             }
             .padding(LMMSpacing.lg)
@@ -57,10 +57,10 @@ struct StageResultsView: View {
                 Text(String(format: "%.0f", stats.score))
                     .font(.system(size: 34, weight: .bold, design: .rounded))
                     .foregroundStyle(LMMColor.foreground)
-                Text(String(format: "%.0f%% accuracy", stats.accuracy))
+                Text(lmmFormat("stage.results.accuracyFormat", stats.accuracy))
                     .font(LMMFont.subheadline).foregroundStyle(LMMColor.mutedForeground)
                 if isPractice {
-                    Text("PRACTICE — unranked")
+                    Text(lmmString("stage.results.practiceUnranked"))
                         .font(.caption2).tracking(1).foregroundStyle(LMMColor.gold)
                 }
             }
@@ -70,11 +70,14 @@ struct StageResultsView: View {
 
     private var statGrid: some View {
         HStack(spacing: LMMSpacing.xs) {
+            // Grade names (PERFECT/GOOD/OK/MISS) stay English brand tokens — the web stage
+            // (`components/play-sense/stage/*`) has no i18n at all and renders these literally
+            // even to Spanish users, so mirroring keeps one shared brand voice across platforms.
             statCell("PERFECT", stats.perfectCount, LMMColor.success)
             statCell("GOOD", stats.goodCount, LMMColor.gold)
             statCell("OK", stats.okCount, LMMColor.terracotta)
             statCell("MISS", stats.missCount, LMMColor.destructive)
-            statCell("MAX ×", stats.maxCombo, LMMColor.primary)
+            statCell(lmmString("stage.results.maxCombo"), stats.maxCombo, LMMColor.primary)
         }
     }
 
@@ -92,7 +95,7 @@ struct StageResultsView: View {
 
     private var perEventStrip: some View {
         VStack(alignment: .leading, spacing: LMMSpacing.xs) {
-            Text("PER-EVENT")
+            Text(lmmString("stage.perEvent"))
                 .font(.system(size: 10, weight: .semibold)).tracking(2).foregroundStyle(LMMColor.mutedForeground)
             // Capped to a card-width run of bars (mirrors DebugStageView's strip).
             HStack(spacing: 3) {
@@ -117,12 +120,12 @@ struct StageResultsView: View {
         case .saving:
             HStack(spacing: LMMSpacing.xs) {
                 ProgressView().controlSize(.small)
-                Text("Saving…").font(.caption2).foregroundStyle(LMMColor.mutedForeground)
+                Text(lmmString("stage.results.saving")).font(.caption2).foregroundStyle(LMMColor.mutedForeground)
             }
         case .queued:
             HStack(spacing: LMMSpacing.xs) {
                 Image(systemName: "icloud.and.arrow.up")
-                Text("Offline — will sync automatically").font(.caption2)
+                Text(lmmString("stage.results.offlineSync")).font(.caption2)
             }
             .foregroundStyle(LMMColor.mutedForeground)
         }

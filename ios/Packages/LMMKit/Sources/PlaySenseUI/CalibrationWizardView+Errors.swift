@@ -24,7 +24,7 @@ extension CalibrationWizardView {
                 .font(LMMFont.subheadline)
                 .foregroundStyle(LMMColor.destructive)
                 .multilineTextAlignment(.center)
-            Button("Try Again") { model.retry() }.buttonStyle(.lmmPrimary)
+            Button(lmmString("common.tryAgain")) { model.retry() }.buttonStyle(.lmmPrimary)
         }
     }
 
@@ -32,13 +32,11 @@ extension CalibrationWizardView {
     static func failureMessage(_ failure: CalibrationFailure) -> String {
         switch failure {
         case let .notEnoughTaps(detected, minimum):
-            return "Not enough taps detected (\(detected) of \(minimum) minimum). "
-                + "Make sure your mic is registering taps and try again."
+            return lmmFormat("calibration.failure.notEnoughTaps", detected, minimum)
         case let .notEnoughValidTaps(valid, minimum):
-            return "Not enough valid taps detected (\(valid) of \(minimum) minimum). "
-                + "Tap more closely to the beat and try again."
+            return lmmFormat("calibration.failure.notEnoughValidTaps", valid, minimum)
         case .tooInconsistent:
-            return "Tap timing was too inconsistent. Try tapping more steadily with the beat."
+            return lmmString("calibration.failure.tooInconsistent")
         }
     }
 
@@ -56,27 +54,25 @@ extension CalibrationWizardView {
                     .font(.system(size: 20))
                     .foregroundStyle(LMMColor.destructive)
             }
-            Text("Calibration interrupted")
+            Text(lmmString("calibration.interrupted.title"))
                 .font(LMMFont.headline)
                 .foregroundStyle(LMMColor.destructive)
             Text(Self.interruptionMessage(reason))
                 .font(LMMFont.subheadline)
                 .foregroundStyle(LMMColor.mutedForeground)
                 .multilineTextAlignment(.center)
-            Button("Retry") { model.retry() }.buttonStyle(.lmmPrimary)
+            Button(lmmString("common.retry")) { model.retry() }.buttonStyle(.lmmPrimary)
         }
     }
 
     static func interruptionMessage(_ reason: CalibrationInterruptionReason) -> String {
         switch reason {
         case .audioInterruption:
-            return "Calibration was interrupted (e.g. a phone call or another app using audio). "
-                + "Please try again."
+            return lmmString("calibration.interrupted.audio")
         case .routeChanged:
-            return "Your audio route changed during calibration (e.g. headphones connected or "
-                + "disconnected). Please try again."
+            return lmmString("calibration.interrupted.route")
         case .backgrounded:
-            return "Calibration was interrupted because the app moved to the background. Please try again."
+            return lmmString("calibration.interrupted.backgrounded")
         }
     }
 }

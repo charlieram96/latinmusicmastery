@@ -69,7 +69,8 @@ let package = Package(
             name: "PlaySenseUI",
             dependencies: [
                 "PlaySenseCore", "PlaySenseAudio", "PlaySenseBLE", "PlaySenseHighway", "ScoreModel", "LMMDesignSystem"
-            ]
+            ],
+            resources: [.process("Resources")]
         ),
 
         // MARK: - App layer
@@ -142,7 +143,8 @@ let package = Package(
                 "PlaySenseBLE",
                 "PlaySenseHighway",
                 "ScoreModel",
-                "LMMTestSupport"
+                "LMMTestSupport",
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ]
         ),
         .testTarget(

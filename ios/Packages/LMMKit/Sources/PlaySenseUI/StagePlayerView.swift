@@ -218,16 +218,19 @@ public struct StagePlayerView: View {
             messageOverlay(
                 icon: "exclamationmark.triangle.fill",
                 tint: LMMColor.gold,
-                title: "Session interrupted (\(String(describing: reason)))",
-                primary: ("Retry", { coordinator.retry() })
+                title: lmmFormat("stage.interruptedTitleFormat", String(describing: reason)),
+                primary: (lmmString("common.retry"), { coordinator.retry() })
             )
         case .bluetoothBlocked:
             messageOverlay(
                 icon: "airpodspro",
                 tint: LMMColor.primary,
-                title: "Bluetooth audio adds unpredictable latency and can't be scored accurately.",
-                primary: ("Practice anyway (no score)", { Task { await coordinator.acceptPracticeMode() } }),
-                secondary: ("Back", { coordinator.dismissBluetoothBlock() })
+                title: lmmString("stage.bluetoothBlocked.title"),
+                primary: (
+                    lmmString("stage.bluetoothBlocked.practiceAnyway"),
+                    { Task { await coordinator.acceptPracticeMode() } }
+                ),
+                secondary: (lmmString("common.back"), { coordinator.dismissBluetoothBlock() })
             )
         }
     }
@@ -248,7 +251,7 @@ public struct StagePlayerView: View {
                 Text(error).font(LMMFont.caption).foregroundStyle(LMMColor.destructive)
             }
             VStack(spacing: LMMSpacing.xs) {
-                Button("Start") { start(offsetMs: 0) }.buttonStyle(.lmmPrimary)
+                Button(lmmString("stage.start")) { start(offsetMs: 0) }.buttonStyle(.lmmPrimary)
                 #if DEBUG
                 HStack(spacing: LMMSpacing.xs) {
                     Button("Loose") { start(offsetMs: 55) }.buttonStyle(.lmmSecondary)
@@ -266,8 +269,14 @@ public struct StagePlayerView: View {
     }
 
     private var metaLine: String {
-        "\(Int(exercise.bpm)) BPM · \(exercise.timeSignature.numerator)/\(exercise.timeSignature.denominator)"
-            + " · \(exercise.events.count) events · \(exercise.difficulty.rawValue)"
+        lmmFormat(
+            "stage.meta.format",
+            Int(exercise.bpm),
+            exercise.timeSignature.numerator,
+            exercise.timeSignature.denominator,
+            exercise.events.count,
+            exercise.difficulty.rawValue
+        )
     }
 
     // MARK: - Mode select / connecting device (D25) — see `StagePlayerView+PlaysenseMode.swift`

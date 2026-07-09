@@ -392,7 +392,7 @@ public final class SessionCoordinator {
         if audioMode != .playsense {
             let granted = await sessionController.requestMicrophonePermission()
             guard granted else {
-                errorMessage = "Microphone access is required to play."
+                errorMessage = lmmString("stage.error.micRequired")
                 return
             }
         }
@@ -401,7 +401,7 @@ public final class SessionCoordinator {
         do {
             actual = try sessionController.configure()
         } catch {
-            errorMessage = "Couldn't start audio: \(error.localizedDescription)"
+            errorMessage = lmmFormat("stage.error.audioStartFormat", error.localizedDescription)
             return
         }
 
@@ -466,7 +466,7 @@ public final class SessionCoordinator {
             let countInDuration = MetronomeSchedule.countInDuration(bpm: exercise.bpm, countInBeats: countInBeats)
             anchor = try newEngine.start(t0Delay: countInDuration + 0.15, clicks: clicks)
         } catch {
-            errorMessage = "Audio engine failed: \(error.localizedDescription)"
+            errorMessage = lmmFormat("stage.error.audioEngineFormat", error.localizedDescription)
             newEngine.teardown()
             machine.reset()
             return

@@ -17,7 +17,7 @@ extension StagePlayerView {
                 Text(exercise.title)
                     .font(LMMFont.title2).foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                Text("Choose your input").font(LMMFont.caption).foregroundStyle(.white.opacity(0.6))
+                Text(lmmString("stage.mode.chooseInput")).font(LMMFont.caption).foregroundStyle(.white.opacity(0.6))
             }
             // Fix round 1 (D25's review, finding 2): a BLE connect failure bounces back to `.modeSelect`
             // (`SessionCoordinator.handleBLEStatusChange`'s `.error` branch sets `errorMessage` THEN
@@ -28,9 +28,9 @@ extension StagePlayerView {
                 Text(error).font(LMMFont.caption).foregroundStyle(LMMColor.destructive).multilineTextAlignment(.center)
             }
             VStack(spacing: LMMSpacing.xs) {
-                Button("Headphones") { chooseMicMode(.headphones) }.buttonStyle(.lmmPrimary)
-                Button("Speaker-safe") { chooseMicMode(.speakerSafe) }.buttonStyle(.lmmSecondary)
-                Button("PlaySense (BLE)") { choosePlaysenseMode() }.buttonStyle(.lmmSecondary)
+                Button(lmmString("stage.mode.headphones")) { chooseMicMode(.headphones) }.buttonStyle(.lmmPrimary)
+                Button(lmmString("stage.mode.speakerSafe")) { chooseMicMode(.speakerSafe) }.buttonStyle(.lmmSecondary)
+                Button(lmmString("stage.mode.playsense")) { choosePlaysenseMode() }.buttonStyle(.lmmSecondary)
             }
             Spacer()
         }
@@ -84,7 +84,7 @@ extension StagePlayerView {
             // stuck on a real device that's slow/never found meant no way back to `.modeSelect` short of
             // leaving the screen entirely. Stops the scan (`SessionCoordinator.cancelBLEConnect()`) rather
             // than reporting a failure.
-            Button("Cancel") { coordinator.cancelBLEConnect() }.buttonStyle(.lmmSecondary)
+            Button(lmmString("common.cancel")) { coordinator.cancelBLEConnect() }.buttonStyle(.lmmSecondary)
             Spacer()
         }
         .padding(LMMSpacing.screen)
@@ -94,10 +94,10 @@ extension StagePlayerView {
 
     var connectingStatusText: String {
         switch coordinator.bleConnectionStatus {
-        case .scanning: return "Searching for PlaySense device…"
-        case .connecting: return "Connecting…"
-        case .reconnecting: return "Reconnecting…"
-        default: return "Connecting to PlaySense…"
+        case .scanning: return lmmString("stage.ble.searching")
+        case .connecting: return lmmString("stage.ble.connecting")
+        case .reconnecting: return lmmString("stage.ble.reconnecting")
+        default: return lmmString("stage.ble.connectingGeneric")
         }
     }
 }

@@ -21,7 +21,7 @@ public struct DevicePickerSheet: View {
 
     public var body: some View {
         VStack(spacing: LMMSpacing.md) {
-            Text("Choose a PlaySense device")
+            Text(lmmString("device.picker.title"))
                 .font(LMMFont.headline)
                 .foregroundStyle(.white)
 

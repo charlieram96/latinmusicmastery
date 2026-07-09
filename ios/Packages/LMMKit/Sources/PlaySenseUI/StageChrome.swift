@@ -22,11 +22,11 @@ struct StagePlayingChrome: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(alignment: .top) {
-                stat(label: "SCORE", value: String(format: "%.0f", score))
+                stat(label: lmmString("stage.score"), value: String(format: "%.0f", score))
                 Spacer()
                 comboBadge
                 Spacer()
-                stat(label: "ACC", value: String(format: "%.0f%%", accuracy))
+                stat(label: lmmString("stage.acc"), value: String(format: "%.0f%%", accuracy))
             }
             .padding(.horizontal, LMMSpacing.lg)
             .padding(.top, LMMSpacing.sm)
@@ -71,6 +71,9 @@ struct StagePlayingChrome: View {
 
     @ViewBuilder
     private var gradeCallout: some View {
+        // The in-play grade flash (perfect/good/ok/miss) stays an English brand token — the web
+        // stage renders the same callouts literally to Spanish users (no i18n there). See the
+        // grade-name note in `StageResultsView.statGrid`.
         if let grade = lastGrade {
             Text(grade.uppercased())
                 .font(.system(size: 22, weight: .black, design: .rounded)).tracking(3)
@@ -98,7 +101,7 @@ struct CountdownOverlay: View {
 
     var body: some View {
         VStack(spacing: LMMSpacing.lg) {
-            Text("GET READY")
+            Text(lmmString("stage.getReady"))
                 .font(.system(size: 13, weight: .semibold)).tracking(4).foregroundStyle(.white.opacity(0.6))
             Text(beat > 0 ? "\(beat)" : "•")
                 .font(.system(size: 120, weight: .heavy, design: .rounded))
@@ -107,7 +110,7 @@ struct CountdownOverlay: View {
                 .scaleEffect(pulse ? 1.12 : 0.92)
                 .shadow(color: LMMColor.primary.opacity(0.5), radius: 24)
                 .animation(.spring(response: 0.25, dampingFraction: 0.55), value: beat)
-            Button("Cancel", action: onCancel).buttonStyle(.lmmSecondary)
+            Button(lmmString("common.cancel"), action: onCancel).buttonStyle(.lmmSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.black.opacity(0.35))

@@ -41,7 +41,7 @@ public struct CalibrationWizardView: View {
             .frame(maxWidth: .infinity)
         }
         .background(LMMColor.background)
-        .navigationTitle("Calibration")
+        .navigationTitle(lmmString("calibration.title"))
         .onDisappear { model.cancel() }
         .onChange(of: scenePhase) { _, phase in
             // A phone call or Bluetooth route change surfaces as an `AudioSessionController` event and
@@ -62,7 +62,7 @@ public struct CalibrationWizardView: View {
         VStack(spacing: LMMSpacing.sm) {
             HStack(spacing: LMMSpacing.xxs) {
                 Image(systemName: sourceIcon)
-                Text("Calibrating: \(sourceLabel)")
+                Text(lmmFormat("calibration.calibratingFormat", sourceLabel))
             }
             .font(LMMFont.eyebrow)
             .foregroundStyle(LMMColor.primary)
@@ -78,7 +78,7 @@ public struct CalibrationWizardView: View {
                 .background(Circle().fill(LMMColor.primary.opacity(0.1)))
                 .overlay(Circle().strokeBorder(LMMColor.primary.opacity(0.2), lineWidth: 1))
 
-            Text("Audio Calibration")
+            Text(lmmString("calibration.heading"))
                 .font(LMMFont.title2)
                 .foregroundStyle(LMMColor.foreground)
         }
@@ -89,7 +89,7 @@ public struct CalibrationWizardView: View {
     }
 
     private var sourceLabel: String {
-        sourceType == .ble ? "PlaySense Device" : "Microphone"
+        sourceType == .ble ? lmmString("calibration.source.ble") : lmmString("calibration.source.mic")
     }
 
     // MARK: - Step content
@@ -101,15 +101,15 @@ public struct CalibrationWizardView: View {
             introContent
         case .permissionDenied:
             messageContent(
-                "Microphone access is required to calibrate.",
+                lmmString("calibration.permissionDenied"),
                 color: LMMColor.destructive,
-                actionTitle: "Try Again"
+                actionTitle: lmmString("common.tryAgain")
             ) { Task { await model.start() } }
         case let .engineError(message):
             messageContent(
-                "Couldn't start calibration: \(message)",
+                lmmFormat("calibration.engineErrorFormat", message),
                 color: LMMColor.destructive,
-                actionTitle: "Try Again"
+                actionTitle: lmmString("common.tryAgain")
             ) { Task { await model.start() } }
         case let .running(phase):
             runningContent(phase)
@@ -124,11 +124,11 @@ public struct CalibrationWizardView: View {
 
     private var introContent: some View {
         VStack(spacing: LMMSpacing.md) {
-            Text("Use headphones for best results. Calibration takes about 15 seconds.")
+            Text(lmmString("calibration.introBody"))
                 .font(LMMFont.subheadline)
                 .foregroundStyle(LMMColor.mutedForeground)
                 .multilineTextAlignment(.center)
-            Button("Start Calibration") { Task { await model.start() } }
+            Button(lmmString("calibration.start")) { Task { await model.start() } }
                 .buttonStyle(.lmmPrimary)
         }
     }
@@ -214,9 +214,9 @@ public struct CalibrationWizardView: View {
     private static func statusLine(for phase: CalibrationPhase) -> String {
         switch phase {
         case .intro, .countingIn:
-            return "Count-in… get ready to tap!"
+            return lmmString("calibration.countIn")
         case let .tapping(beat):
-            return "Tap along! \(beat) / \(LatencyCalibrator.measuredBeats)"
+            return lmmFormat("calibration.tapAlongFormat", beat, LatencyCalibrator.measuredBeats)
         case .result, .interrupted:
             // `.interrupted` is pulled up to its own top-level `CalibrationWizardStep` (see
             // `CalibrationWizardModel`'s `onPhaseChange`), so `runningContent` never actually renders it
@@ -250,20 +250,20 @@ public struct CalibrationWizardView: View {
                     .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(LMMColor.success)
             }
-            Text("Calibrated")
+            Text(lmmString("calibration.result.calibrated"))
                 .font(LMMFont.headline)
                 .foregroundStyle(LMMColor.success)
 
             VStack(spacing: LMMSpacing.xxs) {
-                Text("Latency: \(Self.formatMs(record.offsetMs))")
-                Text("Consistency: \(Self.formatMs(record.iqrMs)) IQR")
+                Text(lmmFormat("calibration.result.latencyFormat", Self.formatMs(record.offsetMs)))
+                Text(lmmFormat("calibration.result.consistencyFormat", Self.formatMs(record.iqrMs)))
             }
             .font(.system(.footnote, design: .monospaced))
             .foregroundStyle(LMMColor.mutedForeground)
 
             if record.widenMs > 0 {
                 Label(
-                    "Calibration approximate — tolerance windows widened",
+                    lmmString("calibration.result.approximate"),
                     systemImage: "exclamationmark.triangle.fill"
                 )
                     .font(LMMFont.caption)
@@ -272,8 +272,8 @@ public struct CalibrationWizardView: View {
             }
 
             HStack(spacing: LMMSpacing.sm) {
-                Button("Recalibrate") { model.retry() }.buttonStyle(.lmmSecondary)
-                Button("Continue") { model.accept() }.buttonStyle(.lmmPrimary)
+                Button(lmmString("calibration.recalibrate")) { model.retry() }.buttonStyle(.lmmSecondary)
+                Button(lmmString("common.continue")) { model.accept() }.buttonStyle(.lmmPrimary)
             }
         }
     }
@@ -289,14 +289,14 @@ public struct CalibrationWizardView: View {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 40))
                 .foregroundStyle(LMMColor.success)
-            Text("Calibration saved")
+            Text(lmmString("calibration.stored.title"))
                 .font(LMMFont.headline)
                 .foregroundStyle(LMMColor.foreground)
-            Text("\(Self.formatMs(record.offsetMs)) latency saved for this route.")
+            Text(lmmFormat("calibration.stored.bodyFormat", Self.formatMs(record.offsetMs)))
                 .font(LMMFont.subheadline)
                 .foregroundStyle(LMMColor.mutedForeground)
             if let onFinished {
-                Button("Done", action: onFinished).buttonStyle(.lmmPrimary)
+                Button(lmmString("common.done"), action: onFinished).buttonStyle(.lmmPrimary)
             }
         }
     }
