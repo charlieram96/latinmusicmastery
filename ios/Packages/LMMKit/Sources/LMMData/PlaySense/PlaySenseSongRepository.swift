@@ -10,6 +10,14 @@ public protocol PlaySenseSongRepository: Sendable {
     func publishedSongs() async throws -> [PlaySenseSong]
 }
 
+/// Test/preview seam — no songs, ever. Default for `AppServices`' test-seam initializer so existing
+/// callers that don't care about the D27 songs surface don't need to pass one.
+public struct EmptyPlaySenseSongRepository: PlaySenseSongRepository {
+    public init() {}
+
+    public func publishedSongs() async throws -> [PlaySenseSong] { [] }
+}
+
 public struct LivePlaySenseSongRepository: PlaySenseSongRepository {
     private let client: SupabaseClient
     private let cache: ResponseCache?

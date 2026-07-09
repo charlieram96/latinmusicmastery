@@ -26,6 +26,8 @@ public final class AppServices {
     /// Injected into `StagePlayerView`'s `SessionCoordinator` so a finished ranked take persists
     /// (or queues offline) without PlaySenseUI depending on Supabase (D26).
     public let attemptSink: PlaySenseAttemptSink
+    /// Reads the published `play_sense_songs` catalog for the D27 "Practice Songs" surface.
+    public let songs: PlaySenseSongRepository
 
     public init(_ repositories: LiveRepositories) {
         self.catalog = repositories.catalog
@@ -37,6 +39,7 @@ public final class AppServices {
         self.mediaResolver = repositories.mediaResolver
         self.attempts = repositories.attempts
         self.attemptSink = repositories.attemptSink
+        self.songs = repositories.songs
     }
 
     /// Test / preview seam — inject fakes without touching Supabase.
@@ -49,7 +52,8 @@ public final class AppServices {
         cache: ResponseCache,
         mediaResolver: MediaURLResolver = PassthroughMediaURLResolver(),
         attempts: AttemptRepository = NoOpAttemptRepository(),
-        attemptSink: PlaySenseAttemptSink = NoOpAttemptSink()
+        attemptSink: PlaySenseAttemptSink = NoOpAttemptSink(),
+        songs: PlaySenseSongRepository = EmptyPlaySenseSongRepository()
     ) {
         self.catalog = catalog
         self.progress = progress
@@ -60,5 +64,6 @@ public final class AppServices {
         self.mediaResolver = mediaResolver
         self.attempts = attempts
         self.attemptSink = attemptSink
+        self.songs = songs
     }
 }

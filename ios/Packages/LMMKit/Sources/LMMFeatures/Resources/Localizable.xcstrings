@@ -481,6 +481,29 @@
         }
       }
     },
+    "home.practiceSongs.eyebrow": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Play & score" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Toca y anota" } }
+      }
+    },
+    "home.practiceSongs.rowSubtitle": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Score-graded songs to play along with" } },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canciones con puntuación para tocar junto a la pista"
+          }
+        }
+      }
+    },
+    "home.practiceSongs.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Practice Songs" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Canciones de práctica" } }
+      }
+    },
     "locked.dismiss": {
       "localizations": {
         "en": {
@@ -607,6 +630,63 @@
             "value": "Mis cursos"
           }
         }
+      }
+    },
+    "playSense.songs.difficulty.advanced": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Advanced" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Avanzado" } }
+      }
+    },
+    "playSense.songs.difficulty.beginner": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Beginner" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Principiante" } }
+      }
+    },
+    "playSense.songs.difficulty.intermediate": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Intermediate" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Intermedio" } }
+      }
+    },
+    "playSense.songs.empty.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practice songs coming soon — check back for new songs to play and score."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canciones de práctica próximamente: vuelve pronto para ver nuevas canciones para tocar y puntuar."
+          }
+        }
+      }
+    },
+    "playSense.songs.empty.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Coming soon" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Próximamente" } }
+      }
+    },
+    "playSense.songs.loadError": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Couldn't load this song. Please try again." } },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo cargar esta canción. Inténtalo de nuevo."
+          }
+        }
+      }
+    },
+    "playSense.songs.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Practice Songs" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Canciones de práctica" } }
       }
     },
     "profile.help": {

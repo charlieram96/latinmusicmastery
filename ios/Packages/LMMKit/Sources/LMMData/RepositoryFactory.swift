@@ -17,6 +17,8 @@ public struct LiveRepositories: Sendable {
     /// The injected `SessionCoordinator.attemptSink` — an `OfflineAttemptQueue` wrapping
     /// `attempts` with an on-disk retry queue (D26).
     public let attemptSink: PlaySenseAttemptSink
+    /// Reads the published `play_sense_songs` catalog for the D27 "Practice Songs" surface.
+    public let songs: PlaySenseSongRepository
 
     public init(
         catalog: CatalogRepository,
@@ -27,7 +29,8 @@ public struct LiveRepositories: Sendable {
         cache: ResponseCache,
         mediaResolver: MediaURLResolver = PassthroughMediaURLResolver(),
         attempts: AttemptRepository,
-        attemptSink: PlaySenseAttemptSink
+        attemptSink: PlaySenseAttemptSink,
+        songs: PlaySenseSongRepository
     ) {
         self.catalog = catalog
         self.progress = progress
@@ -38,6 +41,7 @@ public struct LiveRepositories: Sendable {
         self.mediaResolver = mediaResolver
         self.attempts = attempts
         self.attemptSink = attemptSink
+        self.songs = songs
     }
 }
 
@@ -57,7 +61,8 @@ public extension SupabaseService {
             cache: cache,
             mediaResolver: PassthroughMediaURLResolver(),
             attempts: attempts,
-            attemptSink: attemptQueue
+            attemptSink: attemptQueue,
+            songs: LivePlaySenseSongRepository(client: client, cache: cache)
         )
     }
 }

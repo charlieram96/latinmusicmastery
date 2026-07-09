@@ -56,6 +56,7 @@ struct HomeView: View {
                     continueSection(continueItem)
                 }
                 browseSection
+                practiceSongsSection
             }
             .padding(.horizontal, LMMSpacing.screen)
             .padding(.top, LMMSpacing.md)
@@ -121,6 +122,48 @@ struct HomeView: View {
             }
             .padding(.horizontal, -LMMSpacing.screen)
             .padding(.leading, LMMSpacing.screen)
+        }
+    }
+
+    /// D27: a light, design-system-styled entry point into the standalone "Practice Songs" catalog
+    /// (`PracticeSongsView`). Always shown — `play_sense_songs` has zero rows in prod today, but the
+    /// destination itself handles that with a proper empty state, so Home doesn't need to know or care.
+    private var practiceSongsSection: some View {
+        VStack(alignment: .leading, spacing: LMMSpacing.md) {
+            SectionHeader(
+                eyebrow: lmmString("home.practiceSongs.eyebrow"),
+                title: lmmString("home.practiceSongs.title")
+            )
+            NavigationLink(value: CatalogRoute.practiceSongs) {
+                HStack(spacing: LMMSpacing.sm) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
+                            .fill(LMMColor.primary.opacity(0.12))
+                        Image(systemName: "music.note")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(LMMColor.primary)
+                    }
+                    .frame(width: 44, height: 44)
+                    Text(lmmString("home.practiceSongs.rowSubtitle"))
+                        .font(LMMFont.subheadline)
+                        .foregroundStyle(LMMColor.foreground)
+                        .multilineTextAlignment(.leading)
+                    Spacer(minLength: LMMSpacing.xs)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(LMMColor.mutedForeground)
+                }
+                .padding(LMMSpacing.md)
+                .background(
+                    RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
+                        .fill(LMMColor.surface)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: LMMRadius.md, style: .continuous)
+                        .strokeBorder(LMMColor.border, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
         }
     }
 

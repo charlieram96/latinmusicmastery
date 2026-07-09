@@ -7,4 +7,6 @@ public enum CatalogRoute: Hashable {
     case course(UUID)
     /// The lesson viewer for a class (a placeholder until Stage B).
     case classViewer(courseId: UUID, classId: UUID)
+    /// The standalone "Practice Songs" list (D27) — published `play_sense_songs`, reachable from Home.
+    case practiceSongs
 }

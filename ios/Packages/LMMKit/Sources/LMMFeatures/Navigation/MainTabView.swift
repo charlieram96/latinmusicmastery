@@ -84,6 +84,8 @@ struct CatalogDestinations: ViewModifier {
                 CourseDetailView(courseId: courseId)
             case .classViewer(let courseId, let classId):
                 ClassViewerView(courseId: courseId, classId: classId)
+            case .practiceSongs:
+                PracticeSongsView()
             }
         }
     }
