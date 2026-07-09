@@ -45,6 +45,9 @@ targets:
         SUPABASE_ANON_KEY: "$(SUPABASE_ANON_KEY)"
         NSMicrophoneUsageDescription: "PlaySense listens to your instrument to score your practice."
         NSBluetoothAlwaysUsageDescription: "Connect your PlaySense device to play."
+        # The app uses only standard/exempt encryption (HTTPS). Declaring this skips the App Store
+        # Connect export-compliance prompt on every TestFlight/App Store upload.
+        ITSAppUsesNonExemptEncryption: false
     dependencies:
       - package: LMMKit
         product: LMMFeatures

@@ -15,9 +15,16 @@ From `ios/Packages/LMMKit`:
 
 ```
 xcodebuild test -scheme LMMKit-Package \
-  -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.3.1' \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
   -skipPackagePluginValidation
 ```
+
+Don't pin a concrete `OS=` — a hardcoded runtime version rots as Xcode/simulator images drop older
+runtimes. Omitting `OS=` lets `xcodebuild` resolve whatever iOS runtime the named device has
+installed; if it can't match, run `xcrun simctl list devices available` and use a simulator from that
+list (name or `id=<UDID>`). CI does this automatically — see the "Select an available iOS Simulator"
+step in `.github/workflows/ios.yml`, which reads the runner's installed runtimes and builds the
+destination from the newest available iPhone.
 
 ### Opt-in gated tests (`RUN_*=1`)
 
