@@ -109,6 +109,8 @@ public struct FileAttemptQueueStore: AttemptQueueStore {
             at: fileURL.deletingLastPathComponent(),
             withIntermediateDirectories: true
         )
-        try? data.write(to: fileURL, options: .atomic)
+        // Queued attempts can carry the signed-in user's practice data — protect the file at rest so
+        // it isn't readable before the device is first unlocked after a boot.
+        try? data.write(to: fileURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
     }
 }

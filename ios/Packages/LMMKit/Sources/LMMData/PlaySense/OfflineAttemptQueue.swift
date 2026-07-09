@@ -191,7 +191,7 @@ public actor OfflineAttemptQueue: PlaySenseAttemptSink {
         let depth = store.load().count
         logger.error(
             """
-            \(stage, privacy: .public) failed: \(String(describing: error), privacy: .public) — \
+            \(stage, privacy: .public) failed: \(String(describing: error), privacy: .private) — \
             queue depth \(depth, privacy: .public)
             """
         )
