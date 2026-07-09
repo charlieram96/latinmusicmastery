@@ -123,21 +123,71 @@ jobs:
         working-directory: ios
         run: swiftlint lint --strict
 
-  # TODO(ios-app): re-enable once xcodegen is available on the CI runner (and the
-  # LMMKit dependency graph is past the scaffold stage). Wire fully in a later task.
-  # simulator-build:
-  #   name: App Build (iOS Simulator)
-  #   runs-on: macos-15
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Install XcodeGen
-  #       run: brew install xcodegen
-  #     - name: Generate project
-  #       working-directory: ios
-  #       run: xcodegen generate
-  #     - name: Build for simulator
-  #       working-directory: ios
-  #       run: |
-  #         xcodebuild -scheme LatinMusicMastery \
-  #           -destination 'platform=iOS Simulator,name=iPhone 16' \
-  #           build
+  simulator-build:
+    name: App Build (iOS Simulator)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        working-directory: ios
+        run: xcodegen generate
+      # Same dynamic-selection rule as the package-tests job: a hardcoded `OS=`/device pairing rots
+      # as GitHub's runner images drop older simulator runtimes, so ask the runner what it actually
+      # has and build an `id=<UDID>` destination from the newest available iPhone.
+      - name: Select an available iOS Simulator
+        id: simulator
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import re
+          import subprocess
+          import sys
+
+          raw = subprocess.check_output(
+              ["xcrun", "simctl", "list", "devices", "available", "--json"]
+          )
+          runtimes = json.loads(raw)["devices"]
+
+
+          def runtime_version(key):
+              match = re.match(
+                  r"com\.apple\.CoreSimulator\.SimRuntime\.iOS-(\d+)-(\d+)(?:-(\d+))?$", key
+              )
+              if not match:
+                  return None
+              major, minor, patch = match.groups()
+              return (int(major), int(minor), int(patch or 0))
+
+
+          candidates = []
+          for key, devices in runtimes.items():
+              version = runtime_version(key)
+              if version is None:
+                  continue
+              for device in devices:
+                  if device.get("isAvailable") and device["name"].startswith("iPhone"):
+                      candidates.append((version, device["name"], device["udid"]))
+
+          if not candidates:
+              print("::error::No available iPhone simulator found on this runner.", file=sys.stderr)
+              sys.exit(1)
+
+          newest_version = max(c[0] for c in candidates)
+          newest = [c for c in candidates if c[0] == newest_version]
+          newest.sort(key=lambda c: (len(c[1]), c[1]))
+          _, name, udid = newest[0]
+
+          version_string = ".".join(str(part) for part in newest_version)
+          print(f"Selected simulator: {name} ({udid}), runtime iOS {version_string}", file=sys.stderr)
+          print(f"udid={udid}")
+          print(f"name={name}")
+          PY
+      - name: Build for simulator
+        working-directory: ios
+        run: |
+          echo "Building against ${{ steps.simulator.outputs.name }} (${{ steps.simulator.outputs.udid }})"
+          xcodebuild build \
+            -scheme LatinMusicMastery \
+            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}'
