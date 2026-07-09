@@ -4,11 +4,11 @@ import XCTest
 
 @testable import LMMData
 
-/// Pins ``AttemptInsertRow``/``AttemptEventInsertRow`` (the exact wire shape `LiveAttemptRepository`
-/// sends) against the live DB's column names — verified directly against `information_schema.columns`
-/// for `play_sense_attempts`/`play_sense_attempt_events` and against `saveAttempt`'s insert objects
-/// (`app/actions/play-sense.ts`) — and pins ``PlaySenseAttempt``'s decode against a captured-shape
-/// fixture (A2's convention).
+/// Pins ``AttemptInsertRow``/``AttemptEventInsertRow`` (the exact wire shape `LiveAttemptRepository
+/// .insertAttempt`/`.insertEvents` send) against the live DB's column names — verified directly
+/// against `information_schema.columns` for `play_sense_attempts`/`play_sense_attempt_events` and
+/// against the web's `saveAttempt` action's insert objects (`app/actions/play-sense.ts`) — and pins
+/// ``PlaySenseAttempt``'s decode against a captured-shape fixture (A2's convention).
 final class AttemptRowCodingTests: XCTestCase {
 
     private static let sampleStats = AttemptStats(

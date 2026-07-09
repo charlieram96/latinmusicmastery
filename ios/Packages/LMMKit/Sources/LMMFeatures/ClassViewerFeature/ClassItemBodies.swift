@@ -6,7 +6,9 @@ import LMMModels
 import SwiftUI
 
 /// EXERCISE / JAM_SESSION fallback (web's non-PlaySense branch): description, bpm/key badges, an
-/// audio player when `audio_url` is present, and a "coming soon" note when a score is attached.
+/// audio player when `audio_url` is present, and — when a score is attached — a link into the real
+/// PlaySense grading stage (`PlaySenseExerciseLauncher`, all builds since D26; fix round 1 corrects
+/// this comment, which previously described the pre-D26 DEBUG-gated "coming soon" placeholder).
 struct ExerciseJamFallbackCard: View {
     let item: ClassItem
     let resolver: MediaURLResolver

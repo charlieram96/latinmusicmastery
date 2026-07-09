@@ -10,19 +10,34 @@ public struct QueuedAttempt: Codable, Equatable, Sendable {
     public let stats: AttemptStats
     public let events: [EventResult]
     public let queuedAt: Date
+    /// Fix round 1 (D26 review, finding 1) — resume semantics: set once `AttemptRepository
+    /// .insertAttempt(...)` has already succeeded for this take but `insertEvents(...)` then
+    /// failed (a mid-batch partial failure). `nil` means "nothing inserted yet" — the ordinary
+    /// case where the live save never even reached the network (or its first insert failed) — and
+    /// a retry re-runs BOTH steps from scratch. Once non-`nil`, every retry (`OfflineAttemptQueue
+    /// .attemptLiveSave`) skips `insertAttempt` entirely and calls ONLY `insertEvents(attemptId:
+    /// events:)` against this SAME id — the fix for the pre-fix-round bug where a re-run of the
+    /// whole two-step write inserted a SECOND attempt row while the first sat events-less forever
+    /// (no schema constraint catches that — verified live). `Optional` so a pre-fix-round on-disk
+    /// queue file (written before this field existed) still decodes fine: the synthesized
+    /// `Decodable` treats a missing key on an `Optional` property as `nil`, no schema-version bump
+    /// needed.
+    public let persistedAttemptId: UUID?
 
     public init(
         localId: UUID = UUID(),
         exerciseId: String,
         stats: AttemptStats,
         events: [EventResult],
-        queuedAt: Date
+        queuedAt: Date,
+        persistedAttemptId: UUID? = nil
     ) {
         self.localId = localId
         self.exerciseId = exerciseId
         self.stats = stats
         self.events = events
         self.queuedAt = queuedAt
+        self.persistedAttemptId = persistedAttemptId
     }
 }
 

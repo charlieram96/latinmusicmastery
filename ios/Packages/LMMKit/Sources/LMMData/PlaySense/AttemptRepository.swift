@@ -15,12 +15,24 @@ import Supabase
 /// `pitchAccuracy` on `AttemptStats` is intentionally NOT written: the live schema has no such
 /// column (verified), and the web's `saveAttempt` payload doesn't send it either — an iOS/pitched-
 /// instrument-only stat with no wire representation yet.
+///
+/// Fix round 1 (D26 review, finding 1): the original shape was a single `saveAttempt(...)` doing
+/// both inserts. `OfflineAttemptQueue` (LMMData) is what actually calls this — its retry loop needs
+/// to tell the two inserts apart so a mid-batch failure (attempt row lands, events batch doesn't)
+/// can resume from the events step instead of re-running the whole thing and inserting a SECOND
+/// attempt row while the first sits events-less. See `OfflineAttemptQueue`'s doc comment for the
+/// resume mechanics and the (now much narrower) remaining crash window.
 public protocol AttemptRepository: Sendable {
-    /// Insert one attempt + its per-event breakdown. Returns the new `play_sense_attempts.id`.
-    /// Practice-mode (unranked) takes are never passed here — that decision is made by the caller
+    /// Insert one `play_sense_attempts` row (no events). Returns the new row's `id`. Practice-mode
+    /// (unranked) takes are never passed here — that decision is made by the caller
     /// (`SessionCoordinator`), matching the web (which has no unranked concept at all).
     @discardableResult
-    func saveAttempt(exerciseId: UUID, stats: AttemptStats, events: [EventResult]) async throws -> UUID
+    func insertAttempt(exerciseId: UUID, stats: AttemptStats) async throws -> UUID
+
+    /// Insert the per-event breakdown for an attempt that already exists (its `id` from
+    /// `insertAttempt`). A no-op for an empty `events` array — matches the previous combined
+    /// `saveAttempt`'s behavior of skipping the batch insert entirely for a zero-event take.
+    func insertEvents(attemptId: UUID, events: [EventResult]) async throws
 
     /// Recent attempts for one exercise, newest first, capped at `limit`. Mirrors `getUserAttempts`
     /// (the web also supports an all-exercises variant when its `exerciseId` argument is omitted;
@@ -38,7 +50,7 @@ public struct LiveAttemptRepository: AttemptRepository {
     }
 
     @discardableResult
-    public func saveAttempt(exerciseId: UUID, stats: AttemptStats, events: [EventResult]) async throws -> UUID {
+    public func insertAttempt(exerciseId: UUID, stats: AttemptStats) async throws -> UUID {
         let userId = try await sessionUserProvider.currentUserId()
         let payload = AttemptInsertRow(userId: userId, exerciseId: exerciseId, stats: stats)
 
@@ -50,15 +62,16 @@ public struct LiveAttemptRepository: AttemptRepository {
             .execute()
             .value
 
-        if !events.isEmpty {
-            let eventRows = events.map { AttemptEventInsertRow(attemptId: inserted.id, event: $0) }
-            _ = try await client
-                .from("play_sense_attempt_events")
-                .insert(eventRows)
-                .execute()
-        }
-
         return inserted.id
+    }
+
+    public func insertEvents(attemptId: UUID, events: [EventResult]) async throws {
+        guard !events.isEmpty else { return }
+        let eventRows = events.map { AttemptEventInsertRow(attemptId: attemptId, event: $0) }
+        _ = try await client
+            .from("play_sense_attempt_events")
+            .insert(eventRows)
+            .execute()
     }
 
     public func recentAttempts(exerciseId: UUID, limit: Int) async throws -> [PlaySenseAttempt] {
@@ -77,13 +90,16 @@ public struct LiveAttemptRepository: AttemptRepository {
 
 /// Default for previews/tests that don't exercise attempt persistence — mirrors
 /// `PassthroughMediaURLResolver`'s role for `AppServices.mediaResolver`. Never touches the
-/// network; `saveAttempt` fabricates a local id, `recentAttempts` returns empty.
+/// network; `insertAttempt` fabricates a local id, `insertEvents` no-ops, `recentAttempts`
+/// returns empty.
 public struct NoOpAttemptRepository: AttemptRepository {
     public init() {}
 
-    public func saveAttempt(exerciseId: UUID, stats: AttemptStats, events: [EventResult]) async throws -> UUID {
+    public func insertAttempt(exerciseId: UUID, stats: AttemptStats) async throws -> UUID {
         UUID()
     }
+
+    public func insertEvents(attemptId: UUID, events: [EventResult]) async throws {}
 
     public func recentAttempts(exerciseId: UUID, limit: Int) async throws -> [PlaySenseAttempt] {
         []
@@ -94,7 +110,7 @@ public struct NoOpAttemptRepository: AttemptRepository {
 // pin these against the live DB's exact column names via `@testable import LMMData`).
 
 /// Insert payload for `play_sense_attempts` — exact column names verified against the live DB
-/// (`information_schema.columns`) and against `saveAttempt`'s insert object.
+/// (`information_schema.columns`) and against `insertAttempt`'s insert object.
 struct AttemptInsertRow: Encodable, Equatable {
     let userId: UUID
     let exerciseId: UUID
@@ -146,7 +162,7 @@ struct AttemptInsertRow: Encodable, Equatable {
     }
 }
 
-/// Insert payload for one `play_sense_attempt_events` row — exact shape from `saveAttempt`'s
+/// Insert payload for one `play_sense_attempt_events` row — exact shape from `insertEvents`'s
 /// `eventRows` map: `{attempt_id, event_index, grade, offset_ms, timing, onset_energy}`. The
 /// richer iOS-only `EventResult` fields (pitch/technique/surface detail) have no column on this
 /// table and are never sent — parity with the web's event insert object.

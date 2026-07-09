@@ -14,6 +14,17 @@ import QuartzCore
 // stays disabled for the whole file (inherent — there's no "this declaration" to scope it to);
 // `type_body_length` is disabled/re-enabled around just the primary class body below (closing brace),
 // rather than left as an indefinite blanket disable.
+//
+// Fix round 1 (D26 review, finding 6 — this file had grown to 840 lines): the D26 attempt-
+// persistence glue is NOT in the same boat as the BLE methods above — `persistAttemptIfNeeded`/
+// `handleForegrounding` only touch `attemptSink` (already `public`), `attemptPersistState`, and
+// `hasPersistedCurrentAttempt`, none of which are `machine`/`engine`/`scorer`-shaped mutable audio
+// state shared with a dozen other methods. Both moved out to `SessionCoordinator+Persistence.swift`.
+// Swift extensions can't declare stored properties, so `attemptPersistState`'s setter and
+// `hasPersistedCurrentAttempt` itself widen from `private` to `internal` (same relaxation, same
+// rationale `bleManager`/`machine` already use below) purely so that file can reach them — nothing
+// outside the module gains any new access (`attemptPersistState`'s public surface is still
+// read-only).
 // swiftlint:disable file_length
 // swiftlint:disable type_body_length
 
@@ -63,7 +74,9 @@ public final class SessionCoordinator {
     public var attemptSink: PlaySenseAttemptSink?
     /// The results panel's persistence affordance — `StageResultsView` shows a spinner while
     /// `.saving` and a subtle "will sync" note when `.queued`; `.saved`/`.idle` show nothing extra.
-    public private(set) var attemptPersistState: AttemptPersistState = .idle
+    /// `internal(set)` (not `private(set)`) so `SessionCoordinator+Persistence.swift` — a
+    /// different file, same module/type — can set it; the public surface stays read-only.
+    public internal(set) var attemptPersistState: AttemptPersistState = .idle
 
     /// The full expected-event timeline for the current take (for the debug stage's upcoming-events list).
     public private(set) var expectedEvents: [ExpectedEvent] = []
@@ -140,8 +153,10 @@ public final class SessionCoordinator {
     /// it ends up getting called (`stopSession()` is already documented idempotent via the phase
     /// machine, but this is the belt-and-suspenders guard the offline-queue design leans on to rule
     /// out double-fire — see `OfflineAttemptQueue`'s doc comment). Reset per take in
-    /// `resetTakeState()`.
-    private var hasPersistedCurrentAttempt = false
+    /// `resetTakeState()`. `internal` (not `private`) — same reason as `bleManager`/`machine`
+    /// below, but here it's `SessionCoordinator+Persistence.swift` (fix round 1, finding 6) that
+    /// needs the cross-file access rather than a test target.
+    var hasPersistedCurrentAttempt = false
 
     private static let hudInterval: CFTimeInterval = 0.1 // ~10 Hz
 
@@ -589,24 +604,8 @@ public final class SessionCoordinator {
         }
     }
 
-    /// D26: hand the just-finished take to the injected ``PlaySenseAttemptSink`` — unless this take
-    /// ran in practice mode (the Bluetooth-blocked escape hatch), which the web has no equivalent of
-    /// and is therefore never persisted (parity-safe: not writing beats writing an attempt shape the
-    /// web could never have produced). `internal` (not `private`) for the same testability reason as
-    /// `machine`/`bleManager`: `AttemptPersistenceTests` drives this directly instead of a real take
-    /// (mic permission + a real `GameAudioEngine` make that environment-sensitive — see
-    /// `SessionEndToEndSmokeTests`'s module doc).
-    func persistAttemptIfNeeded(exerciseId: String, stats: AttemptStats, events: [EventResult]) {
-        guard !machine.isPracticeMode else { return } // attemptPersistState stays .idle
-        guard let attemptSink else { return } // no sink injected (DEBUG harnesses/previews) → .idle
-        guard !hasPersistedCurrentAttempt else { return } // one persist call per take, no matter what
-        hasPersistedCurrentAttempt = true
-        attemptPersistState = .saving
-        Task { @MainActor [weak self] in
-            let outcome = await attemptSink.record(exerciseId: exerciseId, stats: stats, events: events)
-            self?.attemptPersistState = outcome == .saved ? .saved : .queued
-        }
-    }
+    // `persistAttemptIfNeeded` (called just above) lives in `SessionCoordinator+Persistence.swift`
+    // (fix round 1, finding 6) along with `handleForegrounding`.
 
     /// Retry after results/interruption — re-arm to `ready`.
     ///
@@ -778,13 +777,9 @@ extension SessionCoordinator {
         abortTake(.backgrounded)
     }
 
-    /// SwiftUI `scenePhase` → `.active` bridge (D26): opportunistically flushes any attempts still
-    /// stuck in the offline queue from a previous failed save. Fire-and-forget; never blocks the UI,
-    /// and a no-op whenever no sink is injected.
-    public func handleForegrounding() {
-        guard let attemptSink else { return }
-        Task { @MainActor in await attemptSink.drainPending() }
-    }
+    // `handleForegrounding` (the `scenePhase` → `.active` bridge) lives in
+    // `SessionCoordinator+Persistence.swift` (fix round 1, finding 6) along with
+    // `persistAttemptIfNeeded`.
 
     private func abortTake(_ reason: SessionInterruption) {
         guard machine.isActive else { return }

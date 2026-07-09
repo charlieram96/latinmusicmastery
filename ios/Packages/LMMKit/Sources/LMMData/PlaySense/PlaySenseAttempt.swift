@@ -1,8 +1,8 @@
 import Foundation
 
 /// A row of `play_sense_attempts` (verified against the live DB — see ``AttemptRepository``'s doc
-/// comment). Read-only from the app's perspective (writes go through ``AttemptRepository/saveAttempt``,
-/// which never round-trips a full row back — only the new `id`).
+/// comment). Read-only from the app's perspective (writes go through ``AttemptRepository``'s
+/// `insertAttempt`/`insertEvents`, which never round-trip a full row back — only the new `id`).
 public struct PlaySenseAttempt: Codable, Identifiable, Equatable, Sendable {
     public let id: UUID
     public let userId: UUID

@@ -47,7 +47,7 @@ struct PlaySenseExerciseLauncher: View {
 
     private func load() async {
         guard let scoreDocumentId = item.scoreDocumentId else {
-            loaded = .failed("This exercise has no attached score.")
+            loaded = .failed(lmmString("viewer.playsense.noScore"))
             return
         }
         loaded = .loading
@@ -62,7 +62,7 @@ struct PlaySenseExerciseLauncher: View {
             )
             loaded = .loaded(exercise)
         } catch {
-            loaded = .failed("Couldn't load exercise: \(error.localizedDescription)")
+            loaded = .failed(lmmFormat("viewer.playsense.loadError", error.localizedDescription))
         }
     }
 }

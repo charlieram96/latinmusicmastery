@@ -1475,6 +1475,18 @@
         "es": { "stringUnit": { "state": "translated", "value": "Parte %1$lld de %2$lld" } }
       }
     },
+    "viewer.playsense.loadError": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Couldn't load exercise: %@" } },
+        "es": { "stringUnit": { "state": "translated", "value": "No se pudo cargar el ejercicio: %@" } }
+      }
+    },
+    "viewer.playsense.noScore": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "This exercise has no attached score." } },
+        "es": { "stringUnit": { "state": "translated", "value": "Este ejercicio no tiene una partitura adjunta." } }
+      }
+    },
     "viewer.playsense.play": {
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Play exercise" } },

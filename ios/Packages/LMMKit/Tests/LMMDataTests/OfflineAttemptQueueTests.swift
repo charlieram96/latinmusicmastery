@@ -5,9 +5,12 @@ import XCTest
 @testable import LMMData
 
 /// `OfflineAttemptQueue` behavior against a mock ``AttemptRepository`` (the brief's own wording
-/// for this bullet) — enqueue/drain semantics, the ~50 cap with oldest-dropped, and serialize/
-/// restore via a real (temp-file) `AttemptQueueStore`. A genuine network-layer failure (no mock)
-/// is separately covered by `OfflineAttemptQueueNetworkFailureTests`.
+/// for this bullet) — enqueue/drain semantics, the ~50 cap with oldest-dropped, serialize/restore
+/// via a real (temp-file) `AttemptQueueStore`, and (fix round 1, finding 1) the mid-batch
+/// partial-failure resume matrix: an attempt insert that succeeds but whose events insert fails
+/// must retry ONLY the events batch, against the SAME attempt id, on every subsequent drain — never
+/// re-inserting the attempt row. A genuine network-layer failure (no mock) is separately covered by
+/// `OfflineAttemptQueueNetworkFailureTests`.
 final class OfflineAttemptQueueTests: XCTestCase {
 
     private var tempFile: URL!
@@ -37,7 +40,7 @@ final class OfflineAttemptQueueTests: XCTestCase {
         [EventResult(eventIndex: 0, grade: .perfect, offsetMs: 5, timing: .onTime, onsetEnergy: 1)]
     }
 
-    // MARK: - record()
+    // MARK: - record() — fully atomic success/failure
 
     func testRecordSavesLiveWhenRepositorySucceeds() async {
         let repository = FakeAttemptRepository()
@@ -46,13 +49,15 @@ final class OfflineAttemptQueueTests: XCTestCase {
         let outcome = await queue.record(exerciseId: UUID().uuidString, stats: makeStats(), events: makeEvents())
 
         XCTAssertEqual(outcome, .saved)
-        let savedCount = await repository.saveCallCount
-        XCTAssertEqual(savedCount, 1)
+        let attemptInserts = await repository.insertAttemptCallCount
+        XCTAssertEqual(attemptInserts, 1)
+        let eventInserts = await repository.insertEventsCallCount
+        XCTAssertEqual(eventInserts, 1)
         XCTAssertEqual(FileAttemptQueueStore(fileURL: tempFile).load(), [], "a successful save must not touch disk")
     }
 
-    func testRecordQueuesToDiskWhenRepositoryFails() async {
-        let repository = FakeAttemptRepository(shouldThrow: true)
+    func testRecordQueuesToDiskWhenTheAttemptInsertItselfFails() async {
+        let repository = FakeAttemptRepository(failure: .attemptInsert)
         let store = FileAttemptQueueStore(fileURL: tempFile)
         let queue = OfflineAttemptQueue(repository: repository, store: store)
         let exerciseId = UUID().uuidString
@@ -63,6 +68,12 @@ final class OfflineAttemptQueueTests: XCTestCase {
         let pending = store.load()
         XCTAssertEqual(pending.count, 1)
         XCTAssertEqual(pending.first?.exerciseId, exerciseId)
+        XCTAssertNil(
+            pending.first?.persistedAttemptId,
+            "the attempt row never landed — a retry must re-run BOTH steps from scratch"
+        )
+        let eventInserts = await repository.insertEventsCallCount
+        XCTAssertEqual(eventInserts, 0, "insertEvents must never be attempted when insertAttempt itself failed")
     }
 
     func testMalformedExerciseIdIsDroppedRatherThanQueuedForever() async {
@@ -74,15 +85,100 @@ final class OfflineAttemptQueueTests: XCTestCase {
 
         XCTAssertEqual(outcome, .saved, "treated as handled — nothing retriable, dropped instead of queued forever")
         XCTAssertEqual(store.load(), [])
-        let savedCount = await repository.saveCallCount
-        XCTAssertEqual(savedCount, 0, "the repository is never called with an unparsable id")
+        let attemptInserts = await repository.insertAttemptCallCount
+        XCTAssertEqual(attemptInserts, 0, "the repository is never called with an unparsable id")
     }
 
-    // MARK: - drainPending()
+    // MARK: - record() — mid-batch partial failure (fix round 1, finding 1)
+
+    func testPartialFailureQueuesWithThePersistedAttemptIdAndRetryOnlyInsertsEvents() async throws {
+        let store = FileAttemptQueueStore(fileURL: tempFile)
+        let failingEvents = FakeAttemptRepository(failure: .eventsInsert)
+        let queue = OfflineAttemptQueue(repository: failingEvents, store: store)
+        let exerciseId = UUID().uuidString
+
+        let outcome = await queue.record(exerciseId: exerciseId, stats: makeStats(), events: makeEvents())
+
+        XCTAssertEqual(outcome, .queued)
+        let attemptInserts = await failingEvents.insertAttemptCallCount
+        XCTAssertEqual(attemptInserts, 1, "the attempt row itself must be inserted exactly once")
+        let pending = store.load()
+        XCTAssertEqual(pending.count, 1)
+        let persistedId = try XCTUnwrap(
+            pending.first?.persistedAttemptId,
+            "the successfully-inserted attempt id must be persisted to disk so a retry resumes instead of re-inserting"
+        )
+
+        // "Relaunch" with events now succeeding too — a brand-new repository/queue instance,
+        // same disk store (matching the existing recovery tests' pattern).
+        let recovering = FakeAttemptRepository()
+        let recoveredQueue = OfflineAttemptQueue(repository: recovering, store: store)
+        await recoveredQueue.drainPending()
+
+        XCTAssertEqual(store.load(), [], "fully saved now — nothing left queued")
+        let recoveredAttemptInserts = await recovering.insertAttemptCallCount
+        XCTAssertEqual(recoveredAttemptInserts, 0, "a resumed retry must NOT insert a second attempt row")
+        let recoveredEventInserts = await recovering.insertEventsCallCount
+        XCTAssertEqual(recoveredEventInserts, 1)
+        let attemptIdsUsed = await recovering.insertEventsAttemptIds
+        XCTAssertEqual(attemptIdsUsed, [persistedId], "events must be retried against the SAME attempt id")
+    }
+
+    func testRepeatedEventsFailureKeepsRetryingTheSameAttemptIdWithoutDuplicatingTheAttempt() async {
+        let store = FileAttemptQueueStore(fileURL: tempFile)
+        let failingEvents = FakeAttemptRepository(failure: .eventsInsert)
+        let queue = OfflineAttemptQueue(repository: failingEvents, store: store)
+        _ = await queue.record(exerciseId: UUID().uuidString, stats: makeStats(), events: makeEvents())
+        let firstId = store.load().first?.persistedAttemptId
+        XCTAssertNotNil(firstId)
+
+        await queue.drainPending() // still failing events, same repository instance
+        await queue.drainPending() // again
+
+        let pending = store.load()
+        XCTAssertEqual(pending.count, 1)
+        XCTAssertEqual(
+            pending.first?.persistedAttemptId, firstId,
+            "the persisted id must not change across repeated failed retries"
+        )
+        let attemptInserts = await failingEvents.insertAttemptCallCount
+        XCTAssertEqual(attemptInserts, 1, "still only ONE attempt row across every retry")
+        let eventInserts = await failingEvents.insertEventsCallCount
+        XCTAssertEqual(eventInserts, 3, "one from record() + two more drains, all against the same id")
+    }
+
+    func testDrainPendingPersistsTheAttemptIdToDiskEvenWhenEventsStillFailOnRetry() async {
+        // A fully-failed queued item already on disk from an earlier "no network at all" failure —
+        // no persistedAttemptId yet.
+        let store = FileAttemptQueueStore(fileURL: tempFile)
+        let exerciseId = UUID().uuidString
+        store.save([QueuedAttempt(exerciseId: exerciseId, stats: makeStats(), events: makeEvents(), queuedAt: Date())])
+
+        // The network partially recovers: the attempt insert now succeeds, but events still fail.
+        let partiallyRecovered = FakeAttemptRepository(failure: .eventsInsert)
+        let queue = OfflineAttemptQueue(repository: partiallyRecovered, store: store)
+
+        await queue.drainPending()
+
+        let pending = store.load()
+        XCTAssertEqual(pending.count, 1, "still queued — events insert failed")
+        XCTAssertNotNil(
+            pending.first?.persistedAttemptId,
+            """
+            even though the queued item count didn't change, the newly-inserted attempt id MUST be \
+            written to disk — otherwise a crash/relaunch before the next successful drain would forget \
+            it and re-insert a duplicate attempt row on the following retry
+            """
+        )
+        let attemptInserts = await partiallyRecovered.insertAttemptCallCount
+        XCTAssertEqual(attemptInserts, 1)
+    }
+
+    // MARK: - drainPending() — fully atomic success/failure
 
     func testDrainPendingFlushesAQueuedAttemptOnceTheRepositorySucceeds() async {
         let store = FileAttemptQueueStore(fileURL: tempFile)
-        let failing = FakeAttemptRepository(shouldThrow: true)
+        let failing = FakeAttemptRepository(failure: .attemptInsert)
         let queue = OfflineAttemptQueue(repository: failing, store: store)
         let exerciseId = UUID().uuidString
         _ = await queue.record(exerciseId: exerciseId, stats: makeStats(), events: makeEvents())
@@ -95,13 +191,15 @@ final class OfflineAttemptQueueTests: XCTestCase {
         await recovered.drainPending()
 
         XCTAssertEqual(store.load(), [], "the queued attempt must be gone from disk once it saves live")
-        let savedCount = await succeeding.saveCallCount
-        XCTAssertEqual(savedCount, 1)
+        let attemptInserts = await succeeding.insertAttemptCallCount
+        XCTAssertEqual(attemptInserts, 1)
+        let eventInserts = await succeeding.insertEventsCallCount
+        XCTAssertEqual(eventInserts, 1)
     }
 
     func testDrainPendingLeavesStillFailingItemsQueued() async {
         let store = FileAttemptQueueStore(fileURL: tempFile)
-        let failing = FakeAttemptRepository(shouldThrow: true)
+        let failing = FakeAttemptRepository(failure: .attemptInsert)
         let queue = OfflineAttemptQueue(repository: failing, store: store)
         _ = await queue.record(exerciseId: UUID().uuidString, stats: makeStats(), events: makeEvents())
 
@@ -124,15 +222,15 @@ final class OfflineAttemptQueueTests: XCTestCase {
 
         XCTAssertEqual(outcome, .saved)
         XCTAssertEqual(store.load(), [], "the stale backlog item must have drained too")
-        let savedCount = await repository.saveCallCount
-        XCTAssertEqual(savedCount, 2, "one for the drained backlog item, one for the current attempt")
+        let attemptInserts = await repository.insertAttemptCallCount
+        XCTAssertEqual(attemptInserts, 2, "one for the drained backlog item, one for the current attempt")
     }
 
     // MARK: - Cap (~50, oldest-dropped)
 
     func testQueueCapDropsOldestEntriesAndKeepsTheMostRecent() async {
         let store = FileAttemptQueueStore(fileURL: tempFile)
-        let repository = FakeAttemptRepository(shouldThrow: true)
+        let repository = FakeAttemptRepository(failure: .attemptInsert)
         let queue = OfflineAttemptQueue(repository: repository, store: store)
 
         var exerciseIds: [String] = []
@@ -159,17 +257,34 @@ final class OfflineAttemptQueueTests: XCTestCase {
 // MARK: - Fakes
 
 private actor FakeAttemptRepository: AttemptRepository {
-    private let shouldThrow: Bool
-    private(set) var saveCallCount = 0
-
-    init(shouldThrow: Bool = false) {
-        self.shouldThrow = shouldThrow
+    enum Failure {
+        case none
+        /// `insertAttempt` itself throws — the ordinary "fully offline" case; nothing lands.
+        case attemptInsert
+        /// `insertAttempt` succeeds but `insertEvents` throws — the mid-batch partial failure
+        /// this fix round's resume semantics target (finding 1).
+        case eventsInsert
     }
 
-    func saveAttempt(exerciseId: UUID, stats: AttemptStats, events: [EventResult]) async throws -> UUID {
-        saveCallCount += 1
-        if shouldThrow { throw URLError(.notConnectedToInternet) }
+    private let failure: Failure
+    private(set) var insertAttemptCallCount = 0
+    private(set) var insertEventsCallCount = 0
+    private(set) var insertEventsAttemptIds: [UUID] = []
+
+    init(failure: Failure = .none) {
+        self.failure = failure
+    }
+
+    func insertAttempt(exerciseId: UUID, stats: AttemptStats) async throws -> UUID {
+        insertAttemptCallCount += 1
+        if case .attemptInsert = failure { throw URLError(.notConnectedToInternet) }
         return UUID()
+    }
+
+    func insertEvents(attemptId: UUID, events: [EventResult]) async throws {
+        insertEventsCallCount += 1
+        insertEventsAttemptIds.append(attemptId)
+        if case .eventsInsert = failure { throw URLError(.notConnectedToInternet) }
     }
 
     func recentAttempts(exerciseId: UUID, limit: Int) async throws -> [PlaySenseAttempt] {
