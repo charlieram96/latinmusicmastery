@@ -1,3 +1,4 @@
+import LMMTestSupport
 import Metal
 import PlaySenseBLE
 import PlaySenseCore
@@ -14,21 +15,25 @@ import XCTest
 /// rendered head-lessly with `SKRenderer` into an offscreen Metal texture at a controlled playhead
 /// (so notes sit exactly where we want, with hit/miss choreography frozen mid-flight), and the real
 /// SwiftUI chrome (count-in, HUD, results) is rendered with `ImageRenderer` and composited on top —
-/// the same views the live `StagePlayerView` shows. Opt-in via `RUN_STAGE_SHOTS=1`; PNGs land in
-/// `STAGE_SHOT_DIR`.
+/// the same views the live `StagePlayerView` shows. Opt-in via `RUN_STAGE_SHOTS=1` (or
+/// `SIMCTL_CHILD_RUN_STAGE_SHOTS=1` — see `TestGates` for the D27 fix); PNGs land in `STAGE_SHOT_DIR`
+/// (same dual-spelling lookup, since it rides alongside the gate and has the identical forwarding
+/// problem).
 final class StageScreenshotTests: XCTestCase {
 
     private var outputDir: URL?
 
     override func setUpWithError() throws {
-        let env = ProcessInfo.processInfo.environment
-        guard env["RUN_STAGE_SHOTS"] == "1" else {
-            throw XCTSkip("Set RUN_STAGE_SHOTS=1 (and STAGE_SHOT_DIR) to render stage screenshots.")
+        guard TestGates.isEnabled("RUN_STAGE_SHOTS") else {
+            throw XCTSkip(
+                "Set RUN_STAGE_SHOTS=1 (or SIMCTL_CHILD_RUN_STAGE_SHOTS=1) (and STAGE_SHOT_DIR) to render "
+                + "stage screenshots."
+            )
         }
         guard MTLCreateSystemDefaultDevice() != nil else {
             throw XCTSkip("No Metal device available for offscreen highway rendering.")
         }
-        outputDir = URL(fileURLWithPath: env["STAGE_SHOT_DIR"] ?? NSTemporaryDirectory())
+        outputDir = URL(fileURLWithPath: TestGates.value("STAGE_SHOT_DIR") ?? NSTemporaryDirectory())
     }
 
     private let size = CGSize(width: 402, height: 874)

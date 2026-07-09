@@ -1,6 +1,7 @@
 import Foundation
 import XCTest
 
+import LMMTestSupport
 @testable import PlaySenseAudio
 @testable import PlaySenseCore
 
@@ -39,8 +40,10 @@ final class CalibrationRunnerTests: XCTestCase {
     }
 
     func testLiveInterruptStopsPollingAndPublishesInterruptedPhase() throws {
-        guard ProcessInfo.processInfo.environment["RUN_AUDIO_SMOKE"] == "1" else {
-            throw XCTSkip("Set RUN_AUDIO_SMOKE=1 to run the live-engine smoke test.")
+        guard TestGates.isEnabled("RUN_AUDIO_SMOKE") else {
+            throw XCTSkip(
+                "Set RUN_AUDIO_SMOKE=1 (or SIMCTL_CHILD_RUN_AUDIO_SMOKE=1) to run the live-engine smoke test."
+            )
         }
 
         let engine = GameAudioEngine()

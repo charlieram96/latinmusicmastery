@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import LMMTestSupport
 import ScoreModel
 import SnapshotTesting
 import UIKit
@@ -38,20 +39,22 @@ final class CorpusGoldenSnapshotTests: XCTestCase {
     /// another. This repo's own CI history REJECTED pinning runners to a fixed simulator OS, and CI
     /// selects 18.5 / 18.6 / 26.x while these goldens were recorded on 18.1 — so by default we skip
     /// this suite (with a visible message) rather than fail CI on unavoidable raster drift. It runs
-    /// only when explicitly opted in (`RUN_NOTATION_GOLDENS=1`, the documented local invocation in
-    /// `ios/README.md`) or when the live OS matches the recorded one. Do NOT delete the goldens —
-    /// they are the intended regression net for a matched-OS local/record run.
+    /// only when explicitly opted in (`RUN_NOTATION_GOLDENS=1` or `SIMCTL_CHILD_RUN_NOTATION_GOLDENS=1` —
+    /// see `TestGates` for the D27 fix — the documented local invocation in `ios/README.md`) or when the
+    /// live OS matches the recorded one. Do NOT delete the goldens — they are the intended regression net
+    /// for a matched-OS local/record run.
     private static let recordedOSMajorMinor = "18.1"
 
     private func skipUnlessGoldensEnabled() throws {
-        if ProcessInfo.processInfo.environment["RUN_NOTATION_GOLDENS"] == "1" { return }
+        if TestGates.isEnabled("RUN_NOTATION_GOLDENS") { return }
         let version = ProcessInfo.processInfo.operatingSystemVersion
         let current = "\(version.majorVersion).\(version.minorVersion)"
         if current == Self.recordedOSMajorMinor { return }
         throw XCTSkip(
             "Notation goldens skipped: references were recorded on iOS \(Self.recordedOSMajorMinor), "
             + "running iOS \(current) — CoreText raster drift would fail the byte comparison. "
-            + "Set RUN_NOTATION_GOLDENS=1 to force them (see ios/README.md)."
+            + "Set RUN_NOTATION_GOLDENS=1 (or SIMCTL_CHILD_RUN_NOTATION_GOLDENS=1) to force them "
+            + "(see ios/README.md)."
         )
     }
 

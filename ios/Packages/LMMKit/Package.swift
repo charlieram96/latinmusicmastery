@@ -122,7 +122,8 @@ let package = Package(
             name: "PlaySenseAudioTests",
             dependencies: [
                 "PlaySenseAudio",
-                "PlaySenseCore"
+                "PlaySenseCore",
+                "LMMTestSupport"
             ]
         ),
         .testTarget(
@@ -140,7 +141,8 @@ let package = Package(
                 "PlaySenseCore",
                 "PlaySenseBLE",
                 "PlaySenseHighway",
-                "ScoreModel"
+                "ScoreModel",
+                "LMMTestSupport"
             ]
         ),
         .testTarget(
@@ -164,6 +166,7 @@ let package = Package(
             dependencies: [
                 "NotationEngraving",
                 "ScoreModel",
+                "LMMTestSupport",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
             ]
         ),
@@ -197,6 +200,12 @@ let package = Package(
                 "LMMDesignSystem",
                 "LMMModels",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+            ]
+        ),
+        .testTarget(
+            name: "LMMTestSupportTests",
+            dependencies: [
+                "LMMTestSupport"
             ]
         )
     ]

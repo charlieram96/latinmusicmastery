@@ -1,18 +1,22 @@
 import AVFoundation
 import XCTest
 
+import LMMTestSupport
 @testable import PlaySenseAudio
 import PlaySenseCore
 
 /// Live-engine smoke test for the D21 mic tap: install the tap on the real input node, let it run over
 /// the simulator mic (silence is fine), and confirm it drains without xruns/crashes and tears down
-/// cleanly. Gated behind `RUN_AUDIO_SMOKE=1` (same convention as D20). Logs findings for the report.
+/// cleanly. Gated behind `RUN_AUDIO_SMOKE=1` (same convention as D20; see `TestGates` for the D27 fix
+/// that also accepts the `SIMCTL_CHILD_`-prefixed spelling). Logs findings for the report.
 final class OnsetMicTapSmokeTests: XCTestCase {
 
     @MainActor
     func testMicTapRunsAndTearsDown() throws {
-        guard ProcessInfo.processInfo.environment["RUN_AUDIO_SMOKE"] == "1" else {
-            throw XCTSkip("Set RUN_AUDIO_SMOKE=1 to run the live mic-tap smoke test.")
+        guard TestGates.isEnabled("RUN_AUDIO_SMOKE") else {
+            throw XCTSkip(
+                "Set RUN_AUDIO_SMOKE=1 (or SIMCTL_CHILD_RUN_AUDIO_SMOKE=1) to run the live mic-tap smoke test."
+            )
         }
 
         let session = AudioSessionController()
