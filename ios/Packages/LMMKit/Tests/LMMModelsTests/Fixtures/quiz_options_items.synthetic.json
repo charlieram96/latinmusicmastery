@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "id": "i1", "text": "Intro", "correctPosition": 0 },
+    { "id": "i2", "text": "Verse", "correctPosition": 1 },
+    { "id": "i3", "text": "Montuno", "correctPosition": 2 }
+  ]
+}

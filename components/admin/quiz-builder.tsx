@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Plus, Trash2 } from 'lucide-react'
 import { QuestionType } from '@/types/modules'
 import { QuizMediaUpload } from './quiz-media-upload'
-import { InstrumentAssemblyBuilder } from './instrument-assembly-builder'
+import { PiecePlacementBuilder } from './piece-placement-builder'
 
 interface QuizBuilderProps {
   questionId: string
@@ -80,9 +80,9 @@ export function QuizBuilder({
             onChange={onChange}
           />
         )
-      case 'instrument_assembly':
+      case 'piece_placement':
         return (
-          <InstrumentAssemblyBuilder
+          <PiecePlacementBuilder
             questionId={questionId}
             options={options}
             imageUrl={imageUrl}

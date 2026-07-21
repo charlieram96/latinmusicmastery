@@ -1,0 +1,1670 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "class.state.completed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completada"
+          }
+        }
+      }
+    },
+    "class.state.free": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gratis"
+          }
+        }
+      }
+    },
+    "class.state.inProgress": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In progress"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En progreso"
+          }
+        }
+      }
+    },
+    "class.state.locked": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Locked"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueada"
+          }
+        }
+      }
+    },
+    "common.cancel": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Cancel" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Cancelar" } }
+      }
+    },
+    "common.comingSoon": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coming soon"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Próximamente"
+          }
+        }
+      }
+    },
+    "course.continue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar"
+          }
+        }
+      }
+    },
+    "course.curriculum.empty.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classes for this course haven't been added yet."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las clases de este curso aún no se han agregado."
+          }
+        }
+      }
+    },
+    "course.curriculum.empty.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Curriculum coming soon"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contenido próximamente"
+          }
+        }
+      }
+    },
+    "course.curriculum.eyebrow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Curriculum"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan de estudios"
+          }
+        }
+      }
+    },
+    "course.curriculum.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What you'll learn"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contenido del curso"
+          }
+        }
+      }
+    },
+    "course.progressCount": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld of %2$lld complete"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld completadas"
+          }
+        }
+      }
+    },
+    "course.start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start learning"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empezar a aprender"
+          }
+        }
+      }
+    },
+    "courses.empty.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try a different search or filter."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prueba otra búsqueda o filtro."
+          }
+        }
+      }
+    },
+    "courses.empty.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No courses found"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontraron cursos"
+          }
+        }
+      }
+    },
+    "courses.emptyCatalog.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check back soon."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve pronto."
+          }
+        }
+      }
+    },
+    "courses.emptyCatalog.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No courses yet"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no hay cursos"
+          }
+        }
+      }
+    },
+    "courses.filter.all": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos"
+          }
+        }
+      }
+    },
+    "courses.search.prompt": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search courses"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar cursos"
+          }
+        }
+      }
+    },
+    "courses.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courses"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cursos"
+          }
+        }
+      }
+    },
+    "error.generic.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We couldn't load this. Check your connection and try again."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pudimos cargar esto. Revisa tu conexión e inténtalo de nuevo."
+          }
+        }
+      }
+    },
+    "error.generic.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Algo salió mal"
+          }
+        }
+      }
+    },
+    "error.retry": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reintentar"
+          }
+        }
+      }
+    },
+    "home.browse.eyebrow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explorar"
+          }
+        }
+      }
+    },
+    "home.browse.seeAll": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See all"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver todo"
+          }
+        }
+      }
+    },
+    "home.browse.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browse courses"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explora cursos"
+          }
+        }
+      }
+    },
+    "home.continue.eyebrow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar"
+          }
+        }
+      }
+    },
+    "home.continue.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick up where you left off"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retoma donde lo dejaste"
+          }
+        }
+      }
+    },
+    "home.eyebrow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latin Music Mastery"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latin Music Mastery"
+          }
+        }
+      }
+    },
+    "home.greeting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hi, %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hola, %@"
+          }
+        }
+      }
+    },
+    "home.greeting.generic": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hola"
+          }
+        }
+      }
+    },
+    "home.practiceSongs.eyebrow": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Play & score" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Toca y anota" } }
+      }
+    },
+    "home.practiceSongs.rowSubtitle": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Score-graded songs to play along with" } },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canciones con puntuación para tocar junto a la pista"
+          }
+        }
+      }
+    },
+    "home.practiceSongs.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Practice Songs" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Canciones de práctica" } }
+      }
+    },
+    "locked.dismiss": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got it"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entendido"
+          }
+        }
+      }
+    },
+    "locked.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This class is included in the %@ subscription. Subscriptions are managed on the Latin Music Mastery website."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta clase está incluida en la suscripción de %@. Las suscripciones se administran en el sitio web de Latin Music Mastery."
+          }
+        }
+      }
+    },
+    "locked.message.generic": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This class is included in a subscription. Subscriptions are managed on the Latin Music Mastery website."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta clase está incluida en una suscripción. Las suscripciones se administran en el sitio web de Latin Music Mastery."
+          }
+        }
+      }
+    },
+    "locked.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Included with a subscription"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluida con una suscripción"
+          }
+        }
+      }
+    },
+    "myCourses.empty.action": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browse courses"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explora cursos"
+          }
+        }
+      }
+    },
+    "myCourses.empty.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enroll in a course to see it here."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inscríbete en un curso para verlo aquí."
+          }
+        }
+      }
+    },
+    "myCourses.empty.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No courses yet"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no tienes cursos"
+          }
+        }
+      }
+    },
+    "myCourses.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Courses"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mis cursos"
+          }
+        }
+      }
+    },
+    "playSense.songs.difficulty.advanced": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Advanced" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Avanzado" } }
+      }
+    },
+    "playSense.songs.difficulty.beginner": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Beginner" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Principiante" } }
+      }
+    },
+    "playSense.songs.difficulty.intermediate": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Intermediate" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Intermedio" } }
+      }
+    },
+    "playSense.songs.empty.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practice songs coming soon — check back for new songs to play and score."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canciones de práctica próximamente: vuelve pronto para ver nuevas canciones para tocar y puntuar."
+          }
+        }
+      }
+    },
+    "playSense.songs.empty.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Coming soon" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Próximamente" } }
+      }
+    },
+    "playSense.songs.loadError": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Couldn't load this song. Please try again." } },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo cargar esta canción. Inténtalo de nuevo."
+          }
+        }
+      }
+    },
+    "playSense.songs.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Practice Songs" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Canciones de práctica" } }
+      }
+    },
+    "profile.help": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Help"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayuda"
+          }
+        }
+      }
+    },
+    "profile.settings": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes"
+          }
+        }
+      }
+    },
+    "profile.signOut": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar sesión"
+          }
+        }
+      }
+    },
+    "profile.delete.confirmButton": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Email deletion request" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Enviar solicitud por correo" } }
+      }
+    },
+    "profile.delete.confirmMessage": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Account deletion is handled by our support team. We'll open an email addressed to support with your account details — send it and we'll permanently delete your account and data." } },
+        "es": { "stringUnit": { "state": "translated", "value": "La eliminación de la cuenta la gestiona nuestro equipo de soporte. Abriremos un correo dirigido a soporte con los datos de tu cuenta; envíalo y eliminaremos tu cuenta y tus datos de forma permanente." } }
+      }
+    },
+    "profile.delete.confirmTitle": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Delete your account?" } },
+        "es": { "stringUnit": { "state": "translated", "value": "¿Eliminar tu cuenta?" } }
+      }
+    },
+    "profile.delete.emailBody": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Please permanently delete my Latin Music Mastery account and all associated data.\n\nAccount email: %@\n" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Por favor, eliminen de forma permanente mi cuenta de Latin Music Mastery y todos los datos asociados.\n\nCorreo de la cuenta: %@\n" } }
+      }
+    },
+    "profile.delete.emailSubject": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Account deletion request" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Solicitud de eliminación de cuenta" } }
+      }
+    },
+    "profile.delete.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Delete account" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Eliminar cuenta" } }
+      }
+    },
+    "profile.delete.unknownEmail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "(not signed in)" } },
+        "es": { "stringUnit": { "state": "translated", "value": "(sesión no iniciada)" } }
+      }
+    },
+    "profile.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perfil"
+          }
+        }
+      }
+    },
+    "quiz.assembly.dragHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag each part onto the instrument"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrastra cada pieza al instrumento"
+          }
+        }
+      }
+    },
+    "quiz.assembly.fallback.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This question type needs a bigger canvas — try it on the web."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este tipo de pregunta necesita más espacio — pruébalo en la web."
+          }
+        }
+      }
+    },
+    "quiz.audio.placeholder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type what you hear…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe lo que escuchas…"
+          }
+        }
+      }
+    },
+    "quiz.audioChoice.clipLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %lld"
+          }
+        }
+      }
+    },
+    "quiz.checkAnswer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check Answer"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobar respuesta"
+          }
+        }
+      }
+    },
+    "quiz.empty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This quiz has no questions yet."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este cuestionario todavía no tiene preguntas."
+          }
+        }
+      }
+    },
+    "quiz.feedback.correct": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct!"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡Correcto!"
+          }
+        }
+      }
+    },
+    "quiz.feedback.incorrect": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not quite right"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No es correcto"
+          }
+        }
+      }
+    },
+    "quiz.fillInBlank.placeholder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your answer"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu respuesta"
+          }
+        }
+      }
+    },
+    "quiz.finish": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finalizar"
+          }
+        }
+      }
+    },
+    "quiz.matchingPairs.choosePlaceholder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose match"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige pareja"
+          }
+        }
+      }
+    },
+    "quiz.next": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siguiente"
+          }
+        }
+      }
+    },
+    "quiz.pause": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause clip"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pausar clip"
+          }
+        }
+      }
+    },
+    "quiz.play": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play clip"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproducir clip"
+          }
+        }
+      }
+    },
+    "quiz.previous": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anterior"
+          }
+        }
+      }
+    },
+    "quiz.progress.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Question %1$lld of %2$lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pregunta %1$lld de %2$lld"
+          }
+        }
+      }
+    },
+    "quiz.results.correctAnswer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct answer: "
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Respuesta correcta: "
+          }
+        }
+      }
+    },
+    "quiz.results.headline.great": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Great work!"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡Buen trabajo!"
+          }
+        }
+      }
+    },
+    "quiz.results.headline.keepPracticing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep practicing"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sigue practicando"
+          }
+        }
+      }
+    },
+    "quiz.results.headline.nice": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nice effort!"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡Buen esfuerzo!"
+          }
+        }
+      }
+    },
+    "quiz.results.headline.perfect": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perfect!"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡Perfecto!"
+          }
+        }
+      }
+    },
+    "quiz.results.noDetails": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No additional details."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin detalles adicionales."
+          }
+        }
+      }
+    },
+    "quiz.results.scoreLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld / %2$lld correct"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld / %2$lld correctas"
+          }
+        }
+      }
+    },
+    "quiz.results.sub.great": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're getting the hang of it."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya le vas agarrando el modo."
+          }
+        }
+      }
+    },
+    "quiz.results.sub.keepPracticing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review the answers below and try again."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisa las respuestas de abajo e inténtalo de nuevo."
+          }
+        }
+      }
+    },
+    "quiz.results.sub.perfect": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You nailed this quiz."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dominaste este cuestionario."
+          }
+        }
+      }
+    },
+    "quiz.results.tryAgain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try Again"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intentar de nuevo"
+          }
+        }
+      }
+    },
+    "quiz.textAnswer.placeholder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type your answer…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe tu respuesta…"
+          }
+        }
+      }
+    },
+    "quiz.trueFalse.false": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "False"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Falso"
+          }
+        }
+      }
+    },
+    "quiz.trueFalse.true": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "True"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verdadero"
+          }
+        }
+      }
+    },
+    "quiz.type.audio": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escucha"
+          }
+        }
+      }
+    },
+    "quiz.type.audioChoice": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen & choose"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escucha y elige"
+          }
+        }
+      }
+    },
+    "quiz.type.fillInBlank": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fill in the blank"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completa el espacio"
+          }
+        }
+      }
+    },
+    "quiz.type.instrumentAssembly": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Build the instrument"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arma el instrumento"
+          }
+        }
+      }
+    },
+    "quiz.type.matchingPairs": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Match the pairs"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empareja"
+          }
+        }
+      }
+    },
+    "quiz.type.multipleChoice": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Multiple choice"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opción múltiple"
+          }
+        }
+      }
+    },
+    "quiz.type.orderingSequence": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Put in order"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordena"
+          }
+        }
+      }
+    },
+    "quiz.type.textAnswer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Short answer"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Respuesta corta"
+          }
+        }
+      }
+    },
+    "quiz.type.trueFalse": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "True or false"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verdadero o falso"
+          }
+        }
+      }
+    },
+    "tab.courses": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courses"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cursos"
+          }
+        }
+      }
+    },
+    "tab.home": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicio"
+          }
+        }
+      }
+    },
+    "tab.myCourses": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Courses"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mis cursos"
+          }
+        }
+      }
+    },
+    "tab.profile": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perfil"
+          }
+        }
+      }
+    },
+    "unit.classesFormat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld classes"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld clases"
+          }
+        }
+      }
+    },
+    "unit.itemsFormat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld items"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld elementos"
+          }
+        }
+      }
+    },
+    "unit.minutesFormat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        }
+      }
+    },
+    "viewer.about.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "About this lesson" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Acerca de esta lección" } }
+      }
+    },
+    "viewer.completed": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Completed" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Completada" } }
+      }
+    },
+    "viewer.empty.message": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "This class doesn't have any content yet." } },
+        "es": { "stringUnit": { "state": "translated", "value": "Esta clase aún no tiene contenido." } }
+      }
+    },
+    "viewer.empty.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Nothing here yet" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Aún no hay nada aquí" } }
+      }
+    },
+    "viewer.exercise.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Exercise" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Ejercicio" } }
+      }
+    },
+    "viewer.jam.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Jam Session" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Sesión de improvisación" } }
+      }
+    },
+    "viewer.markComplete": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Mark complete" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Marcar completada" } }
+      }
+    },
+    "viewer.meta.bpm": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "BPM %lld" } },
+        "es": { "stringUnit": { "state": "translated", "value": "BPM %lld" } }
+      }
+    },
+    "viewer.meta.key": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Key %@" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Tono %@" } }
+      }
+    },
+    "viewer.part.a11y": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Part %1$lld of %2$lld" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Parte %1$lld de %2$lld" } }
+      }
+    },
+    "viewer.part.label": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Part %1$lld of %2$lld" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Parte %1$lld de %2$lld" } }
+      }
+    },
+    "viewer.playsense.loadError": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Couldn't load exercise: %@" } },
+        "es": { "stringUnit": { "state": "translated", "value": "No se pudo cargar el ejercicio: %@" } }
+      }
+    },
+    "viewer.playsense.noScore": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "This exercise has no attached score." } },
+        "es": { "stringUnit": { "state": "translated", "value": "Este ejercicio no tiene una partitura adjunta." } }
+      }
+    },
+    "viewer.playsense.play": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Play exercise" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Reproducir ejercicio" } }
+      }
+    },
+    "viewer.quiz.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Quiz" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Cuestionario" } }
+      }
+    },
+    "viewer.video.unavailable": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "This video couldn't be loaded." } },
+        "es": { "stringUnit": { "state": "translated", "value": "No se pudo cargar este video." } }
+      }
+    },
+    "viewer.comingSoon.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This lesson opens here soon."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta lección se abrirá aquí muy pronto."
+          }
+        }
+      }
+    },
+    "viewer.comingSoon.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coming soon"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Próximamente"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

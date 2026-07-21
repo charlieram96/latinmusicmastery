@@ -1,0 +1,193 @@
+name: iOS
+
+on:
+  push:
+    paths:
+      - "ios/**"
+  pull_request:
+    paths:
+      - "ios/**"
+
+jobs:
+  package-tests:
+    name: Swift Package Tests
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: ios/Packages/LMMKit
+    steps:
+      - uses: actions/checkout@v4
+      # Package.swift declares iOS-only (.iOS(.v17)), so a bare `swift test`
+      # falls back to building LMMData for the macOS host (SwiftPM's macOS 10.13
+      # baseline), which conflicts with Supabase's macOS 13 minimum. Run the
+      # tests through the auto-synthesized package scheme on an iOS simulator
+      # instead (Xcode synthesizes "LMMKit-Package" for any SPM package dir,
+      # no xcodegen needed here). Verified locally: `xcodebuild -list` in this
+      # directory reports the "LMMKit-Package" scheme.
+      #
+      # Destination used to be pinned to a concrete OS (`OS=18.3.1`, matching
+      # the local verification device at the time) rather than `OS=latest`,
+      # because this repo's own iOS tasks had hit `xcodebuild`
+      # destination-matching failures with the `latest` keyword before (A1
+      # carry-forward). That pin has since gone stale: GitHub's macos-15 image
+      # dropped the 18.3/18.4 runtimes per its normal deprecation policy and
+      # now only ships 18.5/18.6/26.x, so the hardcoded destination no longer
+      # resolves to anything on the runner. A fixed version string will always
+      # eventually rot the same way, so instead of re-pinning to a different
+      # guess, the step below asks the runner what it actually has and builds
+      # the destination from that at run time (see the query step for the
+      # exact selection rule).
+      - name: Select an available iOS Simulator
+        id: simulator
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import re
+          import subprocess
+          import sys
+
+          raw = subprocess.check_output(
+              ["xcrun", "simctl", "list", "devices", "available", "--json"]
+          )
+          runtimes = json.loads(raw)["devices"]
+
+
+          def runtime_version(key):
+              match = re.match(
+                  r"com\.apple\.CoreSimulator\.SimRuntime\.iOS-(\d+)-(\d+)(?:-(\d+))?$", key
+              )
+              if not match:
+                  return None
+              major, minor, patch = match.groups()
+              return (int(major), int(minor), int(patch or 0))
+
+
+          candidates = []
+          for key, devices in runtimes.items():
+              version = runtime_version(key)
+              if version is None:
+                  continue
+              for device in devices:
+                  if device.get("isAvailable") and device["name"].startswith("iPhone"):
+                      candidates.append((version, device["name"], device["udid"]))
+
+          if not candidates:
+              print("::error::No available iPhone simulator found on this runner.", file=sys.stderr)
+              sys.exit(1)
+
+          newest_version = max(c[0] for c in candidates)
+          newest = [c for c in candidates if c[0] == newest_version]
+          # Among ties on the same runtime, prefer the plainest device name (e.g.
+          # "iPhone 16" over "iPhone 16 Pro") so the pick is deterministic run to run.
+          newest.sort(key=lambda c: (len(c[1]), c[1]))
+          _, name, udid = newest[0]
+
+          version_string = ".".join(str(part) for part in newest_version)
+          print(f"Selected simulator: {name} ({udid}), runtime iOS {version_string}", file=sys.stderr)
+          print(f"udid={udid}")
+          print(f"name={name}")
+          PY
+      # `id=<UDID>` is the most robust destination form: unlike `name=...,OS=...` it can't fail
+      # to match because of a runtime/device-name pairing that doesn't exist on this runner —
+      # the UDID above was read straight out of `simctl`, so it's guaranteed to resolve.
+      - name: xcodebuild test (iOS Simulator)
+        run: |
+          echo "Testing against ${{ steps.simulator.outputs.name }} (${{ steps.simulator.outputs.udid }})"
+          xcodebuild test \
+            -scheme LMMKit-Package \
+            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}' \
+            -skipPackagePluginValidation
+
+  swiftlint:
+    name: SwiftLint
+    runs-on: macos-15
+    env:
+      # Pinned to the version verified locally (`swiftlint version` → 0.65.0) so a
+      # newer SwiftLint release can't start failing CI on rules this repo hasn't
+      # opted into or vetted yet.
+      SWIFTLINT_VERSION: "0.65.0"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SwiftLint (pinned)
+        run: |
+          curl -sSL -o swiftlint.zip \
+            "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/SwiftLintBinary.artifactbundle.zip"
+          unzip -q swiftlint.zip -d swiftlint-bin
+          sudo mv "swiftlint-bin/SwiftLintBinary.artifactbundle/macos/swiftlint" /usr/local/bin/swiftlint
+          installed="$(swiftlint version)"
+          if [ "$installed" != "$SWIFTLINT_VERSION" ]; then
+            echo "Expected SwiftLint $SWIFTLINT_VERSION, got $installed" >&2
+            exit 1
+          fi
+      - name: Run SwiftLint
+        working-directory: ios
+        run: swiftlint lint --strict
+
+  simulator-build:
+    name: App Build (iOS Simulator)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        working-directory: ios
+        run: xcodegen generate
+      # Same dynamic-selection rule as the package-tests job: a hardcoded `OS=`/device pairing rots
+      # as GitHub's runner images drop older simulator runtimes, so ask the runner what it actually
+      # has and build an `id=<UDID>` destination from the newest available iPhone.
+      - name: Select an available iOS Simulator
+        id: simulator
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import re
+          import subprocess
+          import sys
+
+          raw = subprocess.check_output(
+              ["xcrun", "simctl", "list", "devices", "available", "--json"]
+          )
+          runtimes = json.loads(raw)["devices"]
+
+
+          def runtime_version(key):
+              match = re.match(
+                  r"com\.apple\.CoreSimulator\.SimRuntime\.iOS-(\d+)-(\d+)(?:-(\d+))?$", key
+              )
+              if not match:
+                  return None
+              major, minor, patch = match.groups()
+              return (int(major), int(minor), int(patch or 0))
+
+
+          candidates = []
+          for key, devices in runtimes.items():
+              version = runtime_version(key)
+              if version is None:
+                  continue
+              for device in devices:
+                  if device.get("isAvailable") and device["name"].startswith("iPhone"):
+                      candidates.append((version, device["name"], device["udid"]))
+
+          if not candidates:
+              print("::error::No available iPhone simulator found on this runner.", file=sys.stderr)
+              sys.exit(1)
+
+          newest_version = max(c[0] for c in candidates)
+          newest = [c for c in candidates if c[0] == newest_version]
+          newest.sort(key=lambda c: (len(c[1]), c[1]))
+          _, name, udid = newest[0]
+
+          version_string = ".".join(str(part) for part in newest_version)
+          print(f"Selected simulator: {name} ({udid}), runtime iOS {version_string}", file=sys.stderr)
+          print(f"udid={udid}")
+          print(f"name={name}")
+          PY
+      - name: Build for simulator
+        working-directory: ios
+        run: |
+          echo "Building against ${{ steps.simulator.outputs.name }} (${{ steps.simulator.outputs.udid }})"
+          xcodebuild build \
+            -scheme LatinMusicMastery \
+            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}'

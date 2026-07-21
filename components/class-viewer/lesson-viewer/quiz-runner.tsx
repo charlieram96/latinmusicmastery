@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { markClassItemComplete } from '@/app/actions/progress'
-import { gradeQuestion, hasAnswer, shuffleStable, type OrderItem } from '@/lib/quiz/grading'
+import { gradeQuestionScore, hasAnswer, shuffleStable, type OrderItem } from '@/lib/quiz/grading'
 import type { QuizQuestion } from '@/types/modules'
 import { FeedbackBanner } from './quiz/feedback-banner'
 import { ProgressSegments } from './quiz/progress-segments'
@@ -18,7 +18,7 @@ const TYPE_LABELS: Record<string, string> = {
   text_answer: 'Short answer',
   audio: 'Listening',
   audio_choice: 'Listen & choose',
-  instrument_assembly: 'Build the instrument',
+  piece_placement: 'Place the pieces',
   fill_in_blank: 'Fill in the blank',
   matching_pairs: 'Match the pairs',
   ordering_sequence: 'Put in order',
@@ -38,8 +38,8 @@ function seedAnswers(questions: QuizQuestion[]): Record<string, unknown> {
     if (qq.question_type === 'ordering_sequence') {
       const items = ((qq.options ?? {}) as Record<string, unknown>).items as OrderItem[] | undefined
       init[qq.id] = shuffleStable((items ?? []).map((it) => it.id), qq.id)
-    } else if (qq.question_type === 'instrument_assembly') {
-      init[qq.id] = {} // partId -> zoneId, filled as parts are dragged
+    } else if (qq.question_type === 'piece_placement') {
+      init[qq.id] = {} // pieceId -> {x, y} center %, filled as pieces are dragged
     }
   }
   return init
@@ -50,14 +50,14 @@ export function QuizRunner({ classItemId, questions, kind = 'Quiz' }: QuizRunner
   const [index, setIndex] = useState(0)
   const [direction, setDirection] = useState(1)
   const [answers, setAnswers] = useState<Record<string, unknown>>(() => seedAnswers(questions))
-  const [graded, setGraded] = useState<Record<string, boolean>>({})
+  const [graded, setGraded] = useState<Record<string, number>>({})
   const [finished, setFinished] = useState(false)
 
   const q = ordered[index]
   const isGraded = q ? q.id in graded : false
   const answer = q ? answers[q.id] : undefined
   const canCheck = q ? hasAnswer(q, answer) : false
-  const wasCorrect = q ? graded[q.id] : false
+  const score = q ? (graded[q.id] ?? 0) : 0
 
   const setAnswer = (value: unknown) => {
     if (q) setAnswers((prev) => ({ ...prev, [q.id]: value }))
@@ -65,7 +65,7 @@ export function QuizRunner({ classItemId, questions, kind = 'Quiz' }: QuizRunner
 
   const handleCheck = () => {
     if (!q || isGraded || !canCheck) return
-    setGraded((prev) => ({ ...prev, [q.id]: gradeQuestion(q, answer) }))
+    setGraded((prev) => ({ ...prev, [q.id]: gradeQuestionScore(q, answer) }))
   }
 
   const goNext = () => {
@@ -170,7 +170,7 @@ export function QuizRunner({ classItemId, questions, kind = 'Quiz' }: QuizRunner
 
             <QuestionInput question={q} answer={answer} isGraded={isGraded} onChange={setAnswer} />
 
-            {isGraded && <FeedbackBanner correct={!!wasCorrect} explanation={q.explanation} />}
+            {isGraded && <FeedbackBanner score={score} explanation={q.explanation} />}
           </motion.div>
         </AnimatePresence>
 

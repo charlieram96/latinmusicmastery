@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { CheckCircle2, ChevronDown, RotateCcw, XCircle } from 'lucide-react'
+import { CheckCircle2, ChevronDown, MinusCircle, RotateCcw, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -18,11 +18,13 @@ export function ResultsScreen({
 }: {
   kind: string
   questions: QuizQuestion[]
-  graded: Record<string, boolean>
+  graded: Record<string, number>
   onRestart: () => void
 }) {
-  const correctCount = questions.filter((q) => graded[q.id]).length
-  const pct = questions.length ? Math.round((correctCount / questions.length) * 100) : 0
+  const totalScore = questions.reduce((sum, q) => sum + (graded[q.id] ?? 0), 0)
+  // Show fractional totals (e.g. "7.5") only when partial credit was earned.
+  const scoreLabel = Number.isInteger(totalScore) ? String(totalScore) : totalScore.toFixed(1)
+  const pct = questions.length ? Math.round((totalScore / questions.length) * 100) : 0
   const [open, setOpen] = useState<string | null>(null)
 
   const headline = pct >= 90 ? 'Perfect!' : pct >= 70 ? 'Great work!' : pct >= 50 ? 'Nice effort!' : 'Keep practicing'
@@ -48,14 +50,14 @@ export function ResultsScreen({
         <h2 className="mt-6 text-3xl font-black">{headline}</h2>
         <p className="mt-1 text-muted-foreground">{sub}</p>
         <p className="mt-4 text-sm font-semibold">
-          <span className="text-primary">{correctCount}</span>
+          <span className="text-primary">{scoreLabel}</span>
           <span className="text-muted-foreground"> / {questions.length} correct</span>
         </p>
       </div>
 
       <div className="relative mt-8 space-y-2">
         {questions.map((q, i) => {
-          const isCorrect = !!graded[q.id]
+          const score = graded[q.id] ?? 0
           const isOpen = open === q.id
           const label = correctAnswerLabel(q)
           return (
@@ -65,8 +67,10 @@ export function ResultsScreen({
                 onClick={() => setOpen(isOpen ? null : q.id)}
                 className="flex w-full items-center gap-3 p-4 text-left hover:bg-muted/50"
               >
-                {isCorrect ? (
+                {score >= 1 ? (
                   <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+                ) : score > 0 ? (
+                  <MinusCircle className="h-5 w-5 shrink-0 text-amber-600" />
                 ) : (
                   <XCircle className="h-5 w-5 shrink-0 text-red-600" />
                 )}

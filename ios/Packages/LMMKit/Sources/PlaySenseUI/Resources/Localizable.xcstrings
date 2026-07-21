@@ -1,0 +1,354 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "calibration.calibratingFormat" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Calibrating: %@" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Calibrando: %@" } }
+      }
+    },
+    "calibration.countIn" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Count-in… get ready to tap!" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cuenta de entrada… ¡prepárate para tocar!" } }
+      }
+    },
+    "calibration.engineErrorFormat" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't start calibration: %@" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "No se pudo iniciar la calibración: %@" } }
+      }
+    },
+    "calibration.failure.notEnoughTaps" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not enough taps detected (%1$d of %2$d minimum). Make sure your mic is registering taps and try again." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "No se detectaron suficientes toques (%1$d de %2$d mínimo). Asegúrate de que el micrófono registre tus toques e inténtalo de nuevo." } }
+      }
+    },
+    "calibration.failure.notEnoughValidTaps" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not enough valid taps detected (%1$d of %2$d minimum). Tap more closely to the beat and try again." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "No se detectaron suficientes toques válidos (%1$d de %2$d mínimo). Toca más cerca del pulso e inténtalo de nuevo." } }
+      }
+    },
+    "calibration.failure.tooInconsistent" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tap timing was too inconsistent. Try tapping more steadily with the beat." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "El ritmo de tus toques fue demasiado irregular. Intenta tocar de forma más constante con el pulso." } }
+      }
+    },
+    "calibration.heading" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Audio Calibration" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Calibración de audio" } }
+      }
+    },
+    "calibration.interrupted.audio" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Calibration was interrupted (e.g. a phone call or another app using audio). Please try again." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "La calibración se interrumpió (por ejemplo, una llamada u otra app usando el audio). Inténtalo de nuevo." } }
+      }
+    },
+    "calibration.interrupted.backgrounded" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Calibration was interrupted because the app moved to the background. Please try again." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "La calibración se interrumpió porque la app pasó a segundo plano. Inténtalo de nuevo." } }
+      }
+    },
+    "calibration.interrupted.route" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your audio route changed during calibration (e.g. headphones connected or disconnected). Please try again." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Tu ruta de audio cambió durante la calibración (por ejemplo, se conectaron o desconectaron los auriculares). Inténtalo de nuevo." } }
+      }
+    },
+    "calibration.interrupted.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Calibration interrupted" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Calibración interrumpida" } }
+      }
+    },
+    "calibration.introBody" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use headphones for best results. Calibration takes about 15 seconds." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Usa auriculares para obtener mejores resultados. La calibración tarda unos 15 segundos." } }
+      }
+    },
+    "calibration.permissionDenied" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Microphone access is required to calibrate." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Se necesita acceso al micrófono para calibrar." } }
+      }
+    },
+    "calibration.recalibrate" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recalibrate" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Recalibrar" } }
+      }
+    },
+    "calibration.result.approximate" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Calibration approximate — tolerance windows widened" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Calibración aproximada — se ampliaron los márgenes de tolerancia" } }
+      }
+    },
+    "calibration.result.calibrated" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Calibrated" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Calibrado" } }
+      }
+    },
+    "calibration.result.consistencyFormat" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Consistency: %@ IQR" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Consistencia: %@ IQR" } }
+      }
+    },
+    "calibration.result.latencyFormat" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Latency: %@" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Latencia: %@" } }
+      }
+    },
+    "calibration.source.ble" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "PlaySense Device" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Dispositivo PlaySense" } }
+      }
+    },
+    "calibration.source.mic" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Microphone" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Micrófono" } }
+      }
+    },
+    "calibration.start" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start Calibration" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Iniciar calibración" } }
+      }
+    },
+    "calibration.stored.bodyFormat" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ latency saved for this route." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Se guardó una latencia de %@ para esta ruta." } }
+      }
+    },
+    "calibration.stored.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Calibration saved" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Calibración guardada" } }
+      }
+    },
+    "calibration.tapAlongFormat" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tap along! %1$d / %2$d" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "¡Sigue el pulso! %1$d / %2$d" } }
+      }
+    },
+    "calibration.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Calibration" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Calibración" } }
+      }
+    },
+    "common.back" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Back" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Atrás" } }
+      }
+    },
+    "common.cancel" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cancelar" } }
+      }
+    },
+    "common.continue" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Continue" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Continuar" } }
+      }
+    },
+    "common.done" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Listo" } }
+      }
+    },
+    "common.retry" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Retry" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Reintentar" } }
+      }
+    },
+    "common.tryAgain" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Try Again" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Intentar de nuevo" } }
+      }
+    },
+    "device.picker.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a PlaySense device" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Elige un dispositivo PlaySense" } }
+      }
+    },
+    "stage.acc" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "ACC" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "PREC" } }
+      }
+    },
+    "stage.ble.connecting" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting…" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Conectando…" } }
+      }
+    },
+    "stage.ble.connectingGeneric" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting to PlaySense…" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Conectando con PlaySense…" } }
+      }
+    },
+    "stage.ble.reconnecting" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reconnecting…" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Reconectando…" } }
+      }
+    },
+    "stage.ble.searching" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Searching for PlaySense device…" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Buscando dispositivo PlaySense…" } }
+      }
+    },
+    "stage.bluetoothBlocked.practiceAnyway" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Practice anyway (no score)" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Practicar de todos modos (sin puntuación)" } }
+      }
+    },
+    "stage.bluetoothBlocked.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Bluetooth audio adds unpredictable latency and can't be scored accurately." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "El audio por Bluetooth añade una latencia impredecible y no se puede puntuar con precisión." } }
+      }
+    },
+    "stage.error.audioEngineFormat" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Audio engine failed: %@" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Falló el motor de audio: %@" } }
+      }
+    },
+    "stage.error.audioStartFormat" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't start audio: %@" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "No se pudo iniciar el audio: %@" } }
+      }
+    },
+    "stage.error.micRequired" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Microphone access is required to play." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Se necesita acceso al micrófono para tocar." } }
+      }
+    },
+    "stage.exit" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Exit" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Salir" } }
+      }
+    },
+    "stage.getReady" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "GET READY" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "PREPÁRATE" } }
+      }
+    },
+    "stage.interruptedTitleFormat" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Session interrupted (%@)" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Sesión interrumpida (%@)" } }
+      }
+    },
+    "stage.meta.format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$d BPM · %2$d/%3$d · %4$d events · %5$@" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "%1$d BPM · %2$d/%3$d · %4$d eventos · %5$@" } }
+      }
+    },
+    "stage.mode.chooseInput" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose your input" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Elige tu entrada" } }
+      }
+    },
+    "stage.mode.headphones" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Headphones" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Auriculares" } }
+      }
+    },
+    "stage.mode.playsense" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "PlaySense (BLE)" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "PlaySense (BLE)" } }
+      }
+    },
+    "stage.mode.speakerSafe" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Speaker-safe" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Modo altavoz" } }
+      }
+    },
+    "stage.perEvent" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "PER-EVENT" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "POR EVENTO" } }
+      }
+    },
+    "stage.results.accuracyFormat" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%.0f%% accuracy" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "%.0f %% de precisión" } }
+      }
+    },
+    "stage.results.maxCombo" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "MAX ×" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "MÁX ×" } }
+      }
+    },
+    "stage.results.offlineSync" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Offline — will sync automatically" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Sin conexión — se sincronizará automáticamente" } }
+      }
+    },
+    "stage.results.practiceUnranked" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "PRACTICE — unranked" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "PRÁCTICA — sin clasificar" } }
+      }
+    },
+    "stage.results.saving" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saving…" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Guardando…" } }
+      }
+    },
+    "stage.score" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "SCORE" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "PUNTOS" } }
+      }
+    },
+    "stage.start" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Empezar" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

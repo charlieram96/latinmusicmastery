@@ -37,7 +37,7 @@ const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   ordering_sequence: 'Ordering/Sequence',
   audio: 'Audio Response',
   audio_choice: 'Audio — Listen & Choose',
-  instrument_assembly: 'Instrument Assembly (drag & drop)',
+  piece_placement: 'Piece Placement (drag & drop)',
 }
 
 export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorProps) {

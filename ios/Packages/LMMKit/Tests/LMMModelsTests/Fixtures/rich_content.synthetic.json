@@ -1,0 +1,24 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Bienvenido a la clase." }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "attrs": { "tight": true, "start": 1 },
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Punto uno" }] }
+          ]
+        }
+      ]
+    }
+  ],
+  "meta": null
+}

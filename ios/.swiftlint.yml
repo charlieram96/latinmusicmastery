@@ -1,0 +1,6 @@
+opt_in_rules:
+  - sorted_imports
+
+excluded:
+  - Packages/LMMKit/.build
+  - LatinMusicMastery.xcodeproj

@@ -9,16 +9,16 @@ import { cn } from '@/lib/utils'
 import {
   norm,
   shuffleStable,
-  type AssemblyPart,
-  type AssemblyZone,
   type AudioChoice,
   type Blank,
   type Choice,
   type OrderItem,
   type Pair,
+  type PiecePlacement,
+  type PlacementPiece,
 } from '@/lib/quiz/grading'
 import type { QuizQuestion } from '@/types/modules'
-import { InstrumentAssemblyInput } from './instrument-assembly-input'
+import { PiecePlacementInput } from './piece-placement-input'
 import { OptionTile, type TileState } from './option-tile'
 
 /** Play/pause control for an audio answer choice. Renders as a span (not a
@@ -131,15 +131,13 @@ export function QuestionInput({
       )
     }
 
-    case 'instrument_assembly': {
-      const zones = (opts.zones as AssemblyZone[]) ?? []
-      const parts = (opts.parts as AssemblyPart[]) ?? []
-      const placement = (answer as Record<string, string>) ?? {}
+    case 'piece_placement': {
+      const pieces = (opts.pieces as PlacementPiece[]) ?? []
+      const placement = (answer as Record<string, PiecePlacement>) ?? {}
       return (
-        <InstrumentAssemblyInput
+        <PiecePlacementInput
           imageUrl={q.image_url}
-          zones={zones}
-          parts={parts}
+          pieces={pieces}
           placement={placement}
           isGraded={isGraded}
           onChange={(v) => onChange(v)}

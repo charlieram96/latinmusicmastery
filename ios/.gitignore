@@ -1,0 +1,5 @@
+*.xcodeproj
+.build/
+xcuserdata/
+DerivedData/
+App/Info.plist

@@ -1,0 +1,586 @@
+{
+  "generator": "scratchpad/d21-gen/run.mjs",
+  "worklet": "public/audio-worklets/onset-detector-processor.js",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "fixtures": [
+    {
+      "name": "clicks_default",
+      "configName": "default",
+      "config": {
+        "bandPassLow": 120,
+        "bandPassHigh": 2000,
+        "envelopeAttackMs": 3,
+        "envelopeReleaseMs": 50,
+        "adaptiveMedianFrames": 15,
+        "adaptiveThresholdMultiplier": 1.8,
+        "adaptiveThresholdOffset": 0.005,
+        "refractoryPeriodMs": 60,
+        "minOnsetEnergy": 0.01,
+        "fftSize": 512,
+        "frameSize": 1024,
+        "hopSize": 512,
+        "analyzeChroma": false
+      },
+      "signal": {
+        "durationSec": 1.5,
+        "grains": [
+          {
+            "atSec": 0.2,
+            "freq": 1000,
+            "amp": 0.6,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          },
+          {
+            "atSec": 0.45,
+            "freq": 1000,
+            "amp": 0.6,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          },
+          {
+            "atSec": 0.7,
+            "freq": 1000,
+            "amp": 0.6,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          },
+          {
+            "atSec": 0.95,
+            "freq": 1000,
+            "amp": 0.6,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          },
+          {
+            "atSec": 1.2,
+            "freq": 1000,
+            "amp": 0.6,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          }
+        ]
+      },
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "paddedLength": 72064,
+      "inputChecksum": {
+        "sum": 22.69539396482287,
+        "absSum": 363.5990049902466,
+        "length": 72064
+      },
+      "onsets": [
+        {
+          "timestamp": 0.2,
+          "energy": 0.0997337456795683,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.264,
+          "energy": 0.01848403005321792,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.456,
+          "energy": 0.1176378998798167,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.52,
+          "energy": 0.014993855647588941,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.7013333333333334,
+          "energy": 0.11000765233824268,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.7653333333333333,
+          "energy": 0.017114152981635974,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.9573333333333334,
+          "energy": 0.11808443623974772,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 1.0213333333333334,
+          "energy": 0.01467022639916972,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 1.2026666666666668,
+          "energy": 0.11405416076641263,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 1.2666666666666666,
+          "energy": 0.016267010710296792,
+          "fluxConfirmed": false,
+          "frequency": null
+        }
+      ],
+      "chords": [],
+      "levelStats": {
+        "count": 563,
+        "max": 0.31253338185664403,
+        "last": 0
+      }
+    },
+    {
+      "name": "double_hit_refractory",
+      "configName": "default",
+      "config": {
+        "bandPassLow": 120,
+        "bandPassHigh": 2000,
+        "envelopeAttackMs": 3,
+        "envelopeReleaseMs": 50,
+        "adaptiveMedianFrames": 15,
+        "adaptiveThresholdMultiplier": 1.8,
+        "adaptiveThresholdOffset": 0.005,
+        "refractoryPeriodMs": 60,
+        "minOnsetEnergy": 0.01,
+        "fftSize": 512,
+        "frameSize": 1024,
+        "hopSize": 512,
+        "analyzeChroma": false
+      },
+      "signal": {
+        "durationSec": 1,
+        "grains": [
+          {
+            "atSec": 0.3,
+            "freq": 1000,
+            "amp": 0.6,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          },
+          {
+            "atSec": 0.33,
+            "freq": 1000,
+            "amp": 0.6,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          },
+          {
+            "atSec": 0.6,
+            "freq": 1000,
+            "amp": 0.6,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          },
+          {
+            "atSec": 0.72,
+            "freq": 1000,
+            "amp": 0.6,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          }
+        ]
+      },
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "paddedLength": 48000,
+      "inputChecksum": {
+        "sum": 18.156315171858296,
+        "absSum": 290.8792039921973,
+        "length": 48000
+      },
+      "onsets": [
+        {
+          "timestamp": 0.30666666666666664,
+          "energy": 0.1179024779066489,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.37066666666666664,
+          "energy": 0.050404527163330576,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.6053333333333333,
+          "energy": 0.11737811152378977,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.6693333333333333,
+          "energy": 0.015149331555790756,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.7333333333333333,
+          "energy": 0.11856636087992677,
+          "fluxConfirmed": true,
+          "frequency": null
+        }
+      ],
+      "chords": [],
+      "levelStats": {
+        "count": 375,
+        "max": 0.31253338185664403,
+        "last": 0
+      }
+    },
+    {
+      "name": "sine_pitch_default",
+      "configName": "default",
+      "config": {
+        "bandPassLow": 120,
+        "bandPassHigh": 2000,
+        "envelopeAttackMs": 3,
+        "envelopeReleaseMs": 50,
+        "adaptiveMedianFrames": 15,
+        "adaptiveThresholdMultiplier": 1.8,
+        "adaptiveThresholdOffset": 0.005,
+        "refractoryPeriodMs": 60,
+        "minOnsetEnergy": 0.01,
+        "fftSize": 512,
+        "frameSize": 1024,
+        "hopSize": 512,
+        "analyzeChroma": false
+      },
+      "signal": {
+        "durationSec": 0.9,
+        "grains": [
+          {
+            "atSec": 0.2,
+            "freq": 220,
+            "amp": 0.5,
+            "durSec": 0.5,
+            "decaySec": 0
+          }
+        ]
+      },
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "paddedLength": 43264,
+      "inputChecksum": {
+        "sum": 3.552713678800501e-14,
+        "absSum": 7639.432895570062,
+        "length": 43264
+      },
+      "onsets": [
+        {
+          "timestamp": 0.2,
+          "energy": 0.08164791687340961,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.264,
+          "energy": 0.3186717317915913,
+          "fluxConfirmed": false,
+          "frequency": 110.00002718778578
+        }
+      ],
+      "chords": [],
+      "levelStats": {
+        "count": 338,
+        "max": 0.377573677670665,
+        "last": 0
+      }
+    },
+    {
+      "name": "guitar_chord",
+      "configName": "guitar",
+      "config": {
+        "bandPassLow": 80,
+        "bandPassHigh": 5000,
+        "envelopeAttackMs": 5,
+        "envelopeReleaseMs": 80,
+        "adaptiveMedianFrames": 15,
+        "adaptiveThresholdMultiplier": 1.8,
+        "adaptiveThresholdOffset": 0.005,
+        "refractoryPeriodMs": 80,
+        "minOnsetEnergy": 0.008,
+        "fftSize": 2048,
+        "frameSize": 2048,
+        "hopSize": 512,
+        "analyzeChroma": true
+      },
+      "signal": {
+        "durationSec": 1.2,
+        "grains": [
+          {
+            "atSec": 0.25,
+            "freqs": [
+              261.63,
+              329.63,
+              392
+            ],
+            "amp": 0.3,
+            "durSec": 0.7,
+            "decaySec": 0.5
+          }
+        ]
+      },
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "paddedLength": 57600,
+      "inputChecksum": {
+        "sum": 21.438002325023213,
+        "absSum": 5436.582286538447,
+        "length": 57600
+      },
+      "onsets": [
+        {
+          "timestamp": 0.25333333333333335,
+          "energy": 0.14779652281526806,
+          "fluxConfirmed": true,
+          "frequency": null
+        }
+      ],
+      "chords": [
+        {
+          "onsetTimestamp": 0.25333333333333335,
+          "chroma": [
+            0.5502052845142528,
+            0.4888772575395007,
+            0.00874194072093725,
+            0.24545571789409726,
+            0.5847157526004073,
+            0.3693959547109082,
+            0.1348195879992015,
+            1,
+            0.100707194631427,
+            0.011204841111376825,
+            0.017467806503982015,
+            0.1605154974990211
+          ]
+        }
+      ],
+      "levelStats": {
+        "count": 450,
+        "max": 0.6261841906855279,
+        "last": 0
+      }
+    },
+    {
+      "name": "noise_floor_noisyRoom",
+      "configName": "noisyRoom",
+      "config": {
+        "bandPassLow": 200,
+        "bandPassHigh": 2000,
+        "envelopeAttackMs": 3,
+        "envelopeReleaseMs": 50,
+        "adaptiveMedianFrames": 15,
+        "adaptiveThresholdMultiplier": 2.5,
+        "adaptiveThresholdOffset": 0.01,
+        "refractoryPeriodMs": 60,
+        "minOnsetEnergy": 0.02,
+        "fftSize": 512,
+        "frameSize": 1024,
+        "hopSize": 512,
+        "analyzeChroma": false
+      },
+      "signal": {
+        "durationSec": 1,
+        "noise": {
+          "seed": 424242,
+          "amp": 0.015
+        },
+        "grains": [
+          {
+            "atSec": 0.5,
+            "freq": 900,
+            "amp": 0.8,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          }
+        ]
+      },
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "paddedLength": 48000,
+      "inputChecksum": {
+        "sum": 5.9454612992743705,
+        "absSum": 451.3169626587428,
+        "length": 48000
+      },
+      "onsets": [
+        {
+          "timestamp": 0.49866666666666665,
+          "energy": 0.10550934661230452,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.5626666666666666,
+          "energy": 0.02985959279790463,
+          "fluxConfirmed": false,
+          "frequency": null
+        }
+      ],
+      "chords": [],
+      "levelStats": {
+        "count": 375,
+        "max": 0.335739002881703,
+        "last": 0.00888396658180544
+      }
+    },
+    {
+      "name": "speakerSafe_hits",
+      "configName": "speakerSafe",
+      "config": {
+        "bandPassLow": 200,
+        "bandPassHigh": 1800,
+        "envelopeAttackMs": 3,
+        "envelopeReleaseMs": 50,
+        "adaptiveMedianFrames": 15,
+        "adaptiveThresholdMultiplier": 2.2,
+        "adaptiveThresholdOffset": 0.005,
+        "refractoryPeriodMs": 100,
+        "minOnsetEnergy": 0.015,
+        "fftSize": 512,
+        "frameSize": 1024,
+        "hopSize": 512,
+        "analyzeChroma": false
+      },
+      "signal": {
+        "durationSec": 1,
+        "noise": {
+          "seed": 99,
+          "amp": 0.01
+        },
+        "grains": [
+          {
+            "atSec": 0.3,
+            "freq": 800,
+            "amp": 0.5,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          },
+          {
+            "atSec": 0.6,
+            "freq": 800,
+            "amp": 0.5,
+            "durSec": 0.02,
+            "decaySec": 0.004
+          }
+        ]
+      },
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "paddedLength": 48000,
+      "inputChecksum": {
+        "sum": 9.818674614553142,
+        "absSum": 354.16732114707287,
+        "length": 48000
+      },
+      "onsets": [
+        {
+          "timestamp": 0.30666666666666664,
+          "energy": 0.10237861217300699,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.6053333333333333,
+          "energy": 0.10152428813530828,
+          "fluxConfirmed": false,
+          "frequency": null
+        }
+      ],
+      "chords": [],
+      "levelStats": {
+        "count": 375,
+        "max": 0.25925808866199246,
+        "last": 0.005574897198937969
+      }
+    },
+    {
+      "name": "conga_default",
+      "configName": "conga",
+      "config": {
+        "bandPassLow": 120,
+        "bandPassHigh": 2000,
+        "envelopeAttackMs": 3,
+        "envelopeReleaseMs": 50,
+        "adaptiveMedianFrames": 15,
+        "adaptiveThresholdMultiplier": 1.8,
+        "adaptiveThresholdOffset": 0.005,
+        "refractoryPeriodMs": 60,
+        "minOnsetEnergy": 0.01,
+        "fftSize": 512,
+        "frameSize": 1024,
+        "hopSize": 512,
+        "analyzeChroma": false
+      },
+      "signal": {
+        "durationSec": 0.9,
+        "grains": [
+          {
+            "atSec": 0.25,
+            "freq": 300,
+            "amp": 0.5,
+            "durSec": 0.03,
+            "decaySec": 0.006
+          },
+          {
+            "atSec": 0.55,
+            "freq": 300,
+            "amp": 0.5,
+            "durSec": 0.03,
+            "decaySec": 0.006
+          }
+        ]
+      },
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "paddedLength": 43264,
+      "inputChecksum": {
+        "sum": 25.093751829263056,
+        "absSum": 181.83526927544153,
+        "length": 43264
+      },
+      "onsets": [
+        {
+          "timestamp": 0.25333333333333335,
+          "energy": 0.1128378277442751,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.31733333333333336,
+          "energy": 0.018457548963416677,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.552,
+          "energy": 0.10672914016418,
+          "fluxConfirmed": false,
+          "frequency": null
+        },
+        {
+          "timestamp": 0.616,
+          "energy": 0.019500030713562322,
+          "fluxConfirmed": false,
+          "frequency": null
+        }
+      ],
+      "chords": [],
+      "levelStats": {
+        "count": 338,
+        "max": 0.27182463460198664,
+        "last": 0
+      }
+    }
+  ]
+}
