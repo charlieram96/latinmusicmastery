@@ -5,8 +5,12 @@ export type Pair = { id: string; left: string; right: string }
 export type Blank = { id: string; answer: string }
 export type OrderItem = { id: string; text: string; correctPosition: number }
 export type AudioChoice = { id: string; text?: string; audioUrl?: string }
-export type AssemblyZone = { id: string; label: string; x: number; y: number; width: number; height: number }
-export type AssemblyPart = { id: string; label: string; imageUrl: string; correctZoneId: string }
+// Piece placement geometry is in percentages of the background image so it
+// scales responsively. `width` is the piece's display width; `area` is the
+// hidden correct rectangle. A piece is correct when its CENTER lands in `area`.
+export type PlacementArea = { x: number; y: number; width: number; height: number }
+export type PlacementPiece = { id: string; label?: string; imageUrl: string; width: number; area: PlacementArea }
+export type PiecePlacement = { x: number; y: number }
 
 export function norm(s: string): string {
   return s.toLowerCase().trim()
@@ -25,18 +29,40 @@ export function shuffleStable<T>(arr: T[], seed: string): T[] {
   return a
 }
 
-/** Grade a single question against the student's answer. Behavior preserved from the original QuizRunner. */
+/** Whether a piece's center landed inside its (hidden) correct area. Boundary inclusive. */
+export function isPieceCorrect(piece: PlacementPiece, placement: PiecePlacement | undefined): boolean {
+  if (!placement) return false
+  const { area } = piece
+  return (
+    placement.x >= area.x &&
+    placement.x <= area.x + area.width &&
+    placement.y >= area.y &&
+    placement.y <= area.y + area.height
+  )
+}
+
+/**
+ * Grade a question to a score in [0, 1]. Boolean question types score exactly
+ * 0 or 1; piece_placement earns fractional credit per correctly placed piece.
+ */
+export function gradeQuestionScore(q: QuizQuestion, answer: unknown): number {
+  if (q.question_type === 'piece_placement') {
+    const pieces = (((q.options ?? {}) as Record<string, unknown>).pieces as PlacementPiece[]) ?? []
+    if (pieces.length === 0) return 0
+    const placed = (answer as Record<string, PiecePlacement>) ?? {}
+    const correct = pieces.filter((p) => isPieceCorrect(p, placed[p.id])).length
+    return correct / pieces.length
+  }
+  return gradeQuestion(q, answer) ? 1 : 0
+}
+
+/** Grade a boolean-scored question against the student's answer. */
 export function gradeQuestion(q: QuizQuestion, answer: unknown): boolean {
   const opts = (q.options ?? {}) as Record<string, unknown>
   switch (q.question_type) {
     case 'multiple_choice':
     case 'audio_choice':
       return typeof answer === 'string' && !!q.correct_answer && answer === q.correct_answer
-    case 'instrument_assembly': {
-      const parts = (opts.parts as AssemblyPart[]) ?? []
-      const placed = (answer as Record<string, string>) ?? {}
-      return parts.length > 0 && parts.every((p) => placed[p.id] === p.correctZoneId)
-    }
     case 'true_false':
       return typeof answer === 'string' && norm(answer) === norm(q.correct_answer ?? '')
     case 'text_answer':
@@ -69,7 +95,7 @@ export function hasAnswer(q: QuizQuestion, answer: unknown): boolean {
   if (
     q.question_type === 'fill_in_blank' ||
     q.question_type === 'matching_pairs' ||
-    q.question_type === 'instrument_assembly'
+    q.question_type === 'piece_placement'
   ) {
     return !!answer && Object.keys(answer as object).length > 0
   }
@@ -90,11 +116,6 @@ export function correctAnswerLabel(q: QuizQuestion): string {
     if (idx < 0) return q.correct_answer ?? ''
     return choices[idx].text?.trim() || `Clip ${idx + 1}`
   }
-  if (q.question_type === 'instrument_assembly') {
-    const parts = (opts.parts as AssemblyPart[]) ?? []
-    const zones = (opts.zones as AssemblyZone[]) ?? []
-    const zoneLabel = new Map(zones.map((z) => [z.id, z.label]))
-    return parts.map((p) => `${p.label} → ${zoneLabel.get(p.correctZoneId) ?? '?'}`).join(', ')
-  }
+  // piece_placement answers are positional; there is no meaningful text label.
   return q.correct_answer ?? ''
 }

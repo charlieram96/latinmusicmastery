@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { gradeQuestion, hasAnswer, shuffleStable, norm } from '../grading'
+import { gradeQuestion, gradeQuestionScore, hasAnswer, isPieceCorrect, shuffleStable, norm, type PlacementPiece } from '../grading'
 import type { QuizQuestion } from '@/types/modules'
 
 function q(partial: Partial<QuizQuestion>): QuizQuestion {
@@ -15,10 +15,16 @@ function q(partial: Partial<QuizQuestion>): QuizQuestion {
     question_es: null,
     explanation_es: null,
     options_es: null,
+    audio_url: null,
+    image_url: null,
     created_at: null,
     updated_at: null,
     ...partial,
   }
+}
+
+function piece(partial: Partial<PlacementPiece>): PlacementPiece {
+  return { id: 'p1', imageUrl: '', width: 10, area: { x: 20, y: 20, width: 20, height: 20 }, ...partial }
 }
 
 describe('norm', () => {
@@ -88,11 +94,65 @@ describe('gradeQuestion', () => {
     expect(gradeQuestion(question, undefined)).toBe(false)
   })
 
-  it('instrument_assembly: every part must land in its correct zone', () => {
-    const question = q({ question_type: 'instrument_assembly', options: { zones: [{ id: 'z1', label: 'Top', x: 0, y: 0, width: 10, height: 10 }, { id: 'z2', label: 'Bottom', x: 0, y: 50, width: 10, height: 10 }], parts: [{ id: 'p1', label: 'Head', imageUrl: '', correctZoneId: 'z1' }, { id: 'p2', label: 'Shell', imageUrl: '', correctZoneId: 'z2' }] } })
-    expect(gradeQuestion(question, { p1: 'z1', p2: 'z2' })).toBe(true)
-    expect(gradeQuestion(question, { p1: 'z2', p2: 'z1' })).toBe(false)
-    expect(gradeQuestion(question, { p1: 'z1' })).toBe(false) // unplaced part
+})
+
+describe('isPieceCorrect', () => {
+  const p = piece({ area: { x: 20, y: 30, width: 20, height: 10 } })
+  it('true when the piece center is inside the area', () => {
+    expect(isPieceCorrect(p, { x: 30, y: 35 })).toBe(true)
+  })
+  it('true on the area boundary (inclusive)', () => {
+    expect(isPieceCorrect(p, { x: 20, y: 30 })).toBe(true)
+    expect(isPieceCorrect(p, { x: 40, y: 40 })).toBe(true)
+  })
+  it('false when the center is outside the area', () => {
+    expect(isPieceCorrect(p, { x: 19.9, y: 35 })).toBe(false)
+    expect(isPieceCorrect(p, { x: 30, y: 41 })).toBe(false)
+  })
+  it('false when the piece is unplaced', () => {
+    expect(isPieceCorrect(p, undefined)).toBe(false)
+  })
+})
+
+describe('gradeQuestionScore', () => {
+  it('piece_placement: fraction of pieces whose center is inside their area', () => {
+    const question = q({
+      question_type: 'piece_placement',
+      options: {
+        pieces: [
+          piece({ id: 'p1', area: { x: 0, y: 0, width: 20, height: 20 } }),
+          piece({ id: 'p2', area: { x: 50, y: 50, width: 20, height: 20 } }),
+        ],
+      },
+    })
+    expect(gradeQuestionScore(question, { p1: { x: 10, y: 10 }, p2: { x: 60, y: 60 } })).toBe(1)
+    expect(gradeQuestionScore(question, { p1: { x: 10, y: 10 }, p2: { x: 10, y: 10 } })).toBe(0.5)
+    expect(gradeQuestionScore(question, { p1: { x: 90, y: 90 }, p2: { x: 10, y: 10 } })).toBe(0)
+  })
+  it('piece_placement: unplaced pieces count as wrong', () => {
+    const question = q({
+      question_type: 'piece_placement',
+      options: {
+        pieces: [
+          piece({ id: 'p1', area: { x: 0, y: 0, width: 20, height: 20 } }),
+          piece({ id: 'p2', area: { x: 50, y: 50, width: 20, height: 20 } }),
+        ],
+      },
+    })
+    expect(gradeQuestionScore(question, { p1: { x: 10, y: 10 } })).toBe(0.5)
+    expect(gradeQuestionScore(question, undefined)).toBe(0)
+  })
+  it('piece_placement: no pieces configured scores 0', () => {
+    const question = q({ question_type: 'piece_placement', options: { pieces: [] } })
+    expect(gradeQuestionScore(question, {})).toBe(0)
+  })
+  it('boolean question types map to exactly 0 or 1', () => {
+    const mc = q({ question_type: 'multiple_choice', correct_answer: 'b', options: { choices: [{ id: 'a', text: 'A' }, { id: 'b', text: 'B' }] } })
+    expect(gradeQuestionScore(mc, 'b')).toBe(1)
+    expect(gradeQuestionScore(mc, 'a')).toBe(0)
+    const tf = q({ question_type: 'true_false', correct_answer: 'true' })
+    expect(gradeQuestionScore(tf, 'TRUE')).toBe(1)
+    expect(gradeQuestionScore(tf, 'false')).toBe(0)
   })
 })
 
@@ -116,9 +176,9 @@ describe('hasAnswer', () => {
     expect(hasAnswer(question, 'c1')).toBe(true)
     expect(hasAnswer(question, '')).toBe(false)
   })
-  it('instrument_assembly needs at least one placed part', () => {
-    const question = q({ question_type: 'instrument_assembly' })
-    expect(hasAnswer(question, { p1: 'z1' })).toBe(true)
+  it('piece_placement needs at least one placed piece', () => {
+    const question = q({ question_type: 'piece_placement' })
+    expect(hasAnswer(question, { p1: { x: 10, y: 10 } })).toBe(true)
     expect(hasAnswer(question, {})).toBe(false)
   })
 })

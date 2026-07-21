@@ -27,7 +27,7 @@ type QuestionInput = {
   options?: unknown
   correct_answer?: string | null
   explanation?: string | null
-  // Primary media for audio_choice (prompt clip) / instrument_assembly (bg image)
+  // Primary media for audio_choice (prompt clip) / piece_placement (bg image)
   audio_url?: string | null
   image_url?: string | null
   // Spanish overlays (fall back to the English columns when empty)

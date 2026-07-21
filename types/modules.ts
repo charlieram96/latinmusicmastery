@@ -10,7 +10,7 @@ export type QuestionType =
   | 'text_answer'
   | 'audio'
   | 'audio_choice'
-  | 'instrument_assembly'
+  | 'piece_placement'
   | 'matching_pairs'
   | 'fill_in_blank'
   | 'ordering_sequence'
@@ -92,8 +92,8 @@ export interface QuizQuestion {
   question_es: string | null
   explanation_es: string | null
   options_es: QuestionOptions | null
-  // Primary media (per-option/per-part media lives inside `options`):
-  // audio_choice → prompt clip; instrument_assembly → background image.
+  // Primary media (per-option/per-piece media lives inside `options`):
+  // audio_choice → prompt clip; piece_placement → background image.
   audio_url: string | null
   image_url: string | null
   created_at: string | null
@@ -136,12 +136,18 @@ export interface AudioChoiceOptions {
   choices: { id: string; text?: string; audioUrl?: string }[]
 }
 
-// Instrument assembly: student drags labeled parts onto labeled drop zones
-// overlaid on `QuizQuestion.image_url`. Zone geometry is in percentages of the
-// image so it scales responsively. Each part has one correct zone.
-export interface InstrumentAssemblyOptions {
-  zones: { id: string; label: string; x: number; y: number; width: number; height: number }[]
-  parts: { id: string; label: string; imageUrl: string; correctZoneId: string }[]
+// Piece placement: student freely drags pieces anywhere over
+// `QuizQuestion.image_url`; a piece is correct when its center lands inside
+// its hidden `area` rectangle. All geometry is in percentages of the image so
+// it scales responsively. `width` is the piece's display width.
+export interface PiecePlacementOptions {
+  pieces: {
+    id: string
+    label?: string
+    imageUrl: string
+    width: number
+    area: { x: number; y: number; width: number; height: number }
+  }[]
 }
 
 export type QuestionOptions =
@@ -150,7 +156,7 @@ export type QuestionOptions =
   | FillInBlankOptions
   | OrderingSequenceOptions
   | AudioChoiceOptions
-  | InstrumentAssemblyOptions
+  | PiecePlacementOptions
   | { answer: boolean } // for true_false
   | null
 
