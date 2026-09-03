@@ -3,18 +3,20 @@
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/components/language-provider'
 import { formatCents, midiToHz, verdictFor } from '@/lib/tuner/note-math'
-import type { TunerFrame } from '@/lib/tuner/pitch-tracker'
+import { useTunerFrame } from '@/hooks/use-tuner-engine'
+import type { TunerStore } from '@/lib/tuner/tuner-store'
 
 interface ReadoutsProps {
-  frame: TunerFrame | null
+  store: TunerStore
   a4: number
   tol: number
 }
 
 const COLOR = { ok: 'text-success', warn: 'text-primary', bad: 'text-terracotta' } as const
 
-export function Readouts({ frame, a4, tol }: ReadoutsProps) {
+export function Readouts({ store, a4, tol }: ReadoutsProps) {
   const { t } = useTranslation()
+  const { frame } = useTunerFrame(store)
   const verdict = frame ? verdictFor(frame.cents, tol) : null
   const guidance = !frame
     ? ' '

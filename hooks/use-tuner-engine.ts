@@ -5,6 +5,7 @@ import { mpm, MPM_DEFAULTS } from '@/lib/tuner/pitch-engine'
 import { PitchTracker, type TunerFrame } from '@/lib/tuner/pitch-tracker'
 import { createTunerStore, EMPTY_SNAPSHOT, type TunerSnapshot, type TunerStore } from '@/lib/tuner/tuner-store'
 import { SENSITIVITY_PRESETS, type Sensitivity } from '@/lib/tuner/sensitivity'
+import { courseTargetMidi } from '@/lib/tuner/instruments'
 
 export type EngineStatus = 'idle' | 'starting' | 'listening' | 'error'
 export type EngineErrorKind = 'denied' | 'notfound' | 'busy' | 'unsupported' | 'unknown'
@@ -19,8 +20,8 @@ export interface TunerEngineOptions {
   holdMs: number
   tolCents: number
   sensitivity: Sensitivity
-  /** Manual target note, or null for nearest-semitone mode. */
-  targetMidi: number | null
+  /** Manually selected course (its notes), or null for nearest-semitone mode. */
+  targetCourse: number[] | null
   /** Called for every non-null frame (the page watches `justLocked`). */
   onFrame?: (frame: TunerFrame) => void
 }
@@ -89,7 +90,7 @@ export function useTunerEngine(opts: TunerEngineOptions) {
       const frame = tracker.push(hz != null ? { hz, clarity } : null, performance.now(), o.a4, {
         holdMs: o.holdMs,
         tolCents: o.tolCents,
-        targetMidi: o.targetMidi,
+        targetMidi: o.targetCourse ? courseTargetMidi(o.targetCourse, hz, o.a4) : null,
       })
       store.set({ frame, level: levelRef.current, clip: peak > CLIP_PEAK })
       if (frame && o.onFrame) o.onFrame(frame)

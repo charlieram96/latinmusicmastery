@@ -118,6 +118,11 @@ existing design tokens.
 Delete `lib/tuner/tuner-utils.ts` after moving its callers (only the tuner
 components use it).
 
+**Amendment (implementation):** `hooks/use-pitch-detection.ts` is *kept*, not
+deleted: `hooks/use-exercise-session.ts` (PlaySense stage player) still depends
+on it. The tuner no longer imports it; migrating PlaySense to the new engine is
+a separate change.
+
 ### Audio layer
 
 - `public/audio-worklets/pitch-detector-processor.js` — plain JS

@@ -926,64 +926,170 @@
     },
     "pages": {
       "tuner": {
-        "title": "Afinador de instrumentos",
-        "subtitle": "Toca una nota y afínala al centro. Funciona con cualquier instrumento de tono.",
-        "chromatic": "Cromático",
-        "chromaticHint": "Modo cromático: toca cualquier tecla y afínala al centro.",
-        "openStrings": "Cuerdas al aire",
-        "target": "Objetivo",
-        "startTuner": "Empezar a afinar",
-        "stopTuner": "Detener",
-        "micAccessDenied": "Acceso al micrófono denegado",
-        "micAccessHelp": "Permite el acceso al micrófono en la configuración de tu navegador y vuelve a intentarlo.",
-        "micError": "No se pudo iniciar el afinador",
-        "tryAgain": "Reintentar",
+        "title": "Afinador",
+        "subtitle": "Toca una nota y afina hasta el centro. Funciona con cualquier instrumento afinado.",
+        "brand": "Afinador LMM",
+        "instruments": {
+          "guitar": "Guitarra",
+          "bass": "Bajo",
+          "tres": "Tres cubano",
+          "cuatro": "Cuatro",
+          "ukulele": "Ukelele",
+          "violin": "Violín",
+          "chromatic": "Cromático"
+        },
+        "tunings": {
+          "guitar": {
+            "standard": "Estándar E A D G B E",
+            "dropD": "Drop D",
+            "halfDown": "Medio tono abajo",
+            "dadgad": "DADGAD",
+            "openG": "Sol abierto"
+          },
+          "bass": {
+            "standard": "Estándar E A D G",
+            "five": "5 cuerdas B E A D G",
+            "dropD": "Drop D"
+          },
+          "tres": {
+            "do": "Afinación en Do · Sol Do Mi",
+            "re": "Afinación en Re · La Re Fa♯"
+          },
+          "cuatro": {
+            "pr": "Puertorriqueño · Si Mi La Re Sol"
+          },
+          "ukulele": {
+            "standard": "Estándar G C E A",
+            "lowG": "Sol grave"
+          },
+          "violin": {
+            "standard": "Estándar G D A E"
+          },
+          "chromatic": {
+            "any": "Cualquier nota"
+          }
+        },
         "status": {
-          "idle": "Listo",
-          "waiting": "Escuchando…",
+          "ready": "Listo",
+          "listening": "Escuchando…",
           "inTune": "Afinado",
-          "sharp": "Alto",
+          "slightlyFlat": "Ligeramente bajo",
           "slightlySharp": "Ligeramente alto",
           "flat": "Bajo",
-          "slightlyFlat": "Ligeramente bajo"
+          "sharp": "Alto"
         },
-        "signal": {
-          "title": "Escuchando",
-          "live": "En vivo",
-          "off": "Apagado",
-          "level": "Nivel",
-          "hintLive": "Toca una nota; mantén el nivel fuera del rojo.",
-          "hintIdle": "Permite el micrófono para empezar."
+        "readout": {
+          "cents": "cents",
+          "detected": "detectado",
+          "target": "objetivo {hz} Hz",
+          "tighten": "aprieta para subir",
+          "loosen": "afloja para bajar",
+          "hold": "mantenlo ahí",
+          "locked": "clavado",
+          "overFlat": "más de 50¢ bajo",
+          "overSharp": "más de 50¢ alto"
+        },
+        "written": {
+          "sounds": "Suena {note} en tono de concierto",
+          "tuningTo": "Afinando a {notes}",
+          "holding": "manteniendo la última nota"
+        },
+        "listen": {
+          "start": "Empezar a afinar",
+          "starting": "Iniciando…",
+          "stop": "Escuchando… toca para parar",
+          "hintIdle": "Toca una sola nota en tu instrumento y déjala sonar.",
+          "hintLive": "Toca una sola nota y déjala sonar. Mantén el nivel fuera del rojo."
+        },
+        "input": {
+          "label": "Entrada",
+          "defaultDevice": "Micrófono predeterminado",
+          "off": "Micrófono apagado",
+          "offHelp": "No se graba ni se sube nada. El audio se queda en este dispositivo.",
+          "on": "Micrófono encendido",
+          "onHelp": "{device} · el audio nunca sale de este dispositivo",
+          "unavailable": "Micrófono no disponible"
+        },
+        "strings": {
+          "title": "Cuerdas al aire",
+          "auto": "Auto",
+          "manual": "Manual",
+          "inTune": "afinada",
+          "done": "lista",
+          "chromaticHint": "Modo cromático: cualquier nota, cualquier instrumento. El afinador apunta al semitono más cercano. Configura la transposición en ajustes para instrumentos en Si♭ o Mi♭.",
+          "play": "Escuchar {note}",
+          "select": "Cuerda {n}: {notes}"
+        },
+        "errors": {
+          "denied": "El acceso al micrófono está bloqueado. Permítelo en la configuración del sitio de tu navegador y vuelve a intentarlo.",
+          "notFound": "No se encontró ningún micrófono. Conecta uno y vuelve a intentarlo.",
+          "busy": "Otra aplicación está usando el micrófono. Ciérrala y vuelve a intentarlo.",
+          "unsupported": "Este navegador no puede ejecutar el afinador. Prueba con la última versión de Chrome, Safari o Firefox.",
+          "unknown": "No se pudo iniciar el micrófono. Vuelve a intentarlo.",
+          "tryAgain": "Reintentar"
+        },
+        "meter": {
+          "label": "Medidor de afinación",
+          "needle": "Aguja",
+          "strobe": "Estrobo"
         },
         "settings": {
           "title": "Ajustes",
-          "reference": "Referencia (La4)",
-          "referenceHelp": "Tono de concierto. El estándar es 440 Hz; algunos grupos afinan a 442.",
+          "open": "Ajustes del afinador",
           "sensitivity": "Sensibilidad",
-          "sensitivityHelp": "Más alta capta notas suaves; más baja ignora el ruido de fondo.",
-          "sensitivityLevels": { "low": "Baja", "medium": "Media", "high": "Alta" }
+          "sensitivityHelp": "Alta capta notas suaves; baja ignora el ruido de la sala.",
+          "low": "Baja",
+          "med": "Media",
+          "high": "Alta",
+          "window": "Margen de afinación",
+          "windowHelp": "Qué tan cerca cuenta como afinado.",
+          "names": "Nombres de notas",
+          "namesHelp": "Solfeo muestra Do Re Mi.",
+          "letters": "C D E",
+          "solfege": "Do Re Mi",
+          "transpose": "Transposición",
+          "transposeHelp": "Para instrumentos transpositores.",
+          "concert": "Concierto",
+          "hold": "Mantener última nota",
+          "holdHelp": "Conserva la lectura cuando la nota se apaga.",
+          "off": "No"
         },
-        "guide": {
-          "title": "Cómo afinar",
-          "howto": {
-            "q": "¿Cómo afino?",
-            "a": "Pulsa Empezar y toca una nota. Lee el nombre de la nota y observa la banda estroboscópica: se desplaza a la izquierda cuando estás bajo y a la derecha cuando estás alto. Ajusta tu instrumento hasta que se detenga en el centro y se ilumine en dorado: eso es estar afinado."
-          },
-          "cents": {
-            "q": "¿Qué son los cents y los Hz?",
-            "a": "Los Hz (hercios) son el tono real de la nota que tocas. Los cents miden qué tan lejos está ese tono de la nota correcta más cercana: 100 cents forman un semitono. Cualquier valor dentro de ±5 cents se considera afinado."
-          },
-          "reference": {
-            "q": "¿Por qué La440 (tono de referencia)?",
-            "a": "Cada nota se afina en relación con el La sobre el do central. El estándar moderno fija ese La en 440 Hz. Subirlo o bajarlo desplaza todos los tonos objetivo, así que usa la misma referencia que el resto de tu grupo."
-          }
+        "reference": {
+          "title": "Tono de referencia",
+          "a4": "Frecuencia de La4",
+          "lower": "Bajar La4 1 Hz",
+          "raise": "Subir La4 1 Hz",
+          "play": "Escuchar {note}",
+          "stop": "Parar {note}",
+          "note": "Nota de referencia",
+          "octave": "Octava",
+          "help": "Afina de oído: escucha el tono, iguala tu cuerda y luego revisa el medidor. Toca ▶ en cualquier cuerda para escucharla."
         },
-        "instruments": {
-          "guitar": { "name": "Guitarra", "description": "Toca cada cuerda al aire y afínala hasta que coincida." },
-          "bass": { "name": "Bajo", "description": "Toca cada cuerda al aire y afínala hasta que coincida." },
-          "piano": { "name": "Piano", "description": "Toca notas individuales y compáralas con el tono objetivo." },
-          "violin": { "name": "Violín", "description": "Afina cada cuerda tocando con el arco o pulsándola suavemente." },
-          "tres": { "name": "Tres", "description": "Afina cada orden (cuerdas dobles) hasta que coincidan." }
+        "session": {
+          "title": "Esta sesión",
+          "clear": "Limpiar",
+          "progress": "{done}/{total} cuerdas afinadas",
+          "allSet": "todo listo",
+          "notesLocked": "{count} notas clavadas",
+          "empty": "Las notas que dejes afinadas aparecerán aquí.",
+          "justNow": "ahora mismo",
+          "secondsAgo": "hace {n} s",
+          "minutesAgo": "hace {n} min",
+          "hoursAgo": "hace {n} h"
+        },
+        "tips": {
+          "meterTitle": "Lee el medidor",
+          "meterBody": "Aguja a la izquierda: bajo, aprieta. Aguja a la derecha: alto, afloja. El centro verde significa que estás dentro del margen.",
+          "centsTitle": "Cents y hercios",
+          "centsBody": "Hz es la altura real. Los cents miden la distancia a la nota correcta más cercana; 100 cents son un semitono.",
+          "orderTitle": "Baja y luego sube",
+          "orderBody": "Quédate un poco bajo primero y aprieta hasta el tono. Las cuerdas mantienen mejor la afinación cuando el último movimiento fue hacia arriba.",
+          "keepPracticing": "Sigue practicando",
+          "openPlaySense": "Abrir Play Sense"
+        },
+        "keys": {
+          "space": "Espacio inicia y detiene",
+          "arrows": "← → elige cuerda · ↑ ↓ ajusta La4"
         }
       },
       "community": {

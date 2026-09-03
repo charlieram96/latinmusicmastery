@@ -926,64 +926,170 @@
     },
     "pages": {
       "tuner": {
-        "title": "Instrument Tuner",
+        "title": "Tuner",
         "subtitle": "Play a note and tune to the center. Works for any pitched instrument.",
-        "chromatic": "Chromatic",
-        "chromaticHint": "Chromatic mode — play any single key and tune it to the center.",
-        "openStrings": "Open strings",
-        "target": "Target",
-        "startTuner": "Start tuning",
-        "stopTuner": "Stop",
-        "micAccessDenied": "Microphone access denied",
-        "micAccessHelp": "Allow microphone access in your browser settings, then try again.",
-        "micError": "Couldn't start the tuner",
-        "tryAgain": "Try again",
+        "brand": "LMM Tuner",
+        "instruments": {
+          "guitar": "Guitar",
+          "bass": "Bass",
+          "tres": "Tres cubano",
+          "cuatro": "Cuatro",
+          "ukulele": "Ukulele",
+          "violin": "Violin",
+          "chromatic": "Chromatic"
+        },
+        "tunings": {
+          "guitar": {
+            "standard": "Standard E A D G B E",
+            "dropD": "Drop D",
+            "halfDown": "Half step down",
+            "dadgad": "DADGAD",
+            "openG": "Open G"
+          },
+          "bass": {
+            "standard": "Standard E A D G",
+            "five": "5-string B E A D G",
+            "dropD": "Drop D"
+          },
+          "tres": {
+            "do": "Afinación en Do · G C E",
+            "re": "Afinación en Re · A D F♯"
+          },
+          "cuatro": {
+            "pr": "Puertorriqueño · B E A D G"
+          },
+          "ukulele": {
+            "standard": "Standard G C E A",
+            "lowG": "Low G"
+          },
+          "violin": {
+            "standard": "Standard G D A E"
+          },
+          "chromatic": {
+            "any": "Any note"
+          }
+        },
         "status": {
-          "idle": "Ready",
-          "waiting": "Listening…",
+          "ready": "Ready",
+          "listening": "Listening…",
           "inTune": "In tune",
-          "sharp": "Sharp",
+          "slightlyFlat": "Slightly flat",
           "slightlySharp": "Slightly sharp",
           "flat": "Flat",
-          "slightlyFlat": "Slightly flat"
+          "sharp": "Sharp"
         },
-        "signal": {
-          "title": "Listening",
-          "live": "Live",
-          "off": "Off",
-          "level": "Level",
-          "hintLive": "Play a note — keep the level out of the red.",
-          "hintIdle": "Allow your mic to begin."
+        "readout": {
+          "cents": "cents",
+          "detected": "detected",
+          "target": "target {hz} Hz",
+          "tighten": "tighten to raise",
+          "loosen": "loosen to lower",
+          "hold": "hold it there",
+          "locked": "locked in",
+          "overFlat": "more than 50¢ flat",
+          "overSharp": "more than 50¢ sharp"
+        },
+        "written": {
+          "sounds": "Sounds {note} at concert pitch",
+          "tuningTo": "Tuning to {notes}",
+          "holding": "holding last note"
+        },
+        "listen": {
+          "start": "Start tuning",
+          "starting": "Starting…",
+          "stop": "Listening… tap to stop",
+          "hintIdle": "Play one note on your instrument and let it ring.",
+          "hintLive": "Play one note and let it ring. Keep the level out of the red."
+        },
+        "input": {
+          "label": "Input",
+          "defaultDevice": "Default microphone",
+          "off": "Microphone off",
+          "offHelp": "Nothing is recorded or uploaded. Audio stays on this device.",
+          "on": "Microphone on",
+          "onHelp": "{device} · audio never leaves this device",
+          "unavailable": "Microphone unavailable"
+        },
+        "strings": {
+          "title": "Open strings",
+          "auto": "Auto",
+          "manual": "Manual",
+          "inTune": "in tune",
+          "done": "done",
+          "chromaticHint": "Chromatic mode: any note, any instrument. The tuner targets the nearest semitone. Set a transposition in settings for B♭ or E♭ horns.",
+          "play": "Play {note}",
+          "select": "String {n}: {notes}"
+        },
+        "errors": {
+          "denied": "Microphone access was blocked. Allow it in your browser's site settings, then try again.",
+          "notFound": "No microphone found. Connect one and try again.",
+          "busy": "Another app is using the microphone. Close it and try again.",
+          "unsupported": "This browser can't run the tuner. Try the latest Chrome, Safari or Firefox.",
+          "unknown": "Could not start the microphone. Try again.",
+          "tryAgain": "Try again"
+        },
+        "meter": {
+          "label": "Tuning meter",
+          "needle": "Needle",
+          "strobe": "Strobe"
         },
         "settings": {
           "title": "Settings",
-          "reference": "Reference (A4)",
-          "referenceHelp": "Concert pitch. Standard is 440 Hz; some ensembles tune to 442.",
+          "open": "Tuner settings",
           "sensitivity": "Sensitivity",
-          "sensitivityHelp": "Higher picks up quiet notes; lower ignores background noise.",
-          "sensitivityLevels": { "low": "Low", "medium": "Medium", "high": "High" }
+          "sensitivityHelp": "Higher hears quiet notes; lower ignores room noise.",
+          "low": "Low",
+          "med": "Med",
+          "high": "High",
+          "window": "In-tune window",
+          "windowHelp": "How close counts as in tune.",
+          "names": "Note names",
+          "namesHelp": "Solfège shows Do Re Mi.",
+          "letters": "C D E",
+          "solfege": "Do Re Mi",
+          "transpose": "Transposition",
+          "transposeHelp": "For transposing instruments.",
+          "concert": "Concert",
+          "hold": "Hold last note",
+          "holdHelp": "Keep the reading after the note decays.",
+          "off": "Off"
         },
-        "guide": {
-          "title": "How to tune",
-          "howto": {
-            "q": "How do I tune?",
-            "a": "Press Start and play one note. Read the note name, then watch the strobe band: it drifts left when you're flat and right when you're sharp. Adjust your instrument until it settles in the center and locks gold — that's in tune."
-          },
-          "cents": {
-            "q": "What are cents and Hz?",
-            "a": "Hz (hertz) is the raw pitch of the note you're playing. Cents measure how far that pitch sits from the nearest correct note — 100 cents make one semitone. Anything within ±5 cents reads as in tune."
-          },
-          "reference": {
-            "q": "Why A440 (reference pitch)?",
-            "a": "Every note is tuned relative to the A above middle C. The modern standard sets that A to 440 Hz. Raising or lowering it shifts every target pitch, so match the reference the rest of your group is using."
-          }
+        "reference": {
+          "title": "Reference tone",
+          "a4": "A4 frequency",
+          "lower": "Lower A4 by 1 Hz",
+          "raise": "Raise A4 by 1 Hz",
+          "play": "Play {note}",
+          "stop": "Stop {note}",
+          "note": "Reference note",
+          "octave": "Octave",
+          "help": "Tune by ear: play the tone, match your string, then check the meter. Tap ▶ on any string pad to hear that string."
         },
-        "instruments": {
-          "guitar": { "name": "Guitar", "description": "Play each open string and tune to match." },
-          "bass": { "name": "Bass", "description": "Play each open string and tune to match." },
-          "piano": { "name": "Piano", "description": "Play individual keys and compare to the target pitch." },
-          "violin": { "name": "Violin", "description": "Tune each string by bowing or plucking gently." },
-          "tres": { "name": "Tres", "description": "Tune each course (doubled strings) to match." }
+        "session": {
+          "title": "This session",
+          "clear": "Clear",
+          "progress": "{done}/{total} strings in tune",
+          "allSet": "all set",
+          "notesLocked": "{count} notes locked in tune",
+          "empty": "Notes you lock in tune show up here.",
+          "justNow": "just now",
+          "secondsAgo": "{n}s ago",
+          "minutesAgo": "{n} min ago",
+          "hoursAgo": "{n} h ago"
+        },
+        "tips": {
+          "meterTitle": "Read the meter",
+          "meterBody": "Needle left is flat: tighten. Needle right is sharp: loosen. Green center means you're within the in-tune window.",
+          "centsTitle": "Cents and hertz",
+          "centsBody": "Hz is the raw pitch. Cents is distance from the nearest correct note; 100 cents is one semitone.",
+          "orderTitle": "Tune down, then up",
+          "orderBody": "Go slightly flat first and tighten into pitch. Strings hold tuning better when the last move raised them.",
+          "keepPracticing": "Keep practicing",
+          "openPlaySense": "Open Play Sense"
+        },
+        "keys": {
+          "space": "Space starts and stops",
+          "arrows": "← → pick a string · ↑ ↓ adjust A4"
         }
       },
       "community": {

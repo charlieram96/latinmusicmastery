@@ -5,10 +5,11 @@ import { ArrowDown, ArrowUp, AudioLines, CircleCheck, Music2 } from 'lucide-reac
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/components/language-provider'
 import { noteLabel, noteParts, verdictFor, type NoteNames, type Verdict } from '@/lib/tuner/note-math'
-import type { TunerFrame } from '@/lib/tuner/pitch-tracker'
+import { useTunerFrame } from '@/hooks/use-tuner-engine'
+import type { TunerStore } from '@/lib/tuner/tuner-store'
 
 interface NoteDisplayProps {
-  frame: TunerFrame | null
+  store: TunerStore
   /** True while the microphone is listening. */
   active: boolean
   names: NoteNames
@@ -25,8 +26,9 @@ const PILL: Record<Verdict | 'idle', string> = {
   idle: 'border-border bg-raised text-muted-foreground',
 }
 
-export function NoteDisplay({ frame, active, names, transpose, tol, manualCourse }: NoteDisplayProps) {
+export function NoteDisplay({ store, active, names, transpose, tol, manualCourse }: NoteDisplayProps) {
   const { t } = useTranslation()
+  const { frame } = useTunerFrame(store)
   const reduce = useReducedMotion()
   const shownMidi = frame ? frame.midi + transpose : null
   const parts = shownMidi != null ? noteParts(shownMidi, names) : null
