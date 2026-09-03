@@ -8,17 +8,20 @@ import { Plus, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { QuizMediaUpload } from './quiz-media-upload'
 import type { PlacementPiece } from '@/lib/quiz/grading'
+import { patchLocalizedEntry, pruneLocalizedEntries, readLocalizedField } from '@/lib/quiz/options-es'
 
 interface Props {
   questionId: string
   options: { pieces?: PlacementPiece[] } | null
+  /** Spanish overlay: `{ pieces: [{ id, label }] }` with the same piece ids. */
+  optionsEs?: Record<string, unknown> | null
   imageUrl: string
-  onChange: (data: { options?: unknown; image_url?: string | null }) => void
+  onChange: (data: { options?: unknown; options_es?: unknown; image_url?: string | null }) => void
 }
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n))
 
-export function PiecePlacementBuilder({ questionId, options, imageUrl, onChange }: Props) {
+export function PiecePlacementBuilder({ questionId, options, optionsEs = null, imageUrl, onChange }: Props) {
   const pieces = options?.pieces ?? []
   const stageRef = useRef<HTMLDivElement>(null)
   const dragState = useRef<{ id: string; offX: number; offY: number } | null>(null)
@@ -28,6 +31,10 @@ export function PiecePlacementBuilder({ questionId, options, imageUrl, onChange 
 
   const updatePiece = (id: string, p: Partial<PlacementPiece>) => {
     patch(pieces.map((pc) => (pc.id === id ? { ...pc, ...p } : pc)))
+  }
+
+  const updatePieceLabelEs = (id: string, label: string) => {
+    onChange({ options_es: patchLocalizedEntry(optionsEs, 'pieces', id, { label }) })
   }
 
   const addPiece = () => {
@@ -40,7 +47,11 @@ export function PiecePlacementBuilder({ questionId, options, imageUrl, onChange 
   }
 
   const removePiece = (id: string) => {
-    patch(pieces.filter((pc) => pc.id !== id))
+    const remaining = pieces.filter((pc) => pc.id !== id)
+    onChange({
+      options: { pieces: remaining },
+      options_es: pruneLocalizedEntries(optionsEs, 'pieces', remaining.map((pc) => pc.id)),
+    })
     if (selectedId === id) setSelectedId(null)
   }
 
@@ -200,6 +211,15 @@ export function PiecePlacementBuilder({ questionId, options, imageUrl, onChange 
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-5 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">ES</span>
+              <Input
+                value={readLocalizedField(optionsEs, 'pieces', p.id, 'label')}
+                onChange={(e) => updatePieceLabelEs(p.id, e.target.value)}
+                placeholder={`Etiqueta de la pieza ${i + 1} (Español, opcional)`}
+                className="flex-1 border-dashed"
+              />
             </div>
             <QuizMediaUpload
               kind="image"

@@ -9,6 +9,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { QuestionType } from '@/types/modules'
 import { QuizMediaUpload } from './quiz-media-upload'
 import { PiecePlacementBuilder } from './piece-placement-builder'
+import { patchLocalizedEntry, pruneLocalizedEntries, readLocalizedField, type LocalizedOptions } from '@/lib/quiz/options-es'
 
 interface QuizBuilderProps {
   questionId: string
@@ -16,6 +17,8 @@ interface QuizBuilderProps {
   question: string
   questionEs?: string
   options: any
+  /** Spanish overlay for `options`: same lists and ids, translated strings only. */
+  optionsEs?: LocalizedOptions
   correctAnswer: string
   audioUrl?: string
   imageUrl?: string
@@ -25,6 +28,7 @@ interface QuizBuilderProps {
     question?: string
     question_es?: string | null
     options?: any
+    options_es?: unknown
     correct_answer?: string
     audio_url?: string | null
     image_url?: string | null
@@ -33,12 +37,38 @@ interface QuizBuilderProps {
   }) => void
 }
 
+/** Secondary input row for the Spanish version of one option string. */
+function EsField({
+  value,
+  onChange,
+  placeholder,
+  multiline = false,
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+  multiline?: boolean
+}) {
+  const className = 'flex-1 border-dashed'
+  return (
+    <div className="flex items-center gap-2 pl-6">
+      <span className="w-5 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">ES</span>
+      {multiline ? (
+        <Textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={2} className={className} />
+      ) : (
+        <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={className} />
+      )}
+    </div>
+  )
+}
+
 export function QuizBuilder({
   questionId,
   questionType,
   question,
   questionEs = '',
   options,
+  optionsEs = null,
   correctAnswer,
   audioUrl = '',
   imageUrl = '',
@@ -52,16 +82,17 @@ export function QuizBuilder({
         return (
           <MultipleChoiceBuilder
             options={options}
+            optionsEs={optionsEs}
             correctAnswer={correctAnswer}
             onChange={onChange}
           />
         )
       case 'matching_pairs':
-        return <MatchingPairsBuilder options={options} onChange={onChange} />
+        return <MatchingPairsBuilder options={options} optionsEs={optionsEs} onChange={onChange} />
       case 'fill_in_blank':
-        return <FillInBlankBuilder options={options} onChange={onChange} />
+        return <FillInBlankBuilder options={options} optionsEs={optionsEs} onChange={onChange} />
       case 'ordering_sequence':
-        return <OrderingSequenceBuilder options={options} onChange={onChange} />
+        return <OrderingSequenceBuilder options={options} optionsEs={optionsEs} onChange={onChange} />
       case 'true_false':
         return (
           <TrueFalseBuilder correctAnswer={correctAnswer} onChange={onChange} />
@@ -75,6 +106,7 @@ export function QuizBuilder({
           <AudioChoiceBuilder
             questionId={questionId}
             options={options}
+            optionsEs={optionsEs}
             correctAnswer={correctAnswer}
             audioUrl={audioUrl}
             onChange={onChange}
@@ -85,6 +117,7 @@ export function QuizBuilder({
           <PiecePlacementBuilder
             questionId={questionId}
             options={options}
+            optionsEs={optionsEs}
             imageUrl={imageUrl}
             onChange={onChange}
           />
@@ -154,10 +187,12 @@ export function QuizBuilder({
 // Multiple Choice Builder
 function MultipleChoiceBuilder({
   options,
+  optionsEs,
   correctAnswer,
   onChange,
 }: {
   options: any
+  optionsEs: LocalizedOptions
   correctAnswer: string
   onChange: (data: any) => void
 }) {
@@ -179,11 +214,15 @@ function MultipleChoiceBuilder({
     })
   }
 
+  const updateChoiceEs = (id: string, text: string) => {
+    onChange({ options_es: patchLocalizedEntry(optionsEs, 'choices', id, { text }) })
+  }
+
   const removeChoice = (id: string) => {
+    const remaining = choices.filter((c: any) => c.id !== id)
     onChange({
-      options: {
-        choices: choices.filter((c: any) => c.id !== id),
-      },
+      options: { choices: remaining },
+      options_es: pruneLocalizedEntries(optionsEs, 'choices', remaining.map((c: { id: string }) => c.id)),
     })
   }
 
@@ -191,29 +230,36 @@ function MultipleChoiceBuilder({
     <div className="space-y-3">
       <Label>Answer Choices (select the correct one)</Label>
       {choices.map((choice: any, index: number) => (
-        <div key={choice.id} className="flex gap-2 items-center">
-          <input
-            type="radio"
-            name="correct"
-            checked={correctAnswer === choice.id}
-            onChange={() => onChange({ correct_answer: choice.id })}
-            className="h-4 w-4"
+        <div key={choice.id} className="space-y-1.5">
+          <div className="flex gap-2 items-center">
+            <input
+              type="radio"
+              name="correct"
+              checked={correctAnswer === choice.id}
+              onChange={() => onChange({ correct_answer: choice.id })}
+              className="h-4 w-4"
+            />
+            <Input
+              value={choice.text}
+              onChange={(e) => updateChoice(choice.id, e.target.value)}
+              placeholder={`Option ${index + 1}`}
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => removeChoice(choice.id)}
+              className="h-8 w-8 p-0"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+          <EsField
+            value={readLocalizedField(optionsEs, 'choices', choice.id, 'text')}
+            onChange={(v) => updateChoiceEs(choice.id, v)}
+            placeholder={`Opción ${index + 1} (Español, opcional)`}
           />
-          <Input
-            value={choice.text}
-            onChange={(e) => updateChoice(choice.id, e.target.value)}
-            placeholder={`Option ${index + 1}`}
-            className="flex-1"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => removeChoice(choice.id)}
-            className="h-8 w-8 p-0"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" onClick={addChoice}>
@@ -226,9 +272,11 @@ function MultipleChoiceBuilder({
 // Matching Pairs Builder
 function MatchingPairsBuilder({
   options,
+  optionsEs,
   onChange,
 }: {
   options: any
+  optionsEs: LocalizedOptions
   onChange: (data: any) => void
 }) {
   const pairs = options?.pairs || []
@@ -251,11 +299,15 @@ function MatchingPairsBuilder({
     })
   }
 
+  const updatePairEs = (id: string, field: 'left' | 'right', value: string) => {
+    onChange({ options_es: patchLocalizedEntry(optionsEs, 'pairs', id, { [field]: value }) })
+  }
+
   const removePair = (id: string) => {
+    const remaining = pairs.filter((p: any) => p.id !== id)
     onChange({
-      options: {
-        pairs: pairs.filter((p: any) => p.id !== id),
-      },
+      options: { pairs: remaining },
+      options_es: pruneLocalizedEntries(optionsEs, 'pairs', remaining.map((p: { id: string }) => p.id)),
     })
   }
 
@@ -267,29 +319,48 @@ function MatchingPairsBuilder({
         <span>Right Column (Correct Match)</span>
       </div>
       {pairs.map((pair: any) => (
-        <div key={pair.id} className="flex gap-2 items-center">
-          <Input
-            value={pair.left}
-            onChange={(e) => updatePair(pair.id, 'left', e.target.value)}
-            placeholder="Left item"
-            className="flex-1"
-          />
-          <span className="text-muted-foreground">→</span>
-          <Input
-            value={pair.right}
-            onChange={(e) => updatePair(pair.id, 'right', e.target.value)}
-            placeholder="Right item"
-            className="flex-1"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => removePair(pair.id)}
-            className="h-8 w-8 p-0"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+        <div key={pair.id} className="space-y-1.5">
+          <div className="flex gap-2 items-center">
+            <Input
+              value={pair.left}
+              onChange={(e) => updatePair(pair.id, 'left', e.target.value)}
+              placeholder="Left item"
+              className="flex-1"
+            />
+            <span className="text-muted-foreground">→</span>
+            <Input
+              value={pair.right}
+              onChange={(e) => updatePair(pair.id, 'right', e.target.value)}
+              placeholder="Right item"
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => removePair(pair.id)}
+              className="h-8 w-8 p-0"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-2 pl-6">
+            <span className="w-5 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">ES</span>
+            <Input
+              value={readLocalizedField(optionsEs, 'pairs', pair.id, 'left')}
+              onChange={(e) => updatePairEs(pair.id, 'left', e.target.value)}
+              placeholder="Izquierda (Español, opcional)"
+              className="flex-1 border-dashed"
+            />
+            <span className="text-muted-foreground">→</span>
+            <Input
+              value={readLocalizedField(optionsEs, 'pairs', pair.id, 'right')}
+              onChange={(e) => updatePairEs(pair.id, 'right', e.target.value)}
+              placeholder="Derecha (Español, opcional)"
+              className="flex-1 border-dashed"
+            />
+            <span className="w-8" />
+          </div>
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" onClick={addPair}>
@@ -302,13 +373,24 @@ function MatchingPairsBuilder({
 // Fill in the Blank Builder
 function FillInBlankBuilder({
   options,
+  optionsEs,
   onChange,
 }: {
   options: any
+  optionsEs: LocalizedOptions
   onChange: (data: any) => void
 }) {
   const text = options?.text || ''
   const blanks = options?.blanks || []
+  const textEs = typeof optionsEs?.text === 'string' ? optionsEs.text : ''
+
+  const updateTextEs = (value: string) => {
+    onChange({ options_es: { ...(optionsEs ?? {}), text: value } })
+  }
+
+  const updateBlankAnswerEs = (id: string, answer: string) => {
+    onChange({ options_es: patchLocalizedEntry(optionsEs, 'blanks', id, { answer }) })
+  }
 
   const updateText = (newText: string) => {
     // Extract blanks from text (format: {{blank_id}})
@@ -354,19 +436,37 @@ function FillInBlankBuilder({
         </p>
       </div>
 
+      <div className="grid gap-2">
+        <Label className="text-muted-foreground">Text with Blanks (Español)</Label>
+        <Textarea
+          value={textEs}
+          onChange={(e) => updateTextEs(e.target.value)}
+          rows={3}
+          className="border-dashed"
+          placeholder="Usa los mismos {{blank_name}} que en inglés. Ejemplo: La {{instrument}} es un instrumento de percusión."
+        />
+      </div>
+
       {blanks.length > 0 && (
         <div className="space-y-2">
           <Label>Correct Answers for Blanks</Label>
           {blanks.map((blank: any) => (
-            <div key={blank.id} className="flex gap-2 items-center">
-              <span className="text-sm font-mono bg-muted px-2 py-1 rounded min-w-[100px]">
-                {blank.id}
-              </span>
-              <Input
-                value={blank.answer}
-                onChange={(e) => updateBlankAnswer(blank.id, e.target.value)}
-                placeholder="Correct answer"
-                className="flex-1"
+            <div key={blank.id} className="space-y-1.5">
+              <div className="flex gap-2 items-center">
+                <span className="text-sm font-mono bg-muted px-2 py-1 rounded min-w-[100px]">
+                  {blank.id}
+                </span>
+                <Input
+                  value={blank.answer}
+                  onChange={(e) => updateBlankAnswer(blank.id, e.target.value)}
+                  placeholder="Correct answer"
+                  className="flex-1"
+                />
+              </div>
+              <EsField
+                value={readLocalizedField(optionsEs, 'blanks', blank.id, 'answer')}
+                onChange={(v) => updateBlankAnswerEs(blank.id, v)}
+                placeholder="Respuesta en español (opcional, si difiere)"
               />
             </div>
           ))}
@@ -379,12 +479,18 @@ function FillInBlankBuilder({
 // Ordering/Sequence Builder
 function OrderingSequenceBuilder({
   options,
+  optionsEs,
   onChange,
 }: {
   options: any
+  optionsEs: LocalizedOptions
   onChange: (data: any) => void
 }) {
   const items = options?.items || []
+
+  const updateItemEs = (id: string, text: string) => {
+    onChange({ options_es: patchLocalizedEntry(optionsEs, 'items', id, { text }) })
+  }
 
   const addItem = () => {
     const newPosition = items.length
@@ -416,6 +522,7 @@ function OrderingSequenceBuilder({
       options: {
         items: newItems,
       },
+      options_es: pruneLocalizedEntries(optionsEs, 'items', newItems.map((item: { id: string }) => item.id)),
     })
   }
 
@@ -454,45 +561,54 @@ function OrderingSequenceBuilder({
         to put them back in order.
       </p>
       {items.map((item: any, index: number) => (
-        <div key={item.id} className="flex gap-2 items-center">
-          <div className="flex flex-col gap-1">
+        <div key={item.id} className="space-y-1.5">
+          <div className="flex gap-2 items-center">
+            <div className="flex flex-col gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => moveItem(item.id, 'up')}
+                disabled={index === 0}
+                className="h-6 w-6 p-0"
+              >
+                ↑
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => moveItem(item.id, 'down')}
+                disabled={index === items.length - 1}
+                className="h-6 w-6 p-0"
+              >
+                ↓
+              </Button>
+            </div>
+            <span className="text-sm font-medium w-6">{index + 1}.</span>
+            <Input
+              value={item.text}
+              onChange={(e) => updateItem(item.id, e.target.value)}
+              placeholder={`Step ${index + 1}`}
+              className="flex-1"
+            />
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => moveItem(item.id, 'up')}
-              disabled={index === 0}
-              className="h-6 w-6 p-0"
+              onClick={() => removeItem(item.id)}
+              className="h-8 w-8 p-0"
             >
-              ↑
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => moveItem(item.id, 'down')}
-              disabled={index === items.length - 1}
-              className="h-6 w-6 p-0"
-            >
-              ↓
+              <Trash2 className="w-4 h-4" />
             </Button>
           </div>
-          <span className="text-sm font-medium w-6">{index + 1}.</span>
-          <Input
-            value={item.text}
-            onChange={(e) => updateItem(item.id, e.target.value)}
-            placeholder={`Step ${index + 1}`}
-            className="flex-1"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => removeItem(item.id)}
-            className="h-8 w-8 p-0"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+          <div className="pl-8">
+            <EsField
+              value={readLocalizedField(optionsEs, 'items', item.id, 'text')}
+              onChange={(v) => updateItemEs(item.id, v)}
+              placeholder={`Paso ${index + 1} (Español, opcional)`}
+            />
+          </div>
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" onClick={addItem}>
@@ -564,12 +680,14 @@ function TextAnswerBuilder({
 function AudioChoiceBuilder({
   questionId,
   options,
+  optionsEs,
   correctAnswer,
   audioUrl,
   onChange,
 }: {
   questionId: string
   options: any
+  optionsEs: LocalizedOptions
   correctAnswer: string
   audioUrl: string
   onChange: (data: any) => void
@@ -577,14 +695,22 @@ function AudioChoiceBuilder({
   const mode: 'text' | 'audio' = options?.optionMode ?? 'text'
   const choices = options?.choices ?? []
 
-  const setOptions = (next: { optionMode?: 'text' | 'audio'; choices?: any[] }) => {
-    onChange({ options: { optionMode: mode, choices, ...next } })
+  const setOptions = (next: { optionMode?: 'text' | 'audio'; choices?: any[] }, extra: Record<string, unknown> = {}) => {
+    onChange({ options: { optionMode: mode, choices, ...next }, ...extra })
   }
 
   const addChoice = () => setOptions({ choices: [...choices, { id: crypto.randomUUID(), text: '', audioUrl: '' }] })
   const updateChoice = (id: string, patch: any) =>
     setOptions({ choices: choices.map((c: any) => (c.id === id ? { ...c, ...patch } : c)) })
-  const removeChoice = (id: string) => setOptions({ choices: choices.filter((c: any) => c.id !== id) })
+  const updateChoiceEs = (id: string, text: string) =>
+    onChange({ options_es: patchLocalizedEntry(optionsEs, 'choices', id, { text }) })
+  const removeChoice = (id: string) => {
+    const remaining = choices.filter((c: any) => c.id !== id)
+    setOptions(
+      { choices: remaining },
+      { options_es: pruneLocalizedEntries(optionsEs, 'choices', remaining.map((c: { id: string }) => c.id)) }
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -633,6 +759,13 @@ function AudioChoiceBuilder({
                 onChange={(e) => updateChoice(choice.id, { text: e.target.value })}
                 placeholder={mode === 'audio' ? `Optional label for clip ${index + 1}` : `Option ${index + 1}`}
               />
+              <div className="-ml-6">
+                <EsField
+                  value={readLocalizedField(optionsEs, 'choices', choice.id, 'text')}
+                  onChange={(v) => updateChoiceEs(choice.id, v)}
+                  placeholder={mode === 'audio' ? `Etiqueta del clip ${index + 1} (Español, opcional)` : `Opción ${index + 1} (Español, opcional)`}
+                />
+              </div>
               {mode === 'audio' && (
                 <QuizMediaUpload
                   kind="audio"
