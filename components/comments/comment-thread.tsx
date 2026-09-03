@@ -9,6 +9,7 @@ import { timeAgo } from '@/lib/time-ago'
 import { CommentForm } from './comment-form'
 import { ReactionBar } from './reaction-bar'
 import type { ClassComment, ReactionCount } from '@/types/comments'
+import { useTranslation } from '@/components/language-provider'
 
 interface CommentThreadProps {
   comment: ClassComment
@@ -27,6 +28,7 @@ export function CommentThread({
   onDelete,
   onReact,
 }: CommentThreadProps) {
+  const { t, locale } = useTranslation()
   const [showReplyForm, setShowReplyForm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -55,7 +57,7 @@ export function CommentThread({
   })
 
   const handleDelete = async () => {
-    if (!confirm('Delete this comment?')) return
+    if (!confirm(t('dashboard.classViewer.discussion.confirmDelete'))) return
     setIsDeleting(true)
     await onDelete(comment.id)
     setIsDeleting(false)
@@ -71,18 +73,18 @@ export function CommentThread({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm font-medium">
-              {comment.user?.full_name || 'Anonymous'}
+              {comment.user?.full_name || t('dashboard.classViewer.discussion.anonymous')}
             </span>
             {comment.user?.is_admin && (
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-600 border-amber-500/20">
-                Instructor
+                {t('dashboard.pages.course.instructor')}
               </Badge>
             )}
             <span className="text-xs text-muted-foreground">
-              {timeAgo(comment.created_at)}
+              {timeAgo(comment.created_at, locale)}
             </span>
             {comment.is_edited && (
-              <span className="text-xs text-muted-foreground">(edited)</span>
+              <span className="text-xs text-muted-foreground">{t('dashboard.classViewer.discussion.edited')}</span>
             )}
           </div>
           <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
@@ -107,7 +109,7 @@ export function CommentThread({
                 onClick={() => setShowReplyForm(!showReplyForm)}
               >
                 <MessageSquare className="h-3 w-3 mr-1" />
-                Reply
+                {t('dashboard.classViewer.discussion.reply')}
               </Button>
             )}
             <ReactionBar
@@ -133,7 +135,7 @@ export function CommentThread({
                 disabled={isDeleting}
               >
                 <Trash2 className="h-3 w-3 mr-1" />
-                Delete
+                {t('dashboard.classViewer.discussion.delete')}
               </Button>
             )}
           </div>
@@ -146,7 +148,7 @@ export function CommentThread({
                   await onReply(comment.id, content)
                   setShowReplyForm(false)
                 }}
-                placeholder="Write a reply..."
+                placeholder={t('dashboard.classViewer.discussion.replyPlaceholder')}
                 autoFocus
                 onCancel={() => setShowReplyForm(false)}
               />

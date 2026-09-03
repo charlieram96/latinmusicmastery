@@ -3,15 +3,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getServerLocale } from "@/lib/i18n/server";
+import { getServerTranslator } from "@/lib/i18n/server";
 import { localizeRow, localizeRows } from "@/lib/i18n/localize";
+import { instrumentLabel } from "@/lib/i18n/instruments";
 import PageHero from "@/components/marketing/PageHero";
 import SectionWrapper from "@/components/marketing/SectionWrapper";
 import CourseCard from "@/components/marketing/CourseCard";
 
-export const metadata: Metadata = {
-  title: 'Explore Courses - Latin Music Mastery',
-  description: 'Discover Latin American music courses organized by country, style, and instrument.',
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslator()
+  return {
+    title: t('marketing.pages.explore.metadata.title'),
+    description: t('marketing.pages.explore.metadata.description'),
+  }
 }
 
 const countryEmojis: Record<string, string> = {
@@ -50,7 +54,7 @@ type CourseRow = {
 
 const COURSE_FIELDS = "id, title, title_es, slug, description, description_es, instrument, difficulty, thumbnail_url";
 
-function FilteredCourses({
+async function FilteredCourses({
   title,
   subtitle,
   crumbLabel,
@@ -61,14 +65,15 @@ function FilteredCourses({
   crumbLabel: string;
   courses: CourseRow[];
 }) {
+  const { t } = await getServerTranslator();
   return (
     <>
       <PageHero
         title={title}
         subtitle={subtitle}
         breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Explore", href: "/explore" },
+          { label: t("marketing.common.home"), href: "/" },
+          { label: t("nav.explore"), href: "/explore" },
           { label: crumbLabel },
         ]}
         showBackButton
@@ -92,10 +97,10 @@ function FilteredCourses({
           ) : (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-20 text-center">
               <p className="text-lg font-medium text-muted-foreground">
-                No courses available yet
+                {t("marketing.pages.explore.empty.title")}
               </p>
               <p className="mt-2 text-sm text-muted-foreground/70">
-                We are adding more courses for {crumbLabel}. Check back soon!
+                {t("marketing.pages.explore.empty.body", { label: crumbLabel })}
               </p>
             </div>
           )}
@@ -112,7 +117,7 @@ interface ExplorePageProps {
 export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   const { instrument: instrumentParam, style: styleSlug } = await searchParams;
   const supabase = await createClient();
-  const locale = await getServerLocale();
+  const { t, locale } = await getServerTranslator();
 
   // ── Filtered view: courses for a single instrument ──────────────────────
   // courses.instrument is free text (e.g. "Conga"), so we match it directly.
@@ -125,11 +130,14 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
 
     localizeRows(courses as Record<string, unknown>[] | null, locale, ['title', 'description']);
 
+    // Display-only: the raw value above stays the filter key.
+    const instrumentName = instrumentLabel(instrumentParam, locale);
+
     return (
       <FilteredCourses
-        title={`${instrumentParam} Courses`}
-        subtitle={`Browse courses for ${instrumentParam}.`}
-        crumbLabel={instrumentParam}
+        title={t("marketing.pages.explore.instrumentTitle", { instrument: instrumentName })}
+        subtitle={t("marketing.pages.explore.instrumentSubtitle", { instrument: instrumentName })}
+        crumbLabel={instrumentName}
         courses={(courses ?? []) as CourseRow[]}
       />
     );
@@ -157,7 +165,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
     return (
       <FilteredCourses
         title={style.name}
-        subtitle={style.description ?? `Explore ${style.name} courses.`}
+        subtitle={style.description ?? t("marketing.pages.explore.styleSubtitle", { style: style.name })}
         crumbLabel={style.name}
         courses={(courses ?? []) as CourseRow[]}
       />
@@ -178,9 +186,9 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   return (
     <>
       <PageHero
-        title="Explore Courses"
-        subtitle="Discover the rich world of Latin American music organized by country and musical tradition."
-        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Explore" }]}
+        title={t("marketing.pages.explore.hero.title")}
+        subtitle={t("marketing.pages.explore.hero.subtitle")}
+        breadcrumbs={[{ label: t("marketing.common.home"), href: "/" }, { label: t("nav.explore") }]}
         showBackButton
       />
 

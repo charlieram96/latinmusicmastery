@@ -9,8 +9,10 @@ import {
 } from '@/components/dashboard/animated-section'
 import { CourseCoverCard } from '@/components/dashboard/course-cover-card'
 import type { MyCoursesProps } from '@/types/dashboard'
+import { useTranslation } from '@/components/language-provider'
 
 export function MyCoursesSection({ courses }: MyCoursesProps) {
+  const { t } = useTranslation()
   if (courses.length === 0) return null
 
   const displayed = courses.slice(0, 3)
@@ -22,13 +24,13 @@ export function MyCoursesSection({ courses }: MyCoursesProps) {
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="inline-flex items-center gap-2.5 font-heading text-lg font-bold tracking-tight text-foreground">
             <BookOpen className="h-4 w-4 text-primary" />
-            My courses
+            {t('dashboard.nav.myCourses')}
           </h2>
           <Link
             href="/dashboard/my-courses"
             className="inline-flex items-center gap-1 text-[13px] font-medium text-muted-foreground transition-colors hover:text-primary"
           >
-            View all
+            {t('common.viewAll')}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>

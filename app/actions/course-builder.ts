@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { validateCourseKind } from '@/lib/courses/fundamentals'
+import { validateSubtitlesInput } from '@/lib/subtitles/tracks'
 
 // ============================================
 // Course (settings + creation)
@@ -399,6 +400,14 @@ export async function updateClassItem(itemId: string, updates: Record<string, un
     if (value !== undefined) {
       cleanUpdates[key] = value
     }
+  }
+
+  // Subtitle tracks are a capped jsonb array; normalize + reject bad shapes
+  // here so the DB CHECK is never the first line of defense.
+  if ('subtitles' in cleanUpdates) {
+    const result = validateSubtitlesInput(cleanUpdates.subtitles)
+    if (!result.ok) return { error: result.error }
+    cleanUpdates.subtitles = result.value
   }
 
   const { data, error } = await supabase

@@ -1,15 +1,24 @@
 import type { Metadata } from 'next'
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getServerLocale } from "@/lib/i18n/server";
-import { localizeRow, localizeRows } from "@/lib/i18n/localize";
+import { getServerTranslator } from "@/lib/i18n/server";
+import { localizeRow, localizeRows, pick } from "@/lib/i18n/localize";
 
 export async function generateMetadata({ params }: { params: Promise<{ countrySlug: string }> }): Promise<Metadata> {
   const { countrySlug } = await params
-  const name = countrySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+  const { t, locale } = await getServerTranslator()
+  const supabase = await createClient()
+  const { data: country } = await supabase
+    .from('countries')
+    .select('name, name_es')
+    .eq('slug', countrySlug)
+    .maybeSingle()
+  const name = country
+    ? pick(locale, country.name, country.name_es ?? '')
+    : countrySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   return {
-    title: `${name} Music - Latin Music Mastery`,
-    description: `Explore musical styles and courses from ${name}. Learn authentic rhythms and techniques.`,
+    title: t('marketing.pages.explore.country.metadata.title', { country: name }),
+    description: t('marketing.pages.explore.country.metadata.description', { country: name }),
   }
 }
 import PageHero from "@/components/marketing/PageHero";
@@ -25,7 +34,7 @@ export default async function CountryPage({
 }) {
   const { countrySlug } = await params;
   const supabase = await createClient();
-  const locale = await getServerLocale();
+  const { t, locale } = await getServerTranslator();
 
   const { data: country } = await supabase
     .from("countries")
@@ -85,8 +94,8 @@ export default async function CountryPage({
         title={country.name}
         subtitle={country.description ?? undefined}
         breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Explore", href: "/explore" },
+          { label: t("marketing.common.home"), href: "/" },
+          { label: t("nav.explore"), href: "/explore" },
           { label: country.name },
         ]}
         showBackButton
@@ -98,7 +107,7 @@ export default async function CountryPage({
         <div className="mx-auto max-w-7xl px-6 py-16">
           <SectionWrapper>
             <h2 className="mb-8 text-2xl font-bold tracking-tight sm:text-3xl">
-              Musical Styles
+              {t("marketing.pages.explore.country.musicalStyles")}
             </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {country.musical_styles.map((style) => (
@@ -117,10 +126,12 @@ export default async function CountryPage({
                       </p>
                     )}
                     <p className="mt-3 text-xs font-medium text-primary">
-                      {courseCountByStyle[style.name] ?? 0}{" "}
-                      {(courseCountByStyle[style.name] ?? 0) === 1
-                        ? "course"
-                        : "courses"}
+                      {t(
+                        (courseCountByStyle[style.name] ?? 0) === 1
+                          ? "marketing.common.courseCountOne"
+                          : "marketing.common.courseCount",
+                        { count: courseCountByStyle[style.name] ?? 0 }
+                      )}
                     </p>
                   </div>
                 </Link>
@@ -135,7 +146,7 @@ export default async function CountryPage({
         <div className="mx-auto max-w-7xl px-6 pb-16">
           <SectionWrapper>
             <h2 className="mb-8 text-2xl font-bold tracking-tight sm:text-3xl">
-              All Courses
+              {t("marketing.pages.explore.country.allCourses")}
             </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {courses.map((course) => (

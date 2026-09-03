@@ -6,6 +6,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { User } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
+import { instrumentLabel } from '@/lib/i18n/instruments'
 
 interface MasterClassCourse {
   id: string
@@ -46,6 +48,13 @@ function getInitials(name: string): string {
 }
 
 export function MasterClassCard({ course }: MasterClassCardProps) {
+  const { t, locale } = useTranslation()
+  const difficultyLabel = (d: string) => {
+    const key = d.toLowerCase()
+    return ['beginner', 'intermediate', 'advanced'].includes(key)
+      ? t(`dashboard.pages.courses.difficulty.${key}`)
+      : d
+  }
   return (
     <Link href={`/dashboard/course/${course.slug || course.id}`}>
       <Card className="overflow-hidden group hover:brightness-110 transition-all duration-300 p-0 gap-0">
@@ -73,7 +82,10 @@ export function MasterClassCard({ course }: MasterClassCardProps) {
           <div className="absolute bottom-3 left-3">
             <Avatar className="h-10 w-10 ring-2 ring-white shadow-md">
               {course.teacher_image_url && (
-                <AvatarImage src={course.teacher_image_url} alt={course.teacher_name || 'Teacher'} />
+                <AvatarImage
+                  src={course.teacher_image_url}
+                  alt={course.teacher_name || t('dashboard.pages.feedback.history.teacherFallback')}
+                />
               )}
               <AvatarFallback className="bg-amber-500/20 text-amber-700 text-xs font-semibold">
                 {course.teacher_name ? getInitials(course.teacher_name) : '?'}
@@ -87,8 +99,8 @@ export function MasterClassCard({ course }: MasterClassCardProps) {
           {/* Teacher name + instrument */}
           {(course.teacher_name || course.instrument) && (
             <p className="text-xs font-medium text-muted-foreground font-mono tracking-wide uppercase mb-1.5">
-              {course.teacher_name || 'Instructor'}
-              {course.instrument && ` \u00B7 ${course.instrument}`}
+              {course.teacher_name || t('dashboard.pages.courses.instructor')}
+              {course.instrument && ` \u00B7 ${instrumentLabel(course.instrument, locale)}`}
             </p>
           )}
 
@@ -101,7 +113,7 @@ export function MasterClassCard({ course }: MasterClassCardProps) {
           <div className="flex flex-wrap items-center gap-2">
             {course.difficulty && (
               <Badge variant="outline" className={`text-xs ${getDifficultyColor(course.difficulty)}`}>
-                {course.difficulty}
+                {difficultyLabel(course.difficulty)}
               </Badge>
             )}
             {course.musical_style && (

@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
+import { useTranslation } from '@/components/language-provider'
 
 interface LoadingContextType {
   isLoading: boolean
@@ -34,6 +35,7 @@ function RouteChangeComplete({ onComplete }: { onComplete: () => void }) {
 
 function PageLoadingOverlay() {
   const { isLoading } = useContext(LoadingContext)
+  const { t } = useTranslation()
 
   return (
     <div
@@ -44,7 +46,7 @@ function PageLoadingOverlay() {
     >
       <Image
         src="/logo-solo-white.svg"
-        alt="Loading..."
+        alt={t('common.loading')}
         width={120}
         height={90}
         className="animate-pulse"

@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/components/language-provider";
 
 interface BreadcrumbNavProps {
   items: { label: string; href?: string }[];
 }
 
 export default function BreadcrumbNav({ items }: BreadcrumbNavProps) {
+  const { t } = useTranslation();
   return (
-    <nav aria-label="Breadcrumb">
+    <nav aria-label={t("marketing.common.breadcrumb")}>
       <ol className="flex items-center gap-1.5 text-sm text-muted-foreground">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;

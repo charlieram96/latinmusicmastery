@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { AnimatedSection } from '@/components/dashboard/animated-section'
 import type { FeaturedTeacher } from '@/types/dashboard'
 import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
+import { useTranslation } from '@/components/language-provider'
 
 interface FeaturedTeacherSpotlightProps {
   teacher: FeaturedTeacher
@@ -14,13 +15,14 @@ interface FeaturedTeacherSpotlightProps {
 export function FeaturedTeacherSpotlight({
   teacher,
 }: FeaturedTeacherSpotlightProps) {
+  const { t } = useTranslation()
   return (
     <AnimatedSection delay={0.25}>
       <div className="warm-surface rounded-2xl p-4 space-y-3">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-gold" />
           <h3 className="text-sm font-heading font-semibold text-foreground">
-            Featured Teacher
+            {t('dashboard.pages.home.featuredTeacher')}
           </h3>
         </div>
 

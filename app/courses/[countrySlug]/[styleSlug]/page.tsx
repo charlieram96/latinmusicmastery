@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { getServerLocale } from '@/lib/i18n/server'
+import { getServerTranslator } from '@/lib/i18n/server'
 import { localizeRow, localizeRows, STYLE_FIELDS, COUNTRY_FIELDS, COURSE_FIELDS } from '@/lib/i18n/localize'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -17,7 +17,7 @@ interface PageProps {
 export default async function StyleCoursesPage({ params }: PageProps) {
   const { countrySlug, styleSlug } = await params
   const supabase = await createClient()
-  const locale = await getServerLocale()
+  const { t, locale } = await getServerTranslator()
 
   // Get the country
   const { data: country } = await supabase
@@ -63,7 +63,7 @@ export default async function StyleCoursesPage({ params }: PageProps) {
       <div className="mb-8">
         <div className="mb-4">
           <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
-            ← Back to home
+            {t('marketing.pages.courses.backToHome')}
           </Link>
         </div>
         <div className="flex items-center gap-2 mb-2">
@@ -96,7 +96,14 @@ export default async function StyleCoursesPage({ params }: PageProps) {
                 </CardDescription>
                 <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                   {course.course_modules && (
-                    <span>{course.course_modules.length} lessons</span>
+                    <span>
+                      {t(
+                        course.course_modules.length === 1
+                          ? 'marketing.common.lessonCountOne'
+                          : 'marketing.common.lessonCount',
+                        { count: course.course_modules.length }
+                      )}
+                    </span>
                   )}
                 </div>
                 {course.teacher_name && (
@@ -109,7 +116,7 @@ export default async function StyleCoursesPage({ params }: PageProps) {
                       />
                     )}
                     <span className="text-sm text-muted-foreground">
-                      by {course.teacher_name}
+                      {t('marketing.pages.courses.by', { name: course.teacher_name })}
                     </span>
                   </div>
                 )}
@@ -117,7 +124,7 @@ export default async function StyleCoursesPage({ params }: PageProps) {
               <CardContent>
                 <Button asChild className="w-full">
                   <Link href={`/course/${course.id}`}>
-                    View Course
+                    {t('marketing.pages.courses.viewCourse')}
                   </Link>
                 </Button>
               </CardContent>
@@ -127,14 +134,14 @@ export default async function StyleCoursesPage({ params }: PageProps) {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>No Courses Available</CardTitle>
+            <CardTitle>{t('marketing.pages.courses.empty.title')}</CardTitle>
             <CardDescription>
-              There are no published courses for {style.name} yet. Check back soon!
+              {t('marketing.pages.courses.empty.body', { style: style.name })}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline">
-              <Link href="/">Browse Other Styles</Link>
+              <Link href="/">{t('marketing.pages.courses.empty.browseOtherStyles')}</Link>
             </Button>
           </CardContent>
         </Card>

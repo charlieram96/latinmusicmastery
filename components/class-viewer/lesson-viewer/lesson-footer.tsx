@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/components/language-provider'
 import { markClassItemComplete } from '@/app/actions/progress'
 import styles from './lesson-viewer.module.css'
 
@@ -31,6 +32,7 @@ export function LessonFooter({
   isCompleted,
   nextLabel,
 }: LessonFooterProps) {
+  const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(isCompleted)
 
@@ -47,7 +49,11 @@ export function LessonFooter({
       ? `/dashboard/course/${courseId}/class/${nextClassId}`
       : null
 
-  const nextText = hasNext ? 'Next' : nextClassId ? nextLabel || 'Next class' : null
+  const nextText = hasNext
+    ? t('common.next')
+    : nextClassId
+      ? nextLabel || t('dashboard.classViewer.footer.nextClass')
+      : null
 
   const handleComplete = async () => {
     if (!activeItemId || done) return
@@ -55,12 +61,12 @@ export function LessonFooter({
     try {
       const result = await markClassItemComplete(activeItemId)
       if (result?.error) {
-        alert('Failed to mark as complete. Please try again.')
+        alert(t('dashboard.classViewer.footer.markFailed'))
       } else {
         setDone(true)
       }
     } catch {
-      alert('An error occurred. Please try again.')
+      alert(t('dashboard.classViewer.footer.genericError'))
     } finally {
       setSaving(false)
     }
@@ -85,7 +91,7 @@ export function LessonFooter({
           href={prevHref}
           className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
-          <ChevronLeft className="h-3.5 w-3.5" /> Previous
+          <ChevronLeft className="h-3.5 w-3.5" /> {t('dashboard.pages.modules.previous')}
         </Link>
       ) : (
         <span />
@@ -102,7 +108,11 @@ export function LessonFooter({
         )}
       >
         <Check className="h-3.5 w-3.5" />
-        {done ? 'Completed' : saving ? 'Saving…' : 'Mark as completed'}
+        {done
+          ? t('dashboard.pages.modules.completed')
+          : saving
+            ? t('dashboard.classViewer.footer.saving')
+            : t('dashboard.classViewer.footer.markCompleted')}
       </button>
 
       {nextHref ? (

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { getServerTranslator, getServerLocale } from '@/lib/i18n/server'
-import { localizeRows, localizeRow, COUNTRY_FIELDS, STYLE_FIELDS } from '@/lib/i18n/localize'
+import { localizeRows, localizeRow, localizeTeachers, COUNTRY_FIELDS, STYLE_FIELDS, INSTRUMENT_FIELDS } from '@/lib/i18n/localize'
 import { getPricing } from '@/lib/payments/pricing-source'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -54,11 +54,11 @@ export default async function MarketingHomePage() {
       .order('name'),
     supabase
       .from('teachers')
-      .select('id, name, instrument, bio, image_url, specialties')
+      .select('id, name, instrument, instrument_es, bio, bio_es, image_url, specialties')
       .order('name'),
     supabase
       .from('instruments')
-      .select('id, name, slug, image_url')
+      .select('id, name, name_es, slug, image_url')
       .order('name'),
     supabase
       .from('musical_styles')
@@ -72,6 +72,8 @@ export default async function MarketingHomePage() {
     localizeRows((country as any).musical_styles as Record<string, unknown>[] | null, locale, STYLE_FIELDS)
   }
   localizeRows(musicalStyles as Record<string, unknown>[] | null, locale, STYLE_FIELDS)
+  localizeTeachers(teachers as Record<string, unknown>[] | null, locale)
+  localizeRows(instruments as Record<string, unknown>[] | null, locale, INSTRUMENT_FIELDS)
 
   const waitlistInstruments = (instruments ?? []).map(({ id, name }) => ({ id, name }))
   const waitlistStyles = musicalStyles ?? []
@@ -96,7 +98,7 @@ export default async function MarketingHomePage() {
       <section id="waitlist" className="relative overflow-hidden py-20 sm:py-28">
         <Image
           src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&auto=format&fit=crop&q=80"
-          alt="Latin music performance"
+          alt={t('marketing.home.waitlistImageAlt')}
           fill
           className="object-cover"
           sizes="100vw"

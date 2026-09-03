@@ -102,14 +102,14 @@ struct LessonVideoPlayerView: View {
     }
 
     private func subtitleTracks() -> [LessonSubtitleTrack] {
-        var tracks: [LessonSubtitleTrack] = []
-        if let raw = item.subtitlesEnUrl, let url = URL(string: raw) {
-            tracks.append(LessonSubtitleTrack(lang: .en, label: SubtitleLang.en.label, url: url))
+        ClassItemSubtitle.parse(item.subtitles).compactMap { entry in
+            guard let url = URL(string: entry.src) else { return nil }
+            return LessonSubtitleTrack(
+                lang: SubtitleLang(code: entry.lang),
+                label: SubtitleLanguages.label(for: entry.lang),
+                url: url
+            )
         }
-        if let raw = item.subtitlesEsUrl, let url = URL(string: raw) {
-            tracks.append(LessonSubtitleTrack(lang: .es, label: SubtitleLang.es.label, url: url))
-        }
-        return tracks
     }
 
     // MARK: Controls auto-hide

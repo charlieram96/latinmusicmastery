@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/components/language-provider";
+import { instrumentLabel } from "@/lib/i18n/instruments";
 
 interface CourseCardProps {
   title: string;
@@ -24,6 +26,19 @@ export default function CourseCard({
   href,
   teacher,
 }: CourseCardProps) {
+  const { t, locale } = useTranslation();
+  // `instrument` / `difficulty` are raw DB values; localize for display only.
+  const instrumentName = instrument ? instrumentLabel(instrument, locale) : undefined;
+  const difficultyKey = difficulty
+    ? `marketing.common.difficulty.${difficulty.toLowerCase()}`
+    : null;
+  const difficultyLabel =
+    difficultyKey && t(difficultyKey) !== difficultyKey
+      ? t(difficultyKey)
+      : difficulty
+        ? difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
+        : undefined;
+
   return (
     <Link href={href} className="group block">
       <motion.div
@@ -47,7 +62,7 @@ export default function CourseCard({
           {/* Instrument badge overlay */}
           {instrument && (
             <span className="absolute right-3 top-3 rounded-full bg-primary/90 px-2 py-1 text-xs font-medium text-white">
-              {instrument}
+              {instrumentName}
             </span>
           )}
         </div>
@@ -75,7 +90,7 @@ export default function CourseCard({
                     "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                 )}
               >
-                {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+                {difficultyLabel}
               </span>
             )}
 

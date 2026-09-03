@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
 
 interface ScoreExerciseGameProps {
   /** The exercise derived from the authored score (see lib/play-sense/score-to-exercise). */
@@ -62,6 +63,7 @@ export function ScoreExerciseGame({
   backingTracks,
   exerciseVideo,
 }: ScoreExerciseGameProps) {
+  const { t } = useTranslation()
   // Which backing tracks the student wants to hear — all of them by default.
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
     () => new Set((backingTracks ?? []).map((t) => t.id))
@@ -201,7 +203,7 @@ export function ScoreExerciseGame({
           onClick={session.goToSelect}
           className="mb-3 text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="w-4 h-4 mr-1" /> Back
+          <ArrowLeft className="w-4 h-4 mr-1" /> {t('common.back')}
         </Button>
         <div className="max-w-lg mx-auto">
           <CalibrationWizard
@@ -239,9 +241,9 @@ export function ScoreExerciseGame({
       {isActive && (
         <div className="flex items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-2.5">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">Now it&apos;s your turn</p>
+            <p className="text-sm font-semibold text-foreground">{t('dashboard.classViewer.exercise.yourTurn')}</p>
             <p className="truncate text-xs text-muted-foreground">
-              Play along with the highway — you&apos;ll be graded on your timing.
+              {t('dashboard.classViewer.exercise.yourTurnHint')}
             </p>
           </div>
 
@@ -252,7 +254,7 @@ export function ScoreExerciseGame({
                 className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                Watch again
+                {t('dashboard.classViewer.exercise.watchAgain')}
               </button>
             )}
 
@@ -261,7 +263,7 @@ export function ScoreExerciseGame({
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-1.5">
-                    Play along with
+                    {t('dashboard.classViewer.exercise.playAlongWith')}
                     <Badge variant="secondary" className="ml-0.5">
                       {selectedTrackIds.size}/{backingTracks.length}
                     </Badge>
@@ -270,7 +272,7 @@ export function ScoreExerciseGame({
                 </PopoverTrigger>
                 <PopoverContent align="end" className="w-60 p-3">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Play along with
+                    {t('dashboard.classViewer.exercise.playAlongWith')}
                   </p>
                   <div className="flex max-h-[260px] flex-col gap-0.5 overflow-y-auto">
                     {backingTracks.map((t) => (
@@ -287,7 +289,7 @@ export function ScoreExerciseGame({
                     ))}
                   </div>
                   <p className="mt-2 text-[11px] text-muted-foreground">
-                    Selected tracks play in sync with the notes while you&apos;re graded.
+                    {t('dashboard.classViewer.exercise.tracksHint')}
                   </p>
                 </PopoverContent>
               </Popover>
@@ -404,7 +406,7 @@ export function ScoreExerciseGame({
           </>
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            Preparing the test…
+            {t('dashboard.classViewer.exercise.preparing')}
           </div>
         )}
       </div>

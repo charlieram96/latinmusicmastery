@@ -4,6 +4,7 @@ import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/components/language-provider'
 import { markClassItemComplete } from '@/app/actions/progress'
 import { gradeQuestionScore, hasAnswer, shuffleStable, type OrderItem } from '@/lib/quiz/grading'
 import type { QuizQuestion } from '@/types/modules'
@@ -12,16 +13,16 @@ import { ProgressSegments } from './quiz/progress-segments'
 import { QuestionInput } from './quiz/question-input'
 import { ResultsScreen } from './quiz/results-screen'
 
-const TYPE_LABELS: Record<string, string> = {
-  multiple_choice: 'Multiple choice',
-  true_false: 'True or false',
-  text_answer: 'Short answer',
-  audio: 'Listening',
-  audio_choice: 'Listen & choose',
-  piece_placement: 'Place the pieces',
-  fill_in_blank: 'Fill in the blank',
-  matching_pairs: 'Match the pairs',
-  ordering_sequence: 'Put in order',
+const TYPE_LABEL_KEYS: Record<string, string> = {
+  multiple_choice: 'dashboard.classViewer.quiz.types.multipleChoice',
+  true_false: 'dashboard.classViewer.quiz.types.trueFalse',
+  text_answer: 'dashboard.classViewer.quiz.types.textAnswer',
+  audio: 'dashboard.classViewer.quiz.types.audio',
+  audio_choice: 'dashboard.classViewer.quiz.types.audioChoice',
+  piece_placement: 'dashboard.classViewer.quiz.types.piecePlacement',
+  fill_in_blank: 'dashboard.classViewer.quiz.types.fillInBlank',
+  matching_pairs: 'dashboard.classViewer.quiz.types.matchingPairs',
+  ordering_sequence: 'dashboard.classViewer.quiz.types.orderingSequence',
 }
 
 interface QuizRunnerProps {
@@ -46,6 +47,8 @@ function seedAnswers(questions: QuizQuestion[]): Record<string, unknown> {
 }
 
 export function QuizRunner({ classItemId, questions, kind = 'Quiz' }: QuizRunnerProps) {
+  const { t } = useTranslation()
+  const kindLabel = t(kind === 'Exercise' ? 'dashboard.pages.modules.exercise' : 'dashboard.pages.modules.quiz')
   const ordered = useMemo(() => [...questions].sort((a, b) => a.order_index - b.order_index), [questions])
   const [index, setIndex] = useState(0)
   const [direction, setDirection] = useState(1)
@@ -131,7 +134,7 @@ export function QuizRunner({ classItemId, questions, kind = 'Quiz' }: QuizRunner
   if (ordered.length === 0) {
     return (
       <div className="rounded-3xl border border-border bg-card py-10 text-center text-muted-foreground">
-        This {kind.toLowerCase()} has no questions yet.
+        {t('dashboard.classViewer.quiz.noQuestions', { kind: kindLabel.toLowerCase() })}
       </div>
     )
   }
@@ -139,7 +142,7 @@ export function QuizRunner({ classItemId, questions, kind = 'Quiz' }: QuizRunner
   if (finished) {
     return (
       <MotionConfig reducedMotion="user">
-        <ResultsScreen kind={kind} questions={ordered} graded={graded} onRestart={handleRestart} />
+        <ResultsScreen kind={kindLabel} questions={ordered} graded={graded} onRestart={handleRestart} />
       </MotionConfig>
     )
   }
@@ -163,7 +166,7 @@ export function QuizRunner({ classItemId, questions, kind = 'Quiz' }: QuizRunner
           >
             <div className="space-y-2">
               <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">
-                {TYPE_LABELS[q.question_type] ?? kind}
+                {TYPE_LABEL_KEYS[q.question_type] ? t(TYPE_LABEL_KEYS[q.question_type]) : kindLabel}
               </span>
               <h3 className="text-xl font-bold leading-snug sm:text-2xl">{q.question}</h3>
             </div>
@@ -176,15 +179,15 @@ export function QuizRunner({ classItemId, questions, kind = 'Quiz' }: QuizRunner
 
         <div className="mt-8 flex items-center justify-between gap-3">
           <Button variant="ghost" onClick={goPrev} disabled={index === 0} className="rounded-xl">
-            <ArrowLeft className="mr-1 h-4 w-4" /> Previous
+            <ArrowLeft className="mr-1 h-4 w-4" /> {t('dashboard.pages.modules.previous')}
           </Button>
           {!isGraded ? (
             <Button onClick={handleCheck} disabled={!canCheck} size="lg" className="rounded-xl px-8">
-              <Check className="mr-1 h-4 w-4" /> Check Answer
+              <Check className="mr-1 h-4 w-4" /> {t('dashboard.classViewer.quiz.checkAnswer')}
             </Button>
           ) : (
             <Button onClick={goNext} size="lg" className="rounded-xl px-8">
-              {index < ordered.length - 1 ? 'Next' : 'Finish'}
+              {index < ordered.length - 1 ? t('common.next') : t('dashboard.classViewer.quiz.finish')}
               <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           )}

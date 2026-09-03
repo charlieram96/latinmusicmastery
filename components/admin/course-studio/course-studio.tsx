@@ -38,6 +38,7 @@ import type {
   SectionWithClasses,
   TeacherOption,
 } from './types'
+import { parseSubtitles } from '@/lib/subtitles/tracks'
 
 interface CourseStudioProps {
   course: CourseStudioCourse
@@ -288,7 +289,8 @@ function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: C
       }
       const result = await track(createClassItem(classId, type, defaultTitles[type]))
       if (result.data) {
-        const newItem = result.data as ClassItem
+        // The row's jsonb `subtitles` needs the typed reader before it is a ClassItem.
+        const newItem = { ...result.data, subtitles: parseSubtitles(result.data.subtitles) } as ClassItem
         setSections((prev) =>
           prev.map((s) => ({
             ...s,

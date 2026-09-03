@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/card'
 import { BookOpen, Play, GraduationCap } from 'lucide-react'
 import { getInstrumentColor } from '@/lib/instruments'
+import { useTranslation } from '@/components/language-provider'
+import { instrumentLabel } from '@/lib/i18n/instruments'
 
 interface MyCourseCardProps {
   course: {
@@ -75,6 +77,7 @@ function ProgressRing({ percent, size = 28, strokeWidth = 2.5 }: { percent: numb
 }
 
 export function MyCourseCard({ course, index }: MyCourseCardProps) {
+  const { t, locale } = useTranslation()
   const progressPercent = course.totalLessons > 0
     ? Math.round((course.completedLessons / course.totalLessons) * 100)
     : 0
@@ -120,7 +123,7 @@ export function MyCourseCard({ course, index }: MyCourseCardProps) {
             {/* Instrument badge — top-left */}
             {course.instrument && (
               <span className={`absolute top-1.5 left-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${getInstrumentColor(course.instrument)}`}>
-                {course.instrument}
+                {instrumentLabel(course.instrument, locale)}
               </span>
             )}
 
@@ -169,12 +172,15 @@ export function MyCourseCard({ course, index }: MyCourseCardProps) {
             {/* Module info — compact */}
             {isComplete ? (
               <div className="flex items-center gap-1 mb-1.5">
-                <span className="text-xs font-medium text-green-500">Complete</span>
+                <span className="text-xs font-medium text-green-500">{t('dashboard.pages.myCourses.card.complete')}</span>
               </div>
             ) : hasSections && course.currentSectionTitle ? (
               <div className="mb-1.5 space-y-0.5">
                 <p className="text-xs text-muted-foreground">
-                  Mod {course.currentSectionIndex}/{course.totalSections}
+                  {t('dashboard.pages.myCourses.card.module', {
+                    current: course.currentSectionIndex ?? '',
+                    total: course.totalSections,
+                  })}
                 </p>
                 {course.currentClassTitle && (
                   <div className="flex items-center gap-1">
@@ -198,7 +204,10 @@ export function MyCourseCard({ course, index }: MyCourseCardProps) {
                 />
               </div>
               <p className="text-[10px] text-muted-foreground mt-1 tabular-nums">
-                {course.completedLessons}/{course.totalLessons} items
+                {t('dashboard.pages.myCourses.card.items', {
+                  completed: course.completedLessons,
+                  total: course.totalLessons,
+                })}
               </p>
             </div>
           </div>

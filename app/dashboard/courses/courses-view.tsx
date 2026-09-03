@@ -6,6 +6,8 @@ import { Search, Check, X, BookOpen, Globe } from 'lucide-react'
 import { SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
 import { coverStyle, glyph, levelColor } from '@/lib/course-covers'
 import { useTranslation } from '@/components/language-provider'
+import { instrumentLabel } from '@/lib/i18n/instruments'
+import type { Locale } from '@/lib/i18n'
 import './browse-courses.css'
 
 const LEVELS = ['beginner', 'intermediate', 'advanced'] as const
@@ -15,7 +17,7 @@ interface CoursesViewProps {
 }
 
 export function CoursesView({ courses }: CoursesViewProps) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
 
   const [q, setQ] = useState('')
   const [instruments, setInstruments] = useState<string[]>([])
@@ -51,14 +53,14 @@ export function CoursesView({ courses }: CoursesViewProps) {
     const g = c.musical_style?.name
     if (genres.length && !genres.includes(g)) return false
     if (q) {
-      const hay = `${c.title} ${g || ''} ${c.instrument || ''} ${c.teacher?.name || ''}`.toLowerCase()
+      const hay = `${c.title} ${g || ''} ${c.instrument || ''} ${instrumentLabel(c.instrument, locale)} ${c.teacher?.name || ''}`.toLowerCase()
       if (!hay.includes(q.toLowerCase())) return false
     }
     return true
   })
 
   const activeChips = [
-    ...instruments.map((v) => ({ key: 'i' + v, label: v, remove: () => toggle(instruments, setInstruments, v) })),
+    ...instruments.map((v) => ({ key: 'i' + v, label: instrumentLabel(v, locale), remove: () => toggle(instruments, setInstruments, v) })),
     ...genres.map((v) => ({ key: 'g' + v, label: v, remove: () => toggle(genres, setGenres, v) })),
     ...levels.map((v) => ({ key: 'l' + v, label: difficultyLabel(v), remove: () => toggle(levels, setLevels, v) })),
   ]
@@ -107,7 +109,7 @@ export function CoursesView({ courses }: CoursesViewProps) {
                       onClick={() => toggle(instruments, setInstruments, inst)}
                     >
                       <span className="ck">{on && <Check size={12} strokeWidth={3} />}</span>
-                      {inst}
+                      {instrumentLabel(inst, locale)}
                       <span className="cnt">{count}</span>
                     </button>
                   )
@@ -173,7 +175,7 @@ export function CoursesView({ courses }: CoursesViewProps) {
               {activeChips.map((ch) => (
                 <span className="a-chip" key={ch.key}>
                   {ch.label}
-                  <button onClick={ch.remove} aria-label={`Remove ${ch.label}`}>
+                  <button onClick={ch.remove} aria-label={t('dashboard.pages.courses.removeFilter', { label: ch.label })}>
                     <X size={13} />
                   </button>
                 </span>
@@ -187,7 +189,14 @@ export function CoursesView({ courses }: CoursesViewProps) {
           {filtered.length > 0 ? (
             <div className="a-grid">
               {filtered.map((c) => (
-                <CourseCard key={c.id} course={c} lessons={lessonsOf(c)} difficultyLabel={difficultyLabel} t={t} />
+                <CourseCard
+                  key={c.id}
+                  course={c}
+                  lessons={lessonsOf(c)}
+                  difficultyLabel={difficultyLabel}
+                  t={t}
+                  locale={locale}
+                />
               ))}
             </div>
           ) : (
@@ -219,17 +228,20 @@ function CourseCard({
   lessons,
   difficultyLabel,
   t,
+  locale,
 }: {
   course: any
   lessons: number
   difficultyLabel: (d: string | null) => string
   t: (key: string, params?: Record<string, string | number>) => string
+  locale: Locale
 }) {
   const hasPhoto = !!c.thumbnail_url
   const genre = c.musical_style?.name
   const country = c.musical_style?.country?.name
   const teacherName = c.teacher?.name || t('dashboard.pages.courses.instructor')
-  const teacherRole = c.teacher?.instrument || c.instrument
+  // teacher.instrument is already localized by localizeCourse; course.instrument is a raw filter key.
+  const teacherRole = c.teacher?.instrument || instrumentLabel(c.instrument, locale)
 
   return (
     <Link href={`/dashboard/course/${c.slug || c.id}`} className="a-card">
@@ -271,7 +283,7 @@ function CourseCard({
               </span>
             )}
           </div>
-          {c.instrument && <span className="instr-lab">{c.instrument}</span>}
+          {c.instrument && <span className="instr-lab">{instrumentLabel(c.instrument, locale)}</span>}
         </div>
       </div>
 

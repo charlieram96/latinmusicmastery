@@ -17,8 +17,10 @@ export type ActiveSubtitleLang = SubtitleLang | 'off'
 
 function readStoredPref(): ActiveSubtitleLang | null {
   if (typeof window === 'undefined') return null
+  // Any non-empty code is a candidate; the caller checks it against the tracks
+  // actually present, so a language this lesson lacks simply falls through.
   const v = window.localStorage.getItem(STORAGE_KEY)
-  return v === 'en' || v === 'es' || v === 'off' ? v : null
+  return v ? v : null
 }
 
 export function useSubtitleTracks(

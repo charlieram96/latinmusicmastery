@@ -7,10 +7,11 @@ import {
   StaggerContainer,
   StaggerItem,
 } from '@/components/dashboard/animated-section'
+import { useTranslation } from '@/components/language-provider'
 
 const ACTIONS = [
   {
-    label: 'Resume Last Lesson',
+    labelKey: 'dashboard.pages.home.quickActions.resume',
     href: '/dashboard/my-courses',
     icon: Play,
     iconBg: 'bg-terracotta/15',
@@ -18,7 +19,7 @@ const ACTIONS = [
     gradient: 'from-terracotta/6 to-transparent',
   },
   {
-    label: 'Browse Courses',
+    labelKey: 'dashboard.nav.browseCourses',
     href: '/dashboard/courses',
     icon: BookOpen,
     iconBg: 'bg-gold/15',
@@ -26,7 +27,7 @@ const ACTIONS = [
     gradient: 'from-gold/6 to-transparent',
   },
   {
-    label: 'Open Tuner',
+    labelKey: 'dashboard.pages.home.quickActions.tuner',
     href: '/dashboard/tuner',
     icon: Music,
     iconBg: 'bg-amber-500/15',
@@ -34,7 +35,7 @@ const ACTIONS = [
     gradient: 'from-amber-500/6 to-transparent',
   },
   {
-    label: 'Submit Feedback',
+    labelKey: 'dashboard.pages.home.quickActions.feedback',
     href: '/dashboard/feedback',
     icon: MessageSquare,
     iconBg: 'bg-terracotta/10',
@@ -48,12 +49,13 @@ interface QuickActionsProps {
 }
 
 export function QuickActions({ variant = 'grid' }: QuickActionsProps) {
+  const { t } = useTranslation()
   if (variant === 'list') {
     return (
       <AnimatedSection delay={0.1}>
         <div className="warm-surface rounded-2xl p-4">
           <h3 className="text-sm font-heading font-semibold text-foreground mb-3">
-            Quick Actions
+            {t('dashboard.pages.home.quickActions.title')}
           </h3>
           <div className="space-y-1">
             {ACTIONS.map((action) => {
@@ -70,7 +72,7 @@ export function QuickActions({ variant = 'grid' }: QuickActionsProps) {
                     <Icon className={`h-4 w-4 ${action.iconColor}`} />
                   </div>
                   <span className="text-sm font-medium text-foreground/90 group-hover:text-foreground transition-colors">
-                    {action.label}
+                    {t(action.labelKey)}
                   </span>
                 </Link>
               )
@@ -99,7 +101,7 @@ export function QuickActions({ variant = 'grid' }: QuickActionsProps) {
                   <Icon className={`h-5 w-5 ${action.iconColor}`} />
                 </div>
                 <span className="relative text-sm font-medium text-foreground/90 group-hover:text-foreground transition-colors">
-                  {action.label}
+                  {t(action.labelKey)}
                 </span>
               </Link>
             </StaggerItem>

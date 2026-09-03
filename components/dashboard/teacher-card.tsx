@@ -25,6 +25,7 @@ import {
 import Link from 'next/link'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
 import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
+import { useTranslation } from '@/components/language-provider'
 
 interface Course {
   id: string
@@ -59,6 +60,7 @@ function getInitials(name: string): string {
 }
 
 export function TeacherCard({ teacher }: TeacherCardProps) {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -128,10 +130,17 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
           <div className="flex items-center justify-between pt-3 border-t">
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <BookOpen className="w-3.5 h-3.5" />
-              <span>{teacher.courses.length} {teacher.courses.length === 1 ? 'course' : 'courses'}</span>
+              <span>
+                {t(
+                  teacher.courses.length === 1
+                    ? 'dashboard.pages.teachers.courseCountOne'
+                    : 'dashboard.pages.teachers.courseCountOther',
+                  { count: teacher.courses.length },
+                )}
+              </span>
             </div>
             <span className="text-xs text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
-              View Profile
+              {t('dashboard.pages.teachers.viewProfile')}
               <ChevronRight className="h-3 w-3" />
             </span>
           </div>
@@ -142,7 +151,7 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="sr-only">{teacher.name}'s Profile</DialogTitle>
+            <DialogTitle className="sr-only">{t('dashboard.pages.teachers.profileOf', { name: teacher.name })}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -182,7 +191,7 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
               <div>
                 <h3 className="font-semibold mb-2 flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-primary" />
-                  About
+                  {t('dashboard.pages.teachers.about')}
                 </h3>
                 <div className="text-muted-foreground leading-relaxed text-sm [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-bold [&_h1:first-child]:mt-0 [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h2:first-child]:mt-0 [&_h3]:mt-3 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3:first-child]:mt-0 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-primary [&_a]:underline [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-primary/60 [&_blockquote]:pl-3 [&_blockquote]:italic [&_img]:my-3 [&_img]:rounded-lg [&_img]:max-w-full [&_iframe]:my-3 [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg">
                   <TiptapReadOnly
@@ -201,7 +210,7 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-primary" />
-                  Courses by {teacher.name.split(' ')[0]}
+                  {t('dashboard.pages.teachers.coursesBy', { name: teacher.name.split(' ')[0] })}
                 </h3>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {teacher.courses.map((course) => (
@@ -250,14 +259,14 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
               <Button asChild className="flex-1">
                 <Link href="/dashboard/feedback" onClick={() => setIsOpen(false)}>
                   <Video className="h-4 w-4 mr-2" />
-                  Request Feedback
+                  {t('dashboard.pages.feedback.request.title')}
                 </Link>
               </Button>
               {teacher.email && (
                 <Button variant="outline" asChild className="flex-1">
                   <a href={`mailto:${teacher.email}`}>
                     <Mail className="h-4 w-4 mr-2" />
-                    Contact Teacher
+                    {t('dashboard.pages.teachers.contact')}
                   </a>
                 </Button>
               )}

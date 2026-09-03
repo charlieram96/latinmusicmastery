@@ -9,6 +9,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Check, Play, BookOpen, Clock, Layers } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
 
 interface CurriculumNavigatorProps {
   sections: any[]
@@ -36,23 +37,34 @@ export function CurriculumNavigator({
   totalDurationMinutes,
   hasStarted,
 }: CurriculumNavigatorProps) {
+  const { t } = useTranslation()
   const totalLessons = sections.reduce((acc: number, s: any) => acc + s.classes.length, 0)
 
   return (
     <div>
       {/* Header */}
       <h2 className="font-heading text-2xl font-extrabold tracking-[-0.02em] text-foreground">
-        Curriculum
+        {t('dashboard.pages.course.curriculum.title')}
       </h2>
       <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] font-medium text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <Layers className="h-3.5 w-3.5 opacity-80" />
-          {sections.length} module{sections.length !== 1 ? 's' : ''}
+          {t(
+            sections.length === 1
+              ? 'dashboard.pages.course.moduleCountOne'
+              : 'dashboard.pages.course.moduleCountOther',
+            { count: sections.length },
+          )}
         </span>
         <span className="h-[3px] w-[3px] rounded-full bg-muted-foreground/40" />
         <span className="inline-flex items-center gap-1.5">
           <BookOpen className="h-3.5 w-3.5 opacity-80" />
-          {totalLessons} lesson{totalLessons !== 1 ? 's' : ''}
+          {t(
+            totalLessons === 1
+              ? 'dashboard.pages.course.lessonCountOne'
+              : 'dashboard.pages.course.lessonCountOther',
+            { count: totalLessons },
+          )}
         </span>
         <span className="h-[3px] w-[3px] rounded-full bg-muted-foreground/40" />
         <span className="inline-flex items-center gap-1.5">
@@ -64,7 +76,9 @@ export function CurriculumNavigator({
       {/* Progress */}
       {hasStarted && (
         <div className="mb-5 mt-5">
-          <div className="mb-1.5 text-sm font-medium text-foreground">{progressPercentage}% complete</div>
+          <div className="mb-1.5 text-sm font-medium text-foreground">
+            {t('dashboard.pages.course.percentComplete', { percent: progressPercentage })}
+          </div>
           <Progress value={progressPercentage} className="h-1.5" />
         </div>
       )}
@@ -96,7 +110,10 @@ export function CurriculumNavigator({
                       {section.title}
                     </span>
                     <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
-                      {section.completedItems}/{section.totalItems} completed
+                      {t('dashboard.pages.course.curriculum.completed', {
+                        completed: section.completedItems,
+                        total: section.totalItems,
+                      })}
                     </span>
                   </span>
                 </span>
@@ -151,11 +168,16 @@ export function CurriculumNavigator({
                         {/* Badge or item count */}
                         {isNext ? (
                           <span className="flex-shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10.5px] font-bold tracking-[0.04em] text-primary-foreground">
-                            Next
+                            {t('common.next')}
                           </span>
                         ) : (
                           <span className="flex-shrink-0 text-xs text-muted-foreground">
-                            {cls.totalItems} item{cls.totalItems !== 1 ? 's' : ''}
+                            {t(
+                              cls.totalItems === 1
+                                ? 'dashboard.pages.course.itemCountOne'
+                                : 'dashboard.pages.course.itemCountOther',
+                              { count: cls.totalItems },
+                            )}
                           </span>
                         )}
                       </Link>

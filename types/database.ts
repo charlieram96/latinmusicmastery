@@ -298,8 +298,7 @@ export type Database = {
           rich_content: Json | null
           score_document_id: string | null
           soundslice_embed_url: string | null
-          subtitles_en_url: string | null
-          subtitles_es_url: string | null
+          subtitles: Json
           title: string
           title_es: string | null
           updated_at: string | null
@@ -329,8 +328,7 @@ export type Database = {
           rich_content?: Json | null
           score_document_id?: string | null
           soundslice_embed_url?: string | null
-          subtitles_en_url?: string | null
-          subtitles_es_url?: string | null
+          subtitles?: Json
           title: string
           title_es?: string | null
           updated_at?: string | null
@@ -360,8 +358,7 @@ export type Database = {
           rich_content?: Json | null
           score_document_id?: string | null
           soundslice_embed_url?: string | null
-          subtitles_en_url?: string | null
-          subtitles_es_url?: string | null
+          subtitles?: Json
           title?: string
           title_es?: string | null
           updated_at?: string | null
@@ -1020,27 +1017,33 @@ export type Database = {
           country_id: string | null
           created_at: string | null
           description: string | null
+          description_es: string | null
           id: string
           image_url: string | null
           name: string
+          name_es: string | null
           slug: string
         }
         Insert: {
           country_id?: string | null
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           id?: string
           image_url?: string | null
           name: string
+          name_es?: string | null
           slug: string
         }
         Update: {
           country_id?: string | null
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           id?: string
           image_url?: string | null
           name?: string
+          name_es?: string | null
           slug?: string
         }
         Relationships: [
@@ -1855,11 +1858,13 @@ export type Database = {
       teachers: {
         Row: {
           bio: Json | null
+          bio_es: Json | null
           created_at: string | null
           email: string | null
           id: string
           image_url: string | null
           instrument: string
+          instrument_es: string | null
           name: string
           specialties: string[] | null
           updated_at: string | null
@@ -1867,11 +1872,13 @@ export type Database = {
         }
         Insert: {
           bio?: Json | null
+          bio_es?: Json | null
           created_at?: string | null
           email?: string | null
           id?: string
           image_url?: string | null
           instrument: string
+          instrument_es?: string | null
           name: string
           specialties?: string[] | null
           updated_at?: string | null
@@ -1879,11 +1886,13 @@ export type Database = {
         }
         Update: {
           bio?: Json | null
+          bio_es?: Json | null
           created_at?: string | null
           email?: string | null
           id?: string
           image_url?: string | null
           instrument?: string
+          instrument_es?: string | null
           name?: string
           specialties?: string[] | null
           updated_at?: string | null

@@ -33,6 +33,7 @@ export function ClassEditor({ cls, onPatched, onDelete }: ClassEditorProps) {
   const [title, setTitle] = useState(cls.title)
   const [titleEs, setTitleEs] = useState(cls.title_es ?? '')
   const [description, setDescription] = useState(cls.description ?? '')
+  const [descriptionEs, setDescriptionEs] = useState(cls.description_es ?? '')
 
   // The save closure is refreshed each render by useAutosave, so it always reads
   // the latest local state.
@@ -43,6 +44,7 @@ export function ClassEditor({ cls, onPatched, onDelete }: ClassEditorProps) {
           title: title.trim() || cls.title,
           description,
           title_es: titleEs || null,
+          description_es: descriptionEs || null,
         })
       ),
   })
@@ -103,6 +105,23 @@ export function ClassEditor({ cls, onPatched, onDelete }: ClassEditorProps) {
             }}
             rows={4}
             placeholder="What students will learn in this class…"
+          />
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="class-description-es" className="text-xs text-muted-foreground">
+            Description (Español)
+          </Label>
+          <Textarea
+            id="class-description-es"
+            value={descriptionEs}
+            onChange={(e) => {
+              setDescriptionEs(e.target.value)
+              onPatched({ description_es: e.target.value || null })
+              queue({})
+            }}
+            rows={4}
+            placeholder="Lo que aprenderán los estudiantes en esta clase (opcional)"
           />
         </div>
       </div>

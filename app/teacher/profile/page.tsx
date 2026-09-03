@@ -30,9 +30,11 @@ export default function TeacherProfilePage() {
     image_url?: string | null
     specialties?: string[] | null
     bio?: unknown
+    bio_es?: unknown
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [bio, setBio] = useState<BioDoc | null>(null)
+  const [bioEs, setBioEs] = useState<BioDoc | null>(null)
   const [imageUrl, setImageUrl] = useState('')
   const [specialties, setSpecialties] = useState('')
   const [success, setSuccess] = useState(false)
@@ -45,6 +47,11 @@ export default function TeacherProfilePage() {
         setBio(
           data.bio && typeof data.bio === 'object'
             ? (data.bio as BioDoc)
+            : null
+        )
+        setBioEs(
+          data.bio_es && typeof data.bio_es === 'object'
+            ? (data.bio_es as BioDoc)
             : null
         )
         setImageUrl(data.image_url || '')
@@ -63,6 +70,7 @@ export default function TeacherProfilePage() {
       try {
         await updateTeacherProfile({
           bio: isEmptyDoc(bio) ? null : bio,
+          bio_es: isEmptyDoc(bioEs) ? null : bioEs,
           image_url: imageUrl || null,
           specialties: specialties || null,
         })
@@ -216,6 +224,19 @@ export default function TeacherProfilePage() {
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Supports rich formatting — headings, lists, links, images, and video.
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="bio_es">Bio (Español)</Label>
+                <div className="mt-1">
+                  <TiptapEditor
+                    content={bioEs}
+                    onChange={(next) => setBioEs(next)}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Shown to students who use the site in Spanish. Leave empty to show the English bio.
                 </p>
               </div>
 

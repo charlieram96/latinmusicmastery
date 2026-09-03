@@ -12,6 +12,7 @@ import { Clock } from 'lucide-react'
 import { SplitWorkspace, OrientationToggle } from '@/components/playsense-studio/player/split-workspace'
 import { Badge } from '@/components/ui/badge'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
+import { useTranslation } from '@/components/language-provider'
 
 interface VideoInfoSplitProps {
   videoUrl: string
@@ -39,6 +40,7 @@ export function VideoInfoSplit({
   bpm,
   keySignature,
 }: VideoInfoSplitProps) {
+  const { t } = useTranslation()
   const durationLabel = formatDuration(durationSeconds)
   const hasFacts = Boolean(durationLabel || bpm || keySignature)
   const hasBody = Boolean(description || richContent)
@@ -60,7 +62,7 @@ export function VideoInfoSplit({
         <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-border bg-secondary px-4 py-2.5">
           <div className="min-w-0">
             <div className="text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
-              About this lesson
+              {t('dashboard.pages.modules.aboutLesson')}
             </div>
             <div className="mt-1 truncate font-heading text-[13.5px] font-bold tracking-tight text-foreground">
               {title}
@@ -83,7 +85,7 @@ export function VideoInfoSplit({
                 <Badge variant="outline">BPM: {bpm}</Badge>
               )}
               {keySignature && (
-                <Badge variant="outline">Key: {keySignature}</Badge>
+                <Badge variant="outline">{t('dashboard.classViewer.renderer.key', { key: keySignature })}</Badge>
               )}
             </div>
           )}
@@ -98,7 +100,7 @@ export function VideoInfoSplit({
 
           {!hasBody && (
             <p className="text-sm text-muted-foreground">
-              No additional notes for this lesson.
+              {t('dashboard.classViewer.renderer.noNotes')}
             </p>
           )}
         </div>

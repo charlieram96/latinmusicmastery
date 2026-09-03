@@ -9,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useTranslation } from '@/components/language-provider'
 
 interface HeaderContinueClientProps {
   classId: string
@@ -18,6 +19,7 @@ interface HeaderContinueClientProps {
 }
 
 export function HeaderContinueClient({ classId, courseId, classTitle, courseTitle }: HeaderContinueClientProps) {
+  const { t } = useTranslation()
   return (
     <TooltipProvider>
       <Tooltip>
@@ -30,7 +32,7 @@ export function HeaderContinueClient({ classId, courseId, classTitle, courseTitl
           >
             <Link href={`/dashboard/course/${courseId}/class/${classId}`}>
               <Play className="h-4 w-4 fill-current" />
-              <span className="hidden lg:inline">Continue</span>
+              <span className="hidden lg:inline">{t('common.continue')}</span>
             </Link>
           </Button>
         </TooltipTrigger>

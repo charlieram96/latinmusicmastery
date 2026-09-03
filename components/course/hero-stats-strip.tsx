@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslation } from '@/components/language-provider'
+
 interface HeroStatsStripProps {
   progressPercentage: number
   completedItems: number
@@ -50,12 +52,17 @@ export function HeroStatsStrip({
   difficulty,
   difficultyColor,
 }: HeroStatsStripProps) {
+  const { t } = useTranslation()
   return (
     <div className="grid grid-cols-2 gap-px bg-border md:grid-cols-4">
-      <Stat value={`${progressPercentage}%`} label="Complete" />
-      <Stat value={completedItems} sub={totalItems} label="Lessons" />
-      <Stat value={formatDuration(remainingDuration)} label="Remaining" />
-      <Stat value={difficulty || 'All'} label="Level" valueClassName={`capitalize ${difficultyColor}`} />
+      <Stat value={`${progressPercentage}%`} label={t('dashboard.pages.course.stats.complete')} />
+      <Stat value={completedItems} sub={totalItems} label={t('dashboard.pages.course.stats.lessons')} />
+      <Stat value={formatDuration(remainingDuration)} label={t('dashboard.pages.course.stats.remaining')} />
+      <Stat
+        value={difficulty || t('dashboard.pages.course.stats.levelAll')}
+        label={t('dashboard.pages.course.stats.level')}
+        valueClassName={`capitalize ${difficultyColor}`}
+      />
     </div>
   )
 }

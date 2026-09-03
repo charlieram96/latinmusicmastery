@@ -25,6 +25,7 @@ import {
   StaggerItem,
 } from '@/components/dashboard/animated-section'
 import type { LearningMilestonesProps } from '@/types/dashboard'
+import { useTranslation } from '@/components/language-provider'
 
 /* ------------------------------------------------------------------ */
 /*  Icon lookup                                                        */
@@ -116,6 +117,7 @@ interface ExtendedLearningMilestonesProps extends LearningMilestonesProps {
 }
 
 export function LearningMilestones({ milestones, variant = 'cards' }: ExtendedLearningMilestonesProps) {
+  const { t } = useTranslation()
   if (milestones.length === 0) return null
 
   if (variant === 'compact') {
@@ -127,7 +129,7 @@ export function LearningMilestones({ milestones, variant = 'cards' }: ExtendedLe
           <div className="relative flex items-center gap-2 mb-3">
             <Trophy className="h-4 w-4 text-gold" />
             <h3 className="text-sm font-heading font-semibold text-foreground">
-              Next Milestones
+              {t('dashboard.pages.home.nextMilestones')}
             </h3>
           </div>
           <div className="relative space-y-3">
@@ -164,7 +166,7 @@ export function LearningMilestones({ milestones, variant = 'cards' }: ExtendedLe
         <div className="flex items-center gap-2">
           <Trophy className="h-5 w-5 text-gold" />
           <h3 className="text-lg font-heading font-semibold text-foreground">
-            Next Milestones
+            {t('dashboard.pages.home.nextMilestones')}
           </h3>
         </div>
 

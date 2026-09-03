@@ -13,6 +13,7 @@ import {
 import { CourseCoverCard } from '@/components/dashboard/course-cover-card'
 import type { DashboardCourse, FeaturedTeacher } from '@/types/dashboard'
 import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
+import { useTranslation } from '@/components/language-provider'
 
 /* ------------------------------------------------------------------ */
 /*  Props — newCourseIds arrives as string[] (Sets can't serialize)    */
@@ -27,16 +28,17 @@ interface RecommendedFeaturedProps {
 
 /** Difficulty → badge styling (green / amber / red), matching the design. */
 function difficultyBadge(
-  difficulty?: string | null
+  difficulty: string | null | undefined,
+  t: (key: string) => string
 ): { text: string; className: string } | undefined {
   if (!difficulty) return undefined
   const d = difficulty.toLowerCase()
   if (d === 'beginner')
-    return { text: 'Beginner', className: 'bg-emerald-500/85 text-white' }
+    return { text: t('dashboard.pages.courses.difficulty.beginner'), className: 'bg-emerald-500/85 text-white' }
   if (d === 'intermediate')
-    return { text: 'Intermediate', className: 'bg-amber-500/90 text-neutral-900' }
+    return { text: t('dashboard.pages.courses.difficulty.intermediate'), className: 'bg-amber-500/90 text-neutral-900' }
   if (d === 'advanced')
-    return { text: 'Advanced', className: 'bg-red-500/85 text-white' }
+    return { text: t('dashboard.pages.courses.difficulty.advanced'), className: 'bg-red-500/85 text-white' }
   return { text: difficulty, className: 'bg-secondary text-foreground' }
 }
 
@@ -49,6 +51,7 @@ export function RecommendedFeatured({
   newCourseIds,
   featuredTeacher,
 }: RecommendedFeaturedProps) {
+  const { t } = useTranslation()
   const newIds = useMemo(() => new Set(newCourseIds), [newCourseIds])
 
   const displayed = recommendedCourses.slice(0, 3)
@@ -110,13 +113,13 @@ export function RecommendedFeatured({
             <div className="flex items-baseline justify-between gap-3">
               <h2 className="inline-flex items-center gap-2.5 font-heading text-lg font-bold tracking-tight text-foreground">
                 <Sparkles className="h-4 w-4 text-primary" />
-                Recommended for you
+                {t('dashboard.pages.home.recommended')}
               </h2>
               <Link
                 href="/dashboard/courses"
                 className="inline-flex items-center gap-1 text-[13px] font-medium text-muted-foreground transition-colors hover:text-primary"
               >
-                View all
+                {t('common.viewAll')}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
@@ -125,8 +128,8 @@ export function RecommendedFeatured({
             <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {displayed.map((course) => {
                 const badge = newIds.has(course.id)
-                  ? { text: 'New', className: 'bg-gold text-[#161210]' }
-                  : difficultyBadge(course.difficulty)
+                  ? { text: t('dashboard.pages.home.newBadge'), className: 'bg-gold text-[#161210]' }
+                  : difficultyBadge(course.difficulty, t)
                 return (
                   <StaggerItem key={course.id}>
                     <CourseCoverCard

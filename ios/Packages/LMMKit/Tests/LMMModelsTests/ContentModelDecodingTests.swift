@@ -95,6 +95,7 @@ final class ContentModelDecodingTests: XCTestCase {
         XCTAssertEqual(video.titleEs, "Cáscara Básica — Interpretación")
         XCTAssertNotNil(video.createdAt)
         XCTAssertEqual(video.bpm, 96)
+        XCTAssertEqual(ClassItemSubtitle.parse(video.subtitles).map(\.lang), ["en", "es"])
 
         let exercise = try XCTUnwrap(items.first { $0.itemType == .exercise })
         XCTAssertEqual(exercise.keySignature, "C")

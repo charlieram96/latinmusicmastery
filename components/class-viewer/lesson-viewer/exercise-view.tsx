@@ -11,6 +11,7 @@ import {
 } from '@/components/playsense-studio/player/playsense-studio-player'
 import { ScoreExerciseGame } from './score-exercise-game'
 import { useLessonShell } from './lesson-shell-context'
+import { useTranslation } from '@/components/language-provider'
 import type { BackingTrack } from '@/app/actions/playsense-studio'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
@@ -64,6 +65,7 @@ export function ExerciseView({
   // Surfaces the big centered CTA once the demo has played to the end.
   const [videoEnded, setVideoEnded] = useState(false)
   const { setCollapsed } = useLessonShell()
+  const { t } = useTranslation()
 
   // Entering the immersive play view: collapse the lesson sidebar for room.
   const goToPlay = () => {
@@ -132,7 +134,7 @@ export function ExerciseView({
                   className="inline-flex items-center gap-2.5 rounded-2xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground shadow-2xl ring-4 ring-primary/30 transition hover:opacity-90"
                 >
                   <Gamepad2 className="h-5 w-5" />
-                  Now it&apos;s your turn
+                  {t('dashboard.classViewer.exercise.yourTurn')}
                 </motion.button>
               </motion.div>
             )}
@@ -145,7 +147,7 @@ export function ExerciseView({
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
           >
             <Gamepad2 className="h-4 w-4" />
-            Now it&apos;s your turn
+            {t('dashboard.classViewer.exercise.yourTurn')}
           </button>
         </div>
       </div>

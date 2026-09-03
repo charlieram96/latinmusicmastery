@@ -27,7 +27,15 @@
     "required": "Obligatorio",
     "optional": "Opcional",
     "error": "Error",
-    "success": "Éxito"
+    "success": "Éxito",
+    "viewAll": "Ver todo",
+    "commandPalette": {
+      "title": "Paleta de comandos",
+      "description": "Busca un comando para ejecutar..."
+    },
+    "toggleSidebar": "Mostrar u ocultar la barra lateral",
+    "switchToLightMode": "Cambiar al modo claro",
+    "switchToDarkMode": "Cambiar al modo oscuro"
   },
   "nav": {
     "explore": "Explorar",
@@ -79,7 +87,8 @@
   "marketing": {
     "home": {
       "waitlistTitle": "¿Listo para comenzar tu viaje musical?",
-      "waitlistSubtitle": "Sé de los primeros en enterarte cuando lancemos. Únete a la lista de espera para obtener acceso anticipado y precios de miembro fundador."
+      "waitlistSubtitle": "Sé de los primeros en enterarte cuando lancemos. Únete a la lista de espera para obtener acceso anticipado y precios de miembro fundador.",
+      "waitlistImageAlt": "Presentación de música latina"
     },
     "pages": {
       "pricing": {
@@ -520,6 +529,10 @@
           "subtitle": "Comienza tu camino musical con instructores de música latina de clase mundial. Prueba gratuita incluida.",
           "primaryLabel": "Empezar Gratis",
           "secondaryLabel": "Ver Precios"
+        },
+        "metadata": {
+          "title": "Nuestros instructores — Latin Music Mastery",
+          "description": "Aprende con músicos de clase mundial con décadas de experiencia interpretando y enseñando música latinoamericana."
         }
       },
       "blog": {
@@ -543,6 +556,74 @@
           "title": "Aún no hay publicaciones",
           "description": "Vuelve pronto para encontrar reflexiones, tutoriales e historias del mundo de la música latina."
         }
+      },
+      "explore": {
+        "metadata": {
+          "title": "Explora cursos — Latin Music Mastery",
+          "description": "Descubre cursos de música latinoamericana organizados por país, estilo e instrumento."
+        },
+        "hero": {
+          "title": "Explora cursos",
+          "subtitle": "Descubre el rico mundo de la música latinoamericana, organizado por país y tradición musical."
+        },
+        "instrumentTitle": "Cursos de {instrument}",
+        "instrumentSubtitle": "Explora los cursos de {instrument}.",
+        "styleSubtitle": "Explora los cursos de {style}.",
+        "empty": {
+          "title": "Aún no hay cursos disponibles",
+          "body": "Estamos agregando más cursos de {label}. ¡Vuelve pronto!"
+        },
+        "country": {
+          "metadata": {
+            "title": "Música de {country} — Latin Music Mastery",
+            "description": "Explora los estilos musicales y cursos de {country}. Aprende ritmos y técnicas auténticos."
+          },
+          "musicalStyles": "Estilos musicales",
+          "allCourses": "Todos los cursos"
+        },
+        "style": {
+          "metadata": {
+            "title": "{style} — {country} — Latin Music Mastery",
+            "description": "Descubre cursos de {style} de {country}. Aprende ritmos, técnicas y tradiciones auténticos."
+          },
+          "emptyBody": "Estamos trabajando para agregar cursos de {style}. ¡Vuelve pronto!"
+        }
+      },
+      "coursePreview": {
+        "metadata": {
+          "titleTemplate": "{title} — Latin Music Mastery",
+          "fallbackTitle": "Vista previa del curso — Latin Music Mastery",
+          "fallbackDescription": "Echa un vistazo a este curso de música latina y explora el plan de estudios, el instructor y las lecciones."
+        },
+        "about": "Acerca de este curso",
+        "curriculum": "Vista previa del plan de estudios",
+        "yourInstructor": "Tu instructor",
+        "signUpToAccess": "Regístrate para acceder"
+      },
+      "courses": {
+        "backToHome": "← Volver al inicio",
+        "by": "por {name}",
+        "viewCourse": "Ver curso",
+        "empty": {
+          "title": "No hay cursos disponibles",
+          "body": "Todavía no hay cursos publicados de {style}. ¡Vuelve pronto!",
+          "browseOtherStyles": "Explorar otros estilos"
+        }
+      }
+    },
+    "common": {
+      "home": "Inicio",
+      "breadcrumb": "Ruta de navegación",
+      "backTo": "Volver a {label}",
+      "openBioFor": "Ver la biografía de {name}",
+      "lessonCountOne": "{count} lección",
+      "lessonCount": "{count} lecciones",
+      "courseCountOne": "{count} curso",
+      "courseCount": "{count} cursos",
+      "difficulty": {
+        "beginner": "Principiante",
+        "intermediate": "Intermedio",
+        "advanced": "Avanzado"
       }
     }
   },
@@ -559,9 +640,15 @@
         "label": "Estudiantes activos",
         "staticText": "En progreso"
       },
-      "videoLessons": { "label": "Lecciones en video" },
-      "hoursOfContent": { "label": "Horas de contenido" },
-      "expertInstructors": { "label": "Instructores expertos" }
+      "videoLessons": {
+        "label": "Lecciones en video"
+      },
+      "hoursOfContent": {
+        "label": "Horas de contenido"
+      },
+      "expertInstructors": {
+        "label": "Instructores expertos"
+      }
     },
     "waitlistForm": {
       "launchingSoon": "Próximo lanzamiento",
@@ -1135,9 +1222,18 @@
         "searchButton": "Buscar",
         "learnMore": "Saber más →",
         "resources": {
-          "gettingStarted": { "title": "Guía de inicio", "description": "Aprende lo básico y comienza tu camino" },
-          "videoTutorials": { "title": "Tutoriales en video", "description": "Mira tutoriales paso a paso de la plataforma" },
-          "documentation": { "title": "Documentación", "description": "Guías detalladas y referencias" }
+          "gettingStarted": {
+            "title": "Guía de inicio",
+            "description": "Aprende lo básico y comienza tu camino"
+          },
+          "videoTutorials": {
+            "title": "Tutoriales en video",
+            "description": "Mira tutoriales paso a paso de la plataforma"
+          },
+          "documentation": {
+            "title": "Documentación",
+            "description": "Guías detalladas y referencias"
+          }
         },
         "faqs": {
           "title": "Preguntas frecuentes",
@@ -1209,12 +1305,36 @@
         },
         "hints": {
           "selectInstrument": "Selecciona un instrumento arriba para continuar.",
-          "selectPlan": "Elige un plan arriba para continuar."
+          "selectPlan": "Elige un plan arriba para continuar.",
+          "selectGenre": "Elige el curso de género que quieres incluir en tu suscripción."
         },
         "errors": {
           "checkoutFailed": "No se pudo iniciar el pago. Inténtalo de nuevo.",
           "generic": "Ocurrió un error. Inténtalo de nuevo."
-        }
+        },
+        "intro": "Elige un instrumento, tu primer curso de género (el curso de fundamentos va incluido gratis) y, si quieres, géneros extra en los planes mensuales.",
+        "canceled": "El pago se canceló. Vuelve a elegir para intentarlo de nuevo.",
+        "steps": {
+          "instrument": "1. Instrumento",
+          "courses": "2. Tus cursos",
+          "billing": "3. Facturación"
+        },
+        "alreadySubscribed": "Ya estás suscrito a este instrumento",
+        "coursesIntro": "Un curso de género va incluido. En los planes mensuales puedes agregar más por {price} cada uno. El curso de fundamentos del instrumento se incluye automáticamente.",
+        "pricePerMonth": "{price} / mes",
+        "pricePerYear": "{price} / año",
+        "noCoursesForInstrument": "Todavía no hay cursos de género publicados para {instrument}.",
+        "included": "Incluido",
+        "monthly": "Mensual",
+        "annual": "Anual",
+        "save17": "Ahorra 17%",
+        "perYear": "/año",
+        "perExtraGenre": "+ {price} por género extra",
+        "addGenresLater": "Agrega géneros extra después de suscribirte",
+        "annualBaseOnly": "El plan anual solo incluye el plan base. Quitamos tus géneros extra; puedes agregarlos después de suscribirte desde la página de administración.",
+        "total": "Total",
+        "baseAddonsOne": "Base + {count} extra",
+        "baseAddonsOther": "Base + {count} extras"
       },
       "settings": {
         "title": "Configuración",
@@ -1292,7 +1412,14 @@
         "empty": {
           "title": "Aún no hay maestros",
           "subtitle": "¡Vuelve pronto para conocer nuestro increíble equipo de instructores!"
-        }
+        },
+        "courseCountOne": "{count} curso",
+        "courseCountOther": "{count} cursos",
+        "viewProfile": "Ver perfil",
+        "profileOf": "Perfil de {name}",
+        "about": "Acerca de",
+        "coursesBy": "Cursos de {name}",
+        "contact": "Contactar al maestro"
       },
       "masterClass": {
         "title": "Clase magistral",
@@ -1351,6 +1478,24 @@
           "inProgressBody": "Comienza un curso para ver tu progreso aquí.",
           "completedTitle": "Aún no hay cursos completados",
           "completedBody": "Completa tu primer curso para verlo aquí. ¡Sigue aprendiendo!"
+        },
+        "moduleFallback": "Módulo {number}",
+        "untitledClass": "Clase sin título",
+        "filters": {
+          "all": "Todos los cursos",
+          "inProgress": "En progreso",
+          "completed": "Completados",
+          "sortPlaceholder": "Ordenar por...",
+          "sort": {
+            "recent": "Vistos recientemente",
+            "progress": "Progreso",
+            "alphabetical": "A-Z"
+          }
+        },
+        "card": {
+          "complete": "Completado",
+          "module": "Mód {current}/{total}",
+          "items": "{completed}/{total} elementos"
         }
       },
       "progress": {
@@ -1408,19 +1553,28 @@
         "clearAll": "Borrar todo",
         "resultCourse": "curso",
         "resultCourses": "cursos",
-        "facets": { "instrument": "Instrumento", "level": "Nivel", "genre": "Género" },
-        "tabs": { "all": "Todos" },
+        "facets": {
+          "instrument": "Instrumento",
+          "level": "Nivel",
+          "genre": "Género"
+        },
+        "tabs": {
+          "all": "Todos"
+        },
         "difficulty": {
           "beginner": "Principiante",
           "intermediate": "Intermedio",
           "advanced": "Avanzado"
         },
-        "badges": { "courseFallback": "Curso" },
+        "badges": {
+          "courseFallback": "Curso"
+        },
         "empty": {
           "title": "No se encontraron cursos",
           "subtitle": "Prueba ajustando los filtros o la búsqueda para encontrar lo que buscas",
           "clearFilters": "Borrar todos los filtros"
-        }
+        },
+        "removeFilter": "Quitar {label}"
       },
       "subscription": {
         "title": "Mi suscripción",
@@ -1431,7 +1585,9 @@
           "title": "Suscripciones de instrumentos redundantes",
           "body": "Tienes un plan de Acceso total que ya incluye todos los instrumentos. Puedes cancelar tus suscripciones individuales de instrumentos desde el portal de facturación para evitar cargos adicionales."
         },
-        "planNames": { "allAccess": "Acceso total" },
+        "planNames": {
+          "allAccess": "Acceso total"
+        },
         "planDescriptions": {
           "allAccess": "Acceso completo a todos los instrumentos y cursos",
           "instrument": "Acceso a todos los cursos de {instrument}"
@@ -1458,7 +1614,34 @@
           "title": "Sin suscripción activa",
           "body": "Suscríbete para desbloquear cursos y comenzar a aprender",
           "cta": "Ver planes"
-        }
+        },
+        "noneYet": "Aún no tienes ninguna suscripción activa.",
+        "startInstrument": {
+          "title": "Empieza con un instrumento",
+          "body": "Obtén el curso de fundamentos del instrumento más un curso de género desde {price}."
+        },
+        "intro": "Una suscripción por instrumento. Agrega más géneros cuando quieras.",
+        "cancelsAtPeriodEnd": "se cancela al final del período",
+        "status": {
+          "active": "activa",
+          "trialing": "en prueba",
+          "past_due": "pago vencido",
+          "canceled": "cancelada"
+        },
+        "nextRenewal": "Próxima renovación: {date}",
+        "addonRenewal": "Renovación de extras: {date}",
+        "fundamentalsIncluded": "Fundamentos · incluido",
+        "noGenreCourses": "Este plan aún no tiene cursos de género.",
+        "genreIncludedWithBase": "Género · incluido en el plan base",
+        "genreAddon": "Género · +{price}",
+        "removeLastGenre": "Quitar el último género cancela el instrumento",
+        "removeGenre": "Quitar este género",
+        "addGenre": "Agregar un género",
+        "manage": "Administrar suscripción",
+        "portalNote": "Los datos de pago y las facturas se administran en el portal de clientes de Stripe; haz clic en {manage} arriba.",
+        "portalError": "No se pudo abrir el portal de clientes. Inténtalo de nuevo.",
+        "confirmRemoveCourse": "¿Quitar este curso de tu plan? Esto reducirá tu factura mensual.",
+        "confirmCancelInstrument": "¿Cancelar tu suscripción de {instrument} al final del período actual? Conservarás el acceso hasta entonces."
       },
       "course": {
         "backToCourses": "Volver a Cursos",
@@ -1525,6 +1708,31 @@
             "cta": "Suscríbete para desbloquear",
             "back": "Volver al curso"
           }
+        },
+        "moduleCountOne": "{count} módulo",
+        "moduleCountOther": "{count} módulos",
+        "lessonCountOne": "{count} lección",
+        "lessonCountOther": "{count} lecciones",
+        "itemCountOne": "{count} elemento",
+        "itemCountOther": "{count} elementos",
+        "percentComplete": "{percent}% completado",
+        "adding": "Agregando…",
+        "addToPlan": "Agregar a mi plan (+{price}/mes)",
+        "stats": {
+          "complete": "Completado",
+          "lessons": "Lecciones",
+          "remaining": "Restante",
+          "level": "Nivel",
+          "levelAll": "Todos"
+        },
+        "curriculum": {
+          "title": "Plan de estudios",
+          "completed": "{completed}/{total} completados"
+        },
+        "enter": {
+          "starting": "Iniciando el curso",
+          "entering": "Entrando al modo curso",
+          "preparing": "Preparando tu entorno de aprendizaje..."
         }
       },
       "modules": {
@@ -1537,6 +1745,216 @@
         "next": "Siguiente",
         "nextLocked": "Siguiente (Bloqueada)",
         "courseContent": "Contenido del curso"
+      },
+      "home": {
+        "musicianFallback": "músico",
+        "streakDaysOne": "Racha de {count} día",
+        "streakDaysOther": "Racha de {count} días",
+        "lessonsThisWeekOne": "{count} lección esta semana",
+        "lessonsThisWeekOther": "{count} lecciones esta semana",
+        "thisWeek": "Esta semana",
+        "dayLetters": "D,L,M,M,J,V,S",
+        "pickFirstCourse": "Elige tu primer curso",
+        "pickFirstCourseBody": "Elige un instrumento y un género para comenzar tu camino; tu progreso se guarda automáticamente.",
+        "continueLearning": "Seguir aprendiendo",
+        "resumeLesson": "Reanudar lección",
+        "courseProgress": "Progreso del curso",
+        "notStarted": "Sin empezar",
+        "courseCompleted": "Completado",
+        "recommended": "Recomendados para ti",
+        "newBadge": "Nuevo",
+        "nextMilestones": "Próximos logros",
+        "featuredTeacher": "Maestro destacado",
+        "quickActions": {
+          "title": "Acciones rápidas",
+          "resume": "Reanudar última lección",
+          "tuner": "Abrir afinador",
+          "feedback": "Pedir retroalimentación"
+        },
+        "activity": {
+          "completedLesson": "Completaste una lección",
+          "achievementUnlocked": "Logro desbloqueado"
+        },
+        "subscriptionCta": {
+          "title": "Desbloquea todos los cursos",
+          "body": "Todos los cursos + herramientas de práctica"
+        },
+        "practiceTip": {
+          "title": "Consejo de práctica del día",
+          "tips": {
+            "slowDown": {
+              "title": "Baja el tempo",
+              "body": "Practica los pasajes difíciles a la mitad del tempo. La velocidad llega después de la precisión: primero clava las notas y luego sube el tempo poco a poco."
+            },
+            "listen": {
+              "title": "Escucha con atención",
+              "body": "Dedica 10 minutos hoy solo a escuchar tu tema latino favorito. Concéntrate en un instrumento y en cómo encaja con la clave."
+            },
+            "clave": {
+              "title": "Palmea la clave",
+              "body": "Antes de tocar, palmea el patrón de clave durante 2 minutos. Interiorizar el ritmo hace que todo lo demás sea más fácil."
+            },
+            "record": {
+              "title": "Grábate",
+              "body": "Graba un clip corto de tu práctica. Al escucharlo notarás cosas que se te escapan en el momento."
+            },
+            "isolate": {
+              "title": "Aísla la parte difícil",
+              "body": "Elige los dos compases más difíciles y repítelos 20 veces. La repetición enfocada rinde más que tocar la pieza completa."
+            },
+            "feeling": {
+              "title": "Toca con sentimiento",
+              "body": "Incluso en los ejercicios, agrega dinámicas. Tocar con musicalidad desde el principio crea mejores hábitos que añadir la expresión después."
+            },
+            "ears": {
+              "title": "Calienta el oído",
+              "body": "Canta o tararea la melodía antes de tocarla. Si puedes escucharla por dentro, tus manos la seguirán con más naturalidad."
+            }
+          }
+        }
+      }
+    },
+    "header": {
+      "search": {
+        "placeholderShort": "Buscar...",
+        "placeholder": "Busca cursos, lecciones, maestros...",
+        "clear": "Borrar",
+        "searching": "Buscando...",
+        "noResults": "No se encontraron resultados para «{query}»",
+        "hint": "Empieza a escribir para buscar cursos, lecciones y maestros",
+        "groups": {
+          "courses": "Cursos",
+          "lessons": "Lecciones",
+          "teachers": "Maestros",
+          "styles": "Estilos",
+          "instruments": "Instrumentos"
+        }
+      },
+      "notifications": {
+        "title": "Notificaciones",
+        "markAllRead": "Marcar todas como leídas",
+        "empty": "Aún no tienes notificaciones"
+      },
+      "streak": {
+        "tooltipOne": "¡Racha de {count} día aprendiendo!",
+        "tooltipOther": "¡Racha de {count} días aprendiendo!",
+        "empty": "¡Empieza a aprender para construir tu racha!"
+      }
+    },
+    "classViewer": {
+      "itemTypes": {
+        "lesson": "Lección",
+        "jamSession": "Jam Session"
+      },
+      "sidebar": {
+        "learningPathway": "Ruta de aprendizaje",
+        "module": "Módulo {n}",
+        "taughtBy": "Impartido por",
+        "taughtByName": "Impartido por {name}",
+        "lessonTitle": "Lección {n} — {title}",
+        "expandMenu": "Expandir menú",
+        "collapseMenu": "Contraer menú"
+      },
+      "partsNav": {
+        "ariaLabel": "Partes de la lección"
+      },
+      "footer": {
+        "nextClass": "Siguiente clase",
+        "saving": "Guardando…",
+        "markCompleted": "Marcar como completada",
+        "markFailed": "No se pudo marcar como completada. Inténtalo de nuevo.",
+        "genericError": "Ocurrió un error. Inténtalo de nuevo."
+      },
+      "renderer": {
+        "key": "Tonalidad: {key}",
+        "noNotes": "No hay notas adicionales para esta lección."
+      },
+      "discussion": {
+        "title": "Discusión",
+        "empty": "Aún no hay comentarios. ¡Sé el primero en iniciar la conversación!",
+        "placeholder": "Escribe un comentario...",
+        "replyPlaceholder": "Escribe una respuesta...",
+        "submitHint": "Presiona Cmd+Enter para enviar",
+        "post": "Publicar",
+        "posting": "Publicando...",
+        "reply": "Responder",
+        "delete": "Eliminar",
+        "confirmDelete": "¿Eliminar este comentario?",
+        "anonymous": "Anónimo",
+        "edited": "(editado)"
+      },
+      "quiz": {
+        "types": {
+          "multipleChoice": "Opción múltiple",
+          "trueFalse": "Verdadero o falso",
+          "textAnswer": "Respuesta corta",
+          "audio": "Escucha",
+          "audioChoice": "Escucha y elige",
+          "piecePlacement": "Coloca las piezas",
+          "fillInBlank": "Completa el espacio",
+          "matchingPairs": "Une los pares",
+          "orderingSequence": "Ordena la secuencia"
+        },
+        "noQuestions": "Este {kind} aún no tiene preguntas.",
+        "checkAnswer": "Comprobar respuesta",
+        "finish": "Finalizar",
+        "true": "Verdadero",
+        "false": "Falso",
+        "playClip": "Reproducir clip",
+        "pauseClip": "Pausar clip",
+        "clip": "Clip {n}",
+        "typeWhatYouHear": "Escribe lo que escuchas…",
+        "typeYourAnswer": "Escribe tu respuesta…",
+        "yourAnswer": "Tu respuesta",
+        "chooseMatch": "Elige la pareja",
+        "moveUp": "Mover arriba",
+        "moveDown": "Mover abajo",
+        "unsupportedType": "Tipo de pregunta no compatible: {type}",
+        "dragPieces": "Arrastra cada pieza sobre la imagen",
+        "puzzlePiece": "Pieza del rompecabezas",
+        "puzzleBackground": "Fondo del rompecabezas",
+        "feedback": {
+          "correct": "¡Correcto!",
+          "partial": "¡Casi!",
+          "incorrect": "No es correcto"
+        },
+        "results": {
+          "perfect": "¡Perfecto!",
+          "greatWork": "¡Buen trabajo!",
+          "niceEffort": "¡Buen intento!",
+          "keepPracticing": "Sigue practicando",
+          "nailedIt": "Dominaste este {kind}.",
+          "gettingHang": "Le estás agarrando el ritmo.",
+          "reviewAndRetry": "Revisa las respuestas de abajo e inténtalo de nuevo.",
+          "correct": "correctas",
+          "correctAnswer": "Respuesta correcta:",
+          "noDetails": "Sin detalles adicionales."
+        }
+      },
+      "video": {
+        "playVideo": "Reproducir video",
+        "play": "Reproducir",
+        "pause": "Pausar",
+        "mute": "Silenciar",
+        "unmute": "Activar sonido",
+        "volume": "Volumen",
+        "setLoopStart": "Marcar inicio del loop (A)",
+        "setLoopEnd": "Marcar fin del loop (B)",
+        "toggleLoop": "Activar o desactivar loop",
+        "clearLoop": "Quitar loop",
+        "playbackSpeed": "Velocidad de reproducción",
+        "subtitles": "Subtítulos",
+        "subtitlesOff": "Desactivados",
+        "fullscreen": "Pantalla completa",
+        "exitFullscreen": "Salir de pantalla completa"
+      },
+      "exercise": {
+        "yourTurn": "Ahora es tu turno",
+        "yourTurnHint": "Toca siguiendo la pista — se calificará tu precisión rítmica.",
+        "watchAgain": "Ver de nuevo",
+        "playAlongWith": "Tocar junto con",
+        "tracksHint": "Las pistas seleccionadas suenan en sincronía con las notas mientras se te califica.",
+        "preparing": "Preparando la prueba…"
       }
     }
   }

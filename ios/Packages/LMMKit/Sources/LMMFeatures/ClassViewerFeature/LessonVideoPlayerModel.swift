@@ -1,6 +1,7 @@
 import AVFoundation
 import Foundation
 import LMMData
+import LMMModels
 import Observation
 
 /// A caption language available in the picker (mirrors the web's `SubtitleTrackDef`).
@@ -10,19 +11,17 @@ struct LessonSubtitleTrack: Equatable {
     let url: URL
 }
 
-// swiftlint:disable identifier_name
-/// The two caption languages the app carries (web parity: `subtitles_en_url` / `subtitles_es_url`).
-enum SubtitleLang: String, Equatable {
-    case en
-    case es
+/// A caption language code (web parity: the `lang` of a `class_items.subtitles` entry). `en` and
+/// `es` are named because the UI locale picks the default track; any code the backend sends works.
+struct SubtitleLang: Hashable, Equatable {
+    let code: String
+
+    // swiftlint:disable identifier_name
+    static let en = SubtitleLang(code: "en")
+    static let es = SubtitleLang(code: "es")
     // swiftlint:enable identifier_name
 
-    var label: String {
-        switch self {
-        case .en: return "English"
-        case .es: return "Español"
-        }
-    }
+    var label: String { SubtitleLanguages.label(for: code) }
 }
 
 /// Owns the `AVPlayer` for one lesson video and publishes the state the custom SwiftUI controls
@@ -137,7 +136,7 @@ final class LessonVideoPlayerModel {
 
     func setActiveSubtitle(_ lang: SubtitleLang?) {
         activeSubtitle = lang
-        UserDefaults.standard.set(lang?.rawValue ?? "off", forKey: Self.subtitlePrefKey)
+        UserDefaults.standard.set(lang?.code ?? "off", forKey: Self.subtitlePrefKey)
         updateActiveCue()
     }
 
@@ -161,8 +160,8 @@ final class LessonVideoPlayerModel {
         if let stored = UserDefaults.standard.string(forKey: Self.subtitlePrefKey) {
             if stored == "off" {
                 activeSubtitle = nil
-            } else if let lang = SubtitleLang(rawValue: stored), parsed[lang] != nil {
-                activeSubtitle = lang
+            } else if parsed[SubtitleLang(code: stored)] != nil {
+                activeSubtitle = SubtitleLang(code: stored)
             }
         }
         if let active = activeSubtitle, parsed[active] == nil {

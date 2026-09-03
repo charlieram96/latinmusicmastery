@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/components/language-provider'
 import { isPieceCorrect, type PiecePlacement, type PlacementPiece } from '@/lib/quiz/grading'
 
 type Placement = Record<string, PiecePlacement> // pieceId -> center position in % of the image
@@ -9,11 +10,12 @@ type Placement = Record<string, PiecePlacement> // pieceId -> center position in
 const clamp = (n: number) => Math.max(0, Math.min(100, n))
 
 function PieceImage({ piece }: { piece: PlacementPiece }) {
+  const { t } = useTranslation()
   return piece.imageUrl ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={piece.imageUrl}
-      alt={piece.label || 'Puzzle piece'}
+      alt={piece.label || t('dashboard.classViewer.quiz.puzzlePiece')}
       className="block w-full select-none"
       draggable={false}
     />
@@ -40,6 +42,7 @@ export function PiecePlacementInput({
   isGraded: boolean
   onChange: (v: Placement) => void
 }) {
+  const { t } = useTranslation()
   const wrapRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   // While dragging, the piece follows the pointer in wrapper pixels so it can
@@ -90,7 +93,7 @@ export function PiecePlacementInput({
       <div ref={stageRef} className="relative w-full rounded-2xl border-2 border-border bg-muted">
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="Puzzle background" className="block w-full select-none rounded-2xl" draggable={false} />
+          <img src={imageUrl} alt={t('dashboard.classViewer.quiz.puzzleBackground')} className="block w-full select-none rounded-2xl" draggable={false} />
         ) : (
           <div className="aspect-video" />
         )}
@@ -145,7 +148,7 @@ export function PiecePlacementInput({
       {(unplaced.length > 0 || drag) && (
         <div className="rounded-2xl border border-border bg-card/50 p-3">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Drag each piece onto the image
+            {t('dashboard.classViewer.quiz.dragPieces')}
           </p>
           <div className="flex min-h-10 flex-wrap items-start gap-3">
             {unplaced.map((p) => (

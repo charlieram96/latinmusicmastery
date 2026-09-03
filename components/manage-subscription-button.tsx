@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/components/language-provider'
 
 export function ManageSubscriptionButton() {
   const [isLoading, setIsLoading] = useState(false)
+  const { t } = useTranslation()
 
   const handleManage = async () => {
     setIsLoading(true)
@@ -17,7 +19,7 @@ export function ManageSubscriptionButton() {
 
       if (data.error) {
         console.error('Portal error:', data.error)
-        alert('Failed to open customer portal. Please try again.')
+        alert(t('dashboard.pages.subscription.portalError'))
         return
       }
 
@@ -26,7 +28,7 @@ export function ManageSubscriptionButton() {
       }
     } catch (error) {
       console.error('Error creating portal session:', error)
-      alert('An error occurred. Please try again.')
+      alert(t('dashboard.pages.subscribe.errors.generic'))
     } finally {
       setIsLoading(false)
     }
@@ -39,7 +41,7 @@ export function ManageSubscriptionButton() {
       variant="outline"
       className="w-full"
     >
-      {isLoading ? 'Loading...' : 'Manage Subscription'}
+      {isLoading ? t('common.loading') : t('dashboard.pages.subscription.manage')}
     </Button>
   )
 }

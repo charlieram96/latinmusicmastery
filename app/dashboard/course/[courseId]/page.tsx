@@ -33,7 +33,7 @@ export default async function CoursePage({ params }: PageProps) {
         id, name, name_es, slug,
         country:countries(id, name, name_es, slug)
       ),
-      teacher:teachers(id, name, instrument, image_url, bio)
+      teacher:teachers(id, name, instrument, instrument_es, image_url, bio, bio_es)
     `)
     .eq('is_published', true)
 

@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ClassItemCompleteButton } from './class-item-complete-button'
+import { useTranslation } from '@/components/language-provider'
 
 interface ClassViewerNavProps {
   courseId: string
@@ -21,6 +22,7 @@ export function ClassViewerNav({
   classItemId,
   isCompleted,
 }: ClassViewerNavProps) {
+  const { t } = useTranslation()
   return (
     <div className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-10">
       <div className="px-4 py-3">
@@ -29,7 +31,7 @@ export function ClassViewerNav({
             <Button asChild variant="ghost" size="sm">
               <Link href={`/dashboard/course/${courseId}`}>
                 <ArrowLeft className="w-4 h-4 mr-1" />
-                Back to Course
+                {t('dashboard.pages.modules.backToCourse')}
               </Link>
             </Button>
             <div className="flex-1 min-w-0">
@@ -45,7 +47,7 @@ export function ClassViewerNav({
             {isCompleted ? (
               <Badge variant="default" className="gap-1">
                 <CheckCircle2 className="w-4 h-4" />
-                Completed
+                {t('dashboard.pages.modules.completed')}
               </Badge>
             ) : classItemId ? (
               <ClassItemCompleteButton classItemId={classItemId} />

@@ -69,7 +69,7 @@ final class PlaySenseExerciseLauncherTests: XCTestCase {
             id: UUID(), classId: UUID(), itemType: .exercise, title: "Test exercise", titleEs: nil,
             description: nil, descriptionEs: nil, orderIndex: 0, richContent: nil,
             videoUrl: nil, videoDurationSeconds: nil,
-            audioUrl: nil, soundsliceEmbedUrl: nil, subtitlesEnUrl: nil, subtitlesEsUrl: nil,
+            audioUrl: nil, soundsliceEmbedUrl: nil, subtitles: nil,
             bpm: nil, keySignature: nil, scoreDocumentId: scoreDocumentId, activeTimeMapId: nil,
             exerciseTimeMapId: nil, exerciseVideoUrl: nil, exerciseVideoStartSeconds: 0,
             question: nil, questionType: nil, options: nil, correctAnswer: nil, explanation: nil,
