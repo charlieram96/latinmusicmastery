@@ -1,164 +1,292 @@
 'use client'
 
-import { useState } from 'react'
-import { AudioWaveform, AlertTriangle, Guitar, Piano, Music2, Music } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { usePitchDetection } from '@/hooks/use-pitch-detection'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AudioLines } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
-import { TUNER_INSTRUMENTS, type TunerInstrument } from '@/lib/tuner/tuner-utils'
-import { StrobeMeter } from '@/components/tuner/strobe-meter'
-import { NoteReadout } from '@/components/tuner/note-readout'
+import { useTunerPrefs } from '@/hooks/use-tuner-prefs'
+import { useTunerEngine } from '@/hooks/use-tuner-engine'
+import { useReferenceTone } from '@/hooks/use-reference-tone'
+import { courseMidis, getInstrument, getTuning, nearestCourse, type InstrumentId } from '@/lib/tuner/instruments'
+import { midiToHz } from '@/lib/tuner/note-math'
+import type { TunerFrame } from '@/lib/tuner/pitch-tracker'
+import { InstrumentChips } from '@/components/tuner/instrument-chips'
+import { TuningSelect } from '@/components/tuner/tuning-select'
+import { NoteDisplay } from '@/components/tuner/note-display'
+import { TuningMeter } from '@/components/tuner/tuning-meter'
+import { Readouts } from '@/components/tuner/readouts'
+import { ListenButton } from '@/components/tuner/listen-button'
+import { InputPanel } from '@/components/tuner/input-panel'
 import { StringPads } from '@/components/tuner/string-pads'
-import { SignalWaveform } from '@/components/tuner/signal-waveform'
-import { TunerSettings, SENSITIVITY_PRESETS, type Sensitivity } from '@/components/tuner/tuner-settings'
-import { TunerExplainer } from '@/components/tuner/tuner-explainer'
+import { ReferenceToneCard } from '@/components/tuner/reference-tone-card'
+import { SessionCard, type LogEntry } from '@/components/tuner/session-card'
+import { TunerSettingsPopover } from '@/components/tuner/tuner-settings-popover'
+import { TunerTips } from '@/components/tuner/tuner-tips'
 
-const INSTRUMENT_ICONS: Record<TunerInstrument, typeof Guitar> = {
-  Guitar,
-  Bass: Guitar,
-  Piano,
-  Violin: Music2,
-  Tres: Music,
-}
+const MAX_LOG = 12
+const PAD_TONE_MS = 3000
+const A4_MIN = 415
+const A4_MAX = 466
 
 export default function TunerPage() {
   const { t } = useTranslation()
-  const [referencePitch, setReferencePitch] = useState(440)
-  const [instrument, setInstrument] = useState<TunerInstrument>('Guitar')
-  const [sensitivity, setSensitivity] = useState<Sensitivity>('medium')
+  const [prefs, setPrefs] = useTunerPrefs()
+  const instrument = getInstrument(prefs.instrument)
+  const tuning = getTuning(instrument, prefs.tuning)
+  const courses = useMemo(() => courseMidis(tuning), [tuning])
 
-  const preset = SENSITIVITY_PRESETS[sensitivity]
-  const {
-    frequency,
-    note,
-    octave,
-    cents,
-    level,
-    isListening,
-    hasPermission,
-    error,
-    getAnalyser,
-    startListening,
-    stopListening,
-  } = usePitchDetection({
-    referencePitch,
-    silenceThreshold: preset.silenceThreshold,
-    clarityThreshold: preset.clarityThreshold,
+  /** Manually targeted course index, or null for auto. */
+  const [manual, setManual] = useState<number | null>(null)
+  const [done, setDone] = useState<Set<number>>(() => new Set())
+  const [log, setLog] = useState<LogEntry[]>([])
+  const [refNote, setRefNote] = useState({ pc: 9, oct: 4 })
+  const [playingCourse, setPlayingCourse] = useState<number | null>(null)
+  const padTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const logIdRef = useRef(0)
+
+  const manualCourse = manual != null ? (courses[manual] ?? null) : null
+
+  const onFrame = useCallback(
+    (frame: TunerFrame) => {
+      if (!frame.justLocked) return
+      const idx = manual != null ? manual : nearestCourse(courses, frame.hz, prefs.a4)
+      if (idx >= 0 && courses[idx]?.includes(frame.midi)) {
+        setDone((prev) => {
+          if (prev.has(idx)) return prev
+          const next = new Set(prev)
+          next.add(idx)
+          return next
+        })
+      }
+      logIdRef.current += 1
+      const entry: LogEntry = { id: logIdRef.current, midi: frame.midi, hz: frame.hz, cents: frame.cents, t: Date.now() }
+      setLog((prev) => [entry, ...prev].slice(0, MAX_LOG))
+    },
+    [courses, manual, prefs.a4]
+  )
+
+  const engine = useTunerEngine({
+    a4: prefs.a4,
+    holdMs: prefs.holdSec * 1000,
+    tolCents: prefs.tolerance,
+    sensitivity: prefs.sensitivity,
+    targetCourse: manualCourse,
+    onFrame,
   })
+  const tone = useReferenceTone(engine.getAudioContext)
+  const refPlaying = tone.playing && playingCourse == null
+  const refMidi = (refNote.oct + 1) * 12 + refNote.pc
+
+  const stopPadTone = useCallback(() => {
+    if (padTimerRef.current) {
+      clearTimeout(padTimerRef.current)
+      padTimerRef.current = null
+    }
+    if (playingCourse != null) {
+      setPlayingCourse(null)
+      tone.stop()
+    }
+  }, [playingCourse, tone])
+
+  const toggleListening = useCallback(() => {
+    if (engine.status === 'listening') {
+      stopPadTone()
+      if (tone.playing) tone.stop()
+      engine.stop()
+    } else if (engine.status !== 'starting') {
+      void engine.start(engine.deviceId ?? undefined)
+    }
+  }, [engine, stopPadTone, tone])
+
+  const resetTargets = useCallback(() => {
+    setManual(null)
+    setDone(new Set())
+    engine.resetTracker()
+  }, [engine])
+
+  const selectInstrument = (id: InstrumentId) => {
+    setPrefs({ instrument: id, tuning: getInstrument(id).tunings[0].id })
+    resetTargets()
+  }
+  const selectTuning = (id: string) => {
+    setPrefs({ tuning: id })
+    resetTargets()
+  }
+  const selectCourse = useCallback(
+    (i: number | null) => {
+      setManual(i)
+      engine.resetTracker()
+    },
+    [engine]
+  )
+
+  const setA4 = useCallback(
+    (value: number) => {
+      const a4 = Math.max(A4_MIN, Math.min(A4_MAX, value))
+      setPrefs({ a4 })
+      if (refPlaying) tone.play(midiToHz(refMidi, a4))
+    },
+    [refMidi, refPlaying, setPrefs, tone]
+  )
+
+  const toggleRefTone = () => {
+    stopPadTone()
+    if (refPlaying) tone.stop()
+    else tone.play(midiToHz(refMidi, prefs.a4))
+  }
+  const changeRefNote = (pc: number, oct: number) => {
+    setRefNote({ pc, oct })
+    if (refPlaying) tone.play(midiToHz((oct + 1) * 12 + pc, prefs.a4))
+  }
+  const playCourse = (i: number) => {
+    if (playingCourse === i) {
+      stopPadTone()
+      return
+    }
+    if (padTimerRef.current) clearTimeout(padTimerRef.current)
+    setPlayingCourse(i)
+    tone.play(midiToHz(courses[i][0], prefs.a4))
+    padTimerRef.current = setTimeout(() => {
+      padTimerRef.current = null
+      setPlayingCourse(null)
+      tone.stop()
+    }, PAD_TONE_MS)
+  }
+
+  // Keyboard: Space start/stop, ↑↓ A4, ←→ manual string.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null
+      if (el && (/^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(el.tagName) || el.isContentEditable)) return
+      if (e.code === 'Space') {
+        e.preventDefault()
+        toggleListening()
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setA4(prefs.a4 + 1)
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setA4(prefs.a4 - 1)
+      } else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && courses.length > 0) {
+        e.preventDefault()
+        const n = courses.length
+        const cur = manual ?? (e.key === 'ArrowRight' ? -1 : 0)
+        selectCourse((cur + (e.key === 'ArrowRight' ? 1 : n - 1)) % n)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [courses.length, manual, prefs.a4, selectCourse, setA4, toggleListening])
+
+  // Clear a pending pad-tone timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (padTimerRef.current) clearTimeout(padTimerRef.current)
+    }
+  }, [])
 
   return (
-    <div className="flex min-h-[calc(100vh-7rem)] flex-col gap-6 pb-6">
-      {/* Header */}
+    <div className="flex flex-col gap-4 pb-6 lg:gap-[18px]">
       <div className="flex items-center gap-3">
         <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight">
-            {t('dashboard.pages.tuner.title')}
-          </h1>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">{t('dashboard.pages.tuner.title')}</h1>
           <p className="text-sm text-muted-foreground">{t('dashboard.pages.tuner.subtitle')}</p>
         </div>
-        <Badge variant="secondary" className="ml-auto hidden sm:flex">
-          <AudioWaveform className="h-3 w-3" />
-          {t('dashboard.pages.tuner.chromatic')}
-        </Badge>
+        <div className="ml-auto hidden text-xs text-muted-foreground lg:block">
+          {t('dashboard.pages.tuner.keys.space')} · {t('dashboard.pages.tuner.keys.arrows')}
+        </div>
       </div>
 
-      <div className="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_clamp(320px,26vw,400px)]">
-        {/* ── Main panel ── */}
-        <div className="flex flex-col gap-6 rounded-2xl border border-border bg-card/40 p-5 sm:p-8">
-          {/* Instrument selector */}
-          <div className="flex flex-wrap gap-2">
-            {TUNER_INSTRUMENTS.map((inst) => {
-              const Icon = INSTRUMENT_ICONS[inst]
-              const selected = instrument === inst
-              return (
-                <button
-                  key={inst}
-                  type="button"
-                  onClick={() => setInstrument(inst)}
-                  className={cn(
-                    'flex flex-1 items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
-                    selected
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-card/60 text-muted-foreground hover:bg-muted/50'
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {t(`dashboard.pages.tuner.instruments.${inst.toLowerCase()}.name`)}
-                </button>
-              )
-            })}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-[18px]">
+        <section className="relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-4 sm:p-5" aria-label={t('dashboard.pages.tuner.brand')}>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-40 -right-32 h-[420px] w-[420px] rounded-full bg-[radial-gradient(closest-side,hsl(var(--gold-highlight)/0.10),transparent_70%)]"
+          />
+
+          <div className="relative flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 font-heading text-[12px] font-bold uppercase tracking-[0.14em] text-gold">
+              <AudioLines className="h-[18px] w-[18px]" />
+              {t('dashboard.pages.tuner.brand')}
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <TuningSelect instrument={instrument} value={tuning.id} onChange={selectTuning} />
+              <TunerSettingsPopover prefs={prefs} onChange={setPrefs} />
+            </div>
+            <InstrumentChips value={instrument.id} onChange={selectInstrument} />
           </div>
 
-          {/* Meter + readout — fills the panel, vertically centered */}
-          <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-10 py-2">
-            <StrobeMeter cents={cents} isListening={isListening} />
-            <NoteReadout
-              note={note}
-              octave={octave}
-              frequency={frequency}
-              cents={cents}
-              isListening={isListening}
-              referencePitch={referencePitch}
+          <div className="relative flex flex-col items-center gap-1.5 pt-1.5">
+            <NoteDisplay
+              store={engine.store}
+              active={engine.status === 'listening'}
+              names={prefs.names}
+              transpose={prefs.transpose}
+              tol={prefs.tolerance}
+              manualCourse={manualCourse}
+            />
+            <TuningMeter store={engine.store} mode={prefs.meter} tol={prefs.tolerance} onModeChange={(meter) => setPrefs({ meter })} />
+            <Readouts store={engine.store} a4={prefs.a4} tol={prefs.tolerance} />
+            <ListenButton status={engine.status} onToggle={toggleListening} />
+          </div>
+
+          <div className="relative mt-auto">
+            <InputPanel
+              status={engine.status}
+              errorKind={engine.errorKind}
+              devices={engine.devices}
+              deviceId={engine.deviceId}
+              deviceLabel={engine.deviceLabel}
+              onDeviceChange={engine.setDevice}
+              onRetry={() => void engine.start(engine.deviceId ?? undefined)}
+              store={engine.store}
             />
           </div>
 
-          {/* String pads — anchored to the bottom */}
-          <StringPads
-            instrument={instrument}
-            frequency={frequency}
-            isListening={isListening}
-            referencePitch={referencePitch}
+          <div className="relative">
+            <StringPads
+              courses={courses}
+              tuningName={t(`dashboard.pages.tuner.tunings.${tuning.nameKey}`)}
+              auto={manual == null}
+              manual={manual}
+              onSelect={selectCourse}
+              done={done}
+              store={engine.store}
+              a4={prefs.a4}
+              tol={prefs.tolerance}
+              names={prefs.names}
+              onPlay={playCourse}
+              playingCourse={playingCourse}
+            />
+          </div>
+        </section>
+
+        <div className="flex flex-col gap-4 lg:gap-[18px]">
+          <ReferenceToneCard
+            a4={prefs.a4}
+            onA4Change={setA4}
+            names={prefs.names}
+            refPc={refNote.pc}
+            refOct={refNote.oct}
+            onRefChange={changeRefNote}
+            playing={refPlaying}
+            onToggle={toggleRefTone}
+          />
+          <SessionCard
+            courses={courses}
+            done={done}
+            log={log}
+            names={prefs.names}
+            transpose={prefs.transpose}
+            tol={prefs.tolerance}
+            onClear={() => {
+              setLog([])
+              setDone(new Set())
+            }}
           />
         </div>
-
-        {/* ── Right rail ── */}
-        <div className="flex flex-col gap-5">
-          <div className="rounded-2xl border border-border bg-card/40 p-5">
-            <SignalWaveform
-              getAnalyser={getAnalyser}
-              level={level}
-              isListening={isListening}
-              onStart={startListening}
-              onStop={stopListening}
-            />
-          </div>
-
-          <div className="rounded-2xl border border-border bg-card/40 p-5">
-            <TunerSettings
-              referencePitch={referencePitch}
-              onReferencePitchChange={setReferencePitch}
-              sensitivity={sensitivity}
-              onSensitivityChange={setSensitivity}
-            />
-          </div>
-
-          <div className="flex-1 rounded-2xl border border-border bg-card/40 p-5">
-            <TunerExplainer />
-          </div>
-        </div>
       </div>
 
-      {/* Permission / error */}
-      {(hasPermission === false || error) && (
-        <div className="flex items-start gap-3 rounded-xl border border-destructive/50 bg-destructive/5 p-4">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-destructive">
-              {hasPermission === false
-                ? t('dashboard.pages.tuner.micAccessDenied')
-                : t('dashboard.pages.tuner.micError')}
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {error || t('dashboard.pages.tuner.micAccessHelp')}
-            </p>
-            <Button variant="outline" size="sm" className="mt-3" onClick={startListening}>
-              {t('dashboard.pages.tuner.tryAgain')}
-            </Button>
-          </div>
-        </div>
-      )}
+      <TunerTips />
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import type { Locale } from '@/lib/i18n'
+import { instrumentLabel } from '@/lib/i18n/instruments'
 
 /**
  * Localization for dynamic database content.
@@ -32,11 +33,73 @@ export function localizeRow<T extends Record<string, unknown>>(
   fields: readonly string[]
 ): T | null | undefined {
   if (!row || locale !== 'es') return row
+  const r = row as Record<string, unknown>
   for (const f of fields) {
-    const es = (row as Record<string, unknown>)[`${f}_es`]
-    if (hasValue(es)) (row as Record<string, unknown>)[f] = es
+    const es = r[`${f}_es`]
+    if (!hasValue(es)) continue
+    // Quiz `options` is structured JSON keyed by locale-invariant ids, so it is
+    // merged onto the English value rather than swapped (see mergeLocalizedOptions).
+    r[f] = f === 'options' ? mergeLocalizedOptions(r[f], es) : es
   }
   return row
+}
+
+type PlainObject = Record<string, unknown>
+
+function isPlainObject(v: unknown): v is PlainObject {
+  return typeof v === 'object' && v !== null && !Array.isArray(v)
+}
+
+/**
+ * Merge a quiz `options_es` JSON onto the English `options` JSON.
+ *
+ * Choice / pair / blank / item / piece ids are locale-invariant: `correct_answer`
+ * and the student's answers are English ids, so the overlay must never replace
+ * them. Only non-empty strings are copied from the Spanish side; ids and
+ * structural values (correctPosition, placement geometry, booleans, media the
+ * Spanish side doesn't provide) stay English. List entries match by id first;
+ * when no id lines up at all (a row saved with freshly generated ids) they match
+ * by position, and if even the lengths differ the English list is kept.
+ *
+ * Falls back to the Spanish JSON wholesale only when there is no English object.
+ */
+export function mergeLocalizedOptions(en: unknown, es: unknown): unknown {
+  if (!isPlainObject(en)) return hasValue(es) ? es : en
+  if (!isPlainObject(es)) return en
+  const out: PlainObject = { ...en }
+  for (const [key, esValue] of Object.entries(es)) {
+    if (key === 'id') continue
+    const enValue = en[key]
+    if (Array.isArray(esValue)) {
+      if (Array.isArray(enValue)) out[key] = mergeLocalizedList(enValue, esValue)
+      else if (enValue === undefined) out[key] = esValue
+    } else if (isPlainObject(esValue)) {
+      if (isPlainObject(enValue)) out[key] = mergeLocalizedOptions(enValue, esValue)
+      else if (enValue === undefined) out[key] = esValue
+    } else if (typeof esValue === 'string') {
+      if (esValue.trim().length > 0 && (typeof enValue === 'string' || enValue === undefined)) out[key] = esValue
+    } else if (enValue === undefined && esValue != null) {
+      out[key] = esValue
+    }
+  }
+  return out
+}
+
+function mergeLocalizedList(en: unknown[], es: unknown[]): unknown[] {
+  const esById = new Map<string, PlainObject>()
+  for (const item of es) {
+    if (isPlainObject(item) && typeof item.id === 'string') esById.set(item.id, item)
+  }
+  const anyIdMatches = en.some((item) => isPlainObject(item) && typeof item.id === 'string' && esById.has(item.id))
+  if (anyIdMatches) {
+    return en.map((item) => {
+      if (!isPlainObject(item) || typeof item.id !== 'string') return item
+      const match = esById.get(item.id)
+      return match ? mergeLocalizedOptions(item, match) : item
+    })
+  }
+  if (en.length !== es.length) return en
+  return en.map((item, i) => (isPlainObject(item) && isPlainObject(es[i]) ? mergeLocalizedOptions(item, es[i]) : item))
 }
 
 /** Localize an array of rows in place. Tolerates null/undefined. */
@@ -52,17 +115,49 @@ export function localizeRows<T extends Record<string, unknown>>(
 }
 
 // Per-entity localizable field sets. `options` is included for quiz rows so the
-// generic copy picks up `options_es` (parallel JSON with Spanish answer text).
+// generic copy picks up `options_es` (parallel JSON with Spanish answer text);
+// it is merged onto the English JSON, keeping every id, not swapped.
 export const COURSE_FIELDS = ['title', 'description'] as const
 export const SECTION_FIELDS = ['title', 'description'] as const
 export const CLASS_FIELDS = ['title', 'description'] as const
-// NOTE: never add subtitle fields here — subtitles_en_url/subtitles_es_url are
-// not a base/_es overlay pair; the players need both languages simultaneously.
+// NOTE: never add `subtitles` here — the jsonb track list is not a base/_es
+// overlay pair; the players need every language simultaneously.
 export const ITEM_FIELDS = ['title', 'description', 'question', 'explanation', 'options'] as const
 export const QUIZ_FIELDS = ['question', 'explanation', 'options'] as const
 export const STYLE_FIELDS = ['name', 'description'] as const
 export const COUNTRY_FIELDS = ['name', 'description'] as const
 export const SONG_FIELDS = ['title'] as const
+export const INSTRUMENT_FIELDS = ['name', 'description'] as const
+// `bio` is a TipTap JSON document (bio_es likewise); `instrument` is free text.
+export const TEACHER_FIELDS = ['bio', 'instrument'] as const
+
+/**
+ * Localize a teacher row in place. `bio` and `instrument` use the `_es` overlay;
+ * when `instrument_es` is empty we fall back to a token translation of the
+ * English label so "Piano, Violin" still reads "Piano, Violín".
+ */
+export function localizeTeacher<T extends Record<string, unknown>>(
+  teacher: T | null | undefined,
+  locale: Locale
+): T | null | undefined {
+  if (!teacher || locale !== 'es') return teacher
+  localizeRow(teacher, locale, TEACHER_FIELDS)
+  const row = teacher as Record<string, unknown>
+  if (!hasValue(row['instrument_es']) && typeof row['instrument'] === 'string') {
+    row['instrument'] = instrumentLabel(row['instrument'], locale)
+  }
+  return teacher
+}
+
+export function localizeTeachers<T extends Record<string, unknown>>(
+  teachers: T[] | null | undefined,
+  locale: Locale
+): T[] {
+  if (!teachers) return []
+  if (locale !== 'es') return teachers
+  for (const t of teachers) localizeTeacher(t, locale)
+  return teachers
+}
 
 /**
  * Localize a nested course tree (sections → classes → items) in place. Handles
@@ -106,5 +201,11 @@ export function localizeCourse<T extends Record<string, unknown>>(
   }
   const country = course['country'] as Record<string, unknown> | undefined
   if (country) localizeRow(country, locale, COUNTRY_FIELDS)
+  // Joined teacher (select shapes use `teacher:teachers(...)` or `teachers(...)`).
+  for (const key of ['teacher', 'teachers'] as const) {
+    const joined = course[key]
+    if (Array.isArray(joined)) localizeTeachers(joined as Record<string, unknown>[], locale)
+    else if (joined && typeof joined === 'object') localizeTeacher(joined as Record<string, unknown>, locale)
+  }
   return course
 }

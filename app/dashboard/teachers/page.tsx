@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
-import { localizeCourse } from '@/lib/i18n/localize'
+import { localizeCourse, localizeTeachers } from '@/lib/i18n/localize'
 import { TeachersView } from './teachers-view'
 
 export default async function TeachersPage() {
@@ -24,6 +24,8 @@ export default async function TeachersPage() {
     .order('name')
 
   const locale = await getServerLocale()
+  // `select('*')` includes bio_es / instrument_es, so the overlay applies here.
+  localizeTeachers(teachers as Record<string, unknown>[] | null, locale)
 
   // Filter to only published courses
   const teachersWithCourses = (teachers || []).map(teacher => ({

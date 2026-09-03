@@ -83,7 +83,7 @@ final class ClassViewerContentTests: XCTestCase {
             id: id, classId: classId, itemType: type, title: title, titleEs: nil,
             description: nil, descriptionEs: nil, orderIndex: order, richContent: nil,
             videoUrl: type == .video ? "https://example.com/v.m4v" : nil, videoDurationSeconds: 100,
-            audioUrl: nil, soundsliceEmbedUrl: nil, subtitlesEnUrl: nil, subtitlesEsUrl: nil,
+            audioUrl: nil, soundsliceEmbedUrl: nil, subtitles: nil,
             bpm: nil, keySignature: nil, scoreDocumentId: nil, activeTimeMapId: nil,
             exerciseTimeMapId: nil, exerciseVideoUrl: nil, exerciseVideoStartSeconds: 0,
             question: nil, questionType: nil, options: nil, correctAnswer: nil, explanation: nil,

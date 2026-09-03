@@ -15,7 +15,8 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
 import { useTranslation } from '@/components/language-provider'
-import { pick } from '@/lib/i18n/localize'
+import { pick, localizeTeacher } from '@/lib/i18n/localize'
+import { instrumentLabel } from '@/lib/i18n/instruments'
 
 interface SearchResult {
   id: string
@@ -27,7 +28,7 @@ interface SearchResult {
 
 export function HeaderSearch() {
   const router = useRouter()
-  const { locale } = useTranslation()
+  const { t, locale } = useTranslation()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
@@ -73,7 +74,7 @@ export function HeaderSearch() {
           .limit(3),
         supabase
           .from('teachers')
-          .select('id, name, instrument')
+          .select('id, name, instrument, instrument_es')
           .ilike('name', `%${searchQuery}%`)
           .limit(3),
         supabase
@@ -91,7 +92,9 @@ export function HeaderSearch() {
             title: pick(locale, course.title, course.title_es) ?? course.title,
             type: 'course',
             href: `/dashboard/course/${course.slug}`,
-            subtitle: [course.teacher_name, course.instrument].filter(Boolean).join(' · ') || undefined,
+            subtitle:
+              [course.teacher_name, instrumentLabel(course.instrument, locale)].filter(Boolean).join(' · ') ||
+              undefined,
           })
         })
       }
@@ -115,6 +118,7 @@ export function HeaderSearch() {
       // Process teachers
       if (teachersRes.status === 'fulfilled' && teachersRes.value.data) {
         teachersRes.value.data.forEach((teacher) => {
+          localizeTeacher(teacher as Record<string, unknown>, locale)
           searchResults.push({
             id: teacher.id,
             title: teacher.name,
@@ -140,15 +144,15 @@ export function HeaderSearch() {
 
       // Match instruments locally
       const matchingInstruments = SUBSCRIBABLE_INSTRUMENTS.filter(
-        (inst) => inst.toLowerCase().includes(q)
+        (inst) => inst.toLowerCase().includes(q) || instrumentLabel(inst, locale).toLowerCase().includes(q)
       )
       matchingInstruments.forEach((inst) => {
         searchResults.push({
           id: `instrument-${inst}`,
-          title: inst,
+          title: instrumentLabel(inst, locale),
           type: 'instrument',
           href: `/dashboard/courses?instrument=${inst}`,
-          subtitle: 'Browse courses',
+          subtitle: t('dashboard.nav.browseCourses'),
         })
       })
 
@@ -158,7 +162,7 @@ export function HeaderSearch() {
     } finally {
       setIsLoading(false)
     }
-  }, [locale])
+  }, [locale, t])
 
   // Debounced search
   useEffect(() => {
@@ -189,18 +193,18 @@ export function HeaderSearch() {
     }
   }
 
-  const getTypeLabel = (type: SearchResult['type']) => {
+  const getGroupLabel = (type: SearchResult['type']) => {
     switch (type) {
       case 'course':
-        return 'Course'
+        return t('dashboard.header.search.groups.courses')
       case 'lesson':
-        return 'Lesson'
+        return t('dashboard.header.search.groups.lessons')
       case 'teacher':
-        return 'Teacher'
+        return t('dashboard.header.search.groups.teachers')
       case 'style':
-        return 'Style'
+        return t('dashboard.header.search.groups.styles')
       case 'instrument':
-        return 'Instrument'
+        return t('dashboard.header.search.groups.instruments')
     }
   }
 
@@ -211,7 +215,9 @@ export function HeaderSearch() {
         className="relative flex items-center h-9 w-9 md:w-56 md:px-3 md:py-2 rounded-lg bg-card border-0 hover:bg-card/80 transition-colors"
       >
         <Search className="h-4 w-4 text-muted-foreground md:mr-2" />
-        <span className="hidden md:inline-flex text-sm text-muted-foreground">Search...</span>
+        <span className="hidden md:inline-flex text-sm text-muted-foreground">
+          {t('dashboard.header.search.placeholderShort')}
+        </span>
         <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden md:inline-flex h-5 select-none items-center gap-1 rounded bg-muted/50 px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
           <span className="text-xs">&#8984;</span>K
         </kbd>
@@ -221,7 +227,7 @@ export function HeaderSearch() {
         <div className="flex items-center border-b border-border px-4 py-3">
           <Search className="h-5 w-5 text-muted-foreground mr-3" />
           <input
-            placeholder="Search courses, lessons, teachers..."
+            placeholder={t('dashboard.header.search.placeholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-base"
@@ -232,7 +238,7 @@ export function HeaderSearch() {
               onClick={() => setQuery('')}
               className="text-muted-foreground hover:text-foreground text-sm"
             >
-              Clear
+              {t('dashboard.header.search.clear')}
             </button>
           )}
         </div>
@@ -240,12 +246,12 @@ export function HeaderSearch() {
           {isLoading && (
             <div className="py-12 text-center">
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-3 text-primary" />
-              <p className="text-sm text-muted-foreground">Searching...</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.header.search.searching')}</p>
             </div>
           )}
           {!isLoading && query && results.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-sm text-muted-foreground">No results found for &ldquo;{query}&rdquo;</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.header.search.noResults', { query })}</p>
             </div>
           )}
           {!isLoading && results.length > 0 && (
@@ -254,7 +260,7 @@ export function HeaderSearch() {
                 const typeResults = results.filter((r) => r.type === type)
                 if (typeResults.length === 0) return null
                 return (
-                  <CommandGroup key={type} heading={`${getTypeLabel(type)}s`} className="mb-2">
+                  <CommandGroup key={type} heading={getGroupLabel(type)} className="mb-2">
                     {typeResults.map((result) => (
                       <CommandItem
                         key={result.id}
@@ -283,7 +289,7 @@ export function HeaderSearch() {
           {!isLoading && !query && (
             <div className="py-12 text-center">
               <Search className="h-10 w-10 mx-auto mb-4 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">Start typing to search courses, lessons, and teachers</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.header.search.hint')}</p>
             </div>
           )}
         </CommandList>

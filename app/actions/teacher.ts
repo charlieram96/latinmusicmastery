@@ -173,6 +173,7 @@ export async function markFeedbackInReview(requestId: string) {
 // Update teacher profile (bio, image, specialties)
 export async function updateTeacherProfile(input: {
   bio: Record<string, unknown> | null
+  bio_es?: Record<string, unknown> | null
   image_url: string | null
   specialties: string | null
 }) {
@@ -189,6 +190,8 @@ export async function updateTeacherProfile(input: {
     .from('teachers')
     .update({
       bio: input.bio as Json | null,
+      // `undefined` leaves the column untouched for callers that don't send it.
+      ...(input.bio_es !== undefined ? { bio_es: input.bio_es as Json | null } : {}),
       image_url: input.image_url,
       specialties,
       updated_at: new Date().toISOString(),

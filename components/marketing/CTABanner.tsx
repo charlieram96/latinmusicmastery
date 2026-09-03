@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { fadeInUp, staggerContainer, staggerChild } from "@/lib/animation-variants";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/components/language-provider";
 
 interface CTABannerProps {
   title?: string;
@@ -14,11 +15,13 @@ interface CTABannerProps {
 }
 
 export default function CTABanner({
-  title = "Ready to Start Your Musical Journey?",
+  title,
   subtitle,
   primaryAction,
   secondaryAction,
 }: CTABannerProps) {
+  const { t } = useTranslation();
+  const heading = title ?? t("marketing.home.waitlistTitle");
   return (
     <section className="px-4 py-16 sm:px-6 lg:px-8">
       <motion.div
@@ -45,7 +48,7 @@ export default function CTABanner({
             variants={staggerChild}
             className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
           >
-            {title}
+            {heading}
           </motion.h2>
 
           {subtitle && (

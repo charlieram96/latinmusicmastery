@@ -33,6 +33,7 @@ import {
   Captions,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/components/language-provider'
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock'
 import { useSubtitleTracks } from '@/components/playsense-studio/player/state/use-subtitle-tracks'
 import type { SubtitleLang, SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt'
@@ -66,6 +67,7 @@ export function LessonVideoPlayer({
 }: LessonVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const { t } = useTranslation()
   const clock = useVideoTransportClock(videoRef)
   const tracks = subtitles ?? []
   const { activeLang, setActiveLang } = useSubtitleTracks(videoRef, tracks, defaultSubtitleLang)
@@ -262,7 +264,7 @@ export function LessonVideoPlayer({
           type="button"
           onClick={firstPlay}
           className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 transition-colors hover:bg-black/20"
-          aria-label="Play video"
+          aria-label={t('dashboard.classViewer.video.playVideo')}
         >
           <span className="grid h-20 w-20 place-items-center rounded-full bg-primary/90 text-white shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-transform hover:scale-105">
             <Play className="ml-1 h-9 w-9" fill="currentColor" />
@@ -333,14 +335,14 @@ export function LessonVideoPlayer({
         <div className="flex items-center gap-2 text-white">
           <ControlButton
             onClick={() => (hasPlayed ? clock.toggle() : firstPlay())}
-            label={clock.isPlaying ? 'Pause' : 'Play'}
+            label={clock.isPlaying ? t('dashboard.classViewer.video.pause') : t('dashboard.classViewer.video.play')}
           >
             {clock.isPlaying ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="h-5 w-5" fill="currentColor" />}
           </ControlButton>
 
           {/* Volume */}
           <div className="group/vol flex items-center">
-            <ControlButton onClick={toggleMute} label={muted ? 'Unmute' : 'Mute'}>
+            <ControlButton onClick={toggleMute} label={muted ? t('dashboard.classViewer.video.unmute') : t('dashboard.classViewer.video.mute')}>
               <VolumeIcon className="h-5 w-5" />
             </ControlButton>
             <input
@@ -354,7 +356,7 @@ export function LessonVideoPlayer({
                 setVolume(v)
                 setMuted(v === 0)
               }}
-              aria-label="Volume"
+              aria-label={t('dashboard.classViewer.video.volume')}
               className="h-1 w-0 cursor-pointer appearance-none rounded-full bg-white/30 opacity-0 transition-all duration-200 accent-primary group-hover/vol:ml-1.5 group-hover/vol:w-16 group-hover/vol:opacity-100 focus-visible:ml-1.5 focus-visible:w-16 focus-visible:opacity-100"
             />
           </div>
@@ -366,22 +368,22 @@ export function LessonVideoPlayer({
           <div className="flex-1" />
 
           {/* Loop A/B */}
-          <ControlButton onClick={setA} label="Set loop start (A)">
+          <ControlButton onClick={setA} label={t('dashboard.classViewer.video.setLoopStart')}>
             <span className="text-[11px] font-bold">A</span>
           </ControlButton>
-          <ControlButton onClick={setB} label="Set loop end (B)">
+          <ControlButton onClick={setB} label={t('dashboard.classViewer.video.setLoopEnd')}>
             <span className="text-[11px] font-bold">B</span>
           </ControlButton>
           <ControlButton
             onClick={() => clock.setLoopEnabled(!clock.loopEnabled)}
-            label="Toggle loop"
+            label={t('dashboard.classViewer.video.toggleLoop')}
             active={clock.loopEnabled}
             disabled={clock.loopA === null || clock.loopB === null}
           >
             <Repeat className="h-4 w-4" />
           </ControlButton>
           {(clock.loopA !== null || clock.loopB !== null) && (
-            <ControlButton onClick={clock.clearLoop} label="Clear loop">
+            <ControlButton onClick={clock.clearLoop} label={t('dashboard.classViewer.video.clearLoop')}>
               <RotateCcw className="h-4 w-4" />
             </ControlButton>
           )}
@@ -390,7 +392,7 @@ export function LessonVideoPlayer({
           <div className="relative">
             <ControlButton
               onClick={() => setSpeedOpen((o) => !o)}
-              label="Playback speed"
+              label={t('dashboard.classViewer.video.playbackSpeed')}
               active={clock.playbackRate !== 1}
             >
               <span className="flex items-center gap-1">
@@ -428,18 +430,18 @@ export function LessonVideoPlayer({
             <div className="relative">
               <ControlButton
                 onClick={() => setCaptionsOpen((o) => !o)}
-                label="Subtitles"
+                label={t('dashboard.classViewer.video.subtitles')}
                 active={activeLang !== 'off'}
               >
                 <Captions className="h-5 w-5" />
               </ControlButton>
               {captionsOpen && (
                 <div
-                  className="absolute bottom-full right-0 mb-2 min-w-[110px] overflow-hidden rounded-lg border border-border bg-sunken/95 p-1 shadow-warm backdrop-blur-md"
+                  className="absolute bottom-full right-0 mb-2 max-h-64 min-w-[110px] overflow-y-auto rounded-lg border border-border bg-sunken/95 p-1 shadow-warm backdrop-blur-md"
                   onMouseLeave={() => setCaptionsOpen(false)}
                 >
                   {[
-                    { value: 'off' as const, label: 'Off' },
+                    { value: 'off' as const, label: t('dashboard.classViewer.video.subtitlesOff') },
                     ...tracks.map((t) => ({ value: t.lang, label: t.label })),
                   ].map((opt) => (
                     <button
@@ -463,7 +465,7 @@ export function LessonVideoPlayer({
             </div>
           )}
 
-          <ControlButton onClick={toggleFullscreen} label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
+          <ControlButton onClick={toggleFullscreen} label={isFullscreen ? t('dashboard.classViewer.video.exitFullscreen') : t('dashboard.classViewer.video.fullscreen')}>
             {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
           </ControlButton>
         </div>

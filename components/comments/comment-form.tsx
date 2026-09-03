@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Send } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
 
 interface CommentFormProps {
   onSubmit: (content: string) => Promise<void>
@@ -16,10 +17,11 @@ interface CommentFormProps {
 export function CommentForm({
   onSubmit,
   isLoading = false,
-  placeholder = 'Write a comment...',
+  placeholder,
   autoFocus = false,
   onCancel,
 }: CommentFormProps) {
+  const { t } = useTranslation()
   const [content, setContent] = useState('')
 
   const handleSubmit = async () => {
@@ -33,7 +35,7 @@ export function CommentForm({
       <Textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('dashboard.classViewer.discussion.placeholder')}
         autoFocus={autoFocus}
         rows={3}
         onKeyDown={(e) => {
@@ -45,12 +47,12 @@ export function CommentForm({
       />
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
-          Press Cmd+Enter to submit
+          {t('dashboard.classViewer.discussion.submitHint')}
         </p>
         <div className="flex items-center gap-2">
           {onCancel && (
             <Button variant="ghost" size="sm" onClick={onCancel} disabled={isLoading}>
-              Cancel
+              {t('common.cancel')}
             </Button>
           )}
           <Button
@@ -59,7 +61,7 @@ export function CommentForm({
             disabled={isLoading || !content.trim()}
           >
             <Send className="h-4 w-4 mr-1" />
-            {isLoading ? 'Posting...' : 'Post'}
+            {isLoading ? t('dashboard.classViewer.discussion.posting') : t('dashboard.classViewer.discussion.post')}
           </Button>
         </div>
       </div>

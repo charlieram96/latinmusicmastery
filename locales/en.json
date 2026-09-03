@@ -27,7 +27,15 @@
     "required": "Required",
     "optional": "Optional",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "viewAll": "View all",
+    "commandPalette": {
+      "title": "Command Palette",
+      "description": "Search for a command to run..."
+    },
+    "toggleSidebar": "Toggle sidebar",
+    "switchToLightMode": "Switch to light mode",
+    "switchToDarkMode": "Switch to dark mode"
   },
   "nav": {
     "explore": "Explore",
@@ -79,7 +87,8 @@
   "marketing": {
     "home": {
       "waitlistTitle": "Ready to Start Your Musical Journey?",
-      "waitlistSubtitle": "Be the first to know when we launch. Join the waiting list for early access and founding member pricing."
+      "waitlistSubtitle": "Be the first to know when we launch. Join the waiting list for early access and founding member pricing.",
+      "waitlistImageAlt": "Latin music performance"
     },
     "pages": {
       "pricing": {
@@ -520,6 +529,10 @@
           "subtitle": "Start your musical journey with world-class Latin music instructors. Free trial included.",
           "primaryLabel": "Get Started Free",
           "secondaryLabel": "View Pricing"
+        },
+        "metadata": {
+          "title": "Our Instructors - Latin Music Mastery",
+          "description": "Learn from world-class musicians with decades of performance and teaching experience in Latin American music."
         }
       },
       "blog": {
@@ -543,6 +556,74 @@
           "title": "No blog posts yet",
           "description": "Check back soon for insights, tutorials, and stories from the world of Latin music."
         }
+      },
+      "explore": {
+        "metadata": {
+          "title": "Explore Courses - Latin Music Mastery",
+          "description": "Discover Latin American music courses organized by country, style, and instrument."
+        },
+        "hero": {
+          "title": "Explore Courses",
+          "subtitle": "Discover the rich world of Latin American music organized by country and musical tradition."
+        },
+        "instrumentTitle": "{instrument} Courses",
+        "instrumentSubtitle": "Browse courses for {instrument}.",
+        "styleSubtitle": "Explore {style} courses.",
+        "empty": {
+          "title": "No courses available yet",
+          "body": "We are adding more courses for {label}. Check back soon!"
+        },
+        "country": {
+          "metadata": {
+            "title": "{country} Music - Latin Music Mastery",
+            "description": "Explore musical styles and courses from {country}. Learn authentic rhythms and techniques."
+          },
+          "musicalStyles": "Musical Styles",
+          "allCourses": "All Courses"
+        },
+        "style": {
+          "metadata": {
+            "title": "{style} - {country} - Latin Music Mastery",
+            "description": "Discover {style} courses from {country}. Learn authentic rhythms, techniques, and traditions."
+          },
+          "emptyBody": "We are working on adding courses for {style}. Check back soon!"
+        }
+      },
+      "coursePreview": {
+        "metadata": {
+          "titleTemplate": "{title} - Latin Music Mastery",
+          "fallbackTitle": "Course Preview - Latin Music Mastery",
+          "fallbackDescription": "Preview this Latin music course and explore the curriculum, instructor, and lessons."
+        },
+        "about": "About This Course",
+        "curriculum": "Curriculum Preview",
+        "yourInstructor": "Your Instructor",
+        "signUpToAccess": "Sign up to access"
+      },
+      "courses": {
+        "backToHome": "← Back to home",
+        "by": "by {name}",
+        "viewCourse": "View Course",
+        "empty": {
+          "title": "No Courses Available",
+          "body": "There are no published courses for {style} yet. Check back soon!",
+          "browseOtherStyles": "Browse Other Styles"
+        }
+      }
+    },
+    "common": {
+      "home": "Home",
+      "breadcrumb": "Breadcrumb",
+      "backTo": "Back to {label}",
+      "openBioFor": "Open bio for {name}",
+      "lessonCountOne": "{count} lesson",
+      "lessonCount": "{count} lessons",
+      "courseCountOne": "{count} course",
+      "courseCount": "{count} courses",
+      "difficulty": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
       }
     }
   },
@@ -559,9 +640,15 @@
         "label": "Active Students",
         "staticText": "In Progress"
       },
-      "videoLessons": { "label": "Video Lessons" },
-      "hoursOfContent": { "label": "Hours of Content" },
-      "expertInstructors": { "label": "Expert Instructors" }
+      "videoLessons": {
+        "label": "Video Lessons"
+      },
+      "hoursOfContent": {
+        "label": "Hours of Content"
+      },
+      "expertInstructors": {
+        "label": "Expert Instructors"
+      }
     },
     "waitlistForm": {
       "launchingSoon": "Launching Soon",
@@ -926,64 +1013,170 @@
     },
     "pages": {
       "tuner": {
-        "title": "Instrument Tuner",
+        "title": "Tuner",
         "subtitle": "Play a note and tune to the center. Works for any pitched instrument.",
-        "chromatic": "Chromatic",
-        "chromaticHint": "Chromatic mode — play any single key and tune it to the center.",
-        "openStrings": "Open strings",
-        "target": "Target",
-        "startTuner": "Start tuning",
-        "stopTuner": "Stop",
-        "micAccessDenied": "Microphone access denied",
-        "micAccessHelp": "Allow microphone access in your browser settings, then try again.",
-        "micError": "Couldn't start the tuner",
-        "tryAgain": "Try again",
+        "brand": "LMM Tuner",
+        "instruments": {
+          "guitar": "Guitar",
+          "bass": "Bass",
+          "tres": "Tres cubano",
+          "cuatro": "Cuatro",
+          "ukulele": "Ukulele",
+          "violin": "Violin",
+          "chromatic": "Chromatic"
+        },
+        "tunings": {
+          "guitar": {
+            "standard": "Standard E A D G B E",
+            "dropD": "Drop D",
+            "halfDown": "Half step down",
+            "dadgad": "DADGAD",
+            "openG": "Open G"
+          },
+          "bass": {
+            "standard": "Standard E A D G",
+            "five": "5-string B E A D G",
+            "dropD": "Drop D"
+          },
+          "tres": {
+            "do": "Afinación en Do · G C E",
+            "re": "Afinación en Re · A D F♯"
+          },
+          "cuatro": {
+            "pr": "Puertorriqueño · B E A D G"
+          },
+          "ukulele": {
+            "standard": "Standard G C E A",
+            "lowG": "Low G"
+          },
+          "violin": {
+            "standard": "Standard G D A E"
+          },
+          "chromatic": {
+            "any": "Any note"
+          }
+        },
         "status": {
-          "idle": "Ready",
-          "waiting": "Listening…",
+          "ready": "Ready",
+          "listening": "Listening…",
           "inTune": "In tune",
-          "sharp": "Sharp",
+          "slightlyFlat": "Slightly flat",
           "slightlySharp": "Slightly sharp",
           "flat": "Flat",
-          "slightlyFlat": "Slightly flat"
+          "sharp": "Sharp"
         },
-        "signal": {
-          "title": "Listening",
-          "live": "Live",
-          "off": "Off",
-          "level": "Level",
-          "hintLive": "Play a note — keep the level out of the red.",
-          "hintIdle": "Allow your mic to begin."
+        "readout": {
+          "cents": "cents",
+          "detected": "detected",
+          "target": "target {hz} Hz",
+          "tighten": "tighten to raise",
+          "loosen": "loosen to lower",
+          "hold": "hold it there",
+          "locked": "locked in",
+          "overFlat": "more than 50¢ flat",
+          "overSharp": "more than 50¢ sharp"
+        },
+        "written": {
+          "sounds": "Sounds {note} at concert pitch",
+          "tuningTo": "Tuning to {notes}",
+          "holding": "holding last note"
+        },
+        "listen": {
+          "start": "Start tuning",
+          "starting": "Starting…",
+          "stop": "Listening… tap to stop",
+          "hintIdle": "Play one note on your instrument and let it ring.",
+          "hintLive": "Play one note and let it ring. Keep the level out of the red."
+        },
+        "input": {
+          "label": "Input",
+          "defaultDevice": "Default microphone",
+          "off": "Microphone off",
+          "offHelp": "Nothing is recorded or uploaded. Audio stays on this device.",
+          "on": "Microphone on",
+          "onHelp": "{device} · audio never leaves this device",
+          "unavailable": "Microphone unavailable"
+        },
+        "strings": {
+          "title": "Open strings",
+          "auto": "Auto",
+          "manual": "Manual",
+          "inTune": "in tune",
+          "done": "done",
+          "chromaticHint": "Chromatic mode: any note, any instrument. The tuner targets the nearest semitone. Set a transposition in settings for B♭ or E♭ horns.",
+          "play": "Play {note}",
+          "select": "String {n}: {notes}"
+        },
+        "errors": {
+          "denied": "Microphone access was blocked. Allow it in your browser's site settings, then try again.",
+          "notFound": "No microphone found. Connect one and try again.",
+          "busy": "Another app is using the microphone. Close it and try again.",
+          "unsupported": "This browser can't run the tuner. Try the latest Chrome, Safari or Firefox.",
+          "unknown": "Could not start the microphone. Try again.",
+          "tryAgain": "Try again"
+        },
+        "meter": {
+          "label": "Tuning meter",
+          "needle": "Needle",
+          "strobe": "Strobe"
         },
         "settings": {
           "title": "Settings",
-          "reference": "Reference (A4)",
-          "referenceHelp": "Concert pitch. Standard is 440 Hz; some ensembles tune to 442.",
+          "open": "Tuner settings",
           "sensitivity": "Sensitivity",
-          "sensitivityHelp": "Higher picks up quiet notes; lower ignores background noise.",
-          "sensitivityLevels": { "low": "Low", "medium": "Medium", "high": "High" }
+          "sensitivityHelp": "Higher hears quiet notes; lower ignores room noise.",
+          "low": "Low",
+          "med": "Med",
+          "high": "High",
+          "window": "In-tune window",
+          "windowHelp": "How close counts as in tune.",
+          "names": "Note names",
+          "namesHelp": "Solfège shows Do Re Mi.",
+          "letters": "C D E",
+          "solfege": "Do Re Mi",
+          "transpose": "Transposition",
+          "transposeHelp": "For transposing instruments.",
+          "concert": "Concert",
+          "hold": "Hold last note",
+          "holdHelp": "Keep the reading after the note decays.",
+          "off": "Off"
         },
-        "guide": {
-          "title": "How to tune",
-          "howto": {
-            "q": "How do I tune?",
-            "a": "Press Start and play one note. Read the note name, then watch the strobe band: it drifts left when you're flat and right when you're sharp. Adjust your instrument until it settles in the center and locks gold — that's in tune."
-          },
-          "cents": {
-            "q": "What are cents and Hz?",
-            "a": "Hz (hertz) is the raw pitch of the note you're playing. Cents measure how far that pitch sits from the nearest correct note — 100 cents make one semitone. Anything within ±5 cents reads as in tune."
-          },
-          "reference": {
-            "q": "Why A440 (reference pitch)?",
-            "a": "Every note is tuned relative to the A above middle C. The modern standard sets that A to 440 Hz. Raising or lowering it shifts every target pitch, so match the reference the rest of your group is using."
-          }
+        "reference": {
+          "title": "Reference tone",
+          "a4": "A4 frequency",
+          "lower": "Lower A4 by 1 Hz",
+          "raise": "Raise A4 by 1 Hz",
+          "play": "Play {note}",
+          "stop": "Stop {note}",
+          "note": "Reference note",
+          "octave": "Octave",
+          "help": "Tune by ear: play the tone, match your string, then check the meter. Tap ▶ on any string pad to hear that string."
         },
-        "instruments": {
-          "guitar": { "name": "Guitar", "description": "Play each open string and tune to match." },
-          "bass": { "name": "Bass", "description": "Play each open string and tune to match." },
-          "piano": { "name": "Piano", "description": "Play individual keys and compare to the target pitch." },
-          "violin": { "name": "Violin", "description": "Tune each string by bowing or plucking gently." },
-          "tres": { "name": "Tres", "description": "Tune each course (doubled strings) to match." }
+        "session": {
+          "title": "This session",
+          "clear": "Clear",
+          "progress": "{done}/{total} strings in tune",
+          "allSet": "all set",
+          "notesLocked": "{count} notes locked in tune",
+          "empty": "Notes you lock in tune show up here.",
+          "justNow": "just now",
+          "secondsAgo": "{n}s ago",
+          "minutesAgo": "{n} min ago",
+          "hoursAgo": "{n} h ago"
+        },
+        "tips": {
+          "meterTitle": "Read the meter",
+          "meterBody": "Needle left is flat: tighten. Needle right is sharp: loosen. Green center means you're within the in-tune window.",
+          "centsTitle": "Cents and hertz",
+          "centsBody": "Hz is the raw pitch. Cents is distance from the nearest correct note; 100 cents is one semitone.",
+          "orderTitle": "Tune down, then up",
+          "orderBody": "Go slightly flat first and tighten into pitch. Strings hold tuning better when the last move raised them.",
+          "keepPracticing": "Keep practicing",
+          "openPlaySense": "Open Play Sense"
+        },
+        "keys": {
+          "space": "Space starts and stops",
+          "arrows": "← → pick a string · ↑ ↓ adjust A4"
         }
       },
       "community": {
@@ -1029,9 +1222,18 @@
         "searchButton": "Search",
         "learnMore": "Learn more →",
         "resources": {
-          "gettingStarted": { "title": "Getting Started Guide", "description": "Learn the basics and start your journey" },
-          "videoTutorials": { "title": "Video Tutorials", "description": "Watch step-by-step platform tutorials" },
-          "documentation": { "title": "Documentation", "description": "Detailed guides and references" }
+          "gettingStarted": {
+            "title": "Getting Started Guide",
+            "description": "Learn the basics and start your journey"
+          },
+          "videoTutorials": {
+            "title": "Video Tutorials",
+            "description": "Watch step-by-step platform tutorials"
+          },
+          "documentation": {
+            "title": "Documentation",
+            "description": "Detailed guides and references"
+          }
         },
         "faqs": {
           "title": "Frequently Asked Questions",
@@ -1103,12 +1305,36 @@
         },
         "hints": {
           "selectInstrument": "Select an instrument above to continue.",
-          "selectPlan": "Choose a plan above to continue."
+          "selectPlan": "Choose a plan above to continue.",
+          "selectGenre": "Pick the genre course to include with your subscription."
         },
         "errors": {
           "checkoutFailed": "Failed to start checkout. Please try again.",
           "generic": "An error occurred. Please try again."
-        }
+        },
+        "intro": "Pick an instrument, your first genre course (the fundamentals course is included free), and optional extra genres on monthly plans.",
+        "canceled": "Checkout was canceled. Pick again to try.",
+        "steps": {
+          "instrument": "1. Instrument",
+          "courses": "2. Your courses",
+          "billing": "3. Billing"
+        },
+        "alreadySubscribed": "You're already subscribed to this instrument",
+        "coursesIntro": "One genre course is included. On monthly plans, you can pick extra ones for {price} each. The instrument fundamentals course is included automatically.",
+        "pricePerMonth": "{price} / month",
+        "pricePerYear": "{price} / year",
+        "noCoursesForInstrument": "No genre courses are published for {instrument} yet.",
+        "included": "Included",
+        "monthly": "Monthly",
+        "annual": "Annual",
+        "save17": "Save 17%",
+        "perYear": "/yr",
+        "perExtraGenre": "+ {price} per extra genre",
+        "addGenresLater": "Add extra genres after signup",
+        "annualBaseOnly": "Annual signup is base-only. We unchecked your extra genres — you can add them after signup from the manage page.",
+        "total": "Total",
+        "baseAddonsOne": "Base + {count} add-on",
+        "baseAddonsOther": "Base + {count} add-ons"
       },
       "settings": {
         "title": "Settings",
@@ -1186,7 +1412,14 @@
         "empty": {
           "title": "No Teachers Yet",
           "subtitle": "Check back soon for our amazing roster of instructors!"
-        }
+        },
+        "courseCountOne": "{count} course",
+        "courseCountOther": "{count} courses",
+        "viewProfile": "View Profile",
+        "profileOf": "{name}'s Profile",
+        "about": "About",
+        "coursesBy": "Courses by {name}",
+        "contact": "Contact Teacher"
       },
       "masterClass": {
         "title": "Master Class",
@@ -1245,6 +1478,24 @@
           "inProgressBody": "Start a course to track your progress here.",
           "completedTitle": "No Completed Courses Yet",
           "completedBody": "Complete your first course to see it here. Keep learning!"
+        },
+        "moduleFallback": "Module {number}",
+        "untitledClass": "Untitled Class",
+        "filters": {
+          "all": "All Courses",
+          "inProgress": "In Progress",
+          "completed": "Completed",
+          "sortPlaceholder": "Sort by...",
+          "sort": {
+            "recent": "Recently Accessed",
+            "progress": "Progress",
+            "alphabetical": "A-Z"
+          }
+        },
+        "card": {
+          "complete": "Complete",
+          "module": "Mod {current}/{total}",
+          "items": "{completed}/{total} items"
         }
       },
       "progress": {
@@ -1302,19 +1553,28 @@
         "clearAll": "Clear all",
         "resultCourse": "course",
         "resultCourses": "courses",
-        "facets": { "instrument": "Instrument", "level": "Level", "genre": "Genre" },
-        "tabs": { "all": "All" },
+        "facets": {
+          "instrument": "Instrument",
+          "level": "Level",
+          "genre": "Genre"
+        },
+        "tabs": {
+          "all": "All"
+        },
         "difficulty": {
           "beginner": "Beginner",
           "intermediate": "Intermediate",
           "advanced": "Advanced"
         },
-        "badges": { "courseFallback": "Course" },
+        "badges": {
+          "courseFallback": "Course"
+        },
         "empty": {
           "title": "No Courses Found",
           "subtitle": "Try adjusting your filters or search to find what you're looking for",
           "clearFilters": "Clear all filters"
-        }
+        },
+        "removeFilter": "Remove {label}"
       },
       "subscription": {
         "title": "My Subscription",
@@ -1325,7 +1585,9 @@
           "title": "Redundant Instrument Subscriptions",
           "body": "You have an All-Access plan which already includes all instruments. You can cancel your individual instrument subscriptions through the billing portal to avoid extra charges."
         },
-        "planNames": { "allAccess": "All-Access" },
+        "planNames": {
+          "allAccess": "All-Access"
+        },
         "planDescriptions": {
           "allAccess": "Full access to all instruments and courses",
           "instrument": "Access to all {instrument} courses"
@@ -1352,7 +1614,34 @@
           "title": "No Active Subscription",
           "body": "Subscribe to unlock courses and start learning",
           "cta": "View Plans"
-        }
+        },
+        "noneYet": "You don't have any active subscriptions yet.",
+        "startInstrument": {
+          "title": "Start an instrument",
+          "body": "Get the instrument's fundamentals course plus one genre course from {price}."
+        },
+        "intro": "One subscription per instrument. Add more genres any time.",
+        "cancelsAtPeriodEnd": "cancels at period end",
+        "status": {
+          "active": "active",
+          "trialing": "trial",
+          "past_due": "past due",
+          "canceled": "canceled"
+        },
+        "nextRenewal": "Next renewal: {date}",
+        "addonRenewal": "Add-on renewal: {date}",
+        "fundamentalsIncluded": "Fundamentals · included",
+        "noGenreCourses": "No genre courses on this plan yet.",
+        "genreIncludedWithBase": "Genre · included with base",
+        "genreAddon": "Genre · +{price}",
+        "removeLastGenre": "Removing the last genre cancels the instrument",
+        "removeGenre": "Remove this genre",
+        "addGenre": "Add a genre",
+        "manage": "Manage Subscription",
+        "portalNote": "Payment details and invoices are managed in the Stripe customer portal — click {manage} above.",
+        "portalError": "Failed to open customer portal. Please try again.",
+        "confirmRemoveCourse": "Remove this course from your plan? This will reduce your monthly bill.",
+        "confirmCancelInstrument": "Cancel your {instrument} subscription at the end of the current period? You'll keep access until then."
       },
       "course": {
         "backToCourses": "Back to Courses",
@@ -1419,6 +1708,31 @@
             "cta": "Subscribe to Unlock",
             "back": "Back to Course"
           }
+        },
+        "moduleCountOne": "{count} module",
+        "moduleCountOther": "{count} modules",
+        "lessonCountOne": "{count} lesson",
+        "lessonCountOther": "{count} lessons",
+        "itemCountOne": "{count} item",
+        "itemCountOther": "{count} items",
+        "percentComplete": "{percent}% complete",
+        "adding": "Adding…",
+        "addToPlan": "Add to my plan (+{price}/mo)",
+        "stats": {
+          "complete": "Complete",
+          "lessons": "Lessons",
+          "remaining": "Remaining",
+          "level": "Level",
+          "levelAll": "All"
+        },
+        "curriculum": {
+          "title": "Curriculum",
+          "completed": "{completed}/{total} completed"
+        },
+        "enter": {
+          "starting": "Starting Course",
+          "entering": "Entering Course Mode",
+          "preparing": "Preparing your learning environment..."
         }
       },
       "modules": {
@@ -1431,6 +1745,216 @@
         "next": "Next",
         "nextLocked": "Next (Locked)",
         "courseContent": "Course Content"
+      },
+      "home": {
+        "musicianFallback": "musician",
+        "streakDaysOne": "{count} day streak",
+        "streakDaysOther": "{count} days streak",
+        "lessonsThisWeekOne": "{count} lesson this week",
+        "lessonsThisWeekOther": "{count} lessons this week",
+        "thisWeek": "This week",
+        "dayLetters": "S,M,T,W,T,F,S",
+        "pickFirstCourse": "Pick your first course",
+        "pickFirstCourseBody": "Choose an instrument and a genre to start your journey — your progress saves automatically.",
+        "continueLearning": "Continue learning",
+        "resumeLesson": "Resume lesson",
+        "courseProgress": "Course progress",
+        "notStarted": "Not started",
+        "courseCompleted": "Completed",
+        "recommended": "Recommended for you",
+        "newBadge": "New",
+        "nextMilestones": "Next Milestones",
+        "featuredTeacher": "Featured Teacher",
+        "quickActions": {
+          "title": "Quick Actions",
+          "resume": "Resume Last Lesson",
+          "tuner": "Open Tuner",
+          "feedback": "Submit Feedback"
+        },
+        "activity": {
+          "completedLesson": "Completed a lesson",
+          "achievementUnlocked": "Achievement unlocked"
+        },
+        "subscriptionCta": {
+          "title": "Unlock all courses",
+          "body": "Every course + practice tools"
+        },
+        "practiceTip": {
+          "title": "Daily Practice Tip",
+          "tips": {
+            "slowDown": {
+              "title": "Slow It Down",
+              "body": "Practice tricky passages at half tempo. Speed follows accuracy — nail the notes first, then gradually increase."
+            },
+            "listen": {
+              "title": "Listen Actively",
+              "body": "Spend 10 minutes today just listening to your favorite Latin track. Focus on one instrument and how it fits the clave."
+            },
+            "clave": {
+              "title": "Clap the Clave",
+              "body": "Before you play, clap the clave pattern for 2 minutes. Internalizing the rhythm makes everything else easier."
+            },
+            "record": {
+              "title": "Record Yourself",
+              "body": "Record a short clip of your practice. Listening back reveals things you miss in the moment."
+            },
+            "isolate": {
+              "title": "Isolate the Hard Part",
+              "body": "Pick the two hardest measures and loop them 20 times. Targeted repetition beats playing through the whole piece."
+            },
+            "feeling": {
+              "title": "Play With Feeling",
+              "body": "Even during exercises, add dynamics. Playing musically from the start builds better habits than adding expression later."
+            },
+            "ears": {
+              "title": "Warm Up Your Ears",
+              "body": "Sing or hum the melody before you play it. If you can hear it internally, your hands will follow more naturally."
+            }
+          }
+        }
+      }
+    },
+    "header": {
+      "search": {
+        "placeholderShort": "Search...",
+        "placeholder": "Search courses, lessons, teachers...",
+        "clear": "Clear",
+        "searching": "Searching...",
+        "noResults": "No results found for “{query}”",
+        "hint": "Start typing to search courses, lessons, and teachers",
+        "groups": {
+          "courses": "Courses",
+          "lessons": "Lessons",
+          "teachers": "Teachers",
+          "styles": "Styles",
+          "instruments": "Instruments"
+        }
+      },
+      "notifications": {
+        "title": "Notifications",
+        "markAllRead": "Mark all read",
+        "empty": "No notifications yet"
+      },
+      "streak": {
+        "tooltipOne": "{count} day learning streak!",
+        "tooltipOther": "{count} days learning streak!",
+        "empty": "Start learning to build your streak!"
+      }
+    },
+    "classViewer": {
+      "itemTypes": {
+        "lesson": "Lesson",
+        "jamSession": "Jam Session"
+      },
+      "sidebar": {
+        "learningPathway": "Learning pathway",
+        "module": "Module {n}",
+        "taughtBy": "Taught by",
+        "taughtByName": "Taught by {name}",
+        "lessonTitle": "Lesson {n} — {title}",
+        "expandMenu": "Expand menu",
+        "collapseMenu": "Collapse menu"
+      },
+      "partsNav": {
+        "ariaLabel": "Lesson parts"
+      },
+      "footer": {
+        "nextClass": "Next class",
+        "saving": "Saving…",
+        "markCompleted": "Mark as completed",
+        "markFailed": "Failed to mark as complete. Please try again.",
+        "genericError": "An error occurred. Please try again."
+      },
+      "renderer": {
+        "key": "Key: {key}",
+        "noNotes": "No additional notes for this lesson."
+      },
+      "discussion": {
+        "title": "Discussion",
+        "empty": "No comments yet. Be the first to start the discussion!",
+        "placeholder": "Write a comment...",
+        "replyPlaceholder": "Write a reply...",
+        "submitHint": "Press Cmd+Enter to submit",
+        "post": "Post",
+        "posting": "Posting...",
+        "reply": "Reply",
+        "delete": "Delete",
+        "confirmDelete": "Delete this comment?",
+        "anonymous": "Anonymous",
+        "edited": "(edited)"
+      },
+      "quiz": {
+        "types": {
+          "multipleChoice": "Multiple choice",
+          "trueFalse": "True or false",
+          "textAnswer": "Short answer",
+          "audio": "Listening",
+          "audioChoice": "Listen & choose",
+          "piecePlacement": "Place the pieces",
+          "fillInBlank": "Fill in the blank",
+          "matchingPairs": "Match the pairs",
+          "orderingSequence": "Put in order"
+        },
+        "noQuestions": "This {kind} has no questions yet.",
+        "checkAnswer": "Check Answer",
+        "finish": "Finish",
+        "true": "True",
+        "false": "False",
+        "playClip": "Play clip",
+        "pauseClip": "Pause clip",
+        "clip": "Clip {n}",
+        "typeWhatYouHear": "Type what you hear…",
+        "typeYourAnswer": "Type your answer…",
+        "yourAnswer": "Your answer",
+        "chooseMatch": "Choose match",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "unsupportedType": "Unsupported question type: {type}",
+        "dragPieces": "Drag each piece onto the image",
+        "puzzlePiece": "Puzzle piece",
+        "puzzleBackground": "Puzzle background",
+        "feedback": {
+          "correct": "Correct!",
+          "partial": "Almost there!",
+          "incorrect": "Not quite right"
+        },
+        "results": {
+          "perfect": "Perfect!",
+          "greatWork": "Great work!",
+          "niceEffort": "Nice effort!",
+          "keepPracticing": "Keep practicing",
+          "nailedIt": "You nailed this {kind}.",
+          "gettingHang": "You're getting the hang of it.",
+          "reviewAndRetry": "Review the answers below and try again.",
+          "correct": "correct",
+          "correctAnswer": "Correct answer:",
+          "noDetails": "No additional details."
+        }
+      },
+      "video": {
+        "playVideo": "Play video",
+        "play": "Play",
+        "pause": "Pause",
+        "mute": "Mute",
+        "unmute": "Unmute",
+        "volume": "Volume",
+        "setLoopStart": "Set loop start (A)",
+        "setLoopEnd": "Set loop end (B)",
+        "toggleLoop": "Toggle loop",
+        "clearLoop": "Clear loop",
+        "playbackSpeed": "Playback speed",
+        "subtitles": "Subtitles",
+        "subtitlesOff": "Off",
+        "fullscreen": "Fullscreen",
+        "exitFullscreen": "Exit fullscreen"
+      },
+      "exercise": {
+        "yourTurn": "Now it's your turn",
+        "yourTurnHint": "Play along with the highway — you'll be graded on your timing.",
+        "watchAgain": "Watch again",
+        "playAlongWith": "Play along with",
+        "tracksHint": "Selected tracks play in sync with the notes while you're graded.",
+        "preparing": "Preparing the test…"
       }
     }
   }

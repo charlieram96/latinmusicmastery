@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getServerLocale } from '@/lib/i18n/server'
-import { localizeRow, localizeRows, localizeCourse, COURSE_FIELDS } from '@/lib/i18n/localize'
+import { getServerTranslator } from '@/lib/i18n/server'
+import { localizeRow, localizeRows, localizeCourse, localizeTeacher, COURSE_FIELDS } from '@/lib/i18n/localize'
 import { ACHIEVEMENTS } from '@/lib/achievements'
 import { WelcomeSummary } from '@/components/dashboard/welcome-summary'
 import { ContinueLearningHero } from '@/components/dashboard/continue-learning-hero'
@@ -92,13 +92,14 @@ export default async function DashboardPage() {
       .limit(5),
     supabase
       .from('teachers')
-      .select('id, name, bio, image_url, instrument')
+      .select('id, name, bio, bio_es, image_url, instrument, instrument_es')
       .limit(1)
       .single(),
   ])
 
   // Localize enrolled-course titles (+ nested class titles) to the viewer's language.
-  const locale = await getServerLocale()
+  const { t, locale } = await getServerTranslator()
+  localizeTeacher(featuredTeacher as Record<string, unknown> | null, locale)
   for (const enrollment of enrollments ?? []) {
     const course = (enrollment as any).course as Record<string, unknown> | null
     if (!course) continue
@@ -201,7 +202,7 @@ export default async function DashboardPage() {
     }
   })
   const todayISO = now.toISOString().split('T')[0]
-  const dayLetters = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+  const dayLetters = t('dashboard.pages.home.dayLetters').split(',')
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(startOfWeek)
     d.setDate(startOfWeek.getDate() + i)
@@ -217,7 +218,7 @@ export default async function DashboardPage() {
   // Finds the title of the first class with an incomplete item (ordered by
   // section then class), or a "done"/"not started" label.
   function nextClassLabel(course: any, completedCount: number): string {
-    if (completedCount === 0) return 'Not started'
+    if (completedCount === 0) return t('dashboard.pages.home.notStarted')
     const sections = [...(course.course_sections || [])].sort(
       (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
     )
@@ -229,10 +230,10 @@ export default async function DashboardPage() {
         const hasIncomplete = (cls.items || []).some(
           (it: any) => !completedItemIds.has(it.id)
         )
-        if (hasIncomplete) return cls.title || 'Continue'
+        if (hasIncomplete) return cls.title || t('common.continue')
       }
     }
-    return 'Completed'
+    return t('dashboard.pages.home.courseCompleted')
   }
 
   const myCoursesArray: CourseProgress[] = []
@@ -435,7 +436,7 @@ export default async function DashboardPage() {
       return {
         id: `completion-${i}`,
         type: 'lesson_completed' as const,
-        title: 'Completed a lesson',
+        title: t('dashboard.pages.home.activity.completedLesson'),
         subtitle: courseInfo?.title || null,
         timestamp: p.completed_at,
         iconName: 'CheckCircle',
@@ -450,7 +451,7 @@ export default async function DashboardPage() {
       id: `achievement-${i}`,
       type: 'achievement_earned' as const,
       title: def?.title || a.achievement_key,
-      subtitle: def?.description || 'Achievement unlocked',
+      subtitle: def?.description || t('dashboard.pages.home.activity.achievementUnlocked'),
       timestamp: a.unlocked_at,
       iconName: 'Trophy',
     }

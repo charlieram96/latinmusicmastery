@@ -80,7 +80,7 @@ final class VideoNotationBodyModelIdentityTests: XCTestCase {
         id: UUID(), classId: UUID(), itemType: .video, title: "Scored lesson", titleEs: nil,
         description: nil, descriptionEs: nil, orderIndex: 0, richContent: nil,
         videoUrl: "https://example.com/lesson.m4v", videoDurationSeconds: 100,
-        audioUrl: nil, soundsliceEmbedUrl: nil, subtitlesEnUrl: nil, subtitlesEsUrl: nil,
+        audioUrl: nil, soundsliceEmbedUrl: nil, subtitles: nil,
         bpm: nil, keySignature: nil, scoreDocumentId: nil, activeTimeMapId: nil,
         exerciseTimeMapId: nil, exerciseVideoUrl: nil, exerciseVideoStartSeconds: 0,
         question: nil, questionType: nil, options: nil, correctAnswer: nil, explanation: nil,

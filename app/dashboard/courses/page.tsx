@@ -23,7 +23,7 @@ export default async function BrowseCoursesPage() {
         name_es,
         country:countries(name, name_es, slug)
       ),
-      teacher:teachers(id, name, instrument, image_url),
+      teacher:teachers(id, name, instrument, instrument_es, image_url),
       course_sections(classes(id))
     `)
     .eq('is_published', true)

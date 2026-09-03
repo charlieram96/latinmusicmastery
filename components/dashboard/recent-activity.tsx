@@ -19,6 +19,8 @@ import {
   StaggerItem,
 } from '@/components/dashboard/animated-section'
 import type { RecentActivityProps, RecentActivityItem } from '@/types/dashboard'
+import { useTranslation } from '@/components/language-provider'
+import type { Locale } from '@/lib/i18n'
 
 /* ------------------------------------------------------------------ */
 /*  Icon lookup                                                        */
@@ -41,7 +43,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 /*  Relative timestamp formatter                                       */
 /* ------------------------------------------------------------------ */
 
-function relativeTime(isoString: string): string {
+function relativeTime(isoString: string, locale: Locale): string {
   const now = Date.now()
   const then = new Date(isoString).getTime()
   const diffMs = now - then
@@ -50,18 +52,14 @@ function relativeTime(isoString: string): string {
   const minutes = Math.floor(seconds / 60)
   const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
 
-  if (seconds < 60) return 'Just now'
-  if (minutes < 60) return `${minutes} min${minutes !== 1 ? 's' : ''} ago`
-  if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`
-  if (days === 1) return 'Yesterday'
-  if (days < 7) return `${days} days ago`
-  if (days < 30) {
-    const weeks = Math.floor(days / 7)
-    return `${weeks} week${weeks !== 1 ? 's' : ''} ago`
-  }
-  const months = Math.floor(days / 30)
-  return `${months} month${months !== 1 ? 's' : ''} ago`
+  if (seconds < 60) return rtf.format(0, 'second')
+  if (minutes < 60) return rtf.format(-minutes, 'minute')
+  if (hours < 24) return rtf.format(-hours, 'hour')
+  if (days < 7) return rtf.format(-days, 'day')
+  if (days < 30) return rtf.format(-Math.floor(days / 7), 'week')
+  return rtf.format(-Math.floor(days / 30), 'month')
 }
 
 /* ------------------------------------------------------------------ */
@@ -94,6 +92,7 @@ interface ExtendedRecentActivityProps extends RecentActivityProps {
 }
 
 export function RecentActivity({ activities, maxItems = 8 }: ExtendedRecentActivityProps) {
+  const { t, locale } = useTranslation()
   if (activities.length === 0) return null
 
   const displayed = activities.slice(0, maxItems)
@@ -105,7 +104,7 @@ export function RecentActivity({ activities, maxItems = 8 }: ExtendedRecentActiv
         <div className="flex items-center gap-2">
           <Clock className="h-5 w-5 text-gold" />
           <h3 className="text-lg font-heading font-semibold text-foreground">
-            Recent Activity
+            {t('dashboard.pages.progress.recentActivity.title')}
           </h3>
         </div>
 
@@ -138,7 +137,7 @@ export function RecentActivity({ activities, maxItems = 8 }: ExtendedRecentActiv
                       </p>
                     )}
                     <p className="text-xs text-muted-foreground/60 mt-1">
-                      {relativeTime(activity.timestamp)}
+                      {relativeTime(activity.timestamp, locale)}
                     </p>
                   </div>
                 </div>

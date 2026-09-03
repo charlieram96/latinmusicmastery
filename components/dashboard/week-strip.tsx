@@ -3,6 +3,7 @@
 import { Flame, Check } from 'lucide-react'
 import { AnimatedSection } from '@/components/dashboard/animated-section'
 import type { WeekStripProps } from '@/types/dashboard'
+import { useTranslation } from '@/components/language-provider'
 
 /* ------------------------------------------------------------------ */
 /*  "This week" practice strip — 7 day cells, practiced days filled,   */
@@ -10,6 +11,7 @@ import type { WeekStripProps } from '@/types/dashboard'
 /* ------------------------------------------------------------------ */
 
 export function WeekStrip({ days, streak }: WeekStripProps) {
+  const { t } = useTranslation()
   return (
     <AnimatedSection delay={0.02}>
       <div className="rounded-2xl border border-border bg-card p-[18px]">
@@ -19,10 +21,12 @@ export function WeekStrip({ days, streak }: WeekStripProps) {
             <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/14">
               <Flame className="h-3.5 w-3.5 text-primary" />
             </span>
-            This week
+            {t('dashboard.pages.home.thisWeek')}
           </h3>
           <span className="text-xs text-muted-foreground">
-            {streak} day{streak !== 1 ? 's' : ''} streak
+            {t(streak === 1 ? 'dashboard.pages.home.streakDaysOne' : 'dashboard.pages.home.streakDaysOther', {
+              count: streak,
+            })}
           </span>
         </div>
 

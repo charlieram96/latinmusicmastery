@@ -5,6 +5,7 @@ import { MessageSquare } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CommentForm } from './comment-form'
 import { CommentThread } from './comment-thread'
+import { useTranslation } from '@/components/language-provider'
 import { addComment, deleteComment, toggleReaction } from '@/app/actions/comments'
 import type { ClassComment } from '@/types/comments'
 
@@ -19,6 +20,7 @@ export function CommentsSection({
   initialComments,
   userId,
 }: CommentsSectionProps) {
+  const { t } = useTranslation()
   const [comments, setComments] = useState<ClassComment[]>(initialComments)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -114,7 +116,7 @@ export function CommentsSection({
       <CardHeader>
         <CardTitle className="flex items-center gap-2.5 font-heading text-lg font-bold tracking-tight">
           <MessageSquare className="h-5 w-5 text-muted-foreground" />
-          Discussion
+          {t('dashboard.classViewer.discussion.title')}
           {comments.length > 0 && (
             <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-border bg-background px-2 text-xs font-semibold tabular-nums text-muted-foreground">
               {comments.length}
@@ -140,7 +142,7 @@ export function CommentsSection({
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center py-6">
-            No comments yet. Be the first to start the discussion!
+            {t('dashboard.classViewer.discussion.empty')}
           </p>
         )}
       </CardContent>

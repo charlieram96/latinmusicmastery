@@ -3,6 +3,7 @@ import 'server-only'
 import { createClient } from '@/lib/supabase/server'
 import { getServerLocale } from '@/lib/i18n/server'
 import { pick } from '@/lib/i18n/localize'
+import { instrumentLabel } from '@/lib/i18n/instruments'
 
 export type NavCatalogItem = { slug: string; name: string }
 
@@ -37,7 +38,8 @@ export async function getNavCatalog(): Promise<NavCatalog> {
   ).sort((a, b) => a.localeCompare(b))
 
   return {
-    instruments: instrumentNames.map((name) => ({ slug: name, name })),
+    // `slug` stays the raw English value because /explore?instrument= matches it verbatim.
+    instruments: instrumentNames.map((name) => ({ slug: name, name: instrumentLabel(name, locale) })),
     styles: (styles ?? []).map((s) => ({
       slug: s.slug,
       name: pick(locale, s.name, (s as { name_es?: string | null }).name_es ?? null) ?? s.name,

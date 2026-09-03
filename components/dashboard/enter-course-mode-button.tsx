@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { PlayCircle, Music, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { enrollInCourse } from '@/app/actions/progress'
+import { useTranslation } from '@/components/language-provider'
 
 interface EnterCourseModeButtonProps extends Omit<ComponentProps<typeof Button>, 'onClick'> {
   moduleId?: string
@@ -28,6 +29,7 @@ export function EnterCourseModeButton({
 }: EnterCourseModeButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const { t } = useTranslation()
 
   const handleClick = async () => {
     setIsLoading(true)
@@ -70,7 +72,9 @@ export function EnterCourseModeButton({
 
               {/* Text */}
               <h2 className="text-2xl font-bold font-heading mb-2">
-                {isNewCourse ? 'Starting Course' : 'Entering Course Mode'}
+                {isNewCourse
+                  ? t('dashboard.pages.course.enter.starting')
+                  : t('dashboard.pages.course.enter.entering')}
               </h2>
               {courseTitle && (
                 <p className="text-lg text-muted-foreground mb-4 max-w-md">
@@ -79,7 +83,7 @@ export function EnterCourseModeButton({
               )}
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Preparing your learning environment...</span>
+                <span>{t('dashboard.pages.course.enter.preparing')}</span>
               </div>
 
               {/* Progress bar */}
@@ -123,13 +127,15 @@ export function EnterCourseModeButton({
         {isLoading ? (
           <>
             <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-            Loading...
+            {t('common.loading')}
           </>
         ) : (
           children || (
             <>
               <PlayCircle className="h-5 w-5 mr-2" />
-              {isNewCourse ? 'Start Course' : 'Continue Learning'}
+              {isNewCourse
+                ? t('dashboard.pages.course.beginCourse')
+                : t('dashboard.pages.course.continueCourse')}
             </>
           )
         )}

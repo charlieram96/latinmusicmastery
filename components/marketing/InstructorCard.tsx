@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { fadeInUp } from "@/lib/animation-variants";
 import InstructorBioModal from "@/components/marketing/InstructorBioModal";
+import { useTranslation } from "@/components/language-provider";
 
 interface InstructorCardProps {
   name: string;
@@ -32,6 +33,7 @@ export default function InstructorCard({
   specialties,
   href,
 }: InstructorCardProps) {
+  const { t } = useTranslation();
   const content = (
     <motion.div
       variants={fadeInUp}
@@ -98,7 +100,7 @@ export default function InstructorCard({
       >
         <button
           type="button"
-          aria-label={`Open bio for ${name}`}
+          aria-label={t("marketing.common.openBioFor", { name })}
           className="group block w-full cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-2xl"
         >
           {content}

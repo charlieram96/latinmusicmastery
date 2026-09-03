@@ -72,6 +72,16 @@ export default async function InstrumentFormPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="name_es" className="text-muted-foreground">Name (Español)</Label>
+            <Input
+              id="name_es"
+              name="name_es"
+              defaultValue={instrument?.name_es || ''}
+              placeholder="e.g., Congas (optional — falls back to the English name)"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="slug">Slug *</Label>
             <Input
               id="slug"
@@ -90,6 +100,17 @@ export default async function InstrumentFormPage({ params }: PageProps) {
               name="description"
               defaultValue={instrument?.description || ''}
               placeholder="Brief description of the instrument"
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description_es" className="text-muted-foreground">Description (Español)</Label>
+            <Textarea
+              id="description_es"
+              name="description_es"
+              defaultValue={instrument?.description_es || ''}
+              placeholder="Descripción breve del instrumento (opcional)"
               rows={3}
             />
           </div>

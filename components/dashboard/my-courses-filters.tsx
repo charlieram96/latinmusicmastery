@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { BookOpen, Clock, CheckCircle2, ArrowDownAZ, TrendingUp, History } from 'lucide-react'
+import { useTranslation } from '@/components/language-provider'
 
 interface MyCoursesFiltersProps {
   counts: {
@@ -25,6 +26,7 @@ export function MyCoursesFilters({ counts }: MyCoursesFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const { t } = useTranslation()
 
   const filter = searchParams.get('filter') || 'all'
   const sort = searchParams.get('sort') || 'recent'
@@ -54,15 +56,15 @@ export function MyCoursesFilters({ counts }: MyCoursesFiltersProps) {
   }
 
   const filterOptions = [
-    { value: 'all', label: 'All Courses', icon: BookOpen, count: counts.all },
-    { value: 'in-progress', label: 'In Progress', icon: Clock, count: counts.inProgress },
-    { value: 'completed', label: 'Completed', icon: CheckCircle2, count: counts.completed },
+    { value: 'all', label: t('dashboard.pages.myCourses.filters.all'), icon: BookOpen, count: counts.all },
+    { value: 'in-progress', label: t('dashboard.pages.myCourses.filters.inProgress'), icon: Clock, count: counts.inProgress },
+    { value: 'completed', label: t('dashboard.pages.myCourses.filters.completed'), icon: CheckCircle2, count: counts.completed },
   ]
 
   const sortOptions = [
-    { value: 'recent', label: 'Recently Accessed', icon: History },
-    { value: 'progress', label: 'Progress', icon: TrendingUp },
-    { value: 'alphabetical', label: 'A-Z', icon: ArrowDownAZ },
+    { value: 'recent', label: t('dashboard.pages.myCourses.filters.sort.recent'), icon: History },
+    { value: 'progress', label: t('dashboard.pages.myCourses.filters.sort.progress'), icon: TrendingUp },
+    { value: 'alphabetical', label: t('dashboard.pages.myCourses.filters.sort.alphabetical'), icon: ArrowDownAZ },
   ]
 
   return (
@@ -101,7 +103,7 @@ export function MyCoursesFilters({ counts }: MyCoursesFiltersProps) {
         disabled={isPending}
       >
         <SelectTrigger className="w-[180px] h-9 bg-secondary border-0">
-          <SelectValue placeholder="Sort by..." />
+          <SelectValue placeholder={t('dashboard.pages.myCourses.filters.sortPlaceholder')} />
         </SelectTrigger>
         <SelectContent>
           {sortOptions.map((option) => {

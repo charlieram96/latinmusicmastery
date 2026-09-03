@@ -1,9 +1,9 @@
 import LMMModels
 
-// NOTE: subtitle tracks are never overlaid. `ClassItem.subtitlesEnUrl`/`subtitlesEsUrl` are not
-// a canonical/`_es` overlay pair like the fields below — both language tracks must stay
+// NOTE: subtitle tracks are never overlaid. `ClassItem.subtitles` (a jsonb list of per-language
+// tracks) is not a canonical/`_es` overlay pair like the fields below — every language must stay
 // simultaneously available to the video player (for in-player track switching), so there is no
-// `displaySubtitlesUrl(_:)` accessor here. Mirrors the comment on `ITEM_FIELDS` in
+// `displaySubtitles(_:)` accessor here. Mirrors the comment on `ITEM_FIELDS` in
 // `lib/i18n/localize.ts`.
 
 public extension Course {

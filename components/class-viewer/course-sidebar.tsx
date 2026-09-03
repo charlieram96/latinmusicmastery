@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { cn } from '@/lib/utils'
+import { getServerTranslator } from '@/lib/i18n/server'
 
 interface SidebarSection {
   id: string
@@ -29,7 +30,8 @@ interface CourseSidebarProps {
   courseDescription?: string
 }
 
-export function CourseSidebar({ courseId, currentClassId, sections, courseTitle, courseDescription }: CourseSidebarProps) {
+export async function CourseSidebar({ courseId, currentClassId, sections, courseTitle, courseDescription }: CourseSidebarProps) {
+  const { t } = await getServerTranslator()
   // Find which section contains the current class to default-open it
   const activeSectionId = sections.find(s =>
     s.classes.some(c => c.id === currentClassId)
@@ -46,7 +48,7 @@ export function CourseSidebar({ courseId, currentClassId, sections, courseTitle,
         </div>
       )}
       <div className="p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Course Content</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{t('dashboard.pages.modules.courseContent')}</h3>
         <div className="border-b mb-4" />
       </div>
       <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-thin">

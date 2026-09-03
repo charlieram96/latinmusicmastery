@@ -8,6 +8,7 @@
 import Link from 'next/link'
 import { ChevronRight, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/components/language-provider'
 import styles from './lesson-viewer.module.css'
 
 export interface LessonPart {
@@ -24,20 +25,21 @@ interface LessonPartsNavProps {
   classId: string
 }
 
-const TYPE_LABEL: Record<string, string> = {
-  VIDEO: 'Lesson',
-  QUIZ: 'Quiz',
-  EXERCISE: 'Exercise',
-  JAM_SESSION: 'Jam session',
+const TYPE_LABEL_KEY: Record<string, string> = {
+  VIDEO: 'dashboard.classViewer.itemTypes.lesson',
+  QUIZ: 'dashboard.pages.modules.quiz',
+  EXERCISE: 'dashboard.pages.modules.exercise',
+  JAM_SESSION: 'dashboard.classViewer.itemTypes.jamSession',
 }
 
 // Build friendly labels, numbering repeated types (Exercise 1, Exercise 2…).
-function buildLabels(items: LessonPart[]) {
+function buildLabels(items: LessonPart[], t: (key: string) => string) {
   const counts: Record<string, number> = {}
   const totals: Record<string, number> = {}
   for (const it of items) totals[it.item_type] = (totals[it.item_type] ?? 0) + 1
   return items.map((it) => {
-    const base = TYPE_LABEL[it.item_type] ?? it.item_type
+    const key = TYPE_LABEL_KEY[it.item_type]
+    const base = key ? t(key) : it.item_type
     counts[it.item_type] = (counts[it.item_type] ?? 0) + 1
     const label =
       totals[it.item_type] > 1 ? `${base} ${counts[it.item_type]}` : base
@@ -52,12 +54,13 @@ export function LessonPartsNav({
   courseId,
   classId,
 }: LessonPartsNavProps) {
+  const { t } = useTranslation()
   if (items.length === 0) return null
-  const labels = buildLabels(items)
+  const labels = buildLabels(items, t)
 
   return (
     <nav
-      aria-label="Lesson parts"
+      aria-label={t('dashboard.classViewer.partsNav.ariaLabel')}
       className={cn('mt-[10px] flex items-stretch bg-sunken', styles.rise)}
       style={{ animationDelay: '40ms' }}
     >
@@ -98,7 +101,7 @@ export function LessonPartsNav({
                   {done && (
                     <Check
                       className="h-3 w-3 text-success"
-                      aria-label="Completed"
+                      aria-label={t('dashboard.pages.modules.completed')}
                     />
                   )}
                 </span>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { fadeInUp, staggerContainer, staggerChild } from "@/lib/animation-variants";
 import GradientText from "@/components/marketing/GradientText";
 import { useTranslation } from "@/components/language-provider";
+import { instrumentLabel } from "@/lib/i18n/instruments";
 import { formatCents, type PricingMap } from "@/lib/payments/pricing-types";
 
 interface Instrument {
@@ -40,7 +41,7 @@ const allAccessFeatureKeys = [
 ];
 
 export function HomePricingPreview({ instruments, prices }: HomePricingPreviewProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const monthlyLabel = formatCents(prices.base_monthly.amount_cents);
   const annualLabel = formatCents(prices.base_annual.amount_cents);
   const yearlyAtMonthlyLabel = formatCents(prices.base_monthly.amount_cents * 12);
@@ -93,7 +94,7 @@ export function HomePricingPreview({ instruments, prices }: HomePricingPreviewPr
                 {instrument.image_url ? (
                   <Image
                     src={instrument.image_url}
-                    alt={instrument.name}
+                    alt={instrumentLabel(instrument.name, locale)}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(max-width: 768px) 50vw, 33vw"
@@ -107,7 +108,7 @@ export function HomePricingPreview({ instruments, prices }: HomePricingPreviewPr
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
                 <div className="relative z-10 w-full p-4 md:p-5">
                   <p className="text-base font-semibold text-white md:text-lg">
-                    {instrument.name}
+                    {instrumentLabel(instrument.name, locale)}
                   </p>
                 </div>
               </motion.div>

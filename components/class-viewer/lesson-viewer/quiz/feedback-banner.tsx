@@ -3,9 +3,11 @@
 import { motion } from 'framer-motion'
 import { CheckCircle2, MinusCircle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/components/language-provider'
 
 /** Graded feedback for a question score in [0, 1]; fractional scores show a partial-credit state. */
 export function FeedbackBanner({ score, explanation }: { score: number; explanation?: string | null }) {
+  const { t } = useTranslation()
   const state = score >= 1 ? 'correct' : score > 0 ? 'partial' : 'incorrect'
   return (
     <motion.div
@@ -35,7 +37,11 @@ export function FeedbackBanner({ score, explanation }: { score: number; explanat
             state === 'incorrect' && 'text-red-700 dark:text-red-400',
           )}
         >
-          {state === 'correct' ? 'Correct!' : state === 'partial' ? 'Almost there!' : 'Not quite right'}
+          {state === 'correct'
+            ? t('dashboard.classViewer.quiz.feedback.correct')
+            : state === 'partial'
+              ? t('dashboard.classViewer.quiz.feedback.partial')
+              : t('dashboard.classViewer.quiz.feedback.incorrect')}
         </p>
         {explanation && <p className="mt-1 text-sm text-muted-foreground">{explanation}</p>}
       </div>

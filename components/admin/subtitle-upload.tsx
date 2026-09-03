@@ -9,17 +9,31 @@ import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Captions, Loader2, Upload, X } from 'lucide-react'
-import { srtToVtt, SUBTITLE_LABELS, type SubtitleLang } from '@/lib/subtitles/srt-to-vtt'
+import { srtToVtt, subtitleLabel, type SubtitleLang } from '@/lib/subtitles/srt-to-vtt'
 
 interface SubtitleUploadProps {
   itemId: string
   lang: SubtitleLang
   currentUrl: string | null
   onChanged: (url: string | null) => void
+  /** Lets a parent freeze this row while a sibling row is uploading. */
+  disabled?: boolean
+  onUploadingChange?: (uploading: boolean) => void
 }
 
-export function SubtitleUpload({ itemId, lang, currentUrl, onChanged }: SubtitleUploadProps) {
-  const [uploading, setUploading] = useState(false)
+export function SubtitleUpload({
+  itemId,
+  lang,
+  currentUrl,
+  onChanged,
+  disabled = false,
+  onUploadingChange,
+}: SubtitleUploadProps) {
+  const [uploading, setUploadingState] = useState(false)
+  const setUploading = (next: boolean) => {
+    setUploadingState(next)
+    onUploadingChange?.(next)
+  }
   const [url, setUrl] = useState<string | null>(currentUrl)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -75,21 +89,21 @@ export function SubtitleUpload({ itemId, lang, currentUrl, onChanged }: Subtitle
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-2">
-        <span className="flex w-8 flex-shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <span className="flex min-w-8 flex-shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           <Captions className="h-3.5 w-3.5" />
           {lang}
         </span>
         {url ? (
           <>
             <span className="flex-1 truncate rounded-md border border-border bg-muted/50 px-2 py-1 text-xs text-muted-foreground">
-              {SUBTITLE_LABELS[lang]} subtitles uploaded
+              {subtitleLabel(lang)} subtitles uploaded
             </span>
             <Button
               type="button"
               variant="outline"
               size="sm"
               className="h-7 px-2 text-xs"
-              disabled={uploading}
+              disabled={uploading || disabled}
               onClick={() => fileInputRef.current?.click()}
             >
               Replace
@@ -99,9 +113,9 @@ export function SubtitleUpload({ itemId, lang, currentUrl, onChanged }: Subtitle
               variant="ghost"
               size="sm"
               className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-              disabled={uploading}
+              disabled={uploading || disabled}
               onClick={handleRemove}
-              aria-label={`Remove ${SUBTITLE_LABELS[lang]} subtitles`}
+              aria-label={`Remove ${subtitleLabel(lang)} subtitles`}
             >
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -112,7 +126,7 @@ export function SubtitleUpload({ itemId, lang, currentUrl, onChanged }: Subtitle
             variant="outline"
             size="sm"
             className="h-7 flex-1 justify-start px-2 text-xs font-normal text-muted-foreground"
-            disabled={uploading}
+            disabled={uploading || disabled}
             onClick={() => fileInputRef.current?.click()}
           >
             {uploading ? (
@@ -120,7 +134,7 @@ export function SubtitleUpload({ itemId, lang, currentUrl, onChanged }: Subtitle
             ) : (
               <Upload className="mr-1.5 h-3.5 w-3.5" />
             )}
-            {uploading ? 'Uploading…' : `Upload ${SUBTITLE_LABELS[lang]} (.srt or .vtt)`}
+            {uploading ? 'Uploading…' : `Upload ${subtitleLabel(lang)} (.srt or .vtt)`}
           </Button>
         )}
       </div>
@@ -129,7 +143,7 @@ export function SubtitleUpload({ itemId, lang, currentUrl, onChanged }: Subtitle
         type="file"
         accept=".srt,.vtt,text/vtt"
         onChange={handleFileSelect}
-        disabled={uploading}
+        disabled={uploading || disabled}
         className="hidden"
       />
       {error && <p className="text-xs text-destructive">{error}</p>}

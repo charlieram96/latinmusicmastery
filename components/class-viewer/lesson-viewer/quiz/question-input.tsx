@@ -6,6 +6,7 @@ import { useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/components/language-provider'
 import {
   norm,
   shuffleStable,
@@ -24,6 +25,7 @@ import { OptionTile, type TileState } from './option-tile'
 /** Play/pause control for an audio answer choice. Renders as a span (not a
  *  button) so it can live inside the OptionTile button without nesting. */
 function AudioChoicePlayer({ url, label }: { url?: string; label: string }) {
+  const { t } = useTranslation()
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [playing, setPlaying] = useState(false)
   const toggle = (e: React.SyntheticEvent) => {
@@ -43,7 +45,7 @@ function AudioChoicePlayer({ url, label }: { url?: string; label: string }) {
       <span
         role="button"
         tabIndex={0}
-        aria-label={playing ? 'Pause clip' : 'Play clip'}
+        aria-label={playing ? t('dashboard.classViewer.quiz.pauseClip') : t('dashboard.classViewer.quiz.playClip')}
         onClick={toggle}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') toggle(e)
@@ -80,6 +82,7 @@ export function QuestionInput({
   isGraded: boolean
   onChange: (v: unknown) => void
 }) {
+  const { t } = useTranslation()
   const opts = (q.options ?? {}) as Record<string, unknown>
 
   switch (q.question_type) {
@@ -119,7 +122,7 @@ export function QuestionInput({
               return (
                 <OptionTile key={c.id} label={LETTERS[i]} state={state} disabled={isGraded} onClick={() => onChange(c.id)}>
                   {mode === 'audio' ? (
-                    <AudioChoicePlayer url={c.audioUrl} label={c.text?.trim() || `Clip ${i + 1}`} />
+                    <AudioChoicePlayer url={c.audioUrl} label={c.text?.trim() || t('dashboard.classViewer.quiz.clip', { n: i + 1 })} />
                   ) : (
                     c.text
                   )}
@@ -147,8 +150,8 @@ export function QuestionInput({
 
     case 'true_false': {
       const values = [
-        { v: 'true', label: 'True' },
-        { v: 'false', label: 'False' },
+        { v: 'true', label: t('dashboard.classViewer.quiz.true') },
+        { v: 'false', label: t('dashboard.classViewer.quiz.false') },
       ]
       return (
         <div className="grid grid-cols-2 gap-3">
@@ -171,7 +174,11 @@ export function QuestionInput({
       return (
         <Input
           className="h-12 rounded-xl text-base"
-          placeholder={q.question_type === 'audio' ? 'Type what you hear…' : 'Type your answer…'}
+          placeholder={
+            q.question_type === 'audio'
+              ? t('dashboard.classViewer.quiz.typeWhatYouHear')
+              : t('dashboard.classViewer.quiz.typeYourAnswer')
+          }
           value={(answer as string) ?? ''}
           disabled={isGraded}
           onChange={(e) => onChange(e.target.value)}
@@ -230,7 +237,7 @@ export function QuestionInput({
                   value={val}
                   disabled={isGraded}
                   onChange={(e) => onChange({ ...given, [b.id]: e.target.value })}
-                  placeholder="Your answer"
+                  placeholder={t('dashboard.classViewer.quiz.yourAnswer')}
                   className={cn('rounded-xl', isGraded && (ok ? 'border-green-500' : 'border-red-500'))}
                 />
               </div>
@@ -261,7 +268,7 @@ export function QuestionInput({
                 <span className="text-muted-foreground">→</span>
                 <Select value={val} disabled={isGraded} onValueChange={(v) => onChange({ ...given, [p.id]: v })}>
                   <SelectTrigger className="flex-1 rounded-xl">
-                    <SelectValue placeholder="Choose match" />
+                    <SelectValue placeholder={t('dashboard.classViewer.quiz.chooseMatch')} />
                   </SelectTrigger>
                   <SelectContent>
                     {rightChoices.map((r, i) => (
@@ -314,7 +321,7 @@ export function QuestionInput({
                     type="button"
                     disabled={isGraded || i === 0}
                     onClick={() => move(i, -1)}
-                    aria-label="Move up"
+                    aria-label={t('dashboard.classViewer.quiz.moveUp')}
                     className="rounded-md p-1 text-muted-foreground hover:bg-muted disabled:opacity-30"
                   >
                     <ChevronUp className="h-4 w-4" />
@@ -323,7 +330,7 @@ export function QuestionInput({
                     type="button"
                     disabled={isGraded || i === current.length - 1}
                     onClick={() => move(i, 1)}
-                    aria-label="Move down"
+                    aria-label={t('dashboard.classViewer.quiz.moveDown')}
                     className="rounded-md p-1 text-muted-foreground hover:bg-muted disabled:opacity-30"
                   >
                     <ChevronDown className="h-4 w-4" />
@@ -337,6 +344,6 @@ export function QuestionInput({
     }
 
     default:
-      return <p className="text-sm text-muted-foreground">Unsupported question type: {q.question_type}</p>
+      return <p className="text-sm text-muted-foreground">{t('dashboard.classViewer.quiz.unsupportedType', { type: q.question_type })}</p>
   }
 }

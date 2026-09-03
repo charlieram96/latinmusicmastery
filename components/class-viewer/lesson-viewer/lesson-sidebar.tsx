@@ -16,6 +16,7 @@ import {
   Lock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/components/language-provider'
 import styles from './lesson-viewer.module.css'
 
 export interface LessonSidebarClass {
@@ -86,6 +87,7 @@ export function LessonSidebar({
   collapsed,
   onToggle,
 }: LessonSidebarProps) {
+  const { t } = useTranslation()
   // 1-based lesson numbering that restarts at 01 within each module.
   const numbered = sections.map((s) => ({
     ...s,
@@ -120,7 +122,7 @@ export function LessonSidebar({
           )}
           <button
             onClick={onToggle}
-            aria-label="Expand menu"
+            aria-label={t('dashboard.classViewer.sidebar.expandMenu')}
             className="grid h-9 w-9 place-items-center rounded-[9px] border border-border bg-raised text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <ChevronsRight className="h-4 w-4" />
@@ -133,7 +135,7 @@ export function LessonSidebar({
                 <Link
                   key={c.id}
                   href={`/dashboard/course/${courseId}/class/${c.id}`}
-                  title={`Lesson ${c.n} — ${c.title}`}
+                  title={t('dashboard.classViewer.sidebar.lessonTitle', { n: c.n, title: c.title })}
                   className={cn(
                     'grid h-9 w-9 place-items-center rounded-[9px] border text-[13px] font-bold font-heading transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                     state === 'active' &&
@@ -159,7 +161,7 @@ export function LessonSidebar({
         {teacherName && (
           <div
             className="flex flex-shrink-0 items-center justify-center border-t border-border px-2 py-3.5"
-            title={`Taught by ${teacherName}`}
+            title={t('dashboard.classViewer.sidebar.taughtByName', { name: teacherName })}
           >
             {teacherImageUrl ? (
               <img
@@ -204,12 +206,12 @@ export function LessonSidebar({
               {courseTitle}
             </div>
             <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
-              Learning pathway
+              {t('dashboard.classViewer.sidebar.learningPathway')}
             </div>
           </div>
           <button
             onClick={onToggle}
-            aria-label="Collapse menu"
+            aria-label={t('dashboard.classViewer.sidebar.collapseMenu')}
             className="grid h-[30px] w-[30px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <ChevronsLeft className="h-4 w-4" />
@@ -248,7 +250,7 @@ export function LessonSidebar({
             )}
             <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
-                Taught by
+                {t('dashboard.classViewer.sidebar.taughtBy')}
               </div>
               <div className="truncate text-sm font-semibold text-foreground">
                 {teacherName}
@@ -276,6 +278,7 @@ function SidebarModule({
   moduleIndex: number
   hasAccess: boolean
 }) {
+  const { t } = useTranslation()
   const containsActive = section.classes.some((c) => c.id === currentClassId)
   const [open, setOpen] = useState(containsActive)
 
@@ -299,7 +302,7 @@ function SidebarModule({
       >
         <div className="min-w-0 flex-1">
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
-            Module {moduleIndex + 1}
+            {t('dashboard.classViewer.sidebar.module', { n: moduleIndex + 1 })}
           </div>
           <div className="mt-1 font-heading text-[14px] font-bold leading-snug tracking-tight">
             {section.title}
@@ -338,7 +341,7 @@ function SidebarModule({
         <div className="overflow-hidden">
           <div className="pb-3 pl-3 pr-1.5">
             <div className="mb-1.5 px-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/80">
-              Lessons
+              {t('dashboard.pages.achievements.overall.lessons')}
             </div>
             {section.classes.map((c) => (
               <LessonRow

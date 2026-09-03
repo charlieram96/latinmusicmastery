@@ -262,12 +262,22 @@ export function CourseDetailView({
             >
               <span className="inline-flex items-center gap-2">
                 <Layers className="h-[15px] w-[15px] text-primary" />
-                {sections.length} module{sections.length !== 1 ? 's' : ''}
+                {t(
+                  sections.length === 1
+                    ? 'dashboard.pages.course.moduleCountOne'
+                    : 'dashboard.pages.course.moduleCountOther',
+                  { count: sections.length },
+                )}
               </span>
               {metaDot}
               <span className="inline-flex items-center gap-2">
                 <BookOpen className="h-[15px] w-[15px] text-primary" />
-                {totalLessons} lesson{totalLessons !== 1 ? 's' : ''}
+                {t(
+                  totalLessons === 1
+                    ? 'dashboard.pages.course.lessonCountOne'
+                    : 'dashboard.pages.course.lessonCountOther',
+                  { count: totalLessons },
+                )}
               </span>
               {metaDot}
               <span className="inline-flex items-center gap-2">
@@ -290,7 +300,9 @@ export function CourseDetailView({
                     className="h-12 rounded-full px-8 text-base shadow-[0_0_40px_-8px_hsl(var(--primary)/0.4)]"
                   >
                     <Plus className="mr-2 h-5 w-5" />
-                    {pending ? 'Adding…' : `Add to my plan (+${formatCents(addonPriceCents)}/mo)`}
+                    {pending
+                      ? t('dashboard.pages.course.adding')
+                      : t('dashboard.pages.course.addToPlan', { price: formatCents(addonPriceCents) })}
                   </Button>
                   {addError && (
                     <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs text-destructive">
@@ -358,7 +370,7 @@ export function CourseDetailView({
               completedItems={completedLessons}
               totalItems={totalLessons}
               remainingDuration={remainingDuration}
-              difficulty={course.difficulty || 'All'}
+              difficulty={course.difficulty ? difficultyLabel : t('dashboard.pages.course.stats.levelAll')}
               difficultyColor={difficultyColor}
             />
           </div>

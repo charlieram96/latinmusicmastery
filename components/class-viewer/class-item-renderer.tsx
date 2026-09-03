@@ -11,13 +11,13 @@ import {
 } from '@/app/actions/playsense-studio'
 import { resolveLegacyAudioUrl } from '@/lib/play-sense/exercise-media'
 import { getQuizQuestions } from '@/app/actions/quiz'
-import { getServerLocale } from '@/lib/i18n/server'
+import { getServerTranslator } from '@/lib/i18n/server'
 import { localizeRows, QUIZ_FIELDS } from '@/lib/i18n/localize'
 import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
 import { ExerciseView } from '@/components/class-viewer/lesson-viewer/exercise-view'
 import { LessonVideoPlayer } from '@/components/class-viewer/lesson-viewer/lesson-video-player'
 import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise'
-import type { SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt'
+import { parseSubtitles } from '@/lib/subtitles/tracks'
 
 // Feature flag — set PLAYSENSE_STUDIO_ENABLED=false in env to roll back to the legacy
 // iframe path even when a class item has a score attached. Default true so
@@ -31,8 +31,7 @@ interface ClassItemRendererProps {
     item_type: string
     soundslice_embed_url: string | null
     video_url: string | null
-    subtitles_en_url: string | null
-    subtitles_es_url: string | null
+    subtitles: unknown
     score_document_id: string | null
     active_time_map_id: string | null
     question: string | null
@@ -53,18 +52,12 @@ interface ClassItemRendererProps {
 }
 
 export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassItemRendererProps) {
-  const locale = await getServerLocale()
+  const { t, locale } = await getServerTranslator()
 
-  // Subtitle tracks for the demo video. Both languages are passed to the
+  // Subtitle tracks for the demo video. Every language is passed to the
   // players (the student can switch independently of the UI locale); the
   // locale only picks which one starts showing.
-  const subtitleTracks: SubtitleTrackDef[] = []
-  if (item.subtitles_en_url) {
-    subtitleTracks.push({ lang: 'en', label: 'English', src: item.subtitles_en_url })
-  }
-  if (item.subtitles_es_url) {
-    subtitleTracks.push({ lang: 'es', label: 'Español', src: item.subtitles_es_url })
-  }
+  const subtitleTracks = parseSubtitles(item.subtitles)
 
   // PlaySense Studio takes priority over the legacy Soundslice iframe whenever a
   // score_document is attached AND we have a media URL to drive the cursor
@@ -262,7 +255,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
               </CardContent>
             </Card>
           ) : null}
-          <QuizRunner classItemId={item.id} questions={quizQuestions} kind="Quiz" />
+          <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Quiz" />
         </>
       )}
 
@@ -276,7 +269,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Dumbbell className="w-5 h-5 text-green-500" />
-                  Exercise
+                  {t('dashboard.pages.modules.exercise')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -313,7 +306,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
 
           {/* Optional comprehension questions authored for the exercise. */}
           {quizQuestions.length > 0 && (
-            <QuizRunner classItemId={item.id} questions={quizQuestions} kind="Exercise" />
+            <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Exercise" />
           )}
         </>
       )}
@@ -324,7 +317,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Music className="w-5 h-5 text-orange-500" />
-              Jam Session
+              {t('dashboard.classViewer.itemTypes.jamSession')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -362,7 +355,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
               )}
               {item.key_signature && (
                 <Badge variant="outline" className="gap-1">
-                  Key: {item.key_signature}
+                  {t('dashboard.classViewer.renderer.key', { key: item.key_signature })}
                 </Badge>
               )}
             </div>

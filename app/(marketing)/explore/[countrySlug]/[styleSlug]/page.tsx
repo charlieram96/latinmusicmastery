@@ -1,16 +1,26 @@
 import type { Metadata } from 'next'
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getServerLocale } from "@/lib/i18n/server";
-import { localizeRow, localizeRows } from "@/lib/i18n/localize";
+import { getServerTranslator } from "@/lib/i18n/server";
+import { localizeRow, localizeRows, pick } from "@/lib/i18n/localize";
+
+function titleFromSlug(slug: string): string {
+  return slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ countrySlug: string; styleSlug: string }> }): Promise<Metadata> {
   const { countrySlug, styleSlug } = await params
-  const country = countrySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-  const style = styleSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+  const { t, locale } = await getServerTranslator()
+  const supabase = await createClient()
+  const [{ data: countryRow }, { data: styleRow }] = await Promise.all([
+    supabase.from('countries').select('name, name_es').eq('slug', countrySlug).maybeSingle(),
+    supabase.from('musical_styles').select('name, name_es').eq('slug', styleSlug).limit(1).maybeSingle(),
+  ])
+  const country = countryRow ? pick(locale, countryRow.name, countryRow.name_es ?? '') : titleFromSlug(countrySlug)
+  const style = styleRow ? pick(locale, styleRow.name, styleRow.name_es ?? '') : titleFromSlug(styleSlug)
   return {
-    title: `${style} - ${country} - Latin Music Mastery`,
-    description: `Discover ${style} courses from ${country}. Learn authentic rhythms, techniques, and traditions.`,
+    title: t('marketing.pages.explore.style.metadata.title', { style, country }),
+    description: t('marketing.pages.explore.style.metadata.description', { style, country }),
   }
 }
 import PageHero from "@/components/marketing/PageHero";
@@ -25,7 +35,7 @@ export default async function StylePage({
 }) {
   const { countrySlug, styleSlug } = await params;
   const supabase = await createClient();
-  const locale = await getServerLocale();
+  const { t, locale } = await getServerTranslator();
 
   const { data: country } = await supabase
     .from("countries")
@@ -66,8 +76,8 @@ export default async function StylePage({
         title={style.name}
         subtitle={style.description ?? undefined}
         breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Explore", href: "/explore" },
+          { label: t("marketing.common.home"), href: "/" },
+          { label: t("nav.explore"), href: "/explore" },
           { label: country.name, href: `/explore/${countrySlug}` },
           { label: style.name },
         ]}
@@ -93,11 +103,10 @@ export default async function StylePage({
           ) : (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-20 text-center">
               <p className="text-lg font-medium text-muted-foreground">
-                No courses available yet
+                {t("marketing.pages.explore.empty.title")}
               </p>
               <p className="mt-2 text-sm text-muted-foreground/70">
-                We are working on adding courses for {style.name}. Check back
-                soon!
+                {t("marketing.pages.explore.style.emptyBody", { style: style.name })}
               </p>
             </div>
           )}

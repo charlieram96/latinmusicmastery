@@ -2,14 +2,15 @@ import type { Metadata } from 'next'
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { getServerLocale } from "@/lib/i18n/server";
-import { localizeRow, localizeSectionTree, pick, COURSE_FIELDS, STYLE_FIELDS, COUNTRY_FIELDS } from "@/lib/i18n/localize";
+import { getServerTranslator } from "@/lib/i18n/server";
+import { localizeRow, localizeSectionTree, localizeTeacher, pick, COURSE_FIELDS, STYLE_FIELDS, COUNTRY_FIELDS } from "@/lib/i18n/localize";
+import { instrumentLabel } from "@/lib/i18n/instruments";
 
 export async function generateMetadata({ params }: { params: Promise<{ courseId: string }> }): Promise<Metadata> {
   const { courseId } = await params
   const { createClient: createServerClient } = await import('@/lib/supabase/server')
   const supabase = await createServerClient()
-  const locale = await getServerLocale()
+  const { t, locale } = await getServerTranslator()
   const { data: course } = await supabase
     .from('courses')
     .select('title, title_es, description, description_es')
@@ -18,8 +19,10 @@ export async function generateMetadata({ params }: { params: Promise<{ courseId:
   const title = course ? pick(locale, course.title, course.title_es) : null
   const description = course ? pick(locale, course.description, course.description_es) : null
   return {
-    title: title ? `${title} - Latin Music Mastery` : 'Course Preview - Latin Music Mastery',
-    description: description ?? 'Preview this Latin music course and explore the curriculum, instructor, and lessons.',
+    title: title
+      ? t('marketing.pages.coursePreview.metadata.titleTemplate', { title })
+      : t('marketing.pages.coursePreview.metadata.fallbackTitle'),
+    description: description ?? t('marketing.pages.coursePreview.metadata.fallbackDescription'),
   }
 }
 import { Lock, BookOpen, BarChart3, User, Music } from "lucide-react";
@@ -42,12 +45,12 @@ export default async function CoursePreviewPage({
   const { courseId } = await params;
   const supabase = await createClient();
 
-  const locale = await getServerLocale();
+  const { t, locale } = await getServerTranslator();
 
   const { data: course } = await supabase
     .from("courses")
     .select(
-      "*, musical_styles(name, name_es, slug, countries(name, name_es, slug)), teachers(id, name, instrument, bio, image_url)"
+      "*, musical_styles(name, name_es, slug, countries(name, name_es, slug)), teachers(id, name, instrument, instrument_es, bio, bio_es, image_url)"
     )
     .eq("id", courseId)
     .single();
@@ -75,8 +78,8 @@ export default async function CoursePreviewPage({
 
   // Build breadcrumbs
   const breadcrumbs: { label: string; href?: string }[] = [
-    { label: "Home", href: "/" },
-    { label: "Explore", href: "/explore" },
+    { label: t("marketing.common.home"), href: "/" },
+    { label: t("nav.explore"), href: "/explore" },
   ];
 
   const style =
@@ -107,6 +110,17 @@ export default async function CoursePreviewPage({
     course.teachers && !Array.isArray(course.teachers)
       ? course.teachers
       : null;
+  localizeTeacher(teacher as Record<string, unknown> | null, locale);
+
+  // Difficulty is a raw DB token (beginner/intermediate/advanced); show a
+  // translated label when we have one, else the raw value.
+  const difficultyKey = course.difficulty
+    ? `marketing.common.difficulty.${course.difficulty.toLowerCase()}`
+    : null;
+  const difficultyLabel =
+    difficultyKey && t(difficultyKey) !== difficultyKey
+      ? t(difficultyKey)
+      : course.difficulty;
 
   // Count total classes
   const totalClasses =
@@ -129,13 +143,13 @@ export default async function CoursePreviewPage({
           {course.instrument && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Music className="h-4 w-4 text-primary" />
-              <span>{course.instrument}</span>
+              <span>{instrumentLabel(course.instrument, locale)}</span>
             </div>
           )}
           {course.difficulty && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <BarChart3 className="h-4 w-4 text-primary" />
-              <span className="capitalize">{course.difficulty}</span>
+              <span className="capitalize">{difficultyLabel}</span>
             </div>
           )}
           {teacher && (
@@ -147,7 +161,12 @@ export default async function CoursePreviewPage({
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <BookOpen className="h-4 w-4 text-primary" />
             <span>
-              {totalClasses} {totalClasses === 1 ? "lesson" : "lessons"}
+              {t(
+                totalClasses === 1
+                  ? "marketing.common.lessonCountOne"
+                  : "marketing.common.lessonCount",
+                { count: totalClasses }
+              )}
             </span>
           </div>
         </div>
@@ -158,7 +177,7 @@ export default async function CoursePreviewPage({
         <div className="mx-auto max-w-7xl px-6 py-16">
           <SectionWrapper>
             <h2 className="mb-4 text-2xl font-bold tracking-tight">
-              About This Course
+              {t("marketing.pages.coursePreview.about")}
             </h2>
             <p className="max-w-3xl text-muted-foreground leading-relaxed">
               {course.description}
@@ -172,7 +191,7 @@ export default async function CoursePreviewPage({
         <div className="mx-auto max-w-7xl px-6 pb-16">
           <SectionWrapper>
             <h2 className="mb-6 text-2xl font-bold tracking-tight">
-              Curriculum Preview
+              {t("marketing.pages.coursePreview.curriculum")}
             </h2>
             <div className="rounded-2xl border bg-card">
               <Accordion type="multiple" className="w-full">
@@ -193,8 +212,12 @@ export default async function CoursePreviewPage({
                             {section.title}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {classes.length}{" "}
-                            {classes.length === 1 ? "lesson" : "lessons"}
+                            {t(
+                              classes.length === 1
+                                ? "marketing.common.lessonCountOne"
+                                : "marketing.common.lessonCount",
+                              { count: classes.length }
+                            )}
                           </span>
                         </div>
                       </AccordionTrigger>
@@ -217,7 +240,7 @@ export default async function CoursePreviewPage({
                               className="flex items-center gap-3 rounded-lg bg-secondary/10 px-4 py-2.5 text-sm text-muted-foreground/60"
                             >
                               <Lock className="h-4 w-4 shrink-0" />
-                              <span>Sign up to access</span>
+                              <span>{t("marketing.pages.coursePreview.signUpToAccess")}</span>
                             </li>
                           ))}
                         </ul>
@@ -236,7 +259,7 @@ export default async function CoursePreviewPage({
         <div className="mx-auto max-w-7xl px-6 pb-16">
           <SectionWrapper>
             <h2 className="mb-6 text-2xl font-bold tracking-tight">
-              Your Instructor
+              {t("marketing.pages.coursePreview.yourInstructor")}
             </h2>
             <div className="flex flex-col items-start gap-6 rounded-2xl border bg-card p-6 sm:flex-row sm:items-center">
               {teacher.image_url ? (

@@ -6,12 +6,13 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { updateClassItem } from '@/app/actions/course-builder'
 import { VideoUpload } from '../video-upload'
-import { SubtitleUpload } from '../subtitle-upload'
+import { SubtitleTracksEditor } from '../subtitle-tracks-editor'
 import { QuizQuestionsEditor } from '../quiz-questions-editor'
 import { JamSessionEditor } from '../jam-session-editor'
 import { TiptapEditor } from '../tiptap-editor'
 import { PlaysenseStudioScoreAttach } from '../playsense-studio-score-attach'
 import type { ClassItem } from '@/types/modules'
+import type { StoredSubtitle } from '@/lib/subtitles/tracks'
 import { useAutosave } from './use-autosave'
 import { useSaveStatus } from './save-status'
 import { ItemSaveProvider, useItemSave } from './item-save-context'
@@ -106,10 +107,9 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
     saveNow({ video_url: url })
   }
 
-  const handleSubtitleChanged = (lang: 'en' | 'es') => (url: string | null) => {
-    const col = lang === 'en' ? 'subtitles_en_url' : 'subtitles_es_url'
-    onPatched({ [col]: url } as Partial<ClassItem>)
-    saveNow({ [col]: url })
+  const handleSubtitlesChange = (next: StoredSubtitle[]) => {
+    onPatched({ subtitles: next })
+    saveNow({ subtitles: next })
   }
 
   const handleJamChange = (data: {
@@ -188,17 +188,10 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
           {item.video_url && (
             <div className="space-y-2">
               <SectionLabel>Subtitles</SectionLabel>
-              <SubtitleUpload
+              <SubtitleTracksEditor
                 itemId={item.id}
-                lang="en"
-                currentUrl={item.subtitles_en_url}
-                onChanged={handleSubtitleChanged('en')}
-              />
-              <SubtitleUpload
-                itemId={item.id}
-                lang="es"
-                currentUrl={item.subtitles_es_url}
-                onChanged={handleSubtitleChanged('es')}
+                tracks={item.subtitles ?? []}
+                onChange={handleSubtitlesChange}
               />
             </div>
           )}
@@ -245,17 +238,10 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
               {item.video_url && (
                 <div className="space-y-2">
                   <SectionLabel>Subtitles</SectionLabel>
-                  <SubtitleUpload
+                  <SubtitleTracksEditor
                     itemId={item.id}
-                    lang="en"
-                    currentUrl={item.subtitles_en_url}
-                    onChanged={handleSubtitleChanged('en')}
-                  />
-                  <SubtitleUpload
-                    itemId={item.id}
-                    lang="es"
-                    currentUrl={item.subtitles_es_url}
-                    onChanged={handleSubtitleChanged('es')}
+                    tracks={item.subtitles ?? []}
+                    onChange={handleSubtitlesChange}
                   />
                 </div>
               )}

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { heroTextReveal, fadeInUp, floatAnimation } from "@/lib/animation-variants";
 import GradientText from "@/components/marketing/GradientText";
 import BreadcrumbNav from "@/components/marketing/BreadcrumbNav";
+import { useTranslation } from "@/components/language-provider";
 
 interface PageHeroProps {
   title: string;
@@ -38,6 +39,7 @@ export default function PageHero({
   showBackButton = false,
   backgroundImage,
 }: PageHeroProps) {
+  const { t } = useTranslation();
   const backTarget = showBackButton ? getBackTarget(breadcrumbs) : null;
   // Split the title to apply gradient to the last word
   const words = title.split(" ");
@@ -108,7 +110,7 @@ export default function PageHero({
             className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/80 px-4 py-2 text-sm font-medium text-muted-foreground shadow-lg backdrop-blur-md transition-colors hover:border-border hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to {backTarget.label}</span>
+            <span>{t("marketing.common.backTo", { label: backTarget.label })}</span>
           </Link>
         </motion.div>
       )}

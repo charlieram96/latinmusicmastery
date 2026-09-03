@@ -9,6 +9,13 @@ import {
 import { formatCents, type PricingMap } from '@/lib/payments/pricing-types'
 import { ManageSubscriptionButton } from '@/components/manage-subscription-button'
 import { removeCourseFromSubscription, cancelInstrument } from '@/app/actions/billing'
+import { useTranslation } from '@/components/language-provider'
+import { instrumentLabel } from '@/lib/i18n/instruments'
+import type { Locale } from '@/lib/i18n'
+
+// Placeholder we split translated copy on so part of it can be wrapped in <strong>.
+const SPLIT_TOKEN = '{{x}}'
+const KNOWN_STATUSES = ['active', 'trialing', 'past_due', 'canceled']
 
 interface CourseRef {
   id: string
@@ -41,17 +48,27 @@ interface SubscriptionViewProps {
   prices: PricingMap
 }
 
-function fmtDate(iso: string | null): string {
+function fmtDate(iso: string | null, locale: Locale): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  return new Date(iso).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: SubscriptionViewProps) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const { t, locale } = useTranslation()
+
+  const statusLabel = (status: string) =>
+    KNOWN_STATUSES.includes(status) ? t(`dashboard.pages.subscription.status.${status}`) : status
+  const [startBodyBefore, startBodyAfter] = t('dashboard.pages.subscription.startInstrument.body', {
+    price: SPLIT_TOKEN,
+  }).split(SPLIT_TOKEN)
+  const [portalBefore, portalAfter] = t('dashboard.pages.subscription.portalNote', {
+    manage: SPLIT_TOKEN,
+  }).split(SPLIT_TOKEN)
 
   function handleRemoveCourse(courseId: string) {
-    if (!confirm('Remove this course from your plan? This will reduce your monthly bill.')) return
+    if (!confirm(t('dashboard.pages.subscription.confirmRemoveCourse'))) return
     setError(null)
     startTransition(async () => {
       const res = await removeCourseFromSubscription(courseId)
@@ -60,7 +77,14 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
   }
 
   function handleCancelInstrument(instrument: string) {
-    if (!confirm(`Cancel your ${instrument} subscription at the end of the current period? You'll keep access until then.`)) return
+    if (
+      !confirm(
+        t('dashboard.pages.subscription.confirmCancelInstrument', {
+          instrument: instrumentLabel(instrument, locale),
+        }),
+      )
+    )
+      return
     setError(null)
     startTransition(async () => {
       const res = await cancelInstrument(instrument)
@@ -72,20 +96,22 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
     return (
       <div className="max-w-3xl mx-auto p-6 md:p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">My subscription</h1>
-          <p className="mt-2 text-muted-foreground">
-            You don&apos;t have any active subscriptions yet.
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.pages.subscription.title')}</h1>
+          <p className="mt-2 text-muted-foreground">{t('dashboard.pages.subscription.noneYet')}</p>
         </div>
         <div className="rounded-2xl border bg-card p-8 text-center">
           <Crown className="mx-auto mb-3 h-8 w-8 text-primary" />
-          <h2 className="mb-2 text-lg font-semibold">Start an instrument</h2>
+          <h2 className="mb-2 text-lg font-semibold">{t('dashboard.pages.subscription.startInstrument.title')}</h2>
           <p className="mb-6 text-sm text-muted-foreground">
-            Get the instrument&apos;s fundamentals course plus one genre course from{' '}
-            <strong>{formatCents(prices.base_monthly.amount_cents)}/mo</strong>.
+            {startBodyBefore}
+            <strong>
+              {formatCents(prices.base_monthly.amount_cents)}
+              {t('dashboard.pages.subscribe.perMonth')}
+            </strong>
+            {startBodyAfter}
           </p>
           <Button asChild size="lg">
-            <Link href="/dashboard/subscribe">Choose a plan</Link>
+            <Link href="/dashboard/subscribe">{t('dashboard.pages.subscription.empty.cta')}</Link>
           </Button>
         </div>
       </div>
@@ -95,10 +121,8 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
   return (
     <div className="max-w-4xl mx-auto p-6 md:p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">My subscription</h1>
-        <p className="mt-2 text-muted-foreground">
-          One subscription per instrument. Add more genres any time.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.pages.subscription.title')}</h1>
+        <p className="mt-2 text-muted-foreground">{t('dashboard.pages.subscription.intro')}</p>
       </div>
 
       {error && (
@@ -129,21 +153,29 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
                     <Music className="h-4 w-4" />
                   </span>
                   <div>
-                    <h2 className="font-semibold leading-tight">{sub.instrument}</h2>
+                    <h2 className="font-semibold leading-tight">{instrumentLabel(sub.instrument, locale)}</h2>
                     <p className="text-xs text-muted-foreground">
-                      {monthly ? 'Monthly' : 'Annual'} · {sub.status}
-                      {isCanceling && ' · cancels at period end'}
+                      {monthly ? t('dashboard.pages.subscribe.monthly') : t('dashboard.pages.subscribe.annual')} ·{' '}
+                      {statusLabel(sub.status)}
+                      {isCanceling && ` · ${t('dashboard.pages.subscription.cancelsAtPeriodEnd')}`}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold">{formatCents(periodTotalCents)}{monthly ? '/mo' : '/yr'}</div>
+                  <div className="font-bold">
+                    {formatCents(periodTotalCents)}
+                    {monthly ? t('dashboard.pages.subscribe.perMonth') : t('dashboard.pages.subscribe.perYear')}
+                  </div>
                   <div className="text-xs text-muted-foreground">
-                    Next renewal: {fmtDate(sub.base_current_period_end)}
+                    {t('dashboard.pages.subscription.nextRenewal', {
+                      date: fmtDate(sub.base_current_period_end, locale),
+                    })}
                   </div>
                   {!monthly && sub.stripe_addon_subscription_id && (
                     <div className="text-xs text-muted-foreground">
-                      Add-on renewal: {fmtDate(sub.addon_current_period_end)}
+                      {t('dashboard.pages.subscription.addonRenewal', {
+                        date: fmtDate(sub.addon_current_period_end, locale),
+                      })}
                     </div>
                   )}
                 </div>
@@ -159,17 +191,17 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
                           {fundamentals.title}
                         </Link>
                       </div>
-                      <div className="text-xs text-muted-foreground">Fundamentals · included</div>
+                      <div className="text-xs text-muted-foreground">{t('dashboard.pages.subscription.fundamentalsIncluded')}</div>
                     </div>
                     <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary">
-                      Included
+                      {t('dashboard.pages.subscribe.included')}
                     </span>
                   </div>
                 )}
 
                 {/* Genre courses */}
                 {courses.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">No genre courses on this plan yet.</p>
+                  <p className="text-sm text-muted-foreground italic">{t('dashboard.pages.subscription.noGenreCourses')}</p>
                 ) : (
                   courses.map((course, idx) => {
                     const isFirstGenre = idx === 0 // first genre is bundled into the base
@@ -183,8 +215,10 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {isFirstGenre
-                              ? 'Genre · included with base'
-                              : `Genre · +${formatCents(prices.addon_monthly.amount_cents)}/mo`}
+                              ? t('dashboard.pages.subscription.genreIncludedWithBase')
+                              : t('dashboard.pages.subscription.genreAddon', {
+                                  price: `${formatCents(prices.addon_monthly.amount_cents)}${t('dashboard.pages.subscribe.perMonth')}`,
+                                })}
                           </div>
                         </div>
                         <Button
@@ -192,7 +226,11 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
                           size="sm"
                           disabled={pending}
                           onClick={() => handleRemoveCourse(course.id)}
-                          title={isFirstGenre ? 'Removing the last genre cancels the instrument' : 'Remove this genre'}
+                          title={
+                            isFirstGenre
+                              ? t('dashboard.pages.subscription.removeLastGenre')
+                              : t('dashboard.pages.subscription.removeGenre')
+                          }
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -205,7 +243,7 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
               <div className="border-t bg-muted/20 px-6 py-3 flex flex-wrap items-center justify-between gap-2">
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/dashboard/subscribe?instrument=${encodeURIComponent(sub.instrument)}`}>
-                    <Plus className="mr-1 h-3.5 w-3.5" /> Add a genre
+                    <Plus className="mr-1 h-3.5 w-3.5" /> {t('dashboard.pages.subscription.addGenre')}
                   </Link>
                 </Button>
                 <div className="flex items-center gap-2">
@@ -218,7 +256,7 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
                       onClick={() => handleCancelInstrument(sub.instrument)}
                       className="text-destructive hover:text-destructive"
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </Button>
                   )}
                 </div>
@@ -230,7 +268,9 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
 
       <p className="mt-6 text-xs text-muted-foreground">
         <CreditCard className="mr-1 inline h-3 w-3" />
-        Payment details and invoices are managed in the Stripe customer portal — click <strong>Manage</strong> above.
+        {portalBefore}
+        <strong>{t('dashboard.pages.subscription.manage')}</strong>
+        {portalAfter}
       </p>
     </div>
   )

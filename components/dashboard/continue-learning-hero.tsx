@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { AnimatedSection } from '@/components/dashboard/animated-section'
 import type { ContinueLearningHeroProps } from '@/types/dashboard'
+import { useTranslation } from '@/components/language-provider'
 
 export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps) {
+  const { t } = useTranslation()
   /* ── New user / nothing in progress → quiet "pick a course" bar ── */
   if (!continueData) {
     return (
@@ -18,16 +20,15 @@ export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-semibold text-foreground">
-              Pick your first course
+              {t('dashboard.pages.home.pickFirstCourse')}
             </div>
             <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">
-              Choose an instrument and a genre to start your journey — your
-              progress saves automatically.
+              {t('dashboard.pages.home.pickFirstCourseBody')}
             </p>
           </div>
           <Button asChild className="flex-shrink-0 rounded-full">
             <Link href="/dashboard/courses">
-              Browse courses
+              {t('dashboard.pages.myCourses.browseCourses')}
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
@@ -67,7 +68,7 @@ export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps
           {/* Body */}
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-5 py-5 sm:px-6">
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
-              Continue learning
+              {t('dashboard.pages.home.continueLearning')}
             </span>
             <h3 className="mt-1 line-clamp-2 font-heading text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl">
               {continueData.courseTitle}
@@ -81,11 +82,11 @@ export function ContinueLearningHero({ continueData }: ContinueLearningHeroProps
             <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
               <Button className="w-fit flex-shrink-0 rounded-full" tabIndex={-1}>
                 <Play className="h-4 w-4 fill-current" />
-                Resume lesson
+                {t('dashboard.pages.home.resumeLesson')}
               </Button>
               <div className="min-w-0 flex-1">
                 <div className="mb-1.5 flex items-center justify-between text-[11.5px] tabular-nums text-muted-foreground">
-                  <span>Course progress</span>
+                  <span>{t('dashboard.pages.home.courseProgress')}</span>
                   <span>{continueData.pct}%</span>
                 </div>
                 <Progress

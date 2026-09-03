@@ -7,12 +7,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useTranslation } from '@/components/language-provider'
 
 interface HeaderStreakClientProps {
   streak: number
 }
 
 export function HeaderStreakClient({ streak }: HeaderStreakClientProps) {
+  const { t } = useTranslation()
   const hasStreak = streak > 0
 
   return (
@@ -33,8 +35,11 @@ export function HeaderStreakClient({ streak }: HeaderStreakClientProps) {
         <TooltipContent>
           <p>
             {hasStreak
-              ? `${streak} day${streak > 1 ? 's' : ''} learning streak!`
-              : 'Start learning to build your streak!'}
+              ? t(
+                  streak === 1 ? 'dashboard.header.streak.tooltipOne' : 'dashboard.header.streak.tooltipOther',
+                  { count: streak },
+                )
+              : t('dashboard.header.streak.empty')}
           </p>
         </TooltipContent>
       </Tooltip>

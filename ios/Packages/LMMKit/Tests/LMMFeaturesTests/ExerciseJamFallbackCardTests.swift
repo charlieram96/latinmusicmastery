@@ -43,7 +43,7 @@ final class ExerciseJamFallbackCardTests: XCTestCase {
             id: UUID(), classId: UUID(), itemType: .exercise, title: "Exercise", titleEs: nil,
             description: nil, descriptionEs: nil, orderIndex: 0, richContent: nil,
             videoUrl: nil, videoDurationSeconds: nil, audioUrl: audioUrl, soundsliceEmbedUrl: nil,
-            subtitlesEnUrl: nil, subtitlesEsUrl: nil, bpm: nil, keySignature: nil,
+            subtitles: nil, bpm: nil, keySignature: nil,
             scoreDocumentId: nil, activeTimeMapId: nil, exerciseTimeMapId: nil,
             exerciseVideoUrl: nil, exerciseVideoStartSeconds: 0, question: nil, questionType: nil,
             options: nil, correctAnswer: nil, explanation: nil, createdAt: nil, updatedAt: nil

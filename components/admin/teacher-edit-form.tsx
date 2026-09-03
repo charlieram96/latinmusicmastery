@@ -27,7 +27,9 @@ interface Teacher {
   id: string
   name: string
   instrument: string
+  instrument_es?: string | null
   bio: unknown
+  bio_es?: unknown
   email: string | null
   image_url: string | null
   specialties: string[] | null
@@ -57,6 +59,11 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
       ? (teacher.bio as BioDoc)
       : null
   )
+  const [bioEsDoc, setBioEsDoc] = useState<BioDoc | null>(
+    teacher?.bio_es && typeof teacher.bio_es === 'object'
+      ? (teacher.bio_es as BioDoc)
+      : null
+  )
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -66,6 +73,7 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
     const formData = new FormData(e.currentTarget)
     const name = (formData.get('name') as string).trim()
     const instrument = (formData.get('instrument') as string).trim()
+    const instrumentEs = ((formData.get('instrument_es') as string) || '').trim()
     const email = (formData.get('email') as string).trim()
     const specialtiesRaw = formData.get('specialties') as string
 
@@ -77,7 +85,9 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
     const payload = {
       name,
       instrument,
+      instrument_es: instrumentEs || null,
       bio: (isEmptyDoc(bioDoc) ? null : bioDoc) as Json | null,
+      bio_es: (isEmptyDoc(bioEsDoc) ? null : bioEsDoc) as Json | null,
       email: email || null,
       image_url: imageUrl || null,
       specialties,
@@ -166,6 +176,16 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
               </div>
 
               <div className="grid gap-2">
+                <Label htmlFor="instrument_es" className="text-muted-foreground">Instrument (Español)</Label>
+                <Input
+                  id="instrument_es"
+                  name="instrument_es"
+                  defaultValue={teacher?.instrument_es || ''}
+                  placeholder="e.g., Percusión, Timbal (optional — auto-translated when empty)"
+                />
+              </div>
+
+              <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -184,6 +204,17 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
                 />
                 <p className="text-xs text-muted-foreground">
                   Supports rich formatting — headings, lists, links, images, and video.
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="bio_es" className="text-muted-foreground">Bio (Español)</Label>
+                <TiptapEditor
+                  content={bioEsDoc}
+                  onChange={(next) => setBioEsDoc(next)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Shown to students who use the site in Spanish. Falls back to the English bio when empty.
                 </p>
               </div>
 

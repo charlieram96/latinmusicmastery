@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getServerLocale } from '@/lib/i18n/server'
+import { getServerTranslator } from '@/lib/i18n/server'
 import { localizeCourse, localizeSectionTree } from '@/lib/i18n/localize'
 import { MyCoursesView } from './my-courses-view'
 
@@ -44,7 +44,7 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
     `)
     .eq('user_id', user.id)
 
-  const locale = await getServerLocale()
+  const { t, locale } = await getServerTranslator()
   for (const enrollment of enrollments ?? []) {
     const course = (enrollment as any).course as Record<string, unknown> | null
     if (!course) continue
@@ -121,9 +121,9 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
           const classItemIds = (cls.items || []).map((item: any) => item.id)
           const allComplete = classItemIds.length > 0 && classItemIds.every((id: string) => completedItemIds.has(id))
           if (!allComplete) {
-            currentSectionTitle = section.title || `Module ${si + 1}`
+            currentSectionTitle = section.title || t('dashboard.pages.myCourses.moduleFallback', { number: si + 1 })
             currentSectionIndex = si + 1
-            currentClassTitle = cls.title || 'Untitled Class'
+            currentClassTitle = cls.title || t('dashboard.pages.myCourses.untitledClass')
             currentClassId = cls.id
             found = true
             break
@@ -134,11 +134,11 @@ export default async function MyCoursesPage({ searchParams }: PageProps) {
       // Fallback to first section/class if nothing found (e.g. 0 progress)
       if (!found && sortedSections.length > 0) {
         const firstSection = sortedSections[0]
-        currentSectionTitle = firstSection.title || 'Module 1'
+        currentSectionTitle = firstSection.title || t('dashboard.pages.myCourses.moduleFallback', { number: 1 })
         currentSectionIndex = 1
         const firstClass = firstSection.classes?.[0]
         if (firstClass) {
-          currentClassTitle = firstClass.title || 'Untitled Class'
+          currentClassTitle = firstClass.title || t('dashboard.pages.myCourses.untitledClass')
           currentClassId = firstClass.id
         }
       }

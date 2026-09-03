@@ -18,8 +18,8 @@ public struct ClassItem: Codable, Identifiable, Equatable, Sendable {
     public let videoDurationSeconds: Int?
     public let audioUrl: String?
     public let soundsliceEmbedUrl: String?
-    public let subtitlesEnUrl: String?
-    public let subtitlesEsUrl: String?
+    /// Raw `subtitles` jsonb (array of `{lang, src}`); read it through `ClassItemSubtitle.parse`.
+    public let subtitles: JSONValue?
     public let bpm: Int?
     public let keySignature: String?
     public let scoreDocumentId: UUID?
@@ -49,8 +49,7 @@ public struct ClassItem: Codable, Identifiable, Equatable, Sendable {
         case videoDurationSeconds = "video_duration_seconds"
         case audioUrl = "audio_url"
         case soundsliceEmbedUrl = "soundslice_embed_url"
-        case subtitlesEnUrl = "subtitles_en_url"
-        case subtitlesEsUrl = "subtitles_es_url"
+        case subtitles
         case bpm
         case keySignature = "key_signature"
         case scoreDocumentId = "score_document_id"

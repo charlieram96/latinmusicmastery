@@ -285,7 +285,7 @@ export function TransportBar({
             </button>
             {captionsOpen && (
               <div
-                className="absolute bottom-full right-0 z-40 mb-2 min-w-[110px] overflow-hidden rounded-lg border border-border bg-popover/95 p-1 shadow-lg backdrop-blur"
+                className="absolute bottom-full right-0 z-40 mb-2 max-h-64 min-w-[110px] overflow-y-auto rounded-lg border border-border bg-popover/95 p-1 shadow-lg backdrop-blur"
                 onMouseLeave={() => setCaptionsOpen(false)}
               >
                 {[

@@ -58,10 +58,10 @@ export interface ClassItem {
   video_url: string | null
   video_duration_seconds: number | null
   soundslice_embed_url: string | null
-  // WebVTT subtitle tracks (both kept so the player can offer both languages;
-  // not a localize _es overlay pair — never add these to ITEM_FIELDS).
-  subtitles_en_url: string | null
-  subtitles_es_url: string | null
+  // WebVTT subtitle tracks, up to MAX_SUBTITLE_TRACKS of { lang, src }. Every
+  // language is kept so the player can offer them all; not a localize _es
+  // overlay pair — never add this to ITEM_FIELDS.
+  subtitles: { lang: string; src: string }[]
 
   // QUIZ/EXERCISE fields
   question: string | null

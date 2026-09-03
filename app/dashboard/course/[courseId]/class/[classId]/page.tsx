@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { Clock, BarChart3 } from 'lucide-react'
 import styles from '@/components/class-viewer/lesson-viewer/lesson-viewer.module.css'
 import { createClient } from '@/lib/supabase/server'
-import { getServerLocale } from '@/lib/i18n/server'
+import { getServerTranslator } from '@/lib/i18n/server'
 import { localizeRow, localizeRows, CLASS_FIELDS, SECTION_FIELDS, COURSE_FIELDS, STYLE_FIELDS, ITEM_FIELDS } from '@/lib/i18n/localize'
 import { getCourseStructureForStudent } from '@/app/actions/course-student'
 import { getComments } from '@/app/actions/comments'
@@ -79,7 +79,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
 
   // Localize the directly-fetched class/section/course to the viewer's language.
   // (The sidebar structure is localized separately in getCourseStructureForStudent.)
-  const locale = await getServerLocale()
+  const { t, locale } = await getServerTranslator()
   localizeRow(classData as Record<string, unknown>, locale, CLASS_FIELDS)
   localizeRows(classData.items as Record<string, unknown>[], locale, ITEM_FIELDS)
   localizeRow(classData.section as Record<string, unknown>, locale, SECTION_FIELDS)
@@ -209,9 +209,12 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const comments = commentsResult.data || []
 
   const durationLabel = formatDuration(activeItem?.video_duration_seconds ?? null)
-  const levelLabel = course.difficulty
-    ? String(course.difficulty).charAt(0).toUpperCase() + String(course.difficulty).slice(1)
-    : null
+  const difficulty = course.difficulty ? String(course.difficulty).toLowerCase() : null
+  const levelLabel = !difficulty
+    ? null
+    : ['beginner', 'intermediate', 'advanced'].includes(difficulty)
+      ? t(`dashboard.pages.course.difficulty.${difficulty}`)
+      : difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
 
   // Lesson description lives below the video (not in the sidebar / header).
   // Prefer the lesson's own description; fall back to the section's.
@@ -280,7 +283,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         {lessonDescription && (
           <div className="mb-10">
             <div className="mb-3 font-heading text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground">
-              About this lesson
+              {t('dashboard.pages.modules.aboutLesson')}
             </div>
             <div className="space-y-3">
               {lessonDescription

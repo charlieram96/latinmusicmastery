@@ -624,7 +624,9 @@ export async function createTeacher(formData: FormData) {
   const data = {
     name: formData.get('name') as string,
     instrument: formData.get('instrument') as string,
+    instrument_es: (formData.get('instrument_es') as string) || null,
     bio: formData.get('bio') as string || null,
+    bio_es: (formData.get('bio_es') as string) || null,
     email: formData.get('email') as string || null,
     image_url: formData.get('image_url') as string || null,
     specialties,
@@ -652,7 +654,9 @@ export async function updateTeacher(id: string, formData: FormData) {
   const data = {
     name: formData.get('name') as string,
     instrument: formData.get('instrument') as string,
+    instrument_es: (formData.get('instrument_es') as string) || null,
     bio: formData.get('bio') as string || null,
+    bio_es: (formData.get('bio_es') as string) || null,
     email: formData.get('email') as string || null,
     image_url: formData.get('image_url') as string || null,
     specialties,
@@ -978,8 +982,10 @@ export async function createInstrument(formData: FormData) {
 
   const data = {
     name: formData.get('name') as string,
+    name_es: (formData.get('name_es') as string) || null,
     slug: formData.get('slug') as string,
     description: formData.get('description') as string || null,
+    description_es: (formData.get('description_es') as string) || null,
     image_url: formData.get('image_url') as string || null,
     country_id: countryIdValue && countryIdValue !== '' ? countryIdValue : null,
   }
@@ -1015,8 +1021,10 @@ export async function updateInstrument(id: string, formData: FormData) {
 
   const data = {
     name: formData.get('name') as string,
+    name_es: (formData.get('name_es') as string) || null,
     slug: formData.get('slug') as string,
     description: formData.get('description') as string || null,
+    description_es: (formData.get('description_es') as string) || null,
     image_url: formData.get('image_url') as string || null,
     country_id: countryIdValue && countryIdValue !== '' ? countryIdValue : null,
   }

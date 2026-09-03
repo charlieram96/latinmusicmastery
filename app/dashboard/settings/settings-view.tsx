@@ -16,6 +16,7 @@ import {
 import { User, Bell, Lock, Globe, Trash2 } from 'lucide-react'
 import { ThemePreference } from '@/components/settings/theme-preference'
 import { useTranslation } from '@/components/language-provider'
+import { LOCALES, LOCALE_LABELS, type Locale } from '@/lib/i18n'
 
 interface SettingsViewProps {
   fullName: string
@@ -23,7 +24,7 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ fullName, email }: SettingsViewProps) {
-  const { t } = useTranslation()
+  const { t, locale, setLocale } = useTranslation()
 
   return (
     <>
@@ -150,14 +151,16 @@ export function SettingsView({ fullName, email }: SettingsViewProps) {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="language">{t('dashboard.pages.settings.preferences.languageLabel')}</Label>
-            <Select defaultValue="en">
+            <Select value={locale} onValueChange={(value) => setLocale(value as Locale)}>
               <SelectTrigger id="language">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="es">Español</SelectItem>
-                <SelectItem value="pt">Português</SelectItem>
+                {LOCALES.map((code) => (
+                  <SelectItem key={code} value={code}>
+                    {LOCALE_LABELS[code]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
