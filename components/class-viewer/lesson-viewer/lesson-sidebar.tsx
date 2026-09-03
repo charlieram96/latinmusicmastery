@@ -390,7 +390,7 @@ function LessonRow({
       <Link
         href={`/dashboard/course/${courseId}/class/${cls.id}`}
         className={cn(
-          'flex flex-1 items-center gap-3 rounded-xl pr-2 transition-colors duration-150',
+          'flex min-w-0 flex-1 items-center gap-3 rounded-xl pr-2 transition-colors duration-150',
           state === 'active'
             ? 'bg-primary/[0.1]'
             : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',

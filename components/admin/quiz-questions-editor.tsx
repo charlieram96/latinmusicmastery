@@ -81,6 +81,7 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
           image_url: q.image_url,
           question_es: q.question_es,
           explanation_es: q.explanation_es,
+          options_es: q.options_es,
         })
       )
       promise.finally(() => {
@@ -217,6 +218,7 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
                   patchQuestion(q.id, {
                     question_type: v as QuestionType,
                     options: null,
+                    options_es: null,
                     correct_answer: '',
                     audio_url: null,
                     image_url: null,
@@ -242,6 +244,7 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
               question={q.question}
               questionEs={q.question_es ?? ''}
               options={q.options}
+              optionsEs={q.options_es}
               correctAnswer={q.correct_answer ?? ''}
               audioUrl={q.audio_url ?? ''}
               imageUrl={q.image_url ?? ''}
