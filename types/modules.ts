@@ -91,7 +91,11 @@ export interface QuizQuestion {
   explanation: string | null
   question_es: string | null
   explanation_es: string | null
-  options_es: QuestionOptions | null
+  // Spanish overlay for `options`: mirrors its lists by entry id but carries
+  // only translated strings (see lib/quiz/options-es.ts and
+  // mergeLocalizedOptions in lib/i18n/localize.ts), so it is a loose record,
+  // not a full QuestionOptions.
+  options_es: Record<string, unknown> | null
   // Primary media (per-option/per-piece media lives inside `options`):
   // audio_choice → prompt clip; piece_placement → background image.
   audio_url: string | null
