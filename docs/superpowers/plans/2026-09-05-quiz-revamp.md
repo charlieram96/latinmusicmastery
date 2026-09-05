@@ -3803,7 +3803,7 @@ const start = { x: 40, y: 40, width: 20, height: 10 }
 
 describe('snap', () => {
   it('rounds to the step, or to a tenth when unsnapped', () => {
-    expect(snap(41.2, 2.5)).toBe(42.5)
+    expect(snap(41.3, 2.5)).toBe(42.5)
     expect(snap(41.24, null)).toBe(41.2)
   })
 })
