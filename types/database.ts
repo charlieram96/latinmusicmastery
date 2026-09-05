@@ -295,6 +295,7 @@ export type Database = {
           order_index: number
           question: string | null
           question_type: string | null
+          quiz_settings: Json
           rich_content: Json | null
           score_document_id: string | null
           soundslice_embed_url: string | null
@@ -325,6 +326,7 @@ export type Database = {
           order_index?: number
           question?: string | null
           question_type?: string | null
+          quiz_settings?: Json
           rich_content?: Json | null
           score_document_id?: string | null
           soundslice_embed_url?: string | null
@@ -355,6 +357,7 @@ export type Database = {
           order_index?: number
           question?: string | null
           question_type?: string | null
+          quiz_settings?: Json
           rich_content?: Json | null
           score_document_id?: string | null
           soundslice_embed_url?: string | null

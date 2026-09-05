@@ -180,3 +180,16 @@ describe('localizeRow – quiz options overlay', () => {
     })
   })
 })
+
+describe('mergeLocalizedOptions – piece placement composition', () => {
+  it('keeps the background composition structural (only piece labels overlay)', () => {
+    const en = {
+      background: { color: '#0A0A0A', aspect: 1.6, layers: [{ id: 'l1', imageUrl: 'riser.png', x: 20, y: 5, width: 60, height: 30 }] },
+      pieces: [{ id: 'p1', label: 'Congas', imageUrl: 'c.png', width: 12, area: { x: 1, y: 2, width: 3, height: 4 } }],
+    }
+    const es = { pieces: [{ id: 'p1', label: 'Congas (ES)' }] }
+    const out = mergeLocalizedOptions(en, es) as typeof en
+    expect(out.background).toEqual(en.background)
+    expect(out.pieces[0]).toEqual({ ...en.pieces[0], label: 'Congas (ES)' })
+  })
+})
