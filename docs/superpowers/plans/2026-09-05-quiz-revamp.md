@@ -1376,7 +1376,7 @@ import { useReducedMotion } from 'framer-motion'
 import { useMemo } from 'react'
 import styles from './quiz.module.css'
 
-const COLORS = ['hsl(var(--success))', 'hsl(var(--gold-highlight))', 'hsl(var(--primary))', '#F5E6C8']
+const COLORS = ['hsl(var(--success))', 'hsl(var(--gold-highlight))', 'hsl(var(--primary))', 'hsl(var(--foreground) / 0.8)']
 
 /** Small confetti burst from the center of its (position: relative) parent. Deterministic, SSR-safe, skipped under reduced motion. */
 export function Burst({ count = 14, spread = 64 }: { count?: number; spread?: number }) {
@@ -3125,7 +3125,7 @@ export function ScoreRing({ pct, size = 156, stroke = 13 }: { pct: number; size?
 import { motion, useReducedMotion } from 'framer-motion'
 import { useMemo } from 'react'
 
-const COLORS = ['hsl(var(--gold-highlight))', 'hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--terracotta))', '#F5E6C8']
+const COLORS = ['hsl(var(--gold-highlight))', 'hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--terracotta))', 'hsl(var(--foreground) / 0.8)']
 
 /** Deterministic framer-motion confetti (SSR-safe). Skipped under reduced motion. */
 export function Confetti({ count = 70 }: { count?: number }) {
