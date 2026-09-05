@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/components/language-provider'
+import { readComposition, readPieces } from '@/lib/quiz/composition'
 import {
   norm,
   shuffleStable,
@@ -16,7 +17,6 @@ import {
   type OrderItem,
   type Pair,
   type PiecePlacement,
-  type PlacementPiece,
 } from '@/lib/quiz/grading'
 import type { QuizQuestion } from '@/types/modules'
 import { PiecePlacementInput } from './piece-placement-input'
@@ -135,12 +135,11 @@ export function QuestionInput({
     }
 
     case 'piece_placement': {
-      const pieces = (opts.pieces as PlacementPiece[]) ?? []
       const placement = (answer as Record<string, PiecePlacement>) ?? {}
       return (
         <PiecePlacementInput
-          imageUrl={q.image_url}
-          pieces={pieces}
+          background={readComposition(q.options, q.image_url)}
+          pieces={readPieces(q.options)}
           placement={placement}
           isGraded={isGraded}
           onChange={(v) => onChange(v)}

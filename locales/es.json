@@ -1940,6 +1940,14 @@
           "correctAnswer": "Respuesta correcta:",
           "noDetails": "Sin detalles adicionales.",
           "tryAgain": "Intentar de nuevo"
+        },
+        "pieces": {
+          "title": "Piezas",
+          "placedOf": "{placed} de {total} colocadas",
+          "hint": "Arrastra cada pieza a su lugar",
+          "allPlaced": "Todo está colocado. Arrastra una pieza fuera del escenario para devolverla aquí.",
+          "notPlaced": "Sin colocar",
+          "wasPlaced": "Todas las piezas fueron colocadas."
         }
       },
       "video": {

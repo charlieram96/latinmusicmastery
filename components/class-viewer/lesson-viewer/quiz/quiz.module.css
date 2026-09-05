@@ -1,0 +1,88 @@
+/* components/class-viewer/lesson-viewer/quiz/quiz.module.css
+   Layout that depends on the quiz's own width, not the viewport (the lesson
+   column varies with the sidebar). Colors stay in Tailwind tokens. */
+
+/* ---------- containers ---------- */
+.root { container: quiz / inline-size; }
+.ppRoot { container: pp / inline-size; }
+
+/* ---------- piece placement ---------- */
+.pp { display: grid; gap: 16px; }
+.stageWrap { display: grid; justify-items: center; }
+.stage {
+  position: relative;
+  width: min(100%, calc(var(--stage-maxh, 62vh) * var(--stage-ratio, 1.6)));
+  aspect-ratio: var(--stage-ratio, 1.6);
+  overflow: hidden;
+  border-radius: 16px;
+  touch-action: none;
+  user-select: none;
+}
+.tray { display: grid; gap: 10px; }
+.trayList { display: grid; gap: 8px; }
+@container pp (min-width: 760px) {
+  .pp { grid-template-columns: minmax(0, 1fr) 250px; gap: 20px; align-items: start; }
+  .tray { position: sticky; top: 20px; }
+}
+@container pp (max-width: 759px) {
+  .trayList { grid-auto-flow: column; grid-auto-columns: 150px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
+  .trayItem { scroll-snap-align: start; }
+}
+
+/* ---------- focus stage ---------- */
+.focus { display: grid; gap: 22px; }
+.stageCol { min-width: 0; width: 100%; max-width: 820px; margin: 0 auto; }
+.map { display: none; }
+.hint { display: none; }
+.question { font-size: 20px; }
+.panel { padding: 22px; }
+@container quiz (min-width: 700px) {
+  .question { font-size: 24px; }
+  .hint { display: inline-flex; }
+  .panel { padding: 30px 32px; }
+}
+@container quiz (min-width: 1000px) {
+  .focus { grid-template-columns: minmax(0, 1fr) 280px; gap: 28px; align-items: start; }
+  .map { display: block; position: sticky; top: 20px; }
+}
+
+/* ---------- exam sheet ---------- */
+.sheet { display: grid; gap: 22px; }
+.sheetGrid { display: grid; gap: 14px; }
+.sheetRail { display: grid; gap: 14px; }
+.sheetBar { display: flex; }
+@container quiz (min-width: 1000px) {
+  .sheet { grid-template-columns: minmax(0, 1fr) 260px; gap: 28px; align-items: start; }
+  .sheetRail { position: sticky; top: 20px; }
+  .sheetBar { display: none; }
+}
+@container quiz (min-width: 1180px) {
+  .sheetGrid { grid-template-columns: 1fr 1fr; }
+  .span { grid-column: 1 / -1; }
+}
+
+/* ---------- motion ---------- */
+.rise { animation: rise 320ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.pop { animation: pop 500ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.okPulse { animation: okPulse 700ms ease-out, pop 500ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.bounceIn { animation: bounceIn 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 350ms; }
+.burst { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 6; }
+.burstPiece {
+  position: absolute; left: -3px; top: -3px; width: 7px; height: 7px; border-radius: 2px;
+  animation: burst 800ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+.levelBar { animation: level 1.2s ease-in-out infinite; transform-origin: bottom; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.035); } 100% { transform: scale(1); } }
+@keyframes okPulse { 0% { box-shadow: 0 0 0 0 hsl(var(--success) / 0.45); } 100% { box-shadow: 0 0 0 14px transparent; } }
+@keyframes bounceIn { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes burst {
+  0% { transform: translate(0, 0) rotate(0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(0.5); opacity: 0; }
+}
+@keyframes level { 0%, 100% { transform: scaleY(0.55); } 50% { transform: scaleY(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .pop, .okPulse, .bounceIn, .burstPiece, .levelBar { animation: none; }
+}
