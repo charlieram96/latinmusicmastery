@@ -1963,6 +1963,9 @@
         },
         "audio": {
           "playing": "Reproduciendo…"
+        },
+        "matching": {
+          "pickFor": "Elige la pareja de {left}"
         }
       },
       "video": {

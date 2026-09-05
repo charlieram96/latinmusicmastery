@@ -1963,6 +1963,9 @@
         },
         "audio": {
           "playing": "Playing…"
+        },
+        "matching": {
+          "pickFor": "Pick the match for {left}"
         }
       },
       "video": {
