@@ -1926,7 +1926,10 @@
         "feedback": {
           "correct": "¡Correcto!",
           "partial": "¡Casi!",
-          "incorrect": "No es correcto"
+          "incorrect": "No es correcto",
+          "partly": "Casi · {pct}%",
+          "correctAnswer": "Respuesta correcta:",
+          "acceptedAnswers": "Respuestas aceptadas:"
         },
         "results": {
           "perfect": "¡Perfecto!",

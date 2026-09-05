@@ -151,7 +151,7 @@ export function QuizRunner({ classItemId, questions, kind = 'Quiz' }: QuizRunner
     <MotionConfig reducedMotion="user">
       <div className="rounded-3xl border border-border bg-card p-5 sm:p-7">
         <div className="mb-6">
-          <ProgressSegments total={ordered.length} current={index} />
+          <ProgressSegments questions={ordered} graded={graded} current={index} />
         </div>
 
         <AnimatePresence mode="wait" custom={direction}>

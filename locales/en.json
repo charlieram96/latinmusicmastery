@@ -1926,7 +1926,10 @@
         "feedback": {
           "correct": "Correct!",
           "partial": "Almost there!",
-          "incorrect": "Not quite right"
+          "incorrect": "Not quite right",
+          "partly": "Partly right · {pct}%",
+          "correctAnswer": "Correct answer:",
+          "acceptedAnswers": "Accepted answers:"
         },
         "results": {
           "perfect": "Perfect!",
