@@ -4,7 +4,7 @@ import { useReducedMotion } from 'framer-motion'
 import { useMemo } from 'react'
 import styles from './quiz.module.css'
 
-const COLORS = ['hsl(var(--success))', 'hsl(var(--gold-highlight))', 'hsl(var(--primary))', '#F5E6C8']
+const COLORS = ['hsl(var(--success))', 'hsl(var(--gold-highlight))', 'hsl(var(--primary))', 'hsl(var(--foreground) / 0.8)']
 
 /** Small confetti burst from the center of its (position: relative) parent. Deterministic, SSR-safe, skipped under reduced motion. */
 export function Burst({ count = 14, spread = 64 }: { count?: number; spread?: number }) {
