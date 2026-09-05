@@ -1966,6 +1966,10 @@
         },
         "matching": {
           "pickFor": "Elige la pareja de {left}"
+        },
+        "ordering": {
+          "shouldBe": "debería ser #{n}",
+          "dragHandle": "Arrastra para reordenar"
         }
       },
       "video": {

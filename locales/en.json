@@ -1966,6 +1966,10 @@
         },
         "matching": {
           "pickFor": "Pick the match for {left}"
+        },
+        "ordering": {
+          "shouldBe": "should be #{n}",
+          "dragHandle": "Drag to reorder"
         }
       },
       "video": {
