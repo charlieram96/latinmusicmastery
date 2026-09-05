@@ -1746,6 +1746,15 @@
         "nextLocked": "Siguiente (Bloqueada)",
         "courseContent": "Contenido del curso"
       },
+      "moduleOverview": {
+        "aboutModule": "Sobre este módulo",
+        "lessonsHeading": "Lecciones de este módulo",
+        "startModule": "Comenzar módulo",
+        "continueModule": "Continuar módulo",
+        "moduleComplete": "Módulo completado",
+        "freePreview": "Vista previa gratis",
+        "empty": "Este módulo aún no tiene lecciones."
+      },
       "home": {
         "musicianFallback": "músico",
         "streakDaysOne": "Racha de {count} día",
@@ -1853,7 +1862,8 @@
         "taughtByName": "Impartido por {name}",
         "lessonTitle": "Lección {n} — {title}",
         "expandMenu": "Expandir menú",
-        "collapseMenu": "Contraer menú"
+        "collapseMenu": "Contraer menú",
+        "toggleLessons": "Mostrar u ocultar las lecciones de {title}"
       },
       "partsNav": {
         "ariaLabel": "Partes de la lección"
@@ -1928,7 +1938,8 @@
           "reviewAndRetry": "Revisa las respuestas de abajo e inténtalo de nuevo.",
           "correct": "correctas",
           "correctAnswer": "Respuesta correcta:",
-          "noDetails": "Sin detalles adicionales."
+          "noDetails": "Sin detalles adicionales.",
+          "tryAgain": "Intentar de nuevo"
         }
       },
       "video": {

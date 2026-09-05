@@ -106,7 +106,7 @@ export function ResultsScreen({
       </div>
 
       <Button onClick={onRestart} size="lg" className="relative mt-8 w-full rounded-xl">
-        <RotateCcw className="mr-2 h-4 w-4" /> {t('dashboard.pages.tuner.tryAgain')}
+        <RotateCcw className="mr-2 h-4 w-4" /> {t('dashboard.classViewer.quiz.results.tryAgain')}
       </Button>
     </div>
   )
