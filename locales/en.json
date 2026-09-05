@@ -1948,6 +1948,15 @@
           "allPlaced": "Everything is placed. Drag a piece off the stage to bring it back here.",
           "notPlaced": "Not placed",
           "wasPlaced": "Every piece was placed."
+        },
+        "streak": {
+          "inRow": "{count} in a row",
+          "onFire": "On fire · {count} in a row"
+        },
+        "tile": {
+          "correct": "Correct",
+          "answer": "Answer",
+          "yourPick": "Your pick"
         }
       },
       "video": {

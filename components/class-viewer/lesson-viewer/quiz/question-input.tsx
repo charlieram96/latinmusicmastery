@@ -93,9 +93,9 @@ export function QuestionInput({
           {choices.map((c, i) => {
             const selected = answer === c.id
             let state: TileState = selected ? 'selected' : 'idle'
-            if (isGraded) state = q.correct_answer === c.id ? 'correct' : selected ? 'incorrect' : 'idle'
+            if (isGraded) state = q.correct_answer === c.id ? 'correct' : selected ? 'wrong' : 'idle'
             return (
-              <OptionTile key={c.id} label={LETTERS[i]} state={state} disabled={isGraded} onClick={() => onChange(c.id)}>
+              <OptionTile key={c.id} letter={LETTERS[i]} state={state} disabled={isGraded} onClick={() => onChange(c.id)}>
                 {c.text}
               </OptionTile>
             )
@@ -118,9 +118,9 @@ export function QuestionInput({
             {choices.map((c, i) => {
               const selected = answer === c.id
               let state: TileState = selected ? 'selected' : 'idle'
-              if (isGraded) state = q.correct_answer === c.id ? 'correct' : selected ? 'incorrect' : 'idle'
+              if (isGraded) state = q.correct_answer === c.id ? 'correct' : selected ? 'wrong' : 'idle'
               return (
-                <OptionTile key={c.id} label={LETTERS[i]} state={state} disabled={isGraded} onClick={() => onChange(c.id)}>
+                <OptionTile key={c.id} letter={LETTERS[i]} state={state} disabled={isGraded} onClick={() => onChange(c.id)}>
                   {mode === 'audio' ? (
                     <AudioChoicePlayer url={c.audioUrl} label={c.text?.trim() || t('dashboard.classViewer.quiz.clip', { n: i + 1 })} />
                   ) : (
@@ -157,7 +157,7 @@ export function QuestionInput({
           {values.map(({ v, label }) => {
             const selected = norm(String(answer ?? '')) === v
             let state: TileState = selected ? 'selected' : 'idle'
-            if (isGraded) state = norm(q.correct_answer ?? '') === v ? 'correct' : selected ? 'incorrect' : 'idle'
+            if (isGraded) state = norm(q.correct_answer ?? '') === v ? 'correct' : selected ? 'wrong' : 'idle'
             return (
               <OptionTile key={v} state={state} disabled={isGraded} onClick={() => onChange(v)}>
                 <span className="block w-full text-center text-lg font-semibold">{label}</span>

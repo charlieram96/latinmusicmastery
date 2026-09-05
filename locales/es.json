@@ -1948,6 +1948,15 @@
           "allPlaced": "Todo está colocado. Arrastra una pieza fuera del escenario para devolverla aquí.",
           "notPlaced": "Sin colocar",
           "wasPlaced": "Todas las piezas fueron colocadas."
+        },
+        "streak": {
+          "inRow": "{count} seguidas",
+          "onFire": "En racha · {count} seguidas"
+        },
+        "tile": {
+          "correct": "Correcta",
+          "answer": "Respuesta",
+          "yourPick": "Tu elección"
         }
       },
       "video": {
