@@ -33,7 +33,11 @@ export function useQuizEngine(questions: QuizQuestion[]): QuizEngine {
   )
   const checkMany = useCallback(
     (ids: string[]) => {
-      const scores = ids.map((id) => (id in state.graded ? state.graded[id] : gradeQuestionScore(byId.get(id)!, state.answers[id])))
+      const scores = ids.flatMap((id) => {
+        if (id in state.graded) return [state.graded[id]]
+        const q = byId.get(id)
+        return q ? [gradeQuestionScore(q, state.answers[id])] : []
+      })
       dispatch({ type: 'checkMany', ids })
       return scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
     },
