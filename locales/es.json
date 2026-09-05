@@ -1960,6 +1960,9 @@
           "correct": "Correcta",
           "answer": "Respuesta",
           "yourPick": "Tu elección"
+        },
+        "audio": {
+          "playing": "Reproduciendo…"
         }
       },
       "video": {

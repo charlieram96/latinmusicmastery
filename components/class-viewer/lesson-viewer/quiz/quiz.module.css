@@ -45,6 +45,8 @@
   .focus { grid-template-columns: minmax(0, 1fr) 280px; gap: 28px; align-items: start; }
   .map { display: block; position: sticky; top: 20px; }
 }
+.tilesWide { display: grid; }
+@container quiz (min-width: 760px) { .tilesWide { grid-template-columns: 1fr 1fr; } }
 
 /* ---------- exam sheet ---------- */
 .sheet { display: grid; gap: 22px; }
