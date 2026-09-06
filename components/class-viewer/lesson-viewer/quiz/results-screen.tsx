@@ -103,7 +103,13 @@ function ReviewList({
         const tone = outcomeOf(score)
         const i = questions.indexOf(q)
         const isOpen = openAll || open === q.id
-        const said = q.question_type === 'piece_placement' ? t('dashboard.classViewer.quiz.results.piecesPlaced', countCorrectPieces(q, answers[q.id])) : userAnswerLabel(q, answers[q.id])
+        const said =
+          q.question_type === 'piece_placement'
+            ? t('dashboard.classViewer.quiz.results.piecesPlaced', countCorrectPieces(q, answers[q.id]))
+            : q.question_type === 'true_false'
+              ? userAnswerLabel(q, answers[q.id]) &&
+                t(userAnswerLabel(q, answers[q.id]) === 'true' ? 'dashboard.classViewer.quiz.true' : 'dashboard.classViewer.quiz.false')
+              : userAnswerLabel(q, answers[q.id])
         const right = q.question_type === 'true_false' ? t(fullCorrectLabel(q) === 'true' ? 'dashboard.classViewer.quiz.true' : 'dashboard.classViewer.quiz.false') : fullCorrectLabel(q)
         const Icon = tone === 'ok' ? Check : tone === 'part' ? Minus : X
         return (
@@ -111,6 +117,8 @@ function ReviewList({
             <button
               type="button"
               onClick={() => !openAll && setOpen(isOpen ? null : q.id)}
+              aria-expanded={isOpen}
+              aria-disabled={openAll}
               className={cn('grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 text-left', !openAll && 'hover:bg-foreground/3')}
             >
               <span className={cn('grid h-[26px] w-[26px] place-items-center rounded-lg text-white', tone === 'ok' && 'bg-success', tone === 'part' && 'bg-primary', tone === 'bad' && 'bg-terracotta')}>
