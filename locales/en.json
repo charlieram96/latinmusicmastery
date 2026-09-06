@@ -1840,7 +1840,9 @@
           "lessons": "Lessons",
           "remaining": "Remaining",
           "level": "Level",
-          "levelAll": "All"
+          "levelAll": "All",
+          "modules": "Modules",
+          "video": "Video"
         },
         "curriculum": {
           "title": "Curriculum",
@@ -1850,6 +1852,26 @@
           "starting": "Starting Course",
           "entering": "Entering Course Mode",
           "preparing": "Preparing your learning environment..."
+        },
+        "continueLesson": "Continue lesson",
+        "startLesson": "Start the course",
+        "itemTypes": {
+          "VIDEO": "Video",
+          "QUIZ": "Quiz",
+          "EXERCISE": "Exercise",
+          "JAM_SESSION": "Play-along"
+        },
+        "syllabus": {
+          "completed": "Completed",
+          "inProgress": "In progress",
+          "notStarted": "Not started",
+          "moduleFallback": "Module {number}",
+          "lessonFallback": "Lesson {number}",
+          "itemsDone": "{done} of {total} items done",
+          "freePreview": "Free preview",
+          "lessonOf": "Lesson {n} of {total}",
+          "left": "{duration} left",
+          "inYourPlan": "Included in your plan"
         }
       },
       "modules": {

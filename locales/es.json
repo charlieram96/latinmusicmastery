@@ -1840,7 +1840,9 @@
           "lessons": "Lecciones",
           "remaining": "Restante",
           "level": "Nivel",
-          "levelAll": "Todos"
+          "levelAll": "Todos",
+          "modules": "Módulos",
+          "video": "Video"
         },
         "curriculum": {
           "title": "Plan de estudios",
@@ -1850,6 +1852,26 @@
           "starting": "Iniciando el curso",
           "entering": "Entrando al modo curso",
           "preparing": "Preparando tu entorno de aprendizaje..."
+        },
+        "continueLesson": "Continuar lección",
+        "startLesson": "Empezar el curso",
+        "itemTypes": {
+          "VIDEO": "Video",
+          "QUIZ": "Cuestionario",
+          "EXERCISE": "Ejercicio",
+          "JAM_SESSION": "Toca con la banda"
+        },
+        "syllabus": {
+          "completed": "Completado",
+          "inProgress": "En curso",
+          "notStarted": "Sin empezar",
+          "moduleFallback": "Módulo {number}",
+          "lessonFallback": "Lección {number}",
+          "itemsDone": "{done} de {total} elementos hechos",
+          "freePreview": "Vista previa gratis",
+          "lessonOf": "Lección {n} de {total}",
+          "left": "faltan {duration}",
+          "inYourPlan": "Incluido en tu plan"
         }
       },
       "modules": {
