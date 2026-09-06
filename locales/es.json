@@ -1503,10 +1503,8 @@
           "completedTitle": "Aún no hay cursos completados",
           "completedBody": "Completa tu primer curso para verlo aquí. ¡Sigue aprendiendo!"
         },
-        "moduleFallback": "Módulo {number}",
-        "untitledClass": "Clase sin título",
         "filters": {
-          "all": "Todos los cursos",
+          "all": "Todos",
           "inProgress": "En progreso",
           "completed": "Completados",
           "sortPlaceholder": "Ordenar por...",
@@ -1514,12 +1512,20 @@
             "recent": "Vistos recientemente",
             "progress": "Progreso",
             "alphabetical": "A-Z"
-          }
+          },
+          "label": "Filtrar cursos",
+          "sortLabel": "Ordenar",
+          "showAll": "Ver todos los cursos"
         },
-        "card": {
-          "complete": "Completado",
-          "module": "Mód {current}/{total}",
-          "items": "{completed}/{total} elementos"
+        "row": {
+          "moduleOfTotal": "Módulo {n} de {total}",
+          "lesson": "Lección {n}",
+          "lessonsDone": "{done} de {total} lecciones completadas",
+          "completed": "Curso completado",
+          "notStarted": "Aún sin empezar",
+          "resume": "Continuar",
+          "start": "Empezar",
+          "review": "Repasar"
         }
       },
       "progress": {

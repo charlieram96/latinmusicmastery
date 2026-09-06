@@ -1503,10 +1503,8 @@
           "completedTitle": "No Completed Courses Yet",
           "completedBody": "Complete your first course to see it here. Keep learning!"
         },
-        "moduleFallback": "Module {number}",
-        "untitledClass": "Untitled Class",
         "filters": {
-          "all": "All Courses",
+          "all": "All",
           "inProgress": "In Progress",
           "completed": "Completed",
           "sortPlaceholder": "Sort by...",
@@ -1514,12 +1512,20 @@
             "recent": "Recently Accessed",
             "progress": "Progress",
             "alphabetical": "A-Z"
-          }
+          },
+          "label": "Filter courses",
+          "sortLabel": "Sort",
+          "showAll": "Show all courses"
         },
-        "card": {
-          "complete": "Complete",
-          "module": "Mod {current}/{total}",
-          "items": "{completed}/{total} items"
+        "row": {
+          "moduleOfTotal": "Module {n} of {total}",
+          "lesson": "Lesson {n}",
+          "lessonsDone": "{done} of {total} lessons done",
+          "completed": "Course completed",
+          "notStarted": "Not started yet",
+          "resume": "Continue",
+          "start": "Start",
+          "review": "Review"
         }
       },
       "progress": {

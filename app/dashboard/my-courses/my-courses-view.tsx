@@ -1,76 +1,70 @@
 'use client'
 
-import { PageHeader } from '@/components/dashboard/page-header'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { BookOpen, ArrowRight } from 'lucide-react'
-import { MyCoursesFilters } from '@/components/dashboard/my-courses-filters'
-import { MyCourseCard } from '@/components/dashboard/my-course-card'
+import { ArrowRight, BookOpen, Compass } from 'lucide-react'
+import { PageHeader } from '@/components/dashboard/page-header'
+import { EmptyState } from '@/components/dashboard/empty-state'
+import { MyCourseRow } from '@/components/dashboard/my-course-row'
+import { MyCoursesToolbar, type MyCoursesFilter, type MyCoursesSort } from '@/components/dashboard/my-courses-toolbar'
+import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
+import type { MyCourseRow as MyCourseRowData } from '@/types/dashboard'
 
 interface MyCoursesViewProps {
-  enrolledCourses: any[]
-  counts: {
-    all: number
-    inProgress: number
-    completed: number
-  }
-  filter: 'all' | 'in-progress' | 'completed'
+  courses: MyCourseRowData[]
+  counts: { all: number; inProgress: number; completed: number }
+  filter: MyCoursesFilter
+  sort: MyCoursesSort
 }
 
-export function MyCoursesView({ enrolledCourses, counts, filter }: MyCoursesViewProps) {
+export function MyCoursesView({ courses, counts, filter, sort }: MyCoursesViewProps) {
   const { t } = useTranslation()
 
-  const emptyTitle =
-    filter === 'completed'
-      ? t('dashboard.pages.myCourses.empty.completedTitle')
-      : filter === 'in-progress'
-        ? t('dashboard.pages.myCourses.empty.inProgressTitle')
-        : t('dashboard.pages.myCourses.empty.allTitle')
-
-  const emptyBody =
-    filter === 'completed'
-      ? t('dashboard.pages.myCourses.empty.completedBody')
-      : filter === 'in-progress'
-        ? t('dashboard.pages.myCourses.empty.inProgressBody')
-        : t('dashboard.pages.myCourses.empty.allBody')
+  const emptyKey = filter === 'completed' ? 'completed' : filter === 'in-progress' ? 'inProgress' : 'all'
 
   return (
     <>
       <PageHeader
         title={t('dashboard.pages.myCourses.title')}
         description={t('dashboard.pages.myCourses.subtitle')}
-        className="mb-6"
-      />
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/dashboard/courses">
+              <Compass aria-hidden />
+              {t('dashboard.pages.myCourses.browseCourses')}
+            </Link>
+          </Button>
+        }
+      >
+        {counts.all > 0 ? <MyCoursesToolbar counts={counts} filter={filter} sort={sort} /> : null}
+      </PageHeader>
 
-      {/* Filters & Sort */}
-      <MyCoursesFilters counts={counts} />
-
-      {/* Courses */}
-      {enrolledCourses.length > 0 ? (
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {enrolledCourses.map((course: any, index: number) => (
-            <MyCourseCard key={course.id} course={course} index={index} />
+      {courses.length > 0 ? (
+        <div className="divide-y divide-border border-y border-border">
+          {courses.map((course) => (
+            <MyCourseRow key={course.id} course={course} />
           ))}
         </div>
       ) : (
-        /* Empty State */
-        <Card className="mt-8">
-          <CardContent className="p-12 text-center">
-            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="h-8 w-8 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">{emptyTitle}</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">{emptyBody}</p>
-            <Button asChild>
-              <Link href="/dashboard/courses">
-                {t('dashboard.pages.myCourses.browseCourses')}
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={BookOpen}
+          title={t(`dashboard.pages.myCourses.empty.${emptyKey}Title`)}
+          body={t(`dashboard.pages.myCourses.empty.${emptyKey}Body`)}
+          action={
+            filter === 'all' ? (
+              <Button asChild>
+                <Link href="/dashboard/courses">
+                  {t('dashboard.pages.myCourses.browseCourses')}
+                  <ArrowRight aria-hidden />
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild variant="outline">
+                <Link href="/dashboard/my-courses">{t('dashboard.pages.myCourses.filters.showAll')}</Link>
+              </Button>
+            )
+          }
+        />
       )}
     </>
   )

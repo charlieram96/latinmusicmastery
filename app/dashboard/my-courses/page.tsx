@@ -1,208 +1,160 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getServerTranslator } from '@/lib/i18n/server'
+import { createClient } from '@/lib/supabase/server'
+import { getServerLocale } from '@/lib/i18n/server'
 import { localizeCourse, localizeSectionTree } from '@/lib/i18n/localize'
+import {
+  classHref,
+  completedItemIds,
+  courseCompletion,
+  courseHref,
+  currentClassIndexFor,
+  moduleIndexForClass,
+  orderedClasses,
+} from '@/lib/dashboard/course-progress'
+import type { MyCourseRow } from '@/types/dashboard'
 import { MyCoursesView } from './my-courses-view'
+import type { MyCoursesFilter, MyCoursesSort } from '@/components/dashboard/my-courses-toolbar'
 
 interface PageProps {
-  searchParams: Promise<{
-    filter?: 'all' | 'in-progress' | 'completed'
-    sort?: 'recent' | 'progress' | 'alphabetical'
-  }>
+  searchParams: Promise<{ filter?: string; sort?: string }>
 }
+
+/* ── Row shapes returned by the query below ───────────────────────── */
+interface ItemRow {
+  id: string
+}
+interface ClassRow {
+  id: string
+  title: string
+  order_index: number | null
+  items: ItemRow[] | null
+}
+interface SectionRow {
+  id: string
+  order_index: number | null
+  classes: ClassRow[] | null
+}
+interface CourseRow {
+  id: string
+  title: string
+  slug: string | null
+  thumbnail_url: string | null
+  instrument: string | null
+  teacher_name: string | null
+  teacher: { name: string; image_url: string | null } | null
+  musical_style: { name: string; country: { name: string } | null } | null
+  course_sections: SectionRow[] | null
+}
+interface EnrollmentRow {
+  enrolled_at: string | null
+  last_accessed_at: string | null
+  course: CourseRow | null
+}
+
+const FILTERS: MyCoursesFilter[] = ['all', 'in-progress', 'completed']
+const SORTS: MyCoursesSort[] = ['recent', 'progress', 'alphabetical']
 
 export default async function MyCoursesPage({ searchParams }: PageProps) {
   const params = await searchParams
+  const filter: MyCoursesFilter = FILTERS.includes(params.filter as MyCoursesFilter)
+    ? (params.filter as MyCoursesFilter)
+    : 'all'
+  const sort: MyCoursesSort = SORTS.includes(params.sort as MyCoursesSort) ? (params.sort as MyCoursesSort) : 'recent'
+
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-  if (!user) {
-    redirect('/login')
-  }
-
-  // Get user's course enrollments with new hierarchy
-  const { data: enrollments } = await supabase
+  const { data: enrollmentData } = await supabase
     .from('course_enrollments')
-    .select(`
-      *,
+    .select(
+      `
+      enrolled_at, last_accessed_at,
       course:courses(
         *,
         course_sections(
-          id, title, title_es, order_index,
+          id, order_index,
           classes(
             id, title, title_es, order_index,
             items:class_items(id)
           )
         ),
-        musical_style:musical_styles(
-          name,
-          name_es,
-          country:countries(name, name_es)
-        ),
+        musical_style:musical_styles(name, name_es, country:countries(name, name_es)),
         teacher:teachers(name, image_url)
       )
-    `)
+    `
+    )
     .eq('user_id', user.id)
 
-  const { t, locale } = await getServerTranslator()
-  for (const enrollment of enrollments ?? []) {
-    const course = (enrollment as any).course as Record<string, unknown> | null
-    if (!course) continue
+  const enrollments = (enrollmentData ?? []) as unknown as EnrollmentRow[]
+  const locale = await getServerLocale()
+  for (const enrollment of enrollments) {
+    if (!enrollment.course) continue
+    const course = enrollment.course as unknown as Record<string, unknown>
     localizeCourse(course, locale)
     localizeSectionTree(course['course_sections'] as Record<string, unknown>[] | undefined, locale)
   }
 
-  // Collect all item IDs across all enrolled courses
-  const allItemIds: string[] = []
-  const courseItemMap = new Map<string, string[]>()
+  const courses = enrollments.filter((e): e is EnrollmentRow & { course: CourseRow } => e.course !== null)
 
-  for (const enrollment of enrollments || []) {
-    const course = enrollment.course as any
-    if (!course) continue
-    const itemIds: string[] = []
-    for (const section of course.course_sections || []) {
-      for (const cls of section.classes || []) {
-        for (const item of cls.items || []) {
-          itemIds.push(item.id)
-          allItemIds.push(item.id)
-        }
-      }
-    }
-    courseItemMap.set(course.id, itemIds)
-  }
+  // One progress query for every item across every enrolled course.
+  const allItemIds = courses.flatMap((e) => orderedClasses(e.course.course_sections).flatMap((c) => c.items ?? [])).map((it) => it.id)
+  const { data: progressData } =
+    allItemIds.length > 0
+      ? await supabase
+          .from('class_item_progress')
+          .select('class_item_id, completed, updated_at, created_at')
+          .eq('user_id', user.id)
+          .in('class_item_id', allItemIds)
+      : { data: [] }
+  const progress = progressData ?? []
+  const completed = completedItemIds(progress)
 
-  // Get progress for all items in one query
-  let progressData: any[] = []
-  if (allItemIds.length > 0) {
-    const { data } = await supabase
-      .from('class_item_progress')
-      .select('*')
-      .eq('user_id', user.id)
-      .in('class_item_id', allItemIds)
-    progressData = data || []
-  }
-
-  const completedItemIds = new Set(
-    progressData.filter(p => p.completed).map(p => p.class_item_id)
-  )
-
-  // Build enriched courses array
-  let enrolledCourses = (enrollments || []).map((enrollment: any) => {
-    const course = enrollment.course
-    if (!course) return null
-
-    const itemIds = courseItemMap.get(course.id) || []
-    const totalItems = itemIds.length
-    const completedCount = itemIds.filter(id => completedItemIds.has(id)).length
-
-    // Sort sections and classes by order_index to compute current position
-    const sortedSections = [...(course.course_sections || [])]
-      .sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0))
-      .map((section: any) => ({
-        ...section,
-        classes: [...(section.classes || [])]
-          .sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0)),
-      }))
-
-    const totalSections = sortedSections.length
-
-    // Find current (first incomplete) class
-    let currentSectionTitle: string | null = null
-    let currentSectionIndex: number | null = null
-    let currentClassTitle: string | null = null
-    let currentClassId: string | null = null
-
-    if (totalItems > 0 && completedCount < totalItems) {
-      // Walk sections → classes → items to find first incomplete class
-      let found = false
-      for (let si = 0; si < sortedSections.length && !found; si++) {
-        const section = sortedSections[si]
-        for (const cls of section.classes || []) {
-          const classItemIds = (cls.items || []).map((item: any) => item.id)
-          const allComplete = classItemIds.length > 0 && classItemIds.every((id: string) => completedItemIds.has(id))
-          if (!allComplete) {
-            currentSectionTitle = section.title || t('dashboard.pages.myCourses.moduleFallback', { number: si + 1 })
-            currentSectionIndex = si + 1
-            currentClassTitle = cls.title || t('dashboard.pages.myCourses.untitledClass')
-            currentClassId = cls.id
-            found = true
-            break
-          }
-        }
-      }
-
-      // Fallback to first section/class if nothing found (e.g. 0 progress)
-      if (!found && sortedSections.length > 0) {
-        const firstSection = sortedSections[0]
-        currentSectionTitle = firstSection.title || t('dashboard.pages.myCourses.moduleFallback', { number: 1 })
-        currentSectionIndex = 1
-        const firstClass = firstSection.classes?.[0]
-        if (firstClass) {
-          currentClassTitle = firstClass.title || t('dashboard.pages.myCourses.untitledClass')
-          currentClassId = firstClass.id
-        }
-      }
-    }
-    // If completedCount === totalItems && totalItems > 0 → complete, leave nulls
-
+  const rows: MyCourseRow[] = courses.map(({ course, enrolled_at, last_accessed_at }) => {
+    const classes = orderedClasses(course.course_sections)
+    const completion = courseCompletion(classes, completed)
+    const currentClassIndex = currentClassIndexFor(classes, progress, completed)
+    const currentClass = currentClassIndex === null ? null : classes[currentClassIndex]
+    const firstClass = classes[0] ?? null
+    const resumeTarget = completion.status === 'completed' ? null : (currentClass ?? firstClass)
     return {
-      ...course,
-      totalLessons: totalItems,
-      completedLessons: completedCount,
-      lastAccessed: enrollment.last_accessed_at || enrollment.enrolled_at,
-      enrolledAt: enrollment.enrolled_at,
-      currentSectionTitle,
-      currentSectionIndex,
-      totalSections,
-      currentClassTitle,
-      currentClassId,
+      id: course.id,
+      slug: course.slug ?? course.id,
+      title: course.title,
+      thumbnailUrl: course.thumbnail_url,
+      styleName: course.musical_style?.name ?? null,
+      countryName: course.musical_style?.country?.name ?? null,
+      teacherName: course.teacher?.name ?? course.teacher_name ?? null,
+      instrument: course.instrument,
+      totalClasses: completion.totalClasses,
+      doneClasses: completion.doneClasses,
+      totalModules: course.course_sections?.length ?? 0,
+      currentModuleIndex: currentClassIndex === null ? null : moduleIndexForClass(course.course_sections, currentClassIndex),
+      currentClassIndex,
+      currentClassTitle: currentClass?.title ?? null,
+      pct: completion.pct,
+      status: completion.status,
+      href: courseHref(course),
+      resumeHref: resumeTarget ? classHref(course, resumeTarget.id) : courseHref(course),
+      lastAccessed: last_accessed_at ?? enrolled_at,
     }
-  }).filter(Boolean) as any[]
-
-  // Apply filter
-  const filter = params.filter || 'all'
-  if (filter === 'in-progress') {
-    enrolledCourses = enrolledCourses.filter(c =>
-      c.completedLessons > 0 && c.completedLessons < c.totalLessons
-    )
-  } else if (filter === 'completed') {
-    enrolledCourses = enrolledCourses.filter(c =>
-      c.completedLessons === c.totalLessons && c.totalLessons > 0
-    )
-  }
-
-  // Apply sort
-  const sort = params.sort || 'recent'
-  if (sort === 'recent') {
-    enrolledCourses.sort((a, b) =>
-      new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime()
-    )
-  } else if (sort === 'progress') {
-    enrolledCourses.sort((a, b) => {
-      const progressA = a.totalLessons > 0 ? a.completedLessons / a.totalLessons : 0
-      const progressB = b.totalLessons > 0 ? b.completedLessons / b.totalLessons : 0
-      return progressB - progressA
-    })
-  } else if (sort === 'alphabetical') {
-    enrolledCourses.sort((a, b) => a.title.localeCompare(b.title))
-  }
-
-  // Get counts for filter badges (from unfiltered data)
-  const allCourses = (enrollments || []).map((e: any) => {
-    const course = e.course
-    if (!course) return null
-    const itemIds = courseItemMap.get(course.id) || []
-    return {
-      totalLessons: itemIds.length,
-      completedLessons: itemIds.filter(id => completedItemIds.has(id)).length,
-    }
-  }).filter(Boolean) as any[]
+  })
 
   const counts = {
-    all: allCourses.length,
-    inProgress: allCourses.filter(c => c.completedLessons > 0 && c.completedLessons < c.totalLessons).length,
-    completed: allCourses.filter(c => c.completedLessons === c.totalLessons && c.totalLessons > 0).length,
+    all: rows.length,
+    inProgress: rows.filter((r) => r.status === 'in-progress').length,
+    completed: rows.filter((r) => r.status === 'completed').length,
   }
 
-  return <MyCoursesView enrolledCourses={enrolledCourses} counts={counts} filter={filter} />
+  const visible = rows
+    .filter((r) => (filter === 'all' ? true : r.status === filter))
+    .sort((a, b) => {
+      if (sort === 'progress') return b.pct - a.pct || a.title.localeCompare(b.title)
+      if (sort === 'alphabetical') return a.title.localeCompare(b.title)
+      return new Date(b.lastAccessed ?? 0).getTime() - new Date(a.lastAccessed ?? 0).getTime()
+    })
+
+  return <MyCoursesView courses={visible} counts={counts} filter={filter} sort={sort} />
 }
