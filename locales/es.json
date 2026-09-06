@@ -1746,6 +1746,15 @@
         "nextLocked": "Siguiente (Bloqueada)",
         "courseContent": "Contenido del curso"
       },
+      "moduleOverview": {
+        "aboutModule": "Sobre este módulo",
+        "lessonsHeading": "Lecciones de este módulo",
+        "startModule": "Comenzar módulo",
+        "continueModule": "Continuar módulo",
+        "moduleComplete": "Módulo completado",
+        "freePreview": "Vista previa gratis",
+        "empty": "Este módulo aún no tiene lecciones."
+      },
       "home": {
         "musicianFallback": "músico",
         "streakDaysOne": "Racha de {count} día",
@@ -1853,7 +1862,8 @@
         "taughtByName": "Impartido por {name}",
         "lessonTitle": "Lección {n} — {title}",
         "expandMenu": "Expandir menú",
-        "collapseMenu": "Contraer menú"
+        "collapseMenu": "Contraer menú",
+        "toggleLessons": "Mostrar u ocultar las lecciones de {title}"
       },
       "partsNav": {
         "ariaLabel": "Partes de la lección"
@@ -1916,7 +1926,10 @@
         "feedback": {
           "correct": "¡Correcto!",
           "partial": "¡Casi!",
-          "incorrect": "No es correcto"
+          "incorrect": "No es correcto",
+          "partly": "Casi · {pct}%",
+          "correctAnswer": "Respuesta correcta:",
+          "acceptedAnswers": "Respuestas aceptadas:"
         },
         "results": {
           "perfect": "¡Perfecto!",
@@ -1928,7 +1941,82 @@
           "reviewAndRetry": "Revisa las respuestas de abajo e inténtalo de nuevo.",
           "correct": "correctas",
           "correctAnswer": "Respuesta correcta:",
-          "noDetails": "Sin detalles adicionales."
+          "noDetails": "Sin detalles adicionales.",
+          "tryAgain": "Intentar de nuevo",
+          "complete": "{kind} completado",
+          "continueNext": "Continuar a la siguiente parte",
+          "reviewMissed": "Revisar {count} falladas",
+          "nothingMissed": "Nada que revisar. Todas las respuestas fueron correctas.",
+          "piecesPlaced": "{correct} de {total} piezas en su lugar",
+          "stats": {
+            "correct": "correctas",
+            "partly": "casi",
+            "missed": "falladas"
+          },
+          "score": "puntaje"
+        },
+        "pieces": {
+          "title": "Piezas",
+          "placedOf": "{placed} de {total} colocadas",
+          "hint": "Arrastra cada pieza a su lugar",
+          "allPlaced": "Todo está colocado. Arrastra una pieza fuera del escenario para devolverla aquí.",
+          "notPlaced": "Sin colocar",
+          "wasPlaced": "Todas las piezas fueron colocadas."
+        },
+        "streak": {
+          "inRow": "{count} seguidas",
+          "onFire": "En racha · {count} seguidas"
+        },
+        "tile": {
+          "correct": "Correcta",
+          "answer": "Respuesta",
+          "yourPick": "Tu elección"
+        },
+        "audio": {
+          "playing": "Reproduciendo…"
+        },
+        "matching": {
+          "pickFor": "Elige la pareja de {left}"
+        },
+        "ordering": {
+          "shouldBe": "debería ser #{n}",
+          "dragHandle": "Arrastra para reordenar"
+        },
+        "continue": "Continuar",
+        "seeResults": "Ver resultados",
+        "questionOf": "Pregunta {n} de {total}",
+        "map": {
+          "title": "Preguntas",
+          "checked": "Revisadas"
+        },
+        "sound": {
+          "on": "Sonido activado",
+          "off": "Sonido desactivado"
+        },
+        "hints": {
+          "select": "elegir",
+          "check": "comprobar",
+          "continue": "continuar"
+        },
+        "review": {
+          "title": "Revisión",
+          "titleAll": "Todas las preguntas, con su respuesta",
+          "all": "Todas",
+          "missed": "Falladas · {count}",
+          "youSaid": "Respondiste",
+          "answer": "Respuesta"
+        },
+        "sheet": {
+          "intro": "{count} preguntas. Responde en cualquier orden; nada se califica hasta que envíes.",
+          "scored": "Puntaje {pct}%. Cada tarjeta muestra ahora la respuesta correcta y por qué.",
+          "submitAll": "Enviar todas las respuestas",
+          "answeredOf": "{answered} de {total} respondidas",
+          "unanswered": "{count} sin responder. Puedes enviar de todos modos.",
+          "answered": "Respondida",
+          "unansweredLabel": "Sin responder",
+          "correct": "Correcta",
+          "partly": "Casi",
+          "missed": "Fallada"
         }
       },
       "video": {

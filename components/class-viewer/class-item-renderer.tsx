@@ -11,6 +11,7 @@ import {
 } from '@/app/actions/playsense-studio'
 import { resolveLegacyAudioUrl } from '@/lib/play-sense/exercise-media'
 import { getQuizQuestions } from '@/app/actions/quiz'
+import { readQuizSettings } from '@/lib/quiz/quiz-settings'
 import { getServerTranslator } from '@/lib/i18n/server'
 import { localizeRows, QUIZ_FIELDS } from '@/lib/i18n/localize'
 import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
@@ -45,13 +46,16 @@ interface ClassItemRendererProps {
     rich_content: Record<string, unknown> | null
     video_duration_seconds: number | null
     description: string | null
+    quiz_settings?: unknown
   }
   userId: string
   /** 'split' renders the PlaySense media player as a resizable video|notation workspace. */
   playerLayout?: 'stack' | 'split'
+  /** Where "Continue to next part" goes at the end of a quiz/exercise; omitted when this is the last part. */
+  nextHref?: string | null
 }
 
-export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassItemRendererProps) {
+export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref = null }: ClassItemRendererProps) {
   const { t, locale } = await getServerTranslator()
 
   // Subtitle tracks for the demo video. Every language is passed to the
@@ -255,7 +259,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
               </CardContent>
             </Card>
           ) : null}
-          <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Quiz" />
+          <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Quiz" title={item.title} nextHref={nextHref} settings={readQuizSettings(item.quiz_settings)} />
         </>
       )}
 
@@ -306,7 +310,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
 
           {/* Optional comprehension questions authored for the exercise. */}
           {quizQuestions.length > 0 && (
-            <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Exercise" />
+            <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Exercise" title={item.title} nextHref={nextHref} />
           )}
         </>
       )}

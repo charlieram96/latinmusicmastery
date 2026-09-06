@@ -1,44 +1,42 @@
 'use client'
 
-import { animate } from 'framer-motion'
+import { animate, useReducedMotion } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { useTranslation } from '@/components/language-provider'
 
-/** SVG progress ring that counts up to `pct` on mount. */
-export function ScoreRing({ pct, size = 168, stroke = 14 }: { pct: number; size?: number; stroke?: number }) {
+/** SVG ring that counts up to `pct`. The number scales with the ring (26% of its size) so small rings never overflow. */
+export function ScoreRing({ pct, size = 156, stroke = 13 }: { pct: number; size?: number; stroke?: number }) {
+  const { t } = useTranslation()
+  const reduce = useReducedMotion()
   const r = (size - stroke) / 2
   const circumference = 2 * Math.PI * r
-  const [display, setDisplay] = useState(0)
+  const [animated, setAnimated] = useState(0)
 
   useEffect(() => {
-    const controls = animate(0, pct, {
-      duration: 1.1,
-      ease: 'easeOut',
-      onUpdate: (v) => setDisplay(Math.round(v)),
-    })
+    if (reduce) return
+    const controls = animate(0, pct, { duration: 0.9, ease: [0.22, 1, 0.36, 1], onUpdate: (v) => setAnimated(Math.round(v)) })
     return () => controls.stop()
-  }, [pct])
+  }, [pct, reduce])
 
+  // Reduced motion (or the SSR/pre-hydration `reduce === null` window) shows the
+  // final value directly instead of mirroring it into state from an effect.
+  const display = reduce ? pct : animated
   const offset = circumference - (display / 100) * circumference
-  const tone = pct >= 80 ? 'hsl(145 55% 42%)' : pct >= 50 ? 'hsl(30 85% 55%)' : 'hsl(0 72% 55%)'
+  const tone = pct >= 80 ? 'hsl(var(--success))' : pct >= 50 ? 'hsl(var(--primary))' : 'hsl(var(--terracotta))'
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="hsl(var(--border))" strokeWidth={stroke} />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke={tone}
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-        />
+    <div className="relative grid place-items-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90" aria-hidden>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="hsl(var(--foreground) / 0.09)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={tone} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset} />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-4xl font-black tabular-nums">{display}%</span>
+      <div className="absolute grid justify-items-center leading-none">
+        <span className="font-heading font-black tabular-nums tracking-[-0.03em]" style={{ fontSize: Math.round(size * 0.26) }}>
+          {display}%
+        </span>
+        <span className="mt-1 font-semibold uppercase tracking-[0.1em] text-muted-foreground" style={{ fontSize: Math.max(8, Math.round(size * 0.07)) }}>
+          {t('dashboard.classViewer.quiz.results.score')}
+        </span>
       </div>
     </div>
   )

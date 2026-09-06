@@ -1746,6 +1746,15 @@
         "nextLocked": "Next (Locked)",
         "courseContent": "Course Content"
       },
+      "moduleOverview": {
+        "aboutModule": "About this module",
+        "lessonsHeading": "Lessons in this module",
+        "startModule": "Start module",
+        "continueModule": "Continue module",
+        "moduleComplete": "Module completed",
+        "freePreview": "Free preview",
+        "empty": "This module doesn't have any lessons yet."
+      },
       "home": {
         "musicianFallback": "musician",
         "streakDaysOne": "{count} day streak",
@@ -1853,7 +1862,8 @@
         "taughtByName": "Taught by {name}",
         "lessonTitle": "Lesson {n} — {title}",
         "expandMenu": "Expand menu",
-        "collapseMenu": "Collapse menu"
+        "collapseMenu": "Collapse menu",
+        "toggleLessons": "Show or hide lessons for {title}"
       },
       "partsNav": {
         "ariaLabel": "Lesson parts"
@@ -1916,7 +1926,10 @@
         "feedback": {
           "correct": "Correct!",
           "partial": "Almost there!",
-          "incorrect": "Not quite right"
+          "incorrect": "Not quite right",
+          "partly": "Partly right · {pct}%",
+          "correctAnswer": "Correct answer:",
+          "acceptedAnswers": "Accepted answers:"
         },
         "results": {
           "perfect": "Perfect!",
@@ -1928,7 +1941,82 @@
           "reviewAndRetry": "Review the answers below and try again.",
           "correct": "correct",
           "correctAnswer": "Correct answer:",
-          "noDetails": "No additional details."
+          "noDetails": "No additional details.",
+          "tryAgain": "Try again",
+          "complete": "{kind} complete",
+          "continueNext": "Continue to next part",
+          "reviewMissed": "Review {count} missed",
+          "nothingMissed": "Nothing missed. Every answer was right.",
+          "piecesPlaced": "{correct} of {total} pieces in the right spot",
+          "stats": {
+            "correct": "correct",
+            "partly": "partly right",
+            "missed": "missed"
+          },
+          "score": "score"
+        },
+        "pieces": {
+          "title": "Pieces",
+          "placedOf": "{placed} of {total} placed",
+          "hint": "Drag each piece to where it belongs",
+          "allPlaced": "Everything is placed. Drag a piece off the stage to bring it back here.",
+          "notPlaced": "Not placed",
+          "wasPlaced": "Every piece was placed."
+        },
+        "streak": {
+          "inRow": "{count} in a row",
+          "onFire": "On fire · {count} in a row"
+        },
+        "tile": {
+          "correct": "Correct",
+          "answer": "Answer",
+          "yourPick": "Your pick"
+        },
+        "audio": {
+          "playing": "Playing…"
+        },
+        "matching": {
+          "pickFor": "Pick the match for {left}"
+        },
+        "ordering": {
+          "shouldBe": "should be #{n}",
+          "dragHandle": "Drag to reorder"
+        },
+        "continue": "Continue",
+        "seeResults": "See results",
+        "questionOf": "Question {n} of {total}",
+        "map": {
+          "title": "Questions",
+          "checked": "Checked"
+        },
+        "sound": {
+          "on": "Sound on",
+          "off": "Sound off"
+        },
+        "hints": {
+          "select": "select",
+          "check": "check",
+          "continue": "continue"
+        },
+        "review": {
+          "title": "Review",
+          "titleAll": "Every question, with the answer",
+          "all": "All",
+          "missed": "Missed · {count}",
+          "youSaid": "You said",
+          "answer": "Answer"
+        },
+        "sheet": {
+          "intro": "{count} questions. Answer in any order; nothing is graded until you submit.",
+          "scored": "Scored {pct}%. Every card now shows the right answer and why.",
+          "submitAll": "Submit all answers",
+          "answeredOf": "{answered} of {total} answered",
+          "unanswered": "{count} still unanswered. You can submit anyway.",
+          "answered": "Answered",
+          "unansweredLabel": "Unanswered",
+          "correct": "Correct",
+          "partly": "Partly right",
+          "missed": "Missed"
         }
       },
       "video": {

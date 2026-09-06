@@ -5,6 +5,12 @@
 
 export type ClassItemType = 'VIDEO' | 'QUIZ' | 'EXERCISE' | 'JAM_SESSION'
 
+/** Per-quiz presentation settings stored in class_items.quiz_settings (jsonb). */
+export type QuizMode = 'focus' | 'sheet'
+export interface QuizSettings {
+  mode: QuizMode
+}
+
 export type QuestionType =
   | 'multiple_choice'
   | 'text_answer'
@@ -53,6 +59,7 @@ export interface ClassItem {
   description_es: string | null
   order_index: number
   rich_content: Record<string, unknown> | null
+  quiz_settings?: QuizSettings | Record<string, unknown> | null
 
   // VIDEO fields
   video_url: string | null
@@ -140,11 +147,17 @@ export interface AudioChoiceOptions {
   choices: { id: string; text?: string; audioUrl?: string }[]
 }
 
-// Piece placement: student freely drags pieces anywhere over
-// `QuizQuestion.image_url`; a piece is correct when its center lands inside
-// its hidden `area` rectangle. All geometry is in percentages of the image so
-// it scales responsively. `width` is the piece's display width.
+// Piece placement: the background is a COMPOSITION (a color plus positioned
+// image layers), students drag pieces anywhere over it, and a piece is correct
+// when its center lands inside its hidden `area`. All geometry is in percent
+// of the composition; `aspect` is width/height (null = derive from the first
+// layer at runtime, for rows migrated from the single image_url era).
 export interface PiecePlacementOptions {
+  background?: {
+    color: string
+    aspect: number | null
+    layers: { id: string; imageUrl: string; x: number; y: number; width: number; height: number; ratio?: number }[]
+  }
   pieces: {
     id: string
     label?: string

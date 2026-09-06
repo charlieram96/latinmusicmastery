@@ -227,7 +227,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     <>
       {activeItem ? (
         <div className={`px-4 md:px-8 ${styles.rise}`} style={{ animationDelay: '80ms' }}>
-          <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" />
+          <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
         </div>
       ) : (
         <div className="px-4 pt-4 md:px-8">

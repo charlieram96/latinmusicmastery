@@ -1,49 +1,64 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { CheckCircle2, MinusCircle, XCircle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Check, Minus, X } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
+import { cn } from '@/lib/utils'
+import { outcomeOf } from '@/lib/quiz/engine'
+import { Burst } from './burst'
 
-/** Graded feedback for a question score in [0, 1]; fractional scores show a partial-credit state. */
-export function FeedbackBanner({ score, explanation }: { score: number; explanation?: string | null }) {
+/** Graded feedback for a score in [0, 1]. Announced to screen readers via role="status". */
+export function FeedbackBanner({
+  score,
+  explanation,
+  correctAnswer,
+}: {
+  score: number
+  explanation?: string | null
+  /** Shown on a miss so the student sees the right answer without hunting for it. */
+  correctAnswer?: string | null
+}) {
   const { t } = useTranslation()
-  const state = score >= 1 ? 'correct' : score > 0 ? 'partial' : 'incorrect'
+  const tone = outcomeOf(score)
+  const title =
+    tone === 'ok'
+      ? t('dashboard.classViewer.quiz.feedback.correct')
+      : tone === 'part'
+        ? t('dashboard.classViewer.quiz.feedback.partly', { pct: Math.round(score * 100) })
+        : t('dashboard.classViewer.quiz.feedback.incorrect')
+  const Icon = tone === 'ok' ? Check : tone === 'part' ? Minus : X
   return (
     <motion.div
+      role="status"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        'flex items-start gap-3 rounded-2xl border-2 p-4',
-        state === 'correct' && 'border-green-500/40 bg-green-500/10',
-        state === 'partial' && 'border-amber-500/40 bg-amber-500/10',
-        state === 'incorrect' && 'border-red-500/40 bg-red-500/10',
+        'grid grid-cols-[auto_1fr] items-start gap-3 rounded-[14px] border p-4',
+        tone === 'ok' && 'border-success/40 bg-success/10',
+        tone === 'part' && 'border-primary/40 bg-primary/10',
+        tone === 'bad' && 'border-terracotta/40 bg-terracotta/10',
       )}
     >
-      {state === 'correct' ? (
-        <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-green-600" />
-      ) : state === 'partial' ? (
-        <MinusCircle className="mt-0.5 h-6 w-6 shrink-0 text-amber-600" />
-      ) : (
-        <XCircle className="mt-0.5 h-6 w-6 shrink-0 text-red-600" />
-      )}
-      <div>
-        <p
-          className={cn(
-            'font-bold',
-            state === 'correct' && 'text-green-700 dark:text-green-400',
-            state === 'partial' && 'text-amber-700 dark:text-amber-400',
-            state === 'incorrect' && 'text-red-700 dark:text-red-400',
-          )}
-        >
-          {state === 'correct'
-            ? t('dashboard.classViewer.quiz.feedback.correct')
-            : state === 'partial'
-              ? t('dashboard.classViewer.quiz.feedback.partial')
-              : t('dashboard.classViewer.quiz.feedback.incorrect')}
-        </p>
-        {explanation && <p className="mt-1 text-sm text-muted-foreground">{explanation}</p>}
+      <span
+        className={cn(
+          'relative grid h-7 w-7 place-items-center rounded-[9px] text-white',
+          tone === 'ok' && 'bg-success',
+          tone === 'part' && 'bg-primary',
+          tone === 'bad' && 'bg-terracotta',
+        )}
+      >
+        {tone === 'ok' && <Burst count={10} spread={40} />}
+        <Icon className="h-4 w-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="font-heading text-[13.5px] font-extrabold">{title}</p>
+        {tone === 'bad' && correctAnswer && (
+          <p className="mt-0.5 text-[13.5px] text-muted-foreground">
+            {t('dashboard.classViewer.quiz.feedback.correctAnswer')} <span className="font-semibold text-foreground">{correctAnswer}</span>
+          </p>
+        )}
+        {explanation && <p className="mt-0.5 text-[13.5px] leading-relaxed text-muted-foreground">{explanation}</p>}
       </div>
     </motion.div>
   )
