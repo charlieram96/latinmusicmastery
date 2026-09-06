@@ -9,6 +9,7 @@ import { LanguageToggle } from '@/components/language-toggle'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { useTranslation } from '@/components/language-provider'
 import { cn } from '@/lib/utils'
+import { initialsFor } from '@/lib/dashboard/initials'
 import { isNavActive, navGroups, type NavItemDef } from './nav-items'
 import { useSidebarState } from './sidebar-state'
 
@@ -30,15 +31,6 @@ const REVEAL =
   'opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-has-[:focus-visible]/rail:opacity-100 group-data-[pinned=true]/rail:opacity-100'
 const HIDE_WHEN_OPEN =
   'transition-opacity duration-150 group-hover/rail:opacity-0 group-has-[:focus-visible]/rail:opacity-0 group-data-[pinned=true]/rail:opacity-0'
-
-export function initialsFor(name?: string, email?: string): string {
-  const source = (name || '').trim() || (email || '').split('@')[0]
-  if (!source) return 'U'
-  const parts = source.split(/[\s._-]+/).filter(Boolean)
-  const first = parts[0]?.[0] ?? ''
-  const second = parts.length > 1 ? parts[parts.length - 1][0] : parts[0]?.[1] ?? ''
-  return (first + second).toUpperCase()
-}
 
 function RailItem({ item, active, label }: { item: NavItemDef; active: boolean; label: string }) {
   const Icon = item.icon

@@ -12,7 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useTranslation } from '@/components/language-provider'
 import { signOut } from '@/app/actions/auth'
-import { initialsFor } from './dashboard-sidebar'
+import { initialsFor } from '@/lib/dashboard/initials'
 
 interface AccountMenuProps {
   name: string

@@ -1798,7 +1798,25 @@
         "courseProgress": "Progreso del curso",
         "notStarted": "Sin empezar",
         "courseCompleted": "Completado",
-        "recommended": "Recomendados para ti",
+        "recommended": {
+          "title": "Recomendados para ti",
+          "subtitle": "Según lo que tocas",
+          "preview": "Ver el curso",
+          "lessons": "{count} lecciones",
+          "emptyFilter": "Nada coincide con este filtro todavía.",
+          "filters": {
+            "all": "Todos",
+            "forInstrument": "Para {instrument}",
+            "yourTeachers": "Tus maestros",
+            "new": "Nuevos"
+          },
+          "why": {
+            "instrument": "Porque tocas {instrument}.",
+            "teacher": "Más de {teacher}, quien enseña tu curso {course}.",
+            "new": "Nuevo este mes.",
+            "popular": "Popular entre nuevos estudiantes."
+          }
+        },
         "newBadge": "Nuevo",
         "nextMilestones": "Próximos logros",
         "featuredTeacher": "Maestro destacado",
@@ -1848,6 +1866,65 @@
               "body": "Canta o tararea la melodía antes de tocarla. Si puedes escucharla por dentro, tus manos la seguirán con más naturalidad."
             }
           }
+        },
+        "greeting": {
+          "morning": "Buenos días, {name}",
+          "afternoon": "Buenas tardes, {name}",
+          "evening": "Buenas noches, {name}"
+        },
+        "weeklyGoalChip": "{done} de {goal} lecciones",
+        "continue": {
+          "lesson": "Lección",
+          "eyebrow": "{course}, lección {n} de {total}",
+          "minutes": "{count} min",
+          "watched": "{pct}% visto",
+          "lessonsDone": "{done} de {total} lecciones completadas",
+          "toGo": "Faltan {count}",
+          "upNext": "Siguiente: {title}",
+          "resume": "Reanudar lección",
+          "start": "Empezar lección",
+          "courseDetails": "Detalles del curso",
+          "emptyTitle": "Elige tu primer curso",
+          "emptyBody": "Elige un instrumento y un género. Tu progreso se guarda automáticamente.",
+          "browse": "Explorar cursos"
+        },
+        "courses": {
+          "title": "Mis cursos",
+          "inProgress": "{count} en curso",
+          "lessonOfTotal": "lección {n} de {total}",
+          "notStarted": "sin empezar",
+          "completed": "completado"
+        },
+        "feedback": {
+          "title": "Comentarios del maestro",
+          "newCount": "{count} nuevo",
+          "allReviews": "Todas las reseñas",
+          "reviewed": "{teacher} revisó tu video",
+          "pendingWith": "Tu video está con {teacher}",
+          "watch": "Ver reseña",
+          "read": "Leer reseña",
+          "sendNew": "Enviar otro video",
+          "inviteTitle": "Recibe comentarios de un maestro",
+          "inviteBody": "Graba un video corto tocando y un maestro lo revisará.",
+          "sendClip": "Enviar un video"
+        },
+        "calendar": {
+          "title": "Calendario de práctica",
+          "goalToGo": "Meta semanal: faltan {count}",
+          "goalReached": "Meta semanal cumplida",
+          "streakBest": "Racha de {streak} días. Mejor: {best} días.",
+          "keepStreak": "Practica hoy para mantener la racha.",
+          "tenMinutes": "Diez minutos también cuentan."
+        },
+        "masterClass": {
+          "label": "Master class",
+          "watch": "Ver"
+        },
+        "tools": {
+          "tuner": "Afinador",
+          "tunerBody": "Afina antes de tocar",
+          "playSense": "Play Sense",
+          "playSenseBody": "Practica un patrón"
         }
       }
     },

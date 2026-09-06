@@ -11,7 +11,8 @@ import { useTranslation } from '@/components/language-provider'
 import { cn } from '@/lib/utils'
 import { isNavActive, navGroups, TAB_ITEMS } from './nav-items'
 import { useSidebarState } from './sidebar-state'
-import { initialsFor, type DashboardSidebarProps } from './dashboard-sidebar'
+import { initialsFor } from '@/lib/dashboard/initials'
+import type { DashboardSidebarProps } from './dashboard-sidebar'
 
 /** Routes with their own fixed bottom chrome (course action bar, lesson player). */
 const TAB_BAR_HIDDEN_PREFIXES = ['/dashboard/course/', '/dashboard/modules/']
