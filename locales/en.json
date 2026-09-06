@@ -1942,7 +1942,18 @@
           "correct": "correct",
           "correctAnswer": "Correct answer:",
           "noDetails": "No additional details.",
-          "tryAgain": "Try again"
+          "tryAgain": "Try again",
+          "complete": "{kind} complete",
+          "continueNext": "Continue to next part",
+          "reviewMissed": "Review {count} missed",
+          "nothingMissed": "Nothing missed. Every answer was right.",
+          "piecesPlaced": "{correct} of {total} pieces in the right spot",
+          "stats": {
+            "correct": "correct",
+            "partly": "partly right",
+            "missed": "missed"
+          },
+          "score": "score"
         },
         "pieces": {
           "title": "Pieces",
@@ -1986,6 +1997,14 @@
           "select": "select",
           "check": "check",
           "continue": "continue"
+        },
+        "review": {
+          "title": "Review",
+          "titleAll": "Every question, with the answer",
+          "all": "All",
+          "missed": "Missed · {count}",
+          "youSaid": "You said",
+          "answer": "Answer"
         }
       },
       "video": {

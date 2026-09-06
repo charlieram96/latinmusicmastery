@@ -45,13 +45,16 @@ interface ClassItemRendererProps {
     rich_content: Record<string, unknown> | null
     video_duration_seconds: number | null
     description: string | null
+    quiz_settings?: unknown
   }
   userId: string
   /** 'split' renders the PlaySense media player as a resizable video|notation workspace. */
   playerLayout?: 'stack' | 'split'
+  /** Where "Continue to next part" goes at the end of a quiz/exercise; omitted when this is the last part. */
+  nextHref?: string | null
 }
 
-export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassItemRendererProps) {
+export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref = null }: ClassItemRendererProps) {
   const { t, locale } = await getServerTranslator()
 
   // Subtitle tracks for the demo video. Every language is passed to the
@@ -255,7 +258,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
               </CardContent>
             </Card>
           ) : null}
-          <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Quiz" />
+          <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Quiz" title={item.title} nextHref={nextHref} />
         </>
       )}
 
@@ -306,7 +309,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack' }: ClassI
 
           {/* Optional comprehension questions authored for the exercise. */}
           {quizQuestions.length > 0 && (
-            <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Exercise" />
+            <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Exercise" title={item.title} nextHref={nextHref} />
           )}
         </>
       )}

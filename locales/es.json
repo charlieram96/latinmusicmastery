@@ -1942,7 +1942,18 @@
           "correct": "correctas",
           "correctAnswer": "Respuesta correcta:",
           "noDetails": "Sin detalles adicionales.",
-          "tryAgain": "Intentar de nuevo"
+          "tryAgain": "Intentar de nuevo",
+          "complete": "{kind} completado",
+          "continueNext": "Continuar a la siguiente parte",
+          "reviewMissed": "Revisar {count} falladas",
+          "nothingMissed": "Nada que revisar. Todas las respuestas fueron correctas.",
+          "piecesPlaced": "{correct} de {total} piezas en su lugar",
+          "stats": {
+            "correct": "correctas",
+            "partly": "casi",
+            "missed": "falladas"
+          },
+          "score": "puntaje"
         },
         "pieces": {
           "title": "Piezas",
@@ -1986,6 +1997,14 @@
           "select": "elegir",
           "check": "comprobar",
           "continue": "continuar"
+        },
+        "review": {
+          "title": "Revisión",
+          "titleAll": "Todas las preguntas, con su respuesta",
+          "all": "Todas",
+          "missed": "Falladas · {count}",
+          "youSaid": "Respondiste",
+          "answer": "Respuesta"
         }
       },
       "video": {

@@ -53,7 +53,7 @@ export function QuizRunner({ classItemId, questions, kind = 'Quiz', settings, ne
     <MotionConfig reducedMotion="user">
       <div className={styles.root}>
         {finished ? (
-          <ResultsScreen kind={kindLabel} questions={ordered} graded={engine.state.graded} onRestart={restart} />
+          <ResultsScreen kind={kindLabel} questions={ordered} answers={engine.state.answers} graded={engine.state.graded} onRestart={restart} nextHref={nextHref} />
         ) : (
           <FocusStage questions={ordered} engine={engine} kindLabel={kindLabel} title={title} onFinish={() => setFinished(true)} />
         )}
