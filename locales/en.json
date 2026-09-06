@@ -35,7 +35,14 @@
     },
     "toggleSidebar": "Toggle sidebar",
     "switchToLightMode": "Switch to light mode",
-    "switchToDarkMode": "Switch to dark mode"
+    "switchToDarkMode": "Switch to dark mode",
+    "useSystemTheme": "Follow system theme",
+    "theme": {
+      "label": "Theme",
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System"
+    }
   },
   "nav": {
     "explore": "Explore",
@@ -1009,7 +1016,28 @@
       "subscription": "Subscription",
       "teacherPortal": "Teacher Portal",
       "adminPanel": "Admin Panel",
-      "settings": "Settings"
+      "settings": "Settings",
+      "label": "Main navigation",
+      "groups": {
+        "learn": "Learn",
+        "discover": "Discover",
+        "connect": "Connect",
+        "tools": "Tools",
+        "manage": "Manage"
+      },
+      "pin": "Keep the menu open",
+      "unpin": "Collapse the menu",
+      "openMenu": "Open menu",
+      "tabs": {
+        "home": "Home",
+        "courses": "Courses",
+        "practice": "Practice",
+        "profile": "Profile"
+      },
+      "plan": {
+        "free": "Free plan",
+        "active": "Member"
+      }
     },
     "pages": {
       "tuner": {
@@ -1770,7 +1798,25 @@
         "courseProgress": "Course progress",
         "notStarted": "Not started",
         "courseCompleted": "Completed",
-        "recommended": "Recommended for you",
+        "recommended": {
+          "title": "Recommended for you",
+          "subtitle": "Picked from what you play",
+          "preview": "Preview the course",
+          "lessons": "{count} lessons",
+          "emptyFilter": "Nothing matches this filter yet.",
+          "filters": {
+            "all": "All",
+            "forInstrument": "For {instrument}",
+            "yourTeachers": "Your teachers",
+            "new": "New"
+          },
+          "why": {
+            "instrument": "Because you play {instrument}.",
+            "teacher": "More from {teacher}, who teaches your {course}.",
+            "new": "New this month.",
+            "popular": "Popular with new learners."
+          }
+        },
         "newBadge": "New",
         "nextMilestones": "Next Milestones",
         "featuredTeacher": "Featured Teacher",
@@ -1820,6 +1866,65 @@
               "body": "Sing or hum the melody before you play it. If you can hear it internally, your hands will follow more naturally."
             }
           }
+        },
+        "greeting": {
+          "morning": "Good morning, {name}",
+          "afternoon": "Good afternoon, {name}",
+          "evening": "Good evening, {name}"
+        },
+        "weeklyGoalChip": "{done} of {goal} lessons",
+        "continue": {
+          "lesson": "Lesson",
+          "eyebrow": "{course}, lesson {n} of {total}",
+          "minutes": "{count} min",
+          "watched": "{pct}% watched",
+          "lessonsDone": "{done} of {total} lessons done",
+          "toGo": "{count} to go",
+          "upNext": "Up next: {title}",
+          "resume": "Resume lesson",
+          "start": "Start lesson",
+          "courseDetails": "Course details",
+          "emptyTitle": "Pick your first course",
+          "emptyBody": "Choose an instrument and a genre. Your progress saves automatically.",
+          "browse": "Browse courses"
+        },
+        "courses": {
+          "title": "My courses",
+          "inProgress": "{count} in progress",
+          "lessonOfTotal": "lesson {n} of {total}",
+          "notStarted": "not started",
+          "completed": "completed"
+        },
+        "feedback": {
+          "title": "Teacher feedback",
+          "newCount": "{count} new",
+          "allReviews": "All reviews",
+          "reviewed": "{teacher} reviewed your clip",
+          "pendingWith": "Your clip is with {teacher}",
+          "watch": "Watch review",
+          "read": "Read review",
+          "sendNew": "Send a new clip",
+          "inviteTitle": "Get feedback from a teacher",
+          "inviteBody": "Record a short clip of your playing and a teacher will review it.",
+          "sendClip": "Send a clip"
+        },
+        "calendar": {
+          "title": "Practice calendar",
+          "goalToGo": "Weekly goal: {count} to go",
+          "goalReached": "Weekly goal reached",
+          "streakBest": "{streak}-day streak. Best: {best} days.",
+          "keepStreak": "Practice today to keep the streak.",
+          "tenMinutes": "Even ten minutes counts."
+        },
+        "masterClass": {
+          "label": "Master class",
+          "watch": "Watch"
+        },
+        "tools": {
+          "tuner": "Tuner",
+          "tunerBody": "Tune before you play",
+          "playSense": "Play Sense",
+          "playSenseBody": "Practice a pattern"
         }
       }
     },
@@ -1848,6 +1953,13 @@
         "tooltipOne": "{count} day learning streak!",
         "tooltipOther": "{count} days learning streak!",
         "empty": "Start learning to build your streak!"
+      },
+      "account": {
+        "open": "Account menu",
+        "profile": "Profile and settings",
+        "plan": "Plan",
+        "progress": "My progress",
+        "help": "Help"
       }
     },
     "classViewer": {

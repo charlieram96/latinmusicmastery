@@ -6,6 +6,7 @@ import { Search, Check, X, BookOpen, Globe } from 'lucide-react'
 import { SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
 import { coverStyle, glyph, levelColor } from '@/lib/course-covers'
 import { useTranslation } from '@/components/language-provider'
+import { PageHeader } from '@/components/dashboard/page-header'
 import { instrumentLabel } from '@/lib/i18n/instruments'
 import type { Locale } from '@/lib/i18n'
 import './browse-courses.css'
@@ -76,13 +77,12 @@ export function CoursesView({ courses }: CoursesViewProps) {
 
   return (
     <div className="bc-browse">
-      <div className="bc-pagehead">
-        <span className="eyebrow">{t('dashboard.pages.courses.eyebrow')}</span>
-        <h1 className="bc-title">{t('dashboard.pages.courses.title')}</h1>
-        <p className="bc-sub">
-          {t('dashboard.pages.courses.subtitleBrowse', { count: courses.length })}
-        </p>
-      </div>
+      <PageHeader
+        crumb={t('dashboard.pages.courses.eyebrow')}
+        title={t('dashboard.pages.courses.title')}
+        description={t('dashboard.pages.courses.subtitleBrowse', { count: courses.length })}
+        className="mb-7"
+      />
 
       <div className="a-wrap">
         {/* ---- Filter rail ---- */}

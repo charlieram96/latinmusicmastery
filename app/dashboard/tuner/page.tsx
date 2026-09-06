@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AudioLines } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
+import { PageHeader } from '@/components/dashboard/page-header'
 import { useTunerPrefs } from '@/hooks/use-tuner-prefs'
 import { useTunerEngine } from '@/hooks/use-tuner-engine'
 import { useReferenceTone } from '@/hooks/use-reference-tone'
@@ -186,15 +187,16 @@ export default function TunerPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-6 lg:gap-[18px]">
-      <div className="flex items-center gap-3">
-        <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight">{t('dashboard.pages.tuner.title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('dashboard.pages.tuner.subtitle')}</p>
-        </div>
-        <div className="ml-auto hidden text-xs text-muted-foreground lg:block">
-          {t('dashboard.pages.tuner.keys.space')} · {t('dashboard.pages.tuner.keys.arrows')}
-        </div>
-      </div>
+      <PageHeader
+        title={t('dashboard.pages.tuner.title')}
+        description={t('dashboard.pages.tuner.subtitle')}
+        className="mb-0"
+        actions={
+          <span className="hidden text-xs text-muted-foreground lg:block">
+            {t('dashboard.pages.tuner.keys.space')} · {t('dashboard.pages.tuner.keys.arrows')}
+          </span>
+        }
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-[18px]">
         <section className="relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-4 sm:p-5" aria-label={t('dashboard.pages.tuner.brand')}>

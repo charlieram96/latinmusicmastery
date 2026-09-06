@@ -1,5 +1,6 @@
 'use client'
 
+import { PageHeader } from '@/components/dashboard/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Music, GraduationCap, BookOpen } from 'lucide-react'
 import { TeacherCard } from '@/components/dashboard/teacher-card'
@@ -24,10 +25,11 @@ export function TeachersView({
     <>
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold font-heading mb-2">{t('dashboard.pages.teachers.title')}</h1>
-        <p className="text-muted-foreground mb-6">
-          {t('dashboard.pages.teachers.subtitle')}
-        </p>
+        <PageHeader
+          title={t('dashboard.pages.teachers.title')}
+          description={t('dashboard.pages.teachers.subtitle')}
+          className="mb-6"
+        />
 
         {/* Quick Stats */}
         <div className="flex flex-wrap gap-4">

@@ -1,5 +1,6 @@
 'use client'
 
+import { PageHeader } from '@/components/dashboard/page-header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -28,13 +29,10 @@ export function SettingsView({ fullName, email }: SettingsViewProps) {
 
   return (
     <>
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{t('dashboard.pages.settings.title')}</h1>
-        <p className="text-muted-foreground">
-          {t('dashboard.pages.settings.subtitle')}
-        </p>
-      </div>
+      <PageHeader
+        title={t('dashboard.pages.settings.title')}
+        description={t('dashboard.pages.settings.subtitle')}
+      />
 
       {/* Profile Settings */}
       <Card className="mb-6">

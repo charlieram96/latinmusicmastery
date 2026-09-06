@@ -1,5 +1,6 @@
 'use client'
 
+import { PageHeader } from '@/components/dashboard/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -42,13 +43,10 @@ export function ProgressView({
 
   return (
     <>
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{t('dashboard.pages.progress.title')}</h1>
-        <p className="text-muted-foreground">
-          {t('dashboard.pages.progress.subtitle')}
-        </p>
-      </div>
+      <PageHeader
+        title={t('dashboard.pages.progress.title')}
+        description={t('dashboard.pages.progress.subtitle')}
+      />
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-4 mb-8">

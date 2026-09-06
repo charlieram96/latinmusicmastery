@@ -9,48 +9,65 @@
     scroll-behavior: smooth;
   }
 
-  /* Light theme (default) — warm off-white */
+  /* Studio Amber — light. Bare HSL channels; consumed as hsl(var(--x)). */
   :root {
-    --background: 30 25% 98%;
-    --foreground: 20 10% 15%;
-    --card: 30 20% 99%;
-    --card-foreground: 20 10% 15%;
-    --popover: 30 20% 99%;
-    --popover-foreground: 20 10% 15%;
-    --primary: 30 85% 55%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 30 15% 94%;
-    --secondary-foreground: 20 10% 15%;
-    --muted: 30 15% 94%;
-    --muted-foreground: 20 8% 42%;
-    --accent: 30 85% 55%;
-    --accent-foreground: 20 10% 15%;
-    --destructive: 0 84.2% 60.2%;
+    --background: 30 25% 97.5%;
+    --foreground: 20 12% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 12% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 12% 12%;
+    --primary: 28 85% 50%;
+    --primary-foreground: 24 40% 9%;
+    --secondary: 30 15% 93%;
+    --secondary-foreground: 20 12% 12%;
+    --muted: 30 15% 93%;
+    --muted-foreground: 25 8% 40%;
+    --accent: 30 30% 94%;
+    --accent-foreground: 20 12% 12%;
+    --destructive: 0 70% 46%;
     --destructive-foreground: 0 0% 98%;
-    --border: 30 10% 88%;
-    --input: 30 10% 88%;
-    --ring: 30 85% 55%;
-    --radius: 0.5rem;
-    --chart-1: 30 85% 55%;
-    --chart-2: 35 90% 45%;
-    --chart-3: 24 100% 45%;
+    --border: 30 12% 86%;
+    --input: 30 12% 84%;
+    --ring: 28 85% 50%;
+    --radius: 0.625rem;
+    --header-h: 3.5rem;
+    --chart-1: 28 85% 50%;
+    --chart-2: 38 65% 44%;
+    --chart-3: 14 55% 46%;
     --chart-4: 280 75% 60%;
     --chart-5: 340 75% 50%;
 
-    /* Warm Latin palette — light mode */
+    /* Brand accents */
     --warm-surface: 30 20% 96%;
-    --terracotta: 14 52% 48%;
-    --gold-highlight: 38 58% 50%;
+    --terracotta: 14 55% 46%;
+    --gold-highlight: 38 65% 44%;
 
-    /* Lesson viewer surfaces & states — light mode */
-    --surface-sunken: 30 22% 96.5%;
-    --surface-raised: 30 20% 99%;
-    --success: 145 55% 38%;
+    /* Surfaces and states */
+    --surface-sunken: 30 20% 95%;
+    --surface-raised: 0 0% 100%;
+    --success: 145 55% 36%;
+    --warning: 38 92% 40%;
+    --danger: 0 70% 46%;
+    --info: 210 80% 44%;
     --shadow-warm: 24 30% 20%;
+    --shadow-card: 0 1px 2px hsl(var(--shadow-warm) / 0.05), 0 6px 16px -10px hsl(var(--shadow-warm) / 0.12);
+    --shadow-lift: 0 2px 4px hsl(var(--shadow-warm) / 0.06), 0 14px 32px -14px hsl(var(--shadow-warm) / 0.2);
+    --shadow-pop: 0 8px 20px -10px hsl(var(--shadow-warm) / 0.18), 0 28px 64px -20px hsl(var(--shadow-warm) / 0.3);
+
+    /* Sidebar (channels, like every other token) */
+    --sidebar: 30 22% 96%;
+    --sidebar-foreground: 20 12% 12%;
+    --sidebar-primary: 28 85% 50%;
+    --sidebar-primary-foreground: 24 40% 9%;
+    --sidebar-accent: 30 20% 91%;
+    --sidebar-accent-foreground: 20 12% 12%;
+    --sidebar-border: 30 12% 88%;
+    --sidebar-ring: 28 85% 50%;
 
     /* PlaySense Studio notation palette — light mode */
-    --playsense-studio-notation: 20 10% 15%;          /* note glyphs, staff lines */
-    --playsense-studio-notation-muted: 20 8% 42%;     /* secondary text (e.g. measure labels) */
+    --playsense-studio-notation: 20 12% 12%;          /* note glyphs, staff lines */
+    --playsense-studio-notation-muted: 25 8% 40%;     /* secondary text (e.g. measure labels) */
     --playsense-studio-gap-fill: 28 90% 91%;          /* no-notation gap box — light orange */
     --playsense-studio-gap-line: 28 55% 78%;          /* gap box staff lines */
     --playsense-studio-gap-text: 24 65% 42%;          /* gap box time label */
@@ -60,43 +77,56 @@
     --spacing-element: 1rem;
   }
 
-  /* Dark theme — Spotify x MasterClass cinematic aesthetic */
+  /* Studio Amber — dark. Warm-tinted neutrals, borders at 10% white. */
   .dark {
-    --background: 0 0% 4%; /* #0A0A0A near-black */
-    --foreground: 0 0% 93%; /* #ededed */
-    --card: 0 0% 8%; /* #141414 */
-    --card-foreground: 0 0% 93%;
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 93%;
-    --primary: 30 85% 55%; /* warm amber */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 11%; /* #1C1C1C elevated */
-    --secondary-foreground: 0 0% 93%;
-    --muted: 0 0% 11%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 30 85% 55%;
-    --accent-foreground: 0 0% 93%;
-    --destructive: 0 84.2% 60.2%;
+    --background: 20 10% 5%;
+    --foreground: 30 10% 93%;
+    --card: 20 8% 8.5%;
+    --card-foreground: 30 10% 93%;
+    --popover: 20 7% 11%;
+    --popover-foreground: 30 10% 93%;
+    --primary: 30 85% 55%;
+    --primary-foreground: 24 40% 8%;
+    --secondary: 20 7% 12%;
+    --secondary-foreground: 30 10% 93%;
+    --muted: 20 7% 12%;
+    --muted-foreground: 25 6% 63%;
+    --accent: 20 8% 14%;
+    --accent-foreground: 30 10% 93%;
+    --destructive: 0 75% 64%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 100% / 0.06; /* near-invisible */
-    --input: 0 0% 100% / 0.06;
+    --border: 0 0% 100% / 0.1;
+    --input: 0 0% 100% / 0.12;
     --ring: 30 85% 55%;
     --chart-1: 30 85% 55%;
-    --chart-2: 35 90% 50%;
-    --chart-3: 24 100% 50%;
+    --chart-2: 38 60% 58%;
+    --chart-3: 14 55% 55%;
     --chart-4: 280 75% 65%;
     --chart-5: 340 75% 55%;
 
-    /* Warm Latin studio palette */
-    --warm-surface: 16 14% 8%; /* #161210 */
-    --terracotta: 14 52% 53%; /* #C4654A */
-    --gold-highlight: 38 58% 58%; /* #D4A854 */
+    --warm-surface: 16 14% 8%;
+    --terracotta: 14 55% 55%;
+    --gold-highlight: 38 60% 58%;
 
-    /* Lesson viewer surfaces & states — dark mode */
-    --surface-sunken: 0 0% 5%;
-    --surface-raised: 0 0% 9%;
-    --success: 145 50% 45%;
+    --surface-sunken: 20 10% 3.5%;
+    --surface-raised: 20 7% 12%;
+    --success: 145 50% 50%;
+    --warning: 40 90% 60%;
+    --danger: 0 75% 64%;
+    --info: 210 85% 66%;
     --shadow-warm: 0 0% 0%;
+    --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.25), 0 6px 16px -10px hsl(0 0% 0% / 0.45);
+    --shadow-lift: 0 2px 4px hsl(0 0% 0% / 0.3), 0 14px 32px -14px hsl(0 0% 0% / 0.6);
+    --shadow-pop: 0 8px 20px -10px hsl(0 0% 0% / 0.5), 0 28px 64px -20px hsl(0 0% 0% / 0.7);
+
+    --sidebar: 20 10% 4%;
+    --sidebar-foreground: 30 10% 93%;
+    --sidebar-primary: 30 85% 55%;
+    --sidebar-primary-foreground: 24 40% 8%;
+    --sidebar-accent: 0 0% 100% / 0.06;
+    --sidebar-accent-foreground: 30 10% 93%;
+    --sidebar-border: 0 0% 100% / 0.08;
+    --sidebar-ring: 30 85% 55%;
 
     /* PlaySense Studio notation palette — dark mode */
     --playsense-studio-notation: 0 0% 88%;            /* near-white note glyphs */
@@ -113,7 +143,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
@@ -130,37 +160,6 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-:root {
-  --sidebar: hsl(30 20% 97%);
-  --sidebar-foreground: hsl(20 10% 15%);
-  --sidebar-primary: hsl(30 85% 55%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(30 15% 92%);
-  --sidebar-accent-foreground: hsl(20 10% 15%);
-  --sidebar-border: hsl(30 10% 88%);
-  --sidebar-ring: hsl(30 85% 55%);
-}
-
-.dark {
-  --sidebar: #0E0E0E;
-  --sidebar-foreground: hsl(0 0% 93%);
-  --sidebar-primary: hsl(30 85% 55%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(0 0% 100% / 0.06);
-  --sidebar-accent-foreground: hsl(0 0% 93%);
-  --sidebar-border: hsl(0 0% 100% / 0.06);
-  --sidebar-ring: hsl(30 85% 55%);
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }
 

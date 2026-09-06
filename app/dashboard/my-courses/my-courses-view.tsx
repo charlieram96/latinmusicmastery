@@ -1,5 +1,6 @@
 'use client'
 
+import { PageHeader } from '@/components/dashboard/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -37,13 +38,11 @@ export function MyCoursesView({ enrolledCourses, counts, filter }: MyCoursesView
 
   return (
     <>
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold font-heading mb-2">{t('dashboard.pages.myCourses.title')}</h1>
-        <p className="text-muted-foreground">
-          {t('dashboard.pages.myCourses.subtitle')}
-        </p>
-      </div>
+      <PageHeader
+        title={t('dashboard.pages.myCourses.title')}
+        description={t('dashboard.pages.myCourses.subtitle')}
+        className="mb-6"
+      />
 
       {/* Filters & Sort */}
       <MyCoursesFilters counts={counts} />

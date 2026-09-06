@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, BellDot, Check } from 'lucide-react'
+import { Bell, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Popover,
@@ -62,23 +62,29 @@ export function HeaderNotificationsClient({ notifications: initialNotifications,
     })
   }
 
-  const BellIcon = unreadCount > 0 ? BellDot : Bell
-  const displayCount = unreadCount > 9 ? '9+' : unreadCount
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-9 w-9">
-          <BellIcon className="h-4 w-4" />
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="relative text-muted-foreground hover:text-foreground"
+          aria-label={
+            unreadCount > 0
+              ? `${t('dashboard.header.notifications.title')} (${unreadCount})`
+              : t('dashboard.header.notifications.title')
+          }
+        >
+          <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-              {displayCount}
-            </span>
+            <span
+              aria-hidden
+              className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary ring-2 ring-background"
+            />
           )}
-          <span className="sr-only">{t('dashboard.header.notifications.title')}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0">
+      <PopoverContent align="end" sideOffset={8} className="w-80 rounded-lg p-0 shadow-pop">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h3 className="text-sm font-semibold">{t('dashboard.header.notifications.title')}</h3>

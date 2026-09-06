@@ -1,5 +1,6 @@
 'use client'
 
+import { PageHeader } from '@/components/dashboard/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -79,13 +80,10 @@ export function AchievementsView({
 
   return (
     <>
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold font-heading mb-2">{t('dashboard.pages.achievements.title')}</h1>
-        <p className="text-muted-foreground">
-          {t('dashboard.pages.achievements.subtitle')}
-        </p>
-      </div>
+      <PageHeader
+        title={t('dashboard.pages.achievements.title')}
+        description={t('dashboard.pages.achievements.subtitle')}
+      />
 
       {/* Overall Progress Card */}
       <Card className="mb-8 overflow-hidden">

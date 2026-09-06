@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import { cookies } from "next/headers";
 import { PageLoadingProvider } from "@/components/page-loading-overlay";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider, THEME_INIT_SCRIPT } from "@/components/theme-provider";
 import { LanguageProvider } from "@/components/language-provider";
 import { CourseModeProvider } from "@/contexts/course-mode-context";
 import { PlaysenseProvider } from "@/contexts/playsense-context";
@@ -39,10 +39,12 @@ export default async function RootLayout({
   const locale = isLocale(cookieLocale) ? cookieLocale : DEFAULT_LOCALE;
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${inter.variable} ${montserrat.variable} antialiased font-sans`}
       >
+        {/* Applies the stored theme before hydration so light-mode users never see a dark flash. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <ThemeProvider>
           <LanguageProvider initialLocale={locale}>
             <CourseModeProvider>
