@@ -1646,15 +1646,17 @@
         "lessonCount": "{count} lessons",
         "descriptionFallback": "Master {style} with expert instruction",
         "eyebrow": "Course library",
-        "subtitleBrowse": "Find your instrument, pick a tradition, and start playing. {count} courses across the Americas.",
-        "searchPlaceholder": "Search courses…",
-        "clearAll": "Clear all",
+        "subtitleBrowse": "Pick an instrument, choose a tradition, start playing. {count} courses from across the Americas.",
+        "searchPlaceholder": "Search courses, teachers, styles",
+        "clearAll": "Clear",
         "resultCourse": "course",
         "resultCourses": "courses",
         "facets": {
           "instrument": "Instrument",
           "level": "Level",
-          "genre": "Genre"
+          "genre": "Style",
+          "teacher": "Teacher",
+          "country": "Country"
         },
         "tabs": {
           "all": "All"
@@ -1672,7 +1674,24 @@
           "subtitle": "Try adjusting your filters or search to find what you're looking for",
           "clearFilters": "Clear all filters"
         },
-        "removeFilter": "Remove {label}"
+        "removeFilter": "Remove {label}",
+        "allLevels": "All levels",
+        "any": "Any",
+        "fundamentals": "Fundamentals",
+        "comingSoon": "Coming soon",
+        "courseCount": "{count} courses",
+        "courseCountOne": "{count} course",
+        "sort": {
+          "label": "Sort",
+          "newest": "Newest first",
+          "title": "A-Z",
+          "lessons": "Most lessons"
+        },
+        "view": {
+          "label": "View",
+          "grid": "Grid",
+          "list": "List"
+        }
       },
       "subscription": {
         "title": "My Subscription",

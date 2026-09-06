@@ -1646,15 +1646,17 @@
         "lessonCount": "{count} lecciones",
         "descriptionFallback": "Domina {style} con instrucción experta",
         "eyebrow": "Biblioteca de cursos",
-        "subtitleBrowse": "Encuentra tu instrumento, elige una tradición y empieza a tocar. {count} cursos de toda América.",
-        "searchPlaceholder": "Buscar cursos…",
-        "clearAll": "Borrar todo",
+        "subtitleBrowse": "Elige un instrumento, escoge una tradición y empieza a tocar. {count} cursos de toda América.",
+        "searchPlaceholder": "Buscar cursos, maestros, estilos",
+        "clearAll": "Limpiar",
         "resultCourse": "curso",
         "resultCourses": "cursos",
         "facets": {
           "instrument": "Instrumento",
           "level": "Nivel",
-          "genre": "Género"
+          "genre": "Estilo",
+          "teacher": "Maestro",
+          "country": "País"
         },
         "tabs": {
           "all": "Todos"
@@ -1672,7 +1674,24 @@
           "subtitle": "Prueba ajustando los filtros o la búsqueda para encontrar lo que buscas",
           "clearFilters": "Borrar todos los filtros"
         },
-        "removeFilter": "Quitar {label}"
+        "removeFilter": "Quitar {label}",
+        "allLevels": "Todos los niveles",
+        "any": "Cualquiera",
+        "fundamentals": "Fundamentos",
+        "comingSoon": "Muy pronto",
+        "courseCount": "{count} cursos",
+        "courseCountOne": "{count} curso",
+        "sort": {
+          "label": "Ordenar",
+          "newest": "Más recientes",
+          "title": "A-Z",
+          "lessons": "Más lecciones"
+        },
+        "view": {
+          "label": "Vista",
+          "grid": "Cuadrícula",
+          "list": "Lista"
+        }
       },
       "subscription": {
         "title": "Mi suscripción",

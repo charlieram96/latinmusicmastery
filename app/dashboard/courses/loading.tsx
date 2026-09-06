@@ -1,60 +1,36 @@
 import { Skeleton } from '@/components/ui/skeleton'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
+/** Mirrors Browse: header with search, instrument strip, toolbar, poster grid. */
 export default function BrowseCoursesLoading() {
   return (
-    <>
-      {/* Page Header */}
-      <div className="mb-6">
-        <Skeleton className="h-9 w-48 mb-2" />
-        <Skeleton className="h-5 w-80" />
-      </div>
-
-      {/* Filters Skeleton */}
-      <div className="space-y-4 mb-8">
-        {/* Search and View Toggle */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Skeleton className="h-10 flex-1" />
-          <Skeleton className="h-10 w-20" />
+    <div aria-busy>
+      <div className="mb-6 flex flex-col gap-5">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <Skeleton className="h-3 w-24 rounded" />
+            <Skeleton className="mt-2 h-9 w-56 rounded-lg" />
+            <Skeleton className="mt-3 h-4 w-[30rem] max-w-full rounded" />
+          </div>
+          <Skeleton className="h-10 w-72 rounded-lg" />
         </div>
-
-        {/* Filter Buttons */}
-        <div className="flex flex-wrap gap-3">
-          <Skeleton className="h-9 w-28" />
-          <Skeleton className="h-9 w-32" />
-          <Skeleton className="h-9 w-28" />
-          <Skeleton className="h-9 w-32" />
-        </div>
-
-        {/* Results Count */}
-        <div className="flex justify-end">
-          <Skeleton className="h-5 w-24" />
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5">
+          {Array.from({ length: 9 }, (_, i) => (
+            <Skeleton key={i} className="h-[92px] rounded-xl" />
+          ))}
         </div>
       </div>
-
-      {/* Course Grid Skeleton */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-          <Card key={i} className="overflow-hidden">
-            <Skeleton className="aspect-video" />
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-2 mb-2">
-                <Skeleton className="h-5 w-16" />
-                <Skeleton className="h-5 w-14" />
-              </div>
-              <Skeleton className="h-5 w-full mb-1" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-            </CardContent>
-          </Card>
+      <div className="mb-4 flex items-center gap-2.5">
+        <Skeleton className="h-10 w-[360px] rounded-lg" />
+        <Skeleton className="h-9 w-40 rounded-lg" />
+        <Skeleton className="h-9 w-40 rounded-lg" />
+        <span className="flex-1" />
+        <Skeleton className="h-9 w-[170px] rounded-lg" />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        {Array.from({ length: 8 }, (_, i) => (
+          <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />
         ))}
       </div>
-    </>
+    </div>
   )
 }
