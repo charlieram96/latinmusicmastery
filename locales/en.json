@@ -40,6 +40,10 @@
       "label": "Theme",
       "dark": "Dark",
       "light": "Light"
+    },
+    "duration": {
+      "minutes": "{m} min",
+      "hoursMinutes": "{h} h {m} min"
     }
   },
   "nav": {
@@ -1541,28 +1545,42 @@
         "title": "My Progress",
         "subtitle": "Track your learning journey and achievements",
         "stats": {
-          "totalItems": "Total Items",
           "completed": "Completed",
           "accuracy": "Accuracy",
           "currentStreak": "Current Streak",
-          "inProgressCount": "{count} in progress",
           "accuracyBreakdown": "{correct}/{total} correct",
           "daysValue": "{count} days",
           "keepItGoing": "Keep it going!",
-          "startStreak": "Start your streak today!"
-        },
-        "learningTime": {
-          "title": "Learning Time",
-          "totalHours": "Total Hours",
-          "totalMinutes": "Total Minutes",
-          "hoursValue": "{count}h",
-          "minutesValue": "{count}m"
+          "startStreak": "Start your streak today!",
+          "completedItems": "Items completed",
+          "ofStarted": "of {count} started",
+          "practiceTime": "Practice time",
+          "thisWeek": "{count} min this week",
+          "best": "Best: {count} days",
+          "noExercises": "No exercises yet",
+          "dayValue": "{count} day",
+          "bestOne": "Best: {count} day"
         },
         "recentActivity": {
           "title": "Recent Activity",
           "done": "Done",
           "classItemFallback": "Class Item",
-          "empty": "No recent activity yet. Start learning to see your progress here!"
+          "empty": "No recent activity yet. Start learning to see your progress here!",
+          "emptyTitle": "Nothing here yet"
+        },
+        "viewAchievements": "View achievements",
+        "chart": {
+          "title": "Weekly activity",
+          "range": "Last {count} weeks",
+          "average": "{count} per week on average",
+          "thisWeek": "This week",
+          "tooltip": "{count} completed · {minutes} min",
+          "empty": "Complete a lesson and your weekly activity will show up here."
+        },
+        "byCourse": {
+          "title": "By course",
+          "summary": "{completed} completed · {minutes} min",
+          "empty": "Your courses will appear here as you complete lessons."
         }
       },
       "achievements": {

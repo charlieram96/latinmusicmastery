@@ -4,7 +4,7 @@ import { getServerLocale } from '@/lib/i18n/server'
 import { localizeRow, localizeRows, COURSE_FIELDS } from '@/lib/i18n/localize'
 import { ACHIEVEMENTS } from '@/lib/achievements'
 import { computeStreaks } from '@/lib/dashboard/streak'
-import { buildPracticeCalendar } from '@/lib/dashboard/practice-calendar'
+import { buildPracticeCalendar, WEEK_GOAL } from '@/lib/dashboard/practice-calendar'
 import { dateKeyFor, todayKey } from '@/lib/dashboard/time-zone'
 import { isNew, reasonFor, type RecContext } from '@/lib/dashboard/recommendations'
 import { GreetingRow } from '@/components/dashboard/home/greeting-row'
@@ -29,8 +29,6 @@ import type {
 } from '@/types/dashboard'
 import { classIsDone, courseHref, currentClassIndexFor, orderedClasses, progressTime } from '@/lib/dashboard/course-progress'
 
-/** Lessons per week the dashboard treats as the goal. */
-const WEEK_GOAL = 6
 
 /* ── Row shapes returned by the queries below ─────────────────────── */
 interface ItemRow {
