@@ -22,10 +22,10 @@ export default function TeachersLoading() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         {Array.from({ length: 8 }, (_, i) => (
-          <div key={i} className="rounded-xl border border-border bg-card p-5">
+          <div key={i} className="overflow-hidden rounded-xl border border-border bg-card">
             <div className="flex items-start gap-4">
-              <Skeleton className="h-16 w-16 shrink-0 rounded-xl" />
-              <div className="flex-1 space-y-2 pt-1">
+              <Skeleton className="h-[124px] w-[124px] shrink-0 rounded-none" />
+              <div className="flex-1 space-y-2 pr-4 pt-5">
                 <Skeleton className="h-4 w-2/3 rounded" />
                 <Skeleton className="h-3 w-1/2 rounded" />
                 <div className="flex gap-1 pt-1">
@@ -34,12 +34,12 @@ export default function TeachersLoading() {
                 </div>
               </div>
             </div>
-            <div className="mt-4 space-y-1.5">
+            <div className="mt-3 space-y-1.5 px-4">
               <Skeleton className="h-3 w-full rounded" />
               <Skeleton className="h-3 w-11/12 rounded" />
               <Skeleton className="h-3 w-2/3 rounded" />
             </div>
-            <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+            <div className="mx-4 mt-3.5 flex items-center justify-between border-t border-border pb-4 pt-3.5">
               <Skeleton className="h-6 w-24 rounded" />
               <Skeleton className="h-4 w-16 rounded" />
             </div>

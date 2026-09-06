@@ -70,12 +70,13 @@ export function TeacherCard({ teacher }: { teacher: TeacherCardData }) {
         type="button"
         onClick={() => setIsOpen(true)}
         aria-label={t('dashboard.pages.teachers.profileOf', { name: teacher.name })}
-        className="group flex h-full flex-col rounded-xl border border-border bg-card p-5 text-left shadow-card transition-[box-shadow,transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-lift focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card text-left shadow-card transition-[box-shadow,transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-lift focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
+        {/* The photo owns the corner: no padding, clipped by the card, radius from the card. */}
         <div className="flex items-start gap-4">
-          <TeacherAvatar teacher={teacher} className="h-16 w-16 text-xl" />
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate font-heading text-base font-bold tracking-tight transition-colors group-hover:text-primary">
+          <TeacherAvatar teacher={teacher} className="h-[124px] w-[124px] rounded-none text-3xl" />
+          <div className="min-w-0 flex-1 pr-4 pt-4">
+            <h3 className="truncate font-heading text-lg font-bold tracking-tight transition-colors group-hover:text-primary">
               {teacher.name}
             </h3>
             {instruments.length > 0 ? (
@@ -98,9 +99,9 @@ export function TeacherCard({ teacher }: { teacher: TeacherCardData }) {
           </div>
         </div>
 
-        {bio ? <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">{bio}</p> : null}
+        {bio ? <p className="mt-3 line-clamp-3 px-4 text-sm leading-relaxed text-muted-foreground">{bio}</p> : null}
 
-        <div className="mt-auto flex items-center justify-between border-t border-border pt-4 [&:not(:first-child)]:mt-4">
+        <div className="mx-4 mt-auto flex items-center justify-between border-t border-border pb-4 pt-3.5 [&:not(:first-child)]:mt-3.5">
           <div className="flex items-center gap-2.5">
             {teacher.courses.length > 0 ? (
               <div className="flex" aria-hidden>
