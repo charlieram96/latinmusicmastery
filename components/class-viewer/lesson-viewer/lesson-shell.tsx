@@ -17,7 +17,8 @@ import styles from './lesson-viewer.module.css'
 interface LessonShellProps {
   sidebar: {
     courseId: string
-    currentClassId: string
+    currentClassId: string | null
+    currentSectionId?: string | null
     sections: LessonSidebarSection[]
     courseTitle: string
     courseImageUrl?: string | null
@@ -26,7 +27,10 @@ interface LessonShellProps {
     hasAccess: boolean
   }
   header: {
-    moduleTitle: string
+    /** Breadcrumb above the title (module name on a lesson, course name on a
+        module overview). Links when `eyebrowHref` is set. */
+    eyebrow: string
+    eyebrowHref?: string | null
     title: string
     subtitle?: string | null
   }

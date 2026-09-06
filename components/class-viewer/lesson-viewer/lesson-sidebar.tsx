@@ -6,7 +6,7 @@
 // numbered lesson dots so navigation still works.
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import {
   ChevronsLeft,
   ChevronsRight,
@@ -17,28 +17,23 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/components/language-provider'
+import {
+  classState,
+  moduleOverviewHref,
+  type LessonSidebarClass,
+  type LessonSidebarSection,
+  type RowState,
+} from '@/lib/courses/structure'
 import styles from './lesson-viewer.module.css'
 
-export interface LessonSidebarClass {
-  id: string
-  title: string
-  totalItems: number
-  completedItems: number
-  isFree: boolean
-}
-
-export interface LessonSidebarSection {
-  id: string
-  title: string
-  description?: string | null
-  totalItems: number
-  completedItems: number
-  classes: LessonSidebarClass[]
-}
+export type { LessonSidebarClass, LessonSidebarSection } from '@/lib/courses/structure'
 
 interface LessonSidebarProps {
   courseId: string
-  currentClassId: string
+  /** Null on pages that aren't a lesson (e.g. the module overview). */
+  currentClassId: string | null
+  /** Module whose overview page is open; it renders highlighted + expanded. */
+  currentSectionId?: string | null
   sections: LessonSidebarSection[]
   courseTitle: string
   courseImageUrl?: string | null
@@ -48,20 +43,6 @@ interface LessonSidebarProps {
   hasAccess: boolean
   collapsed: boolean
   onToggle: () => void
-}
-
-type RowState = 'active' | 'completed' | 'locked' | 'available'
-
-function classState(
-  cls: LessonSidebarClass,
-  currentClassId: string,
-  hasAccess: boolean
-): RowState {
-  if (cls.id === currentClassId) return 'active'
-  if (!cls.isFree && !hasAccess) return 'locked'
-  if (cls.totalItems > 0 && cls.completedItems === cls.totalItems)
-    return 'completed'
-  return 'available'
 }
 
 function avatarInitials(name?: string | null) {
@@ -78,6 +59,7 @@ function avatarInitials(name?: string | null) {
 export function LessonSidebar({
   courseId,
   currentClassId,
+  currentSectionId,
   sections,
   courseTitle,
   courseImageUrl,
@@ -225,6 +207,7 @@ export function LessonSidebar({
               key={section.id}
               courseId={courseId}
               currentClassId={currentClassId}
+              currentSectionId={currentSectionId}
               section={section}
               moduleIndex={i}
               hasAccess={hasAccess}
@@ -266,12 +249,14 @@ export function LessonSidebar({
 function SidebarModule({
   courseId,
   currentClassId,
+  currentSectionId,
   section,
   moduleIndex,
   hasAccess,
 }: {
   courseId: string
-  currentClassId: string
+  currentClassId: string | null
+  currentSectionId?: string | null
   section: Omit<LessonSidebarSection, 'classes'> & {
     classes: (LessonSidebarClass & { n: number })[]
   }
@@ -279,8 +264,11 @@ function SidebarModule({
   hasAccess: boolean
 }) {
   const { t } = useTranslation()
+  const regionId = useId()
   const containsActive = section.classes.some((c) => c.id === currentClassId)
-  const [open, setOpen] = useState(containsActive)
+  const isCurrent = section.id === currentSectionId
+  // Route changes remount this subtree, so a mount-time default is enough.
+  const [open, setOpen] = useState(containsActive || isCurrent)
 
   const pct =
     section.totalItems > 0
@@ -292,19 +280,27 @@ function SidebarModule({
     <div
       className={cn(
         'mx-2 mb-1 mt-5 rounded-2xl border border-transparent transition-colors',
-        containsActive ? 'bg-foreground/[0.02]' : 'border-foreground/[0.05]'
+        containsActive || isCurrent ? 'bg-foreground/[0.02]' : 'border-foreground/[0.05]'
       )}
     >
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex w-full items-start justify-between gap-3 rounded-2xl px-3 py-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      >
-        <div className="min-w-0 flex-1">
+      {/* Header: the title block links to the module overview page; the
+          chevron is a sibling control that only toggles the lesson list.
+          They are never nested so each stays a valid, focusable target. */}
+      <div className="flex items-start">
+        <Link
+          href={moduleOverviewHref(courseId, section.id)}
+          aria-current={isCurrent ? 'page' : undefined}
+          className="group min-w-0 flex-1 rounded-2xl px-3 py-3 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
             {t('dashboard.classViewer.sidebar.module', { n: moduleIndex + 1 })}
           </div>
-          <div className="mt-1 font-heading text-[14px] font-bold leading-snug tracking-tight">
+          <div
+            className={cn(
+              'mt-1 font-heading text-[14px] font-bold leading-snug tracking-tight underline-offset-2 group-hover:underline',
+              isCurrent && 'text-primary'
+            )}
+          >
             {section.title}
           </div>
           {section.description && open && (
@@ -326,18 +322,28 @@ function SidebarModule({
               {section.completedItems}/{section.totalItems}
             </span>
           </div>
-        </div>
-        <ChevronDown
-          className={cn(
-            'mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-300',
-            !open && '-rotate-90'
-          )}
-        />
-      </button>
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-controls={regionId}
+          aria-label={t('dashboard.classViewer.sidebar.toggleLessons', { title: section.title })}
+          className="mr-2 mt-2.5 grid h-[30px] w-[30px] flex-shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          <ChevronDown
+            className={cn(
+              'h-4 w-4 transition-transform duration-300',
+              !open && '-rotate-90'
+            )}
+          />
+        </button>
+      </div>
 
       {/* Lessons nest inside the module block so they share its background.
-          The grid-rows trick animates the height open/closed. */}
-      <div className={styles.collapse} data-open={open}>
+          The grid-rows trick animates the height open/closed; `inert` keeps
+          the collapsed (zero-height) rows out of the tab order. */}
+      <div id={regionId} className={styles.collapse} data-open={open} inert={!open}>
         <div className="overflow-hidden">
           <div className="pb-3 pl-3 pr-1.5">
             <div className="mb-1.5 px-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/80">
@@ -434,7 +440,7 @@ function LessonRow({
 }
 
 // Circular play button whose ring fills with the lesson's completion progress.
-function LessonProgressButton({
+export function LessonProgressButton({
   state,
   progress,
 }: {
