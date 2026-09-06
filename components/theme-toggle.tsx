@@ -1,7 +1,7 @@
 'use client'
 
-import { Monitor, Moon, Sun } from 'lucide-react'
-import { useTheme, type Theme } from '@/components/theme-provider'
+import { Moon, Sun } from 'lucide-react'
+import { useTheme } from '@/components/theme-provider'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
 import { cn } from '@/lib/utils'
@@ -12,22 +12,18 @@ interface ThemeToggleProps {
   className?: string
 }
 
-const ICONS: Record<Theme, typeof Sun> = { light: Sun, dark: Moon, system: Monitor }
+/** Text that only shows while the rail is expanded (hover) or forced open (data-expanded). */
+export const RAIL_REVEAL =
+  'opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-data-[expanded=true]/rail:opacity-100'
 
 export function ThemeToggle({ variant = 'icon', className }: ThemeToggleProps) {
   const { theme, toggleTheme, mounted } = useTheme()
   const { t } = useTranslation()
 
-  // Before mount we do not know the stored preference; render the dark icon disabled.
-  const current: Theme = mounted ? theme : 'dark'
-  const Icon = ICONS[current]
-  const label = t(`common.theme.${current}`)
-  const nextLabel =
-    current === 'light'
-      ? t('common.switchToDarkMode')
-      : current === 'dark'
-        ? t('common.useSystemTheme')
-        : t('common.switchToLightMode')
+  // Before mount the stored preference is unknown; render the dark icon disabled.
+  const current = mounted ? theme : 'dark'
+  const Icon = current === 'light' ? Sun : Moon
+  const nextLabel = current === 'light' ? t('common.switchToDarkMode') : t('common.switchToLightMode')
 
   if (variant === 'rail') {
     return (
@@ -42,8 +38,8 @@ export function ThemeToggle({ variant = 'icon', className }: ThemeToggleProps) {
         )}
       >
         <Icon className="h-5 w-5 shrink-0" />
-        <span className="ml-3 truncate text-sm font-medium opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-has-[:focus-visible]/rail:opacity-100 group-data-[pinned=true]/rail:opacity-100">
-          {t('common.theme.label')}: {label}
+        <span className={cn('ml-3 truncate text-sm font-medium', RAIL_REVEAL)}>
+          {t('common.theme.label')}: {t(`common.theme.${current}`)}
         </span>
       </button>
     )
