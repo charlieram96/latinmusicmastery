@@ -44,6 +44,36 @@ export interface MyCourseRow {
   /** Where the primary button goes: the current lesson, the first lesson, or the course when complete. */
   resumeHref: string
   lastAccessed: string | null
+  /** true = covered by a subscription, false = not covered, null = no tag (no plans, or admin). */
+  inPlan: boolean | null
+}
+
+/** A course a subscription entitles the learner to, enrolled or not. */
+export interface PlanCourse {
+  id: string
+  title: string
+  href: string
+  resumeHref: string
+  thumbnailUrl: string | null
+  styleName: string | null
+  kind: 'fundamentals' | 'style'
+  /** Progress when enrolled; null when the learner has not opened it. */
+  pct: number | null
+  status: 'not-started' | 'in-progress' | 'completed' | null
+}
+
+/** One instrument subscription as shown on My Courses. */
+export interface PlanSummary {
+  id: string
+  instrument: string
+  interval: string
+  status: string
+  renewsAt: string | null
+  cancelAtPeriodEnd: boolean
+  priceCents: number
+  addonPriceCents: number
+  currency: string
+  courses: PlanCourse[]
 }
 
 export type SegmentState = 'done' | 'current' | 'todo'

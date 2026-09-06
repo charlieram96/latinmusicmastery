@@ -1540,6 +1540,39 @@
           "resume": "Continuar",
           "start": "Empezar",
           "review": "Repasar"
+        },
+        "plan": {
+          "title": "Tu plan",
+          "included": "Incluido en tu plan",
+          "interval": {
+            "month": "Mensual",
+            "year": "Anual"
+          },
+          "status": {
+            "active": "Activo",
+            "past_due": "Pago pendiente",
+            "canceled": "Cancelado"
+          },
+          "renews": "se renueva el {date}",
+          "ends": "termina el {date}",
+          "perMonth": "{price}/mes",
+          "perYear": "{price}/año",
+          "note": "Incluye los fundamentos y un curso de estilo. Cada estilo adicional cuesta {price}/mes.",
+          "manage": "Administrar plan",
+          "billing": "Historial de pagos",
+          "fundamentals": "Incluido en todos los planes de {instrument}",
+          "styleCourse": "Tu curso de estilo",
+          "pctComplete": "{pct}% completado",
+          "addStyle": "Añadir otro curso de estilo de {instrument}",
+          "addPrice": "+{price}/mes",
+          "inPlan": "En tu plan",
+          "notInPlan": "Fuera de tu plan",
+          "addToPlan": "Añadir al plan",
+          "none": {
+            "title": "Empieza con un instrumento",
+            "body": "Obtén el curso de fundamentos del instrumento más un curso de estilo desde {price}/mes.",
+            "cta": "Ver planes"
+          }
         }
       },
       "progress": {

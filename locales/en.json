@@ -1540,6 +1540,39 @@
           "resume": "Continue",
           "start": "Start",
           "review": "Review"
+        },
+        "plan": {
+          "title": "Your plan",
+          "included": "Included in your plan",
+          "interval": {
+            "month": "Monthly",
+            "year": "Yearly"
+          },
+          "status": {
+            "active": "Active",
+            "past_due": "Payment past due",
+            "canceled": "Canceled"
+          },
+          "renews": "renews {date}",
+          "ends": "ends {date}",
+          "perMonth": "{price}/mo",
+          "perYear": "{price}/yr",
+          "note": "Fundamentals plus one style course are included. More styles are {price}/mo each.",
+          "manage": "Manage plan",
+          "billing": "Billing history",
+          "fundamentals": "Included with every {instrument} plan",
+          "styleCourse": "Your style course",
+          "pctComplete": "{pct}% complete",
+          "addStyle": "Add another {instrument} style course",
+          "addPrice": "+{price}/mo",
+          "inPlan": "In your plan",
+          "notInPlan": "Not in your plan",
+          "addToPlan": "Add to plan",
+          "none": {
+            "title": "Start with an instrument",
+            "body": "Get the instrument's fundamentals course plus one style course from {price}/mo.",
+            "cta": "See plans"
+          }
         }
       },
       "progress": {

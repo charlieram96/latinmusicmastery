@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { CheckCircle2, Play, RotateCcw } from 'lucide-react'
+import { BadgeCheck, CheckCircle2, Lock, Play, Plus, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { CourseThumb } from '@/components/dashboard/home/course-list'
@@ -42,25 +42,42 @@ export function MyCourseRow({ course }: { course: MyCourseRowData }) {
           .join(' · ')
       : t('dashboard.pages.myCourses.row.notStarted')
 
-  const cta = done
-    ? { label: t('dashboard.pages.myCourses.row.review'), icon: RotateCcw }
-    : started
-      ? { label: t('dashboard.pages.myCourses.row.resume'), icon: Play }
-      : { label: t('dashboard.pages.myCourses.row.start'), icon: Play }
+  // A course the current plan no longer covers sends the learner to the course page to add it.
+  const blocked = course.inPlan === false
+  const cta = blocked
+    ? { label: t('dashboard.pages.myCourses.plan.addToPlan'), icon: Plus, href: course.href }
+    : done
+      ? { label: t('dashboard.pages.myCourses.row.review'), icon: RotateCcw, href: course.resumeHref }
+      : started
+        ? { label: t('dashboard.pages.myCourses.row.resume'), icon: Play, href: course.resumeHref }
+        : { label: t('dashboard.pages.myCourses.row.start'), icon: Play, href: course.resumeHref }
 
   return (
     <div className="group relative -mx-3 flex items-center gap-4 rounded-lg px-3 py-4 transition-colors hover:bg-accent/40 sm:gap-5">
       <CourseThumb src={course.thumbnailUrl} styleName={course.styleName} alt="" className="h-[60px] w-24" />
 
       <div className="min-w-0 flex-1">
-        <h3 className="truncate font-heading text-base font-bold tracking-tight">
-          <Link
-            href={course.href}
-            className="transition-colors after:absolute after:inset-0 after:rounded-lg group-hover:text-primary focus-visible:outline-none focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
-          >
-            {course.title}
-          </Link>
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="truncate font-heading text-base font-bold tracking-tight">
+            <Link
+              href={course.href}
+              className="transition-colors after:absolute after:inset-0 after:rounded-lg group-hover:text-primary focus-visible:outline-none focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
+            >
+              {course.title}
+            </Link>
+          </h3>
+          {course.inPlan === true ? (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/[0.12] px-2 py-0.5 text-[11px] font-semibold text-success">
+              <BadgeCheck className="h-3 w-3" aria-hidden />
+              {t('dashboard.pages.myCourses.plan.inPlan')}
+            </span>
+          ) : course.inPlan === false ? (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+              <Lock className="h-3 w-3" aria-hidden />
+              {t('dashboard.pages.myCourses.plan.notInPlan')}
+            </span>
+          ) : null}
+        </div>
         {who ? <p className="truncate text-sm text-muted-foreground">{who}</p> : null}
         {done ? (
           <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-success">
@@ -85,11 +102,11 @@ export function MyCourseRow({ course }: { course: MyCourseRowData }) {
       <Button
         asChild
         size="sm"
-        variant={done ? 'outline' : 'default'}
+        variant={done || blocked ? 'outline' : 'default'}
         className="relative z-10 hidden w-[7.5rem] shrink-0 sm:inline-flex"
       >
-        <Link href={course.resumeHref}>
-          <cta.icon className={done ? '' : 'fill-current'} aria-hidden />
+        <Link href={cta.href}>
+          <cta.icon className={cta.icon === Play ? 'fill-current' : ''} aria-hidden />
           {cta.label}
         </Link>
       </Button>

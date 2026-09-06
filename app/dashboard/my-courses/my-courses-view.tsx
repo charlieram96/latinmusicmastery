@@ -6,18 +6,22 @@ import { PageHeader } from '@/components/dashboard/page-header'
 import { EmptyState } from '@/components/dashboard/empty-state'
 import { MyCourseRow } from '@/components/dashboard/my-course-row'
 import { MyCoursesToolbar, type MyCoursesFilter, type MyCoursesSort } from '@/components/dashboard/my-courses-toolbar'
+import { PlanEmptyPanel, PlanPanel } from '@/components/dashboard/plan-panel'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
-import type { MyCourseRow as MyCourseRowData } from '@/types/dashboard'
+import type { MyCourseRow as MyCourseRowData, PlanSummary } from '@/types/dashboard'
 
 interface MyCoursesViewProps {
   courses: MyCourseRowData[]
   counts: { all: number; inProgress: number; completed: number }
   filter: MyCoursesFilter
   sort: MyCoursesSort
+  plans: PlanSummary[]
+  basePrice: { cents: number; currency: string }
+  isAdmin: boolean
 }
 
-export function MyCoursesView({ courses, counts, filter, sort }: MyCoursesViewProps) {
+export function MyCoursesView({ courses, counts, filter, sort, plans, basePrice, isAdmin }: MyCoursesViewProps) {
   const { t } = useTranslation()
 
   const emptyKey = filter === 'completed' ? 'completed' : filter === 'in-progress' ? 'inProgress' : 'all'
@@ -35,9 +39,19 @@ export function MyCoursesView({ courses, counts, filter, sort }: MyCoursesViewPr
             </Link>
           </Button>
         }
-      >
-        {counts.all > 0 ? <MyCoursesToolbar counts={counts} filter={filter} sort={sort} /> : null}
-      </PageHeader>
+      />
+
+      {plans.length > 0 ? (
+        plans.map((plan) => <PlanPanel key={plan.id} plan={plan} />)
+      ) : isAdmin ? null : (
+        <PlanEmptyPanel priceCents={basePrice.cents} currency={basePrice.currency} />
+      )}
+
+      {counts.all > 0 ? (
+        <div className="mb-3">
+          <MyCoursesToolbar counts={counts} filter={filter} sort={sort} />
+        </div>
+      ) : null}
 
       {courses.length > 0 ? (
         <div className="divide-y divide-border border-y border-border">
