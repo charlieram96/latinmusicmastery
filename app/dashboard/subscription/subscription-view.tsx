@@ -1,5 +1,6 @@
 'use client'
 
+import { PageHeader } from '@/components/dashboard/page-header'
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
@@ -95,10 +96,10 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
   if (subs.length === 0) {
     return (
       <div className="max-w-3xl mx-auto p-6 md:p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.pages.subscription.title')}</h1>
-          <p className="mt-2 text-muted-foreground">{t('dashboard.pages.subscription.noneYet')}</p>
-        </div>
+        <PageHeader
+          title={t('dashboard.pages.subscription.title')}
+          description={t('dashboard.pages.subscription.noneYet')}
+        />
         <div className="rounded-2xl border bg-card p-8 text-center">
           <Crown className="mx-auto mb-3 h-8 w-8 text-primary" />
           <h2 className="mb-2 text-lg font-semibold">{t('dashboard.pages.subscription.startInstrument.title')}</h2>
@@ -120,10 +121,10 @@ export function SubscriptionView({ subs, fundamentalsByInstrument, prices }: Sub
 
   return (
     <div className="max-w-4xl mx-auto p-6 md:p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.pages.subscription.title')}</h1>
-        <p className="mt-2 text-muted-foreground">{t('dashboard.pages.subscription.intro')}</p>
-      </div>
+      <PageHeader
+        title={t('dashboard.pages.subscription.title')}
+        description={t('dashboard.pages.subscription.intro')}
+      />
 
       {error && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">

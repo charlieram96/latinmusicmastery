@@ -1,5 +1,6 @@
 'use client'
 
+import { PageHeader } from '@/components/dashboard/page-header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,13 +43,10 @@ export default function HelpPage() {
   const { t } = useTranslation()
   return (
     <>
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{t('dashboard.pages.help.title')}</h1>
-        <p className="text-muted-foreground">
-          {t('dashboard.pages.help.subtitle')}
-        </p>
-      </div>
+      <PageHeader
+        title={t('dashboard.pages.help.title')}
+        description={t('dashboard.pages.help.subtitle')}
+      />
 
       {/* Search */}
       <Card className="mb-8">
