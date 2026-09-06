@@ -11,6 +11,7 @@ import {
 } from '@/app/actions/playsense-studio'
 import { resolveLegacyAudioUrl } from '@/lib/play-sense/exercise-media'
 import { getQuizQuestions } from '@/app/actions/quiz'
+import { readQuizSettings } from '@/lib/quiz/quiz-settings'
 import { getServerTranslator } from '@/lib/i18n/server'
 import { localizeRows, QUIZ_FIELDS } from '@/lib/i18n/localize'
 import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
@@ -258,7 +259,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
               </CardContent>
             </Card>
           ) : null}
-          <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Quiz" title={item.title} nextHref={nextHref} />
+          <QuizRunner key={item.id} classItemId={item.id} questions={quizQuestions} kind="Quiz" title={item.title} nextHref={nextHref} settings={readQuizSettings(item.quiz_settings)} />
         </>
       )}
 
