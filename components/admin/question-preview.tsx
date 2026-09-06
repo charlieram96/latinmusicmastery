@@ -32,6 +32,19 @@ export function QuestionPreview({ question }: { question: QuizQuestion }) {
     setAnswer(seedAnswers([question])[question.id])
     setGraded(false)
   }
+  // Reseed whenever the question's answerable content changes (type, options,
+  // or correct answer) — e.g. the admin switches question_type in the form
+  // above while this preview stays open. Adjusting state during render (React's
+  // recommended pattern for "reset state when a prop changes", rather than an
+  // effect) keys off a signature of just those three fields, so unrelated
+  // edits elsewhere in the form (e.g. typing the question text) don't clear
+  // the student's in-progress preview answer.
+  const signature = JSON.stringify([question.question_type, question.options, question.correct_answer])
+  const [prevSignature, setPrevSignature] = useState(signature)
+  if (signature !== prevSignature) {
+    setPrevSignature(signature)
+    reset()
+  }
   return (
     <div className={cn(quizStyles.root, 'grid gap-3 rounded-xl border border-dashed border-foreground/25 bg-sunken p-3.5')}>
       <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
