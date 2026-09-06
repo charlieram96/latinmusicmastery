@@ -1443,7 +1443,16 @@
         "profileOf": "{name}'s Profile",
         "about": "About",
         "coursesBy": "Courses by {name}",
-        "contact": "Contact Teacher"
+        "contact": "Contact Teacher",
+        "filters": {
+          "all": "All instruments",
+          "label": "Filter teachers by instrument",
+          "showAll": "Show all teachers"
+        },
+        "noMatch": {
+          "title": "No teachers for {instrument} yet",
+          "body": "We are adding teachers regularly. Try another instrument in the meantime."
+        }
       },
       "masterClass": {
         "title": "Master Class",

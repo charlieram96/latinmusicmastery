@@ -2,214 +2,175 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Music,
-  Mail,
-  BookOpen,
-  Video,
-  ChevronRight,
-  ExternalLink,
-  MessageSquare,
-  User
-} from 'lucide-react'
 import Link from 'next/link'
+import { BookOpen, ChevronRight, ExternalLink, Mail, MessageSquare, Music, Video } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { CourseThumb } from '@/components/dashboard/home/course-list'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
-import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
 import { useTranslation } from '@/components/language-provider'
+import { coverStyle } from '@/lib/course-covers'
+import { initialsFor } from '@/lib/dashboard/initials'
+import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
+import { cn } from '@/lib/utils'
+import { splitInstruments, type TeacherCardData } from '@/lib/dashboard/teachers'
 
-interface Course {
-  id: string
-  title: string
-  slug: string
-  thumbnail_url: string | null
-  musical_style: { name: string } | null
+export type { TeacherCardData }
+
+/**
+ * Photo when there is one; otherwise initials on the gradient of the teacher's
+ * first course style, so a roster without photos still reads as people.
+ */
+export function TeacherAvatar({
+  teacher,
+  className,
+}: {
+  teacher: Pick<TeacherCardData, 'name' | 'image_url' | 'courses'>
+  className?: string
+}) {
+  const styleName = teacher.courses[0]?.musical_style?.name ?? null
+  if (teacher.image_url) {
+    return (
+      <span className={cn('relative block shrink-0 overflow-hidden rounded-xl bg-sunken', className)}>
+        <Image src={teacher.image_url} alt="" fill sizes="128px" className="object-cover" />
+      </span>
+    )
+  }
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'flex shrink-0 items-center justify-center rounded-xl font-heading font-bold tracking-tight text-white/90',
+        className
+      )}
+      style={{ background: coverStyle(styleName) }}
+    >
+      {initialsFor(teacher.name)}
+    </span>
+  )
 }
 
-interface Teacher {
-  id: string
-  name: string
-  image_url: string | null
-  instrument: string
-  bio: unknown
-  email: string | null
-  specialties: string[] | null
-  courses: Course[]
-}
-
-interface TeacherCardProps {
-  teacher: Teacher
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-}
-
-export function TeacherCard({ teacher }: TeacherCardProps) {
+export function TeacherCard({ teacher }: { teacher: TeacherCardData }) {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
+  const instruments = splitInstruments(teacher.instrument)
+  const specialties = teacher.specialties ?? []
+  const bio = tiptapToPlainText(teacher.bio)
+  const courseCount = t(
+    teacher.courses.length === 1 ? 'dashboard.pages.teachers.courseCountOne' : 'dashboard.pages.teachers.courseCountOther',
+    { count: teacher.courses.length }
+  )
+
   return (
     <>
-      <Card
-        className="overflow-hidden cursor-pointer group hover:brightness-110 transition-all duration-300 p-0 gap-0"
+      <button
+        type="button"
         onClick={() => setIsOpen(true)}
+        aria-label={t('dashboard.pages.teachers.profileOf', { name: teacher.name })}
+        className="group flex h-full flex-col rounded-xl border border-border bg-card p-5 text-left shadow-card transition-[box-shadow,transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-lift focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
-        {/* Image Section */}
-        <div className="relative aspect-[4/3] bg-muted">
-          {teacher.image_url ? (
-            <Image
-              src={teacher.image_url}
-              alt={teacher.name}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="w-10 h-10 text-primary/40" />
+        <div className="flex items-start gap-4">
+          <TeacherAvatar teacher={teacher} className="h-16 w-16 text-xl" />
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate font-heading text-base font-bold tracking-tight transition-colors group-hover:text-primary">
+              {teacher.name}
+            </h3>
+            {instruments.length > 0 ? (
+              <p className="truncate text-sm text-muted-foreground">{instruments.join(' · ')}</p>
+            ) : null}
+            {specialties.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {specialties.slice(0, 3).map((s) => (
+                  <Badge key={s} variant="secondary" className="font-medium">
+                    {s}
+                  </Badge>
+                ))}
+                {specialties.length > 3 ? (
+                  <Badge variant="outline" className="font-medium text-muted-foreground">
+                    +{specialties.length - 3}
+                  </Badge>
+                ) : null}
               </div>
-            </div>
-          )}
-          {/* Instrument Badge */}
-          <div className="absolute top-3 left-3">
-            <Badge className="bg-black/60 hover:bg-black/60 text-white border-0 backdrop-blur-sm">
-              <Music className="w-3 h-3 mr-1" />
-              {teacher.instrument}
-            </Badge>
+            ) : null}
           </div>
         </div>
 
-        {/* Content Section */}
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-lg mb-2 truncate group-hover:text-primary transition-colors">
-            {teacher.name}
-          </h3>
+        {bio ? <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">{bio}</p> : null}
 
-          {/* Specialties */}
-          {teacher.specialties && teacher.specialties.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              {teacher.specialties.slice(0, 3).map((specialty) => (
-                <Badge key={specialty} variant="secondary" className="text-xs font-normal">
-                  {specialty}
-                </Badge>
-              ))}
-              {teacher.specialties.length > 3 && (
-                <Badge variant="secondary" className="text-xs font-normal">
-                  +{teacher.specialties.length - 3}
-                </Badge>
-              )}
-            </div>
-          )}
-
-          {/* Bio */}
-          {(() => {
-            const bioPreview = tiptapToPlainText(teacher.bio)
-            return bioPreview ? (
-              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                {bioPreview}
-              </p>
-            ) : null
-          })()}
-
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-3 border-t">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>
-                {t(
-                  teacher.courses.length === 1
-                    ? 'dashboard.pages.teachers.courseCountOne'
-                    : 'dashboard.pages.teachers.courseCountOther',
-                  { count: teacher.courses.length },
-                )}
-              </span>
-            </div>
-            <span className="text-xs text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
-              {t('dashboard.pages.teachers.viewProfile')}
-              <ChevronRight className="h-3 w-3" />
-            </span>
+        <div className="mt-auto flex items-center justify-between border-t border-border pt-4 [&:not(:first-child)]:mt-4">
+          <div className="flex items-center gap-2.5">
+            {teacher.courses.length > 0 ? (
+              <div className="flex" aria-hidden>
+                {teacher.courses.slice(0, 3).map((course, i) => (
+                  <CourseThumb
+                    key={course.id}
+                    src={course.thumbnail_url}
+                    styleName={course.musical_style?.name ?? null}
+                    alt=""
+                    className={cn('h-6 w-9 ring-2 ring-card', i > 0 && '-ml-2')}
+                  />
+                ))}
+              </div>
+            ) : null}
+            <span className="text-xs text-muted-foreground">{courseCount}</span>
           </div>
-        </CardContent>
-      </Card>
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
+            {t('dashboard.pages.teachers.viewProfile')}
+            <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+          </span>
+        </div>
+      </button>
 
-      {/* Expanded Profile Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="sr-only">{t('dashboard.pages.teachers.profileOf', { name: teacher.name })}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              <Avatar className="w-28 h-28 ring-4 ring-primary/10">
-                {teacher.image_url && (
-                  <AvatarImage src={teacher.image_url} alt={teacher.name} />
-                )}
-                <AvatarFallback className="bg-primary/10 text-primary text-3xl font-semibold">
-                  {getInitials(teacher.name)}
-                </AvatarFallback>
-              </Avatar>
-
-              <div className="text-center sm:text-left flex-1">
-                <h2 className="text-2xl font-bold mb-2">{teacher.name}</h2>
-                <div className="flex items-center justify-center sm:justify-start gap-2 text-primary mb-3">
-                  <Music className="w-5 h-5" />
-                  <span className="font-semibold text-lg">{teacher.instrument}</span>
-                </div>
-
-                {/* Specialties */}
-                {teacher.specialties && teacher.specialties.length > 0 && (
-                  <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                    {teacher.specialties.map((specialty) => (
-                      <Badge key={specialty} variant="secondary">
-                        {specialty}
+            <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+              <TeacherAvatar teacher={teacher} className="h-28 w-28 text-3xl" />
+              <div className="flex-1 text-center sm:text-left">
+                <h2 className="font-heading text-2xl font-bold tracking-tight">{teacher.name}</h2>
+                {instruments.length > 0 ? (
+                  <div className="mt-1.5 flex items-center justify-center gap-2 text-primary sm:justify-start">
+                    <Music className="h-4 w-4" aria-hidden />
+                    <span className="font-semibold">{instruments.join(' · ')}</span>
+                  </div>
+                ) : null}
+                {specialties.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap justify-center gap-1.5 sm:justify-start">
+                    {specialties.map((s) => (
+                      <Badge key={s} variant="secondary">
+                        {s}
                       </Badge>
                     ))}
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
 
-            {/* Bio */}
             {teacher.bio ? (
               <div>
-                <h3 className="font-semibold mb-2 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-primary" />
+                <h3 className="mb-2 flex items-center gap-2 font-semibold">
+                  <MessageSquare className="h-4 w-4 text-primary" aria-hidden />
                   {t('dashboard.pages.teachers.about')}
                 </h3>
-                <div className="text-muted-foreground leading-relaxed text-sm [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-bold [&_h1:first-child]:mt-0 [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h2:first-child]:mt-0 [&_h3]:mt-3 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3:first-child]:mt-0 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-primary [&_a]:underline [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-primary/60 [&_blockquote]:pl-3 [&_blockquote]:italic [&_img]:my-3 [&_img]:rounded-lg [&_img]:max-w-full [&_iframe]:my-3 [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg">
+                <div className="text-sm leading-relaxed text-muted-foreground [&_a]:text-primary [&_a]:underline [&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-primary/60 [&_blockquote]:pl-3 [&_blockquote]:italic [&_em]:italic [&_h1:first-child]:mt-0 [&_h1]:mb-2 [&_h1]:mt-4 [&_h1]:text-xl [&_h1]:font-bold [&_h2:first-child]:mt-0 [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_h3:first-child]:mt-0 [&_h3]:mb-2 [&_h3]:mt-3 [&_h3]:text-base [&_h3]:font-semibold [&_iframe]:my-3 [&_iframe]:aspect-video [&_iframe]:w-full [&_iframe]:rounded-lg [&_img]:my-3 [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p:last-child]:mb-0 [&_p]:mb-3 [&_strong]:font-semibold [&_strong]:text-foreground [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5">
                   <TiptapReadOnly
-                    content={
-                      teacher.bio && typeof teacher.bio === 'object'
-                        ? (teacher.bio as Record<string, unknown>)
-                        : null
-                    }
+                    content={teacher.bio && typeof teacher.bio === 'object' ? (teacher.bio as Record<string, unknown>) : null}
                   />
                 </div>
               </div>
             ) : null}
 
-            {/* Courses */}
-            {teacher.courses.length > 0 && (
+            {teacher.courses.length > 0 ? (
               <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-primary" />
+                <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                  <BookOpen className="h-4 w-4 text-primary" aria-hidden />
                   {t('dashboard.pages.teachers.coursesBy', { name: teacher.name.split(' ')[0] })}
                 </h3>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -220,56 +181,47 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
                       onClick={() => setIsOpen(false)}
                       className="group"
                     >
-                      <Card className="overflow-hidden hover:bg-secondary/30 transition-colors">
+                      <Card className="gap-0 overflow-hidden py-0 transition-colors hover:bg-accent/40">
                         <div className="flex items-center gap-3 p-3">
-                          <div className="w-16 h-12 rounded bg-muted flex-shrink-0 overflow-hidden">
-                            {course.thumbnail_url ? (
-                              <img
-                                src={course.thumbnail_url}
-                                alt={course.title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                                <BookOpen className="h-5 w-5 text-primary/50" />
-                              </div>
-                            )}
+                          <CourseThumb
+                            src={course.thumbnail_url}
+                            styleName={course.musical_style?.name ?? null}
+                            alt=""
+                            className="h-10 w-16"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">{course.title}</p>
+                            {course.musical_style ? (
+                              <p className="text-xs text-muted-foreground">{course.musical_style.name}</p>
+                            ) : null}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-                              {course.title}
-                            </p>
-                            {course.musical_style && (
-                              <p className="text-xs text-muted-foreground">
-                                {course.musical_style.name}
-                              </p>
-                            )}
-                          </div>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                          <ExternalLink
+                            className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
+                            aria-hidden
+                          />
                         </div>
                       </Card>
                     </Link>
                   ))}
                 </div>
               </div>
-            )}
+            ) : null}
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+            <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row">
               <Button asChild className="flex-1">
                 <Link href="/dashboard/feedback" onClick={() => setIsOpen(false)}>
-                  <Video className="h-4 w-4 mr-2" />
+                  <Video aria-hidden />
                   {t('dashboard.pages.feedback.request.title')}
                 </Link>
               </Button>
-              {teacher.email && (
+              {teacher.email ? (
                 <Button variant="outline" asChild className="flex-1">
                   <a href={`mailto:${teacher.email}`}>
-                    <Mail className="h-4 w-4 mr-2" />
+                    <Mail aria-hidden />
                     {t('dashboard.pages.teachers.contact')}
                   </a>
                 </Button>
-              )}
+              ) : null}
             </div>
           </div>
         </DialogContent>

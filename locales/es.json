@@ -1443,7 +1443,16 @@
         "profileOf": "Perfil de {name}",
         "about": "Acerca de",
         "coursesBy": "Cursos de {name}",
-        "contact": "Contactar al maestro"
+        "contact": "Contactar al maestro",
+        "filters": {
+          "all": "Todos los instrumentos",
+          "label": "Filtrar maestros por instrumento",
+          "showAll": "Ver todos los maestros"
+        },
+        "noMatch": {
+          "title": "Aún no hay maestros de {instrument}",
+          "body": "Sumamos maestros con regularidad. Mientras tanto, prueba con otro instrumento."
+        }
       },
       "masterClass": {
         "title": "Clase magistral",
