@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button'
 import { FeedbackBanner } from '@/components/class-viewer/lesson-viewer/quiz/feedback-banner'
 import { QuestionInput } from '@/components/class-viewer/lesson-viewer/quiz/question-input'
 import { TypeChip } from '@/components/class-viewer/lesson-viewer/quiz/type-chip'
+import { useAnswerLabels } from '@/components/class-viewer/lesson-viewer/quiz/use-answer-labels'
 import quizStyles from '@/components/class-viewer/lesson-viewer/quiz/quiz.module.css'
 import { QUIZ_FIELDS, localizeRow } from '@/lib/i18n/localize'
 import { cn } from '@/lib/utils'
 import { seedAnswers } from '@/lib/quiz/engine'
 import { gradeQuestionScore, hasAnswer } from '@/lib/quiz/grading'
-import { fullCorrectLabel } from '@/lib/quiz/labels'
 import type { QuizQuestion } from '@/types/modules'
 
 /**
@@ -19,6 +19,7 @@ import type { QuizQuestion } from '@/types/modules'
  * so admins see exactly what the Spanish overlay produces.
  */
 export function QuestionPreview({ question }: { question: QuizQuestion }) {
+  const { bannerCorrect } = useAnswerLabels()
   const [lang, setLang] = useState<'en' | 'es'>('en')
   const shown = useMemo(() => {
     if (lang === 'en') return question
@@ -61,7 +62,7 @@ export function QuestionPreview({ question }: { question: QuizQuestion }) {
         <div className="flex items-center gap-2"><TypeChip type={shown.question_type} /></div>
         <h4 className="font-heading text-[17px] font-extrabold leading-snug tracking-[-0.01em]">{shown.question}</h4>
         <QuestionInput question={shown} answer={answer} isGraded={graded} onChange={setAnswer} />
-        {graded && <FeedbackBanner score={gradeQuestionScore(shown, answer)} explanation={shown.explanation} correctAnswer={fullCorrectLabel(shown) || null} />}
+        {graded && <FeedbackBanner score={gradeQuestionScore(shown, answer)} explanation={shown.explanation} correctAnswer={bannerCorrect(shown)} />}
         <div className="flex justify-between">
           <Button type="button" variant="ghost" size="sm" onClick={reset}>Reset</Button>
           <Button type="button" size="sm" disabled={graded || !hasAnswer(shown, answer)} onClick={() => setGraded(true)}>Check answer</Button>

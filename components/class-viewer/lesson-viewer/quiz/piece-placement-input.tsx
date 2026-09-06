@@ -47,19 +47,32 @@ export function CompositionBackground({ background }: { background: Background }
   )
 }
 
-/** Resolve the stage aspect: stored value, else the first layer's natural ratio, else the fallback. */
-export function useStageAspect(background: Background): number {
-  const [measured, setMeasured] = useState<number | null>(null)
+/**
+ * Resolve the stage aspect: stored value, else the first layer's natural
+ * ratio once it has loaded, else the fallback. `measured` is true only once
+ * the aspect is actually known (stored, or the layer image loaded) — never
+ * for the fallback a not-yet-loaded or broken image falls back to, so
+ * callers that persist the aspect can gate on it instead of on truthiness.
+ */
+export function useMeasuredAspect(background: Background): { aspect: number; measured: boolean } {
+  const [loaded, setLoaded] = useState<number | null>(null)
   const first = background.layers[0]?.imageUrl
   useEffect(() => {
-    if (background.aspect || !first) return
+    if (background.aspect != null || !first) return
     const img = new Image()
     img.onload = () => {
-      if (img.naturalWidth > 0 && img.naturalHeight > 0) setMeasured(img.naturalWidth / img.naturalHeight)
+      if (img.naturalWidth > 0 && img.naturalHeight > 0) setLoaded(img.naturalWidth / img.naturalHeight)
     }
+    img.onerror = () => {} // a broken image never counts as measured
     img.src = first
   }, [background.aspect, first])
-  return background.aspect ?? measured ?? FALLBACK_ASPECT
+  const measured = background.aspect != null || loaded != null
+  return { aspect: background.aspect ?? loaded ?? FALLBACK_ASPECT, measured }
+}
+
+/** Thin wrapper over useMeasuredAspect for callers that only need the number. */
+export function useStageAspect(background: Background): number {
+  return useMeasuredAspect(background).aspect
 }
 
 /**

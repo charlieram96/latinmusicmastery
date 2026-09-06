@@ -65,3 +65,14 @@ export function readPieces(options: unknown): PlacementPiece[] {
   const opts = isRecord(options) ? options : {}
   return Array.isArray(opts.pieces) ? (opts.pieces as PlacementPiece[]) : []
 }
+
+/**
+ * Whether the builder should persist the aspect it currently has on screen.
+ * True only once, for a migrated row (`storedAspect == null`) that has at
+ * least one layer, while the dialog is open, and only after the first
+ * layer's natural size has actually been measured — never for the fallback
+ * aspect a not-yet-loaded (or broken) image falls back to.
+ */
+export function shouldPersistAspect(input: { open: boolean; storedAspect: number | null; layerCount: number; measured: boolean }): boolean {
+  return input.open && input.storedAspect == null && input.layerCount > 0 && input.measured
+}

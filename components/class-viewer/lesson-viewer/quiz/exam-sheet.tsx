@@ -10,13 +10,13 @@ import type { QuizEngine } from '@/hooks/use-quiz-engine'
 import { cn } from '@/lib/utils'
 import { outcomeOf, percentScore } from '@/lib/quiz/engine'
 import { hasAnswer } from '@/lib/quiz/grading'
-import { fullCorrectLabel } from '@/lib/quiz/labels'
 import { playCue } from '@/lib/quiz/sounds'
 import type { QuizQuestion } from '@/types/modules'
 import { FeedbackBanner } from './feedback-banner'
 import { QuestionInput } from './question-input'
 import { ScoreRing } from './score-ring'
 import { TypeChip } from './type-chip'
+import { useAnswerLabels } from './use-answer-labels'
 import styles from './quiz.module.css'
 
 const SPANS = new Set(['matching_pairs', 'ordering_sequence', 'fill_in_blank', 'audio_choice', 'piece_placement'])
@@ -41,6 +41,7 @@ export function ExamSheet({
   onRestart: () => void
 }) {
   const { t } = useTranslation()
+  const { bannerCorrect } = useAnswerLabels()
   const [prefs, setPrefs] = useQuizPrefs()
   const [submitted, setSubmitted] = useState(false)
   const [filter, setFilter] = useState<Filter>('all')
@@ -160,7 +161,7 @@ export function ExamSheet({
                 </div>
                 <h4 className="font-heading text-[17px] font-extrabold leading-snug tracking-[-0.01em]">{q.question}</h4>
                 <QuestionInput question={q} answer={state.answers[q.id]} isGraded={submitted} onChange={(v) => engine.setAnswer(q.id, v)} />
-                {submitted && <FeedbackBanner score={g ?? 0} explanation={q.explanation} correctAnswer={fullCorrectLabel(q) || null} />}
+                {submitted && <FeedbackBanner score={g ?? 0} explanation={q.explanation} correctAnswer={bannerCorrect(q)} />}
               </section>
             )
           })}

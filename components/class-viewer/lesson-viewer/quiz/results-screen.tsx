@@ -9,12 +9,13 @@ import { useContainerWidth } from '@/hooks/use-container-width'
 import { useQuizPrefs } from '@/hooks/use-quiz-prefs'
 import { cn } from '@/lib/utils'
 import { outcomeOf, percentScore, totalScore } from '@/lib/quiz/engine'
-import { countCorrectPieces, fullCorrectLabel, userAnswerLabel } from '@/lib/quiz/labels'
+import { countCorrectPieces } from '@/lib/quiz/labels'
 import { playCue } from '@/lib/quiz/sounds'
 import type { QuizQuestion } from '@/types/modules'
 import { Confetti } from './confetti'
 import { ScoreRing } from './score-ring'
 import { TypeChip } from './type-chip'
+import { useAnswerLabels } from './use-answer-labels'
 import styles from './quiz.module.css'
 
 const REPORT_MIN_WIDTH = 960
@@ -93,6 +94,7 @@ function ReviewList({
   openAll: boolean
 }) {
   const { t } = useTranslation()
+  const { reviewCorrect, said: saidFor } = useAnswerLabels()
   const [open, setOpen] = useState<string | null>(null)
   const list = questions.filter((q) => filter === 'all' || (graded[q.id] ?? 0) < 1)
   if (list.length === 0) return <p className="py-4 text-center text-sm text-muted-foreground">{t('dashboard.classViewer.quiz.results.nothingMissed')}</p>
@@ -106,11 +108,8 @@ function ReviewList({
         const said =
           q.question_type === 'piece_placement'
             ? t('dashboard.classViewer.quiz.results.piecesPlaced', countCorrectPieces(q, answers[q.id]))
-            : q.question_type === 'true_false'
-              ? userAnswerLabel(q, answers[q.id]) &&
-                t(userAnswerLabel(q, answers[q.id]) === 'true' ? 'dashboard.classViewer.quiz.true' : 'dashboard.classViewer.quiz.false')
-              : userAnswerLabel(q, answers[q.id])
-        const right = q.question_type === 'true_false' ? t(fullCorrectLabel(q) === 'true' ? 'dashboard.classViewer.quiz.true' : 'dashboard.classViewer.quiz.false') : fullCorrectLabel(q)
+            : saidFor(q, answers[q.id])
+        const right = reviewCorrect(q)
         const Icon = tone === 'ok' ? Check : tone === 'part' ? Minus : X
         return (
           <div key={q.id} className="overflow-hidden rounded-[14px] border border-border bg-card">

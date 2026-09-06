@@ -4,10 +4,10 @@ import { Eye, Grid3X3, Pencil, Target } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { PiecePlacementInput, useStageAspect } from '@/components/class-viewer/lesson-viewer/quiz/piece-placement-input'
+import { PiecePlacementInput, useMeasuredAspect } from '@/components/class-viewer/lesson-viewer/quiz/piece-placement-input'
 import { FeedbackBanner } from '@/components/class-viewer/lesson-viewer/quiz/feedback-banner'
 import { cn } from '@/lib/utils'
-import { readComposition, readPieces, type Background } from '@/lib/quiz/composition'
+import { readComposition, readPieces, shouldPersistAspect, type Background } from '@/lib/quiz/composition'
 import { gradeQuestionScore, type PiecePlacement, type PlacementPiece } from '@/lib/quiz/grading'
 import { patchLocalizedEntry, pruneLocalizedEntries, type LocalizedOptions } from '@/lib/quiz/options-es'
 import type { Rect } from '@/lib/quiz/transform'
@@ -58,16 +58,19 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, op
   const [snap, setSnap] = useState(true)
   const [showGrid, setShowGrid] = useState(true)
   const [preview, setPreview] = useState(false)
-  const aspect = useStageAspect(background)
+  const { aspect, measured } = useMeasuredAspect(background)
 
   const write = (next: { background?: Background; pieces?: PlacementPiece[] }) =>
     onChange({ options: { ...((options as Record<string, unknown>) ?? {}), background: next.background ?? background, pieces: next.pieces ?? pieces }, image_url: null })
 
-  // Migrated rows carry aspect: null; persist the measured ratio the first time the builder sees one.
+  // Migrated rows carry aspect: null; persist the measured ratio the first time it's actually known
+  // (never the fallback a not-yet-loaded or broken image falls back to).
   useEffect(() => {
-    if (open && background.aspect == null && background.layers.length > 0 && aspect) write({ background: { ...background, aspect } })
+    if (shouldPersistAspect({ open, storedAspect: background.aspect, layerCount: background.layers.length, measured })) {
+      write({ background: { ...background, aspect } })
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, aspect, background.aspect])
+  }, [open, aspect, measured, background.aspect])
 
   const setBackground = (patch: Partial<Background>) => write({ background: { ...background, ...patch } })
   const setLayerRect = (id: string, r: Rect) => setBackground({ layers: background.layers.map((l) => (l.id === id ? { ...l, ...r } : l)) })

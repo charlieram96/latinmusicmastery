@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_BACKGROUND_COLOR, legacyLayer, readComposition, readPieces } from '../composition'
+import { DEFAULT_BACKGROUND_COLOR, legacyLayer, readComposition, readPieces, shouldPersistAspect } from '../composition'
 
 describe('readComposition', () => {
   it('returns the stored background when present', () => {
@@ -29,5 +29,24 @@ describe('readPieces', () => {
     expect(readPieces({ pieces: [{ id: 'p', imageUrl: '', width: 5, area: { x: 0, y: 0, width: 1, height: 1 } }] })).toHaveLength(1)
     expect(readPieces(null)).toEqual([])
     expect(readPieces({ pieces: 'nope' })).toEqual([])
+  })
+})
+
+describe('shouldPersistAspect', () => {
+  const base = { open: true, storedAspect: null, layerCount: 1, measured: true }
+  it('is true only when open, unstored, has layers, and measured', () => {
+    expect(shouldPersistAspect(base)).toBe(true)
+  })
+  it('is false when not measured (fallback aspect, not the real one)', () => {
+    expect(shouldPersistAspect({ ...base, measured: false })).toBe(false)
+  })
+  it('is false when an aspect is already stored', () => {
+    expect(shouldPersistAspect({ ...base, storedAspect: 1.5 })).toBe(false)
+  })
+  it('is false with zero layers', () => {
+    expect(shouldPersistAspect({ ...base, layerCount: 0 })).toBe(false)
+  })
+  it('is false when the dialog is closed', () => {
+    expect(shouldPersistAspect({ ...base, open: false })).toBe(false)
   })
 })

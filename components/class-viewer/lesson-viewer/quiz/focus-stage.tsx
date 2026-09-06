@@ -8,7 +8,7 @@ import { useQuizPrefs } from '@/hooks/use-quiz-prefs'
 import type { QuizEngine } from '@/hooks/use-quiz-engine'
 import { cn } from '@/lib/utils'
 import { cueFor, outcomeOf } from '@/lib/quiz/engine'
-import { correctAnswerLabel, hasAnswer } from '@/lib/quiz/grading'
+import { hasAnswer } from '@/lib/quiz/grading'
 import { playCue } from '@/lib/quiz/sounds'
 import type { QuizQuestion } from '@/types/modules'
 import { FeedbackBanner } from './feedback-banner'
@@ -17,6 +17,7 @@ import { QuestionInput } from './question-input'
 import { QuestionMap } from './question-map'
 import { StreakChip } from './streak-chip'
 import { TypeChip } from './type-chip'
+import { useAnswerLabels } from './use-answer-labels'
 import styles from './quiz.module.css'
 
 const KEY_CHOICE = /^[1-9]$/
@@ -37,6 +38,7 @@ export function FocusStage({
   onFinish: () => void
 }) {
   const { t } = useTranslation()
+  const { bannerCorrect } = useAnswerLabels()
   const [prefs, setPrefs] = useQuizPrefs()
   const [index, setIndex] = useState(0)
   const [pop, setPop] = useState(false)
@@ -67,12 +69,17 @@ export function FocusStage({
   // Keyboard: 1-9 / a-h pick a choice, T / F for true-false, Enter checks then continues, arrows move.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement | null)?.tagName
-      const inField = tag === 'INPUT' || tag === 'TEXTAREA'
+      const target = e.target as HTMLElement | null
+      const inField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA'
+      const interactive = !!target?.closest?.('button, a, [role="button"], [role="radio"], select, [contenteditable="true"]')
       if (e.key === 'Enter') {
-        e.preventDefault()
-        if (isGraded) next()
-        else check()
+        // Enter on an interactive element (a button, the dnd-kit handle, …) is
+        // the browser's own click — don't hijack it into check/continue.
+        if (inField || !interactive) {
+          e.preventDefault()
+          if (isGraded) next()
+          else check()
+        }
         return
       }
       if (inField) return
@@ -129,7 +136,7 @@ export function FocusStage({
               <h3 className={cn('font-heading font-extrabold leading-[1.25] tracking-[-0.015em]', styles.question)}>{q.question}</h3>
             </div>
             <QuestionInput question={q} answer={answer} isGraded={isGraded} onChange={(v) => engine.setAnswer(q.id, v)} />
-            {isGraded && <FeedbackBanner score={score} explanation={q.explanation} correctAnswer={correctAnswerLabel(q) || null} />}
+            {isGraded && <FeedbackBanner score={score} explanation={q.explanation} correctAnswer={bannerCorrect(q)} />}
           </div>
 
           <div className="relative mt-6 flex items-center justify-between gap-3">
