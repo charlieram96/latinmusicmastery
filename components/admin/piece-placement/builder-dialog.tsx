@@ -89,7 +89,7 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, op
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[90vh] w-[96vw] max-w-[1200px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1200px]">
+      <DialogContent showCloseButton={false} aria-describedby={undefined} className="flex h-[90vh] w-[96vw] max-w-[1200px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1200px]">
         <DialogTitle className="sr-only">Drag-and-drop builder</DialogTitle>
         <div className="flex flex-wrap items-center gap-2.5 border-b border-border bg-sunken px-3.5 py-2.5">
           <span className="mr-auto font-heading text-[13px] font-bold">Drag into place</span>
