@@ -6,6 +6,7 @@ import { useTranslation } from '@/components/language-provider'
 import { markClassItemComplete } from '@/app/actions/progress'
 import { useQuizEngine } from '@/hooks/use-quiz-engine'
 import type { QuizQuestion, QuizSettings } from '@/types/modules'
+import { ExamSheet } from './quiz/exam-sheet'
 import { FocusStage } from './quiz/focus-stage'
 import { ResultsScreen } from './quiz/results-screen'
 import styles from './quiz/quiz.module.css'
@@ -24,13 +25,13 @@ interface QuizRunnerProps {
 }
 
 /** Shell: owns the engine and the finished flag, picks the layout mode, marks completion once. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function QuizRunner({ classItemId, questions, kind = 'Quiz', settings, nextHref = null, title }: QuizRunnerProps) {
   const { t } = useTranslation()
   const kindLabel = t(kind === 'Exercise' ? 'dashboard.pages.modules.exercise' : 'dashboard.pages.modules.quiz')
   const ordered = useMemo(() => [...questions].sort((a, b) => a.order_index - b.order_index), [questions])
   const engine = useQuizEngine(ordered)
   const [finished, setFinished] = useState(false)
+  const mode = kind === 'Quiz' && settings?.mode === 'sheet' ? 'sheet' : 'focus'
 
   useEffect(() => {
     if (finished) void markClassItemComplete(classItemId).catch(() => {})
@@ -52,7 +53,9 @@ export function QuizRunner({ classItemId, questions, kind = 'Quiz', settings, ne
   return (
     <MotionConfig reducedMotion="user">
       <div className={styles.root}>
-        {finished ? (
+        {mode === 'sheet' ? (
+          <ExamSheet questions={ordered} engine={engine} kindLabel={kindLabel} title={title} nextHref={nextHref} onSubmit={() => setFinished(true)} onRestart={restart} />
+        ) : finished ? (
           <ResultsScreen kind={kindLabel} questions={ordered} answers={engine.state.answers} graded={engine.state.graded} onRestart={restart} nextHref={nextHref} />
         ) : (
           <FocusStage questions={ordered} engine={engine} kindLabel={kindLabel} title={title} onFinish={() => setFinished(true)} />

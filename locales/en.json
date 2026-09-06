@@ -2005,6 +2005,18 @@
           "missed": "Missed · {count}",
           "youSaid": "You said",
           "answer": "Answer"
+        },
+        "sheet": {
+          "intro": "{count} questions. Answer in any order; nothing is graded until you submit.",
+          "scored": "Scored {pct}%. Every card now shows the right answer and why.",
+          "submitAll": "Submit all answers",
+          "answeredOf": "{answered} of {total} answered",
+          "unanswered": "{count} still unanswered. You can submit anyway.",
+          "answered": "Answered",
+          "unansweredLabel": "Unanswered",
+          "correct": "Correct",
+          "partly": "Partly right",
+          "missed": "Missed"
         }
       },
       "video": {

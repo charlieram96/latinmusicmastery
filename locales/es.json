@@ -2005,6 +2005,18 @@
           "missed": "Falladas · {count}",
           "youSaid": "Respondiste",
           "answer": "Respuesta"
+        },
+        "sheet": {
+          "intro": "{count} preguntas. Responde en cualquier orden; nada se califica hasta que envíes.",
+          "scored": "Puntaje {pct}%. Cada tarjeta muestra ahora la respuesta correcta y por qué.",
+          "submitAll": "Enviar todas las respuestas",
+          "answeredOf": "{answered} de {total} respondidas",
+          "unanswered": "{count} sin responder. Puedes enviar de todos modos.",
+          "answered": "Respondida",
+          "unansweredLabel": "Sin responder",
+          "correct": "Correcta",
+          "partly": "Casi",
+          "missed": "Fallada"
         }
       },
       "video": {
