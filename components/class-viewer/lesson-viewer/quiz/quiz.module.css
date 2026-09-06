@@ -20,6 +20,7 @@
 }
 .tray { display: grid; gap: 10px; min-width: 0; }
 .trayList { display: grid; gap: 8px; min-width: 0; }
+.tray > * { min-width: 0; max-width: 100%; }
 @container pp (min-width: 760px) {
   .pp { grid-template-columns: minmax(0, 1fr) 250px; gap: 20px; align-items: start; }
   .tray { position: sticky; top: 20px; }
