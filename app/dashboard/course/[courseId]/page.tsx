@@ -100,9 +100,9 @@ export default async function CoursePage({ params }: PageProps) {
   const teacher = course.teacher
 
   const difficultyConfig = {
-    beginner: { color: 'text-green-500', bg: 'bg-green-500/10' },
-    intermediate: { color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
-    advanced: { color: 'text-red-500', bg: 'bg-red-500/10' },
+    beginner: { color: 'text-success', bg: 'bg-success/10' },
+    intermediate: { color: 'text-warning', bg: 'bg-warning/10' },
+    advanced: { color: 'text-danger', bg: 'bg-danger/10' },
   } as const
   const difficultyKey = (course.difficulty as keyof typeof difficultyConfig) in difficultyConfig
     ? (course.difficulty as keyof typeof difficultyConfig)

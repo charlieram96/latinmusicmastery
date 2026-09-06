@@ -9,6 +9,7 @@ import { getComments } from '@/app/actions/comments'
 import { ClassItemRenderer } from '@/components/class-viewer/class-item-renderer'
 import { CommentsSection } from '@/components/comments/comments-section'
 import { LessonShell } from '@/components/class-viewer/lesson-viewer/lesson-shell'
+import { HeaderTitleOverride } from '@/components/dashboard/header-title-override'
 import { canAccessCourse } from '@/lib/subscriptions'
 import { ClassViewerEmpty } from './class-viewer-empty'
 import { ClassViewerLocked } from './class-viewer-locked'
@@ -143,7 +144,9 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   // Subscription-gated: show a paywall instead of the lesson content.
   if (locked) {
     return (
-      <LessonShell
+      <>
+        <HeaderTitleOverride title={course.title} />
+        <LessonShell
         sidebar={{
           courseId,
           currentClassId: classId,
@@ -166,6 +169,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           </div>
         }
       />
+      </>
     )
   }
 
@@ -317,7 +321,9 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   )
 
   return (
-    <LessonShell
+    <>
+      <HeaderTitleOverride title={course.title} />
+      <LessonShell
       sidebar={{
         courseId,
         currentClassId: classId,
@@ -359,5 +365,6 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
       }}
       body={body}
     />
+    </>
   )
 }

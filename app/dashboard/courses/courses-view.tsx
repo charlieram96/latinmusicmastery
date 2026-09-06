@@ -296,10 +296,12 @@ function CourseCard({
             })}
         </p>
         <div className="a-meta">
-          <span className="mi">
-            <BookOpen size={14} />
-            {t('dashboard.pages.courses.lessonCount', { count: lessons })}
-          </span>
+          {lessons > 0 && (
+            <span className="mi">
+              <BookOpen size={14} />
+              {t('dashboard.pages.courses.lessonCount', { count: lessons })}
+            </span>
+          )}
           {country && (
             <span className="mi">
               <Globe size={14} />
@@ -307,19 +309,21 @@ function CourseCard({
             </span>
           )}
         </div>
-        <div className="a-foot">
-          <span className="bc-avatar">
-            {c.teacher?.image_url ? (
-              <img src={c.teacher.image_url} alt={teacherName} />
-            ) : (
-              <span>{initialsOf(c.teacher?.name)}</span>
-            )}
-          </span>
-          <span className="who">
-            <div className="n">{teacherName}</div>
-            {teacherRole && <div className="r">{teacherRole}</div>}
-          </span>
-        </div>
+        {c.teacher?.name && (
+          <div className="a-foot">
+            <span className="bc-avatar">
+              {c.teacher.image_url ? (
+                <img src={c.teacher.image_url} alt={teacherName} />
+              ) : (
+                <span>{initialsOf(c.teacher.name)}</span>
+              )}
+            </span>
+            <span className="who">
+              <div className="n">{teacherName}</div>
+              {teacherRole && <div className="r">{teacherRole}</div>}
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   )

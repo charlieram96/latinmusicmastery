@@ -1593,6 +1593,13 @@
           "lessons": "Lessons",
           "dayStreak": "Day Streak",
           "courses": "Courses"
+        },
+        "categories": {
+          "learning": "Learning milestones",
+          "consistency": "Consistency streaks",
+          "completion": "Course completion",
+          "exploration": "Style explorer",
+          "engagement": "Community engagement"
         }
       },
       "courses": {

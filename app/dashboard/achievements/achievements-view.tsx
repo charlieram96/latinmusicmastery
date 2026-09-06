@@ -23,7 +23,7 @@ import {
   Heart,
   type LucideIcon,
 } from 'lucide-react'
-import { CATEGORY_ORDER, CATEGORY_LABELS } from '@/lib/achievements'
+import { CATEGORY_ORDER } from '@/lib/achievements'
 import { useTranslation } from '@/components/language-provider'
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -132,7 +132,9 @@ export function AchievementsView({
         return (
           <div key={category} className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">{CATEGORY_LABELS[category]}</h2>
+              <h2 className="font-heading text-xl font-bold tracking-tight">
+                {t(`dashboard.pages.achievements.categories.${category}`)}
+              </h2>
               <Badge variant="secondary">
                 {categoryUnlocked}/{categoryAchievements.length}
               </Badge>
@@ -167,7 +169,7 @@ export function AchievementsView({
                             <Lock className="h-6 w-6" />
                           )}
                           {achievement.isUnlocked && (
-                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-success rounded-full flex items-center justify-center">
                               <svg
                                 className="w-3 h-3 text-white"
                                 fill="none"

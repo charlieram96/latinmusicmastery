@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { HeaderTitleOverride } from '@/components/dashboard/header-title-override'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
@@ -152,12 +153,13 @@ export function CourseDetailView({
 
   const eyebrowClass = 'text-xs font-bold uppercase tracking-[0.14em] text-primary'
   const sectionTitleClass =
-    'mt-2 font-heading text-2xl md:text-[34px] font-extrabold tracking-[-0.025em] text-foreground'
+    'mt-2 font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground'
 
   const metaDot = <span className="h-1 w-1 rounded-full bg-white/30" aria-hidden />
 
   return (
-    <div className="-mx-6 -mt-[calc(56px+1.5rem)] pb-24 lg:pb-0">
+    <div className="-mx-6 -mt-[calc(var(--header-h)+1.5rem)] pb-24 lg:pb-0">
+      <HeaderTitleOverride title={course.title} />
       {/* ── Cinematic Hero ── */}
       <div className="relative overflow-hidden bg-[#0a0a0a]">
         {course.thumbnail_url && (
@@ -186,9 +188,9 @@ export function CourseDetailView({
         />
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.08] via-transparent to-terracotta/[0.05]" />
 
-        <div className="relative flex min-h-[560px] w-full flex-col justify-end px-6 pb-16 pt-[calc(56px+3rem)] md:px-10 lg:min-h-[620px]">
+        <div className="relative flex min-h-[560px] w-full flex-col justify-end px-6 pb-16 pt-[calc(var(--header-h)+3rem)] md:px-10 lg:min-h-[620px]">
           {/* Back button */}
-          <div className="absolute left-6 top-[calc(56px+1rem)] z-10 md:left-10">
+          <div className="absolute left-6 top-[calc(var(--header-h)+1rem)] z-10 md:left-10">
             <Button
               size="sm"
               variant="ghost"
@@ -364,7 +366,7 @@ export function CourseDetailView({
       <div className="w-full px-6 md:px-10">
         {/* Stats bar (overlaps hero) */}
         <div className="relative z-10 -mt-14 mb-4">
-          <div className="overflow-hidden rounded-[20px] border border-border shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)]">
+          <div className="overflow-hidden rounded-2xl border border-border shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)]">
             <HeroStatsStrip
               progressPercentage={progressPercentage}
               completedItems={completedLessons}
@@ -399,7 +401,7 @@ export function CourseDetailView({
                   {whatYouLearn.map((item, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <CheckCircle2 className="mt-0.5 h-[22px] w-[22px] flex-shrink-0 text-primary" />
-                      <p className="text-[15.5px] leading-relaxed text-foreground/80">{item}</p>
+                      <p className="text-base leading-relaxed text-foreground/80">{item}</p>
                     </div>
                   ))}
                 </div>
@@ -413,12 +415,12 @@ export function CourseDetailView({
                   {includedItems.map((item, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-3.5 rounded-[14px] border border-border bg-card p-4"
+                      className="flex items-center gap-3.5 rounded-xl border border-border bg-card p-4"
                     >
-                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[11px] bg-primary/10 text-primary">
+                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                         <item.icon className="h-[19px] w-[19px]" />
                       </span>
-                      <span className="text-[14.5px] font-medium capitalize text-foreground">{item.text}</span>
+                      <span className="text-sm font-medium capitalize text-foreground">{item.text}</span>
                     </div>
                   ))}
                 </div>
@@ -434,7 +436,7 @@ export function CourseDetailView({
                       <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-border bg-muted text-primary">
                         <req.icon className="h-5 w-5" />
                       </span>
-                      <p className="text-[15.5px] leading-snug text-foreground/85">{req.text}</p>
+                      <p className="text-base leading-snug text-foreground/85">{req.text}</p>
                     </div>
                   ))}
                 </div>

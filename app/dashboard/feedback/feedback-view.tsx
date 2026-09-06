@@ -31,7 +31,7 @@ export function FeedbackView({ feedbackRequests, teachers }: FeedbackViewProps) 
         )
       case 'completed':
         return (
-          <Badge className="gap-1 bg-green-500/20 text-green-500">
+          <Badge className="gap-1 bg-success/[0.14] text-success">
             <CheckCircle className="h-3 w-3" /> {t('dashboard.pages.feedback.status.completed')}
           </Badge>
         )
@@ -154,8 +154,8 @@ export function FeedbackView({ feedbackRequests, teachers }: FeedbackViewProps) 
                     )}
 
                     {request.status === 'completed' && request.response_message && (
-                      <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                        <p className="text-sm font-medium text-green-500 mb-1">
+                      <div className="mt-4 p-3 rounded-lg bg-success/10 border border-success/20">
+                        <p className="text-sm font-medium text-success mb-1">
                           {t('dashboard.pages.feedback.history.teacherResponse')}
                         </p>
                         <p className="text-sm">{request.response_message}</p>

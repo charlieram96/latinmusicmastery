@@ -71,8 +71,8 @@ export function MasterClassView({
         /* Empty State */
         <Card>
           <CardContent className="p-12 text-center">
-            <div className="h-16 w-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
-              <Crown className="h-8 w-8 text-amber-500" />
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Crown className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-xl font-semibold mb-2">{t('dashboard.pages.masterClass.empty.title')}</h3>
             <p className="text-muted-foreground">

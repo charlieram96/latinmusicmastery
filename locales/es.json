@@ -1593,6 +1593,13 @@
           "lessons": "Lecciones",
           "dayStreak": "Días de racha",
           "courses": "Cursos"
+        },
+        "categories": {
+          "learning": "Hitos de aprendizaje",
+          "consistency": "Rachas de constancia",
+          "completion": "Cursos completados",
+          "exploration": "Explorador de estilos",
+          "engagement": "Participación en la comunidad"
         }
       },
       "courses": {
