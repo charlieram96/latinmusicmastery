@@ -7,8 +7,8 @@
 .ppRoot { container: pp / inline-size; }
 
 /* ---------- piece placement ---------- */
-.pp { display: grid; gap: 16px; }
-.stageWrap { display: grid; justify-items: center; }
+.pp { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.stageWrap { display: grid; justify-items: center; min-width: 0; }
 .stage {
   position: relative;
   width: min(100%, calc(var(--stage-maxh, 62vh) * var(--stage-ratio, 1.6)));
@@ -18,8 +18,8 @@
   touch-action: none;
   user-select: none;
 }
-.tray { display: grid; gap: 10px; }
-.trayList { display: grid; gap: 8px; }
+.tray { display: grid; gap: 10px; min-width: 0; }
+.trayList { display: grid; gap: 8px; min-width: 0; }
 @container pp (min-width: 760px) {
   .pp { grid-template-columns: minmax(0, 1fr) 250px; gap: 20px; align-items: start; }
   .tray { position: sticky; top: 20px; }
