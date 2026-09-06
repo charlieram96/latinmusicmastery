@@ -37,12 +37,12 @@ export function ThemeToggle({ variant = 'icon', className }: ThemeToggleProps) {
         disabled={!mounted}
         aria-label={nextLabel}
         className={cn(
-          'flex h-10 w-full items-center rounded-lg pl-[11px] pr-2 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground',
+          'flex h-10 w-full items-center rounded-lg pl-[10px] pr-2 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground',
           className
         )}
       >
         <Icon className="h-5 w-5 shrink-0" />
-        <span className="ml-3 truncate text-sm font-medium opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100 group-data-[pinned=true]/rail:opacity-100">
+        <span className="ml-3 truncate text-sm font-medium opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-has-[:focus-visible]/rail:opacity-100 group-data-[pinned=true]/rail:opacity-100">
           {t('common.theme.label')}: {label}
         </span>
       </button>

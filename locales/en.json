@@ -1876,6 +1876,13 @@
         "tooltipOne": "{count} day learning streak!",
         "tooltipOther": "{count} days learning streak!",
         "empty": "Start learning to build your streak!"
+      },
+      "account": {
+        "open": "Account menu",
+        "profile": "Profile and settings",
+        "plan": "Plan",
+        "progress": "My progress",
+        "help": "Help"
       }
     },
     "classViewer": {

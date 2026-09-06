@@ -1,14 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, BookOpen, Music, GraduationCap, Loader2, Disc3 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import {
   CommandDialog,
-  CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
@@ -33,6 +30,12 @@ export function HeaderSearch() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  // Keyboard hint by platform; resolved on the client only.
+  const isMac = useSyncExternalStore(
+    () => () => {},
+    () => /Mac|iPhone|iPad/.test(navigator.platform),
+    () => true
+  )
 
   // Keyboard shortcut (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -212,14 +215,18 @@ export function HeaderSearch() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="relative flex items-center h-9 w-9 md:w-56 md:px-3 md:py-2 rounded-lg bg-card border-0 hover:bg-card/80 transition-colors"
+        aria-label={t('dashboard.header.search.placeholder')}
+        className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-input bg-card text-muted-foreground transition-colors hover:border-foreground/25 hover:text-foreground md:w-56 md:justify-start md:px-3"
       >
-        <Search className="h-4 w-4 text-muted-foreground md:mr-2" />
-        <span className="hidden md:inline-flex text-sm text-muted-foreground">
+        <Search className="h-4 w-4 md:mr-2" />
+        <span className="hidden text-sm md:inline-flex">
           {t('dashboard.header.search.placeholderShort')}
         </span>
-        <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden md:inline-flex h-5 select-none items-center gap-1 rounded bg-muted/50 px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-          <span className="text-xs">&#8984;</span>K
+        <kbd
+          suppressHydrationWarning
+          className="pointer-events-none absolute right-2 top-1/2 hidden h-5 -translate-y-1/2 select-none items-center rounded border border-border bg-background px-1.5 text-[10px] font-medium text-muted-foreground md:inline-flex"
+        >
+          {isMac ? '⌘K' : 'Ctrl K'}
         </kbd>
       </button>
 

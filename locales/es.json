@@ -1876,6 +1876,13 @@
         "tooltipOne": "¡Racha de {count} día aprendiendo!",
         "tooltipOther": "¡Racha de {count} días aprendiendo!",
         "empty": "¡Empieza a aprender para construir tu racha!"
+      },
+      "account": {
+        "open": "Menú de la cuenta",
+        "profile": "Perfil y configuración",
+        "plan": "Plan",
+        "progress": "Mi progreso",
+        "help": "Ayuda"
       }
     },
     "classViewer": {

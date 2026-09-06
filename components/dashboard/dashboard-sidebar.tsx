@@ -27,9 +27,9 @@ export interface DashboardSidebarProps {
  * keep their position between the two states.
  */
 const REVEAL =
-  'opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100 group-data-[pinned=true]/rail:opacity-100'
+  'opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-has-[:focus-visible]/rail:opacity-100 group-data-[pinned=true]/rail:opacity-100'
 const HIDE_WHEN_OPEN =
-  'transition-opacity duration-150 group-hover/rail:opacity-0 group-focus-within/rail:opacity-0 group-data-[pinned=true]/rail:opacity-0'
+  'transition-opacity duration-150 group-hover/rail:opacity-0 group-has-[:focus-visible]/rail:opacity-0 group-data-[pinned=true]/rail:opacity-0'
 
 export function initialsFor(name?: string, email?: string): string {
   const source = (name || '').trim() || (email || '').split('@')[0]
@@ -83,7 +83,7 @@ export function DashboardSidebar({
       className={cn(
         'group/rail fixed inset-y-0 left-0 z-50 hidden w-16 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar px-3 py-3 text-sidebar-foreground md:flex',
         'transition-[width,box-shadow] duration-200 ease-out',
-        'hover:w-[248px] hover:shadow-pop focus-within:w-[248px] data-[pinned=true]:w-[248px] data-[pinned=true]:shadow-none'
+        'hover:w-[248px] hover:shadow-pop has-[:focus-visible]:w-[248px] data-[pinned=true]:w-[248px] data-[pinned=true]:shadow-none'
       )}
     >
       {/* Brand row: fixed height, mark stays put, lockup fades in beside it. */}
