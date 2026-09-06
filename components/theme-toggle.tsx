@@ -38,7 +38,7 @@ export function ThemeToggle({ variant = 'icon', className }: ThemeToggleProps) {
         )}
       >
         <Icon className="h-5 w-5 shrink-0" />
-        <span className={cn('ml-3 truncate text-sm font-medium', RAIL_REVEAL)}>
+        <span className={cn('ml-[22px] truncate text-sm font-medium', RAIL_REVEAL)}>
           {t('common.theme.label')}: {t(`common.theme.${current}`)}
         </span>
       </button>

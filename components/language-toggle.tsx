@@ -56,7 +56,7 @@ export function LanguageToggle({ variant = 'labeled', className }: LanguageToggl
             {LOCALE_SHORT_LABELS[locale]}
           </span>
         </span>
-        <span className={cn('pointer-events-none relative ml-3 truncate text-sm font-medium', RAIL_REVEAL)}>
+        <span className={cn('pointer-events-none relative ml-[22px] truncate text-sm font-medium', RAIL_REVEAL)}>
           {t('common.language')}
         </span>
         <div
