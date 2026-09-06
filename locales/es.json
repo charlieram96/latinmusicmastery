@@ -1970,6 +1970,22 @@
         "ordering": {
           "shouldBe": "debería ser #{n}",
           "dragHandle": "Arrastra para reordenar"
+        },
+        "continue": "Continuar",
+        "seeResults": "Ver resultados",
+        "questionOf": "Pregunta {n} de {total}",
+        "map": {
+          "title": "Preguntas",
+          "checked": "Revisadas"
+        },
+        "sound": {
+          "on": "Sonido activado",
+          "off": "Sonido desactivado"
+        },
+        "hints": {
+          "select": "elegir",
+          "check": "comprobar",
+          "continue": "continuar"
         }
       },
       "video": {
