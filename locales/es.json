@@ -35,7 +35,14 @@
     },
     "toggleSidebar": "Mostrar u ocultar la barra lateral",
     "switchToLightMode": "Cambiar al modo claro",
-    "switchToDarkMode": "Cambiar al modo oscuro"
+    "switchToDarkMode": "Cambiar al modo oscuro",
+    "useSystemTheme": "Seguir el tema del sistema",
+    "theme": {
+      "label": "Tema",
+      "dark": "Oscuro",
+      "light": "Claro",
+      "system": "Sistema"
+    }
   },
   "nav": {
     "explore": "Explorar",

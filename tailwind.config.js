@@ -1,12 +1,3 @@
-// The sidebar CSS vars hold FULL color values (hsl(...), hex, some with embedded
-// alpha) rather than bare HSL channels, so the usual "hsl(var(--x))" pattern can't
-// be used. The function form keeps opacity modifiers (e.g. text-sidebar-foreground/60,
-// bg-sidebar-primary/10) working via color-mix.
-const cssVarColor = (variable) => ({ opacityValue }) =>
-  opacityValue === undefined
-    ? `var(${variable})`
-    : `color-mix(in srgb, var(${variable}) calc(${opacityValue} * 100%), transparent)`;
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
@@ -75,19 +66,22 @@ module.exports = {
         sunken: "hsl(var(--surface-sunken))",
         raised: "hsl(var(--surface-raised))",
         success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        danger: "hsl(var(--danger))",
+        info: "hsl(var(--info))",
         sidebar: {
-          DEFAULT: cssVarColor('--sidebar'),
-          foreground: cssVarColor('--sidebar-foreground'),
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
           primary: {
-            DEFAULT: cssVarColor('--sidebar-primary'),
-            foreground: cssVarColor('--sidebar-primary-foreground'),
+            DEFAULT: "hsl(var(--sidebar-primary))",
+            foreground: "hsl(var(--sidebar-primary-foreground))",
           },
           accent: {
-            DEFAULT: cssVarColor('--sidebar-accent'),
-            foreground: cssVarColor('--sidebar-accent-foreground'),
+            DEFAULT: "hsl(var(--sidebar-accent))",
+            foreground: "hsl(var(--sidebar-accent-foreground))",
           },
-          border: cssVarColor('--sidebar-border'),
-          ring: cssVarColor('--sidebar-ring'),
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
         },
       },
       borderRadius: {
@@ -96,10 +90,9 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        'stripe': '0 30px 60px -10px rgba(50, 50, 93, 0.25), 0 18px 36px -18px rgba(0, 0, 0, 0.3)',
-        'stripe-sm': '0 2px 4px rgba(0, 0, 0, 0.1)',
-        'stripe-md': '0 4px 8px rgba(0, 0, 0, 0.12)',
-        'stripe-lg': '0 8px 16px rgba(0, 0, 0, 0.15)',
+        card: 'var(--shadow-card)',
+        lift: 'var(--shadow-lift)',
+        pop: 'var(--shadow-pop)',
         'warm': '0 1px 2px hsl(var(--shadow-warm) / 0.06), 0 8px 24px -12px hsl(var(--shadow-warm) / 0.12)',
       },
       keyframes: {

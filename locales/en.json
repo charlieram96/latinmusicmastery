@@ -35,7 +35,14 @@
     },
     "toggleSidebar": "Toggle sidebar",
     "switchToLightMode": "Switch to light mode",
-    "switchToDarkMode": "Switch to dark mode"
+    "switchToDarkMode": "Switch to dark mode",
+    "useSystemTheme": "Follow system theme",
+    "theme": {
+      "label": "Theme",
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System"
+    }
   },
   "nav": {
     "explore": "Explore",
