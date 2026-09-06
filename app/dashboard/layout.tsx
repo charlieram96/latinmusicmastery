@@ -1,11 +1,10 @@
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar'
 import { DashboardLayoutClient } from '@/components/dashboard/dashboard-layout-client'
 import { MobileNavSheet, MobileTabBar } from '@/components/dashboard/mobile-nav'
-import { SidebarStateProvider, SIDEBAR_COOKIE } from '@/components/dashboard/sidebar-state'
+import { SidebarStateProvider } from '@/components/dashboard/sidebar-state'
 
 export default async function DashboardLayout({
   children,
@@ -19,7 +18,7 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  const [{ data: profile }, { data: teacherProfile }, { data: subscription }, cookieStore] = await Promise.all([
+  const [{ data: profile }, { data: teacherProfile }, { data: subscription }] = await Promise.all([
     supabase.from('profiles').select('is_admin, email, full_name, avatar_url').eq('id', user.id).single(),
     supabase.from('teachers').select('id').eq('user_id', user.id).maybeSingle(),
     supabase
@@ -29,7 +28,6 @@ export default async function DashboardLayout({
       .eq('status', 'active')
       .limit(1)
       .maybeSingle(),
-    cookies(),
   ])
 
   const navProps = {
@@ -42,7 +40,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <SidebarStateProvider defaultPinned={cookieStore.get(SIDEBAR_COOKIE)?.value === 'true'}>
+    <SidebarStateProvider>
       <DashboardLayoutClient
         sidebar={<DashboardSidebar {...navProps} />}
         header={<DashboardHeader />}

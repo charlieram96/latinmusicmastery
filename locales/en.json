@@ -36,12 +36,10 @@
     "toggleSidebar": "Toggle sidebar",
     "switchToLightMode": "Switch to light mode",
     "switchToDarkMode": "Switch to dark mode",
-    "useSystemTheme": "Follow system theme",
     "theme": {
       "label": "Theme",
       "dark": "Dark",
-      "light": "Light",
-      "system": "System"
+      "light": "Light"
     }
   },
   "nav": {
@@ -1025,8 +1023,6 @@
         "tools": "Tools",
         "manage": "Manage"
       },
-      "pin": "Keep the menu open",
-      "unpin": "Collapse the menu",
       "openMenu": "Open menu",
       "tabs": {
         "home": "Home",

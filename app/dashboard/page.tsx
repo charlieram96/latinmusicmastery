@@ -436,7 +436,7 @@ export default async function DashboardPage() {
 
   // ── Render ───────────────────────────────────────────────────────
   return (
-    <div className="mx-auto w-full max-w-[1232px] space-y-6 lg:space-y-8">
+    <div className="w-full space-y-6 lg:space-y-8">
       <GreetingRow firstName={data.firstName} streak={data.streak} weekDone={data.weekDone} weekGoal={data.weekGoal} />
       <ContinueCard card={data.continueCard} />
 

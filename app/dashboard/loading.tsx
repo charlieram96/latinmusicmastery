@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 /** Mirrors the home layout: greeting row, continue card, list + rail. */
 export default function DashboardLoading() {
   return (
-    <div className="mx-auto w-full max-w-[1232px] space-y-6 lg:space-y-8" aria-busy>
+    <div className="w-full space-y-6 lg:space-y-8" aria-busy>
       <div className="flex items-end justify-between gap-3">
         <Skeleton className="h-9 w-72 rounded-lg" />
         <div className="flex gap-2">

@@ -36,12 +36,10 @@
     "toggleSidebar": "Mostrar u ocultar la barra lateral",
     "switchToLightMode": "Cambiar al modo claro",
     "switchToDarkMode": "Cambiar al modo oscuro",
-    "useSystemTheme": "Seguir el tema del sistema",
     "theme": {
       "label": "Tema",
       "dark": "Oscuro",
-      "light": "Claro",
-      "system": "Sistema"
+      "light": "Claro"
     }
   },
   "nav": {
@@ -1025,8 +1023,6 @@
         "tools": "Herramientas",
         "manage": "Gestionar"
       },
-      "pin": "Mantener el menú abierto",
-      "unpin": "Contraer el menú",
       "openMenu": "Abrir menú",
       "tabs": {
         "home": "Inicio",

@@ -34,9 +34,8 @@ export function MobileNavSheet({
     <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
       <SheetContent side="left" className="w-[300px] gap-0 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground">
         <SheetTitle className="sr-only">{t('dashboard.nav.label')}</SheetTitle>
-        <div className="flex h-14 items-center gap-2 px-4">
-          <Image src="/logo-solo-color.svg" alt="" width={32} height={24} className="h-6 w-8 object-contain" />
-          <Image src="/sidebar-logo.svg" alt="Latin Music Mastery" width={196} height={22} className="h-[22px] w-auto" />
+        <div className="flex h-14 items-center px-4">
+          <Image src="/logo-solo-color.svg" alt="Latin Music Mastery" width={32} height={24} className="h-6 w-8 object-contain" />
         </div>
         <nav aria-label={t('dashboard.nav.label')} className="flex-1 overflow-y-auto px-3 pb-3">
           {groups.map((group) => (
@@ -67,7 +66,7 @@ export function MobileNavSheet({
           ))}
         </nav>
         <div className="border-t border-sidebar-border p-3">
-          <div className="group/rail" data-pinned="true">
+          <div className="group/rail" data-expanded="true">
             <LanguageToggle variant="rail" />
             <ThemeToggle variant="rail" />
           </div>

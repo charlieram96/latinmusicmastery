@@ -13,6 +13,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { LOCALE_LABELS, LOCALE_SHORT_LABELS, type Locale } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
+/** Rail label visibility: shown while the rail is hovered or forced open. */
+const RAIL_REVEAL =
+  'opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-data-[expanded=true]/rail:opacity-100'
+const RAIL_HIDE = 'transition-opacity duration-150 group-hover/rail:opacity-0 group-data-[expanded=true]/rail:opacity-0'
+
 interface LanguageToggleProps {
   /** `rail`: a 40px row for the sidebar rail whose label fades in when the rail expands. */
   variant?: 'icon' | 'labeled' | 'rail'
@@ -23,36 +28,59 @@ export function LanguageToggle({ variant = 'labeled', className }: LanguageToggl
   const { locale, setLocale, locales, t } = useTranslation()
 
   if (variant === 'rail') {
+    // No popover: collapsed, the row itself flips to the next language (the
+    // current code sits on the icon); expanded, an inline EN / ES switch appears.
+    const next = locales[(locales.indexOf(locale) + 1) % locales.length]
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            aria-label={t('common.changeLanguage')}
+      <div
+        className={cn(
+          'relative flex h-10 w-full items-center rounded-lg pl-[10px] pr-1.5 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground',
+          className
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => setLocale(next)}
+          aria-label={`${t('common.changeLanguage')}: ${LOCALE_LABELS[next]}`}
+          className="absolute inset-0 rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        />
+        <span className="pointer-events-none relative flex h-5 w-5 shrink-0 items-center justify-center">
+          <Languages className="h-5 w-5" />
+          <span
+            aria-hidden
             className={cn(
-              'flex h-10 w-full items-center rounded-lg pl-[10px] pr-2 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground',
-              className
+              'absolute -right-2 -top-1.5 rounded-[3px] bg-sidebar px-[3px] text-[8px] font-bold leading-[11px] text-sidebar-foreground/80 ring-1 ring-sidebar-border',
+              RAIL_HIDE
             )}
           >
-            <Languages className="h-5 w-5 shrink-0" />
-            <span className="ml-3 truncate text-sm font-medium opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-has-[:focus-visible]/rail:opacity-100 group-data-[pinned=true]/rail:opacity-100">
-              {t('common.language')}: {LOCALE_LABELS[locale]}
-            </span>
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" side="right" sideOffset={12}>
+            {LOCALE_SHORT_LABELS[locale]}
+          </span>
+        </span>
+        <span className={cn('pointer-events-none relative ml-3 truncate text-sm font-medium', RAIL_REVEAL)}>
+          {t('common.language')}
+        </span>
+        <div
+          role="radiogroup"
+          aria-label={t('common.language')}
+          className={cn('relative ml-auto flex shrink-0 gap-0.5 rounded-md bg-sidebar-accent p-0.5', RAIL_REVEAL)}
+        >
           {locales.map((l) => (
-            <DropdownMenuItem
+            <button
               key={l}
-              onSelect={() => setLocale(l)}
-              className={cn(locale === l && 'bg-accent')}
+              type="button"
+              role="radio"
+              aria-checked={locale === l}
+              onClick={() => setLocale(l)}
+              className={cn(
+                'h-6 rounded-[5px] px-2 text-[11px] font-semibold transition-colors',
+                locale === l ? 'bg-card text-foreground shadow-card' : 'text-muted-foreground hover:text-foreground'
+              )}
             >
-              <span className="font-semibold mr-2 text-xs w-6">{LOCALE_SHORT_LABELS[l]}</span>
-              {LOCALE_LABELS[l]}
-            </DropdownMenuItem>
+              {LOCALE_SHORT_LABELS[l]}
+            </button>
           ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </div>
+      </div>
     )
   }
 

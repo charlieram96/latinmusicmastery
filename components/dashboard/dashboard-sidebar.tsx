@@ -3,15 +3,13 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Pin, PinOff } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { LanguageToggle } from '@/components/language-toggle'
-import { ThemeToggle } from '@/components/theme-toggle'
+import { ThemeToggle, RAIL_REVEAL } from '@/components/theme-toggle'
 import { useTranslation } from '@/components/language-provider'
 import { cn } from '@/lib/utils'
 import { initialsFor } from '@/lib/dashboard/initials'
 import { isNavActive, navGroups, type NavItemDef } from './nav-items'
-import { useSidebarState } from './sidebar-state'
 
 export interface DashboardSidebarProps {
   isAdmin?: boolean
@@ -22,15 +20,8 @@ export interface DashboardSidebarProps {
   hasSubscription?: boolean
 }
 
-/**
- * Text that is only visible while the rail is expanded (hover, keyboard focus,
- * or pinned). It fades in place; its container never changes size, so icons
- * keep their position between the two states.
- */
-const REVEAL =
-  'opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-has-[:focus-visible]/rail:opacity-100 group-data-[pinned=true]/rail:opacity-100'
-const HIDE_WHEN_OPEN =
-  'transition-opacity duration-150 group-hover/rail:opacity-0 group-has-[:focus-visible]/rail:opacity-0 group-data-[pinned=true]/rail:opacity-0'
+/** Shown only while collapsed (the group hairlines). */
+const HIDE_WHEN_OPEN = 'transition-opacity duration-150 group-hover/rail:opacity-0 group-data-[expanded=true]/rail:opacity-0'
 
 function RailItem({ item, active, label }: { item: NavItemDef; active: boolean; label: string }) {
   const Icon = item.icon
@@ -50,11 +41,16 @@ function RailItem({ item, active, label }: { item: NavItemDef; active: boolean; 
         <span aria-hidden className="absolute -left-3 bottom-2.5 top-2.5 w-[3px] rounded-r-full bg-primary" />
       )}
       <Icon className="h-5 w-5 shrink-0" />
-      <span className={cn('ml-3 truncate text-sm font-medium', REVEAL)}>{label}</span>
+      <span className={cn('ml-3 truncate text-sm font-medium', RAIL_REVEAL)}>{label}</span>
     </Link>
   )
 }
 
+/**
+ * Hover-expanding rail. 64px at rest, 248px while the pointer is over it. It
+ * overlays the page, so nothing reflows, and every row keeps its height in
+ * both states so icons never move. The mark is centered in either width.
+ */
 export function DashboardSidebar({
   isAdmin = false,
   isTeacher = false,
@@ -65,21 +61,18 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const pathname = usePathname()
   const { t } = useTranslation()
-  const { pinned, setPinned } = useSidebarState()
   const groups = navGroups(isTeacher, isAdmin)
 
   return (
     <nav
       aria-label={t('dashboard.nav.label')}
-      data-pinned={pinned}
       className={cn(
         'group/rail fixed inset-y-0 left-0 z-50 hidden w-16 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar px-3 py-3 text-sidebar-foreground md:flex',
-        'transition-[width,box-shadow] duration-200 ease-out',
-        'hover:w-[248px] hover:shadow-pop has-[:focus-visible]:w-[248px] data-[pinned=true]:w-[248px] data-[pinned=true]:shadow-none'
+        'transition-[width,box-shadow] duration-200 ease-out hover:w-[248px] hover:shadow-pop'
       )}
     >
-      {/* Brand row: fixed height, mark stays put, lockup fades in beside it. */}
-      <div className="relative flex h-10 items-center">
+      {/* Brand row: the mark stays centered in whichever width the rail has. */}
+      <div className="flex h-10 items-center justify-center">
         <Link
           href="/dashboard"
           aria-label={t('dashboard.nav.home')}
@@ -87,25 +80,6 @@ export function DashboardSidebar({
         >
           <Image src="/logo-solo-color.svg" alt="" width={32} height={24} priority className="h-6 w-8 object-contain" />
         </Link>
-        <Image
-          src="/sidebar-logo.svg"
-          alt="Latin Music Mastery"
-          width={196}
-          height={22}
-          className={cn('ml-1 h-[22px] w-auto max-w-[150px] shrink-0 object-contain object-left', REVEAL)}
-        />
-        <button
-          type="button"
-          onClick={() => setPinned(!pinned)}
-          aria-label={pinned ? t('dashboard.nav.unpin') : t('dashboard.nav.pin')}
-          aria-pressed={pinned}
-          className={cn(
-            'absolute right-0 top-1 grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground',
-            REVEAL
-          )}
-        >
-          {pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-        </button>
       </div>
 
       {/* Groups. Each label row is 24px in both states: a hairline collapsed, the name expanded. */}
@@ -114,12 +88,7 @@ export function DashboardSidebar({
           <div key={group.key} className="flex flex-col gap-0.5">
             <div className="relative flex h-6 items-center px-2.5">
               <span aria-hidden className={cn('absolute left-2 right-2 top-1/2 h-px bg-sidebar-border', HIDE_WHEN_OPEN)} />
-              <span
-                className={cn(
-                  'truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground',
-                  REVEAL
-                )}
-              >
+              <span className={cn('truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground', RAIL_REVEAL)}>
                 {t(`dashboard.nav.groups.${group.key}`)}
               </span>
             </div>
@@ -148,7 +117,7 @@ export function DashboardSidebar({
             {userAvatar ? <AvatarImage src={userAvatar} alt={userName || 'User'} /> : null}
             <AvatarFallback>{initialsFor(userName, userEmail)}</AvatarFallback>
           </Avatar>
-          <span className={cn('ml-3 min-w-0 leading-tight', REVEAL)}>
+          <span className={cn('ml-3 min-w-0 leading-tight', RAIL_REVEAL)}>
             <span className="block truncate text-sm font-semibold text-sidebar-foreground">
               {userName || userEmail.split('@')[0]}
             </span>
