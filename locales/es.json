@@ -1016,7 +1016,28 @@
       "subscription": "Suscripción",
       "teacherPortal": "Portal de Maestros",
       "adminPanel": "Panel de Admin",
-      "settings": "Configuración"
+      "settings": "Configuración",
+      "label": "Navegación principal",
+      "groups": {
+        "learn": "Aprender",
+        "discover": "Descubrir",
+        "connect": "Conectar",
+        "tools": "Herramientas",
+        "manage": "Gestionar"
+      },
+      "pin": "Mantener el menú abierto",
+      "unpin": "Contraer el menú",
+      "openMenu": "Abrir menú",
+      "tabs": {
+        "home": "Inicio",
+        "courses": "Cursos",
+        "practice": "Práctica",
+        "profile": "Perfil"
+      },
+      "plan": {
+        "free": "Plan gratuito",
+        "active": "Miembro"
+      }
     },
     "pages": {
       "tuner": {

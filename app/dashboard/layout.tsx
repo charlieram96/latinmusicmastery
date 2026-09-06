@@ -1,9 +1,11 @@
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { SidebarProvider } from '@/components/ui/sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar'
 import { DashboardLayoutClient } from '@/components/dashboard/dashboard-layout-client'
+import { MobileNavSheet, MobileTabBar } from '@/components/dashboard/mobile-nav'
+import { SidebarStateProvider, SIDEBAR_COOKIE } from '@/components/dashboard/sidebar-state'
 
 export default async function DashboardLayout({
   children,
@@ -17,43 +19,42 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin, email, full_name')
-    .eq('id', user.id)
-    .single()
+  const [{ data: profile }, { data: teacherProfile }, { data: subscription }, cookieStore] = await Promise.all([
+    supabase.from('profiles').select('is_admin, email, full_name, avatar_url').eq('id', user.id).single(),
+    supabase.from('teachers').select('id').eq('user_id', user.id).maybeSingle(),
+    supabase
+      .from('instrument_subscriptions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle(),
+    cookies(),
+  ])
 
-  // Check if user is a teacher
-  const { data: teacherProfile } = await supabase
-    .from('teachers')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-
-  const isTeacher = !!teacherProfile
+  const navProps = {
+    isAdmin: profile?.is_admin || false,
+    isTeacher: !!teacherProfile,
+    userEmail: user.email || profile?.email || '',
+    userName: profile?.full_name || '',
+    userAvatar: profile?.avatar_url ?? null,
+    hasSubscription: !!subscription,
+  }
 
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "64px",
-          "--sidebar-width-mobile": "0px",
-        } as React.CSSProperties
-      }
-    >
+    <SidebarStateProvider defaultPinned={cookieStore.get(SIDEBAR_COOKIE)?.value === 'true'}>
       <DashboardLayoutClient
-        sidebar={
-          <DashboardSidebar
-            isAdmin={profile?.is_admin || false}
-            isTeacher={isTeacher}
-            userEmail={user.email || profile?.email || ''}
-            userName={profile?.full_name || ''}
-          />
-        }
+        sidebar={<DashboardSidebar {...navProps} />}
         header={<DashboardHeader />}
+        mobileNav={
+          <>
+            <MobileNavSheet {...navProps} />
+            <MobileTabBar />
+          </>
+        }
       >
         {children}
       </DashboardLayoutClient>
-    </SidebarProvider>
+    </SidebarStateProvider>
   )
 }

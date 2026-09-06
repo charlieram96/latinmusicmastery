@@ -1016,7 +1016,28 @@
       "subscription": "Subscription",
       "teacherPortal": "Teacher Portal",
       "adminPanel": "Admin Panel",
-      "settings": "Settings"
+      "settings": "Settings",
+      "label": "Main navigation",
+      "groups": {
+        "learn": "Learn",
+        "discover": "Discover",
+        "connect": "Connect",
+        "tools": "Tools",
+        "manage": "Manage"
+      },
+      "pin": "Keep the menu open",
+      "unpin": "Collapse the menu",
+      "openMenu": "Open menu",
+      "tabs": {
+        "home": "Home",
+        "courses": "Courses",
+        "practice": "Practice",
+        "profile": "Profile"
+      },
+      "plan": {
+        "free": "Free plan",
+        "active": "Member"
+      }
     },
     "pages": {
       "tuner": {

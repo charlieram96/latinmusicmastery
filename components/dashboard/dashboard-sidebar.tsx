@@ -3,137 +3,64 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import {
-  Home,
-  BookOpen,
-  Library,
-  GraduationCap,
-  Award,
-  AudioWaveform,
-  Crown,
-  Shield,
-  Video,
-  Users,
-  CreditCard,
-  Drum,
-} from 'lucide-react'
+import { Pin, PinOff } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { LanguageToggle } from '@/components/language-toggle'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { useTranslation } from '@/components/language-provider'
 import { cn } from '@/lib/utils'
+import { isNavActive, navGroups, type NavItemDef } from './nav-items'
+import { useSidebarState } from './sidebar-state'
 
-interface DashboardSidebarProps {
+export interface DashboardSidebarProps {
   isAdmin?: boolean
   isTeacher?: boolean
   userEmail?: string
   userName?: string
-  userAvatar?: string
+  userAvatar?: string | null
+  hasSubscription?: boolean
 }
 
-type NavKey =
-  | 'home'
-  | 'myCourses'
-  | 'browseCourses'
-  | 'teachers'
-  | 'masterClass'
-  | 'achievements'
-  | 'teacherFeedback'
-  | 'community'
-  | 'tuner'
-  | 'playSense'
-  | 'subscription'
-  | 'teacherPortal'
-  | 'adminPanel'
+/**
+ * Text that is only visible while the rail is expanded (hover, keyboard focus,
+ * or pinned). It fades in place; its container never changes size, so icons
+ * keep their position between the two states.
+ */
+const REVEAL =
+  'opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100 group-data-[pinned=true]/rail:opacity-100'
+const HIDE_WHEN_OPEN =
+  'transition-opacity duration-150 group-hover/rail:opacity-0 group-focus-within/rail:opacity-0 group-data-[pinned=true]/rail:opacity-0'
 
-interface NavItemDef {
-  labelKey: NavKey
-  href: string
-  icon: React.ComponentType<{ className?: string }>
+export function initialsFor(name?: string, email?: string): string {
+  const source = (name || '').trim() || (email || '').split('@')[0]
+  if (!source) return 'U'
+  const parts = source.split(/[\s._-]+/).filter(Boolean)
+  const first = parts[0]?.[0] ?? ''
+  const second = parts.length > 1 ? parts[parts.length - 1][0] : parts[0]?.[1] ?? ''
+  return (first + second).toUpperCase()
 }
 
-const personalNavItems: NavItemDef[] = [
-  { labelKey: 'home', href: '/dashboard', icon: Home },
-  { labelKey: 'myCourses', href: '/dashboard/my-courses', icon: BookOpen },
-]
-
-const discoverNavItems: NavItemDef[] = [
-  { labelKey: 'browseCourses', href: '/dashboard/courses', icon: Library },
-  { labelKey: 'teachers', href: '/dashboard/teachers', icon: GraduationCap },
-  { labelKey: 'masterClass', href: '/dashboard/master-class', icon: Crown },
-  { labelKey: 'achievements', href: '/dashboard/achievements', icon: Award },
-]
-
-const connectNavItems: NavItemDef[] = [
-  { labelKey: 'teacherFeedback', href: '/dashboard/feedback', icon: Video },
-  { labelKey: 'community', href: '/dashboard/community', icon: Users },
-]
-
-const toolsNavItems: NavItemDef[] = [
-  { labelKey: 'tuner', href: '/dashboard/tuner', icon: AudioWaveform },
-  { labelKey: 'playSense', href: '/dashboard/play-sense', icon: Drum },
-]
-
-const settingsNavItems: NavItemDef[] = [
-  { labelKey: 'subscription', href: '/dashboard/subscription', icon: CreditCard },
-]
-
-function NavItem({ item, pathname, label }: { item: NavItemDef; pathname: string; label: string }) {
+function RailItem({ item, active, label }: { item: NavItemDef; active: boolean; label: string }) {
   const Icon = item.icon
-  const isActive = item.href === '/dashboard'
-    ? pathname === '/dashboard'
-    : pathname === item.href || pathname.startsWith(`${item.href}/`)
-
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          href={item.href}
-          className={cn(
-            'relative flex items-center justify-center w-10 h-10 rounded-lg transition-colors',
-            isActive
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-          )}
-        >
-          {isActive && (
-            <span className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-[12px] w-[3px] h-5 rounded-r-full bg-primary" />
-          )}
-          <Icon className="h-[18px] w-[18px]" />
-        </Link>
-      </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={12}>
-        {label}
-      </TooltipContent>
-    </Tooltip>
+    <Link
+      href={item.href}
+      aria-label={label}
+      aria-current={active ? 'page' : undefined}
+      data-active={active}
+      className={cn(
+        'relative flex h-10 w-full items-center rounded-lg pl-[10px] pr-2 text-sidebar-foreground/70 transition-colors',
+        'hover:bg-sidebar-accent hover:text-sidebar-foreground',
+        'data-[active=true]:bg-primary/[0.12] data-[active=true]:text-primary data-[active=true]:hover:bg-primary/[0.16]'
+      )}
+    >
+      {active && (
+        <span aria-hidden className="absolute -left-3 bottom-2.5 top-2.5 w-[3px] rounded-r-full bg-primary" />
+      )}
+      <Icon className="h-5 w-5 shrink-0" />
+      <span className={cn('ml-3 truncate text-sm font-medium', REVEAL)}>{label}</span>
+    </Link>
   )
-}
-
-function NavSection({
-  items,
-  pathname,
-  t,
-}: {
-  items: NavItemDef[]
-  pathname: string
-  t: (key: string) => string
-}) {
-  return (
-    <div className="flex flex-col items-center gap-1">
-      {items.map((item) => (
-        <NavItem
-          key={item.href}
-          item={item}
-          pathname={pathname}
-          label={t(`dashboard.nav.${item.labelKey}`)}
-        />
-      ))}
-    </div>
-  )
-}
-
-function Separator() {
-  return <div className="w-8 h-px bg-border mx-auto" />
 }
 
 export function DashboardSidebar({
@@ -141,84 +68,103 @@ export function DashboardSidebar({
   isTeacher = false,
   userEmail = '',
   userName = '',
-  userAvatar = ''
+  userAvatar = null,
+  hasSubscription = false,
 }: DashboardSidebarProps) {
   const pathname = usePathname()
   const { t } = useTranslation()
+  const { pinned, setPinned } = useSidebarState()
+  const groups = navGroups(isTeacher, isAdmin)
 
   return (
-    <nav className="fixed inset-y-0 left-0 z-50 w-16 bg-sidebar border-r border-sidebar-border hidden md:flex flex-col items-center py-4 gap-4">
-      {/* Logo */}
-      <Link href="/" className="mb-2">
+    <nav
+      aria-label={t('dashboard.nav.label')}
+      data-pinned={pinned}
+      className={cn(
+        'group/rail fixed inset-y-0 left-0 z-50 hidden w-16 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar px-3 py-3 text-sidebar-foreground md:flex',
+        'transition-[width,box-shadow] duration-200 ease-out',
+        'hover:w-[248px] hover:shadow-pop focus-within:w-[248px] data-[pinned=true]:w-[248px] data-[pinned=true]:shadow-none'
+      )}
+    >
+      {/* Brand row: fixed height, mark stays put, lockup fades in beside it. */}
+      <div className="relative flex h-10 items-center">
+        <Link
+          href="/dashboard"
+          aria-label={t('dashboard.nav.home')}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+        >
+          <Image src="/logo-solo-color.svg" alt="" width={32} height={24} priority className="h-6 w-8 object-contain" />
+        </Link>
         <Image
-          src="/logo-solo-color.svg"
+          src="/sidebar-logo.svg"
           alt="Latin Music Mastery"
-          width={28}
-          height={28}
-          className="h-7 w-7"
+          width={196}
+          height={22}
+          className={cn('ml-1 h-[22px] w-auto max-w-[150px] shrink-0 object-contain object-left', REVEAL)}
         />
-      </Link>
-
-      {/* Navigation */}
-      <div className="flex-1 flex flex-col gap-3 overflow-y-auto">
-        <NavSection items={personalNavItems} pathname={pathname} t={t} />
-        <Separator />
-        <NavSection items={discoverNavItems} pathname={pathname} t={t} />
-        <Separator />
-        <NavSection items={connectNavItems} pathname={pathname} t={t} />
-        <Separator />
-        <NavSection items={toolsNavItems} pathname={pathname} t={t} />
-        <Separator />
-        <NavSection items={settingsNavItems} pathname={pathname} t={t} />
-
-        {isTeacher && (
-          <>
-            <Separator />
-            <div className="flex flex-col items-center gap-1">
-              <NavItem
-                item={{ labelKey: 'teacherPortal', href: '/teacher', icon: GraduationCap }}
-                pathname={pathname}
-                label={t('dashboard.nav.teacherPortal')}
-              />
-            </div>
-          </>
-        )}
-
-        {isAdmin && (
-          <>
-            <Separator />
-            <div className="flex flex-col items-center gap-1">
-              <NavItem
-                item={{ labelKey: 'adminPanel', href: '/admin', icon: Shield }}
-                pathname={pathname}
-                label={t('dashboard.nav.adminPanel')}
-              />
-            </div>
-          </>
-        )}
+        <button
+          type="button"
+          onClick={() => setPinned(!pinned)}
+          aria-label={pinned ? t('dashboard.nav.unpin') : t('dashboard.nav.pin')}
+          aria-pressed={pinned}
+          className={cn(
+            'absolute right-0 top-1 grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground',
+            REVEAL
+          )}
+        >
+          {pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+        </button>
       </div>
 
-      {/* Footer — Language toggle + Avatar */}
-      <div className="mt-auto flex flex-col items-center gap-2">
-        <LanguageToggle variant="icon" />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link
-              href="/dashboard/settings"
-              className="flex items-center justify-center"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={userAvatar} alt={userName || 'User'} />
-                <AvatarFallback className="bg-primary text-white text-xs font-semibold">
-                  {userEmail?.split('@')[0].slice(0, 2).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={12}>
-            {t('dashboard.nav.settings')}
-          </TooltipContent>
-        </Tooltip>
+      {/* Groups. Each label row is 24px in both states: a hairline collapsed, the name expanded. */}
+      <div className="mt-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {groups.map((group) => (
+          <div key={group.key} className="flex flex-col gap-0.5">
+            <div className="relative flex h-6 items-center px-2.5">
+              <span aria-hidden className={cn('absolute left-2 right-2 top-1/2 h-px bg-sidebar-border', HIDE_WHEN_OPEN)} />
+              <span
+                className={cn(
+                  'truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground',
+                  REVEAL
+                )}
+              >
+                {t(`dashboard.nav.groups.${group.key}`)}
+              </span>
+            </div>
+            {group.items.map((item) => (
+              <RailItem
+                key={item.href}
+                item={item}
+                active={isNavActive(pathname, item)}
+                label={t(`dashboard.nav.${item.labelKey}`)}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Footer: preferences and account. Every row is 40px in both states. */}
+      <div className="mt-2 flex flex-col gap-0.5 border-t border-sidebar-border pt-2">
+        <LanguageToggle variant="rail" />
+        <ThemeToggle variant="rail" />
+        <Link
+          href="/dashboard/settings"
+          aria-label={t('dashboard.nav.settings')}
+          className="flex h-10 w-full items-center rounded-lg pl-1 pr-2 hover:bg-sidebar-accent"
+        >
+          <Avatar className="h-8 w-8 shrink-0">
+            {userAvatar ? <AvatarImage src={userAvatar} alt={userName || 'User'} /> : null}
+            <AvatarFallback>{initialsFor(userName, userEmail)}</AvatarFallback>
+          </Avatar>
+          <span className={cn('ml-3 min-w-0 leading-tight', REVEAL)}>
+            <span className="block truncate text-sm font-semibold text-sidebar-foreground">
+              {userName || userEmail.split('@')[0]}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {hasSubscription ? t('dashboard.nav.plan.active') : t('dashboard.nav.plan.free')}
+            </span>
+          </span>
+        </Link>
       </div>
     </nav>
   )

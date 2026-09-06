@@ -14,12 +14,47 @@ import { LOCALE_LABELS, LOCALE_SHORT_LABELS, type Locale } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
 interface LanguageToggleProps {
-  variant?: 'icon' | 'labeled'
+  /** `rail`: a 40px row for the sidebar rail whose label fades in when the rail expands. */
+  variant?: 'icon' | 'labeled' | 'rail'
   className?: string
 }
 
 export function LanguageToggle({ variant = 'labeled', className }: LanguageToggleProps) {
   const { locale, setLocale, locales, t } = useTranslation()
+
+  if (variant === 'rail') {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            aria-label={t('common.changeLanguage')}
+            className={cn(
+              'flex h-10 w-full items-center rounded-lg pl-[10px] pr-2 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground',
+              className
+            )}
+          >
+            <Languages className="h-5 w-5 shrink-0" />
+            <span className="ml-3 truncate text-sm font-medium opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100 group-data-[pinned=true]/rail:opacity-100">
+              {t('common.language')}: {LOCALE_LABELS[locale]}
+            </span>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side="right" sideOffset={12}>
+          {locales.map((l) => (
+            <DropdownMenuItem
+              key={l}
+              onSelect={() => setLocale(l)}
+              className={cn(locale === l && 'bg-accent')}
+            >
+              <span className="font-semibold mr-2 text-xs w-6">{LOCALE_SHORT_LABELS[l]}</span>
+              {LOCALE_LABELS[l]}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
 
   if (variant === 'icon') {
     return (
