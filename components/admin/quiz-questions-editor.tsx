@@ -6,6 +6,7 @@ import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSo
 import { Button } from '@/components/ui/button'
 import { Plus, Loader2 } from 'lucide-react'
 import { QuizQuestionCard } from './quiz-question-card'
+import { QuestionPreview } from './question-preview'
 import { QuizQuestion } from '@/types/modules'
 import {
   getQuizQuestions,
@@ -165,7 +166,9 @@ export function QuizQuestionsEditor({ classItemId, kind }: QuizQuestionsEditorPr
                 onRemove={() => removeQuestion(q.id)}
                 previewOpen={previewId === q.id}
                 onTogglePreview={() => setPreviewId(previewId === q.id ? null : q.id)}
-              />
+              >
+                <QuestionPreview question={q} />
+              </QuizQuestionCard>
             ))}
           </div>
         </SortableContext>
