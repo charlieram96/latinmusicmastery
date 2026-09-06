@@ -1037,7 +1037,8 @@
       "plan": {
         "free": "Free plan",
         "active": "Member"
-      }
+      },
+      "progress": "My Progress"
     },
     "pages": {
       "tuner": {
