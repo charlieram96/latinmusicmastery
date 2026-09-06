@@ -40,7 +40,7 @@ export function MobileNavSheet({
         <nav aria-label={t('dashboard.nav.label')} className="flex-1 overflow-y-auto px-3 pb-3">
           {groups.map((group) => (
             <div key={group.key} className="mb-1">
-              <div className="px-2.5 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <div className="px-2.5 pb-1 pt-[22px] text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 {t(`dashboard.nav.groups.${group.key}`)}
               </div>
               {group.items.map((item) => {
@@ -53,7 +53,7 @@ export function MobileNavSheet({
                     onClick={() => setMobileOpen(false)}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'flex h-10 items-center gap-3 rounded-lg pl-[10px] pr-2 text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+                      'flex h-10 items-center gap-[22px] rounded-lg pl-[10px] pr-2 text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
                       active && 'bg-primary/[0.12] text-primary hover:bg-primary/[0.16]'
                     )}
                   >
@@ -79,7 +79,7 @@ export function MobileNavSheet({
               {userAvatar ? <AvatarImage src={userAvatar} alt={userName || 'User'} /> : null}
               <AvatarFallback>{initialsFor(userName, userEmail)}</AvatarFallback>
             </Avatar>
-            <span className="ml-3 min-w-0 leading-tight">
+            <span className="ml-4 min-w-0 leading-tight">
               <span className="block truncate text-sm font-semibold">{userName || userEmail.split('@')[0]}</span>
               <span className="block truncate text-xs text-muted-foreground">
                 {hasSubscription ? t('dashboard.nav.plan.active') : t('dashboard.nav.plan.free')}

@@ -41,7 +41,7 @@ function RailItem({ item, active, label }: { item: NavItemDef; active: boolean; 
         <span aria-hidden className="absolute -left-3 bottom-2.5 top-2.5 w-[3px] rounded-r-full bg-primary" />
       )}
       <Icon className="h-5 w-5 shrink-0" />
-      <span className={cn('ml-3 truncate text-sm font-medium', RAIL_REVEAL)}>{label}</span>
+      <span className={cn('ml-[22px] truncate text-sm font-medium', RAIL_REVEAL)}>{label}</span>
     </Link>
   )
 }
@@ -68,7 +68,7 @@ export function DashboardSidebar({
       aria-label={t('dashboard.nav.label')}
       className={cn(
         'group/rail fixed inset-y-0 left-0 z-50 hidden w-16 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar px-3 py-3 text-sidebar-foreground md:flex',
-        'transition-[width,box-shadow] duration-200 ease-out hover:w-[248px] hover:shadow-pop'
+        'transition-[width,box-shadow] duration-200 ease-out hover:w-[264px] hover:shadow-pop'
       )}
     >
       {/* Brand row: the mark stays centered in whichever width the rail has. */}
@@ -83,10 +83,10 @@ export function DashboardSidebar({
       </div>
 
       {/* Groups. Each label row is 24px in both states: a hairline collapsed, the name expanded. */}
-      <div className="mt-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {groups.map((group) => (
           <div key={group.key} className="flex flex-col gap-0.5">
-            <div className="relative flex h-6 items-center px-2.5">
+            <div className="relative flex h-[34px] items-center px-2.5 pt-2.5">
               <span aria-hidden className={cn('absolute left-2 right-2 top-1/2 h-px bg-sidebar-border', HIDE_WHEN_OPEN)} />
               <span className={cn('truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground', RAIL_REVEAL)}>
                 {t(`dashboard.nav.groups.${group.key}`)}
@@ -117,7 +117,7 @@ export function DashboardSidebar({
             {userAvatar ? <AvatarImage src={userAvatar} alt={userName || 'User'} /> : null}
             <AvatarFallback>{initialsFor(userName, userEmail)}</AvatarFallback>
           </Avatar>
-          <span className={cn('ml-3 min-w-0 leading-tight', RAIL_REVEAL)}>
+          <span className={cn('ml-4 min-w-0 leading-tight', RAIL_REVEAL)}>
             <span className="block truncate text-sm font-semibold text-sidebar-foreground">
               {userName || userEmail.split('@')[0]}
             </span>
