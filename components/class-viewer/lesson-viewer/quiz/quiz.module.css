@@ -3,7 +3,7 @@
    column varies with the sidebar). Colors stay in Tailwind tokens. */
 
 /* ---------- containers ---------- */
-.root { container: quiz / inline-size; padding-top: 28px; }
+.root { container: quiz / inline-size; padding-top: 44px; }
 .ppRoot { container: pp / inline-size; }
 
 /* ---------- piece placement ---------- */
@@ -21,11 +21,16 @@
 .tray { display: grid; gap: 10px; min-width: 0; }
 .trayList { display: grid; gap: 8px; min-width: 0; }
 .tray > * { min-width: 0; max-width: 100%; }
-@container pp (min-width: 760px) {
-  .pp { grid-template-columns: minmax(0, 1fr) 250px; gap: 20px; align-items: start; }
-  .tray { position: sticky; top: 20px; }
+/* Tray on the left, stage on the right. Explicit grid placement so DOM order
+   (stage first, tray second) does not matter. Breakpoint below the panel's
+   inner width so the tray never collapses to a bottom strip on desktop. */
+@container pp (min-width: 620px) {
+  .pp { grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .tray { grid-column: 1; grid-row: 1; position: sticky; top: 20px; }
+  .stageWrap { grid-column: 2; grid-row: 1; }
 }
-@container pp (max-width: 759px) {
+@container pp (max-width: 619px) {
+  .tray { order: -1; }
   .trayList { grid-auto-flow: column; grid-auto-columns: 150px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
   .trayItem { scroll-snap-align: start; }
 }
