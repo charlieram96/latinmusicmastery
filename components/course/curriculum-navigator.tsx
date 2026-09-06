@@ -1,15 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import * as AccordionPrimitive from '@radix-ui/react-accordion'
 import { Progress } from '@/components/ui/progress'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
-import { Check, Play, BookOpen, Clock, Layers } from 'lucide-react'
+import { Accordion, AccordionContent, AccordionItem } from '@/components/ui/accordion'
+import { Check, Play, BookOpen, Clock, Layers, ChevronDown } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
+import { moduleOverviewHref } from '@/lib/courses/structure'
 
 interface CurriculumNavigatorProps {
   sections: any[]
@@ -99,14 +96,21 @@ export function CurriculumNavigator({
               value={section.id}
               className="overflow-hidden rounded-[16px] border border-border bg-card"
             >
-              <AccordionTrigger className="items-center gap-3.5 rounded-none px-4 py-4 hover:bg-muted/40 hover:no-underline">
-                <span className="flex flex-1 items-center gap-3.5 text-left">
+              {/* The title links to the module overview; the chevron is a
+                  sibling Radix trigger that only opens/closes the lessons.
+                  Built from the primitives because the shared AccordionTrigger
+                  wraps its whole header in one button. */}
+              <AccordionPrimitive.Header className="flex items-stretch">
+                <Link
+                  href={moduleOverviewHref(courseId, section.id)}
+                  className="group flex min-w-0 flex-1 items-center gap-3.5 px-4 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                >
                   {/* Number badge or checkmark */}
                   <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full bg-primary/15 font-heading text-sm font-bold text-primary">
                     {sectionComplete ? <Check className="h-4 w-4" /> : sectionIndex + 1}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-heading text-[15.5px] font-bold leading-tight tracking-[-0.01em] text-foreground">
+                    <span className="block truncate font-heading text-[15.5px] font-bold leading-tight tracking-[-0.01em] text-foreground underline-offset-2 group-hover:underline">
                       {section.title}
                     </span>
                     <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
@@ -116,8 +120,14 @@ export function CurriculumNavigator({
                       })}
                     </span>
                   </span>
-                </span>
-              </AccordionTrigger>
+                </Link>
+                <AccordionPrimitive.Trigger
+                  aria-label={t('dashboard.classViewer.sidebar.toggleLessons', { title: section.title })}
+                  className="flex flex-none items-center justify-center px-4 text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&[data-state=open]>svg]:rotate-180"
+                >
+                  <ChevronDown className="size-4 shrink-0 transition-transform duration-200" />
+                </AccordionPrimitive.Trigger>
+              </AccordionPrimitive.Header>
               <AccordionContent className="px-2.5 pb-3 pt-0">
                 <div className="flex flex-col gap-0.5">
                   {section.classes.map((cls: any) => {

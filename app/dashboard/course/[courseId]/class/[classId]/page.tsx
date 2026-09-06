@@ -10,6 +10,7 @@ import { ClassItemRenderer } from '@/components/class-viewer/class-item-renderer
 import { CommentsSection } from '@/components/comments/comments-section'
 import { LessonShell } from '@/components/class-viewer/lesson-viewer/lesson-shell'
 import { canAccessCourse } from '@/lib/subscriptions'
+import { moduleOverviewHref, toSidebarSections } from '@/lib/courses/structure'
 import { ClassViewerEmpty } from './class-viewer-empty'
 import { ClassViewerLocked } from './class-viewer-locked'
 
@@ -119,20 +120,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const structure = structureResult.data
 
   // Build sidebar sections (needed for both locked and unlocked views)
-  const sidebarSections = structure?.sections.map((s: any) => ({
-    id: s.id,
-    title: s.title,
-    description: s.description ?? null,
-    totalItems: s.totalItems,
-    completedItems: s.completedItems,
-    classes: s.classes.map((c: any) => ({
-      id: c.id,
-      title: c.title,
-      totalItems: c.totalItems,
-      completedItems: c.completedItems,
-      isFree: c.is_free ?? false,
-    })),
-  })) || []
+  const sidebarSections = toSidebarSections(structure?.sections ?? [])
 
   const teacherName = (course.teacher as { name?: string } | null)?.name ?? null
   const teacherImageUrl =
@@ -155,7 +143,8 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           hasAccess: isStudent,
         }}
         header={{
-          moduleTitle,
+          eyebrow: moduleTitle,
+          eyebrowHref: moduleOverviewHref(courseId, section.id),
           title: classData.title,
         }}
         parts={null}
@@ -329,7 +318,8 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         hasAccess: isStudent,
       }}
       header={{
-        moduleTitle,
+        eyebrow: moduleTitle,
+        eyebrowHref: moduleOverviewHref(courseId, section.id),
         title: classData.title,
       }}
       parts={
