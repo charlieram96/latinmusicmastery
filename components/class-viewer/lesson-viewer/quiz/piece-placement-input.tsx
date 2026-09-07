@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from '@/components/language-provider'
 import { cn } from '@/lib/utils'
@@ -209,6 +209,7 @@ export function PiecePlacementInput({
       window.removeEventListener('pointercancel', stable.current.up)
       session.current = null
       setDrag(null)
+      if (e.type === 'pointercancel') return
       const { placement, isGraded, onChange, byId, heightOf } = latest.current
       if (isGraded) return
       if (!s.live) {
@@ -217,7 +218,6 @@ export function PiecePlacementInput({
         else lift(s.id)
         return
       }
-      if (e.type === 'pointercancel') return
       const stage = stageRef.current?.getBoundingClientRect()
       const piece = byId.get(s.id)
       if (!stage || !piece) return
@@ -262,7 +262,8 @@ export function PiecePlacementInput({
   }
 
   // Position the ghost as soon as it mounts, and grow it from the tray thumbnail.
-  useEffect(() => {
+  // useLayoutEffect so the transform is written before the browser's first paint of the portal.
+  useLayoutEffect(() => {
     if (!drag?.live) return
     paintGhost()
     const el = ghostRef.current

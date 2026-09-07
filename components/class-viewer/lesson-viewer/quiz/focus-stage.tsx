@@ -69,6 +69,8 @@ export function FocusStage({
   // Keyboard: 1-9 / a-h pick a choice, T / F for true-false, Enter checks then continues, arrows move.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // a focused input component that consumed the key — the placement stage's Enter and arrows — opts out
+      if (e.defaultPrevented) return
       const target = e.target as HTMLElement | null
       const inField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA'
       const interactive = !!target?.closest?.('button, a, [role="button"], [role="radio"], select, [contenteditable="true"]')
