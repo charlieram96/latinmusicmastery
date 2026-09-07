@@ -2069,7 +2069,13 @@
           "hint": "Drag each piece to where it belongs",
           "allPlaced": "Everything is placed. Drag a piece off the stage to bring it back here.",
           "notPlaced": "Not placed",
-          "wasPlaced": "Every piece was placed."
+          "wasPlaced": "Every piece was placed.",
+          "pieceN": "Piece {n}",
+          "hintTap": "Drag each piece to where it belongs, or tap one and then tap the stage",
+          "tapWhere": "Tap where the {label} goes",
+          "selectedAria": "Selected: {label}. Tap the stage to place it.",
+          "placedAria": "{label}, placed. Arrow keys nudge it; Backspace returns it to the list.",
+          "revealHint": "Faded pieces show where each missing piece belongs. Hover a row in the list to highlight it."
         },
         "streak": {
           "inRow": "{count} in a row",

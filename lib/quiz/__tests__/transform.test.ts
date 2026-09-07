@@ -46,6 +46,10 @@ describe('resizeRect', () => {
     expect(resizeRect(start, 'e', 1.1, 0, 2.5, false).width).toBe(20)
     expect(resizeRect(start, 'e', 1.3, 0, 2.5, false).width).toBe(22.5)
   })
+  it('locks corners to an explicit box ratio when one is given', () => {
+    expect(resizeRect(start, 'se', 10, 0, null, true, 3)).toEqual({ x: 40, y: 40, width: 30, height: 10 })
+    expect(resizeRect(start, 'e', 10, 0, null, true, 3)).toEqual({ x: 40, y: 40, width: 30, height: 10 })
+  })
 })
 
 describe('clampPieceWidth', () => {

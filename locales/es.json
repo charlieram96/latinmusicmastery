@@ -2069,7 +2069,13 @@
           "hint": "Arrastra cada pieza a su lugar",
           "allPlaced": "Todo está colocado. Arrastra una pieza fuera del escenario para devolverla aquí.",
           "notPlaced": "Sin colocar",
-          "wasPlaced": "Todas las piezas fueron colocadas."
+          "wasPlaced": "Todas las piezas fueron colocadas.",
+          "pieceN": "Pieza {n}",
+          "hintTap": "Arrastra cada pieza a su lugar, o toca una y luego toca el escenario",
+          "tapWhere": "Toca donde va: {label}",
+          "selectedAria": "Seleccionada: {label}. Toca el escenario para colocarla.",
+          "placedAria": "{label}, colocada. Las flechas la mueven; Retroceso la devuelve a la lista.",
+          "revealHint": "Las piezas atenuadas muestran dónde va cada pieza que falta. Pasa el cursor por una fila de la lista para resaltarla."
         },
         "streak": {
           "inRow": "{count} seguidas",

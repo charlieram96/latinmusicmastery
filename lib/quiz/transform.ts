@@ -25,9 +25,9 @@ export function moveRect(start: Rect, dx: number, dy: number, step: number | nul
 
 /**
  * Resize from a handle. West/north handles keep the opposite edge fixed.
- * With keepRatio on a corner, height follows width at the start ratio.
+ * With keepRatio on a corner, height follows width at `boxRatio` (width/height in percent units) when given, else at the start ratio.
  */
-export function resizeRect(start: Rect, handle: Handle, dx: number, dy: number, step: number | null, keepRatio: boolean): Rect {
+export function resizeRect(start: Rect, handle: Handle, dx: number, dy: number, step: number | null, keepRatio: boolean, boxRatio?: number): Rect {
   let width = start.width
   let height = start.height
   if (handle.includes('e')) width = start.width + dx
@@ -35,7 +35,7 @@ export function resizeRect(start: Rect, handle: Handle, dx: number, dy: number, 
   if (handle.includes('s')) height = start.height + dy
   if (handle.includes('n')) height = start.height - dy
   width = Math.max(MIN_SIZE, snap(width, step))
-  if (keepRatio && handle.length === 2) height = (width * start.height) / start.width
+  if (keepRatio && handle.length === 2) height = boxRatio && boxRatio > 0 ? width / boxRatio : (width * start.height) / start.width
   height = Math.max(MIN_SIZE, snap(height, step))
   const x = handle.includes('w') ? start.x + start.width - width : start.x
   const y = handle.includes('n') ? start.y + start.height - height : start.y

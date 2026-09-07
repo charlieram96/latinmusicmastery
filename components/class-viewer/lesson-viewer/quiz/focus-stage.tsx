@@ -69,6 +69,8 @@ export function FocusStage({
   // Keyboard: 1-9 / a-h pick a choice, T / F for true-false, Enter checks then continues, arrows move.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // a focused input component that consumed the key — the placement stage's Enter and arrows — opts out
+      if (e.defaultPrevented) return
       const target = e.target as HTMLElement | null
       const inField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA'
       const interactive = !!target?.closest?.('button, a, [role="button"], [role="radio"], select, [contenteditable="true"]')
@@ -102,29 +104,29 @@ export function FocusStage({
 
   return (
     <div className={styles.focus}>
-      <div className={styles.stageCol}>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="grid gap-0.5">
-            <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-gold">{kindLabel}</span>
-            {title && <h3 className="font-heading text-[15px] font-bold">{title}</h3>}
-          </div>
-          <div className="flex items-center gap-2.5">
-            <StreakChip count={state.streak} pop={pop} />
-            <button
-              type="button"
-              aria-pressed={prefs.sound}
-              aria-label={t(prefs.sound ? 'dashboard.classViewer.quiz.sound.on' : 'dashboard.classViewer.quiz.sound.off')}
-              onClick={() => setPrefs({ sound: !prefs.sound })}
-              className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-raised text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {prefs.sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-            </button>
-          </div>
-          <div className="basis-full sm:basis-[260px]">
-            <ProgressSegments questions={questions} graded={state.graded} current={index} />
-          </div>
+      <div className={cn(styles.stageHead, 'flex flex-wrap items-center justify-between gap-3')}>
+        <div className="grid gap-0.5">
+          <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-gold">{kindLabel}</span>
+          {title && <h3 className="font-heading text-[15px] font-bold">{title}</h3>}
         </div>
+        <div className="flex items-center gap-2.5">
+          <StreakChip count={state.streak} pop={pop} />
+          <button
+            type="button"
+            aria-pressed={prefs.sound}
+            aria-label={t(prefs.sound ? 'dashboard.classViewer.quiz.sound.on' : 'dashboard.classViewer.quiz.sound.off')}
+            onClick={() => setPrefs({ sound: !prefs.sound })}
+            className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-raised text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {prefs.sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          </button>
+        </div>
+        <div className="basis-full sm:basis-[260px]">
+          <ProgressSegments questions={questions} graded={state.graded} current={index} />
+        </div>
+      </div>
 
+      <div className={styles.stageCol}>
         <div className={cn('relative overflow-hidden rounded-[20px] border border-border bg-card', styles.panel)}>
           <div aria-hidden className="pointer-events-none absolute -bottom-40 -right-36 h-[380px] w-[380px] rounded-full bg-[radial-gradient(closest-side,hsl(var(--gold-highlight)/0.12),transparent_70%)]" />
           <div key={q.id} className={cn('relative grid gap-5', styles.rise)}>
