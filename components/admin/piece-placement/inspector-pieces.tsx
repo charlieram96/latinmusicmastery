@@ -29,18 +29,23 @@ const num = (v: string): number | undefined => {
 }
 
 function Field({ label, value, step = 0.1, onChange, onCommit }: { label: string; value: number; step?: number; onChange: (v: number) => void; onCommit: () => void }) {
+  const [text, setText] = useState<string | null>(null)
   return (
     <label className="grid gap-0.5 text-center text-[10px] font-bold text-muted-foreground">
       {label}
       <input
         type="number"
         step={step}
-        value={Math.round(value * 10) / 10}
+        value={text ?? String(Math.round(value * 10) / 10)}
         onChange={(e) => {
+          setText(e.target.value)
           const v = num(e.target.value)
           if (v !== undefined) onChange(v)
         }}
-        onBlur={onCommit}
+        onBlur={() => {
+          setText(null)
+          onCommit()
+        }}
         className="h-7 w-full rounded-[7px] border border-border bg-sunken text-center text-xs tabular-nums outline-none focus:border-primary"
       />
     </label>
@@ -85,6 +90,7 @@ export function InspectorPieces({
   const inputRef = useRef<HTMLInputElement>(null)
   const [over, setOver] = useState(false)
   const pick = (list: FileList | null) => {
+    if (importing) return
     const files = Array.from(list ?? []).filter((f) => f.type.startsWith('image/'))
     if (files.length) onImport(files)
   }
@@ -94,11 +100,12 @@ export function InspectorPieces({
       <div
         onDragOver={(e) => {
           e.preventDefault()
-          setOver(true)
+          if (!importing) setOver(true)
         }}
         onDragLeave={() => setOver(false)}
         onDrop={(e) => {
           e.preventDefault()
+          if (importing) return
           setOver(false)
           pick(e.dataTransfer.files)
         }}
@@ -109,6 +116,7 @@ export function InspectorPieces({
           type="file"
           accept="image/png,image/webp,image/jpeg"
           multiple
+          disabled={!!importing}
           className="hidden"
           onChange={(e) => {
             pick(e.target.files)
