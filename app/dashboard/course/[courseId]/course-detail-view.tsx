@@ -36,6 +36,7 @@ import { initialsFor } from '@/lib/dashboard/initials'
 import { formatCents } from '@/lib/payments/pricing-types'
 import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
 import { cn } from '@/lib/utils'
+import { moduleOverviewHref } from '@/lib/courses/structure'
 
 interface ClassItem {
   id: string
@@ -296,7 +297,13 @@ export function CourseDetailView({
                     {String(si + 1).padStart(2, '0')}
                   </span>
                   <h2 id={`module-${section.id}`} className="font-heading text-lg font-bold tracking-tight">
-                    {section.title || t(`${base}.syllabus.moduleFallback`, { number: si + 1 })}
+                    {/* Module title opens the module overview page (full description + lessons). */}
+                    <Link
+                      href={moduleOverviewHref(courseId, section.id)}
+                      className="rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    >
+                      {section.title || t(`${base}.syllabus.moduleFallback`, { number: si + 1 })}
+                    </Link>
                   </h2>
                   <span className="ml-auto shrink-0 text-xs text-muted-foreground">
                     {t(list.length === 1 ? `${base}.lessonCountOne` : `${base}.lessonCountOther`, { count: list.length })} · {status}
