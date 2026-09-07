@@ -67,6 +67,12 @@ describe('placePiece', () => {
     expect(p.width).toBe(20)
     expect(p.area).toEqual({ x: 38, y: 43, width: 24, height: 14 })
   })
+  it('keeps a ratio-less piece proportional when its width changes', () => {
+    const legacy = piece({ id: 'l', width: 10, area: { x: 43, y: 45.5, width: 14, height: 9 } }) // 10 x 5 on a 1:1 stage, tolerance 2
+    const p = placePiece(legacy, { x: 50, y: 50 }, 20, 1, 2)
+    expect(p.area.height).toBeCloseTo(10 + 4, 5)
+    expect(p.area.width).toBeCloseTo(20 + 4, 5)
+  })
 })
 
 describe('refitForAspect', () => {

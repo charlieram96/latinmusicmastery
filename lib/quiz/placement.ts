@@ -60,7 +60,7 @@ export function frameToStage(frame: Box, layer: Box): { centre: Centre; width: n
 }
 
 export function placePiece(piece: PlacementPiece, centre: Centre, width: number, aspect: number, tolerance: number): PlacementPiece {
-  const ratio = effectiveRatio({ ...piece, width }, aspect, tolerance)
+  const ratio = effectiveRatio(piece, aspect, tolerance)
   const h = pieceHeightPct(width, aspect, ratio)
   return { ...piece, width: r1(width), area: areaFor(centre, width, h, piece.tolerance ?? tolerance) }
 }
