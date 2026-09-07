@@ -100,17 +100,17 @@ export function CurriculumNavigator({
                   sibling Radix trigger that only opens/closes the lessons.
                   Built from the primitives because the shared AccordionTrigger
                   wraps its whole header in one button. */}
-              <AccordionPrimitive.Header className="flex items-stretch">
+              <AccordionPrimitive.Header className="flex items-stretch transition-colors hover:bg-muted/40">
                 <Link
                   href={moduleOverviewHref(courseId, section.id)}
-                  className="group flex min-w-0 flex-1 items-center gap-3.5 px-4 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  className="group/link flex min-w-0 flex-1 items-center gap-3.5 px-4 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 >
                   {/* Number badge or checkmark */}
                   <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full bg-primary/15 font-heading text-sm font-bold text-primary">
                     {sectionComplete ? <Check className="h-4 w-4" /> : sectionIndex + 1}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-heading text-[15.5px] font-bold leading-tight tracking-[-0.01em] text-foreground underline-offset-2 group-hover:underline">
+                    <span className="block truncate font-heading text-[15.5px] font-bold leading-tight tracking-[-0.01em] text-foreground transition-colors group-hover/link:text-primary">
                       {section.title}
                     </span>
                     <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
@@ -123,7 +123,7 @@ export function CurriculumNavigator({
                 </Link>
                 <AccordionPrimitive.Trigger
                   aria-label={t('dashboard.classViewer.sidebar.toggleLessons', { title: section.title })}
-                  className="flex flex-none items-center justify-center px-4 text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&[data-state=open]>svg]:rotate-180"
+                  className="flex flex-none items-center justify-center px-4 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&[data-state=open]>svg]:rotate-180"
                 >
                   <ChevronDown className="size-4 shrink-0 transition-transform duration-200" />
                 </AccordionPrimitive.Trigger>

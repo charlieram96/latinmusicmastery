@@ -286,18 +286,18 @@ function SidebarModule({
       {/* Header: the title block links to the module overview page; the
           chevron is a sibling control that only toggles the lesson list.
           They are never nested so each stays a valid, focusable target. */}
-      <div className="flex items-start">
+      <div className="flex items-start rounded-2xl transition-colors hover:bg-muted/30">
         <Link
           href={moduleOverviewHref(courseId, section.id)}
           aria-current={isCurrent ? 'page' : undefined}
-          className="group min-w-0 flex-1 rounded-2xl px-3 py-3 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="group/link min-w-0 flex-1 rounded-2xl px-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
             {t('dashboard.classViewer.sidebar.module', { n: moduleIndex + 1 })}
           </div>
           <div
             className={cn(
-              'mt-1 font-heading text-[14px] font-bold leading-snug tracking-tight underline-offset-2 group-hover:underline',
+              'mt-1 font-heading text-[14px] font-bold leading-snug tracking-tight transition-colors group-hover/link:text-primary',
               isCurrent && 'text-primary'
             )}
           >
@@ -329,7 +329,7 @@ function SidebarModule({
           aria-expanded={open}
           aria-controls={regionId}
           aria-label={t('dashboard.classViewer.sidebar.toggleLessons', { title: section.title })}
-          className="mr-2 mt-2.5 grid h-[30px] w-[30px] flex-shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="mr-2 mt-2.5 grid h-[30px] w-[30px] flex-shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <ChevronDown
             className={cn(
