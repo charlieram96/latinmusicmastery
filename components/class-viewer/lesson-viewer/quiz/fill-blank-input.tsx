@@ -17,6 +17,7 @@ export function FillBlankInput({ question: q, answer, isGraded, onChange }: Ques
   const text = (opts.text as string) ?? ''
   const given = (answer as Record<string, string>) ?? {}
   const blankById = new Map(blanks.map((b) => [b.id, b]))
+  const positionById = new Map(blanks.map((b, i) => [b.id, i + 1]))
 
   const renderBlank = (b: Blank, key: React.Key) => {
     const val = given[b.id] ?? ''
@@ -26,7 +27,7 @@ export function FillBlankInput({ question: q, answer, isGraded, onChange }: Ques
         <input
           value={val}
           disabled={isGraded}
-          aria-label={b.id}
+          aria-label={`${t('dashboard.classViewer.quiz.yourAnswer')} ${positionById.get(b.id)}`}
           onChange={(e) => onChange({ ...given, [b.id]: e.target.value })}
           style={{ width: `${Math.max(b.answer.length + 3, 7)}ch` }}
           className={cn(
@@ -66,7 +67,6 @@ export function FillBlankInput({ question: q, answer, isGraded, onChange }: Ques
         <div key={b.id} className="flex items-center gap-3">
           <span className="min-w-[90px] rounded-lg bg-sunken px-2 py-1 font-mono text-xs">{b.id}</span>
           {renderBlank(b, b.id)}
-          <span className="sr-only">{t('dashboard.classViewer.quiz.yourAnswer')}</span>
         </div>
       ))}
     </div>

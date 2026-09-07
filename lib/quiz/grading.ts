@@ -9,7 +9,7 @@ export type AudioChoice = { id: string; text?: string; audioUrl?: string }
 // scales responsively. `width` is the piece's display width; `area` is the
 // hidden correct rectangle. A piece is correct when its CENTER lands in `area`.
 export type PlacementArea = { x: number; y: number; width: number; height: number }
-export type PlacementPiece = { id: string; label?: string; imageUrl: string; width: number; area: PlacementArea }
+export type PlacementPiece = { id: string; label?: string; imageUrl: string; width: number; area: PlacementArea; ratio?: number; tolerance?: number }
 export type PiecePlacement = { x: number; y: number }
 
 export function norm(s: string): string {

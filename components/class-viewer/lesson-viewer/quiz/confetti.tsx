@@ -1,12 +1,13 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useMemo } from 'react'
 
-const COLORS = ['#f59e0b', '#fbbf24', '#34d399', '#60a5fa', '#f472b6', '#a78bfa']
+const COLORS = ['hsl(var(--gold-highlight))', 'hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--terracotta))', 'hsl(var(--foreground) / 0.8)']
 
-/** Deterministic framer-motion confetti burst. No randomness so it is SSR-safe. */
-export function Confetti({ count = 90 }: { count?: number }) {
+/** Deterministic framer-motion confetti (SSR-safe). Skipped under reduced motion. */
+export function Confetti({ count = 70 }: { count?: number }) {
+  const reduce = useReducedMotion()
   const pieces = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => ({
@@ -20,7 +21,7 @@ export function Confetti({ count = 90 }: { count?: number }) {
       })),
     [count],
   )
-
+  if (reduce) return null
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       {pieces.map((p) => (

@@ -11,6 +11,7 @@ import { CommentsSection } from '@/components/comments/comments-section'
 import { LessonShell } from '@/components/class-viewer/lesson-viewer/lesson-shell'
 import { HeaderTitleOverride } from '@/components/dashboard/header-title-override'
 import { canAccessCourse } from '@/lib/subscriptions'
+import { moduleOverviewHref, toSidebarSections } from '@/lib/courses/structure'
 import { ClassViewerEmpty } from './class-viewer-empty'
 import { ClassViewerLocked } from './class-viewer-locked'
 
@@ -120,20 +121,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const structure = structureResult.data
 
   // Build sidebar sections (needed for both locked and unlocked views)
-  const sidebarSections = structure?.sections.map((s: any) => ({
-    id: s.id,
-    title: s.title,
-    description: s.description ?? null,
-    totalItems: s.totalItems,
-    completedItems: s.completedItems,
-    classes: s.classes.map((c: any) => ({
-      id: c.id,
-      title: c.title,
-      totalItems: c.totalItems,
-      completedItems: c.completedItems,
-      isFree: c.is_free ?? false,
-    })),
-  })) || []
+  const sidebarSections = toSidebarSections(structure?.sections ?? [])
 
   const teacherName = (course.teacher as { name?: string } | null)?.name ?? null
   const teacherImageUrl =
@@ -158,7 +146,8 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
           hasAccess: isStudent,
         }}
         header={{
-          moduleTitle,
+          eyebrow: moduleTitle,
+          eyebrowHref: moduleOverviewHref(courseId, section.id),
           title: classData.title,
         }}
         parts={null}
@@ -231,7 +220,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     <>
       {activeItem ? (
         <div className={`px-4 md:px-8 ${styles.rise}`} style={{ animationDelay: '80ms' }}>
-          <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" />
+          <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
         </div>
       ) : (
         <div className="px-4 pt-4 md:px-8">
@@ -335,7 +324,8 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         hasAccess: isStudent,
       }}
       header={{
-        moduleTitle,
+        eyebrow: moduleTitle,
+        eyebrowHref: moduleOverviewHref(courseId, section.id),
         title: classData.title,
       }}
       parts={

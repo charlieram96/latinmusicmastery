@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Plus, Trash2 } from 'lucide-react'
 import { QuestionType } from '@/types/modules'
 import { QuizMediaUpload } from './quiz-media-upload'
-import { PiecePlacementBuilder } from './piece-placement-builder'
+import { PiecePlacementSummary } from './piece-placement/piece-placement-summary'
 import { patchLocalizedEntry, pruneLocalizedEntries, readLocalizedField, type LocalizedOptions } from '@/lib/quiz/options-es'
 
 interface QuizBuilderProps {
@@ -113,15 +113,7 @@ export function QuizBuilder({
           />
         )
       case 'piece_placement':
-        return (
-          <PiecePlacementBuilder
-            questionId={questionId}
-            options={options}
-            optionsEs={optionsEs}
-            imageUrl={imageUrl}
-            onChange={onChange}
-          />
-        )
+        return <PiecePlacementSummary questionId={questionId} question={question} options={options} optionsEs={optionsEs} imageUrl={imageUrl} onChange={onChange} />
       case 'audio':
         return (
           <div className="text-sm text-muted-foreground">

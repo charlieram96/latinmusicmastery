@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { updateClassItem } from '@/app/actions/course-builder'
+import { readQuizSettings } from '@/lib/quiz/quiz-settings'
 import { VideoUpload } from '../video-upload'
 import { SubtitleTracksEditor } from '../subtitle-tracks-editor'
 import { QuizQuestionsEditor } from '../quiz-questions-editor'
@@ -251,6 +253,27 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
               />
             </div>
           </details>
+
+          <div className="grid gap-1.5">
+            <SectionLabel>Quiz layout</SectionLabel>
+            <Select
+              value={readQuizSettings(item.quiz_settings).mode}
+              onValueChange={(v) => {
+                const quiz_settings = { mode: v === 'sheet' ? 'sheet' : 'focus' }
+                onPatched({ quiz_settings })
+                queue({ quiz_settings })
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="focus">Focus stage — one question at a time, graded as you go</SelectItem>
+                <SelectItem value="sheet">Exam sheet — every question on one page, graded on submit</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Exercises always use the focus stage.</p>
+          </div>
 
           <div className="space-y-3">
             <SectionLabel>Questions</SectionLabel>
