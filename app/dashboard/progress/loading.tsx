@@ -1,72 +1,43 @@
 import { Skeleton } from '@/components/ui/skeleton'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
+/** Mirrors the My Progress layout: header, four tiles, chart + activity, calendar + courses. */
 export default function ProgressLoading() {
   return (
-    <>
-      {/* Page Header */}
-      <div className="mb-8">
-        <Skeleton className="h-9 w-40 mb-2" />
-        <Skeleton className="h-5 w-72" />
+    <div aria-busy>
+      <div className="mb-8 flex items-end justify-between gap-4">
+        <div>
+          <Skeleton className="h-9 w-48 rounded-lg" />
+          <Skeleton className="mt-3 h-4 w-80 rounded" />
+        </div>
+        <Skeleton className="h-10 w-36 rounded-lg" />
       </div>
-
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-4 mb-8">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16 mb-2" />
-              <Skeleton className="h-3 w-20" />
-            </CardContent>
-          </Card>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-[108px] rounded-xl" />
         ))}
       </div>
-
-      {/* Additional Stats */}
-      <div className="grid gap-6 md:grid-cols-2 mb-8">
-        {/* Learning Time */}
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-32" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-12" />
-              </div>
-              <div className="flex justify-between">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-4 w-12" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-36" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <Skeleton className="h-4 w-40 mb-1" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
-                  <Skeleton className="h-5 w-14" />
+      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
+        <div className="min-w-0 space-y-8">
+          <Skeleton className="h-[280px] rounded-xl" />
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-44 rounded-md" />
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center gap-3 py-2">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-1/2 rounded" />
+                  <Skeleton className="h-3 w-1/3 rounded" />
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <Skeleton className="h-3 w-12 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <aside className="space-y-4">
+          <Skeleton className="h-[380px] rounded-xl" />
+          <Skeleton className="h-[160px] rounded-xl" />
+        </aside>
       </div>
-    </>
+    </div>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { PageHeader } from '@/components/dashboard/page-header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,13 +12,10 @@ export default function CommunityPage() {
   const { t } = useTranslation()
   return (
     <>
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold font-heading">{t('dashboard.pages.community.title')}</h1>
-        <p className="text-muted-foreground mt-1">
-          {t('dashboard.pages.community.subtitle')}
-        </p>
-      </div>
+      <PageHeader
+        title={t('dashboard.pages.community.title')}
+        description={t('dashboard.pages.community.subtitle')}
+      />
 
       {/* Discord CTA */}
       <Card className="mb-8 overflow-hidden">

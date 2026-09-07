@@ -1,5 +1,6 @@
 'use client'
 
+import { PageHeader } from '@/components/dashboard/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Crown, GraduationCap, Music } from 'lucide-react'
 import { MasterClassCard } from '@/components/dashboard/master-class-card'
@@ -24,12 +25,11 @@ export function MasterClassView({
     <>
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold font-heading mb-2">
-          {t('dashboard.pages.masterClass.title')}<span className="text-primary">.</span>
-        </h1>
-        <p className="text-muted-foreground mb-6">
-          {t('dashboard.pages.masterClass.subtitle')}
-        </p>
+        <PageHeader
+          title={t('dashboard.pages.masterClass.title')}
+          description={t('dashboard.pages.masterClass.subtitle')}
+          className="mb-6"
+        />
 
         {/* Quick Stats */}
         <div className="flex flex-wrap gap-4">
@@ -71,8 +71,8 @@ export function MasterClassView({
         /* Empty State */
         <Card>
           <CardContent className="p-12 text-center">
-            <div className="h-16 w-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
-              <Crown className="h-8 w-8 text-amber-500" />
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Crown className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-xl font-semibold mb-2">{t('dashboard.pages.masterClass.empty.title')}</h3>
             <p className="text-muted-foreground">

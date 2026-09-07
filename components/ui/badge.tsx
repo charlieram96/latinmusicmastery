@@ -17,6 +17,16 @@ const badgeVariants = cva(
           "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+        /** Primary tint: the default badge on cards in the redesigned dashboard. */
+        tint: "border-transparent bg-primary/[0.14] text-primary",
+        success: "border-transparent bg-success/[0.14] text-success",
+        warning: "border-transparent bg-warning/[0.16] text-warning",
+        danger: "border-transparent bg-danger/[0.14] text-danger",
+        info: "border-transparent bg-info/[0.14] text-info",
+        gold: "border-transparent bg-gold/[0.16] text-gold",
+        /** Dark glass for badges that sit on imagery. */
+        onImage:
+          "border-white/15 bg-black/60 text-white backdrop-blur-sm",
       },
     },
     defaultVariants: {

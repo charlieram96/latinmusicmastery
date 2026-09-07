@@ -1,8 +1,8 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useSyncExternalStore } from 'react'
 
-type Theme = 'light' | 'dark'
+export type Theme = 'light' | 'dark'
 
 interface ThemeContextType {
   theme: Theme
@@ -11,52 +11,69 @@ interface ThemeContextType {
   mounted: boolean
 }
 
+const STORAGE_KEY = 'theme'
+const CHANGE_EVENT = 'lmm-theme-change'
+const DEFAULT_THEME: Theme = 'dark'
+
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'dark',
+  theme: DEFAULT_THEME,
   setTheme: () => {},
   toggleTheme: () => {},
   mounted: false,
 })
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark')
-  const [mounted, setMounted] = useState(false)
+/** Anything other than an explicit "light" is dark (the app default). */
+function readStoredTheme(): Theme {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === 'light' ? 'light' : DEFAULT_THEME
+  } catch {
+    return DEFAULT_THEME
+  }
+}
 
+/* The preference lives in localStorage, an external system, so it is read
+   through useSyncExternalStore and the only effect below writes to the DOM. */
+function subscribe(callback: () => void) {
+  window.addEventListener('storage', callback)
+  window.addEventListener(CHANGE_EVENT, callback)
+  return () => {
+    window.removeEventListener('storage', callback)
+    window.removeEventListener(CHANGE_EVENT, callback)
+  }
+}
+const getServerTheme = (): Theme => DEFAULT_THEME
+const subscribeNever = () => () => {}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const theme = useSyncExternalStore(subscribe, readStoredTheme, getServerTheme)
+  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false)
+
+  // Keep the document in sync. The inline script in app/layout.tsx has already
+  // applied the class before paint, so this never flashes.
   useEffect(() => {
-    setMounted(true)
-    // Check localStorage for saved theme, default to dark
-    const savedTheme = localStorage.getItem('theme') as Theme | null
-    if (savedTheme) {
-      setTheme(savedTheme)
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+    document.documentElement.style.colorScheme = theme
+  }, [theme])
+
+  const setTheme = useCallback((next: Theme) => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next)
+    } catch {
+      /* private mode: the event still updates the in-memory snapshot */
     }
+    window.dispatchEvent(new Event(CHANGE_EVENT))
   }, [])
 
-  useEffect(() => {
-    if (!mounted) return
+  const toggleTheme = useCallback(() => {
+    setTheme(readStoredTheme() === 'light' ? 'dark' : 'light')
+  }, [setTheme])
 
-    // Update the class on the html element
-    const root = document.documentElement
-    if (theme === 'dark') {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
-    }
-
-    // Save to localStorage
-    localStorage.setItem('theme', theme)
-  }, [theme, mounted])
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
-  }
-
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, mounted }}>
-      {children}
-    </ThemeContext.Provider>
-  )
+  return <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, mounted }}>{children}</ThemeContext.Provider>
 }
 
 export function useTheme() {
   return useContext(ThemeContext)
 }
+
+/** Inline, dependency-free script that applies the stored theme before hydration. */
+export const THEME_INIT_SCRIPT = `try{var d=localStorage.getItem('${STORAGE_KEY}')!=='light';document.documentElement.classList.toggle('dark',d);document.documentElement.style.colorScheme=d?'dark':'light'}catch(e){}`

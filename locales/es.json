@@ -35,7 +35,16 @@
     },
     "toggleSidebar": "Mostrar u ocultar la barra lateral",
     "switchToLightMode": "Cambiar al modo claro",
-    "switchToDarkMode": "Cambiar al modo oscuro"
+    "switchToDarkMode": "Cambiar al modo oscuro",
+    "theme": {
+      "label": "Tema",
+      "dark": "Oscuro",
+      "light": "Claro"
+    },
+    "duration": {
+      "minutes": "{m} min",
+      "hoursMinutes": "{h} h {m} min"
+    }
   },
   "nav": {
     "explore": "Explorar",
@@ -1009,7 +1018,27 @@
       "subscription": "Suscripción",
       "teacherPortal": "Portal de Maestros",
       "adminPanel": "Panel de Admin",
-      "settings": "Configuración"
+      "settings": "Configuración",
+      "label": "Navegación principal",
+      "groups": {
+        "learn": "Aprender",
+        "discover": "Descubrir",
+        "connect": "Conectar",
+        "tools": "Herramientas",
+        "manage": "Gestionar"
+      },
+      "openMenu": "Abrir menú",
+      "tabs": {
+        "home": "Inicio",
+        "courses": "Cursos",
+        "practice": "Práctica",
+        "profile": "Perfil"
+      },
+      "plan": {
+        "free": "Plan gratuito",
+        "active": "Miembro"
+      },
+      "progress": "Mi progreso"
     },
     "pages": {
       "tuner": {
@@ -1419,7 +1448,16 @@
         "profileOf": "Perfil de {name}",
         "about": "Acerca de",
         "coursesBy": "Cursos de {name}",
-        "contact": "Contactar al maestro"
+        "contact": "Contactar al maestro",
+        "filters": {
+          "all": "Todos los instrumentos",
+          "label": "Filtrar maestros por instrumento",
+          "showAll": "Ver todos los maestros"
+        },
+        "noMatch": {
+          "title": "Aún no hay maestros de {instrument}",
+          "body": "Sumamos maestros con regularidad. Mientras tanto, prueba con otro instrumento."
+        }
       },
       "masterClass": {
         "title": "Clase magistral",
@@ -1479,10 +1517,8 @@
           "completedTitle": "Aún no hay cursos completados",
           "completedBody": "Completa tu primer curso para verlo aquí. ¡Sigue aprendiendo!"
         },
-        "moduleFallback": "Módulo {number}",
-        "untitledClass": "Clase sin título",
         "filters": {
-          "all": "Todos los cursos",
+          "all": "Todos",
           "inProgress": "En progreso",
           "completed": "Completados",
           "sortPlaceholder": "Ordenar por...",
@@ -1490,40 +1526,95 @@
             "recent": "Vistos recientemente",
             "progress": "Progreso",
             "alphabetical": "A-Z"
-          }
+          },
+          "label": "Filtrar cursos",
+          "sortLabel": "Ordenar",
+          "showAll": "Ver todos los cursos"
         },
-        "card": {
-          "complete": "Completado",
-          "module": "Mód {current}/{total}",
-          "items": "{completed}/{total} elementos"
+        "row": {
+          "moduleOfTotal": "Módulo {n} de {total}",
+          "lesson": "Lección {n}",
+          "lessonsDone": "{done} de {total} lecciones completadas",
+          "completed": "Curso completado",
+          "notStarted": "Aún sin empezar",
+          "resume": "Continuar",
+          "start": "Empezar",
+          "review": "Repasar"
+        },
+        "plan": {
+          "title": "Tu plan",
+          "included": "Incluido en tu plan",
+          "interval": {
+            "month": "Mensual",
+            "year": "Anual"
+          },
+          "status": {
+            "active": "Activo",
+            "past_due": "Pago pendiente",
+            "canceled": "Cancelado"
+          },
+          "renews": "se renueva el {date}",
+          "ends": "termina el {date}",
+          "perMonth": "{price}/mes",
+          "perYear": "{price}/año",
+          "note": "Incluye los fundamentos y un curso de estilo. Cada estilo adicional cuesta {price}/mes.",
+          "manage": "Administrar plan",
+          "billing": "Historial de pagos",
+          "fundamentals": "Incluido en todos los planes de {instrument}",
+          "styleCourse": "Tu curso de estilo",
+          "pctComplete": "{pct}% completado",
+          "addStyle": "Añadir otro curso de estilo de {instrument}",
+          "addPrice": "+{price}/mes",
+          "inPlan": "En tu plan",
+          "notInPlan": "Fuera de tu plan",
+          "addToPlan": "Añadir al plan",
+          "none": {
+            "title": "Empieza con un instrumento",
+            "body": "Obtén el curso de fundamentos del instrumento más un curso de estilo desde {price}/mes.",
+            "cta": "Ver planes"
+          }
         }
       },
       "progress": {
         "title": "Mi progreso",
         "subtitle": "Haz seguimiento de tu aprendizaje y tus logros",
         "stats": {
-          "totalItems": "Elementos totales",
           "completed": "Completados",
           "accuracy": "Precisión",
           "currentStreak": "Racha actual",
-          "inProgressCount": "{count} en progreso",
           "accuracyBreakdown": "{correct}/{total} correctos",
           "daysValue": "{count} días",
           "keepItGoing": "¡Sigue así!",
-          "startStreak": "¡Comienza tu racha hoy!"
-        },
-        "learningTime": {
-          "title": "Tiempo de aprendizaje",
-          "totalHours": "Horas totales",
-          "totalMinutes": "Minutos totales",
-          "hoursValue": "{count} h",
-          "minutesValue": "{count} min"
+          "startStreak": "¡Comienza tu racha hoy!",
+          "completedItems": "Elementos completados",
+          "ofStarted": "de {count} iniciados",
+          "practiceTime": "Tiempo de práctica",
+          "thisWeek": "{count} min esta semana",
+          "best": "Mejor: {count} días",
+          "noExercises": "Aún sin ejercicios",
+          "dayValue": "{count} día",
+          "bestOne": "Mejor: {count} día"
         },
         "recentActivity": {
           "title": "Actividad reciente",
           "done": "Hecho",
           "classItemFallback": "Elemento de clase",
-          "empty": "Aún no hay actividad reciente. ¡Comienza a aprender para ver tu progreso aquí!"
+          "empty": "Aún no hay actividad reciente. ¡Comienza a aprender para ver tu progreso aquí!",
+          "emptyTitle": "Aún no hay nada aquí"
+        },
+        "viewAchievements": "Ver logros",
+        "chart": {
+          "title": "Actividad semanal",
+          "range": "Últimas {count} semanas",
+          "average": "Media de {count} por semana",
+          "thisWeek": "Esta semana",
+          "tooltip": "{count} completados · {minutes} min",
+          "empty": "Completa una lección y tu actividad semanal aparecerá aquí."
+        },
+        "byCourse": {
+          "title": "Por curso",
+          "summary": "{completed} completados · {minutes} min",
+          "empty": "Tus cursos aparecerán aquí a medida que completes lecciones."
         }
       },
       "achievements": {
@@ -1536,6 +1627,13 @@
           "lessons": "Lecciones",
           "dayStreak": "Días de racha",
           "courses": "Cursos"
+        },
+        "categories": {
+          "learning": "Hitos de aprendizaje",
+          "consistency": "Rachas de constancia",
+          "completion": "Cursos completados",
+          "exploration": "Explorador de estilos",
+          "engagement": "Participación en la comunidad"
         }
       },
       "courses": {
@@ -1548,15 +1646,17 @@
         "lessonCount": "{count} lecciones",
         "descriptionFallback": "Domina {style} con instrucción experta",
         "eyebrow": "Biblioteca de cursos",
-        "subtitleBrowse": "Encuentra tu instrumento, elige una tradición y empieza a tocar. {count} cursos de toda América.",
-        "searchPlaceholder": "Buscar cursos…",
-        "clearAll": "Borrar todo",
+        "subtitleBrowse": "Elige un instrumento, escoge una tradición y empieza a tocar. {count} cursos de toda América.",
+        "searchPlaceholder": "Buscar cursos, maestros, estilos",
+        "clearAll": "Limpiar",
         "resultCourse": "curso",
         "resultCourses": "cursos",
         "facets": {
           "instrument": "Instrumento",
           "level": "Nivel",
-          "genre": "Género"
+          "genre": "Estilo",
+          "teacher": "Maestro",
+          "country": "País"
         },
         "tabs": {
           "all": "Todos"
@@ -1574,7 +1674,24 @@
           "subtitle": "Prueba ajustando los filtros o la búsqueda para encontrar lo que buscas",
           "clearFilters": "Borrar todos los filtros"
         },
-        "removeFilter": "Quitar {label}"
+        "removeFilter": "Quitar {label}",
+        "allLevels": "Todos los niveles",
+        "any": "Cualquiera",
+        "fundamentals": "Fundamentos",
+        "comingSoon": "Muy pronto",
+        "courseCount": "{count} cursos",
+        "courseCountOne": "{count} curso",
+        "sort": {
+          "label": "Ordenar",
+          "newest": "Más recientes",
+          "title": "A-Z",
+          "lessons": "Más lecciones"
+        },
+        "view": {
+          "label": "Vista",
+          "grid": "Cuadrícula",
+          "list": "Lista"
+        }
       },
       "subscription": {
         "title": "Mi suscripción",
@@ -1723,7 +1840,9 @@
           "lessons": "Lecciones",
           "remaining": "Restante",
           "level": "Nivel",
-          "levelAll": "Todos"
+          "levelAll": "Todos",
+          "modules": "Módulos",
+          "video": "Video"
         },
         "curriculum": {
           "title": "Plan de estudios",
@@ -1733,6 +1852,26 @@
           "starting": "Iniciando el curso",
           "entering": "Entrando al modo curso",
           "preparing": "Preparando tu entorno de aprendizaje..."
+        },
+        "continueLesson": "Continuar lección",
+        "startLesson": "Empezar el curso",
+        "itemTypes": {
+          "VIDEO": "Video",
+          "QUIZ": "Cuestionario",
+          "EXERCISE": "Ejercicio",
+          "JAM_SESSION": "Toca con la banda"
+        },
+        "syllabus": {
+          "completed": "Completado",
+          "inProgress": "En curso",
+          "notStarted": "Sin empezar",
+          "moduleFallback": "Módulo {number}",
+          "lessonFallback": "Lección {number}",
+          "itemsDone": "{done} de {total} elementos hechos",
+          "freePreview": "Vista previa gratis",
+          "lessonOf": "Lección {n} de {total}",
+          "left": "faltan {duration}",
+          "inYourPlan": "Incluido en tu plan"
         }
       },
       "modules": {
@@ -1770,7 +1909,25 @@
         "courseProgress": "Progreso del curso",
         "notStarted": "Sin empezar",
         "courseCompleted": "Completado",
-        "recommended": "Recomendados para ti",
+        "recommended": {
+          "title": "Recomendados para ti",
+          "subtitle": "Según lo que tocas",
+          "preview": "Ver el curso",
+          "lessons": "{count} lecciones",
+          "emptyFilter": "Nada coincide con este filtro todavía.",
+          "filters": {
+            "all": "Todos",
+            "forInstrument": "Para {instrument}",
+            "yourTeachers": "Tus maestros",
+            "new": "Nuevos"
+          },
+          "why": {
+            "instrument": "Porque tocas {instrument}.",
+            "teacher": "Más de {teacher}, quien enseña tu curso {course}.",
+            "new": "Nuevo este mes.",
+            "popular": "Popular entre nuevos estudiantes."
+          }
+        },
         "newBadge": "Nuevo",
         "nextMilestones": "Próximos logros",
         "featuredTeacher": "Maestro destacado",
@@ -1820,6 +1977,65 @@
               "body": "Canta o tararea la melodía antes de tocarla. Si puedes escucharla por dentro, tus manos la seguirán con más naturalidad."
             }
           }
+        },
+        "greeting": {
+          "morning": "Buenos días, {name}",
+          "afternoon": "Buenas tardes, {name}",
+          "evening": "Buenas noches, {name}"
+        },
+        "weeklyGoalChip": "{done} de {goal} lecciones",
+        "continue": {
+          "lesson": "Lección",
+          "eyebrow": "{course}, lección {n} de {total}",
+          "minutes": "{count} min",
+          "watched": "{pct}% visto",
+          "lessonsDone": "{done} de {total} lecciones completadas",
+          "toGo": "Faltan {count}",
+          "upNext": "Siguiente: {title}",
+          "resume": "Reanudar lección",
+          "start": "Empezar lección",
+          "courseDetails": "Detalles del curso",
+          "emptyTitle": "Elige tu primer curso",
+          "emptyBody": "Elige un instrumento y un género. Tu progreso se guarda automáticamente.",
+          "browse": "Explorar cursos"
+        },
+        "courses": {
+          "title": "Mis cursos",
+          "inProgress": "{count} en curso",
+          "lessonOfTotal": "lección {n} de {total}",
+          "notStarted": "sin empezar",
+          "completed": "completado"
+        },
+        "feedback": {
+          "title": "Comentarios del maestro",
+          "newCount": "{count} nuevo",
+          "allReviews": "Todas las reseñas",
+          "reviewed": "{teacher} revisó tu video",
+          "pendingWith": "Tu video está con {teacher}",
+          "watch": "Ver reseña",
+          "read": "Leer reseña",
+          "sendNew": "Enviar otro video",
+          "inviteTitle": "Recibe comentarios de un maestro",
+          "inviteBody": "Graba un video corto tocando y un maestro lo revisará.",
+          "sendClip": "Enviar un video"
+        },
+        "calendar": {
+          "title": "Calendario de práctica",
+          "goalToGo": "Meta semanal: faltan {count}",
+          "goalReached": "Meta semanal cumplida",
+          "streakBest": "Racha de {streak} días. Mejor: {best} días.",
+          "keepStreak": "Practica hoy para mantener la racha.",
+          "tenMinutes": "Diez minutos también cuentan."
+        },
+        "masterClass": {
+          "label": "Master class",
+          "watch": "Ver"
+        },
+        "tools": {
+          "tuner": "Afinador",
+          "tunerBody": "Afina antes de tocar",
+          "playSense": "Play Sense",
+          "playSenseBody": "Practica un patrón"
         }
       }
     },
@@ -1848,6 +2064,13 @@
         "tooltipOne": "¡Racha de {count} día aprendiendo!",
         "tooltipOther": "¡Racha de {count} días aprendiendo!",
         "empty": "¡Empieza a aprender para construir tu racha!"
+      },
+      "account": {
+        "open": "Menú de la cuenta",
+        "profile": "Perfil y configuración",
+        "plan": "Plan",
+        "progress": "Mi progreso",
+        "help": "Ayuda"
       }
     },
     "classViewer": {

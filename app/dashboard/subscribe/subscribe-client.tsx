@@ -1,5 +1,6 @@
 'use client'
 
+import { PageHeader } from '@/components/dashboard/page-header'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Check, Music, ArrowRight, Plus, AlertCircle } from 'lucide-react'
@@ -114,13 +115,13 @@ export function SubscribeClient({
 
   return (
     <div className="max-w-4xl mx-auto p-6 md:p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.pages.subscribe.title')}</h1>
-        <p className="mt-2 text-muted-foreground">{t('dashboard.pages.subscribe.intro')}</p>
-      </div>
+      <PageHeader
+        title={t('dashboard.pages.subscribe.title')}
+        description={t('dashboard.pages.subscribe.intro')}
+      />
 
       {canceled && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
           <AlertCircle className="h-4 w-4" />
           <span>{t('dashboard.pages.subscribe.canceled')}</span>
         </div>
@@ -295,7 +296,7 @@ export function SubscribeClient({
             </button>
           </div>
           {annualBlocksAddons && (
-            <p className="mt-3 text-xs text-amber-600 dark:text-amber-500">
+            <p className="mt-3 text-xs text-warning">
               {t('dashboard.pages.subscribe.annualBaseOnly')}
             </p>
           )}
