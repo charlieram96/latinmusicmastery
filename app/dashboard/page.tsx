@@ -4,7 +4,7 @@ import { getServerLocale } from '@/lib/i18n/server'
 import { localizeRow, localizeRows, COURSE_FIELDS } from '@/lib/i18n/localize'
 import { ACHIEVEMENTS } from '@/lib/achievements'
 import { computeStreaks } from '@/lib/dashboard/streak'
-import { buildPracticeCalendar } from '@/lib/dashboard/practice-calendar'
+import { buildPracticeCalendar, WEEK_GOAL } from '@/lib/dashboard/practice-calendar'
 import { dateKeyFor, todayKey } from '@/lib/dashboard/time-zone'
 import { isNew, reasonFor, type RecContext } from '@/lib/dashboard/recommendations'
 import { GreetingRow } from '@/components/dashboard/home/greeting-row'
@@ -27,9 +27,8 @@ import type {
   RecommendedCourse,
   SegmentState,
 } from '@/types/dashboard'
+import { classIsDone, courseHref, currentClassIndexFor, orderedClasses, progressTime } from '@/lib/dashboard/course-progress'
 
-/** Lessons per week the dashboard treats as the goal. */
-const WEEK_GOAL = 6
 
 /* ── Row shapes returned by the queries below ─────────────────────── */
 interface ItemRow {
@@ -77,45 +76,6 @@ interface ProgressRow {
   completed_at: string | null
   updated_at: string | null
   created_at: string | null
-}
-
-const byOrder = <T extends { order_index: number | null }>(a: T, b: T) => (a.order_index ?? 0) - (b.order_index ?? 0)
-
-/** Classes of a course in section/class order, each with its items. */
-function orderedClasses(course: CourseRow): ClassRow[] {
-  const sections = [...(course.course_sections ?? [])].sort(byOrder)
-  return sections.flatMap((s) => [...(s.classes ?? [])].sort(byOrder))
-}
-
-function classIsDone(cls: ClassRow, completed: Set<string>): boolean {
-  const items = cls.items ?? []
-  return items.length > 0 && items.every((it) => completed.has(it.id))
-}
-
-function courseHref(course: CourseRow) {
-  return `/dashboard/course/${course.slug || course.id}`
-}
-
-const progressTime = (p: ProgressRow) => new Date(p.updated_at ?? p.created_at ?? 0).getTime()
-
-/**
- * The class the learner is "on": the one holding their most recent progress row,
- * or the next unfinished class when that one is complete. `null` when the course
- * has no progress at all, or when every class is done.
- */
-function currentClassIndexFor(classes: ClassRow[], progress: ProgressRow[], completed: Set<string>): number | null {
-  const itemToIndex = new Map<string, number>()
-  classes.forEach((c, i) => (c.items ?? []).forEach((it) => itemToIndex.set(it.id, i)))
-  const latest = progress
-    .filter((p) => itemToIndex.has(p.class_item_id))
-    .sort((a, b) => progressTime(b) - progressTime(a))[0]
-  if (!latest) return null
-  const idx = itemToIndex.get(latest.class_item_id) ?? 0
-  if (!classIsDone(classes[idx], completed)) return idx
-  const next = classes.findIndex((c, i) => i > idx && !classIsDone(c, completed))
-  if (next !== -1) return next
-  const anyOpen = classes.findIndex((c) => !classIsDone(c, completed))
-  return anyOpen === -1 ? null : anyOpen
 }
 
 export default async function DashboardPage() {
@@ -208,7 +168,7 @@ export default async function DashboardPage() {
   // ── Batch 2: progress for the enrolled items ─────────────────────
   const itemToClass = new Map<string, { course: CourseRow; cls: ClassRow }>()
   for (const course of courses) {
-    for (const cls of orderedClasses(course)) {
+    for (const cls of orderedClasses(course.course_sections)) {
       for (const it of cls.items ?? []) itemToClass.set(it.id, { course, cls })
     }
   }
@@ -230,7 +190,7 @@ export default async function DashboardPage() {
 
   // ── Course summaries ─────────────────────────────────────────────
   const courseSummaries: HomeCourseSummary[] = courses.map((course) => {
-    const classes = orderedClasses(course)
+    const classes = orderedClasses(course.course_sections)
     const items = classes.flatMap((c) => c.items ?? [])
     const doneItems = items.filter((it) => completed.has(it.id)).length
     const doneClasses = classes.filter((c) => classIsDone(c, completed)).length
@@ -258,7 +218,7 @@ export default async function DashboardPage() {
     const hit = latest ? itemToClass.get(latest.class_item_id) : undefined
     const course = hit?.course ?? courses[0] ?? null
     if (course) {
-      const classes = orderedClasses(course)
+      const classes = orderedClasses(course.course_sections)
       // A fresh enrollment (no progress) starts at the first class.
       const index = currentClassIndexFor(classes, progress, completed) ?? (hit ? -1 : 0)
       if (index >= 0 && classes.length > 0) {

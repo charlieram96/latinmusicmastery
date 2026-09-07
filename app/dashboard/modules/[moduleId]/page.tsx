@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { canAccessCourse } from '@/lib/subscriptions'
 import { ModuleView } from './module-view'
+import { HeaderTitleOverride } from '@/components/dashboard/header-title-override'
 
 interface PageProps {
   params: Promise<{
@@ -96,7 +97,9 @@ export default async function ModulePage({ params }: PageProps) {
   const canAccessNext = !!(nextModule && (nextModule.is_free || isStudent))
 
   return (
-    <ModuleView
+    <>
+      <HeaderTitleOverride title={(module.course as { title?: string } | null)?.title ?? module.title} />
+      <ModuleView
       module={module}
       moduleId={moduleId}
       userId={user.id}
@@ -108,5 +111,6 @@ export default async function ModulePage({ params }: PageProps) {
       canAccessNext={canAccessNext}
       isStudent={isStudent}
     />
+    </>
   )
 }

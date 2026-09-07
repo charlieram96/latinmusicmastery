@@ -1,188 +1,187 @@
 'use client'
 
+import Link from 'next/link'
+import { Award, BarChart3, BookOpen, CheckCircle2, Circle, Clock, Flame, History, Target } from 'lucide-react'
 import { PageHeader } from '@/components/dashboard/page-header'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
+import { SectionHeader } from '@/components/dashboard/section-header'
+import { StatTile } from '@/components/dashboard/stat-tile'
+import { EmptyState } from '@/components/dashboard/empty-state'
+import { WeeklyActivityChart } from '@/components/dashboard/progress/weekly-activity-chart'
+import { PracticeCalendar } from '@/components/dashboard/home/practice-calendar'
 import { Badge } from '@/components/ui/badge'
-import {
-  TrendingUp,
-  BookOpen,
-  CheckCircle,
-  Target,
-  Flame,
-  Calendar,
-} from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
+import { splitMinutes, type ProgressData } from '@/lib/dashboard/progress'
 
-interface ProgressViewProps {
-  totalItems: number
-  completedItems: number
-  inProgressItems: number
-  totalExercises: number
-  correctExercises: number
-  accuracyRate: number
-  totalMinutes: number
-  totalHours: number
-  currentStreak: number
-  recentActivity: any[]
-}
-
-export function ProgressView({
-  totalItems,
-  completedItems,
-  inProgressItems,
-  totalExercises,
-  correctExercises,
-  accuracyRate,
-  totalMinutes,
-  totalHours,
-  currentStreak,
-  recentActivity,
-}: ProgressViewProps) {
+export function ProgressView({ data }: { data: ProgressData }) {
   const { t, locale } = useTranslation()
+  const base = 'dashboard.pages.progress'
+
+  const duration = (minutes: number) => {
+    const { h, m } = splitMinutes(minutes)
+    return h > 0 ? t('common.duration.hoursMinutes', { h, m }) : t('common.duration.minutes', { m })
+  }
+  const dateFmt = new Intl.DateTimeFormat(locale === 'es' ? 'es' : 'en', { day: 'numeric', month: 'short' })
+  const hasActivity = data.startedItems > 0
 
   return (
     <>
       <PageHeader
-        title={t('dashboard.pages.progress.title')}
-        description={t('dashboard.pages.progress.subtitle')}
+        title={t(`${base}.title`)}
+        description={t(`${base}.subtitle`)}
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/dashboard/achievements">
+              <Award aria-hidden />
+              {t(`${base}.viewAchievements`)}
+            </Link>
+          </Button>
+        }
       />
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-4 mb-8">
-        {/* Total Items */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('dashboard.pages.progress.stats.totalItems')}
-            </CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalItems}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('dashboard.pages.progress.stats.inProgressCount', { count: inProgressItems })}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Completed */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('dashboard.pages.progress.stats.completed')}
-            </CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completedItems}</div>
-            <Progress
-              value={totalItems > 0 ? (completedItems / totalItems) * 100 : 0}
-              className="mt-2 h-1"
-            />
-          </CardContent>
-        </Card>
-
-        {/* Exercise Accuracy */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('dashboard.pages.progress.stats.accuracy')}
-            </CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{accuracyRate}%</div>
-            <p className="text-xs text-muted-foreground">
-              {t('dashboard.pages.progress.stats.accuracyBreakdown', { correct: correctExercises, total: totalExercises })}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Current Streak */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('dashboard.pages.progress.stats.currentStreak')}
-            </CardTitle>
-            <Flame className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{t('dashboard.pages.progress.stats.daysValue', { count: currentStreak })}</div>
-            <p className="text-xs text-muted-foreground">
-              {currentStreak > 0
-                ? t('dashboard.pages.progress.stats.keepItGoing')
-                : t('dashboard.pages.progress.stats.startStreak')}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile
+          icon={Flame}
+          label={t(`${base}.stats.currentStreak`)}
+          value={t(data.streak === 1 ? `${base}.stats.dayValue` : `${base}.stats.daysValue`, { count: data.streak })}
+          hint={
+            data.bestStreak > 0
+              ? t(data.bestStreak === 1 ? `${base}.stats.bestOne` : `${base}.stats.best`, { count: data.bestStreak })
+              : t(`${base}.stats.startStreak`)
+          }
+        />
+        <StatTile
+          icon={CheckCircle2}
+          tint="bg-success/[0.14] text-success"
+          label={t(`${base}.stats.completedItems`)}
+          value={data.completedItems}
+          hint={t(`${base}.stats.ofStarted`, { count: data.startedItems })}
+        />
+        <StatTile
+          icon={Clock}
+          tint="bg-gold/[0.16] text-gold"
+          label={t(`${base}.stats.practiceTime`)}
+          value={duration(data.totalMinutes)}
+          hint={t(`${base}.stats.thisWeek`, { count: data.weekMinutes })}
+        />
+        <StatTile
+          icon={Target}
+          tint="bg-terracotta/[0.16] text-terracotta"
+          label={t(`${base}.stats.accuracy`)}
+          value={data.accuracy === null ? '—' : `${data.accuracy}%`}
+          hint={
+            data.attempts > 0
+              ? t(`${base}.stats.accuracyBreakdown`, { correct: data.correct, total: data.attempts })
+              : t(`${base}.stats.noExercises`)
+          }
+        />
       </div>
 
-      {/* Additional Stats */}
-      <div className="grid gap-6 md:grid-cols-2 mb-8">
-        {/* Learning Time */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              {t('dashboard.pages.progress.learningTime.title')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t('dashboard.pages.progress.learningTime.totalHours')}</span>
-                <span className="font-bold">{t('dashboard.pages.progress.learningTime.hoursValue', { count: totalHours })}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t('dashboard.pages.progress.learningTime.totalMinutes')}</span>
-                <span className="font-bold">{t('dashboard.pages.progress.learningTime.minutesValue', { count: totalMinutes })}</span>
-              </div>
+      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
+        <div className="min-w-0 space-y-8">
+          <section aria-labelledby="progress-chart" className="rounded-xl border border-border bg-card p-5 shadow-card">
+            <div className="mb-5 flex items-center gap-2">
+              <span className="grid h-7 w-7 place-items-center rounded-md bg-primary/[0.14] text-primary">
+                <BarChart3 className="h-4 w-4" aria-hidden />
+              </span>
+              <h2 id="progress-chart" className="text-base font-semibold">
+                {t(`${base}.chart.title`)}
+              </h2>
+              <span className="ml-auto text-xs text-muted-foreground">{t(`${base}.chart.range`, { count: data.weeks.length })}</span>
             </div>
-          </CardContent>
-        </Card>
+            {data.completedItems > 0 ? (
+              <WeeklyActivityChart buckets={data.weeks} />
+            ) : (
+              <p className="py-10 text-center text-sm text-muted-foreground">{t(`${base}.chart.empty`)}</p>
+            )}
+          </section>
 
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              {t('dashboard.pages.progress.recentActivity.title')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentActivity && recentActivity.length > 0 ? (
-              <div className="space-y-3">
-                {recentActivity.map((activity: any) => {
-                  const item = activity.class_item as any
-                  const cls = item?.class
-                  return (
-                    <div key={activity.id} className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium line-clamp-1">
-                          {item?.title || cls?.title || t('dashboard.pages.progress.recentActivity.classItemFallback')}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(activity.updated_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US')}
-                        </p>
+          <section aria-labelledby="progress-recent">
+            <SectionHeader title={t(`${base}.recentActivity.title`)} />
+            {data.recent.length > 0 ? (
+              <ul className="divide-y divide-border border-y border-border">
+                {data.recent.map((a) => {
+                  const Icon = a.completed ? CheckCircle2 : Circle
+                  const where = [a.courseTitle, a.lessonTitle].filter(Boolean).join(' · ')
+                  const inner = (
+                    <>
+                      <Icon
+                        className={`h-4 w-4 shrink-0 ${a.completed ? 'text-success' : 'text-muted-foreground/60'}`}
+                        aria-hidden
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{a.title || t(`${base}.recentActivity.classItemFallback`)}</p>
+                        {where ? <p className="truncate text-xs text-muted-foreground">{where}</p> : null}
                       </div>
-                      {activity.completed && (
-                        <Badge variant="secondary" className="ml-2">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          {t('dashboard.pages.progress.recentActivity.done')}
+                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{dateFmt.format(new Date(a.at))}</span>
+                      {a.completed ? (
+                        <Badge variant="success" className="hidden shrink-0 sm:inline-flex">
+                          {t(`${base}.recentActivity.done`)}
                         </Badge>
+                      ) : null}
+                    </>
+                  )
+                  return (
+                    <li key={a.id}>
+                      {a.href ? (
+                        <Link href={a.href} className="-mx-3 flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-accent/40">
+                          {inner}
+                        </Link>
+                      ) : (
+                        <div className="flex items-center gap-3 py-3">{inner}</div>
                       )}
-                    </div>
+                    </li>
                   )
                 })}
-              </div>
+              </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.pages.progress.recentActivity.empty')}
-              </p>
+              <EmptyState icon={History} title={t(`${base}.recentActivity.emptyTitle`)} body={t(`${base}.recentActivity.empty`)} />
             )}
-          </CardContent>
-        </Card>
+          </section>
+        </div>
+
+        <aside className="space-y-4">
+          <PracticeCalendar
+            cells={data.calendar}
+            weekDone={data.weekDone}
+            weekGoal={data.weekGoal}
+            streak={data.streak}
+            bestStreak={data.bestStreak}
+          />
+
+          <section aria-labelledby="progress-courses" className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 shadow-card">
+            <div className="flex items-center gap-2">
+              <span className="grid h-7 w-7 place-items-center rounded-md bg-primary/[0.14] text-primary">
+                <BookOpen className="h-4 w-4" aria-hidden />
+              </span>
+              <h2 id="progress-courses" className="text-base font-semibold">
+                {t(`${base}.byCourse.title`)}
+              </h2>
+            </div>
+            {data.courses.length > 0 ? (
+              <ul className="flex flex-col gap-3">
+                {data.courses.map((c) => (
+                  <li key={c.id}>
+                    <Link href={c.href} className="group block">
+                      <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">{c.title}</p>
+                      <p className="text-xs tabular-nums text-muted-foreground">
+                        {t(`${base}.byCourse.summary`, { completed: c.completed, minutes: c.minutes })}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t(`${base}.byCourse.empty`)}</p>
+            )}
+          </section>
+
+          {!hasActivity ? (
+            <Button asChild className="w-full">
+              <Link href="/dashboard/my-courses">{t('dashboard.pages.myCourses.title')}</Link>
+            </Button>
+          ) : null}
+        </aside>
       </div>
     </>
   )

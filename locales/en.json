@@ -40,6 +40,10 @@
       "label": "Theme",
       "dark": "Dark",
       "light": "Light"
+    },
+    "duration": {
+      "minutes": "{m} min",
+      "hoursMinutes": "{h} h {m} min"
     }
   },
   "nav": {
@@ -1033,7 +1037,8 @@
       "plan": {
         "free": "Free plan",
         "active": "Member"
-      }
+      },
+      "progress": "My Progress"
     },
     "pages": {
       "tuner": {
@@ -1443,7 +1448,16 @@
         "profileOf": "{name}'s Profile",
         "about": "About",
         "coursesBy": "Courses by {name}",
-        "contact": "Contact Teacher"
+        "contact": "Contact Teacher",
+        "filters": {
+          "all": "All instruments",
+          "label": "Filter teachers by instrument",
+          "showAll": "Show all teachers"
+        },
+        "noMatch": {
+          "title": "No teachers for {instrument} yet",
+          "body": "We are adding teachers regularly. Try another instrument in the meantime."
+        }
       },
       "masterClass": {
         "title": "Master Class",
@@ -1503,10 +1517,8 @@
           "completedTitle": "No Completed Courses Yet",
           "completedBody": "Complete your first course to see it here. Keep learning!"
         },
-        "moduleFallback": "Module {number}",
-        "untitledClass": "Untitled Class",
         "filters": {
-          "all": "All Courses",
+          "all": "All",
           "inProgress": "In Progress",
           "completed": "Completed",
           "sortPlaceholder": "Sort by...",
@@ -1514,40 +1526,95 @@
             "recent": "Recently Accessed",
             "progress": "Progress",
             "alphabetical": "A-Z"
-          }
+          },
+          "label": "Filter courses",
+          "sortLabel": "Sort",
+          "showAll": "Show all courses"
         },
-        "card": {
-          "complete": "Complete",
-          "module": "Mod {current}/{total}",
-          "items": "{completed}/{total} items"
+        "row": {
+          "moduleOfTotal": "Module {n} of {total}",
+          "lesson": "Lesson {n}",
+          "lessonsDone": "{done} of {total} lessons done",
+          "completed": "Course completed",
+          "notStarted": "Not started yet",
+          "resume": "Continue",
+          "start": "Start",
+          "review": "Review"
+        },
+        "plan": {
+          "title": "Your plan",
+          "included": "Included in your plan",
+          "interval": {
+            "month": "Monthly",
+            "year": "Yearly"
+          },
+          "status": {
+            "active": "Active",
+            "past_due": "Payment past due",
+            "canceled": "Canceled"
+          },
+          "renews": "renews {date}",
+          "ends": "ends {date}",
+          "perMonth": "{price}/mo",
+          "perYear": "{price}/yr",
+          "note": "Fundamentals plus one style course are included. More styles are {price}/mo each.",
+          "manage": "Manage plan",
+          "billing": "Billing history",
+          "fundamentals": "Included with every {instrument} plan",
+          "styleCourse": "Your style course",
+          "pctComplete": "{pct}% complete",
+          "addStyle": "Add another {instrument} style course",
+          "addPrice": "+{price}/mo",
+          "inPlan": "In your plan",
+          "notInPlan": "Not in your plan",
+          "addToPlan": "Add to plan",
+          "none": {
+            "title": "Start with an instrument",
+            "body": "Get the instrument's fundamentals course plus one style course from {price}/mo.",
+            "cta": "See plans"
+          }
         }
       },
       "progress": {
         "title": "My Progress",
         "subtitle": "Track your learning journey and achievements",
         "stats": {
-          "totalItems": "Total Items",
           "completed": "Completed",
           "accuracy": "Accuracy",
           "currentStreak": "Current Streak",
-          "inProgressCount": "{count} in progress",
           "accuracyBreakdown": "{correct}/{total} correct",
           "daysValue": "{count} days",
           "keepItGoing": "Keep it going!",
-          "startStreak": "Start your streak today!"
-        },
-        "learningTime": {
-          "title": "Learning Time",
-          "totalHours": "Total Hours",
-          "totalMinutes": "Total Minutes",
-          "hoursValue": "{count}h",
-          "minutesValue": "{count}m"
+          "startStreak": "Start your streak today!",
+          "completedItems": "Items completed",
+          "ofStarted": "of {count} started",
+          "practiceTime": "Practice time",
+          "thisWeek": "{count} min this week",
+          "best": "Best: {count} days",
+          "noExercises": "No exercises yet",
+          "dayValue": "{count} day",
+          "bestOne": "Best: {count} day"
         },
         "recentActivity": {
           "title": "Recent Activity",
           "done": "Done",
           "classItemFallback": "Class Item",
-          "empty": "No recent activity yet. Start learning to see your progress here!"
+          "empty": "No recent activity yet. Start learning to see your progress here!",
+          "emptyTitle": "Nothing here yet"
+        },
+        "viewAchievements": "View achievements",
+        "chart": {
+          "title": "Weekly activity",
+          "range": "Last {count} weeks",
+          "average": "{count} per week on average",
+          "thisWeek": "This week",
+          "tooltip": "{count} completed · {minutes} min",
+          "empty": "Complete a lesson and your weekly activity will show up here."
+        },
+        "byCourse": {
+          "title": "By course",
+          "summary": "{completed} completed · {minutes} min",
+          "empty": "Your courses will appear here as you complete lessons."
         }
       },
       "achievements": {
@@ -1560,6 +1627,13 @@
           "lessons": "Lessons",
           "dayStreak": "Day Streak",
           "courses": "Courses"
+        },
+        "categories": {
+          "learning": "Learning milestones",
+          "consistency": "Consistency streaks",
+          "completion": "Course completion",
+          "exploration": "Style explorer",
+          "engagement": "Community engagement"
         }
       },
       "courses": {
@@ -1572,15 +1646,17 @@
         "lessonCount": "{count} lessons",
         "descriptionFallback": "Master {style} with expert instruction",
         "eyebrow": "Course library",
-        "subtitleBrowse": "Find your instrument, pick a tradition, and start playing. {count} courses across the Americas.",
-        "searchPlaceholder": "Search courses…",
-        "clearAll": "Clear all",
+        "subtitleBrowse": "Pick an instrument, choose a tradition, start playing. {count} courses from across the Americas.",
+        "searchPlaceholder": "Search courses, teachers, styles",
+        "clearAll": "Clear",
         "resultCourse": "course",
         "resultCourses": "courses",
         "facets": {
           "instrument": "Instrument",
           "level": "Level",
-          "genre": "Genre"
+          "genre": "Style",
+          "teacher": "Teacher",
+          "country": "Country"
         },
         "tabs": {
           "all": "All"
@@ -1598,7 +1674,24 @@
           "subtitle": "Try adjusting your filters or search to find what you're looking for",
           "clearFilters": "Clear all filters"
         },
-        "removeFilter": "Remove {label}"
+        "removeFilter": "Remove {label}",
+        "allLevels": "All levels",
+        "any": "Any",
+        "fundamentals": "Fundamentals",
+        "comingSoon": "Coming soon",
+        "courseCount": "{count} courses",
+        "courseCountOne": "{count} course",
+        "sort": {
+          "label": "Sort",
+          "newest": "Newest first",
+          "title": "A-Z",
+          "lessons": "Most lessons"
+        },
+        "view": {
+          "label": "View",
+          "grid": "Grid",
+          "list": "List"
+        }
       },
       "subscription": {
         "title": "My Subscription",
@@ -1747,7 +1840,9 @@
           "lessons": "Lessons",
           "remaining": "Remaining",
           "level": "Level",
-          "levelAll": "All"
+          "levelAll": "All",
+          "modules": "Modules",
+          "video": "Video"
         },
         "curriculum": {
           "title": "Curriculum",
@@ -1757,6 +1852,26 @@
           "starting": "Starting Course",
           "entering": "Entering Course Mode",
           "preparing": "Preparing your learning environment..."
+        },
+        "continueLesson": "Continue lesson",
+        "startLesson": "Start the course",
+        "itemTypes": {
+          "VIDEO": "Video",
+          "QUIZ": "Quiz",
+          "EXERCISE": "Exercise",
+          "JAM_SESSION": "Play-along"
+        },
+        "syllabus": {
+          "completed": "Completed",
+          "inProgress": "In progress",
+          "notStarted": "Not started",
+          "moduleFallback": "Module {number}",
+          "lessonFallback": "Lesson {number}",
+          "itemsDone": "{done} of {total} items done",
+          "freePreview": "Free preview",
+          "lessonOf": "Lesson {n} of {total}",
+          "left": "{duration} left",
+          "inYourPlan": "Included in your plan"
         }
       },
       "modules": {

@@ -121,7 +121,7 @@ export function SubscribeClient({
       />
 
       {canceled && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
           <AlertCircle className="h-4 w-4" />
           <span>{t('dashboard.pages.subscribe.canceled')}</span>
         </div>
@@ -296,7 +296,7 @@ export function SubscribeClient({
             </button>
           </div>
           {annualBlocksAddons && (
-            <p className="mt-3 text-xs text-amber-600 dark:text-amber-500">
+            <p className="mt-3 text-xs text-warning">
               {t('dashboard.pages.subscribe.annualBaseOnly')}
             </p>
           )}

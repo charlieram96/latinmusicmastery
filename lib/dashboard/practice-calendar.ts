@@ -1,5 +1,8 @@
 import { shiftDateKey } from './streak'
 
+/** Lessons per week the dashboard treats as the goal. */
+export const WEEK_GOAL = 6
+
 export type HeatLevel = 0 | 1 | 2 | 3
 
 export interface CalendarCell {

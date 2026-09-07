@@ -8,6 +8,7 @@ import {
   Home,
   Library,
   Shield,
+  TrendingUp,
   Users,
   Video,
   type LucideIcon,
@@ -40,6 +41,7 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: BookOpen,
         activePrefixes: ['/dashboard/course', '/dashboard/modules'],
       },
+      { labelKey: 'progress', href: '/dashboard/progress', icon: TrendingUp },
     ],
   },
   {
