@@ -113,7 +113,7 @@ export function QuizBuilder({
           />
         )
       case 'piece_placement':
-        return <PiecePlacementSummary questionId={questionId} options={options} optionsEs={optionsEs} imageUrl={imageUrl} onChange={onChange} />
+        return <PiecePlacementSummary questionId={questionId} question={question} options={options} optionsEs={optionsEs} imageUrl={imageUrl} onChange={onChange} />
       case 'audio':
         return (
           <div className="text-sm text-muted-foreground">
