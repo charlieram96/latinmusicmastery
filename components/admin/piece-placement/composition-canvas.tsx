@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import type { Background } from '@/lib/quiz/composition'
 import type { PlacementPiece } from '@/lib/quiz/grading'
@@ -61,6 +61,15 @@ export function CompositionCanvas({
 
   const ratioOf = (p: PlacementPiece) => p.ratio ?? ratios[p.id] ?? effectiveRatio(p, aspect, tolerance)
   const focusPiece = (id: string) => canvasRef.current?.querySelector<HTMLElement>(`[data-piece="${id}"]`)?.focus()
+
+  // A selection made elsewhere (e.g. a pieces-panel row in a later task) should still move
+  // keyboard focus onto the canvas so arrow/Backspace/Escape work without a click first.
+  useEffect(() => {
+    if (selection?.kind !== 'piece') return
+    const root = canvasRef.current
+    if (!root || root.contains(document.activeElement)) return
+    root.querySelector<HTMLElement>(`[data-piece="${selection.id}"]`)?.focus({ preventScroll: true })
+  }, [selection])
 
   const onPieceKey = (e: React.KeyboardEvent, p: PlacementPiece) => {
     const c = centreOf(p.area)
@@ -152,6 +161,7 @@ export function CompositionCanvas({
               style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${p.width}%`, height: `${h}%`, zIndex: on ? 30 : 10 + i }}
               onPointerDown={(e) => {
                 if ((e.target as HTMLElement).dataset.sizeHandle) return
+                ;(e.currentTarget as HTMLElement).focus()
                 onSelect({ kind: 'piece', id: p.id })
                 tf.begin(e, { mode: 'centre', centre: c, onChange: (next) => onPieceCentre(p.id, next) })
               }}
