@@ -71,9 +71,10 @@ export function InspectorBackground({
               key={a.label}
               type="button"
               aria-pressed={Math.abs(aspect - a.value) < 0.01}
+              disabled={busy}
               onClick={() => onAspect(a.value)}
               className={cn(
-                'grid place-items-center gap-1 rounded-[9px] border-[1.5px] px-1 py-2 text-[11px] font-bold',
+                'grid place-items-center gap-1 rounded-[9px] border-[1.5px] px-1 py-2 text-[11px] font-bold disabled:opacity-40',
                 Math.abs(aspect - a.value) < 0.01 ? 'border-primary bg-primary/8 text-foreground' : 'border-border text-muted-foreground',
               )}
             >
@@ -131,7 +132,9 @@ export function InspectorBackground({
                 <span className="min-w-0 text-xs font-semibold">
                   <span className="block truncate">{layerName(l, i)}</span>
                   <small className="block text-[11px] font-medium tabular-nums text-muted-foreground">
-                    {Math.round(l.width)}% × {Math.round(l.height)}%{l.ratio ? ` · ratio ${l.ratio.toFixed(2)}` : ' · ratio unknown'}
+                    {Math.round(l.width)}% × {Math.round(l.height)}%
+                    {/* The original file's pixel size is what aligned import matches against; show it when we have it. */}
+                    {l.natural ? ` · ${l.natural.width} × ${l.natural.height} px` : l.ratio ? ` · ratio ${l.ratio.toFixed(2)}` : ' · ratio unknown'}
                   </small>
                 </span>
                 <span className="inline-flex gap-0.5">

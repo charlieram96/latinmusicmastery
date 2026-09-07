@@ -7,6 +7,8 @@ export const DEFAULT_TOLERANCE = 3
 export type Centre = { x: number; y: number }
 export type Box = { x: number; y: number; width: number; height: number }
 export type StageRect = { left: number; top: number; width: number; height: number }
+/** Pixel size of an image file. */
+export type Natural = { width: number; height: number }
 
 const r1 = (n: number) => Math.round(n * 1000) / 1000
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n))
@@ -57,6 +59,35 @@ export function frameToStage(frame: Box, layer: Box): { centre: Centre; width: n
     centre: { x: r1(layer.x + (layer.width * (frame.x + frame.width / 2)) / 100), y: r1(layer.y + (layer.height * (frame.y + frame.height / 2)) / 100) },
     width: r1((layer.width * frame.width) / 100),
   }
+}
+
+/** Two files are the same export when both sides match within a pixel. */
+export function sameSize(a: Natural | null | undefined, b: Natural | null | undefined): boolean {
+  return !!a && !!b && Math.abs(a.width - b.width) <= 1 && Math.abs(a.height - b.height) <= 1
+}
+
+/**
+ * The full-file rect a layer's original file occupies, given the stored
+ * (possibly trimmed) rect and its frame box. Without a frame the rect is the
+ * full file. Inverts the sub-rect mapping `frameToStage` walks forwards.
+ */
+export function fullFrameRect(layer: Box, frame?: Box): Box {
+  if (!frame || !(frame.width > 0) || !(frame.height > 0)) return layer
+  return {
+    x: layer.x - (layer.width * frame.x) / frame.width,
+    y: layer.y - (layer.height * frame.y) / frame.height,
+    width: (layer.width * 100) / frame.width,
+    height: (layer.height * 100) / frame.height,
+  }
+}
+
+/** Where an imported piece belongs: aligned when its file has the base's original pixel size (±1 px), else null. */
+export function alignedPlacement(
+  piece: { natural: Natural; frame: Box },
+  base: { rect: Box; natural: Natural; frame?: Box } | null,
+): { centre: Centre; width: number } | null {
+  if (!base || !sameSize(piece.natural, base.natural)) return null
+  return frameToStage(piece.frame, fullFrameRect(base.rect, base.frame))
 }
 
 export function placePiece(piece: PlacementPiece, centre: Centre, width: number, aspect: number, tolerance: number): PlacementPiece {

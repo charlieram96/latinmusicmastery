@@ -4,14 +4,14 @@ import { createClient } from '@/lib/supabase/client'
 import type { Background, BackgroundLayer } from '@/lib/quiz/composition'
 import type { PlacementPiece } from '@/lib/quiz/grading'
 import { alphaBounds, boxToPercent, scaleToFit } from '@/lib/quiz/image-trim'
-import { centreOf, frameToStage, placePiece, type Box, type Centre } from '@/lib/quiz/placement'
+import { alignedPlacement, centreOf, placePiece, sameSize, type Box, type Centre, type Natural } from '@/lib/quiz/placement'
 
-export type Natural = { width: number; height: number }
+export { sameSize }
+export type { Natural }
 export type Trimmed = { blob: Blob; ext: 'webp' | 'png'; ratio: number; frame: Box; natural: Natural; trimmed: boolean }
 export type ImportedPiece = { id: string; label: string; imageUrl: string; ratio: number; aligned: { centre: Centre; width: number } | null }
 
 const BUCKET = 'quiz-media'
-const NEW_PIECE_WIDTH = 20
 
 /** "timbal_bell-2.png" → "Timbal bell 2" */
 export function fileNameToLabel(name: string): string {
@@ -19,9 +19,16 @@ export function fileNameToLabel(name: string): string {
   return base ? base[0].toUpperCase() + base.slice(1) : ''
 }
 
-export function sameSize(a: Natural | null | undefined, b: Natural | null | undefined): boolean {
-  return !!a && !!b && Math.abs(a.width - b.width) <= 1 && Math.abs(a.height - b.height) <= 1
+/** Name the file that failed: one bad export among thirty is otherwise unfindable. */
+async function inContext<T>(label: string, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run()
+  } catch (e) {
+    throw new Error(`${label}: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
+
+const basename = (url: string) => url.split('/').pop()?.split('?')[0] || url
 
 export function measureNatural(url: string): Promise<Natural | null> {
   return new Promise((resolve) => {
@@ -75,16 +82,18 @@ export async function uploadImageBlob(name: string, blob: Blob): Promise<string>
 /** Trim + upload each file; files with the base image's pixel size are placed from their frame position. */
 export async function importPieceFiles(
   files: File[],
-  ctx: { questionId: string; base: { rect: Box; natural: Natural } | null; onProgress?: (done: number, total: number) => void },
+  ctx: { questionId: string; base: { rect: Box; natural: Natural; frame?: Box } | null; onProgress?: (done: number, total: number) => void },
 ): Promise<ImportedPiece[]> {
   const out: ImportedPiece[] = []
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
     const id = crypto.randomUUID()
-    const t = await trimImage(file)
-    const imageUrl = await uploadImageBlob(`${ctx.questionId}-piece-${id}-${Date.now()}.${t.ext}`, t.blob)
-    const aligned = ctx.base && sameSize(t.natural, ctx.base.natural) ? frameToStage(t.frame, ctx.base.rect) : null
-    out.push({ id, label: fileNameToLabel(file.name), imageUrl, ratio: t.ratio, aligned })
+    const piece = await inContext(file.name, async () => {
+      const t = await trimImage(file)
+      const imageUrl = await uploadImageBlob(`${ctx.questionId}-piece-${id}-${Date.now()}.${t.ext}`, t.blob)
+      return { id, label: fileNameToLabel(file.name), imageUrl, ratio: t.ratio, aligned: alignedPlacement(t, ctx.base) }
+    })
+    out.push(piece)
     ctx.onProgress?.(i + 1, files.length)
   }
   return out
@@ -96,11 +105,14 @@ export async function importLayerFiles(files: File[], ctx: { questionId: string;
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
     const id = crypto.randomUUID()
-    const t = await trimImage(file)
-    const imageUrl = await uploadImageBlob(`${ctx.questionId}-layer-${id}-${Date.now()}.${t.ext}`, t.blob)
-    const width = 30
-    const height = Math.min(100, (width * ctx.aspect) / t.ratio)
-    out.push({ id, imageUrl, name: fileNameToLabel(file.name), ratio: t.ratio, x: 50 - width / 2, y: Math.max(0, 50 - height / 2), width, height })
+    const layer = await inContext(file.name, async () => {
+      const t = await trimImage(file)
+      const imageUrl = await uploadImageBlob(`${ctx.questionId}-layer-${id}-${Date.now()}.${t.ext}`, t.blob)
+      const width = 30
+      const height = Math.min(100, (width * ctx.aspect) / t.ratio)
+      return { id, imageUrl, name: fileNameToLabel(file.name), ratio: t.ratio, natural: t.natural, frame: t.frame, x: 50 - width / 2, y: Math.max(0, 50 - height / 2), width, height }
+    })
+    out.push(layer)
     ctx.onProgress?.(i + 1, files.length)
   }
   return out
@@ -128,36 +140,41 @@ export async function fixImages(input: {
   const layers: BackgroundLayer[] = []
   let baseFull: { rect: Box; natural: Natural } | null = null
   for (const l of background.layers) {
-    const t = await trimImage(await fetchBlob(l.imageUrl))
-    const imageUrl = await uploadImageBlob(`${questionId}-layer-${l.id}-${Date.now()}.${t.ext}`, t.blob)
-    // corrected rect for the full file: keep width and centre, height from the full file's ratio
-    const fullRatio = t.natural.width / t.natural.height
-    const fullH = (l.width * aspect) / fullRatio
-    const full: Box = { x: l.x, y: l.y + l.height / 2 - fullH / 2, width: l.width, height: fullH }
-    if (!baseFull) baseFull = { rect: full, natural: t.natural }
-    // the trimmed image occupies its frame box inside the corrected full rect
-    const rect: Box = { x: full.x + (full.width * t.frame.x) / 100, y: full.y + (full.height * t.frame.y) / 100, width: (full.width * t.frame.width) / 100, height: (full.height * t.frame.height) / 100 }
-    layers.push({ ...l, imageUrl, ratio: t.ratio, name: l.name ?? fileNameToLabel(l.imageUrl.split('/').pop() ?? ''), ...rect })
+    const next = await inContext(l.name || basename(l.imageUrl), async () => {
+      const t = await trimImage(await fetchBlob(l.imageUrl))
+      const imageUrl = await uploadImageBlob(`${questionId}-layer-${l.id}-${Date.now()}.${t.ext}`, t.blob)
+      // corrected rect for the full file: keep width and centre, height from the full file's ratio
+      const fullRatio = t.natural.width / t.natural.height
+      const fullH = (l.width * aspect) / fullRatio
+      const full: Box = { x: l.x, y: l.y + l.height / 2 - fullH / 2, width: l.width, height: fullH }
+      // the trimmed image occupies its frame box inside the corrected full rect
+      const rect: Box = { x: full.x + (full.width * t.frame.x) / 100, y: full.y + (full.height * t.frame.y) / 100, width: (full.width * t.frame.width) / 100, height: (full.height * t.frame.height) / 100 }
+      const layer: BackgroundLayer = { ...l, imageUrl, ratio: t.ratio, natural: t.natural, frame: t.frame, name: l.name ?? fileNameToLabel(basename(l.imageUrl)), ...rect }
+      return { layer, full, natural: t.natural }
+    })
+    if (!baseFull) baseFull = { rect: next.full, natural: next.natural }
+    layers.push(next.layer)
     onProgress?.(++done, total)
   }
   const next: PlacementPiece[] = []
   for (const p of pieces) {
-    if (!p.imageUrl) {
+    const url = p.imageUrl
+    if (!url) {
       next.push(p)
       onProgress?.(++done, total)
       continue
     }
-    const t = await trimImage(await fetchBlob(p.imageUrl))
-    const imageUrl = await uploadImageBlob(`${questionId}-piece-${p.id}-${Date.now()}.${t.ext}`, t.blob)
-    const withRatio = { ...p, imageUrl, ratio: t.ratio }
-    if (baseFull && sameSize(t.natural, baseFull.natural)) {
-      const m = frameToStage(t.frame, baseFull.rect)
-      next.push(placePiece(withRatio, m.centre, m.width, aspect, tolerance))
-    } else {
+    const placed = await inContext((p.label ?? '').trim() || basename(url), async () => {
+      const t = await trimImage(await fetchBlob(url))
+      const imageUrl = await uploadImageBlob(`${questionId}-piece-${p.id}-${Date.now()}.${t.ext}`, t.blob)
+      const withRatio = { ...p, imageUrl, ratio: t.ratio }
+      const m = alignedPlacement(t, baseFull)
+      if (m) return placePiece(withRatio, m.centre, m.width, aspect, tolerance)
       // keep the centre; the sprite's on-screen width shrinks to the visible part of the old file
       const width = (p.width * t.frame.width) / 100
-      next.push(placePiece(withRatio, centreOf(p.area), width, aspect, tolerance))
-    }
+      return placePiece(withRatio, centreOf(p.area), width, aspect, tolerance)
+    })
+    next.push(placed)
     onProgress?.(++done, total)
   }
   return { background: { ...background, layers }, pieces: next }

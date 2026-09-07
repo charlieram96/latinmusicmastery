@@ -168,7 +168,9 @@ export function CompositionCanvas({
               onKeyDown={(e) => onPieceKey(e, p)}
             >
               {(on || showHalos) && (
-                <span aria-hidden className="pointer-events-none absolute rounded-lg border-[1.5px] border-dashed border-terracotta/80 bg-terracotta/[0.07]" style={{ inset: `calc(-1 * ${t}cqw)` }} />
+                // The tolerance is `t`% of stage width horizontally and `t`% of stage HEIGHT vertically
+                // (areaFor adds it to y/height in percent of height), so the vertical slack is t/aspect cqw.
+                <span aria-hidden className="pointer-events-none absolute rounded-lg border-[1.5px] border-dashed border-terracotta/80 bg-terracotta/[0.07]" style={{ inset: `calc(-1 * ${t / aspect}cqw) calc(-1 * ${t}cqw)` }} />
               )}
               {p.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element

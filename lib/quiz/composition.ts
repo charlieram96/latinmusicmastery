@@ -1,4 +1,5 @@
 import type { PlacementPiece } from './grading'
+import type { Box } from './placement'
 
 /**
  * A piece-placement background is a composition: a color plus positioned
@@ -16,6 +17,17 @@ export type BackgroundLayer = {
   /** natural width / height of the image, when known (locks corner resizing) */
   ratio?: number
   name?: string
+  /**
+   * Pixel size of the ORIGINAL uploaded file, before trimming. Aligned import
+   * compares a piece's file size against this, so it keeps working once the
+   * stored image is a trimmed, downscaled copy.
+   */
+  natural?: { width: number; height: number }
+  /**
+   * The stored (trimmed) image's opaque box in percent of that original file.
+   * With `natural` it recovers the full-file rect the layer would occupy.
+   */
+  frame?: Box
 }
 
 export type Background = {
@@ -39,14 +51,32 @@ function isFiniteNumber(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v)
 }
 
+function toBox(v: unknown): Box | null {
+  if (!isRecord(v)) return null
+  const { x, y, width, height } = v
+  if (![x, y, width, height].every(isFiniteNumber)) return null
+  return { x: x as number, y: y as number, width: width as number, height: height as number }
+}
+
+function toNatural(v: unknown): { width: number; height: number } | null {
+  if (!isRecord(v)) return null
+  const { width, height } = v
+  if (!isFiniteNumber(width) || !isFiniteNumber(height) || width <= 0 || height <= 0) return null
+  return { width, height }
+}
+
 function toLayer(v: unknown): BackgroundLayer | null {
   if (!isRecord(v)) return null
-  const { id, imageUrl, x, y, width, height, ratio, name } = v
+  const { id, imageUrl, x, y, width, height, ratio, name, natural, frame } = v
   if (typeof id !== 'string' || typeof imageUrl !== 'string') return null
   if (![x, y, width, height].every(isFiniteNumber)) return null
   const layer: BackgroundLayer = { id, imageUrl, x: x as number, y: y as number, width: width as number, height: height as number }
   if (isFiniteNumber(ratio) && ratio > 0) layer.ratio = ratio
   if (typeof name === 'string' && name.trim()) layer.name = name.trim()
+  const nat = toNatural(natural)
+  if (nat) layer.natural = nat
+  const box = toBox(frame)
+  if (box) layer.frame = box
   return layer
 }
 

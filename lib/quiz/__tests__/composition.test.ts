@@ -22,6 +22,29 @@ describe('readComposition', () => {
     expect(bg.aspect).toBeNull()
     expect(bg.layers).toEqual([{ id: 'ok', imageUrl: 'u', x: 0, y: 0, width: 10, height: 10, ratio: 2 }])
   })
+  it('keeps a layer natural size and frame when they are well formed', () => {
+    const layer = { id: 'a', imageUrl: 'u', x: 0, y: 0, width: 10, height: 10, natural: { width: 1440, height: 2126 }, frame: { x: 10, y: 5, width: 80, height: 90 } }
+    const bg = readComposition({ background: { color: '#111', aspect: 1.5, layers: [layer] } })
+    expect(bg.layers[0].natural).toEqual({ width: 1440, height: 2126 })
+    expect(bg.layers[0].frame).toEqual({ x: 10, y: 5, width: 80, height: 90 })
+  })
+  it('drops a malformed natural size or frame but keeps the layer', () => {
+    const bg = readComposition({
+      background: {
+        color: '#111',
+        aspect: 1.5,
+        layers: [
+          { id: 'a', imageUrl: 'u', x: 0, y: 0, width: 10, height: 10, natural: { width: 0, height: 100 }, frame: { x: 1, y: 2, width: 3 } },
+          { id: 'b', imageUrl: 'u', x: 0, y: 0, width: 10, height: 10, natural: 'big', frame: 'all' },
+        ],
+      },
+    })
+    expect(bg.layers).toHaveLength(2)
+    for (const l of bg.layers) {
+      expect(l).not.toHaveProperty('natural')
+      expect(l).not.toHaveProperty('frame')
+    }
+  })
 })
 
 describe('readPieces', () => {

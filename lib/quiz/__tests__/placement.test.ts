@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PlacementPiece } from '../grading'
 import {
-  DEFAULT_TOLERANCE, areaFor, centreOf, clampCentre, effectiveRatio, frameToStage, pieceHeightPct, pieceWarnings, placePiece, refitForAspect, resolveDrop, swappable, toleranceOf,
+  DEFAULT_TOLERANCE, alignedPlacement, areaFor, centreOf, clampCentre, effectiveRatio, frameToStage, fullFrameRect, pieceHeightPct, pieceWarnings, placePiece, refitForAspect, resolveDrop, sameSize, swappable, toleranceOf,
 } from '../placement'
 
 const piece = (over: Partial<PlacementPiece> & { id: string }): PlacementPiece => ({ label: 'x', imageUrl: 'u', width: 10, area: { x: 0, y: 0, width: 10, height: 10 }, ...over })
@@ -58,6 +58,61 @@ describe('frameToStage', () => {
     const r = frameToStage({ x: 25, y: 50, width: 50, height: 20 }, { x: 10, y: 20, width: 40, height: 60 })
     expect(r.centre).toEqual({ x: 30, y: 56 })
     expect(r.width).toBe(20)
+  })
+})
+
+describe('sameSize', () => {
+  it('matches within a pixel and needs both sides', () => {
+    expect(sameSize({ width: 1440, height: 2126 }, { width: 1441, height: 2125 })).toBe(true)
+    expect(sameSize({ width: 1440, height: 2126 }, { width: 1443, height: 2126 })).toBe(false)
+    expect(sameSize(null, { width: 1, height: 1 })).toBe(false)
+    expect(sameSize({ width: 1, height: 1 }, undefined)).toBe(false)
+  })
+})
+
+describe('fullFrameRect', () => {
+  // a 1000 x 2000 base trimmed to x 10-90% / y 5-95% of the file, stored at 20/10 40x80
+  const frame = { x: 10, y: 5, width: 80, height: 90 }
+  const stored = { x: 20, y: 10, width: 40, height: 80 }
+  it('recovers the rect the untrimmed file would occupy', () => {
+    const full = fullFrameRect(stored, frame)
+    expect(full.x).toBeCloseTo(15, 6)
+    expect(full.y).toBeCloseTo(5.5556, 3)
+    expect(full.width).toBeCloseTo(50, 6)
+    expect(full.height).toBeCloseTo(88.8889, 3)
+  })
+  it('round-trips: the frame mapped through the full rect is the stored rect', () => {
+    const full = fullFrameRect(stored, frame)
+    const back = frameToStage(frame, full)
+    expect(back.centre).toEqual({ x: stored.x + stored.width / 2, y: stored.y + stored.height / 2 })
+    expect(back.width).toBeCloseTo(stored.width, 6)
+  })
+  it('returns the rect unchanged without a frame (or a degenerate one)', () => {
+    expect(fullFrameRect(stored)).toEqual(stored)
+    expect(fullFrameRect(stored, { x: 0, y: 0, width: 0, height: 100 })).toEqual(stored)
+  })
+})
+
+describe('alignedPlacement', () => {
+  const natural = { width: 1000, height: 2000 }
+  const base = { rect: { x: 20, y: 10, width: 40, height: 80 }, natural, frame: { x: 10, y: 5, width: 80, height: 90 } }
+  it('maps a same-size piece through the base full-file rect', () => {
+    const piece = { natural: { width: 1000, height: 2000 }, frame: { x: 20, y: 40, width: 10, height: 5 } }
+    const m = alignedPlacement(piece, base)
+    // full rect is x 15 w 50, y 5.5556 h 88.8889
+    expect(m).not.toBeNull()
+    expect(m!.centre.x).toBeCloseTo(15 + (50 * 25) / 100, 2)
+    expect(m!.centre.y).toBeCloseTo(5.5556 + (88.8889 * 42.5) / 100, 2)
+    expect(m!.width).toBeCloseTo(5, 6)
+  })
+  it('returns null for a different file size or no base', () => {
+    expect(alignedPlacement({ natural: { width: 800, height: 2000 }, frame: { x: 0, y: 0, width: 10, height: 10 } }, base)).toBeNull()
+    expect(alignedPlacement({ natural, frame: { x: 0, y: 0, width: 10, height: 10 } }, null)).toBeNull()
+  })
+  it('maps through the layer rect itself when the base has no frame', () => {
+    const noFrame = { rect: { x: 10, y: 20, width: 40, height: 60 }, natural }
+    const m = alignedPlacement({ natural, frame: { x: 25, y: 50, width: 50, height: 20 } }, noFrame)
+    expect(m).toEqual(frameToStage({ x: 25, y: 50, width: 50, height: 20 }, noFrame.rect))
   })
 })
 

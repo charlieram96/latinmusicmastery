@@ -100,7 +100,9 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
 
   const naturals = useNaturalSizes([...background.layers.map((l) => l.imageUrl), ...pieces.map((p) => p.imageUrl)])
   const baseLayer = background.layers[0]
-  const baseNatural = baseLayer ? naturals[baseLayer.imageUrl] : undefined
+  // The ORIGINAL file's pixel size when the layer records it; otherwise the size of the
+  // stored file (right only for a base that was never trimmed).
+  const baseNatural = baseLayer ? baseLayer.natural ?? naturals[baseLayer.imageUrl] : undefined
   const ratios = useMemo(() => {
     const out: Record<string, number> = {}
     for (const p of pieces) {
@@ -137,7 +139,9 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
   }
   const write = (next: { background?: Background; pieces?: PlacementPiece[]; tolerance?: number }, commitLabel?: string, es?: LocalizedOptions) => {
     const nextOptions = build(next)
-    latest.current = { options: nextOptions, optionsEs: es !== undefined ? es : optionsEs }
+    // Fall back to the latest Spanish overlay, never the prop: a label typed a moment ago
+    // (setLabelEs writes only to `latest`) would otherwise be reverted by the next write.
+    latest.current = { options: nextOptions, optionsEs: es !== undefined ? es : latest.current.optionsEs }
     onChange({ options: nextOptions, image_url: null, ...(es !== undefined ? { options_es: es } : {}) })
     if (commitLabel) history.commit(latest.current)
   }
@@ -205,7 +209,11 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
     setImportError(null)
     setImporting({ done: 0, total: files.length })
     try {
-      const imported = await importPieceFiles(files, { questionId, base: baseLayer && baseNatural ? { rect: baseLayer, natural: baseNatural } : null, onProgress: (done, total) => setImporting({ done, total }) })
+      const imported = await importPieceFiles(files, {
+        questionId,
+        base: baseLayer && baseNatural ? { rect: baseLayer, natural: baseNatural, frame: baseLayer.frame } : null,
+        onProgress: (done, total) => setImporting({ done, total }),
+      })
       // Place and append against the state as it is *now*, not the props this call closed over.
       const now = latest.current.options
       const t = readTolerance(now)
@@ -279,6 +287,9 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z' || preview) return
+    // Text fields keep their own native undo stack.
+    const el = e.target as HTMLElement | null
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return
     e.preventDefault()
     if (e.shiftKey) redo()
     else undo()
@@ -336,26 +347,29 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
         ) : (
           <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden md:grid-cols-[minmax(0,1fr)_320px]">
             <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto]">
-              <CompositionCanvas
-                background={background}
-                pieces={pieces}
-                aspect={aspect}
-                tolerance={tolerance}
-                ratios={ratios}
-                selection={selection}
-                onSelect={setSelection}
-                onLayerRect={setLayerRect}
-                onPieceCentre={movePiece}
-                onPieceWidth={sizePiece}
-                onRemovePiece={removePiece}
-                onGestureEnd={commitNow}
-                snap={snap}
-                showGrid={showGrid}
-                showHalos={showHalos}
-                zoom={zoom}
-                warnings={warnings}
-                labels={labels}
-              />
+              {/* An upload rewrites the very options a drag would write: freeze the canvas until it lands. */}
+              <div aria-busy={busy} className={cn('grid min-h-0', busy && 'pointer-events-none opacity-60')}>
+                <CompositionCanvas
+                  background={background}
+                  pieces={pieces}
+                  aspect={aspect}
+                  tolerance={tolerance}
+                  ratios={ratios}
+                  selection={selection}
+                  onSelect={setSelection}
+                  onLayerRect={setLayerRect}
+                  onPieceCentre={movePiece}
+                  onPieceWidth={sizePiece}
+                  onRemovePiece={removePiece}
+                  onGestureEnd={commitNow}
+                  snap={snap}
+                  showGrid={showGrid}
+                  showHalos={showHalos}
+                  zoom={zoom}
+                  warnings={warnings}
+                  labels={labels}
+                />
+              </div>
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-2 text-[11.5px] text-muted-foreground">
                 <span>Autosaves as you go · {history.canUndo ? 'undo available until Done' : 'nothing to undo yet'}</span>
                 <span>← ↑ ↓ → nudge 0.1% · Shift 1% · ⌫ remove · ⌘Z undo</span>
