@@ -4,68 +4,99 @@ import { useRef } from 'react'
 import { cn } from '@/lib/utils'
 import type { Background } from '@/lib/quiz/composition'
 import type { PlacementPiece } from '@/lib/quiz/grading'
+import { centreOf, effectiveRatio, pieceHeightPct, type Centre, type PieceWarning } from '@/lib/quiz/placement'
 import type { Rect } from '@/lib/quiz/transform'
-import { useStageAspect } from '@/components/class-viewer/lesson-viewer/quiz/piece-placement-input'
 import { Handles } from './handles'
 import { useCanvasTransform } from './use-canvas-transform'
 
 export type Selection = { kind: 'layer' | 'piece'; id: string } | null
 
-const BASE_HEIGHT_PX = 500
-
 /**
- * The editable composition: color, draggable/resizable image layers, and one
- * draggable/resizable target box per piece with the piece ghost centered in
- * it. Clicking empty canvas moves the selected piece's box there.
+ * The composed answer: colour, image layers, and every piece drawn where it
+ * belongs at the size the student sees. Dragging a sprite moves its target;
+ * the gold dot changes its width; the dashed halo is the grading tolerance.
+ * The canvas fills its container's height (container-type: size on the wrap).
  */
 export function CompositionCanvas({
   background,
   pieces,
+  aspect,
+  tolerance,
+  ratios,
   selection,
   onSelect,
   onLayerRect,
-  onPieceArea,
+  onPieceCentre,
   onPieceWidth,
+  onRemovePiece,
+  onGestureEnd,
   snap,
   showGrid,
+  showHalos,
+  zoom,
+  warnings,
+  labels,
 }: {
   background: Background
   pieces: PlacementPiece[]
+  aspect: number
+  tolerance: number
+  ratios: Record<string, number>
   selection: Selection
   onSelect: (s: Selection) => void
   onLayerRect: (id: string, rect: Rect) => void
-  onPieceArea: (id: string, rect: Rect) => void
+  onPieceCentre: (id: string, centre: Centre) => void
   onPieceWidth: (id: string, width: number) => void
+  onRemovePiece: (id: string) => void
+  onGestureEnd: () => void
   snap: boolean
   showGrid: boolean
+  showHalos: boolean
+  zoom: 1 | 2
+  warnings: Record<string, PieceWarning[]>
+  labels: (piece: PlacementPiece, index: number) => string
 }) {
   const canvasRef = useRef<HTMLDivElement>(null)
-  const aspect = useStageAspect(background)
-  const tf = useCanvasTransform(canvasRef, snap)
-  const selectedPiece = selection?.kind === 'piece' ? pieces.find((p) => p.id === selection.id) : undefined
+  const tf = useCanvasTransform(canvasRef, { snap, onEnd: (moved) => moved && onGestureEnd() })
 
-  const onCanvasClick = (e: React.MouseEvent) => {
-    if (tf.consumeClick()) return
-    if (e.target !== e.currentTarget) return
-    if (!selectedPiece) {
+  const ratioOf = (p: PlacementPiece) => p.ratio ?? ratios[p.id] ?? effectiveRatio(p, aspect, tolerance)
+  const focusPiece = (id: string) => canvasRef.current?.querySelector<HTMLElement>(`[data-piece="${id}"]`)?.focus()
+
+  const onPieceKey = (e: React.KeyboardEvent, p: PlacementPiece) => {
+    const c = centreOf(p.area)
+    const step = e.shiftKey ? 1 : 0.1
+    let next: Centre | null = null
+    if (e.key === 'ArrowLeft') next = { x: c.x - step, y: c.y }
+    else if (e.key === 'ArrowRight') next = { x: c.x + step, y: c.y }
+    else if (e.key === 'ArrowUp') next = { x: c.x, y: c.y - step }
+    else if (e.key === 'ArrowDown') next = { x: c.x, y: c.y + step }
+    else if (e.key === 'Backspace' || e.key === 'Delete') {
+      e.preventDefault()
+      onRemovePiece(p.id)
+      return
+    } else if (e.key === 'Escape') {
       onSelect(null)
       return
     }
-    const r = canvasRef.current!.getBoundingClientRect()
-    const a = selectedPiece.area
-    const x = ((e.clientX - r.left) / r.width) * 100 - a.width / 2
-    const y = ((e.clientY - r.top) / r.height) * 100 - a.height / 2
-    onPieceArea(selectedPiece.id, { ...a, x: Math.min(100 - a.width, Math.max(0, x)), y: Math.min(100 - a.height, Math.max(0, y)) })
+    if (!next) return
+    e.preventDefault()
+    onPieceCentre(p.id, { x: Math.round(next.x * 10) / 10, y: Math.round(next.y * 10) / 10 })
+    onGestureEnd()
+    requestAnimationFrame(() => focusPiece(p.id))
   }
 
+  const fit = `min(100cqw - 48px, calc((100cqh - 48px) * ${aspect}))`
   return (
-    <div className="grid min-h-[380px] place-items-center bg-[radial-gradient(hsl(var(--foreground)/0.1)_1px,transparent_1px)] bg-[length:16px_16px] p-6">
+    <div className="grid h-full min-h-[360px] place-items-center overflow-auto bg-[radial-gradient(hsl(var(--foreground)/0.1)_1px,transparent_1px)] bg-[length:16px_16px] p-6 [container-type:size]">
       <div
         ref={canvasRef}
-        onClick={onCanvasClick}
+        onClick={(e) => {
+          if (tf.consumeClick()) return
+          if (e.target === e.currentTarget) onSelect(null)
+        }}
         {...tf.handlers}
-        className="relative touch-none select-none rounded-[10px] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6),0_0_0_1px_hsl(var(--foreground)/0.15)]"
-        style={{ width: `min(100%, ${BASE_HEIGHT_PX * aspect}px)`, aspectRatio: aspect, background: background.color }}
+        className="relative touch-none select-none rounded-[10px] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6),0_0_0_1px_hsl(var(--foreground)/0.15)] [container-type:inline-size]"
+        style={{ width: zoom === 2 ? `calc(2 * ${fit})` : fit, aspectRatio: aspect, background: background.color }}
       >
         {background.layers.map((l) => {
           const on = selection?.kind === 'layer' && selection.id === l.id
@@ -73,7 +104,7 @@ export function CompositionCanvas({
           return (
             <div
               key={l.id}
-              className={cn('absolute cursor-move', on && 'outline outline-[1.5px] outline-primary')}
+              className={cn('absolute cursor-move', on && 'ring-[1.5px] ring-primary')}
               style={{ left: `${l.x}%`, top: `${l.y}%`, width: `${l.width}%`, height: `${l.height}%` }}
               onPointerDown={(e) => {
                 onSelect({ kind: 'layer', id: l.id })
@@ -82,7 +113,12 @@ export function CompositionCanvas({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={l.imageUrl} alt="" draggable={false} className="pointer-events-none block h-full w-full select-none" style={{ objectFit: 'fill' }} />
-              {on && <Handles tone="neutral" onDown={(e, h) => tf.begin(e, { mode: 'resize', rect, handle: h, keepRatio: true, onChange: (r) => onLayerRect(l.id, r) })} />}
+              {on && (
+                <Handles
+                  tone="neutral"
+                  onDown={(e, h) => tf.begin(e, { mode: 'resize', rect, handle: h, keepRatio: true, boxRatio: l.ratio ? l.ratio / aspect : undefined, onChange: (r) => onLayerRect(l.id, r) })}
+                />
+              )}
             </div>
           )
         })}
@@ -100,40 +136,46 @@ export function CompositionCanvas({
 
         {pieces.map((p, i) => {
           const on = selection?.kind === 'piece' && selection.id === p.id
-          const a = p.area
+          const c = centreOf(p.area)
+          const t = p.tolerance ?? tolerance
+          const warn = (warnings[p.id]?.length ?? 0) > 0
+          const label = labels(p, i)
+          const h = pieceHeightPct(p.width, aspect, ratioOf(p))
           return (
             <div
               key={p.id}
-              className={cn(
-                'absolute cursor-move rounded-md border-[1.5px] border-dashed border-primary/55 bg-primary/8',
-                on && 'border-solid border-primary bg-primary/15 shadow-[0_0_0_1px_rgba(0,0,0,0.25)]',
-              )}
-              style={{ left: `${a.x}%`, top: `${a.y}%`, width: `${a.width}%`, height: `${a.height}%`, zIndex: on ? 5 : 2 }}
+              data-piece={p.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`${label}: drag to move, arrows nudge, Backspace removes`}
+              className={cn('group absolute -translate-x-1/2 -translate-y-1/2 cursor-move touch-none focus-visible:outline-none', on && 'ring-[1.5px] ring-primary ring-offset-1 ring-offset-transparent')}
+              style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${p.width}%`, height: `${h}%`, zIndex: on ? 30 : 10 + i }}
               onPointerDown={(e) => {
+                if ((e.target as HTMLElement).dataset.sizeHandle) return
                 onSelect({ kind: 'piece', id: p.id })
-                tf.begin(e, { mode: 'move', rect: a, onChange: (r) => onPieceArea(p.id, r) })
+                tf.begin(e, { mode: 'centre', centre: c, onChange: (next) => onPieceCentre(p.id, next) })
               }}
+              onKeyDown={(e) => onPieceKey(e, p)}
             >
-              <span className="absolute -top-[22px] left-0 whitespace-nowrap rounded-[5px] bg-primary px-1.5 py-0.5 text-[10.5px] font-bold leading-[1.5] text-white">
-                {p.label || `Piece ${i + 1}`}
-              </span>
-              {/* Ghost: the piece at its student size, centered in the box. The gold dot resizes it. */}
-              <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ width: `${(p.width / a.width) * 100}%` }}>
-                {p.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.imageUrl} alt="" draggable={false} className="block h-auto w-full select-none opacity-50" />
-                ) : (
-                  <div className="aspect-square w-full rounded border-2 border-dashed border-white/50" />
-                )}
-                {on && (
-                  <span
-                    title="Drag to change how big the piece appears to students"
-                    onPointerDown={(e) => tf.begin(e, { mode: 'size', width: p.width, onChange: (w) => onPieceWidth(p.id, w) })}
-                    className="pointer-events-auto absolute -bottom-[7px] -right-[7px] z-[4] h-[13px] w-[13px] cursor-nwse-resize rounded-full border-[1.5px] border-white bg-gold shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
-                  />
-                )}
-              </div>
-              {on && <Handles onDown={(e, h) => tf.begin(e, { mode: 'resize', rect: a, handle: h, onChange: (r) => onPieceArea(p.id, r) })} />}
+              {(on || showHalos) && (
+                <span aria-hidden className="pointer-events-none absolute rounded-lg border-[1.5px] border-dashed border-terracotta/80 bg-terracotta/[0.07]" style={{ inset: `calc(-1 * ${t}cqw)` }} />
+              )}
+              {p.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.imageUrl} alt="" draggable={false} className="pointer-events-none block h-full w-full select-none" style={{ objectFit: 'fill' }} />
+              ) : (
+                <div className="h-full w-full rounded border-2 border-dashed border-white/50" />
+              )}
+              <span className={cn('pointer-events-none absolute -left-2 -top-2 grid h-[18px] w-[18px] place-items-center rounded-full text-[10px] font-bold text-white shadow-[0_1px_3px_rgba(0,0,0,0.35)]', warn ? 'bg-terracotta' : 'bg-primary')}>{i + 1}</span>
+              <span className={cn('pointer-events-none absolute bottom-full left-1/2 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-[5px] bg-primary px-1.5 py-0.5 text-[10.5px] font-bold leading-[1.5] text-white group-hover:block', on && 'block')}>{label}</span>
+              {on && (
+                <span
+                  data-size-handle="1"
+                  title="Drag to change how big the piece appears to students"
+                  onPointerDown={(e) => tf.begin(e, { mode: 'size', width: p.width, onChange: (w) => onPieceWidth(p.id, w) })}
+                  className="absolute -bottom-[7px] -right-[7px] z-[4] h-[13px] w-[13px] cursor-nwse-resize rounded-full border-[1.5px] border-white bg-gold shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
+                />
+              )}
             </div>
           )
         })}
