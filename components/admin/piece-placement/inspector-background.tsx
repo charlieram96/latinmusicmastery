@@ -38,6 +38,7 @@ export function InspectorBackground({
   fixing,
   fixError,
   saved,
+  busy: busyElsewhere,
 }: {
   background: Background
   aspect: number
@@ -54,9 +55,11 @@ export function InspectorBackground({
   fixing: { done: number; total: number } | null
   fixError: string | null
   saved: unknown
+  /** Any long upload in flight, in this panel or the other one. */
+  busy?: boolean
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
-  const busy = !!adding || !!fixing
+  const busy = !!adding || !!fixing || !!busyElsewhere
 
   return (
     <div className="grid content-start gap-5 p-3.5">
@@ -145,6 +148,7 @@ export function InspectorBackground({
             type="file"
             accept="image/png,image/webp,image/jpeg"
             multiple
+            disabled={busy}
             className="hidden"
             onChange={(e) => {
               const files = Array.from(e.target.files ?? []).filter((f) => f.type.startsWith('image/'))
@@ -168,9 +172,9 @@ export function InspectorBackground({
         {fixError && <span className="text-destructive">{fixError}</span>}
       </div>
 
-      <details>
+      <details className="min-w-0">
         <summary className="cursor-pointer text-[11.5px] font-bold text-muted-foreground">Advanced · saved data</summary>
-        <pre className="mt-2 max-h-[220px] overflow-auto rounded-[10px] border border-border bg-sunken p-3 text-[11px] leading-snug text-muted-foreground">{JSON.stringify(saved, null, 2)}</pre>
+        <pre className="mt-2 max-h-[220px] max-w-full overflow-auto rounded-[10px] border border-border bg-sunken p-3 text-[11px] leading-snug text-muted-foreground">{JSON.stringify(saved, null, 2)}</pre>
       </details>
     </div>
   )

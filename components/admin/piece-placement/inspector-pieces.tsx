@@ -69,6 +69,7 @@ export function InspectorPieces({
   onTolerance,
   warnings,
   labels,
+  busy: busyElsewhere,
 }: {
   pieces: PlacementPiece[]
   optionsEs: LocalizedOptions
@@ -86,11 +87,14 @@ export function InspectorPieces({
   onTolerance: (t: number, commit: boolean) => void
   warnings: Record<string, PieceWarning[]>
   labels: (piece: PlacementPiece, index: number) => string
+  /** Any long upload in flight, in this panel or the other one. */
+  busy?: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [over, setOver] = useState(false)
+  const busy = !!importing || !!busyElsewhere
   const pick = (list: FileList | null) => {
-    if (importing) return
+    if (busy) return
     const files = Array.from(list ?? []).filter((f) => f.type.startsWith('image/'))
     if (files.length) onImport(files)
   }
@@ -100,12 +104,12 @@ export function InspectorPieces({
       <div
         onDragOver={(e) => {
           e.preventDefault()
-          if (!importing) setOver(true)
+          if (!busy) setOver(true)
         }}
         onDragLeave={() => setOver(false)}
         onDrop={(e) => {
           e.preventDefault()
-          if (importing) return
+          if (busy) return
           setOver(false)
           pick(e.dataTransfer.files)
         }}
@@ -116,7 +120,7 @@ export function InspectorPieces({
           type="file"
           accept="image/png,image/webp,image/jpeg"
           multiple
-          disabled={!!importing}
+          disabled={busy}
           className="hidden"
           onChange={(e) => {
             pick(e.target.files)
@@ -127,7 +131,7 @@ export function InspectorPieces({
           <span className="font-semibold">Importing {importing.done} of {importing.total}…</span>
         ) : (
           <>
-            <button type="button" onClick={() => inputRef.current?.click()} className="inline-flex items-center justify-center gap-1.5 font-semibold text-foreground hover:text-primary">
+            <button type="button" disabled={busy} onClick={() => inputRef.current?.click()} className="inline-flex items-center justify-center gap-1.5 font-semibold text-foreground hover:text-primary disabled:opacity-40">
               <Upload className="h-3.5 w-3.5" /> Drop PNGs here or click to choose
             </button>
             <span className="leading-snug text-muted-foreground">Several at once is fine. Files with the base image’s pixel size are trimmed and placed automatically; others land centred at 20% width.</span>

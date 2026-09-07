@@ -112,17 +112,29 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
   const fullFrameIds = useMemo(() => new Set(pieces.filter((p) => baseNatural && sameSize(naturals[p.imageUrl], baseNatural)).map((p) => p.id)), [pieces, naturals, baseNatural])
   const warnings = useMemo(() => pieceWarnings(pieces, aspect, tolerance, fullFrameIds), [pieces, aspect, tolerance, fullFrameIds])
   const labels = (p: PlacementPiece, i: number) => (p.label ?? '').trim() || `Piece ${i + 1}`
+  /** One flag for every long upload: they share the same options, so only one may run at a time. */
+  const busy = !!importing || !!adding || !!fixing
+  /** What the Background tab's "saved data" shows: the current props, normalised. */
+  const saved = useMemo(() => ({ image_url: null, options: { ...((options as Record<string, unknown>) ?? {}), background, pieces, tolerance } }), [options, background, pieces, tolerance])
 
   // ---- writes: every write autosaves through onChange; `commitLabel` also records a history entry
-  const record = (options as Record<string, unknown>) ?? {}
-  const build = (next: { background?: Background; pieces?: PlacementPiece[]; tolerance?: number }) => ({ ...record, background: next.background ?? background, pieces: next.pieces ?? pieces, tolerance: next.tolerance ?? tolerance })
-  // What the last write handed to `onChange`, updated synchronously so a commit that
-  // lands in the same tick as its write (drag end) records the new state, not the props
-  // this render still holds.
+  // What the last write handed to `onChange`, updated synchronously so a commit that lands in the
+  // same tick as its write (drag end) records the new state, not the props this render still holds.
+  // It is also what every write merges into, so an upload that resolves seconds after it started
+  // folds into whatever the state is *now* instead of reinstating the props it captured.
   const latest = useRef<Snapshot>({ options, optionsEs })
   useEffect(() => {
     latest.current = { options, optionsEs }
   }, [options, optionsEs])
+  const build = (next: { background?: Background; pieces?: PlacementPiece[]; tolerance?: number }) => {
+    const base = latest.current.options
+    return {
+      ...((base as Record<string, unknown>) ?? {}),
+      background: next.background ?? readComposition(base, imageUrl),
+      pieces: next.pieces ?? readPieces(base),
+      tolerance: next.tolerance ?? readTolerance(base),
+    }
+  }
   const write = (next: { background?: Background; pieces?: PlacementPiece[]; tolerance?: number }, commitLabel?: string, es?: LocalizedOptions) => {
     const nextOptions = build(next)
     latest.current = { options: nextOptions, optionsEs: es !== undefined ? es : optionsEs }
@@ -137,14 +149,26 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
   const undo = () => { const s = history.undo(); if (s) restore(s) }
   const redo = () => { const s = history.redo(); if (s) restore(s) }
 
-  // The summary card mounts this dialog closed, so the first snapshot can be stale: re-seed on open.
+  // The summary card mounts this dialog closed, so the first snapshot can be stale: re-seed on open,
+  // with the *normalised* options so undoing all the way back never yields a row that has no
+  // background (the write path always sets image_url to null).
   useEffect(() => {
     if (open) {
       latest.current = { options, optionsEs }
-      history.reset(latest.current)
+      const seed = { options: build({}), optionsEs }
+      latest.current = seed
+      history.reset(seed)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
+
+  // An undo can drop the piece or layer the selection points at; forget it rather than keep
+  // an inspector row and a canvas handle for something that no longer exists.
+  useEffect(() => {
+    if (!selection) return
+    const list = selection.kind === 'piece' ? pieces : background.layers
+    if (!list.some((x) => x.id === selection.id)) setSelection(null)
+  }, [selection, pieces, background.layers])
 
   // Migrated rows carry aspect: null; persist the measured ratio the first time it's actually known.
   useEffect(() => {
@@ -182,11 +206,14 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
     setImporting({ done: 0, total: files.length })
     try {
       const imported = await importPieceFiles(files, { questionId, base: baseLayer && baseNatural ? { rect: baseLayer, natural: baseNatural } : null, onProgress: (done, total) => setImporting({ done, total }) })
+      // Place and append against the state as it is *now*, not the props this call closed over.
+      const now = latest.current.options
+      const t = readTolerance(now)
       const added = imported.map((it) => {
         const seed: PlacementPiece = { id: it.id, label: it.label, imageUrl: it.imageUrl, ratio: it.ratio, width: NEW_PIECE_WIDTH, area: { x: 0, y: 0, width: 0, height: 0 } }
-        return it.aligned ? placePiece(seed, it.aligned.centre, it.aligned.width, aspect, tolerance) : placePiece(seed, { x: 50, y: 50 }, NEW_PIECE_WIDTH, aspect, tolerance)
+        return it.aligned ? placePiece(seed, it.aligned.centre, it.aligned.width, aspect, t) : placePiece(seed, { x: 50, y: 50 }, NEW_PIECE_WIDTH, aspect, t)
       })
-      write({ pieces: [...pieces, ...added] }, `import ${added.length} piece${added.length === 1 ? '' : 's'}`)
+      write({ pieces: [...readPieces(now), ...added] }, `import ${added.length} piece${added.length === 1 ? '' : 's'}`)
       if (added[0]) setSelection({ kind: 'piece', id: added[0].id })
       setTab('pieces')
     } catch (e) {
@@ -223,10 +250,13 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
     if (selection?.kind === 'layer' && selection.id === id) setSelection(null)
   }
   const addLayers = async (files: File[]) => {
+    setFixError(null)
     setAdding({ done: 0, total: files.length })
     try {
       const added = await importLayerFiles(files, { questionId, aspect, onProgress: (done, total) => setAdding({ done, total }) })
-      setBackground({ layers: [...background.layers, ...added] }, `add ${added.length} layer${added.length === 1 ? '' : 's'}`)
+      // Append to the layers as they are *now*, not the props this call closed over.
+      const now = readComposition(latest.current.options, imageUrl)
+      write({ background: { ...now, layers: [...now.layers, ...added] } }, `add ${added.length} layer${added.length === 1 ? '' : 's'}`)
       if (added[0]) setSelection({ kind: 'layer', id: added[0].id })
     } catch (e) {
       setFixError(e instanceof Error ? e.message : 'Upload failed')
@@ -254,7 +284,7 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
     else undo()
   }
   const done = () => {
-    history.reset(latest.current)
+    history.reset({ options: build({}), optionsEs: latest.current.optionsEs })
     onOpenChange(false)
   }
 
@@ -353,7 +383,8 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
                     onFixImages={() => void runFixImages()}
                     fixing={fixing}
                     fixError={fixError}
-                    saved={{ image_url: null, options: build({}) }}
+                    saved={saved}
+                    busy={busy}
                   />
                 ) : (
                   <InspectorPieces
@@ -373,6 +404,7 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
                     onTolerance={setTolerance}
                     warnings={warnings}
                     labels={labels}
+                    busy={busy}
                   />
                 )}
               </div>
