@@ -12,7 +12,6 @@ import styles from './quiz.module.css'
 type Placement = Record<string, PiecePlacement> // pieceId -> centre in % of the stage
 
 const DRAG_THRESHOLD_PX = 6
-const KEY = 'dashboard.classViewer.quiz.pieces.'
 
 function PieceImage({ piece, label, fit = false, className }: { piece: PlacementPiece; label: string; fit?: boolean; className?: string }) {
   return piece.imageUrl ? (
@@ -156,7 +155,7 @@ export function PiecePlacementInput({
 
   const ratioOf = (p: PlacementPiece) => p.ratio ?? measured[p.id] ?? 1
   const heightOf = (p: PlacementPiece) => pieceHeightPct(p.width, aspect, ratioOf(p))
-  const labelOf = (p: PlacementPiece, i: number) => (p.label ?? '').trim() || t(KEY + 'pieceN', { n: i + 1 })
+  const labelOf = (p: PlacementPiece, i: number) => (p.label ?? '').trim() || t('dashboard.classViewer.quiz.pieces.pieceN', { n: i + 1 })
   const indexOf = useMemo(() => new Map(pieces.map((p, i) => [p.id, i])), [pieces])
   const byId = useMemo(() => new Map(pieces.map((p) => [p.id, p])), [pieces])
 
@@ -278,7 +277,6 @@ export function PiecePlacementInput({
     window.removeEventListener('pointermove', stable.current.move)
     window.removeEventListener('pointerup', stable.current.up)
     window.removeEventListener('pointercancel', stable.current.up)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const placeAt = (id: string, centre: Centre) => {
@@ -358,7 +356,7 @@ export function PiecePlacementInput({
             {!isGraded && !drag?.live && (placedCount === 0 || armed) && (
               <div className="pointer-events-none absolute inset-x-0 top-3 z-[45] flex justify-center px-3">
                 <span className="max-w-full truncate rounded-full bg-black/55 px-3.5 py-1.5 text-xs font-semibold text-white backdrop-blur-sm">
-                  {armed ? t(KEY + 'tapWhere', { label: labelOf(byId.get(armed)!, indexOf.get(armed) ?? 0) }) : t(KEY + 'hintTap')}
+                  {armed ? t('dashboard.classViewer.quiz.pieces.tapWhere', { label: labelOf(byId.get(armed)!, indexOf.get(armed) ?? 0) }) : t('dashboard.classViewer.quiz.pieces.hintTap')}
                 </span>
               </div>
             )}
@@ -373,10 +371,16 @@ export function PiecePlacementInput({
                   <div
                     key={`reveal-${p.id}`}
                     data-reveal={p.id}
+                    // Keyboard-reachable so a wrongly placed piece's answer name is not hover-only.
+                    tabIndex={0}
+                    role="img"
+                    aria-label={label}
                     onMouseEnter={() => setHover(p.id)}
                     onMouseLeave={() => setHover((h) => (h === p.id ? null : h))}
+                    onFocus={() => setHover(p.id)}
+                    onBlur={() => setHover((h) => (h === p.id ? null : h))}
                     style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${p.width}%`, zIndex: 5 }}
-                    className={cn(styles.reveal, hover === p.id && styles.revealHi)}
+                    className={cn(styles.reveal, 'rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold', hover === p.id && styles.revealHi)}
                   >
                     <div className="rounded-lg border-2 border-dashed border-success p-0.5">
                       <PieceImage piece={p} label="" className="opacity-40 transition-opacity" />
@@ -401,7 +405,7 @@ export function PiecePlacementInput({
                     data-piece={p.id}
                     role="button"
                     tabIndex={isGraded ? -1 : 0}
-                    aria-label={t(KEY + 'placedAria', { label })}
+                    aria-label={t('dashboard.classViewer.quiz.pieces.placedAria', { label })}
                     title={label}
                     onPointerDown={(e) => startDrag(e, p.id, false)}
                     onKeyDown={(e) => onPieceKey(e, p.id)}
@@ -424,11 +428,11 @@ export function PiecePlacementInput({
           </div>
         </div>
 
-        <aside ref={trayRef} className={styles.tray}>
+        <aside ref={trayRef} aria-label={t('dashboard.classViewer.quiz.pieces.title')} className={styles.tray}>
           <div className={cn('rounded-2xl border border-border bg-card p-3 transition-colors', drag?.live && drag.overTray && styles.trayDrop)}>
             <div className="mb-2 flex items-center justify-between">
-              <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-gold">{t(KEY + 'title')}</span>
-              <span className="text-xs tabular-nums text-muted-foreground">{t(KEY + 'placedOf', { placed: placedCount, total: pieces.length })}</span>
+              <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-gold">{t('dashboard.classViewer.quiz.pieces.title')}</span>
+              <span className="text-xs tabular-nums text-muted-foreground">{t('dashboard.classViewer.quiz.pieces.placedOf', { placed: placedCount, total: pieces.length })}</span>
             </div>
             <div className={styles.trayList}>
               {unplaced.map((p) => {
@@ -442,7 +446,7 @@ export function PiecePlacementInput({
                     type="button"
                     data-piece-id={p.id}
                     aria-pressed={isArmed}
-                    aria-label={isArmed ? t(KEY + 'selectedAria', { label }) : label}
+                    aria-label={isArmed ? t('dashboard.classViewer.quiz.pieces.selectedAria', { label }) : label}
                     onPointerDown={(e) => startDrag(e, p.id, true)}
                     onClick={(e) => {
                       if (e.detail === 0 && !isGraded) setArmed((a) => (a === p.id ? null : p.id))
@@ -465,19 +469,19 @@ export function PiecePlacementInput({
                     </span>
                     <span className="min-w-0 truncate text-[13px] font-semibold leading-tight">
                       {label}
-                      {isGraded && <small className="block text-[11px] font-medium text-muted-foreground">{t(KEY + 'notPlaced')}</small>}
+                      {isGraded && <small className="block text-[11px] font-medium text-muted-foreground">{t('dashboard.classViewer.quiz.pieces.notPlaced')}</small>}
                     </span>
                   </button>
                 )
               })}
               {unplaced.length === 0 && (
                 <div className="rounded-xl border border-dashed border-border px-2.5 py-4 text-center text-xs text-muted-foreground">
-                  {isGraded ? t(KEY + 'wasPlaced') : t(KEY + 'allPlaced')}
+                  {isGraded ? t('dashboard.classViewer.quiz.pieces.wasPlaced') : t('dashboard.classViewer.quiz.pieces.allPlaced')}
                 </div>
               )}
             </div>
             {isGraded && pieces.some((p) => !isPieceCorrect(p, placement[p.id])) && (
-              <p className="mt-2.5 text-[11.5px] leading-snug text-muted-foreground">{t(KEY + 'revealHint')}</p>
+              <p className="mt-2.5 text-[11.5px] leading-snug text-muted-foreground">{t('dashboard.classViewer.quiz.pieces.revealHint')}</p>
             )}
           </div>
         </aside>
