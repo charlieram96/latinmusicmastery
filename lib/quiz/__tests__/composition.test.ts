@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_BACKGROUND_COLOR, legacyLayer, readComposition, readPieces, shouldPersistAspect } from '../composition'
+import { DEFAULT_BACKGROUND_COLOR, legacyLayer, readComposition, readPieces, readTolerance, shouldPersistAspect } from '../composition'
 
 describe('readComposition', () => {
   it('returns the stored background when present', () => {
@@ -48,5 +48,25 @@ describe('shouldPersistAspect', () => {
   })
   it('is false when the dialog is closed', () => {
     expect(shouldPersistAspect({ ...base, open: false })).toBe(false)
+  })
+})
+
+describe('readPieces normalisation', () => {
+  it('keeps ratio and tolerance only when they are sane', () => {
+    const [p] = readPieces({ pieces: [{ id: 'p', imageUrl: 'u', width: 5, area: { x: 0, y: 0, width: 1, height: 1 }, ratio: 0, tolerance: 2 }] })
+    expect(p).not.toHaveProperty('ratio')
+    expect(p.tolerance).toBe(2)
+    const [q] = readPieces({ pieces: [{ id: 'q', imageUrl: 'u', width: 5, area: { x: 0, y: 0, width: 1, height: 1 }, ratio: 1.5, tolerance: -1 }] })
+    expect(q.ratio).toBe(1.5)
+    expect(q).not.toHaveProperty('tolerance')
+    expect(readPieces({ pieces: [null, 'x'] })).toEqual([])
+  })
+})
+
+describe('readTolerance', () => {
+  it('returns the stored question default or 3', () => {
+    expect(readTolerance({ tolerance: 5 })).toBe(5)
+    expect(readTolerance({ tolerance: -1 })).toBe(3)
+    expect(readTolerance(null)).toBe(3)
   })
 })

@@ -15,6 +15,7 @@ export type BackgroundLayer = {
   height: number
   /** natural width / height of the image, when known (locks corner resizing) */
   ratio?: number
+  name?: string
 }
 
 export type Background = {
@@ -40,11 +41,12 @@ function isFiniteNumber(v: unknown): v is number {
 
 function toLayer(v: unknown): BackgroundLayer | null {
   if (!isRecord(v)) return null
-  const { id, imageUrl, x, y, width, height, ratio } = v
+  const { id, imageUrl, x, y, width, height, ratio, name } = v
   if (typeof id !== 'string' || typeof imageUrl !== 'string') return null
   if (![x, y, width, height].every(isFiniteNumber)) return null
   const layer: BackgroundLayer = { id, imageUrl, x: x as number, y: y as number, width: width as number, height: height as number }
   if (isFiniteNumber(ratio) && ratio > 0) layer.ratio = ratio
+  if (typeof name === 'string' && name.trim()) layer.name = name.trim()
   return layer
 }
 
@@ -63,7 +65,23 @@ export function readComposition(options: unknown, imageUrl?: string | null): Bac
 
 export function readPieces(options: unknown): PlacementPiece[] {
   const opts = isRecord(options) ? options : {}
-  return Array.isArray(opts.pieces) ? (opts.pieces as PlacementPiece[]) : []
+  if (!Array.isArray(opts.pieces)) return []
+  const out: PlacementPiece[] = []
+  for (const v of opts.pieces) {
+    if (!isRecord(v)) continue
+    const { ratio, tolerance, ...rest } = v
+    const piece = { ...rest } as PlacementPiece
+    if (isFiniteNumber(ratio) && ratio > 0) piece.ratio = ratio
+    if (isFiniteNumber(tolerance) && tolerance >= 0) piece.tolerance = tolerance
+    out.push(piece)
+  }
+  return out
+}
+
+/** Question-level default tolerance (percent of stage width) for the builder's halo; `area` is what the grader reads. */
+export function readTolerance(options: unknown): number {
+  const opts = isRecord(options) ? options : {}
+  return isFiniteNumber(opts.tolerance) && opts.tolerance >= 0 ? opts.tolerance : 3
 }
 
 /**
