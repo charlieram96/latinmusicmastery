@@ -1,4 +1,5 @@
 {
+  "lessonView": {"videoToggle": "Vídeo", "scoreToggle": "Partitura","label": "Vista de la lección", "both": "Vídeo + partitura", "video": "Solo vídeo", "score": "Solo partitura"},
   "common": {
     "language": "Idioma",
     "changeLanguage": "Cambiar idioma",

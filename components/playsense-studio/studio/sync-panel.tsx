@@ -12,11 +12,12 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, Loader2, Maximize, Music2, Repeat, Trash2, UploadCloud, ZoomIn, ZoomOut } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type Dispatch } from 'react';
+import { AudioLines, Loader2, Maximize, Music2, Repeat, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
-import { publishTimeMap, saveSectionDraftTimeMap } from '@/app/actions/playsense-studio';
+import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
+import { publishTimeMap, saveScoreDocument } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
@@ -103,7 +104,7 @@ export interface SyncPanelProps {
 
 const MIN_PPS = 8;
 const MAX_PPS = 600;
-const DRAFT_DEBOUNCE_MS = 1500;
+const TIMING_DEBOUNCE_MS = 1500;
 
 export function SyncPanel({
   classItemId,
@@ -152,7 +153,7 @@ export function SyncPanel({
     }
     return seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, 0));
   });
-  const [dirty, setDirty] = useState(false);
+  const [dirty, setDirty] = useState(!!hasDraft);
   // Faint note-onset ticks over the waveform — default on (they're low-opacity).
   const [showNotes, setShowNotes] = useState(true);
 
@@ -165,6 +166,7 @@ export function SyncPanel({
     if (prevSig.current === sig) return;
     prevSig.current = sig;
     setMarkers((prev) => reconcileMarkers(prev, score.tracks[0], score));
+    setDirty(true);
   }, [sig, score]);
 
   // --- View state ---
@@ -220,17 +222,20 @@ export function SyncPanel({
   const [decodeState, setDecodeState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
 
-  // --- Publish / draft autosave ---
+  // --- Active timing autosave ---
   const [error, setError] = useState<string | null>(null);
-  const [published, setPublished] = useState(false);
-  const [isPublishing, startPublish] = useTransition();
-  // Draft autosave state (section path only). `dirty` = not yet written to the
-  // draft; `hasUnpublished` = a saved draft differs from what students see live.
-  const [hasUnpublished, setHasUnpublished] = useState(!!hasDraft);
-  const [savingDraft, setSavingDraft] = useState(false);
-  const savingDraftRef = useRef(false);
-  // Autosave only the section sync path (not the legacy classItem / exercise sync).
-  const draftAutosave = showSync && !!sectionId && (publishTarget ?? 'section') === 'section';
+
+  // Track the exact snapshot so edits arriving during a save remain pending.
+  const markersRef = useRef(markers);
+  const scoreRef = useRef(score);
+  markersRef.current = markers;
+  scoreRef.current = score;
+  const [savingTiming, setSavingTiming] = useState(false);
+  const savingTimingRef = useRef(false);
+  // Every video sync target saves directly to its active map.
+  const timingAutosave = showSync;
+  // Editing a failed snapshot allows autosave to try again.
+  useEffect(() => { setError(null); }, [markers, score]);
 
   const timelineDuration = Math.max(
     peaks?.durationSeconds ?? 0,
@@ -479,11 +484,11 @@ export function SyncPanel({
     clock.loadLoop(start, end);
   };
 
-  const zoomBy = (factor: number) => {
+  const zoomBy = (factor: number, anchorPx = viewportWidth / 2) => {
     setPps((p) => {
       const nextPps = clamp(p * factor, MIN_PPS, MAX_PPS);
-      const centerTime = (scrollLeft + viewportWidth / 2) / p;
-      setScrollLeft(Math.max(0, centerTime * nextPps - viewportWidth / 2));
+      const centerTime = (scrollLeft + anchorPx) / p;
+      setScrollLeft(clamp(centerTime * nextPps - anchorPx, 0, Math.max(0, timelineDuration * nextPps - viewportWidth)));
       return nextPps;
     });
   };
@@ -504,88 +509,53 @@ export function SyncPanel({
     });
   };
 
-  const handlePublish = () => {
-    const waypoints = enforceMonotonic(markerStateToWaypoints(markers, { includeBeats: 'edited-beats' }));
+  // Serialize the matching score and active timing map with all other score writes.
+  const saveTiming = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!timingAutosave || (savingTimingRef.current && !opts?.silent)) return;
+    const snapshot = markers;
+    const scoreSnapshot = score;
+    const waypoints = enforceMonotonic(markerStateToWaypoints(snapshot, { includeBeats: 'edited-beats' }));
     if (waypoints.length < 2) {
-      setError('Need at least two markers to publish.');
+      if (!opts?.silent) setError('Add a measure before saving its timing.');
       return;
     }
-    setError(null);
-    setPublished(false);
-    startPublish(async () => {
-      const editedBeats = markers.measures.flatMap((m) =>
-        m.beats
+    savingTimingRef.current = true;
+    if (!opts?.silent) { setSavingTiming(true); setError(null); }
+    try {
+      const result = await queueStudioSave(scoreDocumentId, async () => {
+        const saved = await saveScoreDocument({ scoreDocumentId, scoreDocument: scoreSnapshot });
+        if (saved.error) return saved;
+        const editedBeats = snapshot.measures.flatMap((m) => m.beats
           .filter((b) => b.edited && b.beatInMeasure !== 1)
-          .map((b) => ({ measure: m.measureNumber, beat: b.beatInMeasure }))
-      );
-      const result = await publishTimeMap({
-        classItemId,
-        scoreDocumentId,
-        sectionId,
-        target: publishTarget,
-        method: 'drag',
-        params: { editedBeats, pps, peaksCached: decodeState === 'ready', version: 1 },
-        waypoints,
-        makeActive: true,
+          .map((b) => ({ measure: m.measureNumber, beat: b.beatInMeasure })));
+        return publishTimeMap({ classItemId, scoreDocumentId, sectionId, target: publishTarget,
+          method: 'drag', params: { editedBeats, pps, peaksCached: decodeState === 'ready', version: 1 },
+          waypoints, makeActive: true });
       });
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      setPublished(true);
-      setDirty(false);
-      setHasUnpublished(false); // server consumed the draft; this is now live
-      onPublished?.();
-    });
-  };
-
-  // Save the current markers to the hidden draft (silent — no publish, no
-  // student-facing change). Shared by the debounce + the unmount flush.
-  const saveDraft = useCallback(
-    async (opts?: { silent?: boolean }) => {
-      if (!draftAutosave || !sectionId || savingDraftRef.current) return;
-      const waypoints = enforceMonotonic(markerStateToWaypoints(markers, { includeBeats: 'edited-beats' }));
-      if (waypoints.length < 2) return;
-      savingDraftRef.current = true;
-      if (!opts?.silent) setSavingDraft(true);
-      const editedBeats = markers.measures.flatMap((m) =>
-        m.beats
-          .filter((b) => b.edited && b.beatInMeasure !== 1)
-          .map((b) => ({ measure: m.measureNumber, beat: b.beatInMeasure }))
-      );
-      const result = await saveSectionDraftTimeMap({
-        classItemId,
-        scoreDocumentId,
-        sectionId,
-        method: 'drag',
-        params: { editedBeats, pps, peaksCached: decodeState === 'ready', version: 1 },
-        waypoints,
-      });
-      savingDraftRef.current = false;
-      // On the unmount flush the component is gone — skip all state updates.
       if (opts?.silent) return;
-      setSavingDraft(false);
-      if (!result.error) {
+      if (result.error) { setError(result.error); return; }
+      if (markersRef.current === snapshot && scoreRef.current === scoreSnapshot) {
         setDirty(false);
-        setHasUnpublished(true);
+        onPublished?.();
       }
-    },
-    [draftAutosave, sectionId, markers, classItemId, scoreDocumentId, pps, decodeState]
-  );
+    } catch {
+      if (!opts?.silent) setError('Could not save timing. Check your connection and retry.');
+    } finally {
+      savingTimingRef.current = false;
+      if (!opts?.silent) setSavingTiming(false);
+    }
+  }, [timingAutosave, markers, score, scoreDocumentId, classItemId, sectionId, publishTarget, pps, decodeState, onPublished]);
 
-  // Debounced draft autosave: after the drag settles (and not while placing /
-  // publishing), persist the markers to the draft.
   useEffect(() => {
-    if (!draftAutosave || !dirty || isPublishing || placeArmed) return;
-    const id = setTimeout(() => { void saveDraft(); }, DRAFT_DEBOUNCE_MS);
+    if (!timingAutosave || !dirty || savingTiming || placeArmed || error) return;
+    const id = setTimeout(() => { void saveTiming(); }, TIMING_DEBOUNCE_MS);
     return () => clearTimeout(id);
-  }, [draftAutosave, dirty, isPublishing, placeArmed, saveDraft]);
+  }, [timingAutosave, dirty, savingTiming, placeArmed, error, saveTiming]);
 
-  // Flush a pending draft on unmount (e.g. switching sections mid-debounce) so
-  // nothing in the autosave window is lost. Reads the latest markers via a ref.
-  const saveDraftRef = useRef(saveDraft);
+  // Best-effort flush when switching sections; browser shutdown may interrupt it.
+  const saveTimingRef = useRef(saveTiming);
   useEffect(() => {
-    saveDraftRef.current = saveDraft;
+    saveTimingRef.current = saveTiming;
   });
   const dirtyRef = useRef(dirty);
   useEffect(() => {
@@ -593,7 +563,7 @@ export function SyncPanel({
   });
   useEffect(() => {
     return () => {
-      if (dirtyRef.current) void saveDraftRef.current({ silent: true });
+      if (dirtyRef.current) void saveTimingRef.current({ silent: true });
     };
   }, []);
 
@@ -633,7 +603,7 @@ export function SyncPanel({
             <div className="ml-auto flex items-center gap-1.5">
               {decodeState === 'loading' && (
                 <span className="text-xs text-muted-foreground">
-                  Analyzing audio… {progress > 0 ? `${Math.round(progress * 100)}%` : ''}
+                  {progress >= 1 ? 'Processing audio…' : `Downloading audio… ${progress > 0 ? `${Math.round(progress * 100)}%` : ''}`}
                 </span>
               )}
               <button
@@ -769,8 +739,9 @@ export function SyncPanel({
                   scrollLeftPx={scrollLeft}
                   viewportWidth={viewportWidth}
                   onRequestZoom={(nextPps, nextScroll) => {
-                    setPps(clamp(nextPps, MIN_PPS, MAX_PPS));
-                    setScrollLeft(clampScroll(nextScroll));
+                    const zoom = clamp(nextPps, MIN_PPS, MAX_PPS);
+                    setPps(zoom);
+                    setScrollLeft(clamp(nextScroll, 0, Math.max(0, timelineDuration * zoom - viewportWidth)));
                   }}
                   dragAll={dragAll}
                   showDragMode={showSync}
@@ -809,7 +780,7 @@ export function SyncPanel({
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 rounded-[14px] bg-background/75 backdrop-blur-sm">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm font-medium">
-                Analyzing audio…{progress > 0 ? ` ${Math.round(progress * 100)}%` : ''}
+                {progress >= 1 ? 'Processing audio…' : `Downloading audio…${progress > 0 ? ` ${Math.round(progress * 100)}%` : ''}`}
               </p>
               <p className="max-w-xs text-center text-xs text-muted-foreground">
                 Decoding this video’s audio so the waveform lines up with the score. This happens once —
@@ -880,14 +851,8 @@ export function SyncPanel({
               <div className="st-icard">
                 <div className="flex items-center justify-between">
                   <span className="st-sec-label">Sync status</span>
-                  <button
-                    onClick={handlePublish}
-                    disabled={isPublishing || (draftAutosave && !hasUnpublished && !dirty)}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <UploadCloud className="h-3.5 w-3.5" />
-                    {isPublishing ? 'Publishing…' : 'Publish'}
-                  </button>
+                  {error && <button type="button" className="st-chip" disabled={savingTiming}
+                    onClick={() => { void saveTiming(); }}>Retry save</button>}
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <span className="st-pip" /> {markers.measures.length} measure
@@ -898,14 +863,14 @@ export function SyncPanel({
                   <b className="font-mono tabular-nums text-foreground">{anchorSeconds.toFixed(1)}s</b> ·{' '}
                   {score.initialTempo} BPM
                 </div>
-                {/* Draft autosave status (section path). Students keep the last
-                    Published sync until Publish promotes the draft. */}
-                {draftAutosave && (
+                {/* Show whether the latest timing has reached the active map. */}
+                {timingAutosave && (
                   <div className="flex items-center gap-2 text-xs">
-                    {savingDraft || dirty ? (
-                      <><span className="st-pip warn" /> <span className="text-muted-foreground">Saving draft…</span></>
-                    ) : hasUnpublished ? (
-                      <><span className="st-pip warn" /> <span className="text-foreground">Draft saved · not live — Publish to go live</span></>
+                    {error ? (
+                      <><span className="st-pip warn" /> <span>Timing not saved</span></>
+                    ) : savingTiming || dirty ? (
+                      <><span className="st-pip warn" /> <span className="text-muted-foreground">Saving timing…</span></>
+
                     ) : (
                       <><span className="st-pip" /> <span className="text-muted-foreground">Live — students see this sync</span></>
                     )}
@@ -914,11 +879,6 @@ export function SyncPanel({
                 {error && (
                   <p className="rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
                     {error}
-                  </p>
-                )}
-                {published && !draftAutosave && (
-                  <p className="rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs text-primary">
-                    Published — students will see the new sync.
                   </p>
                 )}
                 {decodeState === 'error' && (

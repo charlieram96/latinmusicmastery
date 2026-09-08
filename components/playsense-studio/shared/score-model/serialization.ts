@@ -71,6 +71,13 @@ const timeSignatureSchema = z.tuple([
 ]);
 
 const measureSchema = z.object({
+  repeat: z.object({
+    id: z.string().min(1),
+    pass: z.number().int().min(0).max(7),
+    count: z.number().int().min(2).max(8),
+    offset: z.number().int().min(0),
+    length: z.number().int().positive(),
+  }).optional(),
   number: z.number().int().positive(),
   timeSignature: timeSignatureSchema.optional(),
   tempoChange: z.number().positive().optional(),

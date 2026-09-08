@@ -6,18 +6,15 @@
 // this module just produces the Float32Array to feed it and handles the
 // Supabase storage cache.
 //
-// Decode strategy (and why): `decodeAudioData` always decodes the entire
-// compressed file into RAM at its native sample rate — there is no streaming or
-// reduced-rate decode in the browser. To bound memory we then render the
-// decoded buffer through an OfflineAudioContext configured for 1 channel at a
-// low sample rate, which downmixes to mono and resamples in one pass, and we
-// close the live AudioContext immediately after. Peaks come from that small
-// mono buffer.
+// Decode into a low-rate offline context, then mix channels in place. Avoid
+// duplicating the downloaded video or retaining a native-rate AudioBuffer
+// alongside a second offline render. The browser still decodes the whole file.
 
 import {
   computePeaks,
   deserializePeaks,
   serializePeaks,
+  waveformBucketCount,
   type WaveformPeaks,
 } from '@/lib/playsense-studio/waveform';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -25,7 +22,6 @@ import type { Database } from '@/types/database';
 
 const WAVEFORM_BUCKET = 'score-waveforms';
 const TARGET_SAMPLE_RATE = 8000;
-const TARGET_BUCKETS = 8000;
 
 export interface DecodeOptions {
   targetBuckets?: number;
@@ -44,36 +40,27 @@ export async function decodeVideoPeaks(
   videoUrl: string,
   opts: DecodeOptions = {}
 ): Promise<WaveformPeaks> {
-  const targetBuckets = opts.targetBuckets ?? TARGET_BUCKETS;
   const targetSampleRate = opts.targetSampleRate ?? TARGET_SAMPLE_RATE;
 
   const arrayBuffer = await fetchWithProgress(videoUrl, opts.onProgress, opts.signal);
+  opts.onProgress?.(1);
 
-  // Decode the full file (native rate). Closed immediately after rendering.
-  const AudioCtx: typeof AudioContext =
-    window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  const decodeCtx = new AudioCtx();
-  let decoded: AudioBuffer;
-  try {
-    decoded = await decodeCtx.decodeAudioData(arrayBuffer.slice(0));
-  } finally {
-    void decodeCtx.close();
-  }
-
-  // Downmix to mono + resample to a low rate via an offline render.
-  const frameCount = Math.max(1, Math.ceil(decoded.duration * targetSampleRate));
   const OfflineCtx: typeof OfflineAudioContext =
     window.OfflineAudioContext ??
     (window as unknown as { webkitOfflineAudioContext: typeof OfflineAudioContext }).webkitOfflineAudioContext;
-  const offline = new OfflineCtx(1, frameCount, targetSampleRate);
-  const source = offline.createBufferSource();
-  source.buffer = decoded;
-  source.connect(offline.destination);
-  source.start();
-  const rendered = await offline.startRendering();
-  const mono = rendered.getChannelData(0);
+  const offline = new OfflineCtx(1, 1, targetSampleRate);
+  // decodeAudioData consumes this buffer; do not clone a potentially huge video.
+  const decoded = await offline.decodeAudioData(arrayBuffer);
+  const mono = decoded.getChannelData(0);
+  for (let channel = 1; channel < decoded.numberOfChannels; channel++) {
+    const samples = decoded.getChannelData(channel);
+    for (let i = 0; i < mono.length; i++) mono[i] += samples[i];
+  }
+  if (decoded.numberOfChannels > 1) {
+    for (let i = 0; i < mono.length; i++) mono[i] /= decoded.numberOfChannels;
+  }
 
-  return computePeaks(mono, targetSampleRate, decoded.duration, targetBuckets);
+  return computePeaks(mono, targetSampleRate, decoded.duration, opts.targetBuckets ?? waveformBucketCount(decoded.duration));
 }
 
 /**
@@ -127,7 +114,7 @@ export async function loadCachedPeaks(
 }
 
 export function waveformPath(classItemId: string, videoUrl: string): string {
-  return `peaks/${classItemId}-${shortHash(videoUrl)}.json`;
+  return `peaks/${classItemId}-${shortHash(videoUrl)}-hires-v2.json`;
 }
 
 async function tryLoadCache(
@@ -141,7 +128,7 @@ async function tryLoadCache(
     // happens BEFORE its peaks are uploaded, so it 404s. `force-cache` would pin
     // that miss and every later read would keep returning it, re-triggering a
     // full re-decode forever. Always asking the network keeps an already-cached
-    // video loading instantly (~48 KB) instead of re-analyzing.
+    // video loading from its cached peaks instead of re-analyzing.
     const res = await fetch(data.publicUrl, { signal, cache: 'no-store' });
     if (!res.ok) return null;
     return deserializePeaks(await res.text());
@@ -181,6 +168,7 @@ async function fetchWithProgress(
     out.set(chunk, offset);
     offset += chunk.length;
   }
+  chunks.length = 0;
   return out.buffer;
 }
 

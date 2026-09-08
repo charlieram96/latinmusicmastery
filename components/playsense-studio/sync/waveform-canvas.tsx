@@ -54,7 +54,7 @@ export interface WaveformCanvasProps {
   onScrollByPx: (dx: number) => void;
   onViewportWidth: (w: number) => void;
   /** Pinch / ctrl-wheel zoom by a multiplicative factor (>1 in, <1 out). */
-  onZoomBy?: (factor: number) => void;
+  onZoomBy?: (factor: number, anchorPx?: number) => void;
 }
 
 const DEFAULT_HEIGHT = 240;
@@ -176,14 +176,22 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       let first = Math.max(0, Math.floor(firstT / secPerBucket));
       let last = Math.min(peaks.bucketCount - 1, Math.ceil(lastT / secPerBucket));
       if (last < first) [first, last] = [0, -1];
-      const stride = Math.max(1, Math.floor((last - first) / (w * 2)));
+      const stride = Math.max(1, Math.ceil((last - first + 1) / Math.max(1, w)));
 
       ctx.strokeStyle = theme.wave;
       ctx.globalAlpha = 0.55;
       ctx.beginPath();
       for (let b = first; b <= last; b += stride) {
         const x = videoTimeToX(b * secPerBucket);
-        const { min, max } = bucketMinMax(peaks, b);
+        // Aggregate every peak in this screen column so short attacks survive
+        // zooming out instead of disappearing between sampled buckets.
+        let min = Infinity;
+        let max = -Infinity;
+        for (let i = b; i < Math.min(b + stride, last + 1); i++) {
+          const peak = bucketMinMax(peaks, i);
+          min = Math.min(min, peak.min);
+          max = Math.max(max, peak.max);
+        }
         const yTop = mid - max * (waveH / 2);
         const yBot = mid - min * (waveH / 2);
         ctx.moveTo(x + 0.5, yTop);
@@ -203,9 +211,10 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     // Note-onset ticks (faint, all tracks) — drawn over the peaks but under the
     // grid so measure lines/chips stay legible. Toggleable via showNotes.
     if (showNotes && onsetsRef.current.length) {
-      ctx.strokeStyle = theme.wave;
+      ctx.strokeStyle = theme.selected;
+      ctx.fillStyle = theme.selected;
       ctx.lineWidth = 1;
-      ctx.globalAlpha = 0.18;
+      ctx.globalAlpha = 0.28;
       ctx.beginPath();
       for (const t of onsetsRef.current) {
         const x = videoTimeToX(t);
@@ -214,6 +223,18 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         ctx.lineTo(x + 0.5, h);
       }
       ctx.stroke();
+      // Small noteheads distinguish score onsets from the audio peaks and grid.
+      for (const t of onsetsRef.current) {
+        const x = videoTimeToX(t);
+        if (x < -4 || x > w + 4) continue;
+        ctx.beginPath();
+        ctx.ellipse(x, waveTop + 14, 3.5, 2.5, -0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(x + 3, waveTop + 14);
+        ctx.lineTo(x + 3, waveTop + 3);
+        ctx.stroke();
+      }
       ctx.globalAlpha = 1;
     }
 
@@ -362,7 +383,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     let startX = 0;
     let pointerId: number | null = null;
 
-    const localX = (e: PointerEvent) => {
+    const localX = (e: { clientX: number }) => {
       const rect = overlay.getBoundingClientRect();
       return e.clientX - rect.left;
     };
@@ -433,15 +454,15 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     };
 
     const onWheel = (e: WheelEvent) => {
-      // Pinch-to-zoom: browsers map trackpad pinch to ctrl+wheel. Zoom around
-      // the pointer-agnostic center (SyncPanel keeps the timeline centered).
-      if (e.ctrlKey && onZoomByRef.current) {
+      const horizontal = !e.ctrlKey && (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY));
+      if (!horizontal && onZoomByRef.current && e.deltaY !== 0) {
         e.preventDefault();
-        onZoomByRef.current(Math.exp(-e.deltaY * 0.01));
+        const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? overlay.clientHeight : 1);
+        onZoomByRef.current(Math.exp(-Math.max(-200, Math.min(200, delta)) * 0.003), localX(e));
         return;
       }
-      // Otherwise: horizontal scroll (trackpads send deltaX; mice send deltaY).
-      const dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (!horizontal) return;
+      const dx = e.deltaX !== 0 ? e.deltaX : e.deltaY;
       if (dx !== 0) {
         e.preventDefault();
         onScrollByPx(dx);

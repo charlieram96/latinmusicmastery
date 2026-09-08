@@ -60,6 +60,8 @@ export interface Track {
 }
 
 export interface Measure {
+  /** Expanded performance order; matching offsets share notation across passes. */
+  repeat?: { id: string; pass: number; count: number; offset: number; length: number };
   /** 1-based measure number. */
   number: number;
   /** Optional time-signature change at this measure. */

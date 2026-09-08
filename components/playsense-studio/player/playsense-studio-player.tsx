@@ -25,6 +25,7 @@
 // usable as soon as a score document is attached, with sync polish coming
 // from M7's authoring tools.
 
+import { useTranslation } from '@/components/language-provider';
 import {
   useEffect,
   useMemo,
@@ -410,6 +411,19 @@ export function PlaysenseStudioPlayer({
     wasPlayingRef.current = clock.isPlaying;
   }, [clock.isPlaying, clock.currentSeconds, clock.playbackRate, classItemId, readOnly]);
 
+  const { t } = useTranslation();
+  const [lessonView, setLessonView] = useState<'both' | 'video' | 'score'>('both');
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('lmm-lesson-view');
+      if (saved === 'both' || saved === 'video' || saved === 'score') setLessonView(saved);
+    } catch { /* Storage may be unavailable. */ }
+  }, []);
+  const changeLessonView = (view: 'both' | 'video' | 'score') => {
+    setLessonView(view);
+    try { localStorage.setItem('lmm-lesson-view', view); } catch { /* Session choice still works. */ }
+  };
+
   // Notation pane staff layout — stacked staves vs. single horizontal scroll
   // (only used when layout === 'split'). Pane geometry lives in SplitWorkspace.
   const [notationLayout, setNotationLayout] = useState<'wrapped' | 'scroll'>('wrapped');
@@ -564,6 +578,7 @@ export function PlaysenseStudioPlayer({
         <div className="-mx-4 md:-mx-8">
           <SplitWorkspace
             frame="bleed"
+            visiblePane={lessonView === 'both' ? 'both' : lessonView === 'video' ? 'primary' : 'secondary'}
             primary={
             <>
               <div className="flex flex-1 items-center justify-center overflow-hidden">
@@ -575,7 +590,7 @@ export function PlaysenseStudioPlayer({
             </>
           }
           secondaryHeader={({ orient, setOrient }) => (
-            <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-border bg-secondary px-4 py-2.5">
+            <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-border bg-secondary px-3 py-2">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(30_85%_55%/0.7)]" />
@@ -588,12 +603,22 @@ export function PlaysenseStudioPlayer({
                   {meta}
                 </div>
               </div>
-              <div className="flex flex-shrink-0 items-center gap-2">
-                <NotationLayoutToggle
-                  value={notationLayout}
-                  onChange={setNotationLayout}
-                />
-                <OrientationToggle value={orient} onChange={setOrient} />
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <div className="flex items-center gap-0.5 rounded-full border border-border p-0.5" role="group" aria-label={t('lessonView.label')}>
+                  {(['video', 'score'] as const).map(view => {
+                    const enabled = lessonView === 'both' || lessonView === view;
+                    const onlyEnabled = lessonView === view;
+                    return <button key={view} type="button" aria-pressed={enabled} disabled={onlyEnabled}
+                      onClick={() => changeLessonView(enabled ? (view === 'video' ? 'score' : 'video') : 'both')}
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${enabled ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'} disabled:cursor-default`}>
+                      {t(`lessonView.${view}Toggle`)}
+                    </button>;
+                  })}
+                </div>
+                {lessonView !== 'video' && <div className="flex items-center gap-1">
+                  <NotationLayoutToggle value={notationLayout} onChange={setNotationLayout} />
+                  {lessonView === 'both' && <OrientationToggle value={orient} onChange={setOrient} />}
+                </div>}
               </div>
             </div>
           )}
@@ -612,6 +637,7 @@ export function PlaysenseStudioPlayer({
               </div>
             }
           />
+          {lessonView === 'score' && <div className="border-t border-border bg-card px-3 py-2">{transportEl}</div>}
         </div>
 
         {clipsEl}
@@ -793,7 +819,7 @@ function NotationLayoutToggle({
         onClick={() => onChange('wrapped')}
         title="Stacked staves"
         aria-label="Stacked staves"
-        className={`grid h-[30px] w-8 place-items-center rounded-full transition-colors ${
+        className={`grid h-[26px] w-7 place-items-center rounded-full transition-colors ${
           value === 'wrapped'
             ? 'bg-primary/[0.16] text-primary'
             : 'text-muted-foreground hover:text-foreground'
@@ -806,7 +832,7 @@ function NotationLayoutToggle({
         onClick={() => onChange('scroll')}
         title="Horizontal scroll"
         aria-label="Horizontal scroll"
-        className={`grid h-[30px] w-8 place-items-center rounded-full transition-colors ${
+        className={`grid h-[26px] w-7 place-items-center rounded-full transition-colors ${
           value === 'scroll'
             ? 'bg-primary/[0.16] text-primary'
             : 'text-muted-foreground hover:text-foreground'

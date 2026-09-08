@@ -6,6 +6,7 @@
 // `structuredClone`-equivalent JSON.parse(JSON.stringify(...)) works.
 
 import { useCallback, useReducer } from 'react';
+import { repeatGroups } from './repeats';
 import type {
   Chord,
   Measure,
@@ -51,6 +52,8 @@ export type EditorAction =
   | { type: 'add-track' }
   | { type: 'delete-track'; trackIndex: number }
   | { type: 'add-measure'; trackIndex: number }
+  | { type: 'repeat-measures'; trackIndex: number; start: number; end: number; count: number; id: string }
+  | { type: 'unlink-repeat'; trackIndex: number; id: string }
   | { type: 'delete-measure'; trackIndex: number; measureIndex: number }
   | {
       type: 'add-note';
@@ -123,6 +126,21 @@ function overflowsMeasure(
 }
 
 function withHistory(state: EditorState, nextScore: ScoreDocument): EditorState {
+  // Editing notation in any pass updates the same measure in every pass.
+  nextScore.tracks.forEach((track, ti) => {
+    track.measures.forEach((measure, mi) => {
+      const old = state.score.tracks[ti]?.measures[mi];
+      const r = measure.repeat;
+      if (!r || !old?.repeat || old.repeat.id !== r.id || old.repeat.offset !== r.offset || old.repeat.pass !== r.pass) return;
+      const { number: _n, repeat: _r, ...content } = measure;
+      const { number: _on, repeat: _or, ...oldContent } = old;
+      if (JSON.stringify(content) === JSON.stringify(oldContent)) return;
+      track.measures = track.measures.map(m => m.repeat?.id === r.id && m.repeat.offset === r.offset
+        ? { ...clone(content), number: m.number, repeat: m.repeat } : m);
+    });
+    const valid = new Set(repeatGroups(track).map(g => g.id));
+    track.measures.forEach(m => { if (m.repeat && !valid.has(m.repeat.id)) delete m.repeat; });
+  });
   const past = [...state.past, state.score].slice(-HISTORY_LIMIT);
   return { score: nextScore, past, future: [], isDirty: true };
 }
@@ -207,6 +225,35 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (!t) return state;
       const lastNumber = t.measures[t.measures.length - 1]?.number ?? 0;
       t.measures.push(emptyMeasure(lastNumber + 1));
+      return withHistory(state, next);
+    }
+    case 'repeat-measures': {
+      const next = clone(state.score);
+      const track = next.tracks[action.trackIndex];
+      const { start, end, count, id } = action;
+      if (!track || !Number.isInteger(start) || !Number.isInteger(end) || !Number.isInteger(count) ||
+        start < 0 || end < start || end >= track.measures.length || count < 2 || count > 8 || !id) return state;
+      const source = track.measures.slice(start, end + 1);
+      if (source.some(m => m.repeat)) return state;
+      let tempo = next.initialTempo;
+      let signature = next.initialTimeSignature;
+      let key = next.initialKeyFifths;
+      for (const m of track.measures.slice(0, start + 1)) {
+        tempo = m.tempoChange ?? tempo;
+        signature = m.timeSignature ?? signature;
+        key = m.keyFifths ?? key;
+      }
+      source[0] = { ...source[0], tempoChange: tempo, timeSignature: signature, keyFifths: key };
+      const expanded = Array.from({ length: count }, (_, pass) => source.map((m, offset) => ({
+        ...clone(m), repeat: { id, pass, count, offset, length: source.length },
+      }))).flat();
+      track.measures.splice(start, source.length, ...expanded);
+      track.measures.forEach((m, i) => { m.number = i + 1; });
+      return withHistory(state, next);
+    }
+    case 'unlink-repeat': {
+      const next = clone(state.score);
+      next.tracks[action.trackIndex]?.measures.forEach(m => { if (m.repeat?.id === action.id) delete m.repeat; });
       return withHistory(state, next);
     }
     case 'delete-measure': {
