@@ -35,6 +35,7 @@ export interface SplitWorkspaceSecondaryHeaderCtx {
 }
 
 export interface SplitWorkspaceProps {
+  visiblePane?: 'both' | 'primary' | 'secondary';
   /** Fills the primary (video) pane edge-to-edge. */
   primary: ReactNode;
   /** Fills the secondary pane body (below its header). */
@@ -60,6 +61,7 @@ export function SplitWorkspace({
   initialSplit = 55,
   initialHeight = 560,
   frame = 'card',
+  visiblePane = 'both',
 }: SplitWorkspaceProps) {
   const bleed = frame === 'bleed';
   const [orient, setOrient] = useState<'row' | 'column'>('row');
@@ -157,8 +159,9 @@ export function SplitWorkspace({
         {/* Primary pane */}
         <div
           className="flex min-h-0 min-w-0 flex-col bg-black"
-          style={{ flex: `${split} 1 0` }}
+          style={{ flex: visiblePane === 'both' ? `${split} 1 0` : '1 1 0', display: visiblePane === 'secondary' ? 'none' : undefined }}
         >
+          {visiblePane === 'primary' && secondaryHeader({ orient, setOrient, isRow })}
           {primary}
         </div>
 
@@ -166,9 +169,10 @@ export function SplitWorkspace({
         <div
           className="flex min-h-0 min-w-0 flex-col bg-card"
           style={{
-            flex: `${100 - split} 1 0`,
-            borderLeft: isRow ? '1px solid hsl(var(--border))' : 'none',
-            borderTop: isRow ? 'none' : '1px solid hsl(var(--border))',
+            flex: visiblePane === 'both' ? `${100 - split} 1 0` : '1 1 0',
+            display: visiblePane === 'primary' ? 'none' : undefined,
+            borderLeft: visiblePane === 'both' && isRow ? '1px solid hsl(var(--border))' : 'none',
+            borderTop: visiblePane === 'both' && !isRow ? '1px solid hsl(var(--border))' : 'none',
           }}
         >
           {secondaryHeader({ orient, setOrient, isRow })}
@@ -179,6 +183,7 @@ export function SplitWorkspace({
       {/* Single diagonal corner knob — resizes split + height together. */}
       <button
         type="button"
+        hidden={visiblePane !== 'both'}
         onMouseDown={startKnob}
         onTouchStart={startKnob}
         onDoubleClick={resetSize}
@@ -234,7 +239,7 @@ export function OrientationToggle({
         onClick={() => onChange('row')}
         title="Side by side"
         aria-label="Side by side"
-        className={`grid h-[30px] w-8 place-items-center rounded-full transition-colors ${
+        className={`grid h-[26px] w-7 place-items-center rounded-full transition-colors ${
           value === 'row'
             ? 'bg-primary/[0.16] text-primary'
             : 'text-muted-foreground hover:text-foreground'
@@ -247,7 +252,7 @@ export function OrientationToggle({
         onClick={() => onChange('column')}
         title="Stacked"
         aria-label="Stacked"
-        className={`grid h-[30px] w-8 place-items-center rounded-full transition-colors ${
+        className={`grid h-[26px] w-7 place-items-center rounded-full transition-colors ${
           value === 'column'
             ? 'bg-primary/[0.16] text-primary'
             : 'text-muted-foreground hover:text-foreground'

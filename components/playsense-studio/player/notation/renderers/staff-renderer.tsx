@@ -19,10 +19,12 @@
 // note's bounding box + its cumulative QN. A pointer event finds the position
 // by interpolating between note anchors and fires onSeek.
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { repeatProjection } from '@/lib/playsense-studio/repeats';
 import {
   Accidental,
   Beam,
+  BarlineType,
   Dot,
   Formatter,
   Renderer,
@@ -538,6 +540,15 @@ class StaffRendererImpl implements ScoreRenderer {
         startMs: qnToTrackMs(track, score, block.cumulativeQN),
       });
       const stave = new Stave(p.x, p.y, p.width);
+      const repeat = block.measure.repeat;
+      if (repeat?.offset === 0) stave.setBegBarType(BarlineType.REPEAT_BEGIN);
+      if (repeat && repeat.offset === repeat.length - 1) {
+        stave.setEndBarType(BarlineType.REPEAT_END);
+        ctx.save();
+        ctx.setFont('Arial', 12);
+        ctx.fillText(`${repeat.count}×`, p.x + p.width - 30, p.y + 14);
+        ctx.restore();
+      }
       if (p.showHeader) {
         stave.addClef('treble').addTimeSignature(
           `${block.timeSignature[0]}/${block.timeSignature[1]}`
@@ -1450,7 +1461,30 @@ export interface StaffRendererProps {
   className?: string;
 }
 
-export function StaffRenderer({
+export function StaffRenderer(props: StaffRendererProps) {
+  const projection = useMemo(() => repeatProjection(props.score, props.trackIndex), [props.score, props.trackIndex]);
+  if (!projection) return <StaffRendererView {...props} />;
+  const map = projection.toCompactMs;
+  const original = (qn: number) => projection.toOriginalQN(qn, props.currentMs);
+  const track = props.score.tracks[props.trackIndex];
+  return <StaffRendererView {...props}
+    score={projection.score}
+    currentMs={map(props.currentMs)}
+    viewMs={props.viewMs == null ? undefined : map(props.viewMs)}
+    loopAMs={props.loopAMs == null ? props.loopAMs : map(props.loopAMs)}
+    loopBMs={props.loopBMs == null ? props.loopBMs : map(props.loopBMs)}
+    onSeek={target => props.onSeek?.({ ...target, ...original(target.qn) })}
+    onSelectRange={range => {
+      const start = original(range.startQn);
+      const end = projection.toOriginalQN(range.endQn, props.currentMs, true);
+      props.onSelectRange?.({ startQn: start.qn, endQn: end.qn,
+        startMs: qnToTrackMs(track, props.score, start.qn), endMs: qnToTrackMs(track, props.score, end.qn) });
+    }}
+    onDurationKnown={() => props.onDurationKnown?.(projection.originalDuration + (props.trailingGapMs ?? 0))}
+  />;
+}
+
+function StaffRendererView({
   score,
   trackIndex,
   currentMs,

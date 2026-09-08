@@ -72,7 +72,7 @@ export function LevelDot({ difficulty }: { difficulty: string | null }) {
  * lesson count at the bottom. Courses without a photo get the genre gradient
  * with a faint instrument glyph, so the grid never has a blank tile.
  */
-export function CoursePoster({ course, priority = false }: { course: PosterCourse; priority?: boolean }) {
+export function CoursePoster({ course, priority = false, compact = false }: { course: PosterCourse; priority?: boolean; compact?: boolean }) {
   const { t, locale } = useTranslation()
   const href = `/dashboard/course/${course.slug || course.id}`
   const level = course.difficulty
@@ -86,7 +86,7 @@ export function CoursePoster({ course, priority = false }: { course: PosterCours
   return (
     <Link
       href={href}
-      className="group relative isolate flex aspect-[3/4] flex-col justify-end overflow-hidden rounded-2xl bg-secondary p-4 text-white shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lift focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      className={`group relative isolate flex ${compact ? 'min-h-[260px] aspect-square' : 'aspect-[3/4]'} flex-col justify-end overflow-hidden rounded-2xl bg-secondary p-4 text-white shadow-card transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lift focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50`}
     >
       {course.thumbnailUrl ? (
         <Image
@@ -120,7 +120,7 @@ export function CoursePoster({ course, priority = false }: { course: PosterCours
 
       <span className="flex flex-col gap-1.5">
         {eyebrow ? <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">{eyebrow}</span> : null}
-        <span className="font-heading text-[21px] font-bold leading-[1.1] tracking-tight">{course.title}</span>
+        <span className={`font-heading ${compact ? 'text-[19px] leading-tight' : 'text-[21px] leading-[1.1]'} font-bold tracking-tight`}>{course.title}</span>
         {course.teacherName ? (
           <span className="flex items-center gap-2 text-[12.5px] text-white/85">
             <Avatar className="h-[22px] w-[22px] border border-white/30 text-[9px]">

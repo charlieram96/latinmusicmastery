@@ -254,7 +254,7 @@ export function CoursesView({ courses }: CoursesViewProps) {
       ) : view === 'grid' ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {filtered.map((c, i) => (
-            <CoursePoster key={c.id} course={c} priority={i < 4} />
+            <CoursePoster key={c.id} course={c} priority={i < 4} compact />
           ))}
         </div>
       ) : (

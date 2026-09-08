@@ -4,6 +4,7 @@ import {
   serializePeaks,
   deserializePeaks,
   bucketMinMax,
+  waveformBucketCount,
 } from '../waveform';
 
 function sine(samples: number, cyclesPerBuffer: number, amplitude = 1): Float32Array {
@@ -15,6 +16,19 @@ function sine(samples: number, cyclesPerBuffer: number, amplitude = 1): Float32A
 }
 
 describe('computePeaks', () => {
+  it('keeps an attack aligned when samples do not divide evenly into buckets', () => {
+    const channel = new Float32Array(1000);
+    channel[500] = 1;
+    const peaks = computePeaks(channel, 1000, 1, 600);
+    expect(bucketMinMax(peaks, 300).max).toBe(1);
+    expect(bucketMinMax(peaks, 599).max).toBe(0);
+  });
+
+  it('scales detail with duration and caps long recording cache sizes', () => {
+    expect(waveformBucketCount(440)).toBe(264000);
+    expect(waveformBucketCount(2)).toBe(1200);
+    expect(waveformBucketCount(7200)).toBe(600000);
+  });
   it('produces exactly targetBuckets buckets and 2 values per bucket', () => {
     const peaks = computePeaks(sine(16000, 200), 8000, 2, 8000);
     expect(peaks.bucketCount).toBe(8000);

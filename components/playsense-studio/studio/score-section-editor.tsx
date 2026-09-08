@@ -13,6 +13,7 @@
 // preview → the bottom drawer. SyncPanel itself portals its inspector + transport
 // into the right rail + bottom dock.
 
+import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import { FileUp, Redo2, Save, Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { createPortal } from 'react-dom';
@@ -51,7 +52,7 @@ export interface ScoreSectionEditorProps {
   highwayOpen: boolean;
 }
 
-const AUTOSAVE_INTERVAL_MS = 5000;
+const AUTOSAVE_INTERVAL_MS = 1000;
 
 export function ScoreSectionEditor({
   classItemId,
@@ -97,7 +98,7 @@ export function ScoreSectionEditor({
     setSavingState('saving');
     setErrorMessage(null);
     startTransition(async () => {
-      const result = await saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score });
+      const result = await queueStudioSave(scoreDocumentId, () => saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score })).catch(() => ({ error: 'Could not save. Check your connection and retry.' }));
       savingRef.current = false;
       if (result.error) {
         setSavingState('error');
@@ -115,11 +116,12 @@ export function ScoreSectionEditor({
     });
   }, [scoreDocumentId, markClean, onChanged]);
 
-  // Autosave every 5s (persist itself no-ops when clean / already saving).
+  // Save after editing pauses, including edits made during the previous save.
   useEffect(() => {
-    const id = setInterval(persist, AUTOSAVE_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [persist]);
+    if (!state.isDirty || isPending || savingState === 'error') return;
+    const id = setTimeout(persist, AUTOSAVE_INTERVAL_MS);
+    return () => clearTimeout(id);
+  }, [persist, state.score, state.isDirty, isPending, savingState]);
 
   // Flush a pending edit on unmount (e.g. switching sections) so nothing within
   // the autosave window is lost. Fire-and-forget: no local state / no onChanged
@@ -127,8 +129,8 @@ export function ScoreSectionEditor({
   useEffect(() => {
     return () => {
       const snap = stateRef.current;
-      if (snap.isDirty && !savingRef.current) {
-        void saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score });
+      if (snap.isDirty) {
+        void queueStudioSave(scoreDocumentId, () => saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score })).catch(() => undefined);
       }
     };
   }, [scoreDocumentId]);
@@ -219,14 +221,14 @@ export function ScoreSectionEditor({
             >
               <Redo2 className="h-4 w-4" />
             </button>
-            <span className="hidden w-28 text-right text-xs tabular-nums text-muted-foreground lg:inline">
+            <span role="status" className="text-right text-xs tabular-nums text-muted-foreground">
               {savingState === 'saving' || isPending
                 ? 'Saving…'
                 : state.isDirty
-                  ? 'Unsaved changes'
+                  ? (savingState === 'error' ? 'Save failed' : 'Saving soon…')
                   : savingState === 'saved'
                     ? 'All changes saved'
-                    : ' '}
+                    : 'Autosave on'}
             </span>
             <button
               onClick={persist}
@@ -234,7 +236,7 @@ export function ScoreSectionEditor({
               className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save className="h-4 w-4" />
-              <span className="hidden sm:inline">Save score</span>
+              <span className="hidden sm:inline">{savingState === 'error' ? 'Retry save' : 'Save now'}</span>
             </button>
           </>,
           appBarEl,

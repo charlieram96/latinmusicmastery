@@ -6,8 +6,8 @@
 // lives in waveform-decode.ts.
 //
 // Layout: peaks are quantized to int8 [-127, 127] and stored interleaved
-// [min0, max0, min1, max1, ...]. ~8000 buckets * 2 = 16000 ints ≈ 50–70 KB of
-// JSON, which gzips to a few KB. Values are normalized by the channel's global
+// [min0, max0, min1, max1, ...]. Detail scales with duration, capped at 600k
+// buckets to bound memory/cache size. Values are normalized by the channel's global
 // peak so quiet recordings still render at full height.
 
 export interface WaveformPeaks {
@@ -24,10 +24,14 @@ export interface WaveformPeaks {
 
 const QUANT = 127;
 
+/** Match the editor's maximum 600 pixels/second, with bounded cache size. */
+export function waveformBucketCount(durationSeconds: number): number {
+  return Math.max(1, Math.min(600_000, Math.ceil(durationSeconds * 600)));
+}
+
 /**
- * Bucket a mono channel into min/max peaks. The first `targetBuckets - 1`
- * buckets each span `floor(channel.length / targetBuckets)` samples; the final
- * bucket absorbs the remainder. Values are normalized by the global peak
+ * Bucket a mono channel into evenly spaced min/max peaks. Fractional sample
+ * boundaries distribute rounding across the recording. Values are normalized by the global peak
  * magnitude before quantizing.
  */
 export function computePeaks(
@@ -51,12 +55,11 @@ export function computePeaks(
   }
   const norm = peak > 0 ? 1 / peak : 0;
 
-  const windowSize = Math.floor(length / bucketCount);
   const data = new Array<number>(bucketCount * 2);
 
   for (let b = 0; b < bucketCount; b++) {
-    const start = b * windowSize;
-    const end = b === bucketCount - 1 ? length : start + windowSize;
+    const start = Math.floor(b * length / bucketCount);
+    const end = Math.floor((b + 1) * length / bucketCount);
 
     let min = Infinity;
     let max = -Infinity;

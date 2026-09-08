@@ -135,6 +135,8 @@ const STEP_MAP: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B
 
 type EditorTab = 'staff' | 'piano-roll';
 
+import { repeatGroups } from '@/lib/playsense-studio/repeats';
+
 export interface IntegratedEditorMeasureTiming {
   measureNumber: number;
   startVideoTimeSeconds: number;
@@ -194,7 +196,13 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // always authors track 0.
   const activeTrackIndex = 0;
   const [editorTab, setEditorTab] = useState<EditorTab>('staff');
+  const [insertOnClick, setInsertOnClick] = useState(false);
+  const [repeatOpen, setRepeatOpen] = useState(false);
+  const [repeatStart, setRepeatStart] = useState(1);
+  const [repeatEnd, setRepeatEnd] = useState(1);
+  const [repeatCount, setRepeatCount] = useState(2);
   const [selected, setSelected] = useState<SelectedEventRef | null>(null);
+  const [selectedMeasureIndex, setSelectedMeasureIndex] = useState<number | null>(null);
   const [duration, setDuration] = useState<number>(1);
   const [pitchLetter, setPitchLetter] = useState<string>('C');
   const [pitchAcc, setPitchAcc] = useState<number>(0);
@@ -362,6 +370,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       out.push({
         measureIndex: i,
         measureNumber: tracked[i].measure.number,
+        repeatPass: tracked[i].measure.repeat,
         startVideoTimeSeconds: measureTimings[i].startVideoTimeSeconds,
         endVideoTimeSeconds: measureTimings[i].endVideoTimeSeconds,
         events: tracked[i].events,
@@ -376,7 +385,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // The measure "Add note" targets: the selected event's measure, else the last.
   const targetMeasureIndex = selected
     ? selected.measureIndex
-    : Math.max(0, (activeTrack?.measures.length ?? 1) - 1);
+    : Math.min(selectedMeasureIndex ?? Math.max(0, (activeTrack?.measures.length ?? 1) - 1), Math.max(0, (activeTrack?.measures.length ?? 1) - 1));
 
   // Capacity of the target measure for its time signature — drives the readout
   // and disables "Add note" once the measure is full (a filler rest counts as
@@ -685,6 +694,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
 
         <span className="st-divline" />
 
+        <div className="st-seg" role="group" aria-label="Note editing mode">
+          <button type="button" className={!insertOnClick ? 'is-on' : ''} aria-pressed={!insertOnClick} onClick={() => setInsertOnClick(false)} title="Select and edit notes without adding notes on click">Select</button>
+          <button type="button" className={insertOnClick ? 'is-on' : ''} aria-pressed={insertOnClick} onClick={() => setInsertOnClick(true)} title="Click empty measure space to insert notes">Insert</button>
+        </div>
+
         {activeTrack && (
           <>
             <input
@@ -752,7 +766,57 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           <Plus className="h-3.5 w-3.5" />
           Add measure
         </button>
+        <button type="button" className="st-chip"
+          disabled={(selected === null && selectedMeasureIndex === null) || (activeTrack?.measures.length ?? 0) <= 1}
+          title={(activeTrack?.measures.length ?? 0) <= 1 ? 'Keep at least one measure in the score' : 'Delete the selected measure. Undo restores it.'}
+          onClick={() => {
+            dispatch({ type: 'delete-measure', trackIndex: activeTrackIndex, measureIndex: targetMeasureIndex });
+            setSelected(null);
+            setSelectedMeasureIndex(null);
+          }}>
+          Delete measure{selected !== null || selectedMeasureIndex !== null ? ` ${targetMeasureIndex + 1}` : ''}
+        </button>
+        <button type="button" className={`st-chip${repeatOpen ? ' is-on' : ''}`} aria-expanded={repeatOpen}
+          onClick={() => {
+            if (!repeatOpen) { setRepeatStart(targetMeasureIndex + 1); setRepeatEnd(targetMeasureIndex + 1); }
+            setRepeatOpen(!repeatOpen);
+          }}>Repeat measures</button>
       </div>
+
+      {repeatOpen && activeTrack && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-md border border-border bg-muted/30 p-3 text-xs">
+          <label className="flex items-center gap-2">From measure
+            <input aria-label="Repeat from measure" type="number" min={1} max={activeTrack.measures.length}
+              className="st-input w-16" value={repeatStart} onChange={e => setRepeatStart(Number(e.target.value))} />
+          </label>
+          <label className="flex items-center gap-2">Through
+            <input aria-label="Repeat through measure" type="number" min={repeatStart} max={activeTrack.measures.length}
+              className="st-input w-16" value={repeatEnd} onChange={e => setRepeatEnd(Number(e.target.value))} />
+          </label>
+          <label className="flex items-center gap-2">Total plays
+            <select className="st-input w-16" value={repeatCount} onChange={e => setRepeatCount(Number(e.target.value))}>
+              {[2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>{n}×</option>)}
+            </select>
+          </label>
+          <button type="button" className="st-chip"
+            disabled={!Number.isInteger(repeatStart) || !Number.isInteger(repeatEnd) || repeatStart < 1 || repeatEnd < repeatStart ||
+              repeatEnd > activeTrack.measures.length || activeTrack.measures.slice(repeatStart - 1, repeatEnd).some(m => m.repeat)}
+            onClick={() => {
+              dispatch({ type: 'repeat-measures', trackIndex: activeTrackIndex, start: repeatStart - 1,
+                end: repeatEnd - 1, count: repeatCount, id: crypto.randomUUID() });
+              setSelected(null);
+            }}>Apply repeat</button>
+          <span className="text-muted-foreground">All passes appear here for syncing. Students see repeat dots.</span>
+          {repeatGroups(activeTrack).map(group => (
+            <div key={group.id} className="flex w-full items-center gap-2">
+              <span>Measures {group.start + 1}–{group.start + group.length} · {group.count} plays</span>
+              <button type="button" className="st-chip" onClick={() => dispatch({ type: 'unlink-repeat', trackIndex: activeTrackIndex, id: group.id })}>
+                Unlink copies
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Active view — the audio-aligned staff (or piano-roll). The staff fills
           the available height between the editor bar and the toolbar. */}
@@ -764,6 +828,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             pixelsPerSecond={pixelsPerSecond}
             scrollLeftPx={scrollLeftPx}
             selected={selected}
+            selectedMeasureIndex={selected?.measureIndex ?? selectedMeasureIndex}
+            onSelectMeasure={(index) => { setSelected(null); setSelectedMeasureIndex(index); }}
             onSelectEvent={handleSelectEvent}
             onClickMeasureEmpty={handleClickEmpty}
             onRequestZoomTo={handleRequestZoomTo}
@@ -777,7 +843,13 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             onMeasureDragEnd={onMeasureDragEnd}
             onTailDrag={onTailDrag}
             resizable={showDragMode}
-            previewMidi={insertRest ? null : currentMidi}
+            previewMidi={insertOnClick ? (insertRest ? null : currentMidi) : undefined}
+            insertOnClick={insertOnClick}
+            onWheelZoom={(factor, anchorPx) => {
+              const nextPps = Math.max(8, Math.min(600, pixelsPerSecond * factor));
+              const anchorSeconds = (scrollLeftPx + anchorPx) / pixelsPerSecond;
+              onRequestZoom(nextPps, Math.max(0, anchorSeconds * nextPps - anchorPx));
+            }}
             onScrollByPx={onScrollByPx}
             height={staffHeight}
           />

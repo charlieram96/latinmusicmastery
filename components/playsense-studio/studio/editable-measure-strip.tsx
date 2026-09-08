@@ -46,6 +46,7 @@ export interface MeasureStripItem {
   /** 0-based index into the score track's measures (NOT the 1-based measureNumber). */
   measureIndex: number;
   measureNumber: number;
+  repeatPass?: { pass: number; count: number };
   startVideoTimeSeconds: number;
   endVideoTimeSeconds: number;
   events: VexEventDescriptor[];
@@ -74,6 +75,8 @@ export interface EditableMeasureStripProps {
   pixelsPerSecond: number;
   scrollLeftPx: number;
   selected: SelectedEventRef | null;
+  selectedMeasureIndex?: number | null;
+  onSelectMeasure?: (measureIndex: number) => void;
   onSelectEvent: (ref: SelectedEventRef) => void;
   onClickMeasureEmpty: (measureIndex: number) => void;
   onRequestZoomTo: (measureIndex: number) => void;
@@ -107,6 +110,8 @@ export interface EditableMeasureStripProps {
   previewMidi?: number | null;
   /** Horizontal wheel/trackpad pan over the staff (shared timeline scroll). */
   onScrollByPx?: (dx: number) => void;
+  onWheelZoom?: (factor: number, anchorPx: number) => void;
+  insertOnClick?: boolean;
   height?: number;
 }
 
@@ -114,7 +119,7 @@ const DEFAULT_HEIGHT = 220;
 const LEFT_PAD = 6;
 const RIGHT_PAD = 6;
 /** Height of the grab-handle band at the top of each measure block. */
-const HANDLE_BAND_PX = 14;
+const HANDLE_BAND_PX = 28;
 /** Below this width a measure can't render notes legibly — show a zoom-in placeholder. */
 const MIN_RENDER_WIDTH = 46;
 /** Pixels per diatonic staff step (half of VexFlow's 10px line spacing). */
@@ -170,6 +175,8 @@ export function EditableMeasureStrip({
   pixelsPerSecond,
   scrollLeftPx,
   selected,
+  selectedMeasureIndex,
+  onSelectMeasure,
   onSelectEvent,
   onClickMeasureEmpty,
   onRequestZoomTo,
@@ -186,6 +193,8 @@ export function EditableMeasureStrip({
   resizable,
   previewMidi,
   onScrollByPx,
+  onWheelZoom,
+  insertOnClick = true,
   height = DEFAULT_HEIGHT,
 }: EditableMeasureStripProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -259,18 +268,23 @@ export function EditableMeasureStrip({
     return () => cancelAnimationFrame(raf);
   }, [getCurrentSeconds, pixelsPerSecond, scrollLeftPx]);
 
-  // Horizontal wheel/trackpad pans the shared timeline, exactly like over the
-  // waveform. Native listener (passive:false) because React's onWheel can't
-  // preventDefault. Plain vertical wheel falls through so the notation column
-  // keeps page-scrolling.
+  // Horizontal gestures pan; vertical gestures zoom around the pointer.
+  // Use a non-passive listener so the page does not scroll while zooming.
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || !onScrollByPx) return;
+    if (!el) return;
     const onWheel = (e: WheelEvent) => {
       // Horizontal intent: trackpad x-deltas, or shift+wheel (Chrome/Safari remap
       // shift+wheel to deltaX; Firefox keeps deltaY with shiftKey set).
       const horizontal = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
-      if (!horizontal) return;
+      if (!horizontal) {
+        if (!onWheelZoom || e.deltaY === 0) return;
+        e.preventDefault();
+        const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? el.clientHeight : 1);
+        onWheelZoom(Math.exp(-Math.max(-200, Math.min(200, delta)) * 0.003), e.clientX - el.getBoundingClientRect().left);
+        return;
+      }
+      if (!onScrollByPx) return;
       const dx = e.deltaX !== 0 ? e.deltaX : e.deltaY;
       if (dx === 0) return;
       e.preventDefault();
@@ -278,7 +292,7 @@ export function EditableMeasureStrip({
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [onScrollByPx]);
+  }, [onScrollByPx, onWheelZoom]);
 
   // ---- Measure-block time drag (the grab handle band) ----------------------
   // Default mode is region (all-after) when `dragAll` is on; Alt/Option inverts.
@@ -289,6 +303,7 @@ export function EditableMeasureStrip({
   };
 
   const handleHandleDown = (e: React.PointerEvent, item: MeasureStripItem) => {
+    onSelectMeasure?.(item.measureIndex);
     e.stopPropagation(); // don't let the note pointerdown on the wrapper fire
     e.preventDefault();
     const grabTime = xToVideoTime(containerX(e));
@@ -456,7 +471,7 @@ export function EditableMeasureStrip({
           /* noop */
         }
       }
-    } else {
+    } else if (insertOnClick) {
       // Empty space: insert only if the press RELEASES in place (pointer-up),
       // so a stray drag across the staff doesn't drop notes.
       pendingEmptyRef.current = {
@@ -465,6 +480,8 @@ export function EditableMeasureStrip({
         startX: e.clientX,
         startY: e.clientY,
       };
+    } else {
+      onSelectMeasure?.(item.measureIndex);
     }
   };
 
@@ -502,7 +519,7 @@ export function EditableMeasureStrip({
     if (pending && pending.pointerId === e.pointerId) {
       pendingEmptyRef.current = null;
       const movedPx = Math.hypot(e.clientX - pending.startX, e.clientY - pending.startY);
-      if (movedPx < DRAG_THRESHOLD_PX) onClickMeasureEmpty(pending.measureIndex);
+      if (insertOnClick && movedPx < DRAG_THRESHOLD_PX) onClickMeasureEmpty(pending.measureIndex);
       return;
     }
     if (!dragging || dragging.pointerId !== e.pointerId) return;
@@ -596,7 +613,7 @@ export function EditableMeasureStrip({
             <button
               key={item.measureIndex}
               type="button"
-              onClick={() => onRequestZoomTo(item.measureIndex)}
+              onClick={() => { onSelectMeasure?.(item.measureIndex); onRequestZoomTo(item.measureIndex); }}
               className="absolute top-0 flex items-center justify-center rounded border border-dashed border-border bg-muted/40 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
               style={{ left: startX, width: Math.max(8, width), height, cursor: 'zoom-in' }}
               title={`Measure ${item.measureNumber} — click to zoom in and edit`}
@@ -619,11 +636,11 @@ export function EditableMeasureStrip({
           ? 'grabbing'
           : hovered?.measureIndex === item.measureIndex
             ? 'ns-resize' // a note is under the cursor — drag ↕ changes its pitch
-            : 'pointer'; // empty space — click to add
+            : insertOnClick ? 'crosshair' : 'default';
         return (
           <div
             key={item.measureIndex}
-            className="absolute top-0"
+            className={`absolute top-0 ${selectedMeasureIndex === item.measureIndex ? 'ring-2 ring-inset ring-primary bg-primary/5' : ''}`}
             style={{ left: startX, width, cursor, touchAction: 'none' }}
             onPointerDown={(e) => handlePointerDown(e, item)}
             onPointerMove={(e) => handlePointerMove(e, item)}
@@ -661,8 +678,12 @@ export function EditableMeasureStrip({
             {/* Grab-handle band: drag horizontally to reposition this measure in
                 time. Sits above the staff and stops propagation so note
                 selection / pitch-drag on the staff below is unaffected. */}
-            <div
-              className={`absolute inset-x-0 top-0 z-10 flex items-center gap-1 rounded-t-sm px-1 text-[10px] transition ${
+            <button
+              type="button"
+              aria-label={`Select measure ${item.measureNumber}`}
+              aria-pressed={selectedMeasureIndex === item.measureIndex}
+              onClick={() => onSelectMeasure?.(item.measureIndex)}
+              className={`absolute inset-x-0 top-0 z-10 flex items-center gap-1.5 rounded-t-sm px-2 text-[11px] transition ${
                 isTimeDragging
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted/70 text-muted-foreground hover:bg-primary/15 hover:text-foreground'
@@ -672,10 +693,11 @@ export function EditableMeasureStrip({
               onPointerMove={handleHandleMove}
               onPointerUp={handleHandleUp}
               onPointerCancel={handleHandleCancel}
-              title="Drag to move this measure (and everything after it). Hold Option for just this measure."
+              title={dragAll ? 'Drag to move this measure and everything after it. Hold Option for just this measure.' : 'Drag to move just this measure. Hold Option to move everything after it too.'}
             >
-              <GripHorizontal className="h-2.5 w-2.5 shrink-0 opacity-70" />
+              <GripHorizontal className="h-3.5 w-3.5 shrink-0 opacity-80" />
               <span className="tabular-nums leading-none">{item.measureNumber}</span>
+              {item.repeatPass && width >= 100 && <span className="truncate opacity-70">· pass {item.repeatPass.pass + 1}/{item.repeatPass.count}</span>}
               {showCap && (
                 <span
                   className={`ml-auto shrink-0 tabular-nums leading-none ${
@@ -686,7 +708,7 @@ export function EditableMeasureStrip({
                   {capLabel}
                 </span>
               )}
-            </div>
+            </button>
             <MiniStave
               measureIndex={item.measureIndex}
               events={item.events}
