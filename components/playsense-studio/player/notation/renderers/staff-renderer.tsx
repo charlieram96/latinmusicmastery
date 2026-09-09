@@ -578,30 +578,20 @@ class StaffRendererImpl implements ScoreRenderer {
       ctx.closeGroup();
       ctx.setLineWidth(1);
 
-      const vexNotes = block.events.map((d) => descriptorToStaveNote(d, block.clef));
-
-      const voice = new Voice({
-        numBeats: block.timeSignature[0],
-        beatValue: block.timeSignature[1],
-      });
-      voice.setStrict(false);
-      voice.addTickables(vexNotes);
-
       // Justify into the note area only — for first-in-row measures the clef +
       // time signature consume the lead-in, so we keep the formatter inside
       // that span and notes never spill past the barline.
       const justify =
         p.width - (p.showHeader ? FIRST_MEASURE_EXTRA_WIDTH : 0) - 20;
-      new Formatter().joinVoices([voice]).format([voice], Math.max(40, justify));
+      const laid = formatMeasureVoice(block.events, block.timeSignature, justify, block.clef);
+      // A blank measure (the studio persists these) is just the empty stave.
+      if (!laid) continue;
 
-      // Beam connectable notes (eighths and shorter); rests break the beam.
-      const beams = Beam.generateBeams(vexNotes, { beamRests: false });
-
-      voice.draw(ctx, stave);
-      beams.forEach((beam) => beam.setContext(ctx).draw());
+      laid.voice.draw(ctx, stave);
+      laid.beams.forEach((beam) => beam.setContext(ctx).draw());
 
       block.events.forEach((d, idx) => {
-        allNotes.push({ vexNote: vexNotes[idx], descriptor: d, system: p.system });
+        allNotes.push({ vexNote: laid.vexNotes[idx], descriptor: d, system: p.system });
       });
     }
 
@@ -1481,6 +1471,37 @@ function descriptorToStaveNote(d: VexEventDescriptor, clef: 'treble' | 'percussi
     if (acc) note.addModifier(new Accidental(acc), idx);
   });
   return note;
+}
+
+/**
+ * Lay out one measure's events into a formatted VexFlow voice, ready to draw.
+ *
+ * Returns null for a blank measure. The studio deliberately persists measures
+ * with no events (see editor-state.ts `emptyMeasure` / `delete-event`), and
+ * VexFlow's Formatter throws "Cannot read properties of undefined (reading
+ * 'getMetrics')" when asked to justify a voice with no tickables — so the
+ * caller draws only the empty stave for those.
+ */
+export function formatMeasureVoice(
+  events: VexEventDescriptor[],
+  timeSignature: [number, number],
+  justifyWidth: number,
+  clef: 'treble' | 'percussion' = 'treble'
+): { vexNotes: StaveNote[]; voice: Voice; beams: Beam[] } | null {
+  if (events.length === 0) return null;
+
+  const vexNotes = events.map((d) => descriptorToStaveNote(d, clef));
+  const voice = new Voice({
+    numBeats: timeSignature[0],
+    beatValue: timeSignature[1],
+  });
+  voice.setStrict(false);
+  voice.addTickables(vexNotes);
+  new Formatter().joinVoices([voice]).format([voice], Math.max(40, justifyWidth));
+
+  // Beam connectable notes (eighths and shorter); rests break the beam.
+  const beams = Beam.generateBeams(vexNotes, { beamRests: false });
+  return { vexNotes, voice, beams };
 }
 
 function qnAtEnd(blocks: ReturnType<typeof extractTrackEvents>): number {
