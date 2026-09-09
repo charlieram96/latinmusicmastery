@@ -1,0 +1,102 @@
+/* The player stays in the same React/DOM tree when the lesson chrome folds away. */
+[data-dashboard-shell]:has([data-exercise-immersive=true]) [data-dashboard-navigation],
+[data-dashboard-shell]:has([data-exercise-immersive=true]) [data-dashboard-header],
+[data-lesson-shell]:has([data-exercise-immersive=true]) > aside,
+[data-lesson-shell]:has([data-exercise-immersive=true]) [data-lesson-heading],
+[data-lesson-shell]:has([data-exercise-immersive=true]) [data-lesson-footer],
+[data-lesson-shell]:has([data-exercise-immersive=true]) [data-lesson-secondary] { display:none; }
+[data-dashboard-shell]:has([data-exercise-immersive=true]),
+[data-dashboard-shell]:has([data-exercise-immersive=true]) [data-dashboard-frame] { height:100dvh; }
+[data-dashboard-shell]:has([data-exercise-immersive=true]) [data-dashboard-frame] { margin-left:0; }
+[data-dashboard-shell]:has([data-exercise-immersive=true]) [data-dashboard-main] { padding-top:0; overflow:hidden; min-height:0; }
+[data-dashboard-shell]:has([data-exercise-immersive=true]) [data-dashboard-content] { padding:0; }
+[data-lesson-shell]:has([data-exercise-immersive=true]) { margin:0; min-height:100dvh; }
+[data-lesson-shell]:has([data-exercise-immersive=true]) [data-lesson-column] { padding-bottom:0!important; }
+[data-lesson-shell]:has([data-exercise-immersive=true]) [data-lesson-item] { padding:0; animation:none; }
+
+.ps-exercise-mode { --exercise-cream:hsl(var(--foreground)); --exercise-gold:hsl(var(--primary)); --exercise-muted:hsl(var(--muted-foreground)); display:flex; flex-direction:column; height:var(--lesson-exercise-height,calc(100dvh - 280px)); color:var(--exercise-cream); background:hsl(var(--background)); border:1px solid hsl(var(--border)); border-radius:12px; overflow:hidden; overflow-anchor:none; }
+[data-lesson-item]:has(.ps-exercise-mode) { animation:none; }
+.ps-exercise-content { display:flex; flex-direction:column; flex:1; min-height:0; }
+.ps-exercise-mode .ps-lesson-game { flex:1; min-height:0; }
+.ps-exercise-mode .ps-lesson-stage { flex:1; height:auto; min-height:0; }
+.ps-exercise-mode :is(.ps-lesson-game-heading,.ps-lesson-preview-controls,.ps-lesson-transport) { flex-shrink:0; }
+.ps-exercise-mode .ps-lesson-game-heading[data-has-tracks=false] { display:none; }
+.ps-exercise-mode .ps-lesson-overlay { overflow-y:auto; align-items:safe center; }
+.ps-exercise-mode :is(.ps-lesson-results,.ps-lesson-calibration) { flex:1; min-height:0; overflow-y:auto; }
+.ps-exercise-toolbar { display:flex; align-items:center; justify-content:space-between; gap:24px; flex-shrink:0; min-height:66px; padding:10px 24px; background:hsl(var(--card)); border-bottom:1px solid hsl(var(--border)); }
+.ps-exercise-identity { display:flex; align-items:center; gap:14px; min-width:0; }
+.ps-exercise-identity>img { flex-shrink:0; width:32px; height:24px; object-fit:contain; }
+.ps-exercise-identity>div { min-width:0; }
+.ps-exercise-identity span { display:block; color:var(--exercise-muted); font-size:9px; letter-spacing:.09em; }
+.ps-exercise-identity i { font-style:normal; padding:0 6px; color:hsl(var(--muted-foreground) / .5); }
+.ps-exercise-identity h2 { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin:4px 0 0; font-size:13px; font-weight:650; line-height:1.3; }
+.ps-exercise-view-controls { display:flex; align-items:center; gap:5px; flex-shrink:0; }
+.ps-exercise-view-controls button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:36px; padding:0 11px; color:var(--exercise-muted); font-size:12px; }
+.ps-exercise-view-controls button:hover { color:var(--exercise-cream); background:hsl(var(--accent)); }
+.ps-exercise-view-controls button[aria-pressed=true] { color:hsl(var(--foreground)); background:hsl(var(--primary) / .12); }
+.ps-exercise-view-controls button[aria-pressed=true] svg { color:hsl(var(--primary)); }
+.ps-exercise-view-controls button[aria-pressed=false] { color:hsl(var(--muted-foreground)); }
+.ps-exercise-view-controls .ps-exercise-mode-toggle { margin-left:10px; border-color:hsl(var(--input)); color:var(--exercise-cream); }
+.ps-exercise-view-controls kbd { border:1px solid hsl(var(--border)); border-radius:4px; padding:1px 4px; font:inherit; font-size:9px; opacity:.5; }
+
+.ps-exercise-content>.ps-lesson-game { border:0; border-radius:0; }
+.ps-exercise-mode[data-video-visible=false] .ps-lesson-video,
+.ps-exercise-mode[data-score-visible=false] .ps-lesson-notation { display:none; }
+
+.ps-exercise-mode[data-exercise-immersive=true] { display:flex; flex-direction:column; height:100dvh; border:0; border-radius:0; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-exercise-content { display:flex; flex-direction:column; flex:1; min-height:0; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-game { flex:1; min-height:0; background:hsl(var(--background)); }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-notation { flex-shrink:0; height:auto; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-stage { flex:1; height:auto; min-height:0; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-theme-picker { display:none; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-video { top:20px; right:24px; width:clamp(200px,21vw,330px); border-radius:12px; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-game-heading { flex-shrink:0; padding:6px 20px; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-game-heading>div:first-child,
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-game-heading[data-has-tracks=false] { display:none; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-game-heading>div:last-child { margin-left:auto; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-preview-controls { flex-shrink:0; min-height:52px; padding:8px 24px; background:hsl(var(--card)); border-color:hsl(var(--border)); }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-overlay { overflow-y:auto; align-items:safe center; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-results,
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-calibration { flex:1; min-height:0; overflow-y:auto; border:0; border-radius:0; padding:clamp(16px,4vh,48px); background:radial-gradient(ellipse at 50% 0%,hsl(var(--primary) / .06),transparent 65%),hsl(var(--background)); }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-results .ps-review { margin-block:auto; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-transport { flex-shrink:0; }
+.ps-exercise-mode[data-exercise-immersive=true] [data-transport-panel=stats] { display:none; }
+.ps-exercise-mode[data-exercise-immersive=true] [data-transport-panel=primary] { flex:1; width:auto; padding:9px 20px; }
+.ps-exercise-mode[data-exercise-immersive=true] [data-transport-panel=settings] { width:auto; padding:9px 20px; flex-direction:row; align-items:center; gap:8px; }
+.ps-exercise-mode[data-exercise-immersive=true] [data-transport-panel=settings]>button,
+.ps-exercise-mode[data-exercise-immersive=true] [data-transport-panel=settings]>div { width:auto; }
+.ps-exercise-mode[data-exercise-immersive=true] [data-transport-state=playing] [data-transport-meter],
+.ps-exercise-mode[data-exercise-immersive=true] [data-transport-state=countdown] [data-transport-meter] { display:none; }
+
+@media(max-width:700px) {
+  .ps-exercise-toolbar { gap:10px; min-height:60px; padding:10px 14px; }
+  .ps-exercise-identity { gap:9px; }
+  .ps-exercise-identity>img { width:26px; height:20px; }
+  .ps-exercise-identity h2 { font-size:11px; }
+  .ps-exercise-identity span { font-size:8px; }
+  .ps-exercise-view-controls { gap:0; }
+  .ps-exercise-view-controls button { padding:0 9px; }
+  .ps-exercise-view-controls button>span, .ps-exercise-view-controls kbd { display:none; }
+  .ps-exercise-view-controls .ps-exercise-mode-toggle { margin-left:5px; }
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-video { width:142px; right:14px; top:14px; }
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-game-scoreboard { top:14px; left:14px; }
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-scoreboard-compact { gap:10px; padding:9px 11px; }
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-stage-title { display:none; }
+  .ps-exercise-mode .ps-lesson-preview-controls { padding:8px 14px; gap:8px; }
+  .ps-exercise-mode .ps-lesson-preview-controls>span { max-width:120px; font-size:9px; }
+  .ps-exercise-mode .ps-lesson-preview-controls button { font-size:10px; padding:0 10px; }
+}
+@media(max-width:520px) {
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-highway { background:hsl(var(--background)); }
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-highway>.ps-highway-canvas { top:82px; height:calc(100% - 82px); }
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-video { top:100px; width:128px; }
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-notation { height:auto; }
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-results,
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-calibration { padding:16px; }
+}
+@media(max-height:600px) and (min-width:701px) {
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-exercise-toolbar { min-height:52px; padding-block:6px; }
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-notation { height:auto; }
+  .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-video { width:190px; }
+}
+@media(prefers-reduced-motion:reduce) { .ps-exercise-mode * { transition:none!important; } }

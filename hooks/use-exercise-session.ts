@@ -9,17 +9,19 @@ import type {
   InstrumentCategory,
 } from '@/lib/play-sense/types'
 import { TOLERANCE_BY_DIFFICULTY, getInstrumentCategory } from '@/lib/play-sense/types'
-import { gradeSingleOnset, gradeChordOnset, matchOnsetToExpected, computeStats, frequencyToMidi } from '@/lib/play-sense/scoring'
+import { gradeSingleOnset, gradeChordOnset, matchOnsetToExpected, computeStats, frequencyToMidi, orderSessionResults, currentComboForResults } from '@/lib/play-sense/scoring'
 import type { ExpectedEvent } from '@/lib/play-sense/scoring'
 import { generateExpectedTimestamps, getExerciseDuration, getCountInDuration } from '@/lib/play-sense/exercise-utils'
 import { useOnsetDetection } from './use-onset-detection'
 import { useMetronome } from './use-metronome'
 import { useCalibration } from './use-calibration'
 import { useBackingTrack } from './use-backing-track'
-import { usePitchDetection } from './use-pitch-detection'
 import { usePlaysenseOnsets } from './use-playsense-onsets'
+import { useMidiOnsets } from './use-midi-onsets'
+import { consumeOnsets } from '@/lib/play-sense/input-events'
 
-export type AudioMode = 'headphones' | 'speaker-safe' | 'playsense'
+import { availableInputModes, type AudioMode } from '@/lib/play-sense/input-modes'
+export type { AudioMode } from '@/lib/play-sense/input-modes'
 
 const AUDIO_MODE_STORAGE_KEY = 'playSenseAudioMode'
 
@@ -28,8 +30,9 @@ const CHORD_GRADE_DELAY_MS = 95
 
 function loadStoredAudioMode(): AudioMode | null {
   if (typeof window === 'undefined') return null
-  const stored = localStorage.getItem(AUDIO_MODE_STORAGE_KEY)
-  if (stored === 'headphones' || stored === 'speaker-safe' || stored === 'playsense') return stored
+  let stored: string | null = null
+  try { stored = localStorage.getItem(AUDIO_MODE_STORAGE_KEY) } catch { return null }
+  if (stored === 'headphones' || stored === 'speaker-safe' || stored === 'playsense' || stored === 'midi') return stored
   return null
 }
 
@@ -72,6 +75,7 @@ interface UseExerciseSessionResult {
 
   // Playhead
   playheadProgress: number // 0-1
+  getElapsedSeconds: () => number
 
   // Live scoring
   currentScore: number
@@ -124,7 +128,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const [detectedMidiNote, setDetectedMidiNote] = useState<number | null>(null)
   const lastDetectedMidiRef = useRef<number | null>(null)
 
-  const expectedEventsRef = useRef<Array<{ eventIndex: number; timestamp: number }>>([])
+  const expectedEventsRef = useRef<ExpectedEvent[]>([])
   const matchedIndicesRef = useRef<Set<number>>(new Set())
   const extraHitsRef = useRef(0)
   const exerciseStartTimeRef = useRef(0)
@@ -134,7 +138,11 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const rafRef = useRef<number | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const eventResultsRef = useRef<EventResult[]>([])
-  const lastProcessedOnsetRef = useRef(0)
+  const seenOnsetsRef = useRef(new WeakSet<import('@/lib/play-sense/types').OnsetEvent>())
+  const sessionGenerationRef = useRef(0)
+  const startingRef = useRef(false)
+  const finishExerciseRef = useRef<() => void>(() => {})
+  const lastUiUpdateRef = useRef(0)
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const liveComboRef = useRef(0)
   const lastMissCheckIndexRef = useRef(0)
@@ -143,7 +151,6 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   // Sustain tracking: maps eventIndex -> { onsetTime, expectedDurationSec }
   const sustainTrackingRef = useRef<Map<number, { onsetTime: number; expectedDurationSec: number }>>(new Map())
   const lastInputLevelRef = useRef(0)
-  const readyToGradeRef = useRef(false)
   const missDetectedIndicesRef = useRef<Set<number>>(new Set())
   // Deferred pitch grading: pending timeouts for pitched onsets where pitch was null at onset time
   const pendingPitchTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
@@ -152,8 +159,10 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const micOnsets = useOnsetDetection({ noisyRoomMode, instrument: exercise?.instrument, audioMode: micAudioMode })
   const bleOnsets = usePlaysenseOnsets(exercise?.instrument ?? null)
 
+  const midiOnsets = useMidiOnsets()
+  const isMidiMode = audioMode === 'midi'
   const isPlaysenseMode = audioMode === 'playsense'
-  const activeOnsets = isPlaysenseMode ? bleOnsets : micOnsets
+  const activeOnsets = isMidiMode ? midiOnsets : isPlaysenseMode ? bleOnsets : micOnsets
 
   const {
     isListening,
@@ -166,8 +175,11 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     clearOnsets,
   } = activeOnsets
 
-  const workletNode = micOnsets.workletNode
   const chromaByOnsetRef = micOnsets.chromaByOnsetRef
+  const getFrequency = micOnsets.getFrequency
+  const stopMicListening = micOnsets.stopListening
+  const stopBleListening = bleOnsets.stopListening
+  const stopMidiListening = midiOnsets.stopListening
 
   const countInBeats = exercise?.timeSignature?.[0] || 4
   const metronome = useMetronome({
@@ -190,10 +202,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     options.backingTrackUrls ?? (exercise?.audioUrl ? [exercise.audioUrl] : [])
   const backingTrack = useBackingTrack({ audioUrls: backingTrackUrls, audioMode: backingTrackAudioMode })
 
-  // Pitch detection for melodic instruments
-  const pitchDetection = usePitchDetection()
-  const pitchDetectionRef = useRef(pitchDetection)
-  pitchDetectionRef.current = pitchDetection
+  // Microphone pitch analysis runs in its worklet on the same stream and clock.
   const instrumentCategoryRef = useRef<InstrumentCategory>('percussion')
 
   // Load stored audio mode and calibration on mount
@@ -213,13 +222,16 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
 
   const clearAudioMode = useCallback(() => {
     setAudioModeState(null)
-    localStorage.removeItem(AUDIO_MODE_STORAGE_KEY)
+    try { localStorage.removeItem(AUDIO_MODE_STORAGE_KEY) } catch { /* optional preference */ }
   }, [])
 
   const setAudioMode = useCallback((mode: AudioMode) => {
+    if (sessionStateRef.current === 'playing' || sessionStateRef.current === 'countdown') return
+    stopMicListening(); stopBleListening(); stopMidiListening()
+    audioCtxRef.current = null
     setAudioModeState(mode)
-    localStorage.setItem(AUDIO_MODE_STORAGE_KEY, mode)
-  }, [])
+    try { localStorage.setItem(AUDIO_MODE_STORAGE_KEY, mode) } catch { /* optional preference */ }
+  }, [stopMicListening, stopBleListening, stopMidiListening])
 
   // Mic testing — opens the mic so user can see level meter without starting an exercise
   const [isMicTesting, setIsMicTesting] = useState(false)
@@ -242,8 +254,8 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
 
   // Keep refs in sync for rAF callback access
   useEffect(() => {
-    calibrationDataRef.current = calibration.calibrationData
-  }, [calibration.calibrationData])
+    calibrationDataRef.current = audioMode === 'midi' ? null : calibration.calibrationData
+  }, [calibration.calibrationData, audioMode])
 
   useEffect(() => {
     if (exercise) {
@@ -261,34 +273,35 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   useEffect(() => {
     if (sessionState !== 'playing' || !exercise) return
 
-    // On the first render in 'playing' state, sync the processed index
-    // to skip all countdown-period onsets, then enable grading
-    if (!readyToGradeRef.current) {
-      lastProcessedOnsetRef.current = recentOnsets.length
-      readyToGradeRef.current = true
-      return
-    }
+    const calibOffset = isMidiMode ? 0 : (calibration.calibrationData?.latencyMs || 0) / 1000
+    const widenMs = !isMidiMode && calibration.calibrationData && calibration.calibrationData.iqrMs > 30 ? 15 : 0
 
-    // Process only new onsets
-    const newOnsets = recentOnsets.slice(lastProcessedOnsetRef.current)
+    const earliestOnset = exerciseStartTimeRef.current + calibOffset - (TOLERANCE_BY_DIFFICULTY[exercise.difficulty].ok + widenMs) / 1000
+    const newOnsets = consumeOnsets(recentOnsets, seenOnsetsRef.current, earliestOnset)
     if (newOnsets.length === 0) return
-    lastProcessedOnsetRef.current = recentOnsets.length
-
-    const calibOffset = (calibration.calibrationData?.latencyMs || 0) / 1000
-    const widenMs = calibration.calibrationData && calibration.calibrationData.iqrMs > 30 ? 15 : 0
-
     const category = getInstrumentCategory(exercise.instrument)
+    const publishResults = (grade: string) => {
+      eventResultsRef.current = orderSessionResults(eventResultsRef.current, expectedEventsRef.current)
+      liveComboRef.current = currentComboForResults(eventResultsRef.current)
+      setEventResults(eventResultsRef.current)
+      setLastHitGrade(grade)
+      setCurrentCombo(liveComboRef.current)
+      const stats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
+      setCurrentScore(stats.score)
+      setCurrentAccuracy(stats.accuracy)
+      setTempoDrift(stats.tempoDriftMs)
+    }
 
     for (const onset of newOnsets) {
       // Chord routing: if this onset lands on a chord-group event, reserve the
       // whole group now (so later onsets / miss-detection skip it) and defer
       // grading briefly to await the worklet's post-strum chroma, then grade the
       // group as a set.
-      if (category === 'pitched') {
+      if (category === 'pitched' && !isMidiMode) {
         const relTs = onset.timestamp - exerciseStartTimeRef.current
         const cand = matchOnsetToExpected(
           relTs,
-          expectedEventsRef.current as unknown as ExpectedEvent[],
+          expectedEventsRef.current,
           matchedIndicesRef.current,
           exercise.difficulty,
           calibOffset,
@@ -299,7 +312,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
           const onsetTs = onset.timestamp
           const energy = onset.energy
           // Reserve the group so subsequent onsets and the rAF miss-detector skip it.
-          const group = (expectedEventsRef.current as unknown as ExpectedEvent[]).filter(
+          const group = (expectedEventsRef.current).filter(
             e => e.chordId === chordId
           )
           for (const e of group) matchedIndicesRef.current.add(e.eventIndex)
@@ -312,7 +325,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
             const results = gradeChordOnset(
               onsetTs - exerciseStartTimeRef.current,
               energy,
-              expectedEventsRef.current as unknown as ExpectedEvent[],
+              expectedEventsRef.current,
               matchedIndicesRef.current,
               chordId,
               exercise.difficulty,
@@ -333,21 +346,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
             }
 
             eventResultsRef.current = [...eventResultsRef.current, ...results]
-            setEventResults([...eventResultsRef.current])
-            setLastHitGrade(results[0].grade)
-
-            // Combo: treat the chord as a single unit.
-            if (results.some(r => r.grade !== 'miss')) {
-              liveComboRef.current++
-            } else {
-              liveComboRef.current = 0
-            }
-            setCurrentCombo(liveComboRef.current)
-
-            const stats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
-            setCurrentScore(stats.score)
-            setCurrentAccuracy(stats.accuracy)
-            setTempoDrift(stats.tempoDriftMs)
+            publishResults(results[0].grade)
           }, CHORD_GRADE_DELAY_MS)
           pendingPitchTimersRef.current.add(timer)
           continue
@@ -355,11 +354,10 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
       }
 
       // For pitched instruments, use frequency from onset if available,
-      // otherwise read the latest pitch detection value, then fall back to
-      // the last MIDI note seen by the rAF loop so wrong notes are caught
-      const pitchFreq = onset.frequency ?? pitchDetectionRef.current.getFrequency() ?? null
+      // otherwise read a fresh pitch-worklet value from the same input stream.
+      const pitchFreq = onset.frequency ?? getFrequency() ?? null
       const detectedMidi = category === 'pitched'
-        ? (pitchFreq ? frequencyToMidi(pitchFreq) : lastDetectedMidiRef.current ?? undefined)
+        ? (onset.midiNote ?? (pitchFreq ? frequencyToMidi(pitchFreq) : undefined))
         : undefined
       const detectedFreq = category === 'pitched'
         ? (pitchFreq ?? undefined)
@@ -374,7 +372,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
           if (sessionStateRef.current !== 'playing') return
 
           // Re-read pitch after 100ms delay
-          const delayedFreq = pitchDetectionRef.current.getFrequency() ?? null
+          const delayedFreq = getFrequency() ?? null
           const delayedMidi = delayedFreq ? frequencyToMidi(delayedFreq) : undefined
 
           const deferredResult = gradeSingleOnset(
@@ -400,20 +398,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
             }
 
             eventResultsRef.current = [...eventResultsRef.current, deferredResult]
-            setEventResults([...eventResultsRef.current])
-            setLastHitGrade(deferredResult.grade)
-
-            if (deferredResult.grade !== 'miss') {
-              liveComboRef.current++
-            } else {
-              liveComboRef.current = 0
-            }
-            setCurrentCombo(liveComboRef.current)
-
-            const stats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
-            setCurrentScore(stats.score)
-            setCurrentAccuracy(stats.accuracy)
-            setTempoDrift(stats.tempoDriftMs)
+            publishResults(deferredResult.grade)
           } else {
             extraHitsRef.current++
           }
@@ -433,7 +418,8 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
         category,
         detectedMidi,
         detectedFreq,
-        onset.surface ?? undefined
+        onset.surface ?? undefined,
+        isMidiMode ? 'midi' : 'microphone'
       )
 
       if (result) {
@@ -460,26 +446,12 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
         }
 
         eventResultsRef.current = [...eventResultsRef.current, result]
-        setEventResults([...eventResultsRef.current])
-        setLastHitGrade(result.grade)
-
-        if (result.grade !== 'miss') {
-          liveComboRef.current++
-        } else {
-          liveComboRef.current = 0
-        }
-        setCurrentCombo(liveComboRef.current)
-
-        // Update live stats
-        const stats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
-        setCurrentScore(stats.score)
-        setCurrentAccuracy(stats.accuracy)
-        setTempoDrift(stats.tempoDriftMs)
+        publishResults(result.grade)
       } else {
         extraHitsRef.current++
       }
     }
-  }, [recentOnsets, sessionState, exercise, calibration.calibrationData])
+  }, [recentOnsets, sessionState, exercise, calibration.calibrationData, isMidiMode, chromaByOnsetRef, getFrequency])
 
   // Playhead animation and exercise end detection
   const updatePlayhead = useCallback(() => {
@@ -489,11 +461,14 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     const elapsed = currentTime - exerciseStartTimeRef.current
     const overallProgress = Math.min(elapsed / exerciseDurationRef.current, 1)
 
-    setPlayheadProgress(overallProgress)
+    if (currentTime - lastUiUpdateRef.current >= 1 / 30 || overallProgress >= 1) {
+      setPlayheadProgress(Math.max(0, overallProgress))
+      lastUiUpdateRef.current = currentTime
+    }
 
     // Update detected MIDI note for visualization (pitched instruments only)
     if (instrumentCategoryRef.current === 'pitched') {
-      const freq = pitchDetectionRef.current.getFrequency()
+      const freq = getFrequency()
       const midi = freq ? frequencyToMidi(freq) : null
       if (midi !== lastDetectedMidiRef.current) {
         lastDetectedMidiRef.current = midi
@@ -541,6 +516,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
         offsetMs: null,
         timing: null,
         onsetEnergy: null,
+        pitchCorrect: evt.expectedPitch != null ? false : null,
       }
       eventResultsRef.current = [...eventResultsRef.current, missResult]
       missDetectedIndicesRef.current.add(evt.eventIndex)
@@ -550,24 +526,30 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     }
 
     if (missDetected) {
-      setEventResults([...eventResultsRef.current])
-      setCurrentCombo(0)
+      eventResultsRef.current = orderSessionResults(eventResultsRef.current, expectedEventsRef.current)
+      liveComboRef.current = currentComboForResults(eventResultsRef.current)
+      setEventResults(eventResultsRef.current)
+      setCurrentCombo(liveComboRef.current)
       setLastHitGrade('miss')
       const stats = computeStats(eventResultsRef.current, extraHitsRef.current, 0)
       setCurrentScore(stats.score)
       setCurrentAccuracy(stats.accuracy)
     }
 
-    if (overallProgress >= 1) {
-      finishExercise()
+    // Let final-note input delivery and deferred pitch analysis finish before closing.
+    if (elapsed >= exerciseDurationRef.current + 0.35) {
+      finishExerciseRef.current()
       return
     }
 
     rafRef.current = requestAnimationFrame(updatePlayhead)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [getFrequency])
 
   const finishExercise = useCallback(() => {
+    if (sessionStateRef.current === 'results') return
+    sessionStateRef.current = 'results'
+    sessionGenerationRef.current++
+    startingRef.current = false
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current)
       rafRef.current = null
@@ -605,13 +587,15 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
           offsetMs: null,
           timing: null,
           onsetEnergy: null,
+          pitchCorrect: expected.expectedPitch != null ? false : null,
         })
       }
     }
 
-    // Sort by eventIndex
+    // Musical order is independent of how the author stored events.
+    const timeByIndex = new Map(expectedEventsRef.current.map(e => [e.eventIndex, e.timestamp]))
     const allResults = Array.from(resultsByIndex.values())
-    allResults.sort((a, b) => a.eventIndex - b.eventIndex)
+    allResults.sort((a, b) => (timeByIndex.get(a.eventIndex) ?? 0) - (timeByIndex.get(b.eventIndex) ?? 0) || a.eventIndex - b.eventIndex)
 
     const duration = audioCtxRef.current
       ? audioCtxRef.current.currentTime - exerciseStartTimeRef.current
@@ -623,17 +607,41 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     setAttemptStats(stats)
     setSessionState('results')
     stopListening()
-    pitchDetectionRef.current.stopListening()
   }, [metronome, stopListening, backingTrack])
 
+  useEffect(() => { finishExerciseRef.current = finishExercise }, [finishExercise])
+
+  const cancelSession = useCallback(() => {
+    sessionGenerationRef.current++
+    startingRef.current = false
+    sessionStateRef.current = 'idle'
+    calibration.cancelCalibration()
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    rafRef.current = null
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
+    countdownIntervalRef.current = null
+    for (const timer of pendingPitchTimersRef.current) clearTimeout(timer)
+    pendingPitchTimersRef.current.clear()
+    metronome.stopMetronome()
+    backingTrack.stopPlayback()
+    stopListening()
+    audioCtxRef.current = null
+  }, [metronome, backingTrack, stopListening, calibration])
+
   const selectExercise = useCallback((ex: ExerciseDefinition) => {
+    cancelSession()
     setExercise(ex)
     setSessionState('selecting')
     setEventResults([])
     setAttemptStats(null)
-  }, [])
+    setPlayheadProgress(0)
+    sessionStateRef.current = 'selecting'
+    // Saved input choice must support the newly selected instrument.
+    if (audioMode && !availableInputModes(ex.instrument).includes(audioMode)) clearAudioMode()
+  }, [cancelSession, audioMode, clearAudioMode])
 
   const startCalibrationFlow = useCallback(async () => {
+    if (audioMode === 'midi') return
     setSessionState('calibrating')
 
     if (audioMode === 'playsense') {
@@ -656,14 +664,16 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
         audioCtxRef.current = audioCtx
         calibration.startCalibration(audioCtx, {
           type: 'mic',
-          workletNode,
+          workletNode: micOnsets.getWorkletNode(),
         })
       }
     }
-  }, [startListening, calibration, workletNode, audioMode, bleOnsets])
+  }, [startListening, calibration, audioMode, bleOnsets, micOnsets])
 
   const startExercise = useCallback(async () => {
-    if (!exercise) return
+    if (!exercise || startingRef.current || sessionStateRef.current === 'playing' || sessionStateRef.current === 'countdown') return
+    startingRef.current = true
+    const generation = ++sessionGenerationRef.current
 
     // Clear mic test state if active
     setIsMicTesting(false)
@@ -681,8 +691,8 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     matchedIndicesRef.current = new Set()
     missDetectedIndicesRef.current = new Set()
     extraHitsRef.current = 0
-    lastProcessedOnsetRef.current = 0
-    readyToGradeRef.current = false
+    seenOnsetsRef.current = new WeakSet()
+    lastUiUpdateRef.current = 0
     liveComboRef.current = 0
     lastMissCheckIndexRef.current = 0
     sustainTrackingRef.current.clear()
@@ -690,20 +700,13 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     pendingPitchTimersRef.current.clear()
     clearOnsets()
 
-    // Start mic
-    let audioCtx = audioCtxRef.current
-    if (!audioCtx || audioCtx.state === 'closed') {
-      audioCtx = await startListening()
-      if (!audioCtx) return
-      audioCtxRef.current = audioCtx
-    } else if (audioCtx.state === 'suspended') {
-      await audioCtx.resume()
-    }
-
-    // Start pitch detection for pitched instruments
-    if (getInstrumentCategory(exercise.instrument) === 'pitched') {
-      pitchDetectionRef.current.startListening()
-    }
+    // The input source owns its AudioContext; always activate that source.
+    // A calibration-only context must never bypass microphone/BLE/MIDI startup.
+    const audioCtx = await startListening()
+    if (generation !== sessionGenerationRef.current) return
+    startingRef.current = false
+    if (!audioCtx) return
+    audioCtxRef.current = audioCtx
 
     // Generate expected events
     expectedEventsRef.current = generateExpectedTimestamps(exercise)
@@ -715,7 +718,9 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     singleLoopDurationRef.current = (singleLoopBeats * 60) / exercise.bpm
 
     // Start countdown
+    sessionStateRef.current = 'countdown'
     setSessionState('countdown')
+    setCountdownBeat(0)
     const countInDuration = getCountInDuration(exercise.bpm, beatsPerMeasure)
     const exerciseStartTime = metronome.startMetronome(audioCtx)
     exerciseStartTimeRef.current = exerciseStartTime
@@ -755,20 +760,22 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   }, [finishExercise])
 
   const retry = useCallback(() => {
+    cancelSession()
+    sessionStateRef.current = 'selecting'
     setSessionState('selecting')
     setEventResults([])
     setAttemptStats(null)
     setPlayheadProgress(0)
-  }, [])
+  }, [cancelSession])
 
   const goToSelect = useCallback(() => {
+    cancelSession()
     setExercise(null)
     setSessionState('idle')
     setIsMicTesting(false)
     setEventResults([])
     setAttemptStats(null)
     stopListening()
-    pitchDetectionRef.current.stopListening()
     metronome.stopMetronome()
     backingTrack.stopPlayback()
     if (rafRef.current) {
@@ -779,16 +786,14 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
       clearInterval(countdownIntervalRef.current)
       countdownIntervalRef.current = null
     }
-  }, [stopListening, metronome, backingTrack])
+  }, [stopListening, metronome, backingTrack, cancelSession])
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
-      metronome.stopMetronome()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const cancelSessionRef = useRef(cancelSession)
+  useEffect(() => { cancelSessionRef.current = cancelSession }, [cancelSession])
+  useEffect(() => () => { cancelSessionRef.current() }, [])
+
+  const getElapsedSeconds = useCallback(() => {
+    return audioCtxRef.current ? audioCtxRef.current.currentTime - exerciseStartTimeRef.current : 0
   }, [])
 
   return {
@@ -817,6 +822,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     backingTrackLoading: backingTrack.isLoading,
     backingTrackLoaded: backingTrack.isLoaded,
     playheadProgress,
+    getElapsedSeconds,
     currentScore,
     currentCombo,
     currentAccuracy,

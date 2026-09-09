@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type { OnsetEvent, Instrument } from '@/lib/play-sense/types'
 import { usePlaysense } from '@/contexts/playsense-context'
+import { inputTimestampToAudioTime } from '@/lib/play-sense/input-events'
 import { getPlaySenseMapping } from '@/lib/play-sense/playsense-mappings'
 
 interface UsePlaysenseOnsetsResult {
@@ -24,16 +25,19 @@ export function usePlaysenseOnsets(
   instrument: Instrument | null
 ): UsePlaysenseOnsetsResult {
   const playsense = usePlaysense()
+  const subscribeToReadings = playsense.subscribeToReadings
 
   const [isListening, setIsListening] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
   const [inputLevel, setInputLevel] = useState(0)
   const [recentOnsets, setRecentOnsets] = useState<OnsetEvent[]>([])
 
   const audioContextRef = useRef<AudioContext | null>(null)
-  const lastReadingRef = useRef<number>(0)
+  const listeningRef = useRef(false)
+  const generationRef = useRef(0)
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null)
   /** Subscribers that always fire on any BLE hit (irrespective of `isListening`). */
   const hitSubscribersRef = useRef<Set<(ts: number) => void>>(new Set())
-  const lastHitReadingRef = useRef<number>(0)
 
   const subscribeToHits = useCallback((cb: (timestampMs: number) => void) => {
     hitSubscribersRef.current.add(cb)
@@ -47,7 +51,10 @@ export function usePlaysenseOnsets(
   }, [])
 
   const stopListening = useCallback(() => {
+    generationRef.current++
+    listeningRef.current = false
     setIsListening(false)
+    setAudioContext(null)
     setInputLevel(0)
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
       audioContextRef.current.close().catch(() => {})
@@ -56,6 +63,7 @@ export function usePlaysenseOnsets(
   }, [])
 
   const startListening = useCallback(async (): Promise<AudioContext | null> => {
+    const generation = ++generationRef.current
     const AudioContextClass =
       typeof window !== 'undefined'
         ? window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
@@ -64,76 +72,54 @@ export function usePlaysenseOnsets(
       return null
     }
 
-    let audioContext = audioContextRef.current
-    if (audioContext && audioContext.state !== 'closed') {
-      await audioContext.resume()
-    } else {
-      audioContext = new AudioContextClass()
-      await audioContext.resume()
-      audioContextRef.current = audioContext
+    setLocalError(null)
+    try {
+      let audioContext = audioContextRef.current
+      if (audioContext && audioContext.state !== 'closed') {
+        await audioContext.resume()
+      } else {
+        audioContext = new AudioContextClass()
+        await audioContext.resume()
+        audioContextRef.current = audioContext
+      }
+
+      if (!playsense.isConnected()) await playsense.connect()
+      if (generation !== generationRef.current) return null
+      if (!playsense.isConnected()) { setLocalError('No PlaySense device connected. Connect your device and try again.'); stopListening(); return null }
+      listeningRef.current = true
+      setAudioContext(audioContext)
+      setIsListening(true)
+      setRecentOnsets([])
+      return audioContext
+    } catch {
+      if (generation === generationRef.current) {
+        setLocalError('Could not start the PlaySense input. Check your connection and try again.')
+        stopListening()
+      }
+      return null
     }
+  }, [playsense, stopListening])
 
-    if (playsense.connectionStatus !== 'connected') {
-      await playsense.connect()
+  // Every packet is delivered directly; UI batching cannot collapse rapid hits.
+  useEffect(() => subscribeToReadings(reading => {
+    if ((reading.piezos || []).some(value => value > 0)) {
+      for (const cb of hitSubscribersRef.current) cb(reading.receivedAt)
     }
-
-    setIsListening(true)
-    setRecentOnsets([])
-    return audioContext
-  }, [playsense])
-
-  // Always-on subscribers — fire on any BLE hit, regardless of `isListening`.
-  // Used for the calibration wizard which doesn't go through the normal start/stop lifecycle.
-  useEffect(() => {
-    if (!playsense.lastReading) return
-    const reading = playsense.lastReading
-    if (reading.receivedAt <= lastHitReadingRef.current) return
-    lastHitReadingRef.current = reading.receivedAt
-    const anyHit = (reading.piezos || []).some((v) => v > 0)
-    if (!anyHit) return
-    for (const cb of hitSubscribersRef.current) {
-      try { cb(reading.receivedAt) } catch { /* swallow */ }
-    }
-  }, [playsense.lastReading])
-
-  useEffect(() => {
-    if (!isListening || !playsense.lastReading || !instrument) return
-
-    const reading = playsense.lastReading
-
-    if (reading.receivedAt <= lastReadingRef.current) return
-    lastReadingRef.current = reading.receivedAt
-
+    const context = audioContextRef.current
+    if (!listeningRef.current || !instrument || !context || context.state !== 'running') return
     const mapping = getPlaySenseMapping(instrument)
     if (!mapping) return
-
-    const audioContext = audioContextRef.current
-    if (!audioContext || audioContext.state === 'closed') return
-
-    const timestamp = audioContext.currentTime
-
-    const newOnsets: OnsetEvent[] = []
+    const timestamp = inputTimestampToAudioTime(reading.receivedAt, performance.now(), context.currentTime)
+    const onsets: OnsetEvent[] = []
     for (let i = 0; i < reading.piezos.length; i++) {
-      const val = reading.piezos[i]
-      if (val > 0 && mapping.piezoMap[i] !== undefined) {
-        newOnsets.push({
-          timestamp,
-          energy: val,
-          surface: mapping.piezoMap[i],
-        })
+      const value = reading.piezos[i]
+      if (Number.isFinite(value) && value > 0 && mapping.piezoMap[i] !== undefined) {
+        onsets.push({ timestamp, energy: value, surface: mapping.piezoMap[i] })
       }
     }
-
-    if (newOnsets.length > 0) {
-      setRecentOnsets((prev) => {
-        const next = [...prev, ...newOnsets]
-        return next.length > 500 ? next.slice(-500) : next
-      })
-    }
-
-    const maxPiezo = Math.max(...reading.piezos, 0)
-    setInputLevel(Math.min(maxPiezo / 4095, 1))
-  }, [isListening, playsense.lastReading, instrument])
+    if (onsets.length) setRecentOnsets(prev => [...prev, ...onsets].slice(-500))
+    setInputLevel(Math.min(Math.max(...reading.piezos, 0) / 4095, 1))
+  }), [subscribeToReadings, instrument])
 
   useEffect(() => {
     return () => {
@@ -150,10 +136,10 @@ export function usePlaysenseOnsets(
   return {
     isListening: isListening && playsense.connectionStatus === 'connected',
     hasPermission,
-    error: playsense.error,
+    error: localError ?? playsense.error,
     inputLevel,
     recentOnsets,
-    audioContext: audioContextRef.current,
+    audioContext,
     workletNode: null,
     startListening,
     stopListening,

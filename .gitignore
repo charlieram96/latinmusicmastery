@@ -42,3 +42,7 @@ next-env.d.ts
 
 # worktrees
 .worktrees/
+
+# Blender automatic revision backups
+/art/playsense/*.blend[0-9]
+/scripts/blender/__pycache__/

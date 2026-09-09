@@ -16,6 +16,7 @@ import { getServerTranslator } from '@/lib/i18n/server'
 import { localizeRows, QUIZ_FIELDS } from '@/lib/i18n/localize'
 import { QuizRunner } from '@/components/class-viewer/lesson-viewer/quiz-runner'
 import { ExerciseView } from '@/components/class-viewer/lesson-viewer/exercise-view'
+import { ScoreExerciseGame } from '@/components/class-viewer/lesson-viewer/score-exercise-game'
 import { LessonVideoPlayer } from '@/components/class-viewer/lesson-viewer/lesson-video-player'
 import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise'
 import { parseSubtitles } from '@/lib/subtitles/tracks'
@@ -53,9 +54,11 @@ interface ClassItemRendererProps {
   playerLayout?: 'stack' | 'split'
   /** Where "Continue to next part" goes at the end of a quiz/exercise; omitted when this is the last part. */
   nextHref?: string | null
+  /** Development-only lesson showcase using existing authorized lesson content. */
+  previewExercise?: boolean
 }
 
-export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref = null }: ClassItemRendererProps) {
+export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref = null, previewExercise = false }: ClassItemRendererProps) {
   const { t, locale } = await getServerTranslator()
 
   // Subtitle tracks for the demo video. Every language is passed to the
@@ -116,6 +119,16 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
   // tempo-based cursor from the score so the staff is visible immediately. The
   // accurate cursor appears once the lesson is sync-authored in PlaySense Studio.
   const firstUnplacedSection = !hasVideoSections ? videoSections[0] ?? null : null
+
+  if (process.env.NODE_ENV === 'development' && previewExercise && item.video_url && firstSection) {
+    return <ScoreExerciseGame
+      key={`preview-${item.id}`}
+      preview
+      exercise={{ ...scoreToExerciseDefinition(firstSection.score, { id: `preview-${item.id}`, title: firstSection.label ?? item.title }), loopCount: 4 }}
+      score={firstSection.score}
+      exerciseVideo={{ url: item.video_url, startSeconds: firstSection.videoStartSeconds ?? 0, timeMap: firstSection.activeTimeMap }}
+    />
+  }
 
   // EXERCISE play-part media: optional cropped video + instrument backing
   // tracks the student selects before playing.

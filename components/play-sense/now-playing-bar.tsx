@@ -11,7 +11,7 @@ import { getInstrumentLabel, getExerciseDuration } from '@/lib/play-sense/exerci
 import { GRADE_LABELS, scaleIn, comboFire, GRADE_GLOW } from '@/lib/play-sense/animations'
 import { slideUp } from '@/lib/play-sense/animations'
 import type { AudioMode } from '@/hooks/use-exercise-session'
-import { PLAYSENSE_INSTRUMENTS } from '@/lib/play-sense/playsense-mappings'
+import { nextInputMode } from '@/lib/play-sense/input-modes'
 import {
   Play,
   Square,
@@ -162,6 +162,7 @@ export function NowPlayingBar({
 
   return (
     <motion.div
+      data-transport-state={sessionState}
       variants={slideUp}
       initial="hidden"
       animate="visible"
@@ -191,7 +192,7 @@ export function NowPlayingBar({
       <div className="flex flex-col sm:flex-row items-stretch">
 
         {/* ── Left Column — Play + Song + Calibrate + Mic ── */}
-        <div className="shrink-0 px-4 py-3 flex flex-col gap-2.5 sm:w-[300px] md:w-[340px]">
+        <div data-transport-panel="primary" className="shrink-0 px-4 py-3 flex flex-col gap-2.5 sm:w-[300px] md:w-[340px]">
           {/* Top row: Play button + song info */}
           <div className="flex items-center gap-4">
             {/* Play/Stop button */}
@@ -201,7 +202,7 @@ export function NowPlayingBar({
                   onClick={onStart}
                   disabled={backingTrackLoading}
                   size="sm"
-                  className="bg-primary hover:bg-primary/90 text-white border-0 rounded-full h-12 w-12 p-0 shadow-lg shadow-primary/30"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 rounded-full h-12 w-12 p-0 shadow-lg shadow-primary/30"
                 >
                   {backingTrackLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -254,7 +255,7 @@ export function NowPlayingBar({
           </div>
 
           {/* Calibration — prominent when uncalibrated, hidden in PlaySense mode */}
-          {sessionState === 'selecting' && audioMode !== 'playsense' && (
+          {sessionState === 'selecting' && audioMode !== 'playsense' && audioMode !== 'midi' && (
             !calibrationData ? (
               <Button
                 variant="outline"
@@ -278,8 +279,8 @@ export function NowPlayingBar({
           )}
 
           {/* Mic level + test button — hidden in PlaySense mode */}
-          {audioMode !== 'playsense' && (
-            <div className="flex items-center gap-2 h-7">
+          {audioMode !== 'playsense' && audioMode !== 'midi' && (
+            <div data-transport-meter className="flex items-center gap-2 h-7">
             <Mic className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
               <div
@@ -318,6 +319,7 @@ export function NowPlayingBar({
 
         {/* ── Center Column — Hero Stats (widest) ── */}
         <motion.div
+          data-transport-panel="stats"
           className="flex-1 min-w-0 py-3 px-4 sm:px-6 bg-secondary/30 flex items-center justify-center"
           animate={{ opacity: isPlaying ? 1 : 0.4 }}
           transition={{ duration: 0.3 }}
@@ -399,19 +401,13 @@ export function NowPlayingBar({
         </motion.div>
 
         {/* ── Right Column — Toggles ── */}
-        <div className="shrink-0 px-4 py-3 sm:w-[280px] md:w-[300px] hidden sm:flex flex-col justify-center gap-2">
+        <div data-transport-panel="settings" className="shrink-0 px-4 py-3 sm:w-[280px] md:w-[300px] hidden sm:flex flex-col justify-center gap-2">
           {/* Audio mode indicator */}
           {audioMode && (
             <button
+              disabled={sessionState === 'playing' || sessionState === 'countdown'}
               onClick={() => {
-                const supportsPlaysense = exercise.instrument ? PLAYSENSE_INSTRUMENTS.has(exercise.instrument) : false
-                if (audioMode === 'headphones') {
-                  onAudioModeChange('speaker-safe')
-                } else if (audioMode === 'speaker-safe') {
-                  onAudioModeChange(supportsPlaysense ? 'playsense' : 'headphones')
-                } else {
-                  onAudioModeChange('headphones')
-                }
+                onAudioModeChange(nextInputMode(exercise.instrument, audioMode))
               }}
               className="flex items-center gap-2 px-3 h-8 w-full rounded-md transition-colors hover:bg-secondary/50"
             >
@@ -423,14 +419,14 @@ export function NowPlayingBar({
                 <Speaker className="w-4 h-4 text-yellow-500 shrink-0" />
               )}
               <span className="text-xs text-muted-foreground">
-                {audioMode === 'playsense' ? 'PlaySense' : audioMode === 'headphones' ? 'Headphones' : 'Speaker Safe'}
+                {audioMode === 'midi' ? 'MIDI' : audioMode === 'playsense' ? 'PlaySense' : audioMode === 'headphones' ? 'Headphones' : 'Speaker Safe'}
               </span>
               <span className="text-[10px] text-muted-foreground/60 ml-auto">switch</span>
             </button>
           )}
 
           {/* Noisy room toggle — hidden in PlaySense mode */}
-          {audioMode !== 'playsense' && (
+          {audioMode !== 'playsense' && audioMode !== 'midi' && (
             <div className="flex items-center gap-2 px-3 h-8">
               <Volume2 className="w-4 h-4 text-muted-foreground shrink-0" />
               <span className="text-xs text-muted-foreground">Noisy Room</span>

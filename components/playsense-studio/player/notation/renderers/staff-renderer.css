@@ -1,0 +1,23 @@
+/* Musical engraving stays conventional; the surrounding measure structure carries the brand. */
+.ps-score-engraving { --score-ink:hsl(var(--playsense-studio-notation)); color:var(--score-ink); }
+.ps-score-engraving .ps-staff-viewport { isolation:isolate; scrollbar-width:thin; scrollbar-color:hsl(var(--primary) / .3) transparent; }
+.ps-score-engraving .ps-staff-viewport:focus-visible { outline:1px solid hsl(var(--primary) / .45); outline-offset:-2px; border-radius:6px; }
+.ps-score-engraving [data-score-stave] { color:hsl(var(--playsense-studio-notation) / .3); }
+.ps-score-engraving [data-score-stave] text { color:var(--score-ink); }
+.ps-score-engraving [data-score-note] { transition:color .1s ease,filter .1s ease; }
+.ps-score-engraving [data-score-note][data-note-state=active] { color:hsl(var(--primary)); filter:drop-shadow(0 0 4px hsl(var(--primary) / .22)); }
+.ps-score-engraving.playsense-studio-notation svg [data-score-measure-dot] { fill:hsl(var(--muted-foreground) / .3)!important; stroke:none!important; }
+.ps-score-engraving.playsense-studio-notation svg [data-state=active] [data-score-measure-dot] { fill:hsl(var(--primary))!important; }
+.ps-score-engraving.playsense-studio-notation svg [data-score-measure-label] { font-family:var(--font-inter),system-ui,sans-serif; font-size:7.5px; font-weight:550; letter-spacing:.9px; fill:hsl(var(--muted-foreground) / .8)!important; stroke:none!important; }
+.ps-score-engraving.playsense-studio-notation svg [data-state=active] [data-score-measure-label] { fill:hsl(var(--primary))!important; }
+.ps-score-engraving.playsense-studio-notation svg [data-score-progress-track] { fill:hsl(var(--foreground) / .07)!important; stroke:none!important; }
+.ps-score-engraving.playsense-studio-notation svg [data-state=played] [data-score-progress-track] { fill:hsl(var(--primary) / .22)!important; }
+.ps-score-engraving.playsense-studio-notation svg [data-score-progress] { fill:hsl(var(--primary))!important; stroke:none!important; }
+.ps-score-engraving.playsense-studio-notation svg [data-score-beat] { font-family:var(--font-inter),system-ui,sans-serif; font-size:8px; font-weight:500; fill:hsl(var(--muted-foreground) / .7)!important; stroke:none!important; }
+.ps-score-engraving.playsense-studio-notation svg [data-score-beat][data-active=true] { fill:hsl(var(--primary))!important; font-weight:750; }
+.ps-score-engraving .ps-staff-playhead { width:1px!important; border-radius:2px; background:linear-gradient(180deg,transparent,hsl(var(--primary) / .35) 25%,hsl(var(--primary) / .65))!important; }
+.ps-score-engraving .ps-staff-playhead::after { content:''; position:absolute; bottom:-4px; left:50%; width:5px; height:5px; border-radius:50%; background:hsl(var(--primary)); box-shadow:0 0 0 3px hsl(var(--primary) / .1); transform:translateX(-50%); }
+.ps-exercise-score .ps-staff-viewport { mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 20px),transparent); }
+.ps-score-engraving:not([data-score-interactive]) .ps-staff-content { touch-action:pan-y!important; }
+.ps-score-engraving[data-score-layout-mode=wrapped]:not([data-score-interactive]) .ps-staff-content { touch-action:pan-x pan-y!important; }
+@media(prefers-reduced-motion:reduce) { .ps-score-engraving * { transition:none!important; } }

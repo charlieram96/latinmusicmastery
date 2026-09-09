@@ -70,6 +70,7 @@ export function LessonShell({
   return (
     <LessonShellProvider collapsed={collapsed} setCollapsed={setCollapsed}>
       <div
+        data-lesson-shell
         className={cn(
           styles.app,
           '-m-6 flex min-h-[calc(100vh-3.5rem)] items-stretch bg-background text-foreground'
@@ -83,14 +84,17 @@ export function LessonShell({
         />
 
         <div
+          data-lesson-column
           className="relative flex min-w-0 flex-1 flex-col"
           style={{ paddingBottom: footer ? 68 : 0 }}
         >
-          <LessonHeader {...header} />
-          {parts && <LessonPartsNav {...parts} />}
+          <div data-lesson-heading>
+            <LessonHeader {...header} />
+            {parts && <LessonPartsNav {...parts} />}
+          </div>
           {workspace}
           {body}
-          {footer && <LessonFooter {...footer} />}
+          {footer && <div data-lesson-footer><LessonFooter {...footer} /></div>}
         </div>
       </div>
     </LessonShellProvider>

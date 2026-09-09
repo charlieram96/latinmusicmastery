@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type { MutableRefObject } from 'react'
 import type { OnsetEvent, Instrument } from '@/lib/play-sense/types'
+import { getInstrumentCategory } from '@/lib/play-sense/types'
 import { getInstrumentConfig, type OnsetConfig } from '@/lib/play-sense/onset-config'
 
 type AudioMode = 'headphones' | 'speaker-safe'
@@ -23,6 +24,8 @@ interface UseOnsetDetectionResult {
   workletNode: AudioWorkletNode | null
   /** Chord chroma vectors keyed by rounded onset timestamp (ms). Read by the grader for chord events. */
   chromaByOnsetRef: MutableRefObject<Map<number, number[]>>
+  getFrequency: () => number | null
+  getWorkletNode: () => AudioWorkletNode | null
   startListening: () => Promise<AudioContext | null>
   stopListening: () => void
   clearOnsets: () => void
@@ -39,6 +42,11 @@ export function useOnsetDetection(
   const [inputLevel, setInputLevel] = useState(0)
   const [recentOnsets, setRecentOnsets] = useState<OnsetEvent[]>([])
 
+  const [resources, setResources] = useState<{ audioContext: AudioContext | null; workletNode: AudioWorkletNode | null }>({ audioContext: null, workletNode: null })
+  const generationRef = useRef(0)
+  const pitchWorkletRef = useRef<AudioWorkletNode | null>(null)
+  const silentSinkRef = useRef<GainNode | null>(null)
+  const pitchRef = useRef<{ frequency: number | null; at: number }>({ frequency: null, at: 0 })
   const audioContextRef = useRef<AudioContext | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const workletNodeRef = useRef<AudioWorkletNode | null>(null)
@@ -46,6 +54,13 @@ export function useOnsetDetection(
   const chromaByOnsetRef = useRef<Map<number, number[]>>(new Map())
 
   const stopListening = useCallback(() => {
+    generationRef.current++
+    pitchWorkletRef.current?.disconnect()
+    pitchWorkletRef.current = null
+    silentSinkRef.current?.disconnect()
+    silentSinkRef.current = null
+    pitchRef.current = { frequency: null, at: 0 }
+    setResources({ audioContext: null, workletNode: null })
     if (workletNodeRef.current) {
       workletNodeRef.current.disconnect()
       workletNodeRef.current = null
@@ -69,6 +84,11 @@ export function useOnsetDetection(
 
   const startListening = useCallback(async (): Promise<AudioContext | null> => {
     setError(null)
+    const generation = ++generationRef.current
+    if (audioContextRef.current?.state !== 'closed' && audioContextRef.current && workletNodeRef.current && mediaStreamRef.current?.active) {
+      await audioContextRef.current.resume()
+      return audioContextRef.current
+    }
 
     const AudioContextClass =
       typeof window !== 'undefined'
@@ -90,6 +110,7 @@ export function useOnsetDetection(
           autoGainControl: false,
         },
       })
+      if (generation !== generationRef.current) { stream.getTracks().forEach(track => track.stop()); return null }
       mediaStreamRef.current = stream
       setHasPermission(true)
 
@@ -105,6 +126,7 @@ export function useOnsetDetection(
 
       // Load AudioWorklet
       await audioContext.audioWorklet.addModule('/audio-worklets/onset-detector-processor.js')
+      if (generation !== generationRef.current) return null
 
       const source = audioContext.createMediaStreamSource(stream)
       const workletNode = new AudioWorkletNode(audioContext, 'onset-detector-processor')
@@ -151,12 +173,30 @@ export function useOnsetDetection(
       }
 
       source.connect(workletNode)
-      // Don't connect workletNode to destination — we don't want to hear the mic
+      // A silent sink keeps both processors scheduled without monitoring the mic.
+      const sink = audioContext.createGain()
+      sink.gain.value = 0
+      sink.connect(audioContext.destination)
+      workletNode.connect(sink)
+      silentSinkRef.current = sink
+      if (instrument && getInstrumentCategory(instrument) === 'pitched') {
+        await audioContext.audioWorklet.addModule('/audio-worklets/pitch-detector-processor.js')
+        if (generation !== generationRef.current) return null
+        const pitchNode = new AudioWorkletNode(audioContext, 'pitch-detector-processor')
+        pitchNode.port.onmessage = message => {
+          pitchRef.current = { frequency: message.data.hz ?? null, at: performance.now() }
+        }
+        source.connect(pitchNode)
+        pitchNode.connect(sink)
+        pitchWorkletRef.current = pitchNode
+      }
+      setResources({ audioContext, workletNode })
 
       setIsListening(true)
       setRecentOnsets([])
       return audioContext
     } catch (err: unknown) {
+      if (generation !== generationRef.current) return null
       const domErr = err as DOMException
       if (domErr.name === 'NotAllowedError') {
         setHasPermission(false)
@@ -178,6 +218,11 @@ export function useOnsetDetection(
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // Invalidate pending permission/worklet work at unmount.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      generationRef.current++
+      pitchWorkletRef.current?.disconnect()
+      silentSinkRef.current?.disconnect()
       if (workletNodeRef.current) {
         workletNodeRef.current.disconnect()
       }
@@ -190,14 +235,19 @@ export function useOnsetDetection(
     }
   }, [])
 
+  const getFrequency = useCallback(() => performance.now() - pitchRef.current.at <= 150 ? pitchRef.current.frequency : null, [])
+  const getWorkletNode = useCallback(() => workletNodeRef.current, [])
+
   return {
     isListening,
     hasPermission,
     error,
     inputLevel,
     recentOnsets,
-    audioContext: audioContextRef.current,
-    workletNode: workletNodeRef.current,
+    audioContext: resources.audioContext,
+    workletNode: resources.workletNode,
+    getFrequency,
+    getWorkletNode,
     chromaByOnsetRef,
     startListening,
     stopListening,

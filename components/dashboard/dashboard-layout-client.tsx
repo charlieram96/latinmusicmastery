@@ -16,18 +16,18 @@ interface DashboardLayoutClientProps {
  */
 export function DashboardLayoutClient({ children, sidebar, header, mobileNav }: DashboardLayoutClientProps) {
   return (
-    <div className="h-screen w-full overflow-hidden bg-background">
-      {sidebar}
+    <div data-dashboard-shell className="h-screen w-full overflow-hidden bg-background">
+      <div data-dashboard-navigation>{sidebar}</div>
 
-      <div className="flex h-screen flex-col md:ml-16">
-        {header}
+      <div data-dashboard-frame className="flex h-screen flex-col md:ml-16">
+        <div data-dashboard-header>{header}</div>
 
-        <main className="flex-1 overflow-y-auto pt-[var(--header-h)]">
-          <div className="p-6 pb-24 md:pb-6">{children}</div>
+        <main data-dashboard-main className="flex-1 overflow-y-auto pt-[var(--header-h)]">
+          <div data-dashboard-content className="p-6 pb-24 md:pb-6">{children}</div>
         </main>
       </div>
 
-      {mobileNav}
+      <div data-dashboard-navigation>{mobileNav}</div>
     </div>
   )
 }

@@ -2,8 +2,8 @@
 
 // Lets components nested deep inside the lesson viewer's RSC `body` slot
 // control the shell's sidebar collapse state (which lives in LessonShell).
-// Used e.g. by ExerciseView to auto-collapse the sidebar when the student
-// enters the immersive "play" view.
+// Immersive exercise mode hides the sidebar independently, preserving this
+// preference when the student returns to the lesson.
 
 import { createContext, useContext, type ReactNode } from 'react'
 

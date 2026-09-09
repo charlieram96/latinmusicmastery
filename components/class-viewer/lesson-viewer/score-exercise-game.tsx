@@ -12,8 +12,10 @@ import {
 } from '@/components/playsense-studio/shared/time-map/time-map'
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
-import { GlassHighway } from '@/components/play-sense/glass-highway'
-import { StaffRenderer } from '@/components/playsense-studio/player/notation/renderers/staff-renderer'
+import { useStageDemoSession } from '@/hooks/use-stage-demo-session'
+import { StageHighway as GlassHighway } from '@/components/play-sense/stage-highway/StageHighway'
+import { ExerciseScore } from './exercise-score'
+import { exerciseScoreTime } from '@/lib/playsense-studio/notation-playback'
 import { NowPlayingBar } from '@/components/play-sense/now-playing-bar'
 import { CalibrationWizard } from '@/components/play-sense/calibration-wizard'
 import { ResultsSummary } from '@/components/play-sense/results-summary'
@@ -26,12 +28,16 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
+import { ExerciseModeFrame } from './exercise-mode-frame'
+import { DEFAULT_EXERCISE_LAYOUT, ExerciseWorkspace } from './exercise-workspace'
 
 interface ScoreExerciseGameProps {
   /** The exercise derived from the authored score (see lib/play-sense/score-to-exercise). */
   exercise: ExerciseDefinition
   /** The lesson's score — rendered as staff notation alongside the highway while playing. */
   score?: ScoreDocument
+  /** Local visual showcase: simulated hits, no input connection or saved attempt. */
+  preview?: boolean
   /** When set (video lessons), the results screen offers "Watch demo again" which
    *  flips the parent back to the instructional video. */
   onWatchDemo?: () => void
@@ -56,14 +62,22 @@ interface ScoreExerciseGameProps {
  * This is a focused, playlist-free embedding of the same engine that powers
  * the standalone /play-sense stage (components/play-sense/stage/stage-player.tsx).
  */
-export function ScoreExerciseGame({
+export function ScoreExerciseGame(props: ScoreExerciseGameProps) {
+  return <ExerciseModeFrame title={props.exercise.title} hasVideo={!!props.exerciseVideo} hasScore={!!props.score} preview={props.preview ?? false} onWatchDemo={props.onWatchDemo}>
+    <ScoreExerciseSession {...props} />
+  </ExerciseModeFrame>
+}
+
+function ScoreExerciseSession({
   exercise,
   score,
   onWatchDemo,
   backingTracks,
   exerciseVideo,
+  preview = false,
 }: ScoreExerciseGameProps) {
   const { t } = useTranslation()
+  const [workspaceLayout, setWorkspaceLayout] = useState(DEFAULT_EXERCISE_LAYOUT)
   // Which backing tracks the student wants to hear — all of them by default.
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
     () => new Set((backingTracks ?? []).map((t) => t.id))
@@ -75,7 +89,10 @@ export function ScoreExerciseGame({
 
   // An explicit (possibly empty) selection only when backing tracks are
   // authored; otherwise the legacy path (exercise.audioUrl) stays in charge.
-  const session = useExerciseSession(backingTracks ? { backingTrackUrls: selectedUrls } : {})
+  const liveSession = useExerciseSession(backingTracks ? { backingTrackUrls: selectedUrls } : {})
+  const demoExercises = useMemo(() => [exercise], [exercise])
+  const demoSession = useStageDemoSession(demoExercises, preview)
+  const session = preview ? { ...liveSession, ...demoSession.overrides } : liveSession
   const stableExercise = useMemo(() => exercise, [exercise])
 
   // --- Optional exercise video, synced to the engine clock ---
@@ -134,15 +151,14 @@ export function ScoreExerciseGame({
     })
   }
 
-  // The staff renderer reports the active track's single-pass duration; the
-  // playhead progress (0..1 across all loops) maps back onto one pass so the
-  // cursor cycles through the notation once per loop.
+  // ExerciseScore reports the active track's single-pass duration. Its side
+  // layout combines this local clock with the pass index to read continuously
+  // through repetitions; the top layout retains compact repeat notation.
   const [staffDurationMs, setStaffDurationMs] = useState<number | null>(null)
   const loopCount = Math.max(1, exercise.loopCount || 1)
-  const staffMs =
-    staffDurationMs != null
-      ? ((session.playheadProgress * loopCount) % 1) * staffDurationMs
-      : 0
+  const staffMs = exerciseScoreTime(session.playheadProgress * exerciseDurationSec, exerciseDurationSec, loopCount, staffDurationMs ?? 0)
+  const getStaffMs = () => exerciseScoreTime(session.getElapsedSeconds(), exerciseDurationSec, loopCount, staffDurationMs ?? 0)
+
 
   // Auto-select this exercise so the session is ready to configure + play.
   useEffect(() => {
@@ -152,6 +168,7 @@ export function ScoreExerciseGame({
 
   // Persist the attempt when results are ready.
   useEffect(() => {
+    if (preview) return
     if (session.sessionState === 'results' && session.attemptStats && session.exercise) {
       saveAttempt({
         exerciseId: session.exercise.id,
@@ -176,7 +193,7 @@ export function ScoreExerciseGame({
         })),
       }).catch(console.error)
     }
-  }, [session.sessionState, session.attemptStats, session.exercise, session.eventResults])
+  }, [preview, session.sessionState, session.attemptStats, session.exercise, session.eventResults])
 
   const isActive =
     session.sessionState === 'selecting' ||
@@ -196,7 +213,7 @@ export function ScoreExerciseGame({
   // Calibrating — full panel
   if (session.sessionState === 'calibrating') {
     return (
-      <div className="rounded-xl border border-border bg-card p-4">
+      <div className="ps-lesson-calibration rounded-xl border border-border bg-card p-4">
         <Button
           variant="ghost"
           size="sm"
@@ -225,39 +242,30 @@ export function ScoreExerciseGame({
   // Results — full panel
   if (session.sessionState === 'results' && session.attemptStats && session.exercise) {
     return (
-      <div className="rounded-xl border border-border bg-card p-4">
+      <div className="ps-lesson-results rounded-xl border border-border bg-card p-4">
         <ResultsSummary
           stats={session.attemptStats}
           exerciseTitle={session.exercise.title}
           onRetry={session.retry}
           onWatchDemo={onWatchDemo}
+          demo={preview}
         />
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
+    <div className="ps-lesson-game rounded-xl border border-border bg-card overflow-hidden flex flex-col">
       {isActive && (
-        <div className="flex items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-2.5">
+        <div className="ps-lesson-game-heading flex items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-2.5" data-has-tracks={session.sessionState === 'selecting' && !!backingTracks?.length}>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">{t('dashboard.classViewer.exercise.yourTurn')}</p>
+            <p className="text-sm font-semibold text-foreground">{preview ? 'Lesson preview' : t('dashboard.classViewer.exercise.yourTurn')}</p>
             <p className="truncate text-xs text-muted-foreground">
-              {t('dashboard.classViewer.exercise.yourTurnHint')}
+              {preview ? 'Instructor video, notation, and PlaySense · simulated performance' : t('dashboard.classViewer.exercise.yourTurnHint')}
             </p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            {onWatchDemo && (
-              <button
-                onClick={onWatchDemo}
-                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                {t('dashboard.classViewer.exercise.watchAgain')}
-              </button>
-            )}
-
             {/* Backing-track selection — compact popover, only before starting. */}
             {session.sessionState === 'selecting' && backingTracks && backingTracks.length > 0 && (
               <Popover>
@@ -298,33 +306,24 @@ export function ScoreExerciseGame({
         </div>
       )}
 
-      {/* Notation band — a thin staff strip directly ABOVE the highway (its own
-          band, NOT superposed on the falling notes). In scroll mode the staff
-          sits below ~100px of empty SVG padding, so the inner layer is pulled up
-          to crop the band to just the staff. */}
-      {showCanvas && score && (
-        <div className="relative flex h-[136px] items-center overflow-hidden border-b border-white/10 bg-[#120d0a]">
-          <div className="w-full -translate-y-5 opacity-95">
-            <StaffRenderer
-              score={score}
-              trackIndex={0}
-              currentMs={staffMs}
-              layoutMode="scroll"
-              onDurationKnown={setStaffDurationMs}
-            />
-          </div>
-        </div>
-      )}
+      <ExerciseWorkspace layout={workspaceLayout} onLayoutChange={setWorkspaceLayout} score={showCanvas && score && (
+        <ExerciseScore score={score} currentMs={staffMs} getCurrentMs={getStaffMs}
+          playing={session.sessionState === 'playing'} pass={Math.floor(session.playheadProgress * loopCount) + 1}
+          getPass={() => Math.floor(Math.max(0, session.getElapsedSeconds()) / exerciseDurationSec * loopCount) + 1}
+          passCount={loopCount} onDurationKnown={setStaffDurationMs}/>
+      )}>
 
       {/* Immersive stage: a tall, full-width highway with the demo video as a
           small PiP. */}
-      <div className="relative h-[76vh] min-h-[460px] bg-black">
+      <div className={`ps-lesson-stage relative bg-black ${preview ? 'h-[calc(100dvh-530px)] min-h-[420px]' : 'h-[76vh] min-h-[460px]'}`}>
         {showCanvas && session.exercise ? (
           <>
             <GlassHighway
+              attemptId={preview ? demoSession.attempt : undefined}
               exercise={session.exercise}
               sessionState={session.sessionState}
               playheadProgress={session.playheadProgress}
+              getElapsedSeconds={session.getElapsedSeconds}
               currentScore={session.currentScore}
               currentCombo={session.currentCombo}
               currentAccuracy={session.currentAccuracy}
@@ -333,13 +332,14 @@ export function ScoreExerciseGame({
               eventResultsLength={session.eventResults.length}
               eventResults={session.eventResults}
               dimAlpha={showAudioModePrompt || showPlaysenseTest ? 0.55 : 0}
+              showThemePicker={!exerciseVideo}
               fill
             />
 
             {/* Demo video — small floating picture-in-picture, muted, follows
                 the engine clock. */}
             {exerciseVideo && (
-              <div className="absolute right-3 top-3 z-20 w-44 overflow-hidden rounded-lg bg-black shadow-2xl ring-1 ring-white/15 sm:w-52">
+              <div className="ps-lesson-video absolute right-3 top-3 z-20 w-44 overflow-hidden rounded-lg bg-black shadow-2xl ring-1 ring-white/15 sm:w-52">
                 <video
                   ref={videoRef}
                   src={exerciseVideo.url}
@@ -347,6 +347,7 @@ export function ScoreExerciseGame({
                   playsInline
                   preload="auto"
                   className="aspect-video w-full object-contain"
+                  aria-label="Instructor reference video"
                 />
               </div>
             )}
@@ -359,7 +360,7 @@ export function ScoreExerciseGame({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute inset-0 z-30 flex items-center justify-center p-4"
+                  className="ps-lesson-overlay absolute inset-0 z-30 flex items-center justify-center p-4"
                 >
                   <div className="w-full max-w-md">
                     <AudioModePrompt
@@ -379,7 +380,7 @@ export function ScoreExerciseGame({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute inset-0 z-30 flex items-center justify-center p-4"
+                  className="ps-lesson-overlay absolute inset-0 z-30 flex items-center justify-center p-4"
                 >
                   <div className="w-full max-w-lg">
                     <PlaysenseTestPanel
@@ -393,7 +394,7 @@ export function ScoreExerciseGame({
             </AnimatePresence>
 
             {session.sessionState === 'playing' && (
-              <div className="absolute left-4 top-3 z-20 flex flex-col gap-0.5 pointer-events-none">
+              <div className="ps-lesson-stage-title absolute left-5 top-[104px] z-20 flex flex-col gap-0.5 pointer-events-none">
                 <span className="text-xs font-semibold text-white/60 tracking-wide drop-shadow-sm">
                   {session.exercise.title}
                 </span>
@@ -410,8 +411,15 @@ export function ScoreExerciseGame({
           </div>
         )}
       </div>
+      </ExerciseWorkspace>
 
-      {session.exercise && isActive && (
+      {preview && isActive && <div className="ps-lesson-preview-controls flex items-center justify-between gap-3 border-t border-border px-4 py-3">
+        <span className="text-xs text-muted-foreground">Demo · muted video · results are not saved</span>
+        <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => void session.startExercise()}>Replay preview</Button><Button size="sm" onClick={demoSession.review}>View results</Button></div>
+      </div>}
+
+      {!preview && session.exercise && isActive && !showAudioModePrompt && !showPlaysenseTest && (
+        <div className="ps-lesson-transport">
         <NowPlayingBar
           exercise={session.exercise}
           sessionState={session.sessionState}
@@ -438,6 +446,7 @@ export function ScoreExerciseGame({
           onNoisyRoomChange={session.setNoisyRoomMode}
           onAudioMetronomeChange={session.setAudioMetronome}
         />
+        </div>
       )}
 
       {session.audioError && (

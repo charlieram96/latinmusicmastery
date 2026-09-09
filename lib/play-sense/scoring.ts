@@ -46,6 +46,18 @@ export interface ExpectedEvent {
   chordId?: string
 }
 
+/** Grade callbacks can complete out of order; combos follow musical time. */
+export function orderSessionResults(results: EventResult[], expected: ExpectedEvent[]): EventResult[] {
+  const times = new Map(expected.map(event => [event.eventIndex, event.timestamp]))
+  return [...results].sort((a, b) => (times.get(a.eventIndex) ?? 0) - (times.get(b.eventIndex) ?? 0) || a.eventIndex - b.eventIndex)
+}
+
+export function currentComboForResults(results: EventResult[]): number {
+  let combo = 0
+  for (let i = results.length - 1; i >= 0 && results[i].grade !== 'miss'; i--) combo++
+  return combo
+}
+
 /**
  * Greedy matching algorithm with 1-event lookahead.
  * Matches detected onsets to expected events based on timing proximity.
@@ -174,7 +186,8 @@ export function gradeSingleOnset(
   instrumentCategory: InstrumentCategory = 'percussion',
   detectedMidiNote?: number | null,
   detectedFrequency?: number | null,
-  detectedSurface?: string | null
+  detectedSurface?: string | null,
+  pitchSource: 'microphone' | 'midi' = 'microphone'
 ): EventResult | null {
   const tolerance = TOLERANCE_BY_DIFFICULTY[difficulty]
   const effectiveTolerance: ToleranceWindows = {
@@ -194,7 +207,16 @@ export function gradeSingleOnset(
     const expectedMs = expectedEvents[i].timestamp * 1000
     const absOffset = Math.abs(correctedMs - expectedMs)
 
-    if (absOffset <= effectiveTolerance.ok && absOffset < bestAbsOffset) {
+    const candidate = expectedEvents[i]
+    const current = bestIdx < 0 ? null : expectedEvents[bestIdx]
+    // Simultaneous notes must match the pressed key / struck drum, regardless
+    // of the order the score or device delivered the chord's events.
+    const sameTime = current != null && Math.abs(candidate.timestamp - current.timestamp) < 0.000001
+    const candidateMatches = detectedSurface != null ? candidate.expectedSurface === detectedSurface
+      : pitchSource === 'midi' && detectedMidiNote != null ? candidate.expectedPitch === detectedMidiNote : false
+    const currentMatches = detectedSurface != null ? current?.expectedSurface === detectedSurface
+      : pitchSource === 'midi' && detectedMidiNote != null ? current?.expectedPitch === detectedMidiNote : false
+    if (absOffset <= effectiveTolerance.ok && ((sameTime && candidateMatches && !currentMatches) || (!sameTime && absOffset < bestAbsOffset) || bestIdx < 0)) {
       bestAbsOffset = absOffset
       bestIdx = i
     }
@@ -217,7 +239,11 @@ export function gradeSingleOnset(
     const toleranceCents = PITCH_TOLERANCE_CENTS[difficulty]
     const octaveAgnostic = PITCH_OCTAVE_AGNOSTIC[difficulty]
 
-    if (detectedFrequency != null) {
+    if (pitchSource === 'midi') {
+      pitchCorrect = detectedMidiNote === matched.expectedPitch
+      pitchCents = pitchCorrect ? 0 : null
+      if (!pitchCorrect) grade = 'miss'
+    } else if (detectedFrequency != null) {
       const expectedFreq = 440 * Math.pow(2, (matched.expectedPitch - 69) / 12)
       const rawCents = 1200 * Math.log2(detectedFrequency / expectedFreq)
 
@@ -244,7 +270,7 @@ export function gradeSingleOnset(
 
     // A clearly-wrong pitch downgrades the hit one level rather than zeroing a
     // well-timed note. (A note with no detected pitch is already a miss above.)
-    if (pitchCorrect === false && (detectedFrequency != null || detectedMidiNote != null)) {
+    if (pitchSource !== 'midi' && pitchCorrect === false && (detectedFrequency != null || detectedMidiNote != null)) {
       grade = downgradeGrade(grade)
     }
   }
@@ -259,7 +285,7 @@ export function gradeSingleOnset(
 
   // Surface scoring for PlaySense device
   let surfaceCorrect: boolean | null = null
-  let detectedSurfaceResult: string | null = detectedSurface ?? null
+  const detectedSurfaceResult: string | null = detectedSurface ?? null
   if (matched.expectedSurface && detectedSurface != null) {
     surfaceCorrect = detectedSurface === matched.expectedSurface
     if (!surfaceCorrect) {
@@ -499,7 +525,7 @@ export function computeStats(
 
   // Pitch accuracy: percentage of notes with pitchCorrect === true
   // out of notes that had expectedPitch (pitchCorrect !== undefined)
-  const pitchedResults = results.filter(r => r.pitchCorrect !== undefined)
+  const pitchedResults = results.filter(r => typeof r.pitchCorrect === 'boolean')
   const pitchAccuracy = pitchedResults.length > 0
     ? Math.round(
         (pitchedResults.filter(r => r.pitchCorrect === true).length / pitchedResults.length) * 10000

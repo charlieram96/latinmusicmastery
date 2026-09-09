@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Headphones, Speaker, AlertTriangle, Bluetooth } from 'lucide-react'
+import { Headphones, Speaker, AlertTriangle, Bluetooth, Piano } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { AudioMode } from '@/hooks/use-exercise-session'
 import type { Instrument } from '@/lib/play-sense/types'
+import { getInstrumentCategory } from '@/lib/play-sense/types'
 import { PLAYSENSE_INSTRUMENTS } from '@/lib/play-sense/playsense-mappings'
 import { usePlaysense } from '@/contexts/playsense-context'
 
@@ -32,24 +33,14 @@ export function AudioModePrompt({ onSelect, instrument }: AudioModePromptProps) 
     setBleConnecting(true)
     try {
       await playsense.connect()
+      if (playsense.isConnected()) onSelect('playsense')
+      else setBleError('No PlaySense device connected. Choose your device and try again.')
     } catch {
-      setBleConnecting(false)
       setBleError('Could not connect to PlaySense device.')
+    } finally {
+      setBleConnecting(false)
     }
   }
-
-  // When BLE connects successfully, auto-select playsense mode
-  useEffect(() => {
-    if (bleConnecting && playsense.connectionStatus === 'connected') {
-      setBleConnecting(false)
-      onSelect('playsense')
-    } else if (bleConnecting && playsense.connectionStatus === 'error') {
-      setBleConnecting(false)
-      setBleError(playsense.error || 'Could not connect to PlaySense device.')
-    } else if (bleConnecting && playsense.connectionStatus === 'disconnected') {
-      setBleConnecting(false)
-    }
-  }, [playsense.connectionStatus, playsense.error, bleConnecting, onSelect])
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -68,16 +59,23 @@ export function AudioModePrompt({ onSelect, instrument }: AudioModePromptProps) 
       className="rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl shadow-black/40 p-6 sm:p-8 flex flex-col gap-6"
     >
       <motion.div variants={itemVariants} className="text-center space-y-2">
-        <h3 className="text-lg font-bold text-foreground">How are you listening?</h3>
+        <h3 className="text-lg font-bold text-foreground">Choose your input</h3>
         <p className="text-sm text-muted-foreground">
-          We optimize detection for your setup.
+          Connect your instrument or use your microphone.
         </p>
       </motion.div>
 
-      <motion.div variants={itemVariants} className="grid gap-3 sm:grid-cols-3">
+      <motion.div variants={itemVariants} className="grid gap-3 sm:grid-cols-2">
+        {instrument && getInstrumentCategory(instrument) === 'pitched' && <ModeCard
+          icon={<Piano className="w-7 h-7" />}
+          label="MIDI instrument"
+          hint="Exact notes · no microphone"
+          onClick={() => onSelect('midi')}
+          accent="hover:border-emerald-400/60 hover:bg-emerald-500/5"
+        />}
         <ModeCard
           icon={<Headphones className="w-7 h-7" />}
-          label="Headphones"
+          label="Microphone + headphones"
           hint="Best accuracy"
           onClick={() => onSelect('headphones')}
           accent="hover:border-primary hover:bg-primary/5"
@@ -85,7 +83,7 @@ export function AudioModePrompt({ onSelect, instrument }: AudioModePromptProps) 
 
         <ModeCard
           icon={<Speaker className="w-7 h-7" />}
-          label="Speakers"
+          label="Microphone + speakers"
           hint="Reduced accuracy"
           onClick={() => {
             if (!showWarning) {
