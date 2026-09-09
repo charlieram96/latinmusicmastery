@@ -10,7 +10,6 @@ import {
   type PlaysenseStudioPlayerTimeMap,
 } from '@/components/playsense-studio/player/playsense-studio-player'
 import { ScoreExerciseGame } from './score-exercise-game'
-import { useLessonShell } from './lesson-shell-context'
 import { useTranslation } from '@/components/language-provider'
 import type { BackingTrack } from '@/app/actions/playsense-studio'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
@@ -64,12 +63,10 @@ export function ExerciseView({
   const [mode, setMode] = useState<Mode>(videoUrl ? 'watch' : 'play')
   // Surfaces the big centered CTA once the demo has played to the end.
   const [videoEnded, setVideoEnded] = useState(false)
-  const { setCollapsed } = useLessonShell()
   const { t } = useTranslation()
 
-  // Entering the immersive play view: collapse the lesson sidebar for room.
+  // The game owns its immersive layout; the lesson sidebar preference is retained.
   const goToPlay = () => {
-    setCollapsed(true)
     setMode('play')
   }
 

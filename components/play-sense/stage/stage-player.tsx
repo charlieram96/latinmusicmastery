@@ -8,12 +8,12 @@ import {
   ArrowLeft,
   Bluetooth,
   ChevronRight,
-  Flame,
   Headphones,
   Loader2,
   Mic,
   Music2,
-  Pause,
+  Square,
+  Piano,
   Pin,
   Play,
   Settings2,
@@ -26,21 +26,27 @@ import {
 } from 'lucide-react'
 import type { ExerciseDefinition, HitGrade } from '@/lib/play-sense/types'
 import { GRADE_COLORS } from '@/lib/play-sense/types'
+import { useStageTheme } from '../stage-highway/use-stage-theme'
+import { STAGE_THEMES, STAGE_THEME_IDS, isStageTheme } from '../stage-highway/themes'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
+import { useStageDemoSession } from '@/hooks/use-stage-demo-session'
 import { getExerciseDuration, getInstrumentLabel } from '@/lib/play-sense/exercise-utils'
 import { GRADE_LABELS } from '@/lib/play-sense/animations'
-import { PLAYSENSE_INSTRUMENTS } from '@/lib/play-sense/playsense-mappings'
+import { nextInputMode } from '@/lib/play-sense/input-modes'
 import { saveAttempt } from '@/app/actions/play-sense'
 import { cn } from '@/lib/utils'
-import { GlassHighway } from '../glass-highway'
+import { Button } from '@/components/ui/button'
+import { StageHighway as GlassHighway } from '../stage-highway/StageHighway'
 import { AudioModePrompt } from '../audio-mode-prompt'
 import { PlaysenseTestPanel } from '../playsense-test-panel'
 import { CalibrationWizard } from '../calibration-wizard'
-import { StageResults } from './stage-results'
-import { AccuracyRing, formatTime } from './stage-ui'
+import { PerformanceResultsDialog } from '../performance-results'
+import { PerformanceHud } from '../performance-hud'
+import { formatTime } from './stage-ui'
 
 interface StagePlayerProps {
   exercises: ExerciseDefinition[]
+  preview?: boolean
 }
 
 type SidebarMode = 'Icon rail' | 'Hidden' | 'Stays open'
@@ -61,10 +67,13 @@ const DEFAULT_SETTINGS: StageSettings = {
   laneGuide: false,
 }
 
-export function StagePlayer({ exercises }: StagePlayerProps) {
+export function StagePlayer({ exercises, preview = false }: StagePlayerProps) {
   const router = useRouter()
+  const [stageTheme, setStageTheme] = useStageTheme()
   const allExercises = useMemo(() => exercises, [exercises])
-  const session = useExerciseSession()
+  const liveSession = useExerciseSession()
+  const demoSession = useStageDemoSession(exercises, preview)
+  const session = preview ? { ...liveSession, ...demoSession.overrides } : liveSession
   const [settings, setSettings] = useState<StageSettings>(DEFAULT_SETTINGS)
   const setSetting = <K extends keyof StageSettings>(k: K, v: StageSettings[K]) =>
     setSettings((s) => ({ ...s, [k]: v }))
@@ -88,13 +97,9 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
   const exercise = session.exercise
   const activeIndex = exercise ? allExercises.findIndex((e) => e.id === exercise.id) : -1
 
-  // Reset pin each time playback starts
-  useEffect(() => {
-    if (isPlaying) setPinned(false)
-  }, [isPlaying])
-
   // Persist the attempt when results are ready
   useEffect(() => {
+    if (preview) return
     if (session.sessionState === 'results' && session.attemptStats && session.exercise) {
       saveAttempt({
         exerciseId: session.exercise.id,
@@ -119,7 +124,7 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
         })),
       }).catch(console.error)
     }
-  }, [session.sessionState, session.attemptStats, session.exercise, session.eventResults])
+  }, [preview, session.sessionState, session.attemptStats, session.exercise, session.eventResults])
 
   // Spawn a call-out on each newly graded event
   useEffect(() => {
@@ -134,7 +139,7 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
   }, [session.eventResults.length, session.lastHitGrade, isPlaying, settings.callouts])
 
   // ── derived UI state ──
-  const showCanvas = !!exercise && isActive
+  const showCanvas = !!exercise && (isActive || session.sessionState === 'results')
   const showAudioModePrompt = session.sessionState === 'selecting' && session.audioMode === null
   const showPlaysenseTest =
     session.sessionState === 'selecting' && session.audioMode === 'playsense' && !!exercise
@@ -161,6 +166,7 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
     if (session.sessionState === 'playing') {
       session.stopExercise()
     } else if (session.sessionState === 'selecting' && !showAudioModePrompt) {
+      setPinned(false)
       session.startExercise()
     }
   }
@@ -176,14 +182,17 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
 
   return (
     <div className="stage-host">
-      <div className={rootCls}>
+      <div className={rootCls} data-stage-theme={stageTheme}>
         {/* highway fills the stage */}
         <div className="sv-stage">
           {showCanvas && exercise ? (
             <GlassHighway
               exercise={exercise}
+              attemptId={preview ? demoSession.attempt : undefined}
               sessionState={session.sessionState}
               playheadProgress={session.playheadProgress}
+              getElapsedSeconds={session.getElapsedSeconds}
+              theme={stageTheme}
               currentScore={session.currentScore}
               currentCombo={session.currentCombo}
               currentAccuracy={session.currentAccuracy}
@@ -215,21 +224,27 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
               }}
             />
             <div className="wm">
-              <small>Play Sense</small>
-              Rhythm Highway
+              <small>Latin Music Mastery</small>
+              PlaySense
             </div>
           </div>
           <div className="stage-top-actions">
-            {exercise && (
+            {preview && <><span className="stage-demo-label">Demo · simulated performance</span>
+              <Button size="sm" className="stage-review-demo" onClick={demoSession.review}>View results</Button></>}
+            {exercise && !preview && (
               <span className="stage-device-dim">
                 <DevicePill audioMode={session.audioMode} isListening={session.isListening} />
               </span>
             )}
-            {session.sessionState === 'selecting' && session.audioMode !== 'playsense' && (
+            {!preview && session.sessionState === 'selecting' && session.audioMode !== 'playsense' && session.audioMode !== 'midi' && (
               <button className="sv-pill accent" onClick={session.startCalibration}>
                 <Sliders size={15} /> {session.calibrationData ? 'Recalibrate' : 'Calibrate'}
               </button>
             )}
+            <select aria-label="Stage appearance" className="stage-theme-select" value={stageTheme} onChange={e => {
+              const value = e.target.value
+              if (isStageTheme(value)) setStageTheme(value)
+            }}>{STAGE_THEME_IDS.map(id => <option key={id} value={id}>{STAGE_THEMES[id].name}</option>)}</select>
             <SettingsMenu settings={settings} setSetting={setSetting} />
             <button className="stage-exit" title="Exit performance mode" onClick={() => router.push('/dashboard')}>
               <ArrowLeft size={18} />
@@ -305,34 +320,11 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
           <Target size={15} /> Exercises <span className="n">{allExercises.length}</span>
         </button>
 
-        {/* ── HUD ── */}
-        <div className="stage-hud glass">
-          <div className="score">
-            <div className="k">Score</div>
-            <div className="v">{(isPlaying ? session.currentScore : 0).toLocaleString()}</div>
-          </div>
-          <div className="divln" />
-          <div className="combo">
-            <div className="k">Combo</div>
-            <div className="v">
-              {isPlaying ? session.currentCombo : 0}×
-              {isPlaying && session.currentCombo >= 6 && (
-                <span className="flame">
-                  <Flame size={16} fill="currentColor" />
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="divln" />
-          <div>
-            <div className="k" style={{ marginBottom: 10 }}>
-              Accuracy
-            </div>
-            <div className="accrow">
-              <AccuracyRing pct={isPlaying ? session.currentAccuracy : 100} size={46} />
-            </div>
-          </div>
-        </div>
+        {/* Live performance is intentionally compact so the band stays visible. */}
+        {session.sessionState !== 'results' && <div className="stage-hud">
+          <PerformanceHud score={session.currentScore} combo={session.currentCombo} accuracy={session.currentAccuracy}
+            hasResults={session.eventResults.length > 0} playing={isPlaying} />
+        </div>}
 
         {/* lane guide */}
         {settings.laneGuide && exercise && (
@@ -379,9 +371,9 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
                 {session.sessionState === 'countdown' || session.backingTrackLoading ? (
                   <Loader2 size={20} className="animate-spin" />
                 ) : isPlaying ? (
-                  <Pause size={20} fill="#fff" />
+                  <Square size={18} fill="currentColor" />
                 ) : (
-                  <Play size={20} fill="#fff" />
+                  <Play size={20} fill="currentColor" />
                 )}
               </button>
               <button className="stage-nav" onClick={goNext} title="Next">
@@ -405,7 +397,7 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
               <span className="time">{formatTime(totalDuration)}</span>
             </div>
             <div className="stage-sep" />
-            <MicMeter inputLevel={session.inputLevel} isListening={session.isListening} />
+            {!preview && <><MicMeter inputLevel={session.inputLevel} isListening={session.isListening} />
             <AudioControls
               audioMode={session.audioMode}
               instrument={exercise.instrument}
@@ -415,7 +407,7 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
               onAudioModeChange={session.setAudioMode}
               onNoisyRoomChange={session.setNoisyRoomMode}
               onAudioMetronomeChange={session.setAudioMetronome}
-            />
+            /></>}
           </div>
         )}
 
@@ -456,17 +448,13 @@ export function StagePlayer({ exercises }: StagePlayerProps) {
               </div>
             </ModalHost>
           )}
-          {session.sessionState === 'results' && session.attemptStats && exercise && (
-            <ModalHost key="results">
-              <StageResults
-                stats={session.attemptStats}
-                exerciseTitle={exercise.title}
-                onRetry={session.retry}
-                onNext={session.goToSelect}
-              />
-            </ModalHost>
-          )}
         </AnimatePresence>
+
+        {session.attemptStats && exercise && <PerformanceResultsDialog
+          open={session.sessionState === 'results'} onClose={session.goToSelect}
+          stats={session.attemptStats} exerciseTitle={exercise.title} demo={preview}
+          onRetry={session.retry} onNext={session.goToSelect} nextLabel="Choose exercise"
+        />}
 
         {/* error toast */}
         {session.audioError && (
@@ -496,11 +484,11 @@ function DevicePill({
   audioMode,
   isListening,
 }: {
-  audioMode: 'headphones' | 'speaker-safe' | 'playsense' | null
+  audioMode: 'headphones' | 'speaker-safe' | 'playsense' | 'midi' | null
   isListening: boolean
 }) {
   const label =
-    audioMode === 'playsense' ? 'PlaySense device' : audioMode === 'speaker-safe' ? 'Speaker (safe)' : 'Built-in microphone'
+    audioMode === 'midi' ? 'MIDI instrument' : audioMode === 'playsense' ? 'PlaySense device' : audioMode === 'speaker-safe' ? 'Speaker (safe)' : 'Built-in microphone'
   return (
     <span className="sv-pill">
       <span className="sv-live" style={{ background: isListening ? 'var(--green)' : 'var(--faint)' }} />
@@ -605,30 +593,27 @@ function AudioControls({
   onNoisyRoomChange,
   onAudioMetronomeChange,
 }: {
-  audioMode: 'headphones' | 'speaker-safe' | 'playsense' | null
+  audioMode: 'headphones' | 'speaker-safe' | 'playsense' | 'midi' | null
   instrument: ExerciseDefinition['instrument']
   noisyRoomMode: boolean
   audioMetronome: boolean
   sessionState: string
-  onAudioModeChange: (m: 'headphones' | 'speaker-safe' | 'playsense') => void
+  onAudioModeChange: (m: 'headphones' | 'speaker-safe' | 'playsense' | 'midi') => void
   onNoisyRoomChange: (v: boolean) => void
   onAudioMetronomeChange: (v: boolean) => void
 }) {
   const cycleMode = () => {
-    const supportsPlaysense = instrument ? PLAYSENSE_INSTRUMENTS.has(instrument) : false
-    if (audioMode === 'headphones') onAudioModeChange('speaker-safe')
-    else if (audioMode === 'speaker-safe') onAudioModeChange(supportsPlaysense ? 'playsense' : 'headphones')
-    else onAudioModeChange('headphones')
+    onAudioModeChange(nextInputMode(instrument, audioMode))
   }
-  const ModeIcon = audioMode === 'playsense' ? Bluetooth : audioMode === 'speaker-safe' ? Speaker : Headphones
+  const ModeIcon = audioMode === 'midi' ? Piano : audioMode === 'playsense' ? Bluetooth : audioMode === 'speaker-safe' ? Speaker : Headphones
   return (
     <div className="sv-audio">
-      <button className="sv-tog on" onClick={cycleMode} title="Input source — tap to switch" type="button">
+      <button className="sv-tog on" onClick={cycleMode} disabled={sessionState === 'playing' || sessionState === 'countdown'} title="Input source — tap to switch" type="button">
         <span className="ti">
           <ModeIcon size={17} />
         </span>
       </button>
-      {audioMode !== 'playsense' && (
+      {audioMode !== 'playsense' && audioMode !== 'midi' && (
         <button
           className={cn('sv-tog', noisyRoomMode && 'on')}
           onClick={() => onNoisyRoomChange(!noisyRoomMode)}
@@ -714,7 +699,7 @@ function SettingsMenu({
                 style={{
                   background: 'var(--panel-2)',
                   color: 'var(--text)',
-                  border: '1px solid var(--border)',
+                  border: '1px solid var(--sv-border)',
                   borderRadius: 8,
                   padding: '4px 8px',
                   fontSize: 12,

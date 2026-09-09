@@ -126,9 +126,9 @@ export function midiToKeyString(
  * the accidental separately for the renderer to attach.
  */
 export function extractAccidental(keyString: string): '#' | 'b' | null {
-  if (keyString.includes('#')) return '#';
-  if (keyString.includes('b')) return 'b';
-  return null;
+  // The first 'b' in b/4 is the pitch B, not a flat accidental.
+  const accidental = /^[a-g]([#b])\//i.exec(keyString)?.[1];
+  return accidental === '#' || accidental === 'b' ? accidental : null;
 }
 
 // ---------------------------------------------------------------------------

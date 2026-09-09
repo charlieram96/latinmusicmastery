@@ -25,6 +25,9 @@ interface PlaysenseContextType {
   lastReading: PlaysenseReading | null
   /** performance.now() value of the most recent valid reading, or null. */
   lastReceivedAt: number | null
+  /** Receive every hardware packet before React batches its UI updates. */
+  subscribeToReadings: (listener: (reading: PlaysenseReading) => void) => () => void
+  isConnected: () => boolean
   connect: () => Promise<void>
   disconnect: () => void
 }
@@ -43,6 +46,12 @@ export function PlaysenseProvider({ children }: { children: ReactNode }) {
   /** True when the user is in an "active session" (e.g. exercise running) — autoreconnect should fire here. */
   const wantConnectedRef = useRef<boolean>(false)
   const reconnectAttemptsRef = useRef(0)
+  const readingListenersRef = useRef(new Set<(reading: PlaysenseReading) => void>())
+  const subscribeToReadings = useCallback((listener: (reading: PlaysenseReading) => void) => {
+    readingListenersRef.current.add(listener)
+    return () => { readingListenersRef.current.delete(listener) }
+  }, [])
+  const isConnected = useCallback(() => !!characteristicRef.current && !!deviceRef.current?.gatt?.connected, [])
 
   useEffect(() => {
     setIsSupported(typeof navigator !== 'undefined' && 'bluetooth' in navigator)
@@ -55,11 +64,13 @@ export function PlaysenseProvider({ children }: { children: ReactNode }) {
       const data = JSON.parse(text)
       if (Array.isArray(data.piezos)) {
         const now = performance.now()
-        setLastReading({
+        const reading: PlaysenseReading = {
           piezos: data.piezos,
           mic: Number(data.mic) || 0,
           receivedAt: now,
-        })
+        }
+        for (const listener of readingListenersRef.current) listener(reading)
+        setLastReading(reading)
         setLastReceivedAt(now)
       }
     } catch {
@@ -177,7 +188,7 @@ export function PlaysenseProvider({ children }: { children: ReactNode }) {
 
   return (
     <PlaysenseContext.Provider
-      value={{ connectionStatus, isSupported, error, lastReading, lastReceivedAt, connect, disconnect }}
+      value={{ connectionStatus, isSupported, error, lastReading, lastReceivedAt, connect, disconnect, subscribeToReadings, isConnected }}
     >
       {children}
     </PlaysenseContext.Provider>

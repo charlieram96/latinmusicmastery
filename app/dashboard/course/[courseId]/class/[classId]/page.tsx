@@ -22,6 +22,7 @@ interface PageProps {
   }>
   searchParams: Promise<{
     item?: string
+    preview?: string
   }>
 }
 
@@ -34,7 +35,7 @@ function formatDuration(seconds: number | null): string | null {
 
 export default async function ClassViewerPage({ params, searchParams }: PageProps) {
   const { courseId, classId } = await params
-  const { item: itemParam } = await searchParams
+  const { item: itemParam, preview } = await searchParams
   const supabase = await createClient()
 
   // Get user
@@ -219,8 +220,8 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const body = (
     <>
       {activeItem ? (
-        <div className={`px-4 md:px-8 ${styles.rise}`} style={{ animationDelay: '80ms' }}>
-          <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
+        <div data-lesson-item className={`px-4 md:px-8 ${styles.rise}`} style={{ animationDelay: '80ms' }}>
+          <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" previewExercise={process.env.NODE_ENV === 'development' && preview === 'exercise'} nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
         </div>
       ) : (
         <div className="px-4 pt-4 md:px-8">
@@ -228,7 +229,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         </div>
       )}
 
-      <div className="px-4 pb-12 pt-6 md:px-8">
+      <div data-lesson-secondary className="px-4 pb-12 pt-6 md:px-8">
         {/* Meta pills */}
         {(durationLabel || levelLabel || teacherName) && (
           <div

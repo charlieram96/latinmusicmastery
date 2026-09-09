@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
-import { GlassHighway } from '@/components/play-sense/glass-highway';
+import { StageHighway as GlassHighway } from '@/components/play-sense/stage-highway/StageHighway';
 import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise';
 import { getExerciseDuration } from '@/lib/play-sense/exercise-utils';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';

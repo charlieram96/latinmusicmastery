@@ -8,11 +8,11 @@
 // via direct DOM mutation at 60fps.
 //
 // Two layout modes:
-//   • 'scroll'  — one continuous horizontal staff; the playhead is anchored
-//                 near the left and the staff slides underneath it.
+//   • 'scroll'  — one horizontal staff, followed continuously or held in
+//                 steady phrases with turns at measure/beat boundaries.
 //   • 'wrapped' — measures wrap into several staves stacked vertically (like a
-//                 page of sheet music); the pane scrolls vertically and the
-//                 playhead jumps row-to-row. This is the default for the
+//                 page of sheet music); the pane advances gradually with the
+//                 music, keeping upcoming rows in view. This is the default for the
 //                 lesson viewer.
 //
 // Click-to-seek hit testing: after VexFlow lays out the notes, we capture each
@@ -23,6 +23,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { repeatProjection } from '@/lib/playsense-studio/repeats';
 import {
   Accidental,
+  Articulation,
   Beam,
   BarlineType,
   Dot,
@@ -43,6 +44,9 @@ import type {
   SeekListener,
   SeekTarget,
 } from '@/lib/playsense-studio/renderer';
+import { scoreCursorAt, scoreScrollOffset, scoreReadingStops, scoreReadingOffset, scoreVerticalOffset, type ScoreReadingStop, type ScoreReadingRow } from '@/lib/playsense-studio/notation-playback';
+import { packScoreRows } from '@/lib/playsense-studio/notation-layout';
+import './staff-renderer.css';
 import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
 
 export interface SelectedRange {
@@ -55,12 +59,14 @@ export interface SelectedRange {
 export type RangeListener = (range: SelectedRange) => void;
 
 export type StaffLayoutMode = 'scroll' | 'wrapped';
+export type StaffFollowMode = 'flow' | 'measure';
 
 interface NoteHit {
   /** Cumulative QN at the start of this event. */
   qn: number;
   /** Score-relative ms at the start of this event. */
   ms: number;
+  endMs: number;
   measure: number;
   beat: number;
   /** SVG bounding box from VexFlow, in renderer-local px. */
@@ -73,39 +79,23 @@ interface NoteHit {
 }
 
 const SYSTEM_PADDING_X = 12;
-const STAVE_TOP = 40;
-const STAVE_HEIGHT = 100;
+const STAVE_TOP = 24;
 // VexFlow default Stave: ~4 blank line-spaces above the staff at 10px each, so
 // the visible 5-line staff sits this far below the stave's `y`, spanning 40px.
 const STAFF_LINE_TOP = 40;
 const STAFF_LINE_SPAN = 40;
 /** Playhead extends this far above/below the staff lines. */
 const CURSOR_OVERHANG = 10;
-/** Staff-line stroke width (model units). VexFlow's default is 1; bumped for
- *  slightly bolder lines. Reset to 1 before notes/stems are drawn. */
-const STAFF_LINE_WIDTH = 1.5;
+/** Keep staff lines finer than the note glyphs. */
+const STAFF_LINE_WIDTH = 1;
 /** Model width of a no-notation gap box appended to the staff. */
 const GAP_BOX_W = 240;
 const FIRST_MEASURE_EXTRA_WIDTH = 80; // room for clef + time signature
-/**
- * Minimum width per note. Kept low because notes are beamed (compact); it only
- * acts as an overflow floor for very dense bars. Tuned so a bar packed with
- * sixteenths (16 notes) still lands near the beat-based ideal below rather than
- * ballooning the uniform measure width and forcing one-per-row.
- */
+/** Preserve note spacing when fitting several measures across a row. */
 const PER_NOTE_MIN_WIDTH = 22;
-/**
- * Model width per quarter note. Measure width is driven by the measure's
- * duration (beats) rather than its note count, so every bar of the same time
- * signature is the same size regardless of how many notes it holds.
- */
-const QN_WIDTH = 90;
-/** Gap between a row's bottom staff line and the next row's top staff line
- *  (model units). The staff's unused top padding overlaps the row above, so
- *  this is much smaller than STAVE_HEIGHT — rows sit close together. */
-const WRAP_ROW_GAP = 44;
-/** Measures per row in wrapped mode. */
-const WRAP_MEASURES_PER_ROW = 2;
+const QN_WIDTH = 54;
+/** Space for measure labels and beat guides between wrapped staff rows. */
+const WRAP_ROW_GAP = 96;
 /** Fallback model width when the container hasn't been measured yet. */
 const WRAP_FALLBACK_WIDTH = 760;
 /**
@@ -124,7 +114,7 @@ export const ZOOM_MAX = 2.6;
  * viewport's width and the staff translates underneath so that the playhead
  * is always under the cursor.
  */
-const CURSOR_ANCHOR_FRACTION = 0.08;
+const CURSOR_ANCHOR_FRACTION = 0.26;
 
 /** Pixel distance the pointer must travel before we treat it as a drag. */
 const DRAG_THRESHOLD_PX = 5;
@@ -164,20 +154,32 @@ class StaffRendererImpl implements ScoreRenderer {
   private bMarkerLabelEl: SVGTextElement | null = null;
   // Live "time remaining in this gap" text inside the gap box.
   private gapCountdownEl: SVGTextElement | null = null;
-  // Lit-up backing rect for the measure the playhead is currently in.
-  private measureHighlightEl: SVGRectElement | null = null;
   private hits: NoteHit[] = [];
-  // The rendered `<g>` per note (parallel to `hits`) so the active note can light
-  // up (orange tint + soft glow). We don't scale geometry: a beamed note's stem
-  // is joined to a separately-drawn beam, so any resize detaches it.
-  private noteEls: Array<{ group: SVGElement | null; isRest: boolean }> = [];
+  // Per-note groups let emphasis change without disturbing connected beams.
+  private noteEls: Array<{ group: SVGElement | null }> = [];
   // Per-measure geometry + start time, used to light the current measure.
   private measureGeoms: Array<{
     x: number;
     y: number;
     width: number;
     startMs: number;
+    endMs: number;
   }> = [];
+  private measurePanels: SVGGElement[] = [];
+  private measureProgressEl: SVGRectElement | null = null;
+  private beatLabels: Array<{ el: SVGTextElement; ms: number; endMs: number; x: number; system: number }> = [];
+  private readingStops: ScoreReadingStop[] = [];
+  private rowReadingStops: ScoreReadingStop[][] = [];
+  private verticalReadingRows: ScoreReadingRow[] = [];
+  private activeBeatIdx = -1;
+  private staveTop = STAVE_TOP;
+  private staffLineTop = STAFF_LINE_TOP;
+  private beatOffset = 110;
+  private panelHeight = 124;
+  private staffFootprint = 132;
+  private followMode: StaffFollowMode = 'flow';
+  private autoFollow = true;
+  private staffTranslate = 0;
   private activeNoteIdx = -1;
   private activeMeasureIdx = -1;
   private systemRanges: Array<{ start: number; end: number }> = [];
@@ -199,14 +201,13 @@ class StaffRendererImpl implements ScoreRenderer {
   private totalDurationMs = 0;
   private startMs = 0;
   private viewportWidth = 0;
-  private cursorAnchorPx = 0;
+  private viewportHeight = 0;
 
   // Wrapped-mode geometry.
   private layoutMode: StaffLayoutMode = 'scroll';
   private systemPitch = 0;
   private systemCount = 1;
   private lastBuildAvail = 0;
-  private lastSystem = -1;
 
   // Stored so we can rebuild on resize (wrapped reflow) / mode change.
   private score: ScoreDocument | null = null;
@@ -250,13 +251,17 @@ class StaffRendererImpl implements ScoreRenderer {
     layoutMode: StaffLayoutMode = 'scroll',
     zoom = 1,
     trailingGapMs = 0,
-    trailingGapLabel = ''
+    trailingGapLabel = '',
+    compact = false,
+    followMode: StaffFollowMode = 'flow'
   ): void {
     this.destroy();
     this.container = el;
     this.score = score;
     this.trackIndex = trackIndex;
     this.layoutMode = layoutMode;
+    this.staveTop = compact ? 8 : STAVE_TOP;
+    this.followMode = followMode;
     this.scale = BASE_SCALE * clampZoom(zoom);
     this.gapMs = Math.max(0, trailingGapMs);
     this.gapLabel = trailingGapLabel;
@@ -285,7 +290,7 @@ class StaffRendererImpl implements ScoreRenderer {
       vp && vp.scrollHeight > 0 ? vp.scrollTop / vp.scrollHeight : 0;
     this.scale = next;
     this.build();
-    if (this.viewportEl && anchorRatio > 0) {
+    if (this.viewportEl && anchorRatio > 0 && !this.autoFollow) {
       this.viewportEl.scrollTop = anchorRatio * this.viewportEl.scrollHeight;
     }
   }
@@ -328,57 +333,54 @@ class StaffRendererImpl implements ScoreRenderer {
     this.bMarkerLineEl = null;
     this.bMarkerLabelEl = null;
     this.gapCountdownEl = null;
-    this.measureHighlightEl = null;
     this.hits = [];
     this.noteEls = [];
     this.measureGeoms = [];
+    this.measurePanels = [];
+    this.beatLabels = [];
+    this.activeBeatIdx = -1;
+    this.measureProgressEl = null;
+    this.readingStops = [];
+    this.rowReadingStops = [];
+    this.verticalReadingRows = [];
+    this.staffTranslate = 0;
     this.activeNoteIdx = -1;
     this.activeMeasureIdx = -1;
     this.systemRanges = [];
     this.systemRowEndX = [];
-    this.lastSystem = -1;
   }
 
   private computePlan(
     measureBlocks: ReturnType<typeof extractTrackEvents>,
     avail: number
   ): LayoutPlan {
-    // Uniform measure width: every bar is the same size so the staff reads
-    // evenly. The width is the widest single measure's requirement — enough for
-    // its beats (QN_WIDTH per quarter) and, as a floor, its note count (so a
-    // dense bar never spills past the barline).
-    const needed = measureBlocks.map((b) => {
-      const measureQN = (b.timeSignature[0] * 4) / b.timeSignature[1];
-      return Math.max(
-        measureQN * QN_WIDTH,
-        Math.max(b.events.length, 1) * PER_NOTE_MIN_WIDTH
-      );
-    });
-    const measureWidth = Math.max(...needed, PER_NOTE_MIN_WIDTH);
     // The trailing gap rides along as the last item in the flow so it sits
     // inline, right after the final measure (part of the staff), not on its own.
     const hasGap = this.gapMs > 0;
 
     if (this.layoutMode === 'scroll') {
       let x = SYSTEM_PADDING_X;
-      const placements: MeasurePlacement[] = measureBlocks.map((_, i) => {
+      const placements: MeasurePlacement[] = measureBlocks.map((block, i) => {
+        const quarterNotes = block.timeSignature[0] * 4 / block.timeSignature[1];
+        const width = Math.max(quarterNotes * 64, block.events.length * 24 + 24)
+          + (i === 0 ? FIRST_MEASURE_EXTRA_WIDTH : 0);
         const placement: MeasurePlacement = {
           blockIndex: i,
           x,
-          y: STAVE_TOP,
-          width: measureWidth,
+          y: this.staveTop,
+          width,
           firstInRow: i === 0,
           showHeader: i === 0,
           system: 0,
         };
-        x += measureWidth;
+        x += width;
         return placement;
       });
       if (hasGap) {
         placements.push({
           blockIndex: -1,
           x,
-          y: STAVE_TOP,
+          y: this.staveTop,
           width: GAP_BOX_W,
           firstInRow: false,
           showHeader: false,
@@ -390,49 +392,41 @@ class StaffRendererImpl implements ScoreRenderer {
       return {
         placements,
         totalWidth: SYSTEM_PADDING_X + x,
-        stageHeight: STAVE_TOP + STAVE_HEIGHT + 20,
+        stageHeight: this.staveTop + this.staffFootprint,
         systemPitch: 0,
         systemCount: 1,
       };
     }
 
-    // Wrapped: pack up to WRAP_MEASURES_PER_ROW items per row, but only as many
-    // as fit without crowding. The gap box is the final item, so it shares the
-    // last row with the measure(s) before it. Each row stretches to fill the
-    // width so there's never empty space.
-    const maxPerRow = Math.min(WRAP_MEASURES_PER_ROW, measureBlocks.length);
-    const perRow = avail >= measureWidth * 2 ? maxPerRow : 1;
-    const systemPitch = STAFF_LINE_SPAN + WRAP_ROW_GAP;
-    const itemCount = measureBlocks.length + (hasGap ? 1 : 0);
-    const systemCount = Math.max(1, Math.ceil(itemCount / perRow));
+    // Fit one, two, or three measures using each bar's own width requirement.
+    // Clef/signature space belongs only to the first bar, not every column.
+    const systemPitch = Math.max(STAFF_LINE_SPAN + WRAP_ROW_GAP, this.staffFootprint + 10);
+    const requiredWidths = measureBlocks.map((block, index) => {
+      const quarterNotes = block.timeSignature[0] * 4 / block.timeSignature[1];
+      return Math.max(100, quarterNotes * QN_WIDTH, block.events.length * PER_NOTE_MIN_WIDTH + 24)
+        + (index === 0 ? FIRST_MEASURE_EXTRA_WIDTH : 0);
+    });
+    if (hasGap) requiredWidths.push(GAP_BOX_W);
+    const rows = packScoreRows(requiredWidths, avail);
+    const systemCount = rows.length;
 
     const placements: MeasurePlacement[] = [];
-    for (let i = 0; i < itemCount; i++) {
-      const system = Math.floor(i / perRow);
-      const col = i % perRow;
-      const itemsInRow = Math.min(perRow, itemCount - system * perRow);
-      const w = avail / itemsInRow;
-      const base = {
-        x: SYSTEM_PADDING_X + col * w,
-        y: STAVE_TOP + system * systemPitch,
-        width: w,
-        firstInRow: col === 0,
-        showHeader: i === 0,
-        system,
-      };
-      placements.push(
-        i < measureBlocks.length
-          ? { blockIndex: i, ...base }
-          : { blockIndex: -1, ...base, isGap: true }
-      );
-    }
+    rows.forEach((row, system) => {
+      let x = SYSTEM_PADDING_X;
+      row.widths.forEach((width, col) => {
+        const i = row.startIndex + col;
+        const base = { x, y: this.staveTop + system * systemPitch, width, firstInRow: col === 0, showHeader: i === 0, system };
+        placements.push(i < measureBlocks.length ? { blockIndex: i, ...base } : { blockIndex: -1, ...base, isGap: true });
+        x += width;
+      });
+    });
 
     return {
       placements,
-      totalWidth: SYSTEM_PADDING_X * 2 + avail,
+      totalWidth: Math.max(SYSTEM_PADDING_X * 2 + avail, ...placements.map(p => p.x + p.width + SYSTEM_PADDING_X)),
       // Reserve a full staff footprint for the LAST row (pitch is tighter than
       // one staff, so earlier rows overlap their neighbour's top padding).
-      stageHeight: STAVE_TOP + (systemCount - 1) * systemPitch + STAVE_HEIGHT + 20,
+      stageHeight: this.staveTop + (systemCount - 1) * systemPitch + this.staffFootprint,
       systemPitch,
       systemCount,
     };
@@ -444,6 +438,8 @@ class StaffRendererImpl implements ScoreRenderer {
     if (!el || !score) return;
     this.teardownDom();
     el.style.position = 'relative';
+    el.dataset.followMode = this.followMode;
+    el.dataset.scoreLayoutMode = this.layoutMode;
 
     const track = score.tracks[this.trackIndex];
     if (!track) return;
@@ -455,11 +451,23 @@ class StaffRendererImpl implements ScoreRenderer {
     );
     if (measureBlocks.length === 0) return;
 
+    // Reserve space for ledger notes before placing labels/beat guides. Treble
+    // staff steps are 5 model pixels; percussion keys use the same staff grid.
+    const headYs = measureBlocks.flatMap(block => block.events.flatMap(event => event.keys.map(key => {
+      const match = /^([a-g])(?:#|b)?\/(-?\d+)$/.exec(key);
+      if (!match) return 60;
+      const step = Number(match[2]) * 7 + 'cdefgab'.indexOf(match[1]);
+      return 80 - (step - 30) * 5;
+    })));
+    const extraTop = Math.max(0, 32 - Math.min(50, ...headYs));
+    this.staffLineTop = STAFF_LINE_TOP + extraTop;
+    this.beatOffset = Math.max(110, Math.max(80, ...headYs) + extraTop + 22);
+    this.panelHeight = this.beatOffset + 14;
+    this.staffFootprint = this.panelHeight + 8;
+
+
     const wrapped = this.layoutMode === 'wrapped';
-    const avail = wrapped
-      ? Math.max(el.clientWidth / this.scale - SYSTEM_PADDING_X * 2, 240) ||
-        WRAP_FALLBACK_WIDTH
-      : 0;
+    const avail = Math.max(el.clientWidth / this.scale - SYSTEM_PADDING_X * 2, 240) || WRAP_FALLBACK_WIDTH;
     this.lastBuildAvail = avail;
 
     const plan = this.computePlan(measureBlocks, avail);
@@ -496,14 +504,21 @@ class StaffRendererImpl implements ScoreRenderer {
       position: 'relative',
       width: '100%',
       height: wrapped ? '100%' : `${scaledStageHeight}px`,
-      overflowX: 'hidden',
+      overflowX: wrapped ? 'auto' : 'hidden',
       overflowY: wrapped ? 'auto' : 'hidden',
     } as CSSStyleDeclaration);
+    viewport.className = 'ps-staff-viewport';
+    if (wrapped) {
+      viewport.tabIndex = 0;
+      viewport.setAttribute('role', 'region');
+      viewport.setAttribute('aria-label', 'Score measures');
+    }
     el.appendChild(viewport);
     el.style.height = wrapped ? '100%' : `${scaledStageHeight}px`;
     this.viewportEl = viewport;
 
     const rendererDiv = document.createElement('div');
+    rendererDiv.className = 'ps-staff-content';
     rendererDiv.style.position = wrapped ? 'relative' : 'absolute';
     rendererDiv.style.top = '0';
     rendererDiv.style.left = '0';
@@ -514,7 +529,7 @@ class StaffRendererImpl implements ScoreRenderer {
     rendererDiv.style.userSelect = 'none';
     (rendererDiv.style as CSSStyleDeclaration & { webkitUserSelect?: string }).webkitUserSelect =
       'none';
-    rendererDiv.style.touchAction = 'none';
+    rendererDiv.style.touchAction = el.hasAttribute('data-score-interactive') ? 'none' : 'pan-y';
     viewport.appendChild(rendererDiv);
     this.rendererDiv = rendererDiv;
 
@@ -537,9 +552,10 @@ class StaffRendererImpl implements ScoreRenderer {
         x: p.x,
         y: p.y,
         width: p.width,
-        startMs: qnToTrackMs(track, score, block.events[0]?.qnStart ?? 0),
+        startMs: qnToTrackMs(track, score, block.cumulativeQN),
+        endMs: qnToTrackMs(track, score, block.cumulativeQN + block.timeSignature[0] * 4 / block.timeSignature[1]),
       });
-      const stave = new Stave(p.x, p.y, p.width);
+      const stave = new Stave(p.x, p.y + this.staffLineTop - STAFF_LINE_TOP, p.width);
       const repeat = block.measure.repeat;
       if (repeat?.offset === 0) stave.setBegBarType(BarlineType.REPEAT_BEGIN);
       if (repeat && repeat.offset === repeat.length - 1) {
@@ -550,16 +566,19 @@ class StaffRendererImpl implements ScoreRenderer {
         ctx.restore();
       }
       if (p.showHeader) {
-        stave.addClef('treble').addTimeSignature(
+        stave.addClef(block.clef).addTimeSignature(
           `${block.timeSignature[0]}/${block.timeSignature[1]}`
         );
       }
       // Bolder staff lines, then back to default weight for notes/stems/beams.
+      const staffGroup = ctx.openGroup('ps-staff-lines') as SVGElement;
+      staffGroup?.setAttribute('data-score-stave', '');
       ctx.setLineWidth(STAFF_LINE_WIDTH);
       stave.setContext(ctx).draw();
+      ctx.closeGroup();
       ctx.setLineWidth(1);
 
-      const vexNotes = block.events.map((d) => descriptorToStaveNote(d));
+      const vexNotes = block.events.map((d) => descriptorToStaveNote(d, block.clef));
 
       const voice = new Voice({
         numBeats: block.timeSignature[0],
@@ -600,9 +619,10 @@ class StaffRendererImpl implements ScoreRenderer {
       return {
         qn: descriptor.qnStart,
         ms: qnToTrackMs(track, score, descriptor.qnStart),
+        endMs: qnToTrackMs(track, score, descriptor.qnStart + descriptor.durationQN),
         measure: lookupMeasureNumber(measureBlocks, descriptor.qnStart),
         beat: descriptor.beatInMeasure,
-        x: bbox.getX(),
+        x: vexNote.getNoteHeadBeginX(),
         y: bbox.getY(),
         width: bbox.getW(),
         height: bbox.getH(),
@@ -610,14 +630,12 @@ class StaffRendererImpl implements ScoreRenderer {
       };
     });
 
-    // Prep each note so it can smoothly light up while the playhead is on it:
-    // the group color drives the currentColor of its glyphs, and a drop-shadow
-    // adds a soft glow. No geometry changes — those detach beamed notes.
+    // CurrentColor tints the whole note group, preserving beam/stem alignment.
     this.activeNoteIdx = -1;
     this.noteEls = allNotes.map(({ vexNote, descriptor }) => {
       const group = vexNote.getSVGElement() ?? null;
-      if (group) group.style.transition = 'color 120ms ease, filter 120ms ease';
-      return { group, isRest: descriptor.isRest };
+      if (group) { group.setAttribute('data-score-note', descriptor.isRest ? 'rest' : 'note'); group.setAttribute('data-note-state', 'upcoming'); }
+      return { group };
     });
 
     // Contiguous hit ranges per system (hits are pushed row-by-row, left to right).
@@ -634,13 +652,14 @@ class StaffRendererImpl implements ScoreRenderer {
 
     // ---- Cursor (playhead) ----
     this.cursorEl = document.createElement('div');
+    this.cursorEl.className = 'ps-staff-playhead';
     Object.assign(this.cursorEl.style, {
       position: 'absolute',
-      top: `${(STAVE_TOP + STAFF_LINE_TOP - CURSOR_OVERHANG) * this.scale}px`,
+      top: `${(this.staveTop + this.staffLineTop - CURSOR_OVERHANG) * this.scale}px`,
       left: '0px',
       width: `${2 * this.scale}px`,
       height: `${(STAFF_LINE_SPAN + 2 * CURSOR_OVERHANG) * this.scale}px`,
-      background: 'hsl(30 85% 55%)',
+      background: 'hsl(var(--primary))',
       pointerEvents: 'none',
       transform: 'translateX(0px)',
       willChange: 'transform',
@@ -654,11 +673,11 @@ class StaffRendererImpl implements ScoreRenderer {
     this.hoverCursorEl = document.createElement('div');
     Object.assign(this.hoverCursorEl.style, {
       position: 'absolute',
-      top: `${(STAVE_TOP + STAFF_LINE_TOP - CURSOR_OVERHANG) * this.scale}px`,
+      top: `${(this.staveTop + this.staffLineTop - CURSOR_OVERHANG) * this.scale}px`,
       left: '0px',
       width: `${2 * this.scale}px`,
       height: `${(STAFF_LINE_SPAN + 2 * CURSOR_OVERHANG) * this.scale}px`,
-      background: 'hsl(30 85% 55%)',
+      background: 'hsl(var(--primary))',
       pointerEvents: 'none',
       transform: 'translateX(0px)',
       willChange: 'transform',
@@ -668,27 +687,30 @@ class StaffRendererImpl implements ScoreRenderer {
 
     // ---- Resize handling ----
     const onResize = () => {
-      if (this.layoutMode === 'wrapped') {
-        // Reflow depends on width — rebuild, but debounce so dragging the
-        // pane reflows on release rather than every frame.
+      {
+        // Throttle engraving during a drag so rows update while the edge moves
+        // without rebuilding the entire SVG on every pointer event.
         const nextAvail = Math.max(
           (this.container?.clientWidth ?? 0) / this.scale - SYSTEM_PADDING_X * 2,
           240
         );
-        if (Math.abs(nextAvail - this.lastBuildAvail) < 16) return;
-        if (this.resizeTimer) clearTimeout(this.resizeTimer);
+        if (Math.abs(nextAvail - this.lastBuildAvail) < 16) {
+          this.viewportWidth = viewport.clientWidth;
+          this.viewportHeight = viewport.clientHeight;
+          this.planReadingStops();
+          this.applyLayout();
+          return;
+        }
+        if (this.resizeTimer) return;
         this.resizeTimer = setTimeout(() => {
           this.resizeTimer = null;
           this.build();
-        }, 150);
+        }, 80);
         return;
       }
-      this.viewportWidth = viewport.clientWidth;
-      this.cursorAnchorPx = this.viewportWidth * CURSOR_ANCHOR_FRACTION;
-      this.applyLayout();
     };
     this.viewportWidth = viewport.clientWidth;
-    this.cursorAnchorPx = this.viewportWidth * CURSOR_ANCHOR_FRACTION;
+    this.viewportHeight = viewport.clientHeight;
     if (typeof ResizeObserver !== 'undefined') {
       this.resizeObserver = new ResizeObserver(onResize);
       this.resizeObserver.observe(viewport);
@@ -724,20 +746,63 @@ class StaffRendererImpl implements ScoreRenderer {
       bg.setAttribute('fill', 'transparent');
       svg.insertBefore(bg, svg.firstChild);
 
-      // ---- Current-measure highlight (sits just above the bg, behind notes) ----
-      const measureHl = document.createElementNS(NS, 'rect');
-      measureHl.setAttribute('data-playsense-studio-active-measure', 'true');
-      measureHl.setAttribute('rx', '7');
-      measureHl.setAttribute('opacity', '0');
-      measureHl.setAttribute('pointer-events', 'none');
-      svg.insertBefore(measureHl, bg.nextSibling);
-      this.measureHighlightEl = measureHl;
+      const panels = document.createElementNS(NS, 'g');
+      panels.setAttribute('data-score-panels', '');
+      svg.insertBefore(panels, bg.nextSibling);
+      this.measurePanels = this.measureGeoms.map((g, index) => {
+        const group = document.createElementNS(NS, 'g');
+        group.setAttribute('data-score-measure', `${index + 1}`);
+        group.setAttribute('data-state', 'upcoming');
+        const dot = document.createElementNS(NS, 'circle');
+        dot.setAttribute('data-score-measure-dot', '');
+        dot.setAttribute('cx', `${g.x + 8}`);
+        dot.setAttribute('cy', `${g.y + 14}`);
+        dot.setAttribute('r', '1.7');
+        group.appendChild(dot);
+        const label = document.createElementNS(NS, 'text');
+        label.setAttribute('data-score-measure-label', '');
+        label.setAttribute('x', `${g.x + 16}`);
+        label.setAttribute('y', `${g.y + 17}`);
+        label.textContent = `MEASURE ${String(measureBlocks[index].measure.number).padStart(2, '0')}`;
+        group.appendChild(label);
+        const rail = document.createElementNS(NS, 'rect');
+        rail.setAttribute('data-score-progress-track', '');
+        rail.setAttribute('x', `${g.x + 16}`);
+        rail.setAttribute('y', `${g.y + 24}`);
+        rail.setAttribute('width', '64');
+        rail.setAttribute('height', '1.5');
+        rail.setAttribute('rx', '1');
+        group.appendChild(rail);
+        const block = measureBlocks[index];
+        for (let beat = 0; beat < block.timeSignature[0]; beat++) {
+          const qn = block.cumulativeQN + beat * 4 / block.timeSignature[1];
+          const ms = qnToTrackMs(track, score, qn);
+          const el = document.createElementNS(NS, 'text');
+          el.setAttribute('data-score-beat', '');
+          el.setAttribute('data-active', 'false');
+          el.setAttribute('x', `${this.msToCursorX(ms) + 5}`);
+          el.setAttribute('y', `${g.y + this.beatOffset}`);
+          el.setAttribute('text-anchor', 'middle');
+          el.textContent = `${beat + 1}`;
+          group.appendChild(el);
+          const beatPosition = this.msToCursorPos(ms);
+          this.beatLabels.push({ el, ms, x: beatPosition.x, system: beatPosition.system, endMs: qnToTrackMs(track, score, qn + 4 / block.timeSignature[1]) });
+        }
+        panels.appendChild(group);
+        return group;
+      });
+      const progress = document.createElementNS(NS, 'rect');
+      progress.setAttribute('data-score-progress', '');
+      progress.setAttribute('height', '1.5');
+      progress.setAttribute('rx', '1');
+      panels.appendChild(progress);
+      this.measureProgressEl = progress;
 
       // ---- Trailing gap box (gray fill + continuing staff lines + label) ----
       if (this.gapMs > 0 && this.gapBoxW > 0) {
         const x = this.gapBoxX;
         const w = this.gapBoxW;
-        const lineTop = this.gapBoxY + STAFF_LINE_TOP;
+        const lineTop = this.gapBoxY + this.staffLineTop;
         const boxTop = lineTop - 12;
         const boxH = STAFF_LINE_SPAN + 24;
 
@@ -800,8 +865,8 @@ class StaffRendererImpl implements ScoreRenderer {
 
       const overlay = document.createElementNS(NS, 'rect');
       overlay.setAttribute('data-playsense-studio-drag-overlay', 'true');
-      overlay.setAttribute('y', `${STAVE_TOP - 4}`);
-      overlay.setAttribute('height', `${STAVE_HEIGHT + 8}`);
+      overlay.setAttribute('y', `${this.staveTop - 4}`);
+      overlay.setAttribute('height', `${this.staffFootprint + 8}`);
       overlay.setAttribute('fill', 'hsl(var(--primary))');
       overlay.setAttribute('stroke', 'hsl(var(--primary))');
       overlay.setAttribute('stroke-width', '1.5');
@@ -813,8 +878,8 @@ class StaffRendererImpl implements ScoreRenderer {
       const buildMarker = (label: 'A' | 'B') => {
         const line = document.createElementNS(NS, 'line');
         line.setAttribute('data-playsense-studio-loop-marker', label);
-        line.setAttribute('y1', `${STAVE_TOP - 14}`);
-        line.setAttribute('y2', `${STAVE_TOP + STAVE_HEIGHT + 8}`);
+        line.setAttribute('y1', `${this.staveTop - 14}`);
+        line.setAttribute('y2', `${this.staveTop + this.staffFootprint + 8}`);
         line.setAttribute('stroke', 'hsl(var(--gold-highlight))');
         line.setAttribute('stroke-width', '2');
         line.setAttribute('stroke-dasharray', '5 4');
@@ -824,7 +889,7 @@ class StaffRendererImpl implements ScoreRenderer {
 
         const text = document.createElementNS(NS, 'text');
         text.setAttribute('data-playsense-studio-loop-marker', label);
-        text.setAttribute('y', `${STAVE_TOP - 18}`);
+        text.setAttribute('y', `${this.staveTop - 18}`);
         text.setAttribute('text-anchor', 'middle');
         text.setAttribute('font-size', '14');
         text.setAttribute('font-family', 'Inter, system-ui, sans-serif');
@@ -846,6 +911,7 @@ class StaffRendererImpl implements ScoreRenderer {
       // ---- Pointer handlers (capture both axes for wrapped hit testing) ----
       const target = rendererDiv;
       this.downHandler = (event: PointerEvent) => {
+        if (!this.container?.hasAttribute('data-score-interactive')) return;
         event.preventDefault();
         this.hideHoverCursor();
         const rect = target.getBoundingClientRect();
@@ -862,6 +928,7 @@ class StaffRendererImpl implements ScoreRenderer {
         }
       };
       this.moveHandler = (event: PointerEvent) => {
+        if (!this.container?.hasAttribute('data-score-interactive')) return;
         // Not in a drag: show the ghost playhead where a click would land.
         if (this.dragStartModelX === null) {
           const rect = target.getBoundingClientRect();
@@ -905,8 +972,8 @@ class StaffRendererImpl implements ScoreRenderer {
             this.dragStartModelX,
             this.dragCurrentModelX ?? this.dragStartModelX
           );
-          const startPos = this.xToTimePosition(startX, this.dragStartModelY ?? STAVE_TOP);
-          const endPos = this.xToTimePosition(endX, this.dragCurrentModelY ?? this.dragStartModelY ?? STAVE_TOP);
+          const startPos = this.xToTimePosition(startX, this.dragStartModelY ?? this.staveTop);
+          const endPos = this.xToTimePosition(endX, this.dragCurrentModelY ?? this.dragStartModelY ?? this.staveTop);
           const lo = Math.min(startPos.ms, endPos.ms);
           const hi = Math.max(startPos.ms, endPos.ms);
           if (hi > lo) {
@@ -923,7 +990,7 @@ class StaffRendererImpl implements ScoreRenderer {
         } else {
           const pos = this.xToTimePosition(
             this.dragStartModelX,
-            this.dragStartModelY ?? STAVE_TOP
+            this.dragStartModelY ?? this.staveTop
           );
           for (const listener of this.seekListeners) {
             listener({ qn: pos.qn, measure: pos.measure, beat: pos.beat });
@@ -949,7 +1016,7 @@ class StaffRendererImpl implements ScoreRenderer {
     }
 
     // Re-apply playback position + loop markers (rebuild keeps the time state).
-    this.lastSystem = -1;
+    this.planReadingStops();
     this.applyLayout();
     this.setLoopMarkers(this.lastLoopAMs, this.lastLoopBMs);
   }
@@ -966,10 +1033,10 @@ class StaffRendererImpl implements ScoreRenderer {
     this.dragOverlayEl.setAttribute('x', `${a}`);
     this.dragOverlayEl.setAttribute('width', `${Math.max(b - a, 1)}`);
     if (this.layoutMode === 'wrapped') {
-      const system = this.systemFromY(this.dragStartModelY ?? STAVE_TOP);
-      const yTop = STAVE_TOP + system * this.systemPitch;
+      const system = this.systemFromY(this.dragStartModelY ?? this.staveTop);
+      const yTop = this.staveTop + system * this.systemPitch;
       this.dragOverlayEl.setAttribute('y', `${yTop - 4}`);
-      this.dragOverlayEl.setAttribute('height', `${STAVE_HEIGHT + 8}`);
+      this.dragOverlayEl.setAttribute('height', `${this.staffFootprint + 8}`);
     }
     this.dragOverlayEl.setAttribute('opacity', '0.28');
   }
@@ -992,6 +1059,24 @@ class StaffRendererImpl implements ScoreRenderer {
 
   setViewMs(ms: number): void {
     this.lastViewMs = ms;
+    this.applyLayout();
+  }
+
+  setPlaybackPosition(ms: number, viewMs = ms): void {
+    this.lastPlaybackMs = ms;
+    this.lastViewMs = viewMs;
+    this.applyLayout();
+  }
+
+  setFollowMode(mode: StaffFollowMode): void {
+    this.followMode = mode;
+    if (this.container) this.container.dataset.followMode = mode;
+    this.applyLayout();
+  }
+
+  setAutoFollow(enabled: boolean): void {
+    if (this.autoFollow === enabled) return;
+    this.autoFollow = enabled;
     this.applyLayout();
   }
 
@@ -1020,12 +1105,12 @@ class StaffRendererImpl implements ScoreRenderer {
     const pos = this.msToCursorPos(ms);
     const yTop =
       this.layoutMode === 'wrapped'
-        ? STAVE_TOP + pos.system * this.systemPitch
-        : STAVE_TOP;
+        ? this.staveTop + pos.system * this.systemPitch
+        : this.staveTop;
     line.setAttribute('x1', `${pos.x}`);
     line.setAttribute('x2', `${pos.x}`);
     line.setAttribute('y1', `${yTop - 14}`);
-    line.setAttribute('y2', `${yTop + STAVE_HEIGHT + 8}`);
+    line.setAttribute('y2', `${yTop + this.staffFootprint + 8}`);
     line.setAttribute('opacity', '0.85');
     label.setAttribute('x', `${pos.x}`);
     label.setAttribute('y', `${yTop - 18}`);
@@ -1058,33 +1143,17 @@ class StaffRendererImpl implements ScoreRenderer {
     return at(hi) <= ms ? hi : lo;
   }
 
-  /** Light up the measure the playhead is currently inside. */
+  /** Update measure states only when crossing a barline or seeking. */
   private updateActiveMeasure(): void {
-    if (!this.measureHighlightEl) return;
-    const inGap = this.lastPlaybackMs >= this.gapStartMs;
-    const idx =
-      this.cursorVisible && !inGap
-        ? this.indexAtOrBefore(this.measureGeoms, this.lastPlaybackMs, 'startMs')
-        : -1;
+    const idx = this.cursorVisible && this.lastPlaybackMs < this.gapStartMs
+      ? this.indexAtOrBefore(this.measureGeoms, this.lastPlaybackMs, 'startMs') : -1;
     if (idx === this.activeMeasureIdx) return;
     this.activeMeasureIdx = idx;
-    if (idx < 0) {
-      this.measureHighlightEl.setAttribute('opacity', '0');
-      return;
-    }
-    const g = this.measureGeoms[idx];
-    // Keep the bright core a little inside the staff and barlines; the heavy CSS
-    // blur spreads it outward into a soft glow.
-    const padY = 4;
-    const inset = 10;
-    this.measureHighlightEl.setAttribute('x', `${g.x + inset}`);
-    this.measureHighlightEl.setAttribute('y', `${g.y + STAFF_LINE_TOP - padY}`);
-    this.measureHighlightEl.setAttribute('width', `${Math.max(g.width - inset * 2, 1)}`);
-    this.measureHighlightEl.setAttribute('height', `${STAFF_LINE_SPAN + padY * 2}`);
-    this.measureHighlightEl.setAttribute('opacity', '1');
+    this.measurePanels.forEach((panel, i) => panel.setAttribute('data-state',
+      idx < 0 ? 'upcoming' : i < idx ? 'played' : i === idx ? 'active' : 'upcoming'));
   }
 
-  /** Grow + tint the note the playhead is currently on; reset the previous. */
+  /** Tint the active note or rest without scaling connected stems and beams. */
   private updateActiveNote(): void {
     if (this.noteEls.length === 0) return;
     const inGap = this.lastPlaybackMs >= this.gapStartMs;
@@ -1092,20 +1161,53 @@ class StaffRendererImpl implements ScoreRenderer {
       this.cursorVisible && !inGap
         ? this.indexAtOrBefore(this.hits, this.lastPlaybackMs, 'ms')
         : -1;
-    if (idx >= 0 && this.noteEls[idx]?.isRest) idx = -1; // rests don't animate
+    if (idx >= 0 && this.lastPlaybackMs >= this.hits[idx].endMs) idx = -1;
     if (idx === this.activeNoteIdx) return;
 
     const prev = this.noteEls[this.activeNoteIdx]?.group;
     if (prev) {
-      prev.style.color = '';
-      prev.style.filter = '';
+      prev.setAttribute('data-note-state', 'upcoming');
     }
     const next = this.noteEls[idx]?.group;
     if (next) {
-      next.style.color = 'hsl(var(--primary))';
-      next.style.filter = 'drop-shadow(0 0 2.5px hsl(var(--primary) / 0.9))';
+      next.setAttribute('data-note-state', 'active');
     }
     this.activeNoteIdx = idx;
+  }
+
+  private planReadingStops(): void {
+    const scale = this.scale;
+    if (this.layoutMode === 'wrapped') {
+      this.verticalReadingRows = [];
+      for (const measure of this.measureGeoms) {
+        const last = this.verticalReadingRows.at(-1);
+        const y = measure.y * scale;
+        if (last?.y === y) last.endMs = measure.endMs;
+        else this.verticalReadingRows.push({ y, startMs: measure.startMs, endMs: measure.endMs });
+      }
+      if (this.gapMs > 0 && this.gapBoxW > 0) {
+        const last = this.verticalReadingRows.at(-1);
+        const y = this.gapBoxY * scale;
+        if (last?.y === y) last.endMs = this.totalDurationMs;
+        else this.verticalReadingRows.push({ y, startMs: this.gapStartMs, endMs: this.totalDurationMs });
+      }
+      this.rowReadingStops = Array.from({ length: this.systemCount }, (_, system) => scoreReadingStops(
+        this.measureGeoms.filter(g => Math.round((g.y - this.staveTop) / this.systemPitch) === system)
+          .map(g => ({ ...g, x: g.x * scale, width: g.width * scale })),
+        this.beatLabels.filter(b => b.system === system).map(b => ({ ms: b.ms, x: b.x * scale })),
+        this.hits.filter(h => h.system === system).map(h => ({ ms: h.ms, x: h.x * scale })),
+        this.viewportWidth,
+        (this.systemRowEndX[system] + SYSTEM_PADDING_X) * scale,
+      ));
+      return;
+    }
+    this.readingStops = scoreReadingStops(
+      this.measureGeoms.map(g => ({ ...g, x: g.x * scale, width: g.width * scale })),
+      this.beatLabels.map(b => ({ ms: b.ms, x: b.x * scale })),
+      this.hits.map(h => ({ ms: h.ms, x: h.x * scale })),
+      this.viewportWidth,
+      this.totalWidth * scale,
+    );
   }
 
   private applyLayout(): void {
@@ -1116,29 +1218,44 @@ class StaffRendererImpl implements ScoreRenderer {
     // without per-mode handling.
     this.updateActiveMeasure();
     this.updateActiveNote();
+    const g = this.measureGeoms[this.activeMeasureIdx];
+    if (this.measureProgressEl) {
+      this.measureProgressEl.setAttribute('opacity', g ? '1' : '0');
+      if (g) {
+        const fraction = Math.max(0, Math.min(1, (this.lastPlaybackMs - g.startMs) / Math.max(1, g.endMs - g.startMs)));
+        this.measureProgressEl.setAttribute('x', `${g.x + 16}`);
+        this.measureProgressEl.setAttribute('y', `${g.y + 24}`);
+        this.measureProgressEl.setAttribute('width', `${64 * fraction}`);
+      }
+    }
+    const beatIndex = this.cursorVisible ? this.indexAtOrBefore(this.beatLabels, this.lastPlaybackMs, 'ms') : -1;
+    const beat = this.beatLabels[beatIndex];
+    const activeBeat = beat && this.lastPlaybackMs < beat.endMs ? beatIndex : -1;
+    if (activeBeat !== this.activeBeatIdx) {
+      this.beatLabels[this.activeBeatIdx]?.el.setAttribute('data-active', 'false');
+      this.beatLabels[activeBeat]?.el.setAttribute('data-active', 'true');
+      this.activeBeatIdx = activeBeat;
+    }
 
     if (this.layoutMode === 'wrapped') {
       this.rendererDiv.style.transform = 'none';
       const pos = this.msToCursorPos(this.lastPlaybackMs);
       const x = pos.x * this.scale;
       const top =
-        (STAVE_TOP + pos.system * this.systemPitch + STAFF_LINE_TOP - CURSOR_OVERHANG) *
+        (this.staveTop + pos.system * this.systemPitch + this.staffLineTop - CURSOR_OVERHANG) *
         this.scale;
       this.cursorEl.style.top = `${top}px`;
       this.cursorEl.style.transform = `translateX(${x}px)`;
       this.cursorEl.style.opacity =
         this.cursorVisible && this.hits.length > 0 ? '0.9' : '0';
 
-      // Keep the active row in view.
-      if (this.viewportEl && pos.system !== this.lastSystem) {
-        this.lastSystem = pos.system;
-        const bandTop = (STAVE_TOP + pos.system * this.systemPitch) * this.scale;
-        const bandBottom = bandTop + STAVE_HEIGHT * this.scale;
-        const vh = this.viewportEl.clientHeight;
-        const st = this.viewportEl.scrollTop;
-        if (bandTop < st || bandBottom > st + vh) {
-          this.viewportEl.scrollTop = Math.max(0, bandTop - 24);
-        }
+      // Read ahead continuously; never wait for the bottom row to be clipped.
+      if (this.viewportEl && this.autoFollow && this.cursorVisible) {
+        const left = -scoreReadingOffset(this.lastPlaybackMs, this.rowReadingStops[pos.system] ?? []);
+        if (Math.abs(this.viewportEl.scrollLeft - left) > 1) this.viewportEl.scrollLeft = left;
+        const top = scoreVerticalOffset(this.lastPlaybackMs, this.verticalReadingRows,
+          this.viewportHeight, this.stageHeight * this.scale);
+        this.viewportEl.scrollTop = top;
       }
       return;
     }
@@ -1147,10 +1264,22 @@ class StaffRendererImpl implements ScoreRenderer {
     const viewScaledX = this.msToCursorX(this.lastViewMs) * this.scale;
     const playbackScaledX = this.msToCursorX(this.lastPlaybackMs) * this.scale;
 
-    const staffTranslate = this.cursorAnchorPx - viewScaledX;
+    const steadyReading = this.followMode === 'measure' && this.lastViewMs < this.gapStartMs;
+    const shortPhraseInset = Math.max(0, (this.viewportWidth - this.totalWidth * this.scale) / 2);
+    const staffTranslate = shortPhraseInset || (steadyReading
+      ? scoreReadingOffset(this.lastViewMs, this.readingStops)
+      : scoreScrollOffset(viewScaledX, this.viewportWidth, this.totalWidth * this.scale, CURSOR_ANCHOR_FRACTION));
+    // Turn instantly in space; only opacity settles. A sliding page would make
+    // students chase the notes and put the cursor out of sync with the glyphs.
+    if (steadyReading && staffTranslate !== this.staffTranslate
+      && this.cursorVisible && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this.rendererDiv.getAnimations().forEach(animation => animation.cancel());
+      this.rendererDiv.animate([{ opacity: .65 }, { opacity: 1 }], { duration: 140, easing: 'ease-out' });
+    }
+    this.staffTranslate = staffTranslate;
     this.rendererDiv.style.transform = `translateX(${staffTranslate}px)`;
 
-    const cursorX = this.cursorAnchorPx + (playbackScaledX - viewScaledX);
+    const cursorX = staffTranslate + playbackScaledX;
     this.cursorEl.style.transform = `translateX(${cursorX}px)`;
     const visible = cursorX >= -2 && cursorX <= this.viewportWidth + 2;
     this.cursorEl.style.opacity = this.cursorVisible && visible ? '0.85' : '0';
@@ -1164,14 +1293,13 @@ class StaffRendererImpl implements ScoreRenderer {
     const cur = this.msToCursorPos(pos.ms);
     if (this.layoutMode === 'wrapped') {
       const top =
-        (STAVE_TOP + cur.system * this.systemPitch + STAFF_LINE_TOP - CURSOR_OVERHANG) *
+        (this.staveTop + cur.system * this.systemPitch + this.staffLineTop - CURSOR_OVERHANG) *
         this.scale;
       this.hoverCursorEl.style.top = `${top}px`;
       this.hoverCursorEl.style.transform = `translateX(${cur.x * this.scale}px)`;
     } else {
       const hoverX =
-        this.cursorAnchorPx +
-        (this.msToCursorX(pos.ms) - this.msToCursorX(this.lastViewMs)) * this.scale;
+        this.staffTranslate + this.msToCursorX(pos.ms) * this.scale;
       this.hoverCursorEl.style.transform = `translateX(${hoverX}px)`;
     }
     this.hoverCursorEl.style.opacity = '0.45';
@@ -1207,7 +1335,7 @@ class StaffRendererImpl implements ScoreRenderer {
     this.stageHeight = 0;
     this.totalDurationMs = 0;
     this.viewportWidth = 0;
-    this.cursorAnchorPx = 0;
+    this.viewportHeight = 0;
     this.systemPitch = 0;
     this.systemCount = 1;
     this.lastBuildAvail = 0;
@@ -1241,50 +1369,12 @@ class StaffRendererImpl implements ScoreRenderer {
       };
     }
 
-    if (clamped <= this.hits[0].ms) {
-      return { x: this.hits[0].x, system: this.hits[0].system };
-    }
-    const lastIdx = this.hits.length - 1;
-    const last = this.hits[lastIdx];
-    if (clamped >= last.ms) {
-      if (lastIdx >= 1) {
-        const prev = this.hits[lastIdx - 1];
-        const slope = (last.x - prev.x) / Math.max(last.ms - prev.ms, 1);
-        // Extrapolation only makes sense within the last system's row.
-        const x =
-          prev.system === last.system
-            ? last.x + (clamped - last.ms) * slope
-            : last.x;
-        return { x, system: last.system };
-      }
-      return { x: last.x, system: last.system };
-    }
-
-    let lo = 0;
-    let hi = lastIdx;
-    while (hi - lo > 1) {
-      const mid = (lo + hi) >>> 1;
-      if (this.hits[mid].ms <= clamped) lo = mid;
-      else hi = mid;
-    }
-    const a = this.hits[lo];
-    const b = this.hits[hi];
-    // If the interval spans a row break, sweep from the last note of the row to
-    // that row's right edge over the interval, then the next bracket (first note
-    // of the next row) takes over — so the playhead glides to the barline and
-    // jumps down at the downbeat instead of freezing on the last note.
-    if (a.system !== b.system) {
-      const rowEnd = this.systemRowEndX[a.system] ?? a.x;
-      const t = (clamped - a.ms) / Math.max(b.ms - a.ms, 1);
-      return { x: a.x + t * (rowEnd - a.x), system: a.system };
-    }
-    const t = (clamped - a.ms) / Math.max(b.ms - a.ms, 1);
-    return { x: a.x + t * (b.x - a.x), system: a.system };
+    return scoreCursorAt(clamped, this.hits, this.gapStartMs, this.systemRowEndX);
   }
 
   private systemFromY(y: number): number {
     if (this.layoutMode !== 'wrapped' || this.systemPitch <= 0) return 0;
-    const s = Math.floor((y - STAVE_TOP) / this.systemPitch);
+    const s = Math.floor((y - this.staveTop) / this.systemPitch);
     return Math.max(0, Math.min(this.systemCount - 1, s));
   }
 
@@ -1378,12 +1468,15 @@ function formatGapTime(ms: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-function descriptorToStaveNote(d: VexEventDescriptor): StaveNote {
+function descriptorToStaveNote(d: VexEventDescriptor, clef: 'treble' | 'percussion'): StaveNote {
   const note = new StaveNote({
     keys: d.keys,
+    clef,
+    ...(d.noteType && !d.isRest ? { type: d.noteType } : {}),
     duration: d.isRest ? `${d.durationCode}r` : d.durationCode,
   });
   if (d.dotted) Dot.buildAndAttach([note]);
+  if (d.articulation) note.addModifier(new Articulation({ staccato: 'a.', accent: 'a>', tenuto: 'a-' }[d.articulation]), 0);
   d.accidentals.forEach((acc, idx) => {
     if (acc) note.addModifier(new Accidental(acc), idx);
   });
@@ -1418,6 +1511,12 @@ export interface StaffRendererProps {
   trackIndex: number;
   /** Score-relative ms of the playhead (drives the orange line). */
   currentMs: number;
+  /** Optional live playback clock. Enables frame-accurate following without React updates. */
+  getCurrentMs?: () => number;
+  compact?: boolean;
+  followMode?: StaffFollowMode;
+  /** Follow the active staff row. Disable to read ahead without interruption. */
+  autoFollow?: boolean;
   /** Score-relative ms anchored at the cursor anchor. Defaults to currentMs (auto-follow). */
   viewMs?: number;
   /** Score-relative ms of the loop start marker on the staff (null = hidden). */
@@ -1450,16 +1549,17 @@ export function StaffRenderer(props: StaffRendererProps) {
   return <StaffRendererView {...props}
     score={projection.score}
     currentMs={map(props.currentMs)}
+    getCurrentMs={props.getCurrentMs ? () => map(props.getCurrentMs!()) : undefined}
     viewMs={props.viewMs == null ? undefined : map(props.viewMs)}
     loopAMs={props.loopAMs == null ? props.loopAMs : map(props.loopAMs)}
     loopBMs={props.loopBMs == null ? props.loopBMs : map(props.loopBMs)}
-    onSeek={target => props.onSeek?.({ ...target, ...original(target.qn) })}
-    onSelectRange={range => {
+    onSeek={props.onSeek ? target => props.onSeek?.({ ...target, ...original(target.qn) }) : undefined}
+    onSelectRange={props.onSelectRange ? range => {
       const start = original(range.startQn);
       const end = projection.toOriginalQN(range.endQn, props.currentMs, true);
       props.onSelectRange?.({ startQn: start.qn, endQn: end.qn,
         startMs: qnToTrackMs(track, props.score, start.qn), endMs: qnToTrackMs(track, props.score, end.qn) });
-    }}
+    } : undefined}
     onDurationKnown={() => props.onDurationKnown?.(projection.originalDuration + (props.trailingGapMs ?? 0))}
   />;
 }
@@ -1468,6 +1568,10 @@ function StaffRendererView({
   score,
   trackIndex,
   currentMs,
+  getCurrentMs,
+  compact = false,
+  followMode = 'flow',
+  autoFollow = true,
   viewMs,
   loopAMs,
   loopBMs,
@@ -1483,14 +1587,14 @@ function StaffRendererView({
 }: StaffRendererProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<StaffRendererImpl | null>(null);
+  const clockRef = useRef(getCurrentMs);
+  const hasLiveClock = !!getCurrentMs;
+  const followRef = useRef(followMode);
+  const autoFollowRef = useRef(autoFollow);
   const zoomRef = useRef(zoom);
-  zoomRef.current = zoom;
   const showCursorRef = useRef(showCursor);
-  showCursorRef.current = showCursor;
   const gapMsRef = useRef(trailingGapMs);
-  gapMsRef.current = trailingGapMs;
   const gapLabelRef = useRef(trailingGapLabel);
-  gapLabelRef.current = trailingGapLabel;
   const onSeekRef = useRef(onSeek);
   const onSelectRangeRef = useRef(onSelectRange);
   const onDurationKnownRef = useRef(onDurationKnown);
@@ -1500,10 +1604,20 @@ function StaffRendererView({
   const viewMsRef = useRef(viewMs);
   const loopARef = useRef(loopAMs);
   const loopBRef = useRef(loopBMs);
-  currentMsRef.current = currentMs;
-  viewMsRef.current = viewMs;
-  loopARef.current = loopAMs;
-  loopBRef.current = loopBMs;
+
+  useEffect(() => {
+    clockRef.current = getCurrentMs;
+    followRef.current = followMode;
+    autoFollowRef.current = autoFollow;
+    zoomRef.current = zoom;
+    showCursorRef.current = showCursor;
+    gapMsRef.current = trailingGapMs;
+    gapLabelRef.current = trailingGapLabel;
+    currentMsRef.current = currentMs;
+    viewMsRef.current = viewMs;
+    loopARef.current = loopAMs;
+    loopBRef.current = loopBMs;
+  }, [getCurrentMs, followMode, autoFollow, zoom, showCursor, trailingGapMs, trailingGapLabel, currentMs, viewMs, loopAMs, loopBMs]);
 
   useEffect(() => {
     onSeekRef.current = onSeek;
@@ -1529,13 +1643,16 @@ function StaffRendererView({
       layoutMode,
       zoomRef.current,
       gapMsRef.current,
-      gapLabelRef.current
+      gapLabelRef.current,
+      compact,
+      followRef.current
     );
 
     const unsubSeek = impl.onSeek((target) => onSeekRef.current?.(target));
     const unsubRange = impl.onSelectRange((range) => onSelectRangeRef.current?.(range));
 
     // Restore the playhead/markers into the freshly-built renderer.
+    impl.setAutoFollow(autoFollowRef.current);
     impl.setLoopMarkers(loopARef.current ?? null, loopBRef.current ?? null);
     impl.setViewMs(viewMsRef.current ?? currentMsRef.current);
     impl.setTimeMs(currentMsRef.current);
@@ -1549,18 +1666,26 @@ function StaffRendererView({
       impl.destroy();
       rendererRef.current = null;
     };
-  }, [score, trackIndex, layoutMode]);
-
-  // Push time updates straight to the imperative renderer.
-  useEffect(() => {
-    rendererRef.current?.setTimeMs(currentMs);
-  }, [currentMs]);
+  }, [score, trackIndex, layoutMode, compact]);
 
   useEffect(() => {
-    if (rendererRef.current) {
-      rendererRef.current.setViewMs(viewMs ?? currentMs);
-    }
-  }, [viewMs, currentMs]);
+    if (!hasLiveClock) rendererRef.current?.setPlaybackPosition(currentMs, viewMs ?? currentMs);
+  }, [currentMs, viewMs, hasLiveClock]);
+
+  useEffect(() => {
+    if (!hasLiveClock) return;
+    let frame = 0;
+    const tick = () => {
+      const ms = clockRef.current?.();
+      if (ms != null && !document.hidden) rendererRef.current?.setPlaybackPosition(ms, viewMsRef.current ?? ms);
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [hasLiveClock]);
+
+  useEffect(() => { rendererRef.current?.setFollowMode(followMode); }, [followMode]);
+  useEffect(() => { rendererRef.current?.setAutoFollow(autoFollow); }, [autoFollow]);
 
   useEffect(() => {
     rendererRef.current?.setLoopMarkers(loopAMs ?? null, loopBMs ?? null);
@@ -1582,7 +1707,8 @@ function StaffRendererView({
   return (
     <div
       ref={containerRef}
-      className={`playsense-studio-notation ${className ?? ''}`}
+      data-score-interactive={onSeek || onSelectRange ? true : undefined}
+      className={`playsense-studio-notation ps-score-engraving ${className ?? ''}`}
       style={layoutMode === 'wrapped' ? { height: '100%' } : undefined}
     />
   );
