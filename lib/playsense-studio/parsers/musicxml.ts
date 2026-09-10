@@ -27,6 +27,7 @@ import type {
   Instrument,
   Measure,
   MusicalEvent,
+  PercussionNotation,
   Note,
   Rest,
   ScoreDocument,
@@ -34,7 +35,8 @@ import type {
   Voice,
 } from '@/components/playsense-studio/shared/score-model/types';
 import { gmToStrokeMidi, inferPercInstrument } from '../gm-percussion';
-import { getPercStrokes } from '../perc-strokes';
+import { getPercStrokes, isPercussion } from '../perc-strokes';
+import { musicXmlNotehead } from '../percussion-noteheads';
 
 const TYPE_TO_QN: Record<string, number> = {
   whole: 4,
@@ -118,14 +120,16 @@ export function parseMusicXmlString(
       const unpitchedEl = mi.querySelector('midi-unpitched');
       if (unpitchedEl) {
         const gm = Number(unpitchedEl.textContent) - 1; // MusicXML is 1-based
-        if (Number.isFinite(gm) && gm >= 0) {
+        if (Number.isInteger(gm) && gm >= 0 && gm <= 127) {
           if (miId) instrumentGm.set(miId, gm);
           gmNotes.push(gm);
         }
       }
     }
 
-    const isUnpitched = instrumentGm.size > 0 || anyDrumChannel;
+    const sourcePart = Array.from(root.querySelectorAll(':scope > part')).find(p => p.getAttribute('id') === id);
+    const isUnpitched = instrumentGm.size > 0 || anyDrumChannel || !!sourcePart?.querySelector('unpitched')
+      || sourcePart?.querySelector('clef > sign')?.textContent === 'percussion';
     const instrument = guessInstrument(program, name, { isUnpitched, gmNotes });
     partInfo.set(id, { name, instrument, instrumentGm });
   }
@@ -250,21 +254,21 @@ function parsePartMeasures(
         // Merge into the previous event as a chord pitch.
         const prev = events[events.length - 1];
         if (prev && (prev.kind === 'note' || prev.kind === 'chord')) {
-          const midi = isRest ? null : noteToMidi(noteEl, midiCtx);
-          if (midi !== null) {
+          const pitch = isRest ? null : noteToPitch(noteEl, midiCtx);
+          if (pitch !== null) {
             if (prev.kind === 'note') {
               const chord: Chord = {
                 kind: 'chord',
                 durationQN: prev.durationQN,
                 dotted: prev.dotted,
                 notes: [
-                  { midi: prev.midi, spellingHint: prev.spellingHint },
-                  { midi },
+                  { midi: prev.midi, spellingHint: prev.spellingHint, percussion: prev.percussion },
+                  pitch,
                 ],
               };
               events[events.length - 1] = chord;
             } else {
-              prev.notes.push({ midi });
+              prev.notes.push(pitch);
             }
           }
         }
@@ -278,11 +282,11 @@ function parsePartMeasures(
           dotted,
         } satisfies Rest);
       } else {
-        const midi = noteToMidi(noteEl, midiCtx);
-        if (midi === null) continue;
+        const pitch = noteToPitch(noteEl, midiCtx);
+        if (pitch === null) continue;
         events.push({
           kind: 'note',
-          midi,
+          ...pitch,
           durationQN: finalDurationQN,
           dotted,
         } satisfies Note);
@@ -342,36 +346,43 @@ interface NoteMidiContext {
   instrumentGm: Map<string, number>;
 }
 
-/**
- * Resolve a <note> to a stored MIDI value, handling both pitched (<pitch>) and
- * unpitched percussion (<unpitched>) notes. Returns null when there's no usable
- * pitch (e.g. a malformed note).
- *
- * Unpitched notes carry their sound via the part's GM "drum map": the note's
- * <instrument id> points at a <midi-instrument> whose <midi-unpitched> gives the
- * GM key. We convert that GM key into a stroke midi valid for the track's
- * percussion instrument so the renderer places it on the right staff line.
- */
-function noteToMidi(noteEl: Element, ctx: NoteMidiContext): number | null {
-  if (noteEl.querySelector(':scope > pitch')) return pitchToMidi(noteEl);
-
+/** Import written percussion independently from playback. Finale may use one
+ * playback key for several symbols, or even encode a drum as a pitched note. */
+function noteToPitch(noteEl: Element, ctx: NoteMidiContext): Pick<Note, 'midi' | 'percussion'> | null {
+  const pitch = noteEl.querySelector(':scope > pitch');
   const unpitched = noteEl.querySelector(':scope > unpitched');
-  if (unpitched) {
-    const instrId = noteEl.querySelector(':scope > instrument')?.getAttribute('id') ?? '';
-    let gm = ctx.instrumentGm.get(instrId);
-    // Single-instrument percussion parts often omit the per-note ref — use the
-    // sole mapping when there's exactly one.
-    if (gm === undefined && ctx.instrumentGm.size === 1) {
-      gm = ctx.instrumentGm.values().next().value;
-    }
-    if (gm === undefined) {
-      // No GM info at all — drop the note onto the instrument's first stroke so
-      // it still appears on the staff rather than vanishing.
-      return getPercStrokes(ctx.instrument)?.[0]?.midi ?? 60;
-    }
-    return gmToStrokeMidi(gm, ctx.instrument);
+  if (!isPercussion(ctx.instrument) && !unpitched) {
+    const midi = pitchToMidi(noteEl);
+    return midi === null ? null : { midi };
   }
-  return null;
+  if (!pitch && !unpitched) return null;
+  const instrId = noteEl.querySelector(':scope > instrument')?.getAttribute('id') ?? '';
+  let gm = ctx.instrumentGm.get(instrId);
+  if (gm === undefined && ctx.instrumentGm.size === 1) gm = ctx.instrumentGm.values().next().value;
+  const step = (unpitched?.querySelector('display-step') ?? pitch?.querySelector('step'))?.textContent?.trim().toLowerCase();
+  const octave = (unpitched?.querySelector('display-octave') ?? pitch?.querySelector('octave'))?.textContent?.trim();
+  const headEl = noteEl.querySelector(':scope > notehead');
+  const notehead = musicXmlNotehead(headEl?.textContent?.trim(), headEl?.getAttribute('smufl'));
+  const marcato = !!noteEl.querySelector('notations > articulations > strong-accent');
+  const hasPosition = !!step && /^[a-g]$/.test(step) && !!octave && /^[0-9]$/.test(octave);
+  if (!hasPosition && gm !== undefined) return { midi: gmToStrokeMidi(gm, ctx.instrument) };
+
+  const percussion: PercussionNotation = {
+    staffLine: hasPosition ? `${step}/${octave}` : 'b/4',
+    notehead, ...(marcato ? { marcato: true } : {}),
+    ...(gm !== undefined ? { sourceMidi: gm } : {}),
+  };
+  const candidates = (getPercStrokes(ctx.instrument) ?? []).filter(s => {
+    const shape = s.notehead ?? s.noteType ?? 'normal';
+    return s.staffLine === percussion.staffLine
+      && (shape === notehead || (shape === 'ornate-x' && notehead === 'x'))
+      && !!s.marcato === marcato;
+  });
+  const stroke = candidates.find(s => gm !== undefined && s.midi === gmToStrokeMidi(gm, ctx.instrument)) ?? candidates[0];
+  if (stroke) percussion.strokeId = stroke.id;
+  // Unrecognized positions stay exactly as written and can be assigned a stroke
+  // in the builder. Never collapse them onto the first palette entry.
+  return { midi: stroke?.midi ?? gm ?? pitchToMidi(noteEl) ?? 60, percussion };
 }
 
 function pitchToMidi(noteEl: Element): number | null {

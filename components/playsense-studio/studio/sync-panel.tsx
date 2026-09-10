@@ -56,9 +56,10 @@ import {
 import type { SelectedEventRef } from '@/components/playsense-studio/studio/editable-measure-strip';
 import { PlaceScoreControl } from '@/components/playsense-studio/sync/place-score-control';
 import { SectionsLane, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
-import { getPercStrokes, isPercussion } from '@/lib/playsense-studio/perc-strokes';
+import { resolvePercStroke, isPercussion } from '@/lib/playsense-studio/perc-strokes';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import type { MusicalEvent, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import type { MidiRecordingSource } from './midi-record-button';
 
 /** A note selection, mirrored out of the editor so the right rail can show it. */
 export interface StudioNoteSelection {
@@ -162,11 +163,19 @@ export function SyncPanel({
   // signature, so they don't churn the markers.
   const sig = useMemo(() => structuralSignature(score), [score]);
   const prevSig = useRef(sig);
+  const previousScore = useRef(score);
+  const recordingMarkerHistory = useRef(new WeakMap<ScoreDocument, MarkerState>());
   useEffect(() => {
-    if (prevSig.current === sig) return;
+    if (previousScore.current === score) return;
+    recordingMarkerHistory.current.set(previousScore.current, markersRef.current);
+    previousScore.current = score;
+    const recordedMarkers = recordingMarkerHistory.current.get(score);
+    const structureChanged = prevSig.current !== sig;
     prevSig.current = sig;
-    setMarkers((prev) => reconcileMarkers(prev, score.tracks[0], score));
-    setDirty(true);
+    if (recordedMarkers || structureChanged) {
+      setMarkers((prev) => recordedMarkers ?? reconcileMarkers(prev, score.tracks[0], score));
+      setDirty(true);
+    }
   }, [sig, score]);
 
   // --- View state ---
@@ -367,6 +376,20 @@ export function SyncPanel({
       };
     });
   }, [markers]);
+
+  const recordingSource = useMemo<MidiRecordingSource>(() => ({
+    videoUrl, videoRef, onPosition: clock.seek,
+    waypoints: markerStateToWaypoints(markers, { includeBeats: 'edited-beats' }),
+    onInsert: (next, waypoints, expected) => {
+      if (scoreRef.current !== expected) throw new Error('The score changed. Reopen the recorder before adding this take.');
+      const nextMarkers = seedMarkerState(next.tracks[0], next, waypoints);
+      if (showSync && siblingRanges.some(range => rangesOverlap(markerSpan(nextMarkers), range))) {
+        throw new Error('This take overlaps another scored section. Record a shorter take or move that section first.');
+      }
+      recordingMarkerHistory.current.set(next, nextMarkers);
+      dispatch({ type: 'apply-midi-score', score: next, expectedScore: expected });
+    },
+  }), [videoUrl, clock.seek, markers, showSync, siblingRanges, dispatch]);
 
   // Note onsets (video seconds) across ALL tracks, for the faint waveform ticks.
   // Each note's cumulative QN is interpolated into its measure's audio span; all
@@ -735,6 +758,7 @@ export function SyncPanel({
                   dispatch={dispatch}
                   measureTimings={measureTimings}
                   getCurrentSeconds={clock.getCurrentSeconds}
+                  recordingSource={recordingSource}
                   pixelsPerSecond={pps}
                   scrollLeftPx={scrollLeft}
                   viewportWidth={viewportWidth}
@@ -823,11 +847,8 @@ export function SyncPanel({
                   measureIndex={selection.ref.measureIndex}
                   percussion={!!selTrack && isPercussion(selTrack.instrument)}
                   percLabel={
-                    selTrack
-                      ? getPercStrokes(selTrack.instrument)?.find(
-                          (s) =>
-                            selEvent.kind === 'note' && s.midi === selEvent.midi,
-                        )?.label ?? null
+                    selTrack && selEvent.kind === 'note'
+                      ? resolvePercStroke(selTrack.instrument, selEvent)?.label ?? 'Imported notation'
                       : null
                   }
                   onDelete={() => {

@@ -98,3 +98,111 @@ describe('Studio MIDI recorder lifecycle', () => {
     expect(recorder.connected).toBe(true); expect(recorder.error).toBeNull();
   });
 });
+
+class VideoMock extends EventTarget {
+  currentTime = 0; playbackRate = 1; readyState = 4; duration = 300; seeking = false; paused = true; ended = false; loop = true;
+  play = vi.fn(async () => { this.paused = false; this.dispatchEvent(new Event('playing')); });
+  pause = vi.fn(() => { if (!this.paused) { this.paused = true; this.dispatchEvent(new Event('pause')); } });
+  event(name: string) { this.dispatchEvent(new Event(name)); }
+}
+async function startVideo(video: VideoMock, overrides = {}) {
+  await act(async () => { await recorder.connect(); await recorder.start({ ...options, countIn: false, ...overrides, video: { element: video as unknown as HTMLVideoElement, startSeconds: 30 } }); });
+  await advance(100);
+}
+
+describe('MIDI recording follows reference video time', () => {
+  it('holds the video at the playhead for count-in and starts it when recording begins', async () => {
+    const video = new VideoMock();
+    await act(async () => { await recorder.connect(); await recorder.start({ ...options, video: { element: video as unknown as HTMLVideoElement, startSeconds: 30 } }); });
+    expect(video.currentTime).toBe(30); expect(video.loop).toBe(false);
+    expect(video.play).not.toHaveBeenCalled(); expect(recorder.phase).toBe('count-in');
+    input.message([0x90, 60, 100]);
+    await advance(2100);
+    expect(video.play).toHaveBeenCalledOnce(); expect(recorder.phase).toBe('recording');
+    video.currentTime = 30.5; await advance(500); input.message([0x90, 64, 100]);
+    video.currentTime = 31; await advance(500); input.message([0x80, 64, 0]);
+    await act(async () => recorder.stop());
+    expect(recorder.take?.startVideoSeconds).toBe(30);
+    expect(recorder.take?.notes).toHaveLength(1);
+    expect(recorder.take?.notes[0]).toMatchObject({ startMs: 500, endMs: 1000 });
+    expect(video.paused).toBe(true);
+  });
+  it('captures source video timing at half speed, accounting for delayed MIDI delivery', async () => {
+    const video = new VideoMock(); video.playbackRate = .5;
+    await startVideo(video);
+    video.currentTime = 31; await advance(2000); input.message([0x90, 60, 100], now - 50);
+    video.currentTime = 31.5; await advance(1000); input.message([0x80, 60, 0], now - 20);
+    await act(async () => recorder.stop());
+    expect(recorder.take?.notes[0]).toMatchObject({ startMs: 975, endMs: 1490 });
+    expect(recorder.take?.durationMs).toBe(1500);
+  });
+  it('does not advance or add attacks during buffering and keeps releases at the frozen video position', async () => {
+    const video = new VideoMock(); await startVideo(video);
+    video.currentTime = 30.5; await advance(500); input.message([0x90, 60, 100]);
+    video.event('waiting'); await advance(5000);
+    input.message([0x80, 60, 0]); input.message([0x90, 64, 100]);
+    expect(recorder.meter.elapsedMs).toBe(500);
+    video.event('playing'); video.currentTime = 31; await advance(500); input.message([0x90, 67, 100]);
+    video.currentTime = 31.5; await advance(500); await act(async () => recorder.stop());
+    expect(recorder.take?.notes.map(n => n.midi)).toEqual([60, 67]);
+    expect(recorder.take?.notes[0].endMs).toBeCloseTo(501); // minimum held-note duration
+    expect(recorder.take?.notes[1]).toMatchObject({ startMs: 1000, endMs: 1500 });
+  });
+  it('waits for playback to really start instead of recording through a startup delay', async () => {
+    const video = new VideoMock(); let played!: () => void;
+    video.play.mockImplementationOnce(() => new Promise(resolve => { played = () => { video.paused = false; video.event('playing'); resolve(); }; }));
+    await startVideo(video); await advance(2000); input.message([0x90, 60, 100]);
+    expect(recorder.phase).toBe('starting'); expect(recorder.meter.elapsedMs).toBe(0);
+    await act(async () => played());
+    video.currentTime = 30.25; await advance(250); input.message([0x90, 64, 100]);
+    video.currentTime = 30.5; await advance(250); await act(async () => recorder.stop());
+    expect(recorder.take?.notes).toHaveLength(1);
+    expect(recorder.take?.notes[0]).toMatchObject({ midi: 64, startMs: 250, endMs: 500 });
+  });
+  it('stops at video end and preserves a take if the playhead is moved', async () => {
+    const video = new VideoMock(); await startVideo(video);
+    video.currentTime = 30.5; await advance(500); input.message([0x90, 60, 100]);
+    video.currentTime = 31; await advance(500);
+    await act(async () => { video.currentTime = 80; video.seeking = true; video.event('seeking'); });
+    expect(recorder.take?.durationMs).toBe(1000); expect(recorder.error).toMatch(/moved/);
+    await act(async () => recorder.discard()); video.seeking = false;
+    await startVideo(video); video.currentTime = 30.5; await advance(500); input.message([0x90, 60, 100]);
+    await act(async () => { video.currentTime = 31; video.ended = true; video.event('ended'); });
+    expect(recorder.phase).toBe('review'); expect(recorder.take?.durationMs).toBe(1000);
+  });
+  it('reports rejected video playback and cleans up the capture session', async () => {
+    const video = new VideoMock(); video.play.mockRejectedValueOnce(new Error('Not allowed'));
+    await startVideo(video);
+    expect(recorder.phase).toBe('idle'); expect(recorder.error).toMatch(/video could not start/);
+    expect(audios[0].state).toBe('closed'); expect(vi.getTimerCount()).toBe(0);
+  });
+  it('stops video playback and reports the matching playhead when the panel closes', async () => {
+    const video = new VideoMock(); const onStop = vi.fn();
+    await act(async () => { await recorder.connect(); await recorder.start({ ...options, countIn: false, video: { element: video as unknown as HTMLVideoElement, startSeconds: 30, onStop } }); });
+    await advance(100); video.currentTime = 31; await advance(1000);
+    await act(async () => root.render(null));
+    expect(video.paused).toBe(true); expect(onStop).toHaveBeenCalledWith(31);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('cancels a loading video without cancelling a new recording or leaving listeners behind', async () => {
+    const loading = new VideoMock(); loading.readyState = 0;
+    const onStop = vi.fn();
+    let pending!: Promise<void>;
+    await act(async () => {
+      await recorder.connect();
+      pending = recorder.start({ ...options, video: { element: loading as unknown as HTMLVideoElement, startSeconds: 30, onStop } });
+      await Promise.resolve();
+    });
+    expect(recorder.phase).toBe('starting');
+    const next = new VideoMock();
+    await act(async () => {
+      recorder.stop();
+      await recorder.start({ ...options, video: { element: next as unknown as HTMLVideoElement, startSeconds: 30 } });
+      await pending;
+    });
+    expect(recorder.phase).toBe('count-in');
+    expect(onStop).toHaveBeenCalledOnce();
+    expect(audios[1].state).toBe('running');
+    expect(vi.getTimerCount()).toBe(1);
+  });
+});

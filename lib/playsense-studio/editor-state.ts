@@ -54,6 +54,7 @@ export type EditorAction =
   | { type: 'delete-track'; trackIndex: number }
   | { type: 'add-measure'; trackIndex: number }
   | { type: 'insert-midi-recording'; trackIndex: number; start: number; replaceCount: number; measures: Measure[]; expectedTrack: Track }
+  | { type: 'apply-midi-score'; score: ScoreDocument; expectedScore: ScoreDocument }
   | { type: 'repeat-measures'; trackIndex: number; start: number; end: number; count: number; id: string }
   | { type: 'unlink-repeat'; trackIndex: number; id: string }
   | { type: 'delete-measure'; trackIndex: number; measureIndex: number }
@@ -173,6 +174,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return { ...state, isDirty: false };
     case 'replace-score': {
       return { score: action.score, past: [], future: [], isDirty: false };
+    }
+    case 'apply-midi-score': {
+      return state.score === action.expectedScore ? withHistory(state, action.score) : state;
     }
     case 'insert-midi-recording': {
       if (state.score.tracks[action.trackIndex] !== action.expectedTrack) return state;
@@ -324,9 +328,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (!event) return state;
       if (event.kind === 'note') {
         (event as Note).midi = action.midi;
+        delete event.percussion;
       } else if (event.kind === 'chord') {
         const chord = event as Chord;
-        if (chord.notes[0]) chord.notes[0].midi = action.midi;
+        if (chord.notes[0]) {
+          chord.notes[0].midi = action.midi;
+          delete chord.notes[0].percussion;
+        }
       }
       return withHistory(state, next);
     }

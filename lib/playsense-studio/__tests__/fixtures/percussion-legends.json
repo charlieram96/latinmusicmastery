@@ -1,0 +1,232 @@
+[
+  {
+    "instrument": "perc-conga",
+    "strokeId": "open-high",
+    "staffLine": "e/5",
+    "notehead": "normal",
+    "smufl": "noteheadBlack",
+    "marcato": false,
+    "finaleEntry": 125,
+    "finaleNoteCode": 36
+  },
+  {
+    "instrument": "perc-conga",
+    "strokeId": "open-low",
+    "staffLine": "d/5",
+    "notehead": "normal",
+    "smufl": "noteheadBlack",
+    "marcato": false,
+    "finaleEntry": 128,
+    "finaleNoteCode": 38
+  },
+  {
+    "instrument": "perc-conga",
+    "strokeId": "slap",
+    "staffLine": "e/5",
+    "notehead": "ornate-x",
+    "smufl": "noteheadXOrnate",
+    "marcato": false,
+    "finaleEntry": 131,
+    "finaleNoteCode": 37
+  },
+  {
+    "instrument": "perc-conga",
+    "strokeId": "pressed-slap",
+    "staffLine": "e/5",
+    "notehead": "ornate-x",
+    "smufl": "noteheadXOrnate",
+    "marcato": true,
+    "finaleEntry": 134,
+    "finaleNoteCode": 37
+  },
+  {
+    "instrument": "perc-conga",
+    "strokeId": "bass",
+    "staffLine": "e/5",
+    "notehead": "circled",
+    "smufl": "noteheadCircledBlackLarge",
+    "marcato": false,
+    "finaleEntry": 137,
+    "finaleNoteCode": 3968
+  },
+  {
+    "instrument": "perc-conga",
+    "strokeId": "tip",
+    "staffLine": "e/5",
+    "notehead": "plus",
+    "smufl": "noteheadPlusBlack",
+    "marcato": false,
+    "finaleEntry": 140,
+    "finaleNoteCode": 3969
+  },
+  {
+    "instrument": "perc-conga",
+    "strokeId": "mute",
+    "staffLine": "e/5",
+    "notehead": "slash",
+    "smufl": "noteheadSlashVerticalEnds",
+    "marcato": false,
+    "finaleEntry": 143,
+    "finaleNoteCode": 3970
+  },
+  {
+    "instrument": "perc-conga",
+    "strokeId": "open-middle",
+    "staffLine": "g/5",
+    "notehead": "normal",
+    "smufl": "noteheadBlack",
+    "marcato": false,
+    "finaleEntry": 146,
+    "finaleNoteCode": 32
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "low",
+    "staffLine": "f/4",
+    "notehead": "normal",
+    "smufl": "noteheadBlack",
+    "marcato": false,
+    "finaleEntry": 125,
+    "finaleNoteCode": 45
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "high",
+    "staffLine": "a/4",
+    "notehead": "normal",
+    "smufl": "noteheadBlack",
+    "marcato": false,
+    "finaleEntry": 128,
+    "finaleNoteCode": 44
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "rim",
+    "staffLine": "a/4",
+    "notehead": "x",
+    "smufl": "noteheadXBlack",
+    "marcato": false,
+    "finaleEntry": 131,
+    "finaleNoteCode": 3970
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "high-mute",
+    "staffLine": "a/4",
+    "notehead": "slash",
+    "smufl": "noteheadSlashVerticalEnds",
+    "marcato": false,
+    "finaleEntry": 134,
+    "finaleNoteCode": 3973
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "low-mute",
+    "staffLine": "f/4",
+    "notehead": "slash",
+    "smufl": "noteheadSlashVerticalEnds",
+    "marcato": false,
+    "finaleEntry": 136,
+    "finaleNoteCode": 3974
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "cascara",
+    "staffLine": "a/4",
+    "notehead": "plus",
+    "smufl": "noteheadPlusBlack",
+    "marcato": false,
+    "finaleEntry": 138,
+    "finaleNoteCode": 3968
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "cascara-low",
+    "staffLine": "f/4",
+    "notehead": "plus",
+    "smufl": "noteheadPlusBlack",
+    "marcato": false,
+    "finaleEntry": 140,
+    "finaleNoteCode": 3969
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "low-cross-stick",
+    "staffLine": "f/4",
+    "notehead": "slashed",
+    "smufl": "noteheadSlashedBlack1",
+    "marcato": false,
+    "finaleEntry": 142,
+    "finaleNoteCode": 3975
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "cymbal",
+    "staffLine": "a/5",
+    "notehead": "x",
+    "smufl": "noteheadXBlack",
+    "marcato": false,
+    "finaleEntry": 145,
+    "finaleNoteCode": 5
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "timbal-bell",
+    "staffLine": "g/4",
+    "notehead": "diamond",
+    "smufl": "noteheadDiamondBlack",
+    "marcato": false,
+    "finaleEntry": 148,
+    "finaleNoteCode": 7
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "jam-block",
+    "staffLine": "f/5",
+    "notehead": "square",
+    "smufl": "noteShapeSquareBlack",
+    "marcato": false,
+    "finaleEntry": 151,
+    "finaleNoteCode": 35
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "bongo-bell-mouth",
+    "staffLine": "f/5",
+    "notehead": "triangle-down",
+    "smufl": "noteheadTriangleDownBlack",
+    "marcato": false,
+    "finaleEntry": 154,
+    "finaleNoteCode": 6
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "bongo-bell-body",
+    "staffLine": "f/5",
+    "notehead": "triangle-up",
+    "smufl": "noteheadTriangleUpBlack",
+    "marcato": false,
+    "finaleEntry": 157,
+    "finaleNoteCode": 3971
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "chacha-bell-mouth",
+    "staffLine": "a/5",
+    "notehead": "triangle-down",
+    "smufl": "noteheadTriangleDownBlack",
+    "marcato": false,
+    "finaleEntry": 160,
+    "finaleNoteCode": 30
+  },
+  {
+    "instrument": "perc-timbal",
+    "strokeId": "chacha-bell-body",
+    "staffLine": "a/5",
+    "notehead": "triangle-up",
+    "smufl": "noteheadTriangleUpBlack",
+    "marcato": false,
+    "finaleEntry": 163,
+    "finaleNoteCode": 3972
+  }
+]

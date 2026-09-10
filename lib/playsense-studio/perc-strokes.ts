@@ -1,19 +1,9 @@
-// PlaySense Studio — percussion stroke maps.
-//
-// Percussion tracks don't have a meaningful chromatic pitch. Instead each
-// instrument has a small fixed set of named strokes (e.g. a conga's
-// Open/Slap/Mute/Bass), each mapped to:
-//   • a MIDI number (so the rest of the pipeline — add-note, set-event-pitch,
-//     serialization — is unchanged; strokes are just MIDI under the hood), and
-//   • a VexFlow staff position (a "key" string like 'g/5') that fixes where the
-//     notehead sits on the percussion staff, plus an optional 'x' notehead for
-//     muted/slap/cymbal articulations (engraving convention).
-//
-// The MIDI values follow GM percussion where it makes sense (drum kit) and the
-// conga fixture in score-fixtures.ts (62/63/64) for hand drums. The exact value
-// only needs to be stable + unique within an instrument so strokes round-trip.
+// Stroke IDs are internal, stable MIDI-sized identifiers, not General MIDI keys.
+// Conga/timbal positions and symbols follow the user-supplied Finale legends:
+// Leyenda Congas.musx and Leyenda de Timbal.musx (Mauricio Upmann).
+// Finale's percussion layout harmLev is diatonic from C4: 9 = E5, 5 = A4.
 
-import type { Instrument } from '@/components/playsense-studio/shared/score-model/types';
+import type { Instrument, PercussionNotation, PercussionNotehead } from '@/components/playsense-studio/shared/score-model/types';
 
 export interface PercStroke {
   /** Stable id (used for palette keys). */
@@ -24,18 +14,26 @@ export interface PercStroke {
   midi: number;
   /** VexFlow key string fixing the notehead's staff position, e.g. 'g/5'. */
   staffLine: string;
-  /** 'x' renders an X notehead (slap/mute/cymbal); omitted = normal notehead. */
+  /** Legacy shape field for the unchanged bongo, clave and kit palettes. */
   noteType?: 'x';
+  notehead?: PercussionNotehead;
+  /** The legend's extra marcato distinguishes the pressed high slap. */
+  marcato?: boolean;
+  description?: string;
+  group?: string;
 }
 
-// Ordered high→low so the palette reads top-to-bottom like the staff.
+// Grouped by playing technique; positions come from the notation legends.
 const PERC_STROKES: Partial<Record<Instrument, PercStroke[]>> = {
   'perc-conga': [
-    { id: 'open-high', label: 'Open High', midi: 64, staffLine: 'g/5' },
-    { id: 'slap', label: 'Slap', midi: 62, staffLine: 'g/5', noteType: 'x' },
-    { id: 'open-low', label: 'Open Low', midi: 63, staffLine: 'e/5' },
-    { id: 'mute', label: 'Mute', midi: 61, staffLine: 'd/5', noteType: 'x' },
-    { id: 'bass', label: 'Bass', midi: 60, staffLine: 'c/5' },
+    { id: 'open-high', label: 'Open · high', midi: 64, staffLine: 'e/5', group: 'Open tones', description: 'Golpe abierto · tumbadora aguda' },
+    { id: 'open-low', label: 'Open · low', midi: 63, staffLine: 'd/5', group: 'Open tones', description: 'Golpe abierto · tumbadora grave' },
+    { id: 'open-middle', label: 'Open · middle', midi: 67, staffLine: 'g/5', group: 'Open tones', description: '3ra tumbadora · afinación media' },
+    { id: 'slap', label: 'Slap', midi: 62, staffLine: 'e/5', notehead: 'ornate-x', group: 'Slaps & muted', description: 'Tapado · abierto o presionado' },
+    { id: 'pressed-slap', label: 'Pressed slap', midi: 65, staffLine: 'e/5', notehead: 'ornate-x', marcato: true, group: 'Slaps & muted', description: 'Tapado agudo · mano contraria sobre el parche' },
+    { id: 'mute', label: 'Muffled tone', midi: 61, staffLine: 'e/5', notehead: 'slash', group: 'Slaps & muted', description: 'Sonido presionado' },
+    { id: 'bass', label: 'Bass · heel', midi: 60, staffLine: 'e/5', notehead: 'circled', group: 'Heel & toe', description: 'Sonido bajo · heel' },
+    { id: 'tip', label: 'Tip · toe', midi: 66, staffLine: 'e/5', notehead: 'plus', group: 'Heel & toe', description: 'Sonido de dedos · toe' },
   ],
   'perc-bongo': [
     { id: 'macho-open', label: 'Macho Open', midi: 64, staffLine: 'g/5' },
@@ -44,10 +42,21 @@ const PERC_STROKES: Partial<Record<Instrument, PercStroke[]>> = {
     { id: 'hembra-slap', label: 'Hembra Slap', midi: 61, staffLine: 'e/5', noteType: 'x' },
   ],
   'perc-timbal': [
-    { id: 'cascara', label: 'Cáscara', midi: 65, staffLine: 'a/5', noteType: 'x' },
-    { id: 'high', label: 'High Drum', midi: 64, staffLine: 'g/5' },
-    { id: 'low', label: 'Low Drum', midi: 62, staffLine: 'e/5' },
-    { id: 'rim', label: 'Rim/Clave', midi: 61, staffLine: 'c/5', noteType: 'x' },
+    { id: 'high', label: 'High timbal', midi: 64, staffLine: 'a/4', group: 'Drums', description: 'Timbal agudo' },
+    { id: 'low', label: 'Low timbal', midi: 62, staffLine: 'f/4', group: 'Drums', description: 'Timbal grave' },
+    { id: 'rim', label: 'High rim shot', midi: 61, staffLine: 'a/4', notehead: 'x', group: 'Drums' },
+    { id: 'high-mute', label: 'High · muffled', midi: 66, staffLine: 'a/4', notehead: 'slash', group: 'Drums' },
+    { id: 'low-mute', label: 'Low · muffled', midi: 67, staffLine: 'f/4', notehead: 'slash', group: 'Drums' },
+    { id: 'low-cross-stick', label: 'Low cross-stick', midi: 69, staffLine: 'f/4', notehead: 'slashed', group: 'Drums' },
+    { id: 'cascara', label: 'Cáscara · high', midi: 65, staffLine: 'a/4', notehead: 'plus', group: 'Shells & block' },
+    { id: 'cascara-low', label: 'Cáscara · low', midi: 68, staffLine: 'f/4', notehead: 'plus', group: 'Shells & block' },
+    { id: 'jam-block', label: 'Jam block', midi: 72, staffLine: 'f/5', notehead: 'square', group: 'Shells & block' },
+    { id: 'timbal-bell', label: 'Timbal bell', midi: 71, staffLine: 'g/4', notehead: 'diamond', group: 'Bells & cymbal', description: 'Contracampana' },
+    { id: 'bongo-bell-mouth', label: 'Bongo bell · mouth', midi: 73, staffLine: 'f/5', notehead: 'triangle-down', group: 'Bells & cymbal' },
+    { id: 'bongo-bell-body', label: 'Bongo bell · body', midi: 74, staffLine: 'f/5', notehead: 'triangle-up', group: 'Bells & cymbal' },
+    { id: 'chacha-bell-mouth', label: 'Cha-cha · mouth', midi: 75, staffLine: 'a/5', notehead: 'triangle-down', group: 'Bells & cymbal' },
+    { id: 'chacha-bell-body', label: 'Cha-cha · body', midi: 76, staffLine: 'a/5', notehead: 'triangle-up', group: 'Bells & cymbal' },
+    { id: 'cymbal', label: 'Cymbal', midi: 70, staffLine: 'a/5', notehead: 'x', group: 'Bells & cymbal', description: 'Platillo' },
   ],
   'perc-clave': [
     { id: 'stroke', label: 'Clave', midi: 60, staffLine: 'b/4', noteType: 'x' },
@@ -80,4 +89,21 @@ export function midiToPercStroke(instrument: Instrument, midi: number): PercStro
   const strokes = PERC_STROKES[instrument];
   if (!strokes) return undefined;
   return strokes.find((s) => s.midi === midi);
+}
+
+/** Written notation takes precedence over playback MIDI, which is often shared by
+ * several Finale strokes. An unmatched imported symbol stays at its written position. */
+export function resolvePercStroke(instrument: Instrument, note: { midi: number; percussion?: PercussionNotation }): PercStroke | undefined {
+  if (!note.percussion) return midiToPercStroke(instrument, note.midi);
+  const strokes = getPercStrokes(instrument) ?? [];
+  return strokes.find(s => s.id === note.percussion?.strokeId)
+    ?? strokes.find(s => s.staffLine === note.percussion?.staffLine
+      && (s.notehead ?? s.noteType ?? 'normal') === note.percussion?.notehead
+      && !!s.marcato === !!note.percussion?.marcato);
+}
+
+export function percussionNotation(instrument: Instrument, note: { midi: number; percussion?: PercussionNotation }): PercussionNotation {
+  if (note.percussion) return note.percussion;
+  const stroke = midiToPercStroke(instrument, note.midi);
+  return { staffLine: stroke?.staffLine ?? 'b/4', notehead: stroke?.notehead ?? stroke?.noteType ?? 'normal', marcato: stroke?.marcato };
 }

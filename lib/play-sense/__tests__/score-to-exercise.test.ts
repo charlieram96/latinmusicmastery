@@ -58,12 +58,12 @@ describe('scoreToExerciseDefinition — conga (percussion)', () => {
     // slap (62) on beat 1
     expect(m1[0].technique).toBe('slap')
     expect(m1[0].surface).toBe('quinto')
-    expect(m1[0].vexKey).toBe('g/5')
+    expect(m1[0].vexKey).toBe('e/5')
     // open high (64) on beat 2
     expect(m1[1].technique).toBe('open')
     expect(m1[1].surface).toBe('quinto')
-    // bass low (63 = open-low) on beat 3 → conga surface
-    expect(m1[3].surface).toBe('conga')
+    // open-low on beat 3 → low tumbadora (tumba)
+    expect(m1[3].surface).toBe('tumba')
     // percussion has no pitch
     expect(m1[0].expectedPitch).toBeUndefined()
   })

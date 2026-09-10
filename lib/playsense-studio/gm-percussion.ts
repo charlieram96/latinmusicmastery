@@ -11,10 +11,8 @@
 //   • gmToStrokeMidi  — GM note → a stroke midi VALID for a chosen instrument,
 //     so midiToPercStroke() always resolves it to a real staff position.
 //
-// Why route everything through our existing stroke midis: the renderer
-// (score-to-vexflow.ts → midiToPercStroke) already knows how to place those on
-// the percussion staff with the right notehead. Mapping GM → stroke midi here
-// means percussion imports "just work" with no renderer changes.
+// MusicXML additionally retains written staff positions and symbols, which
+// can distinguish several custom strokes sharing the same playback key.
 
 import type { Instrument } from '@/components/playsense-studio/shared/score-model/types';
 import { getPercStrokes } from './perc-strokes';
@@ -31,7 +29,7 @@ interface GmEntry {
 //
 // Conga stroke midis: open-high 64, slap 62, open-low 63, mute 61, bass 60.
 // Bongo: macho-open 64, macho-slap 63, hembra-open 62, hembra-slap 61.
-// Timbal: cascara 65, high 64, low 62, rim 61.
+// Timbal: stable original IDs plus the extended legend in perc-strokes.ts.
 // Clave: stroke 60.
 // Kit: crash 49, ride 51, hh-closed 42, hh-open 46, hi-tom 48, mid-tom 45,
 //      snare 38, floor-tom 41, kick 36.
@@ -73,7 +71,9 @@ export const GM_PERCUSSION: Record<number, GmEntry> = {
   65: { instrument: 'perc-timbal', strokeMidi: 64 }, // High Timbale
   66: { instrument: 'perc-timbal', strokeMidi: 62 }, // Low Timbale
   67: { instrument: 'perc-timbal', strokeMidi: 65 }, // High Agogo → cáscara
-  68: { instrument: 'perc-timbal', strokeMidi: 65 }, // Low Agogo → cáscara
+  68: { instrument: 'perc-timbal', strokeMidi: 68 }, // Low Agogo → cáscara
+
+  56: { instrument: 'perc-timbal', strokeMidi: 71 }, // Cowbell → contracampana
 
   // --- Clave / wood ---
   75: { instrument: 'perc-clave', strokeMidi: 60 }, // Claves
@@ -121,6 +121,12 @@ export function inferPercInstrument(gmNotes: number[]): Instrument {
  * (rather than the renderer's generic c/5 fallback).
  */
 export function gmToStrokeMidi(gmNote: number, instrument: Instrument): number {
+  // These auxiliary sounds also belong to a timbal setup. Keep their identity
+  // when the track has explicitly been selected as timbal.
+  if (instrument === 'perc-timbal') {
+    const auxiliary: Record<number, number> = { 37: 69, 49: 70, 51: 70, 52: 70, 55: 70, 56: 71, 57: 70, 59: 70, 75: 72, 76: 72, 77: 72 };
+    if (auxiliary[gmNote] !== undefined) return auxiliary[gmNote];
+  }
   const strokes = getPercStrokes(instrument);
   const first = strokes?.[0]?.midi ?? 60;
   const entry = GM_PERCUSSION[gmNote];

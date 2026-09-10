@@ -19,7 +19,7 @@
 import { ChevronDown, ChevronsLeftRight, MoreHorizontal, Move, Music, Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type Dispatch } from 'react';
 import { diatonicToMidi, extractTrackEvents, midiToDiatonic } from '@/lib/playsense-studio/score-to-vexflow';
-import { getPercStrokes, isPercussion } from '@/lib/playsense-studio/perc-strokes';
+import { getPercStrokes, isPercussion, resolvePercStroke } from '@/lib/playsense-studio/perc-strokes';
 import {
   QN_EPS,
   beatLengthInQN,
@@ -41,7 +41,8 @@ import {
   type SelectedEventRef,
 } from './editable-measure-strip';
 import { PianoRollView } from './piano-roll-view';
-import { MidiRecordButton } from './midi-record-button';
+import { PercussionStrokePicker } from './percussion-stroke-picker';
+import { MidiRecordButton, type MidiRecordingSource } from './midi-record-button';
 import type { DragMode } from '@/components/playsense-studio/sync/waveform-canvas';
 
 type Articulation = 'staccato' | 'accent' | 'tenuto';
@@ -151,6 +152,7 @@ export interface IntegratedEditorProps {
   measureTimings: IntegratedEditorMeasureTiming[];
   /** Live playback position (video seconds) for the staff-lane playhead. */
   getCurrentSeconds?: () => number;
+  recordingSource?: MidiRecordingSource;
   pixelsPerSecond: number;
   scrollLeftPx: number;
   viewportWidth: number;
@@ -180,6 +182,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   dispatch,
   measureTimings,
   getCurrentSeconds,
+  recordingSource,
   pixelsPerSecond,
   scrollLeftPx,
   viewportWidth,
@@ -272,6 +275,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     if (!selected || !activeTrack) return null;
     return activeTrack.measures[selected.measureIndex]?.voices[0]?.events[selected.eventIndex] ?? null;
   }, [selected, activeTrack]);
+
+  const selectedPercPitch = selectedEvent?.kind === 'note' ? selectedEvent
+    : selectedEvent?.kind === 'chord' ? selectedEvent.notes[0] : undefined;
+  const strokeValue = percussion && selectedPercPitch?.percussion
+    ? resolvePercStroke(activeTrack.instrument, selectedPercPitch)?.midi ?? null : currentMidi;
 
   // Sync toolbar to the selected event.
   useEffect(() => {
@@ -759,7 +767,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           </div>
         )}
 
-        {activeTrack && <MidiRecordButton score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} />}
+        {activeTrack && <MidiRecordButton score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} getCurrentSeconds={getCurrentSeconds} recordingSource={recordingSource} />}
 
         <button
           onClick={() => dispatch({ type: 'add-measure', trackIndex: activeTrackIndex })}
@@ -949,28 +957,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         {/* Stroke (percussion) / pitch (pitched) */}
         <div aria-label={percussion ? 'Stroke' : 'Pitch'}>
           {percussion ? (
-            <div className="st-seg" style={{ gap: 3 }}>
-              {(percStrokes ?? []).map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => onStrokeClick(s.midi)}
-                  className={currentMidi === s.midi ? 'is-on' : ''}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
-                >
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 2,
-                      background: 'hsl(var(--primary))',
-                      transform: 'rotate(45deg)',
-                      flexShrink: 0,
-                    }}
-                  />
-                  {s.label}
-                </button>
-              ))}
-            </div>
+            <PercussionStrokePicker strokes={percStrokes ?? []} value={strokeValue} onChange={onStrokeClick} />
           ) : (
             <div className="st-nb-grp" title={`midi ${currentMidi}`}>
               <div className="st-seg pitch" role="radiogroup" aria-label="Note letter">
