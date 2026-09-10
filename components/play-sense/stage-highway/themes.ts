@@ -31,8 +31,10 @@ export const STAGE_THEMES: Record<StageThemeId, StageTheme> = {
   },
 }
 
-export const STAGE_THEME_IDS = Object.keys(STAGE_THEMES) as StageThemeId[]
+/** The courtyard studio is the only selectable appearance. */
+export const STAGE_THEME_IDS: StageThemeId[] = ['studio']
 export const STAGE_THEME_STORAGE_KEY = 'playsense-stage-theme'
 export function isStageTheme(value: string | null): value is StageThemeId {
-  return value === 'concert' || value === 'arcade' || value === 'studio'
+  // Retired appearance preferences fall back to the studio in useStageTheme.
+  return value === 'studio'
 }

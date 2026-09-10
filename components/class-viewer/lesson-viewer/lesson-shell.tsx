@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils'
 import { LessonSidebar, type LessonSidebarSection } from './lesson-sidebar'
 import { LessonHeader } from './lesson-header'
 import { LessonPartsNav, type LessonPart } from './lesson-parts-nav'
-import { LessonFooter } from './lesson-footer'
+import { LessonFooter, type LessonFooterProps } from './lesson-footer'
+import { LessonProgressProvider, useLessonProgress } from './lesson-progress-context'
 import { LessonShellProvider } from './lesson-shell-context'
 import styles from './lesson-viewer.module.css'
 
@@ -41,23 +42,22 @@ interface LessonShellProps {
     courseId: string
     classId: string
   } | null
-  footer?: {
-    courseId: string
-    classId: string
-    currentIndex: number
-    totalItems: number
-    nextClassId: string | null
-    activeItemId: string | null
-    isCompleted: boolean
-    nextLabel?: string | null
-  } | null
+  footer?: LessonFooterProps | null
   /** Full-bleed media workspace (video / PlaySense split). Omit for non-media. */
   workspace?: ReactNode
   /** Scrollable lesson body (meta strip, prose, item content, comments). */
   body: ReactNode
 }
 
-export function LessonShell({
+export function LessonShell(props: LessonShellProps) {
+  return <LessonProgressProvider
+    key={props.footer?.classId ?? props.sidebar.currentClassId ?? 'overview'}
+    itemIds={props.footer?.itemIds ?? []}
+    initialCompletedItemIds={props.footer?.completedItemIds ?? []}
+  ><LessonShellContent {...props} /></LessonProgressProvider>
+}
+
+function LessonShellContent({
   sidebar,
   header,
   parts,
@@ -66,6 +66,17 @@ export function LessonShell({
   body,
 }: LessonShellProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const progress = useLessonProgress()
+  const completedItemIds = progress?.completedItemIds ?? footer?.completedItemIds ?? []
+  const added = completedItemIds.filter(id => !footer?.completedItemIds.includes(id)).length
+  const sections = sidebar.sections.map(section => {
+    const containsCurrent = section.classes.some(lesson => lesson.id === sidebar.currentClassId)
+    if (!containsCurrent || added === 0) return section
+    return { ...section, completedItems: Math.min(section.totalItems, section.completedItems + added),
+      classes: section.classes.map(lesson => lesson.id === sidebar.currentClassId
+        ? { ...lesson, completedItems: Math.min(lesson.totalItems, lesson.completedItems + added) } : lesson),
+    }
+  })
 
   return (
     <LessonShellProvider collapsed={collapsed} setCollapsed={setCollapsed}>
@@ -79,6 +90,7 @@ export function LessonShell({
       >
         <LessonSidebar
           {...sidebar}
+          sections={sections}
           collapsed={collapsed}
           onToggle={() => setCollapsed((c) => !c)}
         />
@@ -90,7 +102,7 @@ export function LessonShell({
         >
           <div data-lesson-heading>
             <LessonHeader {...header} />
-            {parts && <LessonPartsNav {...parts} />}
+            {parts && <LessonPartsNav {...parts} completedItemIds={completedItemIds} />}
           </div>
           {workspace}
           {body}

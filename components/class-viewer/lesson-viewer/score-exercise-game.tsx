@@ -30,6 +30,8 @@ import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
 import { ExerciseModeFrame } from './exercise-mode-frame'
 import { DEFAULT_EXERCISE_LAYOUT, ExerciseWorkspace } from './exercise-workspace'
+import { useLessonActivity } from './lesson-progress-context'
+import { finishedExercise } from '@/lib/courses/lesson-completion'
 
 interface ScoreExerciseGameProps {
   /** The exercise derived from the authored score (see lib/play-sense/score-to-exercise). */
@@ -77,6 +79,7 @@ function ScoreExerciseSession({
   preview = false,
 }: ScoreExerciseGameProps) {
   const { t } = useTranslation()
+  const completePerformance = useLessonActivity('performance')
   const [workspaceLayout, setWorkspaceLayout] = useState(DEFAULT_EXERCISE_LAYOUT)
   // Which backing tracks the student wants to hear — all of them by default.
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
@@ -167,6 +170,10 @@ function ScoreExerciseSession({
   }, [stableExercise])
 
   // Persist the attempt when results are ready.
+  useEffect(() => {
+    if (finishedExercise(session.sessionState, session.playheadProgress, preview)) completePerformance()
+  }, [session.sessionState, session.playheadProgress, preview, completePerformance])
+
   useEffect(() => {
     if (preview) return
     if (session.sessionState === 'results' && session.attemptStats && session.exercise) {

@@ -41,6 +41,7 @@ import {
   type SelectedEventRef,
 } from './editable-measure-strip';
 import { PianoRollView } from './piano-roll-view';
+import { MidiRecordButton } from './midi-record-button';
 import type { DragMode } from '@/components/playsense-studio/sync/waveform-canvas';
 
 type Articulation = 'staccato' | 'accent' | 'tenuto';
@@ -758,6 +759,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           </div>
         )}
 
+        {activeTrack && <MidiRecordButton score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} />}
+
         <button
           onClick={() => dispatch({ type: 'add-measure', trackIndex: activeTrackIndex })}
           className={`st-chip${showDragMode && onSetDragAll ? '' : ' ml-auto'}`}
@@ -1096,7 +1099,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
     target instanceof HTMLInputElement ||
     target instanceof HTMLTextAreaElement ||
     target instanceof HTMLSelectElement ||
-    (target instanceof HTMLElement && target.isContentEditable)
+    (target instanceof HTMLElement && (target.isContentEditable || !!target.closest('[role="dialog"]')))
   );
 }
 

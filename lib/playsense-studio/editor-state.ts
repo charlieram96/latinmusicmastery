@@ -7,6 +7,7 @@
 
 import { useCallback, useReducer } from 'react';
 import { repeatGroups } from './repeats';
+import { insertMidiMeasures } from './midi-recording';
 import type {
   Chord,
   Measure,
@@ -52,6 +53,7 @@ export type EditorAction =
   | { type: 'add-track' }
   | { type: 'delete-track'; trackIndex: number }
   | { type: 'add-measure'; trackIndex: number }
+  | { type: 'insert-midi-recording'; trackIndex: number; start: number; replaceCount: number; measures: Measure[]; expectedTrack: Track }
   | { type: 'repeat-measures'; trackIndex: number; start: number; end: number; count: number; id: string }
   | { type: 'unlink-repeat'; trackIndex: number; id: string }
   | { type: 'delete-measure'; trackIndex: number; measureIndex: number }
@@ -171,6 +173,14 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return { ...state, isDirty: false };
     case 'replace-score': {
       return { score: action.score, past: [], future: [], isDirty: false };
+    }
+    case 'insert-midi-recording': {
+      if (state.score.tracks[action.trackIndex] !== action.expectedTrack) return state;
+      try {
+        const next = insertMidiMeasures(state.score, action.trackIndex, action.start, action.replaceCount, action.measures);
+        // Structural insertion shifts measure indices; don't propagate repeat edits by old index.
+        return { score: next, past: [...state.past, state.score].slice(-HISTORY_LIMIT), future: [], isDirty: true };
+      } catch { return state; }
     }
     case 'set-score-meta': {
       const next = clone(state.score);

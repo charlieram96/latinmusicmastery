@@ -138,6 +138,7 @@ export function ScoreSectionEditor({
   // Cmd/Ctrl+Z = undo, +Shift = redo (or Ctrl+Y), Cmd/Ctrl+S = save now.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof Element && e.target.closest('[role="dialog"]')) return;
       const meta = e.metaKey || e.ctrlKey;
       if (!meta) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;

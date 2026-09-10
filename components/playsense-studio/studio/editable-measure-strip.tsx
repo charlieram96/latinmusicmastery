@@ -38,6 +38,7 @@ import {
   diatonicToMidi,
   midiToDiatonic,
   type VexEventDescriptor,
+  scoreTieIndices,
 } from '@/lib/playsense-studio/score-to-vexflow';
 import type { PercStroke } from '@/lib/playsense-studio/perc-strokes';
 import type { DragMode } from '@/components/playsense-studio/sync/waveform-canvas';
@@ -601,7 +602,7 @@ export function EditableMeasureStrip({
       className="playsense-studio-notation relative w-full select-none overflow-hidden rounded-md border border-border bg-card"
       style={{ height }}
     >
-      {measures.map((item) => {
+      {measures.map((item, itemIndex) => {
         const startX = videoTimeToX(item.startVideoTimeSeconds);
         const endXVal = videoTimeToX(item.endVideoTimeSeconds);
         const width = endXVal - startX;
@@ -712,6 +713,8 @@ export function EditableMeasureStrip({
             <MiniStave
               measureIndex={item.measureIndex}
               events={item.events}
+              previousEvent={measures[itemIndex - 1]?.events.at(-1)}
+              nextEvent={measures[itemIndex + 1]?.events[0]}
               width={Math.round(width)}
               height={height}
               timeSignature={item.timeSignature}
@@ -795,6 +798,8 @@ export function EditableMeasureStrip({
 }
 
 interface MiniStaveProps {
+  previousEvent?: VexEventDescriptor;
+  nextEvent?: VexEventDescriptor;
   measureIndex: number;
   events: VexEventDescriptor[];
   width: number;
@@ -806,6 +811,8 @@ interface MiniStaveProps {
 }
 
 const MiniStave = memo(function MiniStave({
+  previousEvent,
+  nextEvent,
   measureIndex,
   events,
   width,
@@ -876,20 +883,23 @@ const MiniStave = memo(function MiniStave({
         });
         flushRun();
 
-        // Ties — within this measure only (each measure is its own SVG, so
-        // cross-measure ties can't reference the next note object).
+        // Match individual held pitches even when the next chord changes shape.
         events.forEach((d, i) => {
-          if (d.tieToNext && i + 1 < vexNotes.length && !d.isRest && !events[i + 1].isRest) {
-            new StaveTie({
-              firstNote: vexNotes[i],
-              lastNote: vexNotes[i + 1],
-              firstIndexes: [0],
-              lastIndexes: [0],
-            })
-              .setContext(ctx)
-              .draw();
-          }
+          const next = events[i + 1];
+          if (!next) return;
+          const indices = scoreTieIndices(d, next);
+          if (indices.firstIndexes.length) new StaveTie({ firstNote: vexNotes[i], lastNote: vexNotes[i + 1], ...indices }).setContext(ctx).draw();
         });
+
+        // Each measure has its own SVG; partial ties meet at the shared barline.
+        if (previousEvent && events[0]) {
+          const { lastIndexes } = scoreTieIndices(previousEvent, events[0]);
+          if (lastIndexes.length) new StaveTie({ lastNote: vexNotes[0], firstIndexes: lastIndexes, lastIndexes }).setContext(ctx).draw();
+        }
+        if (nextEvent && events.length) {
+          const { firstIndexes } = scoreTieIndices(events[events.length - 1], nextEvent);
+          if (firstIndexes.length) new StaveTie({ firstNote: vexNotes[vexNotes.length - 1], firstIndexes, lastIndexes: firstIndexes }).setContext(ctx).draw();
+        }
 
         // Capture per-event bboxes after a successful draw.
         const hits: MeasureHit[] = vexNotes.map((n, i) => {
@@ -909,7 +919,7 @@ const MiniStave = memo(function MiniStave({
       el.innerHTML = '';
       onHitsReady(measureIndex, null);
     };
-  }, [measureIndex, events, width, height, timeSignature, isFirst, clef, onHitsReady]);
+  }, [measureIndex, events, previousEvent, nextEvent, width, height, timeSignature, isFirst, clef, onHitsReady]);
 
   return <div ref={ref} />;
 });

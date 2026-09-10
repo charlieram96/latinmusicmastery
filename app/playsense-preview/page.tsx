@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { ArrowUpRight, Check, ChevronDown, CircleHelp, Drum, Headphones, Maximize2, Pause, Piano, Play, Move3D, RotateCcw, Sparkles, Volume2, VolumeX, Zap } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, CircleHelp, Drum, Headphones, Maximize2, Pause, Piano, Play, Move3D, RotateCcw, Sparkles, Volume2, VolumeX } from 'lucide-react'
 import { StageHighway } from '@/components/play-sense/stage-highway/StageHighway'
-import { STAGE_THEMES, STAGE_THEME_IDS, type StageThemeId } from '@/components/play-sense/stage-highway/themes'
+import { STAGE_THEMES } from '@/components/play-sense/stage-highway/themes'
 import { backingBandLabel } from '@/components/play-sense/stage-highway/band'
 import { createStageModel } from '@/components/play-sense/stage-highway/model'
 import { getExerciseDuration, generateExpectedTimestamps } from '@/lib/play-sense/exercise-utils'
@@ -18,14 +18,12 @@ import { PerformanceResultsDialog } from '@/components/play-sense/performance-re
 import './preview.css'
 
 const THEME_COPY = {
-  concert: { eyebrow: '01 / FUTURISTIC CONCERT', description: 'An open stage. An infinite horizon. Your rhythm at the center.', icon: Sparkles },
-  arcade: { eyebrow: '02 / RHYTHM ARCADE', description: 'Big color. Electric energy. Every note feels like a power-up.', icon: Zap },
-  studio: { eyebrow: '03 / COURTYARD SESSIONS', description: 'The lights are low. The band is ready. Find your place in the groove.', icon: Headphones },
+  studio: { eyebrow: 'COURTYARD SESSIONS', description: 'The lights are low. The band is ready. Find your place in the groove.', icon: Headphones },
 }
 const KEYS = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k']
 
 export default function PlaySensePreview() {
-  const [theme, setTheme] = useState<StageThemeId>('studio')
+  const theme = 'studio'
   const [instrument, setInstrument] = useState<Instrument>('conga')
   const [running, setRunning] = useState(true)
   const [demo, setDemo] = useState(true)
@@ -154,11 +152,6 @@ export default function PlaySensePreview() {
     </header>
     <div className="ps-direction-bar">
       <div className="ps-direction-intro"><span className="ps-overline">STEP INTO THE SESSION</span><h1>Your place in the band.</h1></div>
-      <div className="ps-direction-tabs" role="group" aria-label="Compare stage designs">
-        {STAGE_THEME_IDS.map((id, i) => { const Icon = THEME_COPY[id].icon; return <button key={id} onClick={() => setTheme(id)} aria-pressed={theme === id}>
-          <span className="ps-tab-number">0{i+1}</span><Icon size={19}/><span><strong>{STAGE_THEMES[id].name}</strong><small>{STAGE_THEMES[id].subtitle}</small></span>{theme === id && <Check size={15} className="ps-tab-check"/>}
-        </button> })}
-      </div>
     </div>
     <section className={`ps-preview-stage ${explore ? 'ps-exploring' : ''}`} ref={stage} aria-label={`${current.name} playable stage`}>
       <StageHighway exercise={exercise} attemptId={take} theme={theme} sessionState="playing" getElapsedSeconds={() => elapsedRef.current}

@@ -20,6 +20,9 @@ import { ScoreExerciseGame } from '@/components/class-viewer/lesson-viewer/score
 import { LessonVideoPlayer } from '@/components/class-viewer/lesson-viewer/lesson-video-player'
 import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise'
 import { parseSubtitles } from '@/lib/subtitles/tracks'
+import { LessonActivityBoundary } from './lesson-viewer/lesson-progress-context'
+import { LessonMediaEmbed } from './lesson-viewer/lesson-media-embed'
+import { completionRequirements } from '@/lib/courses/lesson-completion'
 
 // Feature flag — set PLAYSENSE_STUDIO_ENABLED=false in env to roll back to the legacy
 // iframe path even when a class item has a score attached. Default true so
@@ -56,9 +59,11 @@ interface ClassItemRendererProps {
   nextHref?: string | null
   /** Development-only lesson showcase using existing authorized lesson content. */
   previewExercise?: boolean
+  /** Development-only video/score review without writing playback progress. */
+  previewLesson?: boolean
 }
 
-export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref = null, previewExercise = false }: ClassItemRendererProps) {
+export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref = null, previewExercise = false, previewLesson = false }: ClassItemRendererProps) {
   const { t, locale } = await getServerTranslator()
 
   // Subtitle tracks for the demo video. Every language is passed to the
@@ -172,12 +177,15 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
   }
 
   return (
-    <div className="space-y-6">
+    <LessonActivityBoundary key={item.id} classItemId={item.id}
+      required={completionRequirements(item.item_type, !!playsenseStudioData, quizQuestions.length > 0)}
+      disabled={process.env.NODE_ENV === 'development' && (previewLesson || previewExercise)}>
       {/* VIDEO */}
       {item.item_type === 'VIDEO' &&
         (hasVideoSections && firstSection && item.video_url && playerLayout === 'split' ? (
           // Placed + sync-mapped notation → split workspace with an accurate cursor.
           <PlaysenseStudioPlayer
+            readOnly={process.env.NODE_ENV === 'development' && previewLesson}
             classItemId={item.id}
             videoUrl={item.video_url}
             score={firstSection.score}
@@ -192,6 +200,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
           // Notation exists but isn't sync-mapped yet → still show it on the right.
           // No sections/timeMap: the player synthesizes a tempo-based cursor.
           <PlaysenseStudioPlayer
+            readOnly={process.env.NODE_ENV === 'development' && previewLesson}
             classItemId={item.id}
             videoUrl={item.video_url}
             score={firstUnplacedSection.scoreDocument.parsedScore}
@@ -214,11 +223,9 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
             <CardContent className="p-0">
               {item.soundslice_embed_url ? (
                 <div className="aspect-video overflow-hidden bg-black">
-                  <iframe
+                  <LessonMediaEmbed
                     src={item.soundslice_embed_url}
                     className="w-full h-full"
-                    allow="autoplay; fullscreen"
-                    allowFullScreen
                   />
                 </div>
               ) : (
@@ -349,16 +356,16 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
               />
             ) : (
               <>
-                {item.audio_url && (
+                {item.audio_url ? (
                   <audio controls className="w-full" src={item.audio_url} />
-                )}
+                ) : item.video_url ? (
+                  <LessonVideoPlayer src={item.video_url} subtitles={subtitleTracks} defaultSubtitleLang={locale} />
+                ) : null}
                 {item.soundslice_embed_url && (
                   <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                    <iframe
+                    <LessonMediaEmbed
                       src={item.soundslice_embed_url}
                       className="w-full h-full"
-                      allow="autoplay; fullscreen"
-                      allowFullScreen
                     />
                   </div>
                 )}
@@ -389,6 +396,6 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
           <TiptapReadOnly content={item.rich_content} />
         </div>
       )}
-    </div>
+    </LessonActivityBoundary>
   )
 }

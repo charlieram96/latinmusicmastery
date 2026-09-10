@@ -54,7 +54,7 @@ export function StudioSetup({ classItemId, classItemTitle, appBarExtra }: Studio
       <main className="mx-auto max-w-2xl px-6 py-10">
         <h2 className="mb-1 text-lg font-semibold">Add a score</h2>
         <p className="mb-5 text-sm text-muted-foreground">
-          Import a MIDI or MusicXML file, or start a blank score. Once added, you can build the
+          Import a PDF, MIDI, or MusicXML file, or start a blank score. Once added, you can build the
           notation and sync it to the video here in PlaySense Studio.
         </p>
 
@@ -70,7 +70,7 @@ export function StudioSetup({ classItemId, classItemTitle, appBarExtra }: Studio
                 <Upload className="h-6 w-6 text-muted-foreground" />
                 <span className="font-medium">Import a score file</span>
                 <span className="text-xs text-muted-foreground">
-                  MIDI (.mid, .midi) or MusicXML (.musicxml, .xml, .mxl)
+                  PDF · MusicXML · MIDI
                 </span>
               </div>
             </button>

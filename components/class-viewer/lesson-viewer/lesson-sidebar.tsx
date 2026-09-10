@@ -492,8 +492,8 @@ export function LessonProgressButton({
             : 'text-primary group-hover:bg-primary/10'
         )}
       >
-        {state === 'completed' ? (
-          <Check className="h-3.5 w-3.5 text-success" />
+        {state === 'completed' || progress >= 1 ? (
+          <Check className={cn('h-3.5 w-3.5', state === 'active' ? 'text-white' : 'text-success')} />
         ) : (
           <Play className="ml-0.5 h-3 w-3" fill="currentColor" />
         )}

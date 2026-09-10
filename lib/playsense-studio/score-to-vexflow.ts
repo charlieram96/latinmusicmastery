@@ -208,11 +208,14 @@ export interface VexEventDescriptor {
   dotted: boolean;
   /** MIDI of the (first) pitch — for staff drag anchoring. null for rests. */
   midi: number | null;
+  /** Pitches and ties parallel to keys, including individual held chord notes. */
+  midiPitches?: number[];
+  tiedMidiPitches?: number[];
   /** 'x' for percussion slap/mute/cymbal noteheads; undefined = normal. */
   noteType?: 'x';
   /** True if part of a triplet group (consecutive run forms one tuplet). */
   triplet: boolean;
-  /** True if tied to the next event (rendered within-measure only). */
+  /** True if all pitches are tied to the next event. */
   tieToNext: boolean;
   /** Articulation glyph to attach, or undefined. */
   articulation?: 'staccato' | 'accent' | 'tenuto';
@@ -316,6 +319,8 @@ export function extractTrackEvents(
         isRest,
         dotted,
         midi,
+        midiPitches: event.kind === 'note' ? [event.midi] : event.kind === 'chord' ? event.notes.map(n => n.midi) : [],
+        tiedMidiPitches: event.kind === 'note' ? (event.tieToNext ? [event.midi] : []) : event.kind === 'chord' ? event.notes.filter(n => event.tieToNext || n.tieToNext).map(n => n.midi) : [],
         noteType,
         triplet: event.triplet ?? false,
         tieToNext: event.tieToNext ?? false,
@@ -337,4 +342,18 @@ export function extractTrackEvents(
   }
 
   return result;
+}
+
+/** Match pitches, never chord positions: a held C can change its index in the next chord. */
+export function scoreTieIndices(first: VexEventDescriptor, next: VexEventDescriptor) {
+  const firstIndexes: number[] = [];
+  const lastIndexes: number[] = [];
+  if (first.isRest || next.isRest || Math.abs(first.qnStart + first.durationQN - next.qnStart) > 1e-6) return { firstIndexes, lastIndexes };
+  const pitches = first.midiPitches ?? (first.midi === null ? [] : [first.midi]);
+  const following = next.midiPitches ?? (next.midi === null ? [] : [next.midi]);
+  for (const midi of first.tiedMidiPitches ?? (first.tieToNext ? pitches : [])) {
+    const a = pitches.indexOf(midi), b = following.indexOf(midi);
+    if (a >= 0 && b >= 0) { firstIndexes.push(a); lastIndexes.push(b); }
+  }
+  return { firstIndexes, lastIndexes };
 }
