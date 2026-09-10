@@ -15,6 +15,7 @@ function snapshot(): StageThemeId {
 export function useStageTheme() {
   const theme = useSyncExternalStore(subscribe, snapshot, (): StageThemeId => 'studio')
   const setTheme = (value: StageThemeId) => {
+    if (!isStageTheme(value)) return
     try { localStorage.setItem(STAGE_THEME_STORAGE_KEY, value) } catch { /* Device storage is optional. */ }
     window.dispatchEvent(new Event(EVENT))
   }

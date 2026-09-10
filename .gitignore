@@ -46,3 +46,6 @@ next-env.d.ts
 # Blender automatic revision backups
 /art/playsense/*.blend[0-9]
 /scripts/blender/__pycache__/
+
+# Local score-recognition engine and its working data
+/.local/

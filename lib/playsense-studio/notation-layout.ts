@@ -20,3 +20,14 @@ export function packScoreRows(measureWidths: readonly number[], availableWidth: 
   }
   return rows
 }
+
+export interface LessonScoreRow extends ScoreRow { interlude?: 'leading' | 'trailing' }
+
+/** Video time gets a full row; only music participates in measure packing. */
+export function packLessonScoreRows(measureWidths: readonly number[], availableWidth: number,
+  interludes: { leading: boolean; trailing: boolean }): LessonScoreRow[] {
+  const rows: LessonScoreRow[] = packScoreRows(measureWidths, availableWidth)
+  if (interludes.leading) rows.unshift({ startIndex: -1, widths: [availableWidth], interlude: 'leading' })
+  if (interludes.trailing) rows.push({ startIndex: -1, widths: [availableWidth], interlude: 'trailing' })
+  return rows
+}

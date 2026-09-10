@@ -93,7 +93,7 @@ export function StageHighway(props: StageHighwayProps) {
   return (
     <div className={`ps-highway ${fill ? 'ps-highway-fill' : ''}`} style={{ '--ps-accent': STAGE_THEMES[theme].accent } as React.CSSProperties}>
       <div ref={container} className="ps-highway-canvas" />
-      {showThemePicker && !props.theme && <div className="ps-theme-picker" role="group" aria-label="Stage appearance">
+      {showThemePicker && STAGE_THEME_IDS.length > 1 && !props.theme && <div className="ps-theme-picker" role="group" aria-label="Stage appearance">
         {STAGE_THEME_IDS.map(id => <button type="button" key={id} aria-pressed={theme === id} onClick={() => setSelectedTheme(id)}>{STAGE_THEMES[id].name}</button>)}
       </div>}
       {showHud && <div className="ps-game-scoreboard"><PerformanceHud score={currentScore} combo={currentCombo} accuracy={currentAccuracy}

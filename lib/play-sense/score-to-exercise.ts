@@ -12,7 +12,7 @@ import type {
   Note,
   Chord,
 } from '@/components/playsense-studio/shared/score-model/types'
-import { beatLengthInQN } from '@/lib/playsense-studio/time-mapping'
+import { beatLengthInQN, measureLengthInQN } from '@/lib/playsense-studio/time-mapping'
 import { midiToPercStroke, isPercussion } from '@/lib/playsense-studio/perc-strokes'
 import { midiToKeyString } from '@/lib/playsense-studio/score-to-vexflow'
 import type {
@@ -125,6 +125,7 @@ export function scoreToExerciseDefinition(
   let currentKeyFifths = score.initialKeyFifths
   let hand: Hand = 'R'
   let chordCounter = 0
+  let continuations = new Map<number, { event: ExerciseEvent; beatQN: number }>()
 
   for (const measure of track.measures) {
     if (measure.timeSignature) currentTimeSig = measure.timeSignature
@@ -134,12 +135,13 @@ export function scoreToExerciseDefinition(
     // Use the first voice for grading (v1 supports up to 2; the melody/primary
     // voice is voice 1).
     const voice = measure.voices.find((v) => v.number === 1) ?? measure.voices[0]
-    if (!voice) continue
+    if (!voice) { continuations.clear(); continue }
 
     let qnIntoMeasure = 0
     for (const ev of voice.events) {
       const durationQN = ev.durationQN
       if (ev.kind === 'rest') {
+        continuations.clear()
         qnIntoMeasure += durationQN
         continue
       }
@@ -156,10 +158,18 @@ export function scoreToExerciseDefinition(
       // Tag pitched chords so the scorer can grade the notes as one set. The
       // notes still emit as separate events (cardinality/rendering unchanged) —
       // only grading uses the shared id. Single notes and percussion get none.
-      const chordId =
-        ev.kind === 'chord' && !perc && midis.length > 1 ? `c${chordCounter++}` : undefined
+      const attacks = midis.filter(midi => !continuations.has(midi))
+      const chordId = !perc && attacks.length > 1 ? `c${chordCounter++}` : undefined
+      const nextContinuations = new Map<number, { event: ExerciseEvent; beatQN: number }>()
 
       for (const midi of midis) {
+        const tiesForward = ev.tieToNext || (ev.kind === 'chord' && ev.notes.some(n => n.midi === midi && n.tieToNext))
+        const held = continuations.get(midi)
+        if (held) {
+          held.event.duration += durationQN / held.beatQN
+          if (tiesForward) nextContinuations.set(midi, held)
+          continue
+        }
         let vexKey: string
         let technique: Technique = 'open'
         let surface: string | undefined
@@ -178,7 +188,7 @@ export function scoreToExerciseDefinition(
           expectedNoteName = midiToNoteName(midi, currentKeyFifths)
         }
 
-        events.push({
+        const played: ExerciseEvent = {
           beat,
           measure: measure.number,
           instrument,
@@ -191,13 +201,17 @@ export function scoreToExerciseDefinition(
           expectedNoteName,
           surface,
           chordId,
-        })
+        }
+        events.push(played)
+        if (tiesForward) nextContinuations.set(midi, { event: played, beatQN })
       }
 
       // Alternate hands per struck event for natural sticking/stem direction.
-      hand = hand === 'R' ? 'L' : 'R'
+      continuations = nextContinuations
+      if (attacks.length) hand = hand === 'R' ? 'L' : 'R'
       qnIntoMeasure += durationQN
     }
+    if (Math.abs(qnIntoMeasure - measureLengthInQN(currentTimeSig)) > 1e-6) continuations.clear()
   }
 
   return {

@@ -56,6 +56,7 @@ import {
 } from '@/components/playsense-studio/shared/time-map/time-map';
 import { qnToTrackMs, trackDurationQN } from '@/lib/playsense-studio/time-mapping';
 import { pickActiveSection } from '@/lib/playsense-studio/active-section';
+import { lessonSectionGaps } from '@/lib/playsense-studio/lesson-notation';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import type { SeekTarget } from '@/lib/playsense-studio/renderer';
 import { updateClassItemPosition } from '@/app/actions/progress';
@@ -197,7 +198,7 @@ export function PlaysenseStudioPlayer({
   );
 
   // The staff is never blank: during a gap we keep showing the section we just
-  // finished (so its trailing gap box + playhead are visible); before the first
+  // finished alongside its video interlude; before the first
   // section we preview the upcoming one.
   const displaySection =
     activeSection ?? prevSection ?? upcomingSection ?? normalizedSections[0];
@@ -237,29 +238,23 @@ export function PlaysenseStudioPlayer({
   }, [score, activeTrackIndex, activeTimeMap, clock.durationSeconds]);
 
   // Total score-internal ms of the displayed section's notation — the point the
-  // trailing gap box begins.
+  // trailing video interlude begins.
   const sectionTotalMs = useMemo(() => {
     const tr = score.tracks[activeTrackIndex] ?? score.tracks[0];
     if (!tr) return 0;
     return qnToTrackMs(tr, score, trackDurationQN(tr, score));
   }, [score, activeTrackIndex]);
 
-  // The no-notation gap following the displayed section → drawn as a gray box.
-  const trailingGap = useMemo(() => {
-    const end = displaySection.videoEndSeconds;
-    if (end == null) return null;
-    const nextStart = placedSections.find(
-      (s) => (s.videoStartSeconds as number) > (end as number) + 0.01
-    )?.videoStartSeconds as number | undefined;
-    const gapEnd = nextStart ?? clock.durationSeconds;
-    const gapSec = gapEnd - (end as number);
-    if (gapSec <= 0.75) return null;
-    return { ms: gapSec * 1000, label: fmtClock(gapSec) };
-  }, [displaySection, placedSections, clock.durationSeconds]);
+  const interludes = useMemo(() => lessonSectionGaps(displaySection, normalizedSections, clock.durationSeconds),
+    [displaySection, normalizedSections, clock.durationSeconds]);
+  const leadingGapMs = interludes.leading ? (interludes.leading.endSeconds - interludes.leading.startSeconds) * 1000 : 0;
+  const trailingGapMs = interludes.trailing ? (interludes.trailing.endSeconds - interludes.trailing.startSeconds) * 1000 : 0;
+  const inLeadingGap = !!interludes.leading && clock.currentSeconds < interludes.leading.endSeconds;
 
-  // Convert video seconds → score-internal ms for the staff cursor. While we're
-  // in the trailing gap, advance the cursor into the gap box at video rate.
+  // Convert video seconds → score-internal ms. Video interludes advance at
+  // video rate, independently of the score's tempo and synchronization map.
   const cursorMs = useMemo(() => {
+    if (inLeadingGap && interludes.leading) return (clock.currentSeconds - interludes.leading.endSeconds) * 1000;
     if (!timeMap) return 0;
     if (inTrailingGap && displaySection.videoEndSeconds != null) {
       const gapElapsedMs = Math.max(
@@ -276,6 +271,8 @@ export function PlaysenseStudioPlayer({
     activeTrack,
     score,
     inTrailingGap,
+    inLeadingGap,
+    interludes.leading,
     displaySection,
     sectionTotalMs,
   ]);
@@ -297,13 +294,11 @@ export function PlaysenseStudioPlayer({
   // Independent staff view position. When isFollowing is true, the view
   // tracks playback (cursorMs); when false, viewMs is held wherever the
   // user dragged the scroll bar last.
-  const [viewMs, setViewMs] = useState(0);
+  const [browsedMs, setViewMs] = useState(0);
   const [isFollowing, setIsFollowing] = useState(true);
   const [trackDurationMs, setTrackDurationMs] = useState(0);
-
-  useEffect(() => {
-    if (isFollowing) setViewMs(cursorMs);
-  }, [cursorMs, isFollowing]);
+  // Derive following directly so a track reset cannot hide the negative-time intro.
+  const viewMs = isFollowing ? cursorMs : browsedMs;
 
   // Reset view + follow flag when the active track changes — different
   // tracks have different durations, and a scrub position from one doesn't
@@ -522,9 +517,12 @@ export function PlaysenseStudioPlayer({
       loopBMs={loopBMs}
       layoutMode={staffLayout}
       zoom={layout === 'split' ? zoom : 1}
-      showCursor={hasNotation || inTrailingGap}
-      trailingGapMs={trailingGap?.ms ?? 0}
-      trailingGapLabel={trailingGap?.label ?? ''}
+      showCursor={hasNotation || inTrailingGap || inLeadingGap}
+      leadingGapMs={leadingGapMs}
+      leadingGapLabel={interludes.leading ? `Notation begins at ${fmtClock(interludes.leading.endSeconds)}` : ''}
+      trailingGapMs={trailingGapMs}
+      trailingGapLabel={interludes.hasNext && interludes.trailing
+        ? `Next score at ${fmtClock(interludes.trailing.endSeconds)}` : 'Continue watching your instructor.'}
       onSeek={handleSeek}
       onSelectRange={handleSelectRange}
       onDurationKnown={setTrackDurationMs}
@@ -581,7 +579,7 @@ export function PlaysenseStudioPlayer({
             visiblePane={lessonView === 'both' ? 'both' : lessonView === 'video' ? 'primary' : 'secondary'}
             primary={
             <>
-              <div className="flex flex-1 items-center justify-center overflow-hidden">
+              <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
                 {videoEl}
               </div>
               <div className="flex-shrink-0 border-t border-border bg-card px-3 py-2">
@@ -623,11 +621,12 @@ export function PlaysenseStudioPlayer({
             </div>
           )}
             secondary={
+              <>
               <div className="relative min-h-0 flex-1">
                 <NotationZoomLayer
                   zoom={zoom}
                   onZoom={setZoom}
-                  className="h-full space-y-2 overflow-auto p-3"
+                  className="h-full space-y-2 overflow-auto p-3 pb-16"
                 >
                   {tracksEl}
                   {staffEl}
@@ -635,9 +634,10 @@ export function PlaysenseStudioPlayer({
                 </NotationZoomLayer>
                 <NotationZoomControl zoom={zoom} onZoom={setZoom} />
               </div>
+              {lessonView === 'score' && <div className="flex-shrink-0 border-t border-border bg-card px-3 py-2">{transportEl}</div>}
+              </>
             }
           />
-          {lessonView === 'score' && <div className="border-t border-border bg-card px-3 py-2">{transportEl}</div>}
         </div>
 
         {clipsEl}

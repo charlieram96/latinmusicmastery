@@ -20,4 +20,26 @@
 .ps-exercise-score .ps-staff-viewport { mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 20px),transparent); }
 .ps-score-engraving:not([data-score-interactive]) .ps-staff-content { touch-action:pan-y!important; }
 .ps-score-engraving[data-score-layout-mode=wrapped]:not([data-score-interactive]) .ps-staff-content { touch-action:pan-x pan-y!important; }
+/* Video intervals keep the staff aligned within a slightly taller, unfilled frame. */
+.ps-notation-interlude { --interlude-progress:0%; position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:5px 10px; box-sizing:border-box; overflow:hidden; border-radius:4px; background:none; color:hsl(var(--muted-foreground)); font-family:var(--font-inter),system-ui,sans-serif; pointer-events:auto; isolation:isolate; }
+.ps-interlude-elapsed { position:absolute; inset:0 auto 0 0; width:var(--interlude-progress); background:hsl(var(--primary) / .12); pointer-events:none; }
+.ps-interlude-outline { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.ps-score-engraving.playsense-studio-notation .ps-interlude-outline rect { fill:none!important; stroke:hsl(var(--playsense-studio-notation) / .27)!important; stroke-width:1; stroke-dasharray:.1 6; stroke-linecap:round; }
+.ps-score-engraving.playsense-studio-notation [data-state=active] .ps-interlude-outline rect { stroke:hsl(var(--primary) / .4)!important; }
+.ps-interlude-staff { position:absolute; top:50%; left:0; right:0; transform:translateY(-50%); pointer-events:none; mask-image:linear-gradient(90deg,#000 calc(50% - 48px),transparent calc(50% - 26px),transparent calc(50% + 26px),#000 calc(50% + 48px)); }
+.ps-interlude-staff>i { position:absolute; left:0; right:0; height:1px; background:hsl(var(--playsense-studio-notation) / .07); transform:translateY(-50%); }
+.ps-interlude-label { position:absolute; bottom:calc(50% + 13px); font-size:8px; font-weight:550; line-height:1; letter-spacing:1px; text-transform:uppercase; color:hsl(var(--muted-foreground) / .75); }
+.ps-interlude-countdown { position:relative; font-size:17px; font-weight:500; line-height:1.1; letter-spacing:.3px; font-variant-numeric:tabular-nums; }
+.ps-notation-interlude[data-state=active] .ps-interlude-countdown { color:hsl(var(--foreground) / .9); }
+.ps-interlude-playhead { position:absolute; top:0; bottom:0; left:clamp(0px,var(--interlude-progress),calc(100% - 1.5px)); width:1.5px; background:hsl(var(--primary) / .9); box-shadow:0 0 5px hsl(var(--primary) / .2); pointer-events:none; }
+.ps-notation-interlude:not([data-state=active]) .ps-interlude-playhead { visibility:hidden; }
+.ps-notation-interlude[data-state=completed] .ps-interlude-countdown,
+.ps-notation-interlude[data-state=completed] .ps-interlude-label { opacity:.55; }
+.ps-notation-interlude[data-compact=true] { padding:3px 8px; }
+.ps-notation-interlude[data-compact=true] .ps-interlude-label { display:none; }
+.ps-notation-interlude[data-compact=true] .ps-interlude-countdown { font-size:13px; }
+.ps-score-engraving [data-score-repeat-sign] { color:hsl(var(--playsense-studio-notation) / .6); }
+.ps-score-engraving.playsense-studio-notation svg [data-score-repeat-count],
+.ps-score-engraving.playsense-studio-notation svg [data-score-repeat-count] tspan { font-family:Georgia,'Times New Roman',serif; font-size:10px; font-style:italic; font-weight:400; letter-spacing:.1px; fill:hsl(var(--playsense-studio-notation) / .85)!important; stroke:none!important; }
+.ps-score-engraving.playsense-studio-notation svg [data-score-repeat-count] [data-score-repeat-number] { font-size:13px; font-style:normal; font-weight:600; }
 @media(prefers-reduced-motion:reduce) { .ps-score-engraving * { transition:none!important; } }

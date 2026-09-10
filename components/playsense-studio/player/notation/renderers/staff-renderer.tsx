@@ -25,18 +25,21 @@ import {
   Accidental,
   Articulation,
   Beam,
+  Barline,
   BarlineType,
   Dot,
   Formatter,
   Renderer,
   Stave,
   StaveNote,
+  StaveTie,
   Voice,
 } from 'vexflow';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { qnToTrackMs } from '@/lib/playsense-studio/time-mapping';
 import {
   extractTrackEvents,
+  scoreTieIndices,
   type VexEventDescriptor,
 } from '@/lib/playsense-studio/score-to-vexflow';
 import type {
@@ -45,7 +48,8 @@ import type {
   SeekTarget,
 } from '@/lib/playsense-studio/renderer';
 import { scoreCursorAt, scoreScrollOffset, scoreReadingStops, scoreReadingOffset, scoreVerticalOffset, type ScoreReadingStop, type ScoreReadingRow } from '@/lib/playsense-studio/notation-playback';
-import { packScoreRows } from '@/lib/playsense-studio/notation-layout';
+import { packLessonScoreRows } from '@/lib/playsense-studio/notation-layout';
+import { createNotationInterlude } from './notation-interlude';
 import './staff-renderer.css';
 import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
 
@@ -84,12 +88,14 @@ const STAVE_TOP = 24;
 // the visible 5-line staff sits this far below the stave's `y`, spanning 40px.
 const STAFF_LINE_TOP = 40;
 const STAFF_LINE_SPAN = 40;
+/** Extra CSS pixels around video intervals; staff spacing stays aligned. */
+const INTERLUDE_EXTRA_HEIGHT = 15;
 /** Playhead extends this far above/below the staff lines. */
 const CURSOR_OVERHANG = 10;
 /** Keep staff lines finer than the note glyphs. */
 const STAFF_LINE_WIDTH = 1;
-/** Model width of a no-notation gap box appended to the staff. */
-const GAP_BOX_W = 240;
+/** Base model width of a video interlude in horizontal notation. */
+const GAP_BOX_W = 112;
 const FIRST_MEASURE_EXTRA_WIDTH = 80; // room for clef + time signature
 /** Preserve note spacing when fitting several measures across a row. */
 const PER_NOTE_MIN_WIDTH = 22;
@@ -128,8 +134,8 @@ interface MeasurePlacement {
   /** True only for the very first measure — gets the clef + time signature. */
   showHeader: boolean;
   system: number;
-  /** True for the trailing no-notation gap box (not a real measure). */
-  isGap?: boolean;
+  /** Video time before/after notation, never a musical measure. */
+  isGap?: 'leading' | 'trailing';
 }
 
 interface LayoutPlan {
@@ -152,8 +158,10 @@ class StaffRendererImpl implements ScoreRenderer {
   private aMarkerLabelEl: SVGTextElement | null = null;
   private bMarkerLineEl: SVGLineElement | null = null;
   private bMarkerLabelEl: SVGTextElement | null = null;
-  // Live "time remaining in this gap" text inside the gap box.
-  private gapCountdownEl: SVGTextElement | null = null;
+  private interludes: ReturnType<typeof createNotationInterlude>[] = [];
+  private leadingMs = 0;
+  private leadingLabel = '';
+  private leadingPlacement: MeasurePlacement | null = null;
   private hits: NoteHit[] = [];
   // Per-note groups let emphasis change without disturbing connected beams.
   private noteEls: Array<{ group: SVGElement | null }> = [];
@@ -217,9 +225,7 @@ class StaffRendererImpl implements ScoreRenderer {
   // staff (wrapped mode reflows to fit; scroll mode just renders larger).
   private scale = BASE_SCALE;
 
-  // Trailing no-notation gap rendered as a gray box after the last measure. The
-  // playhead sweeps through it over `gapMs` of (video) time once playback runs
-  // past the notation. Zero gapMs = no box.
+  // Video intervals occupy compact segments beside the notation.
   private gapMs = 0;
   private gapLabel = '';
   private gapStartMs = 0; // score-internal ms at which the gap begins
@@ -253,7 +259,9 @@ class StaffRendererImpl implements ScoreRenderer {
     trailingGapMs = 0,
     trailingGapLabel = '',
     compact = false,
-    followMode: StaffFollowMode = 'flow'
+    followMode: StaffFollowMode = 'flow',
+    leadingGapMs = 0,
+    leadingGapLabel = ''
   ): void {
     this.destroy();
     this.container = el;
@@ -265,15 +273,25 @@ class StaffRendererImpl implements ScoreRenderer {
     this.scale = BASE_SCALE * clampZoom(zoom);
     this.gapMs = Math.max(0, trailingGapMs);
     this.gapLabel = trailingGapLabel;
+    this.leadingMs = Math.max(0, leadingGapMs);
+    this.leadingLabel = leadingGapLabel;
     this.build();
   }
 
-  /** Update the trailing gap box (duration + label) and rebuild. */
+  /** Update the trailing video interlude (duration + label) and rebuild. */
   setTrailingGap(ms: number, label: string): void {
     const next = Math.max(0, ms);
     if (Math.abs(next - this.gapMs) < 1 && label === this.gapLabel) return;
     this.gapMs = next;
     this.gapLabel = label;
+    this.build();
+  }
+
+  setLeadingGap(ms: number, label: string): void {
+    const next = Math.max(0, ms);
+    if (Math.abs(next - this.leadingMs) < 1 && label === this.leadingLabel) return;
+    this.leadingMs = next;
+    this.leadingLabel = label;
     this.build();
   }
 
@@ -332,7 +350,8 @@ class StaffRendererImpl implements ScoreRenderer {
     this.aMarkerLabelEl = null;
     this.bMarkerLineEl = null;
     this.bMarkerLabelEl = null;
-    this.gapCountdownEl = null;
+    this.interludes = [];
+    this.leadingPlacement = null;
     this.hits = [];
     this.noteEls = [];
     this.measureGeoms = [];
@@ -354,12 +373,12 @@ class StaffRendererImpl implements ScoreRenderer {
     measureBlocks: ReturnType<typeof extractTrackEvents>,
     avail: number
   ): LayoutPlan {
-    // The trailing gap rides along as the last item in the flow so it sits
-    // inline, right after the final measure (part of the staff), not on its own.
     const hasGap = this.gapMs > 0;
+    const hasLeading = this.leadingMs > 0;
+    const interludeWidth = Math.max(GAP_BOX_W, 76 / this.scale);
 
     if (this.layoutMode === 'scroll') {
-      let x = SYSTEM_PADDING_X;
+      let x = SYSTEM_PADDING_X + (hasLeading ? interludeWidth : 0);
       const placements: MeasurePlacement[] = measureBlocks.map((block, i) => {
         const quarterNotes = block.timeSignature[0] * 4 / block.timeSignature[1];
         const width = Math.max(quarterNotes * 64, block.events.length * 24 + 24)
@@ -376,18 +395,20 @@ class StaffRendererImpl implements ScoreRenderer {
         x += width;
         return placement;
       });
+      if (hasLeading) placements.unshift({ blockIndex: -1, x: SYSTEM_PADDING_X, y: this.staveTop,
+        width: interludeWidth, firstInRow: true, showHeader: false, system: 0, isGap: 'leading' });
       if (hasGap) {
         placements.push({
           blockIndex: -1,
           x,
           y: this.staveTop,
-          width: GAP_BOX_W,
+          width: interludeWidth,
           firstInRow: false,
           showHeader: false,
           system: 0,
-          isGap: true,
+          isGap: 'trailing',
         });
-        x += GAP_BOX_W;
+        x += interludeWidth;
       }
       return {
         placements,
@@ -406,17 +427,17 @@ class StaffRendererImpl implements ScoreRenderer {
       return Math.max(100, quarterNotes * QN_WIDTH, block.events.length * PER_NOTE_MIN_WIDTH + 24)
         + (index === 0 ? FIRST_MEASURE_EXTRA_WIDTH : 0);
     });
-    if (hasGap) requiredWidths.push(GAP_BOX_W);
-    const rows = packScoreRows(requiredWidths, avail);
+    const rows = packLessonScoreRows(requiredWidths, avail, { leading: hasLeading, trailing: hasGap });
     const systemCount = rows.length;
 
     const placements: MeasurePlacement[] = [];
     rows.forEach((row, system) => {
       let x = SYSTEM_PADDING_X;
       row.widths.forEach((width, col) => {
-        const i = row.startIndex + col;
-        const base = { x, y: this.staveTop + system * systemPitch, width, firstInRow: col === 0, showHeader: i === 0, system };
-        placements.push(i < measureBlocks.length ? { blockIndex: i, ...base } : { blockIndex: -1, ...base, isGap: true });
+        const blockIndex = row.interlude ? -1 : row.startIndex + col;
+        placements.push({ blockIndex, isGap: row.interlude, x,
+          y: this.staveTop + system * systemPitch, width,
+          firstInRow: col === 0, showHeader: blockIndex === 0, system });
         x += width;
       });
     });
@@ -476,9 +497,9 @@ class StaffRendererImpl implements ScoreRenderer {
     this.systemPitch = plan.systemPitch;
     this.systemCount = plan.systemCount;
 
-    // The gap box rides in the layout flow (computePlan) — read its geometry off
-    // the placement so the cursor can sweep through it.
-    const gapPlacement = plan.placements.find((p) => p.isGap) ?? null;
+    // Keep video segments in the reading flow so follow mode can bring them into view.
+    this.leadingPlacement = plan.placements.find(p => p.isGap === 'leading') ?? null;
+    const gapPlacement = plan.placements.find((p) => p.isGap === 'trailing') ?? null;
     if (gapPlacement) {
       this.gapBoxX = gapPlacement.x;
       this.gapBoxY = gapPlacement.y;
@@ -492,6 +513,7 @@ class StaffRendererImpl implements ScoreRenderer {
     // playhead can sweep to the barline at a row break instead of freezing.
     this.systemRowEndX = Array.from({ length: this.systemCount }, () => 0);
     for (const p of plan.placements) {
+      if (p.isGap) continue; // Musical playheads stop at the barline, before video time.
       const right = p.x + p.width;
       if (right > this.systemRowEndX[p.system]) this.systemRowEndX[p.system] = right;
     }
@@ -546,7 +568,7 @@ class StaffRendererImpl implements ScoreRenderer {
 
     this.measureGeoms = [];
     for (const p of plan.placements) {
-      if (p.isGap) continue; // the gap box is drawn separately, below
+      if (p.isGap) continue; // video guidance is rendered separately below
       const block = measureBlocks[p.blockIndex];
       this.measureGeoms.push({
         x: p.x,
@@ -560,10 +582,6 @@ class StaffRendererImpl implements ScoreRenderer {
       if (repeat?.offset === 0) stave.setBegBarType(BarlineType.REPEAT_BEGIN);
       if (repeat && repeat.offset === repeat.length - 1) {
         stave.setEndBarType(BarlineType.REPEAT_END);
-        ctx.save();
-        ctx.setFont('Arial', 12);
-        ctx.fillText(`${repeat.count}×`, p.x + p.width - 30, p.y + 14);
-        ctx.restore();
       }
       if (p.showHeader) {
         stave.addClef(block.clef).addTimeSignature(
@@ -576,6 +594,11 @@ class StaffRendererImpl implements ScoreRenderer {
       ctx.setLineWidth(STAFF_LINE_WIDTH);
       stave.setContext(ctx).draw();
       ctx.closeGroup();
+      for (const modifier of stave.getModifiers()) {
+        if (modifier instanceof Barline && [BarlineType.REPEAT_BEGIN, BarlineType.REPEAT_END, BarlineType.REPEAT_BOTH].includes(modifier.getType())) {
+          modifier.getSVGElement()?.setAttribute('data-score-repeat-sign', '');
+        }
+      }
       ctx.setLineWidth(1);
 
       // Justify into the note area only — for first-in-row measures the clef +
@@ -595,12 +618,26 @@ class StaffRendererImpl implements ScoreRenderer {
       });
     }
 
+    // Draw held pitches across chords and barlines, with partial ties at row turns.
+    allNotes.forEach((first, i) => {
+      const next = allNotes[i + 1];
+      if (!next) return;
+      const indices = scoreTieIndices(first.descriptor, next.descriptor);
+      if (!indices.firstIndexes.length) return;
+      if (first.system === next.system) {
+        new StaveTie({ firstNote: first.vexNote, lastNote: next.vexNote, ...indices }).setContext(ctx).draw();
+      } else {
+        new StaveTie({ firstNote: first.vexNote, firstIndexes: indices.firstIndexes, lastIndexes: indices.firstIndexes }).setContext(ctx).draw();
+        new StaveTie({ lastNote: next.vexNote, firstIndexes: indices.lastIndexes, lastIndexes: indices.lastIndexes }).setContext(ctx).draw();
+      }
+    });
+
     // ---- Capture hit boxes + ms positions ----
     this.totalDurationMs = qnToTrackMs(track, score, qnAtEnd(measureBlocks));
-    this.startMs = 0;
+    this.startMs = -this.leadingMs;
 
     // The gap occupies score-time [notationEnd, notationEnd + gapMs]; extend the
-    // total so the playhead can travel into the gap box.
+    // total so reading and countdowns continue after the music.
     this.gapStartMs = this.totalDurationMs;
     if (this.gapMs > 0) this.totalDurationMs += this.gapMs;
 
@@ -727,6 +764,30 @@ class StaffRendererImpl implements ScoreRenderer {
 
       const NS = 'http://www.w3.org/2000/svg';
 
+      // An engraving instruction, right-aligned with the closing repeat barline.
+      // Two playthroughs are already implied by the repeat sign.
+      this.measureGeoms.forEach((g, index) => {
+        const repeat = measureBlocks[index].measure.repeat;
+        if (!repeat || repeat.count <= 2 || repeat.offset !== repeat.length - 1) return;
+        const right = g.x + g.width;
+        const nearbyTop = Math.min(...this.hits.filter(hit => hit.measure === measureBlocks[index].measure.number
+          && hit.x + hit.width >= right - 80).map(hit => hit.y));
+        const instruction = document.createElementNS(NS, 'text');
+        instruction.setAttribute('data-score-repeat-count', '');
+        instruction.setAttribute('x', `${right - 2}`);
+        instruction.setAttribute('y', `${Math.min(g.y + this.staffLineTop - 18, nearbyTop - 8)}`);
+        instruction.setAttribute('text-anchor', 'end');
+        instruction.setAttribute('aria-label', `Play ${repeat.count} times`);
+        const count = document.createElementNS(NS, 'tspan');
+        count.setAttribute('data-score-repeat-number', '');
+        count.textContent = String(repeat.count);
+        const wording = document.createElementNS(NS, 'tspan');
+        wording.setAttribute('dx', '3');
+        wording.textContent = 'times';
+        instruction.append(count, wording);
+        svg.appendChild(instruction);
+      });
+
       const bg = document.createElementNS(NS, 'rect');
       bg.setAttribute('data-playsense-studio-staff-bg', 'true');
       bg.setAttribute('x', '0');
@@ -788,69 +849,20 @@ class StaffRendererImpl implements ScoreRenderer {
       panels.appendChild(progress);
       this.measureProgressEl = progress;
 
-      // ---- Trailing gap box (gray fill + continuing staff lines + label) ----
-      if (this.gapMs > 0 && this.gapBoxW > 0) {
-        const x = this.gapBoxX;
-        const w = this.gapBoxW;
-        const lineTop = this.gapBoxY + this.staffLineTop;
-        const boxTop = lineTop - 12;
-        const boxH = STAFF_LINE_SPAN + 24;
-
-        const box = document.createElementNS(NS, 'rect');
-        box.setAttribute('data-playsense-studio-gap-box', 'true');
-        box.setAttribute('x', `${x}`);
-        box.setAttribute('y', `${boxTop}`);
-        box.setAttribute('width', `${w}`);
-        box.setAttribute('height', `${boxH}`);
-        box.setAttribute('rx', '3');
-        box.setAttribute('fill', 'hsl(0 0% 50% / 0.16)');
-        box.setAttribute('pointer-events', 'none');
-        svg.appendChild(box);
-
-        for (let i = 0; i < 5; i++) {
-          const y = lineTop + i * 10;
-          const ln = document.createElementNS(NS, 'line');
-          ln.setAttribute('data-playsense-studio-gap-line', 'true');
-          ln.setAttribute('x1', `${x}`);
-          ln.setAttribute('y1', `${y}`);
-          ln.setAttribute('x2', `${x + w}`);
-          ln.setAttribute('y2', `${y}`);
-          ln.setAttribute('stroke', 'hsl(0 0% 62% / 0.4)');
-          ln.setAttribute('stroke-width', `${STAFF_LINE_WIDTH}`);
-          ln.setAttribute('pointer-events', 'none');
-          svg.appendChild(ln);
-        }
-
-        const cx = x + w / 2;
-        const midY = lineTop + STAFF_LINE_SPAN / 2;
-
-        // Live countdown (time remaining in this gap, m:ss) — updated each frame.
-        const countdown = document.createElementNS(NS, 'text');
-        countdown.setAttribute('data-playsense-studio-gap-text', 'true');
-        countdown.setAttribute('x', `${cx}`);
-        countdown.setAttribute('y', `${midY - 1}`);
-        countdown.setAttribute('text-anchor', 'middle');
-        countdown.setAttribute('font-size', '16');
-        countdown.setAttribute('font-family', 'Inter, system-ui, sans-serif');
-        countdown.setAttribute('font-weight', '700');
-        countdown.setAttribute('pointer-events', 'none');
-        countdown.textContent = this.gapLabel || formatGapTime(this.gapMs);
-        svg.appendChild(countdown);
-        this.gapCountdownEl = countdown;
-
-        // Total gap length (static).
-        const total = document.createElementNS(NS, 'text');
-        total.setAttribute('data-playsense-studio-gap-text', 'true');
-        total.setAttribute('x', `${cx}`);
-        total.setAttribute('y', `${midY + 16}`);
-        total.setAttribute('text-anchor', 'middle');
-        total.setAttribute('font-size', '10.5');
-        total.setAttribute('font-family', 'Inter, system-ui, sans-serif');
-        total.setAttribute('font-weight', '600');
-        total.setAttribute('opacity', '0.7');
-        total.setAttribute('pointer-events', 'none');
-        total.textContent = `of ${this.gapLabel || formatGapTime(this.gapMs)}`;
-        svg.appendChild(total);
+      // The frame extends equally above/below the staff without changing its spacing.
+      for (const placement of plan.placements.filter(p => p.isGap)) {
+        const leading = placement.isGap === 'leading';
+        this.interludes.push(createNotationInterlude(rendererDiv, {
+          kind: leading ? 'leading' : 'trailing',
+          x: placement.x * this.scale,
+          y: (placement.y + this.staffLineTop) * this.scale - INTERLUDE_EXTRA_HEIGHT / 2,
+          width: placement.width * this.scale,
+          height: STAFF_LINE_SPAN * this.scale + INTERLUDE_EXTRA_HEIGHT,
+          staffHeight: STAFF_LINE_SPAN * this.scale,
+          startMs: leading ? -this.leadingMs : this.gapStartMs,
+          durationMs: leading ? this.leadingMs : this.gapMs,
+          detail: (leading ? this.leadingLabel : this.gapLabel) || 'Follow along with your instructor.',
+        }));
       }
 
       const overlay = document.createElementNS(NS, 'rect');
@@ -1108,10 +1120,7 @@ class StaffRendererImpl implements ScoreRenderer {
   }
 
   private updateGapCountdown(): void {
-    if (!this.gapCountdownEl || this.gapMs <= 0) return;
-    const elapsed = Math.max(0, this.lastPlaybackMs - this.gapStartMs);
-    const remainMs = Math.max(0, this.gapMs - elapsed);
-    this.gapCountdownEl.textContent = formatGapTime(remainMs);
+    for (const interlude of this.interludes) interlude.update(this.lastPlaybackMs);
   }
 
   /** Rightmost index in `arr` whose `.startMs`/`.ms` is <= ms, or -1. */
@@ -1135,7 +1144,7 @@ class StaffRendererImpl implements ScoreRenderer {
 
   /** Update measure states only when crossing a barline or seeking. */
   private updateActiveMeasure(): void {
-    const idx = this.cursorVisible && this.lastPlaybackMs < this.gapStartMs
+    const idx = this.cursorVisible && this.lastPlaybackMs >= 0 && this.lastPlaybackMs < this.gapStartMs
       ? this.indexAtOrBefore(this.measureGeoms, this.lastPlaybackMs, 'startMs') : -1;
     if (idx === this.activeMeasureIdx) return;
     this.activeMeasureIdx = idx;
@@ -1146,7 +1155,7 @@ class StaffRendererImpl implements ScoreRenderer {
   /** Tint the active note or rest without scaling connected stems and beams. */
   private updateActiveNote(): void {
     if (this.noteEls.length === 0) return;
-    const inGap = this.lastPlaybackMs >= this.gapStartMs;
+    const inGap = this.lastPlaybackMs < 0 || this.lastPlaybackMs >= this.gapStartMs;
     let idx =
       this.cursorVisible && !inGap
         ? this.indexAtOrBefore(this.hits, this.lastPlaybackMs, 'ms')
@@ -1169,6 +1178,8 @@ class StaffRendererImpl implements ScoreRenderer {
     const scale = this.scale;
     if (this.layoutMode === 'wrapped') {
       this.verticalReadingRows = [];
+      if (this.leadingPlacement) this.verticalReadingRows.push({ y: this.leadingPlacement.y * scale,
+        startMs: -this.leadingMs, endMs: 0 });
       for (const measure of this.measureGeoms) {
         const last = this.verticalReadingRows.at(-1);
         const y = measure.y * scale;
@@ -1204,6 +1215,7 @@ class StaffRendererImpl implements ScoreRenderer {
     if (!this.rendererDiv || !this.cursorEl) return;
 
     this.updateGapCountdown();
+    const inInterlude = this.lastPlaybackMs < 0 || (this.gapMs > 0 && this.lastPlaybackMs >= this.gapStartMs);
     // These live inside the SVG (model coords), so they work in both modes
     // without per-mode handling.
     this.updateActiveMeasure();
@@ -1218,7 +1230,7 @@ class StaffRendererImpl implements ScoreRenderer {
         this.measureProgressEl.setAttribute('width', `${64 * fraction}`);
       }
     }
-    const beatIndex = this.cursorVisible ? this.indexAtOrBefore(this.beatLabels, this.lastPlaybackMs, 'ms') : -1;
+    const beatIndex = this.cursorVisible && !inInterlude ? this.indexAtOrBefore(this.beatLabels, this.lastPlaybackMs, 'ms') : -1;
     const beat = this.beatLabels[beatIndex];
     const activeBeat = beat && this.lastPlaybackMs < beat.endMs ? beatIndex : -1;
     if (activeBeat !== this.activeBeatIdx) {
@@ -1237,7 +1249,7 @@ class StaffRendererImpl implements ScoreRenderer {
       this.cursorEl.style.top = `${top}px`;
       this.cursorEl.style.transform = `translateX(${x}px)`;
       this.cursorEl.style.opacity =
-        this.cursorVisible && this.hits.length > 0 ? '0.9' : '0';
+        this.cursorVisible && !inInterlude && this.hits.length > 0 ? '0.9' : '0';
 
       // Read ahead continuously; never wait for the bottom row to be clipped.
       if (this.viewportEl && this.autoFollow && this.cursorVisible) {
@@ -1254,11 +1266,12 @@ class StaffRendererImpl implements ScoreRenderer {
     const viewScaledX = this.msToCursorX(this.lastViewMs) * this.scale;
     const playbackScaledX = this.msToCursorX(this.lastPlaybackMs) * this.scale;
 
-    const steadyReading = this.followMode === 'measure' && this.lastViewMs < this.gapStartMs;
+    const steadyReading = this.followMode === 'measure' && this.lastViewMs >= 0 && this.lastViewMs < this.gapStartMs;
+    const viewingInterlude = this.lastViewMs < 0 || (this.gapMs > 0 && this.lastViewMs >= this.gapStartMs);
     const shortPhraseInset = Math.max(0, (this.viewportWidth - this.totalWidth * this.scale) / 2);
     const staffTranslate = shortPhraseInset || (steadyReading
       ? scoreReadingOffset(this.lastViewMs, this.readingStops)
-      : scoreScrollOffset(viewScaledX, this.viewportWidth, this.totalWidth * this.scale, CURSOR_ANCHOR_FRACTION));
+      : scoreScrollOffset(viewScaledX, this.viewportWidth, this.totalWidth * this.scale, viewingInterlude ? .5 : CURSOR_ANCHOR_FRACTION));
     // Turn instantly in space; only opacity settles. A sliding page would make
     // students chase the notes and put the cursor out of sync with the glyphs.
     if (steadyReading && staffTranslate !== this.staffTranslate
@@ -1272,7 +1285,7 @@ class StaffRendererImpl implements ScoreRenderer {
     const cursorX = staffTranslate + playbackScaledX;
     this.cursorEl.style.transform = `translateX(${cursorX}px)`;
     const visible = cursorX >= -2 && cursorX <= this.viewportWidth + 2;
-    this.cursorEl.style.opacity = this.cursorVisible && visible ? '0.85' : '0';
+    this.cursorEl.style.opacity = this.cursorVisible && !inInterlude && visible ? '0.85' : '0';
   }
 
   /** Place the translucent ghost playhead at the click-landing position for a
@@ -1319,6 +1332,8 @@ class StaffRendererImpl implements ScoreRenderer {
     this.gapLabel = '';
     this.gapStartMs = 0;
     this.gapBoxW = 0;
+    this.leadingMs = 0;
+    this.leadingLabel = '';
     this.seekListeners.clear();
     this.rangeListeners.clear();
     this.totalWidth = 0;
@@ -1347,18 +1362,20 @@ class StaffRendererImpl implements ScoreRenderer {
 
   /** Interpolate ms → model x, and report which system that x lives on. */
   private msToCursorPos(ms: number): { x: number; system: number } {
-    if (this.hits.length === 0) return { x: 0, system: 0 };
     const clamped = Math.max(this.startMs, Math.min(ms, this.totalDurationMs));
+    if (clamped < 0 && this.leadingPlacement) {
+      return { x: this.leadingPlacement.x + this.leadingPlacement.width / 2, system: this.leadingPlacement.system };
+    }
 
-    // Inside the trailing gap box: sweep linearly across the box.
+    // Keep the whole interlude in view while its countdown advances.
     if (this.gapMs > 0 && clamped >= this.gapStartMs) {
-      const t = Math.min(1, (clamped - this.gapStartMs) / this.gapMs);
       return {
-        x: this.gapBoxX + t * this.gapBoxW,
+        x: this.gapBoxX + this.gapBoxW / 2,
         system: this.gapBoxSystem,
       };
     }
 
+    if (this.hits.length === 0) return { x: 0, system: 0 };
     return scoreCursorAt(clamped, this.hits, this.gapStartMs, this.systemRowEndX);
   }
 
@@ -1449,13 +1466,6 @@ class StaffRendererImpl implements ScoreRenderer {
 function clampZoom(zoom: number): number {
   if (!Number.isFinite(zoom)) return 1;
   return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom));
-}
-
-function formatGapTime(ms: number): string {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 function descriptorToStaveNote(d: VexEventDescriptor, clef: 'treble' | 'percussion'): StaveNote {
@@ -1550,7 +1560,9 @@ export interface StaffRendererProps {
   zoom?: number;
   /** Hide the staff's own playhead (e.g. before any notation begins). */
   showCursor?: boolean;
-  /** Trailing no-notation gap drawn as a gray box after the last measure. */
+  /** Video-time segments before/after the notation. Leading time uses negative ms. */
+  leadingGapMs?: number;
+  leadingGapLabel?: string;
   trailingGapMs?: number;
   trailingGapLabel?: string;
   onSeek?: (target: SeekTarget) => void;
@@ -1601,6 +1613,8 @@ function StaffRendererView({
   showCursor = true,
   trailingGapMs = 0,
   trailingGapLabel = '',
+  leadingGapMs = 0,
+  leadingGapLabel = '',
   onSeek,
   onSelectRange,
   onDurationKnown,
@@ -1616,6 +1630,8 @@ function StaffRendererView({
   const showCursorRef = useRef(showCursor);
   const gapMsRef = useRef(trailingGapMs);
   const gapLabelRef = useRef(trailingGapLabel);
+  const leadingMsRef = useRef(leadingGapMs);
+  const leadingLabelRef = useRef(leadingGapLabel);
   const onSeekRef = useRef(onSeek);
   const onSelectRangeRef = useRef(onSelectRange);
   const onDurationKnownRef = useRef(onDurationKnown);
@@ -1634,11 +1650,13 @@ function StaffRendererView({
     showCursorRef.current = showCursor;
     gapMsRef.current = trailingGapMs;
     gapLabelRef.current = trailingGapLabel;
+    leadingMsRef.current = leadingGapMs;
+    leadingLabelRef.current = leadingGapLabel;
     currentMsRef.current = currentMs;
     viewMsRef.current = viewMs;
     loopARef.current = loopAMs;
     loopBRef.current = loopBMs;
-  }, [getCurrentMs, followMode, autoFollow, zoom, showCursor, trailingGapMs, trailingGapLabel, currentMs, viewMs, loopAMs, loopBMs]);
+  }, [getCurrentMs, followMode, autoFollow, zoom, showCursor, trailingGapMs, trailingGapLabel, leadingGapMs, leadingGapLabel, currentMs, viewMs, loopAMs, loopBMs]);
 
   useEffect(() => {
     onSeekRef.current = onSeek;
@@ -1666,7 +1684,9 @@ function StaffRendererView({
       gapMsRef.current,
       gapLabelRef.current,
       compact,
-      followRef.current
+      followRef.current,
+      leadingMsRef.current,
+      leadingLabelRef.current
     );
 
     const unsubSeek = impl.onSeek((target) => onSeekRef.current?.(target));
@@ -1724,6 +1744,10 @@ function StaffRendererView({
   useEffect(() => {
     rendererRef.current?.setTrailingGap(trailingGapMs, trailingGapLabel);
   }, [trailingGapMs, trailingGapLabel]);
+
+  useEffect(() => {
+    rendererRef.current?.setLeadingGap(leadingGapMs, leadingGapLabel);
+  }, [leadingGapMs, leadingGapLabel]);
 
   return (
     <div

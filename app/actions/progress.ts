@@ -226,35 +226,25 @@ export async function markClassItemComplete(classItemId: string) {
 
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: existing } = await supabase
+  const { data: existing, error: readError } = await supabase
     .from('class_item_progress')
-    .select('*')
+    .select('completed')
     .eq('user_id', user.id)
     .eq('class_item_id', classItemId)
-    .single()
+    .maybeSingle()
 
-  if (existing) {
-    const { error } = await supabase
-      .from('class_item_progress')
-      .update({
-        completed: true,
-        completed_at: new Date().toISOString(),
-      })
-      .eq('id', existing.id)
+  if (readError) return { error: readError.message }
+  if (existing?.completed) return { success: true }
 
-    if (error) return { error: error.message }
-  } else {
-    const { error } = await supabase
-      .from('class_item_progress')
-      .insert({
-        user_id: user.id,
-        class_item_id: classItemId,
-        completed: true,
-        completed_at: new Date().toISOString(),
-      })
-
-    if (error) return { error: error.message }
-  }
+  // The media position saver can create the same row at the end of a short
+  // lesson. Upsert on the unique user/item pair so neither write loses progress.
+  const { error } = await supabase.from('class_item_progress').upsert({
+    user_id: user.id,
+    class_item_id: classItemId,
+    completed: true,
+    completed_at: new Date().toISOString(),
+  }, { onConflict: 'user_id,class_item_id' })
+  if (error) return { error: error.message }
 
   revalidatePath('/dashboard')
   return { success: true }
@@ -266,31 +256,12 @@ export async function updateClassItemPosition(classItemId: string, lastPositionS
 
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: existing } = await supabase
-    .from('class_item_progress')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('class_item_id', classItemId)
-    .single()
-
-  if (existing) {
-    const { error } = await supabase
-      .from('class_item_progress')
-      .update({ last_position_seconds: lastPositionSeconds })
-      .eq('id', existing.id)
-
-    if (error) return { error: error.message }
-  } else {
-    const { error } = await supabase
-      .from('class_item_progress')
-      .insert({
-        user_id: user.id,
-        class_item_id: classItemId,
-        last_position_seconds: lastPositionSeconds,
-      })
-
-    if (error) return { error: error.message }
-  }
+  const { error } = await supabase.from('class_item_progress').upsert({
+    user_id: user.id,
+    class_item_id: classItemId,
+    last_position_seconds: lastPositionSeconds,
+  }, { onConflict: 'user_id,class_item_id' })
+  if (error) return { error: error.message }
 
   return { success: true }
 }

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { listSongs, createBlankScoreForSong, deleteSong } from '@/app/actions/playsense-studio'
+import { SongImportButton } from '@/components/playsense-studio/studio/song-import-button'
 
 export default async function AdminPlaySensePage() {
   const { data: songs, error } = await listSongs()
@@ -26,19 +27,22 @@ export default async function AdminPlaySensePage() {
 
   return (
     <div className="p-6 lg:p-8">
-      <div className="flex items-start justify-between mb-8">
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold tracking-tight mb-1">Play Sense Songs</h1>
           <p className="text-muted-foreground">
             Author score-backed songs in the studio. The rhythm highway is derived from the score.
           </p>
         </div>
-        <form action={addSong}>
-          <Button type="submit">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Song
-          </Button>
-        </form>
+        <div className="flex items-center gap-2">
+          <SongImportButton />
+          <form action={addSong}>
+            <Button type="submit">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Song
+            </Button>
+          </form>
+        </div>
       </div>
 
       {error ? (

@@ -27,7 +27,6 @@ import {
 import type { ExerciseDefinition, HitGrade } from '@/lib/play-sense/types'
 import { GRADE_COLORS } from '@/lib/play-sense/types'
 import { useStageTheme } from '../stage-highway/use-stage-theme'
-import { STAGE_THEMES, STAGE_THEME_IDS, isStageTheme } from '../stage-highway/themes'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
 import { useStageDemoSession } from '@/hooks/use-stage-demo-session'
 import { getExerciseDuration, getInstrumentLabel } from '@/lib/play-sense/exercise-utils'
@@ -69,7 +68,7 @@ const DEFAULT_SETTINGS: StageSettings = {
 
 export function StagePlayer({ exercises, preview = false }: StagePlayerProps) {
   const router = useRouter()
-  const [stageTheme, setStageTheme] = useStageTheme()
+  const [stageTheme] = useStageTheme()
   const allExercises = useMemo(() => exercises, [exercises])
   const liveSession = useExerciseSession()
   const demoSession = useStageDemoSession(exercises, preview)
@@ -241,10 +240,6 @@ export function StagePlayer({ exercises, preview = false }: StagePlayerProps) {
                 <Sliders size={15} /> {session.calibrationData ? 'Recalibrate' : 'Calibrate'}
               </button>
             )}
-            <select aria-label="Stage appearance" className="stage-theme-select" value={stageTheme} onChange={e => {
-              const value = e.target.value
-              if (isStageTheme(value)) setStageTheme(value)
-            }}>{STAGE_THEME_IDS.map(id => <option key={id} value={id}>{STAGE_THEMES[id].name}</option>)}</select>
             <SettingsMenu settings={settings} setSetting={setSetting} />
             <button className="stage-exit" title="Exit performance mode" onClick={() => router.push('/dashboard')}>
               <ArrowLeft size={18} />

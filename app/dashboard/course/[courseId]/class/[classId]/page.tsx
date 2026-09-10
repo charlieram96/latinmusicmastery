@@ -221,7 +221,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     <>
       {activeItem ? (
         <div data-lesson-item className={`px-4 md:px-8 ${styles.rise}`} style={{ animationDelay: '80ms' }}>
-          <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" previewExercise={process.env.NODE_ENV === 'development' && preview === 'exercise'} nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
+          <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" previewExercise={process.env.NODE_ENV === 'development' && preview === 'exercise'} previewLesson={process.env.NODE_ENV === 'development' && preview === 'lesson'} nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
         </div>
       ) : (
         <div className="px-4 pt-4 md:px-8">
@@ -349,10 +349,13 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         classId,
         currentIndex: activeIndex,
         totalItems: items.length,
+        itemIds: items.map((item: { id: string }) => item.id),
+        completedItemIds,
         nextClassId,
         activeItemId: activeItem?.id ?? null,
+        activeItemType: activeItem?.item_type ?? null,
         isCompleted: isCurrentItemCompleted,
-        nextLabel: nextClassTitle,
+        nextLabel: activeIndex < items.length - 1 ? items[activeIndex + 1].title : nextClassTitle,
       }}
       body={body}
     />

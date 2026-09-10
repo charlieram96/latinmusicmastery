@@ -249,3 +249,68 @@ Side scores now advance gradually with the live music clock instead of waiting u
 Exercise repetitions are laid out sequentially in the side score, including authored repeats that were previously compacted. The next pass is visible ahead of time, with chronological measure numbers throughout the exercise. A reading copy resets inherited tempo, meter, and key at each pass without changing the original score. The exact playback clock supplies both the local score time and current pass, avoiding a frame of rewind at repeat boundaries. Top placement retains its existing compact notation and Steady/Flow controls. Turning Follow off preserves manual browsing; replaying a completed exercise starts a new reading sequence.
 
 Validation: 53 targeted tests pass, including nine regressions for continuous row movement, varied row durations, resize/zoom/seeks, final holds, repeated-pass continuity, inherited notation state, and source-score preservation. Targeted lint, TypeScript validation, and diff whitespace checks pass. Live browser samples confirmed gradual motion across the first-to-second pass boundary (measure 8 to 9), three-measure row changes, and manual browsing with Follow disabled. The actual lesson with instructor video displays all four passes in sequence. Temporary viewport sizing was reset, and the lesson was returned to lesson view. Preview save guards remain in place.
+
+
+## Class video workspace and notation interludes — 2026-09-09
+
+The regular class video/score workspace now fits its unscrolled top position to the visible dashboard area before paint, reserving the actual fixed completion footer and clearance for the resize handle. Video and notation flex inside that height, including playback controls. The score-only transport now lives inside the fitted workspace. Resize observation updates automatic fitting when the surrounding layout changes; manual sizing and reset remain available. This also applies to the shared no-score lesson workspace.
+
+The first placed score now includes the video introduction from zero to its start marker. Gaps use chronological section boundaries and exclude adjacent or overlapping sections. Video intervals render as themed HTML cards with context, a consistent countdown, and a thin progress rail. Wrapped notation gives each card its own row; horizontal notation reserves readable card width at small zoom. Cards contain no staff lines or musical cursor, and active-note/beat emphasis is suppressed during video intervals. Completed cards show a watched state. Musical timing and authored synchronization remain unchanged.
+
+Validation: 63 tests pass across eight timeline, viewport, engraving, layout, repeat, and synchronization suites, including five new introduction/gap/countdown regressions. Production compilation, TypeScript, and page generation pass. Targeted changed-file lint passes except the player's four existing set-state-in-effect errors, confirmed against HEAD. Browser review of the actual 7:20 class covered the initial 1:20 introduction, transition into the first score, a later 5:29 video countdown, score-only transport, horizontal/wrapped notation, stacked/side-by-side panes, and 50%/100% notation zoom. The full transport remains above the completion bar on initial load. Development-only authenticated `?preview=lesson` enables read-only player checks without saving playback position or client player events.
+
+The Chrome development session also reported a dashboard-header hydration mismatch and a React streaming `$RS` parentNode error on reload; neither stack pointed to the player. Browser automation became unresponsive during the subsequent reload, so no claim is made that these separate development notices are resolved. Changes are local; this follow-up has not been deployed.
+
+
+## Subtle inline video intervals — 2026-09-09
+
+Replaced the prominent Watch & listen cards with compact video-time segments inspired by the supplied reference. Small Intro/Video captions, tabular countdowns, very faint surface tint, fine side edges, and a one-pixel progress accent sit at the staff's height. There are no staff lines, icons, explanatory paragraphs, or completion badges inside these intervals. Details remain available on hover and through accessible labels; small notation sizes retain just the timer.
+
+Wrapped layouts now place intervals beside measures when space permits. They retain their compact widths, do not consume the three-measure row limit, and do not stretch when alone. The introduction can narrow to use remaining space beside the opening measure. The musical playhead stops at its barline before video time. Following now derives its view position directly from playback, fixing the initial horizontal view that could otherwise clip the negative-time introduction after a track reset.
+
+Validation: 33 relevant layout, interval, playback, and engraving tests pass, including three new compact-width/row-packing cases. TypeScript, targeted lint, and diff whitespace checks pass. Browser review of the actual class confirms both intervals in wrapped notation, the full introduction in horizontal notation, and readable timers at 50% and 100% zoom. The earlier viewport fitting and countdown timing remain in place. This is a local design iteration.
+
+
+## Flush score intervals — 2026-09-09
+
+Removed the space between video intervals and adjacent measures in horizontal and wrapped notation. Interval height now matches the outer staff lines exactly. Fine outlines, softly rounded outer corners, a faint warm active surface, and refined countdown typography make the intervals read as joined parts of the score. Staff lines remain absent inside video time.
+
+Validation: 14 interval/layout tests, targeted renderer lint, and whitespace checks pass. Visual review of the actual shared renderer in a temporary local preview confirmed both joins and matching top/bottom edges in horizontal and wrapped layouts. The temporary preview was removed after verification. Native Chrome's class window was unresponsive during review; the isolated in-app preview supplied the visual verification. Changes remain local.
+
+
+## Centered interval proportions — 2026-09-09
+
+Video intervals now extend seven model pixels equally above and below the staff while remaining horizontally flush with the measure edge. The countdown itself is centered on the staff midpoint; its small caption sits independently above it. Softer outer corners, a restrained diagonal surface tint, and a fine inner highlight refine the UI without adding staff lines or larger headings. Compact notation hides the caption and retains the centered timer.
+
+The development-only `/playsense-preview/notation` route displays the actual shared renderer in horizontal and wrapped layouts using local fixtures, without student data or playback writes. Browser review confirmed the symmetric overhang and centered numerals in both layouts. Targeted lint and diff whitespace checks pass. Restarted the existing project preview server on port 3005 after observing a stale Turbopack module-factory error; the refreshed preview renders without that error. This iteration remains local.
+
+
+## Full-row video staves and repeat instructions — 2026-09-09
+
+Stacked notation gives each video interval a full-width row, while musical rows continue to fit up to three measures. Horizontal intervals remain joined to the score. The interval frame is transparent, dotted, and exactly the height of the normal staff. Five very faint staff lines fade around the centered timer to keep it readable without a background patch. The earlier extra height, filled tint, and compact mixed-row packing have been removed.
+
+Repeat counts now use a small italic serif instruction such as “Play 3 times”, right-aligned just above the closing repeat barline. Placement considers nearby note bounds to preserve clearance. The ordinary two-playthrough repeat is indicated by its barlines alone. This follows the end-barline placement described in [Dorico’s repeat-count documentation](https://www.steinberg.help/r/dorico-pro/6.1/en/dorico/topics/notation_reference/notation_reference_repeat_markers/notation_reference_repeat_counts_c.html). Authored repeat playback and synchronization are unchanged.
+
+The development notation preview now includes an actual three-pass repeated phrase. Browser review confirmed full-width intro/outro rows, faint transparent staff treatment, matching staff heights, and repeat instructions in both layouts. All 37 relevant layout, interval, repeat, playback, and engraving tests pass, including three full-row layout cases. TypeScript, targeted lint, and whitespace checks pass. Changes remain local.
+
+
+## Sweeping video intervals — 2026-09-09
+
+Video interval frames are now 15 CSS pixels taller, centered around the unchanged staff height. A thin vertical playhead sweeps across each interval while the elapsed area fills with a restrained primary-orange tint. The bottom progress bar is removed. Completed intervals retain their elapsed tint, upcoming intervals remain transparent, and backward seeks reset the fill and countdown together. The rounded outline uses individually spaced dots that keep their spacing at different notation zoom levels.
+
+Repeat instructions now read “3 times” with an upright, emphasized numeral and a lighter italic serif qualifier, aligned above the closing repeat barline. Native VexFlow repeat bars and dots have 60% ink opacity, independently of the staff's 30% ink, so their geometry remains conventional and their visibility improves.
+
+The development-only notation preview includes playback and seek controls using the renderer's live clock. Browser checks verified moving progress in both layouts, 15px additional frame height, zero staff-center offset, half-completed outro fill, and a backward seek clearing both interval fills. All 37 relevant notation, interval, repeat, and layout tests pass, along with TypeScript, targeted lint, and whitespace checks. Changes remain local.
+
+
+## Automatic course completion and continuation — 2026-09-09
+
+Removed the lesson footer's manual completion button. The footer now shows a compact completion status, completed-part progress, and the next activity's title. Next gains the app's orange surface and restrained glow after completion is saved. Existing navigation remains available while an activity is in progress, and the end of a course offers Back to course. Previously completed activities stay complete when revisited. Lesson tabs and sidebar counts update immediately; a fully completed active lesson also displays a check in its sidebar progress ring.
+
+A shared lesson progress provider connects native media end events, quiz results, and full PlaySense performances. Video lessons and jam media complete on playback end. Quizzes complete when submitted/finished. Exercises require their authored performance and any accompanying questions; demo playback alone does not complete an exercise, and stopping a performance early does not count as completion. Intermediate exercise/question completion is acknowledged in the footer. Exercise results restore the footer in immersive mode, with bottom spacing to keep results accessible.
+
+Legacy Soundslice embeds enable their documented JavaScript API and accept only `ssAudioEnd` from the expected iframe window and origin, ignoring loop-end events. References: [API activation](https://www.soundslice.com/help/en/embedding/javascript-api/38/introduction/) and [player events](https://www.soundslice.com/help/en/embedding/javascript-api/45/events/).
+
+Completion saves are deduplicated, failed saves present Retry saving without claiming success, and delayed responses remain associated with the original item after navigation. Completion and playback-position persistence use the unique user/item pair to avoid competing inserts. Position writes do not reset completion; replays preserve an existing completion timestamp. Lesson preview completion is disabled, and the dedicated development-only `/playsense-preview/completion` uses a local save substitute with no student writes. English and Spanish footer copy are included.
+
+Validation: 16 new tests cover actual native-end capture, multipart completion, duplicate events, saving/error/retry states, navigation while saving, persisted completion, preview isolation, legacy iframe origin/source checks, early exercise stops, and progress-action writes. These and 119 related course/i18n tests pass (135 total). TypeScript and targeted lint pass with only four existing image-element warnings in the sidebar. Browser review exercised a full native video, the actual quiz runner, a simulated exercise finish, final jam-media playback, and continuation/revisiting through all four parts; completion progress reached 4/4 and no console errors were reported. This change is local and has not been deployed.

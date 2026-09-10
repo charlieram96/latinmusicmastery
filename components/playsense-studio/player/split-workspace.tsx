@@ -13,7 +13,7 @@
 
 import {
   useCallback,
-  useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
@@ -21,6 +21,7 @@ import {
   type TouchEvent as ReactTouchEvent,
 } from 'react';
 import { Columns2, Rows2 } from 'lucide-react';
+import { lessonExerciseHeight } from '@/lib/playsense-studio/lesson-viewport';
 
 const SPLIT_MIN = 28;
 const SPLIT_MAX = 72;
@@ -72,21 +73,39 @@ export function SplitWorkspace({
   const workspaceRef = useRef<HTMLDivElement | null>(null);
   const isRow = orient === 'row';
 
-  // In bleed mode, fill the viewport from the workspace's top edge down to a
-  // small bottom gap — recomputed on mount + resize until the user drags to
-  // override (then we respect their chosen height).
-  useEffect(() => {
-    if (!bleed || userSized) return;
+  // Fit before paint, including the fixed lesson footer and the resize handle.
+  // Natural (unscrolled) position prevents page scrolling from enlarging it.
+  useLayoutEffect(() => {
+    const el = workspaceRef.current;
+    if (!el || userSized) return;
+    const lesson = el.closest<HTMLElement>('[data-lesson-shell]');
+    if (!bleed && !lesson) return;
+    const scroller = el.closest<HTMLElement>('[data-dashboard-main]');
+    const footer = lesson?.querySelector<HTMLElement>('[data-lesson-footer] > div');
+    let pending = 0;
     const fit = () => {
-      const top = workspaceRef.current?.getBoundingClientRect().top ?? 0;
-      const gap = 16;
-      const h = Math.max(H_MIN, Math.min(hMax(), window.innerHeight - top - gap));
-      setWorkspaceH(h);
+      pending = 0;
+      const visibleBottom = (window.visualViewport?.offsetTop ?? 0) + (window.visualViewport?.height ?? window.innerHeight);
+      const bottom = Math.min(visibleBottom, scroller?.getBoundingClientRect().bottom ?? visibleBottom);
+      const available = lessonExerciseHeight(bottom, el.getBoundingClientRect().top,
+        scroller?.scrollTop ?? window.scrollY, (footer?.getBoundingClientRect().height ?? 0) + 8);
+      setWorkspaceH(bleed ? available : Math.min(initialHeight, available));
     };
+    const schedule = () => { if (!pending) pending = requestAnimationFrame(fit); };
+    const observer = new ResizeObserver(schedule);
+    for (const target of [scroller, lesson?.querySelector('[data-lesson-heading]'), el.parentElement, footer]) {
+      if (target) observer.observe(target);
+    }
     fit();
-    window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
-  }, [bleed, userSized]);
+    window.addEventListener('resize', schedule);
+    window.visualViewport?.addEventListener('resize', schedule);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(pending);
+      window.removeEventListener('resize', schedule);
+      window.visualViewport?.removeEventListener('resize', schedule);
+    };
+  }, [bleed, userSized, initialHeight]);
 
   const resetSize = useCallback(() => {
     setSplit(isRow ? 55 : 60);
@@ -145,6 +164,7 @@ export function SplitWorkspace({
   return (
     <div
       ref={workspaceRef}
+      data-lesson-workspace=""
       className={
         bleed
           ? 'relative overflow-visible border-y border-border bg-card'

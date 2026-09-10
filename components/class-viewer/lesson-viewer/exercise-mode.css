@@ -3,7 +3,7 @@
 [data-dashboard-shell]:has([data-exercise-immersive=true]) [data-dashboard-header],
 [data-lesson-shell]:has([data-exercise-immersive=true]) > aside,
 [data-lesson-shell]:has([data-exercise-immersive=true]) [data-lesson-heading],
-[data-lesson-shell]:has([data-exercise-immersive=true]) [data-lesson-footer],
+[data-lesson-shell]:has([data-exercise-immersive=true]):not(:has(.ps-lesson-results)) [data-lesson-footer],
 [data-lesson-shell]:has([data-exercise-immersive=true]) [data-lesson-secondary] { display:none; }
 [data-dashboard-shell]:has([data-exercise-immersive=true]),
 [data-dashboard-shell]:has([data-exercise-immersive=true]) [data-dashboard-frame] { height:100dvh; }
@@ -13,6 +13,9 @@
 [data-lesson-shell]:has([data-exercise-immersive=true]) { margin:0; min-height:100dvh; }
 [data-lesson-shell]:has([data-exercise-immersive=true]) [data-lesson-column] { padding-bottom:0!important; }
 [data-lesson-shell]:has([data-exercise-immersive=true]) [data-lesson-item] { padding:0; animation:none; }
+/* Results restore the continuation bar while keeping the exercise immersive. */
+[data-lesson-shell]:has([data-exercise-immersive=true]) [data-lesson-completion-bar] { left:0; }
+[data-lesson-shell]:has([data-exercise-immersive=true]) .ps-lesson-results { padding-bottom:84px; }
 
 .ps-exercise-mode { --exercise-cream:hsl(var(--foreground)); --exercise-gold:hsl(var(--primary)); --exercise-muted:hsl(var(--muted-foreground)); display:flex; flex-direction:column; height:var(--lesson-exercise-height,calc(100dvh - 280px)); color:var(--exercise-cream); background:hsl(var(--background)); border:1px solid hsl(var(--border)); border-radius:12px; overflow:hidden; overflow-anchor:none; }
 [data-lesson-item]:has(.ps-exercise-mode) { animation:none; }
