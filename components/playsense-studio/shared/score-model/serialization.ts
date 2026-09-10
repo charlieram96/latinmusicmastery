@@ -26,10 +26,19 @@ const fingeringSchema = z.object({
   finger: z.number().int().min(0).max(5).optional(),
 });
 
+const percussionSchema = z.object({
+  staffLine: z.string().regex(/^[a-g]\/[0-9]$/),
+  notehead: z.enum(['normal', 'x', 'ornate-x', 'plus', 'circled', 'slash', 'slashed', 'diamond', 'triangle-up', 'triangle-down', 'square']),
+  marcato: z.boolean().optional(),
+  strokeId: z.string().optional(),
+  sourceMidi: z.number().int().min(0).max(127).optional(),
+});
+
 const noteSchema = z.object({
   kind: z.literal('note'),
   midi: z.number().int().min(0).max(127),
   spellingHint: z.string().optional(),
+  percussion: percussionSchema.optional(),
   fingering: fingeringSchema.optional(),
   ...noteBaseShape,
 });
@@ -46,6 +55,7 @@ const chordSchema = z.object({
       z.object({
         midi: z.number().int().min(0).max(127),
         spellingHint: z.string().optional(),
+        percussion: percussionSchema.optional(),
         fingering: fingeringSchema.optional(),
         tieToNext: z.boolean().optional(),
       })

@@ -96,12 +96,25 @@ export interface NoteBase {
   articulation?: 'staccato' | 'accent' | 'tenuto';
 }
 
+export type PercussionNotehead = 'normal' | 'x' | 'ornate-x' | 'plus' | 'circled' | 'slash' | 'slashed' | 'diamond' | 'triangle-up' | 'triangle-down' | 'square';
+
+export interface PercussionNotation {
+  /** Written position, independent of playback MIDI (MusicXML display-step/octave). */
+  staffLine: string;
+  notehead: PercussionNotehead;
+  marcato?: boolean;
+  /** Matched builder stroke, when recognized. Unknown notation remains editable. */
+  strokeId?: string;
+  sourceMidi?: number;
+}
+
 export interface Note extends NoteBase {
   kind: 'note';
   /** MIDI note number (0-127). 60 = middle C. */
   midi: number;
   /** Optional enharmonic spelling hint (e.g. "Bb" vs "A#"). */
   spellingHint?: string;
+  percussion?: PercussionNotation;
   /** Optional fret position (string is 1-based, low to high). For tab/fretboard tracks. */
   fingering?: { string: number; fret: number; finger?: number };
 }
@@ -116,6 +129,7 @@ export interface Chord extends NoteBase {
   notes: Array<{
     midi: number;
     spellingHint?: string;
+    percussion?: PercussionNotation;
     fingering?: { string: number; fret: number; finger?: number };
     tieToNext?: boolean;
   }>;

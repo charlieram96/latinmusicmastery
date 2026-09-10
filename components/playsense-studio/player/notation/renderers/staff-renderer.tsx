@@ -19,6 +19,7 @@
 // note's bounding box + its cumulative QN. A pointer event finds the position
 // by interpolating between note anchors and fires onSeek.
 
+import { createStaveNote } from '@/lib/playsense-studio/percussion-stave-note';
 import { useEffect, useMemo, useRef } from 'react';
 import { repeatProjection } from '@/lib/playsense-studio/repeats';
 import {
@@ -1469,12 +1470,12 @@ function clampZoom(zoom: number): number {
 }
 
 function descriptorToStaveNote(d: VexEventDescriptor, clef: 'treble' | 'percussion'): StaveNote {
-  const note = new StaveNote({
+  const note = createStaveNote({
     keys: d.keys,
     clef,
     ...(d.noteType && !d.isRest ? { type: d.noteType } : {}),
     duration: d.isRest ? `${d.durationCode}r` : d.durationCode,
-  });
+  }, d.percussion);
   if (d.dotted) Dot.buildAndAttach([note]);
   if (d.articulation) note.addModifier(new Articulation({ staccato: 'a.', accent: 'a>', tenuto: 'a-' }[d.articulation]), 0);
   d.accidentals.forEach((acc, idx) => {

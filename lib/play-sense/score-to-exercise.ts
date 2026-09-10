@@ -13,7 +13,7 @@ import type {
   Chord,
 } from '@/components/playsense-studio/shared/score-model/types'
 import { beatLengthInQN, measureLengthInQN } from '@/lib/playsense-studio/time-mapping'
-import { midiToPercStroke, isPercussion } from '@/lib/playsense-studio/perc-strokes'
+import { resolvePercStroke, percussionNotation, isPercussion } from '@/lib/playsense-studio/perc-strokes'
 import { midiToKeyString } from '@/lib/playsense-studio/score-to-vexflow'
 import type {
   ExerciseDefinition,
@@ -61,9 +61,12 @@ const STROKE_INFO: Record<string, { technique: Technique; surface: string }> = {
   // conga
   'open-high': { technique: 'open', surface: 'quinto' },
   slap: { technique: 'slap', surface: 'quinto' },
-  'open-low': { technique: 'open', surface: 'conga' },
-  mute: { technique: 'mute', surface: 'conga' },
-  bass: { technique: 'bass', surface: 'tumba' },
+  'open-low': { technique: 'open', surface: 'tumba' },
+  mute: { technique: 'mute', surface: 'quinto' },
+  bass: { technique: 'bass', surface: 'quinto' },
+  tip: { technique: 'tip', surface: 'quinto' },
+  'pressed-slap': { technique: 'slap', surface: 'quinto' },
+  'open-middle': { technique: 'open', surface: 'conga' },
   // bongo
   'macho-open': { technique: 'open', surface: 'macho' },
   'macho-slap': { technique: 'slap', surface: 'macho' },
@@ -73,7 +76,18 @@ const STROKE_INFO: Record<string, { technique: Technique; surface: string }> = {
   cascara: { technique: 'shell', surface: 'cascara' },
   high: { technique: 'open', surface: 'macho' },
   low: { technique: 'open', surface: 'hembra' },
-  rim: { technique: 'rim', surface: 'cencerro' },
+  rim: { technique: 'rim', surface: 'macho' },
+  'high-mute': { technique: 'mute', surface: 'macho' },
+  'low-mute': { technique: 'mute', surface: 'hembra' },
+  'low-cross-stick': { technique: 'rim', surface: 'hembra' },
+  'cascara-low': { technique: 'shell', surface: 'cascara' },
+  'jam-block': { technique: 'tip', surface: 'jamblock' },
+  'timbal-bell': { technique: 'bell', surface: 'campana' },
+  'bongo-bell-mouth': { technique: 'bell', surface: 'cencerro' },
+  'bongo-bell-body': { technique: 'tip', surface: 'cencerro' },
+  'chacha-bell-mouth': { technique: 'bell', surface: 'campana' },
+  'chacha-bell-body': { technique: 'tip', surface: 'campana' },
+  cymbal: { technique: 'open', surface: 'cymbal' },
   // clave
   stroke: { technique: 'tip', surface: 'clave' },
 }
@@ -150,10 +164,8 @@ export function scoreToExerciseDefinition(
       const durationBeats = durationQN / beatQN
       const accent = ev.articulation === 'accent'
 
-      const midis: number[] =
-        ev.kind === 'chord'
-          ? (ev as Chord).notes.map((n) => n.midi)
-          : [(ev as Note).midi]
+      const pitches = ev.kind === 'chord' ? (ev as Chord).notes : [ev as Note]
+      const midis = pitches.map(n => n.midi)
 
       // Tag pitched chords so the scorer can grade the notes as one set. The
       // notes still emit as separate events (cardinality/rendering unchanged) —
@@ -162,7 +174,8 @@ export function scoreToExerciseDefinition(
       const chordId = !perc && attacks.length > 1 ? `c${chordCounter++}` : undefined
       const nextContinuations = new Map<number, { event: ExerciseEvent; beatQN: number }>()
 
-      for (const midi of midis) {
+      for (const n of pitches) {
+        const midi = n.midi
         const tiesForward = ev.tieToNext || (ev.kind === 'chord' && ev.notes.some(n => n.midi === midi && n.tieToNext))
         const held = continuations.get(midi)
         if (held) {
@@ -177,8 +190,8 @@ export function scoreToExerciseDefinition(
         let expectedNoteName: string | undefined
 
         if (perc) {
-          const strokeData = midiToPercStroke(track.instrument, midi)
-          vexKey = strokeData?.staffLine ?? 'g/5'
+          const strokeData = resolvePercStroke(track.instrument, n)
+          vexKey = percussionNotation(track.instrument, n).staffLine
           const info = strokeData ? STROKE_INFO[strokeData.id] : undefined
           technique = info?.technique ?? 'open'
           surface = info?.surface

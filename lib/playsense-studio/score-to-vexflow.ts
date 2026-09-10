@@ -1,3 +1,4 @@
+import type { PercussionNotation } from '@/components/playsense-studio/shared/score-model/types';
 // PlaySense Studio — convert our normalized Score model into VexFlow primitives.
 //
 // Pure functions. No DOM, no I/O, no React. The staff renderer in
@@ -14,7 +15,7 @@ import {
   beatLengthInQN,
   measureLengthInQN,
 } from './time-mapping';
-import { isPercussion, midiToPercStroke } from './perc-strokes';
+import { isPercussion, percussionNotation } from './perc-strokes';
 
 /**
  * VexFlow duration code for a quarter-note duration.
@@ -213,6 +214,7 @@ export interface VexEventDescriptor {
   tiedMidiPitches?: number[];
   /** 'x' for percussion slap/mute/cymbal noteheads; undefined = normal. */
   noteType?: 'x';
+  percussion?: PercussionNotation[];
   /** True if part of a triplet group (consecutive run forms one tuplet). */
   triplet: boolean;
   /** True if all pitches are tied to the next event. */
@@ -271,15 +273,14 @@ export function extractTrackEvents(
       let keys: string[];
       let accidentals: Array<'#' | 'b' | null>;
       let midi: number | null = null;
-      let noteType: 'x' | undefined;
+      let percussionHeads: PercussionNotation[] | undefined;
 
       if (event.kind === 'note') {
         midi = event.midi;
         if (percussion) {
-          const stroke = midiToPercStroke(track.instrument, event.midi);
-          keys = [stroke?.staffLine ?? 'c/5'];
+          percussionHeads = [percussionNotation(track.instrument, event)];
+          keys = percussionHeads.map(n => n.staffLine);
           accidentals = [null];
-          noteType = stroke?.noteType;
         } else {
           const k = midiToKeyString(event.midi, {
             spellingHint: event.spellingHint,
@@ -291,11 +292,9 @@ export function extractTrackEvents(
       } else if (event.kind === 'chord') {
         midi = event.notes[0]?.midi ?? null;
         if (percussion) {
-          keys = event.notes.map(
-            (n) => midiToPercStroke(track.instrument, n.midi)?.staffLine ?? 'c/5'
-          );
+          percussionHeads = event.notes.map(n => percussionNotation(track.instrument, n));
+          keys = percussionHeads.map(n => n.staffLine);
           accidentals = keys.map(() => null);
-          noteType = midiToPercStroke(track.instrument, event.notes[0]?.midi ?? 0)?.noteType;
         } else {
           keys = event.notes.map((n) =>
             midiToKeyString(n.midi, { spellingHint: n.spellingHint, keyFifths })
@@ -321,7 +320,7 @@ export function extractTrackEvents(
         midi,
         midiPitches: event.kind === 'note' ? [event.midi] : event.kind === 'chord' ? event.notes.map(n => n.midi) : [],
         tiedMidiPitches: event.kind === 'note' ? (event.tieToNext ? [event.midi] : []) : event.kind === 'chord' ? event.notes.filter(n => event.tieToNext || n.tieToNext).map(n => n.midi) : [],
-        noteType,
+        percussion: percussionHeads,
         triplet: event.triplet ?? false,
         tieToNext: event.tieToNext ?? false,
         articulation: event.kind === 'rest' ? undefined : event.articulation,

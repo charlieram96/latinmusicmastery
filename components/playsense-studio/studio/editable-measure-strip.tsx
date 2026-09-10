@@ -17,6 +17,7 @@
 // separate absolute <div> overlay (pointer-events:none) that reads from the
 // Map on each render, so it tracks the right note across marker drags + zoom.
 
+import { createStaveNote } from '@/lib/playsense-studio/percussion-stave-note';
 import { GripHorizontal } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -411,11 +412,14 @@ export function EditableMeasureStrip({
           percStrokes.find((s) => s.midi === drag.originalMidi)?.staffLine ?? 'c/5'
         );
         const targetDia = anchorDia + deltaSteps;
-        let best = percStrokes[0];
+        const original = percStrokes.find(s => s.midi === drag.originalMidi);
+        let best = original ?? percStrokes[0];
         let bestDist = Infinity;
         for (const s of percStrokes) {
           const d = Math.abs(keyToDiatonic(s.staffLine) - targetDia);
-          if (d < bestDist) {
+          const sameHead = (s.notehead ?? s.noteType) === (original?.notehead ?? original?.noteType);
+          const bestSameHead = (best.notehead ?? best.noteType) === (original?.notehead ?? original?.noteType);
+          if (d < bestDist || (d === bestDist && sameHead && !bestSameHead)) {
             bestDist = d;
             best = s;
           }
@@ -931,11 +935,11 @@ const ARTICULATION_CODE: Record<'staccato' | 'accent' | 'tenuto', string> = {
 };
 
 function descriptorToStaveNote(d: VexEventDescriptor): StaveNote {
-  const note = new StaveNote({
+  const note = createStaveNote({
     keys: d.keys,
     duration: d.isRest ? `${d.durationCode}r` : d.durationCode,
     ...(d.noteType ? { type: d.noteType } : {}),
-  });
+  }, d.percussion);
   if (d.dotted) Dot.buildAndAttach([note]);
   d.accidentals.forEach((acc, idx) => {
     if (acc) note.addModifier(new Accidental(acc), idx);

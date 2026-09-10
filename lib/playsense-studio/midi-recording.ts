@@ -6,7 +6,9 @@ import { isPercussion } from './perc-strokes';
 export const MAX_TAKE_MS = 180_000;
 export const MAX_TAKE_NOTES = 4096;
 export type RecordedMidiNote = { id: number; midi: number; channel: number; velocity: number; startMs: number; endMs: number };
-export type MidiTake = { notes: RecordedMidiNote[]; durationMs: number; bpm: number; timeSignature: [number, number] };
+export type MidiTake = { notes: RecordedMidiNote[]; durationMs: number; bpm: number; timeSignature: [number, number]; startVideoSeconds?: number };
+export type MidiNotationBar = { startQN: number; endQN: number; bpm: number; timeSignature: [number, number] };
+export type MidiNotationTimeline = { toQN: (elapsedMs: number) => number; bars: MidiNotationBar[] };
 
 /** Message timestamps are relative to the first downbeat, never arrival/render time. */
 export class MidiNoteCapture {
@@ -77,24 +79,28 @@ export function recordingContext(score: ScoreDocument, track: Track, start: numb
 
 /** Split the timeline at every attack/release/barline. Held pitches receive ties,
  * including across changing chords, so polyphony never becomes extra attacks. */
-export function midiTakeToMeasures(take: MidiTake, gridQN: number, instrument: Instrument, gmPercussion = true): Measure[] {
+export function midiTakeToMeasures(take: MidiTake, gridQN: number, instrument: Instrument, gmPercussion = true, timeline?: MidiNotationTimeline): Measure[] {
   if (!take.notes.length) return [];
   if (!Number.isFinite(take.bpm) || take.bpm < 20 || take.bpm > 400 || ![0, .125, .25, .5, 1].includes(gridQN)) throw new Error('Choose a supported tempo and quantization.');
   const bar = measureLengthInQN(take.timeSignature);
   if (!Number.isFinite(bar) || bar <= 0 || bar > 32) throw new Error('This time signature is not supported for recording.');
   const snap = (qn: number) => gridQN ? Math.round(qn / gridQN) * gridQN : Math.round(qn * 1e6) / 1e6;
+  const toQN = timeline?.toQN ?? ((ms: number) => ms * take.bpm / 60000);
   const notes = take.notes.slice(0, MAX_TAKE_NOTES).map((note) => {
-    const start = Math.max(0, snap(note.startMs * take.bpm / 60000));
+    const start = Math.max(0, snap(toQN(note.startMs)));
     return { ...note, midi: isPercussion(instrument) && gmPercussion ? gmToStrokeMidi(note.midi, instrument) : note.midi,
-      start, end: Math.max(start + (gridQN || .001), snap(note.endMs * take.bpm / 60000)) };
+      start, end: Math.max(start + (gridQN || .001), snap(toQN(note.endMs))) };
   });
-  if (notes.some(n => !Number.isFinite(n.start + n.end) || n.end > MAX_TAKE_MS * take.bpm / 60000 + 1)) throw new Error('This take is too long. Record a shorter section.');
-  const end = Math.ceil((Math.max(snap(take.durationMs * take.bpm / 60000), ...notes.map(n => n.end)) - 1e-7) / bar) * bar;
-  if (end / bar > 256) throw new Error('Record up to 256 measures at a time.');
+  if (notes.some(n => !Number.isFinite(n.start + n.end) || (!timeline && n.end > MAX_TAKE_MS * take.bpm / 60000 + 1))) throw new Error('This take is too long. Record a shorter section.');
+  const lastQN = Math.max(snap(toQN(take.durationMs)), ...notes.map(n => n.end));
+  const bars = timeline ? timeline.bars.filter(b => b.startQN < lastQN - 1e-7) : Array.from({ length: Math.ceil((lastQN - 1e-7) / bar) }, (_, i) => ({ startQN: i * bar, endQN: (i + 1) * bar, bpm: take.bpm, timeSignature: take.timeSignature }));
+  if (!bars.length || bars.length > 256 || bars.at(-1)!.endQN < lastQN - 1e-7) throw new Error('Record up to 256 measures at a time.');
+  const end = bars.at(-1)!.endQN;
   const boundaries = new Set<number>([0, end, ...notes.flatMap(n => [n.start, n.end])]);
-  for (let qn = 0; qn < end; qn += bar) boundaries.add(qn);
+  for (const b of bars) boundaries.add(b.startQN);
   const times = [...boundaries].filter(n => n <= end).sort((a, b) => a - b);
-  const measures: Measure[] = Array.from({ length: Math.round(end / bar) }, (_, i) => ({ number: i + 1, voices: [{ number: 1, events: [] }] }));
+  const measures: Measure[] = bars.map((b, i) => ({ number: i + 1, tempoChange: b.bpm, timeSignature: b.timeSignature, voices: [{ number: 1, events: [] }] }));
+  let measureIndex = 0;
   for (let i = 0; i + 1 < times.length; i++) {
     let cursor = times[i];
     const limit = times[i + 1];
@@ -110,12 +116,11 @@ export function midiTakeToMeasures(take: MidiTake, gridQN: number, instrument: I
       if (!active.length) event = { kind: 'rest', durationQN, ...modifier };
       else if (active.length === 1) event = { kind: 'note', midi: active[0].midi, durationQN, ...modifier, ...(tied(active[0]) ? { tieToNext: true } : {}) };
       else event = { kind: 'chord', durationQN, ...modifier, notes: active.map(n => ({ midi: n.midi, ...(tied(n) ? { tieToNext: true } : {}) })) };
-      measures[Math.min(measures.length - 1, Math.floor((cursor + 1e-7) / bar))].voices[0].events.push(event);
+      while (measureIndex + 1 < bars.length && cursor >= bars[measureIndex].endQN - 1e-7) measureIndex++;
+      measures[measureIndex].voices[0].events.push(event);
       cursor = next;
     }
   }
-  measures[0].tempoChange = take.bpm;
-  measures[0].timeSignature = take.timeSignature;
   return measures;
 }
 
