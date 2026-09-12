@@ -48,6 +48,8 @@ export type StudioMode = 'video' | 'exercise';
 
 export interface StudioWorkspaceProps {
   owner: StudioOwner;
+  /** Class-item authoring: where the app-bar back link lands (the owning course's overview). */
+  backHref?: string;
   /** Class-item authoring mode. Songs (no video) ignore this — defaults to 'video'. */
   mode?: StudioMode;
   title: string;
@@ -66,6 +68,7 @@ const AUTOSAVE_INTERVAL_MS = 1000;
 
 export function StudioWorkspace({
   owner,
+  backHref: classItemBackHref = '/admin/courses',
   mode = 'video',
   title,
   videoUrl,
@@ -124,7 +127,7 @@ export function StudioWorkspace({
   // SyncPanel uses this only on video paths (waveform cache key + publish). For
   // songs there's no video, so the value is never read.
   const mediaOwnerId = owner.kind === 'classItem' ? owner.classItemId : owner.songId;
-  const backHref = owner.kind === 'classItem' ? '/admin/courses' : '/admin/play-sense';
+  const backHref = owner.kind === 'classItem' ? classItemBackHref : '/admin/play-sense';
 
   // Latest editor state mirrored into refs so timers/handlers/unmount always
   // read the newest score (never a stale closure). savingRef blocks overlap.

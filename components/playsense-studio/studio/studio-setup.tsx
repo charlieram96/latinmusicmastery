@@ -15,11 +15,18 @@ import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-im
 export interface StudioSetupProps {
   classItemId: string;
   classItemTitle: string;
+  /** Where the header back link lands (the owning course's overview). */
+  backHref?: string;
   /** Extra header content (e.g. the exercise Watch/Exercise part toggle). */
   appBarExtra?: React.ReactNode;
 }
 
-export function StudioSetup({ classItemId, classItemTitle, appBarExtra }: StudioSetupProps) {
+export function StudioSetup({
+  classItemId,
+  classItemTitle,
+  backHref = '/admin/courses',
+  appBarExtra,
+}: StudioSetupProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -40,7 +47,7 @@ export function StudioSetup({ classItemId, classItemTitle, appBarExtra }: Studio
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-card px-6 py-3">
         <Link
-          href="/admin/courses"
+          href={backHref}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
