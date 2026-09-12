@@ -13,10 +13,40 @@ describe('buildRowPlan', () => {
   });
 
   it('uses the widest requirement across tracks for each measure', () => {
-    const narrow = buildRowPlan(SON_MONTUNO_FIXTURE, [2], 700, { expandRepeats: true });
-    const all = buildRowPlan(SON_MONTUNO_FIXTURE, [0, 1, 2], 700, { expandRepeats: true });
-    const width = (p: typeof all, i: number) => p.rows.flatMap(r => r.widths)[i];
-    expect(width(all, 1)).toBeGreaterThanOrEqual(width(narrow, 1));
+    // Track 1 is a copy of the guitar lick's track 0 with measure index 1
+    // replaced by a dense bar (16 sixteenth notes) so the two tracks disagree
+    // on how wide that measure needs to be, and a naive implementation that
+    // reads only `widthsByTrack[0]` cannot pass by coincidence the way it did
+    // against SON_MONTUNO_FIXTURE (every track there is 4/4, so the beat term
+    // dominated and all tracks needed the same width regardless).
+    const dense = {
+      ...GUITAR_LICK_FIXTURE.tracks[0].measures[1],
+      voices: [{ number: 1, events: Array.from({ length: 16 }, () => ({ kind: 'note' as const, midi: 60, durationQN: 0.25 })) }],
+    };
+    const twoTrack: ScoreDocument = {
+      ...GUITAR_LICK_FIXTURE,
+      tracks: [
+        GUITAR_LICK_FIXTURE.tracks[0],
+        { ...GUITAR_LICK_FIXTURE.tracks[0], index: 1, measures: [GUITAR_LICK_FIXTURE.tracks[0].measures[0], dense] },
+      ],
+    };
+    const width = (p: ReturnType<typeof buildRowPlan>, i: number) => p.rows.flatMap(r => r.widths)[i];
+
+    const soloTrack0 = buildRowPlan(twoTrack, [0], 700, { expandRepeats: true });
+    const mergedInOrder = buildRowPlan(twoTrack, [0, 1], 700, { expandRepeats: true });
+    const mergedReversed = buildRowPlan(twoTrack, [1, 0], 700, { expandRepeats: true });
+
+    // requiredMeasureWidths gives measure index 1 = max(100, 216, 4*22+24=112) = 216
+    // for track 0 and max(100, 216, 16*22+24=376) = 376 for track 1 (the beat
+    // term no longer dominates once the bar is this dense). packLessonScoreRows
+    // then stretches whichever measures share a row to fill availWidth evenly,
+    // so the *packed* numbers below are 310 (both bars fit one row alone with
+    // track 0's own 216) and 390 (the row absorbs track 1's wider 376 instead) —
+    // still strictly different, so the merge across tracks is what's under test.
+    expect(width(soloTrack0, 1)).toBe(310);
+    expect(width(mergedInOrder, 1)).toBe(390);
+    expect(width(mergedReversed, 1)).toBe(390);
+    expect(width(mergedInOrder, 1)).toBeGreaterThan(width(soloTrack0, 1));
   });
 
   it('falls back to per-track rows when measure counts differ', () => {
