@@ -2,6 +2,8 @@
 // exporter draws music glyphs as vector paths instead of embedding the font.
 import fontkit from '@pdf-lib/fontkit';
 
+interface TransformablePath { transform(a: number, b: number, c: number, d: number, e: number, f: number): { toSVG(): string } }
+
 export interface GlyphOutline {
   /** SVG path data in font units, y-axis already flipped to point DOWN. */
   d: string;
@@ -26,7 +28,7 @@ export function createGlyphOutliner(bytes: Uint8Array): GlyphOutliner {
     let result: GlyphOutline | null = null;
     if (glyph) {
       // fontkit paths are y-up; flip so pdf-lib's drawSvgPath (y-down) draws them upright.
-      const d = glyph.path.transform(1, 0, 0, -1, 0, 0).toSVG();
+      const d = (glyph.path as unknown as TransformablePath).transform(1, 0, 0, -1, 0, 0).toSVG();
       result = { d, advance: glyph.advanceWidth };
     }
     cache.set(codePoint, result);

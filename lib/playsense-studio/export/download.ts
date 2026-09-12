@@ -2,7 +2,8 @@
 // the browser owns the save dialog and we cannot observe a cancel.
 
 export function downloadBytes(bytes: Uint8Array | string, filename: string, mimeType: string): void {
-  const blob = new Blob([bytes], { type: mimeType });
+  const part: BlobPart = typeof bytes === 'string' ? bytes : new Uint8Array(bytes);
+  const blob = new Blob([part], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
