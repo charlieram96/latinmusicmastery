@@ -9,6 +9,7 @@ import { ExerciseStudio } from './exercise-studio';
 import { StudioWorkspace } from './studio-workspace';
 import { VideoSectionsWorkspace } from './video-sections-workspace';
 import { StudioSetup } from '@/components/playsense-studio/studio/studio-setup';
+import { adminStudioBackHref } from '@/lib/playsense-studio/admin-nav';
 
 interface PageProps {
   params: Promise<{ classItemId: string }>;
@@ -34,10 +35,17 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
 
   const { data: classItem } = await supabase
     .from('class_items')
-    .select('id, title, item_type, video_url, video_duration_seconds, score_document_id')
+    .select(
+      'id, title, item_type, video_url, video_duration_seconds, score_document_id, class:classes(section:course_sections(course_id))'
+    )
     .eq('id', classItemId)
     .single();
   if (!classItem) notFound();
+
+  // The Studio's back link returns to the owning course's overview page.
+  const courseId = (classItem.class as { section: { course_id: string } | null } | null)?.section
+    ?.course_id;
+  const backHref = adminStudioBackHref(courseId);
 
   // VIDEO lessons support MULTIPLE scored sections (each anchored at a different
   // point in the video). They're authored in their own sections workspace, which
@@ -48,6 +56,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
     return (
       <VideoSectionsWorkspace
         classItemId={classItemId}
+        backHref={backHref}
         title={classItem.title}
         videoUrl={classItem.video_url}
         videoDurationSeconds={classItem.video_duration_seconds}
@@ -77,6 +86,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
         // reseeds from the new document instead of keeping stale state.
         key={classItem.score_document_id ?? 'no-score'}
         classItemId={classItemId}
+        backHref={backHref}
         title={classItem.title}
         videoUrl={classItem.video_url}
         videoDurationSeconds={classItem.video_duration_seconds}
@@ -96,7 +106,9 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
 
   // No score yet → setup (import/create) lives here in the Studio.
   if (!classItem.score_document_id) {
-    return <StudioSetup classItemId={classItemId} classItemTitle={classItem.title} />;
+    return (
+      <StudioSetup classItemId={classItemId} classItemTitle={classItem.title} backHref={backHref} />
+    );
   }
 
   const result = await getScoreDocumentForClassItem(classItemId);
@@ -108,6 +120,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
       // editor reseeds from the new document instead of keeping stale state.
       key={classItem.score_document_id}
       owner={{ kind: 'classItem', classItemId }}
+      backHref={backHref}
       mode="video"
       title={classItem.title}
       videoUrl={classItem.video_url}

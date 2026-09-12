@@ -27,6 +27,8 @@ import { cn } from '@/lib/utils';
 
 export interface VideoSectionsWorkspaceProps {
   classItemId: string;
+  /** Where the app-bar back link lands (the owning course's overview). */
+  backHref?: string;
   title: string;
   videoUrl: string | null;
   videoDurationSeconds: number | null;
@@ -44,6 +46,7 @@ function fmt(s: number | null): string {
 
 export function VideoSectionsWorkspace({
   classItemId,
+  backHref = '/admin/courses',
   title,
   videoUrl,
   videoDurationSeconds,
@@ -125,7 +128,7 @@ export function VideoSectionsWorkspace({
       {/* ---- App bar ---- */}
       <header className="st-appbar">
         <Link
-          href="/admin/courses"
+          href={backHref}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />

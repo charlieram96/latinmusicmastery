@@ -44,6 +44,8 @@ interface ExercisePayload {
 
 export interface ExerciseStudioProps {
   classItemId: string;
+  /** Where the app-bar back link lands (the owning course's overview). */
+  backHref?: string;
   title: string;
   videoUrl: string | null;
   videoDurationSeconds: number | null;
@@ -63,6 +65,7 @@ export interface ExerciseStudioProps {
 
 export function ExerciseStudio({
   classItemId,
+  backHref,
   title,
   videoUrl,
   videoDurationSeconds,
@@ -169,6 +172,7 @@ export function ExerciseStudio({
       <VideoSectionsWorkspace
         key={`watch-${switchCount}`}
         classItemId={classItemId}
+        backHref={backHref}
         title={title}
         videoUrl={videoUrl}
         videoDurationSeconds={videoDurationSeconds}
@@ -179,13 +183,21 @@ export function ExerciseStudio({
   }
 
   if (!exercisePayload) {
-    return <StudioSetup classItemId={classItemId} classItemTitle={title} appBarExtra={toggle} />;
+    return (
+      <StudioSetup
+        classItemId={classItemId}
+        classItemTitle={title}
+        backHref={backHref}
+        appBarExtra={toggle}
+      />
+    );
   }
 
   return (
     <StudioWorkspace
       key={`exercise-${switchCount}-${exercisePayload.scoreDocumentId}`}
       owner={{ kind: 'classItem', classItemId }}
+      backHref={backHref}
       mode="exercise"
       title={title}
       videoUrl={videoUrl}
