@@ -4,7 +4,7 @@
 
 **Goal:** Export one PlaySense Studio scored section as a vector PDF, a MusicXML file, or a MIDI file, from the admin studio (dialog) and the student player (two-item menu).
 
-**Architecture:** All writers are pure browser-side modules under `lib/playsense-studio/export/` that take the in-memory `ScoreDocument` and return bytes. The PDF path engraves each track row-by-row with VexFlow into standalone SVGs (reusing the existing `extractTrackEvents` / `formatMeasureVoice` helpers and a shared row-packing plan so every track wraps identically), then translates those SVGs into `pdf-lib` drawing calls with the Bravura and Academico fonts embedded through `@pdf-lib/fontkit`. UI is two thin components: an admin `ExportDialog` (Radix Dialog, studio chip styles) and a student `DownloadMenu`.
+**Architecture:** All writers are pure browser-side modules under `lib/playsense-studio/export/` that take the in-memory `ScoreDocument` and return bytes. The PDF path engraves each track row-by-row with VexFlow into standalone SVGs (reusing the existing `extractTrackEvents` / `formatMeasureVoice` helpers and a shared row-packing plan so every track wraps identically), then translates those SVGs into `pdf-lib` drawing calls, drawing every Bravura/Academico glyph as a vector outline obtained through `@pdf-lib/fontkit` (pdf-lib's own font embedding is broken for these fonts). UI is two thin components: an admin `ExportDialog` (Radix Dialog, studio chip styles) and a student `DownloadMenu`.
 
 **Tech Stack:** TypeScript, React 19, Next 16, VexFlow 5.0.0 (SVG backend), pdf-lib 1.17.1, @pdf-lib/fontkit (new), @tonejs/midi 2.0.28, vitest 3 (node env by default, `// @vitest-environment jsdom` per file), jsdom 26.
 
@@ -15,7 +15,7 @@
 - Formats: PDF, MusicXML (`.musicxml`, MusicXML 4.0 partwise, uncompressed), MIDI (`.mid`, type 1). Students see PDF and MusicXML only; MIDI is admin only.
 - Filenames: `<class-item-slug>_section-<n>.<ext>`; slug lowercase ASCII, hyphens, accents stripped, max 60 chars.
 - PDF page sizes: Letter 612×792 pt, A4 595.28×841.89 pt. Margins 54 pt.
-- PDF prose text uses pdf-lib built-in Helvetica / Helvetica-Bold. Music glyphs use embedded Bravura; VexFlow text (tab numbers, annotations) uses embedded Academico.
+- PDF prose text uses pdf-lib built-in Helvetica / Helvetica-Bold. Music glyphs and VexFlow text (Bravura, Academico) are drawn as vector outlines from the font files via fontkit; no notation font is ever embedded with pdf-lib (its subsetter corrupts them).
 - Branding (line "class item title · Section N of M" plus footer "Latin Music Mastery · latinmusicmastery.com") is on by default; admin checkbox turns it off.
 - Repeats collapsed by default (matching the student view); "Expand repeats" renders every pass. MIDI always expands.
 - Every test file lives under a `__tests__/` directory (vitest include glob). Tests import `{ describe, it, expect } from 'vitest'` explicitly. Tests that touch the DOM start with `// @vitest-environment jsdom`.
@@ -40,10 +40,11 @@ lib/playsense-studio/export/
   midi-writer.ts             writeMidi(score, trackIndexes): Uint8Array
   pdf/
     fonts.ts                 loadNotationFonts(): Promise<{ bravura: Uint8Array; academico: Uint8Array }>
+    glyph-outlines.ts        createGlyphOutliner(bytes): GlyphOutliner (per-character SVG outlines)
     row-plan.ts              buildRowPlan(score, trackIndexes, availWidth): RowPlan
     engrave.ts               engraveTrackRows(score, trackIndex, plan): EngravedTrack
     page-plan.ts             PAGE_SIZES, planPages(...)
-    svg-to-pdf.ts            drawSvgOnPage(page, svg, fonts, transform)
+    svg-to-pdf.ts            drawSvgOnPage(page, svg, glyphs, transform)
     render-section.ts        renderSectionPdf(request): Promise<Uint8Array>
   __tests__/
     filename.test.ts
@@ -70,16 +71,17 @@ scripts/extract-notation-fonts.mjs   one-off extractor (kept so the files can be
 
 ### Task 1: Font extraction and the fontkit embedding spike
 
-This task settles the one open risk in the spec: can pdf-lib embed VexFlow's Bravura (a CFF-flavoured OpenType font shipped as WOFF2) and draw a SMuFL glyph? If the test in Step 5 fails, follow the fallback in Step 7 before continuing.
+This task settles the one open risk in the spec. The first attempt showed pdf-lib cannot embed VexFlow's fonts (its subsetter corrupts them and the OTF path crashes), so music glyphs are drawn as vector outlines obtained from the font with fontkit. pdf-lib never embeds a notation font.
 
 **Files:**
 - Create: `scripts/extract-notation-fonts.mjs`
 - Create: `public/fonts/notation/bravura.woff2`, `public/fonts/notation/academico.woff2` (generated)
 - Create: `lib/playsense-studio/export/pdf/fonts.ts`
+- Create: `lib/playsense-studio/export/pdf/glyph-outlines.ts`
 - Test: `lib/playsense-studio/export/__tests__/fonts-embed.test.ts`
 
 **Interfaces:**
-- Produces: `loadNotationFonts(fetchImpl?: typeof fetch): Promise<NotationFontBytes>` where `NotationFontBytes = { bravura: Uint8Array; academico: Uint8Array }`. Also `NOTATION_FONT_URLS = { bravura: '/fonts/notation/bravura.woff2', academico: '/fonts/notation/academico.woff2' }`.
+- Produces: `loadNotationFonts(fetchImpl?: typeof fetch): Promise<NotationFontBytes>` where `NotationFontBytes = { bravura: Uint8Array; academico: Uint8Array }`; `NOTATION_FONT_URLS`; and `createGlyphOutliner(bytes: Uint8Array): GlyphOutliner` with `GlyphOutliner = { unitsPerEm: number; outline(codePoint): { d: string; advance: number } | null; widthOf(text, size): number }` (file `pdf/glyph-outlines.ts`).
 
 - [ ] **Step 1: Install fontkit**
 
@@ -128,12 +130,12 @@ node scripts/extract-notation-fonts.mjs && ls -la public/fonts/notation
 ```
 Expected: two files, bravura around 240 KB, academico around 60 KB.
 
-- [ ] **Step 4: Write `fonts.ts`**
+- [ ] **Step 4: Write `fonts.ts`** (byte loader, unchanged in spirit)
 
 ```ts
 // lib/playsense-studio/export/pdf/fonts.ts
-// Fetches the notation fonts the PDF exporter embeds. Bytes are cached for the
-// page lifetime so repeated exports do not refetch.
+// Fetches the notation font bytes the PDF exporter turns into glyph outlines.
+// Bytes are cached for the page lifetime so repeated exports do not refetch.
 
 export const NOTATION_FONT_URLS = {
   bravura: '/fonts/notation/bravura.woff2',
@@ -170,7 +172,60 @@ export function resetNotationFontCache(): void {
 }
 ```
 
-- [ ] **Step 5: Write the embedding test (the spike)**
+- [ ] **Step 5: Write `glyph-outlines.ts`**
+
+pdf-lib's font subsetter (`embedFont(bytes, { subset: true })`) writes corrupted glyph programs for both Bravura and Academico, and `subset: false` on the OTF yields zero-width glyphs (verified in this task's first attempt; see the report). So the exporter never embeds a notation font. Instead it asks fontkit for each glyph's outline and draws it as an SVG path. fontkit parses the WOFF2 bytes correctly; only pdf-lib's re-encoder is broken.
+
+```ts
+// lib/playsense-studio/export/pdf/glyph-outlines.ts
+// Turns notation font bytes into per-character SVG path outlines, so the PDF
+// exporter draws music glyphs as vector paths instead of embedding the font.
+import fontkit from '@pdf-lib/fontkit';
+
+export interface GlyphOutline {
+  /** SVG path data in font units, y-axis already flipped to point DOWN. */
+  d: string;
+  /** Horizontal advance in font units. */
+  advance: number;
+}
+
+export interface GlyphOutliner {
+  unitsPerEm: number;
+  /** Outline for one code point, or null when the font has no glyph for it. */
+  outline(codePoint: number): GlyphOutline | null;
+  /** Total advance of a string at a font size, in the same units as `size`. */
+  widthOf(text: string, size: number): number;
+}
+
+export function createGlyphOutliner(bytes: Uint8Array): GlyphOutliner {
+  const font = fontkit.create(bytes as unknown as Buffer);
+  const cache = new Map<number, GlyphOutline | null>();
+  const outline = (codePoint: number): GlyphOutline | null => {
+    if (cache.has(codePoint)) return cache.get(codePoint)!;
+    const glyph = font.hasGlyphForCodePoint(codePoint) ? font.glyphForCodePoint(codePoint) : null;
+    let result: GlyphOutline | null = null;
+    if (glyph) {
+      // fontkit paths are y-up; flip so pdf-lib's drawSvgPath (y-down) draws them upright.
+      const d = glyph.path.transform(1, 0, 0, -1, 0, 0).toSVG();
+      result = { d, advance: glyph.advanceWidth };
+    }
+    cache.set(codePoint, result);
+    return result;
+  };
+  return {
+    unitsPerEm: font.unitsPerEm,
+    outline,
+    widthOf(text, size) {
+      let total = 0;
+      for (const ch of text) total += outline(ch.codePointAt(0)!)?.advance ?? 0;
+      return (total / font.unitsPerEm) * size;
+    },
+  };
+}
+```
+`@pdf-lib/fontkit` ships a browser build with its own Buffer shim (pdf-lib itself calls `fontkit.create` on a Uint8Array in the browser), so the cast is safe in both node and the browser.
+
+- [ ] **Step 6: Write the outline test (the spike)**
 
 ```ts
 // lib/playsense-studio/export/__tests__/fonts-embed.test.ts
@@ -178,57 +233,71 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { PDFDocument, rgb } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
+import { createGlyphOutliner } from '../pdf/glyph-outlines';
 
 const fontsDir = path.resolve(__dirname, '../../../../public/fonts/notation');
+const bravura = () => createGlyphOutliner(new Uint8Array(readFileSync(path.join(fontsDir, 'bravura.woff2'))));
+const academico = () => createGlyphOutliner(new Uint8Array(readFileSync(path.join(fontsDir, 'academico.woff2'))));
 
-describe('notation fonts — pdf-lib embedding', () => {
-  it('embeds Bravura and draws a SMuFL glyph', async () => {
-    const bravura = readFileSync(path.join(fontsDir, 'bravura.woff2'));
-    const doc = await PDFDocument.create();
-    doc.registerFontkit(fontkit);
-    const font = await doc.embedFont(bravura, { subset: true });
-    const page = doc.addPage([200, 100]);
-    // U+E0A4 noteheadBlack, U+E050 gClef
-    page.drawText('\uE050\uE0A4', { x: 20, y: 40, size: 30, font, color: rgb(0, 0, 0) });
-    const bytes = await doc.save();
-    expect(bytes.length).toBeGreaterThan(1000);
-    expect(String.fromCharCode(...bytes.slice(0, 5))).toBe('%PDF-');
-    expect(font.widthOfTextAtSize('\uE0A4', 30)).toBeGreaterThan(0);
+describe('notation glyph outlines', () => {
+  it('yields a sane outline for the G clef and a notehead', () => {
+    const f = bravura();
+    const clef = f.outline(0xe050)!;
+    const head = f.outline(0xe0a4)!;
+    expect(clef.d.length).toBeGreaterThan(200);
+    expect(head.d.length).toBeGreaterThan(50);
+    expect(clef.advance).toBeGreaterThan(0);
+    // All coordinates stay inside a few ems: no garbage from a broken decode.
+    const nums = clef.d.match(/-?\d+(\.\d+)?/g)!.map(Number);
+    expect(Math.max(...nums.map(Math.abs))).toBeLessThan(f.unitsPerEm * 4);
+    expect(f.outline(0x10ffff)).toBeNull();
   });
 
-  it('embeds Academico and measures plain text', async () => {
-    const academico = readFileSync(path.join(fontsDir, 'academico.woff2'));
+  it('measures text advances', () => {
+    const a = academico();
+    expect(a.widthOf('12', 10)).toBeGreaterThan(0);
+    expect(a.widthOf('12', 20)).toBeCloseTo(a.widthOf('12', 10) * 2, 6);
+  });
+
+  it('draws the outlines into a PDF without embedding a font', async () => {
+    const f = bravura();
     const doc = await PDFDocument.create();
-    doc.registerFontkit(fontkit);
-    const font = await doc.embedFont(academico, { subset: true });
-    expect(font.widthOfTextAtSize('12', 10)).toBeGreaterThan(0);
+    const page = doc.addPage([200, 100]);
+    const size = 30;
+    const scale = size / f.unitsPerEm;
+    let x = 20;
+    for (const cp of [0xe050, 0xe0a4]) {
+      const g = f.outline(cp)!;
+      page.drawSvgPath(g.d, { x, y: 40, scale, color: rgb(0, 0, 0), borderWidth: 0 });
+      x += g.advance * scale + 6;
+    }
+    const bytes = await doc.save();
+    expect(String.fromCharCode(...bytes.slice(0, 5))).toBe('%PDF-');
+    expect(bytes.length).toBeGreaterThan(1000);
+    expect(doc.getForm().getFields()).toHaveLength(0);
+    // No embedded font program in the file.
+    expect(Buffer.from(bytes).includes(Buffer.from('/FontFile'))).toBe(false);
   });
 });
 ```
 
-- [ ] **Step 6: Run the test**
+- [ ] **Step 7: Run the test and rasterize the PDF once**
 
 ```bash
 npx vitest run lib/playsense-studio/export/__tests__/fonts-embed.test.ts
 ```
-Expected: PASS for both. Also open the PDF once by hand: temporarily add `writeFileSync('/tmp/bravura-spike.pdf', bytes)` inside the first test, run it, open the file in Preview, confirm a G clef and a notehead appear, then remove the line.
-
-- [ ] **Step 7: Fallback only if Step 6 fails**
-
-If `embedFont` throws on the WOFF2 bytes (fontkit reports "Unknown font format" or the subset step fails on CFF), download the OTF release instead and switch the URLs:
+Expected: PASS (3 tests). Then prove the glyphs are visible: temporarily add `writeFileSync('/tmp/bravura-spike.pdf', bytes)` inside the third test, run it, and rasterize with PyMuPDF (already available from the first attempt) or `qlmanage -t -s 800 /tmp/bravura-spike.pdf -o /tmp`:
 
 ```bash
-curl -L -o /tmp/bravura.zip https://github.com/steinbergmedia/bravura/releases/latest/download/bravura.zip
-unzip -o /tmp/bravura.zip -d /tmp/bravura && cp /tmp/bravura/*/otf/Bravura.otf public/fonts/notation/bravura.otf
+python3 -c "import fitz; p=fitz.open('/tmp/bravura-spike.pdf')[0].get_pixmap(dpi=144); p.save('/tmp/bravura-spike.png'); import statistics; print('nonwhite', sum(1 for b in p.samples if b < 128))"
 ```
-Change `NOTATION_FONT_URLS.bravura` to `/fonts/notation/bravura.otf`, point the test at `bravura.otf`, and for Academico use `StandardFonts.Helvetica` in `svg-to-pdf.ts` (Task 7 already maps unknown families to Helvetica). Record which path was taken in the commit message.
+Expected: a non-zero non-white pixel count, and the PNG shows a G clef and a black notehead. Record the count in the report and remove the debug line.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add package.json package-lock.json scripts/extract-notation-fonts.mjs public/fonts/notation lib/playsense-studio/export/pdf/fonts.ts lib/playsense-studio/export/__tests__/fonts-embed.test.ts
-git commit -m "Add notation font extraction and pdf-lib embedding for sheet music export"
+git add package.json package-lock.json scripts/extract-notation-fonts.mjs public/fonts/notation lib/playsense-studio/export/pdf/fonts.ts lib/playsense-studio/export/pdf/glyph-outlines.ts lib/playsense-studio/export/__tests__/fonts-embed.test.ts
+git commit -m "Draw notation glyphs as outlines for sheet music export"
 ```
 
 ---
@@ -1055,15 +1124,16 @@ VexFlow's SVG backend emits only `svg`, `g`, `path`, `rect` and `text`. This mod
 - Test: `lib/playsense-studio/export/__tests__/svg-to-pdf.test.ts` (jsdom)
 
 **Interfaces:**
-- Consumes: pdf-lib `PDFPage`, `PDFFont`, `rgb`.
+- Consumes: pdf-lib `PDFPage`, `PDFFont`, `rgb`; `GlyphOutliner` from `./glyph-outlines` (Task 1).
 - Produces:
 ```ts
-export interface PdfFonts { bravura: PDFFont; academico: PDFFont; helvetica: PDFFont }
+export interface PdfFonts { bravura: GlyphOutliner; academico: GlyphOutliner; helvetica: PDFFont }
 export interface RowTransform { x: number; yTop: number; scale: number; pageHeight: number }
 export function drawSvgOnPage(page: PDFPage, svg: SVGSVGElement, fonts: PdfFonts, t: RowTransform): void
 export function parseFontSizePx(value: string | null): number   // '10pt' -> 13.333, '12px' -> 12, '9' -> 9
-export function fontFor(family: string | null, fonts: PdfFonts): PDFFont
+export function outlinerFor(family: string | null, fonts: PdfFonts): GlyphOutliner | null  // Bravura/Academico -> outliner, else null (Helvetica text)
 ```
+Text in Bravura or Academico is drawn glyph by glyph with `page.drawSvgPath(outline.d, { x, y: baseline, scale: sizePx * t.scale / unitsPerEm, color, borderWidth: 0 })`, advancing `x` by `advance * scale` per glyph. Any other family falls back to `page.drawText` with Helvetica.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1071,7 +1141,7 @@ export function fontFor(family: string | null, fonts: PdfFonts): PDFFont
 // @vitest-environment jsdom
 // lib/playsense-studio/export/__tests__/svg-to-pdf.test.ts
 import { describe, expect, it, vi } from 'vitest';
-import { drawSvgOnPage, fontFor, parseFontSizePx } from '../pdf/svg-to-pdf';
+import { drawSvgOnPage, outlinerFor, parseFontSizePx } from '../pdf/svg-to-pdf';
 import type { PDFFont, PDFPage } from 'pdf-lib';
 
 const svgOf = (inner: string): SVGSVGElement => {
@@ -1079,7 +1149,13 @@ const svgOf = (inner: string): SVGSVGElement => {
   return doc.documentElement as unknown as SVGSVGElement;
 };
 const fakeFont = (name: string) => ({ name } as unknown as PDFFont);
-const fonts = { bravura: fakeFont('Bravura'), academico: fakeFont('Academico'), helvetica: fakeFont('Helvetica') };
+// Fake outliner: every code point is a 1000-unit square, advance 1000.
+const fakeOutliner = (tag: string) => ({
+  unitsPerEm: 1000,
+  outline: (cp: number) => ({ d: `M0 0 L1000 0 L1000 -1000 L0 -1000 Z ${tag}${cp}`, advance: 1000 }),
+  widthOf: (text: string, size: number) => text.length * size,
+});
+const fonts = { bravura: fakeOutliner('B'), academico: fakeOutliner('A'), helvetica: fakeFont('Helvetica') };
 const fakePage = () => ({ drawSvgPath: vi.fn(), drawRectangle: vi.fn(), drawText: vi.fn() }) as unknown as PDFPage & { drawSvgPath: ReturnType<typeof vi.fn>; drawRectangle: ReturnType<typeof vi.fn>; drawText: ReturnType<typeof vi.fn> };
 const t = { x: 54, yTop: 100, scale: 0.5, pageHeight: 792 };
 
@@ -1092,11 +1168,11 @@ describe('parseFontSizePx', () => {
   });
 });
 
-describe('fontFor', () => {
-  it('maps families to embedded fonts and falls back to Helvetica', () => {
-    expect(fontFor('Bravura', fonts)).toBe(fonts.bravura);
-    expect(fontFor('Academico', fonts)).toBe(fonts.academico);
-    expect(fontFor('Arial, sans-serif', fonts)).toBe(fonts.helvetica);
+describe('outlinerFor', () => {
+  it('maps notation families to outliners and everything else to null', () => {
+    expect(outlinerFor('Bravura', fonts)).toBe(fonts.bravura);
+    expect(outlinerFor('Academico', fonts)).toBe(fonts.academico);
+    expect(outlinerFor('Arial, sans-serif', fonts)).toBeNull();
   });
 });
 
@@ -1123,15 +1199,29 @@ describe('drawSvgOnPage', () => {
     expect(opts.height).toBe(2);
   });
 
-  it('draws text with the matching embedded font and scaled size', () => {
+  it('draws notation text glyph by glyph as outlines at the scaled size', () => {
     const page = fakePage();
-    drawSvgOnPage(page, svgOf('<text x="4" y="30" font-family="Bravura" font-size="30pt">\uE050</text>'), fonts, t);
+    drawSvgOnPage(page, svgOf('<text x="4" y="30" font-family="Bravura" font-size="30pt">\uE050\uE0A4</text>'), fonts, t);
+    expect(page.drawText).not.toHaveBeenCalled();
+    expect(page.drawSvgPath).toHaveBeenCalledTimes(2);
+    const [d1, o1] = page.drawSvgPath.mock.calls[0];
+    const [, o2] = page.drawSvgPath.mock.calls[1];
+    expect(d1).toContain('B57424'); // 0xE050
+    const glyphScale = (40 * 0.5) / 1000; // 30pt -> 40px, times row scale, per font unit
+    expect(o1.scale).toBeCloseTo(glyphScale, 9);
+    expect(o1.x).toBe(54 + 2);
+    expect(o1.y).toBe(792 - 100 - 15);
+    expect(o2.x).toBeCloseTo(54 + 2 + 1000 * glyphScale, 9);
+    expect(o1.borderWidth).toBe(0);
+  });
+
+  it('draws non-notation text with Helvetica', () => {
+    const page = fakePage();
+    drawSvgOnPage(page, svgOf('<text x="0" y="10" font-family="Arial" font-size="12px">hi</text>'), fonts, t);
     const [text, opts] = page.drawText.mock.calls[0];
-    expect(text).toBe('\uE050');
-    expect(opts.font).toBe(fonts.bravura);
-    expect(opts.size).toBeCloseTo(40 * 0.5, 6);
-    expect(opts.x).toBe(54 + 2);
-    expect(opts.y).toBe(792 - 100 - 15);
+    expect(text).toBe('hi');
+    expect(opts.font).toBe(fonts.helvetica);
+    expect(opts.size).toBe(6);
   });
 
   it('applies a group translate to children', () => {
@@ -1170,8 +1260,9 @@ Expected: FAIL, cannot resolve `../pdf/svg-to-pdf`.
 // Translates a VexFlow row SVG into pdf-lib drawing calls. VexFlow's SVG
 // context only ever emits svg / g / path / rect / text.
 import { rgb, type PDFFont, type PDFPage } from 'pdf-lib';
+import type { GlyphOutliner } from './glyph-outlines';
 
-export interface PdfFonts { bravura: PDFFont; academico: PDFFont; helvetica: PDFFont }
+export interface PdfFonts { bravura: GlyphOutliner; academico: GlyphOutliner; helvetica: PDFFont }
 export interface RowTransform { x: number; yTop: number; scale: number; pageHeight: number }
 
 const PT_TO_PX = 4 / 3;
@@ -1184,11 +1275,11 @@ export function parseFontSizePx(value: string | null): number {
   return value.trim().endsWith('pt') ? n * PT_TO_PX : n;
 }
 
-export function fontFor(family: string | null, fonts: PdfFonts): PDFFont {
+export function outlinerFor(family: string | null, fonts: PdfFonts): GlyphOutliner | null {
   const f = (family ?? '').toLowerCase();
   if (f.includes('bravura')) return fonts.bravura;
   if (f.includes('academico')) return fonts.academico;
-  return fonts.helvetica;
+  return null;
 }
 
 function isNone(value: string | null): boolean {
@@ -1257,13 +1348,22 @@ export function drawSvgOnPage(page: PDFPage, svg: SVGSVGElement, fonts: PdfFonts
         const x = Number(el.getAttribute('x') ?? 0) + cursor.dx;
         const y = Number(el.getAttribute('y') ?? 0) + cursor.dy;
         const sizePx = parseFontSizePx(el.getAttribute('font-size'));
-        page.drawText(text, {
-          x: t.x + x * t.scale,
-          y: t.pageHeight - t.yTop - y * t.scale,
-          size: sizePx * t.scale,
-          font: fontFor(el.getAttribute('font-family'), fonts),
-          color: BLACK,
-        });
+        const baseX = t.x + x * t.scale;
+        const baseY = t.pageHeight - t.yTop - y * t.scale;
+        const outliner = outlinerFor(el.getAttribute('font-family'), fonts);
+        if (!outliner) {
+          page.drawText(text, { x: baseX, y: baseY, size: sizePx * t.scale, font: fonts.helvetica, color: BLACK });
+          return;
+        }
+        // Notation glyphs: one outline per code point, advanced like a text run.
+        const glyphScale = (sizePx * t.scale) / outliner.unitsPerEm;
+        let penX = baseX;
+        for (const ch of text) {
+          const g = outliner.outline(ch.codePointAt(0)!);
+          if (!g) continue;
+          page.drawSvgPath(g.d, { x: penX, y: baseY, scale: glyphScale, color: BLACK, borderWidth: 0 });
+          penX += g.advance * glyphScale;
+        }
         return;
       }
       default:
@@ -1280,7 +1380,7 @@ Fill and stroke colours are always black on purpose: the on-screen renderer uses
 ```bash
 npx vitest run lib/playsense-studio/export/__tests__/svg-to-pdf.test.ts
 ```
-Expected: PASS (8 tests). If VexFlow's text uses `font-size="30"` without a unit somewhere, the parser treats it as px, matching the browser.
+Expected: PASS (9 tests). If VexFlow's text uses `font-size="30"` without a unit somewhere, the parser treats it as px, matching the browser.
 
 - [ ] **Step 5: Commit**
 
@@ -1386,9 +1486,9 @@ Expected: FAIL, cannot resolve `../pdf/render-section`.
 ```ts
 // lib/playsense-studio/export/pdf/render-section.ts
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { loadNotationFonts, type NotationFontBytes } from './fonts';
+import { createGlyphOutliner } from './glyph-outlines';
 import { buildRowPlan } from './row-plan';
 import { engraveTrackRows, PRINT_PADDING_X, type EngravedTrack } from './engrave';
 import { PAGE_MARGIN, PAGE_SIZES, planPages, type PageSize } from './page-plan';
@@ -1477,12 +1577,11 @@ export async function renderSectionPdf(
   const trackForSlot = (system: number, slot: number): EngravedTrack => systems[system][slot];
 
   const doc = await PDFDocument.create();
-  doc.registerFontkit(fontkit);
   doc.setTitle(score.title);
   doc.setProducer('Latin Music Mastery · PlaySense Studio');
   const fonts: PdfFonts = {
-    bravura: await doc.embedFont(fontBytes.bravura, { subset: true }),
-    academico: await doc.embedFont(fontBytes.academico, { subset: true }),
+    bravura: createGlyphOutliner(fontBytes.bravura),
+    academico: createGlyphOutliner(fontBytes.academico),
     helvetica: await doc.embedFont(StandardFonts.Helvetica),
   };
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
@@ -1529,7 +1628,7 @@ export async function renderSectionPdf(
   return doc.save();
 }
 ```
-Note the tempo mark writes `q = 96` with Helvetica because Helvetica has no quarter-note glyph. Improve it in the same task: draw `'\uECA5'` (SMuFL metNoteQuarterUp) with `fonts.bravura` at size 10 followed by ` = 96` in bold Helvetica. Keep the fallback `q` only if the glyph has zero width.
+Note the tempo mark writes `q = 96` with Helvetica because Helvetica has no quarter-note glyph. Improve it in the same task: draw the outline of `0xECA5` (SMuFL metNoteQuarterUp) from `fonts.bravura` with `page.drawSvgPath(outline.d, { x, y, scale: 10 / fonts.bravura.unitsPerEm, color: INK, borderWidth: 0 })`, then ` = 96` in bold Helvetica advanced by `outline.advance * scale + 3`. Keep the `q` fallback only when `outline(0xECA5)` is null.
 
 - [ ] **Step 4: Run the test**
 
