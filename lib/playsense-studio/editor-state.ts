@@ -58,6 +58,7 @@ export type EditorAction =
   | { type: 'repeat-measures'; trackIndex: number; start: number; end: number; count: number; id: string }
   | { type: 'unlink-repeat'; trackIndex: number; id: string }
   | { type: 'delete-measure'; trackIndex: number; measureIndex: number }
+  | { type: 'set-measure-final-bar'; trackIndex: number; measureIndex: number; final: boolean }
   | {
       type: 'add-note';
       trackIndex: number;
@@ -276,6 +277,18 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (!t || t.measures.length <= 1) return state;
       t.measures.splice(action.measureIndex, 1);
       t.measures.forEach((m, i) => (m.number = i + 1));
+      return withHistory(state, next);
+    }
+    case 'set-measure-final-bar': {
+      const next = clone(state.score);
+      const track = next.tracks[action.trackIndex];
+      const measure = track?.measures[action.measureIndex];
+      if (!track || !measure) return state;
+      // Persist only overrides of the automatic rule so the bar follows the
+      // last measure as measures are added or deleted.
+      const automatic = action.measureIndex === track.measures.length - 1;
+      if (action.final === automatic) delete measure.endBarline;
+      else measure.endBarline = action.final ? 'final' : 'single';
       return withHistory(state, next);
     }
     case 'add-note': {

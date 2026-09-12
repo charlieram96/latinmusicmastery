@@ -92,6 +92,7 @@ const measureSchema = z.object({
   timeSignature: timeSignatureSchema.optional(),
   tempoChange: z.number().positive().optional(),
   keyFifths: z.number().int().min(-7).max(7).optional(),
+  endBarline: z.enum(['single', 'final']).optional(),
   voices: z.array(voiceSchema).min(1),
 });
 

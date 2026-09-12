@@ -83,3 +83,13 @@ describe('parseScoreDocument — discriminated union', () => {
     expect(() => parseScoreDocument(bad)).toThrow(ScoreDocumentValidationError);
   });
 });
+
+describe('parseScoreDocument — measure end barline', () => {
+  it('round-trips an explicit endBarline and rejects unknown values', () => {
+    const base = serializeScoreDocument(GUITAR_LICK_FIXTURE) as { tracks: Array<{ measures: Array<Record<string, unknown>> }> };
+    base.tracks[0].measures[1].endBarline = 'single';
+    expect(parseScoreDocument(base).tracks[0].measures[1].endBarline).toBe('single');
+    base.tracks[0].measures[1].endBarline = 'double';
+    expect(() => parseScoreDocument(base)).toThrow(ScoreDocumentValidationError);
+  });
+});
