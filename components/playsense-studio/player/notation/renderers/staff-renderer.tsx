@@ -20,6 +20,7 @@
 // by interpolating between note anchors and fires onSeek.
 
 import { createStaveNote } from '@/lib/playsense-studio/percussion-stave-note';
+import { hasFinalBarline } from '@/lib/playsense-studio/barlines';
 import { useEffect, useMemo, useRef } from 'react';
 import { repeatProjection } from '@/lib/playsense-studio/repeats';
 import {
@@ -583,6 +584,9 @@ class StaffRendererImpl implements ScoreRenderer {
       if (repeat?.offset === 0) stave.setBegBarType(BarlineType.REPEAT_BEGIN);
       if (repeat && repeat.offset === repeat.length - 1) {
         stave.setEndBarType(BarlineType.REPEAT_END);
+      } else if (hasFinalBarline(track.measures, p.blockIndex)) {
+        // The section's last measure closes with a final bar, like the end of a piece.
+        stave.setEndBarType(BarlineType.END);
       }
       if (p.showHeader) {
         stave.addClef(block.clef).addTimeSignature(

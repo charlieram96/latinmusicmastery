@@ -39,12 +39,15 @@ import type {
   TeacherOption,
 } from './types'
 import { parseSubtitles } from '@/lib/subtitles/tracks'
+import { resolveInitialSelection, type InitialSelectionRequest } from './initial-selection'
 
 interface CourseStudioProps {
   course: CourseStudioCourse
   musicalStyles: MusicalStyleOption[]
   teachers: TeacherOption[]
   initialSections: SectionWithClasses[]
+  /** Lesson/item to open on first render (e.g. from `?class=…&item=…`). */
+  initialSelection?: InitialSelectionRequest
 }
 
 export function CourseStudio(props: CourseStudioProps) {
@@ -57,29 +60,26 @@ export function CourseStudio(props: CourseStudioProps) {
 
 const DRAWER_WIDTHS = { narrow: 420, wide: 660 } as const
 
-function StudioWorkspace({ course, musicalStyles, teachers, initialSections }: CourseStudioProps) {
+function StudioWorkspace({
+  course,
+  musicalStyles,
+  teachers,
+  initialSections,
+  initialSelection,
+}: CourseStudioProps) {
   const { track } = useSaveStatus()
 
   const [sections, setSections] = useState<SectionWithClasses[]>(initialSections)
   const [settings, setSettings] = useState<CourseStudioCourse>(course)
 
-  // The first class is the most useful landing spot; fall back to the first
-  // module, then to course settings.
-  const firstClass = initialSections.find((s) => s.classes.length > 0)?.classes[0] ?? null
-  const firstModule = initialSections[0] ?? null
-  const initialCenter: CenterSelection = firstClass
-    ? { type: 'class', id: firstClass.id }
-    : firstModule
-      ? { type: 'module', id: firstModule.id }
-      : null
-  const initialDrawer: DrawerSelection = firstClass
-    ? { type: 'class', id: firstClass.id }
-    : firstModule
-      ? { type: 'module', id: firstModule.id }
-      : { type: 'course' }
-
-  const [centerSelection, setCenterSelection] = useState<CenterSelection>(initialCenter)
-  const [drawerSelection, setDrawerSelection] = useState<DrawerSelection>(initialDrawer)
+  // Land on the requested lesson/item when the URL names one (e.g. returning
+  // from PlaySense Studio); otherwise the first class, then module, then settings.
+  const [centerSelection, setCenterSelection] = useState<CenterSelection>(
+    () => resolveInitialSelection(initialSections, initialSelection).center
+  )
+  const [drawerSelection, setDrawerSelection] = useState<DrawerSelection>(
+    () => resolveInitialSelection(initialSections, initialSelection).drawer
+  )
   const [outlineSheetOpen, setOutlineSheetOpen] = useState(false)
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
 

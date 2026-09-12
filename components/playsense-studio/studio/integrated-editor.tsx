@@ -32,6 +32,7 @@ import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type {
   Chord,
   Instrument,
+  Measure,
   Note,
   ScoreDocument,
 } from '@/components/playsense-studio/shared/score-model/types';
@@ -138,6 +139,7 @@ const STEP_MAP: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B
 type EditorTab = 'staff' | 'piano-roll';
 
 import { repeatGroups } from '@/lib/playsense-studio/repeats';
+import { hasFinalBarline } from '@/lib/playsense-studio/barlines';
 
 export interface IntegratedEditorMeasureTiming {
   measureNumber: number;
@@ -175,6 +177,11 @@ export interface IntegratedEditorProps {
   onSelectionChange?: (selection: { ref: SelectedEventRef; trackIndex: number } | null) => void;
   /** Horizontal wheel/trackpad pan over the staff (shared timeline scroll). */
   onScrollByPx?: (dx: number) => void;
+}
+
+/** A repeat's closing bar (with dots) replaces any final bar on that measure. */
+function isRepeatEnd(measure: Measure): boolean {
+  return !!measure.repeat && measure.repeat.offset === measure.repeat.length - 1;
 }
 
 export const IntegratedEditor = memo(function IntegratedEditor({
@@ -380,6 +387,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         measureIndex: i,
         measureNumber: tracked[i].measure.number,
         repeatPass: tracked[i].measure.repeat,
+        finalBarline: isRepeatEnd(tracked[i].measure) ? false : hasFinalBarline(activeTrack.measures, i),
         startVideoTimeSeconds: measureTimings[i].startVideoTimeSeconds,
         endVideoTimeSeconds: measureTimings[i].endVideoTimeSeconds,
         events: tracked[i].events,
@@ -395,6 +403,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const targetMeasureIndex = selected
     ? selected.measureIndex
     : Math.min(selectedMeasureIndex ?? Math.max(0, (activeTrack?.measures.length ?? 1) - 1), Math.max(0, (activeTrack?.measures.length ?? 1) - 1));
+
+  // Closing-bar state of the target measure — drives the Double bar toggle.
+  const targetMeasure = activeTrack?.measures[targetMeasureIndex];
+  const targetIsRepeatEnd = !!targetMeasure && isRepeatEnd(targetMeasure);
+  const targetHasFinalBar = !!activeTrack && !targetIsRepeatEnd && hasFinalBarline(activeTrack.measures, targetMeasureIndex);
 
   // Capacity of the target measure for its time signature — drives the readout
   // and disables "Add note" once the measure is full (a filler rest counts as
@@ -786,6 +799,17 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             setSelectedMeasureIndex(null);
           }}>
           Delete measure{selected !== null || selectedMeasureIndex !== null ? ` ${targetMeasureIndex + 1}` : ''}
+        </button>
+        <button type="button" className={`st-chip${targetHasFinalBar ? ' is-on' : ''}`}
+          aria-pressed={targetHasFinalBar}
+          disabled={!activeTrack || targetIsRepeatEnd}
+          title={targetIsRepeatEnd
+            ? 'A repeat already closes this measure'
+            : targetHasFinalBar
+              ? `Remove the double bar that closes measure ${targetMeasureIndex + 1}`
+              : `Close measure ${targetMeasureIndex + 1} with a double bar (the end of the section)`}
+          onClick={() => dispatch({ type: 'set-measure-final-bar', trackIndex: activeTrackIndex, measureIndex: targetMeasureIndex, final: !targetHasFinalBar })}>
+          Double bar{selected !== null || selectedMeasureIndex !== null ? ` ${targetMeasureIndex + 1}` : ''}
         </button>
         <button type="button" className={`st-chip${repeatOpen ? ' is-on' : ''}`} aria-expanded={repeatOpen}
           onClick={() => {

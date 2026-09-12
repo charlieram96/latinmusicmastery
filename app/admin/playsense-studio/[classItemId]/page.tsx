@@ -36,16 +36,22 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
   const { data: classItem } = await supabase
     .from('class_items')
     .select(
-      'id, title, item_type, video_url, video_duration_seconds, score_document_id, class:classes(section:course_sections(course_id))'
+      'id, title, item_type, video_url, video_duration_seconds, score_document_id, class:classes(id, section:course_sections(course_id))'
     )
     .eq('id', classItemId)
     .single();
   if (!classItem) notFound();
 
-  // The Studio's back link returns to the owning course's overview page.
-  const courseId = (classItem.class as { section: { course_id: string } | null } | null)?.section
-    ?.course_id;
-  const backHref = adminStudioBackHref(courseId);
+  // The Studio's back link returns to the owning course with this item's
+  // lesson open and the item selected, so the admin lands where they left.
+  const owningClass = classItem.class as
+    | { id: string; section: { course_id: string } | null }
+    | null;
+  const backHref = adminStudioBackHref({
+    courseId: owningClass?.section?.course_id,
+    classId: owningClass?.id,
+    itemId: classItem.id,
+  });
 
   // VIDEO lessons support MULTIPLE scored sections (each anchored at a different
   // point in the video). They're authored in their own sections workspace, which

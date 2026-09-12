@@ -23,6 +23,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Accidental,
   Articulation,
+  BarlineType,
   Beam,
   Dot,
   Formatter,
@@ -49,6 +50,8 @@ export interface MeasureStripItem {
   measureIndex: number;
   measureNumber: number;
   repeatPass?: { pass: number; count: number };
+  /** Close this measure with a final (thin–thick) bar. */
+  finalBarline?: boolean;
   startVideoTimeSeconds: number;
   endVideoTimeSeconds: number;
   events: VexEventDescriptor[];
@@ -723,6 +726,7 @@ export function EditableMeasureStrip({
               height={height}
               timeSignature={item.timeSignature}
               isFirst={item.isFirst}
+              finalBarline={!!item.finalBarline}
               clef={item.clef}
               onHitsReady={handleHitsReady}
             />
@@ -810,6 +814,7 @@ interface MiniStaveProps {
   height: number;
   timeSignature: [number, number];
   isFirst: boolean;
+  finalBarline: boolean;
   clef: 'treble' | 'percussion';
   onHitsReady: (measureIndex: number, hits: MeasureHit[] | null) => void;
 }
@@ -823,6 +828,7 @@ const MiniStave = memo(function MiniStave({
   height,
   timeSignature,
   isFirst,
+  finalBarline,
   clef,
   onHitsReady,
 }: MiniStaveProps) {
@@ -846,6 +852,7 @@ const MiniStave = memo(function MiniStave({
     if (isFirst) {
       stave.addClef(clef).addTimeSignature(`${timeSignature[0]}/${timeSignature[1]}`);
     }
+    if (finalBarline) stave.setEndBarType(BarlineType.END);
     // Center the staff vertically: put the middle line (line 2 = B4) at the
     // box's vertical center so notes/stems have even headroom above and below.
     stave.setY(Math.round(height / 2 - stave.getYForLine(2)));
@@ -923,7 +930,7 @@ const MiniStave = memo(function MiniStave({
       el.innerHTML = '';
       onHitsReady(measureIndex, null);
     };
-  }, [measureIndex, events, previousEvent, nextEvent, width, height, timeSignature, isFirst, clef, onHitsReady]);
+  }, [measureIndex, events, previousEvent, nextEvent, width, height, timeSignature, isFirst, finalBarline, clef, onHitsReady]);
 
   return <div ref={ref} />;
 });

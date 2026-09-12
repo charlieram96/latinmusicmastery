@@ -7,10 +7,21 @@ interface CourseEditPageProps {
   params: Promise<{
     id: string
   }>
+  /** `?class=<classId>&item=<itemId>` opens that lesson (and item) on load. */
+  searchParams: Promise<{
+    class?: string | string[]
+    item?: string | string[]
+  }>
 }
 
-export default async function CourseEditPage({ params }: CourseEditPageProps) {
-  const { id } = await params
+function firstParam(value: string | string[] | undefined): string | null {
+  const v = Array.isArray(value) ? value[0] : value
+  return v ? v : null
+}
+
+export default async function CourseEditPage({ params, searchParams }: CourseEditPageProps) {
+  const [{ id }, query] = await Promise.all([params, searchParams])
+  const initialSelection = { classId: firstParam(query.class), itemId: firstParam(query.item) }
   const supabase = await createClient()
 
   // Fetch course details
@@ -80,6 +91,7 @@ export default async function CourseEditPage({ params }: CourseEditPageProps) {
         instrument: teacher.instrument,
       }))}
       initialSections={(sections || []) as any}
+      initialSelection={initialSelection}
     />
   )
 }

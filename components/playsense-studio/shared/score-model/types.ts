@@ -70,6 +70,13 @@ export interface Measure {
   tempoChange?: number;
   /** Optional key signature change (fifths). */
   keyFifths?: number;
+  /**
+   * Closing barline override. Unset = automatic: the section's last measure
+   * ends with a final (thin–thick) bar, every other measure with a single bar.
+   * 'single' removes the final bar from the last measure; 'final' adds one to an
+   * inner measure. A repeat's closing bar always wins over this.
+   */
+  endBarline?: 'single' | 'final';
   /** Voices within this measure. Editor permits max 2 in v1. */
   voices: Voice[];
 }

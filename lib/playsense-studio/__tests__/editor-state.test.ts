@@ -75,3 +75,32 @@ describe('editor-state capacity guard', () => {
     expect(events(s1)).toEqual([]);
   });
 });
+
+describe('editor-state final barline', () => {
+  const twoMeasures = () => editorReducer(stateOf(makeScore([])), { type: 'add-measure', trackIndex: 0 });
+
+  it('stores only overrides: removing the bar on the last measure persists, re-adding clears the field', () => {
+    const s1 = editorReducer(twoMeasures(), { type: 'set-measure-final-bar', trackIndex: 0, measureIndex: 1, final: false });
+    expect(s1.score.tracks[0].measures[1].endBarline).toBe('single');
+    expect(s1.isDirty).toBe(true);
+    const s2 = editorReducer(s1, { type: 'set-measure-final-bar', trackIndex: 0, measureIndex: 1, final: true });
+    expect(s2.score.tracks[0].measures[1].endBarline).toBeUndefined();
+  });
+
+  it('adds an explicit final bar to an inner measure and clears it again', () => {
+    const s1 = editorReducer(twoMeasures(), { type: 'set-measure-final-bar', trackIndex: 0, measureIndex: 0, final: true });
+    expect(s1.score.tracks[0].measures[0].endBarline).toBe('final');
+    const s2 = editorReducer(s1, { type: 'set-measure-final-bar', trackIndex: 0, measureIndex: 0, final: false });
+    expect(s2.score.tracks[0].measures[0].endBarline).toBeUndefined();
+  });
+
+  it('ignores an out-of-range measure', () => {
+    const s0 = twoMeasures();
+    expect(editorReducer(s0, { type: 'set-measure-final-bar', trackIndex: 0, measureIndex: 7, final: true })).toBe(s0);
+  });
+
+  it('undo restores the previous barline', () => {
+    const s1 = editorReducer(twoMeasures(), { type: 'set-measure-final-bar', trackIndex: 0, measureIndex: 1, final: false });
+    expect(editorReducer(s1, { type: 'undo' }).score.tracks[0].measures[1].endBarline).toBeUndefined();
+  });
+});
