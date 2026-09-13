@@ -86,11 +86,14 @@ export function engraveTrackRows(plan: RowPlan, trackIndex: number): EngravedTra
   // With `expandRepeats` the score is written out pass by pass, so printing
   // repeat barlines too would ask the player to repeat the repeat.
   const printRepeats = !plan.expandRepeats;
-  // 18px above the staff, lifted further when this track's ledger notes reach
-  // into that space. The on-screen renderer clears the *nearby* note heads
-  // using its hit geometry; the exporter has no hits, so it clears the tallest
-  // note in the track instead.
-  const instructionY = staveY + STAFF_LINE_TOP - 18 - Math.max(0, above - 10);
+  // staveY already pushes the whole stave down by `above` px to leave ledger
+  // room, which pins this track's highest note at a fixed absolute row y (see
+  // ledgerExtents). Subtracting that same `above` here cancels the push, so
+  // the instruction stays a constant clearance above that note instead of
+  // drifting back down onto it as `above` grows. The on-screen renderer
+  // clears the *nearby* note heads using its hit geometry; the exporter has
+  // no hits, so it clears the tallest note in the track instead.
+  const instructionY = staveY + STAFF_LINE_TOP - 18 - above;
   const rowHeight = staveY + STAFF_LINE_TOP + STAFF_LINE_SPAN + below + ROW_BOTTOM_PAD;
   const width = plan.availWidth + 2 * PRINT_PADDING_X;
 

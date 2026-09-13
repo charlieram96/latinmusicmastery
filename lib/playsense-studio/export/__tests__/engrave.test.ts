@@ -116,3 +116,28 @@ describe('engraveTrackRows repeat count instruction', () => {
     expect(texts.some(t => t.includes('times'))).toBe(false);
   });
 });
+
+describe('engraveTrackRows repeat instruction placement', () => {
+  it('clears the topmost note instead of landing on it when the track reaches high above the staff', () => {
+    // C6 pushes the whole stave down (the `above` ledger lift) to make room;
+    // the instruction must stay above that note, not ride down along with it.
+    const measures: Measure[] = Array.from({ length: 8 }, (_, i) => ({
+      number: i + 1,
+      repeat: { id: 'rep', pass: Math.floor(i / 2), count: 4, offset: i % 2, length: 2 },
+      voices: [{ number: 1, events: [{ kind: 'note', midi: 84, durationQN: 4 }] }], // c/6
+    }));
+    const score: ScoreDocument = {
+      ...SON_MONTUNO_FIXTURE,
+      title: 'High repeat probe',
+      tracks: [{ ...SON_MONTUNO_FIXTURE.tracks[0], measures }],
+    };
+    const plan = buildRowPlan(score, [0], 700, { expandRepeats: false });
+    const track = engraveTrackRows(plan, 0);
+    const row = track.rows.find(r => r.svg.querySelector('[data-score-repeat-count]'));
+    expect(row).toBeDefined();
+    const instruction = row!.svg.querySelector('[data-score-repeat-count]')!;
+    const y = Number(instruction.getAttribute('y'));
+    // Comfortably above the row's staff top, not merely at or below it.
+    expect(y).toBeLessThan(row!.staffTopY - 20);
+  });
+});

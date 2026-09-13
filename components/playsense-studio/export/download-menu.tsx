@@ -38,6 +38,7 @@ export function DownloadMenu({ score, classItemTitle, sectionIndex, sectionCount
   }, [open]);
 
   const run = async (format: ExportFormat) => {
+    if (busy) return; // A closed-and-reopened menu resets `busy`; don't let a second export start while one is in flight.
     setBusy(format);
     setError(false);
     try {

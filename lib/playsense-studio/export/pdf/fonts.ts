@@ -27,14 +27,17 @@ function deadline(ms: number): AbortSignal | undefined {
 }
 
 async function fetchBytes(url: string, fetchImpl: typeof fetch): Promise<Uint8Array> {
-  let res: Response;
+  // The abort deadline can fire after headers arrive but while the body is
+  // still streaming in, so the body read needs the same catch as the fetch
+  // itself — otherwise a late abort surfaces as a raw AbortError instead of
+  // FAILURE_MESSAGE.
   try {
-    res = await fetchImpl(url, { signal: deadline(FETCH_TIMEOUT_MS) });
+    const res = await fetchImpl(url, { signal: deadline(FETCH_TIMEOUT_MS) });
+    if (!res.ok) throw new Error(FAILURE_MESSAGE);
+    return new Uint8Array(await res.arrayBuffer());
   } catch {
     throw new Error(FAILURE_MESSAGE);
   }
-  if (!res.ok) throw new Error(FAILURE_MESSAGE);
-  return new Uint8Array(await res.arrayBuffer());
 }
 
 export function loadNotationFonts(fetchImpl: typeof fetch = fetch): Promise<NotationFontBytes> {

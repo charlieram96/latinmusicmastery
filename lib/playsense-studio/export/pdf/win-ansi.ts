@@ -36,7 +36,10 @@ export function canEncodeWinAnsi(codePoint: number): boolean {
 export function winAnsiSafe(text: string): string {
   let out = '';
   let dropping = false;
-  for (const ch of text) {
+  // Decomposed input ("a" + combining acute) would otherwise lose the mark to
+  // `?` even though the precomposed form is inside WinAnsi; normalize first so
+  // the two forms agree (matches filename.ts's slugify, which also normalizes).
+  for (const ch of text.normalize('NFC')) {
     if (canEncodeWinAnsi(ch.codePointAt(0)!)) {
       out += ch;
       dropping = false;

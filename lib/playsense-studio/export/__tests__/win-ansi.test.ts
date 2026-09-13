@@ -45,6 +45,14 @@ describe('winAnsiSafe', () => {
     expect(helvetica.widthOfTextAtSize(safe, 10)).toBeGreaterThan(0);
   });
 
+  it('normalizes decomposed input to NFC before scanning, so a combining mark is not lost', () => {
+    const decomposed = `Montuno ba${'́'}sico`; // "a" + combining acute (U+0301), not precomposed "á"
+    expect(decomposed).not.toBe('Montuno básico');
+    const safe = winAnsiSafe(decomposed);
+    expect(safe).toBe('Montuno básico');
+    expect(safe).not.toContain('?');
+  });
+
   it('knows the range edges', () => {
     expect(canEncodeWinAnsi(0x20)).toBe(true);   // space
     expect(canEncodeWinAnsi(0x1f)).toBe(false);  // control

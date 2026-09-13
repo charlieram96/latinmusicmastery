@@ -22,6 +22,15 @@ describe('loadNotationFonts', () => {
     await expect(loadNotationFonts(fetchImpl as unknown as typeof fetch)).rejects.toThrow(/Could not load notation fonts/);
   });
 
+  it('reports a body read that aborts mid-stream the same way, not a raw AbortError', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      arrayBuffer: async () => { throw new DOMException('The operation was aborted.', 'AbortError'); },
+    }) as unknown as Response);
+    await expect(loadNotationFonts(fetchImpl as unknown as typeof fetch)).rejects.toThrow(/Could not load notation fonts/);
+  });
+
   it('reports a non-ok response the same way, and forgets the failure', async () => {
     const bad = vi.fn(async () => ({ ok: false, status: 404 }) as unknown as Response);
     await expect(loadNotationFonts(bad as unknown as typeof fetch)).rejects.toThrow(/Could not load notation fonts/);
