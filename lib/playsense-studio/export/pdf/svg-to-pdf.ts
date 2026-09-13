@@ -6,6 +6,7 @@
 // VexFlow always stamps with its defaults.
 import { rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import type { GlyphOutliner } from './glyph-outlines';
+import { winAnsiSafe } from './win-ansi';
 
 export interface PdfFonts { bravura: GlyphOutliner; academico: GlyphOutliner; helvetica: PDFFont }
 export interface RowTransform { x: number; yTop: number; scale: number; pageHeight: number }
@@ -135,7 +136,13 @@ export function drawSvgOnPage(page: PDFPage, svg: SVGSVGElement, fonts: PdfFonts
           scale: t.scale,
           color: isNone(style.fill) ? undefined : BLACK,
           borderColor: isNone(style.stroke) ? undefined : BLACK,
-          borderWidth: isNone(style.stroke) ? 0 : style.strokeWidth * t.scale,
+          // Unscaled on purpose, and NOT an oversight: pdf-lib emits
+          // `setLineWidth` *inside* the scaled transform for drawSvgPath (it
+          // scales the CTM before writing the line width) but *outside* it for
+          // drawRectangle. So a path takes the model-px width and a rect takes
+          // the already-scaled one; matching that asymmetry is what makes a
+          // path stroke and a rect-drawn barline print at the same weight.
+          borderWidth: isNone(style.stroke) ? 0 : style.strokeWidth,
         });
         return;
       }
@@ -173,7 +180,7 @@ export function drawSvgOnPage(page: PDFPage, svg: SVGSVGElement, fonts: PdfFonts
         const outliners = outlinersFor(style.fontFamily, fonts);
 
         if (outliners.length === 0) {
-          page.drawText(text, { x: baseX, y: baseY, size: sizePt, font: fonts.helvetica, color: BLACK });
+          page.drawText(winAnsiSafe(text), { x: baseX, y: baseY, size: sizePt, font: fonts.helvetica, color: BLACK });
           return;
         }
 
@@ -198,8 +205,9 @@ export function drawSvgOnPage(page: PDFPage, svg: SVGSVGElement, fonts: PdfFonts
           }
           if (matched) continue;
           if (cp >= PUA_START && cp <= PUA_END) continue;
-          page.drawText(ch, { x: penX, y: baseY, size: sizePt, font: fonts.helvetica, color: BLACK });
-          penX += fonts.helvetica.widthOfTextAtSize(ch, sizePt);
+          const safe = winAnsiSafe(ch);
+          page.drawText(safe, { x: penX, y: baseY, size: sizePt, font: fonts.helvetica, color: BLACK });
+          penX += fonts.helvetica.widthOfTextAtSize(safe, sizePt);
         }
         return;
       }

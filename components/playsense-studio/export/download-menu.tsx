@@ -26,6 +26,10 @@ export function DownloadMenu({ score, classItemTitle, sectionIndex, sectionCount
 
   useEffect(() => {
     if (!open) return;
+    // A previous export that hung or failed must not leave both items disabled
+    // reading "Preparing…" the next time the menu is opened.
+    setBusy(null);
+    setError(false);
     const onDown = (e: PointerEvent) => { if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false); };
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     document.addEventListener('pointerdown', onDown);
@@ -40,7 +44,8 @@ export function DownloadMenu({ score, classItemTitle, sectionIndex, sectionCount
       await exportSection({ score, trackIndexes: score.tracks.map((_, i) => i), format, context: { classItemTitle, sectionIndex, sectionCount } });
       if (!readOnly) void logPlaysenseStudioEvent({ eventType: 'playsense_studio_section_exported', classItemId, metadata: { format, trackCount: score.tracks.length, surface: 'student' } });
       setOpen(false);
-    } catch {
+    } catch (e) {
+      console.error(`[playsense-export] ${format} export failed for class item ${classItemId} section ${sectionIndex + 1}`, e);
       setError(true);
     } finally {
       setBusy(null);

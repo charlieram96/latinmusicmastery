@@ -10,8 +10,9 @@ import { exportSection, type ExportFormat } from '@/lib/playsense-studio/export'
 import { sectionExportFilename } from '@/lib/playsense-studio/export/filename';
 import { buildRowPlan } from '@/lib/playsense-studio/export/pdf/row-plan';
 import { engraveTrackRows } from '@/lib/playsense-studio/export/pdf/engrave';
-import { ENGRAVE_WIDTH_PX } from '@/lib/playsense-studio/export/pdf/render-section';
+import { ENGRAVE_WIDTH_PX } from '@/lib/playsense-studio/export/pdf/options';
 import type { PageSize } from '@/lib/playsense-studio/export/pdf/page-plan';
+import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
 import { logPlaysenseStudioEvent } from '@/app/actions/playsense-studio';
 import { exportOptionsReducer, initialExportOptions, PAGE_SIZE_STORAGE_KEY } from './export-options';
 
@@ -67,6 +68,12 @@ export function ExportDialog({ score, classItemTitle, sectionIndex, sectionCount
       if (svg) {
         svg.removeAttribute('width'); svg.removeAttribute('height');
         svg.style.width = '100%'; svg.style.height = 'auto';
+        // Preview only. VexFlow paints literal `black`, which is invisible on a
+        // dark surface; rewriting it to `currentColor` lets the wrapper's
+        // `.playsense-studio-notation` colour cascade in, exactly as the
+        // on-screen player does. The SVGs the exporter renders are never
+        // themed — print wants black ink.
+        themeVexflowSvg(svg);
         host.appendChild(svg);
       }
     } catch {
@@ -79,6 +86,9 @@ export function ExportDialog({ score, classItemTitle, sectionIndex, sectionCount
     try { localStorage.setItem(PAGE_SIZE_STORAGE_KEY, pageSize); } catch { /* private mode */ }
   };
 
+  // Closing while an export is in flight is allowed: `run` only ever closes the
+  // dialog, never reopens it, so a promise that settles after the user walked
+  // away just clears `busy` on a dialog that is already shut.
   const run = async () => {
     setBusy(true);
     setError(null);
@@ -94,9 +104,9 @@ export function ExportDialog({ score, classItemTitle, sectionIndex, sectionCount
   };
 
   return (
-    <Dialog open={open} onOpenChange={next => { if (busy) return; setOpen(next); if (!next) setError(null); }}>
+    <Dialog open={open} onOpenChange={next => { setOpen(next); setError(null); }}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto" showCloseButton={!busy}>
+      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Export sheet music</DialogTitle>
           <DialogDescription>{subtitle}</DialogDescription>
@@ -136,7 +146,7 @@ export function ExportDialog({ score, classItemTitle, sectionIndex, sectionCount
               <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">Page</div>
               <div className="st-seg" role="radiogroup" aria-label="Page size">
                 {(['letter', 'a4'] as const).map(p => (
-                  <button key={p} type="button" className={state.pdf.pageSize === p ? 'is-on' : ''} aria-pressed={state.pdf.pageSize === p} onClick={() => setPageSize(p)}>{p === 'a4' ? 'A4' : 'Letter'}</button>
+                  <button key={p} type="button" role="radio" className={state.pdf.pageSize === p ? 'is-on' : ''} aria-checked={state.pdf.pageSize === p} onClick={() => setPageSize(p)}>{p === 'a4' ? 'A4' : 'Letter'}</button>
                 ))}
               </div>
               <div className="pt-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">Include</div>
@@ -156,7 +166,7 @@ export function ExportDialog({ score, classItemTitle, sectionIndex, sectionCount
               <span className="font-semibold uppercase tracking-[0.04em]">Preview</span>
               <span>First system</span>
             </div>
-            <div ref={previewRef} className="min-h-[60px] [&_svg]:block" aria-hidden="true" />
+            <div ref={previewRef} className="playsense-studio-notation min-h-[60px] [&_svg]:block" aria-hidden="true" />
           </div>
         )}
 
@@ -165,7 +175,7 @@ export function ExportDialog({ score, classItemTitle, sectionIndex, sectionCount
         <div className="flex items-center justify-between gap-3">
           <span className="truncate text-[11.5px] text-muted-foreground">{filename}</span>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setOpen(false)} disabled={busy} className="rounded-md border border-border px-3 py-1.5 text-sm transition hover:bg-muted disabled:opacity-50">Cancel</button>
+            <button type="button" onClick={() => { setOpen(false); setError(null); }} className="rounded-md border border-border px-3 py-1.5 text-sm transition hover:bg-muted">Cancel</button>
             <button type="button" onClick={run} disabled={busy || state.trackIndexes.length === 0}
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-1.5 text-sm text-primary-foreground transition hover:opacity-90 disabled:opacity-50">
               <Download className="h-4 w-4" />

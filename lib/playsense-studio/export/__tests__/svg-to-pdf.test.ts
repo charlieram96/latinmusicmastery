@@ -84,6 +84,25 @@ describe('drawSvgOnPage', () => {
     expect(opts.size).toBe(6);
   });
 
+  it('replaces text Helvetica cannot encode with ? on the whole-run fallback', () => {
+    const page = fakePage();
+    drawSvgOnPage(page, svgOf('<text x="0" y="10" font-family="Arial" font-size="12px">Timba 🔥 Fill</text>'), fonts, t);
+    const [text] = page.drawText.mock.calls[0];
+    expect(text).toBe('Timba ? Fill');
+  });
+
+  it('replaces text Helvetica cannot encode with ? on the per-glyph fallback', () => {
+    const page = fakePage();
+    // An outliner that only knows ASCII, so anything else falls through to the
+    // per-character Helvetica path.
+    const asciiOnly = { ...fakeOutliner('B'), outline: (cp: number) => (cp < 0x80 ? { d: `M0 0 ${cp}`, advance: 1000 } : null) };
+    const helvetica = fakeFont('Helvetica') as PDFFont & { widthOfTextAtSize: (s: string, size: number) => number };
+    helvetica.widthOfTextAtSize = (str: string) => str.length * 4;
+    drawSvgOnPage(page, svgOf('<text x="0" y="10" font-family="Bravura" font-size="12px">A🔥ク</text>'), { ...fonts, bravura: asciiOnly, helvetica }, t);
+    expect(page.drawText.mock.calls.map(call => call[0])).toEqual(['?', '?']);
+    expect(page.drawSvgPath).toHaveBeenCalledTimes(1); // just the "A"
+  });
+
   it('applies a group translate to children', () => {
     const page = fakePage();
     drawSvgOnPage(page, svgOf('<g transform="translate(10,20)"><rect x="0" y="0" width="2" height="2" fill="black"/></g>'), fonts, t);
@@ -95,8 +114,18 @@ describe('drawSvgOnPage', () => {
     const page = fakePage();
     drawSvgOnPage(page, svgOf('<path d="M0 0 L5 0" fill="none" stroke="black" stroke-width="2"/>'), fonts, t);
     const [, opts] = page.drawSvgPath.mock.calls[0];
-    expect(opts.borderWidth).toBe(1);
+    // Unscaled: pdf-lib writes setLineWidth inside drawSvgPath's scaled
+    // transform, so the model-px width is what reaches the page at the right
+    // weight. drawRectangle scales it instead — see the rect assertion below.
+    expect(opts.borderWidth).toBe(2);
     expect(opts.color).toBeUndefined();
+  });
+
+  it('scales a rect stroke width but not a path stroke width', () => {
+    const page = fakePage();
+    drawSvgOnPage(page, svgOf('<path d="M0 0 L5 0" stroke="black" stroke-width="2"/><rect x="0" y="0" width="4" height="4" stroke="black" stroke-width="2"/>'), fonts, t);
+    expect(page.drawSvgPath.mock.calls[0][1].borderWidth).toBe(2);   // inside the scaled transform
+    expect(page.drawRectangle.mock.calls[0][0].borderWidth).toBe(1); // outside it: 2 * scale 0.5
   });
 
   it('throws on an unknown element in development', () => {
@@ -123,7 +152,7 @@ describe('drawSvgOnPage', () => {
     // Stave line: no stroke attr of its own -> inherits black, stroke-width inherits 1.
     const [, pathOpts] = page.drawSvgPath.mock.calls[0];
     expect(pathOpts.borderColor).toBeDefined();
-    expect(pathOpts.borderWidth).toBe(0.5); // stroke-width 1 * scale 0.5
+    expect(pathOpts.borderWidth).toBe(1); // stroke-width 1, unscaled: pdf-lib scales it inside drawSvgPath
 
     // Barline: no fill attr of its own -> inherits black, so it is drawn, not skipped.
     expect(page.drawRectangle).toHaveBeenCalledTimes(1);

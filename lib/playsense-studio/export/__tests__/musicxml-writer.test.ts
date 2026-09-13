@@ -90,6 +90,9 @@ describe('writeMusicXml — features beyond the importer', () => {
     expect(doc.querySelector('clef > sign')?.textContent).toBe('G');
     expect(doc.querySelector('clef > clef-octave-change')?.textContent).toBe('-1');
     expect(q(doc, 'staff-details > staff-tuning')).toHaveLength(6);
+    // No <staff-lines>: the part is on a G clef with real pitches, and a
+    // 6-line (or, for a tres, 3-line) staff would move every note.
+    expect(doc.querySelector('staff-details > staff-lines')).toBeNull();
     expect(doc.querySelector('technical > string')?.textContent).toBe('2');
     expect(doc.querySelector('technical > fret')?.textContent).toBe('5');
   });

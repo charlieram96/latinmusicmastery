@@ -43,6 +43,39 @@ describe('renderSectionPdf', () => {
     expect(doc.getPage(0).getSize().width).toBeCloseTo(595.28, 1);
   });
 
+  // Helvetica is WinAnsi-encoded and pdf-lib throws on anything outside it, so
+  // before the sanitizer an emoji anywhere in the header, a track label or a
+  // VexFlow text run (the Helvetica-fallback path in svg-to-pdf) permanently
+  // broke PDF export for that score.
+  it('renders a score whose title and track name contain emoji', async () => {
+    const hostile = {
+      ...SON_MONTUNO_FIXTURE,
+      title: 'Son Montuno 🔥 (C / F / G / C)',
+      composer: 'Кубинский · クラーベ 🎺',
+      tracks: SON_MONTUNO_FIXTURE.tracks.map((t, i) => (i === 0 ? { ...t, displayName: 'Tres 🎸' } : t)),
+    };
+    const bytes = await renderSectionPdf(hostile, [0, 1, 2], DEFAULT_PDF_OPTIONS, { ...context, classItemTitle: 'Montuno 🔥 básico' }, { fonts });
+    expect(String.fromCharCode(...bytes.slice(0, 5))).toBe('%PDF-');
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPageCount()).toBe(1);
+    // Metadata is UTF-16 and is deliberately NOT sanitized.
+    expect(doc.getTitle()).toBe('Son Montuno 🔥 (C / F / G / C)');
+  });
+
+  // The "<count> times" instruction the engraver appends is a plain Helvetica
+  // <text> node, i.e. a shape VexFlow never emits; check the translator draws
+  // it instead of choking on it.
+  it('renders a four-pass repeat, instruction and all', async () => {
+    const measures = Array.from({ length: 8 }, (_, i) => ({
+      number: i + 1,
+      repeat: { id: 'rep', pass: Math.floor(i / 2), count: 4, offset: i % 2, length: 2 },
+      voices: [{ number: 1 as const, events: [{ kind: 'note' as const, midi: i % 2 === 0 ? 60 : 62, durationQN: 4 }] }],
+    }));
+    const score = { ...SON_MONTUNO_FIXTURE, tracks: [{ ...SON_MONTUNO_FIXTURE.tracks[0], measures }] };
+    const bytes = await renderSectionPdf(score, [0], DEFAULT_PDF_OPTIONS, context, { fonts });
+    expect(String.fromCharCode(...bytes.slice(0, 5))).toBe('%PDF-');
+  });
+
   it('rejects an empty track selection', async () => {
     await expect(renderSectionPdf(SON_MONTUNO_FIXTURE, [], DEFAULT_PDF_OPTIONS, context, { fonts })).rejects.toThrow(/track/i);
   });

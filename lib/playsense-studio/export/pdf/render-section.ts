@@ -8,23 +8,15 @@ import { loadNotationFonts, type NotationFontBytes } from './fonts';
 import { createGlyphOutliner } from './glyph-outlines';
 import { buildRowPlan } from './row-plan';
 import { engraveTrackRows, PRINT_PADDING_X, type EngravedTrack } from './engrave';
-import { PAGE_MARGIN, PAGE_SIZES, planPages, type PageSize } from './page-plan';
+import { PAGE_MARGIN, PAGE_SIZES, planPages } from './page-plan';
 import { drawSvgOnPage, type PdfFonts } from './svg-to-pdf';
+import { winAnsiSafe } from './win-ansi';
+import { ENGRAVE_WIDTH_PX, type PdfExportContext, type PdfExportOptions } from './options';
 
-export interface PdfExportOptions {
-  pageSize: PageSize;
-  includeHeader: boolean;
-  includeMeasureNumbers: boolean;
-  includeBranding: boolean;
-  expandRepeats: boolean;
-}
-export interface PdfExportContext { classItemTitle: string; sectionIndex: number; sectionCount: number }
-
-export const DEFAULT_PDF_OPTIONS: PdfExportOptions = {
-  pageSize: 'letter', includeHeader: true, includeMeasureNumbers: true, includeBranding: true, expandRepeats: false,
-};
-/** Model px the rows are engraved at before scaling to the page. */
-export const ENGRAVE_WIDTH_PX = 700;
+// Re-exported so every existing `from './pdf/render-section'` import keeps
+// working; the declarations themselves live in the pdf-lib-free `options.ts`.
+export { DEFAULT_PDF_OPTIONS, ENGRAVE_WIDTH_PX } from './options';
+export type { PdfExportContext, PdfExportOptions } from './options';
 
 const INK = rgb(0, 0, 0);
 const MUTED = rgb(0.42, 0.4, 0.38);
@@ -45,8 +37,9 @@ function headerHeight(o: PdfExportOptions): number {
 }
 
 function drawCentered(page: PDFPage, text: string, y: number, font: PDFFont, size: number, color = INK) {
-  const w = font.widthOfTextAtSize(text, size);
-  page.drawText(text, { x: (page.getWidth() - w) / 2, y, size, font, color });
+  const safe = winAnsiSafe(text);
+  const w = font.widthOfTextAtSize(safe, size);
+  page.drawText(safe, { x: (page.getWidth() - w) / 2, y, size, font, color });
 }
 
 /** Width of "♩ = <bpm>" at a given size: the Bravura quarter-note glyph's
@@ -56,7 +49,7 @@ function tempoMarkWidth(bpm: number, bravura: PdfFonts['bravura'], bold: PDFFont
   const glyphScale = size / bravura.unitsPerEm;
   const outline = bravura.outline(TEMPO_NOTE_CODEPOINT);
   const noteWidth = outline ? outline.advance * glyphScale + 3 : bold.widthOfTextAtSize('q', size) + 3;
-  return noteWidth + bold.widthOfTextAtSize(` = ${bpm}`, size);
+  return noteWidth + bold.widthOfTextAtSize(winAnsiSafe(` = ${bpm}`), size);
 }
 
 /** Draws "♩ = <bpm>" at (x, y): the Bravura quarter-note outline followed by
@@ -73,7 +66,7 @@ function drawTempoMark(page: PDFPage, x: number, y: number, bpm: number, bravura
     page.drawText('q', { x: penX, y, size, font: bold, color: INK });
     penX += bold.widthOfTextAtSize('q', size) + 3;
   }
-  const rest = ` = ${bpm}`;
+  const rest = winAnsiSafe(` = ${bpm}`);
   page.drawText(rest, { x: penX, y, size, font: bold, color: INK });
   return penX + bold.widthOfTextAtSize(rest, size) - x;
 }
@@ -102,9 +95,9 @@ function drawHeader(
   y -= 16;
 
   if (score.composer) {
-    page.drawText(score.composer, { x: PAGE_MARGIN, y, size: 8, font: regular, color: INK });
+    page.drawText(winAnsiSafe(score.composer), { x: PAGE_MARGIN, y, size: 8, font: regular, color: INK });
   }
-  const ts = `${score.initialTimeSignature[0]}/${score.initialTimeSignature[1]}`;
+  const ts = winAnsiSafe(`${score.initialTimeSignature[0]}/${score.initialTimeSignature[1]}`);
   const tsSize = 9;
   const tsWidth = regular.widthOfTextAtSize(ts, tsSize);
   const groupWidth = tempoMarkWidth(Math.round(score.initialTempo), bravura, bold, tsSize) + 8 + tsWidth;
@@ -116,8 +109,8 @@ function drawHeader(
 function drawFooter(page: PDFPage, pageNo: number, pageCount: number, o: PdfExportOptions, regular: PDFFont) {
   if (!o.includeBranding) return;
   const y = PAGE_MARGIN - 18;
-  page.drawText(SITE_LINE, { x: PAGE_MARGIN, y, size: 8, font: regular, color: MUTED });
-  const label = `Page ${pageNo} of ${pageCount}`;
+  page.drawText(winAnsiSafe(SITE_LINE), { x: PAGE_MARGIN, y, size: 8, font: regular, color: MUTED });
+  const label = winAnsiSafe(`Page ${pageNo} of ${pageCount}`);
   page.drawText(label, { x: page.getWidth() - PAGE_MARGIN - regular.widthOfTextAtSize(label, 8), y, size: 8, font: regular, color: MUTED });
 }
 
@@ -180,13 +173,13 @@ export async function renderSectionPdf(
 
       const isFirstRowOfSystemOnPage = placed.find(p => p.system === r.system) === r;
       if (isFirstRowOfSystemOnPage && options.includeMeasureNumbers) {
-        page.drawText(String(row.firstMeasureNumber), {
+        page.drawText(winAnsiSafe(String(row.firstMeasureNumber)), {
           x: r.x + PRINT_PADDING_X * r.scale, y: height - r.yTop - (row.staffTopY - 14) * r.scale,
           size: 7, font: fonts.helvetica, color: MUTED,
         });
       }
       if (trackIndexes.length > 1) {
-        const label = track.displayName;
+        const label = winAnsiSafe(track.displayName);
         page.drawText(label, {
           x: r.x - 4 - fonts.helvetica.widthOfTextAtSize(label, 7),
           y: height - r.yTop - (row.staffTopY + 22) * r.scale,

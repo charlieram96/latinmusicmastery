@@ -130,6 +130,11 @@ function clefXml(track: Track): string {
   return '<clef><sign>G</sign><line>2</line></clef>';
 }
 
+/** The string tuning, and *only* the tuning. No `<staff-lines>`: these parts
+ * are written on a G clef with real pitches, and telling MuseScore a tres has
+ * three staff lines makes it draw those pitches on a three-line staff.
+ * `staff-lines` is optional in MusicXML, and `staff-tuning` is the next element
+ * in `<staff-details>`, so dropping it keeps the content order schema-valid. */
 function tuningXml(track: Track): string {
   if (!track.tuning || !isFretted(track.instrument)) return '';
   const lines = track.tuning.map((name, i) => {
@@ -138,7 +143,7 @@ function tuningXml(track: Track): string {
     const alter = m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0;
     return `<staff-tuning line="${i + 1}"><tuning-step>${m[1]}</tuning-step>${alter ? `<tuning-alter>${alter}</tuning-alter>` : ''}<tuning-octave>${m[3]}</tuning-octave></staff-tuning>`;
   }).join('');
-  return `<staff-details><staff-lines>${track.tuning.length}</staff-lines>${lines}</staff-details>`;
+  return `<staff-details>${lines}</staff-details>`;
 }
 
 function tempoXml(bpm: number): string {

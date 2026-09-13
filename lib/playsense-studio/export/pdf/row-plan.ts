@@ -15,6 +15,9 @@ export interface RowPlan {
   rows: RowPlanRow[];
   /** True when every selected track has the same measure count and shares `rows`. */
   aligned: boolean;
+  /** Mirrors the caller's option: when true the score is written out pass by
+   * pass, so the engraver must not also print repeat barlines. */
+  expandRepeats: boolean;
   /** Per-track rows when not aligned (each track packed on its own). */
   perTrackRows: Record<number, RowPlanRow[]>;
 }
@@ -54,10 +57,10 @@ export function buildRowPlan(
   if (aligned) {
     const merged = widthsByTrack[0].map((_, i) => Math.max(...widthsByTrack.map(w => w[i])));
     const rows = pack(merged, availWidth);
-    return { score: projected, trackIndexes, availWidth, rows, aligned, perTrackRows: {} };
+    return { score: projected, trackIndexes, availWidth, rows, aligned, expandRepeats: opts.expandRepeats, perTrackRows: {} };
   }
 
   const perTrackRows: Record<number, RowPlanRow[]> = {};
   trackIndexes.forEach((t, k) => { perTrackRows[t] = pack(widthsByTrack[k], availWidth); });
-  return { score: projected, trackIndexes, availWidth, rows: [], aligned, perTrackRows };
+  return { score: projected, trackIndexes, availWidth, rows: [], aligned, expandRepeats: opts.expandRepeats, perTrackRows };
 }

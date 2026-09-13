@@ -17,6 +17,31 @@ const STAFF_LINE_SPAN = 40;
 const ROW_TOP_PAD = 8;
 const ROW_BOTTOM_PAD = 12;
 
+/** A "<count> times" instruction waiting to be drawn above a closing repeat. */
+interface RepeatInstruction { text: string; right: number; y: number }
+const REPEAT_INSTRUCTION_FONT_SIZE_PX = 9;
+/** Rough Helvetica advance per character, as a fraction of the font size.
+ * svg-to-pdf has no `text-anchor` support, so the instruction is pre-aligned
+ * here instead of being right-anchored at the barline. */
+const HELVETICA_AVG_ADVANCE_EM = 0.5;
+
+/** Appends the instruction as a plain `<text>` node. `font-family="Helvetica"`
+ * is deliberate: no glyph outliner claims that family, so svg-to-pdf routes it
+ * through its Helvetica `drawText` path instead of hunting for notation
+ * outlines it would never find. */
+function appendRepeatInstruction(svg: SVGSVGElement, instruction: RepeatInstruction): void {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  const estimatedWidth = instruction.text.length * REPEAT_INSTRUCTION_FONT_SIZE_PX * HELVETICA_AVG_ADVANCE_EM;
+  el.setAttribute('data-score-repeat-count', '');
+  el.setAttribute('x', String(instruction.right - 2 - estimatedWidth));
+  el.setAttribute('y', String(instruction.y));
+  el.setAttribute('font-family', 'Helvetica');
+  el.setAttribute('font-size', `${REPEAT_INSTRUCTION_FONT_SIZE_PX}px`);
+  el.setAttribute('fill', 'black');
+  el.textContent = instruction.text;
+  svg.appendChild(el);
+}
+
 export interface EngravedRow {
   svg: SVGSVGElement;
   width: number;
@@ -58,6 +83,14 @@ export function engraveTrackRows(plan: RowPlan, trackIndex: number): EngravedTra
   const rows = rowsFor(plan, trackIndex);
   const { above, below } = ledgerExtents(blocks);
   const staveY = ROW_TOP_PAD + above;
+  // With `expandRepeats` the score is written out pass by pass, so printing
+  // repeat barlines too would ask the player to repeat the repeat.
+  const printRepeats = !plan.expandRepeats;
+  // 18px above the staff, lifted further when this track's ledger notes reach
+  // into that space. The on-screen renderer clears the *nearby* note heads
+  // using its hit geometry; the exporter has no hits, so it clears the tallest
+  // note in the track instead.
+  const instructionY = staveY + STAFF_LINE_TOP - 18 - Math.max(0, above - 10);
   const rowHeight = staveY + STAFF_LINE_TOP + STAFF_LINE_SPAN + below + ROW_BOTTOM_PAD;
   const width = plan.availWidth + 2 * PRINT_PADDING_X;
 
@@ -67,6 +100,7 @@ export function engraveTrackRows(plan: RowPlan, trackIndex: number): EngravedTra
   let previousRowIndex = -1;
 
   const engraved: EngravedRow[] = rows.map((row, rowIndex) => {
+    const repeatInstructions: RepeatInstruction[] = [];
     const host = document.createElement('div');
     const renderer = new Renderer(host, Renderer.Backends.SVG);
     renderer.resize(width, rowHeight);
@@ -79,8 +113,9 @@ export function engraveTrackRows(plan: RowPlan, trackIndex: number): EngravedTra
       const showHeader = blockIndex === 0;
       const stave = new Stave(x, staveY, measureWidth);
       const repeat = block.measure.repeat;
-      if (repeat?.offset === 0) stave.setBegBarType(BarlineType.REPEAT_BEGIN);
-      if (repeat && repeat.offset === repeat.length - 1) stave.setEndBarType(BarlineType.REPEAT_END);
+      const closesRepeat = !!repeat && repeat.offset === repeat.length - 1;
+      if (printRepeats && repeat?.offset === 0) stave.setBegBarType(BarlineType.REPEAT_BEGIN);
+      if (printRepeats && closesRepeat) stave.setEndBarType(BarlineType.REPEAT_END);
       else if (hasFinalBarline(track.measures, blockIndex)) stave.setEndBarType(BarlineType.END);
       // Every printed row restates the clef (once, at the row's first measure);
       // only the true first row also carries the time signature.
@@ -113,6 +148,12 @@ export function engraveTrackRows(plan: RowPlan, trackIndex: number): EngravedTra
           previousRowIndex = rowIndex;
         });
       }
+      // Mirrors the on-screen staff renderer: two playthroughs are already
+      // implied by the repeat sign, so only a count above two needs spelling
+      // out above the closing barline.
+      if (printRepeats && repeat && closesRepeat && repeat.count > 2) {
+        repeatInstructions.push({ text: `${repeat.count} times`, right: x + measureWidth, y: instructionY });
+      }
       x += measureWidth;
     });
 
@@ -129,6 +170,7 @@ export function engraveTrackRows(plan: RowPlan, trackIndex: number): EngravedTra
     }
 
     const svg = host.querySelector('svg') as SVGSVGElement;
+    repeatInstructions.forEach(instruction => appendRepeatInstruction(svg, instruction));
     svg.setAttribute('width', String(width));
     svg.setAttribute('height', String(rowHeight));
     svg.setAttribute('viewBox', `0 0 ${width} ${rowHeight}`);
