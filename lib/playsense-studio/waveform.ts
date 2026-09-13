@@ -24,9 +24,24 @@ export interface WaveformPeaks {
 
 const QUANT = 127;
 
+/** Hard ceiling on serialized peaks, whatever the resolution asked for. */
+const MAX_BUCKETS = 600_000;
+
+/**
+ * Bucket count for a given horizontal resolution. Separated out because the
+ * main waveform and the thin backing-track lanes want very different densities:
+ * a 240px canvas zoomed to 600 px/s needs every bucket it can get, while a 28px
+ * lane body is a smooth envelope long before that — and paying 600/s there
+ * would mean ~1.2MB of cached JSON per track instead of ~120KB.
+ */
+export function bucketCountFor(durationSeconds: number, bucketsPerSecond: number): number {
+  if (!Number.isFinite(durationSeconds) || !Number.isFinite(bucketsPerSecond)) return 1;
+  return Math.max(1, Math.min(MAX_BUCKETS, Math.ceil(durationSeconds * bucketsPerSecond)));
+}
+
 /** Match the editor's maximum 600 pixels/second, with bounded cache size. */
 export function waveformBucketCount(durationSeconds: number): number {
-  return Math.max(1, Math.min(600_000, Math.ceil(durationSeconds * 600)));
+  return bucketCountFor(durationSeconds, 600);
 }
 
 /**

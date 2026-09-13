@@ -11,6 +11,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import {
+  normalizeClip,
+  normalizeMediaTrim,
+  type MediaTrim,
+} from '@/lib/playsense-studio/clip-model';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 // ============================================
@@ -1384,14 +1389,30 @@ export interface BackingTrack {
   label: string;
   audioUrl: string;
   orderIndex: number;
+  /** Where the clip's trimmed-in point sits on the exercise video's timeline. */
+  timelineStartSeconds: number;
+  /** Offsets into the source file; null trimOut = play to the end. */
+  trimInSeconds: number;
+  trimOutSeconds: number | null;
+  /** Source length, learned from the first waveform decode. */
+  sourceDurationSeconds: number | null;
+  /** What timelineStartSeconds MEANT musically, and the map it was measured
+   *  against. Authoritative for student playback when the map has since been
+   *  republished — see normalizeBackingTrackPlacement's callers. */
+  positionQn: number | null;
+  timeMapId: string | null;
 }
 
 export interface ExerciseMedia {
   /** Optional exercise-part video (independent of the Watch demo video). */
   videoUrl: string | null;
-  /** Crop start offset — the visible window is exactly the score's length.
+  /** Where the usable region of the play-along video starts. This is the trim
+   *  in-point (migration 040 folded the older linear crop into it), so existing
+   *  cropWindow() callers keep working and automatically honour the trim.
    *  Ignored when `timeMap` is set (the map fully positions the video). */
   videoStartSeconds: number;
+  /** End of the usable region; null = play to the end of the video. */
+  videoTrimOutSeconds: number | null;
   /** Optional time map syncing the play-along video to the graded score's beats.
    *  When present, consumers position the video by musical position; otherwise
    *  they fall back to the linear crop (videoStartSeconds). */
@@ -1407,14 +1428,16 @@ export async function getExerciseMedia(
 
   const { data: item, error: itemErr } = await supabase
     .from('class_items')
-    .select('exercise_video_url, exercise_video_start_seconds, exercise_time_map_id')
+    .select('exercise_video_url, exercise_video_start_seconds, exercise_video_trim_in_seconds, exercise_video_trim_out_seconds, exercise_time_map_id')
     .eq('id', classItemId)
     .single();
   if (itemErr || !item) return { error: itemErr?.message ?? 'Class item not found' };
 
   const { data: tracks, error: tracksErr } = await supabase
     .from('class_item_backing_tracks')
-    .select('id, label, audio_url, order_index')
+    .select(
+      'id, label, audio_url, order_index, timeline_start_seconds, trim_in_seconds, trim_out_seconds, source_duration_seconds, position_qn, time_map_id'
+    )
     .eq('class_item_id', classItemId)
     .order('order_index', { ascending: true });
   if (tracksErr) return { error: tracksErr.message };
@@ -1451,13 +1474,22 @@ export async function getExerciseMedia(
   return {
     data: {
       videoUrl: item.exercise_video_url,
-      videoStartSeconds: item.exercise_video_start_seconds ?? 0,
+      // Trim in-point is the source of truth; fall back to the legacy crop for
+      // any row written before 040's backfill.
+      videoStartSeconds: item.exercise_video_trim_in_seconds ?? item.exercise_video_start_seconds ?? 0,
+      videoTrimOutSeconds: item.exercise_video_trim_out_seconds,
       timeMap,
       backingTracks: (tracks ?? []).map((t) => ({
         id: t.id,
         label: t.label,
         audioUrl: t.audio_url,
         orderIndex: t.order_index,
+        timelineStartSeconds: t.timeline_start_seconds ?? 0,
+        trimInSeconds: t.trim_in_seconds ?? 0,
+        trimOutSeconds: t.trim_out_seconds,
+        sourceDurationSeconds: t.source_duration_seconds,
+        positionQn: t.position_qn,
+        timeMapId: t.time_map_id,
       })),
     },
   };
@@ -1478,6 +1510,10 @@ export async function updateExerciseVideo(input: {
     .update({
       exercise_video_url: input.videoUrl,
       exercise_video_start_seconds: input.videoUrl ? Math.max(0, input.startSeconds) : 0,
+      // A different file makes the old window meaningless, so the trim resets
+      // with it — same reasoning as dropping the orphaned time map below.
+      exercise_video_trim_in_seconds: input.videoUrl ? Math.max(0, input.startSeconds) : 0,
+      exercise_video_trim_out_seconds: null,
       // Removing the video orphans its sync map — drop the pointer too.
       ...(input.videoUrl ? {} : { exercise_time_map_id: null }),
     })
@@ -1503,6 +1539,10 @@ export async function updateClassItemVideo(input: {
     .update({
       video_url: input.videoUrl,
       video_duration_seconds: input.videoDurationSeconds,
+      // New file, new timeline — a trim measured against the old one would
+      // silently crop the wrong part of the lesson.
+      video_trim_in_seconds: 0,
+      video_trim_out_seconds: null,
     })
     .eq('id', input.classItemId);
   if (error) return { error: error.message };
@@ -1537,13 +1577,26 @@ export async function addBackingTrack(input: {
       audio_url: input.audioUrl,
       order_index: orderIndex,
     })
-    .select('id, label, audio_url, order_index')
+    .select(
+      'id, label, audio_url, order_index, timeline_start_seconds, trim_in_seconds, trim_out_seconds, source_duration_seconds, position_qn, time_map_id'
+    )
     .single();
   if (error || !data) return { error: error?.message ?? 'Insert failed' };
 
   revalidatePath(`/admin/playsense-studio/${input.classItemId}`);
   return {
-    data: { id: data.id, label: data.label, audioUrl: data.audio_url, orderIndex: data.order_index },
+    data: {
+      id: data.id,
+      label: data.label,
+      audioUrl: data.audio_url,
+      orderIndex: data.order_index,
+      timelineStartSeconds: data.timeline_start_seconds ?? 0,
+      trimInSeconds: data.trim_in_seconds ?? 0,
+      trimOutSeconds: data.trim_out_seconds,
+      sourceDurationSeconds: data.source_duration_seconds,
+      positionQn: data.position_qn,
+      timeMapId: data.time_map_id,
+    },
   };
 }
 
@@ -1576,4 +1629,154 @@ export async function deleteBackingTrack(input: {
     .eq('id', input.trackId);
   if (error) return { error: error.message };
   return { success: true };
+}
+
+/**
+ * Persist a backing track's position + trim. Called on every drag release, so
+ * it deliberately does NOT revalidate — the client already holds the truth and
+ * a revalidation per drag would thrash the studio.
+ *
+ * Everything is re-clamped here with the same pure model the UI uses: a client
+ * bug must not be able to write a window the CHECK constraint would reject, or
+ * one that renders as a zero-width clip nobody can grab again.
+ */
+export async function updateBackingTrackPlacement(input: {
+  trackId: string;
+  timelineStartSeconds: number;
+  trimInSeconds: number;
+  trimOutSeconds: number | null;
+  sourceDurationSeconds?: number | null;
+  /** Musical position of timelineStartSeconds under timeMapId, when a map exists. */
+  positionQn?: number | null;
+  timeMapId?: string | null;
+}): Promise<{ data?: { timelineStartSeconds: number; trimInSeconds: number; trimOutSeconds: number | null }; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const sourceDurationSeconds = input.sourceDurationSeconds ?? null;
+  const clip = normalizeClip(
+    {
+      timelineStartSeconds: input.timelineStartSeconds,
+      trimInSeconds: input.trimInSeconds,
+      trimOutSeconds: input.trimOutSeconds,
+    },
+    { sourceDurationSeconds }
+  );
+
+  // Last line of defence for the CHECK: a degenerate window becomes "no trim".
+  const trimOut =
+    clip.trimOutSeconds != null && clip.trimOutSeconds > clip.trimInSeconds
+      ? clip.trimOutSeconds
+      : null;
+
+  const { error } = await supabase
+    .from('class_item_backing_tracks')
+    .update({
+      timeline_start_seconds: clip.timelineStartSeconds,
+      trim_in_seconds: clip.trimInSeconds,
+      trim_out_seconds: trimOut,
+      ...(sourceDurationSeconds != null && sourceDurationSeconds > 0
+        ? { source_duration_seconds: sourceDurationSeconds }
+        : {}),
+      ...(input.positionQn !== undefined ? { position_qn: input.positionQn } : {}),
+      ...(input.timeMapId !== undefined ? { time_map_id: input.timeMapId } : {}),
+    })
+    .eq('id', input.trackId);
+  if (error) return { error: error.message };
+
+  return {
+    data: {
+      timelineStartSeconds: clip.timelineStartSeconds,
+      trimInSeconds: clip.trimInSeconds,
+      trimOutSeconds: trimOut,
+    },
+  };
+}
+
+/**
+ * Record the source length once the first waveform decode reveals it. Separate
+ * from placement because it is fire-and-forget and must never clobber a trim
+ * the admin is editing at the same moment.
+ */
+export async function updateBackingTrackDuration(input: {
+  trackId: string;
+  sourceDurationSeconds: number;
+}): Promise<{ success?: true; error?: string }> {
+  if (!(input.sourceDurationSeconds > 0)) return { error: 'Invalid duration' };
+
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const { error } = await supabase
+    .from('class_item_backing_tracks')
+    .update({ source_duration_seconds: input.sourceDurationSeconds })
+    .eq('id', input.trackId)
+    .is('source_duration_seconds', null);
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+/** Usable region of the EXERCISE play-along video. */
+export async function updateExerciseVideoTrim(input: {
+  classItemId: string;
+  trimInSeconds: number;
+  trimOutSeconds: number | null;
+  durationSeconds?: number | null;
+}): Promise<{ data?: MediaTrim; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const trim = normalizeMediaTrim(
+    { trimInSeconds: input.trimInSeconds, trimOutSeconds: input.trimOutSeconds },
+    input.durationSeconds ?? null
+  );
+  const trimOut =
+    trim.trimOutSeconds != null && trim.trimOutSeconds > trim.trimInSeconds ? trim.trimOutSeconds : null;
+
+  const { error } = await supabase
+    .from('class_items')
+    .update({
+      exercise_video_trim_in_seconds: trim.trimInSeconds,
+      exercise_video_trim_out_seconds: trimOut,
+      // Keep the legacy crop column in step so any reader that still consults
+      // it directly sees the same in-point rather than a stale one.
+      exercise_video_start_seconds: trim.trimInSeconds,
+    })
+    .eq('id', input.classItemId);
+  if (error) return { error: error.message };
+
+  return { data: { trimInSeconds: trim.trimInSeconds, trimOutSeconds: trimOut } };
+}
+
+/** Usable region of the VIDEO lesson's demo video. */
+export async function updateClassItemVideoTrim(input: {
+  classItemId: string;
+  trimInSeconds: number;
+  trimOutSeconds: number | null;
+  durationSeconds?: number | null;
+}): Promise<{ data?: MediaTrim; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  const trim = normalizeMediaTrim(
+    { trimInSeconds: input.trimInSeconds, trimOutSeconds: input.trimOutSeconds },
+    input.durationSeconds ?? null
+  );
+  const trimOut =
+    trim.trimOutSeconds != null && trim.trimOutSeconds > trim.trimInSeconds ? trim.trimOutSeconds : null;
+
+  const { error } = await supabase
+    .from('class_items')
+    .update({
+      video_trim_in_seconds: trim.trimInSeconds,
+      video_trim_out_seconds: trimOut,
+    })
+    .eq('id', input.classItemId);
+  if (error) return { error: error.message };
+
+  return { data: { trimInSeconds: trim.trimInSeconds, trimOutSeconds: trimOut } };
 }

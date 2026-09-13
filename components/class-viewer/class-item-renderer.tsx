@@ -36,6 +36,8 @@ interface ClassItemRendererProps {
     item_type: string
     soundslice_embed_url: string | null
     video_url: string | null
+    video_trim_in_seconds?: number | null
+    video_trim_out_seconds?: number | null
     subtitles: unknown
     score_document_id: string | null
     active_time_map_id: string | null
@@ -144,6 +146,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
     ? {
         url: exerciseMedia.videoUrl,
         startSeconds: exerciseMedia.videoStartSeconds,
+        trimOutSeconds: exerciseMedia.videoTrimOutSeconds,
         timeMap: exerciseMedia.timeMap,
       }
     : null
@@ -195,6 +198,8 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
             layout="split"
             subtitles={subtitleTracks}
             defaultSubtitleLang={locale}
+            trimInSeconds={item.video_trim_in_seconds ?? 0}
+            trimOutSeconds={item.video_trim_out_seconds ?? null}
           />
         ) : firstUnplacedSection && item.video_url && playerLayout === 'split' ? (
           // Notation exists but isn't sync-mapped yet → still show it on the right.
@@ -209,6 +214,8 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
             layout="split"
             subtitles={subtitleTracks}
             defaultSubtitleLang={locale}
+            trimInSeconds={item.video_trim_in_seconds ?? 0}
+            trimOutSeconds={item.video_trim_out_seconds ?? null}
           />
         ) : item.video_url && !item.soundslice_embed_url ? (
           // No notation → polished full-width player. Description + notes render
@@ -217,6 +224,8 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
             src={item.video_url}
             subtitles={subtitleTracks}
             defaultSubtitleLang={locale}
+            trimInSeconds={item.video_trim_in_seconds ?? 0}
+            trimOutSeconds={item.video_trim_out_seconds ?? null}
           />
         ) : (
           <Card className="overflow-hidden rounded-2xl border-border shadow-warm">

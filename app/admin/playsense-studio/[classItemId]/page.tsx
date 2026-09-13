@@ -36,7 +36,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
   const { data: classItem } = await supabase
     .from('class_items')
     .select(
-      'id, title, item_type, video_url, video_duration_seconds, score_document_id, class:classes(id, section:course_sections(course_id))'
+      'id, title, item_type, video_url, video_duration_seconds, video_trim_in_seconds, video_trim_out_seconds, score_document_id, class:classes(id, section:course_sections(course_id))'
     )
     .eq('id', classItemId)
     .single();
@@ -66,6 +66,10 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
         title={classItem.title}
         videoUrl={classItem.video_url}
         videoDurationSeconds={classItem.video_duration_seconds}
+        initialTrim={{
+          trimInSeconds: classItem.video_trim_in_seconds ?? 0,
+          trimOutSeconds: classItem.video_trim_out_seconds,
+        }}
         initialSections={sections.data ?? []}
       />
     );
@@ -83,6 +87,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
     const exerciseMedia = (await getExerciseMedia(classItemId)).data ?? {
       videoUrl: null,
       videoStartSeconds: 0,
+      videoTrimOutSeconds: null,
       timeMap: null,
       backingTracks: [],
     };
@@ -96,6 +101,10 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
         title={classItem.title}
         videoUrl={classItem.video_url}
         videoDurationSeconds={classItem.video_duration_seconds}
+        initialTrim={{
+          trimInSeconds: classItem.video_trim_in_seconds ?? 0,
+          trimOutSeconds: classItem.video_trim_out_seconds,
+        }}
         initialSections={sections.data ?? []}
         scoreDocumentId={classItem.score_document_id}
         initialScore={scoreResult?.data?.scoreDocument.parsedScore ?? null}

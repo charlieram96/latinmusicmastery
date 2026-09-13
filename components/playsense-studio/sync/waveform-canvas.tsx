@@ -25,7 +25,10 @@ export interface MarkerHandle {
 }
 
 export type DragMode = 'single' | 'all-after';
-export type DragTarget = { kind: 'marker'; ref: MarkerRef } | { kind: 'tail' };
+export type DragTarget =
+  | { kind: 'marker'; ref: MarkerRef }
+  | { kind: 'tail' }
+  | { kind: 'trim'; edge: 'in' | 'out' };
 
 export interface WaveformCanvasProps {
   peaks: WaveformPeaks | null;
@@ -55,12 +58,22 @@ export interface WaveformCanvasProps {
   onViewportWidth: (w: number) => void;
   /** Pinch / ctrl-wheel zoom by a multiplicative factor (>1 in, <1 out). */
   onZoomBy?: (factor: number, anchorPx?: number) => void;
+  /** Usable region of the media. Outside it the wave is scrimmed and playback
+   *  is clamped by the parent; sync waypoints are unaffected. Omit both to
+   *  disable trimming entirely — the two non-trim call sites pass nothing. */
+  trimInSeconds?: number;
+  trimOutSeconds?: number | null;
+  /** Resolves a null trimOut for drawing. */
+  mediaDurationSeconds?: number | null;
+  onTrimDrag?: (edge: 'in' | 'out', videoTimeSeconds: number) => void;
 }
 
 const DEFAULT_HEIGHT = 240;
 const LABEL_BAND = 22; // top strip reserved for measure-number chips
-const HANDLE_HIT_PX = 9; // pointer must be within this of a handle's x to grab it
-const DRAG_THRESHOLD_PX = 4;
+/** Pointer must be within this of a handle's x to grab it. Exported so the
+ *  backing-track lanes feel identical and the two can never drift apart. */
+export const HANDLE_HIT_PX = 9;
+export const DRAG_THRESHOLD_PX = 4;
 
 interface ThemeColors {
   bg: string;
@@ -116,6 +129,10 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     onScrollByPx,
     onViewportWidth,
     onZoomBy,
+    trimInSeconds,
+    trimOutSeconds,
+    mediaDurationSeconds,
+    onTrimDrag,
   } = props;
 
   const onZoomByRef = useRef(onZoomBy);
@@ -140,6 +157,20 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   onsetsRef.current = noteOnsets;
   tailRef.current = tailVideoTimeSeconds;
   dragAllRef.current = dragAll;
+
+  // Trim is optional; `trimEnabled` gates both the grips and the hit test so
+  // callers that don't trim get byte-for-byte the old behaviour.
+  const trimEnabled = onTrimDrag != null && trimInSeconds != null;
+  const resolvedTrimOut =
+    trimOutSeconds ?? (mediaDurationSeconds != null && mediaDurationSeconds > 0 ? mediaDurationSeconds : null);
+  const trimInRef = useRef(trimInSeconds ?? 0);
+  const trimOutRef = useRef<number | null>(resolvedTrimOut);
+  const trimEnabledRef = useRef(trimEnabled);
+  const onTrimDragRef = useRef(onTrimDrag);
+  trimInRef.current = trimInSeconds ?? 0;
+  trimOutRef.current = resolvedTrimOut;
+  trimEnabledRef.current = trimEnabled;
+  onTrimDragRef.current = onTrimDrag;
 
   const videoTimeToX = useCallback(
     (t: number) => t * ppsRef.current - scrollRef.current,
@@ -304,6 +335,42 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       ctx.stroke();
       ctx.setLineDash([]);
     }
+
+    // Trim: scrim everything outside the usable region, then draw the grips.
+    // A theme.bg scrim (rather than recolouring the peaks) dims peaks, grid
+    // lines and note ticks uniformly, so "outside the usable region" reads as
+    // one idea and the peak loop above needs no changes. LABEL_BAND stays
+    // undimmed so the grips remain bright and grabbable.
+    if (trimEnabledRef.current) {
+      const inX = videoTimeToX(trimInRef.current);
+      const outX = trimOutRef.current != null ? videoTimeToX(trimOutRef.current) : w;
+
+      ctx.fillStyle = theme.bg;
+      ctx.globalAlpha = 0.62;
+      if (inX > 0) ctx.fillRect(0, LABEL_BAND, Math.min(inX, w), h - LABEL_BAND);
+      if (outX < w) ctx.fillRect(Math.max(outX, 0), LABEL_BAND, w - Math.max(outX, 0), h - LABEL_BAND);
+      ctx.globalAlpha = 1;
+
+      ctx.strokeStyle = theme.measureLine;
+      ctx.lineWidth = 1.5;
+      for (const x of [inX, outX]) {
+        if (x < -2 || x > w + 2) continue;
+        ctx.beginPath();
+        ctx.moveTo(x + 0.5, LABEL_BAND);
+        ctx.lineTo(x + 0.5, h);
+        ctx.stroke();
+      }
+
+      // Grips, in the band that owns their hit test.
+      ctx.fillStyle = theme.measureLine;
+      for (const x of [inX, outX]) {
+        if (x < -2 || x > w + 2) continue;
+        ctx.beginPath();
+        ctx.roundRect(x - 4, 3, 8, LABEL_BAND - 6, 2);
+        ctx.fill();
+      }
+      ctx.lineWidth = 1;
+    }
   }, [peaks, durationSeconds, selected, height, showNotes, videoTimeToX, xToVideoTime]);
 
   // ---- Sizing + DPR --------------------------------------------------------
@@ -343,7 +410,18 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   // Redraw the wave layer whenever inputs change.
   useEffect(() => {
     drawWave();
-  }, [drawWave, handles, noteOnsets, tailVideoTimeSeconds, pixelsPerSecond, scrollLeftPx]);
+  }, [
+    drawWave,
+    handles,
+    noteOnsets,
+    tailVideoTimeSeconds,
+    pixelsPerSecond,
+    scrollLeftPx,
+    // Read through refs inside drawWave, but a change still needs a repaint.
+    trimEnabled,
+    trimInSeconds,
+    resolvedTrimOut,
+  ]);
 
   // ---- Playhead overlay RAF -----------------------------------------------
   useEffect(() => {
@@ -378,7 +456,14 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     const overlay = overlayRef.current;
     if (!overlay) return;
 
-    let mode: 'idle' | 'pending-marker' | 'dragging-marker' | 'pending-scrub' | 'scrubbing' = 'idle';
+    let mode:
+      | 'idle'
+      | 'pending-marker'
+      | 'dragging-marker'
+      | 'pending-scrub'
+      | 'scrubbing'
+      | 'pending-trim'
+      | 'dragging-trim' = 'idle';
     let target: DragTarget | null = null;
     let startX = 0;
     let pointerId: number | null = null;
@@ -386,6 +471,26 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     const localX = (e: { clientX: number }) => {
       const rect = overlay.getBoundingClientRect();
       return e.clientX - rect.left;
+    };
+    const localY = (e: { clientY: number }) => {
+      const rect = overlay.getBoundingClientRect();
+      return e.clientY - rect.top;
+    };
+
+    /**
+     * Trim grips live ONLY in the top label band. Putting them in the same
+     * closest-wins pool as the markers would let a trim handle steal a downbeat
+     * drag exactly when they coincide — which is precisely when an admin trims
+     * to a bar line. Below LABEL_BAND nothing about the existing behaviour
+     * changes.
+     */
+    const trimHitTest = (x: number): 'in' | 'out' | null => {
+      if (!trimEnabledRef.current) return null;
+      const inX = videoTimeToX(trimInRef.current);
+      if (Math.abs(inX - x) <= HANDLE_HIT_PX) return 'in';
+      const out = trimOutRef.current;
+      if (out != null && Math.abs(videoTimeToX(out) - x) <= HANDLE_HIT_PX) return 'out';
+      return null;
     };
 
     const hitTest = (x: number): DragTarget | null => {
@@ -410,6 +515,16 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       startX = x;
       pointerId = e.pointerId;
       try { overlay.setPointerCapture(e.pointerId); } catch { /* noop */ }
+      if (localY(e) < LABEL_BAND) {
+        const edge = trimHitTest(x);
+        if (edge) {
+          target = { kind: 'trim', edge };
+          mode = 'pending-trim';
+          onSelect(target);
+          return;
+        }
+      }
+
       const hit = hitTest(x);
       if (hit) {
         target = hit;
@@ -429,11 +544,16 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
 
       if (mode === 'pending-marker' && moved) mode = 'dragging-marker';
       if (mode === 'pending-scrub' && moved) mode = 'scrubbing';
+      if (mode === 'pending-trim' && moved) mode = 'dragging-trim';
 
-      if (mode === 'dragging-marker' && target) {
+      if (mode === 'dragging-trim' && target?.kind === 'trim') {
+        onTrimDragRef.current?.(target.edge, xToVideoTime(x));
+      } else if (mode === 'dragging-marker' && target) {
         const t = xToVideoTime(x);
         if (target.kind === 'tail') onTailDrag(t);
-        else onMarkerDrag(target.ref, t, dragAllRef.current ? 'all-after' : 'single');
+        else if (target.kind === 'marker') {
+          onMarkerDrag(target.ref, t, dragAllRef.current ? 'all-after' : 'single');
+        }
       } else if (mode === 'scrubbing') {
         onSeek(xToVideoTime(x));
       }
@@ -445,7 +565,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       if (mode === 'pending-scrub') {
         // A click on empty space = seek there.
         onSeek(xToVideoTime(localX(e)));
-      } else if (mode === 'dragging-marker') {
+      } else if (mode === 'dragging-marker' || mode === 'dragging-trim') {
         onDragEnd();
       }
       mode = 'idle';

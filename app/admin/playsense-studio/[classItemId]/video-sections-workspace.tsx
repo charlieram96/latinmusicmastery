@@ -12,7 +12,7 @@
 
 import { ArrowLeft, FileUp, Loader2, PanelBottom, Plus, Rows3, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import {
   getScoreSectionsForClassItem,
   createBlankSection,
@@ -24,6 +24,8 @@ import { ScoreSectionEditor } from '@/components/playsense-studio/studio/score-s
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import { sectionColor, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { cn } from '@/lib/utils';
+import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
+import { updateClassItemVideoTrim } from '@/app/actions/playsense-studio';
 
 export interface VideoSectionsWorkspaceProps {
   classItemId: string;
@@ -32,6 +34,8 @@ export interface VideoSectionsWorkspaceProps {
   title: string;
   videoUrl: string | null;
   videoDurationSeconds: number | null;
+  /** Usable region of the lesson video. Class-item level, not per section. */
+  initialTrim?: MediaTrim;
   initialSections: ClassItemScoreSection[];
   /** Extra app-bar content (e.g. the exercise Watch/Exercise part toggle). */
   appBarExtra?: React.ReactNode;
@@ -50,6 +54,7 @@ export function VideoSectionsWorkspace({
   title,
   videoUrl,
   videoDurationSeconds,
+  initialTrim,
   initialSections,
   appBarExtra,
 }: VideoSectionsWorkspaceProps) {
@@ -59,6 +64,47 @@ export function VideoSectionsWorkspace({
   const [isPending, startTransition] = useTransition();
   // Set by the import dialog's onConfirm so onImported can select the new section.
   const pendingSelectRef = useRef<string | undefined>(undefined);
+
+  // The trim belongs to the VIDEO, which outlives any one section editor, so
+  // it is owned here rather than inside ScoreSectionEditor.
+  const [trim, setTrim] = useState<MediaTrim>(
+    initialTrim ?? { trimInSeconds: 0, trimOutSeconds: null }
+  );
+  const trimTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trimRef = useRef(trim);
+  trimRef.current = trim;
+
+  const persistTrim = useCallback(() => {
+    void updateClassItemVideoTrim({
+      classItemId,
+      trimInSeconds: trimRef.current.trimInSeconds,
+      trimOutSeconds: trimRef.current.trimOutSeconds,
+      durationSeconds: videoDurationSeconds,
+    });
+  }, [classItemId, videoDurationSeconds]);
+
+  const handleTrimDrag = useCallback(
+    (edge: 'in' | 'out', videoTimeSeconds: number) => {
+      setTrim((prev) =>
+        edge === 'in'
+          ? setTrimIn(prev, videoDurationSeconds, videoTimeSeconds)
+          : setTrimOut(prev, videoDurationSeconds, videoTimeSeconds)
+      );
+      if (trimTimer.current) clearTimeout(trimTimer.current);
+      trimTimer.current = setTimeout(persistTrim, 500);
+    },
+    [videoDurationSeconds, persistTrim]
+  );
+
+  useEffect(
+    () => () => {
+      if (trimTimer.current) {
+        clearTimeout(trimTimer.current);
+        persistTrim();
+      }
+    },
+    [persistTrim]
+  );
 
   // App-shell portal slots (filled by the active ScoreSectionEditor).
   const [appBarEl, setAppBarEl] = useState<HTMLElement | null>(null);
@@ -346,6 +392,8 @@ export function VideoSectionsWorkspace({
               hasDraft={selected.draftTimeMap != null}
               videoUrl={videoUrl}
               videoDurationSeconds={videoDurationSeconds}
+              trim={trim}
+              onTrimDrag={handleTrimDrag}
               onChanged={() => void refetch(selected.sectionId)}
               sections={laneSections}
               onSelectSection={setSelectedId}

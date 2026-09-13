@@ -13,10 +13,20 @@
 // panel below has no preview player, so playback never re-renders the parent.
 
 import { AudioLines, Loader2, Maximize, Music2, Repeat, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
+import { clampToTrim, trimRange, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import { publishTimeMap, saveScoreDocument } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
@@ -101,6 +111,34 @@ export interface SyncPanelProps {
     activeSectionId: string;
     onSelectSection: (sectionId: string) => void;
   };
+  /** Optional lanes rendered under the waveform, sharing its coordinate space.
+   *  A render prop rather than data props: this panel serves all three studios
+   *  and has no business knowing what a backing track is. */
+  renderBackingLanes?: (view: TimelineView) => ReactNode;
+  /** Usable region of the media. Playback clamps to it and the canvas greys the
+   *  rest out; sync waypoints keep their absolute positions either way. */
+  trim?: MediaTrim;
+  onTrimDrag?: (edge: 'in' | 'out', videoTimeSeconds: number) => void;
+}
+
+/** What a lane needs to draw in the same space as the waveform. */
+export interface TimelineView {
+  /** The reference media element, so lanes can slave audio to the same clock.
+   *  A ref rather than the element: it mounts late, through a portal. */
+  videoRef: RefObject<HTMLVideoElement | null>;
+  /** Usable region of the main track, in timeline seconds. */
+  usableRegion: { startSeconds: number; endSeconds: number };
+  pixelsPerSecond: number;
+  scrollLeftPx: number;
+  timelineDurationSeconds: number;
+  viewportWidth: number;
+  /** Measure downbeats, for Shift-snap. */
+  snapTimes: number[];
+  getCurrentSeconds: () => number;
+  isPlaying: boolean;
+  playbackRate: number;
+  onScrollByPx: (dx: number) => void;
+  onZoomBy: (factor: number, anchorPx?: number) => void;
 }
 
 const MIN_PPS = 8;
@@ -124,6 +162,9 @@ export function SyncPanel({
   transportEl,
   monitorEl,
   sectionsContext,
+  renderBackingLanes,
+  trim,
+  onTrimDrag,
 }: SyncPanelProps) {
   const track = score.tracks[0];
 
@@ -363,6 +404,43 @@ export function SyncPanel({
     [markers]
   );
 
+  // --- Main-track trim -----------------------------------------------------
+  // The usable region. Playback clamps to it; the canvas greys out the rest.
+  // Waypoints are NOT rebased — they keep their absolute media positions.
+  const effectiveTrim: MediaTrim = trim ?? { trimInSeconds: 0, trimOutSeconds: null };
+  const trimmed = trim != null;
+  const trimWindow = useMemo(
+    () => trimRange(effectiveTrim, videoDurationSeconds ?? clock.durationSeconds ?? null),
+    [effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock.durationSeconds]
+  );
+
+  /** Every seek entry point goes through here so trim can't be stepped over. */
+  const seekClamped = useCallback(
+    (seconds: number) => {
+      clock.seek(
+        trimmed
+          ? clampToTrim(seconds, effectiveTrim, videoDurationSeconds ?? clock.durationSeconds ?? null)
+          : seconds
+      );
+    },
+    [clock, trimmed, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock.durationSeconds]
+  );
+
+  // Stop at the out-point. currentSeconds is published at RAF rate while
+  // playing, so this lands within a frame. Deliberately NOT in the transport
+  // clock: that hook is shared with LessonVideoPlayer and the student player,
+  // and a trim concept there would regress all three at once. (The A/B loop
+  // machinery is also wrong for this — loops wrap, a trim stops.)
+  useEffect(() => {
+    if (!trimmed || !clock.isPlaying) return;
+    if (!Number.isFinite(trimWindow.endSeconds)) return;
+    if (clock.currentSeconds >= trimWindow.endSeconds) {
+      clock.pause();
+      clock.seek(trimWindow.endSeconds);
+    }
+  }, [trimmed, clock, clock.isPlaying, clock.currentSeconds, trimWindow.endSeconds]);
+
+
   // Timing-only per-measure slots — the editor zips these with extractTrackEvents
   // for the ACTIVE track inside IntegratedEditor (so track-switching doesn't churn SyncPanel).
   const measureTimings: IntegratedEditorMeasureTiming[] = useMemo(() => {
@@ -458,7 +536,11 @@ export function SyncPanel({
   }, []);
 
   const handleSelect = useCallback((target: DragTarget) => {
-    setSelected(target.kind === 'tail' ? 'tail' : target.ref);
+    // Explicit per-kind: an unhandled kind used to fall through to
+    // `target.ref` and set `selected` to undefined.
+    if (target.kind === 'marker') setSelected(target.ref);
+    else if (target.kind === 'tail') setSelected('tail');
+    // Trim grips are not part of the marker selection model.
   }, []);
 
   const handleScrollByPx = useCallback(
@@ -530,6 +612,21 @@ export function SyncPanel({
       setScrollLeft(Math.max(0, centerTime * np - viewportWidth / 2));
       return np;
     });
+  };
+
+  const timelineView: TimelineView = {
+    videoRef,
+    usableRegion: trimWindow,
+    pixelsPerSecond: pps,
+    scrollLeftPx: scrollLeft,
+    timelineDurationSeconds: timelineDuration,
+    viewportWidth,
+    snapTimes: handles.filter((h) => h.isDownbeat).map((h) => h.videoTimeSeconds),
+    getCurrentSeconds: clock.getCurrentSeconds,
+    isPlaying: clock.isPlaying,
+    playbackRate: clock.playbackRate,
+    onScrollByPx: handleScrollByPx,
+    onZoomBy: zoomBy,
   };
 
   // Serialize the matching score and active timing map with all other score writes.
@@ -693,7 +790,11 @@ export function SyncPanel({
                     dragAll={dragAll}
                     selected={selected}
                     getCurrentSeconds={clock.getCurrentSeconds}
-                    onSeek={clock.seek}
+                    onSeek={seekClamped}
+                    trimInSeconds={trim?.trimInSeconds}
+                    trimOutSeconds={trim?.trimOutSeconds ?? null}
+                    mediaDurationSeconds={videoDurationSeconds ?? clock.durationSeconds}
+                    onTrimDrag={onTrimDrag}
                     onSelect={handleSelect}
                     onMarkerDrag={handleMarkerDrag}
                     onTailDrag={handleTailDrag}
@@ -731,6 +832,9 @@ export function SyncPanel({
                       onSelectSection={sectionsContext.onSelectSection}
                     />
                   )}
+
+                  {/* Backing-track lanes share the waveform's x-space. */}
+                  {renderBackingLanes?.(timelineView)}
 
                   {/* Ghost of the armed placement, across the waveform + lane. */}
                   {ghostRange && (
@@ -924,8 +1028,8 @@ export function SyncPanel({
               isPlaying={clock.isPlaying}
               playbackRate={clock.playbackRate}
               onToggle={clock.toggle}
-              onRestart={() => clock.seek(0)}
-              onSeek={clock.seek}
+              onRestart={() => clock.seek(trimWindow.startSeconds)}
+              onSeek={seekClamped}
               onRateChange={clock.setPlaybackRate}
               loopA={clock.loopA}
               loopB={clock.loopB}

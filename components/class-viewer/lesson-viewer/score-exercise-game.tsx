@@ -6,6 +6,7 @@ import type { ExerciseDefinition } from '@/lib/play-sense/types'
 import type { BackingTrack } from '@/app/actions/playsense-studio'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import { getExerciseDuration } from '@/lib/play-sense/exercise-utils'
+import { timelineToEngineSeconds } from '@/lib/play-sense/backing-track-timing'
 import {
   WaypointTimeMap,
   type SyncMethod,
@@ -45,14 +46,18 @@ interface ScoreExerciseGameProps {
   onWatchDemo?: () => void
   /** Instrument backing tracks the student can choose to hear. When provided
    *  (even empty), the selection — not the legacy exercise.audioUrl — drives the
-   *  engine's backing audio. Tracks are equal-length and pre-synced. */
+   *  engine's backing audio. Each track carries its own position and trim,
+   *  set in the studio and converted to engine time here. */
   backingTracks?: BackingTrack[]
   /** Optional exercise-part video: plays MUTED in sync with the engine clock.
    *  Positioned by `timeMap` (beat-accurate) when published, else by its crop
    *  offset (window length = the score's length). */
   exerciseVideo?: {
     url: string
+    /** Trim in-point: where the usable region of the video starts. */
     startSeconds: number
+    /** End of the usable region; null = play to the end. */
+    trimOutSeconds?: number | null
     timeMap: PlaysenseStudioPlayerTimeMap | null
   } | null
 }
@@ -85,18 +90,10 @@ function ScoreExerciseSession({
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
     () => new Set((backingTracks ?? []).map((t) => t.id))
   )
-  const selectedUrls = useMemo(
-    () => (backingTracks ?? []).filter((t) => selectedTrackIds.has(t.id)).map((t) => t.audioUrl),
+  const selectedTracks = useMemo(
+    () => (backingTracks ?? []).filter((t) => selectedTrackIds.has(t.id)),
     [backingTracks, selectedTrackIds]
   )
-
-  // An explicit (possibly empty) selection only when backing tracks are
-  // authored; otherwise the legacy path (exercise.audioUrl) stays in charge.
-  const liveSession = useExerciseSession(backingTracks ? { backingTrackUrls: selectedUrls } : {})
-  const demoExercises = useMemo(() => [exercise], [exercise])
-  const demoSession = useStageDemoSession(demoExercises, preview)
-  const session = preview ? { ...liveSession, ...demoSession.overrides } : liveSession
-  const stableExercise = useMemo(() => exercise, [exercise])
 
   // --- Optional exercise video, synced to the engine clock ---
   // Muted visual reference: seek to the start on countdown, play during
@@ -114,12 +111,46 @@ function ScoreExerciseSession({
       return null
     }
   }, [exerciseVideo])
+
+  // Studio placement is stored on the VIDEO timeline; the engine runs on a
+  // fixed-BPM grid whose t0 is measure 1 beat 1. Convert here, where the time
+  // map already exists, and hand the session clips already in engine seconds —
+  // that keeps time-map knowledge in exactly one place.
+  const placedTracks = useMemo(
+    () =>
+      selectedTracks.map((track) => ({
+        id: track.id,
+        audioUrl: track.audioUrl,
+        startSeconds: timelineToEngineSeconds(
+          track.timelineStartSeconds,
+          videoMap,
+          { bpm: exercise.bpm, timeSignature: exercise.timeSignature },
+          exerciseVideo?.startSeconds ?? 0
+        ),
+        trimInSeconds: track.trimInSeconds,
+        trimOutSeconds: track.trimOutSeconds,
+      })),
+    [selectedTracks, videoMap, exercise.bpm, exercise.timeSignature, exerciseVideo]
+  )
+
+  // An explicit (possibly empty) selection only when backing tracks are
+  // authored; otherwise the legacy path (exercise.audioUrl) stays in charge.
+  const liveSession = useExerciseSession(backingTracks ? { backingTracks: placedTracks } : {})
+  const demoExercises = useMemo(() => [exercise], [exercise])
+  const demoSession = useStageDemoSession(demoExercises, preview)
+  const session = preview ? { ...liveSession, ...demoSession.overrides } : liveSession
+  const stableExercise = useMemo(() => exercise, [exercise])
+
   useEffect(() => {
     const v = videoRef.current
     if (!v || !exerciseVideo) return
     // The map covers one pass; progress spans all loops — fold it back per pass.
     const loops = Math.max(1, exercise.loopCount || 1)
-    const videoStart = videoMap ? videoMap.videoStart : exerciseVideo.startSeconds
+    // exerciseVideo.startSeconds IS the trim in-point (040 folded the old crop
+    // into it), so the usable region starts no earlier than there.
+    const trimIn = exerciseVideo.startSeconds
+    const trimOut = exerciseVideo.trimOutSeconds ?? Infinity
+    const videoStart = Math.max(videoMap ? videoMap.videoStart : trimIn, trimIn)
     if (session.sessionState === 'playing') {
       let expected: number
       if (videoMap) {
@@ -128,8 +159,11 @@ function ScoreExerciseSession({
       } else {
         expected = videoStart + session.playheadProgress * exerciseDurationSec
       }
+      expected = Math.min(Math.max(expected, trimIn), trimOut)
       if (Math.abs(v.currentTime - expected) > 0.35) v.currentTime = expected
-      if (v.paused) void v.play().catch(() => {})
+      if (v.currentTime >= trimOut) {
+        if (!v.paused) v.pause()
+      } else if (v.paused) void v.play().catch(() => {})
     } else if (session.sessionState === 'countdown') {
       if (!v.paused) v.pause()
       if (Math.abs(v.currentTime - videoStart) > 0.05) v.currentTime = videoStart

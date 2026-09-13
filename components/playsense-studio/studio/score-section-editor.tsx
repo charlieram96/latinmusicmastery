@@ -19,6 +19,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { saveScoreDocument, replaceSectionScore } from '@/app/actions/playsense-studio';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
+import type { MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
 import type { LaneSection } from '@/components/playsense-studio/sync/sections-lane';
@@ -37,6 +38,9 @@ export interface ScoreSectionEditorProps {
   hasDraft?: boolean;
   videoUrl: string | null;
   videoDurationSeconds: number | null;
+  /** Usable region of the lesson video, owned by the workspace above. */
+  trim?: MediaTrim;
+  onTrimDrag?: (edge: 'in' | 'out', videoTimeSeconds: number) => void;
   /** Re-fetch sections (ranges / score swapped). Called after publish or replace. */
   onChanged: () => void;
   /** All of this class item's sections — drives the timeline lane + overlap guard. */
@@ -63,6 +67,8 @@ export function ScoreSectionEditor({
   hasDraft,
   videoUrl,
   videoDurationSeconds,
+  trim,
+  onTrimDrag,
   onChanged,
   sections,
   onSelectSection,
@@ -178,6 +184,8 @@ export function ScoreSectionEditor({
         activeTimeMap={activeTimeMap}
         hasDraft={hasDraft}
         videoDurationSeconds={videoDurationSeconds}
+        trim={trim}
+        onTrimDrag={onTrimDrag}
         onPublished={onChanged}
         inspectorEl={inspectorEl}
         transportEl={transportEl}
