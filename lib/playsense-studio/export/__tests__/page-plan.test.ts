@@ -33,8 +33,42 @@ describe('planPages', () => {
   it('gives later pages more room because the header is on page 1 only', () => {
     const plan = planPages({ ...base, pageSize: 'letter', systemCount: 20 });
     const perPage = plan.pages.map(p => new Set(p.map(r => r.system)).size);
-    expect(perPage[1]).toBeGreaterThanOrEqual(perPage[0]);
+    expect(perPage[1]).toBeGreaterThan(perPage[0]);
     expect(plan.pages[1][0].yTop).toBe(PAGE_MARGIN);
-    void SYSTEM_GAP_PT;
+  });
+
+  it('spaces two systems on the same page by SYSTEM_GAP_PT', () => {
+    const plan = planPages({ ...base, pageSize: 'letter', systemCount: 2 });
+    expect(plan.pages).toHaveLength(1);
+    expect(plan.pages[0]).toHaveLength(4);
+    const firstSystemStart = plan.pages[0][0].yTop;
+    const secondSystemStart = plan.pages[0][2].yTop;
+    expect(secondSystemStart).toBeCloseTo(
+      firstSystemStart + (2 * 120 * plan.scale + TRACK_GAP_PT) + SYSTEM_GAP_PT,
+      6
+    );
+  });
+
+  it('downscales further when a system is too tall for the printable area', () => {
+    const plan = planPages({
+      pageSize: 'letter',
+      rowWidthPx: 724,
+      trackRowHeights: Array(12).fill(120),
+      systemCount: 3,
+      headerHeight: 90,
+      footerHeight: 24,
+    });
+    const bottomLimit = PAGE_SIZES.letter.height - PAGE_MARGIN - 24;
+    for (const page of plan.pages) {
+      const last = page[page.length - 1];
+      expect(last.yTop + 120 * plan.scale).toBeLessThanOrEqual(bottomLimit + 1e-6);
+    }
+    const widthOnlyScale = (612 - 108) / 724;
+    expect(plan.scale).toBeLessThan(widthOnlyScale);
+  });
+
+  it('returns a single empty page instead of zero pages when there are no systems', () => {
+    const plan = planPages({ ...base, pageSize: 'letter', systemCount: 0 });
+    expect(plan.pages).toEqual([[]]);
   });
 });
