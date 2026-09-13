@@ -54,6 +54,9 @@ function typeDotTimeModXml(e: NoteBase): string {
 
 interface NoteFlags { tieStop: boolean; slurStop: boolean }
 
+/** Per-voice-number carry state, held for the whole part (not reset per measure). */
+interface VoiceState { pendingTies: Set<number>; pendingSlur: boolean }
+
 function notationsXml(e: NoteBase, flags: NoteFlags, tieStart: boolean, fingering?: Note['fingering'], marcato?: boolean): string {
   const items: string[] = [];
   if (flags.tieStop) items.push('<tied type="stop"/>');
@@ -70,15 +73,16 @@ function notationsXml(e: NoteBase, flags: NoteFlags, tieStart: boolean, fingerin
 
 function oneNote(
   track: Track, e: NoteBase, pitch: { midi: number; spellingHint?: string; percussion?: PercussionNotation; fingering?: Note['fingering']; tieToNext?: boolean },
-  voice: number, flags: NoteFlags, chordTail: boolean, instrumentIds: Map<number, string>,
+  voice: number, tieStop: boolean, slurStop: boolean, chordTail: boolean, instrumentIds: Map<number, string>,
 ): string {
   const perc = isPercussion(track.instrument) ? percussionNotation(track.instrument, pitch) : null;
   const tieStart = !!(pitch.tieToNext ?? e.tieToNext);
+  const flags: NoteFlags = { tieStop, slurStop };
   const parts: string[] = ['<note>'];
   if (chordTail) parts.push('<chord/>');
   parts.push(perc ? unpitchedXml(perc) : pitchXml(pitch.midi, pitch.spellingHint));
   parts.push(durationOnlyXml(e));
-  if (flags.tieStop) parts.push('<tie type="stop"/>');
+  if (tieStop) parts.push('<tie type="stop"/>');
   if (tieStart) parts.push('<tie type="start"/>');
   if (perc?.sourceMidi !== undefined && instrumentIds.has(perc.sourceMidi)) parts.push(`<instrument id="${instrumentIds.get(perc.sourceMidi)}"/>`);
   parts.push(`<voice>${voice}</voice>`);
@@ -89,20 +93,31 @@ function oneNote(
   return parts.join('');
 }
 
-function eventXml(track: Track, e: MusicalEvent, voice: number, flags: NoteFlags, instrumentIds: Map<number, string>): string {
+/**
+ * `pendingTies` carries the specific MIDI pitches tied in from the previous
+ * event (per-pitch, so a partially-tied chord doesn't orphan a `<tie stop>`
+ * on the pitches that weren't actually tied). `slurStop` stays a single
+ * boolean — slurs are chord-wide and only ever land on the first note.
+ */
+function eventXml(track: Track, e: MusicalEvent, voice: number, pendingTies: Set<number>, slurStop: boolean, instrumentIds: Map<number, string>): string {
   if (e.kind === 'rest') {
-    return `<note><rest/>${durationOnlyXml(e)}<voice>${voice}</voice>${typeDotTimeModXml(e)}${notationsXml(e, flags, false)}</note>`;
+    return `<note><rest/>${durationOnlyXml(e)}<voice>${voice}</voice>${typeDotTimeModXml(e)}${notationsXml(e, { tieStop: false, slurStop }, false)}</note>`;
   }
-  if (e.kind === 'note') return oneNote(track, e, e, voice, flags, false, instrumentIds);
+  if (e.kind === 'note') return oneNote(track, e, e, voice, pendingTies.has(e.midi), slurStop, false, instrumentIds);
   const chord = e as Chord;
-  return chord.notes.map((n, i) => oneNote(track, chord, n, voice, i === 0 ? flags : { tieStop: false, slurStop: false }, i > 0, instrumentIds)).join('');
+  return chord.notes.map((n, i) => oneNote(track, chord, n, voice, pendingTies.has(n.midi), i === 0 ? slurStop : false, i > 0, instrumentIds)).join('');
 }
 
-function voiceXml(track: Track, v: Voice, state: { pendingTie: boolean; pendingSlur: boolean }, instrumentIds: Map<number, string>): string {
+function voiceXml(track: Track, v: Voice, state: VoiceState, instrumentIds: Map<number, string>): string {
   return v.events.map(e => {
-    const flags = { tieStop: state.pendingTie, slurStop: state.pendingSlur };
-    const xml = eventXml(track, e, v.number, flags, instrumentIds);
-    state.pendingTie = e.kind === 'chord' ? e.notes.some(n => n.tieToNext) || !!e.tieToNext : !!e.tieToNext;
+    const xml = eventXml(track, e, v.number, state.pendingTies, state.pendingSlur, instrumentIds);
+    const nextTies = new Set<number>();
+    if (e.kind === 'note') {
+      if (e.tieToNext) nextTies.add(e.midi);
+    } else if (e.kind === 'chord') {
+      for (const n of e.notes) if (n.tieToNext ?? e.tieToNext) nextTies.add(n.midi);
+    }
+    state.pendingTies = nextTies;
     state.pendingSlur = !!e.slurToNext;
     return xml;
   }).join('');
@@ -157,7 +172,15 @@ function collapsed(track: Track): Array<{ measure: Measure; repeatStart?: number
 
 function partXml(score: ScoreDocument, track: Track, partId: string, instrumentIds: Map<number, string>): string {
   const measures = collapsed(track);
-  const state = { pendingTie: false, pendingSlur: false };
+  // One carry state per voice NUMBER for the whole part — a tie or slur in
+  // voice 2 crossing a barline needs its state to survive into the next
+  // measure exactly like voice 1's does.
+  const states = new Map<number, VoiceState>();
+  const stateFor = (voiceNumber: number): VoiceState => {
+    let s = states.get(voiceNumber);
+    if (!s) { s = { pendingTies: new Set<number>(), pendingSlur: false }; states.set(voiceNumber, s); }
+    return s;
+  };
   let timeSignature = score.initialTimeSignature;
   const body = measures.map((entry, i) => {
     const m = entry.measure;
@@ -168,10 +191,10 @@ function partXml(score: ScoreDocument, track: Track, partId: string, instrumentI
     if (i === 0) parts.push(tempoXml(score.initialTempo));
     else if (m.tempoChange !== undefined) parts.push(tempoXml(m.tempoChange));
     const [v1, ...rest] = m.voices;
-    if (v1) parts.push(voiceXml(track, v1, state, instrumentIds));
+    if (v1) parts.push(voiceXml(track, v1, stateFor(v1.number), instrumentIds));
     for (const v of rest) {
       parts.push(`<backup><duration>${Math.round(measureLengthInQN(timeSignature) * DIVISIONS)}</duration></backup>`);
-      parts.push(voiceXml(track, v, { pendingTie: false, pendingSlur: false }, instrumentIds));
+      parts.push(voiceXml(track, v, stateFor(v.number), instrumentIds));
     }
     const last = i === measures.length - 1;
     if (entry.repeatEnd) parts.push(`<barline location="right"><bar-style>light-heavy</bar-style><repeat direction="backward" times="${entry.repeatEnd}"/></barline>`);
