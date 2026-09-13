@@ -128,6 +128,12 @@ export type Database = {
           id: string
           label: string
           order_index: number
+          position_qn: number | null
+          source_duration_seconds: number | null
+          time_map_id: string | null
+          timeline_start_seconds: number
+          trim_in_seconds: number
+          trim_out_seconds: number | null
         }
         Insert: {
           audio_url: string
@@ -136,6 +142,12 @@ export type Database = {
           id?: string
           label: string
           order_index?: number
+          position_qn?: number | null
+          source_duration_seconds?: number | null
+          time_map_id?: string | null
+          timeline_start_seconds?: number
+          trim_in_seconds?: number
+          trim_out_seconds?: number | null
         }
         Update: {
           audio_url?: string
@@ -144,6 +156,12 @@ export type Database = {
           id?: string
           label?: string
           order_index?: number
+          position_qn?: number | null
+          source_duration_seconds?: number | null
+          time_map_id?: string | null
+          timeline_start_seconds?: number
+          trim_in_seconds?: number
+          trim_out_seconds?: number | null
         }
         Relationships: [
           {
@@ -151,6 +169,13 @@ export type Database = {
             columns: ["class_item_id"]
             isOneToOne: false
             referencedRelation: "class_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_item_backing_tracks_time_map_id_fkey"
+            columns: ["time_map_id"]
+            isOneToOne: false
+            referencedRelation: "score_time_maps"
             referencedColumns: ["id"]
           },
         ]
@@ -286,6 +311,8 @@ export type Database = {
           description_es: string | null
           exercise_time_map_id: string | null
           exercise_video_start_seconds: number
+          exercise_video_trim_in_seconds: number
+          exercise_video_trim_out_seconds: number | null
           exercise_video_url: string | null
           explanation: string | null
           id: string
@@ -304,6 +331,8 @@ export type Database = {
           title_es: string | null
           updated_at: string | null
           video_duration_seconds: number | null
+          video_trim_in_seconds: number
+          video_trim_out_seconds: number | null
           video_url: string | null
         }
         Insert: {
@@ -317,6 +346,8 @@ export type Database = {
           description_es?: string | null
           exercise_time_map_id?: string | null
           exercise_video_start_seconds?: number
+          exercise_video_trim_in_seconds?: number
+          exercise_video_trim_out_seconds?: number | null
           exercise_video_url?: string | null
           explanation?: string | null
           id?: string
@@ -335,6 +366,8 @@ export type Database = {
           title_es?: string | null
           updated_at?: string | null
           video_duration_seconds?: number | null
+          video_trim_in_seconds?: number
+          video_trim_out_seconds?: number | null
           video_url?: string | null
         }
         Update: {
@@ -348,6 +381,8 @@ export type Database = {
           description_es?: string | null
           exercise_time_map_id?: string | null
           exercise_video_start_seconds?: number
+          exercise_video_trim_in_seconds?: number
+          exercise_video_trim_out_seconds?: number | null
           exercise_video_url?: string | null
           explanation?: string | null
           id?: string
@@ -366,6 +401,8 @@ export type Database = {
           title_es?: string | null
           updated_at?: string | null
           video_duration_seconds?: number | null
+          video_trim_in_seconds?: number
+          video_trim_out_seconds?: number | null
           video_url?: string | null
         }
         Relationships: [

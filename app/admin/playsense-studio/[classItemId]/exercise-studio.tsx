@@ -22,6 +22,7 @@
 
 import { Loader2, MonitorPlay, Target } from 'lucide-react';
 import { useState, useTransition } from 'react';
+import type { MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type {
   ClassItemScorePayload,
   ClassItemScoreSection,
@@ -49,6 +50,8 @@ export interface ExerciseStudioProps {
   title: string;
   videoUrl: string | null;
   videoDurationSeconds: number | null;
+  /** Usable region of the Watch-part demo video (class_items.video_url). */
+  initialTrim?: MediaTrim;
   /** Watch part: scored sections synced to the demo video. */
   initialSections: ClassItemScoreSection[];
   /** Exercise part: the single graded score; null when not yet created. */
@@ -69,6 +72,7 @@ export function ExerciseStudio({
   title,
   videoUrl,
   videoDurationSeconds,
+  initialTrim,
   initialSections,
   scoreDocumentId,
   initialScore,
@@ -176,6 +180,7 @@ export function ExerciseStudio({
         title={title}
         videoUrl={videoUrl}
         videoDurationSeconds={videoDurationSeconds}
+        initialTrim={initialTrim}
         initialSections={sections}
         appBarExtra={toggle}
       />

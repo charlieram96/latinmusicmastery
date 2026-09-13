@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
   saveScoreDocument,
+  updateExerciseVideoTrim,
   updateSongMeta,
   type ExerciseMedia,
   type SongDifficulty,
@@ -31,6 +32,8 @@ import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-im
 import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta-editor';
 import { HighwayPreview } from '@/components/playsense-studio/studio/highway-preview';
 import { ExerciseMediaPanel } from '@/components/playsense-studio/studio/exercise-media-panel';
+import { BackingLanesPanel } from '@/components/playsense-studio/studio/backing-lanes-panel';
+import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 export type StudioOwner =
@@ -117,12 +120,62 @@ export function StudioWorkspace({
   );
   const showExerciseSync = isExercise && exerciseStage === 'syncVideo' && !!exerciseVideoUrl;
 
-  // Uploading/removing the play-along video invalidates any prior sync map.
+  // Usable region of the play-along video. Owned here, next to the video URL,
+  // because it belongs to the class item rather than to any one sync session.
+  const [exerciseTrim, setExerciseTrim] = useState<MediaTrim>({
+    trimInSeconds: exerciseMedia?.videoStartSeconds ?? 0,
+    trimOutSeconds: exerciseMedia?.videoTrimOutSeconds ?? null,
+  });
+
+  // Uploading/removing the play-along video invalidates any prior sync map —
+  // and any trim, which was measured against the old file's timeline.
   const handleExerciseVideoChange = (url: string | null) => {
     setExerciseVideoUrl(url);
     setExerciseTimeMap(null);
+    setExerciseTrim({ trimInSeconds: 0, trimOutSeconds: null });
     if (!url) setExerciseStage('score');
   };
+
+  // Trim handles report a raw timeline position; the pure model clamps it, and
+  // the write is debounced at the same 500ms the crop slider it replaces used.
+  // This is a scalar write, not a time-map publish, so it doesn't need 1500ms.
+  const exerciseTrimTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const exerciseTrimRef = useRef(exerciseTrim);
+  exerciseTrimRef.current = exerciseTrim;
+
+  const persistExerciseTrim = useCallback(() => {
+    if (owner.kind !== 'classItem') return;
+    const trim = exerciseTrimRef.current;
+    void updateExerciseVideoTrim({
+      classItemId: owner.classItemId,
+      trimInSeconds: trim.trimInSeconds,
+      trimOutSeconds: trim.trimOutSeconds,
+    });
+  }, [owner]);
+
+  const handleExerciseTrimDrag = useCallback(
+    (edge: 'in' | 'out', videoTimeSeconds: number) => {
+      setExerciseTrim((prev) =>
+        edge === 'in'
+          ? setTrimIn(prev, null, videoTimeSeconds)
+          : setTrimOut(prev, null, videoTimeSeconds)
+      );
+      if (exerciseTrimTimer.current) clearTimeout(exerciseTrimTimer.current);
+      exerciseTrimTimer.current = setTimeout(persistExerciseTrim, 500);
+    },
+    [persistExerciseTrim]
+  );
+
+  // Flush a pending trim if the stage unmounts mid-drag.
+  useEffect(
+    () => () => {
+      if (exerciseTrimTimer.current) {
+        clearTimeout(exerciseTrimTimer.current);
+        persistExerciseTrim();
+      }
+    },
+    [persistExerciseTrim]
+  );
 
   // SyncPanel uses this only on video paths (waveform cache key + publish). For
   // songs there's no video, so the value is never read.
@@ -371,6 +424,18 @@ export function StudioWorkspace({
               dispatch={dispatch}
               activeTimeMap={exerciseTimeMap}
               videoDurationSeconds={null}
+              trim={exerciseTrim}
+              onTrimDrag={handleExerciseTrimDrag}
+              renderBackingLanes={(v) =>
+                owner.kind === 'classItem' && exerciseMedia ? (
+                  <BackingLanesPanel
+                    classItemId={owner.classItemId}
+                    tracks={exerciseMedia.backingTracks}
+                    timeMap={exerciseTimeMap}
+                    view={v}
+                  />
+                ) : null
+              }
               inspectorEl={inspectorEl}
               transportEl={transportEl}
               onPublished={() => setExerciseStage('syncVideo')}

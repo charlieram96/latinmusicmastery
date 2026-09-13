@@ -15,7 +15,7 @@ import { generateExpectedTimestamps, getExerciseDuration, getCountInDuration } f
 import { useOnsetDetection } from './use-onset-detection'
 import { useMetronome } from './use-metronome'
 import { useCalibration } from './use-calibration'
-import { useBackingTrack } from './use-backing-track'
+import { useBackingTrack, type PlacedBackingTrack } from './use-backing-track'
 import { usePlaysenseOnsets } from './use-playsense-onsets'
 import { useMidiOnsets } from './use-midi-onsets'
 import { consumeOnsets } from '@/lib/play-sense/input-events'
@@ -104,10 +104,19 @@ export interface UseExerciseSessionOptions {
   /**
    * Explicit backing-track URLs (course exercises: the student's selected
    * instrument tracks). When provided — even as an empty array — this wins over
-   * the legacy single `exercise.audioUrl`. All tracks start together at the
-   * engine's t0; they're assumed equal-length and pre-synced with the notes.
+   * the legacy single `exercise.audioUrl`. Every track starts at the engine's
+   * t0, untrimmed.
+   *
+   * @deprecated Prefer `backingTracks`, which carries the position and trim the
+   * admin set in the studio. Kept so callers that never place tracks (and the
+   * legacy single-audio path) keep working unchanged.
    */
   backingTrackUrls?: string[]
+  /**
+   * Backing tracks with their studio placement already converted to engine
+   * seconds. Wins over `backingTrackUrls` when present.
+   */
+  backingTracks?: PlacedBackingTrack[]
 }
 
 export function useExerciseSession(options: UseExerciseSessionOptions = {}): UseExerciseSessionResult {
@@ -200,7 +209,19 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const backingTrackAudioMode = (audioMode === 'headphones' || audioMode === 'speaker-safe') ? audioMode : undefined
   const backingTrackUrls =
     options.backingTrackUrls ?? (exercise?.audioUrl ? [exercise.audioUrl] : [])
-  const backingTrack = useBackingTrack({ audioUrls: backingTrackUrls, audioMode: backingTrackAudioMode })
+  const backingTrack = useBackingTrack({
+    tracks: options.backingTracks,
+    audioUrls: options.backingTracks ? undefined : backingTrackUrls,
+    audioMode: backingTrackAudioMode,
+    // Placed clips must repeat with the exercise, or a looping exercise would
+    // hear them only on the first pass. loopCount is 1 in production today.
+    // Derived here rather than read from singleLoopDurationRef, which is only
+    // populated once the session starts — after this render.
+    loopDurationSeconds: exercise
+      ? (exercise.measures * exercise.timeSignature[0] * 60) / exercise.bpm
+      : undefined,
+    loopCount: exercise?.loopCount ?? 1,
+  })
 
   // Microphone pitch analysis runs in its worklet on the same stream and clock.
   const instrumentCategoryRef = useRef<InstrumentCategory>('percussion')

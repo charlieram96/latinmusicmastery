@@ -696,6 +696,77 @@ html:has([data-marketing]) {
   color: hsl(var(--destructive));
 }
 
+/* ---- Backing-track lanes (under the waveform, exercise sync only) ---- */
+/* The stack scrolls vertically past a few tracks; x always comes from the
+   shared scrollLeft, never from a local horizontal scroller. */
+.st-backing-stack {
+  position: relative;
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+/* Audition buttons sit in a fixed left gutter so they never move with time. */
+.st-backing-toggles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+}
+.st-backing-toggle {
+  display: flex;
+  width: 22px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-right: 1px solid hsl(var(--border));
+  background: color-mix(in srgb, hsl(var(--card)) 78%, transparent);
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+.st-backing-toggle:hover { background: hsl(var(--muted)); color: hsl(var(--foreground)); }
+.st-backing-toggle.is-on { color: hsl(var(--primary)); }
+
+.st-backing-lanes {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-top: 1px solid hsl(var(--border));
+  background: rgba(255, 255, 255, 0.02);
+}
+.st-backing-lane-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+/* Only the overlay takes pointer events; it owns drag + trim. */
+.st-backing-lane-overlay {
+  touch-action: none;
+}
+/* Labels sit above the canvases but never intercept a drag. */
+.st-backing-lane-chrome {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.st-backing-lane-chip {
+  --block-color: hsl(var(--primary));
+  position: absolute;
+  max-width: 40%;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, hsl(var(--card)) 70%, transparent);
+  color: hsl(var(--foreground));
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Full-height ghost of an armed "place at playhead" over the waveform + lane. */
 .st-ghost-overlay {
   position: absolute;

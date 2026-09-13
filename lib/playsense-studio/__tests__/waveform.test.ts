@@ -5,6 +5,7 @@ import {
   deserializePeaks,
   bucketMinMax,
   waveformBucketCount,
+  bucketCountFor,
 } from '../waveform';
 
 function sine(samples: number, cyclesPerBuffer: number, amplitude = 1): Float32Array {
@@ -28,6 +29,31 @@ describe('computePeaks', () => {
     expect(waveformBucketCount(440)).toBe(264000);
     expect(waveformBucketCount(2)).toBe(1200);
     expect(waveformBucketCount(7200)).toBe(600000);
+  });
+
+  describe('bucketCountFor', () => {
+    it('backs the main waveform at 600 buckets/second', () => {
+      expect(bucketCountFor(440, 600)).toBe(waveformBucketCount(440));
+    });
+
+    it('keeps lane peaks an order of magnitude smaller', () => {
+      // A 4-minute backing track: ~14k buckets for a 28px lane, not ~144k.
+      expect(bucketCountFor(240, 60)).toBe(14400);
+    });
+
+    it('never returns less than one bucket', () => {
+      expect(bucketCountFor(0, 60)).toBe(1);
+      expect(bucketCountFor(0.001, 60)).toBe(1);
+    });
+
+    it('applies the cache ceiling at any resolution', () => {
+      expect(bucketCountFor(100_000, 60)).toBe(600000);
+    });
+
+    it('is defensive about non-finite input', () => {
+      expect(bucketCountFor(NaN, 60)).toBe(1);
+      expect(bucketCountFor(240, Infinity)).toBe(1);
+    });
   });
   it('produces exactly targetBuckets buckets and 2 values per bucket', () => {
     const peaks = computePeaks(sine(16000, 200), 8000, 2, 8000);

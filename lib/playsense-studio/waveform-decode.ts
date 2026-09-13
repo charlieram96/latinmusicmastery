@@ -11,6 +11,7 @@
 // alongside a second offline render. The browser still decodes the whole file.
 
 import {
+  bucketCountFor,
   computePeaks,
   deserializePeaks,
   serializePeaks,
@@ -23,8 +24,18 @@ import type { Database } from '@/types/database';
 const WAVEFORM_BUCKET = 'score-waveforms';
 const TARGET_SAMPLE_RATE = 8000;
 
+/**
+ * Horizontal resolution for backing-track lane peaks. The lane body is ~28px,
+ * so the main waveform's 600/s buys nothing visible and costs ~10x the cached
+ * JSON per track. NOTE this is a PEAKS rate only -- playback decodes the file
+ * separately at its native rate.
+ */
+export const LANE_BUCKETS_PER_SECOND = 60;
+
 export interface DecodeOptions {
   targetBuckets?: number;
+  /** Resolution in buckets/second; ignored when targetBuckets is given. */
+  bucketsPerSecond?: number;
   targetSampleRate?: number;
   /** Called with progress 0..1 during the network download. */
   onProgress?: (fraction: number) => void;
@@ -32,9 +43,11 @@ export interface DecodeOptions {
 }
 
 /**
- * Fetch a video's bytes, decode its audio, and return compact peaks. Throws if
- * the bytes can't be fetched (CORS) or the audio can't be decoded (codec). The
- * caller is expected to fall back to a grid-only editor on failure.
+ * Fetch a media file's bytes, decode its audio, and return compact peaks.
+ * Media-agnostic despite the name: it only ever touches the audio track, so
+ * backing-track audio files go through here unchanged. Throws if the bytes
+ * can't be fetched (CORS) or the audio can't be decoded (codec). The caller is
+ * expected to fall back to a grid-only editor on failure.
  */
 export async function decodeVideoPeaks(
   videoUrl: string,
@@ -60,7 +73,13 @@ export async function decodeVideoPeaks(
     for (let i = 0; i < mono.length; i++) mono[i] /= decoded.numberOfChannels;
   }
 
-  return computePeaks(mono, targetSampleRate, decoded.duration, opts.targetBuckets ?? waveformBucketCount(decoded.duration));
+  const targetBuckets =
+    opts.targetBuckets ??
+    (opts.bucketsPerSecond != null
+      ? bucketCountFor(decoded.duration, opts.bucketsPerSecond)
+      : waveformBucketCount(decoded.duration));
+
+  return computePeaks(mono, targetSampleRate, decoded.duration, targetBuckets);
 }
 
 /**
@@ -115,6 +134,64 @@ export async function loadCachedPeaks(
 
 export function waveformPath(classItemId: string, videoUrl: string): string {
   return `peaks/${classItemId}-${shortHash(videoUrl)}-hires-v2.json`;
+}
+
+/**
+ * Cache path for a backing-track lane. A distinct suffix from the main
+ * waveform's `-hires-v2` keeps the two resolutions from ever colliding for the
+ * same owner+url pair.
+ */
+export function laneWaveformPath(ownerId: string, audioUrl: string): string {
+  return `peaks/${ownerId}-${shortHash(audioUrl)}-lane-v1.json`;
+}
+
+/**
+ * Lane equivalent of loadOrComputePeaks: low-resolution peaks for one backing
+ * track, cached in the same bucket.
+ *
+ * The returned `durationSeconds` IS the source duration, so the first decode
+ * (or any later cache hit) doubles as the duration probe that the clip model
+ * needs to clamp trims -- no extra round-trip.
+ */
+export async function loadOrComputeLanePeaks(
+  ownerId: string,
+  audioUrl: string,
+  supabase: SupabaseClient<Database>,
+  opts: DecodeOptions = {}
+): Promise<WaveformPeaks> {
+  const path = laneWaveformPath(ownerId, audioUrl);
+
+  const cached = await tryLoadCache(supabase, path, opts.signal);
+  if (cached) return cached;
+
+  const peaks = await decodeVideoPeaks(audioUrl, {
+    ...opts,
+    bucketsPerSecond: opts.bucketsPerSecond ?? LANE_BUCKETS_PER_SECOND,
+  });
+
+  try {
+    await supabase.storage
+      .from(WAVEFORM_BUCKET)
+      .upload(path, new Blob([serializePeaks(peaks)], { type: 'application/json' }), {
+        upsert: true,
+        cacheControl: '31536000',
+        contentType: 'application/json',
+      });
+  } catch {
+    // Caching is best-effort; the peaks are still usable this session.
+  }
+
+  return peaks;
+}
+
+/** Cache-ONLY lane lookup, for the cheap probe-everything-on-mount pass. */
+export async function loadCachedLanePeaks(
+  ownerId: string,
+  audioUrl: string,
+  supabase: SupabaseClient<Database>,
+  signal?: AbortSignal
+): Promise<WaveformPeaks | null> {
+  return tryLoadCache(supabase, laneWaveformPath(ownerId, audioUrl), signal);
 }
 
 async function tryLoadCache(

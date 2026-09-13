@@ -27,6 +27,7 @@
 
 import { useTranslation } from '@/components/language-provider';
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -125,6 +126,14 @@ export interface PlaysenseStudioPlayerProps {
   subtitles?: SubtitleTrackDef[];
   /** UI locale — the matching track starts showing; user can switch/turn off. */
   defaultSubtitleLang?: SubtitleLang;
+  /**
+   * Usable region of the demo video, set with the studio's trim handles.
+   * Playback starts at trimIn and stops at trimOut. Applied here rather than in
+   * useVideoTransportClock, which is shared with the studio and LessonVideoPlayer.
+   * Sync waypoints keep their absolute video positions and are NOT rebased.
+   */
+  trimInSeconds?: number;
+  trimOutSeconds?: number | null;
 }
 
 const POSITION_SAVE_INTERVAL_MS = 5000;
@@ -143,9 +152,37 @@ export function PlaysenseStudioPlayer({
   onEnded,
   subtitles,
   defaultSubtitleLang,
+  trimInSeconds,
+  trimOutSeconds,
 }: PlaysenseStudioPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const clock = useVideoTransportClock(videoRef, { onEnded });
+
+  const trimStart = Math.max(0, trimInSeconds ?? 0);
+  const trimEnd =
+    trimOutSeconds != null && trimOutSeconds > trimStart ? trimOutSeconds : Infinity;
+  const trimmed = trimStart > 0 || Number.isFinite(trimEnd);
+  const clampSeek = useCallback(
+    (seconds: number) =>
+      clock.seek(trimmed ? Math.min(Math.max(seconds, trimStart), trimEnd) : seconds),
+    [clock, trimmed, trimStart, trimEnd]
+  );
+
+  // Begin at the in-point, and stop at the out-point.
+  const seededStartRef = useRef(false);
+  useEffect(() => {
+    if (!trimmed || seededStartRef.current || clock.durationSeconds <= 0) return;
+    seededStartRef.current = true;
+    if (clock.currentSeconds < trimStart) clock.seek(trimStart);
+  }, [trimmed, clock, clock.durationSeconds, clock.currentSeconds, trimStart]);
+
+  useEffect(() => {
+    if (!trimmed || !clock.isPlaying || !Number.isFinite(trimEnd)) return;
+    if (clock.currentSeconds >= trimEnd) {
+      clock.pause();
+      clock.seek(trimEnd);
+    }
+  }, [trimmed, clock, clock.isPlaying, clock.currentSeconds, trimEnd]);
   const subtitleTracks = subtitles ?? [];
   const { activeLang: activeSubtitleLang, setActiveLang: setActiveSubtitleLang } =
     useSubtitleTracks(videoRef, subtitleTracks, defaultSubtitleLang);
@@ -438,8 +475,8 @@ export function PlaysenseStudioPlayer({
       isPlaying={clock.isPlaying}
       playbackRate={clock.playbackRate}
       onToggle={clock.toggle}
-      onRestart={() => clock.seek(0)}
-      onSeek={clock.seek}
+      onRestart={() => clock.seek(trimStart)}
+      onSeek={clampSeek}
       onRateChange={clock.setPlaybackRate}
       loopA={clock.loopA}
       loopB={clock.loopB}

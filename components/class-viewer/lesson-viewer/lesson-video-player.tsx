@@ -44,6 +44,15 @@ interface LessonVideoPlayerProps {
   className?: string
   subtitles?: SubtitleTrackDef[]
   defaultSubtitleLang?: SubtitleLang
+  /**
+   * Usable region of the video, set by an admin with the trim handles in the
+   * studio. Playback starts at trimIn and stops at trimOut, and the scrubber's
+   * domain is remapped so the trimmed-away parts are simply not reachable.
+   * Handled here rather than in useVideoTransportClock, which is shared with
+   * the studio and the exercise player.
+   */
+  trimInSeconds?: number
+  trimOutSeconds?: number | null
 }
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2]
@@ -64,6 +73,8 @@ export function LessonVideoPlayer({
   className,
   subtitles,
   defaultSubtitleLang,
+  trimInSeconds,
+  trimOutSeconds,
 }: LessonVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -83,8 +94,36 @@ export function LessonVideoPlayer({
   const [hoverPct, setHoverPct] = useState<number | null>(null)
   const [scrubbing, setScrubbing] = useState(false)
 
-  const duration = clock.durationSeconds || 0
-  const playedPct = duration > 0 ? (clock.currentSeconds / duration) * 100 : 0
+  const mediaDuration = clock.durationSeconds || 0
+  const trimStart = Math.max(0, trimInSeconds ?? 0)
+  const trimEnd =
+    trimOutSeconds != null && trimOutSeconds > trimStart
+      ? Math.min(trimOutSeconds, mediaDuration || trimOutSeconds)
+      : mediaDuration
+  const trimmed = trimStart > 0 || (trimOutSeconds != null && trimOutSeconds < mediaDuration)
+
+  // Everything the controls show is RELATIVE to the usable region, so a trimmed
+  // lesson reads as a video of exactly that length.
+  const duration = Math.max(0, trimEnd - trimStart)
+  const positionSeconds = Math.max(0, clock.currentSeconds - trimStart)
+  const playedPct = duration > 0 ? (positionSeconds / duration) * 100 : 0
+
+  // Start at the in-point rather than at zero.
+  const seekedToStartRef = useRef(false)
+  useEffect(() => {
+    if (!trimmed || seekedToStartRef.current || mediaDuration <= 0) return
+    seekedToStartRef.current = true
+    if (clock.currentSeconds < trimStart) clock.seek(trimStart)
+  }, [trimmed, mediaDuration, trimStart, clock])
+
+  // Stop at the out-point.
+  useEffect(() => {
+    if (!trimmed || !clock.isPlaying || trimEnd <= 0) return
+    if (clock.currentSeconds >= trimEnd) {
+      clock.pause()
+      clock.seek(trimEnd)
+    }
+  }, [trimmed, clock, clock.isPlaying, clock.currentSeconds, trimEnd])
 
   // --- buffered range tracking ---
   useEffect(() => {
@@ -158,7 +197,7 @@ export function LessonVideoPlayer({
     if (!rect || rect.width === 0) return 0
     return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
   }
-  const seekToPct = (pct: number) => clock.seek(pct * duration)
+  const seekToPct = (pct: number) => clock.seek(trimStart + pct * duration)
 
   const onTrackPointerDown = (e: ReactPointerEvent) => {
     e.preventDefault()
@@ -186,11 +225,11 @@ export function LessonVideoPlayer({
         break
       case 'ArrowLeft':
         e.preventDefault()
-        clock.seek(Math.max(0, clock.currentSeconds - 5))
+        clock.seek(Math.max(trimStart, clock.currentSeconds - 5))
         break
       case 'ArrowRight':
         e.preventDefault()
-        clock.seek(Math.min(duration, clock.currentSeconds + 5))
+        clock.seek(Math.min(trimEnd, clock.currentSeconds + 5))
         break
       case 'ArrowUp':
         e.preventDefault()
@@ -293,7 +332,9 @@ export function LessonVideoPlayer({
             {/* buffered */}
             <div
               className="absolute inset-y-0 left-0 rounded-full bg-white/25"
-              style={{ width: `${duration > 0 ? (buffered / duration) * 100 : 0}%` }}
+              style={{
+                width: `${duration > 0 ? (Math.max(0, buffered - trimStart) / duration) * 100 : 0}%`,
+              }}
             />
             {/* loop region */}
             {loopAPct !== null && loopBPct !== null && loopBPct > loopAPct && (
@@ -362,7 +403,7 @@ export function LessonVideoPlayer({
           </div>
 
           <span className="ml-0.5 select-none text-xs font-medium tabular-nums text-white/90">
-            {fmt(clock.currentSeconds)} <span className="text-white/50">/ {fmt(duration)}</span>
+            {fmt(positionSeconds)} <span className="text-white/50">/ {fmt(duration)}</span>
           </span>
 
           <div className="flex-1" />

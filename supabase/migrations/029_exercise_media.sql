@@ -9,6 +9,10 @@
 -- 2) Instrument backing tracks the student selects before playing. Tracks are
 --    assumed equal-length and pre-synced with the notes; the engine starts all
 --    selected tracks at the same AudioContext timestamp.
+--
+-- SUPERSEDED BY 040: backing tracks now carry their own position and trim, and
+-- the crop in (1) was folded into exercise_video_trim_in_seconds. Neither
+-- assumption above still holds; see 040_track_placement_and_trim.sql.
 -- ============================================
 
 ALTER TABLE class_items

@@ -2,10 +2,10 @@
 
 // EXERCISE play-part media panel (studio left rail).
 //
-// Two cards: the optional exercise video (uploaded here, cropped with a start
-// offset — the visible window is exactly the score's fixed-BPM length) and the
-// instrument backing tracks students choose from before playing. Tracks are
-// equal-length, pre-synced files; only label + order are editable.
+// Two cards: the optional exercise video and the instrument backing tracks
+// students choose from before playing. This panel manages the FILES — upload,
+// rename, remove. Position and trim are edited on the timeline in "Sync video"
+// (see backing-lanes-panel.tsx), not here.
 //
 // Lives in components/ (NOT the studio route dir) so it can import the server
 // actions directly without tripping the known Turbopack build deadlock.
@@ -199,40 +199,15 @@ export function ExerciseMediaPanel({
               className="w-full rounded-md bg-black"
               onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration || null)}
             />
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>Crop start</span>
-                <span className="font-mono tabular-nums text-foreground">
-                  {formatSeconds(crop.start)} – {formatSeconds(crop.end)}
-                </span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={crop.maxStart ?? Math.max(0, startSeconds)}
-                step={0.1}
-                value={crop.start}
-                disabled={crop.maxStart === 0 || crop.maxStart === null}
-                onChange={(e) => setCropStart(Number(e.target.value))}
-                className="w-full"
-                aria-label="Crop start"
-              />
-              <p className="text-[11px] leading-snug text-muted-foreground">
-                {hasTimeMap
-                  ? 'Synced to the notation — the crop is ignored. Edit it from “Sync video”.'
-                  : crop.maxStart === null
-                    ? 'Loading video length…'
-                    : crop.maxStart === 0
-                      ? 'Video is not longer than the score — it plays from the top.'
-                      : `Window length = score length (${formatSeconds(scoreLengthSeconds)}).`}
-              </p>
-              {!hasTimeMap && (
-                <p className="text-[11px] leading-snug text-muted-foreground">
-                  Need it beat-accurate? Use <span className="font-medium text-foreground">“Sync
-                  video”</span> in the top bar to place waypoints against the notation.
-                </p>
-              )}
-            </div>
+            {/* The crop-start slider used to live here. It is superseded by the
+                trim handles on the waveform in "Sync video", which set the same
+                in-point and can also set an out-point — one windowing mechanism
+                instead of two. */}
+            <p className="text-[11px] leading-snug text-muted-foreground">
+              Trim the usable part of this video, and line backing tracks up
+              against it, in{' '}
+              <span className="font-medium text-foreground">&ldquo;Sync video&rdquo;</span>.
+            </p>
             <button
               type="button"
               onClick={() => void removeVideo()}
@@ -277,8 +252,9 @@ export function ExerciseMediaPanel({
         <span className="st-sec-label">Backing tracks</span>
         {tracks.length === 0 && (
           <p className="text-[11px] leading-snug text-muted-foreground">
-            Optional instrument mixes the student can choose to play along with. Upload files of
-            the same length, already in sync with the notes.
+            Optional instrument mixes the student can choose to play along with. Position and
+            trim each one on the timeline in &ldquo;Sync video&rdquo; — they no longer need to be
+            the same length or pre-synced.
           </p>
         )}
         {tracks.map((t) => (

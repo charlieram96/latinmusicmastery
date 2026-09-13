@@ -35,6 +35,7 @@ interface ExerciseViewProps {
   exerciseVideo?: {
     url: string
     startSeconds: number
+    trimOutSeconds?: number | null
     timeMap: PlaysenseStudioPlayerTimeMap | null
   } | null
 }
