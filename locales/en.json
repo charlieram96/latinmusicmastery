@@ -1,5 +1,6 @@
 {
   "lessonView": {"videoToggle": "Video", "scoreToggle": "Score","label": "Lesson view", "both": "Video + score", "video": "Video only", "score": "Score only"},
+  "playsenseExport": {"button": "Download sheet music", "title": "Download this section", "pdf": "Sheet music (PDF)", "pdfHint": "Print or read on a tablet", "musicxml": "MusicXML", "musicxmlHint": "Open in MuseScore or Guitar Pro", "note": "Includes all tracks, Letter size, title and tempo.", "error": "Could not create the file. Try again.", "working": "Preparing…"},
   "common": {
     "language": "Language",
     "changeLanguage": "Change language",

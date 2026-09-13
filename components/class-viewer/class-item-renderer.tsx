@@ -187,6 +187,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
           <PlaysenseStudioPlayer
             readOnly={process.env.NODE_ENV === 'development' && previewLesson}
             classItemId={item.id}
+            classItemTitle={item.title}
             videoUrl={item.video_url}
             score={firstSection.score}
             tracks={firstSection.tracks}
@@ -202,6 +203,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
           <PlaysenseStudioPlayer
             readOnly={process.env.NODE_ENV === 'development' && previewLesson}
             classItemId={item.id}
+            classItemTitle={item.title}
             videoUrl={item.video_url}
             score={firstUnplacedSection.scoreDocument.parsedScore}
             tracks={firstUnplacedSection.tracks}

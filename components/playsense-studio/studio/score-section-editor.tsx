@@ -14,7 +14,7 @@
 // into the right rail + bottom dock.
 
 import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
-import { FileUp, Redo2, Save, Undo2 } from 'lucide-react';
+import { Download, FileUp, Redo2, Save, Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { saveScoreDocument, replaceSectionScore } from '@/app/actions/playsense-studio';
@@ -25,6 +25,7 @@ import type { LaneSection } from '@/components/playsense-studio/sync/sections-la
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta-editor';
 import { HighwayPreview } from '@/components/playsense-studio/studio/highway-preview';
+import { ExportDialog } from '@/components/playsense-studio/export/export-dialog';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 export interface ScoreSectionEditorProps {
@@ -32,6 +33,9 @@ export interface ScoreSectionEditorProps {
   sectionId: string;
   scoreDocumentId: string;
   initialScore: ScoreDocument;
+  classItemTitle: string;
+  sectionIndex: number;
+  sectionCount: number;
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
   /** True when this section has an autosaved sync draft not yet Published. */
   hasDraft?: boolean;
@@ -59,6 +63,9 @@ export function ScoreSectionEditor({
   sectionId,
   scoreDocumentId,
   initialScore,
+  classItemTitle,
+  sectionIndex,
+  sectionCount,
   activeTimeMap,
   hasDraft,
   videoUrl,
@@ -200,6 +207,19 @@ export function ScoreSectionEditor({
                 <button type="button" className="st-chip" title="Replace this section's score with a new import">
                   <FileUp className="h-4 w-4" />
                   <span className="hidden lg:inline">Replace score</span>
+                </button>
+              }
+            />
+            <ExportDialog
+              score={state.score}
+              classItemTitle={classItemTitle}
+              sectionIndex={sectionIndex}
+              sectionCount={sectionCount}
+              classItemId={classItemId}
+              trigger={
+                <button type="button" className="st-chip" title="Export this section as PDF, MusicXML or MIDI">
+                  <Download className="h-4 w-4" />
+                  <span className="hidden lg:inline">Export</span>
                 </button>
               }
             />

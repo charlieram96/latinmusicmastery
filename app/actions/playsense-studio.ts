@@ -325,7 +325,8 @@ export type PlaysenseStudioEventType =
   | 'playsense_studio_seek_via_notation'
   | 'playsense_studio_clip_saved'
   | 'playsense_studio_view_switched'
-  | 'playsense_studio_legacy_iframe_shown';
+  | 'playsense_studio_legacy_iframe_shown'
+  | 'playsense_studio_section_exported';
 
 /**
  * Log a PlaySense Studio player event. Cheap, fire-and-forget; we don't await this

@@ -50,7 +50,7 @@ import type {
   SeekTarget,
 } from '@/lib/playsense-studio/renderer';
 import { scoreCursorAt, scoreScrollOffset, scoreReadingStops, scoreReadingOffset, scoreVerticalOffset, type ScoreReadingStop, type ScoreReadingRow } from '@/lib/playsense-studio/notation-playback';
-import { packLessonScoreRows } from '@/lib/playsense-studio/notation-layout';
+import { packLessonScoreRows, requiredMeasureWidths, MEASURE_WIDTH } from '@/lib/playsense-studio/notation-layout';
 import { createNotationInterlude } from './notation-interlude';
 import './staff-renderer.css';
 import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
@@ -98,10 +98,7 @@ const CURSOR_OVERHANG = 10;
 const STAFF_LINE_WIDTH = 1;
 /** Base model width of a video interlude in horizontal notation. */
 const GAP_BOX_W = 112;
-const FIRST_MEASURE_EXTRA_WIDTH = 80; // room for clef + time signature
-/** Preserve note spacing when fitting several measures across a row. */
-const PER_NOTE_MIN_WIDTH = 22;
-const QN_WIDTH = 54;
+const FIRST_MEASURE_EXTRA_WIDTH = MEASURE_WIDTH.FIRST_MEASURE_EXTRA_WIDTH; // room for clef + time signature
 /** Space for measure labels and beat guides between wrapped staff rows. */
 const WRAP_ROW_GAP = 96;
 /** Fallback model width when the container hasn't been measured yet. */
@@ -424,11 +421,7 @@ class StaffRendererImpl implements ScoreRenderer {
     // Fit one, two, or three measures using each bar's own width requirement.
     // Clef/signature space belongs only to the first bar, not every column.
     const systemPitch = Math.max(STAFF_LINE_SPAN + WRAP_ROW_GAP, this.staffFootprint + 10);
-    const requiredWidths = measureBlocks.map((block, index) => {
-      const quarterNotes = block.timeSignature[0] * 4 / block.timeSignature[1];
-      return Math.max(100, quarterNotes * QN_WIDTH, block.events.length * PER_NOTE_MIN_WIDTH + 24)
-        + (index === 0 ? FIRST_MEASURE_EXTRA_WIDTH : 0);
-    });
+    const requiredWidths = requiredMeasureWidths(measureBlocks);
     const rows = packLessonScoreRows(requiredWidths, avail, { leading: hasLeading, trailing: hasGap });
     const systemCount = rows.length;
 

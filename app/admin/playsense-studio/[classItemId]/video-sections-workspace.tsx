@@ -340,6 +340,9 @@ export function VideoSectionsWorkspace({
               sectionId={selected.sectionId}
               scoreDocumentId={selected.scoreDocument.id}
               initialScore={selected.scoreDocument.parsedScore}
+              classItemTitle={title}
+              sectionIndex={Math.max(0, sections.findIndex((s) => s.sectionId === selected.sectionId))}
+              sectionCount={sections.length}
               // Seed the sync markers from the admin's autosaved draft when present,
               // else the last Published map. Students only ever get activeTimeMap.
               activeTimeMap={selected.draftTimeMap ?? selected.activeTimeMap}
