@@ -16,6 +16,7 @@ import {
   normalizeMediaTrim,
   type MediaTrim,
 } from '@/lib/playsense-studio/clip-model';
+import { rebaseAnchor, secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 // ============================================
@@ -167,6 +168,13 @@ export interface ClassItemScoreSection extends ClassItemScorePayload {
   /** Admin-only autosaved sync draft (not yet Published). Null when none.
    *  Students never receive this — the studio seeds its markers from it. */
   draftTimeMap: ClassItemScorePayload['activeTimeMap'];
+  /** One video second known to land on a beat, for the student click track.
+   *  Null = this section has no click. Marks ANY beat, not necessarily a
+   *  downbeat, which is why the click is uniform. */
+  metronomeAnchorSeconds: number | null;
+  /** What that second MEANT musically, so republishing a re-dragged sync moves
+   *  the anchor with the music. See lib/playsense-studio/metronome-anchor.ts. */
+  metronomeAnchorQn: number | null;
 }
 
 /** All scored sections for a class item, ordered by section_index. */
@@ -177,7 +185,9 @@ export async function getScoreSectionsForClassItem(
 
   const { data: rows, error } = await supabase
     .from('class_item_score_sections')
-    .select('id, section_index, label, score_document_id, active_time_map_id, draft_time_map_id, video_start_seconds, video_end_seconds')
+    .select(
+      'id, section_index, label, score_document_id, active_time_map_id, draft_time_map_id, video_start_seconds, video_end_seconds, metronome_anchor_seconds, metronome_anchor_qn'
+    )
     .eq('class_item_id', classItemId)
     .order('section_index', { ascending: true });
 
@@ -200,6 +210,8 @@ export async function getScoreSectionsForClassItem(
       videoStartSeconds: row.video_start_seconds,
       videoEndSeconds: row.video_end_seconds,
       draftTimeMap: draft.data ?? null,
+      metronomeAnchorSeconds: row.metronome_anchor_seconds,
+      metronomeAnchorQn: row.metronome_anchor_qn,
     });
   }
 
@@ -657,9 +669,52 @@ export async function publishTimeMap(
     // Capture the maps this publish supersedes so we can reclaim them afterward.
     const { data: prevSec } = await supabase
       .from('class_item_score_sections')
-      .select('active_time_map_id, draft_time_map_id')
+      .select(
+        'active_time_map_id, draft_time_map_id, metronome_anchor_seconds, metronome_anchor_qn'
+      )
       .eq('id', input.sectionId)
       .single();
+
+    // Move the click's anchor with the music. This has to happen HERE, on the
+    // write: the superseded map is deleted a few lines below, so by read time
+    // there is nothing left to rebase against. A first publish seeds the anchor
+    // from the score's own start; later ones recompute it from the musical
+    // position the admin originally meant.
+    //
+    // Wrapped so it can never fail a publish — every failure path leaves the
+    // stored anchor exactly as it was.
+    let anchorPatch: {
+      metronome_anchor_seconds: number;
+      metronome_anchor_qn: number;
+      metronome_anchor_time_map_id: string;
+    } | null = null;
+    try {
+      if (prevSec && prevSec.metronome_anchor_seconds == null) {
+        anchorPatch = {
+          metronome_anchor_seconds: sorted[0].videoTimeSeconds,
+          metronome_anchor_qn: sorted[0].musicalPositionQN,
+          metronome_anchor_time_map_id: tmRow.id,
+        };
+      } else if (prevSec) {
+        const next = rebaseAnchor(
+          {
+            anchorSeconds: prevSec.metronome_anchor_seconds,
+            anchorQn: prevSec.metronome_anchor_qn,
+          },
+          sorted
+        );
+        if (next) {
+          anchorPatch = {
+            metronome_anchor_seconds: next.anchorSeconds,
+            metronome_anchor_qn: next.anchorQn,
+            metronome_anchor_time_map_id: tmRow.id,
+          };
+        }
+      }
+    } catch {
+      anchorPatch = null;
+    }
+
     const { error: secErr } = await supabase
       .from('class_item_score_sections')
       .update({
@@ -668,6 +723,7 @@ export async function publishTimeMap(
         draft_time_map_id: null,
         video_start_seconds: start,
         video_end_seconds: end,
+        ...(anchorPatch ?? {}),
         updated_at: new Date().toISOString(),
       })
       .eq('id', input.sectionId);
@@ -1779,4 +1835,78 @@ export async function updateClassItemVideoTrim(input: {
   if (error) return { error: error.message };
 
   return { data: { trimInSeconds: trim.trimInSeconds, trimOutSeconds: trimOut } };
+}
+
+/**
+ * Set (or clear) a section's metronome anchor — the one video second the
+ * student click phases itself to.
+ *
+ * Deliberately NOT folded into publishTimeMap: that deletes and recreates the
+ * map row and every waypoint, so republishing because someone nudged a marker
+ * by 20ms would churn active_time_map_id under live students. Nudging the
+ * anchor is a scalar write and stays one.
+ *
+ * `anchorQn` should come from the studio's LIVE markers, which are what the
+ * admin is looking at and may differ from the last published map. When it is
+ * omitted we fall back to deriving it from the published map, so the value is
+ * never simply lost.
+ */
+export async function setSectionMetronomeAnchor(input: {
+  sectionId: string;
+  anchorSeconds: number | null;
+  anchorQn?: number | null;
+}): Promise<{ data?: { anchorSeconds: number | null; anchorQn: number | null }; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  if (input.anchorSeconds == null) {
+    const { error } = await supabase
+      .from('class_item_score_sections')
+      .update({
+        metronome_anchor_seconds: null,
+        metronome_anchor_qn: null,
+        metronome_anchor_time_map_id: null,
+      })
+      .eq('id', input.sectionId);
+    if (error) return { error: error.message };
+    return { data: { anchorSeconds: null, anchorQn: null } };
+  }
+
+  if (!Number.isFinite(input.anchorSeconds)) return { error: 'Invalid anchor' };
+
+  const { data: section, error: secErr } = await supabase
+    .from('class_item_score_sections')
+    .select('active_time_map_id')
+    .eq('id', input.sectionId)
+    .single();
+  if (secErr || !section) return { error: secErr?.message ?? 'Section not found' };
+
+  let anchorQn = input.anchorQn ?? null;
+  if (anchorQn == null && section.active_time_map_id) {
+    const { data: waypoints } = await supabase
+      .from('score_time_waypoints')
+      .select('musical_position_qn, video_time_seconds')
+      .eq('time_map_id', section.active_time_map_id)
+      .order('musical_position_qn', { ascending: true });
+    anchorQn = secondsToQn(
+      (waypoints ?? []).map((w) => ({
+        musicalPositionQN: w.musical_position_qn,
+        videoTimeSeconds: w.video_time_seconds,
+      })),
+      input.anchorSeconds
+    );
+  }
+
+  const { error } = await supabase
+    .from('class_item_score_sections')
+    .update({
+      metronome_anchor_seconds: input.anchorSeconds,
+      metronome_anchor_qn: anchorQn,
+      metronome_anchor_time_map_id: section.active_time_map_id,
+    })
+    .eq('id', input.sectionId);
+  if (error) return { error: error.message };
+
+  return { data: { anchorSeconds: input.anchorSeconds, anchorQn } };
 }
