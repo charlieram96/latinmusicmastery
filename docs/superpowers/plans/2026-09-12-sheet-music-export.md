@@ -1131,8 +1131,9 @@ export interface PdfFonts { bravura: GlyphOutliner; academico: GlyphOutliner; he
 export interface RowTransform { x: number; yTop: number; scale: number; pageHeight: number }
 export function drawSvgOnPage(page: PDFPage, svg: SVGSVGElement, fonts: PdfFonts, t: RowTransform): void
 export function parseFontSizePx(value: string | null): number   // '10pt' -> 13.333, '12px' -> 12, '9' -> 9
-export function outlinerFor(family: string | null, fonts: PdfFonts): GlyphOutliner | null  // Bravura/Academico -> outliner, else null (Helvetica text)
+export function outlinersFor(family: string | null, fonts: PdfFonts): GlyphOutliner[]  // font stack in order, e.g. 'Bravura,Academico' -> [bravura, academico]
 ```
+**Amended during execution (fix round 1):** VexFlow omits `fill`/`stroke`/`font-family`/`font-size`/`stroke-width` on elements that inherit them from the root `<svg>`, so the walker threads an inherited-attribute context (seeded from the root with VexFlow defaults) and resolves font stacks per code point: the first listed outliner that has the glyph draws it; Private Use Area code points nobody has are skipped; other text falls back to Helvetica `drawText`.
 Text in Bravura or Academico is drawn glyph by glyph with `page.drawSvgPath(outline.d, { x, y: baseline, scale: sizePx * t.scale / unitsPerEm, color, borderWidth: 0 })`, advancing `x` by `advance * scale` per glyph. Any other family falls back to `page.drawText` with Helvetica.
 
 - [ ] **Step 1: Write the failing test**
