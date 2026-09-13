@@ -45,6 +45,14 @@ interface TransportBarProps {
   // Click-track context
   bpm: number;
   beatsPerMeasure: number;
+  /** Click state, owned by whoever runs the click engine. */
+  clickOn?: boolean;
+  onClickOnChange?: (on: boolean) => void;
+  /** False when the section under the playhead has no metronome anchor, so the
+   *  click cannot be aligned to the recording. */
+  clickAligned?: boolean;
+  clickVolume?: number;
+  onClickVolumeChange?: (volume: number) => void;
 
   // Scored-section regions drawn on the scrub bar (clickable to jump). Used by
   // multi-section video lessons; omitted elsewhere.
@@ -73,6 +81,11 @@ export function TransportBar({
   onClearLoop,
   bpm,
   beatsPerMeasure,
+  clickOn = false,
+  onClickOnChange,
+  clickAligned = true,
+  clickVolume = 0.2,
+  onClickVolumeChange,
   sectionMarkers,
   subtitleOptions,
   activeSubtitleLang = 'off',
@@ -322,6 +335,11 @@ export function TransportBar({
           playbackRate={playbackRate}
           isPlaying={isPlaying}
           onRateChange={onRateChange}
+          clickOn={clickOn}
+          onClickOnChange={onClickOnChange ?? (() => {})}
+          clickAligned={clickAligned}
+          clickVolume={clickVolume}
+          onClickVolumeChange={onClickVolumeChange ?? (() => {})}
         />
       </div>
     </div>

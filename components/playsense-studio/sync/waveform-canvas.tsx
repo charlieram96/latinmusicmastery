@@ -26,6 +26,7 @@ export interface MarkerHandle {
 
 export type DragMode = 'single' | 'all-after';
 export type DragTarget =
+  | { kind: 'anchor' }
   | { kind: 'marker'; ref: MarkerRef }
   | { kind: 'tail' }
   | { kind: 'trim'; edge: 'in' | 'out' };
@@ -66,10 +67,16 @@ export interface WaveformCanvasProps {
   /** Resolves a null trimOut for drawing. */
   mediaDurationSeconds?: number | null;
   onTrimDrag?: (edge: 'in' | 'out', videoTimeSeconds: number) => void;
+  /** One video second known to land on a beat, for the student click track.
+   *  Optional: callers that don't author an anchor pass nothing and get
+   *  byte-for-byte the old behaviour. */
+  metronomeAnchorSeconds?: number | null;
+  onAnchorDrag?: (videoTimeSeconds: number) => void;
 }
 
 const DEFAULT_HEIGHT = 240;
 const LABEL_BAND = 22; // top strip reserved for measure-number chips
+const ANCHOR_BAND = 18; // bottom strip reserved for the metronome-anchor grip
 /** Pointer must be within this of a handle's x to grab it. Exported so the
  *  backing-track lanes feel identical and the two can never drift apart. */
 export const HANDLE_HIT_PX = 9;
@@ -133,6 +140,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     trimOutSeconds,
     mediaDurationSeconds,
     onTrimDrag,
+    metronomeAnchorSeconds,
+    onAnchorDrag,
   } = props;
 
   const onZoomByRef = useRef(onZoomBy);
@@ -158,6 +167,27 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   tailRef.current = tailVideoTimeSeconds;
   dragAllRef.current = dragAll;
 
+  // The pointer effect below keeps its drag state (mode/target/pointerId) in
+  // effect-local variables, so it has to subscribe exactly once: re-subscribing
+  // mid-drag resets the drag to idle and every later pointermove is dropped.
+  // Callers pass identity-unstable callbacks — SyncPanel's onDragEnd is an inline
+  // arrow, and its onSeek closes over a transport clock that is a fresh object
+  // every render — so the handlers read them through refs and never list them as
+  // deps. Same reason as the mirrors above, different failure mode: those exist
+  // to avoid stale values, these to avoid losing the drag.
+  const onSeekRef = useRef(onSeek);
+  const onSelectRef = useRef(onSelect);
+  const onMarkerDragRef = useRef(onMarkerDrag);
+  const onTailDragRef = useRef(onTailDrag);
+  const onDragEndRef = useRef(onDragEnd);
+  const onScrollByPxRef = useRef(onScrollByPx);
+  onSeekRef.current = onSeek;
+  onSelectRef.current = onSelect;
+  onMarkerDragRef.current = onMarkerDrag;
+  onTailDragRef.current = onTailDrag;
+  onDragEndRef.current = onDragEnd;
+  onScrollByPxRef.current = onScrollByPx;
+
   // Trim is optional; `trimEnabled` gates both the grips and the hit test so
   // callers that don't trim get byte-for-byte the old behaviour.
   const trimEnabled = onTrimDrag != null && trimInSeconds != null;
@@ -171,6 +201,18 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   trimOutRef.current = resolvedTrimOut;
   trimEnabledRef.current = trimEnabled;
   onTrimDragRef.current = onTrimDrag;
+
+  // The metronome anchor gets its OWN hit band at the bottom, mirroring what
+  // trim does at the top. Putting it in hitTest's closest-wins pool would let
+  // it steal a downbeat drag exactly when the two coincide -- which is the
+  // common case, since an anchor is usually placed on a beat.
+  const anchorEnabled = onAnchorDrag != null && metronomeAnchorSeconds != null;
+  const anchorRef = useRef<number | null>(metronomeAnchorSeconds ?? null);
+  const anchorEnabledRef = useRef(anchorEnabled);
+  const onAnchorDragRef = useRef(onAnchorDrag);
+  anchorRef.current = metronomeAnchorSeconds ?? null;
+  anchorEnabledRef.current = anchorEnabled;
+  onAnchorDragRef.current = onAnchorDrag;
 
   const videoTimeToX = useCallback(
     (t: number) => t * ppsRef.current - scrollRef.current,
@@ -371,7 +413,39 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       }
       ctx.lineWidth = 1;
     }
-  }, [peaks, durationSeconds, selected, height, showNotes, videoTimeToX, xToVideoTime]);
+
+    // Metronome anchor: one beat of the recording, drawn full height so it can
+    // be eyeballed against a transient, but grabbable only by the grip in
+    // ANCHOR_BAND. Distinct colour from the trim grips so the two bands read as
+    // different tools.
+    if (anchorEnabledRef.current && anchorRef.current != null) {
+      const ax = videoTimeToX(anchorRef.current);
+      if (ax >= -2 && ax <= w + 2) {
+        ctx.strokeStyle = theme.selected;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(ax + 0.5, LABEL_BAND);
+        ctx.lineTo(ax + 0.5, h - ANCHOR_BAND);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = theme.selected;
+        ctx.beginPath();
+        ctx.roundRect(ax - 5, h - ANCHOR_BAND + 3, 10, ANCHOR_BAND - 6, 2);
+        ctx.fill();
+        ctx.lineWidth = 1;
+      }
+    }
+  }, [
+    peaks,
+    durationSeconds,
+    selected,
+    height,
+    showNotes,
+    videoTimeToX,
+    xToVideoTime,
+  ]);
 
   // ---- Sizing + DPR --------------------------------------------------------
   useEffect(() => {
@@ -421,6 +495,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     trimEnabled,
     trimInSeconds,
     resolvedTrimOut,
+    anchorEnabled,
+    metronomeAnchorSeconds,
   ]);
 
   // ---- Playhead overlay RAF -----------------------------------------------
@@ -463,7 +539,9 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       | 'pending-scrub'
       | 'scrubbing'
       | 'pending-trim'
-      | 'dragging-trim' = 'idle';
+      | 'dragging-trim'
+      | 'pending-anchor'
+      | 'dragging-anchor' = 'idle';
     let target: DragTarget | null = null;
     let startX = 0;
     let pointerId: number | null = null;
@@ -493,6 +571,12 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       return null;
     };
 
+    /** Anchor grip: bottom band only, same isolation rationale as trim. */
+    const anchorHitTest = (x: number): boolean => {
+      if (!anchorEnabledRef.current || anchorRef.current == null) return false;
+      return Math.abs(videoTimeToX(anchorRef.current) - x) <= HANDLE_HIT_PX;
+    };
+
     const hitTest = (x: number): DragTarget | null => {
       let best: { target: DragTarget; dist: number } | null = null;
       for (const hnd of handlesRef.current) {
@@ -515,12 +599,19 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       startX = x;
       pointerId = e.pointerId;
       try { overlay.setPointerCapture(e.pointerId); } catch { /* noop */ }
+      if (localY(e) > overlay.clientHeight - ANCHOR_BAND && anchorHitTest(x)) {
+        target = { kind: 'anchor' };
+        mode = 'pending-anchor';
+        onSelectRef.current(target);
+        return;
+      }
+
       if (localY(e) < LABEL_BAND) {
         const edge = trimHitTest(x);
         if (edge) {
           target = { kind: 'trim', edge };
           mode = 'pending-trim';
-          onSelect(target);
+          onSelectRef.current(target);
           return;
         }
       }
@@ -529,7 +620,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       if (hit) {
         target = hit;
         mode = 'pending-marker';
-        onSelect(hit);
+        onSelectRef.current(hit);
       } else {
         target = null;
         mode = 'pending-scrub';
@@ -545,17 +636,20 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       if (mode === 'pending-marker' && moved) mode = 'dragging-marker';
       if (mode === 'pending-scrub' && moved) mode = 'scrubbing';
       if (mode === 'pending-trim' && moved) mode = 'dragging-trim';
+      if (mode === 'pending-anchor' && moved) mode = 'dragging-anchor';
 
-      if (mode === 'dragging-trim' && target?.kind === 'trim') {
+      if (mode === 'dragging-anchor') {
+        onAnchorDragRef.current?.(xToVideoTime(x));
+      } else if (mode === 'dragging-trim' && target?.kind === 'trim') {
         onTrimDragRef.current?.(target.edge, xToVideoTime(x));
       } else if (mode === 'dragging-marker' && target) {
         const t = xToVideoTime(x);
-        if (target.kind === 'tail') onTailDrag(t);
+        if (target.kind === 'tail') onTailDragRef.current(t);
         else if (target.kind === 'marker') {
-          onMarkerDrag(target.ref, t, dragAllRef.current ? 'all-after' : 'single');
+          onMarkerDragRef.current(target.ref, t, dragAllRef.current ? 'all-after' : 'single');
         }
       } else if (mode === 'scrubbing') {
-        onSeek(xToVideoTime(x));
+        onSeekRef.current(xToVideoTime(x));
       }
     };
 
@@ -564,9 +658,13 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       try { overlay.releasePointerCapture(e.pointerId); } catch { /* noop */ }
       if (mode === 'pending-scrub') {
         // A click on empty space = seek there.
-        onSeek(xToVideoTime(localX(e)));
-      } else if (mode === 'dragging-marker' || mode === 'dragging-trim') {
-        onDragEnd();
+        onSeekRef.current(xToVideoTime(localX(e)));
+      } else if (
+        mode === 'dragging-marker' ||
+        mode === 'dragging-trim' ||
+        mode === 'dragging-anchor'
+      ) {
+        onDragEndRef.current();
       }
       mode = 'idle';
       target = null;
@@ -585,7 +683,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       const dx = e.deltaX !== 0 ? e.deltaX : e.deltaY;
       if (dx !== 0) {
         e.preventDefault();
-        onScrollByPx(dx);
+        onScrollByPxRef.current(dx);
       }
     };
 
@@ -619,7 +717,9 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       overlay.removeEventListener('gesturestart', onGestureStart as EventListener);
       overlay.removeEventListener('gesturechange', onGestureChange as EventListener);
     };
-  }, [onSeek, onSelect, onMarkerDrag, onTailDrag, onDragEnd, onScrollByPx, videoTimeToX, xToVideoTime]);
+    // Deliberately subscribes once: both deps are useCallback([]) and the drag
+    // callbacks are read through refs, so an in-flight drag survives re-renders.
+  }, [videoTimeToX, xToVideoTime]);
 
   return (
     <div

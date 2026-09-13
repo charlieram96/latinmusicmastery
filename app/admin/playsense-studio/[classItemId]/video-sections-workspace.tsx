@@ -395,6 +395,7 @@ export function VideoSectionsWorkspace({
               hasDraft={selected.draftTimeMap != null}
               videoUrl={videoUrl}
               videoDurationSeconds={videoDurationSeconds}
+              initialMetronomeAnchorSeconds={selected.metronomeAnchorSeconds}
               trim={trim}
               onTrimDrag={handleTrimDrag}
               onChanged={() => void refetch(selected.sectionId)}

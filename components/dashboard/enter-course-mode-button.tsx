@@ -37,7 +37,7 @@ export function EnterCourseModeButton({
     // Enroll in course (or update last accessed time if already enrolled)
     await enrollInCourse(courseId)
 
-    // Small delay to show the loading state before navigation
+    
     setTimeout(() => {
       router.push(href || (moduleId ? `/dashboard/modules/${moduleId}` : `/dashboard/course/${courseId}`))
     }, 100)

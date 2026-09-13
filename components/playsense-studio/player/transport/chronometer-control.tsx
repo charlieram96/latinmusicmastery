@@ -9,15 +9,18 @@
 //   effectiveBpm = baseBpm × playbackRate
 //   set a BPM     → onRateChange(bpm / baseBpm)   (clamped to [0.1, 2])
 //
-// The metronome is fed the *effective* BPM so its click stays in sync with the
-// slowed/sped video. Like before, it runs on its own AudioContext clock (not
-// phase-locked to the video); the video's own audio carries the true reference.
-// The pendulum swings via pure CSS at the effective tempo, so it animates
-// whether or not the click track is enabled.
+// This is a PURE CONTROL: it owns no audio. The click track is phase-locked to
+// the recording via a per-section anchor, which needs the video element, the
+// active section and media time -- none of which this component knows. So the
+// engine lives in PlaysenseStudioPlayer (useVideoClickTrack) and `clickOn` is
+// lifted to it; here we only render the switch.
+//
+// Note `effectiveBpm` below is ROUNDED. That is fine for a readout and for the
+// CSS pendulum, and it is exactly why the scheduler must never see it: a
+// rounded tempo is cumulative phase error for a phase-locked click.
 
 import { Bell, BellOff, Minus, Plus } from 'lucide-react';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Metronome } from '@/lib/playsense-studio/metronome';
 
 const MIN_RATE = 0.1;
 const MAX_RATE = 2;
@@ -31,6 +34,14 @@ interface ChronometerControlProps {
   playbackRate: number;
   isPlaying: boolean;
   onRateChange: (rate: number) => void;
+  /** Click state, owned by the player that runs the engine. */
+  clickOn: boolean;
+  onClickOnChange: (on: boolean) => void;
+  /** False when the section under the playhead has no anchor, so the click
+   *  cannot be aligned to the recording. It still plays, just free-running. */
+  clickAligned?: boolean;
+  clickVolume: number;
+  onClickVolumeChange: (volume: number) => void;
 }
 
 export function ChronometerControl({
@@ -39,9 +50,13 @@ export function ChronometerControl({
   playbackRate,
   isPlaying,
   onRateChange,
+  clickOn,
+  onClickOnChange,
+  clickAligned = true,
+  clickVolume,
+  onClickVolumeChange,
 }: ChronometerControlProps) {
   const [open, setOpen] = useState(false);
-  const [clickOn, setClickOn] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
   const effectiveBpm = Math.round(baseBpm * playbackRate);
@@ -59,35 +74,6 @@ export function ChronometerControl({
     window.addEventListener('pointerdown', onDown);
     return () => window.removeEventListener('pointerdown', onDown);
   }, [open]);
-
-  // --- metronome: create once, update tempo live, run while enabled + playing ---
-  const metronomeRef = useRef<Metronome | null>(null);
-  useEffect(() => {
-    metronomeRef.current = new Metronome({ bpm: effectiveBpm, beatsPerMeasure });
-    return () => {
-      metronomeRef.current?.destroy();
-      metronomeRef.current = null;
-    };
-    // Intentionally created once; tempo/meter are pushed via updateOptions below
-    // so dragging the rate slider doesn't tear down and rebuild the audio graph.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    metronomeRef.current?.updateOptions({ bpm: effectiveBpm, beatsPerMeasure });
-  }, [effectiveBpm, beatsPerMeasure]);
-
-  useEffect(() => {
-    const m = metronomeRef.current;
-    if (!m) return;
-    if (clickOn && isPlaying) {
-      m.updateOptions({ bpm: effectiveBpm, beatsPerMeasure });
-      m.start();
-    } else {
-      m.stop();
-    }
-    return () => m.stop();
-  }, [clickOn, isPlaying, effectiveBpm, beatsPerMeasure]);
 
   // The pendulum arm swings once per beat; `alternate` makes a full L↔R cycle
   // take two beats, matching how a real metronome ticks each way.
@@ -199,7 +185,7 @@ export function ChronometerControl({
           {/* Click track toggle */}
           <button
             type="button"
-            onClick={() => setClickOn((v) => !v)}
+            onClick={() => onClickOnChange(!clickOn)}
             className={`mt-3 flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
               clickOn
                 ? 'border-primary bg-primary text-primary-foreground'
@@ -210,6 +196,29 @@ export function ChronometerControl({
             {clickOn ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
             Click track
           </button>
+          {clickOn && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="w-10 shrink-0 text-[11px] text-muted-foreground">Volume</span>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={clickVolume}
+                onChange={(e) => onClickVolumeChange(Number(e.target.value))}
+                className="flex-1 accent-primary"
+                aria-label="Click volume"
+              />
+              <span className="w-8 shrink-0 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+                {Math.round(clickVolume * 100)}
+              </span>
+            </div>
+          )}
+          {clickOn && !clickAligned && (
+            <p className="mt-1.5 text-center text-[11px] leading-snug text-muted-foreground">
+              Not aligned to the recording here
+            </p>
+          )}
         </div>
       )}
     </div>

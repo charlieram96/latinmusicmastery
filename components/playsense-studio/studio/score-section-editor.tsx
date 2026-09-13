@@ -42,6 +42,8 @@ export interface ScoreSectionEditorProps {
   hasDraft?: boolean;
   videoUrl: string | null;
   videoDurationSeconds: number | null;
+  /** The section's stored click anchor, seeded into SyncPanel. */
+  initialMetronomeAnchorSeconds?: number | null;
   /** Usable region of the lesson video, owned by the workspace above. */
   trim?: MediaTrim;
   onTrimDrag?: (edge: 'in' | 'out', videoTimeSeconds: number) => void;
@@ -74,6 +76,7 @@ export function ScoreSectionEditor({
   hasDraft,
   videoUrl,
   videoDurationSeconds,
+  initialMetronomeAnchorSeconds,
   trim,
   onTrimDrag,
   onChanged,
@@ -191,6 +194,7 @@ export function ScoreSectionEditor({
         activeTimeMap={activeTimeMap}
         hasDraft={hasDraft}
         videoDurationSeconds={videoDurationSeconds}
+        initialMetronomeAnchorSeconds={initialMetronomeAnchorSeconds}
         trim={trim}
         onTrimDrag={onTrimDrag}
         onPublished={onChanged}

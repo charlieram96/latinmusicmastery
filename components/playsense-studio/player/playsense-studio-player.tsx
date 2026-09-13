@@ -48,6 +48,8 @@ import {
 import { StaffScrubBar } from './notation/staff-scrub-bar';
 import { ClipsPanel } from './clips/clips-panel';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
+import { useVideoClickTrack } from './state/use-video-click-track';
+import { beatGridFromAnchor, mergeBeatGrids } from '@/lib/playsense-studio/beat-grid';
 import { useSubtitleTracks } from './state/use-subtitle-tracks';
 import type { SubtitleLang, SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt';
 import { logPlaysenseStudioEvent, type PlaysenseStudioClip } from '@/app/actions/playsense-studio';
@@ -94,6 +96,9 @@ export interface PlayerSection {
   score: ScoreDocument;
   tracks: PlaysenseStudioPlayerScoreTrack[];
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
+  /** One video second known to land on a beat, for the click track. Null = no
+   *  click for this section. */
+  metronomeAnchorSeconds?: number | null;
 }
 
 export interface PlaysenseStudioPlayerProps {
@@ -137,6 +142,8 @@ export interface PlaysenseStudioPlayerProps {
 }
 
 const POSITION_SAVE_INTERVAL_MS = 5000;
+const CLICK_VOLUME_KEY = 'playsense.clickVolume';
+const DEFAULT_CLICK_VOLUME = 0.2;
 
 export function PlaysenseStudioPlayer({
   classItemId,
@@ -223,6 +230,63 @@ export function PlaysenseStudioPlayer({
   const score = displaySection.score;
   const tracks = displaySection.tracks;
   const activeTimeMap = displaySection.activeTimeMap;
+
+  // --- Click track ---------------------------------------------------------
+  // The beat grid comes from the ACTIVE sections, not the DISPLAYED one. That
+  // distinction is load-bearing: displaySection deliberately persists through
+  // the gaps so the staff is never blank, so a click sourced from it would tick
+  // straight through the instructor talking. Anyone tempted to collapse these
+  // two into one prop has reintroduced that bug.
+  //
+  // Every section's beats are merged into one sorted, de-duplicated array for
+  // the whole video, so the scheduler never has to know about section
+  // boundaries: crossing one stops being an event, gaps simply contain no
+  // beats, and two abutting sections can't fire a doubled click.
+  const [clickOn, setClickOn] = useState(false);
+  // Per-viewer convenience, so it survives a reload. Reads can throw (private
+  // windows, blocked site data), so the player must render fine without it.
+  const [clickVolume, setClickVolume] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem(CLICK_VOLUME_KEY);
+      const parsed = raw == null ? NaN : Number(raw);
+      return Number.isFinite(parsed) ? Math.min(1, Math.max(0, parsed)) : DEFAULT_CLICK_VOLUME;
+    } catch {
+      return DEFAULT_CLICK_VOLUME;
+    }
+  });
+  const handleClickVolumeChange = useCallback((v: number) => {
+    setClickVolume(v);
+    try {
+      window.localStorage.setItem(CLICK_VOLUME_KEY, String(v));
+    } catch {
+      /* not persisting is fine */
+    }
+  }, []);
+  const clickGrid = useMemo(
+    () =>
+      mergeBeatGrids(
+        normalizedSections.map((section) => {
+          const from = section.videoStartSeconds ?? 0;
+          const to = section.videoEndSeconds ?? clock.durationSeconds;
+          if (!(to > from)) return [];
+          // With no anchor we fall back to the section's own start. The phase is
+          // then arbitrary -- exactly as arbitrary as the old free-running click,
+          // which began wherever the student pressed play -- but at least it is
+          // STABLE across seeks, and the toggle stays audible on lessons whose
+          // notation was never placed. clickAligned tells the student which it is.
+          const anchor = section.metronomeAnchorSeconds ?? from;
+          // Unrounded notated tempo, in media time. Playback rate belongs in
+          // the media -> AudioContext conversion, never in the grid.
+          return beatGridFromAnchor(anchor, section.score.initialTempo, from, to);
+        })
+      ),
+    [normalizedSections, clock.durationSeconds]
+  );
+  // Disclosed in the chronometer: the section under the playhead has no anchor,
+  // so there is nothing to align a click to here.
+  const clickAligned = activeSection?.metronomeAnchorSeconds != null;
+
+  useVideoClickTrack({ videoRef, grid: clickGrid, enabled: clickOn, volume: clickVolume });
 
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
@@ -487,6 +551,11 @@ export function PlaysenseStudioPlayer({
       onClearLoop={clock.clearLoop}
       bpm={score.initialTempo}
       beatsPerMeasure={score.initialTimeSignature[0]}
+      clickOn={clickOn}
+      onClickOnChange={setClickOn}
+      clickAligned={clickAligned}
+      clickVolume={clickVolume}
+      onClickVolumeChange={handleClickVolumeChange}
       sectionMarkers={sectionMarkers}
       subtitleOptions={subtitleTracks.length > 0 ? subtitleTracks : undefined}
       activeSubtitleLang={activeSubtitleLang}

@@ -27,6 +27,8 @@ import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import { clampToTrim, trimRange, type MediaTrim } from '@/lib/playsense-studio/clip-model';
+import { secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
+import { setSectionMetronomeAnchor } from '@/app/actions/playsense-studio';
 import { publishTimeMap, saveScoreDocument } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
@@ -115,6 +117,10 @@ export interface SyncPanelProps {
    *  A render prop rather than data props: this panel serves all three studios
    *  and has no business knowing what a backing track is. */
   renderBackingLanes?: (view: TimelineView) => ReactNode;
+  /** One video second known to land on a beat — the phase reference for the
+   *  student click track. Initial value; this panel owns it from then on
+   *  (ScoreSectionEditor is keyed per section, so it remounts on a switch). */
+  initialMetronomeAnchorSeconds?: number | null;
   /** Usable region of the media. Playback clamps to it and the canvas greys the
    *  rest out; sync waypoints keep their absolute positions either way. */
   trim?: MediaTrim;
@@ -163,6 +169,7 @@ export function SyncPanel({
   monitorEl,
   sectionsContext,
   renderBackingLanes,
+  initialMetronomeAnchorSeconds,
   trim,
   onTrimDrag,
 }: SyncPanelProps) {
@@ -687,6 +694,90 @@ export function SyncPanel({
     };
   }, []);
 
+  const seededAnchorSeconds = markers.measures[0]?.beats[0]?.videoTimeSeconds ?? 0;
+
+  // --- Metronome anchor ----------------------------------------------------
+  // One beat of the recording. With the section's notated tempo it defines the
+  // student click's phase, so the click lands on the performance instead of on
+  // whenever the student pressed play.
+  const [metronomeAnchor, setMetronomeAnchor] = useState<number | null>(
+    initialMetronomeAnchorSeconds ?? null
+  );
+  const anchorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const anchorRef = useRef(metronomeAnchor);
+  anchorRef.current = metronomeAnchor;
+
+  const persistAnchor = useCallback(() => {
+    if (!sectionId) return;
+    const seconds = anchorRef.current;
+    // Record what the second MEANT musically, from the LIVE markers rather than
+    // the last published map — those are what the admin is looking at.
+    const qn =
+      seconds == null
+        ? null
+        : secondsToQn(
+            markerStateToWaypoints(markersRef.current, { includeBeats: 'edited-beats' }).map(
+              (w) => ({
+                musicalPositionQN: w.musicalPositionQN,
+                videoTimeSeconds: w.videoTimeSeconds,
+              })
+            ),
+            seconds
+          );
+    void setSectionMetronomeAnchor({ sectionId, anchorSeconds: seconds, anchorQn: qn });
+  }, [sectionId]);
+
+  const scheduleAnchorSave = useCallback(() => {
+    if (anchorTimerRef.current) clearTimeout(anchorTimerRef.current);
+    anchorTimerRef.current = setTimeout(persistAnchor, 500);
+  }, [persistAnchor]);
+
+  const handleAnchorDrag = useCallback(
+    (videoTimeSeconds: number) => {
+      setMetronomeAnchor(Math.max(0, videoTimeSeconds));
+      scheduleAnchorSave();
+    },
+    [scheduleAnchorSave]
+  );
+
+  const setAnchorAtPlayhead = useCallback(() => {
+    setMetronomeAnchor(Math.max(0, clock.getCurrentSeconds()));
+    scheduleAnchorSave();
+  }, [clock, scheduleAnchorSave]);
+
+  // Flush a pending anchor if the section unmounts mid-edit.
+  const persistAnchorRef = useRef(persistAnchor);
+  persistAnchorRef.current = persistAnchor;
+  useEffect(
+    () => () => {
+      if (anchorTimerRef.current) {
+        clearTimeout(anchorTimerRef.current);
+        persistAnchorRef.current();
+      }
+    },
+    []
+  );
+
+  /** What the click actually uses — the stored anchor, else the score's start. */
+  const anchorSeconds = metronomeAnchor ?? seededAnchorSeconds;
+
+  // A single anchor plus a constant tempo cannot follow a performance that
+  // pauses or changes tempo. The published spacing already tells us when that
+  // is the case, so say so rather than shipping a confidently wrong click.
+  const mapImpliedBpm = useMemo(() => {
+    // Measured across the WHOLE section, not the first two bars: one sloppily
+    // dragged marker near the start shouldn't change the verdict.
+    const first = markers.measures[0];
+    if (!first) return null;
+    const qnSpan = markers.tailQN - first.downbeatQN;
+    const secSpan = markers.tailVideoTimeSeconds - first.beats[0].videoTimeSeconds;
+    if (!(qnSpan > 0) || !(secSpan > 0)) return null;
+    return (60 * qnSpan) / secSpan;
+  }, [markers]);
+  const tempoDisagrees =
+    mapImpliedBpm != null &&
+    Math.abs(mapImpliedBpm - score.initialTempo) / score.initialTempo > 0.03;
+
   if (!track) {
     return <p className="text-sm text-muted-foreground">This score has no tracks to edit.</p>;
   }
@@ -702,7 +793,7 @@ export function SyncPanel({
       ? selTrack.measures[selection.ref.measureIndex]?.voices[0]?.events[selection.ref.eventIndex] ?? null
       : null;
 
-  const anchorSeconds = markers.measures[0]?.beats[0]?.videoTimeSeconds ?? 0;
+
 
   return (
     <>
@@ -719,6 +810,20 @@ export function SyncPanel({
               onConfirm={confirmPlacement}
               onCancel={() => setPlaceArmed(false)}
             />
+
+            {/* The anchor can't conflict with anything, so unlike placement it
+                needs no arm/confirm step — one click sets it at the playhead. */}
+            {sectionId && (
+              <button
+                type="button"
+                onClick={setAnchorAtPlayhead}
+                className="st-chip"
+                title="Mark this moment as a beat, so the student's click locks to the recording"
+              >
+                <AudioLines className="h-4 w-4" />
+                <span className="hidden lg:inline">Anchor at playhead</span>
+              </button>
+            )}
 
             <div className="ml-auto flex items-center gap-1.5">
               {decodeState === 'loading' && (
@@ -795,6 +900,8 @@ export function SyncPanel({
                     trimOutSeconds={trim?.trimOutSeconds ?? null}
                     mediaDurationSeconds={videoDurationSeconds ?? clock.durationSeconds}
                     onTrimDrag={onTrimDrag}
+                    metronomeAnchorSeconds={sectionId ? anchorSeconds : undefined}
+                    onAnchorDrag={sectionId ? handleAnchorDrag : undefined}
                     onSelect={handleSelect}
                     onMarkerDrag={handleMarkerDrag}
                     onTailDrag={handleTailDrag}
@@ -988,6 +1095,20 @@ export function SyncPanel({
                   <b className="font-mono tabular-nums text-foreground">{anchorSeconds.toFixed(1)}s</b> ·{' '}
                   {score.initialTempo} BPM
                 </div>
+                {sectionId && metronomeAnchor == null && (
+                  <p className="text-[11px] leading-snug text-muted-foreground">
+                    No click anchor yet — it will default to the score&rsquo;s start.
+                  </p>
+                )}
+                {sectionId && tempoDisagrees && mapImpliedBpm != null && (
+                  <p className="text-[11px] leading-snug text-muted-foreground">
+                    The click runs at the score&rsquo;s{' '}
+                    <b className="text-foreground">{score.initialTempo} BPM</b>, but this sync
+                    plays at{' '}
+                    <b className="text-foreground">~{Math.round(mapImpliedBpm)} BPM</b>. Set the
+                    score&rsquo;s tempo to match if you want the click to sit on the recording.
+                  </p>
+                )}
                 {/* Show whether the latest timing has reached the active map. */}
                 {timingAutosave && (
                   <div className="flex items-center gap-2 text-xs">

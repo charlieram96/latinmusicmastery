@@ -117,6 +117,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
       score: s.scoreDocument.parsedScore,
       tracks: s.tracks,
       activeTimeMap: s.activeTimeMap,
+      metronomeAnchorSeconds: s.metronomeAnchorSeconds,
     }))
   const firstSection = playerSections[0] ?? null
   const hasVideoSections = playerSections.length > 0
