@@ -61,6 +61,9 @@ interface StyleContext {
   strokeWidth: number;
   fontFamily: string;
   fontSize: string;
+  opacity: number;
+  visibility: string;
+  display: string;
 }
 
 // VexFlow's SVGContext defaults. These seed the context only for whatever
@@ -71,17 +74,32 @@ const DEFAULT_STYLE: StyleContext = {
   strokeWidth: 1,
   fontFamily: 'Bravura,Academico',
   fontSize: '10pt',
+  opacity: 1,
+  visibility: 'visible',
+  display: 'inline',
 };
 
 function resolveStyle(el: Element, parent: StyleContext): StyleContext {
   const strokeWidthAttr = el.getAttribute('stroke-width');
+  const opacityAttr = el.getAttribute('opacity');
   return {
     fill: el.getAttribute('fill') ?? parent.fill,
     stroke: el.getAttribute('stroke') ?? parent.stroke,
     strokeWidth: strokeWidthAttr !== null ? Number(strokeWidthAttr) : parent.strokeWidth,
     fontFamily: el.getAttribute('font-family') ?? parent.fontFamily,
     fontSize: el.getAttribute('font-size') ?? parent.fontSize,
+    opacity: opacityAttr !== null ? Number(opacityAttr) : parent.opacity,
+    visibility: el.getAttribute('visibility') ?? parent.visibility,
+    display: el.getAttribute('display') ?? parent.display,
   };
+}
+
+// VexFlow stamps an invisible pointer hit-target <rect> inside every note
+// group (opacity="0", no y/height — a zero-height rect). Neither this nor any
+// hidden subtree (<g opacity="0">, visibility="hidden", display="none") is
+// meant to be painted.
+function isHidden(style: StyleContext): boolean {
+  return style.opacity === 0 || style.visibility === 'hidden' || style.display === 'none';
 }
 
 interface Cursor { dx: number; dy: number; style: StyleContext }
@@ -95,12 +113,14 @@ export function drawSvgOnPage(page: PDFPage, svg: SVGSVGElement, fonts: PdfFonts
         return;
       case 'svg': {
         const style = resolveStyle(el, cursor.style);
+        if (isHidden(style)) return;
         Array.from(el.children).forEach(child => walk(child, { ...cursor, style }));
         return;
       }
       case 'g': {
-        const { dx, dy } = parseTranslate(el.getAttribute('transform'));
         const style = resolveStyle(el, cursor.style);
+        if (isHidden(style)) return; // skips the whole subtree, matching SVG semantics.
+        const { dx, dy } = parseTranslate(el.getAttribute('transform'));
         Array.from(el.children).forEach(child => walk(child, { dx: cursor.dx + dx, dy: cursor.dy + dy, style }));
         return;
       }
@@ -108,6 +128,7 @@ export function drawSvgOnPage(page: PDFPage, svg: SVGSVGElement, fonts: PdfFonts
         const d = el.getAttribute('d');
         if (!d) return;
         const style = resolveStyle(el, cursor.style);
+        if (isHidden(style)) return;
         page.drawSvgPath(d, {
           x: t.x + cursor.dx * t.scale,
           y: t.pageHeight - t.yTop - cursor.dy * t.scale,
@@ -123,7 +144,9 @@ export function drawSvgOnPage(page: PDFPage, svg: SVGSVGElement, fonts: PdfFonts
         const y = Number(el.getAttribute('y') ?? 0) + cursor.dy;
         const w = Number(el.getAttribute('width') ?? 0);
         const h = Number(el.getAttribute('height') ?? 0);
+        if (w <= 0 || h <= 0) return; // degenerate geometry, e.g. VexFlow's hit-target rects.
         const style = resolveStyle(el, cursor.style);
+        if (isHidden(style)) return;
         if (isNone(style.fill) && isNone(style.stroke)) return;
         page.drawRectangle({
           x: t.x + x * t.scale,
@@ -140,6 +163,7 @@ export function drawSvgOnPage(page: PDFPage, svg: SVGSVGElement, fonts: PdfFonts
         const text = el.textContent ?? '';
         if (!text) return;
         const style = resolveStyle(el, cursor.style);
+        if (isHidden(style)) return;
         const x = Number(el.getAttribute('x') ?? 0) + cursor.dx;
         const y = Number(el.getAttribute('y') ?? 0) + cursor.dy;
         const sizePx = parseFontSizePx(style.fontSize);

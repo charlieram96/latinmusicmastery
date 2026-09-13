@@ -160,6 +160,30 @@ describe('drawSvgOnPage', () => {
     expect(d3).toContain('B57424'); // 0xE050: bravura has it, academico doesn't
   });
 
+  it('skips a VexFlow-shaped invisible pointer hit-target rect (opacity 0, no height)', () => {
+    const page = fakePage();
+    drawSvgOnPage(page, svgOf('<rect x="58" width="7" opacity="0" pointer-events="auto"></rect>'), fonts, t);
+    expect(page.drawRectangle).not.toHaveBeenCalled();
+  });
+
+  it('skips a whole hidden group, including its filled rect and text children', () => {
+    const page = fakePage();
+    drawSvgOnPage(
+      page,
+      svgOf(
+        '<g opacity="0">' +
+        '<rect x="0" y="0" width="10" height="10" fill="black"/>' +
+        '<text x="0" y="10" font-family="Arial" font-size="12px">hi</text>' +
+        '</g>'
+      ),
+      fonts,
+      t
+    );
+    expect(page.drawRectangle).not.toHaveBeenCalled();
+    expect(page.drawText).not.toHaveBeenCalled();
+    expect(page.drawSvgPath).not.toHaveBeenCalled();
+  });
+
   it('skips a Private Use Area glyph no listed font has, without drawing text or throwing', () => {
     const blindOutliner = { unitsPerEm: 1000, outline: () => null, widthOf: () => 0 };
     const blindFonts = { bravura: blindOutliner, academico: blindOutliner, helvetica: fakeFont('Helvetica') };
