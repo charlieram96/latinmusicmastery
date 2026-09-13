@@ -38,11 +38,15 @@ function unpitchedXml(p: PercussionNotation): string {
   return `<unpitched><display-step>${step.toUpperCase()}</display-step><display-octave>${octave}</display-octave></unpitched>`;
 }
 
-function durationXml(e: NoteBase): string {
+function durationOnlyXml(e: NoteBase): string {
+  return `<duration>${Math.round(e.durationQN * DIVISIONS)}</duration>`;
+}
+
+/** type/dot/time-modification, in schema order — these follow tie/instrument/voice inside <note>. */
+function typeDotTimeModXml(e: NoteBase): string {
   const base = e.triplet ? e.durationQN * 1.5 : e.durationQN;
   const code = vexflowDurationCode(base, e.dotted);
-  const parts = [`<duration>${Math.round(e.durationQN * DIVISIONS)}</duration>`];
-  parts.push(`<type>${TYPE_BY_CODE[code] ?? 'quarter'}</type>`);
+  const parts = [`<type>${TYPE_BY_CODE[code] ?? 'quarter'}</type>`];
   if (e.dotted) parts.push('<dot/>');
   if (e.triplet) parts.push('<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>');
   return parts.join('');
@@ -73,11 +77,12 @@ function oneNote(
   const parts: string[] = ['<note>'];
   if (chordTail) parts.push('<chord/>');
   parts.push(perc ? unpitchedXml(perc) : pitchXml(pitch.midi, pitch.spellingHint));
-  parts.push(durationXml(e));
+  parts.push(durationOnlyXml(e));
   if (flags.tieStop) parts.push('<tie type="stop"/>');
   if (tieStart) parts.push('<tie type="start"/>');
   if (perc?.sourceMidi !== undefined && instrumentIds.has(perc.sourceMidi)) parts.push(`<instrument id="${instrumentIds.get(perc.sourceMidi)}"/>`);
   parts.push(`<voice>${voice}</voice>`);
+  parts.push(typeDotTimeModXml(e));
   if (perc && perc.notehead !== 'normal') parts.push(`<notehead smufl="${SMUFL_BY_NOTEHEAD[perc.notehead]}">other</notehead>`);
   parts.push(notationsXml(e, flags, tieStart, pitch.fingering, perc?.marcato));
   parts.push('</note>');
@@ -86,7 +91,7 @@ function oneNote(
 
 function eventXml(track: Track, e: MusicalEvent, voice: number, flags: NoteFlags, instrumentIds: Map<number, string>): string {
   if (e.kind === 'rest') {
-    return `<note><rest/>${durationXml(e)}<voice>${voice}</voice>${notationsXml(e, flags, false)}</note>`;
+    return `<note><rest/>${durationOnlyXml(e)}<voice>${voice}</voice>${typeDotTimeModXml(e)}${notationsXml(e, flags, false)}</note>`;
   }
   if (e.kind === 'note') return oneNote(track, e, e, voice, flags, false, instrumentIds);
   const chord = e as Chord;
@@ -199,10 +204,12 @@ export function writeMusicXml(score: ScoreDocument, trackIndexes: number[]): str
   });
 
   const partList = tracks.map((t, k) => {
-    const midi = Array.from(instrumentIdsByPart[k], ([gm, id]) =>
-      `<score-instrument id="${id}"><instrument-name>${escapeXml(t.displayName)}</instrument-name></score-instrument>` +
+    const entries = Array.from(instrumentIdsByPart[k]);
+    const scoreInstruments = entries.map(([, id]) =>
+      `<score-instrument id="${id}"><instrument-name>${escapeXml(t.displayName)}</instrument-name></score-instrument>`).join('');
+    const midiInstruments = entries.map(([gm, id]) =>
       `<midi-instrument id="${id}"><midi-channel>10</midi-channel><midi-unpitched>${gm + 1}</midi-unpitched></midi-instrument>`).join('');
-    return `<score-part id="${partIds[k]}"><part-name>${escapeXml(t.displayName)}</part-name>${midi}</score-part>`;
+    return `<score-part id="${partIds[k]}"><part-name>${escapeXml(t.displayName)}</part-name>${scoreInstruments}${midiInstruments}</score-part>`;
   }).join('');
 
   const parts = tracks.map((t, k) => partXml(score, t, partIds[k], instrumentIdsByPart[k])).join('');
