@@ -31,3 +31,27 @@ export function pickActiveSection(sections: SectionRange[], t: number): number {
   });
   return best;
 }
+
+/**
+ * Index of the section whose notation the staff shows at video time `t`. The
+ * staff is never blank: the active section wins; during a gap we keep the
+ * section that just ended; before the first section we preview the upcoming
+ * one; otherwise the first section.
+ */
+export function pickDisplaySection(sections: SectionRange[], t: number): number {
+  if (!sections.length) return -1;
+  const active = pickActiveSection(sections, t);
+  if (active >= 0) return active;
+  const placed = sections
+    .map((s, index) => ({ s, index }))
+    .filter(({ s }) => s.videoStartSeconds != null)
+    .sort((a, b) => (a.s.videoStartSeconds as number) - (b.s.videoStartSeconds as number));
+  let previous = -1;
+  for (const { s, index } of placed) {
+    const end = s.videoEndSeconds ?? s.videoStartSeconds;
+    if (end != null && end <= t) previous = index;
+  }
+  if (previous >= 0) return previous;
+  const upcoming = placed.find(({ s }) => (s.videoStartSeconds as number) > t);
+  return upcoming ? upcoming.index : 0;
+}

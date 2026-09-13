@@ -9,7 +9,10 @@
 // The shell owns only the geometry (split %, workspace height, row/column
 // orientation) and the diagonal corner knob; pane *contents* are supplied by
 // the consumer. The knob rebalances the split on its primary axis and adjusts
-// the overall height on the other axis (double-click resets).
+// the overall height on the other axis (double-click resets). In the
+// full-bleed lesson frame the height is capped at the space above the lesson
+// footer, and when the panes are stacked the knob only moves the split — the
+// workspace never grows past the viewport it was fitted to.
 
 import {
   useCallback,
@@ -25,6 +28,9 @@ import { lessonExerciseHeight } from '@/lib/playsense-studio/lesson-viewport';
 
 const SPLIT_MIN = 28;
 const SPLIT_MAX = 72;
+// Stacked, a letterboxed 16:9 video needs far less height than the score
+// does, so the split favours the secondary pane (side by side uses initialSplit).
+const COLUMN_SPLIT = 40;
 const H_MIN = 360;
 const hMax = () =>
   Math.round((typeof window !== 'undefined' ? window.innerHeight : 1000) * 0.92);
@@ -71,13 +77,25 @@ export function SplitWorkspace({
   const [userSized, setUserSized] = useState(false);
   const [knobDragging, setKnobDragging] = useState(false);
   const workspaceRef = useRef<HTMLDivElement | null>(null);
+  // Height that fills the space above the lesson footer — the knob's ceiling
+  // in the bleed frame, so a drag can never push the workspace under it.
+  const fitHRef = useRef(initialHeight);
   const isRow = orient === 'row';
+
+  // A width split has no meaning as a height split, so each orientation
+  // starts from its own default.
+  const changeOrient = useCallback((v: 'row' | 'column') => {
+    setOrient(v);
+    setSplit(v === 'row' ? initialSplit : COLUMN_SPLIT);
+  }, [initialSplit]);
 
   // Fit before paint, including the fixed lesson footer and the resize handle.
   // Natural (unscrolled) position prevents page scrolling from enlarging it.
+  // Once the user has sized it we stop growing it, but the bleed frame still
+  // shrinks with the viewport so it never overlaps the footer.
   useLayoutEffect(() => {
     const el = workspaceRef.current;
-    if (!el || userSized) return;
+    if (!el) return;
     const lesson = el.closest<HTMLElement>('[data-lesson-shell]');
     if (!bleed && !lesson) return;
     const scroller = el.closest<HTMLElement>('[data-dashboard-main]');
@@ -89,7 +107,9 @@ export function SplitWorkspace({
       const bottom = Math.min(visibleBottom, scroller?.getBoundingClientRect().bottom ?? visibleBottom);
       const available = lessonExerciseHeight(bottom, el.getBoundingClientRect().top,
         scroller?.scrollTop ?? window.scrollY, (footer?.getBoundingClientRect().height ?? 0) + 8);
-      setWorkspaceH(bleed ? available : Math.min(initialHeight, available));
+      const fitted = bleed ? available : Math.min(initialHeight, available);
+      fitHRef.current = fitted;
+      setWorkspaceH((prev) => (!userSized ? fitted : bleed ? Math.min(prev, fitted) : prev));
     };
     const schedule = () => { if (!pending) pending = requestAnimationFrame(fit); };
     const observer = new ResizeObserver(schedule);
@@ -108,13 +128,19 @@ export function SplitWorkspace({
   }, [bleed, userSized, initialHeight]);
 
   const resetSize = useCallback(() => {
-    setSplit(isRow ? 55 : 60);
+    setSplit(isRow ? initialSplit : COLUMN_SPLIT);
     setUserSized(false);
-    if (!bleed) setWorkspaceH(560);
-  }, [isRow, bleed]);
+    if (!bleed) setWorkspaceH(initialHeight);
+  }, [isRow, bleed, initialSplit, initialHeight]);
 
   // Delta-based 2-axis drag: primary axis rebalances the split, the other axis
-  // changes the overall workspace height.
+  // changes the overall workspace height. Stacked panes in the bleed frame
+  // keep their fitted height — only the split moves.
+  const heightLocked = bleed && !isRow;
+  const clampH = useCallback(
+    (h: number) => Math.max(H_MIN, Math.min(bleed ? fitHRef.current : hMax(), h)),
+    [bleed]
+  );
   const startKnob = useCallback(
     (e: ReactMouseEvent | ReactTouchEvent) => {
       e.preventDefault();
@@ -126,7 +152,7 @@ export function SplitWorkspace({
       const sy = point.clientY;
       const start = { sx, sy, split, h: workspaceH, w: rect.width, ht: rect.height };
       setKnobDragging(true);
-      setUserSized(true);
+      if (!heightLocked) setUserSized(true);
       document.body.style.userSelect = 'none';
 
       const onMove = (ev: MouseEvent | TouchEvent) => {
@@ -137,12 +163,12 @@ export function SplitWorkspace({
           setSplit(
             Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, start.split + (dx / start.w) * 100))
           );
-          setWorkspaceH(Math.max(H_MIN, Math.min(hMax(), start.h + dy)));
+          setWorkspaceH(clampH(start.h + dy));
         } else {
           setSplit(
             Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, start.split + (dy / start.ht) * 100))
           );
-          setWorkspaceH(Math.max(H_MIN, Math.min(hMax(), start.h + dx)));
+          if (!heightLocked) setWorkspaceH(clampH(start.h + dx));
         }
       };
       const onUp = () => {
@@ -158,7 +184,7 @@ export function SplitWorkspace({
       window.addEventListener('touchmove', onMove, { passive: false });
       window.addEventListener('touchend', onUp);
     },
-    [isRow, split, workspaceH]
+    [isRow, split, workspaceH, heightLocked, clampH]
   );
 
   return (
@@ -181,7 +207,7 @@ export function SplitWorkspace({
           className="flex min-h-0 min-w-0 flex-col bg-black"
           style={{ flex: visiblePane === 'both' ? `${split} 1 0` : '1 1 0', display: visiblePane === 'secondary' ? 'none' : undefined }}
         >
-          {visiblePane === 'primary' && secondaryHeader({ orient, setOrient, isRow })}
+          {visiblePane === 'primary' && secondaryHeader({ orient, setOrient: changeOrient, isRow })}
           {primary}
         </div>
 
@@ -195,7 +221,7 @@ export function SplitWorkspace({
             borderTop: visiblePane === 'both' && !isRow ? '1px solid hsl(var(--border))' : 'none',
           }}
         >
-          {secondaryHeader({ orient, setOrient, isRow })}
+          {secondaryHeader({ orient, setOrient: changeOrient, isRow })}
           {secondary}
         </div>
       </div>
