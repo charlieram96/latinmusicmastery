@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // lib/playsense-studio/export/__tests__/svg-to-pdf.test.ts
 import { describe, expect, it, vi } from 'vitest';
-import { drawSvgOnPage, outlinerFor, parseFontSizePx } from '../pdf/svg-to-pdf';
+import { drawSvgOnPage, outlinersFor, parseFontSizePx } from '../pdf/svg-to-pdf';
 import type { PDFFont, PDFPage } from 'pdf-lib';
 
 const svgOf = (inner: string): SVGSVGElement => {
@@ -28,11 +28,11 @@ describe('parseFontSizePx', () => {
   });
 });
 
-describe('outlinerFor', () => {
-  it('maps notation families to outliners and everything else to null', () => {
-    expect(outlinerFor('Bravura', fonts)).toBe(fonts.bravura);
-    expect(outlinerFor('Academico', fonts)).toBe(fonts.academico);
-    expect(outlinerFor('Arial, sans-serif', fonts)).toBeNull();
+describe('outlinersFor', () => {
+  it('maps a font-family list to outliners in stack order, dropping unknown names', () => {
+    expect(outlinersFor('Bravura', fonts)).toEqual([fonts.bravura]);
+    expect(outlinersFor('Bravura,Academico', fonts)).toEqual([fonts.bravura, fonts.academico]);
+    expect(outlinersFor('Arial, sans-serif', fonts)).toEqual([]);
   });
 });
 
@@ -102,5 +102,73 @@ describe('drawSvgOnPage', () => {
   it('throws on an unknown element in development', () => {
     const page = fakePage();
     expect(() => drawSvgOnPage(page, svgOf('<circle r="3"/>'), fonts, t)).toThrow(/unsupported/i);
+  });
+
+  it('draws a real VexFlow-shaped row: fill/stroke/font-family inherited from the root <svg>', () => {
+    const page = fakePage();
+    const svg = svgOf(
+      '<path fill="none" d="M10 80.5L310 80.5"/>' +
+      '<rect x="10" y="80" width="1" height="41" stroke="none"/>' +
+      '<text stroke="none" font-size="30pt" x="15" y="110"></text>'
+    );
+    // VexFlow stamps these on the row's own <svg>; children omit whatever matches.
+    svg.setAttribute('font-family', 'Bravura,Academico');
+    svg.setAttribute('fill', 'black');
+    svg.setAttribute('stroke', 'black');
+
+    drawSvgOnPage(page, svg, fonts, t);
+
+    expect(page.drawText).not.toHaveBeenCalled();
+
+    // Stave line: no stroke attr of its own -> inherits black, stroke-width inherits 1.
+    const [, pathOpts] = page.drawSvgPath.mock.calls[0];
+    expect(pathOpts.borderColor).toBeDefined();
+    expect(pathOpts.borderWidth).toBe(0.5); // stroke-width 1 * scale 0.5
+
+    // Barline: no fill attr of its own -> inherits black, so it is drawn, not skipped.
+    expect(page.drawRectangle).toHaveBeenCalledTimes(1);
+    const [rectOpts] = page.drawRectangle.mock.calls[0];
+    expect(rectOpts.color).toBeDefined();
+
+    // Glyph: no font-family attr of its own -> inherits "Bravura,Academico", so it
+    // draws as an outline (stave-line path + this glyph outline = 2 calls total).
+    expect(page.drawSvgPath).toHaveBeenCalledTimes(2);
+  });
+
+  it('resolves a font stack per code point, falling through to the next font in the list', () => {
+    const bravuraFake = {
+      unitsPerEm: 1000,
+      outline: (cp: number) => (cp < 0xe000 ? null : { d: `M0 0 L1000 0 L1000 -1000 L0 -1000 Z B${cp}`, advance: 1000 }),
+      widthOf: () => 0,
+    };
+    const academicoFake = {
+      unitsPerEm: 1000,
+      outline: (cp: number) => (cp >= 0xe000 ? null : { d: `M0 0 L1000 0 L1000 -1000 L0 -1000 Z A${cp}`, advance: 1000 }),
+      widthOf: () => 0,
+    };
+    const stackFonts = { bravura: bravuraFake, academico: academicoFake, helvetica: fakeFont('Helvetica') };
+    const page = fakePage();
+    drawSvgOnPage(page, svgOf('<text x="0" y="10" font-family="Bravura,Academico" font-size="10">12</text>'), stackFonts, t);
+
+    expect(page.drawText).not.toHaveBeenCalled();
+    expect(page.drawSvgPath).toHaveBeenCalledTimes(3);
+    const [d1] = page.drawSvgPath.mock.calls[0];
+    const [d2] = page.drawSvgPath.mock.calls[1];
+    const [d3] = page.drawSvgPath.mock.calls[2];
+    expect(d1).toContain('A49'); // '1': bravura has no ASCII glyphs, academico does
+    expect(d2).toContain('A50'); // '2': same
+    expect(d3).toContain('B57424'); // 0xE050: bravura has it, academico doesn't
+  });
+
+  it('skips a Private Use Area glyph no listed font has, without drawing text or throwing', () => {
+    const blindOutliner = { unitsPerEm: 1000, outline: () => null, widthOf: () => 0 };
+    const blindFonts = { bravura: blindOutliner, academico: blindOutliner, helvetica: fakeFont('Helvetica') };
+    const page = fakePage();
+
+    expect(() =>
+      drawSvgOnPage(page, svgOf('<text x="0" y="10" font-family="Bravura,Academico" font-size="10"></text>'), blindFonts, t)
+    ).not.toThrow();
+    expect(page.drawSvgPath).not.toHaveBeenCalled();
+    expect(page.drawText).not.toHaveBeenCalled();
   });
 });
