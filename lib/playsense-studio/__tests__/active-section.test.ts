@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pickActiveSection, type SectionRange } from '../active-section';
+import { pickActiveSection, pickDisplaySection, type SectionRange } from '../active-section';
 
 describe('pickActiveSection', () => {
   const sections: SectionRange[] = [
@@ -46,5 +46,37 @@ describe('pickActiveSection', () => {
     expect(pickActiveSection(openEnded, 9)).toBe(-1);
     expect(pickActiveSection(openEnded, 10)).toBe(0);
     expect(pickActiveSection(openEnded, 100000)).toBe(0);
+  });
+});
+
+describe('pickDisplaySection', () => {
+  const sections: SectionRange[] = [
+    { videoStartSeconds: 4, videoEndSeconds: 5.5 },
+    { videoStartSeconds: 14, videoEndSeconds: 16 },
+  ];
+
+  it('previews the first score for the whole intro, including its last frames', () => {
+    expect(pickDisplaySection(sections, 0)).toBe(0);
+    expect(pickDisplaySection(sections, 3.9)).toBe(0);
+    // 20 ms before the first score begins the staff must not swap to another score.
+    expect(pickDisplaySection(sections, 3.98)).toBe(0);
+    expect(pickDisplaySection(sections, 4)).toBe(0);
+  });
+
+  it('shows the active section', () => {
+    expect(pickDisplaySection(sections, 5)).toBe(0);
+    expect(pickDisplaySection(sections, 15)).toBe(1);
+  });
+
+  it('keeps the section that just ended through its trailing gap', () => {
+    expect(pickDisplaySection(sections, 5.5)).toBe(0);
+    expect(pickDisplaySection(sections, 13.99)).toBe(0);
+    expect(pickDisplaySection(sections, 20)).toBe(1);
+  });
+
+  it('falls back to the first section when nothing is placed', () => {
+    const unplaced: SectionRange[] = [{ videoStartSeconds: null, videoEndSeconds: null }];
+    expect(pickDisplaySection(unplaced, 0)).toBe(0);
+    expect(pickDisplaySection([], 0)).toBe(-1);
   });
 });

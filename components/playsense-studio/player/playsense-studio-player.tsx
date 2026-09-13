@@ -55,7 +55,7 @@ import {
   type Waypoint,
 } from '@/components/playsense-studio/shared/time-map/time-map';
 import { qnToTrackMs, trackDurationQN } from '@/lib/playsense-studio/time-mapping';
-import { pickActiveSection } from '@/lib/playsense-studio/active-section';
+import { pickActiveSection, pickDisplaySection } from '@/lib/playsense-studio/active-section';
 import { lessonSectionGaps } from '@/lib/playsense-studio/lesson-notation';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import type { SeekTarget } from '@/lib/playsense-studio/renderer';
@@ -168,41 +168,14 @@ export function PlaysenseStudioPlayer({
   const activeSection = activeSectionIndex >= 0 ? normalizedSections[activeSectionIndex] : null;
   const hasNotation = activeSection !== null;
 
-  // Placed sections in time order — used to resolve the current gap.
-  const placedSections = useMemo(
-    () =>
-      normalizedSections
-        .filter((s) => s.videoStartSeconds != null)
-        .sort(
-          (a, b) => (a.videoStartSeconds as number) - (b.videoStartSeconds as number)
-        ),
-    [normalizedSections]
-  );
-
-  // The section whose trailing gap we're sitting in (the one that just ended).
-  const prevSection = useMemo(() => {
-    let p: PlayerSection | null = null;
-    for (const s of placedSections) {
-      const end = s.videoEndSeconds ?? s.videoStartSeconds;
-      if (end != null && (end as number) <= clock.currentSeconds) p = s;
-    }
-    return p;
-  }, [placedSections, clock.currentSeconds]);
-
-  const upcomingSection = useMemo(
-    () =>
-      placedSections.find(
-        (s) => (s.videoStartSeconds as number) > clock.currentSeconds + 0.05
-      ) ?? null,
-    [placedSections, clock.currentSeconds]
-  );
-
   // The staff is never blank: during a gap we keep showing the section we just
-  // finished alongside its video interlude; before the first
-  // section we preview the upcoming one.
+  // finished alongside its video interlude; before the first section we
+  // preview the upcoming one. No lookahead: the previewed score must stay put
+  // through the last frames of the intro, or the staff rebuilds at the boundary.
   const displaySection =
-    activeSection ?? prevSection ?? upcomingSection ?? normalizedSections[0];
-  const inTrailingGap = !activeSection && prevSection !== null && displaySection === prevSection;
+    normalizedSections[pickDisplaySection(normalizedSections, clock.currentSeconds)] ?? normalizedSections[0];
+  const displayEndSeconds = displaySection.videoEndSeconds ?? displaySection.videoStartSeconds;
+  const inTrailingGap = !activeSection && displayEndSeconds != null && displayEndSeconds <= clock.currentSeconds;
 
   // Effective score/tracks/time-map drive all the existing logic below — now
   // always sourced from the displayed section so the staff is never blank.
@@ -516,6 +489,7 @@ export function PlaysenseStudioPlayer({
       loopAMs={loopAMs}
       loopBMs={loopBMs}
       layoutMode={staffLayout}
+      className={staffLayout === 'wrapped' ? 'min-h-0 flex-1' : undefined}
       zoom={layout === 'split' ? zoom : 1}
       showCursor={hasNotation || inTrailingGap || inLeadingGap}
       leadingGapMs={leadingGapMs}
@@ -587,7 +561,7 @@ export function PlaysenseStudioPlayer({
               </div>
             </>
           }
-          secondaryHeader={({ orient, setOrient }) => (
+          secondaryHeader={({ orient, setOrient, isRow }) => (
             <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-border bg-secondary px-3 py-2">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
@@ -601,7 +575,7 @@ export function PlaysenseStudioPlayer({
                   {meta}
                 </div>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
+              <div className={`flex shrink-0 ${isRow ? 'flex-col items-end gap-1' : 'flex-row-reverse items-center gap-2'}`}>
                 <div className="flex items-center gap-0.5 rounded-full border border-border p-0.5" role="group" aria-label={t('lessonView.label')}>
                   {(['video', 'score'] as const).map(view => {
                     const enabled = lessonView === 'both' || lessonView === view;
@@ -623,10 +597,16 @@ export function PlaysenseStudioPlayer({
             secondary={
               <>
               <div className="relative min-h-0 flex-1">
+                {/* Wrapped staves scroll inside the renderer's own viewport, so the
+                    layer hands it every remaining pixel instead of nesting a
+                    second scroller; the single scrolling line keeps the padded
+                    page so the scrub bar clears the zoom control. */}
                 <NotationZoomLayer
                   zoom={zoom}
                   onZoom={setZoom}
-                  className="h-full space-y-2 overflow-auto p-3 pb-16"
+                  className={staffLayout === 'wrapped'
+                    ? 'flex h-full flex-col gap-2 overflow-hidden p-3'
+                    : 'h-full space-y-2 overflow-auto p-3 pb-16'}
                 >
                   {tracksEl}
                   {staffEl}
