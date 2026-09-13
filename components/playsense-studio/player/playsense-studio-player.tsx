@@ -35,6 +35,7 @@ import {
 } from 'react';
 import { Rows3, MoveHorizontal, Minus, Plus } from 'lucide-react';
 import { SplitWorkspace, OrientationToggle } from './split-workspace';
+import { DownloadMenu } from '@/components/playsense-studio/export/download-menu';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
 import {
@@ -96,6 +97,8 @@ export interface PlayerSection {
 
 export interface PlaysenseStudioPlayerProps {
   classItemId: string;
+  /** Class item title used to name exported sheet-music files; falls back to the score title. */
+  classItemTitle?: string;
   videoUrl: string;
   posterUrl?: string;
   score: ScoreDocument;
@@ -128,6 +131,7 @@ const POSITION_SAVE_INTERVAL_MS = 5000;
 
 export function PlaysenseStudioPlayer({
   classItemId,
+  classItemTitle,
   videoUrl,
   posterUrl,
   score: singleScore,
@@ -616,6 +620,16 @@ export function PlaysenseStudioPlayer({
                 {lessonView !== 'video' && <div className="flex items-center gap-1">
                   <NotationLayoutToggle value={notationLayout} onChange={setNotationLayout} />
                   {lessonView === 'both' && <OrientationToggle value={orient} onChange={setOrient} />}
+                  {hasNotation && (
+                    <DownloadMenu
+                      score={score}
+                      classItemTitle={classItemTitle ?? score.title}
+                      sectionIndex={Math.max(0, normalizedSections.indexOf(displaySection))}
+                      sectionCount={normalizedSections.length}
+                      classItemId={classItemId}
+                      readOnly={readOnly}
+                    />
+                  )}
                 </div>}
               </div>
             </div>
