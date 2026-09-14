@@ -23,6 +23,8 @@ export interface PlacedBackingTrack {
   trimInSeconds: number
   /** null = play to the end of the file. */
   trimOutSeconds: number | null
+  /** Authored level, 0..1. The balance the admin set in the studio. */
+  gain?: number
 }
 
 interface UseBackingTrackOptions {
@@ -50,6 +52,7 @@ const unplaced = (audioUrl: string, index: number): PlacedBackingTrack => ({
   startSeconds: 0,
   trimInSeconds: 0,
   trimOutSeconds: null,
+  gain: 1,
 })
 
 export function useBackingTrack({
@@ -145,9 +148,10 @@ export function useBackingTrack({
 
     stopAllSources()
 
-    // All tracks route through one gain node — reduce volume in speaker-safe
-    // mode to minimize bleed into the mic. There is deliberately no per-track
-    // gain: placement is authored in the studio, loudness is not.
+    // A shared master handles the speaker-safe attenuation (reducing bleed into
+    // the mic); each track then gets its own node carrying the level the admin
+    // authored in the studio. Two stages, two concerns — the master is about the
+    // listening environment, the per-track gain is about the mix.
     const gainNode = audioContext.createGain()
     gainNode.gain.value = audioMode === 'speaker-safe' ? 0.5 : 1.0
     gainNode.connect(audioContext.destination)
@@ -164,6 +168,11 @@ export function useBackingTrack({
       const out = Math.min(track.trimOutSeconds ?? buffer.duration, buffer.duration)
       if (!(out > track.trimInSeconds)) continue
 
+      // One level node per track, shared across that track's loop iterations.
+      const trackGain = audioContext.createGain()
+      trackGain.gain.value = Math.min(1, Math.max(0, track.gain ?? 1))
+      trackGain.connect(gainNode)
+
       for (let loop = 0; loop < iterations; loop++) {
         const loopOffset = loop * (loopLength ?? 0)
         let when = startTime + loopOffset + track.startSeconds
@@ -179,7 +188,7 @@ export function useBackingTrack({
 
         const source = audioContext.createBufferSource()
         source.buffer = buffer
-        source.connect(gainNode)
+        source.connect(trackGain)
         // Rate is always 1 in the student engine, so the duration argument is
         // unambiguous here (unlike the studio mixer, which varies rate).
         source.start(when, offset, out - offset)
@@ -190,7 +199,6 @@ export function useBackingTrack({
       }
     }
     sourceNodesRef.current = sources
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioMode])
 
   const stopPlayback = useCallback(() => {

@@ -426,6 +426,7 @@ export function StudioWorkspace({
               videoDurationSeconds={null}
               trim={exerciseTrim}
               onTrimDrag={handleExerciseTrimDrag}
+              initialMetronomeAnchorSeconds={exerciseMedia?.metronomeAnchorSeconds ?? null}
               renderBackingLanes={(v) =>
                 owner.kind === 'classItem' && exerciseMedia ? (
                   <BackingLanesPanel

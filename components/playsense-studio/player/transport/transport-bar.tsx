@@ -7,7 +7,7 @@
 // span, with vertical markers at A and B. When loop is enabled but the user
 // scrubs outside the range, the wrap kicks in on the next RAF tick.
 
-import { Captions, Pause, Play, Repeat, RotateCcw, X } from 'lucide-react';
+import { Captions, Pause, Play, Repeat, RotateCcw, Volume2, VolumeX, X } from 'lucide-react';
 import {
   useRef,
   useState,
@@ -54,6 +54,13 @@ interface TransportBarProps {
   clickVolume?: number;
   onClickVolumeChange?: (volume: number) => void;
 
+  /** The reference video's own audio. Omit to hide the control entirely, which
+   *  is what every surface except the studio sync stage does. */
+  videoMuted?: boolean;
+  onVideoMutedChange?: (muted: boolean) => void;
+  videoVolume?: number;
+  onVideoVolumeChange?: (volume: number) => void;
+
   // Scored-section regions drawn on the scrub bar (clickable to jump). Used by
   // multi-section video lessons; omitted elsewhere.
   sectionMarkers?: Array<{ startSeconds: number; endSeconds: number | null; label?: string | null }>;
@@ -86,6 +93,10 @@ export function TransportBar({
   clickAligned = true,
   clickVolume = 0.2,
   onClickVolumeChange,
+  videoMuted = false,
+  onVideoMutedChange,
+  videoVolume = 1,
+  onVideoVolumeChange,
   sectionMarkers,
   subtitleOptions,
   activeSubtitleLang = 'off',
@@ -328,7 +339,35 @@ export function TransportBar({
           </div>
         )}
 
-        <span className="st-divline ml-auto hidden sm:block" />
+        {/* Reference-video audio. Only rendered where something owns it. */}
+        {onVideoMutedChange && (
+          <div className="ml-auto flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => onVideoMutedChange(!videoMuted)}
+              className={`st-iconbtn${videoMuted ? '' : ' is-on'}`}
+              aria-pressed={!videoMuted}
+              title={videoMuted ? 'Unmute the reference video' : 'Mute the reference video'}
+            >
+              {videoMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={videoMuted ? 0 : videoVolume}
+              onChange={(e) => onVideoVolumeChange?.(Number(e.target.value))}
+              className="hidden h-1 w-20 cursor-pointer accent-primary sm:block"
+              aria-label="Reference video volume"
+              title={`Reference video — ${Math.round((videoMuted ? 0 : videoVolume) * 100)}%`}
+            />
+          </div>
+        )}
+
+        <span
+          className={`st-divline hidden sm:block${onVideoMutedChange ? '' : ' ml-auto'}`}
+        />
         <ChronometerControl
           baseBpm={bpm}
           beatsPerMeasure={beatsPerMeasure}

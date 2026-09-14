@@ -7,8 +7,11 @@
 // directory so it may import server actions directly — the route-dir files pass
 // data down instead (see exercise-studio.tsx's Turbopack note).
 //
-// The audition toggle is a BINARY MUTE, not a mixer: no faders, no persistence.
-// Deliberate — see the mixer's header.
+// Two separate ideas per lane, multiplied in the mixer:
+//   level   -- the balance the admin authors, persisted per track and shipped
+//              to students as the mix
+//   enabled -- an ephemeral audition mute, so you can listen past a track
+// Muting to hear what is underneath must never destroy the level you set.
 
 import { Loader2, Volume2, VolumeX } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -32,6 +35,7 @@ import { normalizeClip, type Clip } from '@/lib/playsense-studio/clip-model';
 import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import {
   updateBackingTrackDuration,
+  updateBackingTrackGain,
   updateBackingTrackPlacement,
   type BackingTrack,
 } from '@/app/actions/playsense-studio';
@@ -64,6 +68,10 @@ export function BackingLanesPanel({
   const [draggingTrackId, setDraggingTrackId] = useState<string | null>(null);
   // Ephemeral: which tracks you're auditioning. Never persisted.
   const [enabled, setEnabled] = useState<ReadonlySet<string>>(() => new Set());
+  // Authored levels, seeded from the rows and owned here from then on.
+  const [levels, setLevels] = useState<Record<string, number>>(() =>
+    Object.fromEntries(tracks.map((t) => [t.id, t.gain ?? 1]))
+  );
 
   // Adopt rows for tracks we haven't seen (added/removed in the rail panel)
   // without clobbering a clip the admin is mid-drag on.
@@ -85,6 +93,11 @@ export function BackingLanesPanel({
     setEnabled((prev) => {
       const next = new Set([...prev].filter((id) => tracks.some((t) => t.id === id)));
       return next.size === prev.size ? prev : next;
+    });
+    setLevels((prev) => {
+      const next: Record<string, number> = {};
+      for (const track of tracks) next[track.id] = prev[track.id] ?? track.gain ?? 1;
+      return next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackKey]);
@@ -191,6 +204,39 @@ export function BackingLanesPanel({
     [schedulePersist]
   );
 
+  // Levels persist on their own cadence — dragging a fader shouldn't re-send
+  // position and trim, which is why this is a separate action.
+  const gainTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const levelsRef = useRef(levels);
+  levelsRef.current = levels;
+
+  const persistGain = useCallback((trackId: string) => {
+    const gain = levelsRef.current[trackId];
+    if (gain == null) return;
+    void updateBackingTrackGain({ trackId, gain });
+  }, []);
+
+  const handleLevelChange = useCallback(
+    (trackId: string, value: number) => {
+      setLevels((prev) => ({ ...prev, [trackId]: value }));
+      clearTimeout(gainTimersRef.current[trackId]);
+      gainTimersRef.current[trackId] = setTimeout(() => persistGain(trackId), 400);
+    },
+    [persistGain]
+  );
+
+  const persistGainRef = useRef(persistGain);
+  persistGainRef.current = persistGain;
+  useEffect(
+    () => () => {
+      for (const [trackId, timer] of Object.entries(gainTimersRef.current)) {
+        clearTimeout(timer);
+        persistGainRef.current(trackId);
+      }
+    },
+    []
+  );
+
   const toggleEnabled = useCallback((trackId: string) => {
     setEnabled((prev) => {
       const next = new Set(prev);
@@ -244,6 +290,7 @@ export function BackingLanesPanel({
     videoRef: view.videoRef,
     clips: mixerClips,
     enabled,
+    levels,
     usable: view.usableRegion,
     suspended: draggingTrackId != null,
   });
@@ -286,23 +333,34 @@ export function BackingLanesPanel({
           the timeline. Keyboard-reachable; the canvas below is not. */}
       <div className="st-backing-toggles">
         {laneClips.map((clip) => (
-          <button
-            key={clip.trackId}
-            type="button"
-            className={`st-backing-toggle${clip.enabled ? ' is-on' : ''}`}
-            style={{ height: LANE_H }}
-            onClick={() => toggleEnabled(clip.trackId)}
-            aria-pressed={clip.enabled}
-            title={`${clip.enabled ? 'Mute' : 'Audition'} ${clip.label}`}
-          >
-            {clip.loading ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : clip.enabled ? (
-              <Volume2 className="h-3 w-3" />
-            ) : (
-              <VolumeX className="h-3 w-3" />
-            )}
-          </button>
+          <div key={clip.trackId} className="st-backing-lane-controls" style={{ height: LANE_H }}>
+            <button
+              type="button"
+              className={`st-backing-toggle${clip.enabled ? ' is-on' : ''}`}
+              onClick={() => toggleEnabled(clip.trackId)}
+              aria-pressed={clip.enabled}
+              title={`${clip.enabled ? 'Mute' : 'Audition'} ${clip.label}`}
+            >
+              {clip.loading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : clip.enabled ? (
+                <Volume2 className="h-3 w-3" />
+              ) : (
+                <VolumeX className="h-3 w-3" />
+              )}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={levels[clip.trackId] ?? 1}
+              onChange={(e) => handleLevelChange(clip.trackId, Number(e.target.value))}
+              className="st-backing-fader"
+              aria-label={`${clip.label} level`}
+              title={`${clip.label} — ${Math.round((levels[clip.trackId] ?? 1) * 100)}%`}
+            />
+          </div>
         ))}
       </div>
     </div>

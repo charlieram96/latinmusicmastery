@@ -714,14 +714,30 @@ html:has([data-marketing]) {
   display: flex;
   flex-direction: column;
 }
+/* One row per lane: audition mute + the authored level. Fixed gutter, so it
+   never moves with the timeline. */
+.st-backing-lane-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 5px;
+  border-right: 1px solid hsl(var(--border));
+  background: color-mix(in srgb, hsl(var(--card)) 78%, transparent);
+}
+.st-backing-fader {
+  width: 44px;
+  height: 3px;
+  cursor: pointer;
+  accent-color: hsl(var(--primary));
+}
 .st-backing-toggle {
   display: flex;
   width: 22px;
+  height: 100%;
   align-items: center;
   justify-content: center;
   border: none;
-  border-right: 1px solid hsl(var(--border));
-  background: color-mix(in srgb, hsl(var(--card)) 78%, transparent);
+  background: transparent;
   color: hsl(var(--muted-foreground));
   cursor: pointer;
   transition: color 0.12s, background 0.12s;

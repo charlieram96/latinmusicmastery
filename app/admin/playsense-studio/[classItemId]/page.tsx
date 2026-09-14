@@ -88,6 +88,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
       videoUrl: null,
       videoStartSeconds: 0,
       videoTrimOutSeconds: null,
+      metronomeAnchorSeconds: null,
       timeMap: null,
       backingTracks: [],
     };
