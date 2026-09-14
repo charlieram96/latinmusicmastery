@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Video, Dumbbell, Music } from 'lucide-react'
+import { Video, Music } from 'lucide-react'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
 import { PlaysenseStudioPlayer } from '@/components/playsense-studio/player/playsense-studio-player'
 import {
@@ -300,20 +300,6 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
           exercises that have no score attached. */}
       {item.item_type === 'EXERCISE' && (
         <>
-          {item.description && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Dumbbell className="w-5 h-5 text-green-500" />
-                  {t('dashboard.pages.modules.exercise')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground whitespace-pre-wrap">{item.description}</p>
-              </CardContent>
-            </Card>
-          )}
-
           {playsenseStudioData ? (
             <ExerciseView
               classItemId={item.id}
