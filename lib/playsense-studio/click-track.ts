@@ -26,6 +26,30 @@
 
 import { firstIndexAtOrAfter } from '@/lib/playsense-studio/beat-grid';
 
+/** Shared by every surface that offers a click, so one viewer's level follows
+ *  them from the studio to the student player instead of being two settings. */
+export const CLICK_VOLUME_STORAGE_KEY = 'playsense.clickVolume';
+export const DEFAULT_CLICK_VOLUME = 0.2;
+
+/** Read the stored level, tolerating private windows and blocked site data. */
+export function readStoredClickVolume(): number {
+  try {
+    const raw = window.localStorage.getItem(CLICK_VOLUME_STORAGE_KEY);
+    const parsed = raw == null ? NaN : Number(raw);
+    return Number.isFinite(parsed) ? Math.min(1, Math.max(0, parsed)) : DEFAULT_CLICK_VOLUME;
+  } catch {
+    return DEFAULT_CLICK_VOLUME;
+  }
+}
+
+export function writeStoredClickVolume(volume: number): void {
+  try {
+    window.localStorage.setItem(CLICK_VOLUME_STORAGE_KEY, String(volume));
+  } catch {
+    /* not persisting is fine */
+  }
+}
+
 const TICK_MS = 25;
 /**
  * Scheduling horizon. At least 4 ticks, so three consecutive slipped timers

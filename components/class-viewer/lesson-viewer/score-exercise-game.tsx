@@ -129,6 +129,7 @@ function ScoreExerciseSession({
         ),
         trimInSeconds: track.trimInSeconds,
         trimOutSeconds: track.trimOutSeconds,
+        gain: track.gain,
       })),
     [selectedTracks, videoMap, exercise.bpm, exercise.timeSignature, exerciseVideo]
   )

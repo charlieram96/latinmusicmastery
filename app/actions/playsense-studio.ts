@@ -738,11 +738,59 @@ export async function publishTimeMap(
       await supabase.from('score_time_maps').delete().in('id', stale);
     }
   } else if (target === 'exercise') {
+    // Capture what this publish supersedes, so the old map can be reclaimed
+    // afterwards. Without this every exercise re-sync leaked a score_time_maps
+    // row — the section branch above has always cleaned up, this one did not.
+    const { data: prevItem } = await supabase
+      .from('class_items')
+      .select('exercise_time_map_id, metronome_anchor_seconds, metronome_anchor_qn')
+      .eq('id', input.classItemId)
+      .single();
+
+    // Move the click's anchor with the music, exactly as the section branch
+    // does. Wrapped so a bad waypoint list can never fail a publish.
+    let anchorPatch: {
+      metronome_anchor_seconds: number;
+      metronome_anchor_qn: number;
+      metronome_anchor_time_map_id: string;
+    } | null = null;
+    try {
+      if (prevItem && prevItem.metronome_anchor_seconds == null) {
+        anchorPatch = {
+          metronome_anchor_seconds: sorted[0].videoTimeSeconds,
+          metronome_anchor_qn: sorted[0].musicalPositionQN,
+          metronome_anchor_time_map_id: tmRow.id,
+        };
+      } else if (prevItem) {
+        const next = rebaseAnchor(
+          {
+            anchorSeconds: prevItem.metronome_anchor_seconds,
+            anchorQn: prevItem.metronome_anchor_qn,
+          },
+          sorted
+        );
+        if (next) {
+          anchorPatch = {
+            metronome_anchor_seconds: next.anchorSeconds,
+            metronome_anchor_qn: next.anchorQn,
+            metronome_anchor_time_map_id: tmRow.id,
+          };
+        }
+      }
+    } catch {
+      anchorPatch = null;
+    }
+
     const { error: exErr } = await supabase
       .from('class_items')
-      .update({ exercise_time_map_id: tmRow.id })
+      .update({ exercise_time_map_id: tmRow.id, ...(anchorPatch ?? {}) })
       .eq('id', input.classItemId);
     if (exErr) return { error: exErr.message };
+
+    // After the repoint, so a student never resolves to a just-deleted map.
+    if (prevItem?.exercise_time_map_id && prevItem.exercise_time_map_id !== tmRow.id) {
+      await supabase.from('score_time_maps').delete().eq('id', prevItem.exercise_time_map_id);
+    }
   } else if (input.makeActive ?? true) {
     const { error: linkErr } = await supabase
       .from('class_items')
@@ -1452,6 +1500,9 @@ export interface BackingTrack {
   trimOutSeconds: number | null;
   /** Source length, learned from the first waveform decode. */
   sourceDurationSeconds: number | null;
+  /** Authored level, 0..1. 1 is the file's own level; attenuate only.
+   *  Separate from the studio's ephemeral audition on/off. */
+  gain: number;
   /** What timelineStartSeconds MEANT musically, and the map it was measured
    *  against. Authoritative for student playback when the map has since been
    *  republished — see normalizeBackingTrackPlacement's callers. */
@@ -1469,6 +1520,8 @@ export interface ExerciseMedia {
   videoStartSeconds: number;
   /** End of the usable region; null = play to the end of the video. */
   videoTrimOutSeconds: number | null;
+  /** One video second known to land on a beat, for the studio click. */
+  metronomeAnchorSeconds: number | null;
   /** Optional time map syncing the play-along video to the graded score's beats.
    *  When present, consumers position the video by musical position; otherwise
    *  they fall back to the linear crop (videoStartSeconds). */
@@ -1484,7 +1537,9 @@ export async function getExerciseMedia(
 
   const { data: item, error: itemErr } = await supabase
     .from('class_items')
-    .select('exercise_video_url, exercise_video_start_seconds, exercise_video_trim_in_seconds, exercise_video_trim_out_seconds, exercise_time_map_id')
+    .select(
+      'exercise_video_url, exercise_video_start_seconds, exercise_video_trim_in_seconds, exercise_video_trim_out_seconds, exercise_time_map_id, metronome_anchor_seconds'
+    )
     .eq('id', classItemId)
     .single();
   if (itemErr || !item) return { error: itemErr?.message ?? 'Class item not found' };
@@ -1492,7 +1547,7 @@ export async function getExerciseMedia(
   const { data: tracks, error: tracksErr } = await supabase
     .from('class_item_backing_tracks')
     .select(
-      'id, label, audio_url, order_index, timeline_start_seconds, trim_in_seconds, trim_out_seconds, source_duration_seconds, position_qn, time_map_id'
+      'id, label, audio_url, order_index, timeline_start_seconds, trim_in_seconds, trim_out_seconds, source_duration_seconds, position_qn, time_map_id, gain'
     )
     .eq('class_item_id', classItemId)
     .order('order_index', { ascending: true });
@@ -1534,6 +1589,7 @@ export async function getExerciseMedia(
       // any row written before 040's backfill.
       videoStartSeconds: item.exercise_video_trim_in_seconds ?? item.exercise_video_start_seconds ?? 0,
       videoTrimOutSeconds: item.exercise_video_trim_out_seconds,
+      metronomeAnchorSeconds: item.metronome_anchor_seconds,
       timeMap,
       backingTracks: (tracks ?? []).map((t) => ({
         id: t.id,
@@ -1546,6 +1602,7 @@ export async function getExerciseMedia(
         sourceDurationSeconds: t.source_duration_seconds,
         positionQn: t.position_qn,
         timeMapId: t.time_map_id,
+        gain: t.gain ?? 1,
       })),
     },
   };
@@ -1634,7 +1691,7 @@ export async function addBackingTrack(input: {
       order_index: orderIndex,
     })
     .select(
-      'id, label, audio_url, order_index, timeline_start_seconds, trim_in_seconds, trim_out_seconds, source_duration_seconds, position_qn, time_map_id'
+      'id, label, audio_url, order_index, timeline_start_seconds, trim_in_seconds, trim_out_seconds, source_duration_seconds, position_qn, time_map_id, gain'
     )
     .single();
   if (error || !data) return { error: error?.message ?? 'Insert failed' };
@@ -1652,6 +1709,7 @@ export async function addBackingTrack(input: {
       sourceDurationSeconds: data.source_duration_seconds,
       positionQn: data.position_qn,
       timeMapId: data.time_map_id,
+      gain: data.gain ?? 1,
     },
   };
 }
@@ -1906,6 +1964,102 @@ export async function setSectionMetronomeAnchor(input: {
       metronome_anchor_time_map_id: section.active_time_map_id,
     })
     .eq('id', input.sectionId);
+  if (error) return { error: error.message };
+
+  return { data: { anchorSeconds: input.anchorSeconds, anchorQn } };
+}
+
+/**
+ * Set one backing track's authored level (0..1).
+ *
+ * Separate from updateBackingTrackPlacement because it fires on a different
+ * cadence — dragging a fader shouldn't re-send position and trim — and like
+ * placement it deliberately does not revalidate: the client already holds the
+ * truth and a revalidation per drag would thrash the studio.
+ */
+export async function updateBackingTrackGain(input: {
+  trackId: string;
+  gain: number;
+}): Promise<{ data?: { gain: number }; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  if (!Number.isFinite(input.gain)) return { error: 'Invalid gain' };
+  // Attenuate only. The CHECK enforces this too; clamping here means a client
+  // bug produces a quiet track rather than a failed write.
+  const gain = Math.min(1, Math.max(0, input.gain));
+
+  const { error } = await supabase
+    .from('class_item_backing_tracks')
+    .update({ gain })
+    .eq('id', input.trackId);
+  if (error) return { error: error.message };
+
+  return { data: { gain } };
+}
+
+/**
+ * Set (or clear) an EXERCISE's metronome anchor — the phase reference for the
+ * click on its Sync-video stage. Mirrors setSectionMetronomeAnchor; exercises
+ * need their own because they are not sections and reach the sync panel with
+ * no sectionId.
+ */
+export async function setClassItemMetronomeAnchor(input: {
+  classItemId: string;
+  anchorSeconds: number | null;
+  anchorQn?: number | null;
+}): Promise<{ data?: { anchorSeconds: number | null; anchorQn: number | null }; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  if (input.anchorSeconds == null) {
+    const { error } = await supabase
+      .from('class_items')
+      .update({
+        metronome_anchor_seconds: null,
+        metronome_anchor_qn: null,
+        metronome_anchor_time_map_id: null,
+      })
+      .eq('id', input.classItemId);
+    if (error) return { error: error.message };
+    return { data: { anchorSeconds: null, anchorQn: null } };
+  }
+
+  if (!Number.isFinite(input.anchorSeconds)) return { error: 'Invalid anchor' };
+
+  const { data: item, error: itemErr } = await supabase
+    .from('class_items')
+    .select('exercise_time_map_id')
+    .eq('id', input.classItemId)
+    .single();
+  if (itemErr || !item) return { error: itemErr?.message ?? 'Class item not found' };
+
+  let anchorQn = input.anchorQn ?? null;
+  if (anchorQn == null && item.exercise_time_map_id) {
+    const { data: waypoints } = await supabase
+      .from('score_time_waypoints')
+      .select('musical_position_qn, video_time_seconds')
+      .eq('time_map_id', item.exercise_time_map_id)
+      .order('musical_position_qn', { ascending: true });
+    anchorQn = secondsToQn(
+      (waypoints ?? []).map((w) => ({
+        musicalPositionQN: w.musical_position_qn,
+        videoTimeSeconds: w.video_time_seconds,
+      })),
+      input.anchorSeconds
+    );
+  }
+
+  const { error } = await supabase
+    .from('class_items')
+    .update({
+      metronome_anchor_seconds: input.anchorSeconds,
+      metronome_anchor_qn: anchorQn,
+      metronome_anchor_time_map_id: item.exercise_time_map_id,
+    })
+    .eq('id', input.classItemId);
   if (error) return { error: error.message };
 
   return { data: { anchorSeconds: input.anchorSeconds, anchorQn } };

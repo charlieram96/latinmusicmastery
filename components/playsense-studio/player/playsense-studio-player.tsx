@@ -49,6 +49,10 @@ import { ClipsPanel } from './clips/clips-panel';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
 import { useVideoClickTrack } from './state/use-video-click-track';
 import { beatGridFromAnchor, mergeBeatGrids } from '@/lib/playsense-studio/beat-grid';
+import {
+  readStoredClickVolume,
+  writeStoredClickVolume,
+} from '@/lib/playsense-studio/click-track';
 import { useSubtitleTracks } from './state/use-subtitle-tracks';
 import type { SubtitleLang, SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt';
 import { logPlaysenseStudioEvent, type PlaysenseStudioClip } from '@/app/actions/playsense-studio';
@@ -139,8 +143,6 @@ export interface PlaysenseStudioPlayerProps {
 }
 
 const POSITION_SAVE_INTERVAL_MS = 5000;
-const CLICK_VOLUME_KEY = 'playsense.clickVolume';
-const DEFAULT_CLICK_VOLUME = 0.2;
 
 export function PlaysenseStudioPlayer({
   classItemId,
@@ -241,22 +243,10 @@ export function PlaysenseStudioPlayer({
   const [clickOn, setClickOn] = useState(false);
   // Per-viewer convenience, so it survives a reload. Reads can throw (private
   // windows, blocked site data), so the player must render fine without it.
-  const [clickVolume, setClickVolume] = useState(() => {
-    try {
-      const raw = window.localStorage.getItem(CLICK_VOLUME_KEY);
-      const parsed = raw == null ? NaN : Number(raw);
-      return Number.isFinite(parsed) ? Math.min(1, Math.max(0, parsed)) : DEFAULT_CLICK_VOLUME;
-    } catch {
-      return DEFAULT_CLICK_VOLUME;
-    }
-  });
+  const [clickVolume, setClickVolume] = useState(readStoredClickVolume);
   const handleClickVolumeChange = useCallback((v: number) => {
     setClickVolume(v);
-    try {
-      window.localStorage.setItem(CLICK_VOLUME_KEY, String(v));
-    } catch {
-      /* not persisting is fine */
-    }
+    writeStoredClickVolume(v);
   }, []);
   const clickGrid = useMemo(
     () =>

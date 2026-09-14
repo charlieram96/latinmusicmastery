@@ -28,7 +28,16 @@ import { createClient } from '@/lib/supabase/client';
 import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import { clampToTrim, trimRange, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import { secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
-import { setSectionMetronomeAnchor } from '@/app/actions/playsense-studio';
+import { beatGridFromAnchor } from '@/lib/playsense-studio/beat-grid';
+import {
+  readStoredClickVolume,
+  writeStoredClickVolume,
+} from '@/lib/playsense-studio/click-track';
+import { useVideoClickTrack } from '@/components/playsense-studio/player/state/use-video-click-track';
+import {
+  setClassItemMetronomeAnchor,
+  setSectionMetronomeAnchor,
+} from '@/app/actions/playsense-studio';
 import { publishTimeMap, saveScoreDocument } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
@@ -145,6 +154,36 @@ export interface TimelineView {
   playbackRate: number;
   onScrollByPx: (dx: number) => void;
   onZoomBy: (factor: number, anchorPx?: number) => void;
+}
+
+const VIDEO_MUTED_KEY = 'playsense.studioVideoMuted';
+const VIDEO_VOLUME_KEY = 'playsense.studioVideoVolume';
+
+/** localStorage can throw (private windows, blocked site data) — never let a
+ *  monitoring preference stop the panel rendering. */
+function readStoredFlag(key: string, fallback: boolean): boolean {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw == null ? fallback : raw === '1';
+  } catch {
+    return fallback;
+  }
+}
+function readStoredLevel(key: string, fallback: number): number {
+  try {
+    const raw = window.localStorage.getItem(key);
+    const parsed = raw == null ? NaN : Number(raw);
+    return Number.isFinite(parsed) ? Math.min(1, Math.max(0, parsed)) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function writeStoredValue(key: string, value: string): void {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    /* not persisting is fine */
+  }
 }
 
 const MIN_PPS = 8;
@@ -697,6 +736,20 @@ export function SyncPanel({
   const seededAnchorSeconds = markers.measures[0]?.beats[0]?.videoTimeSeconds ?? 0;
 
   // --- Metronome anchor ----------------------------------------------------
+  // Who owns the anchor on this stage. A scored section has its own row; an
+  // EXERCISE reaches this panel with no sectionId, so its anchor lives on the
+  // class item. Everything below gates on this rather than on sectionId, which
+  // is what kept the whole feature invisible to exercises.
+  const anchorOwner = useMemo<{ kind: 'section' | 'classItem'; id: string } | null>(
+    () =>
+      sectionId
+        ? { kind: 'section', id: sectionId }
+        : publishTarget === 'exercise'
+          ? { kind: 'classItem', id: classItemId }
+          : null,
+    [sectionId, publishTarget, classItemId]
+  );
+
   // One beat of the recording. With the section's notated tempo it defines the
   // student click's phase, so the click lands on the performance instead of on
   // whenever the student pressed play.
@@ -708,7 +761,7 @@ export function SyncPanel({
   anchorRef.current = metronomeAnchor;
 
   const persistAnchor = useCallback(() => {
-    if (!sectionId) return;
+    if (!anchorOwner) return;
     const seconds = anchorRef.current;
     // Record what the second MEANT musically, from the LIVE markers rather than
     // the last published map — those are what the admin is looking at.
@@ -724,8 +777,20 @@ export function SyncPanel({
             ),
             seconds
           );
-    void setSectionMetronomeAnchor({ sectionId, anchorSeconds: seconds, anchorQn: qn });
-  }, [sectionId]);
+    if (anchorOwner.kind === 'section') {
+      void setSectionMetronomeAnchor({
+        sectionId: anchorOwner.id,
+        anchorSeconds: seconds,
+        anchorQn: qn,
+      });
+    } else {
+      void setClassItemMetronomeAnchor({
+        classItemId: anchorOwner.id,
+        anchorSeconds: seconds,
+        anchorQn: qn,
+      });
+    }
+  }, [anchorOwner]);
 
   const scheduleAnchorSave = useCallback(() => {
     if (anchorTimerRef.current) clearTimeout(anchorTimerRef.current);
@@ -760,6 +825,67 @@ export function SyncPanel({
 
   /** What the click actually uses — the stored anchor, else the score's start. */
   const anchorSeconds = metronomeAnchor ?? seededAnchorSeconds;
+
+  // --- Studio click --------------------------------------------------------
+  // The transport has always rendered a "Click track" button here, but nothing
+  // was ever wired to it — the engine only existed in the student player. So an
+  // admin could not hear what they were aligning the anchor to, which is the
+  // one thing this stage is for.
+  //
+  // The grid is built from the LIVE markers rather than the published map, so
+  // dragging a marker or the anchor is audible immediately.
+  const [clickOn, setClickOn] = useState(false);
+  const [clickVolume, setClickVolume] = useState(readStoredClickVolume);
+
+  // The reference video's own audio. It used to play at full system volume with
+  // no way to touch it, while the student's copy of the same video is hard-muted
+  // — so the admin was balancing backing tracks and a click against an
+  // uncontrollable voice. Per-viewer, since it is a monitoring preference.
+  const [videoMuted, setVideoMuted] = useState(() => readStoredFlag(VIDEO_MUTED_KEY, false));
+  const [videoVolume, setVideoVolume] = useState(() => readStoredLevel(VIDEO_VOLUME_KEY, 1));
+  const handleVideoMutedChange = useCallback((muted: boolean) => {
+    setVideoMuted(muted);
+    writeStoredValue(VIDEO_MUTED_KEY, muted ? '1' : '0');
+  }, []);
+  const handleVideoVolumeChange = useCallback((volume: number) => {
+    setVideoVolume(volume);
+    writeStoredValue(VIDEO_VOLUME_KEY, String(volume));
+    // Nudging the slider off zero is an unmute; otherwise you'd drag and hear
+    // nothing and assume it was broken.
+    if (volume > 0 && videoMuted) handleVideoMutedChange(false);
+  }, [videoMuted, handleVideoMutedChange]);
+
+  // The element is portalled, so set the property rather than relying on a prop
+  // surviving the move.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = videoMuted;
+    video.volume = videoVolume;
+  }, [videoMuted, videoVolume, videoUrl]);
+  const handleClickVolumeChange = useCallback((v: number) => {
+    setClickVolume(v);
+    writeStoredClickVolume(v);
+  }, []);
+
+  const liveSpan = markerSpan(markers);
+  const clickGrid = useMemo(
+    () =>
+      beatGridFromAnchor(
+        anchorSeconds,
+        score.initialTempo,
+        liveSpan.startSeconds,
+        liveSpan.endSeconds
+      ),
+    [anchorSeconds, score.initialTempo, liveSpan.startSeconds, liveSpan.endSeconds]
+  );
+
+  useVideoClickTrack({
+    videoRef,
+    grid: showSync ? clickGrid : [],
+    enabled: clickOn && showSync,
+    volume: clickVolume,
+  });
 
   // A single anchor plus a constant tempo cannot follow a performance that
   // pauses or changes tempo. The published spacing already tells us when that
@@ -813,7 +939,7 @@ export function SyncPanel({
 
             {/* The anchor can't conflict with anything, so unlike placement it
                 needs no arm/confirm step — one click sets it at the playhead. */}
-            {sectionId && (
+            {anchorOwner && (
               <button
                 type="button"
                 onClick={setAnchorAtPlayhead}
@@ -900,8 +1026,8 @@ export function SyncPanel({
                     trimOutSeconds={trim?.trimOutSeconds ?? null}
                     mediaDurationSeconds={videoDurationSeconds ?? clock.durationSeconds}
                     onTrimDrag={onTrimDrag}
-                    metronomeAnchorSeconds={sectionId ? anchorSeconds : undefined}
-                    onAnchorDrag={sectionId ? handleAnchorDrag : undefined}
+                    metronomeAnchorSeconds={anchorOwner ? anchorSeconds : undefined}
+                    onAnchorDrag={anchorOwner ? handleAnchorDrag : undefined}
                     onSelect={handleSelect}
                     onMarkerDrag={handleMarkerDrag}
                     onTailDrag={handleTailDrag}
@@ -1095,12 +1221,12 @@ export function SyncPanel({
                   <b className="font-mono tabular-nums text-foreground">{anchorSeconds.toFixed(1)}s</b> ·{' '}
                   {score.initialTempo} BPM
                 </div>
-                {sectionId && metronomeAnchor == null && (
+                {anchorOwner && metronomeAnchor == null && (
                   <p className="text-[11px] leading-snug text-muted-foreground">
                     No click anchor yet — it will default to the score&rsquo;s start.
                   </p>
                 )}
-                {sectionId && tempoDisagrees && mapImpliedBpm != null && (
+                {anchorOwner && tempoDisagrees && mapImpliedBpm != null && (
                   <p className="text-[11px] leading-snug text-muted-foreground">
                     The click runs at the score&rsquo;s{' '}
                     <b className="text-foreground">{score.initialTempo} BPM</b>, but this sync
@@ -1159,6 +1285,15 @@ export function SyncPanel({
               onClearLoop={clock.clearLoop}
               bpm={score.initialTempo}
               beatsPerMeasure={score.initialTimeSignature[0]}
+              clickOn={clickOn}
+              onClickOnChange={setClickOn}
+              clickAligned={metronomeAnchor != null}
+              clickVolume={clickVolume}
+              onClickVolumeChange={handleClickVolumeChange}
+              videoMuted={videoMuted}
+              onVideoMutedChange={handleVideoMutedChange}
+              videoVolume={videoVolume}
+              onVideoVolumeChange={handleVideoVolumeChange}
               sectionMarkers={sectionsContext?.sections
                 .filter((s) => s.startSeconds != null)
                 .map((s) => ({ startSeconds: s.startSeconds!, endSeconds: s.endSeconds, label: s.label }))}

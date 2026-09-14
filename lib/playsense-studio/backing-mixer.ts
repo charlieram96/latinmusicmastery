@@ -2,10 +2,14 @@
 //
 // BROWSER ONLY. A plain class with no React, shaped like metronome.ts.
 //
-// This is a BINARY AUDITION MUTE, not a mixer. There is one gain per clip and
-// it is only ever 0 or 1, with a short ramp to kill the click. No faders, no
-// persistence, no solo. If you are here to "finish" it into a console, that is
-// a product decision, not a missing feature.
+// Each clip has its own gain node carrying TWO separate ideas, multiplied:
+//
+//   level    -- the balance the admin authored, persisted per track (0..1)
+//   enabled  -- an ephemeral audition mute, so you can listen past a track
+//
+// Effective gain is `enabled ? level : 0`. Keeping them apart matters: muting a
+// track to hear what is underneath must not destroy the level you set. There is
+// still no solo, and nothing here is persisted — the level arrives as data.
 //
 // Design notes that are easy to get wrong:
 //
@@ -50,6 +54,8 @@ export class BackingMixer {
 
   private clips: MixerClip[] = [];
   private enabled: ReadonlySet<string> = new Set();
+  /** Authored per-track levels, 0..1. Missing = full level. */
+  private levels: Record<string, number> = {};
   private usable: UsableRegion = { startSeconds: 0, endSeconds: Infinity };
   private anchor: Anchor | null = null;
 
@@ -93,6 +99,25 @@ export class BackingMixer {
 
   setEnabled(ids: ReadonlySet<string>) {
     this.enabled = ids;
+    this.applyGains();
+  }
+
+  /** Authored levels. Same ramp, same no-reschedule rule as the audition mute. */
+  setLevels(levels: Record<string, number>) {
+    this.levels = levels;
+    this.applyGains();
+  }
+
+  private levelFor(id: string): number {
+    const level = this.levels[id];
+    return Number.isFinite(level) ? Math.min(1, Math.max(0, level)) : 1;
+  }
+
+  private gainFor_(id: string): number {
+    return this.enabled.has(id) ? this.levelFor(id) : 0;
+  }
+
+  private applyGains() {
     const ctx = this.ctx;
     if (!ctx) return;
     // Gain only — never reschedule. The source keeps running, so re-enabling
@@ -100,7 +125,7 @@ export class BackingMixer {
     for (const clip of this.clips) {
       const gain = this.gains.get(clip.id);
       if (!gain) continue;
-      gain.gain.setTargetAtTime(ids.has(clip.id) ? 1 : 0, ctx.currentTime, GAIN_RAMP_SECONDS);
+      gain.gain.setTargetAtTime(this.gainFor_(clip.id), ctx.currentTime, GAIN_RAMP_SECONDS);
     }
   }
 
@@ -185,7 +210,7 @@ export class BackingMixer {
     let gain = this.gains.get(id);
     if (!gain) {
       gain = ctx.createGain();
-      gain.gain.value = this.enabled.has(id) ? 1 : 0;
+      gain.gain.value = this.gainFor_(id);
       gain.connect(this.master!);
       this.gains.set(id, gain);
     }

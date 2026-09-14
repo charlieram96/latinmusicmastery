@@ -37,13 +37,16 @@ export function useBackingMixer(options: {
   videoRef: RefObject<HTMLVideoElement | null>;
   clips: MixerClipInput[];
   enabled: ReadonlySet<string>;
+  /** Authored per-track levels, 0..1. Separate from `enabled`, which is a
+   *  transient audition mute. */
+  levels?: Record<string, number>;
   usable: UsableRegion;
   /** True while a clip is being dragged. Re-cueing on every pointermove would
    *  restart the clip from a new offset dozens of times a second - a machine
    *  gun. Stop the dragged clip on grab, re-cue once on release. */
   suspended?: boolean;
 }) {
-  const { videoRef, clips, enabled, usable, suspended = false } = options;
+  const { videoRef, clips, enabled, levels, usable, suspended = false } = options;
 
   const mixerRef = useRef<BackingMixer | null>(null);
   if (mixerRef.current === null && typeof window !== 'undefined') {
@@ -131,6 +134,18 @@ export function useBackingMixer(options: {
   useEffect(() => {
     mixerRef.current?.setEnabled(enabled);
   }, [enabled]);
+
+  // Volatile input, own effect, imperative setter — same rule as the rest.
+  const levelsKey = levels
+    ? Object.entries(levels)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([id, v]) => `${id}:${v}`)
+        .join(',')
+    : '';
+  useEffect(() => {
+    mixerRef.current?.setLevels(levels ?? {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [levelsKey]);
 
   useEffect(() => {
     mixerRef.current?.setUsableRegion(usable);

@@ -125,6 +125,7 @@ export type Database = {
           audio_url: string
           class_item_id: string
           created_at: string | null
+          gain: number
           id: string
           label: string
           order_index: number
@@ -139,6 +140,7 @@ export type Database = {
           audio_url: string
           class_item_id: string
           created_at?: string | null
+          gain?: number
           id?: string
           label: string
           order_index?: number
@@ -153,6 +155,7 @@ export type Database = {
           audio_url?: string
           class_item_id?: string
           created_at?: string | null
+          gain?: number
           id?: string
           label?: string
           order_index?: number
@@ -334,6 +337,9 @@ export type Database = {
           id: string
           item_type: string
           key_signature: string | null
+          metronome_anchor_qn: number | null
+          metronome_anchor_seconds: number | null
+          metronome_anchor_time_map_id: string | null
           options: Json | null
           order_index: number
           question: string | null
@@ -369,6 +375,9 @@ export type Database = {
           id?: string
           item_type: string
           key_signature?: string | null
+          metronome_anchor_qn?: number | null
+          metronome_anchor_seconds?: number | null
+          metronome_anchor_time_map_id?: string | null
           options?: Json | null
           order_index?: number
           question?: string | null
@@ -404,6 +413,9 @@ export type Database = {
           id?: string
           item_type?: string
           key_signature?: string | null
+          metronome_anchor_qn?: number | null
+          metronome_anchor_seconds?: number | null
+          metronome_anchor_time_map_id?: string | null
           options?: Json | null
           order_index?: number
           question?: string | null
@@ -434,6 +446,13 @@ export type Database = {
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_items_metronome_anchor_time_map_id_fkey"
+            columns: ["metronome_anchor_time_map_id"]
+            isOneToOne: false
+            referencedRelation: "score_time_maps"
             referencedColumns: ["id"]
           },
           {
