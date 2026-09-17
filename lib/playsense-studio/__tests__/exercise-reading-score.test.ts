@@ -27,14 +27,24 @@ describe('continuous exercise reading passes', () => {
     expect(nextPass.keyFifths).toBe(original.initialKeyFifths)
     expect(trackDurationMs(reading.tracks[0], reading)).toBeCloseTo(trackDurationMs(original.tracks[0], original) * 2)
   })
-  it('keeps authored repeat measures expanded instead of rewinding the visible rows', () => {
+  it('keeps authored repeat signs in every pass so the staff draws them', () => {
     const original = structuredClone(CONGA_TUMBAO_FIXTURE)
     original.tracks[0].measures = Array.from({length:4}, (_, pass) => ({...original.tracks[0].measures[0],number:pass + 1,
       repeat:{id:'repeat',pass,count:4,offset:0,length:1}}))
     expect(repeatProjection(original, 0)).not.toBeNull()
-    const reading = exerciseReadingScore(original, 1)
-    expect(reading.tracks[0].measures).toHaveLength(4)
-    expect(repeatProjection(reading, 0)).toBeNull()
+    const reading = exerciseReadingScore(original, 2)
+    expect(reading.tracks[0].measures).toHaveLength(8)
+    // Each reading pass carries its own repeat group; ids never collide across passes.
+    const ids = new Set(reading.tracks[0].measures.map(m => m.repeat?.id))
+    expect(ids.size).toBe(2)
+    expect(reading.tracks[0].measures.map(m => m.repeat?.pass)).toEqual([0, 1, 2, 3, 0, 1, 2, 3])
+    const projection = repeatProjection(reading, 0)
+    expect(projection).not.toBeNull()
+    // Four written-out bars collapse to one bar with a repeat sign, per pass.
+    expect(projection!.score.tracks[0].measures).toHaveLength(2)
+    expect(projection!.score.tracks[0].measures.map(m => m.repeat?.count)).toEqual([4, 4])
+    // The reading clock still covers every written-out bar.
+    expect(projection!.originalDuration).toBeCloseTo(trackDurationMs(reading.tracks[0], reading))
   })
   it('crosses pass boundaries continuously and clamps the count-in and final hold', () => {
     expect(exerciseReadingTime(7999, 1, 2, 8000)).toBe(7999)
