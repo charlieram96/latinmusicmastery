@@ -8,6 +8,7 @@
 import { useCallback, useReducer } from 'react';
 import { repeatGroups } from './repeats';
 import { insertMidiMeasures } from './midi-recording';
+import { applyMeasureEdit, emptyMeasure, type MeasureClip } from './measure-edits';
 import type {
   Chord,
   Measure,
@@ -16,7 +17,6 @@ import type {
   Rest,
   ScoreDocument,
   Track,
-  Voice,
 } from '@/components/playsense-studio/shared/score-model/types';
 import {
   QN_EPS,
@@ -53,11 +53,19 @@ export type EditorAction =
   | { type: 'add-track' }
   | { type: 'delete-track'; trackIndex: number }
   | { type: 'add-measure'; trackIndex: number }
+  | { type: 'insert-measure'; trackIndex: number; index: number }
+  | { type: 'delete-measures'; trackIndex: number; start: number; count: number }
+  /** Reducer no-op: the studio's dispatch wrapper writes the clipboard (it owns the timing). */
+  | { type: 'copy-measures'; trackIndex: number; start: number; count: number }
+  | { type: 'paste-measures'; trackIndex: number; index: number; clip: MeasureClip }
+  | { type: 'append-score'; score: ScoreDocument }
+  /** Adopt a structurally edited score computed outside the reducer (the sync
+   *  panel pairs it with transformed markers). Refused when the base moved. */
+  | { type: 'apply-structural-score'; score: ScoreDocument; expectedScore: ScoreDocument }
   | { type: 'insert-midi-recording'; trackIndex: number; start: number; replaceCount: number; measures: Measure[]; expectedTrack: Track }
   | { type: 'apply-midi-score'; score: ScoreDocument; expectedScore: ScoreDocument }
   | { type: 'repeat-measures'; trackIndex: number; start: number; end: number; count: number; id: string }
   | { type: 'unlink-repeat'; trackIndex: number; id: string }
-  | { type: 'delete-measure'; trackIndex: number; measureIndex: number }
   | { type: 'set-measure-final-bar'; trackIndex: number; measureIndex: number; final: boolean }
   | {
       type: 'add-note';
@@ -149,6 +157,21 @@ function withHistory(state: EditorState, nextScore: ScoreDocument): EditorState 
   return { score: nextScore, past, future: [], isDirty: true };
 }
 
+/**
+ * History push for STRUCTURAL edits: measure indices shifted, so the
+ * index-keyed cross-pass propagation in withHistory must not run. Repeat
+ * metadata that no longer forms a valid group is still stripped. Returns the
+ * given score object by identity so callers can key on it.
+ */
+function pushHistory(state: EditorState, nextScore: ScoreDocument): EditorState {
+  nextScore.tracks.forEach((track) => {
+    const valid = new Set(repeatGroups(track).map(g => g.id));
+    track.measures.forEach(m => { if (m.repeat && !valid.has(m.repeat.id)) delete m.repeat; });
+  });
+  const past = [...state.past, state.score].slice(-HISTORY_LIMIT);
+  return { score: nextScore, past, future: [], isDirty: true };
+}
+
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   switch (action.type) {
     case 'undo': {
@@ -179,6 +202,11 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'apply-midi-score': {
       return state.score === action.expectedScore ? withHistory(state, action.score) : state;
     }
+    case 'apply-structural-score': {
+      return state.score === action.expectedScore ? pushHistory(state, action.score) : state;
+    }
+    case 'copy-measures':
+      return state;
     case 'insert-midi-recording': {
       if (state.score.tracks[action.trackIndex] !== action.expectedTrack) return state;
       try {
@@ -234,49 +262,18 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       next.tracks.forEach((t, i) => (t.index = i));
       return withHistory(state, next);
     }
-    case 'add-measure': {
-      const next = clone(state.score);
-      const t = next.tracks[action.trackIndex];
-      if (!t) return state;
-      const lastNumber = t.measures[t.measures.length - 1]?.number ?? 0;
-      t.measures.push(emptyMeasure(lastNumber + 1));
-      return withHistory(state, next);
-    }
+    case 'add-measure':
+    case 'insert-measure':
+    case 'delete-measures':
+    case 'paste-measures':
+    case 'append-score':
     case 'repeat-measures': {
-      const next = clone(state.score);
-      const track = next.tracks[action.trackIndex];
-      const { start, end, count, id } = action;
-      if (!track || !Number.isInteger(start) || !Number.isInteger(end) || !Number.isInteger(count) ||
-        start < 0 || end < start || end >= track.measures.length || count < 2 || count > 8 || !id) return state;
-      const source = track.measures.slice(start, end + 1);
-      if (source.some(m => m.repeat)) return state;
-      let tempo = next.initialTempo;
-      let signature = next.initialTimeSignature;
-      let key = next.initialKeyFifths;
-      for (const m of track.measures.slice(0, start + 1)) {
-        tempo = m.tempoChange ?? tempo;
-        signature = m.timeSignature ?? signature;
-        key = m.keyFifths ?? key;
-      }
-      source[0] = { ...source[0], tempoChange: tempo, timeSignature: signature, keyFifths: key };
-      const expanded = Array.from({ length: count }, (_, pass) => source.map((m, offset) => ({
-        ...clone(m), repeat: { id, pass, count, offset, length: source.length },
-      }))).flat();
-      track.measures.splice(start, source.length, ...expanded);
-      track.measures.forEach((m, i) => { m.number = i + 1; });
-      return withHistory(state, next);
+      const result = applyMeasureEdit(state.score, action);
+      return result.ok ? pushHistory(state, result.score) : state;
     }
     case 'unlink-repeat': {
       const next = clone(state.score);
       next.tracks[action.trackIndex]?.measures.forEach(m => { if (m.repeat?.id === action.id) delete m.repeat; });
-      return withHistory(state, next);
-    }
-    case 'delete-measure': {
-      const next = clone(state.score);
-      const t = next.tracks[action.trackIndex];
-      if (!t || t.measures.length <= 1) return state;
-      t.measures.splice(action.measureIndex, 1);
-      t.measures.forEach((m, i) => (m.number = i + 1));
       return withHistory(state, next);
     }
     case 'set-measure-final-bar': {
@@ -461,12 +458,6 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
   }
 }
 
-function emptyMeasure(number: number): Measure {
-  // A blank measure starts empty — the author drops the first note straight in,
-  // with no placeholder rest to delete first.
-  const voice: Voice = { number: 1, events: [] as MusicalEvent[] };
-  return { number, voices: [voice] };
-}
 
 // ---------------------------------------------------------------------------
 // Hook

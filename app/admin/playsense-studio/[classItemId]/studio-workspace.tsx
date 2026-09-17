@@ -103,6 +103,8 @@ export function StudioWorkspace({
   // (not refs) so the portal re-renders once the slot nodes mount.
   const [inspectorEl, setInspectorEl] = useState<HTMLElement | null>(null);
   const [transportEl, setTransportEl] = useState<HTMLElement | null>(null);
+  // App-bar slot SyncPanel portals its "Add score" chip into.
+  const [scoreActionsEl, setScoreActionsEl] = useState<HTMLElement | null>(null);
 
   // Student "highway" preview, as a collapsible bottom drawer.
   const [highwayOpen, setHighwayOpen] = useState(false);
@@ -316,6 +318,7 @@ export function StudioWorkspace({
             </button>
           )}
 
+          {owner.kind === 'classItem' && <span ref={setScoreActionsEl} className="contents" />}
           {owner.kind === 'classItem' && (
             <ScoreImportDialog
               classItemId={owner.classItemId}
@@ -439,6 +442,7 @@ export function StudioWorkspace({
               }
               inspectorEl={inspectorEl}
               transportEl={transportEl}
+              scoreActionsEl={scoreActionsEl}
               onPublished={() => setExerciseStage('syncVideo')}
             />
           ) : (
@@ -454,6 +458,7 @@ export function StudioWorkspace({
                 videoDurationSeconds={videoDurationSeconds}
                 inspectorEl={inspectorEl}
                 transportEl={transportEl}
+                scoreActionsEl={scoreActionsEl}
               />
 
               {/* Exercise mode: the student's falling-notes view lives right under

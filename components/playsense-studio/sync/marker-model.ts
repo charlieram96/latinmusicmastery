@@ -25,6 +25,7 @@
 
 import {
   beatLengthInQN,
+  measureLengthInQN,
   trackDurationQN,
   walkMeasures,
 } from '@/lib/playsense-studio/time-mapping';
@@ -50,6 +51,18 @@ export interface NoteNudge {
   qn: number;
   /** Seconds added to the grid time. |delta| >= NUDGE_EPS, else the entry is absent. */
   deltaSeconds: number;
+}
+
+/** One bar's video-time shape, relative to its own downbeat — what structural
+ *  edits copy and splice (see spliceMeasureSpans). */
+export interface MeasureSpan {
+  lengthQN: number;
+  /** Downbeat → next downbeat (or tail). Always > 0. */
+  durationSeconds: number;
+  /** Edited (dragged) non-downbeat beats, relative to the downbeat. */
+  editedBeats: Array<{ offsetQN: number; offsetSeconds: number }>;
+  /** Per-note nudges, keyed by offset into the bar. */
+  nudges: Array<{ offsetQN: number; deltaSeconds: number }>;
 }
 
 export interface NoteTick {
@@ -769,6 +782,123 @@ export function syncOnsets(state: MarkerState, onsets: OnsetIndex): MarkerState 
     return { ...m, onsetQNs: fresh, nudges };
   });
   return changed ? clampNudges({ ...state, measures }) : state;
+}
+
+// ---------------------------------------------------------------------------
+// Measure spans — structural edits (insert / delete / copy / repeat / append)
+// carry timing along instead of squeezing bars between surviving anchors.
+// ---------------------------------------------------------------------------
+
+/** Each bar's video-time shape relative to its downbeat. */
+export function copyMeasureSpans(state: MarkerState, start: number, count: number): MeasureSpan[] {
+  const out: MeasureSpan[] = [];
+  for (let i = start; i < Math.min(state.measures.length, start + count); i++) {
+    const m = state.measures[i];
+    const next = state.measures[i + 1];
+    const downbeat = m.beats[0].videoTimeSeconds;
+    const end = next ? next.beats[0].videoTimeSeconds : state.tailVideoTimeSeconds;
+    const endQN = next ? next.downbeatQN : state.tailQN;
+    out.push({
+      lengthQN: endQN - m.downbeatQN,
+      durationSeconds: end - downbeat,
+      editedBeats: m.beats
+        .filter((b) => b.beatInMeasure !== 1 && b.edited)
+        .map((b) => ({ offsetQN: b.musicalPositionQN - m.downbeatQN, offsetSeconds: b.videoTimeSeconds - downbeat })),
+      nudges: m.nudges.map((n) => ({ offsetQN: n.qn - m.downbeatQN, deltaSeconds: n.deltaSeconds })),
+    });
+  }
+  return out;
+}
+
+/** A plain bar at a given pace — for blank bars and appended imports. */
+export function paceSpan(secondsPerQN: number, timeSignature: [number, number]): MeasureSpan {
+  const lengthQN = measureLengthInQN(timeSignature);
+  return { lengthQN, durationSeconds: lengthQN * secondsPerQN, editedBeats: [], nudges: [] };
+}
+
+/**
+ * Replace `removeCount` bars at `index` with `insert` spans and rebuild the
+ * markers for `next` (the score AFTER the same edit). Bars before `index` keep
+ * their absolute times. With `ripple`, every later bar keeps its own duration
+ * and slides by (inserted − removed); without it (deletes only) later bars keep
+ * their absolute times and the bar before the gap stretches.
+ * Throws when the spans do not line up with the next score's bars.
+ */
+export function spliceMeasureSpans(
+  state: MarkerState,
+  edit: { index: number; removeCount: number; insert: MeasureSpan[]; ripple: boolean },
+  next: { track: Track; score: ScoreDocument }
+): MarkerState {
+  const n = state.measures.length;
+  const { index, removeCount, insert, ripple } = edit;
+  if (!ripple && insert.length) throw new Error('spliceMeasureSpans: inserting requires ripple.');
+  const all = copyMeasureSpans(state, 0, n);
+  const starts = state.measures.map((m) => m.beats[0].videoTimeSeconds);
+
+  const placed: Array<{ span: MeasureSpan; start: number }> = [];
+  for (let i = 0; i < index; i++) placed.push({ span: all[i], start: starts[i] });
+  let cursor = index < n ? starts[index] : state.tailVideoTimeSeconds;
+  for (const span of insert) {
+    placed.push({ span, start: cursor });
+    cursor += span.durationSeconds;
+  }
+  let tail: number;
+  if (ripple) {
+    for (let i = index + removeCount; i < n; i++) {
+      placed.push({ span: all[i], start: cursor });
+      cursor += all[i].durationSeconds;
+    }
+    tail = cursor;
+  } else {
+    for (let i = index + removeCount; i < n; i++) placed.push({ span: all[i], start: starts[i] });
+    tail = state.tailVideoTimeSeconds;
+  }
+
+  const rows = [...walkMeasures(next.track, next.score)];
+  if (rows.length !== placed.length) {
+    throw new Error(`spliceMeasureSpans: ${placed.length} spans for ${rows.length} measures.`);
+  }
+  const waypoints: Waypoint[] = [];
+  const nudges: NoteNudge[] = [];
+  rows.forEach((row, i) => {
+    const { span, start } = placed[i];
+    const lengthQN = measureLengthInQN(row.state.timeSignature);
+    if (Math.abs(lengthQN - span.lengthQN) > 1e-6) {
+      throw new Error(`spliceMeasureSpans: bar ${row.measure.number} is ${lengthQN} QN but its span is ${span.lengthQN} QN.`);
+    }
+    const downbeatQN = row.state.cumulativeQN;
+    waypoints.push({ musicalPositionQN: downbeatQN, videoTimeSeconds: start, measureNumber: row.measure.number, beatInMeasure: 1 });
+    const beatQN = beatLengthInQN(row.state.timeSignature);
+    for (const b of span.editedBeats) {
+      const beat = b.offsetQN / beatQN + 1;
+      const rounded = Math.round(beat);
+      if (Math.abs(beat - rounded) > 1e-6 || rounded <= 1 || rounded > row.state.timeSignature[0]) continue;
+      waypoints.push({
+        musicalPositionQN: downbeatQN + b.offsetQN,
+        videoTimeSeconds: start + b.offsetSeconds,
+        measureNumber: row.measure.number,
+        beatInMeasure: rounded,
+      });
+    }
+    for (const nd of span.nudges) nudges.push({ qn: downbeatQN + nd.offsetQN, deltaSeconds: nd.deltaSeconds });
+  });
+  waypoints.push({ musicalPositionQN: trackDurationQN(next.track, next.score), videoTimeSeconds: tail, measureNumber: null, beatInMeasure: null });
+
+  // Grid waypoints only: seedMarkerState would subtract a nudge's delta from a
+  // matching anchor, and these rows carry none. Nudges attach afterwards.
+  const rebuilt = seedMarkerState(next.track, next.score, enforceMonotonic(waypoints));
+  return withNudges(rebuilt, nudges);
+}
+
+/** Attach nudges (must land on onsets; others are dropped) and re-clamp. */
+export function withNudges(state: MarkerState, nudges: readonly NoteNudge[]): MarkerState {
+  const onsets: OnsetIndex = new Map(state.measures.map((m) => [m.measureNumber, m.onsetQNs]));
+  const valid = sanitizeNudges(nudges, onsets);
+  const measures = state.measures.map((m) => ({
+    ...m,
+    nudges: valid.filter((n) => m.onsetQNs.some((q) => Math.abs(q - n.qn) < QN_MATCH_TOLERANCE)),
+  }));
+  return clampNudges({ ...state, measures });
 }
 
 // ---------------------------------------------------------------------------

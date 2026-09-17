@@ -16,8 +16,8 @@
 // here — note edits don't change `structuralSignature`, so the markers above stay
 // put while you edit pitches/durations.
 
-import { ChevronDown, ChevronsLeftRight, MoreHorizontal, Move, Music, Plus, Trash2 } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type Dispatch } from 'react';
+import { ChevronDown, ChevronsLeftRight, ClipboardPaste, Copy, MoreHorizontal, Move, Music, Plus, Trash2 } from 'lucide-react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch } from 'react';
 import { diatonicToMidi, extractTrackEvents, midiToDiatonic } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion, resolvePercStroke } from '@/lib/playsense-studio/perc-strokes';
 import {
@@ -140,6 +140,8 @@ type EditorTab = 'staff' | 'piano-roll';
 
 import { repeatGroups } from '@/lib/playsense-studio/repeats';
 import { hasFinalBarline } from '@/lib/playsense-studio/barlines';
+import { structuralEditProblem } from '@/lib/playsense-studio/measure-edits';
+import { readMeasureClipboard, subscribeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
 
 export interface IntegratedEditorMeasureTiming {
   measureNumber: number;
@@ -150,6 +152,8 @@ export interface IntegratedEditorMeasureTiming {
 export interface IntegratedEditorProps {
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
+  /** A refused structural edit, shown inline in the editor bar. */
+  notice?: string | null;
   /** Per-measure audio span from the markers (track 0). */
   measureTimings: IntegratedEditorMeasureTiming[];
   /** Live playback position (video seconds) for the staff-lane playhead. */
@@ -187,6 +191,7 @@ function isRepeatEnd(measure: Measure): boolean {
 export const IntegratedEditor = memo(function IntegratedEditor({
   score,
   dispatch,
+  notice,
   measureTimings,
   getCurrentSeconds,
   recordingSource,
@@ -213,7 +218,18 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [repeatEnd, setRepeatEnd] = useState(1);
   const [repeatCount, setRepeatCount] = useState(2);
   const [selected, setSelected] = useState<SelectedEventRef | null>(null);
-  const [selectedMeasureIndex, setSelectedMeasureIndex] = useState<number | null>(null);
+  // Contiguous measure selection: anchor = where it started, focus = the end
+  // being moved (Shift+click / Shift+arrows). Delete, Copy/Paste and Repeat
+  // act on the whole range; "target" semantics follow the focus.
+  const [measureRange, setMeasureRange] = useState<{ anchor: number; focus: number } | null>(null);
+  const rangeStart = measureRange ? Math.min(measureRange.anchor, measureRange.focus) : null;
+  const rangeEnd = measureRange ? Math.max(measureRange.anchor, measureRange.focus) : null;
+  const rangeCount = rangeStart !== null && rangeEnd !== null ? rangeEnd - rangeStart + 1 : 0;
+  const selectMeasure = useCallback((index: number, extend = false) => {
+    setSelected(null);
+    setMeasureRange((prev) => (extend && prev ? { anchor: prev.anchor, focus: index } : { anchor: index, focus: index }));
+  }, []);
+  const clipboard = useSyncExternalStore(subscribeMeasureClipboard, readMeasureClipboard, () => null);
   const [duration, setDuration] = useState<number>(1);
   const [pitchLetter, setPitchLetter] = useState<string>('C');
   const [pitchAcc, setPitchAcc] = useState<number>(0);
@@ -357,11 +373,14 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         if (selected) {
           e.preventDefault();
           setSelected(null);
+        } else if (measureRange) {
+          e.preventDefault();
+          setMeasureRange(null);
         }
         return;
       }
-      if (!selected) return;
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+      if (selected) {
         e.preventDefault();
         dispatch({
           type: 'delete-event',
@@ -370,11 +389,17 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           eventIndex: selected.eventIndex,
         });
         setSelected(null);
+        return;
+      }
+      if (measureRange && rangeStart !== null) {
+        e.preventDefault();
+        dispatch({ type: 'delete-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
+        setMeasureRange(null);
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [selected, dispatch, activeTrackIndex]);
+  }, [selected, measureRange, rangeStart, rangeCount, dispatch, activeTrackIndex]);
 
   // Build stripItems for the active track — zip events with timings.
   const stripItems: MeasureStripItem[] = useMemo(() => {
@@ -400,9 +425,83 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   }, [activeTrack, score.initialTimeSignature, score.initialKeyFifths, measureTimings]);
 
   // The measure "Add note" targets: the selected event's measure, else the last.
+  const measureCount = activeTrack?.measures.length ?? 0;
+  const lastMeasureIndex = Math.max(0, measureCount - 1);
   const targetMeasureIndex = selected
     ? selected.measureIndex
-    : Math.min(selectedMeasureIndex ?? Math.max(0, (activeTrack?.measures.length ?? 1) - 1), Math.max(0, (activeTrack?.measures.length ?? 1) - 1));
+    : Math.min(measureRange?.focus ?? lastMeasureIndex, lastMeasureIndex);
+  const hasMeasureSelection = selected !== null || measureRange !== null;
+
+  // Keep the range inside the score after deletes / undo.
+  useEffect(() => {
+    setMeasureRange((prev) => {
+      if (!prev || measureCount === 0) return prev && measureCount === 0 ? null : prev;
+      const anchor = Math.min(prev.anchor, lastMeasureIndex);
+      const focus = Math.min(prev.focus, lastMeasureIndex);
+      return anchor === prev.anchor && focus === prev.focus ? prev : { anchor, focus };
+    });
+  }, [measureCount, lastMeasureIndex]);
+
+  // Why each barline gap can or cannot take a new bar (drives the "+" buttons).
+  const gapProblems = useMemo(
+    () => Array.from({ length: measureCount + 1 }, (_, i) =>
+      structuralEditProblem(score, { type: 'insert-measure', trackIndex: activeTrackIndex, index: i })),
+    [score, measureCount, activeTrackIndex]
+  );
+  const pasteProblem = useMemo(() => {
+    if (!clipboard) return 'Copy some measures first.';
+    const index = rangeEnd !== null ? rangeEnd + 1 : measureCount;
+    return structuralEditProblem(score, { type: 'paste-measures', trackIndex: activeTrackIndex, index, clip: clipboard });
+  }, [clipboard, rangeEnd, measureCount, score, activeTrackIndex]);
+  const deleteProblem = useMemo(
+    () => (rangeStart === null
+      ? 'Select a measure first.'
+      : structuralEditProblem(score, { type: 'delete-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount })),
+    [score, activeTrackIndex, rangeStart, rangeCount]
+  );
+
+  const insertMeasureAt = useCallback((index: number) => {
+    dispatch({ type: 'insert-measure', trackIndex: activeTrackIndex, index });
+    setSelected(null);
+    setMeasureRange({ anchor: index, focus: index });
+  }, [dispatch, activeTrackIndex]);
+  const copyRange = useCallback(() => {
+    if (rangeStart === null) return;
+    dispatch({ type: 'copy-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
+  }, [dispatch, activeTrackIndex, rangeStart, rangeCount]);
+  const pasteAfterRange = useCallback(() => {
+    if (!clipboard || pasteProblem) return;
+    const index = rangeEnd !== null ? rangeEnd + 1 : measureCount;
+    dispatch({ type: 'paste-measures', trackIndex: activeTrackIndex, index, clip: clipboard });
+    setSelected(null);
+    setMeasureRange({ anchor: index, focus: index + clipboard.measures.length - 1 });
+  }, [dispatch, activeTrackIndex, clipboard, pasteProblem, rangeEnd, measureCount]);
+  const deleteRange = useCallback(() => {
+    if (rangeStart === null || deleteProblem) return;
+    dispatch({ type: 'delete-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
+    setSelected(null);
+    setMeasureRange(null);
+  }, [dispatch, activeTrackIndex, rangeStart, rangeCount, deleteProblem]);
+
+  // Cmd/Ctrl+C / V on a MEASURE selection only — with a note selected the
+  // browser's own copy is left alone.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey || isTypingTarget(e.target)) return;
+      if (selected !== null || measureRange === null) return;
+      if (e.key === 'c' || e.key === 'C') { e.preventDefault(); copyRange(); }
+      else if (e.key === 'v' || e.key === 'V') { e.preventDefault(); pasteAfterRange(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selected, measureRange, copyRange, pasteAfterRange]);
+
+  // The Repeat panel follows the highlighted range while it is open.
+  useEffect(() => {
+    if (!repeatOpen || rangeStart === null || rangeEnd === null) return;
+    setRepeatStart(rangeStart + 1);
+    setRepeatEnd(rangeEnd + 1);
+  }, [repeatOpen, rangeStart, rangeEnd]);
 
   // Closing-bar state of the target measure — drives the Double bar toggle.
   const targetMeasure = activeTrack?.measures[targetMeasureIndex];
@@ -427,7 +526,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     };
   }, [activeTrack, targetMeasureIndex, stripItems, score.initialTimeSignature, duration, dotted, triplet]);
 
-  const handleSelectEvent = useCallback((ref: SelectedEventRef) => setSelected(ref), []);
+  const handleSelectEvent = useCallback((ref: SelectedEventRef) => {
+    setSelected(ref);
+    setMeasureRange({ anchor: ref.measureIndex, focus: ref.measureIndex });
+  }, []);
 
   // Insert a note (or rest) into a given measure using the toolbar values.
   const insertIntoMeasure = useCallback(
@@ -669,7 +771,22 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       }
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         e.preventDefault();
-        walkSelection(e.key === 'ArrowRight' ? 1 : -1);
+        const dir = e.key === 'ArrowRight' ? 1 : -1;
+        if (e.shiftKey) {
+          // Extend the measure range from its focus (or from the note's bar).
+          const base = measureRange ?? (selected ? { anchor: selected.measureIndex, focus: selected.measureIndex } : null);
+          if (!base) return;
+          const focus = Math.max(0, Math.min(lastMeasureIndex, base.focus + dir));
+          setSelected(null);
+          setMeasureRange({ anchor: base.anchor, focus });
+          return;
+        }
+        if (!selected && measureRange) {
+          const index = Math.max(0, Math.min(lastMeasureIndex, measureRange.focus + dir));
+          setMeasureRange({ anchor: index, focus: index });
+          return;
+        }
+        walkSelection(dir);
         return;
       }
       const byKey = COMMON_DURATIONS.find((d) => d.key === e.key);
@@ -783,22 +900,37 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         {activeTrack && <MidiRecordButton score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} getCurrentSeconds={getCurrentSeconds} recordingSource={recordingSource} />}
 
         <button
-          onClick={() => dispatch({ type: 'add-measure', trackIndex: activeTrackIndex })}
+          onClick={() => insertMeasureAt(rangeEnd !== null ? rangeEnd + 1 : measureCount)}
           className={`st-chip${showDragMode && onSetDragAll ? '' : ' ml-auto'}`}
-          title="Add a measure to the end of the score"
+          disabled={!!gapProblems[rangeEnd !== null ? rangeEnd + 1 : measureCount]}
+          title={gapProblems[rangeEnd !== null ? rangeEnd + 1 : measureCount]
+            ?? (rangeEnd !== null ? `Add a measure after measure ${rangeEnd + 1}` : 'Add a measure at the end of the score')}
         >
           <Plus className="h-3.5 w-3.5" />
           Add measure
         </button>
         <button type="button" className="st-chip"
-          disabled={(selected === null && selectedMeasureIndex === null) || (activeTrack?.measures.length ?? 0) <= 1}
-          title={(activeTrack?.measures.length ?? 0) <= 1 ? 'Keep at least one measure in the score' : 'Delete the selected measure. Undo restores it.'}
-          onClick={() => {
-            dispatch({ type: 'delete-measure', trackIndex: activeTrackIndex, measureIndex: targetMeasureIndex });
-            setSelected(null);
-            setSelectedMeasureIndex(null);
-          }}>
-          Delete measure{selected !== null || selectedMeasureIndex !== null ? ` ${targetMeasureIndex + 1}` : ''}
+          disabled={!!deleteProblem}
+          title={deleteProblem ?? (rangeCount > 1
+            ? `Delete measures ${rangeStart! + 1}–${rangeEnd! + 1}. Undo restores them.`
+            : 'Delete the selected measure. Undo restores it.')}
+          onClick={deleteRange}>
+          <Trash2 className="h-3.5 w-3.5" />
+          {rangeCount > 1 ? `Delete ${rangeStart! + 1}–${rangeEnd! + 1}` : `Delete measure${hasMeasureSelection ? ` ${targetMeasureIndex + 1}` : ''}`}
+        </button>
+        <button type="button" className="st-chip"
+          disabled={rangeStart === null}
+          title={rangeStart === null ? 'Select a measure first.' : `Copy ${rangeCount === 1 ? 'this measure' : `measures ${rangeStart + 1}–${rangeEnd! + 1}`} with its timing (⌘C)`}
+          onClick={copyRange}>
+          <Copy className="h-3.5 w-3.5" />
+          Copy{rangeCount > 1 ? ` ${rangeCount}` : ''}
+        </button>
+        <button type="button" className="st-chip"
+          disabled={!!pasteProblem}
+          title={pasteProblem ?? `Paste ${clipboard?.measures.length ?? 0} measure${clipboard?.measures.length === 1 ? '' : 's'} ${rangeEnd !== null ? `after measure ${rangeEnd + 1}` : 'at the end'} (⌘V)`}
+          onClick={pasteAfterRange}>
+          <ClipboardPaste className="h-3.5 w-3.5" />
+          Paste{clipboard ? ` ${clipboard.measures.length}` : ''}
         </button>
         <button type="button" className={`st-chip${targetHasFinalBar ? ' is-on' : ''}`}
           aria-pressed={targetHasFinalBar}
@@ -809,13 +941,21 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               ? `Remove the double bar that closes measure ${targetMeasureIndex + 1}`
               : `Close measure ${targetMeasureIndex + 1} with a double bar (the end of the section)`}
           onClick={() => dispatch({ type: 'set-measure-final-bar', trackIndex: activeTrackIndex, measureIndex: targetMeasureIndex, final: !targetHasFinalBar })}>
-          Double bar{selected !== null || selectedMeasureIndex !== null ? ` ${targetMeasureIndex + 1}` : ''}
+          Double bar{hasMeasureSelection ? ` ${targetMeasureIndex + 1}` : ''}
         </button>
         <button type="button" className={`st-chip${repeatOpen ? ' is-on' : ''}`} aria-expanded={repeatOpen}
           onClick={() => {
-            if (!repeatOpen) { setRepeatStart(targetMeasureIndex + 1); setRepeatEnd(targetMeasureIndex + 1); }
+            if (!repeatOpen) {
+              setRepeatStart((rangeStart ?? targetMeasureIndex) + 1);
+              setRepeatEnd((rangeEnd ?? targetMeasureIndex) + 1);
+            }
             setRepeatOpen(!repeatOpen);
           }}>Repeat measures</button>
+        {notice && (
+          <span role="status" className="basis-full text-xs text-destructive sm:basis-auto">
+            {notice}
+          </span>
+        )}
       </div>
 
       {repeatOpen && activeTrack && (
@@ -837,9 +977,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             disabled={!Number.isInteger(repeatStart) || !Number.isInteger(repeatEnd) || repeatStart < 1 || repeatEnd < repeatStart ||
               repeatEnd > activeTrack.measures.length || activeTrack.measures.slice(repeatStart - 1, repeatEnd).some(m => m.repeat)}
             onClick={() => {
+              const length = repeatEnd - repeatStart + 1;
               dispatch({ type: 'repeat-measures', trackIndex: activeTrackIndex, start: repeatStart - 1,
                 end: repeatEnd - 1, count: repeatCount, id: crypto.randomUUID() });
               setSelected(null);
+              setMeasureRange({ anchor: repeatStart - 1, focus: repeatStart - 1 + length * repeatCount - 1 });
             }}>Apply repeat</button>
           <span className="text-muted-foreground">All passes appear here for syncing. Students see repeat dots.</span>
           {repeatGroups(activeTrack).map(group => (
@@ -863,8 +1005,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             pixelsPerSecond={pixelsPerSecond}
             scrollLeftPx={scrollLeftPx}
             selected={selected}
-            selectedMeasureIndex={selected?.measureIndex ?? selectedMeasureIndex}
-            onSelectMeasure={(index) => { setSelected(null); setSelectedMeasureIndex(index); }}
+            selectedMeasures={selected ? [selected.measureIndex, selected.measureIndex] : rangeStart !== null && rangeEnd !== null ? [rangeStart, rangeEnd] : null}
+            onSelectMeasure={selectMeasure}
+            onInsertMeasureAt={insertMeasureAt}
+            gapProblems={gapProblems}
             onSelectEvent={handleSelectEvent}
             onClickMeasureEmpty={handleClickEmpty}
             onRequestZoomTo={handleRequestZoomTo}
@@ -1094,7 +1238,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         <span className="k">drag ↕</span> pitch · <span className="k">↑/↓</span> step (
         <span className="k">⇧</span> octave) · <span className="k">←/→</span> walk notes ·{' '}
         <span className="k">⏎</span> add · <span className="k">1–5</span> duration ·{' '}
-        <span className="k">Del</span> remove.
+        <span className="k">Del</span> remove · <span className="k">⇧click / ⇧←/→</span> select bars ·{' '}
+        <span className="k">⌘C/⌘V</span> copy bars.
       </p>
     </div>
   );

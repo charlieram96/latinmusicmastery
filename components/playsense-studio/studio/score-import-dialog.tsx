@@ -39,7 +39,7 @@ export interface ScoreImportDialogProps {
   classItemId: string;
   /** "fresh" = no score yet; "replace" = swap an existing score; "section" = add
    *  the imported score as a new scored section on a video. */
-  mode: 'fresh' | 'replace' | 'section';
+  mode: 'fresh' | 'replace' | 'section' | 'append';
   /** The element that opens the dialog. */
   trigger: ReactNode;
   /** Override the default attach behavior — e.g. create/replace a section. Receives
@@ -246,14 +246,16 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
       <DialogContent className={`${pdfFile ? 'sm:max-w-2xl' : 'sm:max-w-md'} max-h-[90dvh] grid-cols-[minmax(0,1fr)] overflow-x-hidden overflow-y-auto [&>*]:min-w-0`} showCloseButton={!isPending}>
         <DialogHeader>
           <DialogTitle>
-            {mode === 'replace' ? 'Replace score' : mode === 'section' ? 'Import as new section' : 'Import a score'}
+            {mode === 'replace' ? 'Replace score' : mode === 'section' ? 'Import as new section' : mode === 'append' ? 'Add score' : 'Import a score'}
           </DialogTitle>
           <DialogDescription>
             {mode === 'replace'
               ? 'Import a PDF, MusicXML, or MIDI file. Review it before replacing the current score and its sync.'
               : mode === 'section'
                 ? 'Import a PDF, MusicXML, or MIDI file as a new scored section.'
-                : 'Bring your sheet music into Studio as editable notation.'}
+                : mode === 'append'
+                  ? 'Import a PDF, MusicXML, or MIDI file. Its measures are added after the current score’s last measure; the existing score and sync stay as they are.'
+                  : 'Bring your sheet music into Studio as editable notation.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -408,7 +410,7 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
                 className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-1.5 text-sm text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
               >
                 {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {mode === 'replace' ? 'Replace score' : mode === 'section' ? 'Add section' : 'Import'}
+                {mode === 'replace' ? 'Replace score' : mode === 'section' ? 'Add section' : mode === 'append' ? 'Add measures' : 'Import'}
               </button>
             </div>
           </div>
