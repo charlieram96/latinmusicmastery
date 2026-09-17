@@ -35,12 +35,20 @@ function pointer(type: string, x: number, y: number) {
 function Harness({
   onTrimDrag,
   onMarkerDrag,
+  onNoteDrag,
+  noteAt,
+  markerStart = 5,
 }: {
   onTrimDrag?: (edge: 'in' | 'out', t: number) => void;
   onMarkerDrag?: (t: number) => void;
+  onNoteDrag?: (t: number) => void;
+  /** When set, the selected note's handle sits here (seconds). */
+  noteAt?: number;
+  markerStart?: number;
 }) {
   const [trimIn, setTrimIn] = useState(5);
-  const [markerAt, setMarkerAt] = useState(5);
+  const [markerAt, setMarkerAt] = useState(markerStart);
+  const [noteTime, setNoteTime] = useState(noteAt ?? 0);
   const [, setMarkers] = useState(0);
 
   const handleTrimDrag = useCallback(
@@ -59,6 +67,14 @@ function Harness({
     [onMarkerDrag]
   );
 
+  const handleNoteDrag = useCallback(
+    (t: number) => {
+      onNoteDrag?.(t);
+      setNoteTime(t);
+    },
+    [onNoteDrag]
+  );
+
   return (
     <WaveformCanvas
       peaks={null}
@@ -66,8 +82,10 @@ function Harness({
       handles={[
         { measureNumber: 1, beatInMeasure: 1, isDownbeat: true, videoTimeSeconds: markerAt },
       ]}
-      noteOnsets={[]}
+      noteTicks={[]}
       showNotes={false}
+      selectedNote={noteAt === undefined ? null : { videoTimeSeconds: noteTime }}
+      onNoteDrag={handleNoteDrag}
       tailVideoTimeSeconds={60}
       pixelsPerSecond={PPS}
       scrollLeftPx={0}
@@ -157,5 +175,55 @@ describe('WaveformCanvas trim drag', () => {
     });
 
     expect(calls).toEqual([10, 15, 20]);
+  });
+
+  it('keeps reporting note positions across every pointermove', () => {
+    const calls: number[] = [];
+    const markerCalls: number[] = [];
+    act(() => {
+      root.render(
+        <Harness noteAt={5} markerStart={30} onNoteDrag={(t) => calls.push(t)} onMarkerDrag={(t) => markerCalls.push(t)} />
+      );
+    });
+
+    const overlay = container.querySelectorAll('canvas')[1];
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerdown', 50, 100));
+    });
+    for (const x of [100, 150, 200]) {
+      act(() => {
+        overlay.dispatchEvent(pointer('pointermove', x, 100));
+      });
+    }
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerup', 200, 100));
+    });
+
+    expect(calls).toEqual([10, 15, 20]);
+    expect(markerCalls).toEqual([]);
+  });
+
+  it('the selected note wins a tie with a coincident marker', () => {
+    const calls: number[] = [];
+    const markerCalls: number[] = [];
+    act(() => {
+      root.render(
+        <Harness noteAt={5} markerStart={5} onNoteDrag={(t) => calls.push(t)} onMarkerDrag={(t) => markerCalls.push(t)} />
+      );
+    });
+
+    const overlay = container.querySelectorAll('canvas')[1];
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerdown', 50, 100));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointermove', 100, 100));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerup', 100, 100));
+    });
+
+    expect(calls).toEqual([10]);
+    expect(markerCalls).toEqual([]);
   });
 });

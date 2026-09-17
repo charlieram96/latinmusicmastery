@@ -1105,7 +1105,7 @@ function formatBeats(beats: number): string {
   return Number.isInteger(beats) ? String(beats) : beats.toFixed(1);
 }
 
-function isTypingTarget(target: EventTarget | null): boolean {
+export function isTypingTarget(target: EventTarget | null): boolean {
   return (
     target instanceof HTMLInputElement ||
     target instanceof HTMLTextAreaElement ||

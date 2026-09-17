@@ -48,7 +48,25 @@ export interface ClassItemScorePayload {
       measureNumber: number | null;
       beatInMeasure: number | null;
     }>;
+    /** Per-note timing nudges (params.nudges) — the studio's authoritative
+     *  list; the waypoints above already include their effect. */
+    nudges: Array<{ qn: number; deltaSeconds: number }>;
   } | null;
+}
+
+/** params.nudges, defensively: anything malformed is dropped. */
+function readNudges(params: unknown): Array<{ qn: number; deltaSeconds: number }> {
+  const raw = (params as { nudges?: unknown } | null)?.nudges;
+  if (!Array.isArray(raw)) return [];
+  const out: Array<{ qn: number; deltaSeconds: number }> = [];
+  for (const n of raw) {
+    const qn = (n as { qn?: unknown })?.qn;
+    const deltaSeconds = (n as { deltaSeconds?: unknown })?.deltaSeconds;
+    if (typeof qn === 'number' && Number.isFinite(qn) && typeof deltaSeconds === 'number' && Number.isFinite(deltaSeconds)) {
+      out.push({ qn, deltaSeconds });
+    }
+  }
+  return out;
 }
 
 /** Load one time map's header + waypoints (or null). Shared by the active-map
@@ -61,7 +79,7 @@ async function loadTimeMap(
 
   const { data: tm, error: tmErr } = await supabase
     .from('score_time_maps')
-    .select('id, method')
+    .select('id, method, params')
     .eq('id', timeMapId)
     .single();
   if (tmErr) return { error: tmErr.message };
@@ -83,6 +101,7 @@ async function loadTimeMap(
         measureNumber: w.measure_number,
         beatInMeasure: w.beat_in_measure,
       })),
+      nudges: readNudges(tm.params),
     },
   };
 }
@@ -1559,7 +1578,7 @@ export async function getExerciseMedia(
   if (item.exercise_video_url && item.exercise_time_map_id) {
     const { data: tm, error: tmErr } = await supabase
       .from('score_time_maps')
-      .select('id, method')
+      .select('id, method, params')
       .eq('id', item.exercise_time_map_id)
       .single();
     if (tmErr) return { error: tmErr.message };
@@ -1580,6 +1599,7 @@ export async function getExerciseMedia(
         measureNumber: w.measure_number,
         beatInMeasure: w.beat_in_measure,
       })),
+      nudges: readNudges(tm.params),
     };
   }
 

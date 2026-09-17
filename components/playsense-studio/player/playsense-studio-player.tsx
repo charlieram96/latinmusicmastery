@@ -88,6 +88,9 @@ export interface PlaysenseStudioPlayerTimeMap {
     measureNumber: number | null;
     beatInMeasure: number | null;
   }>;
+  /** Per-note timing nudges authored in the studio. The waypoints already
+   *  carry their effect; the player never reads this. */
+  nudges?: Array<{ qn: number; deltaSeconds: number }>;
 }
 
 /** One scored section of a video: a score + sync valid over a video time-range. */

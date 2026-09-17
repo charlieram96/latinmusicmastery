@@ -50,6 +50,11 @@ For each remaining item:
      "Loop measure" to check alignment by ear. Hit **Publish sync** when it lines
      up. Editing the score afterward keeps your dragged markers (they reconcile
      to the new measure structure).
+   - When the teacher plays one note a hair early or late, click that note on
+     the staff to fine-tune just that note: drag its handle on the waveform, or
+     use the inspector's Timing row (±5 ms, Shift ±20, keys `[` / `]`, "Snap
+     to playhead", "Reset"). Nudges live in the sync, not the score, and ride
+     along when you drag measures.
 
 5. **Smoke-test as a student.** Open the lesson page in another tab,
    confirm video plays, cursor tracks, click-to-seek lands sensibly, A/B
