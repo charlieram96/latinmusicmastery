@@ -12,7 +12,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, Loader2, Maximize, Music2, Repeat, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
+import { AudioLines, FilePlus2, Loader2, Maximize, Music2, Repeat, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -90,6 +90,10 @@ import { PlaceScoreControl } from '@/components/playsense-studio/sync/place-scor
 import { SectionsLane, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { resolvePercStroke, isPercussion } from '@/lib/playsense-studio/perc-strokes';
 import { collectOnsets, onsetForSelection } from '@/lib/playsense-studio/note-onsets';
+import { isStructuralAction } from '@/lib/playsense-studio/measure-edits';
+import { writeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
+import { clipFromMeasures, prepareStructuralEdit } from '@/components/playsense-studio/sync/structural-timing';
+import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import type { MusicalEvent, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import type { MidiRecordingSource } from './midi-record-button';
 
@@ -127,6 +131,9 @@ export interface SyncPanelProps {
   transportEl?: HTMLElement | null;
   /** App-shell slot the reference-video monitor portals into (left rail). Falls back to the right rail. */
   monitorEl?: HTMLElement | null;
+  /** App-bar slot for score-level actions this panel owns ("Add score"), so the
+   *  appended measures get their timing through the panel's structural path. */
+  scoreActionsEl?: HTMLElement | null;
   /** Sibling scored sections — drives the sections lane + overlap prevention. */
   sectionsContext?: {
     sections: LaneSection[];
@@ -217,6 +224,7 @@ export function SyncPanel({
   inspectorEl,
   transportEl,
   monitorEl,
+  scoreActionsEl,
   sectionsContext,
   renderBackingLanes,
   initialMetronomeAnchorSeconds,
@@ -263,6 +271,16 @@ export function SyncPanel({
   const prevSig = useRef(sig);
   const previousScore = useRef(score);
   const recordingMarkerHistory = useRef(new WeakMap<ScoreDocument, MarkerState>());
+  const anchorRefreshRef = useRef(false);
+  /** Awaitable anchor write, assigned once the anchor state exists below. */
+  const writeAnchorRef = useRef<() => Promise<void>>(async () => {});
+  // A refused structural edit (or one that would overlap a sibling section).
+  const [editNotice, setEditNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (!editNotice) return;
+    const id = setTimeout(() => setEditNotice(null), 4500);
+    return () => clearTimeout(id);
+  }, [editNotice]);
   useEffect(() => {
     if (previousScore.current === score) return;
     recordingMarkerHistory.current.set(previousScore.current, markersRef.current);
@@ -273,6 +291,10 @@ export function SyncPanel({
     if (recordedMarkers || structureChanged) {
       setMarkers((prev) => recordedMarkers ?? reconcileMarkers(prev, score.tracks[0], score));
       setDirty(true);
+      // The qn axis moved under the click anchor: keep its SECOND and re-derive
+      // its qn before the next publish (see saveTiming), or the server's
+      // qn-based rebase would slide the click along the video.
+      anchorRefreshRef.current = true;
     }
   }, [sig, score]);
 
@@ -350,6 +372,47 @@ export function SyncPanel({
   const scoreRef = useRef(score);
   markersRef.current = markers;
   scoreRef.current = score;
+
+  // Structural edits (insert / delete / paste / append / repeat) change the
+  // score AND the markers together: the timing is computed here from the live
+  // markers, registered for the resulting score object, and adopted by the
+  // reconcile effect — the same channel the MIDI recorder uses, so undo/redo
+  // keep restoring exact markers. Everything else passes straight through.
+  const studioDispatch = useCallback<Dispatch<EditorAction>>((action) => {
+    if (action.type === 'copy-measures') {
+      const current = scoreRef.current;
+      if (!current.tracks[action.trackIndex]) return;
+      writeMeasureClipboard(clipFromMeasures(markersRef.current, current, action.trackIndex, action.start, action.count));
+      return;
+    }
+    if (!isStructuralAction(action)) {
+      dispatch(action);
+      return;
+    }
+    const current = scoreRef.current;
+    const result = prepareStructuralEdit(markersRef.current, current, action);
+    if (!result.ok) {
+      setEditNotice(result.problem);
+      return;
+    }
+    if (showSync) {
+      const span = markerSpan(result.markers);
+      const blocker = (sectionsContext?.sections ?? []).find(
+        (sec) =>
+          sec.sectionId !== sectionsContext?.activeSectionId &&
+          sec.startSeconds != null &&
+          sec.endSeconds != null &&
+          rangesOverlap(span, { startSeconds: sec.startSeconds, endSeconds: sec.endSeconds })
+      );
+      if (blocker) {
+        setEditNotice(`These measures would run into the section “${blocker.label}”. Move that section first.`);
+        return;
+      }
+    }
+    recordingMarkerHistory.current.set(result.score, result.markers);
+    setSelected(null); // marker selection is keyed by measure number
+    dispatch({ type: 'apply-structural-score', score: result.score, expectedScore: current });
+  }, [dispatch, showSync, sectionsContext]);
   const [savingTiming, setSavingTiming] = useState(false);
   const savingTimingRef = useRef(false);
   // Every video sync target saves directly to its active map.
@@ -744,6 +807,12 @@ export function SyncPanel({
       const result = await queueStudioSave(scoreDocumentId, async () => {
         const saved = await saveScoreDocument({ scoreDocumentId, scoreDocument: scoreSnapshot });
         if (saved.error) return saved;
+        if (anchorRefreshRef.current) {
+          // Structure changed since the last publish: re-derive the anchor's qn
+          // from the markers being published so the server rebase keeps its second.
+          anchorRefreshRef.current = false;
+          await writeAnchorRef.current();
+        }
         const editedBeats = snapshot.measures.flatMap((m) => m.beats
           .filter((b) => b.edited && b.beatInMeasure !== 1)
           .map((b) => ({ measure: m.measureNumber, beat: b.beatInMeasure })));
@@ -821,7 +890,7 @@ export function SyncPanel({
   const anchorRef = useRef(metronomeAnchor);
   anchorRef.current = metronomeAnchor;
 
-  const persistAnchor = useCallback(() => {
+  const persistAnchor = useCallback(async () => {
     if (!anchorOwner) return;
     const seconds = anchorRef.current;
     // Record what the second MEANT musically, from the LIVE markers rather than
@@ -839,23 +908,24 @@ export function SyncPanel({
             seconds
           );
     if (anchorOwner.kind === 'section') {
-      void setSectionMetronomeAnchor({
+      await setSectionMetronomeAnchor({
         sectionId: anchorOwner.id,
         anchorSeconds: seconds,
         anchorQn: qn,
       });
     } else {
-      void setClassItemMetronomeAnchor({
+      await setClassItemMetronomeAnchor({
         classItemId: anchorOwner.id,
         anchorSeconds: seconds,
         anchorQn: qn,
       });
     }
   }, [anchorOwner]);
+  writeAnchorRef.current = () => (anchorRef.current == null ? Promise.resolve() : persistAnchor());
 
   const scheduleAnchorSave = useCallback(() => {
     if (anchorTimerRef.current) clearTimeout(anchorTimerRef.current);
-    anchorTimerRef.current = setTimeout(persistAnchor, 500);
+    anchorTimerRef.current = setTimeout(() => { void persistAnchor(); }, 500);
   }, [persistAnchor]);
 
   const handleAnchorDrag = useCallback(
@@ -1155,7 +1225,8 @@ export function SyncPanel({
               <div className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3${showSync ? ' border-t border-border' : ''}`}>
                 <IntegratedEditor
                   score={score}
-                  dispatch={dispatch}
+                  dispatch={studioDispatch}
+                  notice={editNotice}
                   measureTimings={measureTimings}
                   getCurrentSeconds={clock.getCurrentSeconds}
                   recordingSource={recordingSource}
@@ -1222,6 +1293,27 @@ export function SyncPanel({
         createPortal(
           <ReferenceMonitor videoRef={videoRef} videoUrl={videoUrl} />,
           monitorEl,
+        )}
+
+      {/* ============ APP BAR (portal): "Add score" appends an import through the structural path ============ */}
+      {scoreActionsEl &&
+        createPortal(
+          <ScoreImportDialog
+            classItemId={classItemId}
+            mode="append"
+            onConfirm={async (imported) => {
+              studioDispatch({ type: 'append-score', score: imported });
+              return {};
+            }}
+            onImported={() => {}}
+            trigger={
+              <button type="button" className="st-chip" title="Add measures from another file after the last measure">
+                <FilePlus2 className="h-4 w-4" />
+                <span className="hidden lg:inline">Add score</span>
+              </button>
+            }
+          />,
+          scoreActionsEl,
         )}
 
       {/* ============ INSPECTOR (portal): selected note + sync status, left rail ============ */}

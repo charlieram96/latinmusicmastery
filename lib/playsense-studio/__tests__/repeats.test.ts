@@ -46,7 +46,7 @@ it('updates matching notation across passes and can unlink them', () => {
   const edited = editorReducer(state, { type: 'set-event-pitch', trackIndex: 0, measureIndex: 2, eventIndex: 0, midi: 72 });
   for (const i of [0, 2, 4]) expect(edited.score.tracks[0].measures[i].voices[0].events[0]).toMatchObject({ midi: 72 });
   expect(repeatGroups(edited.score.tracks[0])).toHaveLength(1);
-  const changed = editorReducer(state, { type: 'delete-measure', trackIndex: 0, measureIndex: 2 });
+  const changed = editorReducer(state, { type: 'delete-measures', trackIndex: 0, start: 0, count: 6 });
   expect(repeatGroups(changed.score.tracks[0])).toHaveLength(0);
   const unlinked = editorReducer(state, { type: 'unlink-repeat', trackIndex: 0, id: 'group' });
   expect(unlinked.score.tracks[0].measures).toHaveLength(7);

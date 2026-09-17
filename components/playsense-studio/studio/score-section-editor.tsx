@@ -94,6 +94,9 @@ export function ScoreSectionEditor({
 
   const [savingState, setSavingState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // App-bar slot SyncPanel portals its "Add score" chip into (state, not a ref,
+  // so the portal renders once the node mounts).
+  const [scoreActionsEl, setScoreActionsEl] = useState<HTMLElement | null>(null);
   const [isPending, startTransition] = useTransition();
 
   // Latest editor state, mirrored so timers/handlers/unmount always read the
@@ -201,6 +204,7 @@ export function ScoreSectionEditor({
         inspectorEl={inspectorEl}
         transportEl={transportEl}
         monitorEl={monitorEl}
+        scoreActionsEl={scoreActionsEl}
         sectionsContext={{ sections, activeSectionId: sectionId, onSelectSection }}
       />
 
@@ -208,6 +212,8 @@ export function ScoreSectionEditor({
       {appBarEl &&
         createPortal(
           <>
+            {/* SyncPanel portals its "Add score" chip here. */}
+            <span ref={setScoreActionsEl} className="contents" />
             <ScoreImportDialog
               classItemId={classItemId}
               mode="replace"

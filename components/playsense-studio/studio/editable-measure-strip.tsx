@@ -18,7 +18,7 @@
 // Map on each render, so it tracks the right note across marker drags + zoom.
 
 import { createStaveNote } from '@/lib/playsense-studio/percussion-stave-note';
-import { GripHorizontal } from 'lucide-react';
+import { GripHorizontal, Plus } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Accidental,
@@ -80,8 +80,14 @@ export interface EditableMeasureStripProps {
   pixelsPerSecond: number;
   scrollLeftPx: number;
   selected: SelectedEventRef | null;
-  selectedMeasureIndex?: number | null;
-  onSelectMeasure?: (measureIndex: number) => void;
+  /** Highlighted measure range [start, end] (inclusive indices), or null. */
+  selectedMeasures?: [number, number] | null;
+  /** Click selects one bar; Shift+click (extend = true) grows the range to it. */
+  onSelectMeasure?: (measureIndex: number, extend: boolean) => void;
+  /** Insert a blank bar at this barline gap (0 = before the first bar, n = after the last). */
+  onInsertMeasureAt?: (index: number) => void;
+  /** Per gap (n + 1 entries): why a bar cannot be inserted there, or null. */
+  gapProblems?: Array<string | null>;
   onSelectEvent: (ref: SelectedEventRef) => void;
   onClickMeasureEmpty: (measureIndex: number) => void;
   onRequestZoomTo: (measureIndex: number) => void;
@@ -180,8 +186,10 @@ export function EditableMeasureStrip({
   pixelsPerSecond,
   scrollLeftPx,
   selected,
-  selectedMeasureIndex,
+  selectedMeasures = null,
   onSelectMeasure,
+  onInsertMeasureAt,
+  gapProblems,
   onSelectEvent,
   onClickMeasureEmpty,
   onRequestZoomTo,
@@ -245,6 +253,10 @@ export function EditableMeasureStrip({
 
   const videoTimeToX = (t: number) => t * pixelsPerSecond - scrollLeftPx;
   const xToVideoTime = (x: number) => (x + scrollLeftPx) / pixelsPerSecond;
+  const inRange = (measureIndex: number) =>
+    selectedMeasures !== null && measureIndex >= selectedMeasures[0] && measureIndex <= selectedMeasures[1];
+  const isFocus = (measureIndex: number) =>
+    selectedMeasures !== null && measureIndex === selectedMeasures[1];
 
   // Playhead — a thin --primary line matching the waveform's, positioned
   // imperatively on a RAF loop so 60fps playback never re-renders this strip.
@@ -308,9 +320,14 @@ export function EditableMeasureStrip({
   };
 
   const handleHandleDown = (e: React.PointerEvent, item: MeasureStripItem) => {
-    onSelectMeasure?.(item.measureIndex);
     e.stopPropagation(); // don't let the note pointerdown on the wrapper fire
     e.preventDefault();
+    if (e.shiftKey) {
+      // Shift+click grows the measure range; it never starts a time drag.
+      onSelectMeasure?.(item.measureIndex, true);
+      return;
+    }
+    onSelectMeasure?.(item.measureIndex, false);
     const grabTime = xToVideoTime(containerX(e));
     const mode: DragMode = dragAll !== e.altKey ? 'all-after' : 'single';
     setTimeDrag({
@@ -459,6 +476,10 @@ export function EditableMeasureStrip({
     const containerTop = containerRef.current?.getBoundingClientRect().top ?? rect.top;
     const hit = hitAt(item, e.clientX - rect.left, rect.width);
 
+    if (e.shiftKey) {
+      onSelectMeasure?.(item.measureIndex, true);
+      return;
+    }
     if (hit) {
       onSelectEvent({ measureIndex: item.measureIndex, eventIndex: hit.eventIndex });
       // Seed a drag if this event is a pitched/percussion note (has a midi).
@@ -489,7 +510,7 @@ export function EditableMeasureStrip({
         startY: e.clientY,
       };
     } else {
-      onSelectMeasure?.(item.measureIndex);
+      onSelectMeasure?.(item.measureIndex, false);
     }
   };
 
@@ -621,8 +642,8 @@ export function EditableMeasureStrip({
             <button
               key={item.measureIndex}
               type="button"
-              onClick={() => { onSelectMeasure?.(item.measureIndex); onRequestZoomTo(item.measureIndex); }}
-              className="absolute top-0 flex items-center justify-center rounded border border-dashed border-border bg-muted/40 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+              onClick={(e) => { onSelectMeasure?.(item.measureIndex, e.shiftKey); if (!e.shiftKey) onRequestZoomTo(item.measureIndex); }}
+              className={`absolute top-0 flex items-center justify-center rounded border border-dashed border-border bg-muted/40 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground${inRange(item.measureIndex) ? ' ring-2 ring-inset ring-primary' : ''}`}
               style={{ left: startX, width: Math.max(8, width), height, cursor: 'zoom-in' }}
               title={`Measure ${item.measureNumber} — click to zoom in and edit`}
             >
@@ -648,7 +669,7 @@ export function EditableMeasureStrip({
         return (
           <div
             key={item.measureIndex}
-            className={`absolute top-0 ${selectedMeasureIndex === item.measureIndex ? 'ring-2 ring-inset ring-primary bg-primary/5' : ''}`}
+            className={`absolute top-0 ${inRange(item.measureIndex) ? 'ring-2 ring-inset ring-primary bg-primary/5' : ''}${isFocus(item.measureIndex) ? ' st-measure-focus' : ''}`}
             style={{ left: startX, width, cursor, touchAction: 'none' }}
             onPointerDown={(e) => handlePointerDown(e, item)}
             onPointerMove={(e) => handlePointerMove(e, item)}
@@ -689,8 +710,8 @@ export function EditableMeasureStrip({
             <button
               type="button"
               aria-label={`Select measure ${item.measureNumber}`}
-              aria-pressed={selectedMeasureIndex === item.measureIndex}
-              onClick={() => onSelectMeasure?.(item.measureIndex)}
+              aria-pressed={inRange(item.measureIndex)}
+              onClick={(e) => onSelectMeasure?.(item.measureIndex, e.shiftKey)}
               className={`absolute inset-x-0 top-0 z-10 flex items-center gap-1.5 rounded-t-sm px-2 text-[11px] transition ${
                 isTimeDragging
                   ? 'bg-primary text-primary-foreground'
@@ -733,6 +754,38 @@ export function EditableMeasureStrip({
           </div>
         );
       })}
+
+      {/* "+" at every barline gap (and both ends): insert a bar there. Hidden
+          during drags and where a neighbouring bar is too narrow to read. */}
+      {onInsertMeasureAt && !dragging && !timeDrag && !edgeDrag && measures.length > 0 &&
+        Array.from({ length: measures.length + 1 }, (_, gap) => {
+          const before = measures[gap - 1];
+          const after = measures[gap];
+          const x = after ? videoTimeToX(after.startVideoTimeSeconds) : videoTimeToX(before.endVideoTimeSeconds);
+          if (x < -12 || x > viewportWidth + 12) return null;
+          const narrow = (item?: MeasureStripItem) =>
+            !!item && videoTimeToX(item.endVideoTimeSeconds) - videoTimeToX(item.startVideoTimeSeconds) < MIN_RENDER_WIDTH;
+          if (narrow(before) || narrow(after)) return null;
+          const problem = gapProblems?.[gap] ?? null;
+          const label = after
+            ? `Insert a measure before measure ${after.measureNumber}`
+            : `Add a measure after measure ${before.measureNumber}`;
+          return (
+            <button
+              key={`gap-${gap}`}
+              type="button"
+              className="st-gap-add"
+              style={{ left: x, top: 5 }}
+              aria-label={label}
+              title={problem ?? label}
+              disabled={!!problem}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onInsertMeasureAt(gap); }}
+            >
+              <Plus className="h-3 w-3" />
+            </button>
+          );
+        })}
 
       {highlight && (
         <div

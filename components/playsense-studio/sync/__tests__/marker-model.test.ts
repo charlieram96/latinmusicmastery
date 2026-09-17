@@ -26,7 +26,12 @@ import {
   nudgeList,
   countNudges,
   syncOnsets,
+  copyMeasureSpans,
+  paceSpan,
+  spliceMeasureSpans,
+  withNudges,
   type MarkerState,
+  type MeasureSpan,
   type TimeRange,
 } from '../marker-model';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
@@ -741,5 +746,114 @@ describe('note nudges — reconcile and syncOnsets', () => {
     expect(next.measures[1].onsetQNs).toEqual([4, 6]);
     expect(countNudges(next)).toBe(0);
     expect(next.measures[0]).toBe(state.measures[0]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Measure spans — structural edits carry timing along.
+// ---------------------------------------------------------------------------
+
+describe('measure spans', () => {
+  /** 4 bars of quarter notes at 120 → 2 s per bar; drag beat 2 of bar 2 and nudge beat 2 of bar 3. */
+  function shaped(): { score: ScoreDocument; state: MarkerState } {
+    const score = makeNoteScore(4);
+    let state = seedMarkerState(score.tracks[0], score, buildWaypoints(score, 120, 0));
+    state = setMarkerTime(state, { measureNumber: 2, beatInMeasure: 2 }, 2.7); // grid 2.5
+    state = setNoteTime(state, 9, 4.55); // bar 3 beat 2, grid 4.5
+    return { score, state };
+  }
+  const starts = (s: MarkerState) => s.measures.map((m) => m.beats[0].videoTimeSeconds);
+
+  it('copyMeasureSpans reports duration, relative edited beats, and relative nudges', () => {
+    const { state } = shaped();
+    const spans = copyMeasureSpans(state, 1, 2);
+    expect(spans).toHaveLength(2);
+    expect(spans[0].lengthQN).toBe(4);
+    expect(spans[0].durationSeconds).toBeCloseTo(2, 9);
+    expect(spans[0].editedBeats).toEqual([{ offsetQN: 1, offsetSeconds: expect.closeTo(0.7, 9) }]);
+    expect(spans[0].nudges).toEqual([]);
+    expect(spans[1]).toEqual({ lengthQN: 4, durationSeconds: expect.closeTo(2, 9), editedBeats: [], nudges: [{ offsetQN: 1, deltaSeconds: expect.closeTo(0.05, 9) }] });
+    // Last bar spans to the tail.
+    expect(copyMeasureSpans(state, 3, 1)[0].durationSeconds).toBeCloseTo(2, 9);
+  });
+
+  it('paceSpan derives a bar from seconds per quarter note', () => {
+    expect(paceSpan(0.5, [3, 4])).toEqual({ lengthQN: 3, durationSeconds: 1.5, editedBeats: [], nudges: [] });
+  });
+
+  it('inserting in the middle keeps earlier bars, shifts later bars and the tail by the inserted duration', () => {
+    const { score, state } = shaped();
+    const nextScore = makeNoteScore(5);
+    const insert: MeasureSpan[] = [paceSpan(0.25, [4, 4])]; // a 1 s bar
+    const next = spliceMeasureSpans(state, { index: 1, removeCount: 0, insert, ripple: true }, { track: nextScore.tracks[0], score: nextScore });
+    expect(next.measures).toHaveLength(5);
+    expect(next.measures.map((m) => m.measureNumber)).toEqual([1, 2, 3, 4, 5]);
+    expect(next.measures[0]).toEqual(state.measures[0]);
+    expect(starts(next)).toEqual([0, 2, 3, 5, 7].map((t) => expect.closeTo(t, 9)));
+    expect(next.tailVideoTimeSeconds).toBeCloseTo(9, 9);
+    expect(next.tailQN).toBe(20);
+    // The dragged beat and the nudge moved with their bars (old bars 2 and 3 are now 3 and 4).
+    expect(next.measures[2].beats[1]).toMatchObject({ edited: true, videoTimeSeconds: expect.closeTo(3.7, 9) });
+    expect(next.measures[3].nudges).toEqual([{ qn: 13, deltaSeconds: expect.closeTo(0.05, 9) }]);
+    expect(nudgeDelta(next, 13)).toBeCloseTo(0.05, 9);
+    expect(noteTime(next, 13)).toBeCloseTo(5.55, 9);
+    expect(() => new WaypointTimeMap('t', 'drag', markerStateToWaypoints(next, { includeBeats: 'edited-beats' }))).not.toThrow();
+    void score;
+  });
+
+  it('inserting at the start moves everything; inserting at the end only moves the tail', () => {
+    const { state } = shaped();
+    const nextScore = makeNoteScore(5);
+    const span = [paceSpan(0.25, [4, 4])];
+    const atStart = spliceMeasureSpans(state, { index: 0, removeCount: 0, insert: span, ripple: true }, { track: nextScore.tracks[0], score: nextScore });
+    expect(starts(atStart)).toEqual([0, 1, 3, 5, 7].map((t) => expect.closeTo(t, 9)));
+    const atEnd = spliceMeasureSpans(state, { index: 4, removeCount: 0, insert: span, ripple: true }, { track: nextScore.tracks[0], score: nextScore });
+    expect(starts(atEnd)).toEqual([0, 2, 4, 6, 8].map((t) => expect.closeTo(t, 9)));
+    expect(atEnd.tailVideoTimeSeconds).toBeCloseTo(9, 9);
+  });
+
+  it('copy parity: spliced spans read back identically (copy and repeat)', () => {
+    const { state } = shaped();
+    const spans = copyMeasureSpans(state, 1, 2);
+    const nextScore = makeNoteScore(6);
+    const pasted = spliceMeasureSpans(state, { index: 3, removeCount: 0, insert: spans, ripple: true }, { track: nextScore.tracks[0], score: nextScore });
+    const norm = (list: MeasureSpan[]) => JSON.parse(JSON.stringify(list, (_k, v) => (typeof v === 'number' ? Number(v.toFixed(9)) : v)));
+    expect(norm(copyMeasureSpans(pasted, 3, 2))).toEqual(norm(spans));
+    expect(pasted.measures[3].beats[1].edited).toBe(true);
+    // Repeat: the source ×3 replaces the source.
+    const three = [...spans, ...spans, ...spans];
+    const repScore = makeNoteScore(8);
+    const rep = spliceMeasureSpans(state, { index: 1, removeCount: 2, insert: three, ripple: true }, { track: repScore.tracks[0], score: repScore });
+    expect(norm(copyMeasureSpans(rep, 1, 6))).toEqual(norm(three));
+    expect(rep.tailVideoTimeSeconds).toBeCloseTo(16, 9);
+  });
+
+  it('deleting with ripple slides later bars earlier; without ripple the previous bar stretches', () => {
+    const { state } = shaped();
+    const nextScore = makeNoteScore(3);
+    const ripple = spliceMeasureSpans(state, { index: 1, removeCount: 1, insert: [], ripple: true }, { track: nextScore.tracks[0], score: nextScore });
+    expect(starts(ripple)).toEqual([0, 2, 4].map((t) => expect.closeTo(t, 9)));
+    expect(ripple.tailVideoTimeSeconds).toBeCloseTo(6, 9);
+    expect(nudgeDelta(ripple, 5)).toBeCloseTo(0.05, 9); // old bar 3's nudge rode along
+    const keep = spliceMeasureSpans(state, { index: 1, removeCount: 1, insert: [], ripple: false }, { track: nextScore.tracks[0], score: nextScore });
+    expect(starts(keep)).toEqual([0, 4, 6].map((t) => expect.closeTo(t, 9)));
+    expect(keep.tailVideoTimeSeconds).toBeCloseTo(8, 9);
+  });
+
+  it('withNudges attaches deltas to onsets and drops the rest', () => {
+    const score = makeNoteScore(2);
+    const state = seedMarkerState(score.tracks[0], score, buildWaypoints(score, 120, 0));
+    const next = withNudges(state, [{ qn: 5, deltaSeconds: 0.02 }, { qn: 5.5, deltaSeconds: 0.02 }]);
+    expect(nudgeList(next)).toEqual([{ qn: 5, deltaSeconds: 0.02 }]);
+    // A nudge on a downbeat onset survives with its delta intact.
+    const db = withNudges(state, [{ qn: 4, deltaSeconds: 0.03 }]);
+    expect(nudgeDelta(db, 4)).toBeCloseTo(0.03, 9);
+    expect(db.measures[1].beats[0].videoTimeSeconds).toBeCloseTo(2, 9);
+  });
+
+  it('throws when the spans do not match the next score', () => {
+    const { state } = shaped();
+    const nextScore = makeNoteScore(5);
+    expect(() => spliceMeasureSpans(state, { index: 1, removeCount: 0, insert: [], ripple: true }, { track: nextScore.tracks[0], score: nextScore })).toThrow();
   });
 });
