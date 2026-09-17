@@ -14,11 +14,24 @@ import {
   rangesOverlap,
   freeCorridor,
   EPS,
+  NUDGE_EPS,
+  gridTime,
+  noteTime,
+  nudgeDelta,
+  setNoteTime,
+  setNoteDelta,
+  clearNudge,
+  clampNudges,
+  noteTicks,
+  nudgeList,
+  countNudges,
+  syncOnsets,
   type MarkerState,
   type TimeRange,
 } from '../marker-model';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
-import { GUITAR_LICK_FIXTURE } from '@/lib/playsense-studio/score-fixtures';
+import { collectOnsets } from '@/lib/playsense-studio/note-onsets';
+import { CONGA_TUMBAO_FIXTURE, GUITAR_LICK_FIXTURE } from '@/lib/playsense-studio/score-fixtures';
 import { WaypointTimeMap, type Waypoint } from '@/components/playsense-studio/shared/time-map/time-map';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
@@ -439,5 +452,294 @@ describe('section overlap math', () => {
     const corridor = freeCorridor(range(10, 14), [range(12, 20), range(0, 4)]);
     expect(corridor.lo).toBe(4);
     expect(corridor.hi).toBe(Infinity);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Per-note timing nudges — a delta on top of the anchor grid, keyed by onset.
+// ---------------------------------------------------------------------------
+
+const CONGA = CONGA_TUMBAO_FIXTURE;
+const CONGA_TRACK = CONGA.tracks[0];
+
+/** 100 BPM: 1 QN = 0.6 s. Downbeats at 0 and 2.4, tail at 4.8. */
+function seededConga(): MarkerState {
+  return seedMarkerState(CONGA_TRACK, CONGA, buildWaypoints(CONGA, 100, 0));
+}
+
+/** N bars of 4/4, four quarter notes each (so every beat is an onset). */
+function makeNoteScore(bars: number, options: { halves?: number[] } = {}): ScoreDocument {
+  return {
+    schemaVersion: 1,
+    title: 'n',
+    sourceFormat: 'native',
+    initialTempo: 120,
+    initialTimeSignature: [4, 4],
+    initialKeyFifths: 0,
+    tracks: [
+      {
+        index: 0,
+        instrument: 'staff',
+        displayName: 'S',
+        tuning: null,
+        stringMultiplicity: 1,
+        channel: null,
+        defaultView: 'staff',
+        measures: Array.from({ length: bars }, (_, i) => ({
+          number: i + 1,
+          voices: [
+            {
+              number: 1,
+              events: options.halves?.includes(i + 1)
+                ? [{ kind: 'note' as const, midi: 60, durationQN: 2 }, { kind: 'note' as const, midi: 62, durationQN: 2 }]
+                : [1, 2, 3, 4].map(() => ({ kind: 'note' as const, midi: 60, durationQN: 1 })),
+            },
+          ],
+        })),
+      },
+    ],
+  };
+}
+
+const tickTimes = (s: MarkerState) => noteTicks(s).map((t) => t.videoTimeSeconds);
+
+describe('note nudges — seeding', () => {
+  it('records each measure\'s onsets and starts with no nudges', () => {
+    const state = seededGuitar();
+    expect(state.measures[0].onsetQNs).toEqual([0, 1, 2, 3]);
+    expect(state.measures[1].onsetQNs).toEqual([4, 5, 6, 7]);
+    expect(state.measures.every((m) => m.nudges.length === 0)).toBe(true);
+    expect(countNudges(state)).toBe(0);
+  });
+
+  it('draws every onset tick at its grid time', () => {
+    const state = seededConga();
+    expect(tickTimes(state).slice(0, 6)).toEqual([0, 0.6, 0.9, 1.2, 1.8, 2.1].map((t) => expect.closeTo(t, 9)));
+    expect(noteTicks(state).every((t) => !t.nudged)).toBe(true);
+  });
+});
+
+describe('note nudges — setNoteTime', () => {
+  it('moves only the nudged note; every other tick and every beat stays put', () => {
+    const before = seededConga();
+    const after = setNoteTime(before, 1.5, 0.93);
+    expect(after).not.toBe(before);
+    expect(nudgeDelta(after, 1.5)).toBeCloseTo(0.03, 9);
+    expect(noteTime(after, 1.5)).toBeCloseTo(0.93, 9);
+    expect(gridTime(after, 1.5)).toBeCloseTo(0.9, 9);
+
+    const beforeTicks = noteTicks(before);
+    const afterTicks = noteTicks(after);
+    expect(afterTicks).toHaveLength(beforeTicks.length);
+    for (let i = 0; i < beforeTicks.length; i++) {
+      if (beforeTicks[i].qn === 1.5) {
+        expect(afterTicks[i].nudged).toBe(true);
+      } else {
+        expect(afterTicks[i].videoTimeSeconds).toBeCloseTo(beforeTicks[i].videoTimeSeconds, 12);
+        expect(afterTicks[i].nudged).toBe(false);
+      }
+    }
+    expect(after.measures.map((m) => m.beats)).toEqual(before.measures.map((m) => m.beats));
+    expect(markerSpan(after)).toEqual(markerSpan(before));
+  });
+
+  it('drops the nudge when the note returns to (or within NUDGE_EPS of) the grid', () => {
+    const nudged = setNoteTime(seededConga(), 1.5, 0.93);
+    expect(countNudges(nudged)).toBe(1);
+    expect(countNudges(setNoteTime(nudged, 1.5, 0.9))).toBe(0);
+    expect(countNudges(setNoteTime(nudged, 1.5, 0.9 + NUDGE_EPS / 2))).toBe(0);
+    expect(countNudges(clearNudge(nudged, 1.5))).toBe(0);
+    expect(countNudges(setNoteDelta(nudged, 1.5, 0.02))).toBe(1);
+    expect(nudgeDelta(setNoteDelta(nudged, 1.5, 0.02), 1.5)).toBeCloseTo(0.02, 9);
+  });
+
+  it('clamps against the neighbouring onsets', () => {
+    const state = seededConga();
+    // qn 1.5 sits between onsets 1 (0.6 s) and 2 (1.2 s).
+    expect(noteTime(setNoteTime(state, 1.5, 0.1), 1.5)).toBeCloseTo(0.6 + EPS, 9);
+    expect(noteTime(setNoteTime(state, 1.5, 5), 1.5)).toBeCloseTo(1.2 - EPS, 9);
+  });
+
+  it('a downbeat note clamps against the previous bar\'s last onset and its own next onset', () => {
+    const state = seededConga();
+    // qn 4 = downbeat of bar 2 (2.4 s); previous onset 3.5 (2.1 s), next 5 (3.0 s).
+    expect(noteTime(setNoteTime(state, 4, 0), 4)).toBeCloseTo(2.1 + EPS, 9);
+    expect(noteTime(setNoteTime(state, 4, 9), 4)).toBeCloseTo(3.0 - EPS, 9);
+    // The marker itself (the grid) does not move.
+    expect(setNoteTime(state, 4, 2.45).measures[1].beats[0].videoTimeSeconds).toBeCloseTo(2.4, 9);
+  });
+
+  it('the last onset clamps below the tail', () => {
+    const state = seededConga();
+    expect(noteTime(setNoteTime(state, 7.5, 9), 7.5)).toBeCloseTo(4.8 - EPS, 9);
+  });
+
+  it('ignores a position that is not an onset', () => {
+    const state = seededConga();
+    expect(setNoteTime(state, 0.5, 0.4)).toBe(state); // a rest
+    expect(setNoteTime(state, 99, 0.4)).toBe(state);
+  });
+});
+
+describe('note nudges — waypoints', () => {
+  it('emits nothing extra when no note is nudged', () => {
+    const state = seededConga();
+    expect(markerStateToWaypoints(state, { includeBeats: 'edited-beats' })).toHaveLength(3);
+  });
+
+  it('pins every onset of a nudged bar so neighbours keep their grid time exactly', () => {
+    const state = setNoteTime(seededConga(), 1.5, 0.93);
+    const wps = markerStateToWaypoints(state, { includeBeats: 'edited-beats' });
+    const onsetRows = wps.filter((w) => w.measureNumber !== null && w.beatInMeasure === null);
+    expect(onsetRows.map((w) => w.musicalPositionQN)).toEqual([1, 1.5, 2, 3, 3.5]);
+    expect(onsetRows.every((w) => w.measureNumber === 1)).toBe(true);
+    expect(wps).toHaveLength(8);
+
+    const map = new WaypointTimeMap('t', 'drag', wps);
+    expect(map.toVideoTime(1.5)).toBeCloseTo(0.93, 12);
+    expect(map.toVideoTime(1)).toBeCloseTo(0.6, 12);
+    expect(map.toVideoTime(2)).toBeCloseTo(1.2, 12);
+    expect(map.toVideoTime(5)).toBeCloseTo(3.0, 12);
+
+    expect(markerStateToWaypoints(state, { includeBeats: 'edited-beats', includeNudges: false })).toHaveLength(3);
+  });
+
+  it('a nudged downbeat moves its own row and pins both adjacent bars', () => {
+    const state = setNoteTime(seededConga(), 4, 2.45);
+    const wps = markerStateToWaypoints(state, { includeBeats: 'edited-beats' });
+    const db2 = wps.find((w) => w.measureNumber === 2 && w.beatInMeasure === 1)!;
+    expect(db2.videoTimeSeconds).toBeCloseTo(2.45, 12);
+    const onsetRows = wps.filter((w) => w.measureNumber !== null && w.beatInMeasure === null);
+    expect(onsetRows.map((w) => w.musicalPositionQN)).toEqual([1, 1.5, 2, 3, 3.5, 5, 5.5, 6, 7, 7.5]);
+    const qns = wps.map((w) => w.musicalPositionQN);
+    expect(new Set(qns).size).toBe(qns.length);
+    const map = new WaypointTimeMap('t', 'drag', wps);
+    expect(map.toVideoTime(3.5)).toBeCloseTo(2.1, 12);
+    expect(map.toVideoTime(5)).toBeCloseTo(3.0, 12);
+  });
+
+  it('never duplicates a qn when a nudged onset sits on an edited beat', () => {
+    const edited = setMarkerTime(seededGuitar(), { measureNumber: 1, beatInMeasure: 2 }, 0.55);
+    const state = setNoteTime(edited, 1, 0.57);
+    expect(state.measures[0].beats[1].videoTimeSeconds).toBeCloseTo(0.55, 9);
+    expect(nudgeDelta(state, 1)).toBeCloseTo(0.02, 9);
+    const wps = markerStateToWaypoints(state, { includeBeats: 'edited-beats' });
+    const rows = wps.filter((w) => w.musicalPositionQN === 1);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].beatInMeasure).toBe(2);
+    expect(rows[0].videoTimeSeconds).toBeCloseTo(0.57, 12);
+    expect(() => new WaypointTimeMap('t', 'drag', wps)).not.toThrow();
+  });
+
+  it('round-trips through waypoints + the nudge list', () => {
+    const state = setNoteTime(setNoteTime(seededConga(), 1.5, 0.93), 4, 2.45);
+    const wps = markerStateToWaypoints(state, { includeBeats: 'edited-beats' });
+    const nudges = nudgeList(state);
+    expect(nudges).toEqual([
+      { qn: 1.5, deltaSeconds: expect.closeTo(0.03, 9) },
+      { qn: 4, deltaSeconds: expect.closeTo(0.05, 9) },
+    ]);
+
+    const again = seedMarkerState(CONGA_TRACK, CONGA, wps, nudges);
+    expect(again.measures[1].beats[0].videoTimeSeconds).toBeCloseTo(2.4, 9);
+    expect(again.measures.every((m) => m.beats.every((b) => b.beatInMeasure === 1 || !b.edited))).toBe(true);
+    expect(nudgeList(again).map((n) => n.qn)).toEqual([1.5, 4]);
+    expect(nudgeDelta(again, 1.5)).toBeCloseTo(0.03, 9);
+    expect(nudgeDelta(again, 4)).toBeCloseTo(0.05, 9);
+    for (const [a, b] of tickTimes(again).map((t, i) => [t, tickTimes(state)[i]])) {
+      expect(a).toBeCloseTo(b, 9);
+    }
+    const wps2 = markerStateToWaypoints(again, { includeBeats: 'edited-beats' });
+    expect(wps2.map((w) => w.musicalPositionQN)).toEqual(wps.map((w) => w.musicalPositionQN));
+    for (let i = 0; i < wps.length; i++) {
+      expect(wps2[i].videoTimeSeconds).toBeCloseTo(wps[i].videoTimeSeconds, 9);
+    }
+  });
+
+  it('drops invalid or stale nudges on seed', () => {
+    const state = seedMarkerState(CONGA_TRACK, CONGA, buildWaypoints(CONGA, 100, 0), [
+      { qn: 0.5, deltaSeconds: 0.02 }, // a rest
+      { qn: 1.5, deltaSeconds: Number.NaN },
+      { qn: 2, deltaSeconds: NUDGE_EPS / 10 },
+      { qn: 3, deltaSeconds: 0.02 },
+    ]);
+    expect(nudgeList(state)).toEqual([{ qn: 3, deltaSeconds: 0.02 }]);
+  });
+});
+
+describe('note nudges — riding the grid', () => {
+  it('keeps its delta when a downbeat, a ripple drag, or the tail moves', () => {
+    const state = setNoteTime(seededConga(), 1.5, 0.93);
+    const moved = setMarkerTime(state, { measureNumber: 2, beatInMeasure: 1 }, 3.0);
+    expect(nudgeDelta(moved, 1.5)).toBeCloseTo(0.03, 9);
+    expect(gridTime(moved, 1.5)).toBeCloseTo(1.125, 9);
+    expect(noteTime(moved, 1.5)).toBeCloseTo(1.155, 9);
+
+    const shifted = shiftMarkersFrom(state, { measureNumber: 1, beatInMeasure: 1 }, 1);
+    expect(nudgeDelta(shifted, 1.5)).toBeCloseTo(0.03, 9);
+    expect(noteTime(shifted, 1.5)).toBeCloseTo(1.93, 9);
+
+    const last = setNoteTime(seededConga(), 7.5, 4.55);
+    const tailMoved = setTailTime(last, 6);
+    expect(nudgeDelta(tailMoved, 7.5)).toBeCloseTo(0.05, 9);
+    expect(noteTime(tailMoved, 7.5)).toBeCloseTo(gridTime(tailMoved, 7.5) + 0.05, 9);
+  });
+
+  it('re-clamps when a bar is squeezed and stays strictly increasing', () => {
+    const state = setNoteTime(seededConga(), 1.5, 1.15);
+    expect(nudgeDelta(state, 1.5)).toBeCloseTo(0.25, 9);
+    const squeezed = setMarkerTime(state, { measureNumber: 2, beatInMeasure: 1 }, 0.8);
+    // grid(1.5) = 0.3, grid(2) = 0.4 → the nudge can reach at most 0.4 − EPS.
+    expect(noteTime(squeezed, 1.5)).toBeCloseTo(0.4 - EPS, 9);
+    expect(nudgeDelta(squeezed, 1.5)).toBeCloseTo(0.1 - EPS, 9);
+    const times = tickTimes(squeezed);
+    for (let i = 1; i < times.length; i++) expect(times[i]).toBeGreaterThan(times[i - 1]);
+    const wps = markerStateToWaypoints(squeezed, { includeBeats: 'edited-beats' });
+    for (let i = 1; i < wps.length; i++) {
+      expect(wps[i].videoTimeSeconds - wps[i - 1].videoTimeSeconds).toBeGreaterThanOrEqual(EPS - 1e-12);
+    }
+    expect(clampNudges(squeezed)).toBe(squeezed);
+  });
+});
+
+describe('note nudges — reconcile and syncOnsets', () => {
+  const two = makeNoteScore(2);
+  const seedNotes = (score: ScoreDocument) =>
+    seedMarkerState(score.tracks[0], score, buildWaypoints(score, score.initialTempo, 0));
+
+  it('survives an appended measure and dies with a deleted one', () => {
+    const state = setNoteTime(seedNotes(two), 5, 2.53);
+    const three = reconcileMarkers(state, makeNoteScore(3).tracks[0], makeNoteScore(3));
+    expect(nudgeList(three)).toEqual([{ qn: 5, deltaSeconds: expect.closeTo(0.03, 9) }]);
+    const one = reconcileMarkers(state, makeNoteScore(1).tracks[0], makeNoteScore(1));
+    expect(countNudges(one)).toBe(0);
+  });
+
+  it('follows its bar when an upstream time signature shifts the qn axis', () => {
+    const state = setNoteTime(seedNotes(two), 5, 2.53);
+    const score = makeNoteScore(2);
+    score.tracks[0].measures[0] = {
+      ...score.tracks[0].measures[0],
+      timeSignature: [3, 4],
+      voices: [{ number: 1, events: [1, 2, 3].map(() => ({ kind: 'note', midi: 60, durationQN: 1 })) }],
+    };
+    const next = reconcileMarkers(state, score.tracks[0], score);
+    // Bar 2 now starts at qn 3, so "beat 2 of bar 2" is qn 4.
+    expect(nudgeList(next).map((n) => n.qn)).toEqual([4]);
+  });
+
+  it('syncOnsets is a no-op by reference when the onsets did not change', () => {
+    const state = setNoteTime(seedNotes(two), 5, 2.53);
+    expect(syncOnsets(state, collectOnsets(two))).toBe(state);
+  });
+
+  it('syncOnsets prunes a nudge whose onset disappeared and refreshes the onset list', () => {
+    const state = setNoteTime(seedNotes(two), 5, 2.53);
+    const halves = makeNoteScore(2, { halves: [2] });
+    const next = syncOnsets(state, collectOnsets(halves));
+    expect(next).not.toBe(state);
+    expect(next.measures[1].onsetQNs).toEqual([4, 6]);
+    expect(countNudges(next)).toBe(0);
+    expect(next.measures[0]).toBe(state.measures[0]);
   });
 });

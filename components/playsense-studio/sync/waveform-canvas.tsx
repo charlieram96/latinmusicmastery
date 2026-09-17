@@ -29,17 +29,28 @@ export type DragTarget =
   | { kind: 'anchor' }
   | { kind: 'marker'; ref: MarkerRef }
   | { kind: 'tail' }
-  | { kind: 'trim'; edge: 'in' | 'out' };
+  | { kind: 'trim'; edge: 'in' | 'out' }
+  /** The selected note's onset handle (exists only while a note is selected). */
+  | { kind: 'note' };
+
+export interface NoteTickHandle {
+  videoTimeSeconds: number;
+  /** Drawn in the accent colour so the admin can see which notes were adjusted. */
+  nudged: boolean;
+}
 
 export interface WaveformCanvasProps {
   peaks: WaveformPeaks | null;
   /** Fallback timeline length before peaks finish decoding. */
   durationSeconds: number;
   handles: MarkerHandle[];
-  /** Note onset times (video seconds, all tracks) for the faint overlay ticks. */
-  noteOnsets: number[];
+  /** Note onsets (video seconds, all tracks) for the overlay ticks. */
+  noteTicks: NoteTickHandle[];
   /** Toggle the faint note-onset ticks over the waveform. */
   showNotes: boolean;
+  /** The selected note's onset: drawn as a handle and draggable, regardless of showNotes. */
+  selectedNote?: { videoTimeSeconds: number } | null;
+  onNoteDrag?: (videoTimeSeconds: number) => void;
   tailVideoTimeSeconds: number;
   pixelsPerSecond: number;
   scrollLeftPx: number;
@@ -118,8 +129,10 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     peaks,
     durationSeconds,
     handles,
-    noteOnsets,
+    noteTicks,
     showNotes,
+    selectedNote = null,
+    onNoteDrag,
     tailVideoTimeSeconds,
     pixelsPerSecond,
     scrollLeftPx,
@@ -157,13 +170,15 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   const ppsRef = useRef(pixelsPerSecond);
   const scrollRef = useRef(scrollLeftPx);
   const handlesRef = useRef(handles);
-  const onsetsRef = useRef(noteOnsets);
+  const ticksRef = useRef(noteTicks);
+  const selectedNoteRef = useRef(selectedNote);
   const tailRef = useRef(tailVideoTimeSeconds);
   const dragAllRef = useRef(dragAll);
   ppsRef.current = pixelsPerSecond;
   scrollRef.current = scrollLeftPx;
   handlesRef.current = handles;
-  onsetsRef.current = noteOnsets;
+  ticksRef.current = noteTicks;
+  selectedNoteRef.current = selectedNote;
   tailRef.current = tailVideoTimeSeconds;
   dragAllRef.current = dragAll;
 
@@ -179,12 +194,14 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   const onSelectRef = useRef(onSelect);
   const onMarkerDragRef = useRef(onMarkerDrag);
   const onTailDragRef = useRef(onTailDrag);
+  const onNoteDragRef = useRef(onNoteDrag);
   const onDragEndRef = useRef(onDragEnd);
   const onScrollByPxRef = useRef(onScrollByPx);
   onSeekRef.current = onSeek;
   onSelectRef.current = onSelect;
   onMarkerDragRef.current = onMarkerDrag;
   onTailDragRef.current = onTailDrag;
+  onNoteDragRef.current = onNoteDrag;
   onDragEndRef.current = onDragEnd;
   onScrollByPxRef.current = onScrollByPx;
 
@@ -283,32 +300,68 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
 
     // Note-onset ticks (faint, all tracks) — drawn over the peaks but under the
     // grid so measure lines/chips stay legible. Toggleable via showNotes.
-    if (showNotes && onsetsRef.current.length) {
+    const drawNotehead = (x: number, scale = 1) => {
+      ctx.beginPath();
+      ctx.ellipse(x, waveTop + 14, 3.5 * scale, 2.5 * scale, -0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x + 3 * scale, waveTop + 14);
+      ctx.lineTo(x + 3 * scale, waveTop + 3);
+      ctx.stroke();
+    };
+    if (showNotes && ticksRef.current.length) {
       ctx.strokeStyle = theme.selected;
       ctx.fillStyle = theme.selected;
       ctx.lineWidth = 1;
       ctx.globalAlpha = 0.28;
       ctx.beginPath();
-      for (const t of onsetsRef.current) {
-        const x = videoTimeToX(t);
+      for (const tick of ticksRef.current) {
+        if (tick.nudged) continue;
+        const x = videoTimeToX(tick.videoTimeSeconds);
         if (x < -2 || x > w + 2) continue;
         ctx.moveTo(x + 0.5, waveTop);
         ctx.lineTo(x + 0.5, h);
       }
       ctx.stroke();
       // Small noteheads distinguish score onsets from the audio peaks and grid.
-      for (const t of onsetsRef.current) {
-        const x = videoTimeToX(t);
+      for (const tick of ticksRef.current) {
+        if (tick.nudged) continue;
+        const x = videoTimeToX(tick.videoTimeSeconds);
+        if (x < -4 || x > w + 4) continue;
+        drawNotehead(x);
+      }
+      // Nudged notes: solid, in the primary colour, so adjustments are visible.
+      ctx.globalAlpha = 0.9;
+      ctx.strokeStyle = theme.measureLine;
+      ctx.fillStyle = theme.measureLine;
+      for (const tick of ticksRef.current) {
+        if (!tick.nudged) continue;
+        const x = videoTimeToX(tick.videoTimeSeconds);
         if (x < -4 || x > w + 4) continue;
         ctx.beginPath();
-        ctx.ellipse(x, waveTop + 14, 3.5, 2.5, -0.35, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(x + 3, waveTop + 14);
-        ctx.lineTo(x + 3, waveTop + 3);
+        ctx.moveTo(x + 0.5, waveTop);
+        ctx.lineTo(x + 0.5, h);
         ctx.stroke();
+        drawNotehead(x);
       }
       ctx.globalAlpha = 1;
+    }
+    // The selected note's handle: always drawn, so the admin can drag it even
+    // with the faint ticks hidden.
+    const selNote = selectedNoteRef.current;
+    if (selNote) {
+      const x = videoTimeToX(selNote.videoTimeSeconds);
+      if (x >= -6 && x <= w + 6) {
+        ctx.strokeStyle = theme.selected;
+        ctx.fillStyle = theme.selected;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, waveTop);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+        ctx.lineWidth = 1.5;
+        drawNotehead(x, 1.5);
+      }
     }
 
     // Beat gridlines (faint) for non-downbeat handles in view.
@@ -487,7 +540,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   }, [
     drawWave,
     handles,
-    noteOnsets,
+    noteTicks,
+    selectedNote,
     tailVideoTimeSeconds,
     pixelsPerSecond,
     scrollLeftPx,
@@ -579,6 +633,12 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
 
     const hitTest = (x: number): DragTarget | null => {
       let best: { target: DragTarget; dist: number } | null = null;
+      // The note the admin just selected wins ties with markers.
+      const selNote = selectedNoteRef.current;
+      if (selNote && onNoteDragRef.current) {
+        const d = Math.abs(videoTimeToX(selNote.videoTimeSeconds) - x);
+        if (d <= HANDLE_HIT_PX) best = { target: { kind: 'note' }, dist: d };
+      }
       for (const hnd of handlesRef.current) {
         const hx = videoTimeToX(hnd.videoTimeSeconds);
         const d = Math.abs(hx - x);
@@ -647,6 +707,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         if (target.kind === 'tail') onTailDragRef.current(t);
         else if (target.kind === 'marker') {
           onMarkerDragRef.current(target.ref, t, dragAllRef.current ? 'all-after' : 'single');
+        } else if (target.kind === 'note') {
+          onNoteDragRef.current?.(t);
         }
       } else if (mode === 'scrubbing') {
         onSeekRef.current(xToVideoTime(x));

@@ -47,19 +47,29 @@ import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
   EPS,
+  clearNudge,
+  countNudges,
   enforceMonotonic,
   freeCorridor,
+  gridTime,
   markerSpan,
   markerStateToWaypoints,
+  noteTicks,
+  noteTime,
+  nudgeDelta,
+  nudgeList,
   orderedMarkers,
   rangesOverlap,
   reconcileMarkers,
   reinterpolateUnedited,
   seedMarkerState,
   setMarkerTime,
+  setNoteDelta,
+  setNoteTime,
   setTailTime,
   shiftMarkersFrom,
   structuralSignature,
+  syncOnsets,
   type MarkerRef,
   type MarkerState,
   type TimeRange,
@@ -72,13 +82,14 @@ import {
 } from '@/components/playsense-studio/sync/waveform-canvas';
 import {
   IntegratedEditor,
+  isTypingTarget,
   type IntegratedEditorMeasureTiming,
 } from '@/components/playsense-studio/studio/integrated-editor';
 import type { SelectedEventRef } from '@/components/playsense-studio/studio/editable-measure-strip';
 import { PlaceScoreControl } from '@/components/playsense-studio/sync/place-score-control';
 import { SectionsLane, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { resolvePercStroke, isPercussion } from '@/lib/playsense-studio/perc-strokes';
-import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
+import { collectOnsets, onsetForSelection } from '@/lib/playsense-studio/note-onsets';
 import type { MusicalEvent, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import type { MidiRecordingSource } from './midi-record-button';
 
@@ -237,7 +248,7 @@ export function SyncPanel({
   // has no single tempo, so there's no auto-fit across the audio.
   const [markers, setMarkers] = useState<MarkerState>(() => {
     if (activeTimeMap && activeTimeMap.waypoints.length >= 2) {
-      return seedMarkerState(track, score, activeTimeMap.waypoints);
+      return seedMarkerState(track, score, activeTimeMap.waypoints, activeTimeMap.nudges ?? []);
     }
     return seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, 0));
   });
@@ -264,6 +275,19 @@ export function SyncPanel({
       setDirty(true);
     }
   }, [sig, score]);
+
+  // Note edits (add/delete/duration) move onsets without touching the structural
+  // signature, so the markers' onset lists are refreshed on EVERY score change.
+  // syncOnsets returns the same reference when nothing changed, so this stays
+  // silent for pitch edits and never churns the autosave.
+  const onsets = useMemo(() => collectOnsets(score), [score]);
+  useEffect(() => {
+    setMarkers((prev) => {
+      const next = syncOnsets(prev, onsets);
+      if (next !== prev) setDirty(true);
+      return next;
+    });
+  }, [onsets]);
 
   // --- View state ---
   const [pps, setPps] = useState(40);
@@ -506,7 +530,7 @@ export function SyncPanel({
     waypoints: markerStateToWaypoints(markers, { includeBeats: 'edited-beats' }),
     onInsert: (next, waypoints, expected) => {
       if (scoreRef.current !== expected) throw new Error('The score changed. Reopen the recorder before adding this take.');
-      const nextMarkers = seedMarkerState(next.tracks[0], next, waypoints);
+      const nextMarkers = seedMarkerState(next.tracks[0], next, waypoints, nudgeList(markersRef.current));
       if (showSync && siblingRanges.some(range => rangesOverlap(markerSpan(nextMarkers), range))) {
         throw new Error('This take overlaps another scored section. Record a shorter take or move that section first.');
       }
@@ -515,43 +539,71 @@ export function SyncPanel({
     },
   }), [videoUrl, clock.seek, markers, showSync, siblingRanges, dispatch]);
 
-  // Note onsets (video seconds) across ALL tracks, for the faint waveform ticks.
-  // Each note's cumulative QN is interpolated into its measure's audio span; all
-  // tracks share the same measure grid (measureTimings, matched by measureNumber).
-  const noteOnsets: number[] = useMemo(() => {
-    const timingByMeasure = new Map(measureTimings.map((t) => [t.measureNumber, t]));
-    const onsets: number[] = [];
-    for (const t of score.tracks) {
-      const blocks = extractTrackEvents(t, score.initialTimeSignature, score.initialKeyFifths ?? 0);
-      for (let i = 0; i < blocks.length; i++) {
-        const block = blocks[i];
-        const timing = timingByMeasure.get(block.measure.number);
-        if (!timing) continue;
-        const next = blocks[i + 1];
-        const measureLenQN = next
-          ? next.cumulativeQN - block.cumulativeQN
-          : (block.timeSignature[0] * 4) / block.timeSignature[1];
-        if (measureLenQN <= 0) continue;
-        const span = timing.endVideoTimeSeconds - timing.startVideoTimeSeconds;
-        for (const ev of block.events) {
-          if (ev.isRest) continue;
-          const fraction = (ev.qnStart - block.cumulativeQN) / measureLenQN;
-          onsets.push(timing.startVideoTimeSeconds + fraction * span);
-        }
-      }
-    }
-    // Dedupe near-coincident onsets (multi-track hits on the same beat) → one tick.
-    const seen = new Set<number>();
-    const out: number[] = [];
-    for (const s of onsets) {
-      const key = Math.round(s * 1000);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push(s);
-    }
-    out.sort((a, b) => a - b);
-    return out;
-  }, [score, measureTimings]);
+  // Note onsets (video seconds, all tracks) at their EFFECTIVE time — the
+  // anchor grid plus any per-note nudge — for the waveform ticks.
+  const ticks = useMemo(() => noteTicks(markers), [markers]);
+
+  // The selected note's onset (null for rests). Mirrored into a ref so the
+  // canvas drag callback keeps a stable identity.
+  const selectedOnset = useMemo(
+    () => (selection ? onsetForSelection(score, selection.trackIndex, selection.ref) : null),
+    [score, selection]
+  );
+  const selectedOnsetRef = useRef(selectedOnset);
+  selectedOnsetRef.current = selectedOnset;
+  const selectedNoteTime = selectedOnset ? noteTime(markers, selectedOnset.qn) : null;
+  const selectedNoteDelta = selectedOnset ? nudgeDelta(markers, selectedOnset.qn) : 0;
+  // Stable identity: the canvas repaints its wave layer when this changes, and
+  // SyncPanel re-renders at frame rate during playback.
+  const selectedNoteHandle = useMemo(
+    () => (selectedNoteTime === null ? null : { videoTimeSeconds: selectedNoteTime }),
+    [selectedNoteTime]
+  );
+
+  const handleNoteDrag = useCallback((videoTimeSeconds: number) => {
+    const onset = selectedOnsetRef.current;
+    if (!onset) return;
+    setMarkers((s) => setNoteTime(s, onset.qn, videoTimeSeconds));
+    setDirty(true);
+  }, []);
+
+  const nudgeSelected = useCallback((deltaMs: number) => {
+    const onset = selectedOnsetRef.current;
+    if (!onset) return;
+    setMarkers((s) => setNoteDelta(s, onset.qn, nudgeDelta(s, onset.qn) + deltaMs / 1000));
+    setDirty(true);
+  }, []);
+
+  const snapSelectedToPlayhead = useCallback(() => {
+    const onset = selectedOnsetRef.current;
+    if (!onset) return;
+    const at = clock.getCurrentSeconds();
+    setMarkers((s) => setNoteTime(s, onset.qn, at));
+    setDirty(true);
+  }, [clock]);
+
+  const resetSelected = useCallback(() => {
+    const onset = selectedOnsetRef.current;
+    if (!onset) return;
+    setMarkers((s) => clearNudge(s, onset.qn));
+    setDirty(true);
+  }, []);
+
+  // `[` / `]` nudge the selected note by 5 ms (Shift: 20 ms). Unused by the
+  // notation editor's own key map.
+  const nudgeKeysActive = showSync && selectedOnset !== null;
+  useEffect(() => {
+    if (!nudgeKeysActive) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
+      if (e.key !== '[' && e.key !== ']' && e.key !== '{' && e.key !== '}') return;
+      e.preventDefault();
+      const step = e.shiftKey ? 20 : 5;
+      nudgeSelected(e.key === '[' || e.key === '{' ? -step : step);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [nudgeKeysActive, nudgeSelected]);
 
   // --- Marker interaction handlers ---
   // Both drags clamp against the sibling-section corridor so a section can
@@ -586,7 +638,8 @@ export function SyncPanel({
     // `target.ref` and set `selected` to undefined.
     if (target.kind === 'marker') setSelected(target.ref);
     else if (target.kind === 'tail') setSelected('tail');
-    // Trim grips are not part of the marker selection model.
+    // A note handle keeps the staff selection that created it; trim grips are
+    // not part of the marker selection model.
   }, []);
 
   const handleScrollByPx = useCallback(
@@ -695,7 +748,15 @@ export function SyncPanel({
           .filter((b) => b.edited && b.beatInMeasure !== 1)
           .map((b) => ({ measure: m.measureNumber, beat: b.beatInMeasure })));
         return publishTimeMap({ classItemId, scoreDocumentId, sectionId, target: publishTarget,
-          method: 'drag', params: { editedBeats, pps, peaksCached: decodeState === 'ready', version: 1 },
+          method: 'drag',
+          params: {
+            editedBeats,
+            nudges: nudgeList(snapshot),
+            nudgedNotes: countNudges(snapshot),
+            pps,
+            peaksCached: decodeState === 'ready',
+            version: 1,
+          },
           waypoints, makeActive: true });
       });
       if (opts?.silent) return;
@@ -1013,8 +1074,10 @@ export function SyncPanel({
                     peaks={peaks}
                     durationSeconds={timelineDuration}
                     handles={handles}
-                    noteOnsets={noteOnsets}
+                    noteTicks={ticks}
                     showNotes={showNotes}
+                    selectedNote={selectedNoteHandle}
+                    onNoteDrag={handleNoteDrag}
                     tailVideoTimeSeconds={markers.tailVideoTimeSeconds}
                     pixelsPerSecond={pps}
                     scrollLeftPx={scrollLeft}
@@ -1188,6 +1251,18 @@ export function SyncPanel({
                       ? resolvePercStroke(selTrack.instrument, selEvent)?.label ?? 'Imported notation'
                       : null
                   }
+                  timing={
+                    showSync && selectedOnset
+                      ? {
+                          offsetMs: selectedNoteDelta * 1000,
+                          gridSeconds: gridTime(markers, selectedOnset.qn),
+                          actualSeconds: selectedNoteTime ?? 0,
+                          onNudge: nudgeSelected,
+                          onSnap: snapSelectedToPlayhead,
+                          onReset: resetSelected,
+                        }
+                      : undefined
+                  }
                   onDelete={() => {
                     dispatch({
                       type: 'delete-event',
@@ -1342,19 +1417,33 @@ function formatTime(seconds: number): string {
   return `${m}:${rest.toFixed(1).padStart(4, '0')}`;
 }
 
-// Read-only details for the selected note, shown in the right-rail inspector.
-// Editing happens via the staff toolbar; this offers a quick Delete.
+/** The selected note's timing against the sync grid, with its adjustments. */
+interface NoteTimingProps {
+  /** Nudge in ms (0 = on the grid). */
+  offsetMs: number;
+  gridSeconds: number;
+  actualSeconds: number;
+  onNudge: (deltaMs: number) => void;
+  onSnap: () => void;
+  onReset: () => void;
+}
+
+// Details for the selected note, shown in the left-rail inspector. Pitch and
+// duration edits happen via the staff toolbar; this offers the per-note timing
+// nudge (video sync only) and a quick Delete.
 function NoteDetails({
   event,
   measureIndex,
   percussion,
   percLabel,
+  timing,
   onDelete,
 }: {
   event: MusicalEvent;
   measureIndex: number;
   percussion: boolean;
   percLabel: string | null;
+  timing?: NoteTimingProps;
   onDelete: () => void;
 }) {
   const durLabel = formatDurationQN(event.durationQN) + (event.dotted ? '.' : '') + (event.triplet ? ' ³' : '');
@@ -1382,6 +1471,53 @@ function NoteDetails({
         <span className="k">Duration</span>
         <span className="v">{durLabel}</span>
       </div>
+      {timing && event.kind !== 'rest' && (
+        <>
+          <div className="st-prop">
+            <span className="k">Timing</span>
+            <span
+              className="v inline-flex items-center gap-1"
+              title={`Grid ${formatTime(timing.gridSeconds)} → plays ${formatTime(timing.actualSeconds)}. Keys: [ and ] (Shift: 20 ms)`}
+            >
+              <button
+                type="button"
+                className="st-iconbtn"
+                aria-label="Earlier by 5 ms (Shift: 20 ms)"
+                title="Earlier · 5 ms (Shift: 20 ms) · key ["
+                onClick={(e) => timing.onNudge(e.shiftKey ? -20 : -5)}
+              >
+                −
+              </button>
+              <span className={`font-mono tabular-nums${timing.offsetMs !== 0 ? ' accent' : ''}`}>
+                {formatOffsetMs(timing.offsetMs)}
+              </span>
+              <button
+                type="button"
+                className="st-iconbtn"
+                aria-label="Later by 5 ms (Shift: 20 ms)"
+                title="Later · 5 ms (Shift: 20 ms) · key ]"
+                onClick={(e) => timing.onNudge(e.shiftKey ? 20 : 5)}
+              >
+                +
+              </button>
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            <button type="button" className="st-chip" onClick={timing.onSnap} title="Move this note to the playhead">
+              Snap to playhead
+            </button>
+            <button
+              type="button"
+              className="st-chip"
+              onClick={timing.onReset}
+              disabled={timing.offsetMs === 0}
+              title="Back to the grid"
+            >
+              Reset
+            </button>
+          </div>
+        </>
+      )}
       <button
         onClick={onDelete}
         className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs transition hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
@@ -1391,6 +1527,14 @@ function NoteDetails({
       </button>
     </>
   );
+}
+
+/** "+12 ms" / "−7 ms" / "0 ms"; sub-millisecond deltas show one decimal. */
+function formatOffsetMs(ms: number): string {
+  const abs = Math.abs(ms);
+  const body = abs < 1 && abs > 0 ? abs.toFixed(1) : Math.round(abs).toString();
+  const sign = ms > 0 ? '+' : ms < 0 ? '−' : '';
+  return `${sign}${body} ms`;
 }
 
 function formatDurationQN(qn: number): string {

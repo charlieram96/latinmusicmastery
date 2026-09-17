@@ -10,6 +10,17 @@
 //   • seedMarkerState: tempo/tap seed (or a previously-published map) -> markers
 //   • markerStateToWaypoints: markers -> the waypoints publishTimeMap persists
 //
+// Per-note NUDGES sit on top of that grid. A nudge is a delta (seconds) on one
+// note onset: effective time = grid time + delta, where the grid is the
+// interpolation through the anchors (downbeats + edited beats + tail). Moving a
+// note changes only its delta; moving an anchor moves the grid and the deltas
+// ride along. Nudges are keyed by onset qn — the time map is one function of
+// qn shared by every track, so two tracks hitting the same onset share it.
+// The nudge list is persisted on the time map (params.nudges); the waypoints
+// are the MATERIALIZED effective map the player consumes, so a nudged bar
+// emits a waypoint for every one of its onsets (otherwise the linear
+// interpolation would bend the neighbours' times).
+//
 // Everything here is pure and unit-tested; the React/canvas layer owns no math.
 
 import {
@@ -18,6 +29,7 @@ import {
   walkMeasures,
 } from '@/lib/playsense-studio/time-mapping';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
+import { collectOnsets, type OnsetIndex } from '@/lib/playsense-studio/note-onsets';
 import {
   WaypointTimeMap,
   type Waypoint,
@@ -29,6 +41,24 @@ import type { ScoreDocument, Track } from '@/components/playsense-studio/shared/
  * above float noise in DOUBLE PRECISION yet far below perceptible sync error.
  */
 export const EPS = 1e-3;
+
+/** Below this (0.1 ms) a delta is "not nudged" and the entry is removed. */
+export const NUDGE_EPS = 1e-4;
+
+export interface NoteNudge {
+  /** Onset identity: quarter notes from the start of the piece. */
+  qn: number;
+  /** Seconds added to the grid time. |delta| >= NUDGE_EPS, else the entry is absent. */
+  deltaSeconds: number;
+}
+
+export interface NoteTick {
+  measureNumber: number;
+  qn: number;
+  /** Effective time: grid + delta. */
+  videoTimeSeconds: number;
+  nudged: boolean;
+}
 
 export interface BeatMarker {
   /** 1-based; 1 = downbeat. */
@@ -52,6 +82,10 @@ export interface MeasureMarker {
   beats: BeatMarker[];
   /** UI: whether per-beat handles are shown for this measure. */
   expanded: boolean;
+  /** Distinct note/chord onset qns in this bar across ALL tracks, sorted; rests excluded. */
+  onsetQNs: number[];
+  /** Per-note timing nudges, sorted by qn. Every qn is one of onsetQNs. */
+  nudges: NoteNudge[];
 }
 
 export interface MarkerState {
@@ -92,12 +126,29 @@ const QN_MATCH_TOLERANCE = 1e-6;
 export function seedMarkerState(
   track: Track,
   score: ScoreDocument,
-  seedWaypoints: Waypoint[]
+  seedWaypoints: Waypoint[],
+  nudges: readonly NoteNudge[] = []
 ): MarkerState {
-  const seedMap = new WaypointTimeMap('seed', 'tempo', seedWaypoints);
+  const onsets = collectOnsets(score);
+  const validNudges = sanitizeNudges(nudges, onsets);
+
+  // Only anchor-class rows (integer beats + the tail) build the grid. Onset
+  // rows — (measureNumber, null) — are the materialized effect of nudges and
+  // are re-derived, never read. A nudged anchor was stored at grid + delta, so
+  // its grid time is recovered by subtracting the delta.
+  let anchorSeed = seedWaypoints.filter((w) => !isOnsetRow(w));
+  if (validNudges.length) {
+    anchorSeed = enforceMonotonic(
+      anchorSeed.map((w) => {
+        const n = validNudges.find((x) => Math.abs(x.qn - w.musicalPositionQN) < QN_MATCH_TOLERANCE);
+        return n ? { ...w, videoTimeSeconds: w.videoTimeSeconds - n.deltaSeconds } : w;
+      })
+    );
+  }
+  const seedMap = new WaypointTimeMap('seed', 'tempo', anchorSeed);
 
   // Index seed waypoints by QN for exact-match snapping.
-  const byQN = seedWaypoints
+  const byQN = anchorSeed
     .slice()
     .sort((a, b) => a.musicalPositionQN - b.musicalPositionQN);
   const lookup = (qn: number): Waypoint | undefined =>
@@ -122,21 +173,44 @@ export function seedMarkerState(
       });
     }
 
+    const onsetQNs = onsets.get(measure.number) ?? [];
     measures.push({
       measureNumber: measure.number,
       beatsInMeasure,
       downbeatQN,
       beats,
       expanded: false,
+      onsetQNs,
+      nudges: validNudges.filter((n) => onsetQNs.some((q) => Math.abs(q - n.qn) < QN_MATCH_TOLERANCE)),
     });
   }
 
   const tailQN = trackDurationQN(track, score);
-  return {
+  const state: MarkerState = {
     measures,
     tailQN,
     tailVideoTimeSeconds: seedMap.toVideoTime(tailQN),
   };
+  return validNudges.length ? clampNudges(state) : state;
+}
+
+/** A materialized onset row: measure known, no beat. Never read back as an anchor. */
+function isOnsetRow(w: Waypoint): boolean {
+  return w.measureNumber !== null && w.beatInMeasure === null;
+}
+
+/** Finite, non-trivial, on a real onset, one per qn, sorted. */
+function sanitizeNudges(nudges: readonly NoteNudge[], onsets: OnsetIndex): NoteNudge[] {
+  const all = [...onsets.values()].flat();
+  const out: NoteNudge[] = [];
+  for (const n of nudges) {
+    if (!Number.isFinite(n.qn) || !Number.isFinite(n.deltaSeconds)) continue;
+    if (Math.abs(n.deltaSeconds) < NUDGE_EPS) continue;
+    if (!all.some((q) => Math.abs(q - n.qn) < QN_MATCH_TOLERANCE)) continue;
+    if (out.some((o) => Math.abs(o.qn - n.qn) < QN_MATCH_TOLERANCE)) continue;
+    out.push({ qn: n.qn, deltaSeconds: n.deltaSeconds });
+  }
+  return out.sort((a, b) => a.qn - b.qn);
 }
 
 // ---------------------------------------------------------------------------
@@ -148,14 +222,19 @@ export type IncludeBeats = 'downbeats-only' | 'edited-beats' | 'all-expanded';
 /**
  * Flatten markers into publishable waypoints. Every measure downbeat plus the
  * tail boundary are always included; non-downbeat beats are included per
- * `includeBeats`. Result is QN-sorted and passed through enforceMonotonic so it
- * can never trip the server's strict-increase check.
+ * `includeBeats`. With nudges (default on), beats emit at grid + delta and
+ * every bar touched by a nudge emits all of its onsets as (measureNumber, null)
+ * rows, so the published map reproduces each note's effective time exactly.
+ * Result is QN-sorted and passed through enforceMonotonic so it can never trip
+ * the server's strict-increase check.
  */
 export function markerStateToWaypoints(
   state: MarkerState,
-  opts: { includeBeats: IncludeBeats }
+  opts: { includeBeats: IncludeBeats; includeNudges?: boolean }
 ): Waypoint[] {
   const out: Waypoint[] = [];
+  const withNudges = opts.includeNudges !== false && hasNudges(state);
+  const emittedQN: number[] = [];
 
   for (const m of state.measures) {
     for (const beat of m.beats) {
@@ -167,10 +246,32 @@ export function markerStateToWaypoints(
       if (!include) continue;
       out.push({
         musicalPositionQN: beat.musicalPositionQN,
-        videoTimeSeconds: beat.videoTimeSeconds,
+        videoTimeSeconds:
+          beat.videoTimeSeconds + (withNudges ? findDelta(m, beat.musicalPositionQN) : 0),
         measureNumber: m.measureNumber,
         beatInMeasure: beat.beatInMeasure,
       });
+      emittedQN.push(beat.musicalPositionQN);
+    }
+  }
+
+  if (withNudges) {
+    const map = anchorTimeMap(state);
+    if (map) {
+      const bent = bentMeasureIndices(state);
+      for (const i of bent) {
+        const m = state.measures[i];
+        for (const qn of m.onsetQNs) {
+          if (emittedQN.some((q) => Math.abs(q - qn) < QN_MATCH_TOLERANCE)) continue;
+          out.push({
+            musicalPositionQN: qn,
+            videoTimeSeconds: map.toVideoTime(qn) + findDelta(m, qn),
+            measureNumber: m.measureNumber,
+            beatInMeasure: null,
+          });
+          emittedQN.push(qn);
+        }
+      }
     }
   }
 
@@ -283,20 +384,10 @@ function mapBeat(
  * and never cross an anchor.
  */
 export function reinterpolateUnedited(state: MarkerState): MarkerState {
-  const anchors = anchorMarkers(state);
-  if (anchors.length < 2) return state;
+  const map = anchorTimeMap(state);
+  if (!map) return state;
 
-  const anchorWaypoints: Waypoint[] = enforceMonotonic(
-    anchors.map((a) => ({
-      musicalPositionQN: a.qn,
-      videoTimeSeconds: a.videoTimeSeconds,
-      measureNumber: a.ref?.measureNumber ?? null,
-      beatInMeasure: a.ref?.beatInMeasure ?? null,
-    }))
-  );
-  const map = new WaypointTimeMap('reinterp', 'drag', anchorWaypoints);
-
-  return {
+  return clampNudges({
     ...state,
     measures: state.measures.map((m) => ({
       ...m,
@@ -306,7 +397,25 @@ export function reinterpolateUnedited(state: MarkerState): MarkerState {
           : { ...beat, videoTimeSeconds: map.toVideoTime(beat.musicalPositionQN) }
       ),
     })),
-  };
+  });
+}
+
+/**
+ * The GRID: interpolation through the anchors (downbeats + edited beats + tail).
+ * Null when fewer than two anchors exist (an empty score).
+ */
+export function anchorTimeMap(state: MarkerState): WaypointTimeMap | null {
+  const anchors = anchorMarkers(state);
+  if (anchors.length < 2) return null;
+  const anchorWaypoints: Waypoint[] = enforceMonotonic(
+    anchors.map((a) => ({
+      musicalPositionQN: a.qn,
+      videoTimeSeconds: a.videoTimeSeconds,
+      measureNumber: a.ref?.measureNumber ?? null,
+      beatInMeasure: a.ref?.beatInMeasure ?? null,
+    }))
+  );
+  return new WaypointTimeMap('grid', 'drag', anchorWaypoints);
 }
 
 /**
@@ -423,6 +532,246 @@ export function enforceMonotonic(waypoints: Waypoint[]): Waypoint[] {
 }
 
 // ---------------------------------------------------------------------------
+// Per-note nudges
+// ---------------------------------------------------------------------------
+
+function findDelta(m: MeasureMarker, qn: number): number {
+  const n = m.nudges.find((x) => Math.abs(x.qn - qn) < QN_MATCH_TOLERANCE);
+  return n ? n.deltaSeconds : 0;
+}
+
+/** Index of the bar containing `qn`, or -1. */
+function measureIndexForQN(state: MarkerState, qn: number): number {
+  for (let i = state.measures.length - 1; i >= 0; i--) {
+    if (qn >= state.measures[i].downbeatQN - QN_MATCH_TOLERANCE) return i;
+  }
+  return -1;
+}
+
+export function hasNudges(state: MarkerState): boolean {
+  return state.measures.some((m) => m.nudges.length > 0);
+}
+
+export function countNudges(state: MarkerState): number {
+  return state.measures.reduce((n, m) => n + m.nudges.length, 0);
+}
+
+/** Every nudge, qn-sorted — what gets persisted as params.nudges. */
+export function nudgeList(state: MarkerState): NoteNudge[] {
+  return state.measures.flatMap((m) => m.nudges.map((n) => ({ ...n }))).sort((a, b) => a.qn - b.qn);
+}
+
+/** The grid time of a musical position (no nudge applied). */
+export function gridTime(state: MarkerState, qn: number): number {
+  const map = anchorTimeMap(state);
+  return map ? map.toVideoTime(qn) : state.tailVideoTimeSeconds;
+}
+
+/** The nudge on an onset, 0 when none. */
+export function nudgeDelta(state: MarkerState, qn: number): number {
+  const i = measureIndexForQN(state, qn);
+  return i === -1 ? 0 : findDelta(state.measures[i], qn);
+}
+
+/** Effective time of a musical position: grid + nudge. */
+export function noteTime(state: MarkerState, qn: number): number {
+  return gridTime(state, qn) + nudgeDelta(state, qn);
+}
+
+interface TimelinePoint {
+  qn: number;
+  /** Grid time. */
+  grid: number;
+  delta: number;
+  measureIndex: number;
+  isOnset: boolean;
+}
+
+/**
+ * Every point the effective map is made of, qn-sorted: anchors and onsets
+ * (merged where they coincide). Unedited beats are derived, not points.
+ */
+function timelinePoints(state: MarkerState, map: WaypointTimeMap): TimelinePoint[] {
+  const points: TimelinePoint[] = [];
+  const push = (qn: number, grid: number, measureIndex: number, isOnset: boolean) => {
+    const existing = points.find((p) => Math.abs(p.qn - qn) < QN_MATCH_TOLERANCE);
+    if (existing) {
+      existing.isOnset = existing.isOnset || isOnset;
+      return;
+    }
+    const delta = measureIndex === -1 ? 0 : findDelta(state.measures[measureIndex], qn);
+    points.push({ qn, grid, delta, measureIndex, isOnset });
+  };
+  state.measures.forEach((m, i) => {
+    for (const beat of m.beats) {
+      if (isAnchorBeat(beat)) push(beat.musicalPositionQN, beat.videoTimeSeconds, i, false);
+    }
+    for (const qn of m.onsetQNs) push(qn, map.toVideoTime(qn), i, true);
+  });
+  push(state.tailQN, state.tailVideoTimeSeconds, -1, false);
+  return points.sort((a, b) => a.qn - b.qn);
+}
+
+/**
+ * Open interval a nudged onset may occupy: its neighbours' effective times,
+ * EPS away, so the materialized map stays strictly increasing.
+ */
+export function noteBounds(state: MarkerState, qn: number): { lo: number; hi: number } | null {
+  const map = anchorTimeMap(state);
+  if (!map) return null;
+  const points = timelinePoints(state, map);
+  const i = points.findIndex((p) => Math.abs(p.qn - qn) < QN_MATCH_TOLERANCE);
+  if (i === -1) return null;
+  const prev = points[i - 1];
+  const next = points[i + 1];
+  return {
+    lo: prev ? prev.grid + prev.delta + EPS : -Infinity,
+    hi: next ? next.grid + next.delta - EPS : Infinity,
+  };
+}
+
+function withNudge(state: MarkerState, measureIndex: number, qn: number, delta: number): MarkerState {
+  return {
+    ...state,
+    measures: state.measures.map((m, i) => {
+      if (i !== measureIndex) return m;
+      const rest = m.nudges.filter((n) => Math.abs(n.qn - qn) >= QN_MATCH_TOLERANCE);
+      const nudges =
+        Math.abs(delta) < NUDGE_EPS
+          ? rest
+          : [...rest, { qn, deltaSeconds: delta }].sort((a, b) => a.qn - b.qn);
+      return { ...m, nudges };
+    }),
+  };
+}
+
+/**
+ * Move one note to `proposedSeconds`: clamp between its neighbours, store the
+ * difference from the grid as its nudge (or clear it when back on the grid).
+ * Nothing else moves. Returns `state` untouched for a qn that is not an onset.
+ */
+export function setNoteTime(state: MarkerState, qn: number, proposedSeconds: number): MarkerState {
+  const i = measureIndexForQN(state, qn);
+  if (i === -1) return state;
+  const m = state.measures[i];
+  const onset = m.onsetQNs.find((q) => Math.abs(q - qn) < QN_MATCH_TOLERANCE);
+  if (onset === undefined) return state;
+  const bounds = noteBounds(state, onset);
+  if (!bounds || bounds.lo > bounds.hi) return state;
+  const clamped = Math.min(Math.max(proposedSeconds, bounds.lo), bounds.hi);
+  return withNudge(state, i, onset, clamped - gridTime(state, onset));
+}
+
+export function setNoteDelta(state: MarkerState, qn: number, deltaSeconds: number): MarkerState {
+  return setNoteTime(state, qn, gridTime(state, qn) + deltaSeconds);
+}
+
+export function clearNudge(state: MarkerState, qn: number): MarkerState {
+  return setNoteDelta(state, qn, 0);
+}
+
+/**
+ * One left-to-right pass re-clamping every nudge between its neighbours'
+ * effective times (deltas ride along when anchors move, so spacing can
+ * shrink). Returns the same reference when nothing changes.
+ */
+export function clampNudges(state: MarkerState): MarkerState {
+  if (!hasNudges(state)) return state;
+  const map = anchorTimeMap(state);
+  if (!map) return state;
+  const points = timelinePoints(state, map);
+  let changed = false;
+  const next = state.measures.map((m) => ({ ...m, nudges: m.nudges.map((n) => ({ ...n })) }));
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i];
+    if (p.delta === 0) continue;
+    const prev = points[i - 1];
+    const nxt = points[i + 1];
+    const lo = prev ? prev.grid + prev.delta + EPS : -Infinity;
+    const hi = nxt ? nxt.grid + nxt.delta - EPS : Infinity;
+    const time = p.grid + p.delta;
+    const clampedTime = lo <= hi ? Math.min(Math.max(time, lo), hi) : time;
+    // Keep the stored delta byte-identical unless the clamp actually moved it.
+    let delta = clampedTime === time ? p.delta : clampedTime - p.grid;
+    if (Math.abs(delta) < NUDGE_EPS) delta = 0;
+    if (delta !== p.delta) {
+      changed = true;
+      p.delta = delta;
+      const m = next[p.measureIndex];
+      m.nudges = m.nudges.filter((n) => Math.abs(n.qn - p.qn) >= QN_MATCH_TOLERANCE);
+      if (delta !== 0) m.nudges.push({ qn: p.qn, deltaSeconds: delta });
+      m.nudges.sort((a, b) => a.qn - b.qn);
+    }
+  }
+  return changed ? { ...state, measures: next } : state;
+}
+
+/** Every onset at its effective time, time-sorted — what the waveform draws. */
+export function noteTicks(state: MarkerState): NoteTick[] {
+  const map = anchorTimeMap(state);
+  const out: NoteTick[] = [];
+  for (const m of state.measures) {
+    for (const qn of m.onsetQNs) {
+      const delta = findDelta(m, qn);
+      out.push({
+        measureNumber: m.measureNumber,
+        qn,
+        videoTimeSeconds: (map ? map.toVideoTime(qn) : state.tailVideoTimeSeconds) + delta,
+        nudged: delta !== 0,
+      });
+    }
+  }
+  return out.sort((a, b) => a.videoTimeSeconds - b.videoTimeSeconds);
+}
+
+/**
+ * Bars whose span intersects an interpolation segment bent by a nudge: the
+ * segments between the anchors bracketing each nudged qn (both sides when the
+ * nudge sits on an anchor). These bars must emit all their onsets.
+ */
+function bentMeasureIndices(state: MarkerState): number[] {
+  const anchors = anchorMarkers(state).map((a) => a.qn);
+  const out = new Set<number>();
+  for (const m of state.measures) {
+    for (const n of m.nudges) {
+      let lo = -Infinity;
+      let hi = Infinity;
+      for (const a of anchors) {
+        if (a < n.qn - QN_MATCH_TOLERANCE) lo = Math.max(lo, a);
+        else if (a > n.qn + QN_MATCH_TOLERANCE) hi = Math.min(hi, a);
+      }
+      state.measures.forEach((mm, i) => {
+        const start = mm.downbeatQN;
+        const end = state.measures[i + 1]?.downbeatQN ?? state.tailQN;
+        if (start < hi && end > lo) out.add(i);
+      });
+    }
+  }
+  return [...out].sort((a, b) => a - b);
+}
+
+/**
+ * Refresh each bar's onset list after a score edit (note edits do not change
+ * structuralSignature, so reconcileMarkers never sees them). Nudges whose
+ * onset vanished are pruned. Returns the SAME reference when nothing changed,
+ * so callers can use identity to decide whether the sync is dirty.
+ */
+export function syncOnsets(state: MarkerState, onsets: OnsetIndex): MarkerState {
+  let changed = false;
+  const measures = state.measures.map((m) => {
+    const fresh = onsets.get(m.measureNumber) ?? [];
+    const same =
+      fresh.length === m.onsetQNs.length &&
+      fresh.every((q, i) => Math.abs(q - m.onsetQNs[i]) < QN_MATCH_TOLERANCE);
+    const nudges = m.nudges.filter((n) => fresh.some((q) => Math.abs(q - n.qn) < QN_MATCH_TOLERANCE));
+    if (same && nudges.length === m.nudges.length) return m;
+    changed = true;
+    return { ...m, onsetQNs: fresh, nudges };
+  });
+  return changed ? clampNudges({ ...state, measures }) : state;
+}
+
+// ---------------------------------------------------------------------------
 // Section overlap (sibling scored sections may not share video time)
 // ---------------------------------------------------------------------------
 
@@ -506,10 +855,19 @@ export function reconcileMarkers(
   track: Track,
   score: ScoreDocument
 ): MarkerState {
-  // 1. Harvest preserved video times keyed by identity.
+  // 1. Harvest preserved video times keyed by identity. Nudges are keyed by
+  //    (measure, offset into the bar) so they follow their bar when an upstream
+  //    change shifts the qn axis; a nudge whose offset is no longer an onset drops.
   const downbeatTimes = new Map<number, number>();
   const editedBeatTimes = new Map<string, number>();
+  const nudgesByMeasure = new Map<number, Array<{ offsetQN: number; deltaSeconds: number }>>();
   for (const m of prevState.measures) {
+    if (m.nudges.length) {
+      nudgesByMeasure.set(
+        m.measureNumber,
+        m.nudges.map((n) => ({ offsetQN: n.qn - m.downbeatQN, deltaSeconds: n.deltaSeconds }))
+      );
+    }
     for (const beat of m.beats) {
       if (beat.beatInMeasure === 1) {
         downbeatTimes.set(m.measureNumber, beat.videoTimeSeconds);
@@ -566,5 +924,17 @@ export function reconcileMarkers(
 
   // 4. Rebuild the full marker state, interpolating unedited/new beats and
   //    re-flagging preserved non-downbeat beats as edited.
-  return seedMarkerState(track, score, cleaned);
+  const rebuilt = seedMarkerState(track, score, cleaned);
+  if (nudgesByMeasure.size === 0) return rebuilt;
+
+  // 5. Re-attach nudges whose bar survived and whose offset is still an onset.
+  const nudges: NoteNudge[] = [];
+  for (const m of rebuilt.measures) {
+    for (const n of nudgesByMeasure.get(m.measureNumber) ?? []) {
+      const qn = m.downbeatQN + n.offsetQN;
+      const onset = m.onsetQNs.find((q) => Math.abs(q - qn) < QN_MATCH_TOLERANCE);
+      if (onset !== undefined) nudges.push({ qn: onset, deltaSeconds: n.deltaSeconds });
+    }
+  }
+  return nudges.length ? seedMarkerState(track, score, markerStateToWaypoints(rebuilt, { includeBeats: 'edited-beats', includeNudges: false }), nudges) : rebuilt;
 }
