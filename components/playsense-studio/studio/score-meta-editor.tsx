@@ -9,7 +9,7 @@
 // spaces its measures at this tempo.
 
 import { Minus, Plus } from 'lucide-react';
-import type { Dispatch } from 'react';
+import { useRef, useState, type Dispatch, type KeyboardEvent } from 'react';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
@@ -30,8 +30,44 @@ const TIME_SIGNATURES: Array<[number, number]> = [
 export function ScoreMetaEditor({ score, dispatch }: ScoreMetaEditorProps) {
   const [num, den] = score.initialTimeSignature;
 
-  const nudgeTempo = (delta: number) =>
+  // The field holds a draft while it is being typed in, so clearing it to
+  // retype does not snap to the clamp floor, and one commit is one undo step.
+  const [draft, setDraft] = useState<string | null>(null);
+  // Escape blurs the field, and that blur must not commit the abandoned draft.
+  const reverting = useRef(false);
+
+  const nudgeTempo = (delta: number) => {
+    setDraft(null);
     dispatch({ type: 'set-score-meta', initialTempo: score.initialTempo + delta });
+  };
+
+  const commitDraft = () => {
+    if (draft === null) return;
+    setDraft(null);
+    if (reverting.current) {
+      reverting.current = false;
+      return;
+    }
+    const v = Number(draft.trim());
+    if (draft.trim() !== '' && Number.isFinite(v)) {
+      dispatch({ type: 'set-score-meta', initialTempo: v });
+    }
+  };
+
+  const onTempoKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitDraft();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      reverting.current = draft !== null;
+      setDraft(null);
+      e.currentTarget.blur();
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      nudgeTempo((e.key === 'ArrowUp' ? 1 : -1) * (e.shiftKey ? 10 : 1));
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -56,14 +92,12 @@ export function ScoreMetaEditor({ score, dispatch }: ScoreMetaEditorProps) {
             <Minus className="h-4 w-4" />
           </button>
           <input
-            type="number"
-            min={20}
-            max={400}
-            value={score.initialTempo}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              if (Number.isFinite(v)) dispatch({ type: 'set-score-meta', initialTempo: v });
-            }}
+            type="text"
+            inputMode="numeric"
+            value={draft ?? String(score.initialTempo)}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commitDraft}
+            onKeyDown={onTempoKeyDown}
             aria-label="Tempo (BPM)"
           />
           <span className="unit">BPM</span>

@@ -23,6 +23,35 @@ export function repeatGroups(track: Track) {
   return groups;
 }
 
+export interface RepeatSpan {
+  id: string;
+  /** Indices of the first and last strip items in the group, all passes included. */
+  firstIndex: number;
+  lastIndex: number;
+  count: number;
+  length: number;
+  /** Item index where each pass begins, in pass order. */
+  passStarts: number[];
+}
+
+/** Runs of consecutive strip items that share a repeat group, for drawing brackets over the written-out passes. */
+export function repeatSpans(items: ReadonlyArray<{ repeatPass?: { id: string; pass: number; count: number; offset: number; length: number } }>): RepeatSpan[] {
+  const spans: RepeatSpan[] = [];
+  items.forEach((item, index) => {
+    const r = item.repeatPass;
+    if (!r) return;
+    const open = spans[spans.length - 1];
+    if (open && open.id === r.id && open.lastIndex === index - 1) {
+      open.lastIndex = index;
+      if (r.offset === 0) open.passStarts.push(index);
+      return;
+    }
+    spans.push({ id: r.id, firstIndex: index, lastIndex: index, count: r.count, length: r.length,
+      passStarts: r.offset === 0 ? [index] : [] });
+  });
+  return spans;
+}
+
 /** Student layout is compact; playback and video timing remain fully expanded. */
 export function repeatProjection(score: ScoreDocument, trackIndex: number) {
   const track = score.tracks[trackIndex];

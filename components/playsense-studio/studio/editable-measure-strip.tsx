@@ -44,12 +44,14 @@ import {
 } from '@/lib/playsense-studio/score-to-vexflow';
 import type { PercStroke } from '@/lib/playsense-studio/perc-strokes';
 import type { DragMode } from '@/components/playsense-studio/sync/waveform-canvas';
+import { repeatSpans } from '@/lib/playsense-studio/repeats';
 
 export interface MeasureStripItem {
   /** 0-based index into the score track's measures (NOT the 1-based measureNumber). */
   measureIndex: number;
   measureNumber: number;
-  repeatPass?: { pass: number; count: number };
+  /** The measure's repeat membership, when it is one written-out pass of a group. */
+  repeatPass?: { id: string; pass: number; count: number; offset: number; length: number };
   /** Close this measure with a final (thin–thick) bar. */
   finalBarline?: boolean;
   startVideoTimeSeconds: number;
@@ -257,6 +259,9 @@ export function EditableMeasureStrip({
     selectedMeasures !== null && measureIndex >= selectedMeasures[0] && measureIndex <= selectedMeasures[1];
   const isFocus = (measureIndex: number) =>
     selectedMeasures !== null && measureIndex === selectedMeasures[1];
+  // One bracket per repeat group, spanning every written-out pass, so the
+  // strip itself says which measures repeat and how many times.
+  const spans = repeatSpans(measures);
 
   // Playhead — a thin --primary line matching the waveform's, positioned
   // imperatively on a RAF loop so 60fps playback never re-renders this strip.
@@ -726,7 +731,10 @@ export function EditableMeasureStrip({
             >
               <GripHorizontal className="h-3.5 w-3.5 shrink-0 opacity-80" />
               <span className="tabular-nums leading-none">{item.measureNumber}</span>
-              {item.repeatPass && width >= 100 && <span className="truncate opacity-70">· pass {item.repeatPass.pass + 1}/{item.repeatPass.count}</span>}
+              {item.repeatPass && width >= 100 && <span className="truncate opacity-70">
+                {item.repeatPass.pass === 0 && item.repeatPass.offset === 0 && <>· ↻ ×{item.repeatPass.count} </>}
+                · pass {item.repeatPass.pass + 1}/{item.repeatPass.count}
+              </span>}
               {showCap && (
                 <span
                   className={`ml-auto shrink-0 tabular-nums leading-none ${
@@ -751,6 +759,33 @@ export function EditableMeasureStrip({
               clef={item.clef}
               onHitsReady={handleHitsReady}
             />
+          </div>
+        );
+      })}
+
+      {/* Repeat brackets — a bar along the top edge of each group's passes,
+          ticked at every pass boundary, lit while the group is selected. */}
+      {spans.map((span) => {
+        const left = videoTimeToX(measures[span.firstIndex].startVideoTimeSeconds);
+        const right = videoTimeToX(measures[span.lastIndex].endVideoTimeSeconds);
+        if (right < -20 || left > viewportWidth + 20) return null;
+        const selectedGroup = Array.from({ length: span.lastIndex - span.firstIndex + 1 }, (_, i) => span.firstIndex + i).some(inRange);
+        return (
+          <div
+            key={`repeat-${span.id}`}
+            data-repeat-bracket={span.id}
+            aria-hidden
+            className={`pointer-events-none absolute top-0 z-20 h-[3px] rounded-b-sm bg-[hsl(var(--primary))] transition-opacity ${selectedGroup ? 'opacity-100' : 'opacity-45'}`}
+            style={{ left, width: Math.max(2, right - left) }}
+            title={`Measures repeat ${span.count} times`}
+          >
+            {span.passStarts.slice(1).map((index) => (
+              <span
+                key={index}
+                className="absolute top-0 h-[7px] w-px bg-[hsl(var(--primary))]"
+                style={{ left: videoTimeToX(measures[index].startVideoTimeSeconds) - left }}
+              />
+            ))}
           </div>
         );
       })}
