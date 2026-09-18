@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import Image from 'next/image'
 import { ArrowRight, Check, ChevronDown, Clock3, Eye, Flame, RotateCcw, Sparkles, Star, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/components/language-provider'
 import type { AttemptStats } from '@/lib/play-sense/types'
 import { getLetterGrade } from '@/lib/play-sense/exercise-utils'
 import { getStarCount } from '@/lib/play-sense/animations'
@@ -52,6 +53,7 @@ function nextPractice(stats: AttemptStats, total: number) {
 }
 
 export function PerformanceResults({ stats, exerciseTitle, onRetry, onNext, nextLabel = 'Next track', onWatchDemo, demo = false }: PerformanceResultsProps) {
+  const { t } = useTranslation()
   const reduced = useReducedMotion()
   const titleId = useId()
   const score = Math.max(0, Math.min(100, stats.score))
@@ -107,7 +109,7 @@ export function PerformanceResults({ stats, exerciseTitle, onRetry, onNext, next
         <div><dt>Extra hits</dt><dd>{stats.extraHits}</dd></div><div><dt>Duration</dt><dd>{durationLabel}</dd></div></dl>
     </details>
     <footer className="ps-review-actions">
-      {onWatchDemo && <Button type="button" variant="ghost" size="sm" className="ps-review-watch" onClick={onWatchDemo}><Eye size={16} />Watch demo again</Button>}
+      {onWatchDemo && <Button type="button" variant="ghost" size="sm" className="ps-review-watch" onClick={onWatchDemo}><Eye size={16} />{t('dashboard.classViewer.exercise.watchTeacherAgain')}</Button>}
       <div><Button type="button" variant={retryPrimary ? 'default' : 'outline'} onClick={onRetry}><RotateCcw size={16} />Play again</Button>
         {onNext && <Button type="button" variant={retryPrimary ? 'outline' : 'default'} onClick={onNext}>{nextLabel}<ArrowRight size={16} /></Button>}</div>
     </footer>

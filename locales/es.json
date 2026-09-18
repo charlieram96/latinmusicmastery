@@ -2290,8 +2290,14 @@
         "yourTurn": "Ahora es tu turno",
         "yourTurnHint": "Toca siguiendo la pista — se calificará tu precisión rítmica.",
         "watchAgain": "Ver de nuevo",
+        "watchTeacher": "Ver al profesor",
+        "watchTeacherAgain": "Ver al profesor de nuevo",
+        "demoFinished": "Esa fue la toma del profesor",
+        "demoFinishedHint": "¿Listo para intentarlo? También puedes verla de nuevo primero.",
+        "closeOverlay": "Cerrar",
         "playAlongWith": "Tocar junto con",
-        "tracksHint": "Las pistas seleccionadas suenan en sincronía con las notas mientras se te califica.",
+        "tracksOn": "{on} de {total} activas",
+        "tracksHint": "Silencia una pista o ajusta su nivel. Los cambios se aplican mientras tocas.",
         "preparing": "Preparando la prueba…"
       }
     }

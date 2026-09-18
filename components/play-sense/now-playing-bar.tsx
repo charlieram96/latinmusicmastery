@@ -12,8 +12,11 @@ import { GRADE_LABELS, scaleIn, comboFire, GRADE_GLOW } from '@/lib/play-sense/a
 import { slideUp } from '@/lib/play-sense/animations'
 import type { AudioMode } from '@/hooks/use-exercise-session'
 import { nextInputMode } from '@/lib/play-sense/input-modes'
+import { sessionShortcut } from '@/lib/play-sense/session-shortcuts'
 import {
+  Pause,
   Play,
+  RotateCcw,
   Square,
   Settings2,
   Loader2,
@@ -48,6 +51,9 @@ interface NowPlayingBarProps {
   lastHitGrade: string | null
   onStart: () => void
   onStop: () => void
+  onPause?: () => void
+  onResume?: () => void
+  onRestart?: () => void
   onCalibrate: () => void
   onTestMic: () => void
   onStopTestMic: () => void
@@ -143,6 +149,9 @@ export function NowPlayingBar({
   lastHitGrade,
   onStart,
   onStop,
+  onPause,
+  onResume,
+  onRestart,
   onCalibrate,
   onTestMic,
   onStopTestMic,
@@ -151,8 +160,26 @@ export function NowPlayingBar({
 }: NowPlayingBarProps) {
   const totalDuration = getExerciseDuration(exercise)
   const elapsed = playheadProgress * totalDuration
-  const isActive = sessionState === 'playing' || sessionState === 'countdown'
+  const isActive = sessionState === 'playing' || sessionState === 'countdown' || sessionState === 'paused'
   const isPlaying = sessionState === 'playing'
+  // The attempt is under way: the playhead is meaningful and can be paused,
+  // resumed or restarted.
+  const inProgress = sessionState === 'playing' || sessionState === 'paused'
+
+  // Space pauses/resumes, R restarts — see sessionShortcut for what is ignored.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
+      const action = sessionShortcut(event, sessionState)
+      if (!action) return
+      const handler = action === 'pause' ? onPause : action === 'resume' ? onResume : onRestart
+      if (!handler) return
+      event.preventDefault()
+      handler()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [sessionState, onPause, onResume, onRestart])
 
   const comboColor = isPlaying && currentCombo >= 10
     ? 'text-orange-400'
@@ -175,12 +202,12 @@ export function NowPlayingBar({
           className="h-full rounded-r-full"
           style={{
             background: 'linear-gradient(90deg, hsl(30,85%,55%), hsl(14,52%,53%), hsl(38,58%,58%))',
-            width: `${(sessionState === 'playing' ? playheadProgress : 0) * 100}%`,
+            width: `${(inProgress ? playheadProgress : 0) * 100}%`,
             boxShadow: sessionState === 'playing' ? '0 2px 8px hsl(30,85%,55%,0.3)' : 'none',
           }}
           transition={{ duration: 0.1 }}
         />
-        {sessionState === 'playing' && (
+        {inProgress && (
           <div
             className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_8px_hsla(30,85%,55%,0.8)] opacity-0 group-hover:opacity-100 transition-opacity"
             style={{ left: `${playheadProgress * 100}%`, transform: 'translate(-50%, -50%)' }}
@@ -195,8 +222,8 @@ export function NowPlayingBar({
         <div data-transport-panel="primary" className="shrink-0 px-4 py-3 flex flex-col gap-2.5 sm:w-[300px] md:w-[340px]">
           {/* Top row: Play button + song info */}
           <div className="flex items-center gap-4">
-            {/* Play/Stop button */}
-            <div className="shrink-0">
+            {/* Play / Pause / Resume, with Restart and Stop beside them once the attempt is under way */}
+            <div className="flex shrink-0 items-center gap-1.5">
               {sessionState === 'selecting' && (
                 <Button
                   onClick={onStart}
@@ -218,6 +245,7 @@ export function NowPlayingBar({
                   size="sm"
                   disabled
                   className="border-border text-muted-foreground rounded-full h-12 w-12 p-0"
+                  aria-label="Counting in"
                 >
                   <Loader2 className="w-5 h-5 animate-spin" />
                 </Button>
@@ -225,11 +253,51 @@ export function NowPlayingBar({
 
               {sessionState === 'playing' && (
                 <Button
-                  onClick={onStop}
+                  onClick={onPause ?? onStop}
                   size="sm"
                   className="bg-secondary hover:bg-secondary/80 text-foreground border-0 rounded-full h-12 w-12 p-0"
+                  aria-label={onPause ? 'Pause' : 'Stop'}
+                  title={onPause ? 'Pause (Space)' : 'Stop'}
                 >
-                  <Square className="w-4 h-4" />
+                  {onPause ? <Pause className="w-5 h-5" /> : <Square className="w-4 h-4" />}
+                </Button>
+              )}
+
+              {sessionState === 'paused' && (
+                <Button
+                  onClick={onResume}
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 rounded-full h-12 w-12 p-0 shadow-lg shadow-primary/30"
+                  aria-label="Resume"
+                  title="Resume (Space)"
+                >
+                  <Play className="w-5 h-5 ml-0.5" />
+                </Button>
+              )}
+
+              {isActive && onRestart && (
+                <Button
+                  onClick={onRestart}
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 rounded-full p-0 text-muted-foreground hover:text-foreground"
+                  aria-label="Restart"
+                  title="Start over with a fresh count-in (R)"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </Button>
+              )}
+
+              {inProgress && onPause && (
+                <Button
+                  onClick={onStop}
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 rounded-full p-0 text-muted-foreground hover:text-foreground"
+                  aria-label="Stop and see results"
+                  title="Stop and see results"
+                >
+                  <Square className="w-3.5 h-3.5" />
                 </Button>
               )}
             </div>
@@ -246,7 +314,7 @@ export function NowPlayingBar({
                 <span className="text-[10px] text-muted-foreground">·</span>
                 <span className="text-[10px] text-muted-foreground font-mono">{exercise.bpm} BPM</span>
               </div>
-              {sessionState === 'playing' && (
+              {inProgress && (
                 <span className="text-[10px] font-mono text-muted-foreground/70 tabular-nums mt-0.5 block">
                   {formatTime(elapsed)} / {formatTime(totalDuration)}
                 </span>
@@ -405,7 +473,7 @@ export function NowPlayingBar({
           {/* Audio mode indicator */}
           {audioMode && (
             <button
-              disabled={sessionState === 'playing' || sessionState === 'countdown'}
+              disabled={isActive}
               onClick={() => {
                 onAudioModeChange(nextInputMode(exercise.instrument, audioMode))
               }}

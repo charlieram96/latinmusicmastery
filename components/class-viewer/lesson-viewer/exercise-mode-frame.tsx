@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import Image from 'next/image'
 import { Eye, Maximize2, Minimize2, Music2, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/components/language-provider'
 import { lessonExerciseHeight } from '@/lib/playsense-studio/lesson-viewport'
 import './exercise-mode.css'
 
@@ -16,6 +17,7 @@ export function ExerciseModeFrame({ title, hasVideo, hasScore, preview, onWatchD
   onWatchDemo?: () => void
   children: ReactNode
 }) {
+  const { t } = useTranslation()
   const [immersive, setImmersive] = useState(true)
   const [showVideo, setShowVideo] = useState(true)
   const [showScore, setShowScore] = useState(true)
@@ -89,7 +91,7 @@ export function ExerciseModeFrame({ title, hasVideo, hasScore, preview, onWatchD
       <div className="ps-exercise-view-controls" role="group" aria-label="Exercise view">
         {hasVideo && <Button type="button" variant="ghost" size="sm" onClick={() => setShowVideo(value => !value)} aria-pressed={showVideo} aria-label="Show instructor video"><Video size={16} /><span>Video</span></Button>}
         {hasScore && <Button type="button" variant="ghost" size="sm" onClick={() => setShowScore(value => !value)} aria-pressed={showScore} aria-label="Show musical score"><Music2 size={16} /><span>Score</span></Button>}
-        {onWatchDemo && <Button type="button" variant="ghost" size="sm" className="ps-exercise-watch" onClick={onWatchDemo} aria-label="Watch demo"><Eye size={16} /><span>Watch demo</span></Button>}
+        {onWatchDemo && <Button type="button" variant="ghost" size="sm" className="ps-exercise-watch" onClick={onWatchDemo} aria-label={t('dashboard.classViewer.exercise.watchTeacher')}><Eye size={16} /><span>{t('dashboard.classViewer.exercise.watchTeacher')}</span></Button>}
         <Button ref={modeButton} type="button" variant="outline" size="sm" className="ps-exercise-mode-toggle" onClick={toggleMode} aria-label={immersive ? 'Exit exercise mode' : 'Enter exercise mode'} title={immersive ? 'Return to lesson view (Esc)' : 'Enter immersive exercise mode'}>
           {immersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<span>{immersive ? 'Lesson view' : 'Exercise mode'}</span>{immersive && <kbd>esc</kbd>}
         </Button>

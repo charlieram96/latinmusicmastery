@@ -5,7 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ExerciseDefinition, OnsetEvent } from '@/lib/play-sense/types'
 
 const mocks = vi.hoisted(() => {
-  const context = { currentTime: 0, state: 'running' }
+  const context = {
+    currentTime: 0, state: 'running',
+    suspend: vi.fn(async () => { context.state = 'suspended' }),
+    resume: vi.fn(async () => { context.state = 'running' }),
+  }
   const source = () => ({
     isListening: true, hasPermission: true, error: null, inputLevel: 0,
     recentOnsets: [] as OnsetEvent[], startListening: vi.fn(async () => context),
@@ -111,5 +115,47 @@ describe('exercise session lifecycle', () => {
     await act(async () => session.selectExercise(exercise))
     await act(async () => { await Promise.all([session.startExercise(), session.startExercise()]) })
     expect(mocks.metronome.startMetronome).toHaveBeenCalledOnce()
+  })
+
+  it('pauses by suspending the shared clock and resumes without a jump', async () => {
+    await begin()
+    mocks.context.currentTime = 3
+    await act(async () => { vi.advanceTimersByTime(50) })
+    const progressBefore = session.playheadProgress
+    expect(progressBefore).toBeGreaterThan(0)
+    await act(async () => { session.pauseExercise() })
+    expect(session.sessionState).toBe('paused')
+    expect(mocks.context.suspend).toHaveBeenCalledOnce()
+    // A suspended context's clock does not advance, so nothing moves.
+    await act(async () => { vi.advanceTimersByTime(200) })
+    expect(session.playheadProgress).toBe(progressBefore)
+    expect(session.getElapsedSeconds()).toBe(1)
+    await act(async () => { session.resumeExercise() })
+    expect(session.sessionState).toBe('playing')
+    expect(mocks.context.resume).toHaveBeenCalledOnce()
+    mocks.context.currentTime = 3.5
+    await act(async () => { vi.advanceTimersByTime(50) })
+    expect(session.playheadProgress).toBeGreaterThan(progressBefore)
+  })
+  it('restarts from playing or paused with a fresh count-in and no results', async () => {
+    await begin()
+    mocks.context.currentTime = 3
+    await act(async () => { vi.advanceTimersByTime(50) })
+    const stopsBefore = mocks.midi.stopListening.mock.calls.length
+    await act(async () => { await session.restartExercise() })
+    expect(session.sessionState).toBe('countdown')
+    expect(session.playheadProgress).toBe(0)
+    expect(session.attemptStats).toBeNull()
+    expect(mocks.metronome.startMetronome).toHaveBeenCalledTimes(2)
+    expect(mocks.backing.startPlayback).toHaveBeenCalledTimes(2)
+    expect(mocks.midi.stopListening.mock.calls.length).toBe(stopsBefore)
+    mocks.context.currentTime = 2
+    await act(async () => { vi.advanceTimersByTime(30) })
+    expect(session.sessionState).toBe('playing')
+    await act(async () => { session.pauseExercise() })
+    await act(async () => { await session.restartExercise() })
+    expect(mocks.context.resume).toHaveBeenCalledOnce()
+    expect(session.sessionState).toBe('countdown')
+    expect(mocks.metronome.startMetronome).toHaveBeenCalledTimes(3)
   })
 })

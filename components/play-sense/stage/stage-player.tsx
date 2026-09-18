@@ -13,9 +13,11 @@ import {
   Mic,
   Music2,
   Square,
+  Pause,
   Piano,
   Pin,
   Play,
+  RotateCcw,
   Settings2,
   SkipBack,
   SkipForward,
@@ -42,6 +44,7 @@ import { CalibrationWizard } from '../calibration-wizard'
 import { PerformanceResultsDialog } from '../performance-results'
 import { PerformanceHud } from '../performance-hud'
 import { formatTime } from './stage-ui'
+import { sessionShortcut } from '@/lib/play-sense/session-shortcuts'
 
 interface StagePlayerProps {
   exercises: ExerciseDefinition[]
@@ -88,10 +91,12 @@ export function StagePlayer({ exercises, preview = false }: StagePlayerProps) {
   const prevEventCount = useRef(0)
 
   const isPlaying = session.sessionState === 'playing'
+  const isPaused = session.sessionState === 'paused'
   const isActive =
     session.sessionState === 'selecting' ||
     session.sessionState === 'countdown' ||
-    session.sessionState === 'playing'
+    session.sessionState === 'playing' ||
+    session.sessionState === 'paused'
 
   const exercise = session.exercise
   const activeIndex = exercise ? allExercises.findIndex((e) => e.id === exercise.id) : -1
@@ -161,9 +166,27 @@ export function StagePlayer({ exercises, preview = false }: StagePlayerProps) {
     session.selectExercise(allExercises[i])
   }
 
+  // Space pauses/resumes, R restarts — matching the lesson transport bar.
+  const { sessionState: shortcutState, pauseExercise, resumeExercise, restartExercise } = session
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
+      const action = sessionShortcut(event, shortcutState)
+      if (!action) return
+      event.preventDefault()
+      if (action === 'pause') pauseExercise()
+      else if (action === 'resume') resumeExercise()
+      else void restartExercise()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [shortcutState, pauseExercise, resumeExercise, restartExercise])
+
   const onPlay = () => {
     if (session.sessionState === 'playing') {
-      session.stopExercise()
+      session.pauseExercise()
+    } else if (session.sessionState === 'paused') {
+      session.resumeExercise()
     } else if (session.sessionState === 'selecting' && !showAudioModePrompt) {
       setPinned(false)
       session.startExercise()
@@ -361,12 +384,13 @@ export function StagePlayer({ exercises, preview = false }: StagePlayerProps) {
                 style={{ width: 46, height: 46 }}
                 onClick={onPlay}
                 disabled={session.sessionState === 'countdown' || showAudioModePrompt || session.backingTrackLoading}
-                aria-label={isPlaying ? 'Stop' : 'Play'}
+                aria-label={isPlaying ? 'Pause' : isPaused ? 'Resume' : 'Play'}
+                title={isPlaying ? 'Pause (Space)' : isPaused ? 'Resume (Space)' : 'Play'}
               >
                 {session.sessionState === 'countdown' || session.backingTrackLoading ? (
                   <Loader2 size={20} className="animate-spin" />
                 ) : isPlaying ? (
-                  <Square size={18} fill="currentColor" />
+                  <Pause size={18} fill="currentColor" />
                 ) : (
                   <Play size={20} fill="currentColor" />
                 )}
@@ -374,6 +398,16 @@ export function StagePlayer({ exercises, preview = false }: StagePlayerProps) {
               <button className="stage-nav" onClick={goNext} title="Next">
                 <SkipForward size={15} />
               </button>
+              {(isPlaying || isPaused || session.sessionState === 'countdown') && (
+                <button className="stage-nav" onClick={() => void session.restartExercise()} aria-label="Restart" title="Start over with a fresh count-in (R)">
+                  <RotateCcw size={15} />
+                </button>
+              )}
+              {(isPlaying || isPaused) && (
+                <button className="stage-nav" onClick={session.stopExercise} aria-label="Stop and see results" title="Stop and see results">
+                  <Square size={13} fill="currentColor" />
+                </button>
+              )}
             </div>
             <div className="np">
               <div className="t">{exercise.title}</div>
@@ -385,8 +419,8 @@ export function StagePlayer({ exercises, preview = false }: StagePlayerProps) {
             <div className="sv-scrub">
               <span className="time">{formatTime(elapsed)}</span>
               <div className="track">
-                <div className="fill" style={{ width: `${(isPlaying ? session.playheadProgress : 0) * 100}%` }}>
-                  {isPlaying && <span className="knob" />}
+                <div className="fill" style={{ width: `${(isPlaying || isPaused ? session.playheadProgress : 0) * 100}%` }}>
+                  {(isPlaying || isPaused) && <span className="knob" />}
                 </div>
               </div>
               <span className="time">{formatTime(totalDuration)}</span>

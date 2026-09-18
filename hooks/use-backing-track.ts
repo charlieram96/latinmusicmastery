@@ -1,6 +1,10 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { effectiveBackingGain, type BackingMix } from '@/lib/play-sense/backing-mix'
+
+/** Short enough to feel immediate, long enough not to click. */
+const GAIN_RAMP_SECONDS = 0.01
 
 type AudioMode = 'headphones' | 'speaker-safe'
 
@@ -33,6 +37,9 @@ interface UseBackingTrackOptions {
   /** @deprecated Legacy URL list; treated as unplaced, untrimmed tracks at t0. */
   audioUrls?: string[]
   audioMode?: AudioMode
+  /** The student's own level/mute per track id, on top of the authored gain.
+   *  Changing it while playing ramps the running nodes; nothing is rescheduled. */
+  mix?: BackingMix
   /** Length of one loop iteration, so clips repeat with a looping exercise. */
   loopDurationSeconds?: number
   loopCount?: number
@@ -59,6 +66,7 @@ export function useBackingTrack({
   tracks,
   audioUrls,
   audioMode,
+  mix,
   loopDurationSeconds,
   loopCount = 1,
 }: UseBackingTrackOptions): UseBackingTrackResult {
@@ -69,6 +77,11 @@ export function useBackingTrack({
   const audioBuffersRef = useRef<Map<string, AudioBuffer>>(new Map())
   const sourceNodesRef = useRef<AudioBufferSourceNode[]>([])
   const gainNodeRef = useRef<GainNode | null>(null)
+  // Per-track level nodes of the running playback, so a mix change can reach them.
+  const trackGainsRef = useRef<Map<string, { node: GainNode; authored: number | undefined }>>(new Map())
+  const contextRef = useRef<AudioContext | null>(null)
+  const mixRef = useRef<BackingMix | undefined>(mix)
+  mixRef.current = mix
 
   const placed: PlacedBackingTrack[] = tracks ?? (audioUrls ?? []).map(unplaced)
 
@@ -156,6 +169,8 @@ export function useBackingTrack({
     gainNode.gain.value = audioMode === 'speaker-safe' ? 0.5 : 1.0
     gainNode.connect(audioContext.destination)
     gainNodeRef.current = gainNode
+    contextRef.current = audioContext
+    trackGainsRef.current = new Map()
 
     const { loopDurationSeconds: loopLength, loopCount: loops } = loopRef.current
     const iterations = loopLength && loops && loops > 1 ? loops : 1
@@ -170,8 +185,9 @@ export function useBackingTrack({
 
       // One level node per track, shared across that track's loop iterations.
       const trackGain = audioContext.createGain()
-      trackGain.gain.value = Math.min(1, Math.max(0, track.gain ?? 1))
+      trackGain.gain.value = effectiveBackingGain(track.gain, mixRef.current?.[track.id])
       trackGain.connect(gainNode)
+      trackGainsRef.current.set(track.id, { node: trackGain, authored: track.gain })
 
       for (let loop = 0; loop < iterations; loop++) {
         const loopOffset = loop * (loopLength ?? 0)
@@ -207,7 +223,19 @@ export function useBackingTrack({
       gainNodeRef.current.disconnect()
       gainNodeRef.current = null
     }
+    trackGainsRef.current = new Map()
+    contextRef.current = null
   }, [])
+
+  // Gain only — never reschedule. A muted track keeps running silently, so
+  // unmuting snaps back in phase instead of re-cueing from a new offset.
+  useEffect(() => {
+    const ctx = contextRef.current
+    if (!ctx) return
+    for (const [id, { node, authored }] of trackGainsRef.current) {
+      node.gain.setTargetAtTime(effectiveBackingGain(authored, mix?.[id]), ctx.currentTime, GAIN_RAMP_SECONDS)
+    }
+  }, [mix])
 
   // Cleanup on unmount
   useEffect(() => {

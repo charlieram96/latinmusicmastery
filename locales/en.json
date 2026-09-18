@@ -2290,8 +2290,14 @@
         "yourTurn": "Now it's your turn",
         "yourTurnHint": "Play along with the highway — you'll be graded on your timing.",
         "watchAgain": "Watch again",
+        "watchTeacher": "Watch teacher",
+        "watchTeacherAgain": "Watch teacher again",
+        "demoFinished": "That's the teacher's take",
+        "demoFinishedHint": "Ready to try it yourself? You can also watch it again first.",
+        "closeOverlay": "Close",
         "playAlongWith": "Play along with",
-        "tracksHint": "Selected tracks play in sync with the notes while you're graded.",
+        "tracksOn": "{on} of {total} on",
+        "tracksHint": "Mute a track or set its level. Changes apply while you play.",
         "preparing": "Preparing the test…"
       }
     }
