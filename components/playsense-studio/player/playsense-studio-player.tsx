@@ -131,6 +131,10 @@ export interface PlaysenseStudioPlayerProps {
   layout?: 'stack' | 'split';
   /** Fired when the demo video plays to its end. */
   onEnded?: () => void;
+  /** Drawn over the player's own box (the workspace in the split layout, the
+   *  video in the stack layout), so an `absolute inset-0` child covers exactly
+   *  what the student is watching and nothing below it. */
+  overlay?: ReactNode;
   /** WebVTT subtitle tracks for the demo video (rendered by VideoStage). */
   subtitles?: SubtitleTrackDef[];
   /** UI locale — the matching track starts showing; user can switch/turn off. */
@@ -158,6 +162,7 @@ export function PlaysenseStudioPlayer({
   readOnly,
   layout = 'stack',
   onEnded,
+  overlay,
   subtitles,
   defaultSubtitleLang,
   trimInSeconds,
@@ -646,7 +651,7 @@ export function PlaysenseStudioPlayer({
       <div className="space-y-4">
         {/* Break out of the lesson page's px-4/md:px-8 padding for an
             edge-to-edge, viewport-filling workspace. */}
-        <div className="-mx-4 md:-mx-8">
+        <div className="relative -mx-4 md:-mx-8">
           <SplitWorkspace
             frame="bleed"
             visiblePane={lessonView === 'both' ? 'both' : lessonView === 'video' ? 'primary' : 'secondary'}
@@ -717,6 +722,7 @@ export function PlaysenseStudioPlayer({
               </>
             }
           />
+          {overlay}
         </div>
 
         {clipsEl}
@@ -726,7 +732,10 @@ export function PlaysenseStudioPlayer({
 
   return (
     <div className="space-y-4">
-      {videoEl}
+      <div className="relative">
+        {videoEl}
+        {overlay}
+      </div>
       {transportEl}
       {tracksEl}
       <div className="relative bg-card border border-border rounded-lg p-4 overflow-hidden space-y-3">

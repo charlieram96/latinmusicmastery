@@ -506,6 +506,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // Closing-bar state of the target measure — drives the Double bar toggle.
   const targetMeasure = activeTrack?.measures[targetMeasureIndex];
   const targetIsRepeatEnd = !!targetMeasure && isRepeatEnd(targetMeasure);
+  // The repeat group under the selection, if any — the panel offers Unlink
+  // for this one group instead of listing every group in the section.
+  const targetRepeatGroup = activeTrack
+    ? repeatGroups(activeTrack).find(g => targetMeasureIndex >= g.start && targetMeasureIndex < g.start + g.length * g.count) ?? null
+    : null;
   const targetHasFinalBar = !!activeTrack && !targetIsRepeatEnd && hasFinalBarline(activeTrack.measures, targetMeasureIndex);
 
   // Capacity of the target measure for its time signature — drives the readout
@@ -983,15 +988,15 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               setSelected(null);
               setMeasureRange({ anchor: repeatStart - 1, focus: repeatStart - 1 + length * repeatCount - 1 });
             }}>Apply repeat</button>
-          <span className="text-muted-foreground">All passes appear here for syncing. Students see repeat dots.</span>
-          {repeatGroups(activeTrack).map(group => (
-            <div key={group.id} className="flex w-full items-center gap-2">
-              <span>Measures {group.start + 1}–{group.start + group.length} · {group.count} plays</span>
-              <button type="button" className="st-chip" onClick={() => dispatch({ type: 'unlink-repeat', trackIndex: activeTrackIndex, id: group.id })}>
+          <span className="text-muted-foreground">All passes stay written out here for syncing; students see repeat signs.</span>
+          {targetRepeatGroup && (
+            <div className="flex w-full items-center gap-2">
+              <span>Selected: measures {targetRepeatGroup.start + 1}–{targetRepeatGroup.start + targetRepeatGroup.length} · {targetRepeatGroup.count} plays</span>
+              <button type="button" className="st-chip" onClick={() => dispatch({ type: 'unlink-repeat', trackIndex: activeTrackIndex, id: targetRepeatGroup.id })}>
                 Unlink copies
               </button>
             </div>
-          ))}
+          )}
         </div>
       )}
 

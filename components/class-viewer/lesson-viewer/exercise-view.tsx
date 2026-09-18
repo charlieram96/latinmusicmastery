@@ -87,57 +87,54 @@ export function ExerciseView({
     // The authored WATCH part (sections synced to the demo) when it exists;
     // otherwise fall back to the graded score over the video.
     const hasSections = !!sections && sections.length > 0
+    const watched = hasSections
+      ? { score: sections[0].score, tracks: sections[0].tracks, activeTimeMap: sections[0].activeTimeMap, sections }
+      : { score, tracks, activeTimeMap, sections: undefined }
+
+    // Demo finished → big centered CTA. The player draws it over its own box
+    // (the full-bleed workspace in the split layout), which is the only way
+    // to centre it on what the student was watching rather than on the
+    // player plus the clips panel beneath it.
+    const turnCta = (
+      <AnimatePresence>
+        {videoEnded && (
+          <motion.div
+            key="turn-cta"
+            data-testid="turn-cta"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-[2px]"
+          >
+            <motion.button
+              onClick={goToPlay}
+              initial={{ scale: 0.92 }}
+              animate={{ scale: [1, 1.04, 1] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+              className="inline-flex items-center gap-2.5 rounded-2xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground shadow-2xl ring-4 ring-primary/30 transition hover:opacity-90"
+            >
+              <Gamepad2 className="h-5 w-5" />
+              {t('dashboard.classViewer.exercise.yourTurn')}
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    )
+
     return (
       <div className="space-y-4">
-        <div className="relative">
-          {hasSections ? (
-            <PlaysenseStudioPlayer
-              classItemId={classItemId}
-              videoUrl={videoUrl}
-              score={sections[0].score}
-              tracks={sections[0].tracks}
-              activeTimeMap={sections[0].activeTimeMap}
-              sections={sections}
-              layout={playerLayout}
-              onEnded={() => setVideoEnded(true)}
-            />
-          ) : (
-            <PlaysenseStudioPlayer
-              classItemId={classItemId}
-              videoUrl={videoUrl}
-              score={score}
-              tracks={tracks}
-              activeTimeMap={activeTimeMap}
-              layout={playerLayout}
-              onEnded={() => setVideoEnded(true)}
-            />
-          )}
-
-          {/* Demo finished → big centered CTA over the player. */}
-          <AnimatePresence>
-            {videoEnded && (
-              <motion.div
-                key="turn-cta"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-black/60 backdrop-blur-[2px]"
-              >
-                <motion.button
-                  onClick={goToPlay}
-                  initial={{ scale: 0.92 }}
-                  animate={{ scale: [1, 1.04, 1] }}
-                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-                  className="inline-flex items-center gap-2.5 rounded-2xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground shadow-2xl ring-4 ring-primary/30 transition hover:opacity-90"
-                >
-                  <Gamepad2 className="h-5 w-5" />
-                  {t('dashboard.classViewer.exercise.yourTurn')}
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <PlaysenseStudioPlayer
+          classItemId={classItemId}
+          videoUrl={videoUrl}
+          score={watched.score}
+          tracks={watched.tracks}
+          activeTimeMap={watched.activeTimeMap}
+          sections={watched.sections}
+          layout={playerLayout}
+          onEnded={() => setVideoEnded(true)}
+          overlay={turnCta}
+        />
 
         <div className="flex justify-end">
           <button
