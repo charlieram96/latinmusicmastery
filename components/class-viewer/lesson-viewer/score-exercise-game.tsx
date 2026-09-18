@@ -25,9 +25,9 @@ import { PlaysenseTestPanel } from '@/components/play-sense/playsense-test-panel
 import { saveAttempt } from '@/app/actions/play-sense'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, ChevronDown } from 'lucide-react'
+import { ArrowLeft, ChevronDown, SlidersHorizontal, Volume2, VolumeX } from 'lucide-react'
+import { DEFAULT_MIX_ENTRY, readStoredBackingMix, writeStoredBackingMix, type BackingMix } from '@/lib/play-sense/backing-mix'
 import { useTranslation } from '@/components/language-provider'
 import { ExerciseModeFrame } from './exercise-mode-frame'
 import { DEFAULT_EXERCISE_LAYOUT, ExerciseWorkspace } from './exercise-workspace'
@@ -86,14 +86,20 @@ function ScoreExerciseSession({
   const { t } = useTranslation()
   const completePerformance = useLessonActivity('performance')
   const [workspaceLayout, setWorkspaceLayout] = useState(DEFAULT_EXERCISE_LAYOUT)
-  // Which backing tracks the student wants to hear — all of them by default.
-  const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
-    () => new Set((backingTracks ?? []).map((t) => t.id))
-  )
-  const selectedTracks = useMemo(
-    () => (backingTracks ?? []).filter((t) => selectedTrackIds.has(t.id)),
-    [backingTracks, selectedTrackIds]
-  )
+  // The student's mix over the backing tracks: every track plays, each at the
+  // level the student set (on top of the authored level) or muted. Remembered
+  // per viewer; hydrated after mount so the server and first client render agree.
+  const [mix, setMix] = useState<BackingMix>({})
+  useEffect(() => { setMix(readStoredBackingMix()) }, [])
+  const updateMix = (id: string, patch: Partial<typeof DEFAULT_MIX_ENTRY>) => {
+    setMix((prev) => {
+      const next = { ...prev, [id]: { ...DEFAULT_MIX_ENTRY, ...prev[id], ...patch } }
+      writeStoredBackingMix(next)
+      return next
+    })
+  }
+  const entryFor = (id: string) => mix[id] ?? DEFAULT_MIX_ENTRY
+  const tracksOn = (backingTracks ?? []).filter((track) => !entryFor(track.id).muted).length
 
   // --- Optional exercise video, synced to the engine clock ---
   // Muted visual reference: seek to the start on countdown, play during
@@ -118,7 +124,7 @@ function ScoreExerciseSession({
   // that keeps time-map knowledge in exactly one place.
   const placedTracks = useMemo(
     () =>
-      selectedTracks.map((track) => ({
+      (backingTracks ?? []).map((track) => ({
         id: track.id,
         audioUrl: track.audioUrl,
         startSeconds: timelineToEngineSeconds(
@@ -131,12 +137,12 @@ function ScoreExerciseSession({
         trimOutSeconds: track.trimOutSeconds,
         gain: track.gain,
       })),
-    [selectedTracks, videoMap, exercise.bpm, exercise.timeSignature, exerciseVideo]
+    [backingTracks, videoMap, exercise.bpm, exercise.timeSignature, exerciseVideo]
   )
 
   // An explicit (possibly empty) selection only when backing tracks are
   // authored; otherwise the legacy path (exercise.audioUrl) stays in charge.
-  const liveSession = useExerciseSession(backingTracks ? { backingTracks: placedTracks } : {})
+  const liveSession = useExerciseSession(backingTracks ? { backingTracks: placedTracks, backingMix: mix } : {})
   const demoExercises = useMemo(() => [exercise], [exercise])
   const demoSession = useStageDemoSession(demoExercises, preview)
   const session = preview ? { ...liveSession, ...demoSession.overrides } : liveSession
@@ -179,15 +185,6 @@ function ScoreExerciseSession({
     videoMap,
     exercise.loopCount,
   ])
-
-  const toggleTrack = (id: string) => {
-    setSelectedTrackIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
 
   // ExerciseScore reports the active track's single-pass duration. Its side
   // layout combines this local clock with the pass index to read continuously
@@ -240,7 +237,8 @@ function ScoreExerciseSession({
   const isActive =
     session.sessionState === 'selecting' ||
     session.sessionState === 'countdown' ||
-    session.sessionState === 'playing'
+    session.sessionState === 'playing' ||
+    session.sessionState === 'paused'
 
   const showCanvas = !!session.exercise && isActive
 
@@ -299,7 +297,7 @@ function ScoreExerciseSession({
   return (
     <div className="ps-lesson-game rounded-xl border border-border bg-card overflow-hidden flex flex-col">
       {isActive && (
-        <div className="ps-lesson-game-heading flex items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-2.5" data-has-tracks={session.sessionState === 'selecting' && !!backingTracks?.length}>
+        <div className="ps-lesson-game-heading flex items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-2.5" data-has-tracks={!!backingTracks?.length}>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground">{preview ? 'Lesson preview' : t('dashboard.classViewer.exercise.yourTurn')}</p>
             <p className="truncate text-xs text-muted-foreground">
@@ -308,37 +306,70 @@ function ScoreExerciseSession({
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            {/* Backing-track selection — compact popover, only before starting. */}
-            {session.sessionState === 'selecting' && backingTracks && backingTracks.length > 0 && (
+            {/* Backing-track mixer — a mute and a level per track, usable
+                before and during the attempt (changes ramp live). */}
+            {backingTracks && backingTracks.length > 0 && (
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-1.5">
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
                     {t('dashboard.classViewer.exercise.playAlongWith')}
-                    <Badge variant="secondary" className="ml-0.5">
-                      {selectedTrackIds.size}/{backingTracks.length}
+                    <Badge variant={tracksOn === 0 ? 'outline' : 'secondary'} className="ml-0.5 tabular-nums">
+                      {tracksOn}/{backingTracks.length}
                     </Badge>
                     <ChevronDown className="h-3.5 w-3.5 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="w-60 p-3">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t('dashboard.classViewer.exercise.playAlongWith')}
-                  </p>
-                  <div className="flex max-h-[260px] flex-col gap-0.5 overflow-y-auto">
-                    {backingTracks.map((t) => (
-                      <label
-                        key={t.id}
-                        className="flex cursor-pointer select-none items-center gap-2.5 rounded-md px-2 py-1.5 text-sm hover:bg-secondary/50"
-                      >
-                        <Checkbox
-                          checked={selectedTrackIds.has(t.id)}
-                          onCheckedChange={() => toggleTrack(t.id)}
-                        />
-                        <span className="flex-1">{t.label}</span>
-                      </label>
-                    ))}
+                <PopoverContent align="end" className="w-72 p-0">
+                  <div className="flex items-baseline justify-between border-b border-border px-3 py-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t('dashboard.classViewer.exercise.playAlongWith')}
+                    </p>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">
+                      {t('dashboard.classViewer.exercise.tracksOn', { on: tracksOn, total: backingTracks.length })}
+                    </span>
                   </div>
-                  <p className="mt-2 text-[11px] text-muted-foreground">
+                  <ul className="flex max-h-[280px] flex-col overflow-y-auto py-1">
+                    {backingTracks.map((track) => {
+                      const entry = entryFor(track.id)
+                      return (
+                        <li key={track.id} className={`flex items-center gap-2.5 px-3 py-2 ${entry.muted ? 'opacity-60' : ''}`}>
+                          <button
+                            type="button"
+                            onClick={() => updateMix(track.id, { muted: !entry.muted })}
+                            aria-pressed={!entry.muted}
+                            aria-label={`${entry.muted ? 'Unmute' : 'Mute'} ${track.label}`}
+                            title={entry.muted ? 'Unmute' : 'Mute'}
+                            className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
+                              entry.muted ? 'text-muted-foreground hover:bg-muted hover:text-foreground' : 'bg-primary/15 text-primary hover:bg-primary/25'
+                            }`}
+                          >
+                            {entry.muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                          </button>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-baseline justify-between gap-2">
+                              <span className="truncate text-sm font-medium text-foreground">{track.label}</span>
+                              <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                                {Math.round(entry.level * 100)}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              value={entry.level}
+                              disabled={entry.muted}
+                              onChange={(e) => updateMix(track.id, { level: Number(e.target.value) })}
+                              className="mt-1 h-1.5 w-full cursor-pointer accent-primary disabled:cursor-default"
+                              aria-label={`${track.label} level`}
+                            />
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  <p className="border-t border-border px-3 py-2 text-[11px] leading-snug text-muted-foreground">
                     {t('dashboard.classViewer.exercise.tracksHint')}
                   </p>
                 </PopoverContent>
@@ -350,7 +381,7 @@ function ScoreExerciseSession({
 
       <ExerciseWorkspace layout={workspaceLayout} onLayoutChange={setWorkspaceLayout} score={showCanvas && score && (
         <ExerciseScore score={score} currentMs={staffMs} getCurrentMs={getStaffMs}
-          playing={session.sessionState === 'playing'} pass={Math.floor(session.playheadProgress * loopCount) + 1}
+          playing={session.sessionState === 'playing' || session.sessionState === 'paused'} pass={Math.floor(session.playheadProgress * loopCount) + 1}
           getPass={() => Math.floor(Math.max(0, session.getElapsedSeconds()) / exerciseDurationSec * loopCount) + 1}
           passCount={loopCount} onDurationKnown={setStaffDurationMs}/>
       )}>
@@ -435,7 +466,7 @@ function ScoreExerciseSession({
               )}
             </AnimatePresence>
 
-            {session.sessionState === 'playing' && (
+            {(session.sessionState === 'playing' || session.sessionState === 'paused') && (
               <div className="ps-lesson-stage-title absolute left-5 top-[104px] z-20 flex flex-col gap-0.5 pointer-events-none">
                 <span className="text-xs font-semibold text-white/60 tracking-wide drop-shadow-sm">
                   {session.exercise.title}
@@ -482,6 +513,9 @@ function ScoreExerciseSession({
           lastHitGrade={session.lastHitGrade}
           onStart={session.startExercise}
           onStop={session.stopExercise}
+          onPause={session.pauseExercise}
+          onResume={session.resumeExercise}
+          onRestart={() => void session.restartExercise()}
           onCalibrate={session.startCalibration}
           onTestMic={session.testMic}
           onStopTestMic={session.stopTestMic}

@@ -107,7 +107,7 @@ export interface AttemptData extends AttemptStats {
   events: EventResult[]
 }
 
-export type SessionState = 'idle' | 'selecting' | 'calibrating' | 'countdown' | 'playing' | 'results'
+export type SessionState = 'idle' | 'selecting' | 'calibrating' | 'countdown' | 'playing' | 'paused' | 'results'
 
 export interface CalibrationData {
   latencyMs: number

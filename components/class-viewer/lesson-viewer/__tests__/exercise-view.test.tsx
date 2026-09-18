@@ -6,10 +6,11 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 // The player owns the box the "your turn" overlay must cover (its full-bleed
 // workspace), so the stub renders whatever overlay it is handed inside a
 // marked box and lets the test end the demo.
+const restartVideo = vi.fn()
 vi.mock('@/components/playsense-studio/player/playsense-studio-player', () => ({
-  PlaysenseStudioPlayer: (props: { overlay?: React.ReactNode; onEnded?: () => void }) => (
+  PlaysenseStudioPlayer: (props: { overlay?: React.ReactNode | ((ctx: { restart: () => void }) => React.ReactNode); onEnded?: () => void }) => (
     <div data-testid="player">
-      <div data-testid="player-box">{props.overlay}</div>
+      <div data-testid="player-box">{typeof props.overlay === 'function' ? props.overlay({ restart: restartVideo }) : props.overlay}</div>
       <button type="button" data-testid="end-demo" onClick={props.onEnded}>end</button>
     </div>
   ),
@@ -44,14 +45,42 @@ const score = { schemaVersion: 1, title: 'T', sourceFormat: 'native', initialTem
 const exercise = { id: 'x', title: 'x', bpm: 120, timeSignature: [4, 4], tracks: [], loopCount: 1 } as never
 
 const cta = () => host.querySelector('[data-testid="turn-cta"]')
+const endDemo = () => act(() => { host.querySelector<HTMLButtonElement>('[data-testid="end-demo"]')!.click() })
+const button = (label: string) => host.querySelector<HTMLButtonElement>(`[data-testid="turn-cta"] button[aria-label="${label}"], [data-testid="turn-cta"] button[data-action="${label}"]`)!
+
+function mount() {
+  act(() => { root.render(<ExerciseView classItemId="c" videoUrl="v.mp4" score={score} tracks={[]} activeTimeMap={null} exercise={exercise} playerLayout="split" />) })
+}
 
 it('shows the your-turn call to action inside the player box once the demo ends', () => {
-  act(() => { root.render(<ExerciseView classItemId="c" videoUrl="v.mp4" score={score} tracks={[]} activeTimeMap={null} exercise={exercise} playerLayout="split" />) })
+  mount()
   expect(cta()).toBeNull()
-  act(() => { host.querySelector<HTMLButtonElement>('[data-testid="end-demo"]')!.click() })
+  endDemo()
   const overlay = cta()
   expect(overlay).not.toBeNull()
   expect(overlay!.closest('[data-testid="player-box"]')).not.toBeNull()
-  act(() => { overlay!.querySelector('button')!.click() })
+  act(() => { button('your-turn').click() })
   expect(host.querySelector('[data-testid="game"]')).not.toBeNull()
+})
+
+it('can be closed with its button, by clicking the backdrop, and with Escape', () => {
+  mount()
+  endDemo()
+  act(() => { button('dashboard.classViewer.exercise.closeOverlay').click() })
+  expect(cta()).toBeNull()
+  endDemo()
+  act(() => { cta()!.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+  expect(cta()).toBeNull()
+  endDemo()
+  act(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })) })
+  expect(cta()).toBeNull()
+  expect(host.querySelector('[data-testid="game"]')).toBeNull()
+})
+
+it('offers to watch the teacher again, which restarts the video and closes', () => {
+  mount()
+  endDemo()
+  act(() => { button('watch-again').click() })
+  expect(restartVideo).toHaveBeenCalledOnce()
+  expect(cta()).toBeNull()
 })

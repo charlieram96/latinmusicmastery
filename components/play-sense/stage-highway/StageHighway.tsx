@@ -73,7 +73,7 @@ export function StageHighway(props: StageHighwayProps) {
         onError: message => { if (!disposed) setError(message) },
         readFrame: (): StageFrame => {
           const p = latest.current
-          const running = p.sessionState === 'playing' || p.sessionState === 'countdown'
+          const running = p.sessionState === 'playing' || p.sessionState === 'countdown' || p.sessionState === 'paused'
           return {
             elapsed: running ? (p.getElapsedSeconds?.() ?? p.playheadProgress * getExerciseDuration(p.exercise)) : -2,
             showNotes: true, playing: p.sessionState === 'playing',

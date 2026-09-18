@@ -136,8 +136,9 @@ export interface PlaysenseStudioPlayerProps {
   onEnded?: () => void;
   /** Drawn over the player's own box (the workspace in the split layout, the
    *  video in the stack layout), so an `absolute inset-0` child covers exactly
-   *  what the student is watching and nothing below it. */
-  overlay?: ReactNode;
+   *  what the student is watching and nothing below it. A function form gets
+   *  the player's own controls (e.g. to replay the video from the start). */
+  overlay?: ReactNode | ((ctx: PlayerOverlayContext) => ReactNode);
   /** WebVTT subtitle tracks for the demo video (rendered by VideoStage). */
   subtitles?: SubtitleTrackDef[];
   /** UI locale — the matching track starts showing; user can switch/turn off. */
@@ -153,6 +154,11 @@ export interface PlaysenseStudioPlayerProps {
 }
 
 const POSITION_SAVE_INTERVAL_MS = 5000;
+
+export interface PlayerOverlayContext {
+  /** Seek to the start of the usable video and play. */
+  restart: () => void;
+}
 
 export function PlaysenseStudioPlayer({
   classItemId,
@@ -176,6 +182,9 @@ export function PlaysenseStudioPlayer({
   const clock = useVideoTransportClock(videoRef, { onEnded });
 
   const trimStart = Math.max(0, trimInSeconds ?? 0);
+  const overlayEl = typeof overlay === 'function'
+    ? overlay({ restart: () => { clock.seek(trimStart); void clock.play()?.catch(() => {}); } })
+    : overlay;
   const trimEnd =
     trimOutSeconds != null && trimOutSeconds > trimStart ? trimOutSeconds : Infinity;
   const trimmed = trimStart > 0 || Number.isFinite(trimEnd);
@@ -736,7 +745,7 @@ export function PlaysenseStudioPlayer({
               </>
             }
           />
-          {overlay}
+          {overlayEl}
         </div>
 
         {clipsEl}
@@ -748,7 +757,7 @@ export function PlaysenseStudioPlayer({
     <div className="space-y-4">
       <div className="relative">
         {videoEl}
-        {overlay}
+        {overlayEl}
       </div>
       {transportEl}
       {tracksEl}

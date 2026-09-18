@@ -15,6 +15,7 @@ import { generateExpectedTimestamps, getExerciseDuration, getCountInDuration } f
 import { useOnsetDetection } from './use-onset-detection'
 import { useMetronome } from './use-metronome'
 import { useCalibration } from './use-calibration'
+import type { BackingMix } from '@/lib/play-sense/backing-mix'
 import { useBackingTrack, type PlacedBackingTrack } from './use-backing-track'
 import { usePlaysenseOnsets } from './use-playsense-onsets'
 import { useMidiOnsets } from './use-midi-onsets'
@@ -95,6 +96,12 @@ interface UseExerciseSessionResult {
   startCalibration: () => void
   startExercise: () => void
   stopExercise: () => void
+  /** Freeze the attempt in place: the shared AudioContext is suspended, so the
+   *  clock, click, backing tracks and input all stop together. */
+  pauseExercise: () => void
+  resumeExercise: () => void
+  /** Discard the attempt (no grading) and run a fresh count-in with the same setup. */
+  restartExercise: () => Promise<void>
   retry: () => void
   goToSelect: () => void
   setNoisyRoomMode: (enabled: boolean) => void
@@ -117,6 +124,8 @@ export interface UseExerciseSessionOptions {
    * seconds. Wins over `backingTrackUrls` when present.
    */
   backingTracks?: PlacedBackingTrack[]
+  /** The student's own level/mute per backing track id; applied live. */
+  backingMix?: BackingMix
 }
 
 export function useExerciseSession(options: UseExerciseSessionOptions = {}): UseExerciseSessionResult {
@@ -212,6 +221,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const backingTrack = useBackingTrack({
     tracks: options.backingTracks,
     audioUrls: options.backingTracks ? undefined : backingTrackUrls,
+    mix: options.backingMix,
     audioMode: backingTrackAudioMode,
     // Placed clips must repeat with the exercise, or a looping exercise would
     // hear them only on the first pass. loopCount is 1 in production today.
@@ -780,6 +790,51 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     finishExercise()
   }, [finishExercise])
 
+  // Pause = suspend the context. Every timestamp in this engine — the playhead,
+  // scheduled clicks, backing sources, onset times — is on that one clock, so
+  // suspending it freezes the attempt coherently and resuming needs no
+  // re-anchoring of exerciseStartTimeRef.
+  const pauseExercise = useCallback(() => {
+    if (sessionStateRef.current !== 'playing') return
+    sessionStateRef.current = 'paused'
+    setSessionState('paused')
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    void audioCtxRef.current?.suspend().catch(() => {})
+  }, [])
+
+  const resumeExercise = useCallback(() => {
+    if (sessionStateRef.current !== 'paused') return
+    sessionStateRef.current = 'playing'
+    setSessionState('playing')
+    void audioCtxRef.current?.resume().catch(() => {})
+    rafRef.current = requestAnimationFrame(updatePlayhead)
+  }, [updatePlayhead])
+
+  const restartExercise = useCallback(async () => {
+    const state = sessionStateRef.current
+    if (state !== 'countdown' && state !== 'playing' && state !== 'paused') return
+    // Abandon the attempt without grading it. The input source stays open so
+    // the new count-in starts on the same context without another permission
+    // round-trip.
+    sessionGenerationRef.current++
+    startingRef.current = false
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    rafRef.current = null
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
+    countdownIntervalRef.current = null
+    for (const timer of pendingPitchTimersRef.current) clearTimeout(timer)
+    pendingPitchTimersRef.current.clear()
+    metronome.stopMetronome()
+    backingTrack.stopPlayback()
+    if (state === 'paused') await audioCtxRef.current?.resume().catch(() => {})
+    sessionStateRef.current = 'selecting'
+    setPlayheadProgress(0)
+    await startExercise()
+  }, [metronome, backingTrack, startExercise])
+
   const retry = useCallback(() => {
     cancelSession()
     sessionStateRef.current = 'selecting'
@@ -857,6 +912,9 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     startCalibration: startCalibrationFlow,
     startExercise,
     stopExercise,
+    pauseExercise,
+    resumeExercise,
+    restartExercise,
     retry,
     goToSelect,
     setNoisyRoomMode,
