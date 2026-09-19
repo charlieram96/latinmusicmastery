@@ -4,7 +4,7 @@
 //
 // One component for both entry points: the empty-state setup (mode="fresh") and
 // the in-workshop "Replace score" button (mode="replace"). The flow is:
-//   choose file → recognize PDFs on the server / parse notation client-side →
+//   choose file → recognize PDFs on the server (Claude reads the pages) / parse notation client-side →
 //   review PDF recognition → if the file has multiple instrument parts,
 //   pick exactly ONE → attach (single-track) to the class item.
 //
@@ -28,6 +28,7 @@ import {
 import { attachScoreFromImport } from '@/app/actions/playsense-studio';
 import { parseMidi } from '@/lib/playsense-studio/parsers/midi';
 import { parseMusicXmlBuffer } from '@/lib/playsense-studio/parsers/musicxml';
+import { parseScoreDocument } from '@/components/playsense-studio/shared/score-model/serialization';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { MAX_PDF_BYTES, MAX_PDF_PAGES, parsePdfPages } from '@/lib/playsense-studio/pdf/policy.mjs';
 
@@ -162,19 +163,16 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
       if (bytes.length > MAX_PDF_BYTES) throw new Error('The selected pages exceed 4 MB. Choose fewer pages or compress the PDF.');
       if (controller.signal.aborted) return;
       const response = await fetch('/api/playsense/import-pdf', {
-        method: 'POST', headers: { 'Content-Type': 'application/pdf', 'X-Score-Percussion': String(percussion) },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/pdf', 'X-Score-Percussion': String(percussion), 'X-Score-Title': encodeURIComponent(stripExt(pdfFile.name)) },
         body: new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' }), signal: controller.signal,
       });
-      const result = await response.json().catch(() => null) as { error?: string; scores?: Array<{ filename: string; data: string }> } | null;
+      const result = await response.json().catch(() => null) as { error?: string; documents?: unknown[] } | null;
       if (!response.ok) throw new Error(result?.error ?? 'PDF recognition is unavailable. Please try again.');
-      if (!result?.scores?.length) throw new Error('No notation was found. Try a clearer PDF.');
-      const recognized: ScoreDocument[] = [];
-      for (const output of result.scores) {
-        const data = Uint8Array.from(atob(output.data), char => char.charCodeAt(0));
-        const score = await parseMusicXmlBuffer(data.buffer, output.filename, { title: stripExt(pdfFile.name) });
-        if (!score.tracks.length) throw new Error('A detected piece had no instrument parts. Try importing its pages separately.');
-        recognized.push({ ...score, sourceFormat: 'pdf' });
-      }
+      if (!result?.documents?.length) throw new Error('No notation was found. Try a clearer PDF.');
+      // The server already validated; parsing again keeps the client honest about the shape it renders.
+      const recognized: ScoreDocument[] = result.documents.map(document => ({ ...parseScoreDocument(document), sourceFormat: 'pdf' as const }));
+      if (recognized.some(score => !score.tracks.length)) throw new Error('A detected piece had no instrument parts. Try importing its pages separately.');
       if (generation !== generationRef.current) return;
       setPieces(recognized);
       setSelectedPiece(0);

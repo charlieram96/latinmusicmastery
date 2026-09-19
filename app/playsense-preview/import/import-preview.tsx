@@ -9,7 +9,7 @@ export function ImportPreview() {
   return <main className="mx-auto max-w-5xl space-y-6 px-6 py-12">
     <div><p className="text-xs font-medium uppercase tracking-widest text-primary">PlaySense Studio</p>
       <h1 className="mt-2 text-3xl font-semibold">Bring your sheet music to life</h1>
-      <p className="mt-3 max-w-xl text-sm text-muted-foreground">Import a printed PDF, review the recognized notation, and choose an instrument. This preview keeps your imported score in this browser only. PDF recognition requires an admin sign-in.</p></div>
+      <p className="mt-3 max-w-xl text-sm text-muted-foreground">Import a printed PDF, review the recognized notation, and choose an instrument. This preview keeps your imported score in this browser only. PDF recognition (Claude reads the pages) requires an admin sign-in and a configured API key.</p></div>
     <ScoreImportDialog classItemId="preview" mode="fresh"
       trigger={<button className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">Import a score</button>}
       onConfirm={async document => { setScore(document); return {}; }} onImported={() => {}} />
