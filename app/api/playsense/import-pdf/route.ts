@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { MAX_PDF_BYTES } from '@/lib/playsense-studio/pdf/policy.mjs';
-import { readBoundedBody, recognizePdf, RecognitionError } from '@/lib/playsense-studio/pdf/recognize.mjs';
+import { readBoundedBody, recognizePdf, RecognitionError } from '@/lib/playsense-studio/pdf/recognize';
 
 export const runtime = 'nodejs';
 export const maxDuration = 240;
@@ -18,7 +18,9 @@ export async function POST(request: Request) {
     }
     const bytes = await readBoundedBody(request.body, MAX_PDF_BYTES);
     const result = await recognizePdf(bytes, {
-      percussion: request.headers.get('x-score-percussion') === 'true', signal: request.signal,
+      percussion: request.headers.get('x-score-percussion') === 'true',
+      title: decodeURIComponent(request.headers.get('x-score-title') ?? ''),
+      signal: request.signal,
     });
     return Response.json(result, { headers });
   } catch (error) {
