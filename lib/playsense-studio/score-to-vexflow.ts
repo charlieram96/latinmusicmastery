@@ -322,7 +322,14 @@ export function extractTrackEvents(
     previousKeyFifths = measureKeyFifths;
 
     const memory = createAccidentalMemory(measureKeyFifths);
-    const twoVoices = measure.voices.length > 1;
+    const voice1Raw = measure.voices[0]?.events ?? [];
+    const voice2Raw = measure.voices[1]?.events ?? [];
+    const twoVoices = voice2Raw.length > 0;
+    // A voice with no events in this measure can't carry a tie into the next
+    // measure it does appear in — clear its cross-barline tie memory so a
+    // later reappearance isn't mistaken for a tied continuation.
+    if (voice1Raw.length === 0) tieCarry[1] = [];
+    if (voice2Raw.length === 0) tieCarry[2] = [];
 
     // Per-voice event loop, shared by voice 1 and voice 2. Legacy (id-less)
     // triplets are grouped into runs of three, reset whenever a non-triplet
@@ -348,13 +355,13 @@ export function extractTrackEvents(
           legacyRunPos = 0;
         } else if (rawTuplet) {
           // Legacy `triplet: true` with no id — group consecutive runs of 3.
-          if (legacyRunPos === 0) legacyId = `legacy-${measure.number}-${voiceNo}-${legacyGroupIndex}`;
+          // A fresh index is taken whenever a run starts, so a run interrupted
+          // before reaching 3 (e.g. by a rest) doesn't leave the next run to
+          // reuse its id.
+          if (legacyRunPos === 0) legacyId = `legacy-${measure.number}-${voiceNo}-${legacyGroupIndex++}`;
           tuplet = { id: legacyId!, n: rawTuplet.n, m: rawTuplet.m };
           legacyRunPos += 1;
-          if (legacyRunPos === 3) {
-            legacyRunPos = 0;
-            legacyGroupIndex += 1;
-          }
+          if (legacyRunPos === 3) legacyRunPos = 0;
         } else {
           legacyRunPos = 0;
         }
@@ -446,8 +453,8 @@ export function extractTrackEvents(
       return out;
     };
 
-    const events = describeVoice(measure.voices[0]?.events ?? [], 1);
-    const voice2Events = describeVoice(measure.voices[1]?.events ?? [], 2);
+    const events = describeVoice(voice1Raw, 1);
+    const voice2Events = describeVoice(voice2Raw, 2);
 
     result.push({
       measure,

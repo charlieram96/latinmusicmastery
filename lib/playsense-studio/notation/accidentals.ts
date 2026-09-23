@@ -48,10 +48,13 @@ export function createAccidentalMemory(keyFifths: number) {
   const seen = new Map<string, number>()
   return {
     code(p: SpelledPitch, opts: { tiedFromSame?: boolean } = {}): AccidentalCode | null {
+      // A tie only carries the accidental for the tied note itself — it must not
+      // update the bar's memory, or a later untied note at the same pitch would
+      // wrongly inherit the tied note's accidental state and print nothing.
+      if (opts.tiedFromSame) return null
       const slot = `${p.step}${p.octave}`
       const expected = seen.has(slot) ? seen.get(slot)! : keyAlter(p.step, keyFifths)
       seen.set(slot, p.alter)
-      if (opts.tiedFromSame) return null
       if (p.alter !== expected || p.showAccidental === 'always') return ALTER_CODE[p.alter]
       return null
     },

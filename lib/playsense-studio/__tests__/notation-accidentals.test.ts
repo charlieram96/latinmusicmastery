@@ -53,6 +53,6 @@ describe('createAccidentalMemory', () => {
   it('does not repeat the accidental on a note tied from the same pitch', () => {
     const m = createAccidentalMemory(0)
     expect(m.code({ step: 'F', alter: 1, octave: 4 }, { tiedFromSame: true })).toBeNull()
-    expect(m.code({ step: 'F', alter: 1, octave: 4 })).toBeNull()      // and it is remembered
+    expect(m.code({ step: 'F', alter: 1, octave: 4 })).toBe('#')      // a later untied F#4 in the bar restates it
   })
 })
