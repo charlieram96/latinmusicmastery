@@ -16,6 +16,7 @@ import {
   measureLengthInQN,
 } from './time-mapping';
 import { isPercussion, percussionNotation } from './perc-strokes';
+import { eventDots, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
 
 /**
  * VexFlow duration code for a quarter-note duration.
@@ -28,12 +29,13 @@ import { isPercussion, percussionNotation } from './perc-strokes';
  *  0.0625→ '64'  (sixty-fourth)
  *  0.03125→'128' (hundred-twenty-eighth)
  *
- * Dotted notes return the base code; the caller adds a Dot modifier.
- * Triplets return the base code; tuplet bracketing is the caller's concern.
+ * Dots and tuplets are undone here; the caller still adds Dot modifiers and tuplet brackets.
  */
-export function vexflowDurationCode(durationQN: number, dotted?: boolean): string {
-  // If dotted, the underlying duration is durationQN * 2/3; reverse before lookup.
-  const base = dotted ? (durationQN * 2) / 3 : durationQN;
+export function vexflowDurationCode(durationQN: number, dots: number | boolean = 0, tupletScale = 1): string {
+  // Undo the dot (×1.5 or ×1.75) and the tuplet (×m/n) to get the written value.
+  const count = dots === true ? 1 : dots === false ? 0 : dots;
+  const dotFactor = count >= 2 ? 1.75 : count === 1 ? 1.5 : 1;
+  const base = durationQN / dotFactor / (tupletScale || 1);
 
   const eps = 1e-7;
   if (Math.abs(base - 4) < eps) return 'w';
@@ -267,7 +269,7 @@ export function extractTrackEvents(
     for (const event of voice.events) {
       const beatInMeasure = qnInMeasure / beatQN + 1;
       const dotted = event.dotted ?? false;
-      const durationCode = vexflowDurationCode(event.durationQN, dotted);
+      const durationCode = vexflowDurationCode(event.durationQN, eventDots(event), tupletScale(event));
       const isRest = event.kind === 'rest';
 
       let keys: string[];
