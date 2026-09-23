@@ -136,6 +136,26 @@ describe('MusicXML import — marks', () => {
     ]))
   })
 
+  it('carries a trailing direction across the barline to the next note', () => {
+    const score = parseMusicXmlString(doc(
+      `<measure number="1">${attrs(4)}${note({ step: 'F', oct: 4, type: 'quarter', dur: 4 })}${note({ step: 'G', oct: 4, type: 'quarter', dur: 4 })}${dir('<dynamics><mf/></dynamics>')}</measure>` +
+      `<measure number="2">${note({ step: 'A', oct: 4, type: 'quarter', dur: 4 })}</measure>`))
+    const [m1, m2] = score.tracks[0].measures
+    expect(m1.voices[0].events.every(e => e.dynamic === undefined)).toBe(true)
+    expect(m2.voices[0].events[0].dynamic).toBe('mf')
+  })
+
+  it('closes an unmatched wedge stop instead of leaving it open for a later note', () => {
+    // A second, real <wedge type="stop"/> after the two notes is what actually
+    // exercises the bug: with the fix, openWedge is cleared at the first
+    // (unmatched) stop, so this later stop has nothing to close. Left buggy,
+    // openWedge stays alive, the first of the two notes wrongly becomes its
+    // "from", and this later stop would wrongly emit a cresc span between them.
+    const score = parseMusicXmlString(doc(
+      `<measure number="1">${attrs(4)}${dir('<wedge type="crescendo"/>')}<note><rest/><duration>4</duration><voice>1</voice><type>quarter</type></note>${dir('<wedge type="stop"/>')}${note({ step: 'C', oct: 5, type: 'quarter', dur: 4 })}${note({ step: 'D', oct: 5, type: 'quarter', dur: 4 })}${dir('<wedge type="stop"/>')}</measure>`))
+    expect((score.spans ?? []).some(s => s.type === 'cresc')).toBe(false)
+  })
+
   it('produces a document that parseScoreDocument accepts', async () => {
     const { parseScoreDocument } = await import('@/components/playsense-studio/shared/score-model/serialization')
     const score = parseMusicXmlString(doc(`<measure number="1">${attrs(4)}${dir('<dynamics><f/></dynamics>')}${note({ step: 'E', oct: 5, type: 'quarter', dur: 4, extra: '<notations><slur type="start"/></notations>' })}${note({ step: 'G', oct: 5, type: 'half', dur: 8, extra: '<notations><slur type="stop"/></notations>' })}</measure>`))

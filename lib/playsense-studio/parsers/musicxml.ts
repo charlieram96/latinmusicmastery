@@ -250,6 +250,8 @@ function parsePartMeasures(
   const openSlurs = new Map<string, string>();
   let openWedge: { type: 'cresc' | 'dim'; from?: string } | null = null;
   let lastEventId: string | undefined;
+  const pendingGrace = new Map<string, GraceNote[]>();
+  const pendingDir = new Map<string, { dynamic?: Dynamic; text?: string }>();
 
   measureEls.forEach((m, idx) => {
     // attribute updates apply for THIS measure forward.
@@ -276,8 +278,6 @@ function parsePartMeasures(
     };
     const openTuplet = new Map<string, { id: string; left: number; bracketed: boolean }>();
     let lastVoice = '1';
-    const pendingGrace = new Map<string, GraceNote[]>();
-    const pendingDir = new Map<string, { dynamic?: Dynamic; text?: string }>();
 
     for (const el of Array.from(m.children) as Element[]) {
       if (el.tagName === 'direction') {
@@ -290,8 +290,10 @@ function parsePartMeasures(
         pendingDir.set(voiceId, p);
         const wedge = el.querySelector('direction-type > wedge')?.getAttribute('type');
         if (wedge === 'crescendo' || wedge === 'diminuendo') openWedge = { type: wedge === 'crescendo' ? 'cresc' : 'dim' };
-        if (wedge === 'stop' && openWedge?.from && lastEventId && lastEventId !== openWedge.from) {
-          spans.push({ id: ids.next(), type: openWedge.type, from: openWedge.from, to: lastEventId });
+        if (wedge === 'stop') {
+          if (openWedge?.from && lastEventId && lastEventId !== openWedge.from) {
+            spans.push({ id: ids.next(), type: openWedge.type, from: openWedge.from, to: lastEventId });
+          }
           openWedge = null;
         }
         continue;
