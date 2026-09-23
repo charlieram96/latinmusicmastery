@@ -974,7 +974,8 @@ const MiniStave = memo(function MiniStave({
     stave.setY(Math.round(height / 2 - stave.getYForLine(2)));
     stave.setContext(ctx).draw();
 
-    if (events.length > 0) {
+    // Voice 2 alone (voice 1 empty) still has notes to show.
+    if (events.length > 0 || (voice2Events?.length ?? 0) > 0) {
       try {
         const built = buildMeasure([events, voice2Events ?? []], timeSignature, clef);
         if (built) {
