@@ -315,7 +315,8 @@ export function extractTrackEvents(
     const beatQN = beatLengthInQN(currentTimeSig);
 
     const clef: NotationClef = percussion ? 'percussion' : (measure.clef ?? previousClef ?? 'treble');
-    const measureKeyFifths: number = measure.keyFifths ?? previousKeyFifths ?? keyFifths;
+    // A percussion staff has no pitches to key, so it never carries a key signature.
+    const measureKeyFifths: number = percussion ? 0 : (measure.keyFifths ?? previousKeyFifths ?? keyFifths);
     const clefChanged = previousClef !== null && clef !== previousClef;
     const keyChanged = previousKeyFifths !== null && measureKeyFifths !== previousKeyFifths;
     previousClef = clef;

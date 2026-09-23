@@ -114,3 +114,17 @@ describe('richer descriptors', () => {
     expect(b).toMatchObject({ clef: 'treble', keyFifths: 0, keyChanged: false, voice2Events: [] })
   })
 })
+
+describe('percussion key signature', () => {
+  it('never gives a percussion staff a key, even in a sharp key or after a key change', () => {
+    const track: Track = {
+      index: 0, instrument: 'perc-conga', displayName: 'Conga', tuning: null, stringMultiplicity: 1, channel: 9, defaultView: 'rhythm-grid',
+      measures: [
+        { number: 1, voices: [{ number: 1, events: [{ kind: 'note', midi: 65, durationQN: 4, percussion: { staffLine: 'e/5', notehead: 'normal' } }] }] },
+        { number: 2, keyFifths: -3, voices: [{ number: 1, events: [{ kind: 'note', midi: 65, durationQN: 4, percussion: { staffLine: 'e/5', notehead: 'normal' } }] }] },
+      ],
+    }
+    const blocks = extractTrackEvents(track, [4, 4], 2)
+    expect(blocks.map(b => [b.keyFifths, b.keyChanged])).toEqual([[0, false], [0, false]])
+  })
+})
