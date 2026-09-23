@@ -19,23 +19,18 @@
 // note's bounding box + its cumulative QN. A pointer event finds the position
 // by interpolating between note anchors and fires onSeek.
 
-import { createStaveNote } from '@/lib/playsense-studio/percussion-stave-note';
 import { hasFinalBarline } from '@/lib/playsense-studio/barlines';
 import { useEffect, useMemo, useRef } from 'react';
 import { repeatProjection } from '@/lib/playsense-studio/repeats';
 import {
-  Accidental,
-  Articulation,
-  Beam,
   Barline,
   BarlineType,
-  Dot,
-  Formatter,
+  type Beam,
   Renderer,
   Stave,
   StaveNote,
   StaveTie,
-  Voice,
+  type Voice,
 } from 'vexflow';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { qnToTrackMs } from '@/lib/playsense-studio/time-mapping';
@@ -45,6 +40,9 @@ import {
   type NotationClef,
   type VexEventDescriptor,
 } from '@/lib/playsense-studio/score-to-vexflow';
+import { buildMeasure, drawMeasure, formatMeasure } from '@/lib/playsense-studio/notation/build-measure';
+import { drawSpanSegments, spanSegments, type PlacedNote } from '@/lib/playsense-studio/notation/spans';
+import { keySignatureName } from '@/lib/playsense-studio/notation/accidentals';
 import type {
   ScoreRenderer,
   SeekListener,
@@ -379,13 +377,17 @@ class StaffRendererImpl implements ScoreRenderer {
     const hasGap = this.gapMs > 0;
     const hasLeading = this.leadingMs > 0;
     const interludeWidth = Math.max(GAP_BOX_W, 76 / this.scale);
+    // Header modifiers of any length never overlap the notes: a key signature
+    // with several sharps/flats needs more lead-in than a bare clef.
+    const firstBlockKeyFifths = measureBlocks[0]?.keyFifths ?? 0;
+    const firstMeasureExtraWidth = FIRST_MEASURE_EXTRA_WIDTH + Math.abs(firstBlockKeyFifths) * 10;
 
     if (this.layoutMode === 'scroll') {
       let x = SYSTEM_PADDING_X + (hasLeading ? interludeWidth : 0);
       const placements: MeasurePlacement[] = measureBlocks.map((block, i) => {
         const quarterNotes = block.timeSignature[0] * 4 / block.timeSignature[1];
         const width = Math.max(quarterNotes * 64, block.events.length * 24 + 24)
-          + (i === 0 ? FIRST_MEASURE_EXTRA_WIDTH : 0);
+          + (i === 0 ? firstMeasureExtraWidth : 0);
         const placement: MeasurePlacement = {
           blockIndex: i,
           x,
@@ -428,7 +430,7 @@ class StaffRendererImpl implements ScoreRenderer {
     const requiredWidths = measureBlocks.map((block, index) => {
       const quarterNotes = block.timeSignature[0] * 4 / block.timeSignature[1];
       return Math.max(100, quarterNotes * QN_WIDTH, block.events.length * PER_NOTE_MIN_WIDTH + 24)
-        + (index === 0 ? FIRST_MEASURE_EXTRA_WIDTH : 0);
+        + (index === 0 ? firstMeasureExtraWidth : 0);
     });
     const rows = packLessonScoreRows(requiredWidths, avail, { leading: hasLeading, trailing: hasGap });
     const systemCount = rows.length;
@@ -477,8 +479,8 @@ class StaffRendererImpl implements ScoreRenderer {
 
     // Reserve space for ledger notes before placing labels/beat guides. Treble
     // staff steps are 5 model pixels; percussion keys use the same staff grid.
-    const headYs = measureBlocks.flatMap(block => block.events.flatMap(event => event.keys.map(key => {
-      const match = /^([a-g])(?:#|b)?\/(-?\d+)$/.exec(key);
+    const headYs = measureBlocks.flatMap(block => [...block.events, ...block.voice2Events].flatMap(event => event.keys.map(key => {
+      const match = /^([a-g])(?:##|bb|#|b)?\/(-?\d+)$/.exec(key);
       if (!match) return 60;
       const step = Number(match[2]) * 7 + 'cdefgab'.indexOf(match[1]);
       return 80 - (step - 30) * 5;
@@ -568,6 +570,7 @@ class StaffRendererImpl implements ScoreRenderer {
       descriptor: VexEventDescriptor;
       system: number;
     }> = [];
+    const placed: PlacedNote[] = [];
 
     this.measureGeoms = [];
     for (const p of plan.placements) {
@@ -590,9 +593,12 @@ class StaffRendererImpl implements ScoreRenderer {
         stave.setEndBarType(BarlineType.END);
       }
       if (p.showHeader) {
-        stave.addClef(block.clef).addTimeSignature(
-          `${block.timeSignature[0]}/${block.timeSignature[1]}`
-        );
+        stave.addClef(block.clef);
+        if (block.keyFifths) stave.addKeySignature(keySignatureName(block.keyFifths));
+        stave.addTimeSignature(`${block.timeSignature[0]}/${block.timeSignature[1]}`);
+      } else {
+        if (block.clefChanged) stave.addClef(block.clef);
+        if (block.keyChanged) stave.addKeySignature(keySignatureName(block.keyFifths));
       }
       // Bolder staff lines, then back to default weight for notes/stems/beams.
       const staffGroup = ctx.openGroup('ps-staff-lines') as SVGElement;
@@ -607,20 +613,23 @@ class StaffRendererImpl implements ScoreRenderer {
       }
       ctx.setLineWidth(1);
 
-      // Justify into the note area only — for first-in-row measures the clef +
-      // time signature consume the lead-in, so we keep the formatter inside
-      // that span and notes never spill past the barline.
-      const justify =
-        p.width - (p.showHeader ? FIRST_MEASURE_EXTRA_WIDTH : 0) - 20;
-      const laid = formatMeasureVoice(block.events, block.timeSignature, justify, block.clef);
+      // Justify into the note area only. The stave already knows how wide its
+      // header modifiers are (clef, key signature, time signature), so this
+      // stays correct no matter how many sharps/flats a key signature draws.
+      const built = buildMeasure([block.events, block.voice2Events], block.timeSignature, block.clef);
       // A blank measure (the studio persists these) is just the empty stave.
-      if (!laid) continue;
-
-      laid.voice.draw(ctx, stave);
-      laid.beams.forEach((beam) => beam.setContext(ctx).draw());
+      if (!built) continue;
+      formatMeasure(built, Math.max(40, stave.getNoteEndX() - stave.getNoteStartX() - 12));
+      drawMeasure(ctx, stave, built);
 
       block.events.forEach((d, idx) => {
-        allNotes.push({ vexNote: laid.vexNotes[idx], descriptor: d, system: p.system });
+        allNotes.push({ vexNote: built.notes[0][idx], descriptor: d, system: p.system });
+      });
+      block.events.forEach((d, idx) => {
+        placed.push({ id: d.id, note: built.notes[0][idx], system: p.system, hasDynamic: !!d.dynamic });
+      });
+      (block.voice2Events ?? []).forEach((d, idx) => {
+        placed.push({ id: d.id, note: built.notes[1][idx], system: p.system, hasDynamic: !!d.dynamic });
       });
     }
 
@@ -637,6 +646,8 @@ class StaffRendererImpl implements ScoreRenderer {
         new StaveTie({ lastNote: next.vexNote, firstIndexes: indices.lastIndexes, lastIndexes: indices.lastIndexes }).setContext(ctx).draw();
       }
     });
+
+    drawSpanSegments(ctx, spanSegments(score.spans, placed));
 
     // ---- Capture hit boxes + ms positions ----
     this.totalDurationMs = qnToTrackMs(track, score, qnAtEnd(measureBlocks));
@@ -1474,21 +1485,6 @@ function clampZoom(zoom: number): number {
   return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom));
 }
 
-function descriptorToStaveNote(d: VexEventDescriptor, clef: NotationClef): StaveNote {
-  const note = createStaveNote({
-    keys: d.keys,
-    clef,
-    ...(d.noteType && !d.isRest ? { type: d.noteType } : {}),
-    duration: d.isRest ? `${d.durationCode}r` : d.durationCode,
-  }, d.percussion);
-  if (d.dotted) Dot.buildAndAttach([note]);
-  if (d.articulation) note.addModifier(new Articulation({ staccato: 'a.', accent: 'a>', tenuto: 'a-' }[d.articulation]), 0);
-  d.accidentals.forEach((acc, idx) => {
-    if (acc) note.addModifier(new Accidental(acc), idx);
-  });
-  return note;
-}
-
 /**
  * Lay out one measure's events into a formatted VexFlow voice, ready to draw.
  *
@@ -1497,6 +1493,10 @@ function descriptorToStaveNote(d: VexEventDescriptor, clef: NotationClef): Stave
  * VexFlow's Formatter throws "Cannot read properties of undefined (reading
  * 'getMetrics')" when asked to justify a voice with no tickables — so the
  * caller draws only the empty stave for those.
+ *
+ * A thin wrapper over the shared measure builder (build-measure.ts); kept for
+ * its exported signature, which the `.worktrees/sheet-music-export` branch
+ * still imports.
  */
 export function formatMeasureVoice(
   events: VexEventDescriptor[],
@@ -1504,20 +1504,10 @@ export function formatMeasureVoice(
   justifyWidth: number,
   clef: NotationClef = 'treble'
 ): { vexNotes: StaveNote[]; voice: Voice; beams: Beam[] } | null {
-  if (events.length === 0) return null;
-
-  const vexNotes = events.map((d) => descriptorToStaveNote(d, clef));
-  const voice = new Voice({
-    numBeats: timeSignature[0],
-    beatValue: timeSignature[1],
-  });
-  voice.setStrict(false);
-  voice.addTickables(vexNotes);
-  new Formatter().joinVoices([voice]).format([voice], Math.max(40, justifyWidth));
-
-  // Beam connectable notes (eighths and shorter); rests break the beam.
-  const beams = Beam.generateBeams(vexNotes, { beamRests: false });
-  return { vexNotes, voice, beams };
+  const built = buildMeasure([events], timeSignature, clef);
+  if (!built || !built.notes[0].length) return null;
+  formatMeasure(built, justifyWidth);
+  return { vexNotes: built.notes[0], voice: built.voices[0], beams: built.beams };
 }
 
 function qnAtEnd(blocks: ReturnType<typeof extractTrackEvents>): number {
