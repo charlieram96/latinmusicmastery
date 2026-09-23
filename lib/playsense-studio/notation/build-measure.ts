@@ -7,6 +7,7 @@ import {
 import type { Articulation as ArticulationKind, Dynamic, Ornament as OrnamentKind } from '@/components/playsense-studio/shared/score-model/types'
 import { createStaveNote } from '../percussion-stave-note'
 import type { NotationClef, VexEventDescriptor } from '../score-to-vexflow'
+import { keySignatureName } from './accidentals'
 
 const ARTIC: Record<ArticulationKind, string> = { staccato: 'a.', staccatissimo: 'av', tenuto: 'a-', accent: 'a>', marcato: 'a^', fermata: 'a@a' }
 const ORN: Record<OrnamentKind, string> = { trill: 'tr', mordent: 'mordent', turn: 'turn' }
@@ -85,6 +86,34 @@ export function descriptorToStaveNote(d: VexEventDescriptor, opts: { clef: Notat
     note.addModifier(a, 0)
   }
   return note
+}
+
+/** What a stave shows before its notes. */
+export interface StaveHeader { clef?: NotationClef; key?: { spec: string; cancel?: string }; time?: string }
+
+/**
+ * The header modifiers for one bar. The opening bar gets clef, key and time
+ * signature; every later row start restates the clef and key signature
+ * (standard engraving — in-key accidentals are never printed, so a row without
+ * the signature would read wrong); mid-row bars show only a clef or key change.
+ */
+export function staveHeader(
+  b: { clef: NotationClef; keyFifths: number; keyChanged: boolean; clefChanged: boolean; timeSignature: [number, number] },
+  at: { opening: boolean; rowStart: boolean },
+): StaveHeader {
+  const h: StaveHeader = {}
+  if (at.opening || at.rowStart || b.clefChanged) h.clef = b.clef
+  if (((at.opening || at.rowStart) && b.keyFifths !== 0) || (!at.opening && b.keyChanged)) {
+    h.key = { spec: keySignatureName(b.keyFifths) }
+  }
+  if (at.opening) h.time = `${b.timeSignature[0]}/${b.timeSignature[1]}`
+  return h
+}
+
+export function applyStaveHeader(stave: Stave, h: StaveHeader): void {
+  if (h.clef) stave.addClef(h.clef)
+  if (h.key) stave.addKeySignature(h.key.spec, h.key.cancel)
+  if (h.time) stave.addTimeSignature(h.time)
 }
 
 export interface BuiltMeasure { voices: Voice[]; notes: StaveNote[][]; beams: Beam[]; tuplets: Tuplet[] }

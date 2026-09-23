@@ -2,7 +2,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { extractTrackEvents } from '../score-to-vexflow'
 import { REFERENCE_EXCERPT_FIXTURE as F } from '../score-fixtures'
-import { beamGroups, buildMeasure, descriptorToStaveNote, formatMeasure } from '../notation/build-measure'
+import { beamGroups, buildMeasure, descriptorToStaveNote, formatMeasure, staveHeader } from '../notation/build-measure'
 import type { Dynamic, Track } from '@/components/playsense-studio/shared/score-model/types'
 
 beforeAll(() => {
@@ -96,5 +96,20 @@ describe('buildMeasure', () => {
     expect(() => formatMeasure(buildMeasure([[...b1.events, ...b2.events]], [3, 4], 'treble')!, 300)).not.toThrow()
     expect(buildMeasure([[]], [3, 4], 'treble')).toBeNull()
     expect(buildMeasure([[], b1.events], [3, 4], 'treble')!.notes[0]).toEqual([])
+  })
+})
+
+describe('staveHeader', () => {
+  const bar = { clef: 'treble' as const, keyFifths: 2, keyChanged: false, clefChanged: false, timeSignature: [4, 4] as [number, number] }
+  it('gives the opening bar the clef, key and time signature', () => {
+    expect(staveHeader(bar, { opening: true, rowStart: true })).toEqual({ clef: 'treble', key: { spec: 'D' }, time: '4/4' })
+  })
+  it('restates the clef and key signature at every later row start', () => {
+    expect(staveHeader(bar, { opening: false, rowStart: true })).toEqual({ clef: 'treble', key: { spec: 'D' } })
+    expect(staveHeader({ ...bar, keyFifths: 0 }, { opening: false, rowStart: true })).toEqual({ clef: 'treble' })
+  })
+  it('draws nothing mid-row unless the clef or key changes', () => {
+    expect(staveHeader(bar, { opening: false, rowStart: false })).toEqual({})
+    expect(staveHeader({ ...bar, clef: 'bass', clefChanged: true }, { opening: false, rowStart: false })).toEqual({ clef: 'bass' })
   })
 })

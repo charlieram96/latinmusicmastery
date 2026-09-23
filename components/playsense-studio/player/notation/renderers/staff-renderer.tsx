@@ -41,9 +41,8 @@ import {
   type NotationClef,
   type VexEventDescriptor,
 } from '@/lib/playsense-studio/score-to-vexflow';
-import { buildMeasure, drawMeasure, formatMeasure } from '@/lib/playsense-studio/notation/build-measure';
+import { applyStaveHeader, buildMeasure, drawMeasure, formatMeasure, staveHeader } from '@/lib/playsense-studio/notation/build-measure';
 import { drawSpanSegments, spanSegments, type PlacedNote } from '@/lib/playsense-studio/notation/spans';
-import { keySignatureName } from '@/lib/playsense-studio/notation/accidentals';
 import type {
   ScoreRenderer,
   SeekListener,
@@ -99,6 +98,8 @@ const STAFF_LINE_WIDTH = 1;
 /** Base model width of a video interlude in horizontal notation. */
 const GAP_BOX_W = 112;
 const FIRST_MEASURE_EXTRA_WIDTH = 80; // room for clef + time signature
+/** Room for the clef every later wrapped row restates (the key signature adds 10 per accidental). */
+const ROW_START_CLEF_WIDTH = 40;
 /** Preserve note spacing when fitting several measures across a row. */
 const PER_NOTE_MIN_WIDTH = 22;
 const QN_WIDTH = 54;
@@ -133,7 +134,8 @@ interface MeasurePlacement {
   y: number;
   width: number;
   firstInRow: boolean;
-  /** True only for the very first measure — gets the clef + time signature. */
+  /** True only for the very first measure — gets the clef, key and time signature.
+   *  Later row starts (`firstInRow`) restate the clef and key signature. */
   showHeader: boolean;
   system: number;
   /** Video time before/after notation, never a musical measure. */
@@ -426,14 +428,18 @@ class StaffRendererImpl implements ScoreRenderer {
     }
 
     // Fit one, two, or three measures using each bar's own width requirement.
-    // Clef/signature space belongs only to the first bar, not every column.
+    // The opening bar carries clef, key and time signature; any bar that ends up
+    // starting a later row restates clef and key, so the packer reserves that
+    // room only for the bar in that position, not every column.
     const systemPitch = Math.max(STAFF_LINE_SPAN + WRAP_ROW_GAP, this.staffFootprint + 10);
     const requiredWidths = measureBlocks.map((block, index) => {
       const quarterNotes = block.timeSignature[0] * 4 / block.timeSignature[1];
       return Math.max(100, quarterNotes * QN_WIDTH, block.events.length * PER_NOTE_MIN_WIDTH + 24)
         + (index === 0 ? firstMeasureExtraWidth : 0);
     });
-    const rows = packLessonScoreRows(requiredWidths, avail, { leading: hasLeading, trailing: hasGap });
+    const rowStartExtra = measureBlocks.map((block, index) =>
+      index === 0 ? 0 : ROW_START_CLEF_WIDTH + Math.abs(block.keyFifths) * 10);
+    const rows = packLessonScoreRows(requiredWidths, avail, { leading: hasLeading, trailing: hasGap }, rowStartExtra);
     const systemCount = rows.length;
 
     const placements: MeasurePlacement[] = [];
@@ -593,14 +599,7 @@ class StaffRendererImpl implements ScoreRenderer {
         // The section's last measure closes with a final bar, like the end of a piece.
         stave.setEndBarType(BarlineType.END);
       }
-      if (p.showHeader) {
-        stave.addClef(block.clef);
-        if (block.keyFifths) stave.addKeySignature(keySignatureName(block.keyFifths));
-        stave.addTimeSignature(`${block.timeSignature[0]}/${block.timeSignature[1]}`);
-      } else {
-        if (block.clefChanged) stave.addClef(block.clef);
-        if (block.keyChanged) stave.addKeySignature(keySignatureName(block.keyFifths));
-      }
+      applyStaveHeader(stave, staveHeader(block, { opening: p.showHeader, rowStart: p.firstInRow }));
       // Bolder staff lines, then back to default weight for notes/stems/beams.
       const staffGroup = ctx.openGroup('ps-staff-lines') as SVGElement;
       staffGroup?.setAttribute('data-score-stave', '');
