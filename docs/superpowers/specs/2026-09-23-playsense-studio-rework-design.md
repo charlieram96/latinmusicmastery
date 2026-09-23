@@ -199,6 +199,7 @@ The model is unchanged: the draggable waypoint time map (`score_time_maps` metho
   - **Student playback:** the video element plays at `playbackRate = segment ratio` with `preservesPitch = true`. Its rate is updated at segment boundaries from rAF, and drift beyond 60 ms is corrected with a gentle rate trim (±3%) rather than a seek. Notes and the cursor use timeline time.
   - **Admin playback:** the waveform is drawn through the warp, and audio plays the same way as the student's.
   - **Gate:** a spike on Safari macOS, iOS and Chrome must confirm smooth rate changes before this ships (task 1 of the plan).
+  - **Spike result:** pending — run app/(dev)/flex-spike on Safari macOS, iOS Safari and Chrome (plan P1 Task 1, Step 3) and record worst drift / seeks / audible glitches here.
 
 ## 8. Exercise and Jam (graded)
 
