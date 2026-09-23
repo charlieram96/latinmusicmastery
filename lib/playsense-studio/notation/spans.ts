@@ -17,19 +17,23 @@ export function spanSegments(spans: Span[] | undefined, placed: PlacedNote[]): S
     const a = placed[ia], b = placed[ib]
     if (a.system === b.system) { out.push({ type: s.type, from: a.note, to: b.note, fromHasDynamic: !!a.hasDynamic }); continue }
 
-    // Collect unique systems between a and b (inclusive)
-    const systems = new Set<number>()
-    for (let i = ia; i <= ib; i++) systems.add(placed[i].system)
-    const sortedSystems = Array.from(systems).sort((x, y) => x - y)
+    // Walk only the notes within the span (ia..ib) once, forward, tracking each
+    // system's first and last note as we go. No reversed-array index tricks:
+    // those confuse an index into the reversed copy with an index into `placed`.
+    const firstInSys = new Map<number, PlacedNote>()
+    const lastInSys = new Map<number, PlacedNote>()
+    for (let i = ia; i <= ib; i++) {
+      const p = placed[i]
+      if (!firstInSys.has(p.system)) firstInSys.set(p.system, p)
+      lastInSys.set(p.system, p)
+    }
+    const sortedSystems = Array.from(firstInSys.keys()).sort((x, y) => x - y)
 
     // Build one segment per system touched
     let isFirst = true
     for (const sys of sortedSystems) {
-      const firstInSys = placed.find((p, i) => i >= ia && i <= ib && p.system === sys)!
-      const lastInSys = [...placed].reverse().find((p, i) => i >= ia && i <= ib && p.system === sys)!
-
-      const from = (sys === a.system) ? a.note : firstInSys.note
-      const to = (sys === b.system) ? b.note : lastInSys.note
+      const from = (sys === a.system) ? a.note : firstInSys.get(sys)!.note
+      const to = (sys === b.system) ? b.note : lastInSys.get(sys)!.note
       const fromHasDynamic = isFirst ? !!a.hasDynamic : undefined
 
       out.push({ type: s.type, from, to, fromHasDynamic })
