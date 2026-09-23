@@ -285,6 +285,8 @@ export function extractTrackEvents(
   timeSignature: [number, number];
   clef: NotationClef;
   keyFifths: number;
+  /** The key in force before this bar (equals keyFifths when unchanged). */
+  previousKeyFifths: number;
   keyChanged: boolean;
   clefChanged: boolean;
 }> {
@@ -296,6 +298,8 @@ export function extractTrackEvents(
     timeSignature: [number, number];
     clef: NotationClef;
     keyFifths: number;
+    /** The key in force before this bar (equals keyFifths when unchanged). */
+    previousKeyFifths: number;
     keyChanged: boolean;
     clefChanged: boolean;
   }> = [];
@@ -319,6 +323,7 @@ export function extractTrackEvents(
     const measureKeyFifths: number = percussion ? 0 : (measure.keyFifths ?? previousKeyFifths ?? keyFifths);
     const clefChanged = previousClef !== null && clef !== previousClef;
     const keyChanged = previousKeyFifths !== null && measureKeyFifths !== previousKeyFifths;
+    const keyBefore = previousKeyFifths ?? measureKeyFifths;
     previousClef = clef;
     previousKeyFifths = measureKeyFifths;
 
@@ -498,6 +503,7 @@ export function extractTrackEvents(
       timeSignature: currentTimeSig,
       clef,
       keyFifths: measureKeyFifths,
+      previousKeyFifths: keyBefore,
       keyChanged,
       clefChanged,
     });

@@ -100,16 +100,27 @@ describe('buildMeasure', () => {
 })
 
 describe('staveHeader', () => {
-  const bar = { clef: 'treble' as const, keyFifths: 2, keyChanged: false, clefChanged: false, timeSignature: [4, 4] as [number, number] }
+  const bar = { clef: 'treble' as const, keyFifths: 2, previousKeyFifths: 2, keyChanged: false, clefChanged: false, timeSignature: [4, 4] as [number, number] }
   it('gives the opening bar the clef, key and time signature', () => {
     expect(staveHeader(bar, { opening: true, rowStart: true })).toEqual({ clef: 'treble', key: { spec: 'D' }, time: '4/4' })
   })
   it('restates the clef and key signature at every later row start', () => {
     expect(staveHeader(bar, { opening: false, rowStart: true })).toEqual({ clef: 'treble', key: { spec: 'D' } })
-    expect(staveHeader({ ...bar, keyFifths: 0 }, { opening: false, rowStart: true })).toEqual({ clef: 'treble' })
+    expect(staveHeader({ ...bar, keyFifths: 0, previousKeyFifths: 0 }, { opening: false, rowStart: true })).toEqual({ clef: 'treble' })
   })
   it('draws nothing mid-row unless the clef or key changes', () => {
     expect(staveHeader(bar, { opening: false, rowStart: false })).toEqual({})
     expect(staveHeader({ ...bar, clef: 'bass', clefChanged: true }, { opening: false, rowStart: false })).toEqual({ clef: 'bass' })
+  })
+})
+
+describe('staveHeader key changes', () => {
+  const bar = { clef: 'treble' as const, keyFifths: 0, previousKeyFifths: 2, keyChanged: true, clefChanged: false, timeSignature: [4, 4] as [number, number] }
+  it('cancels the old key when it changes mid-row', () => {
+    expect(staveHeader(bar, { opening: false, rowStart: false })).toEqual({ key: { spec: 'C', cancel: 'D' } })
+    expect(staveHeader({ ...bar, keyFifths: 1, previousKeyFifths: 3 }, { opening: false, rowStart: false })).toEqual({ key: { spec: 'G', cancel: 'A' } })
+  })
+  it('cancels the old key when the change falls on a row start', () => {
+    expect(staveHeader(bar, { opening: false, rowStart: true })).toEqual({ clef: 'treble', key: { spec: 'C', cancel: 'D' } })
   })
 })

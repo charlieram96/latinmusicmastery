@@ -34,9 +34,8 @@ import {
   type VexEventDescriptor,
   scoreTieIndices,
 } from '@/lib/playsense-studio/score-to-vexflow';
-import { buildMeasure, drawMeasure, formatMeasure } from '@/lib/playsense-studio/notation/build-measure';
+import { applyStaveHeader, buildMeasure, drawMeasure, formatMeasure, staveHeader } from '@/lib/playsense-studio/notation/build-measure';
 import { drawSpanSegments, spanSegments } from '@/lib/playsense-studio/notation/spans';
-import { keySignatureName } from '@/lib/playsense-studio/notation/accidentals';
 import type { PercStroke } from '@/lib/playsense-studio/perc-strokes';
 import type { DragMode } from '@/components/playsense-studio/sync/waveform-canvas';
 import type { Span } from '@/components/playsense-studio/shared/score-model/types';
@@ -60,6 +59,8 @@ export interface MeasureStripItem {
   clef: NotationClef;
   /** Key signature for this measure (fifths), and whether it/the clef changed from the previous measure. */
   keyFifths: number;
+  /** The key in force before this measure (equals keyFifths when unchanged). */
+  previousKeyFifths: number;
   keyChanged: boolean;
   clefChanged: boolean;
 }
@@ -766,6 +767,7 @@ export function EditableMeasureStrip({
               finalBarline={!!item.finalBarline}
               clef={item.clef}
               keyFifths={item.keyFifths}
+              previousKeyFifths={item.previousKeyFifths}
               keyChanged={item.keyChanged}
               clefChanged={item.clefChanged}
               spans={scoreSpans}
@@ -918,6 +920,7 @@ interface MiniStaveProps {
   finalBarline: boolean;
   clef: NotationClef;
   keyFifths: number;
+  previousKeyFifths: number;
   keyChanged: boolean;
   clefChanged: boolean;
   spans?: Span[];
@@ -937,6 +940,7 @@ const MiniStave = memo(function MiniStave({
   finalBarline,
   clef,
   keyFifths,
+  previousKeyFifths,
   keyChanged,
   clefChanged,
   spans: spansForMeasure,
@@ -959,14 +963,11 @@ const MiniStave = memo(function MiniStave({
     const ctx = renderer.getContext();
 
     const stave = new Stave(LEFT_PAD, 0, staveWidth);
-    if (isFirst) {
-      stave.addClef(clef);
-      if (keyFifths) stave.addKeySignature(keySignatureName(keyFifths));
-      stave.addTimeSignature(`${timeSignature[0]}/${timeSignature[1]}`);
-    } else {
-      if (clefChanged) stave.addClef(clef);
-      if (keyChanged) stave.addKeySignature(keySignatureName(keyFifths));
-    }
+    // One SVG per measure in a single scrolling row: only the opening bar is a row start.
+    applyStaveHeader(stave, staveHeader(
+      { clef, keyFifths, previousKeyFifths, keyChanged, clefChanged, timeSignature },
+      { opening: isFirst, rowStart: false },
+    ));
     if (finalBarline) stave.setEndBarType(BarlineType.END);
     // Center the staff vertically: put the middle line (line 2 = B4) at the
     // box's vertical center so notes/stems have even headroom above and below.
@@ -1020,7 +1021,7 @@ const MiniStave = memo(function MiniStave({
       el.innerHTML = '';
       onHitsReady(measureIndex, null);
     };
-  }, [measureIndex, events, voice2Events, previousEvent, nextEvent, width, height, timeSignature, isFirst, finalBarline, clef, keyFifths, keyChanged, clefChanged, spansForMeasure, onHitsReady]);
+  }, [measureIndex, events, voice2Events, previousEvent, nextEvent, width, height, timeSignature, isFirst, finalBarline, clef, keyFifths, previousKeyFifths, keyChanged, clefChanged, spansForMeasure, onHitsReady]);
 
   return <div ref={ref} />;
 });

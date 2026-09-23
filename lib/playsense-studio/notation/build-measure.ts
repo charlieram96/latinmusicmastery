@@ -98,12 +98,15 @@ export interface StaveHeader { clef?: NotationClef; key?: { spec: string; cancel
  * the signature would read wrong); mid-row bars show only a clef or key change.
  */
 export function staveHeader(
-  b: { clef: NotationClef; keyFifths: number; keyChanged: boolean; clefChanged: boolean; timeSignature: [number, number] },
+  b: { clef: NotationClef; keyFifths: number; previousKeyFifths: number; keyChanged: boolean; clefChanged: boolean; timeSignature: [number, number] },
   at: { opening: boolean; rowStart: boolean },
 ): StaveHeader {
   const h: StaveHeader = {}
   if (at.opening || at.rowStart || b.clefChanged) h.clef = b.clef
-  if (((at.opening || at.rowStart) && b.keyFifths !== 0) || (!at.opening && b.keyChanged)) {
+  if (!at.opening && b.keyChanged) {
+    // Naming the old key lets VexFlow draw naturals for what the new key drops.
+    h.key = { spec: keySignatureName(b.keyFifths), cancel: keySignatureName(b.previousKeyFifths) }
+  } else if ((at.opening || at.rowStart) && b.keyFifths !== 0) {
     h.key = { spec: keySignatureName(b.keyFifths) }
   }
   if (at.opening) h.time = `${b.timeSignature[0]}/${b.timeSignature[1]}`

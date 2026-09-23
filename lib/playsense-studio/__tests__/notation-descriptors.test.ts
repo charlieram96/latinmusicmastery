@@ -30,6 +30,10 @@ describe('richer descriptors', () => {
     expect(b4.events[0]).toMatchObject({ keys: ['b/4'], accidentals: ['n'] })     // B natural in F major
     expect(b4.keyChanged).toBe(false)
   })
+  it('records the key in force before each bar', () => {
+    const [b1, b2, b3, b4] = blocks()
+    expect([b1, b2, b3, b4].map(b => [b.keyFifths, b.previousKeyFifths])).toEqual([[0, 0], [0, 0], [-1, 0], [-1, -1]])
+  })
   it('splits voice 2 out and places rests per clef and voice', () => {
     const [, , , b4, b5] = blocks()
     expect(b4.events).toHaveLength(3)

@@ -11,14 +11,14 @@ beforeAll(() => {
   HTMLCanvasElement.prototype.getContext = (() => ctx) as never;
 });
 
-/** Four bars of quarter notes in D major (two sharps). */
-function dMajorScore(): ScoreDocument {
+/** Four bars of quarter notes in D major (two sharps); `changeTo` rekeys bar 3. */
+function dMajorScore(changeTo?: number): ScoreDocument {
   return {
     schemaVersion: 1, title: 'T', sourceFormat: 'native', initialTempo: 120,
     initialTimeSignature: [4, 4], initialKeyFifths: 2,
     tracks: [{
       index: 0, instrument: 'staff', displayName: 'T', tuning: null, stringMultiplicity: 1, channel: null, defaultView: 'staff',
-      measures: [1, 2, 3, 4].map(number => ({ number, voices: [{ number: 1, events: [62, 64, 66, 67].map(midi => ({ kind: 'note' as const, midi, durationQN: 1 })) }] })),
+      measures: [1, 2, 3, 4].map(number => ({ number, ...(number === 3 && changeTo !== undefined ? { keyFifths: changeTo } : {}), voices: [{ number: 1, events: [62, 64, 66, 67].map(midi => ({ kind: 'note' as const, midi, durationQN: 1 })) }] })),
     }],
   } as ScoreDocument;
 }
@@ -36,8 +36,8 @@ afterEach(async () => {
   host.remove();
 });
 
-function render(layoutMode: StaffLayoutMode) {
-  act(() => { root.render(<StaffRenderer score={dMajorScore()} trackIndex={0} currentMs={0} layoutMode={layoutMode} />); });
+function render(layoutMode: StaffLayoutMode, changeTo?: number) {
+  act(() => { root.render(<StaffRenderer score={dMajorScore(changeTo)} trackIndex={0} currentMs={0} layoutMode={layoutMode} />); });
   return {
     keySignatures: host.querySelectorAll('.vf-keysignature').length,
     clefs: host.querySelectorAll('.vf-clef').length,
@@ -55,5 +55,15 @@ describe('wrapped rows restate the key signature', () => {
     const { keySignatures, clefs } = render('scroll');
     expect(keySignatures).toBe(1);
     expect(clefs).toBe(1);
+  });
+});
+
+describe('key change to fewer accidentals', () => {
+  it('draws cancelling naturals for the sharps the new key drops', () => {
+    render('scroll', 0);
+    const sigs = [...host.querySelectorAll('.vf-keysignature')];
+    expect(sigs).toHaveLength(2);
+    // Bravura: U+E262 sharp, U+E261 natural.
+    expect((sigs[1].textContent ?? '').split('\uE261').length - 1).toBe(2);
   });
 });

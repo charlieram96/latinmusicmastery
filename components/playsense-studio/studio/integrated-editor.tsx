@@ -421,6 +421,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         isFirst: i === 0,
         clef: tracked[i].clef,
         keyFifths: tracked[i].keyFifths,
+        previousKeyFifths: tracked[i].previousKeyFifths,
         keyChanged: tracked[i].keyChanged,
         clefChanged: tracked[i].clefChanged,
       });
