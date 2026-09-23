@@ -17,22 +17,31 @@
 //     prior note).
 //   - attributes: time signature, key signature (fifths), divisions.
 //   - direction/sound tempo as initialTempo.
+//   - marks: articulations, fermatas, ornaments (trill/mordent/turn), grace
+//     notes (attached to the following note, taking no time), dynamics and
+//     words (attach to the next note of their voice), hairpins and slurs
+//     (turned into score.spans, referencing event ids, and may cross
+//     barlines).
 //
-// Out of scope for v1: articulations, ornaments, dynamics, slurs, grace
-// notes, lyrics, voltas (Task 6 adds marks on top of this loop). If a
-// MusicXML file uses those, we still import what we understand and ignore
-// the rest — the renderer doesn't support those features yet anyway.
+// Out of scope for v1: lyrics, voltas. If a MusicXML file uses those, we
+// still import what we understand and ignore the rest — the renderer
+// doesn't support those features yet anyway.
 
 import JSZip from 'jszip';
 import type {
+  Articulation,
   Chord,
+  Dynamic,
+  GraceNote,
   Instrument,
   Measure,
   MusicalEvent,
+  Ornament,
   PercussionNotation,
   Note,
   Rest,
   ScoreDocument,
+  Span,
   Spelling,
   Track,
   Tuplet,
@@ -53,6 +62,17 @@ const TYPE_TO_QN: Record<string, number> = {
   breve: 8,
   long: 16,
 };
+
+const ARTIC: Record<string, Articulation> = { staccato: 'staccato', staccatissimo: 'staccatissimo', tenuto: 'tenuto', accent: 'accent', 'strong-accent': 'marcato' };
+const ORN: Record<string, Ornament> = { 'trill-mark': 'trill', mordent: 'mordent', 'inverted-mordent': 'mordent', turn: 'turn', 'inverted-turn': 'turn' };
+const DYN = new Set<Dynamic>(['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'fp', 'sfz']);
+
+function readMarks(noteEl: Element): { articulations?: Articulation[]; ornament?: Ornament } {
+  const arts = Array.from(noteEl.querySelectorAll(':scope > notations > articulations > *')).map(a => ARTIC[a.tagName]).filter(Boolean);
+  if (noteEl.querySelector(':scope > notations > fermata')) arts.push('fermata');
+  const orn = Array.from(noteEl.querySelectorAll(':scope > notations > ornaments > *')).map(o => ORN[o.tagName]).find(Boolean);
+  return { ...(arts.length ? { articulations: arts } : {}), ...(orn ? { ornament: orn } : {}) };
+}
 
 export interface ParseMusicXmlOptions {
   title?: string;
@@ -139,13 +159,17 @@ export function parseMusicXmlString(
   }
 
   const tracks: Track[] = [];
+  const allSpans: Span[] = [];
+  let seq = 0;
+  const ids = { next: () => `x${++seq}` };
   const partEls = Array.from(doc.querySelectorAll('part')) as Element[];
   partEls.forEach((part, idx) => {
     const id = part.getAttribute('id') ?? '';
     const info =
       partInfo.get(id) ??
       { name: `Part ${idx + 1}`, instrument: 'staff' as const, instrumentGm: new Map<string, number>() };
-    const measures = parsePartMeasures(part, initialTimeSignature, info.instrument, info.instrumentGm);
+    const { measures, spans } = parsePartMeasures(part, initialTimeSignature, info.instrument, info.instrumentGm, ids);
+    allSpans.push(...spans);
     tracks.push({
       index: idx,
       instrument: info.instrument,
@@ -169,6 +193,7 @@ export function parseMusicXmlString(
     initialTempo,
     initialTimeSignature,
     initialKeyFifths,
+    ...(allSpans.length ? { spans: allSpans } : {}),
     tracks: tracks.length > 0 ? tracks : [{
       index: 0,
       instrument: 'staff',
@@ -213,13 +238,18 @@ function parsePartMeasures(
   part: Element,
   initialTimeSignature: [number, number],
   instrument: Instrument,
-  instrumentGm: Map<string, number>
-): Measure[] {
+  instrumentGm: Map<string, number>,
+  ids: { next(): string }
+): { measures: Measure[]; spans: Span[] } {
   const midiCtx: NoteMidiContext = { instrument, instrumentGm };
   let timeSignature: [number, number] = initialTimeSignature;
   let divisions = 1; // ticks per quarter, set by <attributes><divisions>
   const measureEls = Array.from(part.querySelectorAll(':scope > measure')) as Element[];
   const out: Measure[] = [];
+  const spans: Span[] = [];
+  const openSlurs = new Map<string, string>();
+  let openWedge: { type: 'cresc' | 'dim'; from?: string } | null = null;
+  let lastEventId: string | undefined;
 
   measureEls.forEach((m, idx) => {
     // attribute updates apply for THIS measure forward.
@@ -246,21 +276,48 @@ function parsePartMeasures(
     };
     const openTuplet = new Map<string, { id: string; left: number; bracketed: boolean }>();
     let lastVoice = '1';
+    const pendingGrace = new Map<string, GraceNote[]>();
+    const pendingDir = new Map<string, { dynamic?: Dynamic; text?: string }>();
 
     for (const el of Array.from(m.children) as Element[]) {
+      if (el.tagName === 'direction') {
+        const voiceId = el.querySelector(':scope > voice')?.textContent?.trim() ?? '1';
+        const p = pendingDir.get(voiceId) ?? {};
+        const dyn = el.querySelector('direction-type > dynamics > *')?.tagName as Dynamic | undefined;
+        if (dyn && DYN.has(dyn)) p.dynamic = dyn;
+        const words = el.querySelector('direction-type > words')?.textContent?.trim();
+        if (words) p.text = words.slice(0, 60);
+        pendingDir.set(voiceId, p);
+        const wedge = el.querySelector('direction-type > wedge')?.getAttribute('type');
+        if (wedge === 'crescendo' || wedge === 'diminuendo') openWedge = { type: wedge === 'crescendo' ? 'cresc' : 'dim' };
+        if (wedge === 'stop' && openWedge?.from && lastEventId && lastEventId !== openWedge.from) {
+          spans.push({ id: ids.next(), type: openWedge.type, from: openWedge.from, to: lastEventId });
+          openWedge = null;
+        }
+        continue;
+      }
       if (el.tagName === 'forward') {
         const voiceId = el.querySelector(':scope > voice')?.textContent?.trim() ?? lastVoice;
         const qn = Number(el.querySelector(':scope > duration')?.textContent ?? '0') / divisions;
-        if (qn > 0) eventsFor(voiceId).push({ kind: 'rest', durationQN: qn } satisfies Rest);
+        if (qn > 0) eventsFor(voiceId).push({ kind: 'rest', id: ids.next(), durationQN: qn } satisfies Rest);
         continue;
       }
       if (el.tagName !== 'note') continue;
       const noteEl = el;
-      if (noteEl.querySelector(':scope > grace')) continue; // grace notes: handled in the marks pass
       const staff = noteEl.querySelector(':scope > staff')?.textContent?.trim();
       if (staff && staff !== '1') continue;
       const voiceId = noteEl.querySelector(':scope > voice')?.textContent?.trim() ?? '1';
       lastVoice = voiceId;
+      if (noteEl.querySelector(':scope > grace')) {
+        const midi = pitchToMidi(noteEl);
+        if (midi !== null) {
+          const spelling = readSpelling(noteEl);
+          const list = pendingGrace.get(voiceId) ?? [];
+          list.push({ midi, ...(spelling ? { spelling } : {}), slash: noteEl.querySelector(':scope > grace')!.getAttribute('slash') === 'yes' });
+          pendingGrace.set(voiceId, list);
+        }
+        continue;
+      }
       const events = eventsFor(voiceId);
 
       const isChordContinuation = noteEl.querySelector(':scope > chord') !== null;
@@ -329,18 +386,31 @@ function parsePartMeasures(
         ...(tuplet && tuplet.n === 3 && tuplet.m === 2 ? { triplet: true } : {}),
       };
 
+      const id = ids.next();
       if (isRest) {
-        events.push({ kind: 'rest', ...rhythm } satisfies Rest);
+        events.push({ kind: 'rest', id, ...rhythm } satisfies Rest);
       } else {
         const pitch = noteToPitch(noteEl, midiCtx);
         if (pitch === null) continue;
         const spelling = readSpelling(noteEl);
+        const dirs = pendingDir.get(voiceId); pendingDir.delete(voiceId);
+        const grace = pendingGrace.get(voiceId); pendingGrace.delete(voiceId);
         events.push({
-          kind: 'note', ...pitch, ...rhythm,
+          kind: 'note', id, ...pitch, ...rhythm, ...readMarks(noteEl),
           ...(spelling ? { spelling } : {}),
           ...(tieStart ? { tieToNext: true } : {}),
+          ...(dirs?.dynamic ? { dynamic: dirs.dynamic } : {}),
+          ...(dirs?.text ? { text: dirs.text } : {}),
+          ...(grace?.length ? { grace } : {}),
         } satisfies Note);
+        for (const s of Array.from(noteEl.querySelectorAll(':scope > notations > slur'))) {
+          const num = s.getAttribute('number') ?? '1';
+          if (s.getAttribute('type') === 'start') openSlurs.set(num, id);
+          else if (s.getAttribute('type') === 'stop' && openSlurs.has(num)) { spans.push({ id: ids.next(), type: 'slur', from: openSlurs.get(num)!, to: id }); openSlurs.delete(num); }
+        }
+        if (openWedge && !openWedge.from) openWedge.from = id;
       }
+      lastEventId = id;
     }
 
     const voiceIds = Array.from(byVoice.keys()).slice(0, 2);
@@ -356,7 +426,7 @@ function parsePartMeasures(
     });
   });
 
-  return out;
+  return { measures: out, spans };
 }
 
 function readTimeSignature(measure: Element | null): [number, number] | null {

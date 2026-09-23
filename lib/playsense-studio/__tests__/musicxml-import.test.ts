@@ -95,3 +95,50 @@ describe('MusicXML import — rhythm and voices', () => {
     expect(evT[0]).toMatchObject({ kind: 'chord', triplet: true, tuplet: { n: 3, m: 2 }, durationQN: 1 / 3 })
   })
 })
+
+describe('MusicXML import — marks', () => {
+  const dir = (inner: string, voice = '1') => `<direction placement="below"><direction-type>${inner}</direction-type><voice>${voice}</voice></direction>`
+
+  it('reads articulations, ornaments and fermatas', () => {
+    const ev = events(`<measure number="1">${attrs(4)}` +
+      note({ step: 'A', oct: 4, type: 'quarter', dur: 4, extra: '<notations><articulations><staccato/><accent/></articulations></notations>' }) +
+      note({ step: 'B', oct: 4, type: 'quarter', dur: 4, extra: '<notations><articulations><strong-accent/><tenuto/></articulations><ornaments><trill-mark/></ornaments></notations>' }) +
+      note({ step: 'C', oct: 5, type: 'quarter', dur: 4, extra: '<notations><fermata/><ornaments><inverted-mordent/></ornaments></notations>' }) + `</measure>`)
+    expect(ev[0].articulations).toEqual(['staccato', 'accent'])
+    expect(ev[1]).toMatchObject({ articulations: ['marcato', 'tenuto'], ornament: 'trill' })
+    expect(ev[2]).toMatchObject({ articulations: ['fermata'], ornament: 'mordent' })
+  })
+
+  it('attaches grace notes to the next note without taking time', () => {
+    const grace = `<note><grace slash="yes"/><pitch><step>C</step><alter>1</alter><octave>6</octave></pitch><voice>1</voice><type>eighth</type></note>`
+    const ev = events(`<measure number="1">${attrs(4)}${grace}${note({ step: 'D', oct: 6, type: 'half', dur: 8, extra: '<dot/>' })}</measure>`)
+    expect(ev).toHaveLength(1)
+    expect(ev[0].grace).toEqual([{ midi: 85, spelling: { step: 'C', alter: 1 }, slash: true }])
+  })
+
+  it('puts dynamics and words on the next note of their voice', () => {
+    const ev = events(`<measure number="1">${attrs(4)}${dir('<dynamics><mp/></dynamics>')}${dir('<words>div.</words>')}${note({ step: 'B', oct: 4, type: 'half', dur: 8 })}${note({ step: 'D', oct: 5, type: 'quarter', dur: 4 })}</measure>`)
+    expect(ev[0]).toMatchObject({ dynamic: 'mp', text: 'div.' })
+    expect(ev[1].dynamic).toBeUndefined()
+  })
+
+  it('turns wedges and slurs into spans between event ids, across barlines', () => {
+    const score = parseMusicXmlString(doc(
+      `<measure number="1">${attrs(4)}${dir('<wedge type="crescendo"/>')}${note({ step: 'F', oct: 4, type: 'quarter', dur: 4, extra: '<notations><slur type="start" number="1"/></notations>' })}${note({ step: 'G', oct: 4, type: 'half', dur: 8 })}${dir('<wedge type="stop"/>')}</measure>` +
+      `<measure number="2">${note({ step: 'A', oct: 4, type: 'half', dur: 12, extra: '<dot/><notations><slur type="stop" number="1"/></notations>' })}</measure>`))
+    const [m1, m2] = score.tracks[0].measures
+    const [f, g] = m1.voices[0].events
+    const a = m2.voices[0].events[0]
+    expect(f.id && g.id && a.id).toBeTruthy()
+    expect(score.spans).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: 'cresc', from: f.id, to: g.id }),
+      expect.objectContaining({ type: 'slur', from: f.id, to: a.id }),
+    ]))
+  })
+
+  it('produces a document that parseScoreDocument accepts', async () => {
+    const { parseScoreDocument } = await import('@/components/playsense-studio/shared/score-model/serialization')
+    const score = parseMusicXmlString(doc(`<measure number="1">${attrs(4)}${dir('<dynamics><f/></dynamics>')}${note({ step: 'E', oct: 5, type: 'quarter', dur: 4, extra: '<notations><slur type="start"/></notations>' })}${note({ step: 'G', oct: 5, type: 'half', dur: 8, extra: '<notations><slur type="stop"/></notations>' })}</measure>`))
+    expect(() => parseScoreDocument(JSON.parse(JSON.stringify(score)))).not.toThrow()
+  })
+})
