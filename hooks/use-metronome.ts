@@ -38,9 +38,11 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   const beatCounterRef = useRef(0) // total beats elapsed (for visual tracking)
 
   const scheduleClick = useCallback(
-    (audioContext: AudioContext, time: number, isDownbeat: boolean) => {
-      // Skip audio output when silent
-      if (silentRef.current) return
+    (audioContext: AudioContext, time: number, isDownbeat: boolean, force = false) => {
+      // Skip audio output when silent. The count-in forces its clicks: it plays
+      // before the student starts, so it can't mask their onsets, and without it
+      // they have nothing but a visual countdown to come in on.
+      if (silentRef.current && !force) return
 
       const osc = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
@@ -101,7 +103,7 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
       for (let i = 0; i < countInBeats; i++) {
         const time = countInStart + i * beatDuration
         const isDownbeat = i % beatsPerMeasure === 0
-        scheduleClick(audioContext, time, isDownbeat)
+        scheduleClick(audioContext, time, isDownbeat, true)
       }
 
       // Start scheduling exercise metronome

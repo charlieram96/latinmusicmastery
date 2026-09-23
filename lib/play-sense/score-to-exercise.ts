@@ -104,6 +104,15 @@ function midiToNoteName(midi: number, keyFifths: number): string {
 }
 
 /**
+ * The studio stores tempo as quarter notes per minute; the engine counts beats
+ * in the meter's denominator unit (beatToTimestamp: beat * 60 / bpm). Convert,
+ * so 6/8 and 2/2 exercises run at the same speed the studio shows.
+ */
+function engineBpm(quarterNoteBpm: number, timeSignature: [number, number]): number {
+  return quarterNoteBpm / beatLengthInQN(timeSignature)
+}
+
+/**
  * Build an ExerciseDefinition from one track of a score.
  * Rests advance the cursor but emit no event. Chords emit one event per note.
  */
@@ -120,7 +129,7 @@ export function scoreToExerciseDefinition(
       title: options.title ?? score.title,
       description: options.description ?? '',
       instrument: 'conga',
-      bpm: score.initialTempo,
+      bpm: engineBpm(score.initialTempo, score.initialTimeSignature),
       timeSignature: score.initialTimeSignature,
       swing: 0,
       difficulty: options.difficulty ?? 'intermediate',
@@ -232,7 +241,7 @@ export function scoreToExerciseDefinition(
     title: options.title ?? score.title,
     description: options.description ?? '',
     instrument,
-    bpm: score.initialTempo,
+    bpm: engineBpm(score.initialTempo, score.initialTimeSignature),
     timeSignature: score.initialTimeSignature,
     swing: 0,
     difficulty: options.difficulty ?? 'intermediate',
