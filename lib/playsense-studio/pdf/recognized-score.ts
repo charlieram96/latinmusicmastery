@@ -19,6 +19,7 @@ import { parseScoreDocument } from '@/components/playsense-studio/shared/score-m
 import { applyMeasureEdit } from '../measure-edits';
 import { getPercStrokes, type PercStroke } from '../perc-strokes';
 import { RecognitionError } from './recognition-error';
+import { effectiveDurationQN } from '../time-mapping';
 
 const INSTRUMENTS = [
   'guitar', 'bass', 'tres', 'cuatro', 'tiple', 'ukulele', 'mandolin', 'piano', 'staff',
@@ -108,7 +109,9 @@ function resolvePitch(instrument: Instrument, pitch: RecognizedPitch, marcato: b
 
 function convertEvent(instrument: Instrument, event: RecognizedEvent): MusicalEvent | null {
   if (!positive(event.durationQN)) return null;
-  const base = { durationQN: event.durationQN, ...(event.dotted ? { dotted: true } : {}), ...(event.triplet ? { triplet: true } : {}) };
+  // The model returns the written value plus flags (see the prompt); the app stores the real length.
+  const durationQN = effectiveDurationQN(event.durationQN, { dotted: event.dotted, triplet: event.triplet });
+  const base = { durationQN, ...(event.dotted ? { dotted: true } : {}), ...(event.triplet ? { triplet: true } : {}) };
   if (event.kind === 'rest') return { kind: 'rest', ...base };
   const tie = event.tieToNext ? { tieToNext: true } : {};
   if (event.kind === 'chord') {

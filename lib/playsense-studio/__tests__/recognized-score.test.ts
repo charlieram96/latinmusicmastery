@@ -67,3 +67,21 @@ describe('toScoreDocuments', () => {
     expect(score.title).toBe('my-score');
   });
 });
+
+describe('toScoreDocuments — dotted and triplet lengths', () => {
+  it('stores the real length so the bar adds up', () => {
+    const out: RecognitionOutput = { pieces: [{
+      title: 'x', initialTempo: 96, timeSignature: [3, 4], keyFifths: 0,
+      tracks: [{ displayName: 'Violin', instrument: 'staff', repeats: [], measures: [
+        { timeSignature: null, voices: [{ events: [note({ midi: 71, durationQN: 1, dotted: true }), note({ midi: 69, durationQN: 0.5 }), note({ midi: 67, durationQN: 1 })] }] },
+        { timeSignature: null, voices: [{ events: [rest(1), note({ midi: 65, durationQN: 0.5, triplet: true }), note({ midi: 67, durationQN: 0.5, triplet: true }), note({ midi: 69, durationQN: 0.5, triplet: true }), rest(1)] }] },
+      ] }],
+    }] }
+    const [score] = toScoreDocuments(out, { title: 'x' })
+    const [m1, m2] = score.tracks[0].measures
+    expect(m1.voices[0].events[0]).toMatchObject({ durationQN: 1.5, dotted: true })
+    expect(m1.voices[0].events.reduce((s, e) => s + e.durationQN, 0)).toBeCloseTo(3, 9)
+    expect(m2.voices[0].events[1].durationQN).toBeCloseTo(1 / 3, 9)
+    expect(m2.voices[0].events.reduce((s, e) => s + e.durationQN, 0)).toBeCloseTo(3, 9)
+  })
+});
