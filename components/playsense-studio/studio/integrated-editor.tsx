@@ -416,9 +416,13 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         startVideoTimeSeconds: measureTimings[i].startVideoTimeSeconds,
         endVideoTimeSeconds: measureTimings[i].endVideoTimeSeconds,
         events: tracked[i].events,
+        voice2Events: tracked[i].voice2Events,
         timeSignature: tracked[i].timeSignature,
         isFirst: i === 0,
         clef: tracked[i].clef,
+        keyFifths: tracked[i].keyFifths,
+        keyChanged: tracked[i].keyChanged,
+        clefChanged: tracked[i].clefChanged,
       });
     }
     return out;
@@ -1006,6 +1010,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         <div ref={staffWrapRef} className="min-h-0 flex-1">
           <EditableMeasureStrip
             measures={stripItems}
+            spans={score.spans}
             getCurrentSeconds={getCurrentSeconds}
             pixelsPerSecond={pixelsPerSecond}
             scrollLeftPx={scrollLeftPx}

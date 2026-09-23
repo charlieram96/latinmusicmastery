@@ -17,22 +17,13 @@
 // separate absolute <div> overlay (pointer-events:none) that reads from the
 // Map on each render, so it tracks the right note across marker drags + zoom.
 
-import { createStaveNote } from '@/lib/playsense-studio/percussion-stave-note';
 import { GripHorizontal, Plus } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Accidental,
-  Articulation,
   BarlineType,
-  Beam,
-  Dot,
-  Formatter,
   Renderer,
   Stave,
-  StaveNote,
   StaveTie,
-  Tuplet,
-  Voice,
 } from 'vexflow';
 import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
 import { beatLengthInQN, measureLengthInQN, occupiedQN } from '@/lib/playsense-studio/time-mapping';
@@ -43,8 +34,12 @@ import {
   type VexEventDescriptor,
   scoreTieIndices,
 } from '@/lib/playsense-studio/score-to-vexflow';
+import { buildMeasure, drawMeasure, formatMeasure } from '@/lib/playsense-studio/notation/build-measure';
+import { drawSpanSegments, spanSegments } from '@/lib/playsense-studio/notation/spans';
+import { keySignatureName } from '@/lib/playsense-studio/notation/accidentals';
 import type { PercStroke } from '@/lib/playsense-studio/perc-strokes';
 import type { DragMode } from '@/components/playsense-studio/sync/waveform-canvas';
+import type { Span } from '@/components/playsense-studio/shared/score-model/types';
 import { repeatSpans } from '@/lib/playsense-studio/repeats';
 
 export interface MeasureStripItem {
@@ -58,9 +53,15 @@ export interface MeasureStripItem {
   startVideoTimeSeconds: number;
   endVideoTimeSeconds: number;
   events: VexEventDescriptor[];
+  /** Second voice, display-only — never hit-tested, selected or graded. */
+  voice2Events: VexEventDescriptor[];
   timeSignature: [number, number];
   isFirst: boolean;
   clef: NotationClef;
+  /** Key signature for this measure (fifths), and whether it/the clef changed from the previous measure. */
+  keyFifths: number;
+  keyChanged: boolean;
+  clefChanged: boolean;
 }
 
 export interface SelectedEventRef {
@@ -78,6 +79,10 @@ interface MeasureHit {
 
 export interface EditableMeasureStripProps {
   measures: MeasureStripItem[];
+  /** Slurs and hairpins (ScoreDocument.spans) to draw within each measure. A
+   *  span whose ends fall in different measures is skipped here — each measure
+   *  is its own SVG in this strip; cross-bar spans wait for the continuous strip. */
+  spans?: Span[];
   /** Live playback position (video seconds) for the playhead; omit to hide it. */
   getCurrentSeconds?: () => number;
   pixelsPerSecond: number;
@@ -185,6 +190,7 @@ const EDGE_PX = 7;
 
 export function EditableMeasureStrip({
   measures,
+  spans: scoreSpans,
   getCurrentSeconds,
   pixelsPerSecond,
   scrollLeftPx,
@@ -750,6 +756,7 @@ export function EditableMeasureStrip({
             <MiniStave
               measureIndex={item.measureIndex}
               events={item.events}
+              voice2Events={item.voice2Events}
               previousEvent={measures[itemIndex - 1]?.events.at(-1)}
               nextEvent={measures[itemIndex + 1]?.events[0]}
               width={Math.round(width)}
@@ -758,6 +765,10 @@ export function EditableMeasureStrip({
               isFirst={item.isFirst}
               finalBarline={!!item.finalBarline}
               clef={item.clef}
+              keyFifths={item.keyFifths}
+              keyChanged={item.keyChanged}
+              clefChanged={item.clefChanged}
+              spans={scoreSpans}
               onHitsReady={handleHitsReady}
             />
           </div>
@@ -899,12 +910,17 @@ interface MiniStaveProps {
   nextEvent?: VexEventDescriptor;
   measureIndex: number;
   events: VexEventDescriptor[];
+  voice2Events: VexEventDescriptor[];
   width: number;
   height: number;
   timeSignature: [number, number];
   isFirst: boolean;
   finalBarline: boolean;
   clef: NotationClef;
+  keyFifths: number;
+  keyChanged: boolean;
+  clefChanged: boolean;
+  spans?: Span[];
   onHitsReady: (measureIndex: number, hits: MeasureHit[] | null) => void;
 }
 
@@ -913,12 +929,17 @@ const MiniStave = memo(function MiniStave({
   nextEvent,
   measureIndex,
   events,
+  voice2Events,
   width,
   height,
   timeSignature,
   isFirst,
   finalBarline,
   clef,
+  keyFifths,
+  keyChanged,
+  clefChanged,
+  spans: spansForMeasure,
   onHitsReady,
 }: MiniStaveProps) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -939,7 +960,12 @@ const MiniStave = memo(function MiniStave({
 
     const stave = new Stave(LEFT_PAD, 0, staveWidth);
     if (isFirst) {
-      stave.addClef(clef).addTimeSignature(`${timeSignature[0]}/${timeSignature[1]}`);
+      stave.addClef(clef);
+      if (keyFifths) stave.addKeySignature(keySignatureName(keyFifths));
+      stave.addTimeSignature(`${timeSignature[0]}/${timeSignature[1]}`);
+    } else {
+      if (clefChanged) stave.addClef(clef);
+      if (keyChanged) stave.addKeySignature(keySignatureName(keyFifths));
     }
     if (finalBarline) stave.setEndBarType(BarlineType.END);
     // Center the staff vertically: put the middle line (line 2 = B4) at the
@@ -949,64 +975,39 @@ const MiniStave = memo(function MiniStave({
 
     if (events.length > 0) {
       try {
-        const vexNotes = events.map(descriptorToStaveNote);
-        const voice = new Voice({ numBeats: timeSignature[0], beatValue: timeSignature[1] });
-        voice.setStrict(false);
-        voice.addTickables(vexNotes);
-        new Formatter().joinVoices([voice]).format([voice], Math.max(20, staveWidth - 16));
+        const built = buildMeasure([events, voice2Events ?? []], timeSignature, clef);
+        if (built) {
+          formatMeasure(built, Math.max(20, stave.getNoteEndX() - stave.getNoteStartX() - 8));
+          drawMeasure(ctx, stave, built);
+          const vexNotes = built.notes[0];
 
-        // Beam connectable notes (eighths and shorter); rests break the beam.
-        // Generated BEFORE the draw so beamed notes drop their individual flags
-        // and each note's bounding box (captured below) stays a single-note box.
-        const beams = Beam.generateBeams(vexNotes, { beamRests: false });
-        voice.draw(ctx, stave);
-        beams.forEach((beam) => beam.setContext(ctx).draw());
+          // Match individual held pitches even when the next chord changes shape.
+          events.forEach((d, i) => {
+            const next = events[i + 1];
+            if (!next) return;
+            const indices = scoreTieIndices(d, next);
+            if (indices.firstIndexes.length) new StaveTie({ firstNote: vexNotes[i], lastNote: vexNotes[i + 1], ...indices }).setContext(ctx).draw();
+          });
 
-        // Triplet brackets — group consecutive triplet-flagged events into
-        // runs of three and draw a tuplet over each complete group.
-        let run: StaveNote[] = [];
-        const flushRun = () => {
-          if (run.length === 3) {
-            new Tuplet(run, { numNotes: 3, notesOccupied: 2, bracketed: true })
-              .setContext(ctx)
-              .draw();
+          // Each measure has its own SVG; partial ties meet at the shared barline.
+          if (previousEvent && events[0]) {
+            const { lastIndexes } = scoreTieIndices(previousEvent, events[0]);
+            if (lastIndexes.length) new StaveTie({ lastNote: vexNotes[0], firstIndexes: lastIndexes, lastIndexes }).setContext(ctx).draw();
           }
-          run = [];
-        };
-        events.forEach((d, i) => {
-          if (d.triplet) {
-            run.push(vexNotes[i]);
-            if (run.length === 3) flushRun();
-          } else {
-            flushRun();
+          if (nextEvent && events.length) {
+            const { firstIndexes } = scoreTieIndices(events[events.length - 1], nextEvent);
+            if (firstIndexes.length) new StaveTie({ firstNote: vexNotes[vexNotes.length - 1], firstIndexes, lastIndexes: firstIndexes }).setContext(ctx).draw();
           }
-        });
-        flushRun();
 
-        // Match individual held pitches even when the next chord changes shape.
-        events.forEach((d, i) => {
-          const next = events[i + 1];
-          if (!next) return;
-          const indices = scoreTieIndices(d, next);
-          if (indices.firstIndexes.length) new StaveTie({ firstNote: vexNotes[i], lastNote: vexNotes[i + 1], ...indices }).setContext(ctx).draw();
-        });
+          drawSpanSegments(ctx, spanSegments(spansForMeasure, vexNotes.map((note, i) => ({ id: events[i].id, note, system: 0, hasDynamic: !!events[i].dynamic }))));
 
-        // Each measure has its own SVG; partial ties meet at the shared barline.
-        if (previousEvent && events[0]) {
-          const { lastIndexes } = scoreTieIndices(previousEvent, events[0]);
-          if (lastIndexes.length) new StaveTie({ lastNote: vexNotes[0], firstIndexes: lastIndexes, lastIndexes }).setContext(ctx).draw();
+          // Capture per-event bboxes after a successful draw.
+          const hits: MeasureHit[] = vexNotes.map((n, i) => {
+            const bb = n.getBoundingBox();
+            return { eventIndex: i, x: bb.getX(), y: bb.getY(), w: bb.getW(), h: bb.getH() };
+          });
+          onHitsReady(measureIndex, hits);
         }
-        if (nextEvent && events.length) {
-          const { firstIndexes } = scoreTieIndices(events[events.length - 1], nextEvent);
-          if (firstIndexes.length) new StaveTie({ firstNote: vexNotes[vexNotes.length - 1], firstIndexes, lastIndexes: firstIndexes }).setContext(ctx).draw();
-        }
-
-        // Capture per-event bboxes after a successful draw.
-        const hits: MeasureHit[] = vexNotes.map((n, i) => {
-          const bb = n.getBoundingBox();
-          return { eventIndex: i, x: bb.getX(), y: bb.getY(), w: bb.getW(), h: bb.getH() };
-        });
-        onHitsReady(measureIndex, hits);
       } catch {
         // Malformed/overfull measure — the stave still drew; no hits captured.
       }
@@ -1019,32 +1020,10 @@ const MiniStave = memo(function MiniStave({
       el.innerHTML = '';
       onHitsReady(measureIndex, null);
     };
-  }, [measureIndex, events, previousEvent, nextEvent, width, height, timeSignature, isFirst, finalBarline, clef, onHitsReady]);
+  }, [measureIndex, events, voice2Events, previousEvent, nextEvent, width, height, timeSignature, isFirst, finalBarline, clef, keyFifths, keyChanged, clefChanged, spansForMeasure, onHitsReady]);
 
   return <div ref={ref} />;
 });
-
-const ARTICULATION_CODE: Record<'staccato' | 'accent' | 'tenuto', string> = {
-  staccato: 'a.',
-  accent: 'a>',
-  tenuto: 'a-',
-};
-
-function descriptorToStaveNote(d: VexEventDescriptor): StaveNote {
-  const note = createStaveNote({
-    keys: d.keys,
-    duration: d.isRest ? `${d.durationCode}r` : d.durationCode,
-    ...(d.noteType ? { type: d.noteType } : {}),
-  }, d.percussion);
-  if (d.dotted) Dot.buildAndAttach([note]);
-  d.accidentals.forEach((acc, idx) => {
-    if (acc) note.addModifier(new Accidental(acc), idx);
-  });
-  if (!d.isRest && d.articulation) {
-    note.addModifier(new Articulation(ARTICULATION_CODE[d.articulation]), 0);
-  }
-  return note;
-}
 
 // Parse a VexFlow key string ('g/5', 'c#/4') to a continuous diatonic index
 // (octave*7 + letterIndex). Used to snap percussion drags to stroke lines.
