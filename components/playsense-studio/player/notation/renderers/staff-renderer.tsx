@@ -30,6 +30,7 @@ import {
   Stave,
   StaveNote,
   StaveTie,
+  type Tuplet,
   type Voice,
 } from 'vexflow';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -1496,18 +1497,19 @@ function clampZoom(zoom: number): number {
  *
  * A thin wrapper over the shared measure builder (build-measure.ts); kept for
  * its exported signature, which the `.worktrees/sheet-music-export` branch
- * still imports.
+ * still imports. Callers must draw the returned `tuplets` as well as the
+ * beams, or tuplet numbers/brackets go missing.
  */
 export function formatMeasureVoice(
   events: VexEventDescriptor[],
   timeSignature: [number, number],
   justifyWidth: number,
   clef: NotationClef = 'treble'
-): { vexNotes: StaveNote[]; voice: Voice; beams: Beam[] } | null {
+): { vexNotes: StaveNote[]; voice: Voice; beams: Beam[]; tuplets: Tuplet[] } | null {
   const built = buildMeasure([events], timeSignature, clef);
   if (!built || !built.notes[0].length) return null;
   formatMeasure(built, justifyWidth);
-  return { vexNotes: built.notes[0], voice: built.voices[0], beams: built.beams };
+  return { vexNotes: built.notes[0], voice: built.voices[0], beams: built.beams, tuplets: built.tuplets };
 }
 
 function qnAtEnd(blocks: ReturnType<typeof extractTrackEvents>): number {

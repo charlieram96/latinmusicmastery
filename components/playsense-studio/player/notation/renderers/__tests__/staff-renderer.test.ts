@@ -66,4 +66,10 @@ describe('formatMeasureVoice with the shared builder', () => {
     expect(laid.vexNotes[1].getDuration()).toBe('8');
     expect(laid.beams).toHaveLength(2);
   });
+  it('returns the tuplets it built so callers can draw them', () => {
+    const [b1] = extractTrackEvents(REFERENCE_EXCERPT_FIXTURE.tracks[0], [3, 4], 0);
+    const laid = formatMeasureVoice(b1.events, b1.timeSignature, 300, b1.clef)!;
+    expect(laid.tuplets).toHaveLength(1);
+    expect(laid.tuplets[0].getNotes()).toEqual(laid.vexNotes.slice(1, 4));
+  });
 });

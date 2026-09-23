@@ -137,4 +137,6 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 - **Before P4 ships:**
   - Record the Flex spike device results in spec §7.
   - Delete `app/(dev)/flex-spike`.
+- **Sheet-music export branch (before it merges):**
+  - engrave.ts must add the key signature at row starts and on keyChanged, and draw the tuplets `formatMeasureVoice` now returns; descriptors drop in-key accidentals.
 - **Test hygiene:** rename the backing-track-timing test "with a tempo change". Its grid varies `secPerQN`, which `buildExerciseGrid` never produces while tempo changes are ignored.
