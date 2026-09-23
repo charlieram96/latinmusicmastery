@@ -66,6 +66,7 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 
 **Wiring:**
 - `ensureEventIds` runs when a score opens
+- Event-id integrity: `ensureEventIds` must also replace duplicate ids; paste, repeat and append give copied events new ids; append merges or remaps `spans`; deleting events removes spans that reference them.
 - span editing
 - repeat propagation
 

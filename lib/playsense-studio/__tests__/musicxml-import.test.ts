@@ -62,6 +62,21 @@ describe('MusicXML import — rhythm and voices', () => {
     expect(m.voices[1].events).toHaveLength(3)
   })
 
+  it('ignores staff-2 forward and direction elements (piano-style two-staff part)', () => {
+    const score = parseMusicXmlString(doc(
+      `<measure number="1">${attrs(4)}` +
+      note({ step: 'C', oct: 5, type: 'quarter', dur: 4, staff: 1 }) +
+      `<forward><duration>4</duration><voice>1</voice><staff>2</staff></forward>` +
+      `<direction placement="below"><direction-type><dynamics><f/></dynamics></direction-type><voice>1</voice><staff>2</staff></direction>` +
+      note({ step: 'D', oct: 5, type: 'quarter', dur: 4, staff: 1 }) +
+      `</measure>`
+    ))
+    const v = score.tracks[0].measures[0].voices
+    expect(v).toHaveLength(1)
+    expect(v[0].events.map(e => e.kind)).toEqual(['note', 'note'])
+    expect(v[0].events[1].dynamic).toBeUndefined()
+  })
+
   it('turns <forward> into a rest in that voice and ignores staff 2', () => {
     const score = parseMusicXmlString(doc(`<measure number="1">${attrs(4)}${note({ step: 'C', oct: 5, type: 'quarter', dur: 4, staff: 1 })}<forward><duration>8</duration><voice>1</voice></forward>${note({ step: 'C', oct: 3, type: 'half', dur: 8, staff: 2, voice: '5' })}</measure>`))
     const v = score.tracks[0].measures[0].voices
@@ -160,5 +175,45 @@ describe('MusicXML import — marks', () => {
     const { parseScoreDocument } = await import('@/components/playsense-studio/shared/score-model/serialization')
     const score = parseMusicXmlString(doc(`<measure number="1">${attrs(4)}${dir('<dynamics><f/></dynamics>')}${note({ step: 'E', oct: 5, type: 'quarter', dur: 4, extra: '<notations><slur type="start"/></notations>' })}${note({ step: 'G', oct: 5, type: 'half', dur: 8, extra: '<notations><slur type="stop"/></notations>' })}</measure>`))
     expect(() => parseScoreDocument(JSON.parse(JSON.stringify(score)))).not.toThrow()
+  })
+
+  it('caps grace notes at 4 and omits out-of-range tuplets so the import always validates', async () => {
+    const { parseScoreDocument } = await import('@/components/playsense-studio/shared/score-model/serialization')
+    const grace = (step: string) => `<note><grace/><pitch><step>${step}</step><octave>6</octave></pitch><voice>1</voice><type>eighth</type></note>`
+    const sixGraces = ['C', 'D', 'E', 'F', 'G', 'A'].map(grace).join('')
+    const score = parseMusicXmlString(doc(
+      `<measure number="1">${attrs(4)}${sixGraces}${note({ step: 'B', oct: 6, type: 'quarter', dur: 4 })}` +
+      note({ step: 'C', oct: 5, type: '64th', dur: 1, extra: tm(17, 16) }) +
+      `${note({ step: 'D', oct: 5, type: '64th', dur: 1, extra: tm(17, 16) })}</measure>`
+    ))
+    const ev = score.tracks[0].measures[0].voices[0].events
+    expect(ev[0].grace).toHaveLength(4)
+    const outOfRange = ev.slice(1)
+    for (const e of outOfRange) {
+      expect(e.tuplet).toBeUndefined()
+      expect(e.triplet).toBeUndefined()
+      expect(e.durationQN).toBeCloseTo((1 / 16) * (16 / 17), 9)
+    }
+    expect(() => parseScoreDocument(JSON.parse(JSON.stringify(score)))).not.toThrow()
+  })
+
+  it('de-duplicates articulations read from a note', () => {
+    const ev = events(`<measure number="1">${attrs(4)}` +
+      note({ step: 'A', oct: 4, type: 'quarter', dur: 4, extra: '<notations><articulations><staccato/><staccato/><accent/></articulations></notations>' }) +
+      `</measure>`)
+    expect(ev[0].articulations).toEqual(['staccato', 'accent'])
+  })
+})
+
+describe('MusicXML import — event id uniqueness across imports', () => {
+  it('gives two imports of the same document disjoint id sets', () => {
+    const xml = doc(`<measure number="1">${attrs(4)}${note({ step: 'C', oct: 5, type: 'quarter', dur: 4 })}${note({ step: 'D', oct: 5, type: 'quarter', dur: 4 })}</measure>`)
+    const score1 = parseMusicXmlString(xml)
+    const score2 = parseMusicXmlString(xml)
+    const ids1 = score1.tracks[0].measures[0].voices[0].events.map(e => e.id)
+    const ids2 = score2.tracks[0].measures[0].voices[0].events.map(e => e.id)
+    expect(ids1.every(id => !!id)).toBe(true)
+    expect(ids2.every(id => !!id)).toBe(true)
+    expect(ids1.some(id => ids2.includes(id))).toBe(false)
   })
 })

@@ -70,8 +70,9 @@ const DYN = new Set<Dynamic>(['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'f
 function readMarks(noteEl: Element): { articulations?: Articulation[]; ornament?: Ornament } {
   const arts = Array.from(noteEl.querySelectorAll(':scope > notations > articulations > *')).map(a => ARTIC[a.tagName]).filter(Boolean);
   if (noteEl.querySelector(':scope > notations > fermata')) arts.push('fermata');
+  const uniqueArts = [...new Set(arts)];
   const orn = Array.from(noteEl.querySelectorAll(':scope > notations > ornaments > *')).map(o => ORN[o.tagName]).find(Boolean);
-  return { ...(arts.length ? { articulations: arts } : {}), ...(orn ? { ornament: orn } : {}) };
+  return { ...(uniqueArts.length ? { articulations: uniqueArts } : {}), ...(orn ? { ornament: orn } : {}) };
 }
 
 export interface ParseMusicXmlOptions {
@@ -160,8 +161,12 @@ export function parseMusicXmlString(
 
   const tracks: Track[] = [];
   const allSpans: Span[] = [];
+  // Prefix with a per-import random token so ids from two imports of the same
+  // document never collide (the schema requires ids unique within a score,
+  // and downstream code assumes importer output never needs de-duping).
+  const run = (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)).slice(0, 8);
   let seq = 0;
-  const ids = { next: () => `x${++seq}` };
+  const ids = { next: () => `x${run}-${++seq}` };
   const partEls = Array.from(doc.querySelectorAll('part')) as Element[];
   partEls.forEach((part, idx) => {
     const id = part.getAttribute('id') ?? '';
@@ -281,6 +286,8 @@ function parsePartMeasures(
 
     for (const el of Array.from(m.children) as Element[]) {
       if (el.tagName === 'direction') {
+        const dirStaff = el.querySelector(':scope > staff')?.textContent?.trim();
+        if (dirStaff && dirStaff !== '1') continue;
         const voiceId = el.querySelector(':scope > voice')?.textContent?.trim() ?? '1';
         const p = pendingDir.get(voiceId) ?? {};
         const dyn = el.querySelector('direction-type > dynamics > *')?.tagName as Dynamic | undefined;
@@ -299,6 +306,8 @@ function parsePartMeasures(
         continue;
       }
       if (el.tagName === 'forward') {
+        const fwdStaff = el.querySelector(':scope > staff')?.textContent?.trim();
+        if (fwdStaff && fwdStaff !== '1') continue;
         const voiceId = el.querySelector(':scope > voice')?.textContent?.trim() ?? lastVoice;
         const qn = Number(el.querySelector(':scope > duration')?.textContent ?? '0') / divisions;
         if (qn > 0) eventsFor(voiceId).push({ kind: 'rest', id: ids.next(), durationQN: qn } satisfies Rest);
@@ -313,10 +322,15 @@ function parsePartMeasures(
       if (noteEl.querySelector(':scope > grace')) {
         const midi = pitchToMidi(noteEl);
         if (midi !== null) {
-          const spelling = readSpelling(noteEl);
           const list = pendingGrace.get(voiceId) ?? [];
-          list.push({ midi, ...(spelling ? { spelling } : {}), slash: noteEl.querySelector(':scope > grace')!.getAttribute('slash') === 'yes' });
-          pendingGrace.set(voiceId, list);
+          // The schema caps a grace group at 4 (max(4)); further grace notes
+          // before the same main note are dropped rather than producing an
+          // import that fails validation.
+          if (list.length < 4) {
+            const spelling = readSpelling(noteEl);
+            list.push({ midi, ...(spelling ? { spelling } : {}), slash: noteEl.querySelector(':scope > grace')!.getAttribute('slash') === 'yes' });
+            pendingGrace.set(voiceId, list);
+          }
         }
         continue;
       }
@@ -374,7 +388,14 @@ function parsePartMeasures(
           openTuplet.set(voiceId, open);
         }
         open.left--;
-        tuplet = { id: open.id, n: actual, m: normal };
+        // The schema only allows n 2..15 / m 1..16. Outside that range we
+        // still grouped/counted the notes above (so brackets keep working),
+        // but we omit the tuplet metadata on the event itself — the real,
+        // already-scaled durationQN (computed from normal/actual above) is
+        // kept regardless.
+        if (actual <= 15 && normal <= 16) {
+          tuplet = { id: open.id, n: actual, m: normal };
+        }
         if (noteEl.querySelector(':scope > notations > tuplet[type="stop"]')) openTuplet.delete(voiceId);
       } else {
         openTuplet.delete(voiceId);
