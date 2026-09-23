@@ -90,6 +90,8 @@ describe('parseScoreDocument — measure end barline', () => {
     base.tracks[0].measures[1].endBarline = 'single';
     expect(parseScoreDocument(base).tracks[0].measures[1].endBarline).toBe('single');
     base.tracks[0].measures[1].endBarline = 'double';
+    expect(parseScoreDocument(base).tracks[0].measures[1].endBarline).toBe('double');
+    base.tracks[0].measures[1].endBarline = 'unknown';
     expect(() => parseScoreDocument(base)).toThrow(ScoreDocumentValidationError);
   });
 });

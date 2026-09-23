@@ -11,6 +11,12 @@
 import { z } from 'zod';
 import type { ScoreDocument } from './types';
 
+const spellingSchema = z.object({
+  step: z.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G']),
+  alter: z.union([z.literal(-2), z.literal(-1), z.literal(0), z.literal(1), z.literal(2)]),
+  showAccidental: z.enum(['auto', 'always']).optional(),
+});
+
 const noteBaseShape = {
   durationQN: z.number().positive(),
   dotted: z.boolean().optional(),
@@ -18,6 +24,14 @@ const noteBaseShape = {
   tieToNext: z.boolean().optional(),
   slurToNext: z.boolean().optional(),
   articulation: z.enum(['staccato', 'accent', 'tenuto']).optional(),
+  id: z.string().min(1).optional(),
+  dots: z.union([z.literal(1), z.literal(2)]).optional(),
+  tuplet: z.object({ id: z.string().min(1), n: z.number().int().min(2).max(15), m: z.number().int().min(1).max(16) }).optional(),
+  articulations: z.array(z.enum(['staccato', 'staccatissimo', 'tenuto', 'accent', 'marcato', 'fermata'])).max(6).optional(),
+  ornament: z.enum(['trill', 'mordent', 'turn']).optional(),
+  dynamic: z.enum(['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'fp', 'sfz']).optional(),
+  text: z.string().min(1).max(60).optional(),
+  grace: z.array(z.object({ midi: z.number().int().min(0).max(127), spelling: spellingSchema.optional(), slash: z.boolean() })).min(1).max(4).optional(),
 };
 
 const fingeringSchema = z.object({
@@ -38,6 +52,7 @@ const noteSchema = z.object({
   kind: z.literal('note'),
   midi: z.number().int().min(0).max(127),
   spellingHint: z.string().optional(),
+  spelling: spellingSchema.optional(),
   percussion: percussionSchema.optional(),
   fingering: fingeringSchema.optional(),
   ...noteBaseShape,
@@ -55,6 +70,7 @@ const chordSchema = z.object({
       z.object({
         midi: z.number().int().min(0).max(127),
         spellingHint: z.string().optional(),
+        spelling: spellingSchema.optional(),
         percussion: percussionSchema.optional(),
         fingering: fingeringSchema.optional(),
         tieToNext: z.boolean().optional(),
@@ -92,7 +108,11 @@ const measureSchema = z.object({
   timeSignature: timeSignatureSchema.optional(),
   tempoChange: z.number().positive().optional(),
   keyFifths: z.number().int().min(-7).max(7).optional(),
-  endBarline: z.enum(['single', 'final']).optional(),
+  endBarline: z.enum(['single', 'final', 'double']).optional(),
+  clef: z.enum(['treble', 'bass', 'alto', 'tenor', 'percussion']).optional(),
+  repeatStart: z.boolean().optional(),
+  repeatEnd: z.boolean().optional(),
+  volta: z.enum(['1.', '2.']).optional(),
   voices: z.array(voiceSchema).min(1),
 });
 
@@ -131,6 +151,7 @@ const scoreDocumentSchema = z.object({
   initialTimeSignature: timeSignatureSchema,
   initialKeyFifths: z.number().int().min(-7).max(7),
   tracks: z.array(trackSchema).min(1),
+  spans: z.array(z.object({ id: z.string().min(1), type: z.enum(['slur', 'cresc', 'dim']), from: z.string().min(1), to: z.string().min(1) })).optional(),
 });
 
 export const SCORE_DOCUMENT_SCHEMA = scoreDocumentSchema;
