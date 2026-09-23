@@ -16,15 +16,25 @@ export function spanSegments(spans: Span[] | undefined, placed: PlacedNote[]): S
     if (ia === undefined || ib === undefined || ia >= ib) continue
     const a = placed[ia], b = placed[ib]
     if (a.system === b.system) { out.push({ type: s.type, from: a.note, to: b.note, fromHasDynamic: !!a.hasDynamic }); continue }
-    if (s.type === 'slur') {
-      out.push({ type: 'slur', from: a.note, to: undefined, fromHasDynamic: !!a.hasDynamic })
-      out.push({ type: 'slur', from: undefined, to: b.note })
-      continue
+
+    // Collect unique systems between a and b (inclusive)
+    const systems = new Set<number>()
+    for (let i = ia; i <= ib; i++) systems.add(placed[i].system)
+    const sortedSystems = Array.from(systems).sort((x, y) => x - y)
+
+    // Build one segment per system touched
+    let isFirst = true
+    for (const sys of sortedSystems) {
+      const firstInSys = placed.find((p, i) => i >= ia && i <= ib && p.system === sys)!
+      const lastInSys = [...placed].reverse().find((p, i) => i >= ia && i <= ib && p.system === sys)!
+
+      const from = (sys === a.system) ? a.note : firstInSys.note
+      const to = (sys === b.system) ? b.note : lastInSys.note
+      const fromHasDynamic = isFirst ? !!a.hasDynamic : undefined
+
+      out.push({ type: s.type, from, to, fromHasDynamic })
+      isFirst = false
     }
-    const lastOfA = [...placed].reverse().find(p => p.system === a.system)!
-    const firstOfB = placed.find(p => p.system === b.system)!
-    if (lastOfA.note !== a.note) out.push({ type: s.type, from: a.note, to: lastOfA.note, fromHasDynamic: !!a.hasDynamic })
-    if (firstOfB.note !== b.note) out.push({ type: s.type, from: firstOfB.note, to: b.note })
   }
   return out
 }
@@ -32,12 +42,13 @@ export function spanSegments(spans: Span[] | undefined, placed: PlacedNote[]): S
 export function drawSpanSegments(ctx: RenderContext, segments: SpanSegment[]): void {
   for (const seg of segments) {
     try {
-      if (seg.type === 'slur') {
+      if (seg.type === 'slur' && seg.from && seg.to) {
         new Curve(seg.from, seg.to, { thickness: 2, cps: [{ x: 0, y: 12 }, { x: 0, y: 12 }] }).setContext(ctx).draw()
       } else if (seg.from && seg.to) {
         const hp = new StaveHairpin({ firstNote: seg.from, lastNote: seg.to }, seg.type === 'cresc' ? StaveHairpin.type.CRESC : StaveHairpin.type.DECRESC)
         hp.setContext(ctx).setPosition(Modifier.Position.BELOW)
-        hp.setRenderOptions({ height: 8, yShift: 4, leftShiftPx: seg.fromHasDynamic ? -26 : 0, rightShiftPx: 0 })
+        const isSingleNote = seg.from === seg.to
+        hp.setRenderOptions({ height: 8, yShift: 4, leftShiftPx: seg.fromHasDynamic ? 18 : 0, rightShiftPx: isSingleNote ? 24 : 0 })
         hp.draw()
       }
     } catch {
