@@ -7,19 +7,21 @@
 // What we extract:
 //   - score-partwise structure (the only layout we support; if we get
 //     score-timewise, we throw)
-//   - parts → tracks. Each part becomes one Track in our model.
-//   - measures → Measures with a single Voice each. Multi-voice support
-//     would land in M8 alongside the visual editor.
+//   - parts → tracks. Each part becomes one Track in our model. Only staff 1
+//     of each part is kept, with up to two voices per measure (<backup>
+//     starts the second voice; <forward> becomes a rest in its voice).
 //   - notes: pitch (step + octave + alter), rest, type (whole/half/etc.),
-//     dot, chord (siblings of <chord/> are merged into the prior note).
+//     dots (single and double), tuplets (bracketed or counted from
+//     time-modification), ties (<tie type="start">), written spelling and
+//     courtesy accidentals, chord (siblings of <chord/> are merged into the
+//     prior note).
 //   - attributes: time signature, key signature (fifths), divisions.
 //   - direction/sound tempo as initialTempo.
 //
-// Out of scope for v1: tuplets beyond triplets, ties (we emit them in the
-// model but don't yet preserve <tied/> across imports), articulations,
-// ornaments, lyrics, voltas. If a MusicXML file uses those, we still
-// import what we understand and ignore the rest — the renderer doesn't
-// support those features yet anyway.
+// Out of scope for v1: articulations, ornaments, dynamics, slurs, grace
+// notes, lyrics, voltas (Task 6 adds marks on top of this loop). If a
+// MusicXML file uses those, we still import what we understand and ignore
+// the rest — the renderer doesn't support those features yet anyway.
 
 import JSZip from 'jszip';
 import type {
@@ -31,7 +33,9 @@ import type {
   Note,
   Rest,
   ScoreDocument,
+  Spelling,
   Track,
+  Tuplet,
   Voice,
 } from '@/components/playsense-studio/shared/score-model/types';
 import { gmToStrokeMidi, inferPercInstrument } from '../gm-percussion';
@@ -232,74 +236,120 @@ function parsePartMeasures(
     const tempoChange = readTempoChange(m);
     const keyFifths = readKeyFifths(m);
 
-    const events: MusicalEvent[] = [];
-    const noteEls = Array.from(m.querySelectorAll(':scope > note')) as Element[];
+    // Events are bucketed by MusicXML <voice>, so <backup> needs no handling.
+    // Only staff 1 is kept (one instrument, one staff), and at most two voices.
+    const byVoice = new Map<string, MusicalEvent[]>();
+    const eventsFor = (id: string) => {
+      let list = byVoice.get(id);
+      if (!list) { list = []; byVoice.set(id, list); }
+      return list;
+    };
+    const openTuplet = new Map<string, { id: string; left: number; bracketed: boolean }>();
+    let lastVoice = '1';
 
-    for (const noteEl of noteEls) {
+    for (const el of Array.from(m.children) as Element[]) {
+      if (el.tagName === 'forward') {
+        const voiceId = el.querySelector(':scope > voice')?.textContent?.trim() ?? lastVoice;
+        const qn = Number(el.querySelector(':scope > duration')?.textContent ?? '0') / divisions;
+        if (qn > 0) eventsFor(voiceId).push({ kind: 'rest', durationQN: qn } satisfies Rest);
+        continue;
+      }
+      if (el.tagName !== 'note') continue;
+      const noteEl = el;
+      if (noteEl.querySelector(':scope > grace')) continue; // grace notes: handled in the marks pass
+      const staff = noteEl.querySelector(':scope > staff')?.textContent?.trim();
+      if (staff && staff !== '1') continue;
+      const voiceId = noteEl.querySelector(':scope > voice')?.textContent?.trim() ?? '1';
+      lastVoice = voiceId;
+      const events = eventsFor(voiceId);
+
       const isChordContinuation = noteEl.querySelector(':scope > chord') !== null;
       const isRest = noteEl.querySelector(':scope > rest') !== null;
-      const durationTicks = Number(
-        noteEl.querySelector(':scope > duration')?.textContent ?? '0'
-      );
-      const durationQN = durationTicks / divisions;
+      const durationQN = Number(noteEl.querySelector(':scope > duration')?.textContent ?? '0') / divisions;
       const typeEl = noteEl.querySelector(':scope > type')?.textContent?.trim();
-      const dotted = noteEl.querySelectorAll(':scope > dot').length > 0;
-
-      // Resolve duration: prefer <type> when available (more reliable across
-      // engravings) and fall back to derived QN when missing.
-      const baseQN = typeEl && TYPE_TO_QN[typeEl] !== undefined ? TYPE_TO_QN[typeEl] : durationQN;
-      const finalDurationQN = dotted ? baseQN * 1.5 : baseQN;
+      const dots = Math.min(2, noteEl.querySelectorAll(':scope > dot').length) as 0 | 1 | 2;
+      const tmEl = noteEl.querySelector(':scope > time-modification');
+      const actual = Number(tmEl?.querySelector('actual-notes')?.textContent ?? 0);
+      const normal = Number(tmEl?.querySelector('normal-notes')?.textContent ?? 0);
+      const inTuplet = actual > 1 && normal > 0;
+      const dotFactor = dots === 2 ? 1.75 : dots === 1 ? 1.5 : 1;
+      // Prefer <type> (reliable across engravings); fall back to the tick length,
+      // which already includes dots and tuplet scaling.
+      const finalDurationQN = typeEl && TYPE_TO_QN[typeEl] !== undefined
+        ? TYPE_TO_QN[typeEl] * dotFactor * (inTuplet ? normal / actual : 1)
+        : durationQN;
+      const tieStart = noteEl.querySelector(':scope > tie[type="start"]') !== null;
 
       if (isChordContinuation) {
-        // Merge into the previous event as a chord pitch.
         const prev = events[events.length - 1];
         if (prev && (prev.kind === 'note' || prev.kind === 'chord')) {
           const pitch = isRest ? null : noteToPitch(noteEl, midiCtx);
           if (pitch !== null) {
+            const spelling = readSpelling(noteEl);
+            const member = { ...pitch, ...(spelling ? { spelling } : {}), ...(tieStart ? { tieToNext: true } : {}) };
             if (prev.kind === 'note') {
+              const { kind: _k, midi, spellingHint, percussion, spelling: prevSpelling, tieToNext, ...rest } = prev;
               const chord: Chord = {
-                kind: 'chord',
-                durationQN: prev.durationQN,
-                dotted: prev.dotted,
-                notes: [
-                  { midi: prev.midi, spellingHint: prev.spellingHint, percussion: prev.percussion },
-                  pitch,
-                ],
+                ...rest, kind: 'chord',
+                notes: [{ midi, spellingHint, percussion, ...(prevSpelling ? { spelling: prevSpelling } : {}), ...(tieToNext ? { tieToNext } : {}) }, member],
               };
               events[events.length - 1] = chord;
             } else {
-              prev.notes.push(pitch);
+              prev.notes.push(member);
             }
           }
         }
         continue;
       }
 
+      // Tuplet grouping: explicit <tuplet type="start"> brackets win; otherwise count n notes.
+      let tuplet: Tuplet | undefined;
+      if (inTuplet) {
+        const bracketStart = noteEl.querySelector(':scope > notations > tuplet[type="start"]') !== null;
+        let open = openTuplet.get(voiceId);
+        if (!open || bracketStart || (!open.bracketed && open.left <= 0)) {
+          open = { id: `t${idx + 1}-${voiceId}-${events.length}`, left: actual, bracketed: bracketStart };
+          openTuplet.set(voiceId, open);
+        }
+        open.left--;
+        tuplet = { id: open.id, n: actual, m: normal };
+        if (noteEl.querySelector(':scope > notations > tuplet[type="stop"]')) openTuplet.delete(voiceId);
+      } else {
+        openTuplet.delete(voiceId);
+      }
+
+      const rhythm = {
+        durationQN: finalDurationQN,
+        dotted: dots === 1,
+        ...(dots === 2 ? { dots: 2 as const } : {}),
+        ...(tuplet ? { tuplet } : {}),
+        ...(tuplet && tuplet.n === 3 && tuplet.m === 2 ? { triplet: true } : {}),
+      };
+
       if (isRest) {
-        events.push({
-          kind: 'rest',
-          durationQN: finalDurationQN,
-          dotted,
-        } satisfies Rest);
+        events.push({ kind: 'rest', ...rhythm } satisfies Rest);
       } else {
         const pitch = noteToPitch(noteEl, midiCtx);
         if (pitch === null) continue;
+        const spelling = readSpelling(noteEl);
         events.push({
-          kind: 'note',
-          ...pitch,
-          durationQN: finalDurationQN,
-          dotted,
+          kind: 'note', ...pitch, ...rhythm,
+          ...(spelling ? { spelling } : {}),
+          ...(tieStart ? { tieToNext: true } : {}),
         } satisfies Note);
       }
     }
 
-    const voice: Voice = { number: 1, events };
+    const voiceIds = Array.from(byVoice.keys()).slice(0, 2);
+    const voices: Voice[] = voiceIds.length
+      ? voiceIds.map((id, i) => ({ number: i + 1, events: byVoice.get(id)! }))
+      : [{ number: 1, events: [] }];
     out.push({
       number: idx + 1,
       timeSignature: m === measureEls[0] ? undefined : readTimeSignature(m) ?? undefined,
       tempoChange: tempoChange ?? undefined,
       keyFifths: keyFifths ?? undefined,
-      voices: [voice],
+      voices,
     });
   });
 
@@ -399,6 +449,16 @@ function pitchToMidi(noteEl: Element): number | null {
   const alter = alterRaw ? Number(alterRaw) : 0;
   if (!Number.isFinite(octave) || !Number.isFinite(alter)) return null;
   return (octave + 1) * 12 + step + alter;
+}
+
+function readSpelling(noteEl: Element): Spelling | undefined {
+  const pitch = noteEl.querySelector(':scope > pitch');
+  const step = pitch?.querySelector('step')?.textContent?.trim();
+  if (!step || !/^[A-G]$/.test(step)) return undefined;
+  const alter = Math.max(-2, Math.min(2, Math.round(Number(pitch?.querySelector('alter')?.textContent ?? 0)))) as Spelling['alter'];
+  const acc = noteEl.querySelector(':scope > accidental');
+  const courtesy = acc && (acc.getAttribute('cautionary') === 'yes' || acc.getAttribute('parentheses') === 'yes');
+  return { step: step as Spelling['step'], alter, ...(courtesy ? { showAccidental: 'always' as const } : {}) };
 }
 
 function guessInstrument(

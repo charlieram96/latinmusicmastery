@@ -1,0 +1,79 @@
+// @vitest-environment jsdom
+import { describe, expect, it } from 'vitest'
+import { parseMusicXmlString } from '../parsers/musicxml'
+
+const doc = (measures: string) => `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0"><part-list><score-part id="P1"><part-name>Violin</part-name></score-part></part-list>
+<part id="P1">${measures}</part></score-partwise>`
+const attrs = (div: number, beats = 3) => `<attributes><divisions>${div}</divisions><key><fifths>0</fifths></key><time><beats>${beats}</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>`
+const note = (o: { step: string; oct: number; type: string; dur: number; voice?: string; alter?: number; extra?: string; staff?: number }) =>
+  `<note><pitch><step>${o.step}</step>${o.alter != null ? `<alter>${o.alter}</alter>` : ''}<octave>${o.oct}</octave></pitch><duration>${o.dur}</duration><voice>${o.voice ?? '1'}</voice><type>${o.type}</type>${o.extra ?? ''}${o.staff ? `<staff>${o.staff}</staff>` : ''}</note>`
+const tm = (a: number, n: number) => `<time-modification><actual-notes>${a}</actual-notes><normal-notes>${n}</normal-notes></time-modification>`
+const events = (xml: string, m = 0, v = 0) => parseMusicXmlString(doc(xml)).tracks[0].measures[m].voices[v].events
+
+describe('MusicXML import — rhythm and voices', () => {
+  it('reads triplet eighths as one 3:2 group of real length 1/3', () => {
+    const ev = events(`<measure number="1">${attrs(6)}${note({ step: 'C', oct: 5, type: 'quarter', dur: 6 })}` +
+      ['F', 'G', 'A'].map(s => note({ step: s, oct: 4, type: 'eighth', dur: 2, extra: tm(3, 2) })).join('') +
+      `${note({ step: 'B', oct: 4, type: 'quarter', dur: 6 })}</measure>`)
+    expect(ev.slice(1, 4).map(e => e.durationQN)).toEqual([1 / 3, 1 / 3, 1 / 3])
+    expect(ev[1]).toMatchObject({ triplet: true, tuplet: { n: 3, m: 2 } })
+    expect(new Set(ev.slice(1, 4).map(e => e.tuplet!.id)).size).toBe(1)
+    expect(ev.reduce((s, e) => s + e.durationQN, 0)).toBeCloseTo(3, 9)
+  })
+
+  it('groups by counting when the exporter omits tuplet brackets, and starts a new group after n notes', () => {
+    const six = ['C', 'D', 'E', 'F', 'G', 'A'].map(s => note({ step: s, oct: 5, type: 'eighth', dur: 2, extra: tm(3, 2) })).join('')
+    const ev = events(`<measure number="1">${attrs(6)}${six}${note({ step: 'B', oct: 4, type: 'quarter', dur: 6 })}</measure>`)
+    expect(ev[0].tuplet!.id).toBe(ev[2].tuplet!.id)
+    expect(ev[3].tuplet!.id).not.toBe(ev[2].tuplet!.id)
+  })
+
+  it('keeps a mixed-value bracketed triplet as one group', () => {
+    const start = '<notations><tuplet type="start"/></notations>', stop = '<notations><tuplet type="stop"/></notations>'
+    const ev = events(`<measure number="1">${attrs(6)}${note({ step: 'C', oct: 5, type: 'quarter', dur: 4, extra: tm(3, 2) + start })}${note({ step: 'D', oct: 5, type: 'eighth', dur: 2, extra: tm(3, 2) + stop })}${note({ step: 'E', oct: 5, type: 'half', dur: 12 })}</measure>`)
+    expect(ev[0].durationQN).toBeCloseTo(2 / 3, 9)
+    expect(ev[0].tuplet!.id).toBe(ev[1].tuplet!.id)
+  })
+
+  it('reads a quintuplet and a double dot', () => {
+    const q = ['E', 'D', 'C', 'B', 'A'].map(s => note({ step: s, oct: 5, type: '16th', dur: 4, extra: tm(5, 4) })).join('')
+    const ev = events(`<measure number="1">${attrs(20)}${note({ step: 'D', oct: 6, type: 'quarter', dur: 35, extra: '<dot/><dot/>' })}${note({ step: 'C', oct: 6, type: '16th', dur: 5 })}</measure>`)
+    expect(ev[0]).toMatchObject({ durationQN: 1.75, dots: 2 })
+    expect(ev[0].dotted).toBeFalsy()
+    const ev2 = events(`<measure number="1">${attrs(20)}${q}${note({ step: 'G', oct: 5, type: 'half', dur: 40 })}</measure>`)
+    expect(ev2[0]).toMatchObject({ tuplet: { n: 5, m: 4 } })
+    expect(ev2[0].durationQN).toBeCloseTo(0.2, 9)
+    expect(ev2[0].triplet).toBeFalsy()
+  })
+
+  it('reads ties', () => {
+    const ev = events(`<measure number="1">${attrs(4)}${note({ step: 'G', oct: 5, type: 'half', dur: 12, extra: '<dot/><tie type="start"/>' })}</measure>`)
+    expect(ev[0]).toMatchObject({ tieToNext: true, dotted: true, durationQN: 3 })
+  })
+
+  it('splits a second voice using backup instead of appending it', () => {
+    const score = parseMusicXmlString(doc(`<measure number="1">${attrs(4)}${note({ step: 'B', oct: 4, type: 'half', dur: 12, extra: '<dot/>' })}<backup><duration>12</duration></backup>` +
+      ['G', 'G', 'G'].map(s => note({ step: s, oct: 4, type: 'quarter', dur: 4, voice: '2' })).join('') + `</measure>`))
+    const m = score.tracks[0].measures[0]
+    expect(m.voices).toHaveLength(2)
+    expect(m.voices[0].events).toHaveLength(1)
+    expect(m.voices[1]).toMatchObject({ number: 2 })
+    expect(m.voices[1].events).toHaveLength(3)
+  })
+
+  it('turns <forward> into a rest in that voice and ignores staff 2', () => {
+    const score = parseMusicXmlString(doc(`<measure number="1">${attrs(4)}${note({ step: 'C', oct: 5, type: 'quarter', dur: 4, staff: 1 })}<forward><duration>8</duration><voice>1</voice></forward>${note({ step: 'C', oct: 3, type: 'half', dur: 8, staff: 2, voice: '5' })}</measure>`))
+    const v = score.tracks[0].measures[0].voices
+    expect(v).toHaveLength(1)
+    expect(v[0].events.map(e => e.kind)).toEqual(['note', 'rest'])
+    expect(v[0].events[1].durationQN).toBe(2)
+  })
+
+  it('keeps written spelling and courtesy accidentals', () => {
+    const ev = events(`<measure number="1">${attrs(4)}${note({ step: 'B', oct: 4, alter: -1, type: 'quarter', dur: 4 })}${note({ step: 'E', oct: 5, type: 'quarter', dur: 4, extra: '<accidental cautionary="yes">natural</accidental>' })}${note({ step: 'F', oct: 5, alter: 2, type: 'quarter', dur: 4 })}</measure>`)
+    expect(ev[0]).toMatchObject({ midi: 70, spelling: { step: 'B', alter: -1 } })
+    expect(ev[1]).toMatchObject({ spelling: { step: 'E', alter: 0, showAccidental: 'always' } })
+    expect(ev[2]).toMatchObject({ midi: 79, spelling: { step: 'F', alter: 2 } })
+  })
+})
