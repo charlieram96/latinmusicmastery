@@ -22,6 +22,8 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 
 ## Plan 1 — Foundation (detailed plan exists)
 
+**Done 2026-09-23** on feat/studio-rework-p1. Full suite: 967 passing (101 files); tsc clean. Pending, needs a human: Flex spike device results (Task 1, Step 3), and the two browser checks from Task 8 Step 2 (a live exercise plays unchanged with an audible count-in; a MusicXML import with triplets and a second voice draws correctly). Follow-ups recorded: renderers draw dots from legacy `dotted` only (double dots invisible until Plan 2); voice 2 ignored downstream until Plans 2–3; tempo marks honoured only after Plan 3 cleans stale values; metronome from the grid in Plan 5.
+
 1. Flex-video spike on Safari macOS, iOS and Chrome (go/no-go for spec §7).
 2. Additive score-model fields plus accessors (spec §4.1–4.3).
 3. Triplet and tuplet duration code in the renderer (spec §4.4).
