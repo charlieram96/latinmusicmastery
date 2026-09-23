@@ -11,7 +11,7 @@ import type {
 import { TOLERANCE_BY_DIFFICULTY, getInstrumentCategory } from '@/lib/play-sense/types'
 import { gradeSingleOnset, gradeChordOnset, matchOnsetToExpected, computeStats, frequencyToMidi, orderSessionResults, currentComboForResults } from '@/lib/play-sense/scoring'
 import type { ExpectedEvent } from '@/lib/play-sense/scoring'
-import { generateExpectedTimestamps, getExerciseDuration, getCountInDuration } from '@/lib/play-sense/exercise-utils'
+import { generateExpectedTimestamps, getExerciseDuration, getCountInDuration, getLoopDuration } from '@/lib/play-sense/exercise-utils'
 import { useOnsetDetection } from './use-onset-detection'
 import { useMetronome } from './use-metronome'
 import { useCalibration } from './use-calibration'
@@ -227,9 +227,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     // hear them only on the first pass. loopCount is 1 in production today.
     // Derived here rather than read from singleLoopDurationRef, which is only
     // populated once the session starts — after this render.
-    loopDurationSeconds: exercise
-      ? (exercise.measures * exercise.timeSignature[0] * 60) / exercise.bpm
-      : undefined,
+    loopDurationSeconds: exercise ? getLoopDuration(exercise) : undefined,
     loopCount: exercise?.loopCount ?? 1,
   })
 
@@ -745,8 +743,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
 
     // Compute single loop duration for playhead looping
     const beatsPerMeasure = exercise.timeSignature[0]
-    const singleLoopBeats = exercise.measures * beatsPerMeasure
-    singleLoopDurationRef.current = (singleLoopBeats * 60) / exercise.bpm
+    singleLoopDurationRef.current = getLoopDuration(exercise)
 
     // Start countdown
     sessionStateRef.current = 'countdown'

@@ -75,3 +75,15 @@ describe('timelineToEngineSeconds', () => {
     expect(timelineToEngineSeconds(5, { toMusicalPosition: () => NaN }, grid)).toBe(0);
   });
 });
+
+describe('timelineToEngineSeconds with a tempo change', () => {
+  it('uses the grid when the exercise has one', async () => {
+    const { timelineToEngineSeconds } = await import('../backing-track-timing')
+    const grid = { measureStartSec: [0, 2, 4, 6], measureStartQN: [0, 4, 8, 11], secPerQN: [0.5, 0.5, 60 / 90], beatQN: [1, 1, 0.5] }
+    const map = { toMusicalPosition: (s: number) => s } // pretend video seconds == qn
+    // 9.5 qn is 1.5 qn into bar 3 (♩=90): 4 s + 1.5 × 0.667 s = 5 s
+    expect(timelineToEngineSeconds(9.5, map, { bpm: 120, timeSignature: [4, 4], grid })).toBeCloseTo(5, 9)
+    // before the start: extrapolate with bar 1's tempo
+    expect(timelineToEngineSeconds(-2, map, { bpm: 120, timeSignature: [4, 4], grid })).toBeCloseTo(-1, 9)
+  })
+})

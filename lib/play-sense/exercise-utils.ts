@@ -1,10 +1,12 @@
-import type { ExerciseDefinition, ExerciseEvent } from './types'
+import type { ExerciseDefinition, ExerciseEvent, ExerciseGrid } from './types'
 import type { ExpectedEvent } from './scoring'
 
 /**
  * Convert a beat position to a timestamp in seconds relative to exercise start.
  * beat is 1-based, measure is 1-based.
  * swing (0-100) pushes upbeats (off-eighth-notes) later: 0 = straight, 67 = triplet swing.
+ * When `grid` is given (scores with tempo/meter changes), it takes over entirely —
+ * `bpm`/`timeSignature`/`totalMeasures` are then only the uniform fallback.
  */
 export function beatToTimestamp(
   event: ExerciseEvent,
@@ -12,8 +14,18 @@ export function beatToTimestamp(
   timeSignature: [number, number],
   loopIndex: number = 0,
   totalMeasures: number = 0,
-  swing: number = 0
+  swing: number = 0,
+  grid?: ExerciseGrid
 ): number {
+  if (grid) {
+    const i = Math.min(Math.max(event.measure - 1, 0), grid.secPerQN.length - 1)
+    const beatSec = grid.beatQN[i] * grid.secPerQN[i]
+    const loopLen = grid.measureStartSec[grid.measureStartSec.length - 1]
+    let t = loopIndex * loopLen + grid.measureStartSec[i] + (event.beat - 1) * beatSec
+    if (swing > 0 && Math.abs(((event.beat - 1) % 1) - 0.5) < 0.01) t += (swing / 100) * beatSec * 0.5
+    return t
+  }
+
   const beatsPerMeasure = timeSignature[0]
   const beatDuration = 60 / bpm
 
@@ -58,14 +70,17 @@ export function generateExpectedTimestamps(
         exercise.timeSignature,
         loop,
         exercise.measures,
-        exercise.swing
+        exercise.swing,
+        exercise.grid
       )
       results.push({
         eventIndex: results.length,
         timestamp,
         expectedPitch: event.expectedPitch,
         expectedTechnique: event.technique,
-        expectedDurationSec: event.duration * beatDuration,
+        expectedDurationSec: event.duration * (exercise.grid
+          ? exercise.grid.beatQN[event.measure - 1] * exercise.grid.secPerQN[event.measure - 1]
+          : beatDuration),
         expectedSurface: event.surface,
         // Make the chord group id loop-unique so notes from different loop
         // iterations aren't grouped together.
@@ -78,12 +93,18 @@ export function generateExpectedTimestamps(
 }
 
 /**
+ * One pass of the exercise, in seconds.
+ */
+export function getLoopDuration(exercise: ExerciseDefinition): number {
+  if (exercise.grid) return exercise.grid.measureStartSec[exercise.grid.measureStartSec.length - 1]
+  return (exercise.measures * exercise.timeSignature[0] * 60) / exercise.bpm
+}
+
+/**
  * Compute total exercise duration in seconds (including all loops).
  */
 export function getExerciseDuration(exercise: ExerciseDefinition): number {
-  const beatsPerMeasure = exercise.timeSignature[0]
-  const totalBeats = exercise.measures * beatsPerMeasure * exercise.loopCount
-  return (totalBeats * 60) / exercise.bpm
+  return getLoopDuration(exercise) * exercise.loopCount
 }
 
 /**

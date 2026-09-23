@@ -18,6 +18,7 @@ import { midiToKeyString } from '@/lib/playsense-studio/score-to-vexflow'
 import type {
   ExerciseDefinition,
   ExerciseEvent,
+  ExerciseGrid,
   Instrument,
   Technique,
   Difficulty,
@@ -110,6 +111,29 @@ function midiToNoteName(midi: number, keyFifths: number): string {
  */
 function engineBpm(quarterNoteBpm: number, timeSignature: [number, number]): number {
   return quarterNoteBpm / beatLengthInQN(timeSignature)
+}
+
+/**
+ * Build the per-measure timing grid for a track: where each measure starts (in
+ * seconds and quarter notes), and the tempo/meter in force during it. Honours
+ * mid-score tempo and time-signature changes; the engine's uniform `bpm` +
+ * `timeSignature` only ever reflect measure 1.
+ */
+export function buildExerciseGrid(score: ScoreDocument, track: Track): ExerciseGrid {
+  const measureStartSec = [0], measureStartQN = [0], secPerQN: number[] = [], beatQN: number[] = []
+  let ts = score.initialTimeSignature
+  let tempo = score.initialTempo
+  for (const m of track.measures) {
+    if (m.timeSignature) ts = m.timeSignature
+    if (m.tempoChange) tempo = m.tempoChange
+    const spq = 60 / tempo
+    const bar = measureLengthInQN(ts)
+    secPerQN.push(spq)
+    beatQN.push(beatLengthInQN(ts))
+    measureStartSec.push(measureStartSec[measureStartSec.length - 1] + bar * spq)
+    measureStartQN.push(measureStartQN[measureStartQN.length - 1] + bar)
+  }
+  return { measureStartSec, measureStartQN, secPerQN, beatQN }
 }
 
 /**
@@ -249,5 +273,6 @@ export function scoreToExerciseDefinition(
     loopCount: 1,
     events,
     audioUrl: options.audioUrl,
+    grid: buildExerciseGrid(score, track),
   }
 }

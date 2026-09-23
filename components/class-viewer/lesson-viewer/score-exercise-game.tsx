@@ -130,14 +130,14 @@ function ScoreExerciseSession({
         startSeconds: timelineToEngineSeconds(
           track.timelineStartSeconds,
           videoMap,
-          { bpm: exercise.bpm, timeSignature: exercise.timeSignature },
+          { bpm: exercise.bpm, timeSignature: exercise.timeSignature, grid: exercise.grid },
           exerciseVideo?.startSeconds ?? 0
         ),
         trimInSeconds: track.trimInSeconds,
         trimOutSeconds: track.trimOutSeconds,
         gain: track.gain,
       })),
-    [backingTracks, videoMap, exercise.bpm, exercise.timeSignature, exerciseVideo]
+    [backingTracks, videoMap, exercise.bpm, exercise.timeSignature, exercise.grid, exerciseVideo]
   )
 
   // An explicit (possibly empty) selection only when backing tracks are

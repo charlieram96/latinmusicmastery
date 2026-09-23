@@ -105,7 +105,8 @@ export function eventToNormalizedTime(
     exercise.timeSignature,
     loopIndex,
     exercise.measures,
-    exercise.swing
+    exercise.swing,
+    exercise.grid
   )
   const duration = getExerciseDuration(exercise)
   return duration > 0 ? timestamp / duration : 0

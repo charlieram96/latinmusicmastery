@@ -48,6 +48,17 @@ export interface ExerciseEvent {
   chordId?: string
 }
 
+export interface ExerciseGrid {
+  /** Seconds from beat 1 of measure 1 to the start of each measure; length measures + 1 (last = one loop). */
+  measureStartSec: number[]
+  /** Quarter notes from the start to each measure; same length as measureStartSec. */
+  measureStartQN: number[]
+  /** Seconds per quarter note in each measure; length measures. */
+  secPerQN: number[]
+  /** Quarter notes per engine beat (the meter's denominator unit) in each measure; length measures. */
+  beatQN: number[]
+}
+
 export interface ExerciseDefinition {
   id: string
   title: string
@@ -61,6 +72,8 @@ export interface ExerciseDefinition {
   loopCount: number
   events: ExerciseEvent[]
   audioUrl?: string
+  /** Per-measure timing for scores with tempo or meter changes. Absent for hand-authored exercises. */
+  grid?: ExerciseGrid
 }
 
 export interface EventResult {
