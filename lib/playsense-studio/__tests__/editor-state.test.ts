@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { editorReducer, type EditorState } from '../editor-state';
-import type { Rest, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import type { Note, Rest, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { eventDots, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
+import { vexflowDurationCode } from '../score-to-vexflow';
 
 function makeScore(events: ScoreDocument['tracks'][0]['measures'][0]['voices'][0]['events']): ScoreDocument {
   return {
@@ -102,5 +104,83 @@ describe('editor-state final barline', () => {
   it('undo restores the previous barline', () => {
     const s1 = editorReducer(twoMeasures(), { type: 'set-measure-final-bar', trackIndex: 0, measureIndex: 1, final: false });
     expect(editorReducer(s1, { type: 'undo' }).score.tracks[0].measures[1].endBarline).toBeUndefined();
+  });
+});
+
+describe('editor-state rhythm reducers keep new and legacy fields in step', () => {
+  // Shaped like a MusicXML import: legacy AND new fields both present, as the
+  // importer emits them (F1/F3 companions in accessors.ts read the new field
+  // first, falling back to the legacy one).
+  const tripletEighth: Note = {
+    kind: 'note', midi: 60, durationQN: 1 / 3, triplet: true, tuplet: { id: 't', n: 3, m: 2 },
+  };
+  const doubleDottedQuarter: Note = {
+    kind: 'note', midi: 60, durationQN: 1.75, dots: 2,
+  };
+
+  it('set-event-triplet(false) removes both `tuplet` and `triplet`, restoring the written eighth', () => {
+    const s0 = stateOf(makeScore([tripletEighth]));
+    const s1 = editorReducer(s0, { type: 'set-event-triplet', trackIndex: 0, measureIndex: 0, eventIndex: 0, triplet: false });
+    const e = events(s1)[0];
+    expect(e.tuplet).toBeUndefined();
+    expect(e.triplet).toBeUndefined();
+    expect(vexflowDurationCode(e.durationQN, eventDots(e), tupletScale(e))).toBe('8');
+  });
+
+  it('set-event-triplet(true) on a plain note sets a fresh 3:2 tuplet object', () => {
+    const s0 = stateOf(makeScore([{ kind: 'note', midi: 60, durationQN: 0.5 }]));
+    const s1 = editorReducer(s0, { type: 'set-event-triplet', trackIndex: 0, measureIndex: 0, eventIndex: 0, triplet: true });
+    const e = events(s1)[0];
+    expect(e.tuplet).toMatchObject({ n: 3, m: 2 });
+    expect(typeof e.tuplet?.id).toBe('string');
+    expect(e.tuplet?.id.length).toBeGreaterThan(0);
+    expect(vexflowDurationCode(e.durationQN, eventDots(e), tupletScale(e))).toBe('8');
+  });
+
+  it('set-event-triplet(true) on an event that already carries a tuplet id keeps that id', () => {
+    const s0 = stateOf(makeScore([{ kind: 'note', midi: 60, durationQN: 0.4, tuplet: { id: 'keep-me', n: 5, m: 4 } }]));
+    const s1 = editorReducer(s0, { type: 'set-event-triplet', trackIndex: 0, measureIndex: 0, eventIndex: 0, triplet: true });
+    expect(events(s1)[0].tuplet).toMatchObject({ id: 'keep-me', n: 3, m: 2 });
+  });
+
+  it('set-event-dotted on a double-dotted import (dots: 2) keeps eventDots consistent with durationQN', () => {
+    const s0 = stateOf(makeScore([doubleDottedQuarter]));
+    const s1 = editorReducer(s0, { type: 'set-event-dotted', trackIndex: 0, measureIndex: 0, eventIndex: 0, dotted: false });
+    const e = events(s1)[0];
+    expect(e.dots).toBeUndefined();
+    expect(eventDots(e)).toBe(0);
+    expect(e.durationQN).toBeCloseTo(1, 9);
+
+    const s2 = editorReducer(s1, { type: 'set-event-dotted', trackIndex: 0, measureIndex: 0, eventIndex: 0, dotted: true });
+    const e2 = events(s2)[0];
+    expect(e2.dots).toBeUndefined();
+    expect(eventDots(e2)).toBe(1);
+    expect(e2.durationQN).toBeCloseTo(1.5, 9);
+  });
+
+  it('set-event-duration on an event carrying new-field dots/tuplet drops them so the legacy flags stay authoritative', () => {
+    // `set-event-duration` only recomputes durationQN from the LEGACY dotted/triplet
+    // flags (effectiveDurationQN never looks at dots/tuplet). tripletEighth still
+    // carries `triplet: true`, so picking a written "quarter" base keeps it scaled
+    // as a triplet quarter (2/3) — the stale `tuplet`/`dots` objects are dropped so
+    // eventTuplet()/eventDots() fall through to the legacy flags that actually drove
+    // the recompute, keeping durationQN === base × dotFactor × tupletScale true.
+    const s0 = stateOf(makeScore([{ ...tripletEighth, midi: 60 }]));
+    const s1 = editorReducer(s0, { type: 'set-event-duration', trackIndex: 0, measureIndex: 0, eventIndex: 0, durationQN: 1 });
+    const e = events(s1)[0];
+    expect(e.durationQN).toBeCloseTo(2 / 3, 9);
+    expect(e.tuplet).toBeUndefined();
+    expect(e.dots).toBeUndefined();
+    expect(e.triplet).toBe(true);
+    expect(vexflowDurationCode(e.durationQN, eventDots(e), tupletScale(e))).toBe('q');
+  });
+
+  it('convert-event-kind keeps the id, dots and tuplet from the old event', () => {
+    const s0 = stateOf(makeScore([{ kind: 'note', midi: 60, durationQN: 1 / 3, id: 'ev-1', tuplet: { id: 't', n: 3, m: 2 }, triplet: true }]));
+    const s1 = editorReducer(s0, { type: 'convert-event-kind', trackIndex: 0, measureIndex: 0, eventIndex: 0, to: 'rest' });
+    const e = events(s1)[0];
+    expect(e.id).toBe('ev-1');
+    expect(e.tuplet).toMatchObject({ id: 't', n: 3, m: 2 });
+    expect(e.triplet).toBe(true);
   });
 });

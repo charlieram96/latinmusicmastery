@@ -25,6 +25,7 @@ import {
   measureLengthInQN,
   occupiedQN,
 } from './time-mapping';
+import { eventDots, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -105,6 +106,11 @@ const HISTORY_LIMIT = 100;
 
 function clone<T>(x: T): T {
   return JSON.parse(JSON.stringify(x)) as T;
+}
+
+/** New id for a freshly-created tuplet group (the triplet toggle button). */
+function newTupletId(): string {
+  return `t${(globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)).slice(0, 8)}`;
 }
 
 /**
@@ -354,6 +360,11 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const events = track?.measures[action.measureIndex]?.voices[0].events;
       const event = events?.[action.eventIndex];
       if (!track || !events || !event) return state;
+      // This recompute only ever consults the LEGACY dotted/triplet flags
+      // (effectiveDurationQN doesn't know about dots/tuplet). Drop the new
+      // fields so eventDots()/eventTuplet() fall through to the flags that
+      // actually drove this duration, keeping durationQN === base × dotFactor
+      // × tupletScale true for every reader.
       const nextDuration = effectiveDurationQN(action.durationQN, {
         dotted: event.dotted,
         triplet: event.triplet,
@@ -361,6 +372,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (overflowsMeasure(track, next.initialTimeSignature, action.measureIndex, events, action.eventIndex, nextDuration)) {
         return state; // would exceed the measure — keep it valid
       }
+      delete event.dots;
+      delete event.tuplet;
       event.durationQN = nextDuration;
       return withHistory(state, next);
     }
@@ -370,14 +383,16 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const events = track?.measures[action.measureIndex]?.voices[0].events;
       const event = events?.[action.eventIndex];
       if (!track || !events || !event) return state;
-      if (!!event.dotted === action.dotted) {
-        event.dotted = action.dotted;
-        return withHistory(state, next);
-      }
-      const nextDuration = event.durationQN * (action.dotted ? 1.5 : 1 / 1.5);
-      if (overflowsMeasure(track, next.initialTimeSignature, action.measureIndex, events, action.eventIndex, nextDuration)) {
+      // The dot toggle is single-dot only; `dots` (which can hold a double
+      // dot from import) is retired here so `dotted` becomes the sole source
+      // of truth again, per eventDots()'s precedence.
+      const oldFactor = eventDots(event) === 2 ? 1.75 : eventDots(event) === 1 ? 1.5 : 1;
+      const newFactor = action.dotted ? 1.5 : 1;
+      const nextDuration = (event.durationQN / oldFactor) * newFactor;
+      if (oldFactor !== newFactor && overflowsMeasure(track, next.initialTimeSignature, action.measureIndex, events, action.eventIndex, nextDuration)) {
         return state;
       }
+      delete event.dots;
       event.dotted = action.dotted;
       event.durationQN = nextDuration;
       return withHistory(state, next);
@@ -388,15 +403,23 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const events = track?.measures[action.measureIndex]?.voices[0].events;
       const event = events?.[action.eventIndex];
       if (!track || !events || !event) return state;
-      if (!!event.triplet === action.triplet) {
-        event.triplet = action.triplet;
-        return withHistory(state, next);
-      }
-      const nextDuration = event.durationQN * (action.triplet ? 2 / 3 : 3 / 2);
-      if (overflowsMeasure(track, next.initialTimeSignature, action.measureIndex, events, action.eventIndex, nextDuration)) {
+      // Reverse whatever tuplet scale is actually in effect (an imported
+      // event may carry a non-3:2 `tuplet`), not just an assumed 2/3, so
+      // durationQN stays consistent with eventTuplet()/tupletScale() no
+      // matter what this event started as.
+      const oldScale = tupletScale(event);
+      const newScale = action.triplet ? 2 / 3 : 1;
+      const nextDuration = (event.durationQN / oldScale) * newScale;
+      if (oldScale !== newScale && overflowsMeasure(track, next.initialTimeSignature, action.measureIndex, events, action.eventIndex, nextDuration)) {
         return state;
       }
-      event.triplet = action.triplet;
+      if (action.triplet) {
+        event.tuplet = { id: event.tuplet?.id ?? newTupletId(), n: 3, m: 2 };
+        event.triplet = true;
+      } else {
+        delete event.tuplet;
+        delete event.triplet;
+      }
       event.durationQN = nextDuration;
       return withHistory(state, next);
     }
@@ -427,8 +450,11 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         const rest: Rest = {
           kind: 'rest',
           durationQN: event.durationQN,
+          ...(event.id ? { id: event.id } : {}),
           ...(event.dotted ? { dotted: true } : {}),
+          ...(event.dots ? { dots: event.dots } : {}),
           ...(event.triplet ? { triplet: true } : {}),
+          ...(event.tuplet ? { tuplet: event.tuplet } : {}),
         };
         voice.events[action.eventIndex] = rest;
       } else {
@@ -437,8 +463,11 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           kind: 'note',
           midi: action.midi ?? 60,
           durationQN: event.durationQN,
+          ...(event.id ? { id: event.id } : {}),
           ...(event.dotted ? { dotted: true } : {}),
+          ...(event.dots ? { dots: event.dots } : {}),
           ...(event.triplet ? { triplet: true } : {}),
+          ...(event.tuplet ? { tuplet: event.tuplet } : {}),
         };
         voice.events[action.eventIndex] = note;
       }
