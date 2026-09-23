@@ -69,6 +69,8 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 
 **Split:** `integrated-editor.tsx` (1286 lines) and `sync-panel.tsx` (1809 lines) are broken into focused components as they're rebuilt.
 
+**Tempo marks:** an editable tempo mark per measure; must clean or confirm existing per-measure `tempoChange` values (stale MusicXML-import leftovers that disagree with the admin-set tempo) before the engine can honour them (see spec §8).
+
 ## Plan 6 — Drafts, publish, history (spec §9)
 
 - **Migration:** the `studio_versions` table with RLS.
@@ -105,6 +107,7 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
   - video pre-roll or wait
   - video follows the clock through a rate trim (no 0.35 s re-seeks)
 - **Highway beat lines** use the P1 grid.
+- **Metronome** is scheduled from the P1 grid (per-measure tempo/meter), not the uniform `bpm`/`timeSignature` alone.
 
 ## Plan 7 — Listen, loop, MIDI (spec §10)
 

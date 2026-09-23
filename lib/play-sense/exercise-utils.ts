@@ -2,6 +2,16 @@ import type { ExerciseDefinition, ExerciseEvent, ExerciseGrid } from './types'
 import type { ExpectedEvent } from './scoring'
 
 /**
+ * A 1-based measure number clamped to a valid index into a grid's per-measure
+ * arrays. Shared by every grid lookup so an out-of-range measure (there
+ * shouldn't be one, but nothing guarantees it) resolves the same way
+ * everywhere instead of drifting between callers.
+ */
+function gridIndex(grid: ExerciseGrid, measure: number): number {
+  return Math.min(Math.max(measure - 1, 0), grid.secPerQN.length - 1)
+}
+
+/**
  * Convert a beat position to a timestamp in seconds relative to exercise start.
  * beat is 1-based, measure is 1-based.
  * swing (0-100) pushes upbeats (off-eighth-notes) later: 0 = straight, 67 = triplet swing.
@@ -18,7 +28,7 @@ export function beatToTimestamp(
   grid?: ExerciseGrid
 ): number {
   if (grid) {
-    const i = Math.min(Math.max(event.measure - 1, 0), grid.secPerQN.length - 1)
+    const i = gridIndex(grid, event.measure)
     const beatSec = grid.beatQN[i] * grid.secPerQN[i]
     const loopLen = grid.measureStartSec[grid.measureStartSec.length - 1]
     let t = loopIndex * loopLen + grid.measureStartSec[i] + (event.beat - 1) * beatSec
@@ -73,14 +83,14 @@ export function generateExpectedTimestamps(
         exercise.swing,
         exercise.grid
       )
+      const grid = exercise.grid
+      const gi = grid ? gridIndex(grid, event.measure) : -1
       results.push({
         eventIndex: results.length,
         timestamp,
         expectedPitch: event.expectedPitch,
         expectedTechnique: event.technique,
-        expectedDurationSec: event.duration * (exercise.grid
-          ? exercise.grid.beatQN[event.measure - 1] * exercise.grid.secPerQN[event.measure - 1]
-          : beatDuration),
+        expectedDurationSec: event.duration * (grid ? grid.beatQN[gi] * grid.secPerQN[gi] : beatDuration),
         expectedSurface: event.surface,
         // Make the chord group id loop-unique so notes from different loop
         // iterations aren't grouped together.

@@ -216,6 +216,7 @@ The model is unchanged: the draggable waypoint time map (`score_time_maps` metho
   - After that the video follows the clock through `bar1 + engineSeconds` with a rate trim, not the current 0.35 s re-seek.
   - Trim remains a clamp.
 - **Engine tempo and meter changes:** `scoreToExerciseDefinition` gains per-measure `tempoChange` and `timeSignature` support. `beatToTimestamp` uses a precomputed bar-start table instead of `(measure−1)·beatsPerMeasure`. `backing-track-timing.ts` drops its known-limitation note.
+  - Plan 1 honours meter changes only; per-measure `tempoChange` is ignored because live scores carry stale imported values that disagree with the admin-set tempo. Plan 3 adds an editable tempo mark and must clean or confirm existing `tempoChange` values before the engine honours them; Plan 5 schedules the metronome from the grid.
 - **Student preview in the Studio:** plays the count-in click with a 3-2-1 overlay, then the graded bars, and stops at the end.
 - **Jam sessions:**
   - Get a Studio entry: `app/admin/playsense-studio/[classItemId]/page.tsx` routes `JAM_SESSION` to the graded workspace, and the course editor links to it.

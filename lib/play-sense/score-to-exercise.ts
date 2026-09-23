@@ -115,18 +115,23 @@ function engineBpm(quarterNoteBpm: number, timeSignature: [number, number]): num
 
 /**
  * Build the per-measure timing grid for a track: where each measure starts (in
- * seconds and quarter notes), and the tempo/meter in force during it. Honours
- * mid-score tempo and time-signature changes; the engine's uniform `bpm` +
- * `timeSignature` only ever reflect measure 1.
+ * seconds and quarter notes), and the meter in force during it. Honours
+ * mid-score time-signature changes; the engine's uniform `bpm` + `timeSignature`
+ * only ever reflect measure 1.
+ *
+ * Deliberately ignores `m.tempoChange`: the live scores carry stale per-measure
+ * tempo values left over from MusicXML import that disagree with the
+ * admin-set `initialTempo` (the Studio's only tempo control), so honouring them
+ * would re-time live grading against a value the admin never set. Every
+ * measure runs at `score.initialTempo` until Plan 3 gives tempo marks a
+ * visible editor and the engine can trust them.
  */
 export function buildExerciseGrid(score: ScoreDocument, track: Track): ExerciseGrid {
   const measureStartSec = [0], measureStartQN = [0], secPerQN: number[] = [], beatQN: number[] = []
   let ts = score.initialTimeSignature
-  let tempo = score.initialTempo
+  const spq = 60 / score.initialTempo
   for (const m of track.measures) {
     if (m.timeSignature) ts = m.timeSignature
-    if (m.tempoChange) tempo = m.tempoChange
-    const spq = 60 / tempo
     const bar = measureLengthInQN(ts)
     secPerQN.push(spq)
     beatQN.push(beatLengthInQN(ts))
@@ -260,13 +265,18 @@ export function scoreToExerciseDefinition(
     if (Math.abs(qnIntoMeasure - measureLengthInQN(currentTimeSig)) > 1e-6) continuations.clear()
   }
 
+  // The count-in and metronome use `bpm`/`timeSignature` alone (no grid), so
+  // they must match bar 1's EFFECTIVE meter — which a measure-1 timeSignature
+  // change can override — not just the score's initial one.
+  const bar1TimeSignature = track.measures[0]?.timeSignature ?? score.initialTimeSignature
+
   return {
     id: options.id ?? 'score-exercise',
     title: options.title ?? score.title,
     description: options.description ?? '',
     instrument,
-    bpm: engineBpm(score.initialTempo, score.initialTimeSignature),
-    timeSignature: score.initialTimeSignature,
+    bpm: engineBpm(score.initialTempo, bar1TimeSignature),
+    timeSignature: bar1TimeSignature,
     swing: 0,
     difficulty: options.difficulty ?? 'intermediate',
     measures: track.measures.length,
