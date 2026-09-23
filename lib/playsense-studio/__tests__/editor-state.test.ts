@@ -184,3 +184,29 @@ describe('editor-state rhythm reducers keep new and legacy fields in step', () =
     expect(e.triplet).toBe(true);
   });
 });
+
+describe('set-event-pitch spelling', () => {
+  it('drops a stale spelling and hint from an edited note', () => {
+    const note: Note = { kind: 'note', midi: 64, durationQN: 1, spelling: { step: 'E', alter: 0 }, spellingHint: 'E' };
+    const s1 = editorReducer(stateOf(makeScore([note])), { type: 'set-event-pitch', trackIndex: 0, measureIndex: 0, eventIndex: 0, midi: 65 });
+    const e = events(s1)[0] as Note;
+    expect(e.midi).toBe(65);
+    expect(e.spelling).toBeUndefined();
+    expect(e.spellingHint).toBeUndefined();
+  });
+
+  it('drops a stale spelling from the edited chord note only', () => {
+    const chord = {
+      kind: 'chord' as const,
+      durationQN: 1,
+      notes: [
+        { midi: 64, spelling: { step: 'E' as const, alter: 0 as const }, spellingHint: 'E' },
+        { midi: 67, spelling: { step: 'G' as const, alter: 0 as const } },
+      ],
+    };
+    const s1 = editorReducer(stateOf(makeScore([chord])), { type: 'set-event-pitch', trackIndex: 0, measureIndex: 0, eventIndex: 0, midi: 65 });
+    const e = events(s1)[0] as typeof chord;
+    expect(e.notes[0]).toEqual({ midi: 65 });
+    expect(e.notes[1].spelling).toEqual({ step: 'G', alter: 0 });
+  });
+});

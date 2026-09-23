@@ -345,11 +345,16 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (event.kind === 'note') {
         (event as Note).midi = action.midi;
         delete event.percussion;
+        // A spelling names the old pitch; keep it and the note draws there.
+        delete (event as Note).spelling;
+        delete (event as Note).spellingHint;
       } else if (event.kind === 'chord') {
         const chord = event as Chord;
         if (chord.notes[0]) {
           chord.notes[0].midi = action.midi;
           delete chord.notes[0].percussion;
+          delete chord.notes[0].spelling;
+          delete chord.notes[0].spellingHint;
         }
       }
       return withHistory(state, next);

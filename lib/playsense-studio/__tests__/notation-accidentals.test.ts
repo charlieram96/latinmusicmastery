@@ -16,6 +16,22 @@ describe('spellMidi', () => {
   })
 })
 
+describe('spellMidi ignores spellings for another pitch', () => {
+  it('falls back to the key default when the spelling does not match the midi', () => {
+    expect(spellMidi(65, { spelling: { step: 'E', alter: 0 }, keyFifths: 0 })).toEqual({ step: 'F', alter: 0, octave: 4 })
+  })
+  it('falls back to a matching hint before the key default', () => {
+    expect(spellMidi(70, { spelling: { step: 'E', alter: 0 }, spellingHint: 'A#', keyFifths: 0 })).toEqual({ step: 'A', alter: 1, octave: 4 })
+  })
+  it('ignores a mismatched hint', () => {
+    expect(spellMidi(65, { spellingHint: 'E', keyFifths: 0 })).toEqual({ step: 'F', alter: 0, octave: 4 })
+    expect(spellMidi(70, { spellingHint: 'A', keyFifths: -1 })).toEqual({ step: 'B', alter: -1, octave: 4 })
+  })
+  it('still honours enharmonic spellings that match', () => {
+    expect(spellMidi(65, { spelling: { step: 'E', alter: 1 }, keyFifths: 0 })).toEqual({ step: 'E', alter: 1, octave: 4 })
+  })
+})
+
 describe('keys and signatures', () => {
   it('builds VexFlow keys', () => {
     expect(vexKey({ step: 'B', alter: -1, octave: 4 })).toBe('bb/4')

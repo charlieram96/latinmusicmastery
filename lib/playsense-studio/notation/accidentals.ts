@@ -18,8 +18,17 @@ function octaveFor(midi: number, step: Spelling['step'], alter: number): number 
   return Math.floor((midi - alter - STEP_SEMITONE[step]) / 12) - 1
 }
 
+/** Whether a spelling names this midi's pitch class (a stale one, left over
+ *  from before a pitch edit, would draw the note at its old pitch). */
+function spellsPitch(s: Spelling, midi: number): boolean {
+  return ((STEP_SEMITONE[s.step] + s.alter - midi) % 12 + 12) % 12 === 0
+}
+
 export function spellMidi(midi: number, opts: { spelling?: Spelling; spellingHint?: string; keyFifths: number }): SpelledPitch {
-  const s = opts.spelling ?? parseSpellingHint(opts.spellingHint)
+  // Precedence: spelling, then hint, then the key default — each skipped when
+  // it spells a different pitch class than `midi`.
+  const hint = parseSpellingHint(opts.spellingHint)
+  const s = [opts.spelling, hint].find((c): c is Spelling => !!c && spellsPitch(c, midi))
   if (s) {
     return { step: s.step, alter: s.alter, octave: octaveFor(midi, s.step, s.alter), ...(s.showAccidental ? { showAccidental: s.showAccidental } : {}) }
   }
