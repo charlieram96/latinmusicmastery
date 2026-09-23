@@ -401,10 +401,16 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     return () => window.removeEventListener('keydown', handler);
   }, [selected, measureRange, rangeStart, rangeCount, dispatch, activeTrackIndex]);
 
+  // Extract the active track's notation once per score edit. Kept apart from
+  // stripItems so moving sync markers (measureTimings) doesn't re-extract.
+  const tracked = useMemo(
+    () => (activeTrack ? extractTrackEvents(activeTrack, score.initialTimeSignature, score.initialKeyFifths) : []),
+    [activeTrack, score.initialTimeSignature, score.initialKeyFifths]
+  );
+
   // Build stripItems for the active track — zip events with timings.
   const stripItems: MeasureStripItem[] = useMemo(() => {
     if (!activeTrack) return [];
-    const tracked = extractTrackEvents(activeTrack, score.initialTimeSignature, score.initialKeyFifths);
     const count = Math.min(tracked.length, measureTimings.length);
     const out: MeasureStripItem[] = [];
     for (let i = 0; i < count; i++) {
@@ -427,7 +433,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       });
     }
     return out;
-  }, [activeTrack, score.initialTimeSignature, score.initialKeyFifths, measureTimings]);
+  }, [activeTrack, tracked, measureTimings]);
 
   // The measure "Add note" targets: the selected event's measure, else the last.
   const measureCount = activeTrack?.measures.length ?? 0;
