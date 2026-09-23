@@ -15,6 +15,7 @@ import type {
 import { beatLengthInQN, measureLengthInQN } from '@/lib/playsense-studio/time-mapping'
 import { resolvePercStroke, percussionNotation, isPercussion } from '@/lib/playsense-studio/perc-strokes'
 import { midiToKeyString } from '@/lib/playsense-studio/score-to-vexflow'
+import { eventArticulations } from '@/components/playsense-studio/shared/score-model/accessors'
 import type {
   ExerciseDefinition,
   ExerciseEvent,
@@ -200,7 +201,7 @@ export function scoreToExerciseDefinition(
 
       const beat = qnIntoMeasure / beatQN + 1
       const durationBeats = durationQN / beatQN
-      const accent = ev.articulation === 'accent'
+      const accent = eventArticulations(ev).includes('accent')
 
       const pitches = ev.kind === 'chord' ? (ev as Chord).notes : [ev as Note]
       const midis = pitches.map(n => n.midi)

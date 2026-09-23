@@ -131,3 +131,38 @@ describe('scoreToExerciseDefinition — tempo units for non-quarter meters', () 
     expect(secondsPerMeasure([2, 2])).toBeCloseTo((4 * 60) / 96, 9)
   })
 })
+
+describe('scoreToExerciseDefinition — accent grading reads the new articulations field', () => {
+  it('grades an accent carried in `articulations` the same as the legacy `articulation` field', () => {
+    const legacy = scoreToExerciseDefinition({
+      ...GUITAR_LICK_FIXTURE,
+      tracks: GUITAR_LICK_FIXTURE.tracks.map((t, ti) => ti !== 0 ? t : {
+        ...t,
+        measures: t.measures.map((m, mi) => mi !== 0 ? m : {
+          ...m,
+          voices: m.voices.map((v) => ({
+            ...v,
+            events: v.events.map((e, i) => (i !== 0 ? e : { ...e, articulation: 'accent' as const })),
+          })),
+        }),
+      }),
+    })
+    expect(legacy.events[0].accent).toBe(true)
+
+    const modern = scoreToExerciseDefinition({
+      ...GUITAR_LICK_FIXTURE,
+      tracks: GUITAR_LICK_FIXTURE.tracks.map((t, ti) => ti !== 0 ? t : {
+        ...t,
+        measures: t.measures.map((m, mi) => mi !== 0 ? m : {
+          ...m,
+          voices: m.voices.map((v) => ({
+            ...v,
+            events: v.events.map((e, i) => (i !== 0 ? e : { ...e, articulations: ['accent' as const] })),
+          })),
+        }),
+      }),
+    })
+    expect(modern.events[0].accent).toBe(true)
+    expect(modern.events[1].accent).toBe(false)
+  })
+})
