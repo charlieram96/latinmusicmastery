@@ -209,6 +209,66 @@ export const SON_MONTUNO_FIXTURE: ScoreDocument = {
 };
 
 // ---------------------------------------------------------------------------
+// Fixture 4 — Reference excerpt (Studio rework P2 notation reference)
+//
+// The violin line from the reference image (spec §2.3), extended to show every
+// mark P2 must draw. 3/4, F major after bar 3, ♩ = 96.
+// ---------------------------------------------------------------------------
+
+/** The violin line from the reference image (spec §2.3), extended to show every
+ * mark P2 must draw. 3/4, F major after bar 3, ♩ = 96. */
+export const REFERENCE_EXCERPT_FIXTURE: ScoreDocument = {
+  schemaVersion: 1, title: 'Reference excerpt', sourceFormat: 'native', initialTempo: 96, initialTimeSignature: [3, 4], initialKeyFifths: 0,
+  tracks: [{ index: 0, instrument: 'staff', displayName: 'Violin', tuning: null, stringMultiplicity: 1, channel: null, defaultView: 'staff', measures: [
+    { number: 1, voices: [{ number: 1, events: [
+      { kind: 'rest', id: 'r1', durationQN: 1 },
+      { kind: 'note', id: 'n1', midi: 65, durationQN: 1 / 3, triplet: true, tuplet: { id: 't1', n: 3, m: 2 }, dynamic: 'mp' },
+      { kind: 'note', id: 'n2', midi: 67, durationQN: 1 / 3, triplet: true, tuplet: { id: 't1', n: 3, m: 2 } },
+      { kind: 'note', id: 'n3', midi: 69, durationQN: 1 / 3, triplet: true, tuplet: { id: 't1', n: 3, m: 2 } },
+      { kind: 'note', id: 'n4', midi: 71, durationQN: 0.25 },
+      { kind: 'note', id: 'n5', midi: 72, durationQN: 0.25 },
+      { kind: 'note', id: 'n6', midi: 73, durationQN: 0.25, spelling: { step: 'D', alter: -1 } },
+      { kind: 'note', id: 'n7', midi: 75, durationQN: 0.25, spelling: { step: 'E', alter: -1 } },
+    ] }] },
+    { number: 2, voices: [{ number: 1, events: [
+      { kind: 'note', id: 'n8', midi: 76, durationQN: 1, spelling: { step: 'E', alter: 0, showAccidental: 'always' }, dynamic: 'f' },
+      { kind: 'note', id: 'n9', midi: 79, durationQN: 1 },
+      { kind: 'rest', id: 'r2', durationQN: 0.5 },
+      { kind: 'note', id: 'n10', midi: 84, durationQN: 0.5, articulation: 'staccato' },   // legacy field on purpose
+    ] }] },
+    { number: 3, keyFifths: -1, voices: [{ number: 1, events: [
+      { kind: 'note', id: 'n11', midi: 86, durationQN: 1, grace: [{ midi: 85, spelling: { step: 'C', alter: 1 }, slash: true }] },
+      { kind: 'note', id: 'n12', midi: 88, durationQN: 0.2, tuplet: { id: 't2', n: 5, m: 4 } },
+      { kind: 'note', id: 'n13', midi: 86, durationQN: 0.2, tuplet: { id: 't2', n: 5, m: 4 } },
+      { kind: 'note', id: 'n14', midi: 84, durationQN: 0.2, tuplet: { id: 't2', n: 5, m: 4 } },
+      { kind: 'note', id: 'n15', midi: 82, durationQN: 0.2, tuplet: { id: 't2', n: 5, m: 4 } },
+      { kind: 'note', id: 'n16', midi: 81, durationQN: 0.2, tuplet: { id: 't2', n: 5, m: 4 } },
+      { kind: 'note', id: 'n17', midi: 79, durationQN: 1, ornament: 'trill', articulations: ['fermata'] },
+    ] }] },
+    { number: 4, voices: [
+      { number: 1, events: [
+        { kind: 'note', id: 'n18', midi: 71, durationQN: 1.75, dots: 2, spelling: { step: 'B', alter: 0 }, text: 'dolce' },
+        { kind: 'note', id: 'n19', midi: 69, durationQN: 0.25 },
+        { kind: 'chord', id: 'n20', durationQN: 1, articulations: ['accent', 'tenuto'], notes: [{ midi: 70 }, { midi: 74 }] },
+      ] },
+      { number: 2, events: [
+        { kind: 'note', id: 'v2a', midi: 62, durationQN: 2 },
+        { kind: 'rest', id: 'v2b', durationQN: 1 },
+      ] },
+    ] },
+    { number: 5, clef: 'bass', endBarline: 'final', voices: [{ number: 1, events: [
+      { kind: 'note', id: 'n21', midi: 53, durationQN: 3, dots: undefined, dotted: true, dynamic: 'ff', articulations: ['marcato'] },
+    ] }] },
+  ] }],
+  spans: [
+    { id: 's1', type: 'cresc', from: 'n1', to: 'n7' },
+    { id: 's2', type: 'slur', from: 'n8', to: 'n9' },
+    { id: 's3', type: 'slur', from: 'n10', to: 'n11' },
+    { id: 's4', type: 'dim', from: 'n12', to: 'n17' },
+  ],
+}
+
+// ---------------------------------------------------------------------------
 // Index by id for tests + sandbox
 // ---------------------------------------------------------------------------
 
@@ -216,6 +276,7 @@ export const FIXTURES = {
   guitarLick: GUITAR_LICK_FIXTURE,
   congaTumbao: CONGA_TUMBAO_FIXTURE,
   sonMontuno: SON_MONTUNO_FIXTURE,
+  REFERENCE_EXCERPT: REFERENCE_EXCERPT_FIXTURE,
 } as const;
 
 export type FixtureId = keyof typeof FIXTURES;

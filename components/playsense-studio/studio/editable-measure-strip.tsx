@@ -39,6 +39,7 @@ import { beatLengthInQN, measureLengthInQN, occupiedQN } from '@/lib/playsense-s
 import {
   diatonicToMidi,
   midiToDiatonic,
+  type NotationClef,
   type VexEventDescriptor,
   scoreTieIndices,
 } from '@/lib/playsense-studio/score-to-vexflow';
@@ -59,7 +60,7 @@ export interface MeasureStripItem {
   events: VexEventDescriptor[];
   timeSignature: [number, number];
   isFirst: boolean;
-  clef: 'treble' | 'percussion';
+  clef: NotationClef;
 }
 
 export interface SelectedEventRef {
@@ -903,7 +904,7 @@ interface MiniStaveProps {
   timeSignature: [number, number];
   isFirst: boolean;
   finalBarline: boolean;
-  clef: 'treble' | 'percussion';
+  clef: NotationClef;
   onHitsReady: (measureIndex: number, hits: MeasureHit[] | null) => void;
 }
 

@@ -7,8 +7,11 @@ import type { PercussionNotation } from '@/components/playsense-studio/shared/sc
 // Formatter.
 
 import type {
+  Articulation,
+  Dynamic,
   Measure,
   MusicalEvent,
+  Ornament,
   Track,
 } from '@/components/playsense-studio/shared/score-model/types';
 import {
@@ -16,7 +19,11 @@ import {
   measureLengthInQN,
 } from './time-mapping';
 import { isPercussion, percussionNotation } from './perc-strokes';
-import { eventDots, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
+import { eventArticulations, eventDots, eventTuplet, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
+import { createAccidentalMemory, keyAlter, spellMidi, vexKey, type AccidentalCode } from './notation/accidentals';
+// notation/accidentals.ts imports midiToKeyString from this file. That circular
+// import is safe: both sides only use each other inside functions, never at
+// module top level.
 
 /**
  * VexFlow duration code for a quarter-note duration.
@@ -190,6 +197,16 @@ export function diatonicToMidi(
 // Per-measure event extraction
 // ---------------------------------------------------------------------------
 
+/** Clefs the notation renderers know how to draw. */
+export type NotationClef = 'treble' | 'bass' | 'alto' | 'tenor' | 'percussion';
+
+/** One grace note ahead of its main event: spelling + whether it's slashed (acciaccatura). */
+export interface GraceDescriptor {
+  keys: string[];
+  accidentals: Array<AccidentalCode | null>;
+  slash: boolean;
+}
+
 export interface VexEventDescriptor {
   /** 'note' | 'rest' | 'chord' — drives StaveNote construction. */
   kind: MusicalEvent['kind'];
@@ -202,7 +219,7 @@ export interface VexEventDescriptor {
   /** VexFlow key strings for the event's pitches. Rests use ['b/4']. */
   keys: string[];
   /** Accidental glyphs to attach, indexed parallel to keys. null = none. */
-  accidentals: Array<'#' | 'b' | null>;
+  accidentals: Array<AccidentalCode | null>;
   /** VexFlow duration code (without the rest suffix). */
   durationCode: string;
   /** True if this is a rest (the renderer appends 'r' to the duration code). */
@@ -223,7 +240,29 @@ export interface VexEventDescriptor {
   tieToNext: boolean;
   /** Articulation glyph to attach, or undefined. */
   articulation?: 'staccato' | 'accent' | 'tenuto';
+  /** Number of augmentation dots (0-2); the renderer adds that many Dot modifiers. */
+  dots: 0 | 1 | 2;
+  /** Tuplet bracket this event belongs to, or null. Events sharing an id share one bracket. */
+  tuplet: { id: string; n: number; m: number } | null;
+  /** Every articulation glyph to attach (supersedes `articulation`). */
+  articulations: Articulation[];
+  ornament?: Ornament;
+  dynamic?: Dynamic;
+  text?: string;
+  /** Grace notes ahead of this event, spelled and ready to draw. */
+  grace?: GraceDescriptor[];
+  id?: string;
+  /** 1 = primary voice (drives playback/hit-testing/grading); 2 = display-only. */
+  voice: 1 | 2;
 }
+
+// Rest placement, keyed by clef. In a two-voice measure, voice 1's rests sit
+// higher on the staff and voice 2's lower, so they don't collide visually.
+const REST_KEY: Record<NotationClef, string> = { treble: 'b/4', bass: 'd/3', alto: 'c/4', tenor: 'a/3', percussion: 'b/4' };
+const REST_KEY_V1: Record<NotationClef, string> = { treble: 'e/5', bass: 'g/3', alto: 'f/4', tenor: 'd/4', percussion: 'e/5' };
+const REST_KEY_V2: Record<NotationClef, string> = { treble: 'f/4', bass: 'a/2', alto: 'g/3', tenor: 'e/3', percussion: 'f/4' };
+
+const ACCIDENTAL_BY_ALTER: Record<number, AccidentalCode> = { [-2]: 'bb', [-1]: 'b', 0: 'n', 1: '#', 2: '##' };
 
 /**
  * Extract a flat list of VexEventDescriptors for a single track, with
@@ -231,7 +270,8 @@ export interface VexEventDescriptor {
  * affect QN positions — only the score-internal time math (time-mapping.ts)
  * cares about ms.
  *
- * Voice 1 only for M2. Multi-voice support lands in M8.
+ * Only voice 1 (`events`) drives playback highlighting, hit-testing, cursor
+ * mapping and grading. Voice 2 (`voice2Events`) is drawn for display only.
  */
 export function extractTrackEvents(
   track: Track,
@@ -240,103 +280,185 @@ export function extractTrackEvents(
 ): Array<{
   measure: Measure;
   events: VexEventDescriptor[];
+  voice2Events: VexEventDescriptor[];
   cumulativeQN: number;
   timeSignature: [number, number];
-  clef: 'treble' | 'percussion';
+  clef: NotationClef;
+  keyFifths: number;
+  keyChanged: boolean;
+  clefChanged: boolean;
 }> {
   const result: Array<{
     measure: Measure;
     events: VexEventDescriptor[];
+    voice2Events: VexEventDescriptor[];
     cumulativeQN: number;
     timeSignature: [number, number];
-    clef: 'treble' | 'percussion';
+    clef: NotationClef;
+    keyFifths: number;
+    keyChanged: boolean;
+    clefChanged: boolean;
   }> = [];
 
   const percussion = isPercussion(track.instrument);
-  const clef: 'treble' | 'percussion' = percussion ? 'percussion' : 'treble';
 
   let cumulativeQN = 0;
   let currentTimeSig: [number, number] = initialTimeSignature;
+  let previousClef: NotationClef | null = null;
+  let previousKeyFifths: number | null = null;
+  // Tied-from-same-pitch memory per voice, carried across barlines.
+  const tieCarry: Record<1 | 2, number[]> = { 1: [], 2: [] };
 
   for (const measure of track.measures) {
     if (measure.timeSignature) currentTimeSig = measure.timeSignature;
     const measureStartQN = cumulativeQN;
     const beatQN = beatLengthInQN(currentTimeSig);
-    const voice = measure.voices[0]; // M2: voice 1 only
-    const events: VexEventDescriptor[] = [];
 
-    let qnInMeasure = 0;
-    for (const event of voice.events) {
-      const beatInMeasure = qnInMeasure / beatQN + 1;
-      const dotted = event.dotted ?? false;
-      const durationCode = vexflowDurationCode(event.durationQN, eventDots(event), tupletScale(event));
-      const isRest = event.kind === 'rest';
+    const clef: NotationClef = percussion ? 'percussion' : (measure.clef ?? previousClef ?? 'treble');
+    const measureKeyFifths: number = measure.keyFifths ?? previousKeyFifths ?? keyFifths;
+    const clefChanged = previousClef !== null && clef !== previousClef;
+    const keyChanged = previousKeyFifths !== null && measureKeyFifths !== previousKeyFifths;
+    previousClef = clef;
+    previousKeyFifths = measureKeyFifths;
 
-      let keys: string[];
-      let accidentals: Array<'#' | 'b' | null>;
-      let midi: number | null = null;
-      let percussionHeads: PercussionNotation[] | undefined;
+    const memory = createAccidentalMemory(measureKeyFifths);
+    const twoVoices = measure.voices.length > 1;
 
-      if (event.kind === 'note') {
-        midi = event.midi;
-        if (percussion) {
-          percussionHeads = [percussionNotation(track.instrument, event)];
-          keys = percussionHeads.map(n => n.staffLine);
+    // Per-voice event loop, shared by voice 1 and voice 2. Legacy (id-less)
+    // triplets are grouped into runs of three, reset whenever a non-triplet
+    // event interrupts the run.
+    const describeVoice = (events: MusicalEvent[], voiceNo: 1 | 2): VexEventDescriptor[] => {
+      const out: VexEventDescriptor[] = [];
+      let qnInMeasure = 0;
+      let legacyRunPos = 0;
+      let legacyGroupIndex = 0;
+      let legacyId: string | null = null;
+
+      for (const event of events) {
+        const beatInMeasure = qnInMeasure / beatQN + 1;
+        const dots = eventDots(event);
+        const dotted = dots >= 1;
+        const durationCode = vexflowDurationCode(event.durationQN, dots, tupletScale(event));
+        const isRest = event.kind === 'rest';
+
+        const rawTuplet = eventTuplet(event);
+        let tuplet: { id: string; n: number; m: number } | null = null;
+        if (rawTuplet?.id) {
+          tuplet = { id: rawTuplet.id, n: rawTuplet.n, m: rawTuplet.m };
+          legacyRunPos = 0;
+        } else if (rawTuplet) {
+          // Legacy `triplet: true` with no id — group consecutive runs of 3.
+          if (legacyRunPos === 0) legacyId = `legacy-${measure.number}-${voiceNo}-${legacyGroupIndex}`;
+          tuplet = { id: legacyId!, n: rawTuplet.n, m: rawTuplet.m };
+          legacyRunPos += 1;
+          if (legacyRunPos === 3) {
+            legacyRunPos = 0;
+            legacyGroupIndex += 1;
+          }
+        } else {
+          legacyRunPos = 0;
+        }
+
+        let keys: string[];
+        let accidentals: Array<AccidentalCode | null>;
+        let midi: number | null = null;
+        let midiPitches: number[] = [];
+        let tiedMidiPitches: number[] = [];
+        let percussionHeads: PercussionNotation[] | undefined;
+
+        if (event.kind === 'note') {
+          midi = event.midi;
+          midiPitches = [event.midi];
+          tiedMidiPitches = event.tieToNext ? [event.midi] : [];
+          if (percussion) {
+            percussionHeads = [percussionNotation(track.instrument, event)];
+            keys = percussionHeads.map(n => n.staffLine);
+            accidentals = [null];
+          } else {
+            const spelled = spellMidi(event.midi, { spelling: event.spelling, spellingHint: event.spellingHint, keyFifths: measureKeyFifths });
+            keys = [vexKey(spelled)];
+            const tiedFromSame = tieCarry[voiceNo].includes(event.midi);
+            accidentals = [memory.code(spelled, { tiedFromSame })];
+          }
+        } else if (event.kind === 'chord') {
+          midi = event.notes[0]?.midi ?? null;
+          midiPitches = event.notes.map(n => n.midi);
+          tiedMidiPitches = event.notes.filter(n => event.tieToNext || n.tieToNext).map(n => n.midi);
+          if (percussion) {
+            percussionHeads = event.notes.map(n => percussionNotation(track.instrument, n));
+            keys = percussionHeads.map(n => n.staffLine);
+            accidentals = keys.map(() => null);
+          } else {
+            const spelledNotes = event.notes.map(n =>
+              spellMidi(n.midi, { spelling: n.spelling, spellingHint: n.spellingHint, keyFifths: measureKeyFifths })
+            );
+            keys = spelledNotes.map(vexKey);
+            accidentals = spelledNotes.map((spelled, idx) => {
+              const tiedFromSame = tieCarry[voiceNo].includes(event.notes[idx].midi);
+              return memory.code(spelled, { tiedFromSame });
+            });
+          }
+        } else {
+          // rest — VexFlow needs a key for visual placement.
+          keys = [twoVoices ? (voiceNo === 1 ? REST_KEY_V1 : REST_KEY_V2)[clef] : REST_KEY[clef]];
           accidentals = [null];
-        } else {
-          const k = midiToKeyString(event.midi, {
-            spellingHint: event.spellingHint,
-            keyFifths,
-          });
-          keys = [k];
-          accidentals = [extractAccidental(k)];
         }
-      } else if (event.kind === 'chord') {
-        midi = event.notes[0]?.midi ?? null;
-        if (percussion) {
-          percussionHeads = event.notes.map(n => percussionNotation(track.instrument, n));
-          keys = percussionHeads.map(n => n.staffLine);
-          accidentals = keys.map(() => null);
-        } else {
-          keys = event.notes.map((n) =>
-            midiToKeyString(n.midi, { spellingHint: n.spellingHint, keyFifths })
-          );
-          accidentals = keys.map((k) => extractAccidental(k));
-        }
-      } else {
-        // rest — VexFlow needs a key for visual placement; b/4 is the convention
-        keys = ['b/4'];
-        accidentals = [null];
+
+        // Grace notes are spelled against the key only — no bar memory.
+        const grace = event.grace?.map(g => {
+          const spelled = spellMidi(g.midi, { spelling: g.spelling, keyFifths: measureKeyFifths });
+          const accidental = spelled.alter !== keyAlter(spelled.step, measureKeyFifths) ? ACCIDENTAL_BY_ALTER[spelled.alter] : null;
+          return { keys: [vexKey(spelled)], accidentals: [accidental], slash: g.slash };
+        });
+
+        out.push({
+          kind: event.kind,
+          qnStart: measureStartQN + qnInMeasure,
+          durationQN: event.durationQN,
+          beatInMeasure,
+          keys,
+          accidentals,
+          durationCode,
+          isRest,
+          dotted,
+          midi,
+          midiPitches,
+          tiedMidiPitches,
+          percussion: percussionHeads,
+          triplet: event.triplet ?? false,
+          tieToNext: event.tieToNext ?? false,
+          articulation: event.kind === 'rest' ? undefined : event.articulation,
+          dots,
+          tuplet,
+          articulations: event.kind === 'rest' ? [] : eventArticulations(event),
+          ornament: event.ornament,
+          dynamic: event.dynamic,
+          text: event.text,
+          grace,
+          id: event.id,
+          voice: voiceNo,
+        });
+
+        tieCarry[voiceNo] = tiedMidiPitches;
+        qnInMeasure += event.durationQN;
       }
 
-      events.push({
-        kind: event.kind,
-        qnStart: measureStartQN + qnInMeasure,
-        durationQN: event.durationQN,
-        beatInMeasure,
-        keys,
-        accidentals,
-        durationCode,
-        isRest,
-        dotted,
-        midi,
-        midiPitches: event.kind === 'note' ? [event.midi] : event.kind === 'chord' ? event.notes.map(n => n.midi) : [],
-        tiedMidiPitches: event.kind === 'note' ? (event.tieToNext ? [event.midi] : []) : event.kind === 'chord' ? event.notes.filter(n => event.tieToNext || n.tieToNext).map(n => n.midi) : [],
-        percussion: percussionHeads,
-        triplet: event.triplet ?? false,
-        tieToNext: event.tieToNext ?? false,
-        articulation: event.kind === 'rest' ? undefined : event.articulation,
-      });
+      return out;
+    };
 
-      qnInMeasure += event.durationQN;
-    }
+    const events = describeVoice(measure.voices[0]?.events ?? [], 1);
+    const voice2Events = describeVoice(measure.voices[1]?.events ?? [], 2);
 
     result.push({
       measure,
       events,
+      voice2Events,
       cumulativeQN: measureStartQN,
       timeSignature: currentTimeSig,
       clef,
+      keyFifths: measureKeyFifths,
+      keyChanged,
+      clefChanged,
     });
 
     cumulativeQN += measureLengthInQN(currentTimeSig);

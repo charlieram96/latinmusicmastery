@@ -42,6 +42,7 @@ import { qnToTrackMs } from '@/lib/playsense-studio/time-mapping';
 import {
   extractTrackEvents,
   scoreTieIndices,
+  type NotationClef,
   type VexEventDescriptor,
 } from '@/lib/playsense-studio/score-to-vexflow';
 import type {
@@ -1473,7 +1474,7 @@ function clampZoom(zoom: number): number {
   return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom));
 }
 
-function descriptorToStaveNote(d: VexEventDescriptor, clef: 'treble' | 'percussion'): StaveNote {
+function descriptorToStaveNote(d: VexEventDescriptor, clef: NotationClef): StaveNote {
   const note = createStaveNote({
     keys: d.keys,
     clef,
@@ -1501,7 +1502,7 @@ export function formatMeasureVoice(
   events: VexEventDescriptor[],
   timeSignature: [number, number],
   justifyWidth: number,
-  clef: 'treble' | 'percussion' = 'treble'
+  clef: NotationClef = 'treble'
 ): { vexNotes: StaveNote[]; voice: Voice; beams: Beam[] } | null {
   if (events.length === 0) return null;
 
