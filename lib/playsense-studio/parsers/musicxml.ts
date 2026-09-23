@@ -288,10 +288,13 @@ function parsePartMeasures(
             const spelling = readSpelling(noteEl);
             const member = { ...pitch, ...(spelling ? { spelling } : {}), ...(tieStart ? { tieToNext: true } : {}) };
             if (prev.kind === 'note') {
-              const { kind: _k, midi, spellingHint, percussion, spelling: prevSpelling, tieToNext, ...rest } = prev;
+              // fingering lives per chord member (Chord has no top-level fingering),
+              // so pull it off `prev` and keep it with the first note instead of
+              // letting it leak onto the Chord object via `...rest`.
+              const { kind: _k, midi, spellingHint, percussion, spelling: prevSpelling, tieToNext, fingering, ...rest } = prev;
               const chord: Chord = {
                 ...rest, kind: 'chord',
-                notes: [{ midi, spellingHint, percussion, ...(prevSpelling ? { spelling: prevSpelling } : {}), ...(tieToNext ? { tieToNext } : {}) }, member],
+                notes: [{ midi, spellingHint, percussion, ...(prevSpelling ? { spelling: prevSpelling } : {}), ...(tieToNext ? { tieToNext } : {}), ...(fingering ? { fingering } : {}) }, member],
               };
               events[events.length - 1] = chord;
             } else {

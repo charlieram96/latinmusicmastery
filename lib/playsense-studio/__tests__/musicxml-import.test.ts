@@ -76,4 +76,22 @@ describe('MusicXML import — rhythm and voices', () => {
     expect(ev[1]).toMatchObject({ spelling: { step: 'E', alter: 0, showAccidental: 'always' } })
     expect(ev[2]).toMatchObject({ midi: 79, spelling: { step: 'F', alter: 2 } })
   })
+
+  it('carries spelling, ties and rhythm onto pitched chord members', () => {
+    const ev = events(`<measure number="1">${attrs(4)}${note({ step: 'B', oct: 4, alter: -1, type: 'quarter', dur: 4, extra: '<tie type="start"/>' })}${note({ step: 'D', oct: 5, type: 'quarter', dur: 4, extra: '<chord/><accidental cautionary="yes">natural</accidental>' })}</measure>`)
+    expect(ev).toHaveLength(1)
+    expect(ev[0]).toMatchObject({
+      kind: 'chord',
+      durationQN: 1,
+      notes: [
+        { midi: 70, spelling: { step: 'B', alter: -1 }, tieToNext: true },
+        { midi: 74, spelling: { step: 'D', alter: 0, showAccidental: 'always' } },
+      ],
+    })
+
+    // A tuplet on the chord's first note is a rhythm field: it belongs on the
+    // Chord itself, not duplicated per member.
+    const evT = events(`<measure number="1">${attrs(6)}${note({ step: 'C', oct: 5, type: 'eighth', dur: 2, extra: tm(3, 2) })}${note({ step: 'E', oct: 5, type: 'eighth', dur: 2, extra: tm(3, 2) + '<chord/>' })}${note({ step: 'F', oct: 4, type: 'quarter', dur: 4 })}</measure>`)
+    expect(evT[0]).toMatchObject({ kind: 'chord', triplet: true, tuplet: { n: 3, m: 2 }, durationQN: 1 / 3 })
+  })
 })
