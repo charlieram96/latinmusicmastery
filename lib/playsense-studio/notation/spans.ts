@@ -32,8 +32,13 @@ export function spanSegments(spans: Span[] | undefined, placed: PlacedNote[]): S
     // Build one segment per system touched
     let isFirst = true
     for (const sys of sortedSystems) {
-      const from = (sys === a.system) ? a.note : firstInSys.get(sys)!.note
-      const to = (sys === b.system) ? b.note : lastInSys.get(sys)!.note
+      // A slur stays open at each break (VexFlow runs an open end to the stave
+      // edge); a middle line has no end in it, so it spans that line's notes.
+      // Hairpins need both ends, so they close on each line's first/last note.
+      const slur = s.type === 'slur'
+      const middle = sys !== a.system && sys !== b.system
+      const from = sys === a.system ? a.note : slur && !middle ? undefined : firstInSys.get(sys)!.note
+      const to = sys === b.system ? b.note : slur && !middle ? undefined : lastInSys.get(sys)!.note
       const fromHasDynamic = isFirst ? !!a.hasDynamic : undefined
 
       out.push({ type: s.type, from, to, fromHasDynamic })
@@ -46,7 +51,8 @@ export function spanSegments(spans: Span[] | undefined, placed: PlacedNote[]): S
 export function drawSpanSegments(ctx: RenderContext, segments: SpanSegment[]): void {
   for (const seg of segments) {
     try {
-      if (seg.type === 'slur' && seg.from && seg.to) {
+      if (seg.type === 'slur') {
+        if (!seg.from && !seg.to) continue
         new Curve(seg.from, seg.to, { thickness: 2, cps: [{ x: 0, y: 12 }, { x: 0, y: 12 }] }).setContext(ctx).draw()
       } else if (seg.from && seg.to) {
         const hp = new StaveHairpin({ firstNote: seg.from, lastNote: seg.to }, seg.type === 'cresc' ? StaveHairpin.type.CRESC : StaveHairpin.type.DECRESC)

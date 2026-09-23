@@ -19,10 +19,10 @@ describe('spanSegments', () => {
       { type: 'cresc', from: placed[0].note, to: placed[2].note, fromHasDynamic: true },
     ])
   })
-  it('splits a slur across a line break into segments, with middle systems as full curves', () => {
+  it('splits a slur across a line break into two open curves', () => {
     expect(spanSegments([{ id: 's', type: 'slur', from: 'b', to: 'e' }], placed)).toEqual([
-      { type: 'slur', from: placed[1].note, to: placed[2].note, fromHasDynamic: false },
-      { type: 'slur', from: placed[3].note, to: placed[4].note },
+      { type: 'slur', from: placed[1].note, to: undefined, fromHasDynamic: false },
+      { type: 'slur', from: undefined, to: placed[4].note },
     ])
   })
   it('splits a hairpin at each system boundary it crosses', () => {
@@ -56,9 +56,9 @@ describe('spanSegments', () => {
   it('emits three segments for a slur over systems 0..2, with middle system as a full curve', () => {
     const p = [n('a', 0), n('b', 0), n('c', 1), n('d', 1), n('e', 2), n('f', 2)]
     expect(spanSegments([{ id: 's', type: 'slur', from: 'a', to: 'f' }], p)).toEqual([
-      { type: 'slur', from: p[0].note, to: p[1].note, fromHasDynamic: false },
+      { type: 'slur', from: p[0].note, to: undefined, fromHasDynamic: false },
       { type: 'slur', from: p[2].note, to: p[3].note },
-      { type: 'slur', from: p[4].note, to: p[5].note },
+      { type: 'slur', from: undefined, to: p[5].note },
     ])
   })
   it('finds the correct last note of the middle system when notes follow the span (regression: reversed-index bug)', () => {
@@ -121,6 +121,14 @@ describe('drawSpanSegments (jsdom smoke test)', () => {
     const { div, ctx, note1, note2 } = formattedNotes()
     const before = div.querySelectorAll('path').length
     expect(() => drawSpanSegments(ctx, [{ type: 'slur', from: note1, to: note2 }])).not.toThrow()
+    expect(div.querySelectorAll('path').length).toBeGreaterThan(before)
+    document.body.removeChild(div)
+  })
+
+  it('draws a slur that is open at a line break', () => {
+    const { div, ctx, note1 } = formattedNotes()
+    const before = div.querySelectorAll('path').length
+    drawSpanSegments(ctx, [{ type: 'slur', from: note1, to: undefined }])
     expect(div.querySelectorAll('path').length).toBeGreaterThan(before)
     document.body.removeChild(div)
   })
