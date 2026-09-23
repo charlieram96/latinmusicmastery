@@ -117,3 +117,20 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 - Hear Recording / Score / Both: a score synth through the same timeline map.
 - Loop the selection at 100%, 75% or 50% with `preservesPitch`.
 - Web MIDI entry with on-screen keys in the measure zoom; chords from notes within 45 ms.
+
+## Carried forward from Plan 1 reviews
+
+- **P2:**
+  - Renderers must draw dots from `eventDots` (double dots are invisible today).
+  - Guard slur spans where `from === to`.
+  - Rename one of `MeasureClip.spans` (video-time) / `ScoreDocument.spans` (notation) before they meet in the clipboard.
+- **P3:**
+  - Tuplet group editing: toggling one member of an n:m group must keep the whole group consistent (today one id can end up with mixed ratios).
+  - Tuplet group ids should carry the per-import token too (fold into the event-id integrity work).
+- **P3 / P5:**
+  - Add a larger real-world MusicXML fixture that runs through `parseScoreDocument`.
+  - Assert that `measure.number` equals its index + 1 wherever the grid is built.
+- **Before P4 ships:**
+  - Record the Flex spike device results in spec §7.
+  - Delete `app/(dev)/flex-spike`.
+- **Test hygiene:** rename the backing-track-timing test "with a tempo change". Its grid varies `secPerQN`, which `buildExerciseGrid` never produces while tempo changes are ignored.
