@@ -34,11 +34,12 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 
 ## Plan 2 — Notation rendering (spec §5, §11)
 
+**Done 2026-09-23.** Shared builder (notation/build-measure.ts), accidental engine, spans, key signatures, clefs, voice 2 (display only). The continuous single-SVG Studio strip moved to Plan 3 (the strip is rebuilt there); until then strip spans draw within a measure.
+
 - `lib/playsense-studio/notation/build-measure.ts`: one-measure VexFlow builder, ported from the prototype's `buildMeasure`, using the P1 accessors.
 - A spans pass: ties, slurs and hairpins, split across systems.
 - Accidental engine: key signature plus accidentals remembered within the bar, and courtesy accidentals.
 - The student `staff-renderer.tsx` and the export switch to the builder.
-- Studio strip: one continuous SVG over the visible range, with the 46 px placeholder kept.
 - Tests: a builder snapshot of the reference-image excerpt and the accidental rules.
 
 ## Plan 3 — Studio shell and measure editing (spec §6)
@@ -51,6 +52,7 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 - wheel: vertical zooms, horizontal pans
 
 **Measure strip:**
+- one continuous SVG across the visible range (moved from Plan 2), so slurs and hairpins cross barlines in the strip
 - selection model: click, drag or ⇧-click selects; never mutates notes
 - floating measure bar
 - beat counts with the short/over states and the footer issue chip
@@ -121,10 +123,12 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 ## Carried forward from Plan 1 reviews
 
 - **P2:**
-  - Renderers must draw dots from `eventDots` (double dots are invisible today).
-  - Guard slur spans where `from === to`.
-  - Rename one of `MeasureClip.spans` (video-time) / `ScoreDocument.spans` (notation) before they meet in the clipboard.
+  - Renderers must draw dots from `eventDots` (double dots are invisible today). (done in P2)
+  - Guard slur spans where `from === to`. (done in P2)
 - **P3:**
+  - Beam grouping for additive meters such as 7/8 (today 2+2+2+1).
+  - A slur's open start at a line break has no draw-level smoke test (data-level covered).
+  - Rename one of `MeasureClip.spans` (video-time) / `ScoreDocument.spans` (notation) before they meet in the clipboard. (not done in P2; do it with the clipboard/event-id work)
   - Tuplet group editing: toggling one member of an n:m group must keep the whole group consistent (today one id can end up with mixed ratios).
   - Tuplet group ids should carry the per-import token too (fold into the event-id integrity work).
 - **P3 / P5:**
