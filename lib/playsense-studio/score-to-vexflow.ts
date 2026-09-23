@@ -20,7 +20,7 @@ import {
 } from './time-mapping';
 import { isPercussion, percussionNotation } from './perc-strokes';
 import { eventArticulations, eventDots, eventTuplet, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
-import { createAccidentalMemory, keyAlter, spellMidi, vexKey, type AccidentalCode } from './notation/accidentals';
+import { createAccidentalMemory, keyAlter, spellMidi, vexKey, type AccidentalCode, type SpelledPitch } from './notation/accidentals';
 // notation/accidentals.ts imports midiToKeyString from this file. That circular
 // import is safe: both sides only use each other inside functions, never at
 // module top level.
@@ -322,10 +322,22 @@ export function extractTrackEvents(
     previousClef = clef;
     previousKeyFifths = measureKeyFifths;
 
-    const memory = createAccidentalMemory(measureKeyFifths);
     const voice1Raw = measure.voices[0]?.events ?? [];
-    const voice2Raw = measure.voices[1]?.events ?? [];
-    const twoVoices = voice2Raw.length > 0;
+    // A voice 2 of only rests has nothing to show and must not push voice 1
+    // into the two-voice layout (raised rests, forced stems), so it is dropped.
+    const voice2HasPitches = (measure.voices[1]?.events ?? []).some(e => e.kind !== 'rest');
+    const voice2Raw = voice2HasPitches ? measure.voices[1].events : [];
+    const twoVoices = voice2HasPitches;
+    // Accidental decisions are queued per pitched event and run afterwards in
+    // time order across both voices, so the bar's memory sees what came first.
+    const accidentalQueue: Array<{
+      onset: number;
+      voice: 1 | 2;
+      seq: number;
+      pitches: SpelledPitch[];
+      tiedFromSame: boolean[];
+      target: Array<AccidentalCode | null>;
+    }> = [];
     // A voice with no events in this measure can't carry a tie into the next
     // measure it does appear in — clear its cross-barline tie memory so a
     // later reappearance isn't mistaken for a tied continuation.
@@ -333,12 +345,14 @@ export function extractTrackEvents(
     if (voice2Raw.length === 0) tieCarry[2] = [];
 
     // Per-voice event loop, shared by voice 1 and voice 2. Legacy (id-less)
-    // triplets are grouped into runs of three, reset whenever a non-triplet
-    // event interrupts the run.
+    // triplets are grouped by written duration: a group closes once it spans
+    // three of its smallest written value (or at a non-triplet event).
     const describeVoice = (events: MusicalEvent[], voiceNo: 1 | 2): VexEventDescriptor[] => {
       const out: VexEventDescriptor[] = [];
       let qnInMeasure = 0;
-      let legacyRunPos = 0;
+      let legacyOpen = false;
+      let legacyTotal = 0;
+      let legacySmallest = Infinity;
       let legacyGroupIndex = 0;
       let legacyId: string | null = null;
 
@@ -353,18 +367,25 @@ export function extractTrackEvents(
         let tuplet: { id: string; n: number; m: number } | null = null;
         if (rawTuplet?.id) {
           tuplet = { id: rawTuplet.id, n: rawTuplet.n, m: rawTuplet.m };
-          legacyRunPos = 0;
+          legacyOpen = false;
         } else if (rawTuplet) {
-          // Legacy `triplet: true` with no id — group consecutive runs of 3.
-          // A fresh index is taken whenever a run starts, so a run interrupted
-          // before reaching 3 (e.g. by a rest) doesn't leave the next run to
-          // reuse its id.
-          if (legacyRunPos === 0) legacyId = `legacy-${measure.number}-${voiceNo}-${legacyGroupIndex++}`;
+          // Legacy `triplet: true` with no id. durationQN is the sounding
+          // (scaled) length, so the written value is durationQN / scale. A
+          // fresh id is taken whenever a group opens, so a group cut short
+          // (e.g. by a rest) doesn't leave the next one to reuse its id.
+          const written = event.durationQN / tupletScale(event);
+          if (!legacyOpen) {
+            legacyId = `legacy-${measure.number}-${voiceNo}-${legacyGroupIndex++}`;
+            legacyOpen = true;
+            legacyTotal = 0;
+            legacySmallest = Infinity;
+          }
           tuplet = { id: legacyId!, n: rawTuplet.n, m: rawTuplet.m };
-          legacyRunPos += 1;
-          if (legacyRunPos === 3) legacyRunPos = 0;
+          legacyTotal += written;
+          legacySmallest = Math.min(legacySmallest, written);
+          if (legacyTotal >= 3 * legacySmallest - 1e-6) legacyOpen = false;
         } else {
-          legacyRunPos = 0;
+          legacyOpen = false;
         }
 
         let keys: string[];
@@ -385,8 +406,11 @@ export function extractTrackEvents(
           } else {
             const spelled = spellMidi(event.midi, { spelling: event.spelling, spellingHint: event.spellingHint, keyFifths: measureKeyFifths });
             keys = [vexKey(spelled)];
-            const tiedFromSame = tieCarry[voiceNo].includes(event.midi);
-            accidentals = [memory.code(spelled, { tiedFromSame })];
+            accidentals = [null];
+            accidentalQueue.push({
+              onset: qnInMeasure, voice: voiceNo, seq: accidentalQueue.length,
+              pitches: [spelled], tiedFromSame: [tieCarry[voiceNo].includes(event.midi)], target: accidentals,
+            });
           }
         } else if (event.kind === 'chord') {
           midi = event.notes[0]?.midi ?? null;
@@ -401,9 +425,10 @@ export function extractTrackEvents(
               spellMidi(n.midi, { spelling: n.spelling, spellingHint: n.spellingHint, keyFifths: measureKeyFifths })
             );
             keys = spelledNotes.map(vexKey);
-            accidentals = spelledNotes.map((spelled, idx) => {
-              const tiedFromSame = tieCarry[voiceNo].includes(event.notes[idx].midi);
-              return memory.code(spelled, { tiedFromSame });
+            accidentals = spelledNotes.map(() => null);
+            accidentalQueue.push({
+              onset: qnInMeasure, voice: voiceNo, seq: accidentalQueue.length,
+              pitches: spelledNotes, tiedFromSame: event.notes.map(n => tieCarry[voiceNo].includes(n.midi)), target: accidentals,
             });
           }
         } else {
@@ -456,6 +481,14 @@ export function extractTrackEvents(
 
     const events = describeVoice(voice1Raw, 1);
     const voice2Events = describeVoice(voice2Raw, 2);
+
+    // Run the bar's accidental memory in onset order (voice 1 first on ties)
+    // and write each decision back into its descriptor's accidentals array.
+    // Grace notes are decided against the key alone, so they don't take part.
+    const memory = createAccidentalMemory(measureKeyFifths);
+    accidentalQueue
+      .sort((a, b) => (Math.abs(a.onset - b.onset) > 1e-6 ? a.onset - b.onset : a.voice - b.voice || a.seq - b.seq))
+      .forEach(q => q.pitches.forEach((p, i) => { q.target[i] = memory.code(p, { tiedFromSame: q.tiedFromSame[i] }); }));
 
     result.push({
       measure,

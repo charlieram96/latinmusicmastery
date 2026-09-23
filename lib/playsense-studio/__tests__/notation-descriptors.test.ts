@@ -115,6 +115,85 @@ describe('richer descriptors', () => {
   })
 })
 
+describe('accidentals across both voices', () => {
+  it('decides accidentals in time order across the voices, not voice 1 first', () => {
+    // C major. Voice 2 has F#4 on beat 1; voice 1 has F#4 on beat 3.
+    const track: Track = { ...GUITAR_LICK_FIXTURE.tracks[0], measures: [
+      { number: 1, voices: [
+        { number: 1, events: [
+          { kind: 'note', midi: 72, durationQN: 2 },
+          { kind: 'note', midi: 66, durationQN: 2 },
+        ] },
+        { number: 2, events: [{ kind: 'note', midi: 66, durationQN: 4 }] },
+      ] },
+    ] }
+    const [b] = extractTrackEvents(track, [4, 4], 0)
+    expect(b.voice2Events[0]).toMatchObject({ keys: ['f#/4'], accidentals: ['#'] })
+    expect(b.events[1]).toMatchObject({ keys: ['f#/4'], accidentals: [null] })
+  })
+  it('lets voice 1 go first when both voices start together', () => {
+    const track: Track = { ...GUITAR_LICK_FIXTURE.tracks[0], measures: [
+      { number: 1, voices: [
+        { number: 1, events: [{ kind: 'note', midi: 66, durationQN: 4 }] },
+        { number: 2, events: [{ kind: 'note', midi: 66, durationQN: 4 }] },
+      ] },
+    ] }
+    const [b] = extractTrackEvents(track, [4, 4], 0)
+    expect(b.events[0].accidentals).toEqual(['#'])
+    expect(b.voice2Events[0].accidentals).toEqual([null])
+  })
+})
+
+describe('legacy triplet grouping by written duration', () => {
+  // Written QN values; legacy triplets store the scaled length (written × 2/3).
+  const groupsOf = (written: number[]) => {
+    const fill = 4 - written.reduce((a, w) => a + w * 2 / 3, 0)
+    const track: Track = { ...GUITAR_LICK_FIXTURE.tracks[0], measures: [{ number: 1, voices: [{ number: 1, events: [
+      ...written.map(w => ({ kind: 'note' as const, midi: 60, durationQN: w * 2 / 3, triplet: true })),
+      ...(fill > 1e-9 ? [{ kind: 'rest' as const, durationQN: fill }] : []),
+    ] }] }] }
+    const ev = extractTrackEvents(track, [4, 4], 0)[0].events.slice(0, written.length)
+    const out: number[][] = []
+    ev.forEach((d, i) => {
+      if (i > 0 && ev[i - 1].tuplet!.id === d.tuplet!.id) out[out.length - 1].push(written[i])
+      else out.push([written[i]])
+    })
+    return out
+  }
+  it('closes a group once it spans three of its smallest value', () => {
+    expect(groupsOf([0.5, 0.5, 0.5])).toEqual([[0.5, 0.5, 0.5]])
+    expect(groupsOf([1, 1, 1])).toEqual([[1, 1, 1]])
+    expect(groupsOf([1, 0.5])).toEqual([[1, 0.5]])
+    expect(groupsOf([1, 0.5, 0.5])).toEqual([[1, 0.5], [0.5]])
+    expect(groupsOf([0.5, 0.5, 0.5, 0.5, 0.5, 0.5])).toEqual([[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]])
+    expect(groupsOf([0.25, 0.25, 0.25, 0.25, 0.25, 0.25])).toEqual([[0.25, 0.25, 0.25], [0.25, 0.25, 0.25]])
+  })
+  it('closes an open group at a non-triplet event', () => {
+    const track: Track = { ...GUITAR_LICK_FIXTURE.tracks[0], measures: [{ number: 1, voices: [{ number: 1, events: [
+      { kind: 'note' as const, midi: 60, durationQN: 2 / 3, triplet: true },
+      { kind: 'note' as const, midi: 60, durationQN: 1 },
+      { kind: 'note' as const, midi: 60, durationQN: 1 / 3, triplet: true },
+    ] }] }] }
+    const ev = extractTrackEvents(track, [4, 4], 0)[0].events
+    expect(ev[1].tuplet).toBeNull()
+    expect(ev[0].tuplet!.id).not.toBe(ev[2].tuplet!.id)
+  })
+})
+
+describe('voice 2 of only rests', () => {
+  it('does not trigger the two-voice layout', () => {
+    const track: Track = { ...GUITAR_LICK_FIXTURE.tracks[0], measures: [
+      { number: 1, voices: [
+        { number: 1, events: [{ kind: 'rest', durationQN: 2 }, { kind: 'note', midi: 60, durationQN: 2 }] },
+        { number: 2, events: [{ kind: 'rest', durationQN: 4 }] },
+      ] },
+    ] }
+    const [b] = extractTrackEvents(track, [4, 4], 0)
+    expect(b.events[0].keys).toEqual(['b/4'])
+    expect(b.voice2Events).toEqual([])
+  })
+})
+
 describe('percussion key signature', () => {
   it('never gives a percussion staff a key, even in a sharp key or after a key change', () => {
     const track: Track = {
