@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { extractTrackEvents } from '../score-to-vexflow'
 import { REFERENCE_EXCERPT_FIXTURE as F } from '../score-fixtures'
 import { beamGroups, buildMeasure, descriptorToStaveNote, formatMeasure } from '../notation/build-measure'
+import type { Dynamic, Track } from '@/components/playsense-studio/shared/score-model/types'
 
 beforeAll(() => {
   // VexFlow measures annotation text through a canvas; jsdom has none.
@@ -35,6 +36,36 @@ describe('descriptorToStaveNote', () => {
     expect(mods(tr, 'Articulation')).toBe(1)
     expect(mods(descriptorToStaveNote(b3.events[0], { clef: 'treble' }), 'GraceNoteGroup')).toBe(1)
     expect(mods(descriptorToStaveNote(b1.events[1], { clef: 'treble' }), 'Annotation')).toBe(1) // mp
+  })
+})
+
+describe('descriptorToStaveNote percussion marcato', () => {
+  it('does not double the marcato articulation from percussion notation', () => {
+    const track: Track = {
+      index: 0, instrument: 'perc-conga', displayName: 'Conga', tuning: null, stringMultiplicity: 1, channel: 9, defaultView: 'rhythm-grid',
+      measures: [{ number: 1, voices: [{ number: 1, events: [
+        { kind: 'note', id: 'p1', midi: 65, durationQN: 1, percussion: { staffLine: 'e/5', notehead: 'normal', marcato: true }, articulations: ['marcato'] },
+      ] }] }],
+    }
+    const [blk] = extractTrackEvents(track, [4, 4], 0)
+    const note = descriptorToStaveNote(blk.events[0], { clef: 'percussion' })
+    const arts = note.getModifiers().filter(m => m.getCategory() === 'Articulation')
+    expect(arts).toHaveLength(1)
+    expect((arts[0] as unknown as { type: string }).type).toBe('a^')
+  })
+})
+
+describe('descriptorToStaveNote dynamics glyphs', () => {
+  it('gives every dynamic a distinct, non-empty Bravura glyph', () => {
+    const [b1] = blocks()
+    const dynamics: Dynamic[] = ['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'fp', 'sfz']
+    const texts = dynamics.map(dynamic => {
+      const note = descriptorToStaveNote({ ...b1.events[1], dynamic }, { clef: 'treble' })
+      const [annotation] = note.getModifiers().filter(m => m.getCategory() === 'Annotation') as unknown as { getText(): string }[]
+      return annotation.getText()
+    })
+    texts.forEach(t => expect(t).not.toBe(''))
+    expect(new Set(texts).size).toBe(dynamics.length)
   })
 })
 

@@ -10,7 +10,8 @@ import type { NotationClef, VexEventDescriptor } from '../score-to-vexflow'
 
 const ARTIC: Record<ArticulationKind, string> = { staccato: 'a.', staccatissimo: 'av', tenuto: 'a-', accent: 'a>', marcato: 'a^', fermata: 'a@a' }
 const ORN: Record<OrnamentKind, string> = { trill: 'tr', mordent: 'mordent', turn: 'turn' }
-const DYN: Record<Dynamic, string> = { ppp: '', pp: '', p: '', mp: '', mf: '', f: '', ff: '', fff: '', fp: '', sfz: '' }
+// Bravura private-use dynamics glyphs (SMuFL "Dynamics" range).
+const DYN: Record<Dynamic, string> = { ppp: '\uE52A', pp: '\uE52B', p: '\uE520', mp: '\uE52C', mf: '\uE52D', f: '\uE522', ff: '\uE52F', fff: '\uE530', fp: '\uE534', sfz: '\uE539' }
 const BEAMABLE = new Set(['8', '16', '32', '64', '128'])
 
 /** Beam per beat (a dotted quarter in compound meters); tuplet groups stay whole. */
@@ -50,7 +51,13 @@ export function descriptorToStaveNote(d: VexEventDescriptor, opts: { clef: Notat
   d.accidentals.forEach((acc, i) => { if (acc) note.addModifier(new Accidental(acc), i) })
   if (!d.isRest) {
     const up = note.getStemDirection() === 1
+    // PercussionStaveNote already adds an 'a^' Articulation per notehead flagged
+    // marcato in d.percussion (see percussion-stave-note.ts); skip it here so an
+    // event carrying both percussion.marcato and articulations:['marcato'] (as
+    // the MusicXML importer does for <strong-accent>) doesn't draw it twice.
+    const percMarcato = d.percussion?.some(p => p.marcato) ?? false
     d.articulations.forEach(a => {
+      if (a === 'marcato' && percMarcato) return
       const art = new Articulation(ARTIC[a])
       art.setPosition(a === 'fermata' ? Modifier.Position.ABOVE : up ? Modifier.Position.BELOW : Modifier.Position.ABOVE)
       note.addModifier(art, 0)
