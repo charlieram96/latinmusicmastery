@@ -50,6 +50,17 @@ function render(props: Partial<React.ComponentProps<typeof BarPopover>> = {}) {
 const buttons = () => Array.from(host.querySelectorAll('button'));
 const byLabel = (label: string) => buttons().find((b) => b.textContent?.trim() === label);
 
+// Bypasses React's own instrumented `value` setter (installed on the node to
+// track "real" changes), so the following 'input' event isn't a no-op — same
+// trick as score-meta-editor.test.tsx.
+const nativeValueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+function type(input: HTMLInputElement, value: string) {
+  act(() => {
+    nativeValueSetter.call(input, value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+}
+
 describe('BarPopover', () => {
   it('titles the popover "Bar m.3"', () => {
     render();
@@ -80,13 +91,20 @@ describe('BarPopover', () => {
     expect(host.querySelector('[aria-label="Clef"]')).toBeTruthy();
   });
 
+  it('re-syncs the tempo field when current.tempo changes while open, and submits the new value', () => {
+    render();
+    const input = () => host.querySelector('[aria-label="Tempo"]') as HTMLInputElement;
+    expect(input().value).toBe('120');
+    const cb2 = render({ current: { ...baseCurrent, tempo: 140 } });
+    expect(input().value).toBe('140');
+    act(() => { byLabel('Set ♩ =')!.click(); });
+    expect(cb2.onPatch).toHaveBeenCalledWith({ tempo: 140 });
+  });
+
   it('submitting tempo 132 calls onPatch({ tempo: 132 })', () => {
     const cb = render();
     const input = host.querySelector('[aria-label="Tempo"]') as HTMLInputElement;
-    act(() => {
-      input.value = '132';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    type(input, '132');
     act(() => { byLabel('Set ♩ =')!.click(); });
     expect(cb.onPatch).toHaveBeenCalledWith({ tempo: 132 });
   });
@@ -94,10 +112,7 @@ describe('BarPopover', () => {
   it('ignores a tempo submitted outside 30–300', () => {
     const cb = render();
     const input = host.querySelector('[aria-label="Tempo"]') as HTMLInputElement;
-    act(() => {
-      input.value = '301';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    type(input, '301');
     act(() => { byLabel('Set ♩ =')!.click(); });
     expect(cb.onPatch).not.toHaveBeenCalled();
   });

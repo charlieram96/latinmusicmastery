@@ -4,7 +4,7 @@
 // bar. A tempo mark here writes Measure.tempoChange (spec §8); see
 // lib/playsense-studio/tempo-marks.ts for what happens with imported ones.
 
-import { useRef, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { keySignatureName } from '@/lib/playsense-studio/notation/accidentals';
 import type { MeasurePropsPatch } from '@/lib/playsense-studio/editor-state';
 import { MeasurePopover, type PopoverAnchor } from './popover';
@@ -20,19 +20,23 @@ const CLEFS: Array<{ value: 'treble' | 'bass' | 'alto' | 'tenor'; label: string 
 ];
 const KEY_FIFTHS = Array.from({ length: 15 }, (_, i) => i - 7); // -7..7
 
-export function BarPopover({ anchor, measureNumber, percussion, current, onPatch, onFinal, onClose }: {
+export function BarPopover({ anchor, measureIndex, measureNumber, percussion, current, onPatch, onFinal, onClose }: {
   anchor: PopoverAnchor; measureIndex: number; measureNumber: number; percussion: boolean;
   current: { timeSignature: [number, number]; keyFifths: number; clef: 'treble' | 'bass' | 'alto' | 'tenor'; tempo: number;
              repeatStart: boolean; repeatEnd: boolean; double: boolean; final: boolean; volta: '1.' | '2.' | null };
   onPatch: (p: MeasurePropsPatch) => void; onFinal: (final: boolean) => void; onClose: () => void;
 }) {
-  const tempoRef = useRef<HTMLInputElement | null>(null);
+  // Controlled, and re-synced from `current.tempo` — the score's tempo can
+  // change while the popover is open (the rail's stepper, undo/redo), and an
+  // uncontrolled field would keep showing the stale value.
+  const [tempoText, setTempoText] = useState(() => String(current.tempo));
+  useEffect(() => { setTempoText(String(current.tempo)); }, [current.tempo, measureIndex]);
 
   const toggleVolta = (v: '1.' | '2.') => onPatch({ volta: current.volta === v ? null : v });
 
   const onTempoSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const v = Number(tempoRef.current?.value);
+    const v = Number(tempoText);
     if (Number.isFinite(v) && v >= 30 && v <= 300) onPatch({ tempo: v });
   };
 
@@ -81,7 +85,7 @@ export function BarPopover({ anchor, measureNumber, percussion, current, onPatch
       </div>
 
       <form className="st-mpop-row" onSubmit={onTempoSubmit}>
-        <input ref={tempoRef} type="number" min={30} max={300} defaultValue={current.tempo} aria-label="Tempo" className="st-input w-16" />
+        <input type="number" min={30} max={300} value={tempoText} onChange={(e) => setTempoText(e.target.value)} aria-label="Tempo" className="st-input w-16" />
         <button type="submit" className="st-mpop-item">Set ♩ =</button>
       </form>
     </MeasurePopover>
