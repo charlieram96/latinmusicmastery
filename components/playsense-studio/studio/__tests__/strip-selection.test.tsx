@@ -114,6 +114,31 @@ describe('EditableMeasureStrip bar selection', () => {
     expect(cb.onSelectMeasureRange).not.toHaveBeenCalled();
   });
 
+  it('a press released outside the strip ends there, and the next press works normally', () => {
+    const cb = mount();
+    pointer(bar(0), 'pointerdown', 50);
+    // Released off the strip before the pointer crossed the drag threshold:
+    // only the window hears the pointerup.
+    pointer(window as unknown as Element, 'pointerup', 5);
+    act(() => { vi.advanceTimersByTime(50); });
+    // The press is over: a later move far across the strip must not drag.
+    pointer(bar(2), 'pointermove', 250);
+    act(() => { vi.advanceTimersByTime(50); });
+    pointer(bar(0), 'pointermove', 5);
+    act(() => { vi.advanceTimersByTime(50); });
+    expect(cb.onSelectMeasureRange).not.toHaveBeenCalled();
+    expect(cb.onScrollByPx).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0); // the rAF loop has stopped
+
+    pointer(bar(0), 'pointerdown', 50);
+    pointer(bar(0), 'pointermove', 250);
+    act(() => { vi.advanceTimersByTime(20); });
+    pointer(bar(0), 'pointerup', 250);
+    expect(cb.onSelectMeasure).toHaveBeenCalledTimes(2);
+    expect(cb.onSelectMeasureRange).toHaveBeenCalledWith(0, 2);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it('a press and release in place never range-selects, however long it is held', () => {
     const cb = mount();
     pointer(bar(1), 'pointerdown', 150);

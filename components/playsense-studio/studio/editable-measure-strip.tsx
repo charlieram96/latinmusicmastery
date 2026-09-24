@@ -302,9 +302,14 @@ export function EditableMeasureStrip({
     live.current = { measures, pixelsPerSecond, scrollLeftPx, viewportWidth, onScrollByPx, onSelectMeasureRange };
   });
   const selRaf = useRef(0);
+  // Window listeners that end a press released outside the strip — before a
+  // drag captures the pointer, the container never hears that pointerup.
+  const selWindowOff = useRef<(() => void) | null>(null);
   const stopSelectionLoop = () => {
     if (selRaf.current) cancelAnimationFrame(selRaf.current);
     selRaf.current = 0;
+    selWindowOff.current?.();
+    selWindowOff.current = null;
   };
   useEffect(() => stopSelectionLoop, []);
 
@@ -318,6 +323,13 @@ export function EditableMeasureStrip({
       moved: false,
     };
     stopSelectionLoop();
+    const onWindowEnd = (ev: PointerEvent) => endSelectionDrag(ev);
+    window.addEventListener('pointerup', onWindowEnd);
+    window.addEventListener('pointercancel', onWindowEnd);
+    selWindowOff.current = () => {
+      window.removeEventListener('pointerup', onWindowEnd);
+      window.removeEventListener('pointercancel', onWindowEnd);
+    };
     let last = measureIndex;
     const tick = () => {
       const drag = selDrag.current;
@@ -374,7 +386,7 @@ export function EditableMeasureStrip({
     if (index !== null) onOpenMeasure(index);
   };
 
-  const endSelectionDrag = (e: React.PointerEvent) => {
+  const endSelectionDrag = (e: { pointerId: number }) => {
     const drag = selDrag.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
     stopSelectionLoop();
@@ -489,7 +501,7 @@ export function EditableMeasureStrip({
       return;
     }
     // Not dragging: hover feedback for the cursor.
-    if (selDrag.current) return;
+    if (selDrag.current?.moved) return;
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const inHeader = e.clientY - rect.top < HANDLE_BAND_PX;
     const hit = inHeader ? null : hitAt(item, e.clientX - rect.left, rect.width);
