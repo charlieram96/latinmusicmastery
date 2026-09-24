@@ -49,6 +49,7 @@ export type StructuralAction =
   | { type: 'paste-measures'; trackIndex: number; index: number; clip: MeasureClip }
   | { type: 'append-score'; score: ScoreDocument }
   | { type: 'repeat-measures'; trackIndex: number; start: number; end: number; count: number; id: string }
+  | { type: 'set-repeat-count'; trackIndex: number; id: string; count: number }
   | { type: 'add-measure'; trackIndex: number };
 
 export interface Splice {
@@ -65,7 +66,7 @@ export type MeasureEditResult =
 export const MAX_MEASURES = 512;
 
 const STRUCTURAL_TYPES = new Set<string>([
-  'insert-measure', 'delete-measures', 'paste-measures', 'append-score', 'repeat-measures', 'add-measure',
+  'insert-measure', 'delete-measures', 'paste-measures', 'append-score', 'repeat-measures', 'set-repeat-count', 'add-measure',
 ]);
 
 export function isStructuralAction(action: { type: string }): action is StructuralAction {
@@ -194,6 +195,14 @@ export function structuralEditProblem(score: ScoreDocument, action: StructuralAc
       if (n + (end - start + 1) * (count - 1) > MAX_MEASURES) return `Scores are limited to ${MAX_MEASURES} measures.`;
       return null;
     }
+    case 'set-repeat-count': {
+      const g = repeatGroups(track).find((x) => x.id === action.id);
+      if (!g) return 'That repeat no longer exists.';
+      if (!Number.isInteger(action.count) || action.count < 2 || action.count > 8) return 'Choose between 2 and 8 times.';
+      if (action.count === g.count) return 'It already plays that many times.';
+      if (n + g.length * (action.count - g.count) > MAX_MEASURES) return `Scores are limited to ${MAX_MEASURES} measures.`;
+      return null;
+    }
   }
 }
 
@@ -278,6 +287,25 @@ export function applyMeasureEdit(score: ScoreDocument, action: StructuralAction)
       track.measures.splice(start, source.length, ...expanded);
       renumber(track);
       return { ok: true, score: next, splice: { index: start, removeCount: source.length, insertCount: expanded.length } };
+    }
+    case 'set-repeat-count': {
+      const g = repeatGroups(original).find((x) => x.id === action.id)!;
+      const groupEnd = g.start + g.length * g.count;
+      for (let i = g.start; i < groupEnd; i++) track.measures[i].repeat!.count = action.count;
+      if (action.count > g.count) {
+        const pass1 = track.measures.slice(g.start, g.start + g.length);
+        const added = Array.from({ length: action.count - g.count }, (_, k) => pass1.map((m) => ({
+          ...clone(m), repeat: { ...m.repeat!, pass: g.count + k, count: action.count },
+        }))).flat();
+        track.measures.splice(groupEnd, 0, ...added);
+        renumber(track);
+        return { ok: true, score: next, splice: { index: groupEnd, removeCount: 0, insertCount: added.length } };
+      }
+      const keepEnd = g.start + g.length * action.count;
+      const removeCount = groupEnd - keepEnd;
+      track.measures.splice(keepEnd, removeCount);
+      renumber(track);
+      return { ok: true, score: next, splice: { index: keepEnd, removeCount, insertCount: 0 } };
     }
   }
 }

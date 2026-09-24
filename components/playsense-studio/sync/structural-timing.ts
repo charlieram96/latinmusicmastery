@@ -17,6 +17,7 @@ import {
   type Splice,
   type StructuralAction,
 } from '@/lib/playsense-studio/measure-edits';
+import { repeatGroups } from '@/lib/playsense-studio/repeats';
 import { measureLengthInQN, walkMeasures } from '@/lib/playsense-studio/time-mapping';
 import {
   copyMeasureSpans,
@@ -104,6 +105,14 @@ export function prepareStructuralEdit(
     case 'append-score': {
       const pace = paceAt(markers, splice.index);
       insert = Array.from({ length: splice.insertCount }, (_, k) => paceSpan(pace, signatureAt(splice.index + k)));
+      break;
+    }
+    case 'set-repeat-count': {
+      if (splice.insertCount > 0) {
+        const g = repeatGroups(score.tracks[action.trackIndex]).find((x) => x.id === action.id)!;
+        const source = copyMeasureSpans(markers, g.start, g.length);
+        insert = Array.from({ length: splice.insertCount / g.length }, () => source.map((s) => ({ ...s }))).flat();
+      }
       break;
     }
   }

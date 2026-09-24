@@ -91,7 +91,7 @@ import { SectionsLane, type LaneSection } from '@/components/playsense-studio/sy
 import { resolvePercStroke, isPercussion } from '@/lib/playsense-studio/perc-strokes';
 import { collectOnsets, onsetForSelection } from '@/lib/playsense-studio/note-onsets';
 import { isStructuralAction } from '@/lib/playsense-studio/measure-edits';
-import { writeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
+import { stripCopyTags, writeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
 import { clipFromMeasures, prepareStructuralEdit } from '@/components/playsense-studio/sync/structural-timing';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -412,6 +412,14 @@ export function SyncPanel({
       writeMeasureClipboard(clipFromMeasures(markersRef.current, current, action.trackIndex, action.start, action.count));
       return;
     }
+    if (action.type === 'duplicate-measures') {
+      const current = scoreRef.current;
+      if (!current.tracks[action.trackIndex]) return;
+      const clip = clipFromMeasures(markersRef.current, current, action.trackIndex, action.start, action.count);
+      clip.measures = clip.measures.map((m) => stripCopyTags(JSON.parse(JSON.stringify(m))));
+      studioDispatchRef.current({ type: 'paste-measures', trackIndex: action.trackIndex, index: action.start + action.count, clip });
+      return;
+    }
     if (!isStructuralAction(action)) {
       dispatch(action);
       return;
@@ -440,6 +448,11 @@ export function SyncPanel({
     setSelected(null); // marker selection is keyed by measure number
     dispatch({ type: 'apply-structural-score', score: result.score, expectedScore: current });
   }, [dispatch, showSync, sectionsContext]);
+  // studioDispatch calls itself (duplicate-measures re-enters as paste-measures);
+  // useCallback would otherwise close over a stale version of itself, so the
+  // recursive call goes through a ref that's always current.
+  const studioDispatchRef = useRef(studioDispatch);
+  studioDispatchRef.current = studioDispatch;
   const [savingTiming, setSavingTiming] = useState(false);
   const savingTimingRef = useRef(false);
   // Every video sync target saves directly to its active map.

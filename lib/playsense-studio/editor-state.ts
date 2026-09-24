@@ -8,7 +8,9 @@
 import { useCallback, useReducer } from 'react';
 import { repeatGroups } from './repeats';
 import { insertMidiMeasures } from './midi-recording';
-import { applyMeasureEdit, emptyMeasure, type MeasureClip } from './measure-edits';
+import { applyMeasureEdit, contextAt, emptyMeasure, type MeasureClip } from './measure-edits';
+import { stripCopyTags } from './measure-clipboard';
+import { pruneSpans } from './event-ids';
 import type {
   Chord,
   Measure,
@@ -41,6 +43,17 @@ export interface EditorState {
   isDirty: boolean;
 }
 
+export interface MeasurePropsPatch {
+  timeSignature?: [number, number];
+  keyFifths?: number;
+  clef?: 'treble' | 'bass' | 'alto' | 'tenor';
+  tempo?: number;
+  repeatStart?: boolean;
+  repeatEnd?: boolean;
+  endBarline?: 'double' | null; // 'final' stays with set-measure-final-bar
+  volta?: '1.' | '2.' | null;
+}
+
 export type EditorAction =
   | {
       type: 'set-score-meta';
@@ -66,8 +79,12 @@ export type EditorAction =
   | { type: 'insert-midi-recording'; trackIndex: number; start: number; replaceCount: number; measures: Measure[]; expectedTrack: Track }
   | { type: 'apply-midi-score'; score: ScoreDocument; expectedScore: ScoreDocument }
   | { type: 'repeat-measures'; trackIndex: number; start: number; end: number; count: number; id: string }
+  | { type: 'set-repeat-count'; trackIndex: number; id: string; count: number }
   | { type: 'unlink-repeat'; trackIndex: number; id: string }
   | { type: 'set-measure-final-bar'; trackIndex: number; measureIndex: number; final: boolean }
+  | { type: 'clear-measures'; trackIndex: number; start: number; count: number }
+  | { type: 'set-measure-props'; trackIndex: number; measureIndex: number; props: MeasurePropsPatch }
+  | { type: 'duplicate-measures'; trackIndex: number; start: number; count: number }
   | {
       type: 'add-note';
       trackIndex: number;
@@ -127,6 +144,22 @@ function effectiveTimeSignatureAt(
     if (track.measures[i].timeSignature) ts = track.measures[i].timeSignature!;
   }
   return ts;
+}
+
+/** Meter, key, tempo and clef in force just before `index`. */
+function inheritedContext(score: ScoreDocument, track: Track, index: number) {
+  let timeSignature = score.initialTimeSignature;
+  let keyFifths = score.initialKeyFifths;
+  let tempo = score.initialTempo;
+  let clef: NonNullable<Measure['clef']> = 'treble';
+  for (let i = 0; i < index && i < track.measures.length; i++) {
+    const m = track.measures[i];
+    if (m.timeSignature) timeSignature = m.timeSignature;
+    if (m.keyFifths !== undefined) keyFifths = m.keyFifths;
+    if (m.tempoChange !== undefined) tempo = m.tempoChange;
+    if (m.clef) clef = m.clef;
+  }
+  return { timeSignature, keyFifths, tempo, clef };
 }
 
 /** True if changing one event's length to `nextDuration` would overfill its measure. */
@@ -273,7 +306,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'delete-measures':
     case 'paste-measures':
     case 'append-score':
-    case 'repeat-measures': {
+    case 'repeat-measures':
+    case 'set-repeat-count': {
       const result = applyMeasureEdit(state.score, action);
       return result.ok ? pushHistory(state, result.score) : state;
     }
@@ -293,6 +327,68 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (action.final === automatic) delete measure.endBarline;
       else measure.endBarline = action.final ? 'final' : 'single';
       return withHistory(state, next);
+    }
+    case 'clear-measures': {
+      const next = clone(state.score);
+      const track = next.tracks[action.trackIndex];
+      if (!track || action.count < 1) return state;
+      const end = Math.min(track.measures.length, action.start + action.count);
+      let changed = false;
+      for (let i = Math.max(0, action.start); i < end; i++) {
+        const m = track.measures[i];
+        if (m.voices.length === 1 && m.voices[0].events.length === 0) continue;
+        m.voices = [{ number: 1, events: [] }];
+        changed = true;
+      }
+      if (!changed) return state;
+      const spans = pruneSpans(next);
+      if (spans) next.spans = spans;
+      return withHistory(state, next);
+    }
+    case 'set-measure-props': {
+      const next = clone(state.score);
+      const track = next.tracks[action.trackIndex];
+      const m = track?.measures[action.measureIndex];
+      if (!track || !m) return state;
+      const first = action.measureIndex === 0;
+      const before = inheritedContext(next, track, action.measureIndex);
+      const p = action.props;
+      if (p.timeSignature) {
+        if (first) { next.initialTimeSignature = p.timeSignature; delete m.timeSignature; }
+        else if (p.timeSignature[0] === before.timeSignature[0] && p.timeSignature[1] === before.timeSignature[1]) delete m.timeSignature;
+        else m.timeSignature = [p.timeSignature[0], p.timeSignature[1]];
+      }
+      if (p.keyFifths !== undefined) {
+        if (first) { next.initialKeyFifths = p.keyFifths; delete m.keyFifths; }
+        else if (p.keyFifths === before.keyFifths) delete m.keyFifths;
+        else m.keyFifths = p.keyFifths;
+      }
+      if (p.tempo !== undefined) {
+        const bpm = Math.max(20, Math.min(400, Math.round(p.tempo)));
+        if (first) { next.initialTempo = bpm; delete m.tempoChange; }
+        else if (bpm === before.tempo) delete m.tempoChange;
+        else m.tempoChange = bpm;
+      }
+      if (p.clef) { if (p.clef === before.clef) delete m.clef; else m.clef = p.clef; }
+      if (p.repeatStart !== undefined) { if (p.repeatStart) m.repeatStart = true; else delete m.repeatStart; }
+      if (p.repeatEnd !== undefined) { if (p.repeatEnd) m.repeatEnd = true; else delete m.repeatEnd; }
+      if (p.endBarline !== undefined) { if (p.endBarline) m.endBarline = p.endBarline; else if (m.endBarline === 'double') delete m.endBarline; }
+      if (p.volta !== undefined) { if (p.volta) m.volta = p.volta; else delete m.volta; }
+      if (JSON.stringify(next) === JSON.stringify(state.score)) return state;
+      return withHistory(state, next);
+    }
+    case 'duplicate-measures': {
+      const track = state.score.tracks[action.trackIndex];
+      if (!track || action.count < 1) return state;
+      const measures = track.measures.slice(action.start, action.start + action.count).map((m) => stripCopyTags(clone(m)));
+      if (!measures.length) return state;
+      const result = applyMeasureEdit(state.score, {
+        type: 'paste-measures',
+        trackIndex: action.trackIndex,
+        index: action.start + measures.length,
+        clip: { measures, context: contextAt(state.score, track, action.start), instrument: track.instrument },
+      });
+      return result.ok ? pushHistory(state, result.score) : state;
     }
     case 'add-note': {
       const next = clone(state.score);

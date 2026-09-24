@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyMeasureEdit, structuralEditProblem, type MeasureClip } from '../measure-edits';
-import { editorReducer } from '../editor-state';
+import { editorReducer, type MeasurePropsPatch } from '../editor-state';
 import { repeatGroups } from '../repeats';
 import { hasFinalBarline } from '../barlines';
 import type { Measure, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -170,5 +170,93 @@ describe('repeat-measures via applyMeasureEdit', () => {
     const r = ok(applyMeasureEdit(three(), { type: 'repeat-measures', trackIndex: 0, start: 1, end: 2, count: 3, id: 'r' }));
     expect(r.splice).toEqual({ index: 1, removeCount: 2, insertCount: 6 });
     expect(numbers(r.score)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+});
+
+const st = (s: ScoreDocument) => ({ score: s, past: [], future: [], isDirty: false });
+const ev = (s: ScoreDocument, i: number) => s.tracks[0].measures[i].voices[0].events;
+
+describe('clear-measures', () => {
+  it('empties the bars but keeps their meter and count', () => {
+    const s0 = score([bar(1), bar(2, 62, { timeSignature: [3, 4] }), bar(3)]);
+    const s1 = editorReducer(st(s0), { type: 'clear-measures', trackIndex: 0, start: 1, count: 2 }).score;
+    expect(numbers(s1)).toEqual([1, 2, 3]);
+    expect(s1.tracks[0].measures[1].voices).toEqual([{ number: 1, events: [] }]);
+    expect(s1.tracks[0].measures[1].timeSignature).toEqual([3, 4]);
+    expect(ev(s1, 0)).toHaveLength(1);
+  });
+  it('clearing one pass of a repeat clears that bar in every pass and keeps the group (Review Focus 4)', () => {
+    const s1 = editorReducer(st(repeated()), { type: 'clear-measures', trackIndex: 0, start: 2, count: 1 }).score;
+    expect(ev(s1, 0)).toEqual([]);
+    expect(ev(s1, 2)).toEqual([]);
+    expect(ev(s1, 1)).toHaveLength(1);
+    expect(ev(s1, 3)).toHaveLength(1);
+    expect(repeatGroups(s1.tracks[0])).toEqual([expect.objectContaining({ id: 'g', count: 2 })]);
+  });
+  it('drops slurs whose notes were cleared', () => {
+    const s0 = score([{ number: 1, voices: [{ number: 1, events: [
+      { kind: 'note', id: 'a', midi: 60, durationQN: 2 }, { kind: 'note', id: 'b', midi: 62, durationQN: 2 }] }] }, bar(2)]);
+    s0.spans = [{ id: 's', type: 'slur', from: 'a', to: 'b' }];
+    expect(editorReducer(st(s0), { type: 'clear-measures', trackIndex: 0, start: 0, count: 1 }).score.spans).toEqual([]);
+  });
+});
+
+describe('set-measure-props', () => {
+  const set = (s: ScoreDocument, measureIndex: number, props: MeasurePropsPatch) =>
+    editorReducer(st(s), { type: 'set-measure-props', trackIndex: 0, measureIndex, props }).score;
+  it('a time signature on a later bar is an override; the inherited one removes it', () => {
+    const s1 = set(three(), 1, { timeSignature: [3, 4] });
+    expect(s1.tracks[0].measures[1].timeSignature).toEqual([3, 4]);
+    expect(set(s1, 1, { timeSignature: [4, 4] }).tracks[0].measures[1].timeSignature).toBeUndefined();
+  });
+  it('bar 0 writes the score defaults', () => {
+    const s1 = set(three(), 0, { tempo: 132, keyFifths: -2 });
+    expect(s1.initialTempo).toBe(132);
+    expect(s1.initialKeyFifths).toBe(-2);
+    expect(s1.tracks[0].measures[0].tempoChange).toBeUndefined();
+  });
+  it('clamps tempo', () => {
+    expect(set(three(), 1, { tempo: 999 }).tracks[0].measures[1].tempoChange).toBe(400);
+  });
+  it('toggles endings and repeat barlines', () => {
+    const s1 = set(three(), 1, { volta: '1.', repeatEnd: true });
+    expect(s1.tracks[0].measures[1]).toMatchObject({ volta: '1.', repeatEnd: true });
+    const s2 = set(s1, 1, { volta: null, repeatEnd: false });
+    expect(s2.tracks[0].measures[1].volta).toBeUndefined();
+    expect(s2.tracks[0].measures[1].repeatEnd).toBeUndefined();
+  });
+  it('a no-op change adds no history', () => {
+    const s0 = st(three());
+    expect(editorReducer(s0, { type: 'set-measure-props', trackIndex: 0, measureIndex: 1, props: { timeSignature: [4, 4] } })).toBe(s0);
+  });
+});
+
+describe('duplicate-measures', () => {
+  it('inserts copies right after the range', () => {
+    const s1 = editorReducer(st(three()), { type: 'duplicate-measures', trackIndex: 0, start: 0, count: 2 }).score;
+    expect(numbers(s1)).toEqual([1, 2, 3, 4, 5]);
+    expect(midis(s1)).toEqual([60, 62, 60, 62, 64]);
+  });
+});
+
+describe('set-repeat-count', () => {
+  it('adds passes as copies of pass 1 after the group', () => {
+    const r = ok(applyMeasureEdit(repeated(), { type: 'set-repeat-count', trackIndex: 0, id: 'g', count: 3 }));
+    expect(midis(r.score)).toEqual([60, 62, 60, 62, 60, 62, 64]);
+    expect(r.score.tracks[0].measures.slice(0, 6).every((m) => m.repeat?.count === 3)).toBe(true);
+    expect(r.score.tracks[0].measures[4].repeat?.pass).toBe(2);
+    expect(r.splice).toEqual({ index: 4, removeCount: 0, insertCount: 2 });
+  });
+  it('removes trailing passes', () => {
+    const tripled = ok(applyMeasureEdit(repeated(), { type: 'set-repeat-count', trackIndex: 0, id: 'g', count: 3 })).score;
+    const r = ok(applyMeasureEdit(tripled, { type: 'set-repeat-count', trackIndex: 0, id: 'g', count: 2 }));
+    expect(midis(r.score)).toEqual([60, 62, 60, 62, 64]);
+    expect(r.splice).toEqual({ index: 4, removeCount: 2, insertCount: 0 });
+  });
+  it('refuses an unknown group, the same count or a count outside 2–8', () => {
+    const s = repeated();
+    expect(structuralEditProblem(s, { type: 'set-repeat-count', trackIndex: 0, id: 'nope', count: 3 })).toBe('That repeat no longer exists.');
+    expect(structuralEditProblem(s, { type: 'set-repeat-count', trackIndex: 0, id: 'g', count: 2 })).toBe('It already plays that many times.');
+    expect(structuralEditProblem(s, { type: 'set-repeat-count', trackIndex: 0, id: 'g', count: 9 })).toBe('Choose between 2 and 8 times.');
   });
 });

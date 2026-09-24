@@ -107,4 +107,14 @@ describe('prepareStructuralEdit', () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.problem).toMatch(/at least one/);
   });
+
+  it('set-repeat-count: new passes take pass 1’s timing and later bars move to make room', () => {
+    const s = score(3);
+    const markers = seedMarkerState(s.tracks[0], s, buildWaypoints(s, 120, 0));
+    const rep = ok(prepareStructuralEdit(markers, s, { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 2, id: 'g' }));
+    const r = ok(prepareStructuralEdit(rep.markers, rep.score, { type: 'set-repeat-count', trackIndex: 0, id: 'g', count: 3 }));
+    agree(r);
+    expect(starts(r.markers)).toEqual([0, 2, 4, 6, 8].map((t) => expect.closeTo(t, 9)));
+    expect(r.markers.tailVideoTimeSeconds).toBeCloseTo(10, 9);
+  });
 });

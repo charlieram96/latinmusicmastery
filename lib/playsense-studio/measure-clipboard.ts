@@ -4,16 +4,20 @@
 // section of the same class item. It is not the OS clipboard and does not
 // survive a reload. Subscribers (useSyncExternalStore) re-render on write.
 
+import type { Measure } from '@/components/playsense-studio/shared/score-model/types';
 import type { MeasureClip } from './measure-edits';
+
+/** Drops repeat and end-barline tags: a pasted or duplicated copy is never itself a repeat pass. */
+export function stripCopyTags(m: Measure): Measure {
+  const { repeat: _r, endBarline: _e, ...rest } = m;
+  return rest;
+}
 
 let clip: MeasureClip | null = null;
 const listeners = new Set<() => void>();
 
 export function writeMeasureClipboard(next: MeasureClip): void {
-  const measures = (JSON.parse(JSON.stringify(next.measures)) as MeasureClip['measures']).map((m) => {
-    const { repeat: _repeat, endBarline: _end, ...rest } = m;
-    return rest;
-  });
+  const measures = (JSON.parse(JSON.stringify(next.measures)) as MeasureClip['measures']).map(stripCopyTags);
   clip = {
     measures,
     context: { ...next.context, timeSignature: [next.context.timeSignature[0], next.context.timeSignature[1]] },
