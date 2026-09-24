@@ -101,6 +101,7 @@ import { ReferenceMonitor } from '@/components/playsense-studio/sync/reference-m
 import { formatTime, NoteDetails } from '@/components/playsense-studio/studio/note-details';
 import { ScrollBar } from '@/components/playsense-studio/sync/scroll-bar';
 import { ZoomSlider } from '@/components/playsense-studio/sync/zoom-slider';
+import { stableTimings } from '@/components/playsense-studio/studio/stable-timings';
 import { clamp, MAX_PPS, MIN_PPS } from '@/components/playsense-studio/sync/zoom-range';
 import { StageSplitter, clampWaveHeight, WAVE_DEFAULT } from '@/components/playsense-studio/studio/shell/stage-splitter';
 
@@ -617,8 +618,11 @@ export function SyncPanel({
 
   // Timing-only per-measure slots — the editor zips these with extractTrackEvents
   // for the ACTIVE track inside IntegratedEditor (so track-switching doesn't churn SyncPanel).
+  // Value-stable: beat and nudge drags change markers but no bar's start or end,
+  // so the previous array is reused and the strip's staff doesn't redraw.
+  const measureTimingsRef = useRef<IntegratedEditorMeasureTiming[] | null>(null);
   const measureTimings: IntegratedEditorMeasureTiming[] = useMemo(() => {
-    return markers.measures.map((m, i) => {
+    const fresh = markers.measures.map((m, i) => {
       const next = markers.measures[i + 1];
       const endVideoTimeSeconds = next ? next.beats[0].videoTimeSeconds : markers.tailVideoTimeSeconds;
       return {
@@ -627,6 +631,9 @@ export function SyncPanel({
         endVideoTimeSeconds,
       };
     });
+    const stable = stableTimings(measureTimingsRef.current, fresh);
+    measureTimingsRef.current = stable;
+    return stable;
   }, [markers]);
 
   const recordingSource = useMemo<MidiRecordingSource>(() => ({
