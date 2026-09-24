@@ -154,6 +154,11 @@ interface SelectionDrag {
   pointerId: number;
   anchor: number;
   x: number;
+  /** Press point (client space); nothing tracks or scrolls until the pointer leaves it. */
+  startX: number;
+  startY: number;
+  /** The pointer has travelled past DRAG_THRESHOLD_PX: a real drag, captured. */
+  moved: boolean;
 }
 
 /** Near either edge of the strip, a selection drag scrolls the timeline. */
@@ -283,8 +288,10 @@ export function EditableMeasureStrip({
   // ---- Bar selection by drag ------------------------------------------------
   // A press on a bar's header or empty staff selects it; while the button is
   // held, a rAF loop tracks the bar under the pointer (auto-scrolling near the
-  // edges) and grows the selection from the anchor. The loop reads the latest
-  // props through refs, since scrolling re-renders while it runs.
+  // edges) and grows the selection from the anchor. Nothing tracks, scrolls or
+  // captures the pointer until it has moved past DRAG_THRESHOLD_PX, so a click
+  // near an edge stays a click and click/dblclick still reach the bar. The loop
+  // reads the latest props through refs, since scrolling re-renders while it runs.
   const containerX = (e: { clientX: number }) => {
     const container = containerRef.current;
     if (!container) return 0;
@@ -302,17 +309,23 @@ export function EditableMeasureStrip({
   useEffect(() => stopSelectionLoop, []);
 
   const startSelectionDrag = (e: React.PointerEvent, measureIndex: number) => {
-    selDrag.current = { pointerId: e.pointerId, anchor: measureIndex, x: containerX(e) };
-    try {
-      containerRef.current?.setPointerCapture(e.pointerId);
-    } catch {
-      /* noop */
-    }
+    selDrag.current = {
+      pointerId: e.pointerId,
+      anchor: measureIndex,
+      x: containerX(e),
+      startX: e.clientX,
+      startY: e.clientY,
+      moved: false,
+    };
     stopSelectionLoop();
     let last = measureIndex;
     const tick = () => {
       const drag = selDrag.current;
       if (!drag) return;
+      if (!drag.moved) {
+        selRaf.current = requestAnimationFrame(tick);
+        return;
+      }
       const { measures: ms, pixelsPerSecond: pps, scrollLeftPx: scroll, viewportWidth: w } = live.current;
       if (drag.x < AUTO_SCROLL_EDGE_PX) live.current.onScrollByPx?.(-AUTO_SCROLL_STEP_PX);
       else if (drag.x > w - AUTO_SCROLL_EDGE_PX) live.current.onScrollByPx?.(AUTO_SCROLL_STEP_PX);
@@ -333,7 +346,32 @@ export function EditableMeasureStrip({
 
   const handleContainerPointerMove = (e: React.PointerEvent) => {
     const drag = selDrag.current;
-    if (drag && drag.pointerId === e.pointerId) drag.x = containerX(e);
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    drag.x = containerX(e);
+    if (!drag.moved && Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) > DRAG_THRESHOLD_PX) {
+      drag.moved = true;
+      // Capture only now, so a plain click or double-click keeps its target bar.
+      try {
+        containerRef.current?.setPointerCapture(e.pointerId);
+      } catch {
+        /* noop */
+      }
+    }
+  };
+
+  // Double-click opens the bar under the pointer. Handled on the container
+  // because a captured pointer retargets click/dblclick away from the bar.
+  const handleContainerDoubleClick = (e: React.MouseEvent) => {
+    const target = e.target as Element;
+    if (target.closest('button')) return; // placeholders open themselves; "+" never opens
+    const el = target.closest('[data-measure-index]');
+    let index = el ? Number(el.getAttribute('data-measure-index')) : null;
+    if (index === null || Number.isNaN(index)) {
+      const x = containerX(e);
+      const i = measureAtX(x, measures.map((m) => ({ left: videoTimeToX(m.startVideoTimeSeconds), right: videoTimeToX(m.endVideoTimeSeconds) })));
+      index = i === null ? null : measures[i].measureIndex;
+    }
+    if (index !== null) onOpenMeasure(index);
   };
 
   const endSelectionDrag = (e: React.PointerEvent) => {
@@ -539,6 +577,8 @@ export function EditableMeasureStrip({
       onPointerMove={handleContainerPointerMove}
       onPointerUp={endSelectionDrag}
       onPointerCancel={endSelectionDrag}
+      onLostPointerCapture={endSelectionDrag}
+      onDoubleClick={handleContainerDoubleClick}
     >
       {measures.map((item, itemIndex) => {
         const startX = videoTimeToX(item.startVideoTimeSeconds);
@@ -590,7 +630,6 @@ export function EditableMeasureStrip({
             onPointerLeave={() => {
               if (hovered?.measureIndex === item.measureIndex) setHover(null);
             }}
-            onDoubleClick={() => onOpenMeasure(item.measureIndex)}
           >
             {/* Header band: measure number, repeat pass and capacity. A press
                 here selects the bar (handled by the measure's pointerdown). */}

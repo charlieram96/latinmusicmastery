@@ -49,7 +49,7 @@ const items: MeasureStripItem[] = Array.from({ length: 4 }, (_, i) => ({
   clefChanged: false,
 }));
 
-function mount() {
+function mount(pixelsPerSecond = 100) {
   const cb = {
     onSelectMeasure: vi.fn(),
     onSelectMeasureRange: vi.fn(),
@@ -64,7 +64,7 @@ function mount() {
   act(() => {
     root.render(
       <EditableMeasureStrip
-        measures={items} pixelsPerSecond={100} scrollLeftPx={0} selected={null}
+        measures={items} pixelsPerSecond={pixelsPerSecond} scrollLeftPx={0} selected={null}
         accidental={0} keyFifths={0} isPercussion={false} percStrokes={null}
         {...cb}
       />,
@@ -80,6 +80,7 @@ function pointer(target: Element, type: string, clientX: number, clientY = 10) {
 }
 
 const bar = (i: number) => host.querySelector(`[data-measure-index="${i}"]`)!;
+const container = () => host.firstElementChild!;
 
 describe('EditableMeasureStrip bar selection', () => {
   it('a drag across bars selects the range the pointer passes over', () => {
@@ -93,10 +94,34 @@ describe('EditableMeasureStrip bar selection', () => {
     expect(cb.onSelectMeasure.mock.invocationCallOrder[0]).toBeLessThan(cb.onSelectMeasureRange.mock.invocationCallOrder[0]);
   });
 
-  it('a double-click opens the bar', () => {
+  it('a double-click opens the bar under the pointer, even when it lands on the container', () => {
     const cb = mount();
-    act(() => { bar(1).dispatchEvent(new MouseEvent('dblclick', { bubbles: true, clientX: 150, clientY: 10 })); });
+    // A captured pointer retargets dblclick to the container, not the bar.
+    act(() => { container().dispatchEvent(new MouseEvent('dblclick', { bubbles: true, clientX: 150, clientY: 10 })); });
+    expect(cb.onOpenMeasure).toHaveBeenCalledTimes(1);
     expect(cb.onOpenMeasure).toHaveBeenCalledWith(1);
+    act(() => { bar(2).dispatchEvent(new MouseEvent('dblclick', { bubbles: true, clientX: 250, clientY: 10 })); });
+    expect(cb.onOpenMeasure).toHaveBeenLastCalledWith(2);
+  });
+
+  it('a click held near an edge neither scrolls nor range-selects', () => {
+    const cb = mount(200); // bar 3 spans x 600–800 of the 800 px strip
+    pointer(bar(3), 'pointerdown', 790);
+    act(() => { vi.advanceTimersByTime(100); });
+    pointer(bar(3), 'pointerup', 790);
+    expect(cb.onSelectMeasure).toHaveBeenCalledWith(3, false);
+    expect(cb.onScrollByPx).not.toHaveBeenCalled();
+    expect(cb.onSelectMeasureRange).not.toHaveBeenCalled();
+  });
+
+  it('a press and release in place never range-selects, however long it is held', () => {
+    const cb = mount();
+    pointer(bar(1), 'pointerdown', 150);
+    pointer(bar(1), 'pointermove', 152);
+    act(() => { vi.advanceTimersByTime(100); });
+    pointer(bar(1), 'pointerup', 152);
+    expect(cb.onSelectMeasure).toHaveBeenCalledWith(1, false);
+    expect(cb.onSelectMeasureRange).not.toHaveBeenCalled();
   });
 
   it('a click on empty staff only selects the bar and never touches notes', () => {
