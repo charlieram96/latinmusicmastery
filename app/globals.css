@@ -692,6 +692,16 @@ html:has([data-marketing]) {
   color: hsl(var(--muted-foreground));
 }
 
+/* The splitter between the waveform and the measure strip — drag to trade
+   height between them, double-click to reset. */
+.st-splitter { position: relative; flex: 0 0 9px; cursor: row-resize; touch-action: none; }
+.st-splitter-grip {
+  position: absolute; left: 50%; top: 3px; width: 36px; height: 3px; margin-left: -18px; border-radius: 999px;
+  background: hsl(var(--border)); transition: width .12s, margin-left .12s, background .12s;
+}
+.st-splitter:hover .st-splitter-grip { width: 56px; margin-left: -28px; background: hsl(var(--primary)); }
+@media (prefers-reduced-motion: reduce) { .st-splitter-grip { transition: none; } }
+
 /* Lane divider between the waveform and the notation lane. */
 .st-lane-divider {
   display: flex;

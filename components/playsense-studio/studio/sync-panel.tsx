@@ -101,14 +101,13 @@ import { formatTime, NoteDetails } from '@/components/playsense-studio/studio/no
 import { ScrollBar } from '@/components/playsense-studio/sync/scroll-bar';
 import { ZoomSlider } from '@/components/playsense-studio/sync/zoom-slider';
 import { clamp, MAX_PPS, MIN_PPS } from '@/components/playsense-studio/sync/zoom-range';
+import { StageSplitter, clampWaveHeight, WAVE_DEFAULT } from '@/components/playsense-studio/studio/shell/stage-splitter';
 
 /** A note selection, mirrored out of the editor so the right rail can show it. */
 export interface StudioNoteSelection {
   ref: SelectedEventRef;
   trackIndex: number;
 }
-
-const WAVE_H = 240; // waveform lane height — the sync centerpiece, so it's tall
 
 export interface SyncPanelProps {
   classItemId: string;
@@ -254,6 +253,20 @@ export function SyncPanel({
   // + Publish) only renders for VIDEO lessons with a video. Exercises and songs
   // edit the staff on a fixed-BPM grid with no time map.
   const showSync = mode === 'video' && !!videoUrl;
+
+  // Waveform lane height — the admin trades it against the measure strip with
+  // the StageSplitter. Per-viewer, so it's read/written to localStorage.
+  const [waveH, setWaveH] = useState(WAVE_DEFAULT);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('playsense-studio:wave-height');
+      if (raw) setWaveH(clampWaveHeight(Number(raw)));
+    } catch { /* storage unavailable */ }
+  }, []);
+  const changeWaveH = useCallback((h: number) => {
+    setWaveH(h);
+    try { localStorage.setItem('playsense-studio:wave-height', String(h)); } catch { /* storage unavailable */ }
+  }, []);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const clock = useVideoTransportClock(videoRef);
@@ -1151,7 +1164,7 @@ export function SyncPanel({
                 <div className="st-wave-lane relative flex-shrink-0">
                   <WaveformCanvas
                     bare
-                    height={WAVE_H}
+                    height={waveH}
                     peaks={peaks}
                     durationSeconds={timelineDuration}
                     handles={handles}
@@ -1184,7 +1197,7 @@ export function SyncPanel({
                   {/* No-waveform / error state, shown right over the lane so it's
                       visible even when the left-rail inspector is hidden. */}
                   {decodeState !== 'loading' && (!peaks || decodeState === 'error') && (
-                    <div className="st-wave-empty" style={{ height: WAVE_H }}>
+                    <div className="st-wave-empty" style={{ height: waveH }}>
                       <p className="st-wave-empty-text">
                         {decodeState === 'error'
                           ? "Couldn't read this video's audio."
@@ -1230,6 +1243,8 @@ export function SyncPanel({
                   </div>
                 </div>
               )}
+
+              {showSync && <StageSplitter height={waveH} onChange={changeWaveH} />}
 
               {/* No horizontal padding here — the staff strip must share x=0
                   with the waveform canvas above so the measure grid stays aligned. */}
