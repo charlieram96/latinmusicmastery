@@ -38,7 +38,7 @@ export function MidiPreview() {
     <div className="flex gap-3"><button disabled={!canUndo} onClick={undo} className="rounded-lg border px-3 py-2 disabled:opacity-40">Undo</button><button disabled={!canRedo} onClick={redo} className="rounded-lg border px-3 py-2 disabled:opacity-40">Redo</button>
       <p className="self-center text-sm text-muted-foreground">{state.score.tracks[0].measures.length} measures · {exercise.events.length} played notes</p></div>
     <div className="overflow-hidden rounded-xl border border-border"><IntegratedEditor score={state.score} dispatch={dispatch} getCurrentSeconds={clock.getCurrentSeconds} recordingSource={recordingSource} measureTimings={state.score.tracks[0].measures.map((m, i) => ({ measureNumber: m.number, startVideoTimeSeconds: map.toVideoTime(i * 4), endVideoTimeSeconds: map.toVideoTime((i + 1) * 4) }))}
-      pixelsPerSecond={160} scrollLeftPx={0} viewportWidth={1000} onRequestZoom={() => {}} dragAll={false} onMeasureDrag={() => {}} onMeasureDragEnd={() => {}} /></div>
+      pixelsPerSecond={160} scrollLeftPx={0} viewportWidth={1000} onRequestZoom={() => {}} /></div>
     <div className="h-[400px] rounded-xl border border-border"><StaffRenderer score={state.score} trackIndex={0} currentMs={0} showCursor={false} autoFollow={false} layoutMode="wrapped" className="h-full" /></div>
   </main>;
 }

@@ -2,13 +2,18 @@
 
 // PlaySense Studio — editable notation strip beneath the waveform.
 //
-// Replaces the old read-only MeasureStrip. Each measure is its own VexFlow
-// mini-stave, absolutely positioned at the measure's audio span (startX..endX
-// derived from the markers) and sized to its pixel width. Clicking a note
-// selects it (the parent's toolbar then edits that event); clicking empty
-// measure space appends a note using the toolbar's current pitch + duration.
-// Below ~46 px wide a measure becomes a clickable placeholder that asks the
-// parent to zoom in on it — the click itself IS the zoom gesture.
+// Each measure is its own VexFlow mini-stave, absolutely positioned at the
+// measure's audio span (startX..endX derived from the markers) and sized to its
+// pixel width.
+//
+// Gestures select; they never change notes. A click on a bar (its header band
+// or empty staff) selects that bar, ⇧-click extends the selection from its
+// anchor, and a drag across bars selects every bar the pointer passes over
+// (auto-scrolling near either edge). A double-click opens the bar. Clicking a
+// note selects the note; dragging a note vertically still changes its pitch
+// until the measure zoom takes that over. Moving bars in time lives on the
+// waveform's number chips, not here. Below ~46 px wide a measure becomes a
+// placeholder that selects on click and opens on double-click.
 //
 // Hit-testing: after VexFlow lays out the notes, each note's getBoundingBox()
 // is captured inside the same try block as voice.draw and reported up to the
@@ -17,7 +22,7 @@
 // separate absolute <div> overlay (pointer-events:none) that reads from the
 // Map on each render, so it tracks the right note across marker drags + zoom.
 
-import { GripHorizontal, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   BarlineType,
@@ -37,9 +42,9 @@ import {
 import { applyStaveHeader, buildMeasure, drawMeasure, formatMeasure, staveHeader } from '@/lib/playsense-studio/notation/build-measure';
 import { drawSpanSegments, spanSegments } from '@/lib/playsense-studio/notation/spans';
 import type { PercStroke } from '@/lib/playsense-studio/perc-strokes';
-import type { DragMode } from '@/components/playsense-studio/sync/waveform-canvas';
 import type { Span } from '@/components/playsense-studio/shared/score-model/types';
 import { repeatSpans } from '@/lib/playsense-studio/repeats';
+import { measureAtX } from '@/lib/playsense-studio/measure-selection';
 
 export interface MeasureStripItem {
   /** 0-based index into the score track's measures (NOT the 1-based measureNumber). */
@@ -93,12 +98,15 @@ export interface EditableMeasureStripProps {
   selectedMeasures?: [number, number] | null;
   /** Click selects one bar; Shift+click (extend = true) grows the range to it. */
   onSelectMeasure?: (measureIndex: number, extend: boolean) => void;
+  /** A drag across bars: select from the bar it started on to the bar under the pointer. */
+  onSelectMeasureRange: (anchor: number, focus: number) => void;
+  /** Double-click opens a bar. */
+  onOpenMeasure: (index: number) => void;
   /** Insert a blank bar at this barline gap (0 = before the first bar, n = after the last). */
   onInsertMeasureAt?: (index: number) => void;
   /** Per gap (n + 1 entries): why a bar cannot be inserted there, or null. */
   gapProblems?: Array<string | null>;
   onSelectEvent: (ref: SelectedEventRef) => void;
-  onClickMeasureEmpty: (measureIndex: number) => void;
   onRequestZoomTo: (measureIndex: number) => void;
   /** Commit a pitch change after a drag (or click-drag) on a note. */
   onSetPitch: (ref: SelectedEventRef, midi: number) => void;
@@ -110,35 +118,16 @@ export interface EditableMeasureStripProps {
   isPercussion: boolean;
   /** Stroke palette for the active percussion track (null for pitched). */
   percStrokes: PercStroke[] | null;
-  /**
-   * Default mode for measure-block time drags. When true, dragging a measure's
-   * handle shifts it and every later measure (region drag); holding Alt/Option
-   * inverts to single-measure. When false the defaults swap.
-   */
-  dragAll: boolean;
-  /** A measure-block time drag began (downbeat repositioning). */
-  onMeasureDragStart?: (measureIndex: number) => void;
-  /** Live measure-block time drag: move this measure's downbeat to `videoTimeSeconds`. */
-  onMeasureDrag: (measureIndex: number, videoTimeSeconds: number, mode: DragMode) => void;
-  /** A measure-block time drag ended (commit / reinterpolate). */
-  onMeasureDragEnd?: () => void;
-  /** Move the tail boundary (right edge of the LAST measure) in video time. */
-  onTailDrag?: (videoTimeSeconds: number) => void;
-  /** Show the per-measure left/right edge resize handles (sync mode only). */
-  resizable?: boolean;
-  /** MIDI a click on empty space will insert (for the hover preview); null = rest. */
-  previewMidi?: number | null;
   /** Horizontal wheel/trackpad pan over the staff (shared timeline scroll). */
   onScrollByPx?: (dx: number) => void;
   onWheelZoom?: (factor: number, anchorPx: number) => void;
-  insertOnClick?: boolean;
   height?: number;
 }
 
 const DEFAULT_HEIGHT = 220;
 const LEFT_PAD = 6;
 const RIGHT_PAD = 6;
-/** Height of the grab-handle band at the top of each measure block. */
+/** Height of the header band (measure number, capacity) at the top of each measure block. */
 const HANDLE_BAND_PX = 28;
 /** Below this width a measure can't render notes legibly — show a zoom-in placeholder. */
 const MIN_RENDER_WIDTH = 46;
@@ -160,34 +149,16 @@ interface DragState {
   moved: boolean;
 }
 
-/** A press on empty measure space; becomes an insert only if released in place. */
-interface PendingEmptyInsert {
-  measureIndex: number;
+/** A press on a bar that may become a drag across bars (container-space x). */
+interface SelectionDrag {
   pointerId: number;
-  startX: number;
-  startY: number;
+  anchor: number;
+  x: number;
 }
 
-/** Horizontal drag of a measure block's grab handle (repositions its downbeat in time). */
-interface TimeDragState {
-  measureIndex: number;
-  pointerId: number;
-  /** Seconds between the grab point and the measure's start, so the block stays under the cursor. */
-  grabOffsetSeconds: number;
-  mode: DragMode;
-  moved: boolean;
-}
-
-/** Drag of a measure's left/right edge — stretches that one boundary in time. */
-interface EdgeDragState {
-  measureIndex: number;
-  edge: 'left' | 'right';
-  pointerId: number;
-  moved: boolean;
-}
-
-/** Width (px) of the left/right edge resize handles. */
-const EDGE_PX = 7;
+/** Near either edge of the strip, a selection drag scrolls the timeline. */
+const AUTO_SCROLL_EDGE_PX = 30;
+const AUTO_SCROLL_STEP_PX = 12;
 
 export function EditableMeasureStrip({
   measures,
@@ -200,36 +171,22 @@ export function EditableMeasureStrip({
   onSelectMeasure,
   onInsertMeasureAt,
   gapProblems,
+  onSelectMeasureRange,
+  onOpenMeasure,
   onSelectEvent,
-  onClickMeasureEmpty,
-  onRequestZoomTo,
   onSetPitch,
   accidental,
   keyFifths,
   isPercussion,
   percStrokes,
-  dragAll,
-  onMeasureDragStart,
-  onMeasureDrag,
-  onMeasureDragEnd,
-  onTailDrag,
-  resizable,
-  previewMidi,
   onScrollByPx,
   onWheelZoom,
-  insertOnClick = true,
   height = DEFAULT_HEIGHT,
 }: EditableMeasureStripProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [dragging, setDragging] = useState<DragState | null>(null);
-  const [timeDrag, setTimeDrag] = useState<TimeDragState | null>(null);
-  const [edgeDrag, setEdgeDrag] = useState<EdgeDragState | null>(null);
-  const pendingEmptyRef = useRef<PendingEmptyInsert | null>(null);
-  // Cursor preview: where (container x) over empty measure space a click would
-  // drop a note. The note's identity comes from `previewMidi` (the toolbar).
-  const [ghost, setGhost] = useState<{ measureIndex: number; x: number } | null>(null);
-  const ghostXRef = useRef(0);
+  const selDrag = useRef<SelectionDrag | null>(null);
   // Which note the cursor is over (cursor feedback only) — state for the CSS
   // cursor, mirrored in a ref so pointermove only re-renders on identity change.
   const [hovered, setHovered] = useState<{ measureIndex: number; eventIndex: number } | null>(null);
@@ -262,7 +219,6 @@ export function EditableMeasureStrip({
   }, []);
 
   const videoTimeToX = (t: number) => t * pixelsPerSecond - scrollLeftPx;
-  const xToVideoTime = (x: number) => (x + scrollLeftPx) / pixelsPerSecond;
   const inRange = (measureIndex: number) =>
     selectedMeasures !== null && measureIndex >= selectedMeasures[0] && measureIndex <= selectedMeasures[1];
   const isFocus = (measureIndex: number) =>
@@ -324,109 +280,72 @@ export function EditableMeasureStrip({
     return () => el.removeEventListener('wheel', onWheel);
   }, [onScrollByPx, onWheelZoom]);
 
-  // ---- Measure-block time drag (the grab handle band) ----------------------
-  // Default mode is region (all-after) when `dragAll` is on; Alt/Option inverts.
-  const containerX = (e: React.PointerEvent) => {
+  // ---- Bar selection by drag ------------------------------------------------
+  // A press on a bar's header or empty staff selects it; while the button is
+  // held, a rAF loop tracks the bar under the pointer (auto-scrolling near the
+  // edges) and grows the selection from the anchor. The loop reads the latest
+  // props through refs, since scrolling re-renders while it runs.
+  const containerX = (e: { clientX: number }) => {
     const container = containerRef.current;
     if (!container) return 0;
     return e.clientX - container.getBoundingClientRect().left;
   };
+  const live = useRef({ measures, pixelsPerSecond, scrollLeftPx, viewportWidth, onScrollByPx, onSelectMeasureRange });
+  useEffect(() => {
+    live.current = { measures, pixelsPerSecond, scrollLeftPx, viewportWidth, onScrollByPx, onSelectMeasureRange };
+  });
+  const selRaf = useRef(0);
+  const stopSelectionLoop = () => {
+    if (selRaf.current) cancelAnimationFrame(selRaf.current);
+    selRaf.current = 0;
+  };
+  useEffect(() => stopSelectionLoop, []);
 
-  const handleHandleDown = (e: React.PointerEvent, item: MeasureStripItem) => {
-    e.stopPropagation(); // don't let the note pointerdown on the wrapper fire
-    e.preventDefault();
-    if (e.shiftKey) {
-      // Shift+click grows the measure range; it never starts a time drag.
-      onSelectMeasure?.(item.measureIndex, true);
-      return;
-    }
-    onSelectMeasure?.(item.measureIndex, false);
-    const grabTime = xToVideoTime(containerX(e));
-    const mode: DragMode = dragAll !== e.altKey ? 'all-after' : 'single';
-    setTimeDrag({
-      measureIndex: item.measureIndex,
-      pointerId: e.pointerId,
-      grabOffsetSeconds: grabTime - item.startVideoTimeSeconds,
-      mode,
-      moved: false,
-    });
-    onMeasureDragStart?.(item.measureIndex);
+  const startSelectionDrag = (e: React.PointerEvent, measureIndex: number) => {
+    selDrag.current = { pointerId: e.pointerId, anchor: measureIndex, x: containerX(e) };
     try {
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      containerRef.current?.setPointerCapture(e.pointerId);
     } catch {
       /* noop */
     }
+    stopSelectionLoop();
+    let last = measureIndex;
+    const tick = () => {
+      const drag = selDrag.current;
+      if (!drag) return;
+      const { measures: ms, pixelsPerSecond: pps, scrollLeftPx: scroll, viewportWidth: w } = live.current;
+      if (drag.x < AUTO_SCROLL_EDGE_PX) live.current.onScrollByPx?.(-AUTO_SCROLL_STEP_PX);
+      else if (drag.x > w - AUTO_SCROLL_EDGE_PX) live.current.onScrollByPx?.(AUTO_SCROLL_STEP_PX);
+      const bars = ms.map((m) => ({
+        left: m.startVideoTimeSeconds * pps - scroll,
+        right: m.endVideoTimeSeconds * pps - scroll,
+      }));
+      const i = measureAtX(drag.x, bars);
+      const index = i === null ? null : ms[i].measureIndex;
+      if (index !== null && index !== last) {
+        last = index;
+        live.current.onSelectMeasureRange(drag.anchor, index);
+      }
+      selRaf.current = requestAnimationFrame(tick);
+    };
+    selRaf.current = requestAnimationFrame(tick);
   };
 
-  const handleHandleMove = (e: React.PointerEvent) => {
-    if (!timeDrag || timeDrag.pointerId !== e.pointerId) return;
-    e.preventDefault();
-    const newStart = Math.max(0, xToVideoTime(containerX(e)) - timeDrag.grabOffsetSeconds);
-    if (!timeDrag.moved) setTimeDrag({ ...timeDrag, moved: true });
-    onMeasureDrag(timeDrag.measureIndex, newStart, timeDrag.mode);
+  const handleContainerPointerMove = (e: React.PointerEvent) => {
+    const drag = selDrag.current;
+    if (drag && drag.pointerId === e.pointerId) drag.x = containerX(e);
   };
 
-  const handleHandleUp = (e: React.PointerEvent) => {
-    if (!timeDrag || timeDrag.pointerId !== e.pointerId) return;
+  const endSelectionDrag = (e: React.PointerEvent) => {
+    const drag = selDrag.current;
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    stopSelectionLoop();
     try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      containerRef.current?.releasePointerCapture(e.pointerId);
     } catch {
       /* noop */
     }
-    if (timeDrag.moved) onMeasureDragEnd?.();
-    setTimeDrag(null);
-  };
-
-  const handleHandleCancel = (e: React.PointerEvent) => {
-    if (timeDrag?.pointerId !== e.pointerId) return;
-    setTimeDrag(null);
-  };
-
-  // ---- Edge resize (left/right boundary of a single measure) ----------------
-  // Left edge moves this measure's downbeat; right edge moves the next measure's
-  // downbeat (or the tail, for the last measure). Always 'single' so only that
-  // one boundary moves — the measure stretches/squeezes on the dragged side.
-  const lastMeasureIndex = measures.length ? measures[measures.length - 1].measureIndex : -1;
-
-  const handleEdgeDown = (e: React.PointerEvent, item: MeasureStripItem, edge: 'left' | 'right') => {
-    e.stopPropagation();
-    e.preventDefault();
-    setEdgeDrag({ measureIndex: item.measureIndex, edge, pointerId: e.pointerId, moved: false });
-    onMeasureDragStart?.(item.measureIndex);
-    try {
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    } catch {
-      /* noop */
-    }
-  };
-
-  const handleEdgeMove = (e: React.PointerEvent) => {
-    if (!edgeDrag || edgeDrag.pointerId !== e.pointerId) return;
-    e.preventDefault();
-    const t = Math.max(0, xToVideoTime(containerX(e)));
-    if (!edgeDrag.moved) setEdgeDrag({ ...edgeDrag, moved: true });
-    if (edgeDrag.edge === 'left') {
-      onMeasureDrag(edgeDrag.measureIndex, t, 'single');
-    } else if (edgeDrag.measureIndex === lastMeasureIndex) {
-      onTailDrag?.(t);
-    } else {
-      onMeasureDrag(edgeDrag.measureIndex + 1, t, 'single');
-    }
-  };
-
-  const handleEdgeUp = (e: React.PointerEvent) => {
-    if (!edgeDrag || edgeDrag.pointerId !== e.pointerId) return;
-    try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {
-      /* noop */
-    }
-    if (edgeDrag.moved) onMeasureDragEnd?.();
-    setEdgeDrag(null);
-  };
-
-  const handleEdgeCancel = (e: React.PointerEvent) => {
-    if (edgeDrag?.pointerId === e.pointerId) setEdgeDrag(null);
+    selDrag.current = null;
   };
 
   const handleHitsReady = useCallback((measureIndex: number, hits: MeasureHit[] | null) => {
@@ -487,15 +406,14 @@ export function EditableMeasureStrip({
     e.preventDefault();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const containerTop = containerRef.current?.getBoundingClientRect().top ?? rect.top;
-    const hit = hitAt(item, e.clientX - rect.left, rect.width);
+    // The header band always means the bar; on the staff, a note under the
+    // pointer takes the press.
+    const inHeader = e.clientY - rect.top < HANDLE_BAND_PX;
+    const hit = inHeader ? null : hitAt(item, e.clientX - rect.left, rect.width);
 
-    if (e.shiftKey) {
-      onSelectMeasure?.(item.measureIndex, true);
-      return;
-    }
-    if (hit) {
+    if (hit && !e.shiftKey) {
       onSelectEvent({ measureIndex: item.measureIndex, eventIndex: hit.eventIndex });
-      // Seed a drag if this event is a pitched/percussion note (has a midi).
+      // Seed a pitch drag if this event is a pitched/percussion note (has a midi).
       const ev = item.events[hit.eventIndex];
       if (ev && ev.midi != null) {
         setDragging({
@@ -513,18 +431,10 @@ export function EditableMeasureStrip({
           /* noop */
         }
       }
-    } else if (insertOnClick) {
-      // Empty space: insert only if the press RELEASES in place (pointer-up),
-      // so a stray drag across the staff doesn't drop notes.
-      pendingEmptyRef.current = {
-        measureIndex: item.measureIndex,
-        pointerId: e.pointerId,
-        startX: e.clientX,
-        startY: e.clientY,
-      };
-    } else {
-      onSelectMeasure?.(item.measureIndex, false);
+      return;
     }
+    onSelectMeasure?.(item.measureIndex, e.shiftKey);
+    if (!e.shiftKey) startSelectionDrag(e, item.measureIndex);
   };
 
   const handlePointerMove = (e: React.PointerEvent, item: MeasureStripItem) => {
@@ -541,29 +451,14 @@ export function EditableMeasureStrip({
       return;
     }
     // Not dragging: hover feedback for the cursor.
+    if (selDrag.current) return;
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const hit = hitAt(item, e.clientX - rect.left, rect.width);
+    const inHeader = e.clientY - rect.top < HANDLE_BAND_PX;
+    const hit = inHeader ? null : hitAt(item, e.clientX - rect.left, rect.width);
     setHover(hit ? { measureIndex: item.measureIndex, eventIndex: hit.eventIndex } : null);
-    // Over empty space: show the cursor preview note (throttled to ~2px moves).
-    if (!hit && !timeDrag && !edgeDrag) {
-      const cx = containerX(e);
-      if (!ghost || ghost.measureIndex !== item.measureIndex || Math.abs(cx - ghostXRef.current) >= 2) {
-        ghostXRef.current = cx;
-        setGhost({ measureIndex: item.measureIndex, x: cx });
-      }
-    } else if (ghost) {
-      setGhost(null);
-    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
-    const pending = pendingEmptyRef.current;
-    if (pending && pending.pointerId === e.pointerId) {
-      pendingEmptyRef.current = null;
-      const movedPx = Math.hypot(e.clientX - pending.startX, e.clientY - pending.startY);
-      if (insertOnClick && movedPx < DRAG_THRESHOLD_PX) onClickMeasureEmpty(pending.measureIndex);
-      return;
-    }
     if (!dragging || dragging.pointerId !== e.pointerId) return;
     try {
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
@@ -580,7 +475,6 @@ export function EditableMeasureStrip({
   };
 
   const handlePointerCancel = (e: React.PointerEvent) => {
-    if (pendingEmptyRef.current?.pointerId === e.pointerId) pendingEmptyRef.current = null;
     if (dragging?.pointerId !== e.pointerId) return;
     try {
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
@@ -642,6 +536,9 @@ export function EditableMeasureStrip({
       ref={containerRef}
       className="playsense-studio-notation relative w-full select-none overflow-hidden rounded-md border border-border bg-card"
       style={{ height }}
+      onPointerMove={handleContainerPointerMove}
+      onPointerUp={endSelectionDrag}
+      onPointerCancel={endSelectionDrag}
     >
       {measures.map((item, itemIndex) => {
         const startX = videoTimeToX(item.startVideoTimeSeconds);
@@ -650,22 +547,23 @@ export function EditableMeasureStrip({
         if (endXVal < -20 || startX > viewportWidth + 20) return null;
 
         if (width < MIN_RENDER_WIDTH) {
-          // Narrow tier: clickable placeholder; click to zoom in.
+          // Narrow tier: a placeholder that selects on click, opens on double-click.
           return (
             <button
               key={item.measureIndex}
               type="button"
-              onClick={(e) => { onSelectMeasure?.(item.measureIndex, e.shiftKey); if (!e.shiftKey) onRequestZoomTo(item.measureIndex); }}
+              data-measure-index={item.measureIndex}
+              onClick={(e) => onSelectMeasure?.(item.measureIndex, e.shiftKey)}
+              onDoubleClick={() => onOpenMeasure(item.measureIndex)}
               className={`absolute top-0 flex items-center justify-center rounded border border-dashed border-border bg-muted/40 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground${inRange(item.measureIndex) ? ' ring-2 ring-inset ring-primary' : ''}`}
-              style={{ left: startX, width: Math.max(8, width), height, cursor: 'zoom-in' }}
-              title={`Measure ${item.measureNumber} — click to zoom in and edit`}
+              style={{ left: startX, width: Math.max(8, width), height }}
+              title={`Measure ${item.measureNumber} — double-click to open`}
             >
               {item.measureNumber}
             </button>
           );
         }
 
-        const isTimeDragging = timeDrag?.measureIndex === item.measureIndex;
         // Capacity for the measure's time signature, shown as used/total beats
         // (e.g. "0/4", "4/4") so the author sees how full the measure is.
         const beatQN = beatLengthInQN(item.timeSignature);
@@ -678,10 +576,11 @@ export function EditableMeasureStrip({
           ? 'grabbing'
           : hovered?.measureIndex === item.measureIndex
             ? 'ns-resize' // a note is under the cursor — drag ↕ changes its pitch
-            : insertOnClick ? 'crosshair' : 'default';
+            : 'default';
         return (
           <div
             key={item.measureIndex}
+            data-measure-index={item.measureIndex}
             className={`absolute top-0 ${inRange(item.measureIndex) ? 'ring-2 ring-inset ring-primary bg-primary/5' : ''}${isFocus(item.measureIndex) ? ' st-measure-focus' : ''}`}
             style={{ left: startX, width, cursor, touchAction: 'none' }}
             onPointerDown={(e) => handlePointerDown(e, item)}
@@ -690,54 +589,15 @@ export function EditableMeasureStrip({
             onPointerCancel={handlePointerCancel}
             onPointerLeave={() => {
               if (hovered?.measureIndex === item.measureIndex) setHover(null);
-              if (ghost?.measureIndex === item.measureIndex) setGhost(null);
             }}
+            onDoubleClick={() => onOpenMeasure(item.measureIndex)}
           >
-            {/* Left/right edge handles — drag to stretch this measure's start or
-                end boundary (sync mode only; meaningless on the fixed-BPM grid). */}
-            {resizable && (
-              <>
-                <div
-                  className="st-measure-edge st-measure-edge-l"
-                  style={{ left: 0, top: HANDLE_BAND_PX, width: EDGE_PX }}
-                  onPointerDown={(e) => handleEdgeDown(e, item, 'left')}
-                  onPointerMove={handleEdgeMove}
-                  onPointerUp={handleEdgeUp}
-                  onPointerCancel={handleEdgeCancel}
-                  title="Drag to move this measure's left edge"
-                />
-                <div
-                  className="st-measure-edge st-measure-edge-r"
-                  style={{ right: 0, top: HANDLE_BAND_PX, width: EDGE_PX }}
-                  onPointerDown={(e) => handleEdgeDown(e, item, 'right')}
-                  onPointerMove={handleEdgeMove}
-                  onPointerUp={handleEdgeUp}
-                  onPointerCancel={handleEdgeCancel}
-                  title="Drag to move this measure's right edge"
-                />
-              </>
-            )}
-            {/* Grab-handle band: drag horizontally to reposition this measure in
-                time. Sits above the staff and stops propagation so note
-                selection / pitch-drag on the staff below is unaffected. */}
-            <button
-              type="button"
-              aria-label={`Select measure ${item.measureNumber}`}
-              aria-pressed={inRange(item.measureIndex)}
-              onClick={(e) => onSelectMeasure?.(item.measureIndex, e.shiftKey)}
-              className={`absolute inset-x-0 top-0 z-10 flex items-center gap-1.5 rounded-t-sm px-2 text-[11px] transition ${
-                isTimeDragging
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted/70 text-muted-foreground hover:bg-primary/15 hover:text-foreground'
-              }`}
-              style={{ height: HANDLE_BAND_PX, cursor: isTimeDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
-              onPointerDown={(e) => handleHandleDown(e, item)}
-              onPointerMove={handleHandleMove}
-              onPointerUp={handleHandleUp}
-              onPointerCancel={handleHandleCancel}
-              title={dragAll ? 'Drag to move this measure and everything after it. Hold Option for just this measure.' : 'Drag to move just this measure. Hold Option to move everything after it too.'}
+            {/* Header band: measure number, repeat pass and capacity. A press
+                here selects the bar (handled by the measure's pointerdown). */}
+            <div
+              className="absolute inset-x-0 top-0 z-10 flex items-center gap-1.5 rounded-t-sm bg-muted/70 px-2 text-[11px] text-muted-foreground"
+              style={{ height: HANDLE_BAND_PX }}
             >
-              <GripHorizontal className="h-3.5 w-3.5 shrink-0 opacity-80" />
               <span className="tabular-nums leading-none">{item.measureNumber}</span>
               {item.repeatPass && width >= 100 && <span className="truncate opacity-70">
                 {item.repeatPass.pass === 0 && item.repeatPass.offset === 0 && <>· ↻ ×{item.repeatPass.count} </>}
@@ -753,7 +613,7 @@ export function EditableMeasureStrip({
                   {capLabel}
                 </span>
               )}
-            </button>
+            </div>
             <MiniStave
               measureIndex={item.measureIndex}
               events={item.events}
@@ -806,7 +666,7 @@ export function EditableMeasureStrip({
 
       {/* "+" at every barline gap (and both ends): insert a bar there. Hidden
           during drags and where a neighbouring bar is too narrow to read. */}
-      {onInsertMeasureAt && !dragging && !timeDrag && !edgeDrag && measures.length > 0 &&
+      {onInsertMeasureAt && !dragging && measures.length > 0 &&
         Array.from({ length: measures.length + 1 }, (_, gap) => {
           const before = measures[gap - 1];
           const after = measures[gap];
@@ -851,48 +711,6 @@ export function EditableMeasureStrip({
           {dragChip.label}
         </div>
       )}
-
-      {/* Cursor preview: the note a click would add, shown next to the cursor at
-          its staff pitch (B4 sits on the middle line at height/2). */}
-      {ghost && !dragging && previewMidi !== undefined && (() => {
-        const isRest = previewMidi === null;
-        const stroke = !isRest && isPercussion && percStrokes
-          ? percStrokes.find((s) => s.midi === previewMidi)
-          : null;
-        const diatonic = isRest
-          ? 34
-          : stroke
-            ? keyToDiatonic(stroke.staffLine)
-            : midiToDiatonic(previewMidi as number);
-        const topY = Math.max(
-          HANDLE_BAND_PX + 8,
-          Math.min(height - 8, height / 2 - (diatonic - 34) * STEP_PX)
-        );
-        const label = isRest ? 'rest' : stroke ? stroke.label : midiToName(previewMidi as number);
-        return (
-          <div
-            className="pointer-events-none absolute z-20 flex items-center gap-1.5"
-            style={{ left: ghost.x, top: topY, transform: 'translateY(-50%)' }}
-          >
-            {!isRest && (
-              <span
-                style={{
-                  width: 11,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: 'hsl(var(--gold-highlight))',
-                  opacity: 0.6,
-                  transform: 'rotate(-18deg)',
-                  flexShrink: 0,
-                }}
-              />
-            )}
-            <span className="rounded bg-foreground/85 px-1.5 py-0.5 text-[10px] font-medium leading-none text-background shadow">
-              {label}
-            </span>
-          </div>
-        );
-      })()}
 
       {/* Playback playhead — mirrors the waveform's 2px --primary line. Positioned
           via RAF (see effect above); starts hidden until the loop places it. */}

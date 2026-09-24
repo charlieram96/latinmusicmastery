@@ -49,8 +49,8 @@ function renderStrip(track: Track, keyFifths = 0) {
     root.render(
       <EditableMeasureStrip
         measures={items} pixelsPerSecond={100} scrollLeftPx={0} selected={null}
-        onSelectEvent={noop} onClickMeasureEmpty={noop} onRequestZoomTo={noop} onSetPitch={noop}
-        accidental={0} keyFifths={keyFifths} isPercussion={false} percStrokes={null} dragAll={false} onMeasureDrag={noop}
+        onSelectEvent={noop} onSelectMeasureRange={noop} onOpenMeasure={noop} onRequestZoomTo={noop} onSetPitch={noop}
+        accidental={0} keyFifths={keyFifths} isPercussion={false} percStrokes={null}
       />,
     );
   });

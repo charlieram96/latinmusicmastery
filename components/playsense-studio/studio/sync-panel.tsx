@@ -12,7 +12,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, FilePlus2, Loader2, Music2, Repeat } from 'lucide-react';
+import { AudioLines, ChevronsLeftRight, FilePlus2, Loader2, Move, Music2, Repeat } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -1240,8 +1240,29 @@ export function SyncPanel({
                     />
                   )}
 
-                  {/* Zoom floats over the waveform — it zooms THIS lane. */}
+                  {/* Zoom and the marker drag mode float over the waveform — they
+                      act on THIS lane (its number chips use dragAll). */}
                   <div className="st-zoom-float">
+                    <div className="st-seg" role="radiogroup" aria-label="Drag mode">
+                      <button
+                        type="button"
+                        className={dragAll ? 'is-on' : ''}
+                        onClick={() => setDragAll(true)}
+                        title="Ripple — dragging a measure moves it and everything after it (hold Option to move just one)"
+                      >
+                        <ChevronsLeftRight className="h-3.5 w-3.5" />
+                        Ripple
+                      </button>
+                      <button
+                        type="button"
+                        className={!dragAll ? 'is-on' : ''}
+                        onClick={() => setDragAll(false)}
+                        title="Single — dragging moves only that measure or marker (hold Option to ripple)"
+                      >
+                        <Move className="h-3.5 w-3.5" />
+                        Single
+                      </button>
+                    </div>
                     <ZoomSlider pps={pps} onZoomTo={zoomTo} onZoomBy={zoomBy} onFit={fitZoom} />
                   </div>
                 </div>
@@ -1267,19 +1288,8 @@ export function SyncPanel({
                     setPps(zoom);
                     setScrollLeft(clamp(nextScroll, 0, Math.max(0, timelineDuration * zoom - viewportWidth)));
                   }}
-                  dragAll={dragAll}
-                  showDragMode={showSync}
-                  onSetDragAll={setDragAll}
                   onSelectionChange={handleSelectionChange}
                   onScrollByPx={handleScrollByPx}
-                  onMeasureDrag={
-                    showSync
-                      ? (measureNumber, videoTimeSeconds, mode) =>
-                          handleMarkerDrag({ measureNumber, beatInMeasure: 1 }, videoTimeSeconds, mode)
-                      : () => {}
-                  }
-                  onMeasureDragEnd={showSync ? () => setMarkers((s) => reinterpolateUnedited(s)) : () => {}}
-                  onTailDrag={showSync ? handleTailDrag : undefined}
                 />
               </div>
 

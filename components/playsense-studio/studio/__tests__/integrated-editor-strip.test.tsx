@@ -57,7 +57,7 @@ function render(measureTimings: IntegratedEditorMeasureTiming[]) {
     root.render(
       <IntegratedEditor
         score={score} dispatch={noop} measureTimings={measureTimings} pixelsPerSecond={100} scrollLeftPx={0}
-        viewportWidth={800} onRequestZoom={noop} dragAll={false} onMeasureDrag={noop} onMeasureDragEnd={noop}
+        viewportWidth={800} onRequestZoom={noop}
       />,
     );
   });

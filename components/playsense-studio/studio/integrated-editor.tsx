@@ -5,8 +5,9 @@
 // Lives in the same vertical slot the old MeasureStrip occupied. Renders a
 // compact track bar + view tabs + an editing toolbar + the active view:
 //   • Staff (default, main): the audio-aligned EditableMeasureStrip — click a
-//     note to select it; drag a note vertically to change its pitch; click empty
-//     space in a measure (or the Add note button) to append a note with the
+//     bar to select it (drag or ⇧-click for several, double-click to open it);
+//     click a note to select it; drag a note vertically to change its pitch.
+//     Clicks never add notes — the Add note button appends one with the
 //     toolbar's current pitch/duration/modifiers.
 //   • Piano-roll: the existing PianoRollView (not audio-aligned).
 //
@@ -16,7 +17,7 @@
 // here — note edits don't change `structuralSignature`, so the markers above stay
 // put while you edit pitches/durations.
 
-import { ChevronDown, ChevronsLeftRight, ClipboardPaste, Copy, MoreHorizontal, Move, Music, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ClipboardPaste, Copy, MoreHorizontal, Music, Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch } from 'react';
 import { diatonicToMidi, extractTrackEvents, midiToDiatonic } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion, resolvePercStroke } from '@/lib/playsense-studio/perc-strokes';
@@ -44,7 +45,6 @@ import {
 import { PianoRollView } from './piano-roll-view';
 import { PercussionStrokePicker } from './percussion-stroke-picker';
 import { MidiRecordButton, type MidiRecordingSource } from './midi-record-button';
-import type { DragMode } from '@/components/playsense-studio/sync/waveform-canvas';
 
 type Articulation = 'staccato' | 'accent' | 'tenuto';
 
@@ -142,6 +142,7 @@ import { repeatGroups } from '@/lib/playsense-studio/repeats';
 import { hasFinalBarline } from '@/lib/playsense-studio/barlines';
 import { structuralEditProblem } from '@/lib/playsense-studio/measure-edits';
 import { readMeasureClipboard, subscribeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
+import { clampSelection, clickSelect, dragSelect, selectionBounds, type MeasureSelection } from '@/lib/playsense-studio/measure-selection';
 
 export interface IntegratedEditorMeasureTiming {
   measureNumber: number;
@@ -164,18 +165,6 @@ export interface IntegratedEditorProps {
   viewportWidth: number;
   /** Strip asks SyncPanel to zoom in and center a tiny measure. */
   onRequestZoom: (pixelsPerSecond: number, scrollLeftPx: number) => void;
-  /** Default region/single mode for measure-block drags (true = all-after). */
-  dragAll: boolean;
-  /** Show the Ripple/Single drag-mode toggle in the editor bar (sync only). */
-  showDragMode?: boolean;
-  /** Change the drag mode (true = Ripple/all-after, false = Single). */
-  onSetDragAll?: (dragAll: boolean) => void;
-  /** A measure block was dragged to reposition its downbeat in video time. */
-  onMeasureDrag: (measureNumber: number, videoTimeSeconds: number, mode: DragMode) => void;
-  /** A measure-block drag ended (commit / reinterpolate unedited beats). */
-  onMeasureDragEnd: () => void;
-  /** Move the tail boundary (right edge of the last measure) in video time. */
-  onTailDrag?: (videoTimeSeconds: number) => void;
   /** Mirrors the current note selection out to the right-rail inspector. The
    *  editor stays the source of truth; pass a stable callback to keep the memo. */
   onSelectionChange?: (selection: { ref: SelectedEventRef; trackIndex: number } | null) => void;
@@ -199,12 +188,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   scrollLeftPx,
   viewportWidth,
   onRequestZoom,
-  dragAll,
-  showDragMode,
-  onSetDragAll,
-  onMeasureDrag,
-  onMeasureDragEnd,
-  onTailDrag,
   onSelectionChange,
   onScrollByPx,
 }: IntegratedEditorProps) {
@@ -212,7 +195,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // always authors track 0.
   const activeTrackIndex = 0;
   const [editorTab, setEditorTab] = useState<EditorTab>('staff');
-  const [insertOnClick, setInsertOnClick] = useState(false);
   const [repeatOpen, setRepeatOpen] = useState(false);
   const [repeatStart, setRepeatStart] = useState(1);
   const [repeatEnd, setRepeatEnd] = useState(1);
@@ -221,13 +203,16 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // Contiguous measure selection: anchor = where it started, focus = the end
   // being moved (Shift+click / Shift+arrows). Delete, Copy/Paste and Repeat
   // act on the whole range; "target" semantics follow the focus.
-  const [measureRange, setMeasureRange] = useState<{ anchor: number; focus: number } | null>(null);
-  const rangeStart = measureRange ? Math.min(measureRange.anchor, measureRange.focus) : null;
-  const rangeEnd = measureRange ? Math.max(measureRange.anchor, measureRange.focus) : null;
+  const [measureRange, setMeasureRange] = useState<MeasureSelection | null>(null);
+  const [rangeStart, rangeEnd] = selectionBounds(measureRange) ?? [null, null];
   const rangeCount = rangeStart !== null && rangeEnd !== null ? rangeEnd - rangeStart + 1 : 0;
   const selectMeasure = useCallback((index: number, extend = false) => {
     setSelected(null);
-    setMeasureRange((prev) => (extend && prev ? { anchor: prev.anchor, focus: index } : { anchor: index, focus: index }));
+    setMeasureRange((prev) => clickSelect(prev, index, extend));
+  }, []);
+  const selectMeasureRange = useCallback((anchor: number, focus: number) => {
+    setSelected(null);
+    setMeasureRange(dragSelect(anchor, focus));
   }, []);
   const clipboard = useSyncExternalStore(subscribeMeasureClipboard, readMeasureClipboard, () => null);
   const [duration, setDuration] = useState<number>(1);
@@ -445,13 +430,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
 
   // Keep the range inside the score after deletes / undo.
   useEffect(() => {
-    setMeasureRange((prev) => {
-      if (!prev || measureCount === 0) return prev && measureCount === 0 ? null : prev;
-      const anchor = Math.min(prev.anchor, lastMeasureIndex);
-      const focus = Math.min(prev.focus, lastMeasureIndex);
-      return anchor === prev.anchor && focus === prev.focus ? prev : { anchor, focus };
-    });
-  }, [measureCount, lastMeasureIndex]);
+    setMeasureRange((prev) => clampSelection(prev, measureCount));
+  }, [measureCount]);
 
   // Why each barline gap can or cannot take a new bar (drives the "+" buttons).
   const gapProblems = useMemo(
@@ -576,11 +556,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     [insertRest, activeTrackIndex, duration, dotted, triplet, currentMidi, articulation, dispatch]
   );
 
-  const handleClickEmpty = useCallback(
-    (measureIndex: number) => insertIntoMeasure(measureIndex),
-    [insertIntoMeasure]
-  );
-
   // Add-note button: target the selected event's measure, else the last measure.
   const handleAddNote = useCallback(() => {
     if (capacity.full) return; // measure full — the reducer would no-op anyway
@@ -602,15 +577,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     [activeTrackIndex, dispatch]
   );
 
-  // Strip works in measureIndex; the marker model keys on measureNumber.
-  const handleMeasureDrag = useCallback(
-    (measureIndex: number, videoTimeSeconds: number, mode: DragMode) => {
-      const measureNumber = stripItems[measureIndex]?.measureNumber ?? measureIndex + 1;
-      onMeasureDrag(measureNumber, videoTimeSeconds, mode);
-    },
-    [stripItems, onMeasureDrag]
-  );
-
   const handleRequestZoomTo = useCallback(
     (measureIndex: number) => {
       const item = stripItems[measureIndex];
@@ -624,6 +590,19 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     },
     [stripItems, viewportWidth, onRequestZoom]
   );
+
+  // Open a bar: until the measure zoom exists, zoom the timeline so the bar
+  // fills 56% of the viewport, centred, and select it.
+  const openMeasure = useCallback((index: number) => {
+    const t = measureTimings[index];
+    if (!t || viewportWidth <= 0) return;
+    const span = Math.max(0.05, t.endVideoTimeSeconds - t.startVideoTimeSeconds);
+    const pps = Math.min(600, Math.max(8, (viewportWidth * 0.56) / span));
+    const scroll = Math.max(0, t.startVideoTimeSeconds * pps - (viewportWidth - span * pps) / 2);
+    setSelected(null);
+    setMeasureRange({ anchor: index, focus: index });
+    onRequestZoom(pps, scroll);
+  }, [measureTimings, viewportWidth, onRequestZoom]);
 
   // ---- Toolbar control handlers ---------------------------------------------
 
@@ -849,11 +828,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
 
         <span className="st-divline" />
 
-        <div className="st-seg" role="group" aria-label="Note editing mode">
-          <button type="button" className={!insertOnClick ? 'is-on' : ''} aria-pressed={!insertOnClick} onClick={() => setInsertOnClick(false)} title="Select and edit notes without adding notes on click">Select</button>
-          <button type="button" className={insertOnClick ? 'is-on' : ''} aria-pressed={insertOnClick} onClick={() => setInsertOnClick(true)} title="Click empty measure space to insert notes">Insert</button>
-        </div>
-
         {activeTrack && (
           <>
             <input
@@ -890,34 +864,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           </>
         )}
 
-        {showDragMode && onSetDragAll && (
-          <div className="st-seg ml-auto" role="radiogroup" aria-label="Drag mode">
-            <button
-              type="button"
-              className={dragAll ? 'is-on' : ''}
-              onClick={() => onSetDragAll(true)}
-              title="Ripple — dragging a measure moves it and everything after it (hold Option to move just one)"
-            >
-              <ChevronsLeftRight className="h-3.5 w-3.5" />
-              Ripple
-            </button>
-            <button
-              type="button"
-              className={!dragAll ? 'is-on' : ''}
-              onClick={() => onSetDragAll(false)}
-              title="Single — dragging moves only that measure or marker (hold Option to ripple)"
-            >
-              <Move className="h-3.5 w-3.5" />
-              Single
-            </button>
-          </div>
-        )}
-
         {activeTrack && <MidiRecordButton score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} getCurrentSeconds={getCurrentSeconds} recordingSource={recordingSource} />}
 
         <button
           onClick={() => insertMeasureAt(rangeEnd !== null ? rangeEnd + 1 : measureCount)}
-          className={`st-chip${showDragMode && onSetDragAll ? '' : ' ml-auto'}`}
+          className="st-chip ml-auto"
           disabled={!!gapProblems[rangeEnd !== null ? rangeEnd + 1 : measureCount]}
           title={gapProblems[rangeEnd !== null ? rangeEnd + 1 : measureCount]
             ?? (rangeEnd !== null ? `Add a measure after measure ${rangeEnd + 1}` : 'Add a measure at the end of the score')}
@@ -1024,23 +975,17 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             selected={selected}
             selectedMeasures={selected ? [selected.measureIndex, selected.measureIndex] : rangeStart !== null && rangeEnd !== null ? [rangeStart, rangeEnd] : null}
             onSelectMeasure={selectMeasure}
+            onSelectMeasureRange={selectMeasureRange}
+            onOpenMeasure={openMeasure}
             onInsertMeasureAt={insertMeasureAt}
             gapProblems={gapProblems}
             onSelectEvent={handleSelectEvent}
-            onClickMeasureEmpty={handleClickEmpty}
             onRequestZoomTo={handleRequestZoomTo}
             onSetPitch={handleSetPitch}
             accidental={pitchAcc}
             keyFifths={score.initialKeyFifths}
             isPercussion={percussion}
             percStrokes={percStrokes}
-            dragAll={dragAll}
-            onMeasureDrag={handleMeasureDrag}
-            onMeasureDragEnd={onMeasureDragEnd}
-            onTailDrag={onTailDrag}
-            resizable={showDragMode}
-            previewMidi={insertOnClick ? (insertRest ? null : currentMidi) : undefined}
-            insertOnClick={insertOnClick}
             onWheelZoom={(factor, anchorPx) => {
               const nextPps = Math.max(8, Math.min(600, pixelsPerSecond * factor));
               const anchorSeconds = (scrollLeftPx + anchorPx) / pixelsPerSecond;

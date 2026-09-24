@@ -34,7 +34,7 @@ export function PercussionPreview() {
     <div className="flex gap-2"><button type="button" onClick={undo} disabled={!canUndo} className="rounded-lg border px-3 py-1.5 text-xs disabled:opacity-40">Undo</button><button type="button" onClick={redo} disabled={!canRedo} className="rounded-lg border px-3 py-1.5 text-xs disabled:opacity-40">Redo</button></div>
     <div className="overflow-hidden rounded-xl border border-border"><IntegratedEditor score={state.score} dispatch={dispatch}
       measureTimings={state.score.tracks[0].measures.map((m, i) => ({ measureNumber: m.number, startVideoTimeSeconds: i * 2.4, endVideoTimeSeconds: (i + 1) * 2.4 }))}
-      pixelsPerSecond={160} scrollLeftPx={0} viewportWidth={1200} onRequestZoom={() => {}} dragAll={false} onMeasureDrag={() => {}} onMeasureDragEnd={() => {}} /></div>
+      pixelsPerSecond={160} scrollLeftPx={0} viewportWidth={1200} onRequestZoom={() => {}} /></div>
     <div className="h-[420px] overflow-hidden rounded-xl border border-border"><StaffRenderer score={state.score} trackIndex={0} currentMs={0} showCursor={false} autoFollow={false} layoutMode="wrapped" className="h-full" /></div>
   </main>;
 }
