@@ -97,9 +97,10 @@ import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-im
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import type { MidiRecordingSource } from './midi-record-button';
 import { ReferenceMonitor } from '@/components/playsense-studio/sync/reference-monitor';
-import { formatTime, NoteDetails } from './note-details';
+import { formatTime, NoteDetails } from '@/components/playsense-studio/studio/note-details';
 import { ScrollBar } from '@/components/playsense-studio/sync/scroll-bar';
 import { ZoomSlider } from '@/components/playsense-studio/sync/zoom-slider';
+import { clamp, MAX_PPS, MIN_PPS } from '@/components/playsense-studio/sync/zoom-range';
 
 /** A note selection, mirrored out of the editor so the right rail can show it. */
 export interface StudioNoteSelection {
@@ -208,8 +209,6 @@ function writeStoredValue(key: string, value: string): void {
   }
 }
 
-export const MIN_PPS = 8;
-export const MAX_PPS = 600;
 const TIMING_DEBOUNCE_MS = 1500;
 
 function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
@@ -217,10 +216,6 @@ function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
   if (!m) return null;
   const beat = m.beats.find((b) => b.beatInMeasure === ref.beatInMeasure);
   return beat ? beat.videoTimeSeconds : null;
-}
-
-export function clamp(v: number, lo: number, hi: number): number {
-  return Math.max(lo, Math.min(v, hi));
 }
 
 export function SyncPanel({

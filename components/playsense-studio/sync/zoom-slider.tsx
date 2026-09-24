@@ -4,7 +4,7 @@
 
 import { useRef } from 'react';
 import { Maximize, ZoomIn, ZoomOut } from 'lucide-react';
-import { clamp, MAX_PPS, MIN_PPS } from '@/components/playsense-studio/studio/sync-panel';
+import { clamp, MAX_PPS, MIN_PPS } from '@/components/playsense-studio/sync/zoom-range';
 
 /**
  * Drag-to-zoom timeline control. The knob position is a log mapping of the
