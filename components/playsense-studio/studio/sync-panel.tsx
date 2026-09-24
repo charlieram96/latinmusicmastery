@@ -825,10 +825,10 @@ export function SyncPanel({
   const loopedRange = useMemo<[number, number] | null>(() => {
     if (!loopEnabled || loopA === null || loopB === null) return null;
     const near = (x: number, y: number) => Math.abs(x - y) < 1e-3;
-    const start = markers.measures.findIndex((m) => near(m.beats[0].videoTimeSeconds, loopA));
+    const start = markers.measures.findIndex((m) => { const t = m.beats[0]?.videoTimeSeconds; return t !== undefined && near(t, loopA); });
     if (start === -1) return null;
     for (let i = start; i < markers.measures.length; i++) {
-      const end = markers.measures[i + 1]?.beats[0].videoTimeSeconds ?? markers.tailVideoTimeSeconds;
+      const end = markers.measures[i + 1]?.beats[0]?.videoTimeSeconds ?? markers.tailVideoTimeSeconds;
       if (near(end, loopB)) return [start, i];
     }
     return null;
