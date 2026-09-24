@@ -35,6 +35,10 @@ export function StageSplitter({ height, onChange }: { height: number; onChange: 
         drag.current = null;
         try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* noop */ }
       }}
+      onPointerCancel={(e) => {
+        drag.current = null;
+        try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* noop */ }
+      }}
       onDoubleClick={() => onChange(WAVE_DEFAULT)}
     >
       <span className="st-splitter-grip" />

@@ -39,4 +39,11 @@ describe('StageSplitter', () => {
     act(() => { host.querySelector('.st-splitter')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); });
     expect(onChange).toHaveBeenLastCalledWith(WAVE_DEFAULT);
   });
+  it('stops dragging on pointercancel', () => {
+    ptr('pointerdown', 300);
+    ptr('pointercancel', 300);
+    onChange.mockReset();
+    ptr('pointermove', 340);
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });

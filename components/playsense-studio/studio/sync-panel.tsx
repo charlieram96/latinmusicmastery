@@ -260,7 +260,10 @@ export function SyncPanel({
   useEffect(() => {
     try {
       const raw = localStorage.getItem('playsense-studio:wave-height');
-      if (raw) setWaveH(clampWaveHeight(Number(raw)));
+      if (raw) {
+        const n = Number(raw);
+        if (Number.isFinite(n)) setWaveH(clampWaveHeight(n));
+      }
     } catch { /* storage unavailable */ }
   }, []);
   const changeWaveH = useCallback((h: number) => {
