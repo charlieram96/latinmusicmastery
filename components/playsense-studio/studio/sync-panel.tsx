@@ -43,6 +43,7 @@ import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
+import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
@@ -736,6 +737,28 @@ export function SyncPanel({
     setDirty(true);
   }, []);
 
+  // Dragging the whole active section along the video (the sections lane).
+  // The corridor is captured once, at drag start, next to the base markers —
+  // not read live from corridorRef — so a sibling's range can't shift under
+  // the drag mid-gesture (the live corridor moves as `markers` itself moves).
+  const sectionDragBase = useRef<{ base: MarkerState; corridor: { lo: number; hi: number } } | null>(null);
+  const onSectionDrag = useCallback((delta: number, phase: 'move' | 'end') => {
+    if (!sectionDragBase.current) {
+      const base = markersRef.current;
+      sectionDragBase.current = { base, corridor: freeCorridor(markerSpan(base), siblingRanges) };
+    }
+    const { base, corridor } = sectionDragBase.current;
+    const first = base.measures[0];
+    if (first) {
+      const shift = clampSectionShift(markerSpan(base), corridor, videoDurationSeconds ?? null, delta);
+      setMarkers(shiftMarkersFrom(base, { measureNumber: first.measureNumber, beatInMeasure: 1 }, shift));
+    }
+    if (phase === 'end') {
+      sectionDragBase.current = null;
+      setDirty(true);
+    }
+  }, [videoDurationSeconds, siblingRanges]);
+
   const handleSelect = useCallback((target: DragTarget) => {
     // Explicit per-kind: an unhandled kind used to fall through to
     // `target.ref` and set `selected` to undefined.
@@ -1254,6 +1277,7 @@ export function SyncPanel({
                       pixelsPerSecond={pps}
                       scrollLeftPx={scrollLeft}
                       onSelectSection={sectionsContext.onSelectSection}
+                      onDragActive={onSectionDrag}
                     />
                   )}
 

@@ -834,8 +834,9 @@ html:has([data-marketing]) {
   border-width: 1.5px;
   border-color: var(--block-color);
   background: color-mix(in srgb, var(--block-color) 30%, transparent);
-  cursor: default;
+  cursor: grab;
 }
+.st-section-block.is-active:active { cursor: grabbing; }
 .st-section-block-label {
   font-size: 10.5px;
   font-weight: 600;
