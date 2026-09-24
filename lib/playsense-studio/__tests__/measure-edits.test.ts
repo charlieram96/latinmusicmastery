@@ -314,3 +314,49 @@ describe('set-repeat-count', () => {
     expect(structuralEditProblem(s, { type: 'set-repeat-count', trackIndex: 0, id: 'g', count: 9 })).toBe('Choose between 2 and 8 times.');
   });
 });
+
+describe('event ids through structural edits (Task 13)', () => {
+  const withIds = (s: ScoreDocument) => {
+    s.tracks[0].measures.forEach((m, i) => { m.voices[0].events[0].id = `n${i}`; });
+    return s;
+  };
+  const ids = (s: ScoreDocument) => s.tracks[0].measures.map((m) => m.voices[0].events[0]?.id);
+
+  it('append-score gives the imported notes fresh ids and merges their slurs', () => {
+    const base = withIds(three());
+    const imported = withIds(three()); // same ids n0..n2 as the base
+    imported.spans = [{ id: 's', type: 'slur', from: 'n0', to: 'n1' }];
+    const r = ok(applyMeasureEdit(base, { type: 'append-score', score: imported }));
+    const all = ids(r.score);
+    expect(all.slice(0, 3)).toEqual(['n0', 'n1', 'n2']);
+    expect(new Set(all).size).toBe(6);
+    expect(r.score.spans).toEqual([expect.objectContaining({ type: 'slur', from: all[3], to: all[4] })]);
+  });
+
+  it('delete-measures drops slurs that lost a note', () => {
+    const s = withIds(three());
+    s.spans = [{ id: 'gone', type: 'slur', from: 'n0', to: 'n1' }, { id: 'kept', type: 'slur', from: 'n0', to: 'n2' }];
+    const r = ok(applyMeasureEdit(s, { type: 'delete-measures', trackIndex: 0, start: 1, count: 1 }));
+    expect(r.score.spans!.map((x) => x.id)).toEqual(['kept']);
+  });
+
+  it('set-repeat-count drops slurs on removed passes', () => {
+    const s = withIds(three());
+    const rep = ok(applyMeasureEdit(s, { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 3, id: 'r' })).score;
+    expect(ids(rep).slice(0, 3)).toEqual(['n0', 'n0~1', 'n0~2']);
+    rep.spans = [{ id: 'late', type: 'slur', from: 'n0~2', to: 'n1' }];
+    const r = ok(applyMeasureEdit(rep, { type: 'set-repeat-count', trackIndex: 0, id: 'r', count: 2 }));
+    expect(r.score.spans).toEqual([]);
+  });
+
+  it('repeating bars left over from an unlinked repeat never reuses the old pass-0 ids', () => {
+    const s = withIds(score([bar(1, 60)]));
+    const rep = editorReducer(st(s), { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 2, id: 'r' });
+    const unlinked = editorReducer(rep, { type: 'unlink-repeat', trackIndex: 0, id: 'r' });
+    expect(ids(unlinked.score)).toEqual(['n0', 'n0~1']);
+    const again = ok(applyMeasureEdit(unlinked.score, { type: 'repeat-measures', trackIndex: 0, start: 1, end: 1, count: 2, id: 'q' }));
+    const out = ids(again.score);
+    expect(new Set(out).size).toBe(3);
+    expect(out[0]).toBe('n0');
+  });
+});

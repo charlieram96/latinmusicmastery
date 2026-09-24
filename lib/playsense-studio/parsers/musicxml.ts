@@ -166,7 +166,7 @@ export function parseMusicXmlString(
   // and downstream code assumes importer output never needs de-duping).
   const run = (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)).slice(0, 8);
   let seq = 0;
-  const ids = { next: () => `x${run}-${++seq}` };
+  const ids = { token: `x${run}`, next: () => `x${run}-${++seq}` };
   const partEls = Array.from(doc.querySelectorAll('part')) as Element[];
   partEls.forEach((part, idx) => {
     const id = part.getAttribute('id') ?? '';
@@ -244,7 +244,7 @@ function parsePartMeasures(
   initialTimeSignature: [number, number],
   instrument: Instrument,
   instrumentGm: Map<string, number>,
-  ids: { next(): string }
+  ids: { token: string; next(): string }
 ): { measures: Measure[]; spans: Span[] } {
   const midiCtx: NoteMidiContext = { instrument, instrumentGm };
   let timeSignature: [number, number] = initialTimeSignature;
@@ -384,7 +384,7 @@ function parsePartMeasures(
         const bracketStart = noteEl.querySelector(':scope > notations > tuplet[type="start"]') !== null;
         let open = openTuplet.get(voiceId);
         if (!open || bracketStart || (!open.bracketed && open.left <= 0)) {
-          open = { id: `t${idx + 1}-${voiceId}-${events.length}`, left: actual, bracketed: bracketStart };
+          open = { id: `${ids.token}-t${idx + 1}-${voiceId}-${events.length}`, left: actual, bracketed: bracketStart };
           openTuplet.set(voiceId, open);
         }
         open.left--;

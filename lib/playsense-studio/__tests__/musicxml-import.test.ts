@@ -22,6 +22,15 @@ describe('MusicXML import — rhythm and voices', () => {
     expect(ev.reduce((s, e) => s + e.durationQN, 0)).toBeCloseTo(3, 9)
   })
 
+  it('prefixes tuplet ids with the per-import token so two imports never share one', () => {
+    const xml = `<measure number="1">${attrs(6)}` +
+      ['F', 'G', 'A'].map(s => note({ step: s, oct: 4, type: 'eighth', dur: 2, extra: tm(3, 2) })).join('') +
+      `${note({ step: 'B', oct: 4, type: 'half', dur: 12 })}</measure>`
+    const [a, b] = [events(xml), events(xml)]
+    expect(a[0].tuplet!.id.split('-')[0]).toBe(a[0].id!.split('-')[0])
+    expect(a[0].tuplet!.id).not.toBe(b[0].tuplet!.id)
+  })
+
   it('groups by counting when the exporter omits tuplet brackets, and starts a new group after n notes', () => {
     const six = ['C', 'D', 'E', 'F', 'G', 'A'].map(s => note({ step: s, oct: 5, type: 'eighth', dur: 2, extra: tm(3, 2) })).join('')
     const ev = events(`<measure number="1">${attrs(6)}${six}${note({ step: 'B', oct: 4, type: 'quarter', dur: 6 })}</measure>`)

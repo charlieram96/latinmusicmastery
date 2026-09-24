@@ -255,3 +255,63 @@ describe('set-tempo-marks-confirmed / clear-tempo-marks', () => {
     expect(editorReducer(s0, { type: 'clear-tempo-marks', trackIndex: 0 })).toBe(s0);
   });
 });
+
+describe('event-id integrity (Task 13)', () => {
+  const note = (id: string, midi = 60): Note => ({ kind: 'note', id, midi, durationQN: 1 });
+  const ids = (s: EditorState, mi: number) => s.score.tracks[0].measures[mi].voices[0].events.map((e) => e.id);
+
+  it('gives a newly added note an id', () => {
+    const s1 = editorReducer(stateOf(makeScore([])), { type: 'add-note', trackIndex: 0, measureIndex: 0, midi: 60, durationQN: 1 });
+    expect(events(s1)[0].id).toMatch(/^e/);
+  });
+
+  it('removes a slur when its end note is deleted', () => {
+    const score = makeScore([note('a'), note('b')]);
+    score.spans = [{ id: 's', type: 'slur', from: 'a', to: 'b' }];
+    const s1 = editorReducer(stateOf(score), { type: 'delete-event', trackIndex: 0, measureIndex: 0, eventIndex: 1 });
+    expect(s1.score.spans).toEqual([]);
+  });
+
+  it('pastes a copy with fresh ids and carries its slur with remapped ends', () => {
+    const score = makeScore([note('a'), note('b')]);
+    score.spans = [{ id: 's', type: 'slur', from: 'a', to: 'b' }];
+    const clip = {
+      measures: [JSON.parse(JSON.stringify(score.tracks[0].measures[0]))],
+      context: { bpm: 120, timeSignature: [4, 4] as [number, number], keyFifths: 0 },
+      instrument: 'staff' as const,
+      notationSpans: [{ id: 's', type: 'slur' as const, from: 'a', to: 'b' }],
+    };
+    const s1 = editorReducer(stateOf(score), { type: 'paste-measures', trackIndex: 0, index: 1, clip });
+    const pasted = ids(s1, 1);
+    expect(pasted).toHaveLength(2);
+    expect(pasted).not.toContain('a');
+    expect(pasted).not.toContain('b');
+    expect(ids(s1, 0)).toEqual(['a', 'b']);
+    expect(s1.score.spans).toHaveLength(2);
+    const copy = s1.score.spans![1];
+    expect([copy.from, copy.to]).toEqual(pasted);
+    expect(copy.id).not.toBe('s');
+  });
+
+  it('repeats a bar with per-pass ids', () => {
+    const s1 = editorReducer(stateOf(makeScore([note('a')])), { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 2, id: 'r' });
+    expect(ids(s1, 0)).toEqual(['a']);
+    expect(ids(s1, 1)).toEqual(['a~1']);
+  });
+
+  it('editing pass 2 keeps each pass on its own id and the group intact', () => {
+    const s1 = editorReducer(stateOf(makeScore([note('a')])), { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 2, id: 'r' });
+    const s2 = editorReducer(s1, { type: 'set-event-pitch', trackIndex: 0, measureIndex: 1, eventIndex: 0, midi: 67 });
+    expect(ids(s2, 0)).toEqual(['a']);
+    expect(ids(s2, 1)).toEqual(['a~1']);
+    expect(s2.score.tracks[0].measures.map((m) => (m.voices[0].events[0] as Note).midi)).toEqual([67, 67]);
+    expect(s2.score.tracks[0].measures.every((m) => m.repeat?.id === 'r')).toBe(true);
+  });
+
+  it('adds repeat passes with their own pass ids', () => {
+    const s1 = editorReducer(stateOf(makeScore([note('a')])), { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 2, id: 'r' });
+    const s2 = editorReducer(s1, { type: 'set-repeat-count', trackIndex: 0, id: 'r', count: 3 });
+    expect([0, 1, 2].map((i) => ids(s2, i)[0])).toEqual(['a', 'a~1', 'a~2']);
+    expect(s2.score.tracks[0].measures.every((m) => m.repeat?.id === 'r' && m.repeat.count === 3)).toBe(true);
+  });
+});

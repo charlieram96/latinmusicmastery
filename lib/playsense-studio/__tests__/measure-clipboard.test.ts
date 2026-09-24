@@ -22,4 +22,15 @@ describe('measure clipboard', () => {
     writeMeasureClipboard({ measures: [measure], context: { bpm: 120, timeSignature: [4, 4], keyFifths: 0 }, instrument: 'staff' });
     expect(fired).toBe(1);
   });
+
+  it('deep-copies the timing and the slurs inside the clip', () => {
+    const timing = [{ lengthQN: 4, durationSeconds: 2 }] as unknown as NonNullable<Parameters<typeof writeMeasureClipboard>[0]['timing']>;
+    const notationSpans = [{ id: 's', type: 'slur' as const, from: 'a', to: 'b' }];
+    writeMeasureClipboard({ measures: [measure], context: { bpm: 120, timeSignature: [4, 4], keyFifths: 0 }, instrument: 'staff', timing, notationSpans });
+    const clip = readMeasureClipboard()!;
+    expect(clip.timing).toEqual(timing);
+    expect(clip.timing).not.toBe(timing);
+    notationSpans[0].to = 'z';
+    expect(clip.notationSpans).toEqual([{ id: 's', type: 'slur', from: 'a', to: 'b' }]);
+  });
 });

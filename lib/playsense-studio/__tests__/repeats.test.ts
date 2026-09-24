@@ -70,3 +70,18 @@ it('spans consecutive strip items that belong to one repeat group', () => {
   ]);
   expect(repeatSpans([item(), item()])).toEqual([]);
 });
+
+it('still recognises a group whose passes carry per-pass event and tuplet ids', () => {
+  const ev = (id: string) => ({ kind: 'note' as const, id, midi: 60, durationQN: 1 / 3, tuplet: { id: id.replace('a', 'T'), n: 3, m: 2 } });
+  const track = {
+    index: 0, instrument: 'staff' as const, displayName: 'T', tuning: null, stringMultiplicity: 1, channel: null, defaultView: 'staff' as const,
+    measures: [0, 1].map((pass) => ({
+      number: pass + 1,
+      voices: [{ number: 1, events: [ev(pass ? 'a~1' : 'a')] }],
+      repeat: { id: 'r', pass, count: 2, offset: 0, length: 1 },
+    })),
+  };
+  expect(repeatGroups(track)).toEqual([{ id: 'r', start: 0, length: 1, count: 2 }]);
+  track.measures[1].voices[0].events[0].midi = 62;
+  expect(repeatGroups(track)).toEqual([]);
+});

@@ -10,7 +10,7 @@ import { repeatGroups } from './repeats';
 import { insertMidiMeasures } from './midi-recording';
 import { applyMeasureEdit, contextAt, emptyMeasure, type MeasureClip } from './measure-edits';
 import { stripCopyTags } from './measure-clipboard';
-import { pruneSpans } from './event-ids';
+import { newEventId, pruneSpans, withPassIds } from './event-ids';
 import type {
   Chord,
   Measure,
@@ -27,7 +27,7 @@ import {
   measureLengthInQN,
   occupiedQN,
 } from './time-mapping';
-import { eventDots, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
+import { ensureEventIds, eventDots, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -188,8 +188,9 @@ function withHistory(state: EditorState, nextScore: ScoreDocument): EditorState 
       const { number: _n, repeat: _r, ...content } = measure;
       const { number: _on, repeat: _or, ...oldContent } = old;
       if (JSON.stringify(content) === JSON.stringify(oldContent)) return;
+      // Each pass keeps its own ids (`${base}~${pass}`) so spans can tell them apart.
       track.measures = track.measures.map(m => m.repeat?.id === r.id && m.repeat.offset === r.offset
-        ? { ...clone(content), number: m.number, repeat: m.repeat } : m);
+        ? withPassIds({ ...clone(content), number: m.number, repeat: m.repeat }, m.repeat.pass) : m);
     });
     const valid = new Set(repeatGroups(track).map(g => g.id));
     track.measures.forEach(m => { if (m.repeat && !valid.has(m.repeat.id)) delete m.repeat; });
@@ -237,9 +238,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     }
     case 'mark-clean':
       return { ...state, isDirty: false };
-    case 'replace-score': {
-      return { score: action.score, past: [], future: [], isDirty: false };
-    }
+    case 'replace-score':
+      return initialEditorState(action.score);
     case 'apply-midi-score': {
       return state.score === action.expectedScore ? withHistory(state, action.score) : state;
     }
@@ -414,11 +414,14 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (!track || action.count < 1) return state;
       const measures = track.measures.slice(action.start, action.start + action.count).map((m) => stripCopyTags(clone(m)));
       if (!measures.length) return state;
+      const ids = new Set<string>();
+      for (const m of measures) for (const v of m.voices) for (const e of v.events) if (e.id) ids.add(e.id);
+      const notationSpans = (state.score.spans ?? []).filter((sp) => ids.has(sp.from) && ids.has(sp.to));
       const result = applyMeasureEdit(state.score, {
         type: 'paste-measures',
         trackIndex: action.trackIndex,
         index: action.start + measures.length,
-        clip: { measures, context: contextAt(state.score, track, action.start), instrument: track.instrument },
+        clip: { measures, context: contextAt(state.score, track, action.start), instrument: track.instrument, notationSpans },
       });
       return result.ok ? pushHistory(state, result.score) : state;
     }
@@ -436,6 +439,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       }
       const note: Note = {
         kind: 'note',
+        id: newEventId(),
         midi: action.midi,
         durationQN: need,
         ...(action.dotted ? { dotted: true } : {}),
@@ -458,6 +462,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       }
       const rest: Rest = {
         kind: 'rest',
+        id: newEventId(),
         durationQN: need,
         ...(action.dotted ? { dotted: true } : {}),
         ...(action.triplet ? { triplet: true } : {}),
@@ -613,7 +618,10 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       measure.voices[0].events.splice(action.eventIndex, 1);
       // Leave the measure empty (a blank staff) rather than backfilling a rest —
       // the author adds the next note straight into the free space.
-      return withHistory(state, next);
+      const result = withHistory(state, next);
+      // After withHistory, so a note removed from every pass of a repeat is caught too.
+      if (result.score.spans) result.score.spans = pruneSpans(result.score);
+      return result;
     }
     default:
       return state;
@@ -625,13 +633,17 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 // Hook
 // ---------------------------------------------------------------------------
 
+/**
+ * The state a score opens in. Missing or duplicate event ids are fixed here,
+ * but the score stays clean with no history: opening a score never saves it
+ * by itself (the ids are written with the next real edit).
+ */
+export function initialEditorState(score: ScoreDocument): EditorState {
+  return { score: ensureEventIds(clone(score), newEventId), past: [], future: [], isDirty: false };
+}
+
 export function useEditor(initialScore: ScoreDocument) {
-  const [state, dispatch] = useReducer(editorReducer, undefined, () => ({
-    score: clone(initialScore),
-    past: [],
-    future: [],
-    isDirty: false,
-  }));
+  const [state, dispatch] = useReducer(editorReducer, initialScore, initialEditorState);
 
   const undo = useCallback(() => dispatch({ type: 'undo' }), []);
   const redo = useCallback(() => dispatch({ type: 'redo' }), []);

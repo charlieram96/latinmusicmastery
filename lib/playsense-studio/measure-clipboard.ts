@@ -22,7 +22,8 @@ export function writeMeasureClipboard(next: MeasureClip): void {
     measures,
     context: { ...next.context, timeSignature: [next.context.timeSignature[0], next.context.timeSignature[1]] },
     instrument: next.instrument,
-    spans: next.spans ? (JSON.parse(JSON.stringify(next.spans)) as MeasureClip['spans']) : undefined,
+    timing: next.timing ? (JSON.parse(JSON.stringify(next.timing)) as MeasureClip['timing']) : undefined,
+    notationSpans: next.notationSpans ? (JSON.parse(JSON.stringify(next.notationSpans)) as MeasureClip['notationSpans']) : undefined,
   };
   for (const cb of listeners) cb();
 }

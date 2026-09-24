@@ -36,18 +36,30 @@ export function eventSpelling(n: { spelling?: Spelling; spellingHint?: string })
   return n.spelling ?? parseSpellingHint(n.spellingHint);
 }
 
-/** Give every event an id. Returns the same object when nothing was missing. */
+/**
+ * Give every event a unique id: an event with no id, or with an id an earlier
+ * event already uses, gets `makeId()` (the first holder keeps it, so spans
+ * pointing at that id still resolve). Returns the same object when nothing
+ * needed changing.
+ */
 export function ensureEventIds(score: ScoreDocument, makeId: () => string): ScoreDocument {
-  const missing = score.tracks.some(t => t.measures.some(m => m.voices.some(v => v.events.some(e => !e.id))));
-  if (!missing) return score;
-  return {
-    ...score,
-    tracks: score.tracks.map(t => ({
-      ...t,
-      measures: t.measures.map(m => ({
-        ...m,
-        voices: m.voices.map(v => ({ ...v, events: v.events.map(e => (e.id ? e : { ...e, id: makeId() })) })),
+  const seen = new Set<string>();
+  let changed = false;
+  const tracks = score.tracks.map(t => ({
+    ...t,
+    measures: t.measures.map(m => ({
+      ...m,
+      voices: m.voices.map(v => ({
+        ...v,
+        events: v.events.map(e => {
+          if (e.id && !seen.has(e.id)) { seen.add(e.id); return e; }
+          changed = true;
+          const id = makeId();
+          seen.add(id);
+          return { ...e, id };
+        }),
       })),
     })),
-  };
+  }));
+  return changed ? { ...score, tracks } : score;
 }
