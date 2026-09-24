@@ -134,7 +134,8 @@ export interface SyncPanelProps {
   inspectorEl?: HTMLElement | null;
   /** App-shell slot the transport bar portals into (video mode only). */
   transportEl?: HTMLElement | null;
-  /** App-shell slot the reference-video monitor portals into (left rail). Falls back to the right rail. */
+  /** Body slot of the floating PiP (FloatingVideo) the reference-video monitor
+   *  portals into. Falls back to the inspector rail when absent. */
   monitorEl?: HTMLElement | null;
   /** App-bar slot for score-level actions this panel owns ("Add score"), so the
    *  appended measures get their timing through the panel's structural path. */
@@ -1301,7 +1302,7 @@ export function SyncPanel({
       {showSync &&
         monitorEl &&
         createPortal(
-          <ReferenceMonitor videoRef={videoRef} videoUrl={videoUrl} />,
+          <ReferenceMonitor videoRef={videoRef} videoUrl={videoUrl} bare />,
           monitorEl,
         )}
 
@@ -1391,11 +1392,11 @@ export function SyncPanel({
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="st-pip" /> {markers.measures.length} measure
+                  <span className="st-status-pip" /> {markers.measures.length} measure
                   {markers.measures.length === 1 ? '' : 's'} on the grid
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="st-pip warn" /> Anchor at{' '}
+                  <span className="st-status-pip warn" /> Anchor at{' '}
                   <b className="font-mono tabular-nums text-foreground">{anchorSeconds.toFixed(1)}s</b> ·{' '}
                   {score.initialTempo} BPM
                 </div>
@@ -1417,12 +1418,12 @@ export function SyncPanel({
                 {timingAutosave && (
                   <div className="flex items-center gap-2 text-xs">
                     {error ? (
-                      <><span className="st-pip warn" /> <span>Timing not saved</span></>
+                      <><span className="st-status-pip warn" /> <span>Timing not saved</span></>
                     ) : savingTiming || dirty ? (
-                      <><span className="st-pip warn" /> <span className="text-muted-foreground">Saving timing…</span></>
+                      <><span className="st-status-pip warn" /> <span className="text-muted-foreground">Saving timing…</span></>
 
                     ) : (
-                      <><span className="st-pip" /> <span className="text-muted-foreground">Live — students see this sync</span></>
+                      <><span className="st-status-pip" /> <span className="text-muted-foreground">Live — students see this sync</span></>
                     )}
                   </div>
                 )}

@@ -10,7 +10,7 @@
 // at the bottom. ScoreSectionEditor (keyed, one at a time) owns the score state
 // and portals its chrome into these shell slots.
 
-import { Activity, ArrowLeft, FileUp, Loader2, Music, MonitorPlay, PanelBottom, Plus, Rows3, Trash2 } from 'lucide-react';
+import { Activity, ArrowLeft, FileUp, Loader2, Music, PanelBottom, Plus, Rows3, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import {
@@ -24,6 +24,7 @@ import { ScoreSectionEditor } from '@/components/playsense-studio/studio/score-s
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import { sectionColor, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { HoverRail } from '@/components/playsense-studio/studio/shell/hover-rail';
+import { FloatingVideo } from '@/components/playsense-studio/studio/shell/floating-video';
 import { cn } from '@/lib/utils';
 import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import { updateClassItemVideoTrim } from '@/app/actions/playsense-studio';
@@ -212,7 +213,6 @@ export function VideoSectionsWorkspace({
       <div className="st-work">
         <HoverRail
           sections={[
-            { id: 'video', label: 'Reference video', icon: MonitorPlay, content: <div ref={setMonitorEl} /> },
             {
               id: 'sections',
               label: 'Scored sections',
@@ -415,6 +415,7 @@ export function VideoSectionsWorkspace({
           )}
         </main>
 
+        {videoUrl && <FloatingVideo label="Reference" onBodyEl={setMonitorEl} />}
       </div>
 
       {/* ---- Bottom: transport dock + highway drawer ---- */}

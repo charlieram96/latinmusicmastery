@@ -374,6 +374,26 @@ html:has([data-marketing]) {
 .st-hrail-sec + .st-hrail-sec { margin-top: 16px; padding-top: 16px; border-top: 1px solid hsl(var(--border)); }
 @media (prefers-reduced-motion: reduce) { .st-hrail, .st-hrail-body { transition: none; } }
 
+/* Floating reference video (PiP) — dragged by its top bar, shrinks to a pill. */
+.st-pip {
+  position: absolute; z-index: 30; width: 236px; overflow: hidden; border-radius: 12px;
+  background: #000; border: 1px solid hsl(0 0% 100% / .14); box-shadow: 0 16px 40px rgba(0,0,0,.6);
+  transition: width .2s cubic-bezier(.2,.8,.2,1);
+}
+.st-pip.is-min { width: auto; min-width: 150px; }
+.st-pip-bar {
+  position: absolute; inset: 0 0 auto 0; z-index: 2; display: flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 6px 0 10px; font-size: 11px; color: #fff; cursor: grab; touch-action: none;
+  background: linear-gradient(rgba(0,0,0,.65), transparent); opacity: 0; transition: opacity .15s;
+}
+.st-pip:hover .st-pip-bar, .st-pip.is-min .st-pip-bar { opacity: 1; }
+.st-pip.is-min .st-pip-bar { position: static; background: hsl(var(--card)); }
+.st-pip-rec { width: 7px; height: 7px; border-radius: 999px; background: hsl(0 72% 60%); }
+.st-pip-body { aspect-ratio: 16 / 9; }
+.st-pip-body video { display: block; width: 100%; height: 100%; }
+.st-pip.is-min .st-pip-body { height: 0; aspect-ratio: auto; overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .st-pip, .st-pip-bar { transition: none; } }
+
 /* Uppercase section overline used throughout the studio chrome. */
 .st-sec-label {
   font-size: 10.5px;
@@ -497,6 +517,13 @@ html:has([data-marketing]) {
   border: 1px solid hsl(var(--border));
   background: #000;
 }
+/* Inside the floating PiP (.st-pip), which already supplies the border,
+   rounded corners and clipping — drop this card's own so nothing doubles. */
+.st-monitor-bare {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
 .st-monitor .st-monitor-badge {
   position: absolute;
   top: 8px;
@@ -523,8 +550,10 @@ html:has([data-marketing]) {
   box-shadow: 0 0 6px hsl(var(--destructive));
 }
 
-/* Status pips (sync status card). */
-.st-pip {
+/* Status pips (sync status card). Named st-status-pip, not st-pip: that name
+   now belongs to the floating reference-video PiP (see the .st-pip rules
+   after .st-hrail below). */
+.st-status-pip {
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -532,7 +561,7 @@ html:has([data-marketing]) {
   background: hsl(142 45% 52%);
   box-shadow: 0 0 7px hsl(142 45% 52% / 0.8);
 }
-.st-pip.warn {
+.st-status-pip.warn {
   background: hsl(var(--gold-highlight));
   box-shadow: 0 0 7px hsl(var(--gold-highlight) / 0.8);
 }

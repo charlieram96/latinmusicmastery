@@ -34,6 +34,7 @@ import { HighwayPreview } from '@/components/playsense-studio/studio/highway-pre
 import { ExerciseMediaPanel } from '@/components/playsense-studio/studio/exercise-media-panel';
 import { BackingLanesPanel } from '@/components/playsense-studio/studio/backing-lanes-panel';
 import { HoverRail } from '@/components/playsense-studio/studio/shell/hover-rail';
+import { FloatingVideo } from '@/components/playsense-studio/studio/shell/floating-video';
 import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
@@ -106,6 +107,9 @@ export function StudioWorkspace({
   const [transportEl, setTransportEl] = useState<HTMLElement | null>(null);
   // App-bar slot SyncPanel portals its "Add score" chip into.
   const [scoreActionsEl, setScoreActionsEl] = useState<HTMLElement | null>(null);
+  // Portal slot the floating PiP's body renders into; SyncPanel portals the
+  // reference monitor there instead of the inspector.
+  const [monitorEl, setMonitorEl] = useState<HTMLDivElement | null>(null);
 
   // Student "highway" preview, as a collapsible bottom drawer.
   const [highwayOpen, setHighwayOpen] = useState(false);
@@ -436,6 +440,7 @@ export function StudioWorkspace({
               }
               inspectorEl={inspectorEl}
               transportEl={transportEl}
+              monitorEl={monitorEl}
               scoreActionsEl={scoreActionsEl}
               onPublished={() => setExerciseStage('syncVideo')}
             />
@@ -452,6 +457,7 @@ export function StudioWorkspace({
                 videoDurationSeconds={videoDurationSeconds}
                 inspectorEl={inspectorEl}
                 transportEl={transportEl}
+                monitorEl={monitorEl}
                 scoreActionsEl={scoreActionsEl}
               />
 
@@ -470,6 +476,10 @@ export function StudioWorkspace({
             </>
           )}
         </main>
+
+        {(showExerciseSync ? exerciseVideoUrl : videoUrl) && (
+          <FloatingVideo label={isExercise ? 'Play-along' : 'Reference'} onBodyEl={setMonitorEl} />
+        )}
       </div>
 
       {/* ---- Bottom: transport dock + highway drawer ---- */}

@@ -2,21 +2,29 @@
 
 // PlaySense Studio — sync panel's reference-video monitor.
 
+import { cn } from '@/lib/utils';
+
 // The reference-video monitor. Kept as a tiny component so SyncPanel can portal
-// it to the left rail (sections workspace) or the right rail (single-score
-// fallback) — the <video> stays in SyncPanel's React tree either way, so the
-// transport clock keeps driving it.
+// it into the floating PiP (`bare`) or the left-rail inspector fallback — the
+// <video> stays in SyncPanel's React tree either way, so the transport clock
+// keeps driving it.
 export function ReferenceMonitor({
   videoRef,
   videoUrl,
+  bare,
 }: {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   videoUrl: string | null;
+  /** True when this renders inside the floating PiP, which already supplies
+   *  its own label, border and rounded corners. Drops the "Reference video"
+   *  section label and the card's own border so the video fills the PiP body
+   *  with no doubled chrome. */
+  bare?: boolean;
 }) {
   return (
     <div>
-      <span className="st-sec-label">Reference video</span>
-      <div className="st-monitor mt-2">
+      {!bare && <span className="st-sec-label">Reference video</span>}
+      <div className={cn('st-monitor', bare ? 'st-monitor-bare' : 'mt-2')}>
         <div className="st-monitor-badge">
           <span className="pip" /> Reference
         </div>
