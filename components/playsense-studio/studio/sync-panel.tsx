@@ -12,7 +12,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, FilePlus2, Loader2, Maximize, Music2, Repeat, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
+import { AudioLines, FilePlus2, Loader2, Music2, Repeat } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -94,8 +94,12 @@ import { isStructuralAction } from '@/lib/playsense-studio/measure-edits';
 import { writeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
 import { clipFromMeasures, prepareStructuralEdit } from '@/components/playsense-studio/sync/structural-timing';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
-import type { MusicalEvent, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import type { MidiRecordingSource } from './midi-record-button';
+import { ReferenceMonitor } from '@/components/playsense-studio/sync/reference-monitor';
+import { formatTime, NoteDetails } from './note-details';
+import { ScrollBar } from '@/components/playsense-studio/sync/scroll-bar';
+import { ZoomSlider } from '@/components/playsense-studio/sync/zoom-slider';
 
 /** A note selection, mirrored out of the editor so the right rail can show it. */
 export interface StudioNoteSelection {
@@ -204,9 +208,20 @@ function writeStoredValue(key: string, value: string): void {
   }
 }
 
-const MIN_PPS = 8;
-const MAX_PPS = 600;
+export const MIN_PPS = 8;
+export const MAX_PPS = 600;
 const TIMING_DEBOUNCE_MS = 1500;
+
+function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
+  const m = state.measures.find((mm) => mm.measureNumber === ref.measureNumber);
+  if (!m) return null;
+  const beat = m.beats.find((b) => b.beatInMeasure === ref.beatInMeasure);
+  return beat ? beat.videoTimeSeconds : null;
+}
+
+export function clamp(v: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(v, hi));
+}
 
 export function SyncPanel({
   classItemId,
@@ -1469,341 +1484,5 @@ export function SyncPanel({
           transportEl,
         )}
     </>
-  );
-}
-
-// The reference-video monitor. Kept as a tiny component so SyncPanel can portal
-// it to the left rail (sections workspace) or the right rail (single-score
-// fallback) — the <video> stays in SyncPanel's React tree either way, so the
-// transport clock keeps driving it.
-function ReferenceMonitor({
-  videoRef,
-  videoUrl,
-}: {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-  videoUrl: string | null;
-}) {
-  return (
-    <div>
-      <span className="st-sec-label">Reference video</span>
-      <div className="st-monitor mt-2">
-        <div className="st-monitor-badge">
-          <span className="pip" /> Reference
-        </div>
-        <video
-          ref={videoRef}
-          src={videoUrl ?? undefined}
-          playsInline
-          preload="metadata"
-          className="aspect-video w-full bg-black"
-        />
-      </div>
-    </div>
-  );
-}
-
-function formatTime(seconds: number): string {
-  const s = Math.max(0, seconds);
-  const m = Math.floor(s / 60);
-  const rest = s - m * 60;
-  return `${m}:${rest.toFixed(1).padStart(4, '0')}`;
-}
-
-/** The selected note's timing against the sync grid, with its adjustments. */
-interface NoteTimingProps {
-  /** Nudge in ms (0 = on the grid). */
-  offsetMs: number;
-  gridSeconds: number;
-  actualSeconds: number;
-  onNudge: (deltaMs: number) => void;
-  onSnap: () => void;
-  onReset: () => void;
-}
-
-// Details for the selected note, shown in the left-rail inspector. Pitch and
-// duration edits happen via the staff toolbar; this offers the per-note timing
-// nudge (video sync only) and a quick Delete.
-function NoteDetails({
-  event,
-  measureIndex,
-  percussion,
-  percLabel,
-  timing,
-  onDelete,
-}: {
-  event: MusicalEvent;
-  measureIndex: number;
-  percussion: boolean;
-  percLabel: string | null;
-  timing?: NoteTimingProps;
-  onDelete: () => void;
-}) {
-  const durLabel = formatDurationQN(event.durationQN) + (event.dotted ? '.' : '') + (event.triplet ? ' ³' : '');
-  let primary: string;
-  if (event.kind === 'rest') {
-    primary = 'Rest';
-  } else if (percussion) {
-    primary = percLabel ?? 'Stroke';
-  } else if (event.kind === 'note') {
-    primary = midiToName(event.midi);
-  } else {
-    primary = 'Chord';
-  }
-  return (
-    <>
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-foreground">{primary}</span>
-        <span className="font-mono text-xs tabular-nums text-muted-foreground">m.{measureIndex + 1}</span>
-      </div>
-      <div className="st-prop">
-        <span className="k">Kind</span>
-        <span className="v capitalize">{event.kind}</span>
-      </div>
-      <div className="st-prop">
-        <span className="k">Duration</span>
-        <span className="v">{durLabel}</span>
-      </div>
-      {timing && event.kind !== 'rest' && (
-        <>
-          <div className="st-prop">
-            <span className="k">Timing</span>
-            <span
-              className="v inline-flex items-center gap-1"
-              title={`Grid ${formatTime(timing.gridSeconds)} → plays ${formatTime(timing.actualSeconds)}. Keys: [ and ] (Shift: 20 ms)`}
-            >
-              <button
-                type="button"
-                className="st-iconbtn"
-                aria-label="Earlier by 5 ms (Shift: 20 ms)"
-                title="Earlier · 5 ms (Shift: 20 ms) · key ["
-                onClick={(e) => timing.onNudge(e.shiftKey ? -20 : -5)}
-              >
-                −
-              </button>
-              <span className={`font-mono tabular-nums${timing.offsetMs !== 0 ? ' accent' : ''}`}>
-                {formatOffsetMs(timing.offsetMs)}
-              </span>
-              <button
-                type="button"
-                className="st-iconbtn"
-                aria-label="Later by 5 ms (Shift: 20 ms)"
-                title="Later · 5 ms (Shift: 20 ms) · key ]"
-                onClick={(e) => timing.onNudge(e.shiftKey ? 20 : 5)}
-              >
-                +
-              </button>
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            <button type="button" className="st-chip" onClick={timing.onSnap} title="Move this note to the playhead">
-              Snap to playhead
-            </button>
-            <button
-              type="button"
-              className="st-chip"
-              onClick={timing.onReset}
-              disabled={timing.offsetMs === 0}
-              title="Back to the grid"
-            >
-              Reset
-            </button>
-          </div>
-        </>
-      )}
-      <button
-        onClick={onDelete}
-        className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs transition hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-        Delete note
-      </button>
-    </>
-  );
-}
-
-/** "+12 ms" / "−7 ms" / "0 ms"; sub-millisecond deltas show one decimal. */
-function formatOffsetMs(ms: number): string {
-  const abs = Math.abs(ms);
-  const body = abs < 1 && abs > 0 ? abs.toFixed(1) : Math.round(abs).toString();
-  const sign = ms > 0 ? '+' : ms < 0 ? '−' : '';
-  return `${sign}${body} ms`;
-}
-
-function formatDurationQN(qn: number): string {
-  const map: Record<string, string> = {
-    '4': 'whole',
-    '2': 'half',
-    '1': 'quarter',
-    '0.5': '8th',
-    '0.25': '16th',
-    '0.125': '32nd',
-    '0.0625': '64th',
-  };
-  return map[String(qn)] ?? `${qn} QN`;
-}
-
-function midiToName(midi: number): string {
-  const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
-  const pc = ((midi % 12) + 12) % 12;
-  const octave = Math.floor(midi / 12) - 1;
-  return `${names[pc]}${octave}`;
-}
-
-// A thin custom horizontal scrollbar over the canvas coordinate space. The
-// thumb is draggable (pointer capture); clicking the track jumps there and the
-// same gesture keeps dragging. Geometry is fraction-based off the track's own
-// rect, so it stays accurate regardless of the bar's rendered width.
-function ScrollBar({
-  scrollLeft,
-  maxScroll,
-  viewportWidth,
-  contentWidth,
-  onScroll,
-}: {
-  scrollLeft: number;
-  maxScroll: number;
-  viewportWidth: number;
-  contentWidth: number;
-  onScroll: (v: number) => void;
-}) {
-  const dragRef = useRef<{ pointerId: number; grabOffsetPx: number } | null>(null);
-  if (maxScroll <= 0 || contentWidth <= 0) return null;
-
-  const thumbFrac = Math.max(0.02, Math.min(1, viewportWidth / contentWidth));
-  const leftFrac = (scrollLeft / maxScroll) * (1 - thumbFrac);
-
-  const thumbPx = (rect: DOMRect) => Math.max(24, thumbFrac * rect.width);
-  const scrollFromThumbLeft = (rect: DOMRect, thumbLeftPx: number) => {
-    const range = Math.max(1, rect.width - thumbPx(rect));
-    const frac = Math.max(0, Math.min(1, thumbLeftPx / range));
-    onScroll(frac * maxScroll);
-  };
-
-  return (
-    <div
-      className="relative h-2.5 w-full cursor-pointer rounded-full bg-muted"
-      style={{ touchAction: 'none' }}
-      onPointerDown={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const tw = thumbPx(rect);
-        const thumbLeft = leftFrac * rect.width;
-        const x = e.clientX - rect.left;
-        // Grab the thumb where pressed; off the thumb, center it under the cursor.
-        const grabOffsetPx = x >= thumbLeft && x <= thumbLeft + tw ? x - thumbLeft : tw / 2;
-        dragRef.current = { pointerId: e.pointerId, grabOffsetPx };
-        try {
-          e.currentTarget.setPointerCapture(e.pointerId);
-        } catch {
-          /* noop */
-        }
-        scrollFromThumbLeft(rect, x - grabOffsetPx);
-      }}
-      onPointerMove={(e) => {
-        const drag = dragRef.current;
-        if (!drag || drag.pointerId !== e.pointerId) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        scrollFromThumbLeft(rect, e.clientX - rect.left - drag.grabOffsetPx);
-      }}
-      onPointerUp={(e) => {
-        if (dragRef.current?.pointerId !== e.pointerId) return;
-        dragRef.current = null;
-        try {
-          e.currentTarget.releasePointerCapture(e.pointerId);
-        } catch {
-          /* noop */
-        }
-      }}
-      onPointerCancel={() => {
-        dragRef.current = null;
-      }}
-    >
-      <div
-        className="absolute top-0 h-2.5 rounded-full bg-foreground/40 transition-colors hover:bg-foreground/60"
-        style={{ width: `${thumbFrac * 100}%`, minWidth: 24, left: `${leftFrac * 100}%` }}
-      />
-    </div>
-  );
-}
-
-function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
-  const m = state.measures.find((mm) => mm.measureNumber === ref.measureNumber);
-  if (!m) return null;
-  const beat = m.beats.find((b) => b.beatInMeasure === ref.beatInMeasure);
-  return beat ? beat.videoTimeSeconds : null;
-}
-
-function clamp(v: number, lo: number, hi: number): number {
-  return Math.max(lo, Math.min(v, hi));
-}
-
-/**
- * Drag-to-zoom timeline control. The knob position is a log mapping of the
- * current pixels-per-second between MIN_PPS and MAX_PPS, so dragging feels even
- * across the whole zoom range. The −/＋ buttons nudge by a fixed factor and the
- * last button fits the whole timeline to the viewport.
- */
-function ZoomSlider({
-  pps,
-  onZoomTo,
-  onZoomBy,
-  onFit,
-}: {
-  pps: number;
-  onZoomTo: (pps: number) => void;
-  onZoomBy: (factor: number) => void;
-  onFit: () => void;
-}) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
-  const span = Math.log(MAX_PPS / MIN_PPS);
-  const fraction = clamp(Math.log(pps / MIN_PPS) / span, 0, 1);
-
-  const setFromClientX = (clientX: number) => {
-    const el = trackRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const f = clamp((clientX - r.left) / r.width, 0, 1);
-    onZoomTo(MIN_PPS * Math.exp(f * span));
-  };
-  const onDown = (e: React.PointerEvent) => {
-    dragging.current = true;
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-    setFromClientX(e.clientX);
-  };
-  const onMove = (e: React.PointerEvent) => {
-    if (dragging.current) setFromClientX(e.clientX);
-  };
-  const onUp = (e: React.PointerEvent) => {
-    dragging.current = false;
-    e.currentTarget.releasePointerCapture?.(e.pointerId);
-  };
-
-  return (
-    <div className="st-zoom" title="Zoom timeline (drag)">
-      <button type="button" className="st-zoom-btn" onClick={() => onZoomBy(1 / 1.5)} aria-label="Zoom out">
-        <ZoomOut className="h-[15px] w-[15px]" />
-      </button>
-      <div
-        ref={trackRef}
-        className="st-zoom-track"
-        onPointerDown={onDown}
-        onPointerMove={onMove}
-        onPointerUp={onUp}
-        role="slider"
-        aria-label="Zoom level"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(fraction * 100)}
-      >
-        <div className="fill" style={{ width: `${fraction * 100}%` }} />
-        <div className="knob" style={{ left: `${fraction * 100}%` }} />
-      </div>
-      <button type="button" className="st-zoom-btn" onClick={() => onZoomBy(1.5)} aria-label="Zoom in">
-        <ZoomIn className="h-[15px] w-[15px]" />
-      </button>
-      <button type="button" className="st-iconbtn" onClick={onFit} title="Fit to width" style={{ marginLeft: 2 }}>
-        <Maximize className="h-[15px] w-[15px]" />
-      </button>
-    </div>
   );
 }
