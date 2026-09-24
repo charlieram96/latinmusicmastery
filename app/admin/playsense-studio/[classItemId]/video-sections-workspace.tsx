@@ -415,7 +415,10 @@ export function VideoSectionsWorkspace({
           )}
         </main>
 
-        {videoUrl && <FloatingVideo label="Reference" onBodyEl={setMonitorEl} />}
+        {/* Only when a section is selected does SyncPanel actually portal a
+            monitor into monitorEl — the no-sections empty state shows its own
+            full-size inline video instead. */}
+        {selected && videoUrl && <FloatingVideo label="Reference" onBodyEl={setMonitorEl} />}
       </div>
 
       {/* ---- Bottom: transport dock + highway drawer ---- */}

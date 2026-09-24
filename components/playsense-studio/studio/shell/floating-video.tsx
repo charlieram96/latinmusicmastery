@@ -46,6 +46,19 @@ export function FloatingVideo({ label, onBodyEl }: { label: string; onBodyEl: (e
     setPlace(clampPip(next, b));
   }, []);
 
+  // Re-clamp when the stage resizes (e.g. the window, or the rail opening/
+  // closing) so the PiP never ends up stranded off screen or under the rail.
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const parent = ref.current?.parentElement;
+    if (!parent) return;
+    const ro = new ResizeObserver(() => {
+      setPlace((p) => (p ? clampPip(p, box()) : p));
+    });
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, []);
+
   const save = (p: PipPlacement) => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); } catch { /* storage unavailable */ }
   };

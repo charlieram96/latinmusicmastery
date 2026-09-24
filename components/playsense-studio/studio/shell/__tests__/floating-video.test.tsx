@@ -22,6 +22,7 @@ describe('clampPip', () => {
 
 describe('FloatingVideo', () => {
   let host: HTMLDivElement; let root: Root;
+  let roCallback: (() => void) | null;
   beforeEach(() => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     // This jsdom environment has no working global `localStorage` (Node's own
@@ -34,6 +35,16 @@ describe('FloatingVideo', () => {
       removeItem: (k: string) => storage.delete(k),
       clear: () => storage.clear(),
     });
+    // jsdom has no ResizeObserver — stub one that just captures its callback,
+    // so a test can trigger a "resize" by hand.
+    roCallback = null;
+    class FakeResizeObserver {
+      constructor(cb: () => void) { roCallback = cb; }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal('ResizeObserver', FakeResizeObserver);
     Element.prototype.setPointerCapture = vi.fn();
     Element.prototype.releasePointerCapture = vi.fn();
     host = document.createElement('div');
@@ -67,5 +78,14 @@ describe('FloatingVideo', () => {
     act(() => { (host.querySelector('button[title="Shrink to a pill"]') as HTMLButtonElement).click(); });
     expect(pip().classList.contains('is-min')).toBe(true);
     expect(host.querySelector('.st-pip-body')).not.toBeNull();
+  });
+  it('re-clamps into view when the stage shrinks', () => {
+    expect(pip().style.right).toBe('26px');
+    expect(pip().style.top).toBe(`${600 - 170}px`);
+    Object.defineProperty(host, 'clientWidth', { configurable: true, value: 100 });
+    Object.defineProperty(host, 'clientHeight', { configurable: true, value: 50 });
+    act(() => { roCallback?.(); });
+    expect(pip().style.right).toBe('8px');
+    expect(pip().style.top).toBe('8px');
   });
 });

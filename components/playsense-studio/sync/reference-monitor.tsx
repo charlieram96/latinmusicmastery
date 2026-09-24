@@ -17,17 +17,20 @@ export function ReferenceMonitor({
   videoUrl: string | null;
   /** True when this renders inside the floating PiP, which already supplies
    *  its own label, border and rounded corners. Drops the "Reference video"
-   *  section label and the card's own border so the video fills the PiP body
-   *  with no doubled chrome. */
+   *  section label, the card's own border, and the "Reference" badge overlay
+   *  (the PiP's own drag bar already labels it) so the video fills the PiP
+   *  body with no doubled chrome. */
   bare?: boolean;
 }) {
   return (
     <div>
       {!bare && <span className="st-sec-label">Reference video</span>}
       <div className={cn('st-monitor', bare ? 'st-monitor-bare' : 'mt-2')}>
-        <div className="st-monitor-badge">
-          <span className="pip" /> Reference
-        </div>
+        {!bare && (
+          <div className="st-monitor-badge">
+            <span className="pip" /> Reference
+          </div>
+        )}
         <video
           ref={videoRef}
           src={videoUrl ?? undefined}

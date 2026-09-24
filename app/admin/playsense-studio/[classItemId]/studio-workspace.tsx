@@ -477,7 +477,11 @@ export function StudioWorkspace({
           )}
         </main>
 
-        {(showExerciseSync ? exerciseVideoUrl : videoUrl) && (
+        {/* Only render the PiP when the mounted SyncPanel will actually
+            portal a monitor into it (mirrors its own showSync gate) — never
+            in the exercise score stage, whose SyncPanel has mode="exercise"
+            and shows no monitor at all. */}
+        {(showExerciseSync ? !!exerciseVideoUrl : mode === 'video' && !!videoUrl) && (
           <FloatingVideo label={isExercise ? 'Play-along' : 'Reference'} onBodyEl={setMonitorEl} />
         )}
       </div>
