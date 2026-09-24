@@ -2,6 +2,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { measureFill } from '@/lib/playsense-studio/measure-fill';
 import { EditableMeasureStrip, type MeasureStripItem } from '../editable-measure-strip';
 
 beforeAll(() => {
@@ -47,6 +48,7 @@ const items: MeasureStripItem[] = Array.from({ length: 4 }, (_, i) => ({
   previousKeyFifths: 0,
   keyChanged: false,
   clefChanged: false,
+  fill: measureFill([], undefined, [4, 4]),
 }));
 
 function mount(pixelsPerSecond = 100) {

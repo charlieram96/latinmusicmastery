@@ -31,7 +31,7 @@ import {
   StaveTie,
 } from 'vexflow';
 import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
-import { beatLengthInQN, measureLengthInQN, occupiedQN } from '@/lib/playsense-studio/time-mapping';
+import { beatsText, fillTitle, type MeasureFill } from '@/lib/playsense-studio/measure-fill';
 import {
   diatonicToMidi,
   midiToDiatonic,
@@ -68,6 +68,8 @@ export interface MeasureStripItem {
   previousKeyFifths: number;
   keyChanged: boolean;
   clefChanged: boolean;
+  /** How full this bar is, keyed on the track's own events (voice 1 only counted for grading). */
+  fill: MeasureFill;
 }
 
 export interface SelectedEventRef {
@@ -616,14 +618,6 @@ export function EditableMeasureStrip({
           );
         }
 
-        // Capacity for the measure's time signature, shown as used/total beats
-        // (e.g. "0/4", "4/4") so the author sees how full the measure is.
-        const beatQN = beatLengthInQN(item.timeSignature);
-        const usedBeats = occupiedQN(item.events) / beatQN;
-        const totalBeats = measureLengthInQN(item.timeSignature) / beatQN;
-        const isFull = usedBeats >= totalBeats - 1e-6;
-        const capLabel = `${formatBeatsShort(usedBeats)}/${formatBeatsShort(totalBeats)}`;
-        const showCap = width >= 64;
         const cursor = dragging
           ? 'grabbing'
           : hovered?.measureIndex === item.measureIndex
@@ -643,7 +637,7 @@ export function EditableMeasureStrip({
               if (hovered?.measureIndex === item.measureIndex) setHover(null);
             }}
           >
-            {/* Header band: measure number, repeat pass and capacity. A press
+            {/* Header band: measure number, repeat pass and beat count. A press
                 here selects the bar (handled by the measure's pointerdown). */}
             <div
               className="absolute inset-x-0 top-0 z-10 flex items-center gap-1.5 rounded-t-sm bg-muted/70 px-2 text-[11px] text-muted-foreground"
@@ -654,14 +648,9 @@ export function EditableMeasureStrip({
                 {item.repeatPass.pass === 0 && item.repeatPass.offset === 0 && <>· ↻ ×{item.repeatPass.count} </>}
                 · pass {item.repeatPass.pass + 1}/{item.repeatPass.count}
               </span>}
-              {showCap && (
-                <span
-                  className={`ml-auto shrink-0 tabular-nums leading-none ${
-                    isFull ? 'text-[hsl(var(--primary))] opacity-90' : 'opacity-60'
-                  }`}
-                  title={`${formatBeatsShort(usedBeats)} of ${formatBeatsShort(totalBeats)} beats filled`}
-                >
-                  {capLabel}
+              {width >= 60 && (
+                <span className={`st-cap is-${item.fill.kind} ml-auto shrink-0 tabular-nums leading-none`} title={fillTitle(item.measureNumber, item.fill)}>
+                  {item.fill.kind === 'empty' ? `0/${beatsText(item.fill.totalBeats)}` : `${beatsText(item.fill.usedBeats)}/${beatsText(item.fill.totalBeats)}`}
                 </span>
               )}
             </div>
@@ -684,6 +673,18 @@ export function EditableMeasureStrip({
               spans={scoreSpans}
               onHitsReady={handleHitsReady}
             />
+            {item.fill.kind === 'short' && (() => {
+              const hits = hitsByMeasure.current.get(item.measureIndex);
+              const last = hits?.at(-1);
+              const gapLeft = last ? Math.min(width - 8, last.x + last.w + 4) : width * (item.fill.usedBeats / item.fill.totalBeats);
+              return (
+                <div className="st-gapfill" style={{ left: gapLeft, width: width - gapLeft, top: HANDLE_BAND_PX + 6, bottom: 6 }}>
+                  {width - gapLeft > 60 && (
+                    <span>{`−${beatsText(item.fill.missingBeats)} beat${item.fill.missingBeats === 1 ? '' : 's'} missing`}</span>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         );
       })}
@@ -910,10 +911,4 @@ function midiToName(midi: number): string {
   const octave = Math.floor(midi / 12) - 1;
   const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
   return `${names[pc]}${octave}`;
-}
-
-/** Short beat count for the per-measure capacity chip (e.g. "2", "1.5"). */
-function formatBeatsShort(beats: number): string {
-  const rounded = Math.round(beats * 100) / 100;
-  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
 }

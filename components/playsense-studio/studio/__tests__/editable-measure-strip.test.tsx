@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Track } from '@/components/playsense-studio/shared/score-model/types';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
+import { measureFill } from '@/lib/playsense-studio/measure-fill';
 import { EditableMeasureStrip, type MeasureStripItem } from '../editable-measure-strip';
 
 beforeAll(() => {
@@ -44,6 +45,7 @@ function renderStrip(track: Track, keyFifths = 0) {
     previousKeyFifths: b.previousKeyFifths,
     keyChanged: b.keyChanged,
     clefChanged: b.clefChanged,
+    fill: measureFill(b.measure.voices[0]?.events ?? [], b.measure.voices[1]?.events, b.timeSignature),
   }));
   act(() => {
     root.render(

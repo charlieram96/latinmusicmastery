@@ -29,6 +29,7 @@ import {
   measureLengthInQN,
   occupiedQN,
 } from '@/lib/playsense-studio/time-mapping';
+import { fillIssues, measureFill, type MeasureFill } from '@/lib/playsense-studio/measure-fill';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type {
   Chord,
@@ -393,6 +394,15 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     [activeTrack, score.initialTimeSignature, score.initialKeyFifths]
   );
 
+  // How full each bar is — keyed on the track only (not measureTimings), so
+  // moving sync markers doesn't recompute it.
+  const measureFills: MeasureFill[] = useMemo(
+    () => (activeTrack
+      ? activeTrack.measures.map((m, i) => measureFill(m.voices[0]?.events ?? [], m.voices[1]?.events, tracked[i].timeSignature))
+      : []),
+    [activeTrack, tracked]
+  );
+
   // Build stripItems for the active track — zip events with timings.
   const stripItems: MeasureStripItem[] = useMemo(() => {
     if (!activeTrack) return [];
@@ -415,10 +425,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         previousKeyFifths: tracked[i].previousKeyFifths,
         keyChanged: tracked[i].keyChanged,
         clefChanged: tracked[i].clefChanged,
+        fill: measureFills[i],
       });
     }
     return out;
-  }, [activeTrack, tracked, measureTimings]);
+  }, [activeTrack, tracked, measureTimings, measureFills]);
 
   // The measure "Add note" targets: the selected event's measure, else the last.
   const measureCount = activeTrack?.measures.length ?? 0;
@@ -805,6 +816,27 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     return () => window.removeEventListener('keydown', handler);
   });
 
+  // Bars that don't add up — drives the strip footer's issue chip and its
+  // "jump to the next one" behavior.
+  const fills = stripItems.map((it) => it.fill);
+  const issues = fillIssues(fills);
+  const anyOver = issues.some((i) => fills[i].kind === 'over');
+  const nextIssue = () => {
+    if (!issues.length) return;
+    const from = measureRange ? Math.max(measureRange.anchor, measureRange.focus) : -1;
+    const target = issues.find((i) => i > from) ?? issues[0];
+    setSelected(null);
+    setMeasureRange({ anchor: target, focus: target });
+    const t = measureTimings[target];
+    if (t) {
+      const left = t.startVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
+      const right = t.endVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
+      if (left < 0 || right > viewportWidth) {
+        onRequestZoom(pixelsPerSecond, Math.max(0, t.startVideoTimeSeconds * pixelsPerSecond - viewportWidth / 2 + (right - left) / 2));
+      }
+    }
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       {/* Editor bar — view tabs · instrument/name · add measure (single track) */}
@@ -965,36 +997,50 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       {/* Active view — the audio-aligned staff (or piano-roll). The staff fills
           the available height between the editor bar and the toolbar. */}
       {editorTab === 'staff' && (
-        <div ref={staffWrapRef} className="min-h-0 flex-1">
-          <EditableMeasureStrip
-            measures={stripItems}
-            spans={score.spans}
-            getCurrentSeconds={getCurrentSeconds}
-            pixelsPerSecond={pixelsPerSecond}
-            scrollLeftPx={scrollLeftPx}
-            selected={selected}
-            selectedMeasures={selected ? [selected.measureIndex, selected.measureIndex] : rangeStart !== null && rangeEnd !== null ? [rangeStart, rangeEnd] : null}
-            onSelectMeasure={selectMeasure}
-            onSelectMeasureRange={selectMeasureRange}
-            onOpenMeasure={openMeasure}
-            onInsertMeasureAt={insertMeasureAt}
-            gapProblems={gapProblems}
-            onSelectEvent={handleSelectEvent}
-            onRequestZoomTo={handleRequestZoomTo}
-            onSetPitch={handleSetPitch}
-            accidental={pitchAcc}
-            keyFifths={score.initialKeyFifths}
-            isPercussion={percussion}
-            percStrokes={percStrokes}
-            onWheelZoom={(factor, anchorPx) => {
-              const nextPps = Math.max(8, Math.min(600, pixelsPerSecond * factor));
-              const anchorSeconds = (scrollLeftPx + anchorPx) / pixelsPerSecond;
-              onRequestZoom(nextPps, Math.max(0, anchorSeconds * nextPps - anchorPx));
-            }}
-            onScrollByPx={onScrollByPx}
-            height={staffHeight}
-          />
-        </div>
+        <>
+          <div ref={staffWrapRef} className="min-h-0 flex-1">
+            <EditableMeasureStrip
+              measures={stripItems}
+              spans={score.spans}
+              getCurrentSeconds={getCurrentSeconds}
+              pixelsPerSecond={pixelsPerSecond}
+              scrollLeftPx={scrollLeftPx}
+              selected={selected}
+              selectedMeasures={selected ? [selected.measureIndex, selected.measureIndex] : rangeStart !== null && rangeEnd !== null ? [rangeStart, rangeEnd] : null}
+              onSelectMeasure={selectMeasure}
+              onSelectMeasureRange={selectMeasureRange}
+              onOpenMeasure={openMeasure}
+              onInsertMeasureAt={insertMeasureAt}
+              gapProblems={gapProblems}
+              onSelectEvent={handleSelectEvent}
+              onRequestZoomTo={handleRequestZoomTo}
+              onSetPitch={handleSetPitch}
+              accidental={pitchAcc}
+              keyFifths={score.initialKeyFifths}
+              isPercussion={percussion}
+              percStrokes={percStrokes}
+              onWheelZoom={(factor, anchorPx) => {
+                const nextPps = Math.max(8, Math.min(600, pixelsPerSecond * factor));
+                const anchorSeconds = (scrollLeftPx + anchorPx) / pixelsPerSecond;
+                onRequestZoom(nextPps, Math.max(0, anchorSeconds * nextPps - anchorPx));
+              }}
+              onScrollByPx={onScrollByPx}
+              height={staffHeight}
+            />
+          </div>
+          <div className="st-strip-foot">
+            {issues.length > 0 && (
+              <button type="button" className={`st-issue-chip${anyOver ? ' is-bad' : ''}`} onClick={nextIssue} title="Jump to the next bar that doesn’t add up">
+                {issues.length === 1 ? '1 bar doesn’t add up' : `${issues.length} bars don’t add up`} · {issues.slice(0, 3).map((i) => `m.${stripItems[i].measureNumber}`).join(', ')}{issues.length > 3 ? '…' : ''} ▾
+              </button>
+            )}
+            <span className="truncate">
+              {measureRange
+                ? '⏎ zoom in · ⌘D duplicate · ⌫ delete · esc deselect'
+                : 'Drag across bars to select · double-click a bar to zoom in · scroll to zoom'}
+            </span>
+          </div>
+        </>
       )}
       {editorTab === 'piano-roll' && (
         <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-card p-3">

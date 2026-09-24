@@ -640,6 +640,26 @@ html:has([data-marketing]) {
 /* The focus end of a measure range (where Shift+arrows extend from). */
 .st-measure-focus { box-shadow: inset 0 -3px 0 hsl(var(--gold-highlight)); }
 
+/* Per-bar beat count chip (header band), the hatched gap for missing time,
+   and the strip footer's "bars don't add up" chip. */
+.st-cap { font-size: 10.5px; padding: 1px 5px; border-radius: 999px; color: hsl(var(--muted-foreground)); }
+.st-cap.is-ok { color: hsl(var(--foreground) / .75); }
+.st-cap.is-short { background: hsl(var(--gold-highlight) / .18); color: hsl(var(--gold-highlight)); }
+.st-cap.is-over { background: hsl(var(--destructive) / .18); color: hsl(var(--destructive)); }
+.st-cap.is-empty { border: 1px dashed hsl(var(--border)); }
+.st-gapfill {
+  position: absolute; z-index: 0; pointer-events: none; display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: 4px; border: 1px dashed hsl(var(--gold-highlight) / .55); border-radius: 6px;
+  font-size: 10px; color: hsl(var(--gold-highlight));
+  background: repeating-linear-gradient(135deg, hsl(var(--gold-highlight) / .14) 0 6px, transparent 6px 12px);
+}
+.st-strip-foot { display: flex; align-items: center; gap: 12px; min-height: 28px; padding: 4px 2px 0; font-size: 11px; color: hsl(var(--muted-foreground)); }
+.st-issue-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px;
+  background: hsl(var(--gold-highlight) / .16); color: hsl(var(--gold-highlight)); font-weight: 600;
+}
+.st-issue-chip.is-bad { background: hsl(var(--destructive) / .16); color: hsl(var(--destructive)); }
+
 /* The waveform lane — its own bordered surface inside the (borderless) stage. */
 .st-wave-lane {
   border: 1px solid hsl(var(--border));
