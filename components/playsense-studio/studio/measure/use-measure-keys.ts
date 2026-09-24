@@ -3,7 +3,7 @@
 // Bar-level keys in the strip: ←/→ move the selection (⇧ extends), ⏎ opens,
 // ⌘C/⌘V/⌘D copy, paste after and duplicate, ⌫ deletes, Esc clears. Off while a
 // note is selected (note keys own the arrows then) and while typing anywhere;
-// ⏎ leaves a focused button alone.
+// ⏎ leaves a focused button alone and ⌘C leaves a page text selection alone.
 
 import { useEffect, useRef } from 'react';
 import { isTypingTarget } from '@/lib/playsense-studio/typing-target';
@@ -39,7 +39,8 @@ export function useMeasureKeys(opts: {
       if (!mod && (e.key === 'Backspace' || e.key === 'Delete')) { e.preventDefault(); o.onDelete(); return; }
       if (mod && !e.shiftKey) {
         const k = e.key.toLowerCase();
-        if (k === 'c') { e.preventDefault(); o.onCopy(); }
+        // ⌘C with page text selected copies that text, as the browser would.
+        if (k === 'c') { if (window.getSelection()?.toString()) return; e.preventDefault(); o.onCopy(); }
         else if (k === 'v') { e.preventDefault(); o.onPaste(); }
         else if (k === 'd') { e.preventDefault(); o.onDuplicate(); }
       }

@@ -121,4 +121,22 @@ describe('useMeasureKeys', () => {
     expect(cb.onOpen).not.toHaveBeenCalled();
     expect(e.defaultPrevented).toBe(false);
   });
+
+  it('⌘C leaves a page text selection to the browser', () => {
+    const cb = mount();
+    const p = document.createElement('p');
+    p.textContent = 'Some lesson text';
+    host.appendChild(p);
+    const range = document.createRange();
+    range.selectNodeContents(p);
+    window.getSelection()!.removeAllRanges();
+    window.getSelection()!.addRange(range);
+    try {
+      const e = key('c', { metaKey: true });
+      expect(cb.onCopy).not.toHaveBeenCalled();
+      expect(e.defaultPrevented).toBe(false);
+    } finally {
+      window.getSelection()!.removeAllRanges();
+    }
+  });
 });
