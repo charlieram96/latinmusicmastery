@@ -88,7 +88,12 @@ export function SectionsLane({
     }
     onDragActive?.(dx / pixelsPerSecond, 'move');
   };
-  const onActivePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+  // Shared by pointerup, pointercancel and lostpointercapture: whichever fires
+  // first ends the drag (reporting 'end' if it had really started) and clears
+  // dragRef; a second one for the same pointer (e.g. the implicit
+  // lostpointercapture that follows an explicit releasePointerCapture call)
+  // finds dragRef already null and is a no-op.
+  const finishDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
     const d = dragRef.current;
     if (!d || d.pointerId !== e.pointerId) return;
     try {
@@ -99,6 +104,14 @@ export function SectionsLane({
     if (d.dragging) {
       onDragActive?.((e.clientX - d.startX) / pixelsPerSecond, 'end');
       suppressClickRef.current = true;
+      // The trailing click can land outside the lane entirely (the pointer
+      // drifted off it before release), in which case onClickCapture below
+      // never runs and the flag would stick, swallowing some later, unrelated
+      // click. A click arriving in the same turn as this one is still caught
+      // (it runs before this timeout fires); anything after self-clears.
+      setTimeout(() => {
+        suppressClickRef.current = false;
+      }, 0);
     }
     dragRef.current = null;
   };
@@ -137,7 +150,9 @@ export function SectionsLane({
             onClick={() => !isActive && onSelectSection(s.sectionId)}
             onPointerDown={isActive ? onActivePointerDown : undefined}
             onPointerMove={isActive ? onActivePointerMove : undefined}
-            onPointerUp={isActive ? onActivePointerUp : undefined}
+            onPointerUp={isActive ? finishDrag : undefined}
+            onPointerCancel={isActive ? finishDrag : undefined}
+            onLostPointerCapture={isActive ? finishDrag : undefined}
           >
             <span className="st-section-block-label">{s.label}</span>
           </button>
