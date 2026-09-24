@@ -51,6 +51,19 @@ export function HoverRail({ sections }: { sections: RailSection[] }) {
     document.getElementById(`st-rail-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  // Touch has no hover: a tap on the (non-focusable) stage doesn't fire
+  // mouseleave/blur, so an open rail would never close. Listen for a
+  // pointerdown outside the rail, in the capture phase, while open.
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!railRef.current?.contains(e.target as Node | null)) scheduleClose();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   return (
     <aside
       ref={railRef}

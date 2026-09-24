@@ -1384,11 +1384,12 @@ export function SyncPanel({
             {/* Sync status */}
             {showSync && (
               <div className="st-icard">
-                <div className="flex items-center justify-between">
-                  <span className="st-sec-label">Sync status</span>
-                  {error && <button type="button" className="st-chip" disabled={savingTiming}
-                    onClick={() => { void saveTiming(); }}>Retry save</button>}
-                </div>
+                {error && (
+                  <div className="flex justify-end">
+                    <button type="button" className="st-chip" disabled={savingTiming}
+                      onClick={() => { void saveTiming(); }}>Retry save</button>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-xs">
                   <span className="st-pip" /> {markers.measures.length} measure
                   {markers.measures.length === 1 ? '' : 's'} on the grid

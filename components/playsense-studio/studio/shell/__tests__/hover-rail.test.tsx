@@ -66,4 +66,19 @@ describe('HoverRail', () => {
     expect(host.querySelector('.st-hrail-dot.is-warn')).not.toBeNull();
     expect(host.querySelector('#st-rail-score input')).not.toBeNull();
   });
+  it('closes on an outside pointerdown (a touch tap outside the rail)', () => {
+    const btn = host.querySelector('button[aria-label="Score"]') as HTMLButtonElement;
+    act(() => { btn.click(); });
+    expect(rail().classList.contains('is-open')).toBe(true);
+    act(() => { document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })); });
+    act(() => { vi.advanceTimersByTime(RAIL_CLOSE_DELAY_MS + 10); });
+    expect(rail().classList.contains('is-open')).toBe(false);
+  });
+  it('a pointerdown inside the rail does not close it', () => {
+    const btn = host.querySelector('button[aria-label="Score"]') as HTMLButtonElement;
+    act(() => { btn.click(); });
+    act(() => { rail().dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })); });
+    act(() => { vi.advanceTimersByTime(RAIL_CLOSE_DELAY_MS + 10); });
+    expect(rail().classList.contains('is-open')).toBe(true);
+  });
 });
