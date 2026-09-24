@@ -111,4 +111,14 @@ describe('useMeasureKeys', () => {
     key('ArrowRight');
     expect(cb.onSelection).toHaveBeenCalledWith({ anchor: 0, focus: 0 });
   });
+
+  it('⏎ on a focused button presses the button instead of opening the bar', () => {
+    const cb = mount();
+    const button = document.createElement('button');
+    host.appendChild(button);
+    button.focus();
+    const e = key('Enter', {}, button);
+    expect(cb.onOpen).not.toHaveBeenCalled();
+    expect(e.defaultPrevented).toBe(false);
+  });
 });

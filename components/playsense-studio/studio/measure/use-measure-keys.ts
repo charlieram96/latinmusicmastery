@@ -2,7 +2,8 @@
 
 // Bar-level keys in the strip: ←/→ move the selection (⇧ extends), ⏎ opens,
 // ⌘C/⌘V/⌘D copy, paste after and duplicate, ⌫ deletes, Esc clears. Off while a
-// note is selected (note keys own the arrows then) and while typing anywhere.
+// note is selected (note keys own the arrows then) and while typing anywhere;
+// ⏎ leaves a focused button alone.
 
 import { useEffect, useRef } from 'react';
 import { isTypingTarget } from '@/lib/playsense-studio/typing-target';
@@ -30,7 +31,11 @@ export function useMeasureKeys(opts: {
       }
       if (e.key === 'Escape' && o.selection) { e.preventDefault(); o.onSelection(null); return; }
       if (!bounds) return;
-      if (!mod && e.key === 'Enter') { e.preventDefault(); o.onOpen(bounds[0]); return; }
+      // ⏎ on a focused button presses that button, not the bar.
+      if (!mod && e.key === 'Enter') {
+        if (e.target instanceof HTMLButtonElement) return;
+        e.preventDefault(); o.onOpen(bounds[0]); return;
+      }
       if (!mod && (e.key === 'Backspace' || e.key === 'Delete')) { e.preventDefault(); o.onDelete(); return; }
       if (mod && !e.shiftKey) {
         const k = e.key.toLowerCase();
