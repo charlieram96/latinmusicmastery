@@ -14,7 +14,7 @@
 // lives in a collapsible bottom drawer toggled from the app-bar.
 
 import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
-import { ArrowLeft, FileUp, Film, Music, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
+import { ArrowLeft, Activity, FileUp, Film, MonitorPlay, Music, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
@@ -33,6 +33,7 @@ import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta
 import { HighwayPreview } from '@/components/playsense-studio/studio/highway-preview';
 import { ExerciseMediaPanel } from '@/components/playsense-studio/studio/exercise-media-panel';
 import { BackingLanesPanel } from '@/components/playsense-studio/studio/backing-lanes-panel';
+import { HoverRail } from '@/components/playsense-studio/studio/shell/hover-rail';
 import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
@@ -378,35 +379,28 @@ export function StudioWorkspace({
         </div>
       </header>
 
-      {/* ---- Body: left rail (meta + inspector) · center stage ---- */}
-      <div className="flex min-h-0 flex-1">
-        <aside className="st-rail st-rail-left hidden w-64 shrink-0 flex-col lg:flex">
-          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-            <div>
-              <span className="st-sec-label">Score</span>
-              <div className="mt-3">
-                <ScoreMetaEditor score={state.score} dispatch={dispatch} />
-              </div>
-            </div>
-            {/* Exercise play-part media: optional cropped video + backing tracks. */}
-            {isExercise && exerciseMedia && owner.kind === 'classItem' && (
-              <div className="border-t border-border pt-4">
-                <ExerciseMediaPanel
-                  classItemId={owner.classItemId}
-                  scoreLengthSeconds={scoreLengthSeconds}
-                  initialMedia={exerciseMedia}
-                  hasTimeMap={!!exerciseTimeMap}
-                  onVideoChange={handleExerciseVideoChange}
-                />
-              </div>
-            )}
-            {/* Inspector: monitor/demo + selected note + sync status (SyncPanel portals here). */}
-            <div
-              ref={setInspectorEl}
-              className="flex flex-col gap-3 border-t border-border pt-4 empty:hidden"
-            />
-          </div>
-        </aside>
+      {/* ---- Body: hover rail (meta + inspector) · center stage ---- */}
+      <div className="st-work">
+        <HoverRail
+          sections={[
+            { id: 'score', label: 'Score', icon: Music, content: <ScoreMetaEditor score={state.score} dispatch={dispatch} /> },
+            ...(isExercise && exerciseMedia && owner.kind === 'classItem'
+              ? [{
+                  id: 'media', label: 'Play-along media', icon: MonitorPlay,
+                  content: (
+                    <ExerciseMediaPanel
+                      classItemId={owner.classItemId}
+                      scoreLengthSeconds={scoreLengthSeconds}
+                      initialMedia={exerciseMedia}
+                      hasTimeMap={!!exerciseTimeMap}
+                      onVideoChange={handleExerciseVideoChange}
+                    />
+                  ),
+                }]
+              : []),
+            { id: 'sync', label: 'Sync status', icon: Activity, content: <div ref={setInspectorEl} className="flex flex-col gap-3" /> },
+          ]}
+        />
 
         <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 md:p-4">
           {errorMessage && (
