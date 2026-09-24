@@ -62,6 +62,7 @@ function mount(pixelsPerSecond = 100) {
     onSetPitch: vi.fn(),
     onScrollByPx: vi.fn(),
     onWheelZoom: vi.fn(),
+    onSelectionDragChange: vi.fn(),
   };
   act(() => {
     root.render(
@@ -94,6 +95,20 @@ describe('EditableMeasureStrip bar selection', () => {
     expect(cb.onSelectMeasure).toHaveBeenCalledWith(0, false);
     expect(cb.onSelectMeasureRange).toHaveBeenCalledWith(0, 2);
     expect(cb.onSelectMeasure.mock.invocationCallOrder[0]).toBeLessThan(cb.onSelectMeasureRange.mock.invocationCallOrder[0]);
+  });
+
+  it('reports a drag across bars starting and ending, but never a plain click', () => {
+    const cb = mount();
+    pointer(bar(0), 'pointerdown', 50);
+    pointer(bar(0), 'pointerup', 50);
+    expect(cb.onSelectionDragChange).not.toHaveBeenCalled();
+    pointer(bar(0), 'pointerdown', 50);
+    pointer(bar(0), 'pointermove', 250);
+    expect(cb.onSelectionDragChange).toHaveBeenLastCalledWith(true);
+    act(() => { vi.advanceTimersByTime(20); });
+    pointer(bar(0), 'pointerup', 250);
+    expect(cb.onSelectionDragChange).toHaveBeenLastCalledWith(false);
+    expect(cb.onSelectionDragChange).toHaveBeenCalledTimes(2);
   });
 
   it('a double-click opens the bar under the pointer, even when it lands on the container', () => {

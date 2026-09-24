@@ -690,6 +690,27 @@ html:has([data-marketing]) {
 .st-mpop-item { display: block; width: 100%; text-align: left; }
 .st-mpop-hint { margin-top: 6px; font-size: 11px; line-height: 1.4; color: hsl(var(--muted-foreground)); }
 
+/* The floating measure bar over the selected bars. Centred on `left` by the
+   translateX, which its pop-in keyframe keeps so the bar doesn't jump sideways. */
+.st-fbar {
+  position: absolute; z-index: 45; display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 12px;
+  transform: translateX(-50%); background: hsl(var(--card)); border: 1px solid hsl(var(--border));
+  box-shadow: 0 14px 36px rgba(0,0,0,.5); animation: st-fbar-pop .16s cubic-bezier(.2,.8,.2,1); white-space: nowrap;
+}
+@keyframes st-fbar-pop {
+  from { opacity: 0; transform: translateX(-50%) translateY(5px) scale(.97); }
+  to { opacity: 1; transform: translateX(-50%); }
+}
+.st-fbar button { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 8px; border-radius: 8px; font-size: 12px; }
+.st-fbar button:hover:not(:disabled) { background: hsl(var(--muted)); }
+.st-fbar button:disabled { opacity: .4; cursor: not-allowed; }
+.st-fbar button[aria-pressed='true'] { color: hsl(var(--primary)); }
+.st-fbar .st-fbar-info { padding: 0 8px; font: 11px var(--font-mono, ui-monospace, monospace); color: hsl(var(--muted-foreground)); }
+.st-fbar .st-fbar-sep { width: 1px; height: 18px; margin: 0 4px; background: hsl(var(--border)); }
+@media (prefers-reduced-motion: reduce) { .st-fbar { animation: none; } }
+/* A short-lived note under the editor bar ("Copied m.2–3 with its timing."). */
+.st-flash { font-size: 12px; color: hsl(var(--muted-foreground)); }
+
 /* A bar just inserted by the gap menu (empty / copy / paste) grows in from the
    left so the new bar(s) read as new. */
 @keyframes st-grow { from { transform: scaleX(.6); opacity: .3; } to { transform: none; opacity: 1; } }

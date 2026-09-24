@@ -780,15 +780,33 @@ export function SyncPanel({
     });
   }, [selected]);
 
+  // A/B loop over bars start..end (from the first bar's downbeat to the next
+  // bar's, or the tail). Asking for the range already looping clears it.
+  const { loopEnabled, loopA, loopB, loadLoop, clearLoop } = clock;
+  const loopMeasures = useCallback((start: number, end: number) => {
+    const a = markers.measures[start]?.beats[0]?.videoTimeSeconds;
+    const b = markers.measures[end + 1]?.beats[0]?.videoTimeSeconds ?? markers.tailVideoTimeSeconds;
+    if (a === undefined || b <= a) return;
+    if (loopEnabled && loopA !== null && Math.abs(loopA - a) < 1e-3 && loopB !== null && Math.abs(loopB - b) < 1e-3) clearLoop();
+    else loadLoop(a, b);
+  }, [markers, loopEnabled, loopA, loopB, loadLoop, clearLoop]);
+  // Which bars the current loop covers: the bar whose downbeat is A through the
+  // bar that ends at B. Null when no loop runs or it doesn't sit on bar lines.
+  const loopedRange = useMemo<[number, number] | null>(() => {
+    if (!loopEnabled || loopA === null || loopB === null) return null;
+    const near = (x: number, y: number) => Math.abs(x - y) < 1e-3;
+    const start = markers.measures.findIndex((m) => near(m.beats[0].videoTimeSeconds, loopA));
+    if (start === -1) return null;
+    for (let i = start; i < markers.measures.length; i++) {
+      const end = markers.measures[i + 1]?.beats[0].videoTimeSeconds ?? markers.tailVideoTimeSeconds;
+      if (near(end, loopB)) return [start, i];
+    }
+    return null;
+  }, [markers, loopEnabled, loopA, loopB]);
   const loopSelectedMeasure = () => {
     if (!selected || selected === 'tail') return;
     const i = markers.measures.findIndex((m) => m.measureNumber === selected.measureNumber);
-    if (i === -1) return;
-    const start = markers.measures[i].beats[0].videoTimeSeconds;
-    const next = markers.measures[i + 1];
-    const end = next ? next.beats[0].videoTimeSeconds : markers.tailVideoTimeSeconds;
-    if (end <= start) return;
-    clock.loadLoop(start, end);
+    if (i !== -1) loopMeasures(i, i);
   };
 
   const zoomBy = (factor: number, anchorPx = viewportWidth / 2) => {
@@ -1303,6 +1321,8 @@ export function SyncPanel({
                   }}
                   onSelectionChange={handleSelectionChange}
                   onScrollByPx={handleScrollByPx}
+                  onLoopMeasures={showSync ? loopMeasures : undefined}
+                  loopedRange={showSync ? loopedRange : null}
                 />
               </div>
 

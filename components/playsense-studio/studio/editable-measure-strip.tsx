@@ -115,6 +115,9 @@ export interface EditableMeasureStripProps {
   onSelectMeasureRange: (anchor: number, focus: number) => void;
   /** Double-click opens a bar. */
   onOpenMeasure: (index: number) => void;
+  /** A drag across bars started (true, once the pointer passes the drag
+   *  threshold) or ended (false). A plain click never reports. */
+  onSelectionDragChange?: (dragging: boolean) => void;
   /** Open the "+" menu (empty / copy of the bar before / paste) at this barline
    *  gap (0 = before the first bar, n = after the last). */
   onGapClick?: (gap: number, anchor: PopoverAnchor) => void;
@@ -198,6 +201,7 @@ export function EditableMeasureStrip({
   onRepeatBandClick,
   onSelectMeasureRange,
   onOpenMeasure,
+  onSelectionDragChange,
   onSelectEvent,
   onSetPitch,
   accidental,
@@ -381,6 +385,7 @@ export function EditableMeasureStrip({
     drag.x = containerX(e);
     if (!drag.moved && Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) > DRAG_THRESHOLD_PX) {
       drag.moved = true;
+      onSelectionDragChange?.(true);
       // Capture only now, so a plain click or double-click keeps its target bar.
       try {
         containerRef.current?.setPointerCapture(e.pointerId);
@@ -415,6 +420,7 @@ export function EditableMeasureStrip({
       /* noop */
     }
     selDrag.current = null;
+    if (drag.moved) onSelectionDragChange?.(false);
   };
 
   const handleHitsReady = useCallback((measureIndex: number, hits: MeasureHit[] | null) => {

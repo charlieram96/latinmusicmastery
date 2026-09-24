@@ -8,7 +8,8 @@
 //     bar to select it (drag or ⇧-click for several, double-click to open it);
 //     click a note to select it; drag a note vertically to change its pitch.
 //     Clicks never add notes — the Add note button appends one with the
-//     toolbar's current pitch/duration/modifiers.
+//     toolbar's current pitch/duration/modifiers. A measure bar floats over the
+//     selected bars with every bar-level action; useMeasureKeys holds their keys.
 //   • Piano-roll: the existing PianoRollView (not audio-aligned).
 //
 // Owns the editor view state (selected event, active track, active view, toolbar
@@ -17,7 +18,7 @@
 // here — note edits don't change `structuralSignature`, so the markers above stay
 // put while you edit pitches/durations.
 
-import { ChevronDown, ClipboardPaste, Copy, MoreHorizontal, Music, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, MoreHorizontal, Music, Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch } from 'react';
 import { diatonicToMidi, extractTrackEvents, midiToDiatonic } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion, resolvePercStroke } from '@/lib/playsense-studio/perc-strokes';
@@ -46,9 +47,13 @@ import {
 import { RepeatPopover } from './measure/repeat-popover';
 import { GapMenu } from './measure/gap-menu';
 import { BarPopover } from './measure/bar-popover';
+import { MeasureBar } from './measure/measure-bar';
+import { ShortcutsPopover } from './measure/shortcuts-popover';
+import { useMeasureKeys } from './measure/use-measure-keys';
 import type { PopoverAnchor } from './measure/popover';
 import { tempoAt } from '@/lib/playsense-studio/tempo-marks';
-import type { RepeatBand } from './measure/repeat-lane';
+import { REP_H, type RepeatBand } from './measure/repeat-lane';
+import { isTypingTarget } from '@/lib/playsense-studio/typing-target';
 import { PianoRollView } from './piano-roll-view';
 import { PercussionStrokePicker } from './percussion-stroke-picker';
 import { MidiRecordButton, type MidiRecordingSource } from './midi-record-button';
@@ -177,6 +182,11 @@ export interface IntegratedEditorProps {
   onSelectionChange?: (selection: { ref: SelectedEventRef; trackIndex: number } | null) => void;
   /** Horizontal wheel/trackpad pan over the staff (shared timeline scroll). */
   onScrollByPx?: (dx: number) => void;
+  /** Loads (or clears, when already looping that range) an A/B loop over bars
+   *  start..end. Omitted where there is no video to loop (songs, exercises). */
+  onLoopMeasures?: (start: number, end: number) => void;
+  /** Which bars the current loop covers, if any. */
+  loopedRange?: [number, number] | null;
 }
 
 /** A repeat's closing bar (with dots) replaces any final bar on that measure. */
@@ -197,46 +207,72 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   onRequestZoom,
   onSelectionChange,
   onScrollByPx,
+  onLoopMeasures,
+  loopedRange = null,
 }: IntegratedEditorProps) {
   // Single-track studio: the score model still holds Track[], but the editor
   // always authors track 0.
   const activeTrackIndex = 0;
   const [editorTab, setEditorTab] = useState<EditorTab>('staff');
-  const [repeatOpen, setRepeatOpen] = useState(false);
-  const [repeatStart, setRepeatStart] = useState(1);
-  const [repeatEnd, setRepeatEnd] = useState(1);
-  const [repeatCount, setRepeatCount] = useState(2);
   const [selected, setSelected] = useState<SelectedEventRef | null>(null);
   // Contiguous measure selection: anchor = where it started, focus = the end
-  // being moved (Shift+click / Shift+arrows). Delete, Copy/Paste and Repeat
-  // act on the whole range; "target" semantics follow the focus.
+  // being moved (Shift+click / Shift+arrows). The measure bar's actions act on
+  // the whole range; "target" semantics (Add note) follow the focus.
   const [measureRange, setMeasureRange] = useState<MeasureSelection | null>(null);
   const [rangeStart, rangeEnd] = selectionBounds(measureRange) ?? [null, null];
   const rangeCount = rangeStart !== null && rangeEnd !== null ? rangeEnd - rangeStart + 1 : 0;
+  // The measure menus, each anchored over the strip wrapper (position: relative):
+  // the repeat lane's / Repeat ▾ menu, the gap "+" menu (empty bar / copy of the
+  // bar before / paste) and the Bar ▾ menu (meter/key/clef/barlines/endings/tempo).
+  const [repeatPop, setRepeatPop] = useState<{ anchor: PopoverAnchor } | null>(null);
+  const [gapPop, setGapPop] = useState<{ gap: number; anchor: PopoverAnchor } | null>(null);
+  const [barPop, setBarPop] = useState<{ anchor: PopoverAnchor } | null>(null);
+  // A menu belongs to the bars it opened on: every key or click that changes
+  // the bar selection closes whichever menu is open.
+  const closeMenus = useCallback(() => {
+    setRepeatPop(null);
+    setGapPop(null);
+    setBarPop(null);
+  }, []);
+  const selectBars = useCallback((sel: MeasureSelection | null) => {
+    setSelected(null);
+    setMeasureRange(sel);
+    closeMenus();
+  }, [closeMenus]);
   const selectMeasure = useCallback((index: number, extend = false) => {
     setSelected(null);
     setMeasureRange((prev) => clickSelect(prev, index, extend));
-  }, []);
+    closeMenus();
+  }, [closeMenus]);
   const selectMeasureRange = useCallback((anchor: number, focus: number) => {
-    setSelected(null);
-    setMeasureRange(dragSelect(anchor, focus));
-  }, []);
-  // The repeat lane's menu — anchored over the strip wrapper (position: relative).
-  const [repeatPop, setRepeatPop] = useState<{ anchor: PopoverAnchor } | null>(null);
+    selectBars(dragSelect(anchor, focus));
+  }, [selectBars]);
   const onRepeatBandClick = useCallback((b: RepeatBand, anchor: PopoverAnchor) => {
     selectMeasureRange(b.firstIndex, b.lastIndex);
     setRepeatPop({ anchor });
   }, [selectMeasureRange]);
-  // The gap "+" menu (empty bar / copy of the bar before / paste) — anchored
-  // over the strip wrapper the same way repeatPop is.
-  const [gapPop, setGapPop] = useState<{ gap: number; anchor: PopoverAnchor } | null>(null);
   const onGapClick = useCallback((gap: number, anchor: PopoverAnchor) => {
     setGapPop({ gap, anchor });
   }, []);
-  // The Bar ▾ menu (meter/key/clef/barlines/endings/tempo for one bar) —
-  // anchored over the strip wrapper the same way repeatPop/gapPop are. Task
-  // 11's measure bar opens this by calling setBarPop({ anchor }).
-  const [barPop, setBarPop] = useState<{ anchor: PopoverAnchor } | null>(null);
+  // The measure bar hides while a drag across bars is still choosing them.
+  const [selDragging, setSelDragging] = useState(false);
+  // The footer's "?" menu. `shortcutsWasOpen` notes, at pointerdown, whether it
+  // was open — the menu's own outside-press close runs first, so a second click
+  // on "?" closes it instead of reopening it.
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const shortcutsWasOpen = useRef(false);
+  // A short confirmation under the editor bar ("Cleared. Timing kept."). The
+  // `notice` prop is the parent's refused-edit line, so local messages live here.
+  const [flash, setFlash] = useState<string | null>(null);
+  const flashTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (flashTimeout.current) clearTimeout(flashTimeout.current);
+  }, []);
+  const showFlash = useCallback((message: string) => {
+    setFlash(message);
+    if (flashTimeout.current) clearTimeout(flashTimeout.current);
+    flashTimeout.current = setTimeout(() => setFlash(null), 2500);
+  }, []);
   // Bars just inserted by the gap menu — flashed with `is-new` for 400ms.
   const [newBars, setNewBars] = useState<Set<number>>(new Set());
   const newBarsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -386,41 +422,29 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // stroke) · ←/→ walk the selection · 1-5 durations · "." dot · "t" triplet ·
   // "r" rest. Declared below the handlers it calls via function refs would be
   // noisier; instead this effect lives after the toolbar handlers are defined
-  // (see the second keydown effect further down). This one keeps Esc/Delete.
+  // (see the second keydown effect further down). This one keeps Esc/Delete on
+  // a selected NOTE; the same keys on selected bars live in useMeasureKeys.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (isTypingTarget(e.target)) return;
+      if (!selected || isTypingTarget(e.target)) return;
       if (e.key === 'Escape') {
-        if (selected) {
-          e.preventDefault();
-          setSelected(null);
-        } else if (measureRange) {
-          e.preventDefault();
-          setMeasureRange(null);
-        }
-        return;
-      }
-      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-      if (selected) {
         e.preventDefault();
-        dispatch({
-          type: 'delete-event',
-          trackIndex: activeTrackIndex,
-          measureIndex: selected.measureIndex,
-          eventIndex: selected.eventIndex,
-        });
         setSelected(null);
         return;
       }
-      if (measureRange && rangeStart !== null) {
-        e.preventDefault();
-        dispatch({ type: 'delete-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
-        setMeasureRange(null);
-      }
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+      e.preventDefault();
+      dispatch({
+        type: 'delete-event',
+        trackIndex: activeTrackIndex,
+        measureIndex: selected.measureIndex,
+        eventIndex: selected.eventIndex,
+      });
+      setSelected(null);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [selected, measureRange, rangeStart, rangeCount, dispatch, activeTrackIndex]);
+  }, [selected, dispatch, activeTrackIndex]);
 
   // Extract the active track's notation once per score edit. Kept apart from
   // stripItems so moving sync markers (measureTimings) doesn't re-extract.
@@ -491,7 +515,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const targetMeasureIndex = selected
     ? selected.measureIndex
     : Math.min(measureRange?.focus ?? lastMeasureIndex, lastMeasureIndex);
-  const hasMeasureSelection = selected !== null || measureRange !== null;
 
   // Keep the range inside the score after deletes / undo.
   useEffect(() => {
@@ -515,6 +538,21 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       : structuralEditProblem(score, { type: 'delete-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount })),
     [score, activeTrackIndex, rangeStart, rangeCount]
   );
+  // Duplicating pastes a copy of the bars right after them, so it's refused
+  // wherever that paste would be (inside a repeat, past the measure limit…).
+  const dupProblem = useMemo(() => {
+    if (!activeTrack || rangeStart === null || rangeEnd === null) return 'Select a measure first.';
+    return structuralEditProblem(score, {
+      type: 'paste-measures',
+      trackIndex: activeTrackIndex,
+      index: rangeEnd + 1,
+      clip: {
+        measures: activeTrack.measures.slice(rangeStart, rangeEnd + 1).map(stripCopyTags),
+        context: contextAt(score, activeTrack, rangeStart),
+        instrument: activeTrack.instrument,
+      },
+    });
+  }, [score, activeTrack, activeTrackIndex, rangeStart, rangeEnd]);
 
   const insertMeasureAt = useCallback((index: number) => {
     dispatch({ type: 'insert-measure', trackIndex: activeTrackIndex, index });
@@ -529,15 +567,37 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     if (!clipboard || pasteProblem) return;
     const index = rangeEnd !== null ? rangeEnd + 1 : measureCount;
     dispatch({ type: 'paste-measures', trackIndex: activeTrackIndex, index, clip: clipboard });
-    setSelected(null);
-    setMeasureRange({ anchor: index, focus: index + clipboard.measures.length - 1 });
-  }, [dispatch, activeTrackIndex, clipboard, pasteProblem, rangeEnd, measureCount]);
+    selectBars({ anchor: index, focus: index + clipboard.measures.length - 1 });
+  }, [dispatch, activeTrackIndex, clipboard, pasteProblem, rangeEnd, measureCount, selectBars]);
   const deleteRange = useCallback(() => {
     if (rangeStart === null || deleteProblem) return;
     dispatch({ type: 'delete-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
-    setSelected(null);
-    setMeasureRange(null);
-  }, [dispatch, activeTrackIndex, rangeStart, rangeCount, deleteProblem]);
+    selectBars(null);
+  }, [dispatch, activeTrackIndex, rangeStart, rangeCount, deleteProblem, selectBars]);
+  // "m.2" or "m.2–3", from the bars' own numbers.
+  const rangeLabel = (() => {
+    if (!activeTrack || rangeStart === null || rangeEnd === null) return '';
+    const a = activeTrack.measures[rangeStart]?.number ?? rangeStart + 1;
+    const b = activeTrack.measures[rangeEnd]?.number ?? rangeEnd + 1;
+    return rangeStart === rangeEnd ? `m.${a}` : `m.${a}–${b}`;
+  })();
+  const copyWithNotice = useCallback(() => {
+    if (rangeStart === null) return;
+    copyRange();
+    showFlash(`Copied ${rangeLabel} with its timing.`);
+  }, [rangeStart, copyRange, showFlash, rangeLabel]);
+  // Duplicate the bars right after themselves (the sync panel keeps the copies'
+  // timing) and select the copies.
+  const duplicateRange = useCallback(() => {
+    if (rangeStart === null || rangeEnd === null || dupProblem) return;
+    dispatch({ type: 'duplicate-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
+    selectBars({ anchor: rangeEnd + 1, focus: rangeEnd + rangeCount });
+  }, [dispatch, activeTrackIndex, rangeStart, rangeEnd, rangeCount, dupProblem, selectBars]);
+  const clearRange = useCallback(() => {
+    if (rangeStart === null) return;
+    dispatch({ type: 'clear-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
+    showFlash('Cleared. Timing kept.');
+  }, [dispatch, activeTrackIndex, rangeStart, rangeCount, showFlash]);
 
   // The gap menu's three actions — each selects the bar(s) it just made and
   // flashes them.
@@ -560,37 +620,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     flashNewBars(gap, gap + count - 1);
   }, [dispatch, activeTrackIndex, clipboard, flashNewBars]);
 
-  // Cmd/Ctrl+C / V on a MEASURE selection only — with a note selected the
-  // browser's own copy is left alone.
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey || isTypingTarget(e.target)) return;
-      if (selected !== null || measureRange === null) return;
-      if (e.key === 'c' || e.key === 'C') { e.preventDefault(); copyRange(); }
-      else if (e.key === 'v' || e.key === 'V') { e.preventDefault(); pasteAfterRange(); }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [selected, measureRange, copyRange, pasteAfterRange]);
-
-  // The Repeat panel follows the highlighted range while it is open.
-  useEffect(() => {
-    if (!repeatOpen || rangeStart === null || rangeEnd === null) return;
-    setRepeatStart(rangeStart + 1);
-    setRepeatEnd(rangeEnd + 1);
-  }, [repeatOpen, rangeStart, rangeEnd]);
-
-  // Closing-bar state of the target measure — drives the Double bar toggle.
-  const targetMeasure = activeTrack?.measures[targetMeasureIndex];
-  const targetIsRepeatEnd = !!targetMeasure && isRepeatEnd(targetMeasure);
-  // The repeat group under the selection, if any — the panel offers Unlink
-  // for this one group instead of listing every group in the section.
-  const targetRepeatGroup = activeTrack
-    ? repeatGroups(activeTrack).find(g => targetMeasureIndex >= g.start && targetMeasureIndex < g.start + g.length * g.count) ?? null
-    : null;
-  const targetHasFinalBar = !!activeTrack && !targetIsRepeatEnd && hasFinalBarline(activeTrack.measures, targetMeasureIndex);
-  // Same lookup, keyed on the highlighted range's start — drives the repeat
-  // lane's menu, which follows the selection rather than the toolbar target.
+  // The repeat group under the highlighted range's start, if any — drives the
+  // repeat menu, which follows the selection rather than the toolbar target.
   const repeatGroupAtRange = activeTrack && rangeStart !== null
     ? repeatGroups(activeTrack).find(g => rangeStart >= g.start && rangeStart < g.start + g.length * g.count) ?? null
     : null;
@@ -616,7 +647,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const handleSelectEvent = useCallback((ref: SelectedEventRef) => {
     setSelected(ref);
     setMeasureRange({ anchor: ref.measureIndex, focus: ref.measureIndex });
-  }, []);
+    closeMenus();
+  }, [closeMenus]);
 
   // Insert a note (or rest) into a given measure using the toolbar values.
   const insertIntoMeasure = useCallback(
@@ -690,10 +722,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     const span = Math.max(0.05, t.endVideoTimeSeconds - t.startVideoTimeSeconds);
     const pps = Math.min(600, Math.max(8, (viewportWidth * 0.56) / span));
     const scroll = Math.max(0, t.startVideoTimeSeconds * pps - (viewportWidth - span * pps) / 2);
-    setSelected(null);
-    setMeasureRange({ anchor: index, focus: index });
+    selectBars({ anchor: index, focus: index });
     onRequestZoom(pps, scroll);
-  }, [measureTimings, viewportWidth, onRequestZoom]);
+  }, [measureTimings, viewportWidth, onRequestZoom, selectBars]);
 
   // ---- Toolbar control handlers ---------------------------------------------
 
@@ -814,18 +845,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     if (!activeTrack) return;
     const measures = activeTrack.measures;
     const eventsAt = (mi: number) => measures[mi]?.voices[0]?.events ?? [];
-    if (!selected) {
-      // No selection: enter the strip at its first (or last) event.
-      const range = dir === 1 ? measures.map((_, i) => i) : measures.map((_, i) => measures.length - 1 - i);
-      for (const mi of range) {
-        const events = eventsAt(mi);
-        if (events.length) {
-          setSelected({ measureIndex: mi, eventIndex: dir === 1 ? 0 : events.length - 1 });
-          return;
-        }
-      }
-      return;
-    }
+    if (!selected) return;
     let mi = selected.measureIndex;
     let ei = selected.eventIndex + dir;
     while (mi >= 0 && mi < measures.length) {
@@ -845,6 +865,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
       if (e.key === 'Enter') {
+        // With bars (and no note) selected, ⏎ opens the bar — useMeasureKeys.
+        if (!selected && measureRange) return;
         e.preventDefault();
         handleAddNote();
         return;
@@ -856,23 +878,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         return;
       }
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        // Walk notes only while one is selected; otherwise the arrows move the
+        // bar selection (useMeasureKeys).
+        if (!selected) return;
         e.preventDefault();
-        const dir = e.key === 'ArrowRight' ? 1 : -1;
-        if (e.shiftKey) {
-          // Extend the measure range from its focus (or from the note's bar).
-          const base = measureRange ?? (selected ? { anchor: selected.measureIndex, focus: selected.measureIndex } : null);
-          if (!base) return;
-          const focus = Math.max(0, Math.min(lastMeasureIndex, base.focus + dir));
-          setSelected(null);
-          setMeasureRange({ anchor: base.anchor, focus });
-          return;
-        }
-        if (!selected && measureRange) {
-          const index = Math.max(0, Math.min(lastMeasureIndex, measureRange.focus + dir));
-          setMeasureRange({ anchor: index, focus: index });
-          return;
-        }
-        walkSelection(dir);
+        walkSelection(e.key === 'ArrowRight' ? 1 : -1);
         return;
       }
       const byKey = COMMON_DURATIONS.find((d) => d.key === e.key);
@@ -905,8 +915,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     if (!issues.length) return;
     const from = measureRange ? Math.max(measureRange.anchor, measureRange.focus) : -1;
     const target = issues.find((i) => i > from) ?? issues[0];
-    setSelected(null);
-    setMeasureRange({ anchor: target, focus: target });
+    selectBars({ anchor: target, focus: target });
     const t = measureTimings[target];
     if (t) {
       const left = t.startVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
@@ -916,6 +925,48 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       }
     }
   };
+
+  // ---- The floating measure bar ----------------------------------------------
+
+  useMeasureKeys({
+    enabled: selected === null && editorTab === 'staff',
+    count: measureCount,
+    selection: measureRange,
+    onSelection: selectBars,
+    onOpen: openMeasure,
+    onCopy: copyWithNotice,
+    onPaste: pasteAfterRange,
+    onDuplicate: duplicateRange,
+    onDelete: deleteRange,
+  });
+
+  // Centred over the selected bars (clamped so the bar stays on screen), in
+  // container space: the staff below the repeat lane starts at REP_H.
+  const bounds = selectionBounds(measureRange);
+  const barPos = bounds && !selected && !selDragging ? (() => {
+    const a = measureTimings[bounds[0]], b = measureTimings[bounds[1]];
+    if (!a || !b) return null;
+    const l = a.startVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
+    const r = b.endVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
+    if (r < 0 || l > viewportWidth) return null;
+    const center = Math.max(170, Math.min(viewportWidth - 170, (l + r) / 2));
+    return { left: center, top: Math.min(staffHeight - 44, REP_H + (staffHeight - REP_H) / 2 + 56) };
+  })() : null;
+  // The tempo the selected bars play at: their quarter notes over their seconds.
+  const barBpm = (() => {
+    if (!bounds) return null;
+    const a = measureTimings[bounds[0]], b = measureTimings[bounds[1]];
+    if (!a || !b) return null;
+    const seconds = b.endVideoTimeSeconds - a.startVideoTimeSeconds;
+    if (seconds <= 0) return null;
+    let qn = 0;
+    for (let i = bounds[0]; i <= bounds[1]; i++) {
+      const t = tracked[i];
+      if (t) qn += measureLengthInQN(t.timeSignature);
+    }
+    return (qn / seconds) * 60;
+  })();
+  const barLooping = !!bounds && !!loopedRange && loopedRange[0] === bounds[0] && loopedRange[1] === bounds[1];
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
@@ -988,48 +1039,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           <Plus className="h-3.5 w-3.5" />
           Add measure
         </button>
-        <button type="button" className="st-chip"
-          disabled={!!deleteProblem}
-          title={deleteProblem ?? (rangeCount > 1
-            ? `Delete measures ${rangeStart! + 1}–${rangeEnd! + 1}. Undo restores them.`
-            : 'Delete the selected measure. Undo restores it.')}
-          onClick={deleteRange}>
-          <Trash2 className="h-3.5 w-3.5" />
-          {rangeCount > 1 ? `Delete ${rangeStart! + 1}–${rangeEnd! + 1}` : `Delete measure${hasMeasureSelection ? ` ${targetMeasureIndex + 1}` : ''}`}
-        </button>
-        <button type="button" className="st-chip"
-          disabled={rangeStart === null}
-          title={rangeStart === null ? 'Select a measure first.' : `Copy ${rangeCount === 1 ? 'this measure' : `measures ${rangeStart + 1}–${rangeEnd! + 1}`} with its timing (⌘C)`}
-          onClick={copyRange}>
-          <Copy className="h-3.5 w-3.5" />
-          Copy{rangeCount > 1 ? ` ${rangeCount}` : ''}
-        </button>
-        <button type="button" className="st-chip"
-          disabled={!!pasteProblem}
-          title={pasteProblem ?? `Paste ${clipboard?.measures.length ?? 0} measure${clipboard?.measures.length === 1 ? '' : 's'} ${rangeEnd !== null ? `after measure ${rangeEnd + 1}` : 'at the end'} (⌘V)`}
-          onClick={pasteAfterRange}>
-          <ClipboardPaste className="h-3.5 w-3.5" />
-          Paste{clipboard ? ` ${clipboard.measures.length}` : ''}
-        </button>
-        <button type="button" className={`st-chip${targetHasFinalBar ? ' is-on' : ''}`}
-          aria-pressed={targetHasFinalBar}
-          disabled={!activeTrack || targetIsRepeatEnd}
-          title={targetIsRepeatEnd
-            ? 'A repeat already closes this measure'
-            : targetHasFinalBar
-              ? `Remove the double bar that closes measure ${targetMeasureIndex + 1}`
-              : `Close measure ${targetMeasureIndex + 1} with a double bar (the end of the section)`}
-          onClick={() => dispatch({ type: 'set-measure-final-bar', trackIndex: activeTrackIndex, measureIndex: targetMeasureIndex, final: !targetHasFinalBar })}>
-          Double bar{hasMeasureSelection ? ` ${targetMeasureIndex + 1}` : ''}
-        </button>
-        <button type="button" className={`st-chip${repeatOpen ? ' is-on' : ''}`} aria-expanded={repeatOpen}
-          onClick={() => {
-            if (!repeatOpen) {
-              setRepeatStart((rangeStart ?? targetMeasureIndex) + 1);
-              setRepeatEnd((rangeEnd ?? targetMeasureIndex) + 1);
-            }
-            setRepeatOpen(!repeatOpen);
-          }}>Repeat measures</button>
         {notice && (
           <span role="status" className="basis-full text-xs text-destructive sm:basis-auto">
             {notice}
@@ -1037,41 +1046,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         )}
       </div>
 
-      {repeatOpen && activeTrack && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-md border border-border bg-muted/30 p-3 text-xs">
-          <label className="flex items-center gap-2">From measure
-            <input aria-label="Repeat from measure" type="number" min={1} max={activeTrack.measures.length}
-              className="st-input w-16" value={repeatStart} onChange={e => setRepeatStart(Number(e.target.value))} />
-          </label>
-          <label className="flex items-center gap-2">Through
-            <input aria-label="Repeat through measure" type="number" min={repeatStart} max={activeTrack.measures.length}
-              className="st-input w-16" value={repeatEnd} onChange={e => setRepeatEnd(Number(e.target.value))} />
-          </label>
-          <label className="flex items-center gap-2">Total plays
-            <select className="st-input w-16" value={repeatCount} onChange={e => setRepeatCount(Number(e.target.value))}>
-              {[2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>{n}×</option>)}
-            </select>
-          </label>
-          <button type="button" className="st-chip"
-            disabled={!Number.isInteger(repeatStart) || !Number.isInteger(repeatEnd) || repeatStart < 1 || repeatEnd < repeatStart ||
-              repeatEnd > activeTrack.measures.length || activeTrack.measures.slice(repeatStart - 1, repeatEnd).some(m => m.repeat)}
-            onClick={() => {
-              const length = repeatEnd - repeatStart + 1;
-              dispatch({ type: 'repeat-measures', trackIndex: activeTrackIndex, start: repeatStart - 1,
-                end: repeatEnd - 1, count: repeatCount, id: crypto.randomUUID() });
-              setSelected(null);
-              setMeasureRange({ anchor: repeatStart - 1, focus: repeatStart - 1 + length * repeatCount - 1 });
-            }}>Apply repeat</button>
-          <span className="text-muted-foreground">All passes stay written out here for syncing; students see repeat signs.</span>
-          {targetRepeatGroup && (
-            <div className="flex w-full items-center gap-2">
-              <span>Selected: measures {targetRepeatGroup.start + 1}–{targetRepeatGroup.start + targetRepeatGroup.length} · {targetRepeatGroup.count} plays</span>
-              <button type="button" className="st-chip" onClick={() => dispatch({ type: 'unlink-repeat', trackIndex: activeTrackIndex, id: targetRepeatGroup.id })}>
-                Unlink copies
-              </button>
-            </div>
-          )}
-        </div>
+      {flash && (
+        <p role="status" className="st-flash -mt-1.5 flex-shrink-0">
+          {flash}
+        </p>
       )}
 
       {/* Active view — the audio-aligned staff (or piano-roll). The staff fills
@@ -1090,6 +1068,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               onSelectMeasure={selectMeasure}
               onSelectMeasureRange={selectMeasureRange}
               onOpenMeasure={openMeasure}
+              onSelectionDragChange={setSelDragging}
               onGapClick={onGapClick}
               gapProblems={gapProblems}
               newBars={newBars}
@@ -1109,6 +1088,33 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               onScrollByPx={onScrollByPx}
               height={staffHeight}
             />
+            {barPos && bounds && (
+              <MeasureBar
+                left={barPos.left}
+                top={barPos.top}
+                label={rangeLabel}
+                startSeconds={measureTimings[bounds[0]].startVideoTimeSeconds}
+                bpm={barBpm}
+                looping={barLooping}
+                canLoop={!!onLoopMeasures}
+                problems={{ dup: dupProblem, paste: pasteProblem, clear: null, del: deleteProblem }}
+                onEdit={() => openMeasure(bounds[0])}
+                onLoop={() => onLoopMeasures?.(bounds[0], bounds[1])}
+                onRepeat={(anchor) => setRepeatPop({ anchor })}
+                onDup={duplicateRange}
+                onCopy={copyWithNotice}
+                onPaste={pasteAfterRange}
+                onBar={(anchor) => setBarPop({ anchor })}
+                onClear={clearRange}
+                onDelete={deleteRange}
+              />
+            )}
+            {shortcutsOpen && (
+              <ShortcutsPopover
+                anchor={{ left: Math.max(8, viewportWidth - 330), top: REP_H + 4 }}
+                onClose={() => setShortcutsOpen(false)}
+              />
+            )}
             {repeatPop && rangeStart !== null && rangeEnd !== null && (
               <RepeatPopover
                 anchor={repeatPop.anchor}
@@ -1130,7 +1136,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                   setRepeatPop(null);
                 }}
                 onSelectPassOne={() => {
-                  if (repeatGroupAtRange) selectMeasureRange(repeatGroupAtRange.start, repeatGroupAtRange.start + repeatGroupAtRange.length - 1);
+                  // Stays open: the menu's own action, not a new selection in the strip.
+                  if (!repeatGroupAtRange) return;
+                  setSelected(null);
+                  setMeasureRange(dragSelect(repeatGroupAtRange.start, repeatGroupAtRange.start + repeatGroupAtRange.length - 1));
                 }}
                 onClose={() => setRepeatPop(null)}
               />
@@ -1189,6 +1198,20 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 ? '⏎ zoom in · ⌘D duplicate · ⌫ delete · esc deselect'
                 : 'Drag across bars to select · double-click a bar to zoom in · scroll to zoom'}
             </span>
+            <button
+              type="button"
+              className="ml-auto grid h-6 w-6 place-items-center rounded-full border border-border text-[11px]"
+              aria-label="Keyboard shortcuts"
+              title="Keyboard shortcuts"
+              aria-expanded={shortcutsOpen}
+              onPointerDown={() => { shortcutsWasOpen.current = shortcutsOpen; }}
+              onClick={() => {
+                setShortcutsOpen(!shortcutsWasOpen.current);
+                shortcutsWasOpen.current = false;
+              }}
+            >
+              ?
+            </button>
           </div>
         </>
       )}
@@ -1408,14 +1431,9 @@ function formatBeats(beats: number): string {
   return Number.isInteger(beats) ? String(beats) : beats.toFixed(1);
 }
 
-export function isTypingTarget(target: EventTarget | null): boolean {
-  return (
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLTextAreaElement ||
-    target instanceof HTMLSelectElement ||
-    (target instanceof HTMLElement && (target.isContentEditable || !!target.closest('[role="dialog"]')))
-  );
-}
+// Moved to lib/playsense-studio/typing-target.ts (the measure keys hook needs
+// it without importing this file); re-exported for existing importers.
+export { isTypingTarget };
 
 function midiToParts(midi: number): { letter: string; accidental: number; octave: number } {
   const pc = ((midi % 12) + 12) % 12;
