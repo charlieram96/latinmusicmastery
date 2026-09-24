@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Span, Track } from '@/components/playsense-studio/shared/score-model/types';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import { measureFill } from '@/lib/playsense-studio/measure-fill';
@@ -111,5 +111,73 @@ describe('ContinuousStaff', () => {
     render({ scrollLeftPx: 40 });
     expect(host.querySelector('svg')).toBe(svg);
     expect(wrapper.style.transform).not.toBe(before);
+  });
+
+  describe('redraws at most once per animation frame', () => {
+    let frames: Map<number, FrameRequestCallback>;
+    let nextId: number;
+    beforeEach(() => {
+      frames = new Map();
+      nextId = 1;
+      vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { frames.set(nextId, cb); return nextId++; });
+      vi.stubGlobal('cancelAnimationFrame', (id: number) => { frames.delete(id); });
+    });
+    afterEach(() => vi.unstubAllGlobals());
+    const flushFrame = () => act(() => {
+      const due = [...frames.values()];
+      frames.clear();
+      due.forEach((cb) => cb(performance.now()));
+    });
+    // Every draw puts a fresh <svg> into the host, so counting them counts draws.
+    const countDraws = () => {
+      let draws = 0;
+      const obs = new MutationObserver((records) => {
+        for (const r of records) r.addedNodes.forEach((n) => { if (n.nodeName.toLowerCase() === 'svg') draws++; });
+      });
+      obs.observe(host, { childList: true, subtree: true });
+      return () => { obs.takeRecords().forEach((r) => r.addedNodes.forEach((n) => { if (n.nodeName.toLowerCase() === 'svg') draws++; })); obs.disconnect(); return draws; };
+    };
+    const staff = (p: { items?: MeasureStripItem[]; pps?: number; spans?: Span[]; scrollLeftPx?: number }) => (
+      <ContinuousStaff
+        items={p.items ?? items} pixelsPerSecond={p.pps ?? 150} scrollLeftPx={p.scrollLeftPx ?? 0} viewportWidth={800} height={220}
+        spans={p.spans} onHitsReady={() => {}}
+      />
+    );
+
+    it('merges several prop changes within one frame into one draw', () => {
+      act(() => root.render(staff({})));
+      expect(host.querySelectorAll('svg')).toHaveLength(1); // the first draw is immediate
+      const stop = countDraws();
+      act(() => root.render(staff({ items: items.map((it) => ({ ...it })) })));
+      act(() => root.render(staff({ items: items.map((it) => ({ ...it })), pps: 160 })));
+      act(() => root.render(staff({ items: items.map((it) => ({ ...it })), pps: 170, spans: [{ id: 's', type: 'slur', from: 'b', to: 'c' }] })));
+      flushFrame();
+      expect(stop()).toBe(1);
+      expect(host.querySelectorAll('svg')).toHaveLength(1);
+      expect(frames.size).toBe(0);
+    });
+
+    it('draws nothing until the frame, keeping the drawn staff where it was drawn', () => {
+      act(() => root.render(staff({})));
+      const svg = host.querySelector('svg');
+      const wrapper = svg!.parentElement as HTMLElement;
+      // A scroll far enough to move the render window: until the frame, the old
+      // drawing stays up and the transform still places it at its own window.
+      act(() => root.render(staff({ scrollLeftPx: 700 })));
+      expect(host.querySelector('svg')).toBe(svg);
+      expect(wrapper.style.transform).toBe('translateX(-1500px)'); // drawn from -800, viewed from 700
+      flushFrame();
+      expect(host.querySelector('svg')).not.toBe(svg);
+      expect(wrapper.style.transform).toBe('translateX(-800px)'); // redrawn from -100
+    });
+
+    it('cancels a pending draw on unmount', () => {
+      act(() => root.render(staff({})));
+      act(() => root.render(staff({ pps: 160 })));
+      expect(frames.size).toBe(1);
+      act(() => root.unmount());
+      expect(frames.size).toBe(0);
+      root = createRoot(host);
+    });
   });
 });

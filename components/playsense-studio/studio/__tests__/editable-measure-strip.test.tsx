@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Track } from '@/components/playsense-studio/shared/score-model/types';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import { measureFill } from '@/lib/playsense-studio/measure-fill';
@@ -17,8 +17,18 @@ beforeAll(() => {
 
 let root: Root;
 let host: HTMLDivElement;
+// The staff merges redraws into animation frames; the tests run them by hand.
+let frames: FrameRequestCallback[] = [];
+const flushFrames = () => act(() => {
+  const due = frames;
+  frames = [];
+  due.forEach((cb) => cb(performance.now()));
+});
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+  frames = [];
+  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
+  vi.stubGlobal('cancelAnimationFrame', () => {});
   host = document.createElement('div');
   document.body.appendChild(host);
   root = createRoot(host);
@@ -26,6 +36,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
+  vi.unstubAllGlobals();
 });
 
 const noop = () => {};
@@ -56,6 +67,8 @@ function renderStrip(track: Track, keyFifths = 0) {
       />,
     );
   });
+  // The strip measures its viewport after mounting, so the staff redraws once more.
+  flushFrames();
   return [...host.querySelectorAll('svg')].filter(svg => svg.querySelector('.vf-stave'));
 }
 
