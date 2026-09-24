@@ -44,37 +44,21 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 
 ## Plan 3 — Studio shell and measure editing (spec §6)
 
-**Shell:**
-- hover rail (52→340 px overlay, 120 ms)
-- floating PiP video
-- resizable splitter
-- one-row transport
-- wheel: vertical zooms, horizontal pans
+**3a done 2026-09-24** (shell, strip selection, beat counts, measure bar, repeat/gap/Bar menus, tempo-mark confirmation, section drag, event ids, continuous staff). 3b — measure zoom and note editing — follows.
 
-**Measure strip:**
-- one continuous SVG across the visible range (moved from Plan 2), so slurs and hairpins cross barlines in the strip
-- selection model: click, drag or ⇧-click selects; never mutates notes
-- floating measure bar
-- beat counts with the short/over states and the footer issue chip
-- repeat lane
-- the **+** between bars
-- section-block drag
+## Plan 3b (next)
 
-**Measure zoom:**
-- zoom animation, slivers, beat bands, fill meter
-- floating note toolbar and More ▾ tabs
+- the measure zoom (the animation, slivers, beat bands, fill meter)
+- the floating note toolbar and the More ▾ tabs
 - the full keyboard map
-- V1/V2, drag to change pitch, pencil click-to-add
-
-**Wiring:**
-- `ensureEventIds` runs when a score opens
-- Event-id integrity: `ensureEventIds` must also replace duplicate ids; paste, repeat and append give copied events new ids; append merges or remaps `spans`; deleting events removes spans that reference them.
-- span editing
-- repeat propagation
-
-**Split:** `integrated-editor.tsx` (1286 lines) and `sync-panel.tsx` (1809 lines) are broken into focused components as they're rebuilt.
-
-**Tempo marks:** an editable tempo mark per measure; must clean or confirm existing per-measure `tempoChange` values (stale MusicXML-import leftovers that disagree with the admin-set tempo) before the engine can honour them (see spec §8).
+- V1/V2 editing
+- drag to change pitch, moved from the strip into the zoom
+- pencil click-to-add
+- span editing (slur, cresc/dim), with span mirroring across repeat passes via `passEventId`
+- tuplet group editing consistency
+- beam grouping for additive meters
+- the legacy triplet `[8,16,16,8]` grouping
+- the footer hint wording `⏎ edit notes`
 
 ## Plan 6 — Drafts, publish, history (spec §9)
 
@@ -113,6 +97,7 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
   - video follows the clock through a rate trim (no 0.35 s re-seeks)
 - **Highway beat lines** use the P1 grid.
 - **Metronome** is scheduled from the P1 grid (per-measure tempo/meter), not the uniform `bpm`/`timeSignature` alone.
+- Honour Measure.tempoChange only when score.tempoMarksConfirmed is true (P3a added the flag and the keep/clear prompt).
 
 ## Plan 7 — Listen, loop, MIDI (spec §10)
 
@@ -128,9 +113,10 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 - **P3:**
   - Beam grouping for additive meters such as 7/8 (today 2+2+2+1).
   - A slur's open start at a line break has no draw-level smoke test (data-level covered).
-  - Rename one of `MeasureClip.spans` (video-time) / `ScoreDocument.spans` (notation) before they meet in the clipboard. (not done in P2; do it with the clipboard/event-id work)
+  - Event-id integrity: `ensureEventIds` replaces duplicate ids; paste, repeat and append give copied events new ids; spans are merged or remapped. (done in P3a)
+  - Rename one of `MeasureClip.spans` (video-time) / `ScoreDocument.spans` (notation) before they meet in the clipboard. (done in P3a)
   - Tuplet group editing: toggling one member of an n:m group must keep the whole group consistent (today one id can end up with mixed ratios).
-  - Tuplet group ids should carry the per-import token too (fold into the event-id integrity work).
+  - Tuplet group ids should carry the per-import token too (done in P3a).
 - **P3 / P5:**
   - Add a larger real-world MusicXML fixture that runs through `parseScoreDocument`.
   - Assert that `measure.number` equals its index + 1 wherever the grid is built.
