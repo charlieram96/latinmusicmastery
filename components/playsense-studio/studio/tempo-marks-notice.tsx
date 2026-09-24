@@ -1,8 +1,8 @@
 'use client';
 
-// A card shown only while the score carries imported tempo marks that
-// disagree with the lesson tempo, asking the admin to keep or clear them
-// (spec §8). See lib/playsense-studio/tempo-marks.ts.
+// A card shown only while the score carries tempo marks that disagree with
+// the lesson tempo — imported ones or ones set in the Bar menu — asking the
+// admin to keep or clear them (spec §8). See lib/playsense-studio/tempo-marks.ts.
 
 import type { Dispatch } from 'react';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
@@ -15,7 +15,7 @@ export function TempoMarksNotice({ score, dispatch }: { score: ScoreDocument; di
 
   const message = `This score has tempo marks that differ from the lesson tempo (${score.initialTempo} BPM): ${marks
     .map((m) => `m.${m.measureNumber} ♩=${m.bpm}`)
-    .join(', ')}. Graded play ignores them until you keep them.`;
+    .join(', ')}. Graded play ignores them until you keep them — this includes marks you set here.`;
 
   return (
     <div className="st-icard">
