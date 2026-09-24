@@ -258,7 +258,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const next = clone(state.score);
       if (action.title !== undefined) next.title = action.title;
       if (action.composer !== undefined) next.composer = action.composer;
-      if (action.initialTempo !== undefined) {
+      if (action.initialTempo !== undefined && Number.isFinite(action.initialTempo)) {
         next.initialTempo = Math.min(400, Math.max(20, Math.round(action.initialTempo)));
       }
       if (action.initialTimeSignature !== undefined) {
@@ -341,9 +341,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         changed = true;
       }
       if (!changed) return state;
-      const spans = pruneSpans(next);
-      if (spans) next.spans = spans;
-      return withHistory(state, next);
+      const result = withHistory(state, next);
+      // Prune AFTER withHistory has mirrored this clear onto every other pass —
+      // a span whose note only disappeared through that mirroring (not this
+      // action's own loop) still needs to be caught.
+      const spans = pruneSpans(result.score);
+      if (spans) result.score.spans = spans;
+      return result;
     }
     case 'set-measure-props': {
       const next = clone(state.score);
@@ -351,25 +355,38 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const m = track?.measures[action.measureIndex];
       if (!track || !m) return state;
       const first = action.measureIndex === 0;
+      // A repeat pass must keep its own explicit anchor even when the new
+      // value happens to equal what THIS pass alone inherits: withHistory
+      // mirrors whatever this bar ends up with onto every other pass sharing
+      // its offset, and later passes inherit from the PREVIOUS pass's last
+      // bar, not from this one — deleting the override here would leave
+      // those passes reading the wrong meter/key/tempo/clef.
+      const anchored = !!m.repeat;
       const before = inheritedContext(next, track, action.measureIndex);
       const p = action.props;
       if (p.timeSignature) {
-        if (first) { next.initialTimeSignature = p.timeSignature; delete m.timeSignature; }
-        else if (p.timeSignature[0] === before.timeSignature[0] && p.timeSignature[1] === before.timeSignature[1]) delete m.timeSignature;
+        if (first) next.initialTimeSignature = p.timeSignature;
+        const matchesInherited = !first && p.timeSignature[0] === before.timeSignature[0] && p.timeSignature[1] === before.timeSignature[1];
+        if ((first || matchesInherited) && !anchored) delete m.timeSignature;
         else m.timeSignature = [p.timeSignature[0], p.timeSignature[1]];
       }
       if (p.keyFifths !== undefined) {
-        if (first) { next.initialKeyFifths = p.keyFifths; delete m.keyFifths; }
-        else if (p.keyFifths === before.keyFifths) delete m.keyFifths;
+        if (first) next.initialKeyFifths = p.keyFifths;
+        const matchesInherited = !first && p.keyFifths === before.keyFifths;
+        if ((first || matchesInherited) && !anchored) delete m.keyFifths;
         else m.keyFifths = p.keyFifths;
       }
-      if (p.tempo !== undefined) {
+      if (p.tempo !== undefined && Number.isFinite(p.tempo)) {
         const bpm = Math.max(20, Math.min(400, Math.round(p.tempo)));
-        if (first) { next.initialTempo = bpm; delete m.tempoChange; }
-        else if (bpm === before.tempo) delete m.tempoChange;
+        if (first) next.initialTempo = bpm;
+        const matchesInherited = !first && bpm === before.tempo;
+        if ((first || matchesInherited) && !anchored) delete m.tempoChange;
         else m.tempoChange = bpm;
       }
-      if (p.clef) { if (p.clef === before.clef) delete m.clef; else m.clef = p.clef; }
+      if (p.clef) {
+        if (p.clef === before.clef && !anchored) delete m.clef;
+        else m.clef = p.clef;
+      }
       if (p.repeatStart !== undefined) { if (p.repeatStart) m.repeatStart = true; else delete m.repeatStart; }
       if (p.repeatEnd !== undefined) { if (p.repeatEnd) m.repeatEnd = true; else delete m.repeatEnd; }
       if (p.endBarline !== undefined) { if (p.endBarline) m.endBarline = p.endBarline; else if (m.endBarline === 'double') delete m.endBarline; }

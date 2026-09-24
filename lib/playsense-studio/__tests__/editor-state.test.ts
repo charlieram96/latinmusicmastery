@@ -210,3 +210,11 @@ describe('set-event-pitch spelling', () => {
     expect(e.notes[1].spelling).toEqual({ step: 'G', alter: 0 });
   });
 });
+
+describe('set-score-meta (fix round 1)', () => {
+  it('ignores a non-finite initial tempo instead of writing NaN', () => {
+    const s0 = stateOf(makeScore([]));
+    const s1 = editorReducer(s0, { type: 'set-score-meta', initialTempo: NaN });
+    expect(s1.score.initialTempo).toBe(120);
+  });
+});
