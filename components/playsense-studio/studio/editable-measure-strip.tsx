@@ -115,10 +115,13 @@ export interface EditableMeasureStripProps {
   onSelectMeasureRange: (anchor: number, focus: number) => void;
   /** Double-click opens a bar. */
   onOpenMeasure: (index: number) => void;
-  /** Insert a blank bar at this barline gap (0 = before the first bar, n = after the last). */
-  onInsertMeasureAt?: (index: number) => void;
+  /** Open the "+" menu (empty / copy of the bar before / paste) at this barline
+   *  gap (0 = before the first bar, n = after the last). */
+  onGapClick?: (gap: number, anchor: PopoverAnchor) => void;
   /** Per gap (n + 1 entries): why a bar cannot be inserted there, or null. */
   gapProblems?: Array<string | null>;
+  /** Measure indices to flash (just inserted by the gap menu): adds `is-new`. */
+  newBars?: Set<number>;
   /** A repeat-lane band was clicked: open the repeat menu at this anchor. */
   onRepeatBandClick?: (band: RepeatBand, anchor: PopoverAnchor) => void;
   onSelectEvent: (ref: SelectedEventRef) => void;
@@ -189,8 +192,9 @@ export function EditableMeasureStrip({
   selected,
   selectedMeasures = null,
   onSelectMeasure,
-  onInsertMeasureAt,
+  onGapClick,
   gapProblems,
+  newBars,
   onRepeatBandClick,
   onSelectMeasureRange,
   onOpenMeasure,
@@ -645,7 +649,7 @@ export function EditableMeasureStrip({
           <div
             key={item.measureIndex}
             data-measure-index={item.measureIndex}
-            className={`absolute ${inRange(item.measureIndex) ? 'ring-2 ring-inset ring-primary bg-primary/5' : ''}${isFocus(item.measureIndex) ? ' st-measure-focus' : ''}`}
+            className={`absolute ${inRange(item.measureIndex) ? 'ring-2 ring-inset ring-primary bg-primary/5' : ''}${isFocus(item.measureIndex) ? ' st-measure-focus' : ''}${newBars?.has(item.measureIndex) ? ' is-new' : ''}`}
             style={{ left: startX, top: REP_H, width, height: height - REP_H, cursor, touchAction: 'none' }}
             onPointerDown={(e) => handlePointerDown(e, item)}
             onPointerMove={(e) => handlePointerMove(e, item)}
@@ -710,9 +714,10 @@ export function EditableMeasureStrip({
       {/* Repeat lane — one band per pass, reserved at the strip's top edge. */}
       <RepeatLane bands={bands} onBandClick={onRepeatBandClick ?? (() => {})} />
 
-      {/* "+" at every barline gap (and both ends): insert a bar there. Hidden
-          during drags and where a neighbouring bar is too narrow to read. */}
-      {onInsertMeasureAt && !dragging && measures.length > 0 &&
+      {/* "+" at every barline gap (and both ends): opens the gap menu (empty /
+          copy / paste). Hidden during drags and where a neighbouring bar is
+          too narrow to read. */}
+      {onGapClick && !dragging && measures.length > 0 &&
         Array.from({ length: measures.length + 1 }, (_, gap) => {
           const before = measures[gap - 1];
           const after = measures[gap];
@@ -735,7 +740,7 @@ export function EditableMeasureStrip({
               title={problem ?? label}
               disabled={!!problem}
               onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); onInsertMeasureAt(gap); }}
+              onClick={(e) => { e.stopPropagation(); onGapClick(gap, { left: x - 10, top: REP_H + 26 }); }}
             >
               <Plus className="h-3 w-3" />
             </button>

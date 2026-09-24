@@ -690,6 +690,12 @@ html:has([data-marketing]) {
 .st-mpop-item { display: block; width: 100%; text-align: left; }
 .st-mpop-hint { margin-top: 6px; font-size: 11px; line-height: 1.4; color: hsl(var(--muted-foreground)); }
 
+/* A bar just inserted by the gap menu (empty / copy / paste) grows in from the
+   left so the new bar(s) read as new. */
+@keyframes st-grow { from { transform: scaleX(.6); opacity: .3; } to { transform: none; opacity: 1; } }
+.is-new { transform-origin: left center; animation: st-grow .35s cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion: reduce) { .is-new { animation: none; } }
+
 /* The waveform lane — its own bordered surface inside the (borderless) stage. */
 .st-wave-lane {
   border: 1px solid hsl(var(--border));

@@ -44,6 +44,7 @@ import {
   type SelectedEventRef,
 } from './editable-measure-strip';
 import { RepeatPopover } from './measure/repeat-popover';
+import { GapMenu } from './measure/gap-menu';
 import type { PopoverAnchor } from './measure/popover';
 import type { RepeatBand } from './measure/repeat-lane';
 import { PianoRollView } from './piano-roll-view';
@@ -144,8 +145,8 @@ type EditorTab = 'staff' | 'piano-roll';
 
 import { repeatGroups } from '@/lib/playsense-studio/repeats';
 import { hasFinalBarline } from '@/lib/playsense-studio/barlines';
-import { structuralEditProblem } from '@/lib/playsense-studio/measure-edits';
-import { readMeasureClipboard, subscribeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
+import { contextAt, structuralEditProblem } from '@/lib/playsense-studio/measure-edits';
+import { readMeasureClipboard, stripCopyTags, subscribeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
 import { clampSelection, clickSelect, dragSelect, selectionBounds, type MeasureSelection } from '@/lib/playsense-studio/measure-selection';
 
 export interface IntegratedEditorMeasureTiming {
@@ -224,6 +225,25 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     selectMeasureRange(b.firstIndex, b.lastIndex);
     setRepeatPop({ anchor });
   }, [selectMeasureRange]);
+  // The gap "+" menu (empty bar / copy of the bar before / paste) — anchored
+  // over the strip wrapper the same way repeatPop is.
+  const [gapPop, setGapPop] = useState<{ gap: number; anchor: PopoverAnchor } | null>(null);
+  const onGapClick = useCallback((gap: number, anchor: PopoverAnchor) => {
+    setGapPop({ gap, anchor });
+  }, []);
+  // Bars just inserted by the gap menu — flashed with `is-new` for 400ms.
+  const [newBars, setNewBars] = useState<Set<number>>(new Set());
+  const newBarsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (newBarsTimeout.current) clearTimeout(newBarsTimeout.current);
+  }, []);
+  const flashNewBars = useCallback((from: number, to: number) => {
+    const next = new Set<number>();
+    for (let i = from; i <= to; i++) next.add(i);
+    setNewBars(next);
+    if (newBarsTimeout.current) clearTimeout(newBarsTimeout.current);
+    newBarsTimeout.current = setTimeout(() => setNewBars(new Set()), 400);
+  }, []);
   const clipboard = useSyncExternalStore(subscribeMeasureClipboard, readMeasureClipboard, () => null);
   const [duration, setDuration] = useState<number>(1);
   const [pitchLetter, setPitchLetter] = useState<string>('C');
@@ -493,6 +513,27 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     setSelected(null);
     setMeasureRange(null);
   }, [dispatch, activeTrackIndex, rangeStart, rangeCount, deleteProblem]);
+
+  // The gap menu's three actions — each selects the bar(s) it just made and
+  // flashes them.
+  const gapEmpty = useCallback((gap: number) => {
+    insertMeasureAt(gap);
+    flashNewBars(gap, gap);
+  }, [insertMeasureAt, flashNewBars]);
+  const gapCopyLeft = useCallback((gap: number) => {
+    dispatch({ type: 'duplicate-measures', trackIndex: activeTrackIndex, start: gap - 1, count: 1 });
+    setSelected(null);
+    setMeasureRange({ anchor: gap, focus: gap });
+    flashNewBars(gap, gap);
+  }, [dispatch, activeTrackIndex, flashNewBars]);
+  const gapPaste = useCallback((gap: number) => {
+    if (!clipboard) return;
+    const count = clipboard.measures.length;
+    dispatch({ type: 'paste-measures', trackIndex: activeTrackIndex, index: gap, clip: clipboard });
+    setSelected(null);
+    setMeasureRange({ anchor: gap, focus: gap + count - 1 });
+    flashNewBars(gap, gap + count - 1);
+  }, [dispatch, activeTrackIndex, clipboard, flashNewBars]);
 
   // Cmd/Ctrl+C / V on a MEASURE selection only — with a note selected the
   // browser's own copy is left alone.
@@ -1024,8 +1065,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               onSelectMeasure={selectMeasure}
               onSelectMeasureRange={selectMeasureRange}
               onOpenMeasure={openMeasure}
-              onInsertMeasureAt={insertMeasureAt}
+              onGapClick={onGapClick}
               gapProblems={gapProblems}
+              newBars={newBars}
               onRepeatBandClick={onRepeatBandClick}
               onSelectEvent={handleSelectEvent}
               onRequestZoomTo={handleRequestZoomTo}
@@ -1066,6 +1108,36 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                   if (repeatGroupAtRange) selectMeasureRange(repeatGroupAtRange.start, repeatGroupAtRange.start + repeatGroupAtRange.length - 1);
                 }}
                 onClose={() => setRepeatPop(null)}
+              />
+            )}
+            {gapPop && activeTrack && (
+              <GapMenu
+                anchor={gapPop.anchor}
+                gap={gapPop.gap}
+                measureCount={measureCount}
+                clipCount={clipboard ? clipboard.measures.length : null}
+                problems={{
+                  empty: gapProblems[gapPop.gap] ?? null,
+                  copy: gapPop.gap > 0
+                    ? structuralEditProblem(score, {
+                        type: 'paste-measures',
+                        trackIndex: activeTrackIndex,
+                        index: gapPop.gap,
+                        clip: {
+                          measures: [stripCopyTags(activeTrack.measures[gapPop.gap - 1])],
+                          context: contextAt(score, activeTrack, gapPop.gap - 1),
+                          instrument: activeTrack.instrument,
+                        },
+                      })
+                    : null,
+                  paste: clipboard
+                    ? structuralEditProblem(score, { type: 'paste-measures', trackIndex: activeTrackIndex, index: gapPop.gap, clip: clipboard })
+                    : null,
+                }}
+                onEmpty={() => gapEmpty(gapPop.gap)}
+                onCopyLeft={() => gapCopyLeft(gapPop.gap)}
+                onPaste={() => gapPaste(gapPop.gap)}
+                onClose={() => setGapPop(null)}
               />
             )}
           </div>
