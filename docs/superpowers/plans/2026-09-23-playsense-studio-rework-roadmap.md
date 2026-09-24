@@ -46,7 +46,7 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 
 **3a done 2026-09-24** (shell, strip selection, beat counts, measure bar, repeat/gap/Bar menus, tempo-mark confirmation, section drag, event ids, continuous staff). 3b — measure zoom and note editing — follows.
 
-## Plan 3b (next)
+### Plan 3b (next)
 
 - the measure zoom (the animation, slivers, beat bands, fill meter)
 - the floating note toolbar and the More ▾ tabs
@@ -59,6 +59,10 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 - beam grouping for additive meters
 - the legacy triplet `[8,16,16,8]` grouping
 - the footer hint wording `⏎ edit notes`
+- a slur or hairpin whose far end is outside the continuous staff's drawn window isn't drawn; draw it open at the window edge
+- debounce the continuous staff's redraw during zoom (each zoom tick redraws the whole window)
+- the one-row transport: still two rows (TransportBar is shared with the student player, so it's redone with Plan 7's Hear/Loop controls)
+- MIDI-recorded notes get event ids only on the next open; assign them when recorded
 
 ## Plan 6 — Drafts, publish, history (spec §9)
 
