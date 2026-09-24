@@ -64,6 +64,13 @@ export interface ScoreDocument {
   initialKeyFifths: number;
   tracks: Track[];
   spans?: Span[];
+  /**
+   * True once the admin has reviewed per-bar tempo marks (measures[].tempoChange)
+   * that an import left disagreeing with `initialTempo` and chosen to keep them
+   * (see lib/playsense-studio/tempo-marks.ts, spec §8). Unset/false: graded play
+   * ignores every tempoChange.
+   */
+  tempoMarksConfirmed?: boolean;
 }
 
 export interface Track {

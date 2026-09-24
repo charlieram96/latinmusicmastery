@@ -84,6 +84,8 @@ export type EditorAction =
   | { type: 'set-measure-final-bar'; trackIndex: number; measureIndex: number; final: boolean }
   | { type: 'clear-measures'; trackIndex: number; start: number; count: number }
   | { type: 'set-measure-props'; trackIndex: number; measureIndex: number; props: MeasurePropsPatch }
+  | { type: 'set-tempo-marks-confirmed'; confirmed: boolean }
+  | { type: 'clear-tempo-marks'; trackIndex: number }
   | { type: 'duplicate-measures'; trackIndex: number; start: number; count: number }
   | {
       type: 'add-note';
@@ -392,6 +394,19 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (p.endBarline !== undefined) { if (p.endBarline) m.endBarline = p.endBarline; else if (m.endBarline === 'double') delete m.endBarline; }
       if (p.volta !== undefined) { if (p.volta) m.volta = p.volta; else delete m.volta; }
       if (JSON.stringify(next) === JSON.stringify(state.score)) return state;
+      return withHistory(state, next);
+    }
+    case 'set-tempo-marks-confirmed': {
+      if (!!state.score.tempoMarksConfirmed === action.confirmed) return state;
+      const next = clone(state.score);
+      if (action.confirmed) next.tempoMarksConfirmed = true; else delete next.tempoMarksConfirmed;
+      return withHistory(state, next);
+    }
+    case 'clear-tempo-marks': {
+      const next = clone(state.score);
+      const track = next.tracks[action.trackIndex];
+      if (!track || !track.measures.some((m) => m.tempoChange !== undefined)) return state;
+      track.measures.forEach((m) => { delete m.tempoChange; });
       return withHistory(state, next);
     }
     case 'duplicate-measures': {

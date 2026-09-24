@@ -95,3 +95,13 @@ describe('parseScoreDocument — measure end barline', () => {
     expect(() => parseScoreDocument(base)).toThrow(ScoreDocumentValidationError);
   });
 });
+
+describe('parseScoreDocument — tempoMarksConfirmed', () => {
+  it('round-trips the flag', () => {
+    const parsed = parseScoreDocument({
+      ...serializeScoreDocument(GUITAR_LICK_FIXTURE) as object,
+      tempoMarksConfirmed: true,
+    });
+    expect(parsed.tempoMarksConfirmed).toBe(true);
+  });
+});

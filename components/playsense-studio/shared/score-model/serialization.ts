@@ -152,6 +152,7 @@ const scoreDocumentSchema = z.object({
   initialKeyFifths: z.number().int().min(-7).max(7),
   tracks: z.array(trackSchema).min(1),
   spans: z.array(z.object({ id: z.string().min(1), type: z.enum(['slur', 'cresc', 'dim']), from: z.string().min(1), to: z.string().min(1) })).optional(),
+  tempoMarksConfirmed: z.boolean().optional(),
 });
 
 export const SCORE_DOCUMENT_SCHEMA = scoreDocumentSchema;

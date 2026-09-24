@@ -218,3 +218,40 @@ describe('set-score-meta (fix round 1)', () => {
     expect(s1.score.initialTempo).toBe(120);
   });
 });
+
+function scoreWithTempoMarks(): ScoreDocument {
+  const score = makeScore([]);
+  score.tracks[0].measures = [
+    { number: 1, voices: [{ number: 1, events: [] }] },
+    { number: 2, voices: [{ number: 1, events: [] }], tempoChange: 120 },
+    { number: 3, voices: [{ number: 1, events: [] }], tempoChange: 100 },
+  ];
+  return score;
+}
+
+describe('set-tempo-marks-confirmed / clear-tempo-marks', () => {
+  it('set-tempo-marks-confirmed sets the flag', () => {
+    const s0 = stateOf(scoreWithTempoMarks());
+    const s1 = editorReducer(s0, { type: 'set-tempo-marks-confirmed', confirmed: true });
+    expect(s1.score.tempoMarksConfirmed).toBe(true);
+    const s2 = editorReducer(s1, { type: 'set-tempo-marks-confirmed', confirmed: false });
+    expect(s2.score.tempoMarksConfirmed).toBeUndefined();
+  });
+
+  it('is a no-op (no history push) when the flag already matches', () => {
+    const s0 = stateOf(scoreWithTempoMarks());
+    expect(editorReducer(s0, { type: 'set-tempo-marks-confirmed', confirmed: false })).toBe(s0);
+  });
+
+  it('clear-tempo-marks removes every tempoChange on the track and leaves initialTempo alone', () => {
+    const s0 = stateOf(scoreWithTempoMarks());
+    const s1 = editorReducer(s0, { type: 'clear-tempo-marks', trackIndex: 0 });
+    expect(s1.score.tracks[0].measures.every((m) => m.tempoChange === undefined)).toBe(true);
+    expect(s1.score.initialTempo).toBe(120);
+  });
+
+  it('clear-tempo-marks is a no-op when there is nothing to clear', () => {
+    const s0 = stateOf(makeScore([]));
+    expect(editorReducer(s0, { type: 'clear-tempo-marks', trackIndex: 0 })).toBe(s0);
+  });
+});

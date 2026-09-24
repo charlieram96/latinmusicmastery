@@ -45,7 +45,9 @@ import {
 } from './editable-measure-strip';
 import { RepeatPopover } from './measure/repeat-popover';
 import { GapMenu } from './measure/gap-menu';
+import { BarPopover } from './measure/bar-popover';
 import type { PopoverAnchor } from './measure/popover';
+import { tempoAt } from '@/lib/playsense-studio/tempo-marks';
 import type { RepeatBand } from './measure/repeat-lane';
 import { PianoRollView } from './piano-roll-view';
 import { PercussionStrokePicker } from './percussion-stroke-picker';
@@ -231,6 +233,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const onGapClick = useCallback((gap: number, anchor: PopoverAnchor) => {
     setGapPop({ gap, anchor });
   }, []);
+  // The Bar ▾ menu (meter/key/clef/barlines/endings/tempo for one bar) —
+  // anchored over the strip wrapper the same way repeatPop/gapPop are. Task
+  // 11's measure bar opens this by calling setBarPop({ anchor }).
+  const [barPop, setBarPop] = useState<{ anchor: PopoverAnchor } | null>(null);
   // Bars just inserted by the gap menu — flashed with `is-new` for 400ms.
   const [newBars, setNewBars] = useState<Set<number>>(new Set());
   const newBarsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -422,6 +428,25 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     () => (activeTrack ? extractTrackEvents(activeTrack, score.initialTimeSignature, score.initialKeyFifths) : []),
     [activeTrack, score.initialTimeSignature, score.initialKeyFifths]
   );
+
+  // The Bar ▾ popover's current values, for the bar at rangeStart.
+  const barPopCurrent = useMemo(() => {
+    if (!activeTrack || rangeStart === null) return null;
+    const measure = activeTrack.measures[rangeStart];
+    const t = tracked[rangeStart];
+    if (!measure || !t) return null;
+    return {
+      timeSignature: t.timeSignature,
+      keyFifths: t.keyFifths,
+      clef: t.clef === 'percussion' ? ('treble' as const) : t.clef,
+      tempo: tempoAt(score, activeTrackIndex, rangeStart),
+      repeatStart: !!measure.repeatStart,
+      repeatEnd: !!measure.repeatEnd,
+      double: measure.endBarline === 'double',
+      final: hasFinalBarline(activeTrack.measures, rangeStart),
+      volta: measure.volta ?? null,
+    };
+  }, [activeTrack, rangeStart, tracked, score, activeTrackIndex]);
 
   // How full each bar is — keyed on the track only (not measureTimings), so
   // moving sync markers doesn't recompute it.
@@ -1138,6 +1163,18 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 onCopyLeft={() => gapCopyLeft(gapPop.gap)}
                 onPaste={() => gapPaste(gapPop.gap)}
                 onClose={() => setGapPop(null)}
+              />
+            )}
+            {barPop && activeTrack && rangeStart !== null && barPopCurrent && (
+              <BarPopover
+                anchor={barPop.anchor}
+                measureIndex={rangeStart}
+                measureNumber={activeTrack.measures[rangeStart].number}
+                percussion={percussion}
+                current={barPopCurrent}
+                onPatch={(p) => dispatch({ type: 'set-measure-props', trackIndex: activeTrackIndex, measureIndex: rangeStart, props: p })}
+                onFinal={(final) => dispatch({ type: 'set-measure-final-bar', trackIndex: activeTrackIndex, measureIndex: rangeStart, final })}
+                onClose={() => setBarPop(null)}
               />
             )}
           </div>
