@@ -2,9 +2,11 @@
 
 // PlaySense Studio — editable notation strip beneath the waveform.
 //
-// Each measure is its own VexFlow mini-stave, absolutely positioned at the
-// measure's audio span (startX..endX derived from the markers) and sized to its
-// pixel width.
+// The notation is one continuous VexFlow staff (ContinuousStaff) across the
+// visible range, each bar drawn at its audio span (startX..endX derived from
+// the markers), so slurs, hairpins and ties cross barlines. Above it, each
+// measure keeps a transparent absolutely positioned block for selection, hits,
+// its header band and gap fill.
 //
 // Gestures select; they never change notes. A click on a bar (its header band
 // or empty staff) selects that bar, ⇧-click extends the selection from its
@@ -16,14 +18,14 @@
 // placeholder that selects on click and opens on double-click.
 //
 // Hit-testing: after VexFlow lays out the notes, each note's getBoundingBox()
-// is captured inside the same try block as voice.draw and reported up to the
-// strip via onHitsReady. The strip keeps these in a ref Map keyed by
+// is captured inside the same try block as the bar's draw and reported up to
+// the strip via onHitsReady, bar-local in x. The strip keeps these in a ref Map keyed by
 // measureIndex and consults it on pointer events. The selection highlight is a
 // separate absolute <div> overlay (pointer-events:none) that reads from the
 // Map on each render, so it tracks the right note across marker drags + zoom.
 //
 // Coordinates: the strip reserves REP_H (the repeat lane's height) at the top.
-// Measure blocks, placeholders and the staves are pushed down to `top: REP_H`
+// Measure blocks, placeholders and the staff are pushed down to `top: REP_H`
 // with `height: height - REP_H`, so anything nested inside a measure block
 // (the header band, the gapfill) is already in the right place — it inherits
 // the shift from its positioned ancestor. Overlays drawn at the CONTAINER
@@ -33,29 +35,20 @@
 // a staff-local y into a container-space one. Task 14 follows this rule too.
 
 import { Plus } from 'lucide-react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import {
-  BarlineType,
-  Renderer,
-  Stave,
-  StaveTie,
-} from 'vexflow';
-import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { beatsText, fillTitle, type MeasureFill } from '@/lib/playsense-studio/measure-fill';
 import {
   diatonicToMidi,
   midiToDiatonic,
   type NotationClef,
   type VexEventDescriptor,
-  scoreTieIndices,
 } from '@/lib/playsense-studio/score-to-vexflow';
-import { applyStaveHeader, buildMeasure, drawMeasure, formatMeasure, staveHeader } from '@/lib/playsense-studio/notation/build-measure';
-import { drawSpanSegments, spanSegments } from '@/lib/playsense-studio/notation/spans';
 import type { PercStroke } from '@/lib/playsense-studio/perc-strokes';
 import type { Span } from '@/components/playsense-studio/shared/score-model/types';
 import { measureAtX } from '@/lib/playsense-studio/measure-selection';
 import { REP_H, RepeatLane, repeatBands, type RepeatBand } from './measure/repeat-lane';
 import type { PopoverAnchor } from './measure/popover';
+import { ContinuousStaff, MIN_RENDER_WIDTH } from './continuous-staff';
 
 export interface MeasureStripItem {
   /** 0-based index into the score track's measures (NOT the 1-based measureNumber). */
@@ -88,7 +81,9 @@ export interface SelectedEventRef {
   eventIndex: number;
 }
 
-interface MeasureHit {
+/** A voice-1 note's box: x bar-local (0 at the bar's start), y staff-local
+ *  (0 at the top of the staff, which sits at container y = REP_H). */
+export interface MeasureHit {
   eventIndex: number;
   x: number;
   y: number;
@@ -98,9 +93,8 @@ interface MeasureHit {
 
 export interface EditableMeasureStripProps {
   measures: MeasureStripItem[];
-  /** Slurs and hairpins (ScoreDocument.spans) to draw within each measure. A
-   *  span whose ends fall in different measures is skipped here — each measure
-   *  is its own SVG in this strip; cross-bar spans wait for the continuous strip. */
+  /** Slurs and hairpins (ScoreDocument.spans), drawn across barlines on the
+   *  continuous staff. */
   spans?: Span[];
   /** Live playback position (video seconds) for the playhead; omit to hide it. */
   getCurrentSeconds?: () => number;
@@ -146,12 +140,8 @@ export interface EditableMeasureStripProps {
 }
 
 const DEFAULT_HEIGHT = 220;
-const LEFT_PAD = 6;
-const RIGHT_PAD = 6;
 /** Height of the header band (measure number, capacity) at the top of each measure block. */
 const HANDLE_BAND_PX = 28;
-/** Below this width a measure can't render notes legibly — show a zoom-in placeholder. */
-const MIN_RENDER_WIDTH = 46;
 /** Pixels per diatonic staff step (half of VexFlow's 10px line spacing). */
 const STEP_PX = 5;
 /** A press must travel this far vertically before a pitch drag starts, so a
@@ -231,7 +221,7 @@ export function EditableMeasureStrip({
     }
   };
 
-  // Captured bboxes per measureIndex, refreshed by MiniStave on each draw.
+  // Captured bboxes per measureIndex, refreshed by ContinuousStaff on each draw.
   // A version counter forces the overlay to re-render after bboxes update.
   const hitsByMeasure = useRef<Map<number, MeasureHit[]>>(new Map());
   const [bboxVersion, setBboxVersion] = useState(0);
@@ -581,7 +571,7 @@ export function EditableMeasureStrip({
       dragOffsetY = (before - after) * STEP_PX;
     }
     return {
-      // hit.y is staff-local (0 at the top of the MiniStave's SVG); the staff
+      // hit.y is staff-local (0 at the top of the ContinuousStaff's SVG); the staff
       // itself sits at container y = REP_H, so the overlay adds it back once.
       left: startX + hit.x - 3,
       top: REP_H + hit.y - 3 + dragOffsetY,
@@ -622,7 +612,18 @@ export function EditableMeasureStrip({
       onLostPointerCapture={endSelectionDrag}
       onDoubleClick={handleContainerDoubleClick}
     >
-      {measures.map((item, itemIndex) => {
+      {/* The notation: one continuous staff under the measure overlays. */}
+      <ContinuousStaff
+        items={measures}
+        pixelsPerSecond={pixelsPerSecond}
+        scrollLeftPx={scrollLeftPx}
+        viewportWidth={viewportWidth}
+        height={height}
+        spans={scoreSpans}
+        onHitsReady={handleHitsReady}
+      />
+
+      {measures.map((item) => {
         const startX = videoTimeToX(item.startVideoTimeSeconds);
         const endXVal = videoTimeToX(item.endVideoTimeSeconds);
         const width = endXVal - startX;
@@ -682,25 +683,6 @@ export function EditableMeasureStrip({
                 </span>
               )}
             </div>
-            <MiniStave
-              measureIndex={item.measureIndex}
-              events={item.events}
-              voice2Events={item.voice2Events}
-              previousEvent={measures[itemIndex - 1]?.events.at(-1)}
-              nextEvent={measures[itemIndex + 1]?.events[0]}
-              width={Math.round(width)}
-              height={height - REP_H}
-              timeSignature={item.timeSignature}
-              isFirst={item.isFirst}
-              finalBarline={!!item.finalBarline}
-              clef={item.clef}
-              keyFifths={item.keyFifths}
-              previousKeyFifths={item.previousKeyFifths}
-              keyChanged={item.keyChanged}
-              clefChanged={item.clefChanged}
-              spans={scoreSpans}
-              onHitsReady={handleHitsReady}
-            />
             {item.fill.kind === 'short' && (() => {
               const hits = hitsByMeasure.current.get(item.measureIndex);
               const last = hits?.at(-1);
@@ -781,126 +763,6 @@ export function EditableMeasureStrip({
     </div>
   );
 }
-
-interface MiniStaveProps {
-  previousEvent?: VexEventDescriptor;
-  nextEvent?: VexEventDescriptor;
-  measureIndex: number;
-  events: VexEventDescriptor[];
-  voice2Events: VexEventDescriptor[];
-  width: number;
-  height: number;
-  timeSignature: [number, number];
-  isFirst: boolean;
-  finalBarline: boolean;
-  clef: NotationClef;
-  keyFifths: number;
-  previousKeyFifths: number;
-  keyChanged: boolean;
-  clefChanged: boolean;
-  spans?: Span[];
-  onHitsReady: (measureIndex: number, hits: MeasureHit[] | null) => void;
-}
-
-const MiniStave = memo(function MiniStave({
-  previousEvent,
-  nextEvent,
-  measureIndex,
-  events,
-  voice2Events,
-  width,
-  height,
-  timeSignature,
-  isFirst,
-  finalBarline,
-  clef,
-  keyFifths,
-  previousKeyFifths,
-  keyChanged,
-  clefChanged,
-  spans: spansForMeasure,
-  onHitsReady,
-}: MiniStaveProps) {
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.innerHTML = '';
-    // Clear stale bboxes for this measure BEFORE attempting a redraw; only
-    // re-populate after a successful draw so a malformed-measure throw doesn't
-    // leave us with stale hits.
-    onHitsReady(measureIndex, null);
-
-    const staveWidth = Math.max(20, width - LEFT_PAD - RIGHT_PAD);
-    const renderer = new Renderer(el, Renderer.Backends.SVG);
-    renderer.resize(width, height);
-    const ctx = renderer.getContext();
-
-    const stave = new Stave(LEFT_PAD, 0, staveWidth);
-    // One SVG per measure in a single scrolling row: only the opening bar is a row start.
-    applyStaveHeader(stave, staveHeader(
-      { clef, keyFifths, previousKeyFifths, keyChanged, clefChanged, timeSignature },
-      { opening: isFirst, rowStart: false },
-    ));
-    if (finalBarline) stave.setEndBarType(BarlineType.END);
-    // Center the staff vertically: put the middle line (line 2 = B4) at the
-    // box's vertical center so notes/stems have even headroom above and below.
-    stave.setY(Math.round(height / 2 - stave.getYForLine(2)));
-    stave.setContext(ctx).draw();
-
-    // Voice 2 alone (voice 1 empty) still has notes to show.
-    if (events.length > 0 || (voice2Events?.length ?? 0) > 0) {
-      try {
-        const built = buildMeasure([events, voice2Events ?? []], timeSignature, clef);
-        if (built) {
-          formatMeasure(built, Math.max(20, stave.getNoteEndX() - stave.getNoteStartX() - 8));
-          drawMeasure(ctx, stave, built);
-          const vexNotes = built.notes[0];
-
-          // Match individual held pitches even when the next chord changes shape.
-          events.forEach((d, i) => {
-            const next = events[i + 1];
-            if (!next) return;
-            const indices = scoreTieIndices(d, next);
-            if (indices.firstIndexes.length) new StaveTie({ firstNote: vexNotes[i], lastNote: vexNotes[i + 1], ...indices }).setContext(ctx).draw();
-          });
-
-          // Each measure has its own SVG; partial ties meet at the shared barline.
-          if (previousEvent && events[0]) {
-            const { lastIndexes } = scoreTieIndices(previousEvent, events[0]);
-            if (lastIndexes.length) new StaveTie({ lastNote: vexNotes[0], firstIndexes: lastIndexes, lastIndexes }).setContext(ctx).draw();
-          }
-          if (nextEvent && events.length) {
-            const { firstIndexes } = scoreTieIndices(events[events.length - 1], nextEvent);
-            if (firstIndexes.length) new StaveTie({ firstNote: vexNotes[vexNotes.length - 1], firstIndexes, lastIndexes: firstIndexes }).setContext(ctx).draw();
-          }
-
-          drawSpanSegments(ctx, spanSegments(spansForMeasure, vexNotes.map((note, i) => ({ id: events[i].id, note, system: 0, hasDynamic: !!events[i].dynamic }))));
-
-          // Capture per-event bboxes after a successful draw.
-          const hits: MeasureHit[] = vexNotes.map((n, i) => {
-            const bb = n.getBoundingBox();
-            return { eventIndex: i, x: bb.getX(), y: bb.getY(), w: bb.getW(), h: bb.getH() };
-          });
-          onHitsReady(measureIndex, hits);
-        }
-      } catch {
-        // Malformed/overfull measure — the stave still drew; no hits captured.
-      }
-    }
-
-    const svg = el.querySelector('svg');
-    if (svg) themeVexflowSvg(svg as SVGSVGElement);
-
-    return () => {
-      el.innerHTML = '';
-      onHitsReady(measureIndex, null);
-    };
-  }, [measureIndex, events, voice2Events, previousEvent, nextEvent, width, height, timeSignature, isFirst, finalBarline, clef, keyFifths, previousKeyFifths, keyChanged, clefChanged, spansForMeasure, onHitsReady]);
-
-  return <div ref={ref} />;
-});
 
 // Parse a VexFlow key string ('g/5', 'c#/4') to a continuous diatonic index
 // (octave*7 + letterIndex). Used to snap percussion drags to stroke lines.

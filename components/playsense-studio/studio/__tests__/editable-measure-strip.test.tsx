@@ -78,7 +78,11 @@ describe('EditableMeasureStrip', () => {
       { number: 1, voices: quarters },
       { number: 2, keyFifths: 0, voices: quarters },
     ]), 2);
-    const sig = svgs[1].querySelector('.vf-keysignature');
+    // One continuous SVG: bar 1 opens with D major, bar 2 cancels it.
+    expect(svgs).toHaveLength(1);
+    const sigs = svgs[0].querySelectorAll('.vf-keysignature');
+    expect(sigs).toHaveLength(2);
+    const sig = sigs[1];
     expect((sig?.textContent ?? '').split('').length - 1).toBe(2);
   });
 });
