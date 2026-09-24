@@ -43,6 +43,9 @@ import {
   type MeasureStripItem,
   type SelectedEventRef,
 } from './editable-measure-strip';
+import { RepeatPopover } from './measure/repeat-popover';
+import type { PopoverAnchor } from './measure/popover';
+import type { RepeatBand } from './measure/repeat-lane';
 import { PianoRollView } from './piano-roll-view';
 import { PercussionStrokePicker } from './percussion-stroke-picker';
 import { MidiRecordButton, type MidiRecordingSource } from './midi-record-button';
@@ -215,6 +218,12 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     setSelected(null);
     setMeasureRange(dragSelect(anchor, focus));
   }, []);
+  // The repeat lane's menu — anchored over the strip wrapper (position: relative).
+  const [repeatPop, setRepeatPop] = useState<{ anchor: PopoverAnchor } | null>(null);
+  const onRepeatBandClick = useCallback((b: RepeatBand, anchor: PopoverAnchor) => {
+    selectMeasureRange(b.firstIndex, b.lastIndex);
+    setRepeatPop({ anchor });
+  }, [selectMeasureRange]);
   const clipboard = useSyncExternalStore(subscribeMeasureClipboard, readMeasureClipboard, () => null);
   const [duration, setDuration] = useState<number>(1);
   const [pitchLetter, setPitchLetter] = useState<string>('C');
@@ -514,6 +523,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     ? repeatGroups(activeTrack).find(g => targetMeasureIndex >= g.start && targetMeasureIndex < g.start + g.length * g.count) ?? null
     : null;
   const targetHasFinalBar = !!activeTrack && !targetIsRepeatEnd && hasFinalBarline(activeTrack.measures, targetMeasureIndex);
+  // Same lookup, keyed on the highlighted range's start — drives the repeat
+  // lane's menu, which follows the selection rather than the toolbar target.
+  const repeatGroupAtRange = activeTrack && rangeStart !== null
+    ? repeatGroups(activeTrack).find(g => rangeStart >= g.start && rangeStart < g.start + g.length * g.count) ?? null
+    : null;
 
   // Capacity of the target measure for its time signature — drives the readout
   // and disables "Add note" once the measure is full (a filler rest counts as
@@ -998,7 +1012,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           the available height between the editor bar and the toolbar. */}
       {editorTab === 'staff' && (
         <>
-          <div ref={staffWrapRef} className="min-h-0 flex-1">
+          <div ref={staffWrapRef} className="relative min-h-0 flex-1">
             <EditableMeasureStrip
               measures={stripItems}
               spans={score.spans}
@@ -1012,6 +1026,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               onOpenMeasure={openMeasure}
               onInsertMeasureAt={insertMeasureAt}
               gapProblems={gapProblems}
+              onRepeatBandClick={onRepeatBandClick}
               onSelectEvent={handleSelectEvent}
               onRequestZoomTo={handleRequestZoomTo}
               onSetPitch={handleSetPitch}
@@ -1027,6 +1042,32 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               onScrollByPx={onScrollByPx}
               height={staffHeight}
             />
+            {repeatPop && rangeStart !== null && rangeEnd !== null && (
+              <RepeatPopover
+                anchor={repeatPop.anchor}
+                range={[rangeStart, rangeEnd]}
+                group={repeatGroupAtRange ? { id: repeatGroupAtRange.id, count: repeatGroupAtRange.count } : null}
+                problemFor={(n) => repeatGroupAtRange
+                  ? structuralEditProblem(score, { type: 'set-repeat-count', trackIndex: activeTrackIndex, id: repeatGroupAtRange.id, count: n })
+                  : structuralEditProblem(score, { type: 'repeat-measures', trackIndex: activeTrackIndex, start: rangeStart, end: rangeEnd, count: n, id: 'probe' })}
+                onPick={(n) => {
+                  if (repeatGroupAtRange) {
+                    dispatch({ type: 'set-repeat-count', trackIndex: activeTrackIndex, id: repeatGroupAtRange.id, count: n });
+                  } else {
+                    dispatch({ type: 'repeat-measures', trackIndex: activeTrackIndex, start: rangeStart, end: rangeEnd, count: n, id: crypto.randomUUID() });
+                  }
+                  setRepeatPop(null);
+                }}
+                onRemove={() => {
+                  if (repeatGroupAtRange) dispatch({ type: 'unlink-repeat', trackIndex: activeTrackIndex, id: repeatGroupAtRange.id });
+                  setRepeatPop(null);
+                }}
+                onSelectPassOne={() => {
+                  if (repeatGroupAtRange) selectMeasureRange(repeatGroupAtRange.start, repeatGroupAtRange.start + repeatGroupAtRange.length - 1);
+                }}
+                onClose={() => setRepeatPop(null)}
+              />
+            )}
           </div>
           <div className="st-strip-foot">
             {issues.length > 0 && (

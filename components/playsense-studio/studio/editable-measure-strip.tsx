@@ -21,6 +21,16 @@
 // measureIndex and consults it on pointer events. The selection highlight is a
 // separate absolute <div> overlay (pointer-events:none) that reads from the
 // Map on each render, so it tracks the right note across marker drags + zoom.
+//
+// Coordinates: the strip reserves REP_H (the repeat lane's height) at the top.
+// Measure blocks, placeholders and the staves are pushed down to `top: REP_H`
+// with `height: height - REP_H`, so anything nested inside a measure block
+// (the header band, the gapfill) is already in the right place — it inherits
+// the shift from its positioned ancestor. Overlays drawn at the CONTAINER
+// level instead (the selection highlight, the drag chip, the gap "+"
+// buttons) read raw note bboxes and video-time-derived x's that don't know
+// about the lane, so each must add REP_H itself, exactly once, when it turns
+// a staff-local y into a container-space one. Task 14 follows this rule too.
 
 import { Plus } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -43,8 +53,9 @@ import { applyStaveHeader, buildMeasure, drawMeasure, formatMeasure, staveHeader
 import { drawSpanSegments, spanSegments } from '@/lib/playsense-studio/notation/spans';
 import type { PercStroke } from '@/lib/playsense-studio/perc-strokes';
 import type { Span } from '@/components/playsense-studio/shared/score-model/types';
-import { repeatSpans } from '@/lib/playsense-studio/repeats';
 import { measureAtX } from '@/lib/playsense-studio/measure-selection';
+import { REP_H, RepeatLane, repeatBands, type RepeatBand } from './measure/repeat-lane';
+import type { PopoverAnchor } from './measure/popover';
 
 export interface MeasureStripItem {
   /** 0-based index into the score track's measures (NOT the 1-based measureNumber). */
@@ -108,6 +119,8 @@ export interface EditableMeasureStripProps {
   onInsertMeasureAt?: (index: number) => void;
   /** Per gap (n + 1 entries): why a bar cannot be inserted there, or null. */
   gapProblems?: Array<string | null>;
+  /** A repeat-lane band was clicked: open the repeat menu at this anchor. */
+  onRepeatBandClick?: (band: RepeatBand, anchor: PopoverAnchor) => void;
   onSelectEvent: (ref: SelectedEventRef) => void;
   onRequestZoomTo: (measureIndex: number) => void;
   /** Commit a pitch change after a drag (or click-drag) on a note. */
@@ -178,6 +191,7 @@ export function EditableMeasureStrip({
   onSelectMeasure,
   onInsertMeasureAt,
   gapProblems,
+  onRepeatBandClick,
   onSelectMeasureRange,
   onOpenMeasure,
   onSelectEvent,
@@ -230,9 +244,8 @@ export function EditableMeasureStrip({
     selectedMeasures !== null && measureIndex >= selectedMeasures[0] && measureIndex <= selectedMeasures[1];
   const isFocus = (measureIndex: number) =>
     selectedMeasures !== null && measureIndex === selectedMeasures[1];
-  // One bracket per repeat group, spanning every written-out pass, so the
-  // strip itself says which measures repeat and how many times.
-  const spans = repeatSpans(measures);
+  // One band per repeat pass, drawn in the lane reserved at the strip's top.
+  const bands = repeatBands(measures, videoTimeToX);
 
   // Playhead — a thin --primary line matching the waveform's, positioned
   // imperatively on a RAF loop so 60fps playback never re-renders this strip.
@@ -558,8 +571,10 @@ export function EditableMeasureStrip({
       dragOffsetY = (before - after) * STEP_PX;
     }
     return {
+      // hit.y is staff-local (0 at the top of the MiniStave's SVG); the staff
+      // itself sits at container y = REP_H, so the overlay adds it back once.
       left: startX + hit.x - 3,
-      top: hit.y - 3 + dragOffsetY,
+      top: REP_H + hit.y - 3 + dragOffsetY,
       width: hit.w + 6,
       height: hit.h + 6,
     };
@@ -579,7 +594,10 @@ export function EditableMeasureStrip({
           isPercussion && percStrokes
             ? percStrokes.find((s) => s.midi === dragging.currentMidi)?.label ?? ''
             : midiToName(dragging.currentMidi);
-        return { left: startX + hit.x, top: (highlight?.top ?? hit.y) - 16, label };
+        // highlight.top already includes REP_H when it exists; the fallback
+        // (highlight absent, e.g. a fresh drag before selection catches up)
+        // adds it here so both paths land in the same container coordinates.
+        return { left: startX + hit.x, top: (highlight?.top ?? REP_H + hit.y) - 16, label };
       })()
     : null;
 
@@ -609,8 +627,8 @@ export function EditableMeasureStrip({
               data-measure-index={item.measureIndex}
               onClick={(e) => onSelectMeasure?.(item.measureIndex, e.shiftKey)}
               onDoubleClick={() => onOpenMeasure(item.measureIndex)}
-              className={`absolute top-0 flex items-center justify-center rounded border border-dashed border-border bg-muted/40 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground${inRange(item.measureIndex) ? ' ring-2 ring-inset ring-primary' : ''}`}
-              style={{ left: startX, width: Math.max(8, width), height }}
+              className={`absolute flex items-center justify-center rounded border border-dashed border-border bg-muted/40 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground${inRange(item.measureIndex) ? ' ring-2 ring-inset ring-primary' : ''}`}
+              style={{ left: startX, top: REP_H, width: Math.max(8, width), height: height - REP_H }}
               title={`Measure ${item.measureNumber} — double-click to open`}
             >
               {item.measureNumber}
@@ -627,8 +645,8 @@ export function EditableMeasureStrip({
           <div
             key={item.measureIndex}
             data-measure-index={item.measureIndex}
-            className={`absolute top-0 ${inRange(item.measureIndex) ? 'ring-2 ring-inset ring-primary bg-primary/5' : ''}${isFocus(item.measureIndex) ? ' st-measure-focus' : ''}`}
-            style={{ left: startX, width, cursor, touchAction: 'none' }}
+            className={`absolute ${inRange(item.measureIndex) ? 'ring-2 ring-inset ring-primary bg-primary/5' : ''}${isFocus(item.measureIndex) ? ' st-measure-focus' : ''}`}
+            style={{ left: startX, top: REP_H, width, height: height - REP_H, cursor, touchAction: 'none' }}
             onPointerDown={(e) => handlePointerDown(e, item)}
             onPointerMove={(e) => handlePointerMove(e, item)}
             onPointerUp={handlePointerUp}
@@ -661,7 +679,7 @@ export function EditableMeasureStrip({
               previousEvent={measures[itemIndex - 1]?.events.at(-1)}
               nextEvent={measures[itemIndex + 1]?.events[0]}
               width={Math.round(width)}
-              height={height}
+              height={height - REP_H}
               timeSignature={item.timeSignature}
               isFirst={item.isFirst}
               finalBarline={!!item.finalBarline}
@@ -689,32 +707,8 @@ export function EditableMeasureStrip({
         );
       })}
 
-      {/* Repeat brackets — a bar along the top edge of each group's passes,
-          ticked at every pass boundary, lit while the group is selected. */}
-      {spans.map((span) => {
-        const left = videoTimeToX(measures[span.firstIndex].startVideoTimeSeconds);
-        const right = videoTimeToX(measures[span.lastIndex].endVideoTimeSeconds);
-        if (right < -20 || left > viewportWidth + 20) return null;
-        const selectedGroup = Array.from({ length: span.lastIndex - span.firstIndex + 1 }, (_, i) => span.firstIndex + i).some(inRange);
-        return (
-          <div
-            key={`repeat-${span.id}`}
-            data-repeat-bracket={span.id}
-            aria-hidden
-            className={`pointer-events-none absolute top-0 z-20 h-[3px] rounded-b-sm bg-[hsl(var(--primary))] transition-opacity ${selectedGroup ? 'opacity-100' : 'opacity-45'}`}
-            style={{ left, width: Math.max(2, right - left) }}
-            title={`Measures repeat ${span.count} times`}
-          >
-            {span.passStarts.slice(1).map((index) => (
-              <span
-                key={index}
-                className="absolute top-0 h-[7px] w-px bg-[hsl(var(--primary))]"
-                style={{ left: videoTimeToX(measures[index].startVideoTimeSeconds) - left }}
-              />
-            ))}
-          </div>
-        );
-      })}
+      {/* Repeat lane — one band per pass, reserved at the strip's top edge. */}
+      <RepeatLane bands={bands} onBandClick={onRepeatBandClick ?? (() => {})} />
 
       {/* "+" at every barline gap (and both ends): insert a bar there. Hidden
           during drags and where a neighbouring bar is too narrow to read. */}
@@ -736,7 +730,7 @@ export function EditableMeasureStrip({
               key={`gap-${gap}`}
               type="button"
               className="st-gap-add"
-              style={{ left: x, top: 5 }}
+              style={{ left: x, top: REP_H + 5 }}
               aria-label={label}
               title={problem ?? label}
               disabled={!!problem}
