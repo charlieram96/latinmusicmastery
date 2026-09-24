@@ -359,4 +359,31 @@ describe('event ids through structural edits (Task 13)', () => {
     expect(new Set(out).size).toBe(3);
     expect(out[0]).toBe('n0');
   });
+
+  it('repeating pass 0 of an unlinked repeat never reuses a leftover pass id (fix round 2)', () => {
+    const s = withIds(score([bar(1, 60)]));
+    s.spans = [{ id: 'sl', type: 'slur', from: 'n0', to: 'n0' }];
+    const rep = editorReducer(st(s), { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 2, id: 'r' });
+    const unlinked = editorReducer(rep, { type: 'unlink-repeat', trackIndex: 0, id: 'r' });
+    expect(ids(unlinked.score)).toEqual(['n0', 'n0~1']);
+    const again = ok(applyMeasureEdit(unlinked.score, { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 2, id: 'q' }));
+    const out = ids(again.score);
+    expect(new Set(out).size).toBe(3);
+    expect(out[1]).toBe(`${out[0]}~1`);
+    expect(again.score.spans).toEqual([{ id: 'sl', type: 'slur', from: out[0], to: out[0] }]);
+    expect(repeatGroups(again.score.tracks[0])).toEqual([{ id: 'q', start: 0, length: 1, count: 2 }]);
+  });
+
+  it('set-repeat-count never reuses a leftover pass id when it adds passes (fix round 2)', () => {
+    const s = withIds(score([bar(1, 60), bar(2, 60)]));
+    s.tracks[0].measures[1].voices[0].events[0].id = 'n0~2'; // left over from an older, longer repeat
+    const rep = ok(applyMeasureEdit(s, { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 2, id: 'r' })).score;
+    expect(ids(rep)).toEqual(['n0', 'n0~1', 'n0~2']);
+    const r = ok(applyMeasureEdit(rep, { type: 'set-repeat-count', trackIndex: 0, id: 'r', count: 3 }));
+    const out = ids(r.score);
+    expect(new Set(out).size).toBe(4);
+    expect(out.slice(0, 3)).toEqual([out[0], `${out[0]}~1`, `${out[0]}~2`]);
+    expect(out[3]).toBe('n0~2');
+    expect(repeatGroups(r.score.tracks[0])).toEqual([{ id: 'r', start: 0, length: 1, count: 3 }]);
+  });
 });

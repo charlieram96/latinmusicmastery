@@ -25,7 +25,7 @@ import type { MeasureSpan } from '@/components/playsense-studio/sync/marker-mode
 import { recordingContext } from './midi-recording';
 import { isPercussion } from './perc-strokes';
 import { repeatGroups } from './repeats';
-import { newEventId, pruneSpans, reidMeasures, withPassIds } from './event-ids';
+import { newEventId, passEventId, pruneSpans, reidMeasures, withPassIds } from './event-ids';
 
 export interface MeasureContext {
   bpm: number;
@@ -236,6 +236,51 @@ function renamePassIds(score: ScoreDocument, bars: Measure[]): void {
   }
 }
 
+/**
+ * A repeat's passes take pass 0's ids with a `~p` suffix. If a pass about to be
+ * written (`fromPass`..`count - 1`) would take an id some event outside the
+ * group already holds (a bar left over from an unlinked repeat keeps `a~1`),
+ * pass 0 gets fresh ids first and the passes already written (1..fromPass - 1)
+ * are rewritten from it, with spans following, so no id is ever reused.
+ * `track.measures[start, start + length * fromPass)` are the group's current bars.
+ */
+function freshenPassIds(score: ScoreDocument, track: Track, start: number, length: number, fromPass: number, count: number): void {
+  const groupEnd = start + length * fromPass;
+  const outside = new Set<string>();
+  for (const t of score.tracks) {
+    t.measures.forEach((m, i) => {
+      if (t === track && i >= start && i < groupEnd) return;
+      for (const v of m.voices) for (const e of v.events) if (e.id) outside.add(e.id);
+    });
+  }
+  const pass0 = track.measures.slice(start, start + length);
+  const collides = pass0.some((m) => m.voices.some((v) => v.events.some((e) => {
+    if (!e.id) return false;
+    for (let p = fromPass; p < count; p++) if (outside.has(passEventId(e.id, p))) return true;
+    return false;
+  })));
+  if (!collides) return;
+  const renamed = new Map<string, string>();
+  const tuplets = new Map<string, string>();
+  for (const m of pass0) for (const v of m.voices) for (const e of v.events) {
+    const id = newEventId();
+    if (e.id) for (let p = 0; p < fromPass; p++) renamed.set(passEventId(e.id, p), passEventId(id, p));
+    e.id = id;
+    if (e.tuplet) {
+      let group = tuplets.get(e.tuplet.id);
+      if (!group) { group = 't' + newEventId().slice(1); tuplets.set(e.tuplet.id, group); }
+      e.tuplet.id = group;
+    }
+  }
+  for (let i = start + length; i < groupEnd; i++) {
+    const m = track.measures[i];
+    track.measures[i] = withPassIds({ ...pass0[(i - start) % length], number: m.number, repeat: m.repeat }, m.repeat!.pass);
+  }
+  if (score.spans) {
+    score.spans = score.spans.map((s) => ({ ...s, from: renamed.get(s.from) ?? s.from, to: renamed.get(s.to) ?? s.to }));
+  }
+}
+
 function renumber(track: Track): void {
   track.measures.forEach((m, i) => { m.number = i + 1; });
 }
@@ -313,6 +358,7 @@ export function applyMeasureEdit(score: ScoreDocument, action: StructuralAction)
       const { start, end, count, id } = action;
       const source = track.measures.slice(start, end + 1);
       renamePassIds(next, source);
+      freshenPassIds(next, track, start, source.length, 1, count);
       const ctx = contextAt(score, original, start);
       source[0] = { ...source[0], tempoChange: ctx.bpm, timeSignature: ctx.timeSignature, keyFifths: ctx.keyFifths };
       const expanded = Array.from({ length: count }, (_, pass) => source.map((m, offset) => withPassIds({
@@ -327,6 +373,7 @@ export function applyMeasureEdit(score: ScoreDocument, action: StructuralAction)
       const groupEnd = g.start + g.length * g.count;
       for (let i = g.start; i < groupEnd; i++) track.measures[i].repeat!.count = action.count;
       if (action.count > g.count) {
+        freshenPassIds(next, track, g.start, g.length, g.count, action.count);
         const pass1 = track.measures.slice(g.start, g.start + g.length);
         const added = Array.from({ length: action.count - g.count }, (_, k) => pass1.map((m) => withPassIds({
           ...clone(m), repeat: { ...m.repeat!, pass: g.count + k, count: action.count },

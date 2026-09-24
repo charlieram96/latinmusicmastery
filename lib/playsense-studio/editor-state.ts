@@ -10,7 +10,7 @@ import { repeatGroups } from './repeats';
 import { insertMidiMeasures } from './midi-recording';
 import { applyMeasureEdit, contextAt, emptyMeasure, type MeasureClip } from './measure-edits';
 import { stripCopyTags } from './measure-clipboard';
-import { newEventId, pruneSpans, withPassIds } from './event-ids';
+import { ensureScoreEventIds, newEventId, pruneSpans, withPassIds } from './event-ids';
 import type {
   Chord,
   Measure,
@@ -27,7 +27,7 @@ import {
   measureLengthInQN,
   occupiedQN,
 } from './time-mapping';
-import { ensureEventIds, eventDots, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
+import { eventDots, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -635,11 +635,12 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
 /**
  * The state a score opens in. Missing or duplicate event ids are fixed here,
- * but the score stays clean with no history: opening a score never saves it
- * by itself (the ids are written with the next real edit).
+ * keeping repeat groups intact (older saves have passes with no ids or with
+ * pass 0's ids), but the score stays clean with no history: opening a score
+ * never saves it by itself (the ids are written with the next real edit).
  */
 export function initialEditorState(score: ScoreDocument): EditorState {
-  return { score: ensureEventIds(clone(score), newEventId), past: [], future: [], isDirty: false };
+  return { score: ensureScoreEventIds(score, newEventId), past: [], future: [], isDirty: false };
 }
 
 export function useEditor(initialScore: ScoreDocument) {
