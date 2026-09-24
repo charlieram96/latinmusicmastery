@@ -4,7 +4,7 @@
 // start and the tempo they play at, then every bar-level action. A button whose
 // action can't run is disabled and its title says why.
 
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import {
   ClipboardPaste, Copy, CopyPlus, Eraser, Maximize2, Repeat, Repeat1, SlidersHorizontal, Trash2,
 } from 'lucide-react';
@@ -18,7 +18,9 @@ export function formatBarTime(seconds: number): string {
   return `${m}:${s.toFixed(1).padStart(4, '0')}`;
 }
 
-export function MeasureBar(props: {
+export function MeasureBar({ ref, ...props }: {
+  /** The bar's root, so the editor can measure its width and keep it on screen. */
+  ref?: Ref<HTMLDivElement>;
   left: number; top: number; label: string; startSeconds: number; bpm: number | null; looping: boolean;
   canLoop: boolean; problems: { dup: string | null; paste: string | null; clear: string | null; del: string | null };
   onEdit: () => void; onLoop: () => void; onRepeat: (a: PopoverAnchor) => void; onDup: () => void;
@@ -47,7 +49,7 @@ export function MeasureBar(props: {
   );
   const icon = 'h-3.5 w-3.5';
   return (
-    <div className="st-fbar" role="toolbar" aria-label="Selected bars" style={{ left, top }}>
+    <div ref={ref} className="st-fbar" role="toolbar" aria-label="Selected bars" style={{ left, top }}>
       <span className="st-fbar-info">
         {props.label} · {formatBarTime(props.startSeconds)}
         {props.bpm !== null && (

@@ -516,10 +516,32 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     ? selected.measureIndex
     : Math.min(measureRange?.focus ?? lastMeasureIndex, lastMeasureIndex);
 
-  // Keep the range inside the score after deletes / undo.
+  // Bars an insert/paste/duplicate is about to add. The parent may still refuse
+  // the edit (SyncPanel refuses one that would run into a sibling section, which
+  // the problem checks here can't predict), so the new bars are selected (and
+  // flashed) only once the score really grows by that many; any other score
+  // change drops the plan and the selection stays where it was.
+  const pendingBars = useRef<{
+    from: ScoreDocument; expectCount: number; sel: MeasureSelection; flash: boolean;
+  } | null>(null);
+  const expectNewBars = useCallback((added: number, sel: MeasureSelection, flash = false) => {
+    pendingBars.current = { from: score, expectCount: measureCount + added, sel, flash };
+  }, [score, measureCount]);
+  // Keep the range inside the score after deletes / undo — or move it onto the
+  // bars that just arrived.
   useEffect(() => {
+    const pending = pendingBars.current;
+    if (pending && pending.from !== score) {
+      pendingBars.current = null;
+      if (measureCount === pending.expectCount) {
+        selectBars(pending.sel);
+        const [a, b] = selectionBounds(pending.sel)!;
+        if (pending.flash) flashNewBars(a, b);
+        return;
+      }
+    }
     setMeasureRange((prev) => clampSelection(prev, measureCount));
-  }, [measureCount]);
+  }, [score, measureCount, selectBars, flashNewBars]);
 
   // Why each barline gap can or cannot take a new bar (drives the "+" buttons).
   const gapProblems = useMemo(
@@ -554,11 +576,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     });
   }, [score, activeTrack, activeTrackIndex, rangeStart, rangeEnd]);
 
-  const insertMeasureAt = useCallback((index: number) => {
+  const insertMeasureAt = useCallback((index: number, flash = false) => {
+    expectNewBars(1, { anchor: index, focus: index }, flash);
     dispatch({ type: 'insert-measure', trackIndex: activeTrackIndex, index });
-    setSelected(null);
-    setMeasureRange({ anchor: index, focus: index });
-  }, [dispatch, activeTrackIndex]);
+  }, [dispatch, activeTrackIndex, expectNewBars]);
   const copyRange = useCallback(() => {
     if (rangeStart === null) return;
     dispatch({ type: 'copy-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
@@ -566,9 +587,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const pasteAfterRange = useCallback(() => {
     if (!clipboard || pasteProblem) return;
     const index = rangeEnd !== null ? rangeEnd + 1 : measureCount;
+    const count = clipboard.measures.length;
+    expectNewBars(count, { anchor: index, focus: index + count - 1 });
     dispatch({ type: 'paste-measures', trackIndex: activeTrackIndex, index, clip: clipboard });
-    selectBars({ anchor: index, focus: index + clipboard.measures.length - 1 });
-  }, [dispatch, activeTrackIndex, clipboard, pasteProblem, rangeEnd, measureCount, selectBars]);
+  }, [dispatch, activeTrackIndex, clipboard, pasteProblem, rangeEnd, measureCount, expectNewBars]);
   const deleteRange = useCallback(() => {
     if (rangeStart === null || deleteProblem) return;
     dispatch({ type: 'delete-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
@@ -590,35 +612,30 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // timing) and select the copies.
   const duplicateRange = useCallback(() => {
     if (rangeStart === null || rangeEnd === null || dupProblem) return;
+    expectNewBars(rangeCount, { anchor: rangeEnd + 1, focus: rangeEnd + rangeCount });
     dispatch({ type: 'duplicate-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
-    selectBars({ anchor: rangeEnd + 1, focus: rangeEnd + rangeCount });
-  }, [dispatch, activeTrackIndex, rangeStart, rangeEnd, rangeCount, dupProblem, selectBars]);
+  }, [dispatch, activeTrackIndex, rangeStart, rangeEnd, rangeCount, dupProblem, expectNewBars]);
   const clearRange = useCallback(() => {
     if (rangeStart === null) return;
     dispatch({ type: 'clear-measures', trackIndex: activeTrackIndex, start: rangeStart, count: rangeCount });
     showFlash('Cleared. Timing kept.');
   }, [dispatch, activeTrackIndex, rangeStart, rangeCount, showFlash]);
 
-  // The gap menu's three actions — each selects the bar(s) it just made and
-  // flashes them.
+  // The gap menu's three actions — each selects the bar(s) it made and flashes
+  // them, once they arrive.
   const gapEmpty = useCallback((gap: number) => {
-    insertMeasureAt(gap);
-    flashNewBars(gap, gap);
-  }, [insertMeasureAt, flashNewBars]);
+    insertMeasureAt(gap, true);
+  }, [insertMeasureAt]);
   const gapCopyLeft = useCallback((gap: number) => {
+    expectNewBars(1, { anchor: gap, focus: gap }, true);
     dispatch({ type: 'duplicate-measures', trackIndex: activeTrackIndex, start: gap - 1, count: 1 });
-    setSelected(null);
-    setMeasureRange({ anchor: gap, focus: gap });
-    flashNewBars(gap, gap);
-  }, [dispatch, activeTrackIndex, flashNewBars]);
+  }, [dispatch, activeTrackIndex, expectNewBars]);
   const gapPaste = useCallback((gap: number) => {
     if (!clipboard) return;
     const count = clipboard.measures.length;
+    expectNewBars(count, { anchor: gap, focus: gap + count - 1 }, true);
     dispatch({ type: 'paste-measures', trackIndex: activeTrackIndex, index: gap, clip: clipboard });
-    setSelected(null);
-    setMeasureRange({ anchor: gap, focus: gap + count - 1 });
-    flashNewBars(gap, gap + count - 1);
-  }, [dispatch, activeTrackIndex, clipboard, flashNewBars]);
+  }, [dispatch, activeTrackIndex, clipboard, expectNewBars]);
 
   // The repeat group under the highlighted range's start, if any — drives the
   // repeat menu, which follows the selection rather than the toolbar target.
@@ -866,7 +883,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
 
       if (e.key === 'Enter') {
         // With bars (and no note) selected, ⏎ opens the bar — useMeasureKeys.
-        if (!selected && measureRange) return;
+        if (!selected && measureRange && editorTab === 'staff') return;
         e.preventDefault();
         handleAddNote();
         return;
@@ -943,13 +960,21 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // Centred over the selected bars (clamped so the bar stays on screen), in
   // container space: the staff below the repeat lane starts at REP_H.
   const bounds = selectionBounds(measureRange);
+  // The bar's rendered width (it varies with the label); 600 until measured.
+  const [barWidth, setBarWidth] = useState(600);
+  const measureBarRef = (el: HTMLDivElement | null) => {
+    const w = el?.offsetWidth ?? 0;
+    if (w > 0 && w !== barWidth) setBarWidth(w);
+  };
   const barPos = bounds && !selected && !selDragging ? (() => {
     const a = measureTimings[bounds[0]], b = measureTimings[bounds[1]];
     if (!a || !b) return null;
     const l = a.startVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
     const r = b.endVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
     if (r < 0 || l > viewportWidth) return null;
-    const center = Math.max(170, Math.min(viewportWidth - 170, (l + r) / 2));
+    // Keep the whole bar inside the strip; too narrow to fit, pin it left.
+    const half = barWidth / 2 + 8;
+    const center = viewportWidth < barWidth + 16 ? half : Math.max(half, Math.min(viewportWidth - half, (l + r) / 2));
     return { left: center, top: Math.min(staffHeight - 44, REP_H + (staffHeight - REP_H) / 2 + 56) };
   })() : null;
   // The tempo the selected bars play at: their quarter notes over their seconds.
@@ -1090,6 +1115,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             />
             {barPos && bounds && (
               <MeasureBar
+                ref={measureBarRef}
                 left={barPos.left}
                 top={barPos.top}
                 label={rangeLabel}

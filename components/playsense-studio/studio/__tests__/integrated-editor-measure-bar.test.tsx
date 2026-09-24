@@ -13,14 +13,19 @@ beforeAll(() => {
   Element.prototype.releasePointerCapture = () => {};
 });
 
-const score: ScoreDocument = {
+// noteQN < 4 leaves room in each bar, so Add note (⏎) isn't blocked by a full bar.
+const makeScore = (bars: number, noteQN = 4): ScoreDocument => ({
   schemaVersion: 1, title: 'T', sourceFormat: 'native', initialTempo: 120,
   initialTimeSignature: [4, 4], initialKeyFifths: 0,
   tracks: [{
     index: 0, instrument: 'staff', displayName: 'T', tuning: null, stringMultiplicity: 1, channel: null, defaultView: 'staff',
-    measures: [1, 2, 3].map(number => ({ number, voices: [{ number: 1, events: [{ kind: 'note' as const, midi: 60, durationQN: 4 }] }] })),
+    measures: Array.from({ length: bars }, (_, i) => ({ number: i + 1, voices: [{ number: 1, events: [{ kind: 'note' as const, midi: 60, durationQN: noteQN }] }] })),
   }],
-} as ScoreDocument;
+} as ScoreDocument);
+const score = makeScore(3);
+const timingsFor = (bars: number): IntegratedEditorMeasureTiming[] => Array.from({ length: bars }, (_, i) => ({
+  measureNumber: i + 1, startVideoTimeSeconds: i * 2, endVideoTimeSeconds: i * 2 + 2,
+}));
 
 // Each bar is 2 s long: 4 quarter notes in 2 s is 120 BPM.
 const timings: IntegratedEditorMeasureTiming[] = [0, 1, 2].map((i) => ({
@@ -91,12 +96,67 @@ describe('IntegratedEditor measure bar', () => {
     expect(onLoopMeasures).toHaveBeenCalledWith(0, 0);
   });
 
-  it('⌘D duplicates the bars and selects the copies', () => {
-    const { dispatch } = render();
+  it('⌘D duplicates the bars and selects the copies once they arrive', () => {
+    // The parent accepts the edit: the score grows by the two copies.
+    const grow = vi.fn(() => {
+      root.render(
+        <IntegratedEditor score={makeScore(5)} dispatch={grow} measureTimings={timingsFor(5)} pixelsPerSecond={100}
+          scrollLeftPx={0} viewportWidth={800} onRequestZoom={() => {}} />,
+      );
+    });
+    render({ dispatch: grow });
     key('ArrowRight');
+    key('ArrowRight', { shiftKey: true });
     key('d', { metaKey: true });
-    expect(dispatched(dispatch, 'duplicate-measures')).toEqual([{ type: 'duplicate-measures', trackIndex: 0, start: 0, count: 1 }]);
-    expect(toolbar()!.querySelector('.st-fbar-info')!.textContent).toContain('m.2');
+    expect(dispatched(grow, 'duplicate-measures')).toEqual([{ type: 'duplicate-measures', trackIndex: 0, start: 0, count: 2 }]);
+    expect(toolbar()!.querySelector('.st-fbar-info')!.textContent).toContain('m.3–4');
+  });
+
+  it('a refused duplicate leaves the selection on the original bars', () => {
+    const { dispatch } = render(); // dispatch does nothing: the parent refused
+    key('ArrowRight');
+    key('ArrowRight', { shiftKey: true });
+    key('d', { metaKey: true });
+    expect(dispatched(dispatch, 'duplicate-measures')).toHaveLength(1);
+    expect(toolbar()!.querySelector('.st-fbar-info')!.textContent).toContain('m.1–2');
+    // A later, unrelated score change doesn't resurrect the stale plan.
+    render({ score: makeScore(3) });
+    expect(toolbar()!.querySelector('.st-fbar-info')!.textContent).toContain('m.1–2');
+  });
+
+  it('keeps the whole bar inside the strip, using its measured width', () => {
+    const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('st-fbar') ? 400 : 0;
+    });
+    try {
+      render();
+      key('ArrowRight'); // bar 1 spans x 0–200, centre 100 → clamped to 400/2 + 8
+      expect(toolbar()!.getAttribute('style')).toContain('left: 208px');
+      key('ArrowRight');
+      key('ArrowRight'); // bar 3 spans 400–600, centre 500 → clamped to 800 − 208
+      expect(toolbar()!.getAttribute('style')).toContain('left: 500px');
+      render({ scrollLeftPx: 100 }); // centre 400 now fits
+      expect(toolbar()!.getAttribute('style')).toContain('left: 400px');
+      render({ viewportWidth: 300, scrollLeftPx: 300 }); // narrower than the bar: pinned left
+      expect(toolbar()!.getAttribute('style')).toContain('left: 208px');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('before measuring, assumes a 600 px bar', () => {
+    render();
+    key('ArrowRight');
+    expect(toolbar()!.getAttribute('style')).toContain('left: 308px');
+  });
+
+  it('⏎ still adds a note on the Piano-roll tab with bars selected', () => {
+    const { dispatch } = render({ score: makeScore(3, 1) });
+    key('ArrowRight');
+    const tab = Array.from(host.querySelectorAll('button')).find((b) => b.textContent === 'Piano-roll')!;
+    act(() => { tab.click(); });
+    key('Enter');
+    expect(dispatched(dispatch, 'add-note')).toHaveLength(1);
   });
 
   it('Clear empties the bars and says the timing stayed', () => {
@@ -118,7 +178,7 @@ describe('IntegratedEditor measure bar', () => {
   });
 
   it('⏎ zooms into the bar instead of adding a note', () => {
-    const { dispatch, onRequestZoom } = render();
+    const { dispatch, onRequestZoom } = render({ score: makeScore(3, 1) });
     key('ArrowRight');
     key('Enter');
     expect(onRequestZoom).toHaveBeenCalledTimes(1);
