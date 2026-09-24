@@ -124,6 +124,59 @@ describe('IntegratedEditor measure bar', () => {
     expect(toolbar()!.querySelector('.st-fbar-info')!.textContent).toContain('m.1–2');
   });
 
+  it('drops a refused duplicate’s plan, so a later undo reaching the same bar count doesn’t select', () => {
+    const { dispatch } = render(); // no-op dispatch: the parent refused
+    key('ArrowRight');
+    key('ArrowRight', { shiftKey: true });
+    key('d', { metaKey: true });
+    act(() => { vi.advanceTimersByTime(1); });
+    // An undo/redo (straight to useEditor, not through dispatch) lands on 3 + 2 bars.
+    render({ dispatch, score: makeScore(5), measureTimings: timingsFor(5) });
+    expect(toolbar()!.querySelector('.st-fbar-info')!.textContent).toContain('m.1–2');
+    expect(host.querySelector('.is-new')).toBeNull();
+  });
+
+  it('a selection made after a refused duplicate also drops its plan', () => {
+    const { dispatch } = render();
+    key('ArrowRight');
+    key('ArrowRight', { shiftKey: true });
+    key('d', { metaKey: true });
+    key('ArrowRight'); // the admin moves on: m.3
+    render({ dispatch, score: makeScore(5), measureTimings: timingsFor(5) });
+    expect(toolbar()!.querySelector('.st-fbar-info')!.textContent).toContain('m.3');
+    expect(toolbar()!.querySelector('.st-fbar-info')!.textContent).not.toContain('m.3–4');
+  });
+
+  it('an accepted edit selects its bars before the drop timer fires (real scheduling, no act)', async () => {
+    vi.useRealTimers();
+    function Host() {
+      const [sc, setSc] = React.useState(() => makeScore(3));
+      const n = sc.tracks[0].measures.length;
+      const dispatch = (a: { type: string; count?: number }) => {
+        if (a.type === 'duplicate-measures') setSc(makeScore(n + (a.count ?? 0)));
+      };
+      return (
+        <IntegratedEditor score={sc} dispatch={dispatch as never} measureTimings={timingsFor(n)} pixelsPerSecond={100}
+          scrollLeftPx={0} viewportWidth={800} onRequestZoom={() => {}} />
+      );
+    }
+    act(() => { root.render(<Host />); });
+    key('ArrowRight');
+    key('ArrowRight', { shiftKey: true });
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: false });
+    try {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', metaKey: true, bubbles: true, cancelable: true }));
+      // The editor's drop timer was queued first, so it has fired by now; had
+      // it fired before the edit's effect consumed the plan, the copies would
+      // never be selected. Give React's follow-up render time to land.
+      await new Promise((r) => setTimeout(r, 0));
+      await new Promise((r) => setTimeout(r, 20));
+      expect(toolbar()!.querySelector('.st-fbar-info')!.textContent).toContain('m.3–4');
+    } finally {
+      Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+    }
+  });
+
   it('keeps the whole bar inside the strip, using its measured width', () => {
     const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
       return this.classList.contains('st-fbar') ? 400 : 0;

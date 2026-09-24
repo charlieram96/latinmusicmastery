@@ -234,16 +234,29 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     setGapPop(null);
     setBarPop(null);
   }, []);
+  // Bars an insert/paste/duplicate is about to add. The parent may still refuse
+  // the edit (SyncPanel refuses one that would run into a sibling section, which
+  // the problem checks here can't predict), so the new bars are selected (and
+  // flashed) only once the score really grows by that many — see expectNewBars
+  // and the effect that consumes this. Any selection the user makes by other
+  // means drops the plan.
+  const pendingBars = useRef<{
+    from: ScoreDocument; expectCount: number; sel: MeasureSelection; flash: boolean;
+  } | null>(null);
+  const selectionChanged = useCallback(() => {
+    pendingBars.current = null;
+    closeMenus();
+  }, [closeMenus]);
   const selectBars = useCallback((sel: MeasureSelection | null) => {
     setSelected(null);
     setMeasureRange(sel);
-    closeMenus();
-  }, [closeMenus]);
+    selectionChanged();
+  }, [selectionChanged]);
   const selectMeasure = useCallback((index: number, extend = false) => {
     setSelected(null);
     setMeasureRange((prev) => clickSelect(prev, index, extend));
-    closeMenus();
-  }, [closeMenus]);
+    selectionChanged();
+  }, [selectionChanged]);
   const selectMeasureRange = useCallback((anchor: number, focus: number) => {
     selectBars(dragSelect(anchor, focus));
   }, [selectBars]);
@@ -516,16 +529,18 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     ? selected.measureIndex
     : Math.min(measureRange?.focus ?? lastMeasureIndex, lastMeasureIndex);
 
-  // Bars an insert/paste/duplicate is about to add. The parent may still refuse
-  // the edit (SyncPanel refuses one that would run into a sibling section, which
-  // the problem checks here can't predict), so the new bars are selected (and
-  // flashed) only once the score really grows by that many; any other score
-  // change drops the plan and the selection stays where it was.
-  const pendingBars = useRef<{
-    from: ScoreDocument; expectCount: number; sel: MeasureSelection; flash: boolean;
-  } | null>(null);
+  // Call just before dispatching the edit. An accepted edit re-renders and runs
+  // the effect below synchronously (key presses and clicks are discrete events,
+  // whose render and passive effects React flushes before any macrotask), so a
+  // plan still parked when the timeout fires belongs to an edit that never
+  // landed: drop it, or a later undo/redo/append that happens to reach the same
+  // bar count would select (and flash) these bars out of the blue.
   const expectNewBars = useCallback((added: number, sel: MeasureSelection, flash = false) => {
-    pendingBars.current = { from: score, expectCount: measureCount + added, sel, flash };
+    const plan = { from: score, expectCount: measureCount + added, sel, flash };
+    pendingBars.current = plan;
+    setTimeout(() => {
+      if (pendingBars.current === plan) pendingBars.current = null;
+    }, 0);
   }, [score, measureCount]);
   // Keep the range inside the score after deletes / undo — or move it onto the
   // bars that just arrived.
@@ -664,8 +679,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const handleSelectEvent = useCallback((ref: SelectedEventRef) => {
     setSelected(ref);
     setMeasureRange({ anchor: ref.measureIndex, focus: ref.measureIndex });
-    closeMenus();
-  }, [closeMenus]);
+    selectionChanged();
+  }, [selectionChanged]);
 
   // Insert a note (or rest) into a given measure using the toolbar values.
   const insertIntoMeasure = useCallback(
@@ -1165,6 +1180,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                   // Stays open: the menu's own action, not a new selection in the strip.
                   if (!repeatGroupAtRange) return;
                   setSelected(null);
+                  pendingBars.current = null;
                   setMeasureRange(dragSelect(repeatGroupAtRange.start, repeatGroupAtRange.start + repeatGroupAtRange.length - 1));
                 }}
                 onClose={() => setRepeatPop(null)}
