@@ -13,7 +13,6 @@ beforeAll(() => {
   Element.prototype.releasePointerCapture = () => {};
 });
 
-// noteQN < 4 leaves room in each bar, so Add note (⏎) isn't blocked by a full bar.
 const makeScore = (bars: number, noteQN = 4): ScoreDocument => ({
   schemaVersion: 1, title: 'T', sourceFormat: 'native', initialTempo: 120,
   initialTimeSignature: [4, 4], initialKeyFifths: 0,
@@ -203,13 +202,13 @@ describe('IntegratedEditor measure bar', () => {
     expect(toolbar()!.getAttribute('style')).toContain('left: 308px');
   });
 
-  it('⏎ still adds a note on the Piano-roll tab with bars selected', () => {
+  it('⏎ does nothing on the Piano-roll tab — note entry lives in the zoom, which only the staff tab shows', () => {
     const { dispatch } = render({ score: makeScore(3, 1) });
     key('ArrowRight');
     const tab = Array.from(host.querySelectorAll('button')).find((b) => b.textContent === 'Piano-roll')!;
     act(() => { tab.click(); });
     key('Enter');
-    expect(dispatched(dispatch, 'add-note')).toHaveLength(1);
+    expect(dispatched(dispatch, 'add-note')).toHaveLength(0);
   });
 
   it('Clear empties the bars and says the timing stayed', () => {

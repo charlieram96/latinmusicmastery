@@ -3,47 +3,38 @@
 // PlaySense Studio — integrated editor under the waveform.
 //
 // Lives in the same vertical slot the old MeasureStrip occupied. Renders a
-// compact track bar + view tabs + an editing toolbar + the active view:
+// compact track bar + view tabs + the active view:
 //   • Staff (default, main): the audio-aligned EditableMeasureStrip — click a
-//     bar to select it (drag or ⇧-click for several, double-click to open it);
-//     click a note to open its bar in the measure zoom on that note (pitch
-//     drags, the pencil and voice 2 live in the zoom).
-//     Clicks never add notes — the Add note button appends one with the
-//     toolbar's current pitch/duration/modifiers. A measure bar floats over the
-//     selected bars with every bar-level action; useMeasureKeys holds their keys.
-//   • Piano-roll: the existing PianoRollView (not audio-aligned).
+//     bar to select it (drag or ⇧-click for several); a double-click, ⏎, or a
+//     click on one of its notes opens it in the measure zoom, which is where
+//     all note entry and editing (pitch, duration, modifiers, voice 2, the
+//     pencil) now happens. Clicks in the strip itself never add or change
+//     notes. A measure bar floats over the selected bars with every bar-level
+//     action; useMeasureKeys holds their keys.
+//   • Piano-roll: the existing PianoRollView (not audio-aligned), with its
+//     own duration state and note entry.
 //
-// Owns the editor view state (selected event, active track, active view, toolbar
-// pitch/duration/modifiers). Score itself lives in the parent via useEditor; this
-// just dispatches edits. Markers + waveform live in SyncPanel and are not touched
+// Owns the editor view state (selected event, active track, active view, the
+// measure zoom). Score itself lives in the parent via useEditor; this just
+// dispatches edits. Markers + waveform live in SyncPanel and are not touched
 // here — note edits don't change `structuralSignature`, so the markers above stay
 // put while you edit pitches/durations.
 
-import { ChevronDown, MoreHorizontal, Music, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch } from 'react';
-import { diatonicToMidi, extractTrackEvents, midiToDiatonic } from '@/lib/playsense-studio/score-to-vexflow';
+import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion, resolvePercStroke } from '@/lib/playsense-studio/perc-strokes';
-import { midiToParts, pitchName } from '@/lib/playsense-studio/pitch';
-import { STEP_SEMITONE } from '@/lib/playsense-studio/notation/accidentals';
-import {
-  QN_EPS,
-  beatLengthInQN,
-  effectiveDurationQN,
-  isFillerRest,
-  measureLengthInQN,
-  occupiedQN,
-} from '@/lib/playsense-studio/time-mapping';
+import { pitchName } from '@/lib/playsense-studio/pitch';
+import { measureLengthInQN } from '@/lib/playsense-studio/time-mapping';
 import { fillIssues, measureFill, type MeasureFill } from '@/lib/playsense-studio/measure-fill';
 import { eventDots, eventTuplet } from '@/components/playsense-studio/shared/score-model/accessors';
 import { writtenValue, type NoteValue } from '@/lib/playsense-studio/rhythm';
 import { cursorRange, type NoteCursor } from '@/lib/playsense-studio/note-cursor';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type {
-  Chord,
   Instrument,
   Measure,
   MusicalEvent,
-  Note,
   ScoreDocument,
 } from '@/components/playsense-studio/shared/score-model/types';
 import {
@@ -62,32 +53,13 @@ import { tempoAt } from '@/lib/playsense-studio/tempo-marks';
 import { REP_H, type RepeatBand } from './measure/repeat-lane';
 import { isTypingTarget } from '@/lib/playsense-studio/typing-target';
 import { PianoRollView } from './piano-roll-view';
-import { PercussionStrokePicker } from './percussion-stroke-picker';
 import { MidiRecordButton, type MidiRecordingSource } from './midi-record-button';
 import { MeasureZoom, type ZoomState } from './zoom/measure-zoom';
 import { useZoomEditing } from './zoom/use-zoom-editing';
 import type { ZoomLayout } from './zoom/zoom-staff';
-import { NoteIcon, RestIcon } from './zoom/note-glyphs';
 import { clampNoteToolbarPosition, NoteToolbar, NOTE_TOOLBAR_WIDTH_FALLBACK, type NoteToolbarPercussion } from './zoom/note-toolbar';
 import { MorePopover, type MoreTab } from './zoom/more-popover';
 import type { NoteTimingProps } from './note-details';
-
-type Articulation = 'staccato' | 'accent' | 'tenuto';
-
-const DURATION_OPTIONS: Array<{ value: number; label: string; key?: string }> = [
-  { value: 4, label: 'Whole', key: '1' },
-  { value: 2, label: 'Half', key: '2' },
-  { value: 1, label: 'Quarter', key: '3' },
-  { value: 0.5, label: '8th', key: '4' },
-  { value: 0.25, label: '16th', key: '5' },
-  { value: 0.125, label: '32nd' },
-  { value: 0.0625, label: '64th' },
-  { value: 0.03125, label: '128th' },
-];
-
-// The Insert toolbar shows the common durations inline; the rest live behind "more".
-const COMMON_DURATIONS = DURATION_OPTIONS.slice(0, 5); // whole … 16th
-const RARE_DURATIONS = DURATION_OPTIONS.slice(5); // 32nd … 128th
 
 const INSTRUMENT_OPTIONS: Array<{ value: Instrument; label: string }> = [
   { value: 'staff', label: 'Staff' },
@@ -106,17 +78,6 @@ const INSTRUMENT_OPTIONS: Array<{ value: Instrument; label: string }> = [
   { value: 'perc-clave', label: 'Clave' },
 ];
 
-const PITCH_LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const;
-const ACCIDENTAL_OPTIONS = [
-  { value: 0, label: '♮' },
-  { value: 1, label: '♯' },
-  { value: -1, label: '♭' },
-];
-const ARTICULATION_OPTIONS: Array<{ value: Articulation; label: string; title: string }> = [
-  { value: 'staccato', label: '·', title: 'Staccato' },
-  { value: 'accent', label: '>', title: 'Accent' },
-  { value: 'tenuto', label: '–', title: 'Tenuto' },
-];
 type EditorTab = 'staff' | 'piano-roll';
 
 import { repeatGroups } from '@/lib/playsense-studio/repeats';
@@ -191,7 +152,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [selected, setSelected] = useState<SelectedEventRef | null>(null);
   // Contiguous measure selection: anchor = where it started, focus = the end
   // being moved (Shift+click / Shift+arrows). The measure bar's actions act on
-  // the whole range; "target" semantics (Add note) follow the focus.
+  // the whole range; "target" semantics (MIDI record) follow the focus.
   const [measureRange, setMeasureRange] = useState<MeasureSelection | null>(null);
   const [rangeStart, rangeEnd] = selectionBounds(measureRange) ?? [null, null];
   const rangeCount = rangeStart !== null && rangeEnd !== null ? rangeEnd - rangeStart + 1 : 0;
@@ -213,7 +174,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [zoom, setZoom] = useState<ZoomState | null>(null);
   const [zoomOrigin, setZoomOrigin] = useState<{ left: number; width: number } | null>(null);
   const [zoomClosing, setZoomClosing] = useState(false);
-  const zoomOpen = zoom !== null;
   // The zoomed bar's note layout (hits, beat span, line math) — a stash for
   // other zoom work; the note toolbar below reads MeasureZoom's own (reactive)
   // layout instead, since a ref write here doesn't request a re-render.
@@ -291,22 +251,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     newBarsTimeout.current = setTimeout(() => setNewBars(new Set()), 400);
   }, []);
   const clipboard = useSyncExternalStore(subscribeMeasureClipboard, readMeasureClipboard, () => null);
-  const [duration, setDuration] = useState<number>(1);
-  const [pitchLetter, setPitchLetter] = useState<string>('C');
-  const [pitchAcc, setPitchAcc] = useState<number>(0);
-  const [pitchOctave, setPitchOctave] = useState<number>(4);
-  // Toolbar modifier defaults (apply to the selection and to inserts).
-  const [dotted, setDotted] = useState(false);
-  const [triplet, setTriplet] = useState(false);
-  const [articulation, setArticulation] = useState<Articulation | null>(null);
-  const [insertRest, setInsertRest] = useState(false);
-  // Percussion: the currently chosen stroke's MIDI.
-  const [percMidi, setPercMidi] = useState<number | null>(null);
-  // "More durations & articulations" popover in the Insert toolbar.
-  const [moreOpen, setMoreOpen] = useState(false);
 
-  // The staff grows to fill the space between the editor bar and the toolbar —
-  // measure the wrapper and feed its height to the strip (min keeps it usable).
+  // The staff grows to fill the space below the editor bar — measure the
+  // wrapper and feed its height to the strip (min keeps it usable).
   const staffWrapRef = useRef<HTMLDivElement | null>(null);
   const [staffHeight, setStaffHeight] = useState(220);
   useEffect(() => {
@@ -323,18 +270,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const percussion = activeTrack ? isPercussion(activeTrack.instrument) : false;
   const percStrokes = activeTrack ? getPercStrokes(activeTrack.instrument) : null;
 
-  // Default the percussion stroke to the first stroke whenever the active
-  // track's stroke set changes (e.g. switching instrument).
-  useEffect(() => {
-    if (percStrokes && percStrokes.length > 0) {
-      setPercMidi((prev) =>
-        prev != null && percStrokes.some((s) => s.midi === prev) ? prev : percStrokes[0].midi
-      );
-    } else {
-      setPercMidi(null);
-    }
-  }, [percStrokes]);
-
   // Defensive: clear selection if the indexed event has gone away (undo/redo,
   // delete, etc.).
   useEffect(() => {
@@ -349,107 +284,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   useEffect(() => {
     onSelectionChange?.(selected ? { ref: selected, trackIndex: activeTrackIndex } : null);
   }, [selected, activeTrackIndex, onSelectionChange]);
-
-  const currentMidi = useMemo(() => {
-    if (percussion) return percMidi ?? percStrokes?.[0]?.midi ?? 60;
-    return Math.max(0, Math.min(127, (pitchOctave + 1) * 12 + STEP_SEMITONE[pitchLetter as keyof typeof STEP_SEMITONE] + pitchAcc));
-  }, [percussion, percMidi, percStrokes, pitchLetter, pitchAcc, pitchOctave]);
-
-  const selectedEvent = useMemo(() => {
-    if (!selected || !activeTrack) return null;
-    return activeTrack.measures[selected.measureIndex]?.voices[0]?.events[selected.eventIndex] ?? null;
-  }, [selected, activeTrack]);
-
-  const selectedPercPitch = selectedEvent?.kind === 'note' ? selectedEvent
-    : selectedEvent?.kind === 'chord' ? selectedEvent.notes[0] : undefined;
-  const strokeValue = percussion && selectedPercPitch?.percussion
-    ? resolvePercStroke(activeTrack.instrument, selectedPercPitch)?.midi ?? null : currentMidi;
-
-  // Sync toolbar to the selected event.
-  useEffect(() => {
-    if (!selectedEvent) return;
-    setDuration(selectedEvent.durationQN);
-    setDotted(selectedEvent.dotted ?? false);
-    setTriplet(selectedEvent.triplet ?? false);
-    setInsertRest(selectedEvent.kind === 'rest');
-    if (selectedEvent.kind === 'note' || selectedEvent.kind === 'chord') {
-      setArticulation(selectedEvent.articulation ?? null);
-      const midi =
-        selectedEvent.kind === 'note'
-          ? (selectedEvent as Note).midi
-          : (selectedEvent as Chord).notes[0]?.midi ?? 60;
-      if (percussion) {
-        setPercMidi(midi);
-      } else {
-        const parts = midiToParts(midi);
-        setPitchLetter(parts.letter);
-        setPitchAcc(parts.accidental);
-        setPitchOctave(parts.octave);
-      }
-    }
-  }, [selectedEvent, percussion]);
-
-  // ---- Apply-to-selection helpers --------------------------------------------
-
-  const applyPitchToSelection = useCallback(
-    (midi: number) => {
-      if (!selected) return;
-      dispatch({
-        type: 'set-event-pitch',
-        trackIndex: activeTrackIndex,
-        measureIndex: selected.measureIndex,
-        eventIndex: selected.eventIndex,
-        midi,
-      });
-    },
-    [selected, activeTrackIndex, dispatch]
-  );
-
-  const applyDurationToSelection = useCallback(
-    (qn: number) => {
-      if (!selected) return;
-      dispatch({
-        type: 'set-event-duration',
-        trackIndex: activeTrackIndex,
-        measureIndex: selected.measureIndex,
-        eventIndex: selected.eventIndex,
-        durationQN: qn,
-      });
-    },
-    [selected, activeTrackIndex, dispatch]
-  );
-
-  const pitchedMidiFrom = (letter: string, acc: number, octave: number) =>
-    Math.max(0, Math.min(127, (octave + 1) * 12 + STEP_SEMITONE[letter as keyof typeof STEP_SEMITONE] + acc));
-
-  // Keyboard editing — Esc clear · Del remove · ⏎ add · ↑/↓ pitch (⇧ = octave /
-  // stroke) · ←/→ walk the selection · 1-5 durations · "." dot · "t" triplet ·
-  // "r" rest. Declared below the handlers it calls via function refs would be
-  // noisier; instead this effect lives after the toolbar handlers are defined
-  // (see the second keydown effect further down). This one keeps Esc/Delete on
-  // a selected NOTE; the same keys on selected bars live in useMeasureKeys.
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      // The zoom owns its keys while it's open (its selection follows its cursor).
-      if (!selected || zoomOpen || isTypingTarget(e.target)) return;
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        setSelected(null);
-        return;
-      }
-      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-      e.preventDefault();
-      dispatch({
-        type: 'delete-event',
-        trackIndex: activeTrackIndex,
-        measureIndex: selected.measureIndex,
-        eventIndex: selected.eventIndex,
-      });
-      setSelected(null);
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [selected, zoomOpen, dispatch, activeTrackIndex]);
 
   // Extract the active track's notation once per score edit. Kept apart from
   // stripItems so moving sync markers (measureTimings) doesn't re-extract.
@@ -514,7 +348,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     return out;
   }, [activeTrack, tracked, measureTimings, measureFills]);
 
-  // The measure "Add note" targets: the selected event's measure, else the last.
+  // The MIDI record target measure: the selected event's measure, else the last.
   const measureCount = activeTrack?.measures.length ?? 0;
   const lastMeasureIndex = Math.max(0, measureCount - 1);
   const targetMeasureIndex = selected
@@ -649,59 +483,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const repeatGroupAtRange = activeTrack && rangeStart !== null
     ? repeatGroups(activeTrack).find(g => rangeStart >= g.start && rangeStart < g.start + g.length * g.count) ?? null
     : null;
-
-  // Capacity of the target measure for its time signature — drives the readout
-  // and disables "Add note" once the measure is full (a filler rest counts as
-  // empty since the first real note replaces it).
-  const capacity = useMemo(() => {
-    const ts = stripItems[targetMeasureIndex]?.timeSignature ?? score.initialTimeSignature;
-    const total = measureLengthInQN(ts);
-    const events = activeTrack?.measures[targetMeasureIndex]?.voices[0]?.events ?? [];
-    const used = isFillerRest(events, ts) ? 0 : occupiedQN(events);
-    const need = effectiveDurationQN(duration, { dotted, triplet });
-    const beatQN = beatLengthInQN(ts);
-    return {
-      measureNumber: stripItems[targetMeasureIndex]?.measureNumber ?? targetMeasureIndex + 1,
-      full: used + need > total + QN_EPS,
-      usedBeats: used / beatQN,
-      totalBeats: total / beatQN,
-    };
-  }, [activeTrack, targetMeasureIndex, stripItems, score.initialTimeSignature, duration, dotted, triplet]);
-
-  // Insert a note (or rest) into a given measure using the toolbar values.
-  const insertIntoMeasure = useCallback(
-    (measureIndex: number) => {
-      if (insertRest) {
-        dispatch({
-          type: 'add-rest',
-          trackIndex: activeTrackIndex,
-          measureIndex,
-          durationQN: duration,
-          dotted,
-          triplet,
-        });
-      } else {
-        dispatch({
-          type: 'add-note',
-          trackIndex: activeTrackIndex,
-          measureIndex,
-          midi: currentMidi,
-          durationQN: duration,
-          dotted,
-          triplet,
-          ...(articulation ? { articulation } : {}),
-        });
-      }
-      setSelected(null);
-    },
-    [insertRest, activeTrackIndex, duration, dotted, triplet, currentMidi, articulation, dispatch]
-  );
-
-  // Add-note button: target the selected event's measure, else the last measure.
-  const handleAddNote = useCallback(() => {
-    if (capacity.full) return; // measure full — the reducer would no-op anyway
-    insertIntoMeasure(targetMeasureIndex);
-  }, [capacity.full, targetMeasureIndex, insertIntoMeasure]);
 
   const handleRequestZoomTo = useCallback(
     (measureIndex: number) => {
@@ -937,186 +718,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     if (w > 0 && (w !== noteToolbarSize.w || h !== noteToolbarSize.h)) setNoteToolbarSize({ w, h });
   };
 
-  // ---- Toolbar control handlers ---------------------------------------------
-
-  const onDurationClick = (qn: number) => {
-    setDuration(qn);
-    applyDurationToSelection(qn);
-  };
-
-  const onPitchPartChange = (next: { letter?: string; acc?: number; octave?: number }) => {
-    const letter = next.letter ?? pitchLetter;
-    const acc = next.acc ?? pitchAcc;
-    const octave = next.octave ?? pitchOctave;
-    setPitchLetter(letter);
-    setPitchAcc(acc);
-    setPitchOctave(octave);
-    applyPitchToSelection(pitchedMidiFrom(letter, acc, octave));
-  };
-
-  const onStrokeClick = (midi: number) => {
-    setPercMidi(midi);
-    applyPitchToSelection(midi);
-  };
-
-  const onToggleRest = () => {
-    const next = !insertRest;
-    setInsertRest(next);
-    if (selected && selectedEvent) {
-      dispatch({
-        type: 'convert-event-kind',
-        trackIndex: activeTrackIndex,
-        measureIndex: selected.measureIndex,
-        eventIndex: selected.eventIndex,
-        to: next ? 'rest' : 'note',
-        midi: currentMidi,
-      });
-    }
-  };
-
-  const onToggleDotted = () => {
-    const next = !dotted;
-    setDotted(next);
-    if (selected) {
-      dispatch({
-        type: 'set-event-dotted',
-        trackIndex: activeTrackIndex,
-        measureIndex: selected.measureIndex,
-        eventIndex: selected.eventIndex,
-        dotted: next,
-      });
-    }
-  };
-
-  const onToggleTriplet = () => {
-    const next = !triplet;
-    setTriplet(next);
-    if (selected) {
-      dispatch({
-        type: 'set-event-triplet',
-        trackIndex: activeTrackIndex,
-        measureIndex: selected.measureIndex,
-        eventIndex: selected.eventIndex,
-        triplet: next,
-      });
-    }
-  };
-
-  const onToggleTie = () => {
-    if (!selected || !selectedEvent || selectedEvent.kind === 'rest') return;
-    const next = !selectedEvent.tieToNext;
-    dispatch({
-      type: 'set-event-tie',
-      trackIndex: activeTrackIndex,
-      measureIndex: selected.measureIndex,
-      eventIndex: selected.eventIndex,
-      tieToNext: next,
-    });
-  };
-
-  const onArticulationClick = (value: Articulation) => {
-    const next = articulation === value ? null : value;
-    setArticulation(next);
-    if (selected) {
-      dispatch({
-        type: 'set-event-articulation',
-        trackIndex: activeTrackIndex,
-        measureIndex: selected.measureIndex,
-        eventIndex: selected.eventIndex,
-        articulation: next,
-      });
-    }
-  };
-
-  const tieActive =
-    !!selectedEvent && selectedEvent.kind !== 'rest' && !!selectedEvent.tieToNext;
-
-  // ---- Fast keyboard entry (depends on the toolbar handlers above) ----------
-
-  const stepSelectedPitch = (dir: 1 | -1, byOctave: boolean) => {
-    if (!selected || !selectedEvent || selectedEvent.kind === 'rest') return;
-    const midi =
-      selectedEvent.kind === 'note'
-        ? (selectedEvent as Note).midi
-        : (selectedEvent as Chord).notes[0]?.midi ?? 60;
-    let next: number;
-    if (percussion) {
-      const list = percStrokes ?? [];
-      const idx = list.findIndex((s) => s.midi === midi);
-      next = list[Math.min(Math.max(idx + dir, 0), list.length - 1)]?.midi ?? midi;
-    } else if (byOctave) {
-      next = Math.max(0, Math.min(127, midi + 12 * dir));
-    } else {
-      next = diatonicToMidi(midiToDiatonic(midi) + dir, 0, score.initialKeyFifths);
-    }
-    applyPitchToSelection(next);
-  };
-
-  const walkSelection = (dir: 1 | -1) => {
-    if (!activeTrack) return;
-    const measures = activeTrack.measures;
-    const eventsAt = (mi: number) => measures[mi]?.voices[0]?.events ?? [];
-    if (!selected) return;
-    let mi = selected.measureIndex;
-    let ei = selected.eventIndex + dir;
-    while (mi >= 0 && mi < measures.length) {
-      const events = eventsAt(mi);
-      if (ei >= 0 && ei < events.length) {
-        setSelected({ measureIndex: mi, eventIndex: ei });
-        return;
-      }
-      mi += dir;
-      ei = dir === 1 ? 0 : eventsAt(mi).length - 1;
-    }
-  };
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (zoomOpen || isTypingTarget(e.target)) return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-
-      if (e.key === 'Enter') {
-        // With bars (and no note) selected, ⏎ opens the bar — useMeasureKeys.
-        if (!selected && measureRange && editorTab === 'staff') return;
-        e.preventDefault();
-        handleAddNote();
-        return;
-      }
-      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-        if (!selected) return;
-        e.preventDefault();
-        stepSelectedPitch(e.key === 'ArrowUp' ? 1 : -1, e.shiftKey);
-        return;
-      }
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        // Walk notes only while one is selected; otherwise the arrows move the
-        // bar selection (useMeasureKeys).
-        if (!selected) return;
-        e.preventDefault();
-        walkSelection(e.key === 'ArrowRight' ? 1 : -1);
-        return;
-      }
-      const byKey = COMMON_DURATIONS.find((d) => d.key === e.key);
-      if (byKey) {
-        e.preventDefault();
-        onDurationClick(byKey.value);
-        return;
-      }
-      if (e.key === '.') {
-        e.preventDefault();
-        onToggleDotted();
-      } else if (e.key === 't' || e.key === 'T') {
-        e.preventDefault();
-        onToggleTriplet();
-      } else if (e.key === 'r' || e.key === 'R') {
-        e.preventDefault();
-        onToggleRest();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  });
-
   // Bars that don't add up — drives the strip footer's issue chip and its
   // "jump to the next one" behavior.
   const fills = stripItems.map((it) => it.fill);
@@ -1285,7 +886,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       )}
 
       {/* Active view — the audio-aligned staff (or piano-roll). The staff fills
-          the available height between the editor bar and the toolbar. */}
+          the available height below the editor bar. */}
       {editorTab === 'staff' && (
         <>
           <div ref={staffWrapRef} className="relative min-h-0 flex-1">
@@ -1489,8 +1090,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             )}
             <span className="truncate">
               {measureRange
-                ? '⏎ zoom in · ⌘D duplicate · ⌫ delete · esc deselect'
-                : 'Drag across bars to select · double-click a bar to zoom in · scroll to zoom'}
+                ? '⏎ edit notes · ⌘D duplicate · ⌫ delete · esc deselect'
+                : 'Drag across bars to select · double-click a bar to edit its notes · scroll to zoom'}
             </span>
             <button
               type="button"
@@ -1514,216 +1115,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           <PianoRollView score={score} activeTrackIndex={activeTrackIndex} dispatch={dispatch} />
         </div>
       )}
-
-      {/* Insert toolbar — note entry, one compact row */}
-      <div className="st-notebar flex-shrink-0">
-        <div className="st-nb-lead">
-          <span className="st-nb-glyph">
-            <Music className="h-4 w-4" />
-          </span>
-        </div>
-
-        {/* Duration (icons inline · rare durations + articulations behind "more") */}
-        <div className="st-nb-grp" aria-label="Duration">
-          <div className="st-glyphseg">
-            {COMMON_DURATIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => onDurationClick(opt.value)}
-                className={`note-glyph${Math.abs(duration - opt.value) < 1e-7 ? ' is-on' : ''}`}
-                title={opt.key ? `${opt.label} note — ${opt.key}` : `${opt.label} note`}
-              >
-                <NoteIcon durationQN={opt.value} />
-              </button>
-            ))}
-          </div>
-          <button
-            className={`st-iconbtn${moreOpen ? ' is-on' : ''}`}
-            onClick={() => setMoreOpen((m) => !m)}
-            title="More durations & articulations"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
-          {moreOpen && (
-            <>
-              <div className="st-pop-scrim" onClick={() => setMoreOpen(false)} />
-              <div className="st-nb-pop">
-                <div className="st-glyphseg">
-                  {RARE_DURATIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => onDurationClick(opt.value)}
-                      className={`note-glyph${Math.abs(duration - opt.value) < 1e-7 ? ' is-on' : ''}`}
-                      title={`${opt.label} note`}
-                    >
-                      <NoteIcon durationQN={opt.value} />
-                    </button>
-                  ))}
-                </div>
-                <div className="st-glyphseg">
-                  {ARTICULATION_OPTIONS.map((a) => (
-                    <button
-                      key={a.value}
-                      className={articulation === a.value ? 'is-on' : ''}
-                      onClick={() => onArticulationClick(a.value)}
-                      title={a.title}
-                    >
-                      {a.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Modifiers — dot/triplet/tie inline; core to Latin rhythm, so one click */}
-        <div className="st-glyphseg" aria-label="Modifiers">
-          <button className={dotted ? 'is-on' : ''} onClick={onToggleDotted} title="Dotted (1.5×) — .">
-            •
-          </button>
-          <button className={triplet ? 'is-on' : ''} onClick={onToggleTriplet} title="Triplet (3:2) — t">
-            ³
-          </button>
-          <button
-            className={tieActive ? 'is-on' : ''}
-            onClick={onToggleTie}
-            disabled={!selected}
-            title="Tie to next"
-          >
-            ⌣
-          </button>
-        </div>
-
-        <span className="st-divline" />
-
-        {/* Stroke (percussion) / pitch (pitched) */}
-        <div aria-label={percussion ? 'Stroke' : 'Pitch'}>
-          {percussion ? (
-            <PercussionStrokePicker strokes={percStrokes ?? []} value={strokeValue} onChange={onStrokeClick} />
-          ) : (
-            <div className="st-nb-grp" title={`midi ${currentMidi}`}>
-              <div className="st-seg pitch" role="radiogroup" aria-label="Note letter">
-                {PITCH_LETTERS.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => onPitchPartChange({ letter: p })}
-                    className={pitchLetter === p ? 'is-on' : ''}
-                    role="radio"
-                    aria-checked={pitchLetter === p}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-              <div className="st-glyphseg" role="radiogroup" aria-label="Accidental">
-                {ACCIDENTAL_OPTIONS.map((o) => (
-                  <button
-                    key={o.value}
-                    type="button"
-                    onClick={() => onPitchPartChange({ acc: o.value })}
-                    className={pitchAcc === o.value ? 'is-on' : ''}
-                    role="radio"
-                    aria-checked={pitchAcc === o.value}
-                    title={o.value === 0 ? 'Natural' : o.value === 1 ? 'Sharp' : 'Flat'}
-                  >
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-              <div className="st-stepper">
-                <button
-                  type="button"
-                  onClick={() => onPitchPartChange({ octave: Math.max(0, pitchOctave - 1) })}
-                  aria-label="Octave down"
-                >
-                  –
-                </button>
-                <input
-                  type="number"
-                  min={0}
-                  max={9}
-                  value={pitchOctave}
-                  onChange={(e) => onPitchPartChange({ octave: Number(e.target.value) || 0 })}
-                  aria-label="Octave"
-                />
-                <button
-                  type="button"
-                  onClick={() => onPitchPartChange({ octave: Math.min(9, pitchOctave + 1) })}
-                  aria-label="Octave up"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="st-nb-actions">
-          <span
-            className={`st-nb-cap${capacity.full ? ' is-full' : ''}`}
-            title={`Measure ${capacity.measureNumber} — ${formatBeats(capacity.usedBeats)}/${formatBeats(capacity.totalBeats)} beats filled`}
-          >
-            m.{capacity.measureNumber} · {formatBeats(capacity.usedBeats)}/{formatBeats(capacity.totalBeats)}
-          </span>
-          <button
-            className={`st-nb-rest${insertRest ? ' is-on' : ''}`}
-            onClick={onToggleRest}
-            title="Insert a rest instead of a note — r"
-          >
-            <RestIcon /> Rest
-          </button>
-          <button
-            className="st-btn-primary st-nb-add"
-            onClick={handleAddNote}
-            disabled={capacity.full}
-            title={
-              capacity.full
-                ? `Measure ${capacity.measureNumber} is full — add a measure or pick a shorter duration`
-                : 'Add a note/rest with the current toolbar values'
-            }
-          >
-            <Plus className="h-[15px] w-[15px]" /> Add {insertRest ? 'rest' : 'note'}{' '}
-            <span className="kbd">⏎</span>
-          </button>
-          {selected && (
-            <button
-              onClick={() => {
-                dispatch({
-                  type: 'delete-event',
-                  trackIndex: activeTrackIndex,
-                  measureIndex: selected.measureIndex,
-                  eventIndex: selected.eventIndex,
-                });
-                setSelected(null);
-              }}
-              className="st-iconbtn hover:!border-destructive/40 hover:!bg-destructive/10 hover:!text-destructive"
-              title="Delete selected note"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Help */}
-      <p className="st-help flex-shrink-0">
-        <span className="k">drag ↕</span> pitch · <span className="k">↑/↓</span> step (
-        <span className="k">⇧</span> octave) · <span className="k">←/→</span> walk notes ·{' '}
-        <span className="k">⏎</span> add · <span className="k">1–5</span> duration ·{' '}
-        <span className="k">Del</span> remove · <span className="k">⇧click / ⇧←/→</span> select bars ·{' '}
-        <span className="k">⌘C/⌘V</span> copy bars.
-      </p>
     </div>
   );
 });
-
-/** Compact beat count: whole numbers show plain, fractions to one decimal. */
-function formatBeats(beats: number): string {
-  return Number.isInteger(beats) ? String(beats) : beats.toFixed(1);
-}
 
 // Moved to lib/playsense-studio/typing-target.ts (the measure keys hook needs
 // it without importing this file); re-exported for existing importers.
