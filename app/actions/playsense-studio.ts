@@ -17,6 +17,7 @@ import {
   normalizeMediaTrim,
   type MediaTrim,
 } from '@/lib/playsense-studio/clip-model';
+import { readNudges } from '@/lib/playsense-studio/drafts/timing';
 import { rebaseAnchor, secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
@@ -53,21 +54,6 @@ export interface ClassItemScorePayload {
      *  list; the waypoints above already include their effect. */
     nudges: Array<{ qn: number; deltaSeconds: number }>;
   } | null;
-}
-
-/** params.nudges, defensively: anything malformed is dropped. */
-function readNudges(params: unknown): Array<{ qn: number; deltaSeconds: number }> {
-  const raw = (params as { nudges?: unknown } | null)?.nudges;
-  if (!Array.isArray(raw)) return [];
-  const out: Array<{ qn: number; deltaSeconds: number }> = [];
-  for (const n of raw) {
-    const qn = (n as { qn?: unknown })?.qn;
-    const deltaSeconds = (n as { deltaSeconds?: unknown })?.deltaSeconds;
-    if (typeof qn === 'number' && Number.isFinite(qn) && typeof deltaSeconds === 'number' && Number.isFinite(deltaSeconds)) {
-      out.push({ qn, deltaSeconds });
-    }
-  }
-  return out;
 }
 
 /** Load one time map's header + waypoints (or null). Shared by the active-map
