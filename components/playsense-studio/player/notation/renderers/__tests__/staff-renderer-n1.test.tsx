@@ -147,3 +147,24 @@ describe('layout details found in the browser check', () => {
     expect(loud).toBeGreaterThan(plain + 15)
   })
 })
+
+describe('review fixes', () => {
+  it('counts a blank bar inside its own bar, not over the previous one', () => {
+    const blank = scale({}, bar => bar === 2 ? [] : [60, 62, 64, 65].map(midi => ({ kind: 'note', midi, durationQN: 1 })))
+    draw({ score: blank, layoutMode: 'scroll' })
+    const lefts = [...host.querySelectorAll('.ps-staff-count')].map(el => parseFloat((el as HTMLElement).style.left))
+    // One line: eight counts per bar, in bar order.
+    expect(lefts).toHaveLength(32)
+    const bar = (k: number) => lefts.slice(k * 8, k * 8 + 8)
+    expect(Math.min(...bar(1))).toBeGreaterThan(Math.max(...bar(0)))
+    expect(Math.max(...bar(1))).toBeLessThan(Math.min(...bar(2)))
+    // Spread across the bar rather than bunched in the previous bar's tail.
+    const range = (xs: number[]) => Math.max(...xs) - Math.min(...xs)
+    expect(range(bar(1))).toBeGreaterThan(range(bar(0)) * .5)
+  })
+  it('plain engraving (helpers off) draws no helpers and dims no rows, for the Studio previews', () => {
+    draw({ helpers: false, currentMs: 2500 })
+    expect(host.querySelectorAll('.ps-staff-name, .ps-staff-count, .ps-staff-next')).toHaveLength(0)
+    expect(host.querySelectorAll('[data-row-state]')).toHaveLength(0)
+  })
+})

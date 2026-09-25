@@ -13,8 +13,9 @@ export function scoreCursorAt(ms: number, anchors: readonly ScoreAnchor[], endMs
   }
   const a = anchors[lo], b = anchors[lo + 1]
   const end = b?.ms ?? endMs
-  // A note whose successor sits in the next bar runs its tail to its own barline.
-  const crossesBar = !!b && a.barEndX != null && b.bar != null && b.bar !== a.bar
+  // A note whose successor opens the next bar runs its tail to its own barline. When
+  // blank bars lie between them, the sweep runs on through those bars instead.
+  const crossesBar = !!b && a.barEndX != null && a.bar != null && b.bar === a.bar + 1
   const endX = b && b.system === a.system ? (crossesBar ? a.barEndX! : b.x) : (rowEnds[a.system] ?? a.x)
   const fraction = Math.max(0, Math.min(1, (time - a.ms) / Math.max(1, end - a.ms)))
   return { x: a.x + (endX - a.x) * fraction, system: a.system }

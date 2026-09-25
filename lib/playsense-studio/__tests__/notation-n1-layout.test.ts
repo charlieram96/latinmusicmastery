@@ -29,3 +29,14 @@ describe('packScoreRows maxPerRow', () => {
     expect(packScoreRows([300, 300, 300], 500, [], 4).map(r => r.widths.length)).toEqual([1, 1, 1])
   })
 })
+
+describe('scoreCursorAt across a blank bar', () => {
+  it('sweeps through a bar with no notes instead of stalling at the barline', () => {
+    const anchors = [
+      { ms: 0, x: 10, system: 0, bar: 0, barEndX: 100 },
+      { ms: 4000, x: 210, system: 0, bar: 2, barEndX: 300 },
+    ]
+    // Halfway through the blank bar 1 the playhead is well past bar 0's barline.
+    expect(scoreCursorAt(3000, anchors, 6000, [300]).x).toBeGreaterThan(100)
+  })
+})

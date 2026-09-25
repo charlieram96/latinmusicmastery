@@ -1250,15 +1250,21 @@ class StaffRendererImpl implements ScoreRenderer {
   ): void {
     const s = this.scale;
     // Counts: "1 & 2 &" under every bar, placed on the same path as the playhead.
+    const barsWithNotes = new Set(this.hits.map(hit => hit.bar));
     this.measureGeoms.forEach((g, index) => {
       const block = blocks[index];
+      const barStartQn = block.cumulativeQN;
+      const barQn = block.timeSignature[0] * 4 / block.timeSignature[1];
       const marks = barCounts(block.cumulativeQN, block.timeSignature, helpers.and);
       const barEndQn = block.cumulativeQN + block.timeSignature[0] * 4 / block.timeSignature[1];
       marks.forEach((mark, k) => {
         const ms = qnToMs(mark.qn);
         const endMs = qnToMs(marks[k + 1]?.qn ?? barEndQn);
         const pos = this.msToCursorPos(ms);
-        const x = pos.system === g.system ? pos.x : g.x + g.width / 2;
+        // A bar with no notes (a blank studio bar) spreads its counts over its own width.
+        const x = !barsWithNotes.has(index)
+          ? g.x + 12 + (g.width - 24) * (mark.qn - barStartQn) / barQn
+          : pos.system === g.system ? pos.x : g.x + g.width / 2;
         const el = document.createElement('span');
         el.className = 'ps-staff-count';
         el.dataset.beat = String(mark.beat);
@@ -1487,7 +1493,8 @@ class StaffRendererImpl implements ScoreRenderer {
         return;
       }
 
-      if (pos.system !== this.currentRow) {
+      // Plain engraving (helpers off, e.g. Studio previews) keeps every row at full ink.
+      if (this.helpers && pos.system !== this.currentRow) {
         this.currentRow = pos.system;
         rowStates(this.systemCount, pos.system).forEach((state, k) => {
           this.rowGroups[k]?.setAttribute('data-row-state', state);
@@ -1877,7 +1884,7 @@ export interface StaffRendererProps {
   onSelectRange?: (range: SelectedRange) => void;
   /** Fires once after mount with the active track's total duration in ms. */
   onDurationKnown?: (ms: number) => void;
-  /** Reading helpers; defaults to the student's language. `false` hides them. */
+  /** Reading helpers; defaults to the student's language. `false` is plain engraving: no helpers, no row dimming. */
   helpers?: StaffHelpers | false;
   className?: string;
 }

@@ -24,7 +24,7 @@ export function PdfImportPreview({ file, score, trackIndex }: { file: File; scor
     </div>
     <div className="h-64 min-h-0 sm:h-72">
       {score && view === 'notation'
-        ? <StaffRenderer score={score} trackIndex={trackIndex} currentMs={0} showCursor={false} autoFollow={false} layoutMode="wrapped" zoom={0.8} className="h-full" />
+        ? <StaffRenderer score={score} trackIndex={trackIndex} currentMs={0} showCursor={false} autoFollow={false} layoutMode="wrapped" helpers={false} zoom={0.8} className="h-full" />
         : <iframe ref={frameRef} title="Original score PDF" className="h-full w-full border-0" />}
     </div>
   </div>;
