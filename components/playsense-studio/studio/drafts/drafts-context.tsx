@@ -6,6 +6,7 @@
 // ExerciseStudio) only seed their owners into it and reuse its value.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { discardStudioDraft, publishStudioDraft } from '@/app/actions/studio-drafts';
+import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import type { StudioContent } from '@/lib/playsense-studio/drafts/changes';
 import { ownerKey, type StudioDraftOwner } from '@/lib/playsense-studio/drafts/types';
 
@@ -106,7 +107,10 @@ function RootProvider({ owners, children }: { owners: OwnerStatus[]; children: R
     const key = ownerKey(owner);
     const flushed = await flush(key);
     if (flushed.error) return { error: flushed.error };
-    const res = await publishStudioDraft(owner);
+    // Same queue key the hook's autosave uses: waits for any save still on
+    // the wire (flush() only waited for the LAST one it kicked off) instead
+    // of racing it.
+    const res = await queueStudioSave(`draft:${key}`, () => publishStudioDraft(owner));
     if (res.error) return { error: res.error };
     setStatus(owner, { unpublished: false });
     each(key).forEach((h) => h.changed?.());
@@ -115,7 +119,9 @@ function RootProvider({ owners, children }: { owners: OwnerStatus[]; children: R
 
   const discard = useCallback(async (owner: StudioDraftOwner) => {
     const key = ownerKey(owner);
-    const res = await discardStudioDraft(owner);
+    // Same reasoning as publish: wait behind any in-flight save on this owner
+    // instead of racing it.
+    const res = await queueStudioSave(`draft:${key}`, () => discardStudioDraft(owner));
     if (res.error) return { error: res.error };
     if (res.data) notifyAdopt(key, { score: res.data.score, timing: res.data.timing });
     setStatus(owner, { unpublished: false });

@@ -49,6 +49,11 @@ export function useStudioDraft(opts: {
   latest.current = { score, isDirty, timing, timingDirty, label };
   const timingRef = useRef(timing);
 
+  // Invalidates an in-flight save: bumped whenever fresh content is adopted
+  // (discard/restore) so a save already on the wire when that happens can't
+  // clobber it once it finally resolves.
+  const generationRef = useRef(0);
+
   const setTiming = useCallback((patch: Partial<StudioTiming>) => {
     const next = { ...timingRef.current, ...patch };
     timingRef.current = next;
@@ -72,10 +77,15 @@ export function useStudioDraft(opts: {
   const save = useCallback(async (saveOpts?: { silent?: boolean }): Promise<{ error?: string }> => {
     const snap = latest.current;
     if (!snap.isDirty && !snap.timingDirty) return {};
+    const myGeneration = generationRef.current;
     if (!saveOpts?.silent) { setSaveState('saving'); setError(null); }
     const res = await queueStudioSave(`draft:${key}`, () =>
       saveStudioDraft({ owner, score: snap.score, timing: snap.timing })
     ).catch(() => ({ error: 'Could not save. Check your connection and retry.' } as { error: string; updatedAt?: string }));
+    // Content was replaced (discard/restore) while this save was on the
+    // wire: its result no longer describes the current draft, so it must not
+    // touch saveState, the unpublished flag, or the dirty flags.
+    if (generationRef.current !== myGeneration) return res.error ? { error: res.error } : {};
     if (res.error) {
       if (!saveOpts?.silent) { setSaveState('error'); setError(res.error); }
       return { error: res.error };
@@ -105,6 +115,7 @@ export function useStudioDraft(opts: {
   }, [save]);
 
   const adopt = useCallback((c: { score: ScoreDocument; timing: StudioTiming }) => {
+    generationRef.current += 1;
     replaceScore(c.score);
     latest.current.isDirty = false;
     replaceTiming(c.timing);

@@ -128,4 +128,51 @@ describe('useStudioDraft — fix round 1: draft safety', () => {
     expect(acts.publishStudioDraft).not.toHaveBeenCalled();
     expect(ctx.statuses['section:sec-1'].unpublished).toBe(false);
   });
+
+  it('discard pressed while a save is in flight runs after the save resolves, and ends unpublished:false', async () => {
+    let resolveSave!: (v: { updatedAt: string }) => void;
+    acts.saveStudioDraft.mockImplementation(() => new Promise((resolve) => { resolveSave = resolve; }));
+    acts.discardStudioDraft.mockResolvedValue({ data: { score: { title: 'Live' }, timing: EMPTY_TIMING, updatedAt: '' } });
+    mount(<Editor />);
+    act(() => edit('B'));
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    expect(acts.saveStudioDraft).toHaveBeenCalledTimes(1);
+    expect(acts.discardStudioDraft).not.toHaveBeenCalled();
+
+    let discardPromise!: Promise<{ error?: string }>;
+    act(() => { discardPromise = ctx.discard(owner); });
+    // Still queued behind the in-flight save — the actual discard call hasn't fired.
+    expect(acts.discardStudioDraft).not.toHaveBeenCalled();
+
+    let discardResult: { error?: string } | undefined;
+    await act(async () => {
+      resolveSave({ updatedAt: '2026-09-25T10:00:02.000Z' });
+      discardResult = await discardPromise;
+    });
+    expect(acts.discardStudioDraft).toHaveBeenCalledTimes(1);
+    expect(discardResult).toEqual({});
+    expect(ctx.statuses['section:sec-1'].unpublished).toBe(false);
+  });
+
+  it("a save that started before an adopt doesn't flip the status back to unpublished", async () => {
+    let resolveSave!: (v: { updatedAt: string }) => void;
+    acts.saveStudioDraft.mockImplementation(() => new Promise((resolve) => { resolveSave = resolve; }));
+    mount(<Editor />);
+    act(() => edit('B'));
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    expect(acts.saveStudioDraft).toHaveBeenCalledTimes(1);
+
+    // A direct restore-style adopt (bypassing publish/discard's queue) while
+    // that save is still in flight, and whatever drove it marks the owner
+    // published.
+    act(() => {
+      ctx.notifyAdopt('section:sec-1', { score: { title: 'Restored' } as never, timing: EMPTY_TIMING });
+      ctx.setStatus(owner, { unpublished: false });
+    });
+    expect(ctx.statuses['section:sec-1'].unpublished).toBe(false);
+
+    await act(async () => { resolveSave({ updatedAt: '2026-09-25T10:00:02.000Z' }); });
+    // The stale save must not resurrect the unpublished flag.
+    expect(ctx.statuses['section:sec-1'].unpublished).toBe(false);
+  });
 });
