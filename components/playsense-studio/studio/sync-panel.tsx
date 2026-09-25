@@ -655,6 +655,11 @@ export function SyncPanel({
   const [autoPlaceNotice, setAutoPlaceNotice] = useState<string | null>(null);
   const tweenRafRef = useRef<number | null>(null);
   const tweeningRef = useRef(false);
+  // What the tween itself last wrote to `markers` — each frame checks this
+  // against the CURRENT markers (via a functional update) before writing the
+  // next one, so a drag, a structural edit or a reconcile that lands mid-tween
+  // wins outright instead of being clobbered by the next frame.
+  const lastWrittenRef = useRef<MarkerState | null>(null);
 
   // The undo chip is a one-step affordance: it retires as soon as the markers
   // change by anything OTHER than the placement landing (which sets markers to
@@ -677,6 +682,9 @@ export function SyncPanel({
   }, [markers]);
 
   const runAutoPlace = useCallback(() => {
+    // A tween is already animating toward a placement — ignore a second click
+    // rather than racing it (undo would otherwise point at the wrong "before").
+    if (tweeningRef.current) return;
     // The duration is 0 (not null) before the video's metadata loads, and
     // `videoDurationSeconds ?? clock.durationSeconds ?? …` wouldn't catch
     // that (0 isn't nullish) — trust a duration only once it's actually > 0,
@@ -707,30 +715,39 @@ export function SyncPanel({
     setAutoPlaceUndo(from);
     placedRef.current = res.state;
 
-    if (tweenRafRef.current !== null) {
-      cancelAnimationFrame(tweenRafRef.current);
-      tweenRafRef.current = null;
-    }
-
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     if (reducedMotion) {
-      tweeningRef.current = false;
       setMarkers(res.state);
       setDirty(true);
       return;
     }
 
+    lastWrittenRef.current = from;
     tweeningRef.current = true;
     const startedAt = performance.now();
     const tick = (now: number) => {
       const p = Math.min(1, (now - startedAt) / AUTO_PLACE_TWEEN_MS);
-      setMarkers(lerpMarkers(from, res.state, easeOut(p)));
+      const next = p < 1 ? lerpMarkers(from, res.state, easeOut(p)) : res.state;
+      let applied = false;
+      setMarkers((prev) => {
+        // Something else (a drag, a structural edit, a reconcile) wrote to
+        // markers since our last frame — that change wins; stop the tween
+        // instead of overwriting it on the next frame.
+        if (prev !== lastWrittenRef.current) return prev;
+        applied = true;
+        lastWrittenRef.current = next;
+        return next;
+      });
+      if (!applied) {
+        tweenRafRef.current = null;
+        tweeningRef.current = false;
+        return;
+      }
       if (p < 1) {
         tweenRafRef.current = requestAnimationFrame(tick);
       } else {
         tweenRafRef.current = null;
         tweeningRef.current = false;
-        setMarkers(res.state);
         setDirty(true);
       }
     };
@@ -746,6 +763,11 @@ export function SyncPanel({
 
   const undoAutoPlace = useCallback(() => {
     if (!autoPlaceUndo) return;
+    if (tweenRafRef.current !== null) {
+      cancelAnimationFrame(tweenRafRef.current);
+      tweenRafRef.current = null;
+    }
+    tweeningRef.current = false;
     setMarkers(autoPlaceUndo);
     setDirty(true);
     setAutoPlaceUndo(null);
