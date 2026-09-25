@@ -37,6 +37,22 @@ beforeEach(() => {
 })
 afterEach(() => { act(() => root.unmount()); host.remove(); scrollBy.mockReset() })
 
+const pointer = (el: Element | Document['body'], type: string, pointerType: string) => {
+  const ev = new MouseEvent(type, { bubbles: true, cancelable: true })
+  Object.defineProperty(ev, 'pointerType', { value: pointerType })
+  act(() => { el.dispatchEvent(ev) })
+}
+const click = (el: Element) => {
+  const ev = new MouseEvent('click', { bubbles: true, cancelable: true })
+  let prevented = false
+  // Read the result after React's handler, then stop jsdom's unimplemented navigation.
+  const after = (e: Event) => { prevented = e.defaultPrevented; e.preventDefault() }
+  document.addEventListener('click', after)
+  act(() => { el.dispatchEvent(ev) })
+  document.removeEventListener('click', after)
+  return prevented
+}
+
 const render = (items = ITEMS) => act(() => root.render(<PathStrip items={items} ariaLabel="Your path" showArrows />))
 
 describe('PathStrip', () => {
@@ -112,5 +128,82 @@ describe('PathStrip', () => {
     render(done)
     const scroller = host.querySelector('[data-path-scroller]') as HTMLDivElement
     expect(scroller.dataset.anchor).toBe('end')
+  })
+
+  it('wave y positions are whole pixels and the svg matches the track height (compact)', () => {
+    act(() => root.render(<PathStrip items={ITEMS} ariaLabel="p" size="compact" />))
+    for (const n of host.querySelectorAll<HTMLElement>('[data-path-node]')) expect(Number.isInteger(parseFloat(n.style.top))).toBe(true)
+    const track = host.querySelector('[data-path-scroller] > div') as HTMLElement
+    expect(host.querySelector('svg')?.getAttribute('height')).toBe(String(parseFloat(track.style.height)))
+  })
+
+  it('re-scrolls when the items change identity with the same length and current index', () => {
+    const sets: number[] = []
+    Object.defineProperty(HTMLElement.prototype, 'scrollLeft', { configurable: true, get: () => 0, set: (v: number) => { sets.push(v) } })
+    try {
+      render()
+      render(ITEMS.map((i) => ({ ...i, id: `x-${i.id}` })) as PathItem[])
+      expect(sets).toHaveLength(2)
+    } finally {
+      delete (HTMLElement.prototype as { scrollLeft?: number }).scrollLeft
+    }
+  })
+
+  it('first tap on a touch device shows the card with a Go link instead of navigating', () => {
+    render()
+    const link = host.querySelector('[data-path-scroller] a[href="/l/c"]')!
+    pointer(link, 'pointerdown', 'touch')
+    expect(click(link)).toBe(true)
+    const tip = host.querySelector('[role="tooltip"]') as HTMLElement
+    expect(tip.textContent).toContain('Lesson c')
+    expect(tip.querySelector('a[href="/l/c"]')?.textContent).toContain('dashboard.pages.course.path.goToLesson')
+    pointer(link, 'pointerdown', 'touch')
+    expect(click(link)).toBe(false) // the second tap on the same node navigates
+  })
+
+  it('mouse click navigates at once', () => {
+    render()
+    const link = host.querySelector('a[href="/l/c"]')!
+    pointer(link, 'pointerdown', 'mouse')
+    expect(click(link)).toBe(false)
+  })
+
+  it('a tapped card closes on a tap outside the strip, and on Escape', () => {
+    render()
+    const link = host.querySelector('a[href="/l/c"]')!
+    pointer(link, 'pointerdown', 'touch'); click(link)
+    pointer(document.body, 'pointerdown', 'touch')
+    expect(host.querySelector('[role="tooltip"]')).toBeNull()
+    pointer(link, 'pointerdown', 'touch'); click(link)
+    act(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })) })
+    expect(host.querySelector('[role="tooltip"]')).toBeNull()
+  })
+
+  it('touch compatibility mouse events do not open the hover card', () => {
+    render()
+    const node = host.querySelectorAll<HTMLElement>('[data-path-node]')[2]
+    pointer(node.querySelector('a')!, 'pointerdown', 'touch')
+    act(() => { node.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })) })
+    expect(host.querySelector('[role="tooltip"]')).toBeNull()
+  })
+
+  it('module flags mark where each module starts and link to its overview', () => {
+    const two: PathItem[] = [
+      lesson('a', 1, 'done'),
+      { kind: 'checkpoint', id: 'cp0', moduleIndex: 0, moduleTitle: 'Welcome', state: 'done', href: '/m/0' },
+      { ...lesson('b', 2, 'current'), moduleIndex: 1 } as PathItem,
+      { kind: 'checkpoint', id: 'cp1', moduleIndex: 1, moduleTitle: 'Rhythm', state: 'upcoming', href: '/m/1' },
+    ]
+    act(() => root.render(<PathStrip items={two} ariaLabel="p" showModuleFlags />))
+    const flags = [...host.querySelectorAll('[data-path-flag]')]
+    expect(flags.map((f) => f.textContent)).toEqual(['dashboard.pages.course.path.module(1)Welcome', 'dashboard.pages.course.path.module(2)Rhythm'])
+    expect(flags[1].getAttribute('href')).toBe('/m/1')
+    // the flag row sits above the bubble's highest reach
+    for (const n of host.querySelectorAll<HTMLElement>('[data-path-node]')) expect(parseFloat(n.style.top)).toBeGreaterThanOrEqual(122)
+  })
+
+  it('no flags unless asked', () => {
+    render()
+    expect(host.querySelector('[data-path-flag]')).toBeNull()
   })
 })
