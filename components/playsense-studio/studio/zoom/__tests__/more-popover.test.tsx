@@ -263,6 +263,17 @@ describe('MorePopover', () => {
       expect(timing.onNudge).toHaveBeenCalledWith(-5);
     });
 
+    it('says timing applies to voice 1 when the cursor is in voice 2', () => {
+      const timing = {
+        offsetMs: 12, gridSeconds: 1, actualSeconds: 1.5,
+        onNudge: vi.fn(), onSnap: vi.fn(), onReset: vi.fn(),
+      };
+      render({ tab: 'timing', timing, voice: 1 });
+      expect(host.textContent).toContain('Timing applies to voice 1 notes.');
+      expect(host.textContent).not.toContain('Plays at');
+      expect(host.querySelector('.st-mpop-hint')).toBeNull();
+    });
+
     it('Reset calls onReset', () => {
       const timing = {
         offsetMs: 12, gridSeconds: 1, actualSeconds: 1.5,

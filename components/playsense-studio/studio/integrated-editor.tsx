@@ -996,6 +996,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                           timing={noteTiming}
                           watchLike={!!noteTiming}
                           eventKey={zoomEventKey}
+                          voice={zoom.cursor.voice}
                         />
                       )}
                     </>

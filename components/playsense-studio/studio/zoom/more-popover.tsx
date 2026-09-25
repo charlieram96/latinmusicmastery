@@ -75,7 +75,7 @@ function formatOffset(ms: number): string {
 // click). Only the Text input and its Set submit are meant to take focus.
 const preventFocus = (e: ReactMouseEvent) => e.preventDefault();
 
-export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timing, watchLike, eventKey }: {
+export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timing, watchLike, eventKey, voice = 0 }: {
   anchor: PopoverAnchor; tab: MoreTab; onTab: (t: MoreTab) => void; onClose: () => void;
   event: MusicalEvent | null; editing: ZoomEditing; timing?: NoteTimingProps; watchLike: boolean;
   /** Identifies the note at the zoom cursor (e.g. `measureIndex:voice:index`),
@@ -83,9 +83,11 @@ export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timin
    *  "the cursor landed on a different note" even when the two notes' text
    *  happens to read the same (including both empty). */
   eventKey: string | null;
+  /** The zoom cursor's voice. Timing is voice 1's only (voice 2 isn't graded or synced). */
+  voice?: 0 | 1;
 }) {
   const hint = tab === 'timing'
-    ? (timing ? 'Nudge moves only this note against the recording.' : undefined)
+    ? (timing && voice === 0 ? 'Nudge moves only this note against the recording.' : undefined)
     : HINT[tab];
   return (
     <MeasurePopover anchor={anchor} title="More" hint={hint} onClose={onClose}>
@@ -108,7 +110,7 @@ export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timin
       {tab === 'marks' && <MarksTab editing={editing} event={event} />}
       {tab === 'dynamics' && <DynamicsTab editing={editing} event={event} />}
       {tab === 'text' && <TextTab editing={editing} event={event} eventKey={eventKey} />}
-      {tab === 'timing' && <TimingTab timing={timing} />}
+      {tab === 'timing' && <TimingTab timing={timing} voice={voice} />}
     </MeasurePopover>
   );
 }
@@ -249,7 +251,10 @@ function TextTab({ editing, event, eventKey }: { editing: ZoomEditing; event: Mu
   );
 }
 
-function TimingTab({ timing }: { timing?: NoteTimingProps }) {
+function TimingTab({ timing, voice }: { timing?: NoteTimingProps; voice: 0 | 1 }) {
+  if (voice === 1) {
+    return <p className="text-xs text-muted-foreground">Timing applies to voice 1 notes.</p>;
+  }
   if (!timing) {
     return <p className="text-xs text-muted-foreground">Timing is set on the waveform for synced lessons.</p>;
   }
