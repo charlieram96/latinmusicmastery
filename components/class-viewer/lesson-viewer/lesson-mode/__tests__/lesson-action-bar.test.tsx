@@ -18,14 +18,15 @@ const progress: LessonProgressInput = {
   nextClassId: 'k2', activeItemId: 'a', activeItemType: 'VIDEO', isCompleted: false, nextLabel: 'Part two',
 }
 
-function Harness({ part, tone = 'neutral' }: { part: boolean; tone?: ActionTone }) {
+function Harness({ part, tone = 'neutral', second = false }: { part: boolean; tone?: ActionTone; second?: boolean }) {
   const claims = useActionClaims()
   const [host, setHost] = useState<HTMLElement | null>(null)
   const [tools, setTools] = useState<HTMLElement | null>(null)
   void tools
   return <LessonProgressProvider itemIds={progress.itemIds} initialCompletedItemIds={[]}>
-    <LessonFrameProvider value={{ actionHost: host, claim: claims.claim, advance: vi.fn(), teacherName: 'Livan' }}>
+    <LessonFrameProvider value={{ actionHost: host, topClaim: claims.top, claim: claims.claim, advance: vi.fn(), teacherName: 'Livan' }}>
       {part && <LessonAction tone={tone}><ActionMessage icon={null} title="Check your answer" /><button data-check>Check</button></LessonAction>}
+      {second && <LessonAction tone="success"><button data-celebrate>Next lesson</button></LessonAction>}
     </LessonFrameProvider>
     <LessonActionBar progress={progress} claimed={claims.claimed} tone={claims.tone} onActionHost={setHost} onToolsHost={setTools} onPrimary={() => {}} />
   </LessonProgressProvider>
@@ -65,6 +66,15 @@ describe('LessonActionBar', () => {
     expect(bar().querySelector('[data-check]')).toBeNull()
     expect(bar().querySelector('[data-lesson-next]')).not.toBeNull()
     expect(bar().getAttribute('data-tone')).toBe('neutral')
+  })
+
+  it('shows only the newest claim', () => {
+    act(() => root.render(<Harness part second />))
+    expect(bar().querySelector('[data-celebrate]')).not.toBeNull()
+    expect(bar().querySelector('[data-check]')).toBeNull()
+    expect(bar().getAttribute('data-tone')).toBe('success')
+    act(() => root.render(<Harness part />))
+    expect(bar().querySelector('[data-check]')).not.toBeNull()
   })
 
   it('renders a part action inline outside a lesson frame', () => {

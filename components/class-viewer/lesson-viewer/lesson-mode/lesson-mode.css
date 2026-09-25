@@ -1,5 +1,14 @@
 /* Lesson mode (L2 immersive). Plain CSS over the app tokens, like exercise-mode.css. */
 
+/* ───────── Frame ───────── */
+.lx { position:relative; display:grid; grid-template-columns:72px minmax(0,1fr); height:100dvh; background:hsl(var(--background)); color:hsl(var(--foreground)); isolation:isolate; }
+.lx-main { position:relative; display:grid; grid-template-rows:auto minmax(0,1fr) auto; min-width:0; min-height:0; }
+.lx-stage { position:relative; min-height:0; overflow:hidden auto; overscroll-behavior:contain; container:lx-stage / inline-size; }
+.lx-fill { position:relative; min-height:100%; padding:16px 16px 20px; }
+@media (min-width:768px) { .lx-fill { padding:18px 32px 24px; } }
+.lx-fill[hidden] { display:none; }
+@media (max-width:767px) { .lx { grid-template-columns:minmax(0,1fr); } }
+
 /* ───────── Action bar ───────── */
 .lx-action { position:relative; z-index:5; display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:14px 22px;
   border-top:2px solid hsl(var(--border)); background:hsl(var(--card));

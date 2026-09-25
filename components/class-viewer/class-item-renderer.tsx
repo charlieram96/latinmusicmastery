@@ -63,9 +63,11 @@ interface ClassItemRendererProps {
   previewExercise?: boolean
   /** Development-only video/score review without writing playback progress. */
   previewLesson?: boolean
+  /** The course teacher, named in the exercise's Watch message. */
+  teacherName?: string | null
 }
 
-export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref = null, previewExercise = false, previewLesson = false }: ClassItemRendererProps) {
+export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref = null, previewExercise = false, previewLesson = false, teacherName = null }: ClassItemRendererProps) {
   const { t, locale } = await getServerTranslator()
 
   // Subtitle tracks for the demo video. Every language is passed to the
@@ -321,6 +323,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
               playerLayout={playerLayout}
               backingTracks={backingTracks}
               exerciseVideo={exerciseVideo}
+              teacherName={teacherName}
             />
           ) : null}
 

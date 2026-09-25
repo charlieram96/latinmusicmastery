@@ -39,6 +39,8 @@ interface ExerciseViewProps {
     trimOutSeconds?: number | null
     timeMap: PlaysenseStudioPlayerTimeMap | null
   } | null
+  /** Named in the Watch message ("Watch {teacher} play it once"). */
+  teacherName?: string | null
 }
 
 type Mode = 'watch' | 'play'
@@ -60,6 +62,7 @@ export function ExerciseView({
   playerLayout = 'stack',
   backingTracks,
   exerciseVideo,
+  teacherName = null,
 }: ExerciseViewProps) {
   // Demo first: start in Watch when there's a video; otherwise go straight to play.
   const [mode, setMode] = useState<Mode>(videoUrl ? 'watch' : 'play')

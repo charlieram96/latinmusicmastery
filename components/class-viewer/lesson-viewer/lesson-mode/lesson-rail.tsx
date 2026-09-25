@@ -54,17 +54,19 @@ export function LessonRailList({ lessons, open = false }: { lessons: RailLesson[
   </ol>
 }
 
-export function LessonRail({ courseHref, courseTitle, moduleTitle, moduleIndex, lessons }: {
+export function LessonRail({ courseHref, courseTitle, moduleTitle, moduleIndex, lessons, currentDone = false }: {
   courseHref: string
   courseTitle: string
   moduleTitle: string
   moduleIndex: number
   lessons: RailLesson[]
+  /** The open lesson is finished (it still shows as current). */
+  currentDone?: boolean
 }) {
   const { t } = useTranslation()
   // Keyboard users expand the rail by focusing into it; hover expands it with CSS.
   const [focused, setFocused] = useState(false)
-  const done = lessons.filter(l => l.state === 'done').length
+  const done = lessons.filter(l => l.state === 'done' || (currentDone && l.state === 'current')).length
   return <div className="lx-rail-slot hidden md:block">
     <aside data-lesson-rail aria-label={t('dashboard.classViewer.lessonMode.rail.label')} data-expanded={focused}
       className="lx-rail group/rail hidden md:flex"

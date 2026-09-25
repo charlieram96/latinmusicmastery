@@ -14,6 +14,8 @@ export type ActionTone = 'neutral' | 'success' | 'danger'
 
 export interface LessonFrameValue {
   actionHost: HTMLElement | null
+  /** Only the newest claim shows (a celebration over a finished quiz, say). */
+  topClaim: string | null
   claim: (id: string, claim: { tone: ActionTone } | null) => void
   advance: () => void
   teacherName: string | null
@@ -46,6 +48,7 @@ export function useActionClaims() {
   return useMemo(() => ({
     claim,
     claimed: claims.length > 0,
+    top: claims.at(-1)?.[0] ?? null,
     tone: (claims.at(-1)?.[1] ?? 'neutral') as ActionTone,
   }), [claim, claims])
 }
@@ -58,7 +61,7 @@ export function LessonAction({ tone = 'neutral', className, children }: { tone?:
   useLayoutEffect(() => { claim?.(id, { tone }) }, [claim, id, tone])
   useLayoutEffect(() => () => claim?.(id, null), [claim, id])
   if (!frame) return <div className={cn('lx-action-inline', className)} data-tone={tone}>{children}</div>
-  return frame.actionHost ? createPortal(children, frame.actionHost) : null
+  return frame.actionHost && frame.topClaim === id ? createPortal(children, frame.actionHost) : null
 }
 
 /** Badge, bold line and detail — the left side of the action bar. */
