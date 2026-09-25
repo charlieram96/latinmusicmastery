@@ -25,7 +25,6 @@
 // usable as soon as a score document is attached, with sync polish coming
 // from M7's authoring tools.
 
-import { useTranslation } from '@/components/language-provider';
 import {
   useCallback,
   useEffect,
@@ -35,7 +34,9 @@ import {
   type ReactNode,
 } from 'react';
 import { Rows3, MoveHorizontal, Minus, Plus } from 'lucide-react';
-import { SplitWorkspace, OrientationToggle } from './split-workspace';
+import { SplitWorkspace, WorkspaceLayoutSwitcher } from './split-workspace';
+import { useWorkspaceLayout } from './use-workspace-layout';
+import { WATCH_WORKSPACE } from '@/lib/playsense-studio/workspace-layout';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
 import {
@@ -487,22 +488,13 @@ export function PlaysenseStudioPlayer({
     wasPlayingRef.current = clock.isPlaying;
   }, [clock.isPlaying, clock.currentSeconds, clock.playbackRate, classItemId, readOnly]);
 
-  const { t } = useTranslation();
-  const [lessonView, setLessonView] = useState<'both' | 'video' | 'score'>('both');
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('lmm-lesson-view');
-      if (saved === 'both' || saved === 'video' || saved === 'score') setLessonView(saved);
-    } catch { /* Storage may be unavailable. */ }
-  }, []);
-  const changeLessonView = (view: 'both' | 'video' | 'score') => {
-    setLessonView(view);
-    try { localStorage.setItem('lmm-lesson-view', view); } catch { /* Session choice still works. */ }
-  };
-
   // Notation pane staff layout — stacked staves vs. single horizontal scroll
   // (only used when layout === 'split'). Pane geometry lives in SplitWorkspace.
   const [notationLayout, setNotationLayout] = useState<'wrapped' | 'scroll'>('wrapped');
+
+  // The lesson workspace (video | staff): layout, split and PiP are remembered
+  // per staff layout. Watch opens side by side with the video at 44 %.
+  const workspace = useWorkspaceLayout(`watch:${notationLayout}`, WATCH_WORKSPACE);
 
   // Notation zoom (split layout) — pinch or slider scales the staff. 1 = default.
   const [zoom, setZoom] = useState(1);
@@ -656,82 +648,73 @@ export function PlaysenseStudioPlayer({
       .filter(Boolean)
       .join('  ·  ');
 
+    // In pip and music-only the video is small or hidden, so the transport
+    // moves under the staff.
+    const transportWithVideo = workspace.layout === 'side' || workspace.layout === 'stack';
+
     return (
       <div className="space-y-4">
         {/* Break out of the lesson page's px-4/md:px-8 padding for an
             edge-to-edge, viewport-filling workspace. */}
         <div className="relative -mx-4 md:-mx-8">
           <SplitWorkspace
+            controller={workspace}
             frame="bleed"
-            visiblePane={lessonView === 'both' ? 'both' : lessonView === 'video' ? 'primary' : 'secondary'}
-            primary={
-            <>
-              <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
-                {videoEl}
-              </div>
-              <div className="flex-shrink-0 border-t border-border bg-card px-3 py-2">
-                {transportEl}
-              </div>
-            </>
-          }
-          secondaryHeader={({ orient, setOrient, isRow }) => (
-            <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-border bg-secondary px-3 py-2">
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(30_85%_55%/0.7)]" />
-                  PlaySense Studio
-                </div>
-                <div className="mt-1 truncate font-heading text-[13.5px] font-bold tracking-tight">
-                  {score.title || 'Notation'}
-                </div>
-                <div className="mt-0.5 truncate text-[10.5px] font-medium tracking-[0.02em] text-muted-foreground">
-                  {meta}
-                </div>
-              </div>
-              <div className={`flex shrink-0 ${isRow ? 'flex-col items-end gap-1' : 'flex-row-reverse items-center gap-2'}`}>
-                <div className="flex items-center gap-0.5 rounded-full border border-border p-0.5" role="group" aria-label={t('lessonView.label')}>
-                  {(['video', 'score'] as const).map(view => {
-                    const enabled = lessonView === 'both' || lessonView === view;
-                    const onlyEnabled = lessonView === view;
-                    return <button key={view} type="button" aria-pressed={enabled} disabled={onlyEnabled}
-                      onClick={() => changeLessonView(enabled ? (view === 'video' ? 'score' : 'video') : 'both')}
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${enabled ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'} disabled:cursor-default`}>
-                      {t(`lessonView.${view}Toggle`)}
-                    </button>;
-                  })}
-                </div>
-                {lessonView !== 'video' && <div className="flex items-center gap-1">
-                  <NotationLayoutToggle value={notationLayout} onChange={setNotationLayout} />
-                  {lessonView === 'both' && <OrientationToggle value={orient} onChange={setOrient} />}
-                </div>}
-              </div>
-            </div>
-          )}
-            secondary={
+            media={
               <>
-              <div className="relative min-h-0 flex-1">
-                {/* Wrapped staves scroll inside the renderer's own viewport, so the
-                    layer hands it every remaining pixel instead of nesting a
-                    second scroller; the single scrolling line keeps the padded
-                    page so the scrub bar clears the zoom control. */}
-                <NotationZoomLayer
-                  zoom={zoom}
-                  onZoom={setZoom}
-                  className={staffLayout === 'wrapped'
-                    ? 'flex h-full flex-col gap-2 overflow-hidden p-3'
-                    : 'h-full space-y-2 overflow-auto p-3 pb-16'}
-                >
-                  {tracksEl}
-                  {staffEl}
-                  {scrubEl}
-                </NotationZoomLayer>
-                <NotationZoomControl zoom={zoom} onZoom={setZoom} />
-              </div>
-              {lessonView === 'score' && <div className="flex-shrink-0 border-t border-border bg-card px-3 py-2">{transportEl}</div>}
+                <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+                  {videoEl}
+                </div>
+                {transportWithVideo && (
+                  <div data-ws-nodrag="" className="flex-shrink-0 border-t border-border bg-card px-3 py-2">
+                    {transportEl}
+                  </div>
+                )}
               </>
             }
+            music={
+              <>
+                <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-border bg-secondary px-3 py-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(30_85%_55%/0.7)]" />
+                      PlaySense Studio
+                    </div>
+                    <div className="mt-1 truncate font-heading text-[13.5px] font-bold tracking-tight">
+                      {score.title || 'Notation'}
+                    </div>
+                    <div className="mt-0.5 truncate text-[10.5px] font-medium tracking-[0.02em] text-muted-foreground">
+                      {meta}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                    <WorkspaceLayoutSwitcher controller={workspace} />
+                    <NotationLayoutToggle value={notationLayout} onChange={setNotationLayout} />
+                  </div>
+                </div>
+                <div className="relative min-h-0 flex-1">
+                  {/* Wrapped staves scroll inside the renderer's own viewport, so the
+                      layer hands it every remaining pixel instead of nesting a
+                      second scroller; the single scrolling line keeps the padded
+                      page so the scrub bar clears the zoom control. */}
+                  <NotationZoomLayer
+                    zoom={zoom}
+                    onZoom={setZoom}
+                    className={staffLayout === 'wrapped'
+                      ? 'flex h-full flex-col gap-2 overflow-hidden p-3'
+                      : 'h-full space-y-2 overflow-auto p-3 pb-16'}
+                  >
+                    {tracksEl}
+                    {staffEl}
+                    {scrubEl}
+                  </NotationZoomLayer>
+                  <NotationZoomControl zoom={zoom} onZoom={setZoom} />
+                </div>
+                {!transportWithVideo && <div className="flex-shrink-0 border-t border-border bg-card px-3 py-2">{transportEl}</div>}
+              </>
+            }
+            overlay={overlayEl}
           />
-          {overlayEl}
         </div>
 
         {clipsEl}
