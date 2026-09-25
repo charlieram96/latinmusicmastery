@@ -2426,6 +2426,27 @@
           "close": "Close",
           "noDescription": "No description for this lesson yet."
         },
+        "done": {
+          "eyebrow": "Lesson complete",
+          "heading": "{title}, done.",
+          "streakOne": "day streak",
+          "streak": "day streak",
+          "weekOne": "{count} of {goal} lessons this week",
+          "week": "{count} of {goal} lessons this week",
+          "toGoOne": "One more to hit your weekly goal.",
+          "toGo": "{count} more to hit your weekly goal.",
+          "goalMet": "Weekly goal reached. ¡Qué sabor!",
+          "weekLabel": "Weekly goal",
+          "lessonsProgress": "{value}/{goal} lessons",
+          "daysProgress": "{value}/{goal} days",
+          "unlocked": "Unlocked!",
+          "upNext": "Up next",
+          "saved": "Saved to your progress",
+          "savedDetail": "{title} · {count} parts",
+          "savedDetailOne": "{title} · 1 part",
+          "courseDone": "You finished the last lesson of this course.",
+          "nextLesson": "Next lesson"
+        },
         "finishLesson": "Finish lesson"
       }
     }

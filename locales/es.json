@@ -2426,6 +2426,27 @@
           "close": "Cerrar",
           "noDescription": "Esta lección aún no tiene descripción."
         },
+        "done": {
+          "eyebrow": "Lección completada",
+          "heading": "{title}, lista.",
+          "streakOne": "día de racha",
+          "streak": "días de racha",
+          "weekOne": "{count} de {goal} lecciones esta semana",
+          "week": "{count} de {goal} lecciones esta semana",
+          "toGoOne": "Una más para cumplir tu meta semanal.",
+          "toGo": "{count} más para cumplir tu meta semanal.",
+          "goalMet": "Meta semanal cumplida. ¡Qué sabor!",
+          "weekLabel": "Meta semanal",
+          "lessonsProgress": "{value}/{goal} lecciones",
+          "daysProgress": "{value}/{goal} días",
+          "unlocked": "¡Desbloqueado!",
+          "upNext": "Sigue",
+          "saved": "Guardado en tu progreso",
+          "savedDetail": "{title} · {count} partes",
+          "savedDetailOne": "{title} · 1 parte",
+          "courseDone": "Terminaste la última lección de este curso.",
+          "nextLesson": "Siguiente lección"
+        },
         "finishLesson": "Terminar lección"
       }
     }
