@@ -14,7 +14,7 @@
 // into the right rail + bottom dock.
 
 import { FileUp, Redo2, Save, Undo2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { replaceSectionScore } from '@/app/actions/playsense-studio';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
@@ -103,16 +103,10 @@ export function ScoreSectionEditor({
   // so the portal renders once the node mounts).
   const [scoreActionsEl, setScoreActionsEl] = useState<HTMLElement | null>(null);
 
-  // The section name shown in the sidebar/lane IS the score title; refetch to
-  // refresh it only when the title actually changed (renames are rare), and only
-  // once that rename has actually made it into the saved draft.
-  const lastSyncedTitleRef = useRef(initialScore.title);
-  useEffect(() => {
-    if (draft.saveState === 'saved' && state.score.title !== lastSyncedTitleRef.current) {
-      lastSyncedTitleRef.current = state.score.title;
-      onChanged();
-    }
-  }, [draft.saveState, state.score.title, onChanged]);
+  // The sidebar row / lane label reads the live title straight from the
+  // Studio-drafts status (useStudioDraft's own effect keeps `statuses[key].label`
+  // in step with `state.score.title` on every render) — no refetch needed just
+  // for a rename, and no risk of firing one per keystroke while still typing.
 
   // Cmd/Ctrl+Z = undo, +Shift = redo (or Ctrl+Y), Cmd/Ctrl+S = save now.
   useEffect(() => {

@@ -204,13 +204,19 @@ function VideoSectionsBody({
   // content students see.
   const seed = selected ? sectionSeed(selected) : null;
 
+  // The section's display name: the live title while its editor is (or has
+  // been) open — useStudioDraft's own effect keeps statuses[key].label in
+  // step with it on every render — else the cached draft title, else the
+  // last-fetched live title. `s.label` (a stale creation-time snapshot) is
+  // intentionally never used.
+  const sectionLabel = (s: ClassItemScoreSection) =>
+    statuses[`section:${s.sectionId}`]?.label || s.studioDraft?.score.title || s.scoreDocument.title;
+
   // Timeline-lane view of the sections (the active one renders live from its
   // markers inside SyncPanel; siblings use their published video ranges).
   const laneSections: LaneSection[] = sections.map((s) => ({
     sectionId: s.sectionId,
-    // The section name is the score title (the only name field); `label` is a
-    // stale creation-time snapshot and is intentionally ignored.
-    label: s.scoreDocument.title,
+    label: sectionLabel(s),
     startSeconds: s.videoStartSeconds,
     endSeconds: s.videoEndSeconds,
   }));
@@ -346,7 +352,7 @@ function VideoSectionsBody({
                       {sections.map((s, i) => {
                         const isSel = s.sectionId === selectedId;
                         const instrument = s.tracks[0]?.instrument ?? '—';
-                        const name = s.studioDraft?.score.title ?? s.scoreDocument.title;
+                        const name = sectionLabel(s);
                         const unpublished = statuses[`section:${s.sectionId}`]?.unpublished;
                         return (
                           <li key={s.sectionId}>
