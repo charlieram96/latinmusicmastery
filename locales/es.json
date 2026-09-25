@@ -7,6 +7,29 @@
     "video": "Solo vídeo",
     "score": "Solo partitura"
   },
+  "staff": {
+    "countAnd": "y",
+    "layout": {
+      "label": "Disposición del pentagrama",
+      "stacked": "Apilado",
+      "horizontal": "Horizontal"
+    },
+    "score": "Partitura",
+    "scoreAria": "Partitura musical",
+    "bar": "Compás",
+    "barAria": "Compás {bar} de {total}, tiempo {beat}",
+    "pass": "Pasada {pass} / {total}",
+    "follow": "Seguir",
+    "followAria": "Seguir el compás actual",
+    "followOnTitle": "Siguiendo la reproducción. Desactívalo para explorar la partitura.",
+    "followOffTitle": "Vuelve a seguir el compás actual.",
+    "following": "Siguiendo tu música",
+    "browsing": "Explora a tu ritmo",
+    "scrollHint": "Desplázate para leer adelante",
+    "size": "Tamaño de la notación",
+    "smaller": "Notación más pequeña",
+    "larger": "Notación más grande"
+  },
   "common": {
     "language": "Idioma",
     "changeLanguage": "Cambiar idioma",
