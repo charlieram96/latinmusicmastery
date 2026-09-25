@@ -48,10 +48,10 @@ import type {
   SeekListener,
   SeekTarget,
 } from '@/lib/playsense-studio/renderer';
-import { scoreCursorAt, scoreScrollOffset, scoreReadingStops, scoreReadingOffset, scoreVerticalOffset, type ScoreReadingStop, type ScoreReadingRow } from '@/lib/playsense-studio/notation-playback';
+import { scoreCursorAt, scoreScrollOffset, scoreReadingStops, scoreReadingOffset, type ScoreReadingStop } from '@/lib/playsense-studio/notation-playback';
 import { packLessonScoreRows } from '@/lib/playsense-studio/notation-layout';
 import { createNotationInterlude } from './notation-interlude';
-import { barCounts, isAttack, noteLabel, noteStateAt, type NoteNameStyle } from '@/lib/playsense-studio/notation/staff-n1';
+import { barCounts, barsPerRow, glide, isAttack, noteLabel, noteStateAt, pageTurn, rowStates, stackedFollowTarget, type NoteNameStyle } from '@/lib/playsense-studio/notation/staff-n1';
 import { useTranslation } from '@/components/language-provider';
 import './staff-renderer.css';
 import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
@@ -65,7 +65,11 @@ export interface SelectedRange {
 
 export type RangeListener = (range: SelectedRange) => void;
 
-export type StaffLayoutMode = 'scroll' | 'wrapped';
+/**
+ * 'scroll' — one continuous line; 'wrapped' — stacked rows that glide to the top;
+ * 'paged' — the same rows shown one at a time, turning with a slide.
+ */
+export type StaffLayoutMode = 'scroll' | 'wrapped' | 'paged';
 
 /** Always-on reading helpers: note-name chips, beat counts and the next-note ring. */
 export interface StaffHelpers {
@@ -214,7 +218,14 @@ class StaffRendererImpl implements ScoreRenderer {
   private countsY = 0;
   private readingStops: ScoreReadingStop[] = [];
   private rowReadingStops: ScoreReadingStop[][] = [];
-  private verticalReadingRows: ScoreReadingRow[] = [];
+  /** Stacked follow: the row being read and the glide towards it. */
+  private currentRow = -1;
+  private glideY = -1;
+  private glideTarget = 0;
+  private glideFrame = 0;
+  private glideLast = 0;
+  /** Paged: the page on show. */
+  private currentPage = -1;
   private activeBeatIdx = -1;
   private staveTop = STAVE_TOP;
   private staffLineTop = STAFF_LINE_TOP;
@@ -406,7 +417,11 @@ class StaffRendererImpl implements ScoreRenderer {
     this.activeBeatIdx = -1;
     this.readingStops = [];
     this.rowReadingStops = [];
-    this.verticalReadingRows = [];
+    this.currentRow = -1;
+    this.currentPage = -1;
+    this.glideY = -1;
+    if (this.glideFrame && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(this.glideFrame);
+    this.glideFrame = 0;
     this.staffTranslate = 0;
     this.activeNoteIdx = -1;
     this.activeMeasureIdx = -1;
@@ -472,7 +487,9 @@ class StaffRendererImpl implements ScoreRenderer {
     // The opening bar carries clef, key and time signature; any bar that ends up
     // starting a later row restates clef and key, so the packer reserves that
     // room only for the bar in that position, not every column.
-    const systemPitch = Math.max(STAFF_LINE_SPAN + WRAP_ROW_GAP, this.staffFootprint + 10);
+    const paged = this.layoutMode === 'paged';
+    // Every page sits at the same height; only the current one is shown.
+    const systemPitch = paged ? 0 : Math.max(STAFF_LINE_SPAN + WRAP_ROW_GAP, this.staffFootprint + 10);
     const requiredWidths = measureBlocks.map((block, index) => {
       const quarterNotes = block.timeSignature[0] * 4 / block.timeSignature[1];
       return Math.max(100, quarterNotes * QN_WIDTH, block.events.length * PER_NOTE_MIN_WIDTH + 24)
@@ -480,7 +497,8 @@ class StaffRendererImpl implements ScoreRenderer {
     });
     const rowStartExtra = measureBlocks.map((block, index) =>
       index === 0 ? 0 : ROW_START_CLEF_WIDTH + Math.abs(block.keyFifths) * 10);
-    const rows = packLessonScoreRows(requiredWidths, avail, { leading: hasLeading, trailing: hasGap }, rowStartExtra);
+    const maxPerRow = barsPerRow((avail + SYSTEM_PADDING_X * 2) * this.scale, this.scale);
+    const rows = packLessonScoreRows(requiredWidths, avail, { leading: hasLeading, trailing: hasGap }, rowStartExtra, maxPerRow);
     const systemCount = rows.length;
 
     const placements: MeasurePlacement[] = [];
@@ -549,6 +567,8 @@ class StaffRendererImpl implements ScoreRenderer {
 
 
     const wrapped = this.layoutMode === 'wrapped';
+    // Rows (stacked or paged) keep the playhead inside the content; the scroll line anchors it in the viewport.
+    const rowsLayout = this.layoutMode !== 'scroll';
     const avail = Math.max(el.clientWidth / this.scale - SYSTEM_PADDING_X * 2, 240) || WRAP_FALLBACK_WIDTH;
     this.lastBuildAvail = avail;
 
@@ -602,7 +622,7 @@ class StaffRendererImpl implements ScoreRenderer {
 
     const rendererDiv = document.createElement('div');
     rendererDiv.className = 'ps-staff-content';
-    rendererDiv.style.position = wrapped ? 'relative' : 'absolute';
+    rendererDiv.style.position = rowsLayout ? 'relative' : 'absolute';
     rendererDiv.style.top = '0';
     rendererDiv.style.left = '0';
     rendererDiv.style.width = `${this.totalWidth * this.scale}px`;
@@ -805,7 +825,7 @@ class StaffRendererImpl implements ScoreRenderer {
     this.cursorEl.appendChild(this.diamondEl);
     // In scroll mode the cursor lives in the viewport (fixed anchor, clipped).
     // In wrapped mode it lives in the scrolling content so it tracks the row.
-    (wrapped ? rendererDiv : viewport).appendChild(this.cursorEl);
+    (rowsLayout ? rendererDiv : viewport).appendChild(this.cursorEl);
 
     // ---- Hover-preview cursor (ghost playhead showing where a click lands) ----
     this.hoverCursorEl = document.createElement('div');
@@ -821,7 +841,7 @@ class StaffRendererImpl implements ScoreRenderer {
       willChange: 'transform',
       opacity: '0',
     } as CSSStyleDeclaration);
-    (wrapped ? rendererDiv : viewport).appendChild(this.hoverCursorEl);
+    (rowsLayout ? rendererDiv : viewport).appendChild(this.hoverCursorEl);
 
     // ---- Resize handling ----
     const onResize = () => {
@@ -1188,8 +1208,13 @@ class StaffRendererImpl implements ScoreRenderer {
       return;
     }
     const pos = this.msToCursorPos(ms);
+    if (this.layoutMode === 'paged' && pos.system !== this.currentPage) {
+      line.setAttribute('opacity', '0');
+      label.setAttribute('opacity', '0');
+      return;
+    }
     const yTop =
-      this.layoutMode === 'wrapped'
+      this.layoutMode !== 'scroll'
         ? this.staveTop + pos.system * this.systemPitch
         : this.staveTop;
     line.setAttribute('x1', `${pos.x}`);
@@ -1308,7 +1333,7 @@ class StaffRendererImpl implements ScoreRenderer {
     if (!ring) return;
     const nextIdx = state.active >= 0 ? state.active + 1 : state.played;
     const next = this.attacks[nextIdx];
-    const row = this.msToCursorPos(ms).system;
+    const row = this.layoutMode === 'paged' ? this.currentPage : this.msToCursorPos(ms).system;
     if (!live || !next || next.system !== row) { ring.hidden = true; return; }
     ring.hidden = false;
     ring.style.transform = `translate(${next.x * this.scale}px, ${next.y * this.scale}px)`;
@@ -1396,22 +1421,8 @@ class StaffRendererImpl implements ScoreRenderer {
 
   private planReadingStops(): void {
     const scale = this.scale;
+    if (this.layoutMode === 'paged') return;
     if (this.layoutMode === 'wrapped') {
-      this.verticalReadingRows = [];
-      if (this.leadingPlacement) this.verticalReadingRows.push({ y: this.leadingPlacement.y * scale,
-        startMs: -this.leadingMs, endMs: 0 });
-      for (const measure of this.measureGeoms) {
-        const last = this.verticalReadingRows.at(-1);
-        const y = measure.y * scale;
-        if (last?.y === y) last.endMs = measure.endMs;
-        else this.verticalReadingRows.push({ y, startMs: measure.startMs, endMs: measure.endMs });
-      }
-      if (this.gapMs > 0 && this.gapBoxW > 0) {
-        const last = this.verticalReadingRows.at(-1);
-        const y = this.gapBoxY * scale;
-        if (last?.y === y) last.endMs = this.totalDurationMs;
-        else this.verticalReadingRows.push({ y, startMs: this.gapStartMs, endMs: this.totalDurationMs });
-      }
       this.rowReadingStops = Array.from({ length: this.systemCount }, (_, system) => scoreReadingStops(
         this.measureGeoms.filter(g => g.system === system)
           .map(g => ({ ...g, x: g.x * scale, width: g.width * scale })),
@@ -1435,6 +1446,7 @@ class StaffRendererImpl implements ScoreRenderer {
     if (!this.rendererDiv || !this.cursorEl) return;
 
     this.updateGapCountdown();
+    if (this.layoutMode === 'paged') this.showPage(this.msToCursorPos(this.lastViewMs).system);
     const inInterlude = this.lastPlaybackMs < 0 || (this.gapMs > 0 && this.lastPlaybackMs >= this.gapStartMs);
     // These live inside the SVG (model coords), so they work in both modes
     // without per-mode handling.
@@ -1450,9 +1462,11 @@ class StaffRendererImpl implements ScoreRenderer {
     }
     this.updateHelpers(live);
 
-    if (this.layoutMode === 'wrapped') {
+    if (this.layoutMode !== 'scroll') {
       this.rendererDiv.style.transform = 'none';
       const pos = this.msToCursorPos(this.lastPlaybackMs);
+      const paged = this.layoutMode === 'paged';
+      const onShow = !paged || pos.system === this.currentPage;
       const x = pos.x * this.scale;
       const top =
         (this.staveTop + pos.system * this.systemPitch + this.staffLineTop - CURSOR_OVERHANG) *
@@ -1460,15 +1474,23 @@ class StaffRendererImpl implements ScoreRenderer {
       this.cursorEl.style.top = `${top}px`;
       this.cursorEl.style.transform = `translateX(${x}px)`;
       this.cursorEl.style.opacity =
-        this.cursorVisible && !inInterlude && this.hits.length > 0 ? '1' : '0';
+        this.cursorVisible && !inInterlude && this.hits.length > 0 && onShow ? '1' : '0';
+      if (this.bandEl) this.bandEl.style.visibility = paged && this.bandSystem !== this.currentPage ? 'hidden' : '';
+      if (paged) return;
 
-      // Read ahead continuously; never wait for the bottom row to be clipped.
+      if (pos.system !== this.currentRow) {
+        this.currentRow = pos.system;
+        rowStates(this.systemCount, pos.system).forEach((state, k) => {
+          this.rowGroups[k]?.setAttribute('data-row-state', state);
+          this.rowDivs[k]?.setAttribute('data-row-state', state);
+        });
+      }
+      // Glide so the row being read sits at the top; the next rows stay in view below it.
       if (this.viewportEl && this.autoFollow && this.cursorVisible) {
         const left = -scoreReadingOffset(this.lastPlaybackMs, this.rowReadingStops[pos.system] ?? []);
         if (Math.abs(this.viewportEl.scrollLeft - left) > 1) this.viewportEl.scrollLeft = left;
-        const top = scoreVerticalOffset(this.lastPlaybackMs, this.verticalReadingRows,
-          this.viewportHeight, this.stageHeight * this.scale);
-        this.viewportEl.scrollTop = top;
+        this.followRow(stackedFollowTarget(pos.system * this.systemPitch * this.scale,
+          this.viewportHeight, this.stageHeight * this.scale));
       }
       return;
     }
@@ -1499,13 +1521,81 @@ class StaffRendererImpl implements ScoreRenderer {
     this.cursorEl.style.opacity = this.cursorVisible && !inInterlude && visible ? '1' : '0';
   }
 
+  /** Exponential glide of the stacked view (about 7/s) on rAF; reduced motion jumps. */
+  private followRow(target: number): void {
+    const vp = this.viewportEl;
+    if (!vp) return;
+    this.glideTarget = target;
+    if (this.glideFrame) return;
+    const canAnimate = typeof requestAnimationFrame === 'function' && !prefersReducedMotion();
+    if (!canAnimate || this.glideY < 0) {
+      this.glideY = target;
+      if (Math.abs(vp.scrollTop - target) > .5) vp.scrollTop = target;
+      return;
+    }
+    // Start from wherever the reader left the view.
+    this.glideY = vp.scrollTop;
+    if (Math.abs(this.glideY - target) < .5) return;
+    this.glideLast = performance.now();
+    const step = (now: number) => {
+      const viewport = this.viewportEl;
+      if (!viewport) { this.glideFrame = 0; return; }
+      const dt = (now - this.glideLast) / 1000;
+      this.glideLast = now;
+      this.glideY = glide(this.glideY, this.glideTarget, dt);
+      viewport.scrollTop = this.glideY;
+      this.glideFrame = this.glideY === this.glideTarget || !this.autoFollow ? 0 : requestAnimationFrame(step);
+    };
+    this.glideFrame = requestAnimationFrame(step);
+  }
+
+  /** Paged: turn to `page` with a slide (or a fade under reduced motion). */
+  private showPage(page: number): void {
+    if (page === this.currentPage) return;
+    const previous = this.currentPage;
+    const turn = pageTurn(previous, page, prefersReducedMotion());
+    this.currentPage = page;
+    const rowEls = (k: number) => [this.rowGroups[k], this.rowDivs[k]].filter((el): el is SVGGElement | HTMLDivElement => !!el);
+    for (let k = 0; k < this.systemCount; k++) {
+      if (k === page || k === previous) continue;
+      rowEls(k).forEach(el => el.setAttribute('data-page-state', 'hidden'));
+    }
+    const easing = 'cubic-bezier(.22,1,.36,1)';
+    const offset = (sign: number) => turn.offsetPercent ? `translateX(${sign * turn.offsetPercent}%)` : 'none';
+    for (const el of rowEls(page)) {
+      el.getAnimations?.().forEach(animation => animation.cancel());
+      el.setAttribute('data-page-state', 'current');
+      if (turn.kind !== 'instant' && typeof el.animate === 'function') {
+        el.animate([{ transform: offset(turn.direction), opacity: 0 }, { transform: 'none', opacity: 1 }],
+          { duration: turn.durationMs, easing });
+      }
+    }
+    if (previous >= 0) {
+      for (const el of rowEls(previous)) {
+        el.getAnimations?.().forEach(animation => animation.cancel());
+        if (turn.kind === 'instant' || typeof el.animate !== 'function') {
+          el.setAttribute('data-page-state', 'hidden');
+          continue;
+        }
+        el.setAttribute('data-page-state', 'leaving');
+        const animation = el.animate([{ transform: 'none', opacity: 1 }, { transform: offset(-turn.direction), opacity: 0 }],
+          { duration: turn.durationMs, easing, fill: 'forwards' });
+        animation.onfinish = () => {
+          if (this.currentPage !== previous) el.setAttribute('data-page-state', 'hidden');
+          animation.cancel();
+        };
+      }
+    }
+    this.setLoopMarkers(this.lastLoopAMs, this.lastLoopBMs);
+  }
+
   /** Place the translucent ghost playhead at the click-landing position for a
    *  hovered (model-space) point. Reuses the exact click → seek math. */
   private updateHoverCursor(modelX: number, modelY: number): void {
     if (!this.hoverCursorEl || this.hits.length === 0) return;
     const pos = this.xToTimePosition(modelX, modelY);
     const cur = this.msToCursorPos(pos.ms);
-    if (this.layoutMode === 'wrapped') {
+    if (this.layoutMode !== 'scroll') {
       const top =
         (this.staveTop + cur.system * this.systemPitch + this.staffLineTop - CURSOR_OVERHANG) *
         this.scale;
@@ -1591,6 +1681,7 @@ class StaffRendererImpl implements ScoreRenderer {
   }
 
   private systemFromY(y: number): number {
+    if (this.layoutMode === 'paged') return Math.max(0, this.currentPage);
     if (this.layoutMode !== 'wrapped' || this.systemPitch <= 0) return 0;
     const s = Math.floor((y - this.staveTop) / this.systemPitch);
     return Math.max(0, Math.min(this.systemCount - 1, s));
@@ -1608,7 +1699,7 @@ class StaffRendererImpl implements ScoreRenderer {
 
     let loIdx = 0;
     let hiIdx = this.hits.length - 1;
-    if (this.layoutMode === 'wrapped') {
+    if (this.layoutMode !== 'scroll') {
       const system = this.systemFromY(y);
       const range = this.systemRanges[system];
       if (range && range.start !== -1) {

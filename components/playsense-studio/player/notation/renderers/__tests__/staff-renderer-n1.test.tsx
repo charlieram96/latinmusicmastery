@@ -104,3 +104,32 @@ describe('helpers', () => {
     expect(host.querySelectorAll('.ps-staff-count').length).toBeGreaterThan(0)
   })
 })
+describe('stacked', () => {
+  it('marks past, now and next rows', () => {
+    draw({ currentMs: 2500 })
+    const rows = [...host.querySelectorAll('svg > g[data-score-row]')].map(r => r.getAttribute('data-row-state'))
+    expect(rows[0]).toBe('past')
+    expect(rows[1]).toBe('now')
+  })
+})
+
+describe('paged', () => {
+  it('shows only the current page', () => {
+    draw({ layoutMode: 'paged', currentMs: 2500 })
+    const pages = [...host.querySelectorAll('svg > g[data-score-row]')].map(r => r.getAttribute('data-page-state'))
+    expect(pages.filter(p => p === 'current')).toHaveLength(1)
+    expect(pages[1]).toBe('current')
+  })
+  it('draws every page at the same height (one row tall)', () => {
+    draw({ layoutMode: 'paged' })
+    const wrappedHeight = (() => { draw({ layoutMode: 'wrapped' }); return host.querySelector('svg')!.getAttribute('height') })()
+    draw({ layoutMode: 'paged' })
+    expect(Number(host.querySelector('svg')!.getAttribute('height'))).toBeLessThan(Number(wrappedHeight))
+  })
+  it('paged shows the interlude page before the music', () => {
+    draw({ layoutMode: 'paged', currentMs: -500, leadingGapMs: 1000 })
+    const current = host.querySelector('.ps-staff-row[data-page-state=current]')
+    expect(current).not.toBeNull()
+    expect(current!.querySelector('.ps-notation-interlude')).not.toBeNull()
+  })
+})
