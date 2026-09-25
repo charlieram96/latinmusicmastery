@@ -11,6 +11,9 @@ describe('043_studio_versions', () => {
     expect(sql).toMatch(/kind in \('draft', ?'published'\)/i);
     expect(sql).toMatch(/updated_at timestamptz not null default now\(\)/i);
   });
+  it('keeps version rows when their author is deleted', () => {
+    expect(sql).toMatch(/created_by uuid references auth\.users\(id\) on delete set null/i);
+  });
   it('enables RLS with one admin-only policy and no student read policy', () => {
     expect(sql).toMatch(/alter table studio_versions enable row level security/i);
     const policies = sql.match(/create policy/gi) ?? [];

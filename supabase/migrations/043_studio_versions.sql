@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS studio_versions (
   -- Bumped in place by the once-a-minute draft upsert; the draft write policy
   -- reads this to decide whether an owner is unpublished.
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_by UUID REFERENCES auth.users(id)
+  -- SET NULL, so deleting an admin's account keeps the history they wrote.
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_studio_versions_owner
@@ -41,8 +42,9 @@ CREATE POLICY "studio_versions_admin_all"
   WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true));
 
 -- draft_time_map_id is superseded by studio_versions: a section's draft sync is
--- now a studio_versions draft row, not a second score_time_maps row. Task 6
--- stops reading this column; it is not dropped here so a rollback of the app
--- code alone still has somewhere to read from.
+-- now a studio_versions draft row, not a second score_time_maps row. Nothing
+-- new writes this column; publishTimeMap only clears a legacy draft map it
+-- still finds there. It is not dropped here so a rollback of the app code
+-- alone still has somewhere to read from.
 COMMENT ON COLUMN class_item_score_sections.draft_time_map_id IS
-  'DEPRECATED (2026-09, Studio rework P6): superseded by studio_versions. No longer read or written by the app.';
+  'DEPRECATED (2026-09, Studio rework P6): superseded by studio_versions. Nothing new writes it; publishTimeMap still clears a legacy draft map found here.';
