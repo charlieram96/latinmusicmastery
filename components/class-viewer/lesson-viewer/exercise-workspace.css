@@ -1,37 +1,11 @@
-.ps-exercise-workspace { display:flex; flex-direction:column; min-width:0; min-height:0; position:relative; }
-.ps-exercise-workspace[data-score-position=left],.ps-exercise-workspace[data-score-position=right] { display:grid; height:min(820px,82dvh); grid-template-rows:minmax(0,1fr); padding:12px; gap:0; }
-.ps-exercise-workspace[data-score-position=right] { grid-template-columns:minmax(0,1fr) 18px var(--score-panel-size); grid-template-areas:'stage resize score'; }
-.ps-exercise-workspace[data-score-position=left] { grid-template-columns:var(--score-panel-size) 18px minmax(0,1fr); grid-template-areas:'score resize stage'; }
-.ps-exercise-mode .ps-exercise-workspace { flex:1; height:auto; min-height:0; }
-.ps-exercise-workspace>.ps-lesson-stage { grid-area:stage; min-width:0; }
-.ps-exercise-workspace:is([data-score-position=left],[data-score-position=right])>.ps-lesson-stage { height:100%; min-height:0; border-radius:16px; overflow:hidden; container-type:inline-size; container-name:exercise-stage; }
-.ps-exercise-workspace:is([data-score-position=left],[data-score-position=right])>.ps-lesson-notation.ps-exercise-score { grid-area:score; margin:0; height:100%; min-height:0; display:flex; flex-direction:column; }
-.ps-score-resizer { grid-area:resize; position:relative; z-index:25; cursor:col-resize; touch-action:none; outline:none; border-radius:6px; }
-.ps-score-resizer::before { content:''; position:absolute; inset:0 -4px; }
-.ps-score-resizer>span { display:flex; align-items:center; justify-content:center; position:absolute; left:50%; top:50%; width:14px; height:50px; border:1px solid hsl(var(--border)); border-radius:99px; color:hsl(var(--muted-foreground)); background:hsl(var(--foreground) / .055); transform:translate(-50%,-50%); transition:background .15s,color .15s; pointer-events:none; }
-.ps-score-resizer:is(:hover,:focus-visible)>span,.ps-exercise-workspace[data-resizing=true] .ps-score-resizer>span { background:hsl(var(--primary) / .15); color:hsl(var(--primary)); border-color:hsl(var(--primary) / .4); }
-.ps-score-resizer>small { position:absolute; left:50%; top:calc(50% - 62px); transform:translateX(-50%); padding:6px 9px; border:1px solid hsl(var(--border)); border-radius:6px; background:hsl(var(--card)); color:hsl(var(--foreground)); box-shadow:var(--shadow-card); font-size:10px; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity .15s; }
-.ps-score-resizer:is(:hover,:focus-visible)>small,.ps-exercise-workspace[data-resizing=true] .ps-score-resizer>small { opacity:1; }
-.ps-score-resizer:focus-visible { box-shadow:inset 0 0 0 1px hsl(var(--primary) / .5); background:hsl(var(--primary) / .08); }
-.ps-exercise-workspace[data-resizing=true] { user-select:none; }
-.ps-exercise-workspace[data-resizing=true] .ps-lesson-stage { pointer-events:none; }
-.ps-exercise-workspace[data-score-stacked=true]:is([data-score-position=left],[data-score-position=right]) { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 18px var(--score-panel-size); grid-template-areas:'stage' 'resize' 'score'; padding:8px; }
-.ps-exercise-workspace[data-score-stacked=true] .ps-score-resizer { cursor:row-resize; }
-.ps-exercise-workspace[data-score-stacked=true] .ps-score-resizer::before { inset:-4px 0; }
-.ps-exercise-workspace[data-score-stacked=true] .ps-score-resizer>span { width:50px; height:14px; }
-.ps-exercise-workspace[data-score-stacked=true] .ps-score-resizer>small { top:auto; bottom:calc(100% + 4px); }
-.ps-exercise-mode[data-score-visible=false] .ps-exercise-workspace { display:flex; flex-direction:column; }
-.ps-exercise-mode[data-score-visible=false] .ps-score-resizer { display:none; }
-.ps-exercise-mode[data-score-visible=false] .ps-exercise-workspace>.ps-exercise-score { display:none; }
-.ps-exercise-mode[data-score-visible=false] .ps-exercise-workspace>.ps-lesson-stage { flex:1; }
+/* The exercise score and the stage inside the lesson workspace (SplitWorkspace).
+   The workspace's music region already draws the card, so the score sheds its own. */
+.ws-staff > .ps-exercise-score,
+.ps-exercise-mode[data-exercise-immersive=true] .ws-staff > .ps-exercise-score {
+  display:flex; flex-direction:column; flex:1 1 auto; height:auto; min-height:0; margin:0;
+  border:0; border-radius:0; background:transparent; box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none;
+}
+.ws-staff > .ps-lesson-stage, .ws-highway > .ps-lesson-stage { flex:1 1 auto; height:auto; min-height:0; }
 
-/* A narrow stage can result from a wide score even on a large monitor. */
-@container exercise-stage (max-width:650px) {
-  .ps-exercise-mode .ps-lesson-stage .ps-lesson-video { top:100px; right:14px; width:clamp(128px,35cqw,200px); }
-  .ps-exercise-mode .ps-lesson-stage .ps-lesson-stage-title { display:none; }
-  .ps-exercise-mode .ps-lesson-stage .ps-scoreboard-compact { gap:10px; padding:10px 12px; }
-}
-@media(max-width:700px) {
-  .ps-exercise-workspace:is([data-score-position=left],[data-score-position=right])>.ps-lesson-stage { border-radius:12px; }
-}
-@media(prefers-reduced-motion:reduce) { .ps-score-resizer>:is(span,small) { transition:none; } }
+/* The exercise's "Score" toggle hides the staff: the highway takes the music region. */
+.ps-exercise-mode[data-score-visible=false] .ws-music:has(> .ws-highway) > :is(.ws-staff, .ws-div2) { display:none; }
