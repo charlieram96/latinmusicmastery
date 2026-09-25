@@ -27,6 +27,11 @@ export function LessonFrameProvider({ value, children }: { value: LessonFrameVal
   return <FrameContext.Provider value={value}>{children}</FrameContext.Provider>
 }
 
+/** Content that must not claim the action bar (an exercise's follow-up questions sit under its game). */
+export function OutsideLessonFrame({ children }: { children: ReactNode }) {
+  return <FrameContext.Provider value={null}>{children}</FrameContext.Provider>
+}
+
 export function useLessonFrame(): LessonFrameValue | null {
   return useContext(FrameContext)
 }

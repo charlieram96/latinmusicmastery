@@ -59,6 +59,7 @@ export function OptionTile({
       type="button"
       role="radio"
       aria-checked={state === 'selected' || state === 'correct' || state === 'wrong'}
+      data-state={state}
       disabled={disabled}
       onClick={onClick}
       whileTap={disabled ? undefined : { scale: 0.98 }}

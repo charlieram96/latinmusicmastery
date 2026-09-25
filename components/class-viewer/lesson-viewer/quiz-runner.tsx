@@ -10,6 +10,8 @@ import { ExamSheet } from './quiz/exam-sheet'
 import { FocusStage } from './quiz/focus-stage'
 import { ResultsScreen } from './quiz/results-screen'
 import styles from './quiz/quiz.module.css'
+import { cn } from '@/lib/utils'
+import { OutsideLessonFrame, useLessonFrame } from './lesson-mode/lesson-frame'
 
 interface QuizRunnerProps {
   classItemId: string
@@ -33,6 +35,7 @@ export function QuizRunner({ questions, kind = 'Quiz', settings, nextHref = null
   const [finished, setFinished] = useState(false)
   const completeQuestions = useLessonActivity('questions')
   const mode = kind === 'Quiz' && settings?.mode === 'sheet' ? 'sheet' : 'focus'
+  const inLesson = !!useLessonFrame() && kind === 'Quiz'
 
   useEffect(() => {
     if (finished) completeQuestions()
@@ -51,9 +54,9 @@ export function QuizRunner({ questions, kind = 'Quiz', settings, nextHref = null
     )
   }
 
-  return (
+  const body = (
     <MotionConfig reducedMotion="user">
-      <div className={styles.root}>
+      <div className={cn(styles.root, inLesson && styles.rootLesson)}>
         {mode === 'sheet' ? (
           <ExamSheet questions={ordered} engine={engine} kindLabel={kindLabel} title={title} nextHref={nextHref} onSubmit={() => setFinished(true)} onRestart={restart} />
         ) : finished ? (
@@ -64,4 +67,6 @@ export function QuizRunner({ questions, kind = 'Quiz', settings, nextHref = null
       </div>
     </MotionConfig>
   )
+  // An exercise's questions sit under its game, which owns the action bar.
+  return kind === 'Exercise' ? <OutsideLessonFrame>{body}</OutsideLessonFrame> : body
 }

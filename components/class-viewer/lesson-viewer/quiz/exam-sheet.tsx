@@ -13,6 +13,7 @@ import { hasAnswer } from '@/lib/quiz/grading'
 import { playCue } from '@/lib/quiz/sounds'
 import type { QuizQuestion } from '@/types/modules'
 import { FeedbackBanner } from './feedback-banner'
+import { useLessonFrame } from '../lesson-mode/lesson-frame'
 import { QuestionInput } from './question-input'
 import { ScoreRing } from './score-ring'
 import { TypeChip } from './type-chip'
@@ -41,6 +42,7 @@ export function ExamSheet({
   onRestart: () => void
 }) {
   const { t } = useTranslation()
+  const frame = useLessonFrame()
   const { bannerCorrect } = useAnswerLabels()
   const [prefs, setPrefs] = useQuizPrefs()
   const [submitted, setSubmitted] = useState(false)
@@ -200,7 +202,9 @@ export function ExamSheet({
               </div>
               {jumpGrid}
               <div className="mt-3.5 grid gap-2.5">
-                {nextHref && (
+                {frame ? (
+                  <Button className="w-full rounded-xl" onClick={frame.advance}>{t('dashboard.classViewer.quiz.results.continueNext')} <ArrowRight className="h-4 w-4" /></Button>
+                ) : nextHref && (
                   <Button asChild className="w-full rounded-xl">
                     <Link href={nextHref}>{t('dashboard.classViewer.quiz.results.continueNext')} <ArrowRight className="h-4 w-4" /></Link>
                   </Button>

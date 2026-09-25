@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, ArrowRight, Check, Volume2, VolumeX } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Minus, Volume2, VolumeX, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
@@ -11,7 +11,8 @@ import { cueFor, outcomeOf } from '@/lib/quiz/engine'
 import { hasAnswer } from '@/lib/quiz/grading'
 import { playCue } from '@/lib/quiz/sounds'
 import type { QuizQuestion } from '@/types/modules'
-import { FeedbackBanner } from './feedback-banner'
+import { FeedbackBanner, feedbackTitle } from './feedback-banner'
+import { ActionMessage, LessonAction, useLessonFrame } from '../lesson-mode/lesson-frame'
 import { ProgressSegments } from './progress-segments'
 import { QuestionInput } from './question-input'
 import { QuestionMap } from './question-map'
@@ -22,6 +23,8 @@ import styles from './quiz.module.css'
 
 const KEY_CHOICE = /^[1-9]$/
 const KEY_LETTER = /^[a-h]$/i
+/** Inputs that need the full width; the question sits above them instead of beside. */
+const WIDE_INPUTS = new Set(['piece_placement', 'matching_pairs', 'ordering_sequence'])
 
 /** One question at a time: rise transition, immediate feedback, Check → Continue, streak, sound, question map on wide screens. */
 export function FocusStage({
@@ -49,6 +52,7 @@ export function FocusStage({
   const answer = state.answers[q.id]
   const canCheck = hasAnswer(q, answer)
   const isLast = index === questions.length - 1
+  const frame = useLessonFrame()
 
   const check = useCallback(() => {
     if (isGraded || !canCheck) return
@@ -99,6 +103,64 @@ export function FocusStage({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [q, isGraded, index, check, next, engine])
+
+  if (frame) {
+    const outcome = isGraded ? outcomeOf(score) : null
+    const wideInput = WIDE_INPUTS.has(q.question_type)
+    const FeedbackIcon = outcome === 'ok' ? Check : outcome === 'part' ? Minus : X
+    const correct = outcome === 'bad' ? bannerCorrect(q) : null
+    return (
+      <div className={cn(styles.lessonFocus, wideInput && styles.lessonFocusWide)}>
+        <div data-quiz-question key={`q-${q.id}`} className={cn(styles.lessonQ, styles.rise)}>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+              {kindLabel} · {t('dashboard.classViewer.quiz.questionOf', { n: index + 1, total: questions.length })}
+            </span>
+            <TypeChip type={q.question_type} />
+          </div>
+          <h2 className={cn('font-heading font-extrabold tracking-[-0.02em]', styles.lessonQuestion)}>{q.question}</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-[180px] flex-1"><ProgressSegments questions={questions} graded={state.graded} current={index} /></div>
+            <StreakChip count={state.streak} pop={pop} />
+            <button
+              type="button"
+              aria-pressed={prefs.sound}
+              aria-label={t(prefs.sound ? 'dashboard.classViewer.quiz.sound.on' : 'dashboard.classViewer.quiz.sound.off')}
+              onClick={() => setPrefs({ sound: !prefs.sound })}
+              className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-raised text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {prefs.sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        <div data-quiz-answers key={`a-${q.id}`} className={cn(styles.lessonA, styles.rise)}>
+          <QuestionInput question={q} answer={answer} isGraded={isGraded} onChange={(v) => engine.setAnswer(q.id, v)} />
+        </div>
+        <LessonAction tone={outcome === 'ok' ? 'success' : outcome === 'bad' ? 'danger' : 'neutral'}>
+          {isGraded ? (
+            <ActionMessage live icon={<FeedbackIcon className="h-5 w-5" strokeWidth={3} />}
+              title={feedbackTitle(t, score)}
+              detail={[correct ? `${t('dashboard.classViewer.quiz.feedback.correctAnswer')} ${correct}` : null, q.explanation].filter(Boolean).join(' · ') || undefined} />
+          ) : (
+            <div className="lx-msg">
+              <Button variant="ghost" disabled={index === 0} onClick={() => setIndex(index - 1)} className="rounded-xl">
+                <ArrowLeft className="h-4 w-4" /> {t('dashboard.pages.modules.previous')}
+              </Button>
+            </div>
+          )}
+          {!isGraded ? (
+            <Button variant="chunky" data-primary="" disabled={!canCheck} onClick={check}>
+              {t('dashboard.classViewer.quiz.checkAnswer')}
+            </Button>
+          ) : (
+            <Button variant={outcome === 'ok' ? 'chunky-success' : outcome === 'bad' ? 'chunky-danger' : 'chunky'} data-primary="" onClick={next}>
+              {isLast ? t('dashboard.classViewer.quiz.seeResults') : t('dashboard.classViewer.quiz.continue')} <ArrowRight className="h-4 w-4" />
+            </Button>
+          )}
+        </LessonAction>
+      </div>
+    )
+  }
 
   const continueVariant = !isGraded ? 'default' : outcomeOf(score) === 'ok' ? 'success' : outcomeOf(score) === 'part' ? 'default' : 'terracotta'
 

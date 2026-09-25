@@ -127,3 +127,17 @@
   .rise, .pop, .okPulse, .bounceIn, .burstPiece, .levelBar, .pieceOk, .pieceBad { animation: none; }
   .pieceSnap, .ghostGrow { transition: none; }
 }
+
+/* ---------- lesson mode (L2): question left, answers right ---------- */
+.lessonFocus { display: grid; gap: 22px; align-items: center; min-height: 100%; }
+.lessonQ { display: grid; gap: 14px; align-content: center; }
+.lessonA { display: grid; min-width: 0; }
+.lessonQuestion { font-size: clamp(24px, 3.2cqw, 38px); line-height: 1.12; }
+@container quiz (min-width: 820px) {
+  .lessonFocus:not(.lessonFocusWide) { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(20px, 4cqw, 48px); padding-inline: clamp(0px, 2cqw, 28px); }
+}
+.lessonA [data-state] { padding: 20px; font-size: 16px; border-width: 2px; border-bottom-width: 4px; }
+.lessonA [data-state='selected'] { border-color: hsl(var(--info)); background: hsl(var(--info) / 0.1); box-shadow: 0 0 0 3px hsl(var(--info) / 0.18); }
+.lessonA [data-state='selected'] > span:first-of-type { border-color: hsl(var(--info)); background: hsl(var(--info)); color: #fff; }
+.lessonA .tilesWide { grid-template-columns: 1fr; gap: 12px; }
+.rootLesson { padding-top: 0; min-height: 100%; }
