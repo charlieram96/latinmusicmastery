@@ -40,8 +40,8 @@ export function YourPathCard({ path }: { path: YourPath | null }) {
           <ChevronRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </div>
-      <PathStrip items={path.items} size="compact" ariaLabel={label} className="-mb-3 -mt-4 hidden md:block" />
-      <PathStrip items={path.phoneItems} size="compact" ariaLabel={label} className="-mb-3 -mt-4 md:hidden" />
+      <PathStrip items={path.items} size="compact" ariaLabel={label} className="-mb-3 hidden md:block" />
+      <PathStrip items={path.phoneItems} size="compact" ariaLabel={label} className="-mb-3 md:hidden" />
     </section>
   )
 }
