@@ -137,6 +137,18 @@ describe('MeasureZoom', () => {
     expect([...host.querySelectorAll('.st-zoom-sliver-label')].map((l) => l.textContent)).toEqual(['m.2']);
   });
 
+  it('keeps focus where it was when a header button is pressed', () => {
+    mount(1);
+    const head = host.querySelector('.st-zoom-head')!;
+    const labels = [...head.querySelectorAll('button')].map((b) => b.textContent || b.getAttribute('aria-label'));
+    expect(labels).toEqual(expect.arrayContaining(['V1', 'V2', 'Previous bar', 'Next bar', 'Close']));
+    for (const btn of head.querySelectorAll('button')) {
+      const ev = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+      act(() => { btn.dispatchEvent(ev); });
+      expect(ev.defaultPrevented).toBe(true);
+    }
+  });
+
   it('closes from its close button (instantly without animation support)', () => {
     const { onClose } = mount(1);
     act(() => { host.querySelector<HTMLButtonElement>('button[title="Close (Esc)"]')!.click(); });

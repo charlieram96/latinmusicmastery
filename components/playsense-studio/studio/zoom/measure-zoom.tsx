@@ -25,7 +25,7 @@
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import {
   useCallback, useEffect, useLayoutEffect, useRef, useState,
-  type Dispatch, type PointerEvent as ReactPointerEvent, type ReactNode,
+  type Dispatch, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode,
 } from 'react';
 import type { EditorAction, EventRef } from '@/lib/playsense-studio/editor-state';
 import type { MeasureFill } from '@/lib/playsense-studio/measure-fill';
@@ -124,6 +124,8 @@ function originTransform(origin: { left: number; width: number }, panelWidth: nu
 }
 
 const noop = () => {};
+/** Header buttons keep focus where it was, so the zoom's keys keep working after a click. */
+const keepFocus = (e: ReactMouseEvent) => e.preventDefault();
 
 export function MeasureZoom({
   items, zoom, height, spans, fill, bpm, percussion, origin, closing = false,
@@ -386,18 +388,18 @@ export function MeasureZoom({
         {bpm !== null && <span className="text-muted-foreground">≈{bpm.toFixed(1)} BPM</span>}
         {showVoices && (
           <div className="st-seg" role="group" aria-label="Voice">
-            <button type="button" className={voice === 0 ? 'is-on' : ''} aria-pressed={voice === 0} onClick={() => onVoice(0)}>V1</button>
-            <button type="button" className={voice === 1 ? 'is-on' : ''} aria-pressed={voice === 1} onClick={() => onVoice(1)}>V2</button>
+            <button type="button" className={voice === 0 ? 'is-on' : ''} aria-pressed={voice === 0} onMouseDown={keepFocus} onClick={() => onVoice(0)}>V1</button>
+            <button type="button" className={voice === 1 ? 'is-on' : ''} aria-pressed={voice === 1} onMouseDown={keepFocus} onClick={() => onVoice(1)}>V2</button>
           </div>
         )}
         <span className="ml-auto flex items-center gap-1">
-          <button type="button" className="st-iconbtn" title="Previous bar (⌘←)" aria-label="Previous bar" disabled={!prev} onClick={() => onNav(-1)}>
+          <button type="button" className="st-iconbtn" title="Previous bar (⌘←)" aria-label="Previous bar" disabled={!prev} onMouseDown={keepFocus} onClick={() => onNav(-1)}>
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button type="button" className="st-iconbtn" title="Next bar (⌘→)" aria-label="Next bar" disabled={!next} onClick={() => onNav(1)}>
+          <button type="button" className="st-iconbtn" title="Next bar (⌘→)" aria-label="Next bar" disabled={!next} onMouseDown={keepFocus} onClick={() => onNav(1)}>
             <ChevronRight className="h-4 w-4" />
           </button>
-          <button type="button" className="st-iconbtn" title="Close (Esc)" aria-label="Close" onClick={exit}>
+          <button type="button" className="st-iconbtn" title="Close (Esc)" aria-label="Close" onMouseDown={keepFocus} onClick={exit}>
             <X className="h-4 w-4" />
           </button>
         </span>
