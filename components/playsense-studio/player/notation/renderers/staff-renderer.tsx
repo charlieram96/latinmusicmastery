@@ -556,7 +556,10 @@ class StaffRendererImpl implements ScoreRenderer {
     // Helper rows sit under the lowest note head: names (20px chips), then counts.
     // Chips and counts keep their CSS size at any zoom, so their spacing is px / scale.
     const lowestHead = Math.max(80, ...headYs) + extraTop;
-    const helperTop = Math.max(104 + extraTop, lowestHead + 16);
+    // Dynamics and hairpins sit under the staff; the helper rows go below them.
+    const marksBelow = measureBlocks.some(block => block.events.some(event => event.dynamic))
+      || (score.spans ?? []).some(span => span.type !== 'slur');
+    const helperTop = Math.max(104 + extraTop, lowestHead + 16) + (marksBelow ? 24 : 0);
     const pitched = measureBlocks.some(block => block.clef !== 'percussion');
     const names = !!this.helpers && pitched;
     this.namesY = helperTop + 10 / this.scale;
@@ -931,8 +934,9 @@ class StaffRendererImpl implements ScoreRenderer {
       svg.insertBefore(bg, svg.firstChild);
 
       // An italic bar number opens every row after the first.
+      const firstMusicRow = plan.placements.find(p => !p.isGap)?.system ?? 0;
       plan.placements.forEach((p, index) => {
-        if (!p.firstInRow || p.system === 0 || p.isGap || plan.placements[index - 1]?.system === p.system) return;
+        if (p.isGap || p.system === firstMusicRow || plan.placements[index - 1]?.system === p.system) return;
         const number = document.createElementNS(NS, 'text');
         number.setAttribute('data-score-bar-number', '');
         number.setAttribute('x', `${p.x + 2}`);

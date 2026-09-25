@@ -133,3 +133,17 @@ describe('paged', () => {
     expect(current!.querySelector('.ps-notation-interlude')).not.toBeNull()
   })
 })
+
+describe('layout details found in the browser check', () => {
+  it('does not number the first music row when a video intro row precedes it', () => {
+    draw({ leadingGapMs: 1000 })
+    const musicRows = [...host.querySelectorAll('svg > g[data-score-row]')].filter(r => r.querySelector('[data-score-note]')).length
+    expect(host.querySelectorAll('[data-score-bar-number]')).toHaveLength(musicRows - 1)
+  })
+  it('drops the helper rows below dynamics', () => {
+    const top = (score: ScoreDocument) => { draw({ score }); return parseFloat((host.querySelector('.ps-staff-name') as HTMLElement).style.top) }
+    const plain = top(scale())
+    const loud = top(scale({}, () => [60, 62, 64, 65].map(midi => ({ kind: 'note', midi, durationQN: 1, dynamic: 'f' }))))
+    expect(loud).toBeGreaterThan(plain + 15)
+  })
+})
