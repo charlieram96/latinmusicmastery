@@ -41,8 +41,15 @@ export interface MeasureZoomProps {
   onNav: (dir: 1 | -1) => void;
   onClose: () => void;
   onLayout: (l: ZoomLayout) => void;
-  /** Toolbar and popovers (Tasks 8–10). */
-  children?: ReactNode;
+  /**
+   * Toolbar and popovers (Tasks 8–10). A function is called with the center
+   * column's width (for clamping a floating bar inside it, the measure bar's
+   * pattern) and its current layout, and is re-invoked whenever either
+   * changes. Rendered with `gridColumn: 2; gridRow: 2`, the same grid area as
+   * the staff, so an absolutely-positioned child's `left`/`top` share the
+   * hits' coordinate space (0,0 at the center column's top-left).
+   */
+  children?: ReactNode | ((ctx: { centerW: number; layout: ZoomLayout | null }) => ReactNode);
 }
 
 const HEAD_H = 30;
@@ -251,7 +258,7 @@ export function MeasureZoom({
         ))}
       </div>
 
-      {children}
+      {typeof children === 'function' ? children({ centerW, layout }) : children}
     </div>
   );
 }

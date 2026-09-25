@@ -22,7 +22,7 @@ import { ChevronDown, MoreHorizontal, Music, Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch } from 'react';
 import { diatonicToMidi, extractTrackEvents, midiToDiatonic } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion, resolvePercStroke } from '@/lib/playsense-studio/perc-strokes';
-import { midiToParts } from '@/lib/playsense-studio/pitch';
+import { midiToParts, pitchName } from '@/lib/playsense-studio/pitch';
 import { STEP_SEMITONE } from '@/lib/playsense-studio/notation/accidentals';
 import {
   QN_EPS,
@@ -33,11 +33,15 @@ import {
   occupiedQN,
 } from '@/lib/playsense-studio/time-mapping';
 import { fillIssues, measureFill, type MeasureFill } from '@/lib/playsense-studio/measure-fill';
+import { eventDots, eventTuplet } from '@/components/playsense-studio/shared/score-model/accessors';
+import { writtenValue, type NoteValue } from '@/lib/playsense-studio/rhythm';
+import { cursorRange } from '@/lib/playsense-studio/note-cursor';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type {
   Chord,
   Instrument,
   Measure,
+  MusicalEvent,
   Note,
   ScoreDocument,
 } from '@/components/playsense-studio/shared/score-model/types';
@@ -62,6 +66,8 @@ import { MidiRecordButton, type MidiRecordingSource } from './midi-record-button
 import { MeasureZoom, type ZoomState } from './zoom/measure-zoom';
 import { useZoomEditing } from './zoom/use-zoom-editing';
 import type { ZoomLayout } from './zoom/zoom-staff';
+import { NoteIcon } from './zoom/note-glyphs';
+import { NoteToolbar, type NoteToolbarPercussion } from './zoom/note-toolbar';
 
 type Articulation = 'staccato' | 'accent' | 'tenuto';
 
@@ -76,40 +82,6 @@ const DURATION_OPTIONS: Array<{ value: number; label: string; key?: string }> = 
   { value: 0.03125, label: '128th' },
 ];
 
-/** Note-duration icon drawn inline — Unicode music glyphs (𝅝, 𝅗𝅥, 𝅘𝅥𝅯…) are tofu in
- *  most system fonts, so the toolbar renders its own SVG noteheads/stems/flags. */
-function NoteIcon({ durationQN }: { durationQN: number }) {
-  const hollow = durationQN >= 2; // whole + half
-  const stem = durationQN < 4;
-  // 0.5 → 1 flag, 0.25 → 2 … 0.03125 → 5.
-  const flags = durationQN <= 0.5 ? Math.round(Math.log2(0.5 / durationQN)) + 1 : 0;
-  return (
-    <svg viewBox="0 0 16 22" width="13" height="19" aria-hidden focusable="false">
-      <ellipse
-        cx="6"
-        cy="17.6"
-        rx="4.3"
-        ry="3"
-        transform="rotate(-18 6 17.6)"
-        fill={hollow ? 'none' : 'currentColor'}
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      {stem && <rect x="9.5" y="2.5" width="1.4" height="15" rx="0.7" fill="currentColor" />}
-      {Array.from({ length: flags }, (_, i) => (
-        <path
-          key={i}
-          d={`M10.9 ${2.8 + i * 2.6} c3.2 1.5 3.7 3.2 2.5 5.6`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-        />
-      ))}
-    </svg>
-  );
-}
-
 /** Simple half-rest-on-a-line icon (the 𝄽 glyph is also tofu-prone). */
 function RestIcon() {
   return (
@@ -122,6 +94,10 @@ function RestIcon() {
 // The Insert toolbar shows the common durations inline; the rest live behind "more".
 const COMMON_DURATIONS = DURATION_OPTIONS.slice(0, 5); // whole … 16th
 const RARE_DURATIONS = DURATION_OPTIONS.slice(5); // 32nd … 128th
+
+// The note toolbar's own width isn't measured (its interface takes no ref),
+// so this fallback stands in for it when clamping it inside the center column.
+const NOTE_TOOLBAR_WIDTH_FALLBACK = 520;
 
 const INSTRUMENT_OPTIONS: Array<{ value: Instrument; label: string }> = [
   { value: 'staff', label: 'Staff' },
@@ -230,6 +206,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [repeatPop, setRepeatPop] = useState<{ anchor: PopoverAnchor } | null>(null);
   const [gapPop, setGapPop] = useState<{ gap: number; anchor: PopoverAnchor } | null>(null);
   const [barPop, setBarPop] = useState<{ anchor: PopoverAnchor } | null>(null);
+  // The note toolbar's "More ▾" — just the anchor for now; Task 9 builds the
+  // popover that opens there and reads it.
+  const [, setMorePop] = useState<{ anchor: PopoverAnchor } | null>(null);
   // The measure zoom (one bar drawn large over the strip), or null when closed.
   // `zoomOrigin` is the bar's rect in the strip for the enter/exit animation;
   // `zoomClosing` asks the zoom to play its exit and then call back to close.
@@ -237,8 +216,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [zoomOrigin, setZoomOrigin] = useState<{ left: number; width: number } | null>(null);
   const [zoomClosing, setZoomClosing] = useState(false);
   const zoomOpen = zoom !== null;
-  // The zoomed bar's note layout (hits, beat span, line math) for the zoom's
-  // pointer and toolbar work in later tasks.
+  // The zoomed bar's note layout (hits, beat span, line math) — a stash for
+  // other zoom work; the note toolbar below reads MeasureZoom's own (reactive)
+  // layout instead, since a ref write here doesn't request a re-render.
   const zoomLayout = useRef<ZoomLayout | null>(null);
   // A menu belongs to the bars it opened on: every key or click that changes
   // the bar selection closes whichever menu is open.
@@ -844,6 +824,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     setZoom(null);
     setZoomClosing(false);
     zoomLayout.current = null;
+    setMorePop(null);
     if (m !== undefined) selectBars({ anchor: m, focus: m });
   }, [zoom, selectBars]);
 
@@ -874,7 +855,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     (m: number) => measureLengthInQN(tracked[m]?.timeSignature ?? score.initialTimeSignature),
     [tracked, score.initialTimeSignature]
   );
-  useZoomEditing({
+  const zoomEditing = useZoomEditing({
     score, dispatch, trackIndex: activeTrackIndex, zoom, setZoom,
     keyFifthsAt: zoomKeyFifthsAt, clefAt: zoomClefAt, barQNAt: zoomBarQNAt,
     percussion, flash: showFlash, openBar, close: closeZoom,
@@ -885,6 +866,77 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     setZoom(null);
     setZoomClosing(false);
   }
+
+  // ---- The floating note toolbar (Task 8) ------------------------------------
+
+  // The event at the zoom cursor — null at 'end', or when the cursor sits on a
+  // voice with nothing there. Drives the toolbar's info chip and its on/off
+  // buttons; read directly off the score (not through `editing`, whose ref
+  // only catches up with this render's props in a layout effect).
+  const zoomCurrentEvent: MusicalEvent | null = useMemo(() => {
+    if (!zoom) return null;
+    const c = zoom.cursor;
+    if (c.index === 'end') return null;
+    return activeTrack?.measures[c.measureIndex]?.voices[c.voice]?.events[c.index] ?? null;
+  }, [zoom, activeTrack]);
+
+  const zoomHasSelection = useMemo(() => {
+    if (!zoom) return false;
+    const events = zoomEvents(zoom.cursor.measureIndex, zoom.cursor.voice);
+    return cursorRange(zoom.cursor, events.length).some((i) => i >= 0 && i < events.length);
+  }, [zoom, zoomEvents]);
+
+  // Duration/dots shown reflect the selected note when there is one, else the
+  // pending value/dots the zoom will write next (ZoomState.value/dots).
+  const zoomValue: NoteValue = zoomCurrentEvent ? writtenValue(zoomCurrentEvent) ?? zoom?.value ?? 'q' : zoom?.value ?? 'q';
+  const zoomDots: 0 | 1 | 2 = zoomCurrentEvent ? eventDots(zoomCurrentEvent) : zoom?.dots ?? 0;
+  const zoomTupletHere = zoomCurrentEvent ? eventTuplet(zoomCurrentEvent) : null;
+
+  const zoomToolbarPercussion: NoteToolbarPercussion | null = useMemo(() => {
+    if (!percussion || !percStrokes || !activeTrack) return null;
+    const pitch = zoomCurrentEvent?.kind === 'chord' ? zoomCurrentEvent.notes[0]
+      : zoomCurrentEvent?.kind === 'note' ? zoomCurrentEvent : undefined;
+    return {
+      strokes: percStrokes.map((s) => ({ midi: s.midi, label: s.label })),
+      current: pitch ? resolvePercStroke(activeTrack.instrument, pitch)?.midi ?? null : null,
+    };
+  }, [percussion, percStrokes, activeTrack, zoomCurrentEvent]);
+
+  const zoomInfo = (() => {
+    if (!zoom) return '';
+    if (!zoomCurrentEvent) return 'add';
+    if (zoomCurrentEvent.kind === 'rest') return 'rest';
+    const key = zoomKeyFifthsAt(zoom.cursor.measureIndex);
+    if (zoomCurrentEvent.kind === 'chord') {
+      return zoomCurrentEvent.notes.map((n) => pitchName(n.midi, n.spelling, key)).join(' ');
+    }
+    return pitchName(zoomCurrentEvent.midi, zoomCurrentEvent.spelling, key);
+  })();
+
+  // Placed under the cursor's note box (or just after the last note at 'end'),
+  // then clamped inside the center column the way the measure bar is clamped
+  // against the viewport — the toolbar's own width isn't measured (its
+  // interface takes no ref), so a fallback stands in for it throughout.
+  const noteToolbarPos = useCallback((layout: ZoomLayout | null, centerW: number) => {
+    if (!zoom || !layout) return null;
+    const c = zoom.cursor;
+    let x: number;
+    let hitBottom: number;
+    if (c.index !== 'end') {
+      const hit = layout.hits.find((h) => h.voice === c.voice && h.eventIndex === c.index);
+      if (!hit) return null;
+      x = hit.x + hit.w / 2;
+      hitBottom = hit.y + hit.h;
+    } else {
+      x = layout.noteEndX;
+      const voiceHits = layout.hits.filter((h) => h.voice === c.voice);
+      const last = voiceHits[voiceHits.length - 1];
+      hitBottom = last ? last.y + last.h : layout.yForLine(2);
+    }
+    const half = NOTE_TOOLBAR_WIDTH_FALLBACK / 2 + 8;
+    const left = centerW > 0 ? Math.max(half, Math.min(centerW - half, x)) : x;
+    return { left, top: hitBottom + 14 };
+  }, [zoom]);
 
   // ---- Toolbar control handlers ---------------------------------------------
 
@@ -1306,7 +1358,28 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 onNav={navZoom}
                 onClose={finishZoomClose}
                 onLayout={(l) => { zoomLayout.current = l; }}
-              />
+              >
+                {({ centerW, layout }) => {
+                  const pos = noteToolbarPos(layout, centerW);
+                  if (!pos) return null;
+                  return (
+                    <NoteToolbar
+                      left={pos.left}
+                      top={pos.top}
+                      info={zoomInfo}
+                      value={zoomValue}
+                      dots={zoomDots}
+                      isRest={zoomCurrentEvent?.kind === 'rest'}
+                      tie={!!zoomCurrentEvent && zoomCurrentEvent.kind !== 'rest' && !!zoomCurrentEvent.tieToNext}
+                      tripletOn={!!zoomTupletHere && zoomTupletHere.n === 3 && zoomTupletHere.m === 2}
+                      hasSelection={zoomHasSelection}
+                      percussion={zoomToolbarPercussion}
+                      editing={zoomEditing}
+                      onMore={(anchor) => setMorePop({ anchor })}
+                    />
+                  );
+                }}
+              </MeasureZoom>
             )}
             {shortcutsOpen && !zoom && (
               <ShortcutsPopover
