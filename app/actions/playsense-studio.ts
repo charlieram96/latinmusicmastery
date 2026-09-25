@@ -53,6 +53,7 @@ export interface ClassItemScorePayload {
     /** Per-note timing nudges (params.nudges) — the studio's authoritative
      *  list; the waypoints above already include their effect. */
     nudges: Array<{ qn: number; deltaSeconds: number }>;
+    params?: Record<string, unknown>;
   } | null;
 }
 
@@ -89,6 +90,7 @@ async function loadTimeMap(
         beatInMeasure: w.beat_in_measure,
       })),
       nudges: readNudges(tm.params),
+      params: (tm.params ?? {}) as Record<string, unknown>,
     },
   };
 }
