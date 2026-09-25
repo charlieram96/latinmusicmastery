@@ -79,7 +79,7 @@ export function RecommendedSection({ courses, ctx }: { courses: RecommendedCours
       ) : (
         <div
           data-posters
-          className="-mx-6 flex snap-x snap-mandatory scroll-px-6 gap-3.5 overflow-x-auto px-6 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-[repeat(auto-fill,minmax(190px,1fr))] md:overflow-visible md:px-0 md:pb-0"
+          className="-mx-6 flex snap-x snap-mandatory scroll-px-6 gap-3.5 overflow-x-auto px-6 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-[repeat(auto-fill,minmax(max(190px,calc((100%-42px)/4)),1fr))] md:overflow-visible md:px-0 md:pb-0"
         >
           {visible.slice(0, 4).map((course, i) => (
             <PosterCard key={course.id} course={course} reason={reasonText(course.reason, t, locale)} priority={i === 0} />

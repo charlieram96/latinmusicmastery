@@ -14,6 +14,7 @@ vi.mock('@/components/language-provider', () => ({
 vi.mock('next/link', () => ({
   default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => <a href={href} {...rest}>{children}</a>,
 }))
+// eslint-disable-next-line @next/next/no-img-element
 vi.mock('next/image', () => ({ default: (props: { src: string }) => <img data-cover src={props.src} alt="" /> }))
 
 import { RecommendedSection } from '../recommended-section'
@@ -86,7 +87,7 @@ describe('RecommendedSection posters', () => {
   it('is a snap carousel at 62% width below md and a minmax(190px) grid from md', () => {
     render()
     const list = host.querySelector('[data-posters]')!
-    expect(tokens(list)).toEqual(expect.arrayContaining(['flex', 'snap-x', 'snap-mandatory', 'overflow-x-auto', 'md:grid', 'md:grid-cols-[repeat(auto-fill,minmax(190px,1fr))]']))
+    expect(tokens(list)).toEqual(expect.arrayContaining(['flex', 'snap-x', 'snap-mandatory', 'overflow-x-auto', 'md:grid', 'md:grid-cols-[repeat(auto-fill,minmax(max(190px,calc((100%-42px)/4)),1fr))]']))
     for (const p of posters()) expect(tokens(p)).toEqual(expect.arrayContaining(['w-[62%]', 'shrink-0', 'snap-start', 'md:w-auto']))
   })
 
