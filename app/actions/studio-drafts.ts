@@ -189,6 +189,11 @@ export async function publishStudioDraft(
   if (liveContent.error) return { error: liveContent.error };
   const parts = diffParts(liveContent.data!, draft.data);
   const { score, timing } = draft.data;
+  // "Anchor touched" is decided against the PRE-publish live anchor. Seeds copy
+  // the live anchor into every draft, and publishTimeMap may rebase the live
+  // anchor, so comparing after the timing publish would write the draft's stale
+  // seconds back over the rebase and drift the students' click.
+  const anchorTouched = anchorChanged(liveContent.data!.timing.anchor, timing.anchor);
 
   let timingPublished = false;
   if (r.target && parts.timing && timing.waypoints.length >= 2) {
@@ -213,7 +218,8 @@ export async function publishStudioDraft(
       };
     }
   }
-  if (r.anchorKind && anchorChanged(r.liveAnchor, timing.anchor)) {
+  // anchorChanged never reports a null draft anchor, so this never writes a null.
+  if (r.anchorKind && anchorTouched && timing.anchor) {
     const res = r.anchorKind === 'section'
       ? await setSectionMetronomeAnchor({ sectionId: r.sectionId!, anchorSeconds: timing.anchor!.seconds, anchorQn: timing.anchor!.qn })
       : await setClassItemMetronomeAnchor({ classItemId: r.classItemId!, anchorSeconds: timing.anchor!.seconds, anchorQn: timing.anchor!.qn });

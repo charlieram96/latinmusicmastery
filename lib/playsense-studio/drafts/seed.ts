@@ -39,7 +39,7 @@ export function workspaceSeed(input: {
             input.exerciseMedia?.timeMap ?? null,
             input.exerciseMedia?.metronomeAnchorSeconds == null
               ? null
-              : { seconds: input.exerciseMedia.metronomeAnchorSeconds, qn: null }
+              : { seconds: input.exerciseMedia.metronomeAnchorSeconds, qn: input.exerciseMedia.metronomeAnchorQn ?? null }
           )
         : timingFromLive(input.activeTimeMap, null);
   const timing = input.studioDraft?.timing ?? live;

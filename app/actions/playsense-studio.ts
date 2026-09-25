@@ -1436,6 +1436,8 @@ export interface ExerciseMedia {
   videoTrimOutSeconds: number | null;
   /** One video second known to land on a beat, for the studio click. */
   metronomeAnchorSeconds: number | null;
+  /** The musical position (quarter notes) that anchor second lands on. */
+  metronomeAnchorQn: number | null;
   /** Optional time map syncing the play-along video to the graded score's beats.
    *  When present, consumers position the video by musical position; otherwise
    *  they fall back to the linear crop (videoStartSeconds). */
@@ -1452,7 +1454,7 @@ export async function getExerciseMedia(
   const { data: item, error: itemErr } = await supabase
     .from('class_items')
     .select(
-      'exercise_video_url, exercise_video_start_seconds, exercise_video_trim_in_seconds, exercise_video_trim_out_seconds, exercise_time_map_id, metronome_anchor_seconds'
+      'exercise_video_url, exercise_video_start_seconds, exercise_video_trim_in_seconds, exercise_video_trim_out_seconds, exercise_time_map_id, metronome_anchor_seconds, metronome_anchor_qn'
     )
     .eq('id', classItemId)
     .single();
@@ -1505,6 +1507,7 @@ export async function getExerciseMedia(
       videoStartSeconds: item.exercise_video_trim_in_seconds ?? item.exercise_video_start_seconds ?? 0,
       videoTrimOutSeconds: item.exercise_video_trim_out_seconds,
       metronomeAnchorSeconds: item.metronome_anchor_seconds,
+      metronomeAnchorQn: item.metronome_anchor_qn,
       timeMap,
       backingTracks: (tracks ?? []).map((t) => ({
         id: t.id,

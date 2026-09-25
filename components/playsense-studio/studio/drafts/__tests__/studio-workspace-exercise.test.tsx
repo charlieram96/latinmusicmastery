@@ -60,6 +60,7 @@ const exerciseMedia: ExerciseMedia = {
   videoStartSeconds: 0,
   videoTrimOutSeconds: null,
   metronomeAnchorSeconds: 1.5,
+  metronomeAnchorQn: 0,
   timeMap: { id: 'ex-map', method: 'drag', waypoints: [wp(0, 0.5), wp(4, 2.5)], nudges: [] },
   backingTracks: [],
 };

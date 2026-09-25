@@ -118,15 +118,24 @@ describe('publishStudioDraft', () => {
     expect(live.publishTimeMap.mock.invocationCallOrder[0]).toBeLessThan(live.setSectionMetronomeAnchor.mock.invocationCallOrder[0]);
     expect(live.saveScoreDocument).not.toHaveBeenCalled();
   });
-  it('re-reads the live anchor after a timing publish, since publishTimeMap can move it itself', async () => {
-    // Draft anchor equals the PRE-publish live anchor (1, 0) — but the timing
-    // itself changed, so publishTimeMap runs, and its mock rebases the live
-    // anchor to (9, 0) as a side effect. The draft anchor must still be written,
-    // because it now differs from the freshly re-read live anchor.
+  it('leaves an untouched anchor to the rebase publishTimeMap did, and records the rebased one', async () => {
+    // Draft anchor equals the PRE-publish live anchor (1, 0): the seed copied it
+    // and the admin never moved it. The timing changed, so publishTimeMap runs,
+    // and its mock rebases the live anchor to (9, 0). Writing the draft's stale
+    // (1, 0) back would undo that rebase and drift the students' click.
     seed({ timing: { ...TIMED, waypoints: [wp(0, 1.5), wp(4, 3.5)], anchor: { seconds: 1, qn: 0 } } }, true, { seconds: 1, qn: 0 });
     fakePublishTimeMapIntoSection({ seconds: 9, qn: 0 });
     await publishStudioDraft(section);
-    expect(live.setSectionMetronomeAnchor).toHaveBeenCalledWith({ sectionId: 'sec-1', anchorSeconds: 1, anchorQn: 0 });
+    expect(live.setSectionMetronomeAnchor).not.toHaveBeenCalled();
+    const [pub] = h.fake!.tables.studio_versions.filter((r) => r.kind === 'published');
+    expect((pub.timing as StudioTiming).anchor).toEqual({ seconds: 9, qn: 0 });
+  });
+  it('writes a touched anchor after the timing publish, even when publishTimeMap rebased it', async () => {
+    seed({ timing: { ...TIMED, waypoints: [wp(0, 1.5), wp(4, 3.5)], anchor: { seconds: 2.5, qn: 4 } } }, true, { seconds: 1, qn: 0 });
+    fakePublishTimeMapIntoSection({ seconds: 9, qn: 0 });
+    await publishStudioDraft(section);
+    expect(live.setSectionMetronomeAnchor).toHaveBeenCalledWith({ sectionId: 'sec-1', anchorSeconds: 2.5, anchorQn: 4 });
+    expect(live.publishTimeMap.mock.invocationCallOrder[0]).toBeLessThan(live.setSectionMetronomeAnchor.mock.invocationCallOrder[0]);
   });
   it('never writes a null draft anchor, but records the live-seeded one in the published row', async () => {
     seed({ timing: { ...TIMED, waypoints: [wp(0, 1.5), wp(4, 3.5)], anchor: null } }, true, null);
