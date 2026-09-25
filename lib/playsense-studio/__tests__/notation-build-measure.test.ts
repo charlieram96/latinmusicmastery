@@ -5,6 +5,7 @@ import { REFERENCE_EXCERPT_FIXTURE as F } from '../score-fixtures'
 import { beamGroups, buildMeasure, descriptorToStaveNote, formatMeasure, staveHeader } from '../notation/build-measure'
 import type { VexEventDescriptor } from '../score-to-vexflow'
 import type { Dynamic, Track } from '@/components/playsense-studio/shared/score-model/types'
+import { PERCUSSION_GLYPHS } from '../percussion-noteheads'
 
 beforeAll(() => {
   // VexFlow measures annotation text through a canvas; jsdom has none.
@@ -88,6 +89,24 @@ describe('descriptorToStaveNote percussion marcato', () => {
     const arts = note.getModifiers().filter(m => m.getCategory() === 'Articulation')
     expect(arts).toHaveLength(1)
     expect((arts[0] as unknown as { type: string }).type).toBe('a^')
+  })
+})
+
+describe('descriptorToStaveNote percussion flam grace', () => {
+  it('draws a flam grace note with its stroke\'s own notehead, matching the main note', () => {
+    const percussion = { staffLine: 'e/5', notehead: 'x' as const, strokeId: 'rim' }
+    const track: Track = {
+      index: 0, instrument: 'perc-conga', displayName: 'Conga', tuning: null, stringMultiplicity: 1, channel: 9, defaultView: 'rhythm-grid',
+      measures: [{ number: 1, voices: [{ number: 1, events: [
+        { kind: 'note', id: 'p1', midi: 65, durationQN: 1, percussion, grace: [{ midi: 65, percussion, slash: true }] },
+      ] }] }],
+    }
+    const [blk] = extractTrackEvents(track, [4, 4], 0)
+    const note = descriptorToStaveNote(blk.events[0], { clef: 'percussion' })
+    const [group] = note.getModifiers().filter(m => m.getCategory() === 'GraceNoteGroup') as unknown as { getGraceNotes(): { noteHeads: { getText(): string }[] }[] }[]
+    const graceGlyph = group.getGraceNotes()[0].noteHeads[0].getText()
+    expect(graceGlyph).toBe(PERCUSSION_GLYPHS['x'])
+    expect(graceGlyph).toBe(note.noteHeads[0].getText())
   })
 })
 

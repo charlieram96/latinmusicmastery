@@ -1,11 +1,11 @@
 // The one place descriptors become VexFlow objects. The student renderer and
 // the Studio strip both build notes, tuplets and beams here, so they can't drift.
 import {
-  Accidental, Annotation, Articulation, Beam, Dot, Formatter, GraceNote, GraceNoteGroup, Modifier, Ornament,
+  Accidental, Annotation, Articulation, Beam, Dot, Formatter, GraceNoteGroup, Modifier, Ornament,
   type RenderContext, type Stave, type StaveNote, Tuplet, Voice,
 } from 'vexflow'
 import type { Articulation as ArticulationKind, Dynamic, Ornament as OrnamentKind } from '@/components/playsense-studio/shared/score-model/types'
-import { createStaveNote } from '../percussion-stave-note'
+import { createGraceNote, createStaveNote } from '../percussion-stave-note'
 import type { NotationClef, VexEventDescriptor } from '../score-to-vexflow'
 import { keySignatureName } from './accidentals'
 
@@ -92,7 +92,7 @@ export function descriptorToStaveNote(d: VexEventDescriptor, opts: { clef: Notat
     if (d.ornament) note.addModifier(new Ornament(ORN[d.ornament]), 0)
     if (d.grace?.length) {
       const graces = d.grace.map(g => {
-        const gn = new GraceNote({ keys: g.keys, duration: '8', slash: g.slash, clef: opts.clef })
+        const gn = createGraceNote({ keys: g.keys, duration: '8', slash: g.slash, clef: opts.clef }, g.percussion ? [g.percussion] : undefined)
         g.accidentals.forEach((acc, i) => { if (acc) gn.addModifier(new Accidental(acc), i) })
         return gn
       })
