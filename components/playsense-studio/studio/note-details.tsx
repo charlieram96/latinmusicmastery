@@ -25,7 +25,7 @@ export interface NoteTimingProps {
 }
 
 // Details for the selected note, shown in the left-rail inspector. Pitch and
-// duration edits happen via the staff toolbar; this offers the per-note timing
+// duration edits happen in the measure zoom; this offers the per-note timing
 // nudge (video sync only) and a quick Delete.
 export function NoteDetails({
   event,
