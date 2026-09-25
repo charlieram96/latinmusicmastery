@@ -98,7 +98,7 @@ import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-im
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import type { MidiRecordingSource } from './midi-record-button';
 import { ReferenceMonitor } from '@/components/playsense-studio/sync/reference-monitor';
-import { formatTime, NoteDetails } from '@/components/playsense-studio/studio/note-details';
+import { formatTime, NoteDetails, type NoteTimingProps } from '@/components/playsense-studio/studio/note-details';
 import { ScrollBar } from '@/components/playsense-studio/sync/scroll-bar';
 import { ZoomSlider } from '@/components/playsense-studio/sync/zoom-slider';
 import { stableTimings } from '@/components/playsense-studio/studio/stable-timings';
@@ -699,6 +699,23 @@ export function SyncPanel({
     setMarkers((s) => clearNudge(s, onset.qn));
     setDirty(true);
   }, []);
+
+  // The selected note's timing (video-synced lessons only) — one object
+  // shared by the inspector's NoteDetails and the zoom's More ▾ → Timing tab.
+  const noteTiming: NoteTimingProps | undefined = useMemo(
+    () =>
+      showSync && selectedOnset
+        ? {
+            offsetMs: selectedNoteDelta * 1000,
+            gridSeconds: gridTime(markers, selectedOnset.qn),
+            actualSeconds: selectedNoteTime ?? 0,
+            onNudge: nudgeSelected,
+            onSnap: snapSelectedToPlayhead,
+            onReset: resetSelected,
+          }
+        : undefined,
+    [showSync, selectedOnset, selectedNoteDelta, markers, selectedNoteTime, nudgeSelected, snapSelectedToPlayhead, resetSelected]
+  );
 
   // `[` / `]` nudge the selected note by 5 ms (Shift: 20 ms). Unused by the
   // notation editor's own key map.
@@ -1354,6 +1371,7 @@ export function SyncPanel({
                   onScrollByPx={handleScrollByPx}
                   onLoopMeasures={showSync ? loopMeasures : undefined}
                   loopedRange={showSync ? loopedRange : null}
+                  noteTiming={noteTiming}
                 />
               </div>
 
@@ -1446,18 +1464,7 @@ export function SyncPanel({
                       ? resolvePercStroke(selTrack.instrument, selEvent)?.label ?? 'Imported notation'
                       : null
                   }
-                  timing={
-                    showSync && selectedOnset
-                      ? {
-                          offsetMs: selectedNoteDelta * 1000,
-                          gridSeconds: gridTime(markers, selectedOnset.qn),
-                          actualSeconds: selectedNoteTime ?? 0,
-                          onNudge: nudgeSelected,
-                          onSnap: snapSelectedToPlayhead,
-                          onReset: resetSelected,
-                        }
-                      : undefined
-                  }
+                  timing={noteTiming}
                   onDelete={() => {
                     dispatch({
                       type: 'delete-event',

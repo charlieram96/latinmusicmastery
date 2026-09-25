@@ -68,6 +68,8 @@ import { useZoomEditing } from './zoom/use-zoom-editing';
 import type { ZoomLayout } from './zoom/zoom-staff';
 import { NoteIcon, RestIcon } from './zoom/note-glyphs';
 import { clampNoteToolbarPosition, NoteToolbar, NOTE_TOOLBAR_WIDTH_FALLBACK, type NoteToolbarPercussion } from './zoom/note-toolbar';
+import { MorePopover, type MoreTab } from './zoom/more-popover';
+import type { NoteTimingProps } from './note-details';
 
 type Articulation = 'staccato' | 'accent' | 'tenuto';
 
@@ -153,6 +155,10 @@ export interface IntegratedEditorProps {
   onLoopMeasures?: (start: number, end: number) => void;
   /** Which bars the current loop covers, if any. */
   loopedRange?: [number, number] | null;
+  /** The selected note's timing against the sync grid (video-synced lessons
+   *  only) — the same object SyncPanel builds for its NoteDetails inspector,
+   *  threaded down to the zoom's More ▾ → Timing tab. */
+  noteTiming?: NoteTimingProps;
 }
 
 /** A repeat's closing bar (with dots) replaces any final bar on that measure. */
@@ -175,6 +181,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   onScrollByPx,
   onLoopMeasures,
   loopedRange = null,
+  noteTiming,
 }: IntegratedEditorProps) {
   // Single-track studio: the score model still holds Track[], but the editor
   // always authors track 0.
@@ -193,9 +200,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [repeatPop, setRepeatPop] = useState<{ anchor: PopoverAnchor } | null>(null);
   const [gapPop, setGapPop] = useState<{ gap: number; anchor: PopoverAnchor } | null>(null);
   const [barPop, setBarPop] = useState<{ anchor: PopoverAnchor } | null>(null);
-  // The note toolbar's "More ▾" — just the anchor for now; Task 9 builds the
-  // popover that opens there and reads it.
-  const [, setMorePop] = useState<{ anchor: PopoverAnchor } | null>(null);
+  // The note toolbar's "More ▾" popover — its anchor while open, and the
+  // last tab picked (remembered across opens/closes, reset only on unmount).
+  const [morePop, setMorePop] = useState<{ anchor: PopoverAnchor } | null>(null);
+  const [moreTab, setMoreTab] = useState<MoreTab>('durations');
   // The measure zoom (one bar drawn large over the strip), or null when closed.
   // `zoomOrigin` is the bar's rect in the strip for the enter/exit animation;
   // `zoomClosing` asks the zoom to play its exit and then call back to close.
@@ -1361,22 +1369,36 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                   const pos = clampNoteToolbarPosition(anchor.x, anchor.top, noteToolbarSize, { centerW, bodyH });
                   const maxWidth = centerW > 0 ? Math.max(0, centerW - 16) : undefined;
                   return (
-                    <NoteToolbar
-                      ref={noteToolbarRef}
-                      left={pos.left}
-                      top={pos.top}
-                      maxWidth={maxWidth}
-                      info={zoomInfo}
-                      value={zoomValue}
-                      dots={zoomDots}
-                      isRest={zoomCurrentEvent?.kind === 'rest'}
-                      tie={!!zoomCurrentEvent && zoomCurrentEvent.kind !== 'rest' && !!zoomCurrentEvent.tieToNext}
-                      tripletOn={!!zoomTupletHere && zoomTupletHere.n === 3 && zoomTupletHere.m === 2}
-                      hasSelection={zoomHasSelection}
-                      percussion={zoomToolbarPercussion}
-                      editing={zoomEditing}
-                      onMore={(morePopAnchor) => setMorePop({ anchor: morePopAnchor })}
-                    />
+                    <>
+                      <NoteToolbar
+                        ref={noteToolbarRef}
+                        left={pos.left}
+                        top={pos.top}
+                        maxWidth={maxWidth}
+                        info={zoomInfo}
+                        value={zoomValue}
+                        dots={zoomDots}
+                        isRest={zoomCurrentEvent?.kind === 'rest'}
+                        tie={!!zoomCurrentEvent && zoomCurrentEvent.kind !== 'rest' && !!zoomCurrentEvent.tieToNext}
+                        tripletOn={!!zoomTupletHere && zoomTupletHere.n === 3 && zoomTupletHere.m === 2}
+                        hasSelection={zoomHasSelection}
+                        percussion={zoomToolbarPercussion}
+                        editing={zoomEditing}
+                        onMore={(morePopAnchor) => setMorePop({ anchor: morePopAnchor })}
+                      />
+                      {morePop && (
+                        <MorePopover
+                          anchor={morePop.anchor}
+                          tab={moreTab}
+                          onTab={setMoreTab}
+                          onClose={() => setMorePop(null)}
+                          event={zoomCurrentEvent}
+                          editing={zoomEditing}
+                          timing={noteTiming}
+                          watchLike={!!noteTiming}
+                        />
+                      )}
+                    </>
                   );
                 }}
               </MeasureZoom>
