@@ -15,6 +15,7 @@ import { availableInputModes, type AudioMode } from '@/lib/play-sense/input-mode
 import { readyChecks, type CheckState } from '@/lib/play-sense/ready-check'
 import type { Instrument } from '@/lib/play-sense/types'
 import { ActionMessage, LessonAction } from './lesson-mode/lesson-frame'
+import './lesson-mode/lesson-mode.css'
 
 export interface ReadyCheckProps {
   instrument: Instrument

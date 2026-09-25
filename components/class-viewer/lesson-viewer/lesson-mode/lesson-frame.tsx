@@ -75,7 +75,7 @@ export function ActionMessage({ icon, title, detail, live = false }: { icon: Rea
     {icon != null && <span className="lx-msg-badge" aria-hidden>{icon}</span>}
     <div className="min-w-0">
       <b>{title}</b>
-      {detail && <span>{detail}</span>}
+      {detail && <span className="lx-msg-detail">{detail}</span>}
     </div>
   </div>
 }

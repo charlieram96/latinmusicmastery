@@ -10,6 +10,7 @@ import { Eye, Gauge, Pause, Play, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
 import { cn } from '@/lib/utils'
+import './lesson-mode/lesson-mode.css'
 
 export interface LessonTransportProps {
   state: 'selecting' | 'countdown' | 'playing' | 'paused'

@@ -129,7 +129,7 @@
 }
 
 /* ---------- lesson mode (L2): question left, answers right ---------- */
-.lessonFocus { display: grid; gap: 22px; align-items: center; min-height: 100%; }
+.lessonFocus { display: grid; gap: 22px; align-items: center; min-height: min(620px, calc(100dvh - 240px)); }
 .lessonQ { display: grid; gap: 14px; align-content: center; }
 .lessonA { display: grid; min-width: 0; }
 .lessonQuestion { font-size: clamp(24px, 3.2cqw, 38px); line-height: 1.12; }

@@ -15,6 +15,7 @@ import type { CelebrationStats } from '@/lib/dashboard/lesson-celebration'
 import type { PathLessonType } from '@/lib/courses/path-nodes'
 import { Confetti } from '../quiz/confetti'
 import { ActionMessage, LessonAction } from './lesson-frame'
+import './lesson-mode.css'
 
 const MILESTONE_ICON: Record<string, typeof Star> = { Star, Flame, Zap, Target, Trophy, Crown, BookOpen }
 const KIND_ICON: Record<PathLessonType, typeof Star> = { video: Video, play: Music2, quiz: ListChecks, other: BookOpen }

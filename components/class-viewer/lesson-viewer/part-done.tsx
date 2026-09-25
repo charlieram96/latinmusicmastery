@@ -12,6 +12,7 @@ import { useTranslation } from '@/components/language-provider'
 import type { AttemptStats } from '@/lib/play-sense/types'
 import { summarizeTake, type BarResult } from '@/lib/play-sense/bar-results'
 import { ActionMessage, LessonAction } from './lesson-mode/lesson-frame'
+import './lesson-mode/lesson-mode.css'
 
 const BASE = 'dashboard.classViewer.lessonMode.part'
 
