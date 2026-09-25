@@ -2447,6 +2447,18 @@
           "courseDone": "Terminaste la última lección de este curso.",
           "nextLesson": "Siguiente lección"
         },
+        "sections": {
+          "label": "Secciones",
+          "section": "Sección {n}",
+          "loop": "Repetir {name}",
+          "stopLoop": "Dejar de repetir {name}"
+        },
+        "watch": {
+          "title": "Mira a {teacher} tocarlo una vez",
+          "titleNoTeacher": "Mira la demostración una vez",
+          "detail": "Toca una sección para repetirla. Arrastra el divisor o elige un diseño.",
+          "yourTurn": "Tu turno"
+        },
         "finishLesson": "Terminar lección"
       }
     }

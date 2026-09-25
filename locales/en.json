@@ -2447,6 +2447,18 @@
           "courseDone": "You finished the last lesson of this course.",
           "nextLesson": "Next lesson"
         },
+        "sections": {
+          "label": "Sections",
+          "section": "Section {n}",
+          "loop": "Loop {name}",
+          "stopLoop": "Stop looping {name}"
+        },
+        "watch": {
+          "title": "Watch {teacher} play it once",
+          "titleNoTeacher": "Watch the demo once",
+          "detail": "Tap a section to loop it. Drag the divider to resize, or pick a layout.",
+          "yourTurn": "Your turn"
+        },
         "finishLesson": "Finish lesson"
       }
     }

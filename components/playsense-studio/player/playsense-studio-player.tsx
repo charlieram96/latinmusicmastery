@@ -37,6 +37,7 @@ import { Minus, Plus } from 'lucide-react';
 import { SplitWorkspace, WorkspaceLayoutSwitcher } from './split-workspace';
 import { useWorkspaceLayout } from './use-workspace-layout';
 import { WorkspaceToolsPortal } from './workspace-tools-slot';
+import { SectionChips } from './section-chips';
 import { WATCH_WORKSPACE } from '@/lib/playsense-studio/workspace-layout';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
@@ -530,6 +531,13 @@ export function PlaysenseStudioPlayer({
           }))
       : undefined;
 
+  // Section chips in the staff header: tap one to loop that part of the demo.
+  const chipSections = (sectionMarkers ?? []).map((marker, i, all) => ({
+    label: marker.label ?? null,
+    start: marker.startSeconds,
+    end: marker.endSeconds ?? all[i + 1]?.startSeconds ?? clock.durationSeconds,
+  })).filter((section) => section.end > section.start);
+
   const transportEl = (
     <TransportBar
       currentSeconds={clock.currentSeconds}
@@ -696,6 +704,12 @@ export function PlaysenseStudioPlayer({
                     <StaffLayoutSwitch value={notationLayout} onChange={setNotationLayout} />
                   </div>
                 </div>
+                {chipSections.length > 1 && (
+                  <SectionChips sections={chipSections} currentSeconds={clock.currentSeconds}
+                    loop={{ a: clock.loopA, b: clock.loopB, enabled: clock.loopEnabled }}
+                    onLoop={(a, b) => clock.loadLoop(a, b)} onClear={clock.clearLoop}
+                    className="flex-shrink-0 border-b border-border px-3 py-2" />
+                )}
                 <div className="relative min-h-0 flex-1">
                   {/* Wrapped staves scroll inside the renderer's own viewport, so the
                       layer hands it every remaining pixel instead of nesting a
