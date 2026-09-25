@@ -13,7 +13,7 @@ import {
   setClassItemMetronomeAnchor,
   setSectionMetronomeAnchor,
 } from '@/app/actions/playsense-studio';
-import { diffParts, summarizeChanges } from '@/lib/playsense-studio/drafts/changes';
+import { anchorChanged, diffParts, summarizeChanges } from '@/lib/playsense-studio/drafts/changes';
 import { latestPublished, planDraftWrite, unpublishedDraft } from '@/lib/playsense-studio/drafts/policy';
 import { studioTimingSchema, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { ownerKey, type StudioDraftOwner } from '@/lib/playsense-studio/drafts/types';
@@ -165,7 +165,14 @@ async function readUnpublished(supabase: Awaited<ReturnType<typeof createClient>
 
 /** Draft → live, through the same actions the Studio used to call directly.
  *  Order: timing (its validation refuses before any write), score, anchor,
- *  then the published history row. Each part is written only if it changed. */
+ *  then the published history row. Each part is written only if it changed.
+ *
+ *  publishTimeMap can itself seed or rebase the live click anchor (e.g. seeding
+ *  it from the first waypoint when it was null), so once timing has published,
+ *  the anchor decision re-reads the owner instead of trusting the pre-publish
+ *  value. The published history row is built from a final re-read of live too,
+ *  so it always records what students actually get — not just what this draft
+ *  asked for. */
 export async function publishStudioDraft(
   owner: StudioDraftOwner
 ): Promise<{ publishedAt?: string; error?: string }> {
@@ -177,32 +184,52 @@ export async function publishStudioDraft(
   if (!draft.data) return { error: 'Nothing to publish' };
   const resolved = await resolveOwner(supabase, owner);
   if (resolved.error) return { error: resolved.error };
-  const r = resolved.data!;
+  let r = resolved.data!;
   const liveContent = await loadLiveContent(supabase, r);
   if (liveContent.error) return { error: liveContent.error };
   const parts = diffParts(liveContent.data!, draft.data);
   const { score, timing } = draft.data;
 
+  let timingPublished = false;
   if (r.target && parts.timing && timing.waypoints.length >= 2) {
     const res = await publishTimeMap({
       classItemId: r.classItemId!, scoreDocumentId: r.scoreDocumentId, sectionId: r.sectionId ?? undefined,
       target: r.target, method: timing.method, params: timing.params, waypoints: timing.waypoints, makeActive: true,
     });
     if (res.error) return { error: res.error };
+    timingPublished = true;
+    // Re-read: publishTimeMap may have seeded/rebased the live anchor itself.
+    const reResolved = await resolveOwner(supabase, owner);
+    if (reResolved.error) return { error: reResolved.error };
+    r = reResolved.data!;
   }
   if (parts.score) {
     const res = await saveScoreDocument({ scoreDocumentId: r.scoreDocumentId, scoreDocument: score });
-    if (res.error) return { error: res.error };
+    if (res.error) {
+      return {
+        error: timingPublished
+          ? `Timing is live, but the score could not be saved: ${res.error}. Press Publish again.`
+          : res.error,
+      };
+    }
   }
-  if (r.anchorKind && parts.anchor) {
-    const anchorSeconds = timing.anchor?.seconds ?? null;
-    const anchorQn = timing.anchor?.qn ?? null;
+  if (r.anchorKind && anchorChanged(r.liveAnchor, timing.anchor)) {
     const res = r.anchorKind === 'section'
-      ? await setSectionMetronomeAnchor({ sectionId: r.sectionId!, anchorSeconds, anchorQn })
-      : await setClassItemMetronomeAnchor({ classItemId: r.classItemId!, anchorSeconds, anchorQn });
+      ? await setSectionMetronomeAnchor({ sectionId: r.sectionId!, anchorSeconds: timing.anchor!.seconds, anchorQn: timing.anchor!.qn })
+      : await setClassItemMetronomeAnchor({ classItemId: r.classItemId!, anchorSeconds: timing.anchor!.seconds, anchorQn: timing.anchor!.qn });
     if (res.error) return { error: res.error };
   }
-  const ins = await insertVersion(supabase, owner, 'published', draft.data, admin.userId);
+
+  // Record what's actually live, not just what the draft asked for.
+  let content = draft.data;
+  if (r.target) {
+    const finalResolved = await resolveOwner(supabase, owner);
+    if (finalResolved.error) return { error: finalResolved.error };
+    const finalLive = await loadLiveContent(supabase, finalResolved.data!);
+    if (finalLive.error) return { error: finalLive.error };
+    content = { score: draft.data.score, timing: finalLive.data!.timing };
+  }
+  const ins = await insertVersion(supabase, owner, 'published', content, admin.userId);
   if (ins.error) return { error: ins.error };
   return { publishedAt: ins.data!.updatedAt };
 }

@@ -32,9 +32,13 @@ const wp = (qn: number, s: number) => ({ musicalPositionQN: qn, videoTimeSeconds
 const TIMED: StudioTiming = { method: 'drag', params: { nudges: [] }, waypoints: [wp(0, 1), wp(4, 3)], anchor: { seconds: 1, qn: 0 } };
 const section = { kind: 'section' as const, id: 'sec-1' };
 
-function seed(draft: { score?: object; timing?: StudioTiming }, liveMap = true) {
+function seed(
+  draft: { score?: object; timing?: StudioTiming },
+  liveMap = true,
+  liveAnchor: { seconds: number; qn: number } | null = { seconds: 1, qn: 0 }
+) {
   h.fake = createFakeSupabase({
-    class_item_score_sections: [{ id: 'sec-1', class_item_id: 'ci-1', score_document_id: 'doc-1', active_time_map_id: liveMap ? 'tm-1' : null, metronome_anchor_seconds: 1, metronome_anchor_qn: 0 }],
+    class_item_score_sections: [{ id: 'sec-1', class_item_id: 'ci-1', score_document_id: 'doc-1', active_time_map_id: liveMap ? 'tm-1' : null, metronome_anchor_seconds: liveAnchor?.seconds ?? null, metronome_anchor_qn: liveAnchor?.qn ?? null }],
     score_documents: [{ id: 'doc-1', parsed_score: SCORE }],
     score_time_maps: [{ id: 'tm-1', method: 'drag', params: { nudges: [] } }],
     score_time_waypoints: [
@@ -45,6 +49,42 @@ function seed(draft: { score?: object; timing?: StudioTiming }, liveMap = true) 
   });
 }
 
+/** An EXERCISE class item, its own score/timing owner (no section). */
+function seedExercise(draft: { score?: object; timing?: StudioTiming }) {
+  h.fake = createFakeSupabase({
+    class_items: [{ id: 'ci-1', item_type: 'EXERCISE', score_document_id: 'doc-1', active_time_map_id: null, exercise_time_map_id: 'tm-1', metronome_anchor_seconds: 1, metronome_anchor_qn: 0 }],
+    score_documents: [{ id: 'doc-1', parsed_score: SCORE }],
+    score_time_maps: [{ id: 'tm-1', method: 'drag', params: { nudges: [] } }],
+    score_time_waypoints: [
+      { time_map_id: 'tm-1', musical_position_qn: 0, video_time_seconds: 1, measure_number: null, beat_in_measure: null },
+      { time_map_id: 'tm-1', musical_position_qn: 4, video_time_seconds: 3, measure_number: null, beat_in_measure: null },
+    ],
+    studio_versions: [{ id: 'd1', owner_kind: 'exercise', owner_id: 'ci-1', kind: 'draft', score: draft.score ?? SCORE, timing: draft.timing ?? TIMED, created_at: at(-1000), updated_at: at(-1000), created_by: 'admin-1' }],
+  });
+}
+
+/** Simulates the real publishTimeMap: mints a new live map, points the section
+ *  at it, and (optionally) rebases/seeds its live anchor — the side effects
+ *  publishStudioDraft's post-publish re-read needs to observe. */
+function fakePublishTimeMapIntoSection(newAnchor?: { seconds: number; qn: number } | null) {
+  live.publishTimeMap.mockImplementation(async (input: { waypoints: Array<Record<string, unknown>> }) => {
+    h.fake!.tables.score_time_maps.push({ id: 'tm-2', method: 'drag', params: { nudges: [] } });
+    h.fake!.tables.score_time_waypoints.push(
+      ...input.waypoints.map((w) => ({
+        time_map_id: 'tm-2', musical_position_qn: w.musicalPositionQN, video_time_seconds: w.videoTimeSeconds,
+        measure_number: w.measureNumber, beat_in_measure: w.beatInMeasure,
+      }))
+    );
+    const sec = h.fake!.tables.class_item_score_sections.find((r) => r.id === 'sec-1')!;
+    sec.active_time_map_id = 'tm-2';
+    if (newAnchor !== undefined) {
+      sec.metronome_anchor_seconds = newAnchor?.seconds ?? null;
+      sec.metronome_anchor_qn = newAnchor?.qn ?? null;
+    }
+    return { timeMapId: 'tm-2' };
+  });
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(T0);
@@ -52,6 +92,7 @@ beforeEach(() => {
   live.saveScoreDocument.mockResolvedValue({ success: true });
   live.publishTimeMap.mockResolvedValue({ timeMapId: 'tm-2' });
   live.setSectionMetronomeAnchor.mockResolvedValue({ data: {} });
+  live.setClassItemMetronomeAnchor.mockResolvedValue({ data: {} });
 });
 afterEach(() => vi.useRealTimers());
 
@@ -75,6 +116,40 @@ describe('publishStudioDraft', () => {
     }));
     expect(live.setSectionMetronomeAnchor).toHaveBeenCalledWith({ sectionId: 'sec-1', anchorSeconds: 1.2, anchorQn: 0 });
     expect(live.publishTimeMap.mock.invocationCallOrder[0]).toBeLessThan(live.setSectionMetronomeAnchor.mock.invocationCallOrder[0]);
+    expect(live.saveScoreDocument).not.toHaveBeenCalled();
+  });
+  it('re-reads the live anchor after a timing publish, since publishTimeMap can move it itself', async () => {
+    // Draft anchor equals the PRE-publish live anchor (1, 0) — but the timing
+    // itself changed, so publishTimeMap runs, and its mock rebases the live
+    // anchor to (9, 0) as a side effect. The draft anchor must still be written,
+    // because it now differs from the freshly re-read live anchor.
+    seed({ timing: { ...TIMED, waypoints: [wp(0, 1.5), wp(4, 3.5)], anchor: { seconds: 1, qn: 0 } } }, true, { seconds: 1, qn: 0 });
+    fakePublishTimeMapIntoSection({ seconds: 9, qn: 0 });
+    await publishStudioDraft(section);
+    expect(live.setSectionMetronomeAnchor).toHaveBeenCalledWith({ sectionId: 'sec-1', anchorSeconds: 1, anchorQn: 0 });
+  });
+  it('never writes a null draft anchor, but records the live-seeded one in the published row', async () => {
+    seed({ timing: { ...TIMED, waypoints: [wp(0, 1.5), wp(4, 3.5)], anchor: null } }, true, null);
+    fakePublishTimeMapIntoSection({ seconds: 2, qn: 0 });
+    await publishStudioDraft(section);
+    expect(live.setSectionMetronomeAnchor).not.toHaveBeenCalled();
+    const [pub] = h.fake!.tables.studio_versions.filter((r) => r.kind === 'published');
+    expect((pub.timing as StudioTiming).anchor).toEqual({ seconds: 2, qn: 0 });
+  });
+  it('publishes an EXERCISE owner through the exercise target and the class-item anchor action', async () => {
+    const exercise = { kind: 'exercise' as const, id: 'ci-1' };
+    seedExercise({ timing: { ...TIMED, waypoints: [wp(0, 1.2), wp(4, 3.2)], anchor: { seconds: 1.2, qn: 0 } } });
+    await publishStudioDraft(exercise);
+    expect(live.publishTimeMap).toHaveBeenCalledWith(expect.objectContaining({ classItemId: 'ci-1', target: 'exercise', makeActive: true }));
+    expect(live.setClassItemMetronomeAnchor).toHaveBeenCalledWith({ classItemId: 'ci-1', anchorSeconds: 1.2, anchorQn: 0 });
+    expect(live.setSectionMetronomeAnchor).not.toHaveBeenCalled();
+  });
+  it('says timing is live but asks to press Publish again when the score save fails after it', async () => {
+    seed({ score: { ...SCORE, title: 'New' }, timing: { ...TIMED, waypoints: [wp(0, 1.5), wp(4, 3.5)] } });
+    live.saveScoreDocument.mockResolvedValue({ error: 'Could not reach the database' });
+    const res = await publishStudioDraft(section);
+    expect(res.error).toBe('Timing is live, but the score could not be saved: Could not reach the database. Press Publish again.');
+    expect(h.fake!.tables.studio_versions.filter((r) => r.kind === 'published')).toHaveLength(0);
   });
   it('writes nothing live and records no publish when the time map is refused', async () => {
     seed({ score: { ...SCORE, title: 'New' }, timing: { ...TIMED, waypoints: [wp(0, 5), wp(4, 7)] } });
