@@ -362,7 +362,8 @@ export function CourseDetailView({
                 </div>
               ) : null}
             </div>
-            <div className="flex shrink-0 flex-wrap items-center gap-3">
+            {/* Phones: full width, each button grows and wraps onto its own row when it has to. */}
+            <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:shrink-0 max-sm:[&>*]:flex-1">
               {course.preview_video_url ? (
                 <Button variant="outline" size="lg" onClick={() => setPreviewOpen(true)}>
                   <Video aria-hidden />
