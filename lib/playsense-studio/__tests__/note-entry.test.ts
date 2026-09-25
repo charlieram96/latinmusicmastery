@@ -177,6 +177,15 @@ describe('note entry: fix round 1', () => {
     expect(ev(s1).slice(3, 6).map((e) => [e.durationQN, e.triplet])).toEqual([[0.25, undefined], [0.25, undefined], [0.25, undefined]]);
     expect(ev(s1).slice(0, 3)).toEqual(ev(s0).slice(0, 3));
   });
+  it('a voice-2 tuplet split and merge leave voice 1 untouched (Review Focus 3)', () => {
+    const s0 = st(doc([bar(1, [n(60, 2), { ...n(62, 2), tieToNext: true }], [n(48, 1, 'b'), n(50, 2, 'c')])]));
+    const v2 = { ...at(0, 0, 1), eventIndex: 0 };
+    const s1 = editorReducer(s0, { type: 'apply-tuplet', ref: v2, n: 3, m: 2 });
+    expect(ev(s1, 0, 1)).toHaveLength(4);
+    expect(s1.score.tracks[0].measures[0].voices[0]).toEqual(s0.score.tracks[0].measures[0].voices[0]);
+    const s2 = editorReducer(s1, { type: 'apply-tuplet', ref: v2, n: 3, m: 2 });
+    expect(s2.score.tracks[0].measures[0].voices[0]).toEqual(s0.score.tracks[0].measures[0].voices[0]);
+  });
   it('refuses to add a chord note to a percussion note', () => {
     const s0 = st(doc([bar(1, [{ kind: 'note', id: 'p', midi: 38, durationQN: 1, percussion: { staffLine: 'C5', notehead: 'normal' } }])]));
     expect(editorReducer(s0, { type: 'add-chord-note', ref: r0(0), midi: 42 })).toBe(s0);
