@@ -16,3 +16,12 @@ describe('score position bridge for the exercise score', () => {
     expect(layoutForScorePosition('top')).toEqual({ layout: 'stack', swap: false })
   })
 })
+
+describe('narrow stage inside the workspace', () => {
+  it('keeps compacting the highway HUD when its region is narrow', async () => {
+    const { readFileSync } = await import('node:fs')
+    const css = readFileSync(new URL('../exercise-workspace.css', import.meta.url), 'utf8')
+    expect(css).toMatch(/:is\(\.ws-staff, \.ws-highway\) > \.ps-lesson-stage \{[^}]*container-type:inline-size;[^}]*container-name:exercise-stage/)
+    expect(css).toMatch(/@container exercise-stage \(max-width:650px\)[\s\S]*\.ps-lesson-stage-title \{ display:none; \}[\s\S]*\.ps-scoreboard-compact/)
+  })
+})

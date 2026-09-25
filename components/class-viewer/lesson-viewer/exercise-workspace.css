@@ -5,7 +5,13 @@
   display:flex; flex-direction:column; flex:1 1 auto; height:auto; min-height:0; margin:0;
   border:0; border-radius:0; background:transparent; box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none;
 }
-.ws-staff > .ps-lesson-stage, .ws-highway > .ps-lesson-stage { flex:1 1 auto; height:auto; min-height:0; }
+:is(.ws-staff, .ws-highway) > .ps-lesson-stage { flex:1 1 auto; height:auto; min-height:0; container-type:inline-size; container-name:exercise-stage; }
+
+/* A narrow highway region (e.g. side by side with the video): compact its HUD. */
+@container exercise-stage (max-width:650px) {
+  .ps-lesson-stage .ps-lesson-stage-title { display:none; }
+  .ps-lesson-stage .ps-scoreboard-compact { gap:10px; padding:10px 12px; }
+}
 
 /* The exercise's "Score" toggle hides the staff: the highway takes the music region. */
 .ps-exercise-mode[data-score-visible=false] .ws-music:has(> .ws-highway) > :is(.ws-staff, .ws-div2) { display:none; }
