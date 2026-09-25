@@ -35,6 +35,10 @@ describe('pitch', () => {
     expect(pitchName(66, undefined, 2)).toBe('F♯4');
     expect(pitchName(60)).toBe('C4');
   });
+  it('respells from the clamped midi at the keyboard’s edges', () => {
+    expect(stepPitch(0, undefined, 0, -1)).toEqual({ midi: 0, spelling: { step: 'C', alter: 0 } });
+    expect(octavePitch(125, undefined, 0, 1)).toEqual({ midi: 127, spelling: { step: 'G', alter: 0 } });
+  });
   it('keeps the stepper helper and clef references', () => {
     expect(midiToParts(61)).toEqual({ letter: 'C', accidental: 1, octave: 4 });
     expect(CLEF_REF_INDEX.treble).toBe(staffIndex('B', 4));

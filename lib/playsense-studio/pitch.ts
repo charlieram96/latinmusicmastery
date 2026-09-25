@@ -28,7 +28,16 @@ export function spelledMidi(step: Step, alter: number, octave: number): number {
 function keyPitch(i: number, keyFifths: number): Pitch {
   const { step, octave } = fromStaffIndex(i);
   const alter = keyAlter(step, keyFifths) as Alter;
-  return { midi: clampMidi(spelledMidi(step, alter, octave)), spelling: { step, alter } };
+  const midi = spelledMidi(step, alter, octave);
+  const clamped = clampMidi(midi);
+  // A clamp at the keyboard's edges (midi 0/127) can leave the computed
+  // spelling naming a different pitch than the clamped midi; respell from
+  // the clamped value, as semitonePitch does.
+  if (clamped !== midi) {
+    const s = spellMidi(clamped, { keyFifths });
+    return { midi: clamped, spelling: { step: s.step as Step, alter: s.alter as Alter } };
+  }
+  return { midi: clamped, spelling: { step, alter } };
 }
 
 export function pitchIndex(midi: number, spelling: Pitch['spelling'] | undefined, keyFifths: number): number {
@@ -71,7 +80,15 @@ export function semitonePitch(midi: number, dir: 1 | -1, keyFifths: number): Pit
 
 export function octavePitch(midi: number, spelling: Pitch['spelling'] | undefined, keyFifths: number, dir: 1 | -1): Pitch {
   const s = spellMidi(midi, { spelling, keyFifths });
-  return { midi: clampMidi(midi + 12 * dir), spelling: { step: s.step as Step, alter: s.alter as Alter } };
+  const target = midi + 12 * dir;
+  const clamped = clampMidi(target);
+  // As in keyPitch: a clamp at the keyboard's edges must respell from the
+  // clamped midi, or the returned spelling would name a different pitch.
+  if (clamped !== target) {
+    const cs = spellMidi(clamped, { keyFifths });
+    return { midi: clamped, spelling: { step: cs.step as Step, alter: cs.alter as Alter } };
+  }
+  return { midi: clamped, spelling: { step: s.step as Step, alter: s.alter as Alter } };
 }
 
 const ALTER_GLYPH: Record<number, string> = { [-2]: '𝄫', [-1]: '♭', 0: '', 1: '♯', 2: '𝄪' };

@@ -27,6 +27,7 @@ import type {
   ScoreDocument,
 } from '@/components/playsense-studio/shared/score-model/types';
 import { measureLengthInQN } from '@/lib/playsense-studio/time-mapping';
+import { pitchName } from '@/lib/playsense-studio/pitch';
 
 const PITCH_TOP_MIDI = 84; // C6
 const PITCH_BOTTOM_MIDI = 36; // C2
@@ -242,7 +243,7 @@ export function PianoRollView({
                     fontFamily="ui-monospace, monospace"
                     fill="hsl(var(--foreground))"
                   >
-                    {midiToName(midi)}
+                    {pitchName(midi)}
                   </text>
                 )}
                 {/* Background row */}
@@ -522,9 +523,3 @@ function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, n));
 }
 
-function midiToName(midi: number): string {
-  const pc = ((midi % 12) + 12) % 12;
-  const octave = Math.floor(midi / 12) - 1;
-  const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
-  return `${names[pc]}${octave}`;
-}

@@ -4,6 +4,7 @@
 
 import { Trash2 } from 'lucide-react';
 import type { MusicalEvent } from '@/components/playsense-studio/shared/score-model/types';
+import { pitchName } from '@/lib/playsense-studio/pitch';
 
 export function formatTime(seconds: number): string {
   const s = Math.max(0, seconds);
@@ -48,7 +49,7 @@ export function NoteDetails({
   } else if (percussion) {
     primary = percLabel ?? 'Stroke';
   } else if (event.kind === 'note') {
-    primary = midiToName(event.midi);
+    primary = pitchName(event.midi);
   } else {
     primary = 'Chord';
   }
@@ -145,9 +146,3 @@ function formatDurationQN(qn: number): string {
   return map[String(qn)] ?? `${qn} QN`;
 }
 
-function midiToName(midi: number): string {
-  const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
-  const pc = ((midi % 12) + 12) % 12;
-  const octave = Math.floor(midi / 12) - 1;
-  return `${names[pc]}${octave}`;
-}
