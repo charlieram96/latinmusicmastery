@@ -37,6 +37,22 @@ beforeEach(() => {
 })
 afterEach(() => { act(() => root.unmount()); host.remove(); scrollBy.mockReset() })
 
+const pointer = (el: Element | Document['body'], type: string, pointerType: string) => {
+  const ev = new MouseEvent(type, { bubbles: true, cancelable: true })
+  Object.defineProperty(ev, 'pointerType', { value: pointerType })
+  act(() => { el.dispatchEvent(ev) })
+}
+const click = (el: Element) => {
+  const ev = new MouseEvent('click', { bubbles: true, cancelable: true })
+  let prevented = false
+  // Read the result after React's handler, then stop jsdom's unimplemented navigation.
+  const after = (e: Event) => { prevented = e.defaultPrevented; e.preventDefault() }
+  document.addEventListener('click', after)
+  act(() => { el.dispatchEvent(ev) })
+  document.removeEventListener('click', after)
+  return prevented
+}
+
 const render = (items = ITEMS) => act(() => root.render(<PathStrip items={items} ariaLabel="Your path" showArrows />))
 
 describe('PathStrip', () => {
@@ -112,5 +128,210 @@ describe('PathStrip', () => {
     render(done)
     const scroller = host.querySelector('[data-path-scroller]') as HTMLDivElement
     expect(scroller.dataset.anchor).toBe('end')
+  })
+
+  it('wave y positions are whole pixels and the svg matches the track height (compact)', () => {
+    act(() => root.render(<PathStrip items={ITEMS} ariaLabel="p" size="compact" />))
+    for (const n of host.querySelectorAll<HTMLElement>('[data-path-node]')) expect(Number.isInteger(parseFloat(n.style.top))).toBe(true)
+    const track = host.querySelector('[data-path-scroller] > div') as HTMLElement
+    expect(host.querySelector('svg')?.getAttribute('height')).toBe(String(parseFloat(track.style.height)))
+  })
+
+  it('re-scrolls when the items change identity with the same length and current index', () => {
+    const sets: number[] = []
+    Object.defineProperty(HTMLElement.prototype, 'scrollLeft', { configurable: true, get: () => 0, set: (v: number) => { sets.push(v) } })
+    try {
+      render()
+      render(ITEMS.map((i) => ({ ...i, id: `x-${i.id}` })) as PathItem[])
+      expect(sets).toHaveLength(2)
+    } finally {
+      delete (HTMLElement.prototype as { scrollLeft?: number }).scrollLeft
+    }
+  })
+
+  it('first tap on a touch device shows the card with a Go link instead of navigating', () => {
+    render()
+    const link = host.querySelector('[data-path-scroller] a[href="/l/c"]')!
+    pointer(link, 'pointerdown', 'touch')
+    expect(click(link)).toBe(true)
+    const tip = host.querySelector('[role="dialog"]') as HTMLElement
+    expect(tip.textContent).toContain('Lesson c')
+    expect(tip.querySelector('a[href="/l/c"]')?.textContent).toContain('dashboard.pages.course.path.goToLesson')
+    pointer(link, 'pointerdown', 'touch')
+    expect(click(link)).toBe(false) // the second tap on the same node navigates
+  })
+
+  it('mouse click navigates at once', () => {
+    render()
+    const link = host.querySelector('a[href="/l/c"]')!
+    pointer(link, 'pointerdown', 'mouse')
+    expect(click(link)).toBe(false)
+  })
+
+  it('a tapped card closes on a tap outside the strip, and on Escape', () => {
+    render()
+    const link = host.querySelector('a[href="/l/c"]')!
+    pointer(link, 'pointerdown', 'touch'); click(link)
+    pointer(document.body, 'pointerdown', 'touch')
+    expect(host.querySelector('[role="dialog"]')).toBeNull()
+    pointer(link, 'pointerdown', 'touch'); click(link)
+    act(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })) })
+    expect(host.querySelector('[role="dialog"]')).toBeNull()
+  })
+
+  it('touch compatibility mouse events do not open the hover card', () => {
+    render()
+    const node = host.querySelectorAll<HTMLElement>('[data-path-node]')[2]
+    pointer(node.querySelector('a')!, 'pointerdown', 'touch')
+    act(() => { node.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })) })
+    expect(host.querySelector('[role="tooltip"]')).toBeNull()
+  })
+
+  it('module flags mark where each module starts and link to its overview', () => {
+    const two: PathItem[] = [
+      lesson('a', 1, 'done'),
+      { kind: 'checkpoint', id: 'cp0', moduleIndex: 0, moduleTitle: 'Welcome', state: 'done', href: '/m/0' },
+      { ...lesson('b', 2, 'current'), moduleIndex: 1 } as PathItem,
+      { kind: 'checkpoint', id: 'cp1', moduleIndex: 1, moduleTitle: 'Rhythm', state: 'upcoming', href: '/m/1' },
+    ]
+    act(() => root.render(<PathStrip items={two} ariaLabel="p" showModuleFlags />))
+    const flags = [...host.querySelectorAll('[data-path-flag]')]
+    expect(flags.map((f) => f.textContent)).toEqual(['dashboard.pages.course.path.module(1)Welcome', 'dashboard.pages.course.path.module(2)Rhythm'])
+    expect(flags[1].getAttribute('href')).toBe('/m/1')
+    // the flag row sits above the bubble's highest reach
+    for (const n of host.querySelectorAll<HTMLElement>('[data-path-node]')) expect(parseFloat(n.style.top)).toBeGreaterThanOrEqual(122)
+  })
+
+  it('no flags unless asked', () => {
+    render()
+    expect(host.querySelector('[data-path-flag]')).toBeNull()
+  })
+
+  it('arrowsClassName places the arrow pair (e.g. up in a heading row)', () => {
+    act(() => root.render(<PathStrip items={ITEMS} ariaLabel="p" showArrows arrowsClassName="bottom-full top-auto" />))
+    const pair = host.querySelector('button[aria-label="dashboard.pages.course.path.next"]')!.parentElement!
+    expect(pair.className.split(/\s+/)).toEqual(expect.arrayContaining(['bottom-full', 'top-auto', 'right-0']))
+    expect(pair.className.split(/\s+/)).not.toContain('top-0')
+  })
+
+  it('each node snaps through a real 2px anchor (Chrome ignores zero-size snap areas)', () => {
+    render()
+    for (const node of host.querySelectorAll<HTMLElement>('[data-path-node]')) {
+      expect(node.style.scrollSnapAlign).toBe('')
+      const anchor = node.querySelector<HTMLElement>('[data-snap-anchor]')!
+      expect(anchor.style.scrollSnapAlign).toBe('center')
+      expect(anchor.className.split(/\s+/)).toEqual(expect.arrayContaining(['w-[2px]', 'h-[2px]', '-left-px', '-top-px']))
+    }
+  })
+
+  it('marks a first touch tap so the global page loader ignores it; the navigating tap is unmarked', () => {
+    render()
+    const link = host.querySelector('[data-path-scroller] a[href="/l/c"]')!
+    pointer(link, 'pointerdown', 'touch')
+    expect(link.hasAttribute('data-no-page-loader')).toBe(true)
+    click(link)
+    pointer(link, 'pointerdown', 'touch')
+    expect(link.hasAttribute('data-no-page-loader')).toBe(false)
+    pointer(link, 'pointerdown', 'mouse')
+    expect(link.hasAttribute('data-no-page-loader')).toBe(false)
+  })
+
+  describe('compact (dashboard card)', () => {
+    const many: PathItem[] = [lesson('a', 1, 'done'), lesson('b', 2, 'current'), ...['c', 'd', 'e', 'f'].map((id, k) => lesson(id, k + 3, 'upcoming'))]
+    const renderCompact = () => act(() => root.render(<PathStrip items={many} ariaLabel="p" size="compact" />))
+    const track = () => host.querySelector('[data-path-scroller] > div') as HTMLElement
+    const lefts = () => [...host.querySelectorAll<HTMLElement>('[data-path-node]')].map((n) => parseFloat(n.style.left))
+
+    it('is 140-150px tall and still leaves room for its smaller bubble above every node', () => {
+      renderCompact()
+      const h = parseFloat(track().style.height)
+      expect(h).toBeGreaterThanOrEqual(140)
+      expect(h).toBeLessThanOrEqual(150)
+      // compact bubble: 26px offset + ~26px tall + 6px of bob
+      for (const n of host.querySelectorAll<HTMLElement>('[data-path-node]')) expect(parseFloat(n.style.top)).toBeGreaterThanOrEqual(58)
+      const bubble = host.querySelector('[data-path-bubble]') as HTMLElement
+      expect(bubble.className.split(/\s+/)).toContain('bottom-[26px]')
+    })
+
+    it('labels are narrower than the step, so neighbours never touch', () => {
+      renderCompact()
+      const step = lefts()[1] - lefts()[0]
+      const label = host.querySelector('[data-path-label]') as HTMLElement
+      expect(parseFloat(label.style.width)).toBeLessThanOrEqual(step - 8)
+    })
+
+    it('fits five nodes in a phone card (≈324px inside a 390px screen)', () => {
+      let cb: ResizeObserverCallback = () => {}
+      class RO { constructor(c: ResizeObserverCallback) { cb = c } observe() {} disconnect() {} unobserve() {} }
+      vi.stubGlobal('ResizeObserver', RO)
+      try {
+        renderCompact()
+        act(() => cb([{ contentRect: { width: 324 } } as ResizeObserverEntry], {} as ResizeObserver))
+        const l = lefts()
+        const side = l[0]
+        expect(l[4] + side).toBeLessThanOrEqual(324)
+        const label = host.querySelector('[data-path-label]') as HTMLElement
+        expect(parseFloat(label.style.width)).toBeLessThanOrEqual(l[1] - l[0] - 4)
+      } finally {
+        vi.unstubAllGlobals()
+      }
+    })
+  })
+
+  it('the default size keeps its geometry', () => {
+    render()
+    expect(parseFloat((host.querySelector('[data-path-scroller] > div') as HTMLElement).style.height)).toBe(226)
+    const l = [...host.querySelectorAll<HTMLElement>('[data-path-node]')].map((n) => parseFloat(n.style.left))
+    expect(l.slice(0, 2)).toEqual([60, 178])
+    expect((host.querySelector('[data-path-label]') as HTMLElement).style.width).toBe('110px')
+    expect((host.querySelector('[data-path-bubble]') as HTMLElement).className.split(/\s+/)).toContain('bottom-[34px]')
+  })
+
+  describe('review fixes', () => {
+    it('a pinned card is a labelled dialog and takes focus on its Go link (screen readers hear it)', () => {
+      render()
+      const link = host.querySelector('[data-path-scroller] a[href="/l/c"]')!
+      pointer(link, 'pointerdown', 'touch'); click(link)
+      const card = host.querySelector('[role="dialog"]') as HTMLElement
+      expect(card.getAttribute('aria-label')).toContain('Lesson c')
+      expect(document.activeElement).toBe(card.querySelector('a'))
+      expect(host.querySelector('[role="tooltip"]')).toBeNull()
+    })
+
+    it('compact strips navigate on the first tap (no card to clip inside a dashboard card)', () => {
+      act(() => root.render(<PathStrip items={ITEMS} ariaLabel="p" size="compact" />))
+      const link = host.querySelector('a[href="/l/c"]')!
+      pointer(link, 'pointerdown', 'touch')
+      expect(link.hasAttribute('data-no-page-loader')).toBe(false)
+      expect(click(link)).toBe(false)
+    })
+
+    it('the tap decision made at pointerdown holds even if the card closes before the click', () => {
+      render()
+      const link = host.querySelector('[data-path-scroller] a[href="/l/c"]')!
+      pointer(link, 'pointerdown', 'touch'); click(link) // pinned
+      pointer(link, 'pointerdown', 'touch') // second tap: navigate (loader allowed)
+      act(() => { host.querySelector('[data-path-scroller]')!.dispatchEvent(new Event('scroll')) }) // closes the card
+      expect(click(link)).toBe(false)
+    })
+
+    it('keyboard use clears a stale no-loader flag', () => {
+      render()
+      const link = host.querySelector<HTMLAnchorElement>('[data-path-scroller] a[href="/l/c"]')!
+      pointer(link, 'pointerdown', 'touch')
+      expect(link.hasAttribute('data-no-page-loader')).toBe(true)
+      act(() => { link.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })) })
+      expect(link.hasAttribute('data-no-page-loader')).toBe(false)
+    })
+
+    it('a card open when the items change closes instead of reading a non-lesson', () => {
+      render()
+      const node = host.querySelectorAll<HTMLElement>('[data-path-node]')[2]
+      act(() => { node.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })) })
+      expect(host.querySelector('[role="tooltip"]')).not.toBeNull()
+      const shifted: PathItem[] = [lesson('x', 1, 'done'), lesson('y', 2, 'current'), { kind: 'gap', id: 'g2', count: 3 }, ITEMS[4]]
+      expect(() => render(shifted)).not.toThrow()
+      expect(host.querySelector('[role="tooltip"]')).toBeNull()
+    })
   })
 })

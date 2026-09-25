@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -9,6 +9,7 @@ import {
   BookOpen,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   Clock,
   Disc3,
@@ -25,6 +26,8 @@ import { HeaderTitleOverride } from '@/components/dashboard/header-title-overrid
 import { EnterCourseModeButton } from '@/components/dashboard/enter-course-mode-button'
 import { LevelDot } from '@/components/dashboard/course-poster'
 import { MobileCourseBar } from '@/components/course/mobile-course-bar'
+import { PathStrip } from '@/components/course/path-strip'
+import { ProgressRing } from '@/components/course/progress-ring'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -37,6 +40,8 @@ import { formatCents } from '@/lib/payments/pricing-types'
 import { tiptapToPlainText } from '@/lib/tiptap/plain-text'
 import { cn } from '@/lib/utils'
 import { moduleOverviewHref } from '@/lib/courses/structure'
+import { buildPathNodes } from '@/lib/courses/path-nodes'
+import { lessonSegments, syllabusWindow } from './syllabus-window'
 
 interface ClassItem {
   id: string
@@ -91,30 +96,6 @@ interface CourseDetailViewProps {
 
 const base = 'dashboard.pages.course'
 
-function Ring({ pct, size = 56 }: { pct: number; size?: number }) {
-  const stroke = 4
-  const r = (size - stroke) / 2
-  const c = 2 * Math.PI * r
-  return (
-    <span className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }} aria-hidden>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} className="fill-none stroke-foreground/10" />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={c * (1 - Math.min(1, pct / 100))}
-          className={cn('fill-none', pct >= 100 ? 'stroke-success' : 'stroke-primary')}
-        />
-      </svg>
-      <span className="absolute text-[13px] font-bold tabular-nums">{pct}%</span>
-    </span>
-  )
-}
-
 export function CourseDetailView({
   course,
   courseId,
@@ -138,6 +119,8 @@ export function CourseDetailView({
   const [pending, startTransition] = useTransition()
   const [addError, setAddError] = useState<string | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
+  // Modules the student expanded with "Show all N lessons".
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const nextClassHref = nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : undefined
   const classes = sections.flatMap((s) => s.classes ?? [])
@@ -158,6 +141,40 @@ export function CourseDetailView({
     [...new Set((c.items ?? []).map((it) => it.item_type).filter((k): k is string => !!k))]
       .map((k) => t(`${base}.itemTypes.${k}`))
       .join(' · ')
+  const moduleTitle = (s: SectionRow, si: number) => s.title || t(`${base}.syllabus.moduleFallback`, { number: si + 1 })
+
+  // The full-course lesson path ("Your path").
+  const pathNodes = useMemo(() => {
+    let n = 0
+    return buildPathNodes(
+      courseId,
+      sections.map((s, si) => ({
+        id: s.id,
+        title: moduleTitle(s, si),
+        classes: (s.classes ?? []).map((c) => {
+          n += 1
+          return {
+            id: c.id,
+            title: c.title || t(`${base}.syllabus.lessonFallback`, { number: n }),
+            totalItems: c.totalItems,
+            completedItems: c.completedItems,
+            items: (c.items ?? []).flatMap((it) => (it.item_type ? [{ item_type: it.item_type, video_duration_seconds: it.video_duration_seconds }] : [])),
+          }
+        }),
+      })),
+      nextClassId
+    )
+    // moduleTitle only depends on t
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, sections, nextClassId, t])
+
+  // The summary card's progress line, shared with the phone bar.
+  const progressTitle = currentClass
+    ? t(`${base}.syllabus.lessonOf`, { n: currentIndex + 1, total: totalLessons })
+    : totalLessons > 0 && doneLessons >= totalLessons
+      ? t(`${base}.syllabus.completed`)
+      : t(`${base}.syllabus.notStarted`)
+
   const teacherBio =
     tiptapToPlainText(teacher?.bio) ||
     t(`${base}.teacherBioFallback`, { style: style?.name || t(`${base}.latinFallback`) })
@@ -170,14 +187,15 @@ export function CourseDetailView({
     })
   }
 
-  const primaryCta = (size: 'default' | 'lg' = 'lg', className = '') =>
+  // The main forward action, as a chunky button (header, summary card and phone bar).
+  const primaryCta = (size: 'sm' | 'default' | 'lg' = 'lg', className = '') =>
     locked && canAddToPlan ? (
-      <Button size={size} disabled={pending} onClick={handleAddToPlan} className={className}>
+      <Button variant="chunky" size={size} disabled={pending} onClick={handleAddToPlan} className={className}>
         <Plus aria-hidden />
         {pending ? t(`${base}.adding`) : t(`${base}.addToPlan`, { price: formatCents(addonPriceCents) })}
       </Button>
     ) : locked ? (
-      <Button asChild size={size} className={className}>
+      <Button asChild variant="chunky" size={size} className={className}>
         <Link href={`/dashboard/subscribe?instrument=${encodeURIComponent(course.instrument ?? '')}&course=${course.id}`}>
           <Lock aria-hidden />
           {t(`${base}.subscribeToUnlock`)}
@@ -189,6 +207,7 @@ export function CourseDetailView({
         href={nextClassHref}
         courseTitle={course.title}
         isNewCourse={!hasStarted}
+        variant="chunky"
         size={size}
         className={className}
       >
@@ -196,7 +215,7 @@ export function CourseDetailView({
         {hasStarted ? t(`${base}.continueLesson`) : t(`${base}.startLesson`)}
       </EnterCourseModeButton>
     ) : (
-      <Button size={size} disabled className={className}>
+      <Button variant="chunky" size={size} disabled className={className}>
         <Clock aria-hidden />
         {t(`${base}.comingSoon`)}
       </Button>
@@ -227,146 +246,235 @@ export function CourseDetailView({
   // Lesson numbers run across modules (01, 02 … in reading order).
   const lessonNumberOf = new Map(classes.map((c, i) => [c.id, i + 1]))
 
+  const stats: [string | number, string][] = [
+    [sections.length, t(`${base}.stats.modules`)],
+    [totalLessons, t(`${base}.stats.lessons`)],
+    ...(totalDurationMinutes > 0 ? [[minutes(totalDurationMinutes), t(`${base}.stats.video`)] as [string, string]] : []),
+    [levelLabel, t(`${base}.stats.level`)],
+  ]
+
+  // Phone bar: a chunky "Go" into the next lesson, or the same gate CTA as the page.
+  const mobileAction =
+    !locked && nextClassHref ? (
+      <EnterCourseModeButton
+        courseId={course.id}
+        href={nextClassHref}
+        courseTitle={course.title}
+        isNewCourse={!hasStarted}
+        variant="chunky"
+        size="sm"
+      >
+        <Play className="fill-current" aria-hidden />
+        {t(`${base}.syllabus.go`)}
+        <span className="sr-only"> · {hasStarted ? t(`${base}.continueLesson`) : t(`${base}.startLesson`)}</span>
+      </EnterCourseModeButton>
+    ) : (
+      primaryCta('sm')
+    )
+
+  const renderRow = (cls: ClassRow) => {
+    const lessonNumber = lessonNumberOf.get(cls.id) ?? 0
+    const done = classDone(cls)
+    const current = cls.id === nextClassId
+    const accessible = isStudent || !!cls.is_free
+    const href = accessible ? `/dashboard/course/${courseId}/class/${cls.id}` : `/dashboard/subscribe?instrument=${encodeURIComponent(course.instrument ?? '')}&course=${course.id}`
+    const mins = classMinutes(cls)
+    const sub = [itemKinds(cls) || t(cls.totalItems === 1 ? `${base}.itemCountOne` : `${base}.itemCountOther`, { count: cls.totalItems })]
+    if (current && cls.totalItems > 0) sub.push(t(`${base}.syllabus.itemsDone`, { done: cls.completedItems, total: cls.totalItems }))
+    if (cls.is_free && !isStudent) sub.push(t(`${base}.syllabus.freePreview`))
+    return (
+      <li key={cls.id}>
+        <Link
+          href={href}
+          className={cn(
+            'group flex items-center gap-3.5 rounded-lg border bg-card px-3.5 py-3 transition-colors hover:bg-accent/40',
+            current ? 'border-primary/50 ring-[3px] ring-primary/[0.12]' : 'border-border'
+          )}
+        >
+          <span
+            className={cn(
+              'grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-bold',
+              done ? 'bg-success/[0.14] text-success' : current ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
+            )}
+          >
+            {done ? <Check className="h-3.5 w-3.5" aria-hidden /> : current ? <Play className="h-3.5 w-3.5 fill-current" aria-hidden /> : !accessible ? <Lock className="h-3 w-3" aria-hidden /> : lessonNumber}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold transition-colors group-hover:text-primary">{cls.title || t(`${base}.syllabus.lessonFallback`, { number: lessonNumber })}</span>
+            <span className="block truncate text-xs text-muted-foreground">{sub.join(' · ')}</span>
+          </span>
+          <span className="flex shrink-0 items-center gap-3 text-xs tabular-nums text-muted-foreground">
+            {mins > 0 ? (
+              <span className="inline-flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" aria-hidden />
+                {minutes(mins)}
+              </span>
+            ) : null}
+            {current && accessible ? (
+              <span className="hidden rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground sm:inline-block">{t(`${base}.continueLesson`)}</span>
+            ) : done ? (
+              <span className="hidden text-xs font-semibold text-foreground sm:inline-block">{t('dashboard.pages.myCourses.row.review')}</span>
+            ) : null}
+          </span>
+        </Link>
+      </li>
+    )
+  }
+
   return (
     <div className="pb-24 lg:pb-0">
       <HeaderTitleOverride title={course.title} />
 
-      <Link href="/dashboard/courses" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-        <ChevronLeft className="h-4 w-4" aria-hidden />
-        {t(`${base}.backToCourses`)}
-      </Link>
-
-      {/* ── Header row ── */}
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-5 border-b border-border pb-6">
-        <div className="min-w-0">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            {course.is_fundamentals ? <Badge variant="secondary">{t('dashboard.pages.courses.fundamentals')}</Badge> : null}
-            {style ? <Badge variant="secondary"><Music className="h-3 w-3" aria-hidden />{style.name}</Badge> : null}
-            {teacher?.instrument ? <Badge variant="secondary"><Disc3 className="h-3 w-3" aria-hidden />{teacher.instrument}</Badge> : null}
-            {country ? <Badge variant="secondary"><Globe className="h-3 w-3" aria-hidden />{country.name}</Badge> : null}
-            <span className="ml-1 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-              <LevelDot difficulty={course.difficulty} />
-              {levelLabel}
-            </span>
-          </div>
-          <h1 className="text-balance font-heading text-3xl font-extrabold tracking-tight md:text-[38px] md:leading-[1.05]">{course.title}</h1>
-          {teacher ? (
-            <div className="mt-3 flex items-center gap-2.5 text-sm">
-              <Avatar className="h-8 w-8 text-[11px]">
-                {teacher.image_url ? <AvatarImage src={teacher.image_url} alt="" /> : null}
-                <AvatarFallback>{initialsFor(teacher.name)}</AvatarFallback>
-              </Avatar>
-              <span>
-                <b className="font-semibold">{teacher.name}</b>
-                {teacher.instrument ? <span className="text-muted-foreground"> · {teacher.instrument}</span> : null}
-              </span>
-              <Link href="/dashboard/teachers" className="text-xs font-semibold text-primary hover:underline">
-                {t('dashboard.pages.teachers.viewProfile')}
-              </Link>
-            </div>
-          ) : null}
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {course.preview_video_url ? (
-            <Button variant="outline" size="lg" onClick={() => setPreviewOpen(true)}>
-              <Video aria-hidden />
-              {t(`${base}.watchPreview`)}
-            </Button>
-          ) : null}
-          {primaryCta('lg')}
-        </div>
-      </header>
-      {addError ? (
-        <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">{addError}</p>
-      ) : null}
-
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-        {/* ── Syllabus ── */}
         <div className="min-w-0">
-          {course.description ? <p className="mb-6 max-w-[62ch] text-[15px] leading-relaxed text-muted-foreground">{course.description}</p> : null}
+          <Link href="/dashboard/courses" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <ChevronLeft className="h-4 w-4" aria-hidden />
+            {t(`${base}.backToCourses`)}
+          </Link>
 
-          {sections.map((section, si) => {
-            const list = section.classes ?? []
-            const sDone = list.length > 0 && list.every(classDone)
-            const sCurrent = list.some((c) => c.id === nextClassId)
-            const status = sDone ? t(`${base}.syllabus.completed`) : sCurrent ? t(`${base}.syllabus.inProgress`) : t(`${base}.syllabus.notStarted`)
-            return (
-              <section key={section.id} className="mb-7" aria-labelledby={`module-${section.id}`}>
-                <div className="mb-2 flex items-baseline gap-3.5">
-                  <span className={cn('min-w-[44px] font-heading text-[28px] font-extrabold tracking-tight', sDone ? 'text-success' : 'text-primary')}>
-                    {String(si + 1).padStart(2, '0')}
+          {/* ── Hero ── */}
+          <header className="flex flex-wrap items-end justify-between gap-5">
+            <div className="min-w-0">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                {course.is_fundamentals ? <Badge variant="secondary">{t('dashboard.pages.courses.fundamentals')}</Badge> : null}
+                {style ? <Badge variant="secondary"><Music className="h-3 w-3" aria-hidden />{style.name}</Badge> : null}
+                {teacher?.instrument ? <Badge variant="secondary"><Disc3 className="h-3 w-3" aria-hidden />{teacher.instrument}</Badge> : null}
+                {country ? <Badge variant="secondary"><Globe className="h-3 w-3" aria-hidden />{country.name}</Badge> : null}
+                <span className="ml-1 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                  <LevelDot difficulty={course.difficulty} />
+                  {levelLabel}
+                </span>
+              </div>
+              <h1 className="text-balance font-heading text-3xl font-extrabold tracking-tight md:text-[38px] md:leading-[1.05]">{course.title}</h1>
+              {teacher ? (
+                <div className="mt-3 flex items-center gap-2.5 text-sm">
+                  <Avatar className="h-8 w-8 text-[11px]">
+                    {teacher.image_url ? <AvatarImage src={teacher.image_url} alt="" /> : null}
+                    <AvatarFallback>{initialsFor(teacher.name)}</AvatarFallback>
+                  </Avatar>
+                  <span>
+                    <b className="font-semibold">{teacher.name}</b>
+                    {teacher.instrument ? <span className="text-muted-foreground"> · {teacher.instrument}</span> : null}
                   </span>
-                  <h2 id={`module-${section.id}`} className="font-heading text-lg font-bold tracking-tight">
-                    {/* Module title opens the module overview page (full description + lessons). */}
-                    <Link
-                      href={moduleOverviewHref(courseId, section.id)}
-                      className="rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                    >
-                      {section.title || t(`${base}.syllabus.moduleFallback`, { number: si + 1 })}
-                    </Link>
-                  </h2>
-                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                    {t(list.length === 1 ? `${base}.lessonCountOne` : `${base}.lessonCountOther`, { count: list.length })} · {status}
-                  </span>
+                  <Link href="/dashboard/teachers" className="text-xs font-semibold text-primary hover:underline">
+                    {t('dashboard.pages.teachers.viewProfile')}
+                  </Link>
                 </div>
-                {section.description ? (
-                  <p className="mb-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground sm:ml-[58px]">{section.description}</p>
-                ) : null}
-                <ol className="ml-0 flex flex-col gap-2 sm:ml-[58px]">
-                  {list.map((cls) => {
-                    const lessonNumber = lessonNumberOf.get(cls.id) ?? 0
-                    const done = classDone(cls)
-                    const current = cls.id === nextClassId
-                    const accessible = isStudent || !!cls.is_free
-                    const href = accessible ? `/dashboard/course/${courseId}/class/${cls.id}` : `/dashboard/subscribe?instrument=${encodeURIComponent(course.instrument ?? '')}&course=${course.id}`
-                    const mins = classMinutes(cls)
-                    const sub = [itemKinds(cls) || t(cls.totalItems === 1 ? `${base}.itemCountOne` : `${base}.itemCountOther`, { count: cls.totalItems })]
-                    if (current && cls.totalItems > 0) sub.push(t(`${base}.syllabus.itemsDone`, { done: cls.completedItems, total: cls.totalItems }))
-                    if (cls.is_free && !isStudent) sub.push(t(`${base}.syllabus.freePreview`))
-                    return (
-                      <li key={cls.id}>
-                        <Link
-                          href={href}
-                          className={cn(
-                            'group flex items-center gap-3.5 rounded-lg border bg-card px-3.5 py-3 transition-colors hover:bg-accent/40',
-                            current ? 'border-primary/50 ring-[3px] ring-primary/[0.12]' : 'border-border'
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-bold',
-                              done ? 'bg-success/[0.14] text-success' : current ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
-                            )}
-                          >
-                            {done ? <Check className="h-3.5 w-3.5" aria-hidden /> : current ? <Play className="h-3.5 w-3.5 fill-current" aria-hidden /> : !accessible ? <Lock className="h-3 w-3" aria-hidden /> : lessonNumber}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-semibold transition-colors group-hover:text-primary">{cls.title || t(`${base}.syllabus.lessonFallback`, { number: lessonNumber })}</span>
-                            <span className="block truncate text-xs text-muted-foreground">{sub.join(' · ')}</span>
-                          </span>
-                          <span className="flex shrink-0 items-center gap-3 text-xs tabular-nums text-muted-foreground">
-                            {mins > 0 ? (
-                              <span className="inline-flex items-center gap-1">
-                                <Clock className="h-3.5 w-3.5" aria-hidden />
-                                {minutes(mins)}
-                              </span>
-                            ) : null}
-                            {current && accessible ? (
-                              <span className="hidden rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground sm:inline-block">{t(`${base}.continueLesson`)}</span>
-                            ) : done ? (
-                              <span className="hidden text-xs font-semibold text-foreground sm:inline-block">{t('dashboard.pages.myCourses.row.review')}</span>
-                            ) : null}
-                          </span>
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ol>
-              </section>
-            )
-          })}
+              ) : null}
+            </div>
+            {/* Phones: full width, each button grows and wraps onto its own row when it has to. */}
+            <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:shrink-0 max-sm:[&>*]:flex-1">
+              {course.preview_video_url ? (
+                <Button variant="outline" size="lg" onClick={() => setPreviewOpen(true)}>
+                  <Video aria-hidden />
+                  {t(`${base}.watchPreview`)}
+                </Button>
+              ) : null}
+              {primaryCta('lg')}
+            </div>
+          </header>
+          {addError ? (
+            <p className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">{addError}</p>
+          ) : null}
 
-          <section className="mb-8">
+          {/* Phones and tablets: the summary card's stats (the card itself is lg-only). */}
+          <dl className="mt-5 flex flex-wrap gap-x-6 gap-y-2 lg:hidden">
+            {stats.map(([v, l]) => (
+              <div key={l} className="flex flex-col-reverse">
+                <dt className="text-[11px] text-muted-foreground">{l}</dt>
+                <dd className="whitespace-nowrap font-heading text-[15px] font-bold">{String(v)}</dd>
+              </div>
+            ))}
+          </dl>
+
+          {/* ── Your path: laid on the page, no card ── */}
+          {pathNodes.length > 0 ? (
+            <section aria-labelledby="your-path" className="mt-7">
+              <div className="mb-1 flex min-h-9 items-baseline gap-2.5 sm:pr-24">
+                <h2 id="your-path" className="whitespace-nowrap font-heading text-xl font-bold tracking-tight">{t(`${base}.path.heading`)}</h2>
+                <span className="truncate text-[13px] tabular-nums text-muted-foreground">
+                  · {t(totalLessons === 1 ? `${base}.path.doneOfOne` : `${base}.path.doneOf`, { done: doneLessons, total: totalLessons })}
+                </span>
+              </div>
+              <PathStrip
+                items={pathNodes}
+                ariaLabel={t(`${base}.path.heading`)}
+                showArrows
+                showModuleFlags
+                arrowsClassName="bottom-full top-auto mb-1 max-sm:hidden"
+              />
+            </section>
+          ) : null}
+
+          {course.description ? <p className="mb-6 mt-6 max-w-[62ch] text-[15px] leading-relaxed text-muted-foreground">{course.description}</p> : null}
+
+          {/* ── Compact syllabus ── */}
+          <div className={cn(!course.description && 'mt-6')}>
+            {sections.map((section, si) => {
+              const list = section.classes ?? []
+              const sDone = list.length > 0 && list.every(classDone)
+              const sCurrent = list.some((c) => c.id === nextClassId)
+              const status = sDone ? t(`${base}.syllabus.completed`) : sCurrent ? t(`${base}.syllabus.inProgress`) : t(`${base}.syllabus.notStarted`)
+              const win = syllabusWindow(list.map((c) => c.id), nextClassId)
+              const open = !!expanded[section.id]
+              const rows = open ? list : list.filter((c) => win.visible.includes(c.id))
+              return (
+                <section key={section.id} className="mb-6" aria-labelledby={`module-${section.id}`}>
+                  <div className="mb-2 flex flex-wrap items-baseline gap-x-3.5 gap-y-0.5">
+                    <span className={cn('min-w-[44px] font-heading text-[28px] font-extrabold tracking-tight', sDone ? 'text-success' : 'text-primary')}>
+                      {String(si + 1).padStart(2, '0')}
+                    </span>
+                    <h2 id={`module-${section.id}`} className="min-w-0 font-heading text-lg font-bold tracking-tight">
+                      {/* Module title opens the module overview page (full description + lessons). */}
+                      <Link
+                        href={moduleOverviewHref(courseId, section.id)}
+                        className="rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      >
+                        {moduleTitle(section, si)}
+                      </Link>
+                    </h2>
+                    <span className="shrink-0 text-xs text-muted-foreground sm:ml-auto">
+                      {t(list.length === 1 ? `${base}.lessonCountOne` : `${base}.lessonCountOther`, { count: list.length })} · {status}
+                    </span>
+                  </div>
+                  {list.length > 0 ? (
+                    <div className="mb-3 flex gap-[3px] sm:ml-[58px]" aria-hidden>
+                      {lessonSegments(list, nextClassId).map((seg, k) => (
+                        <i key={k} data-segment={seg.state} className="h-[5px] flex-1 overflow-hidden rounded-full bg-muted">
+                          {seg.state !== 'upcoming' ? (
+                            <span
+                              className={cn('block h-full rounded-full', seg.state === 'done' ? 'bg-success' : 'bg-primary')}
+                              style={{ width: `${seg.state === 'done' ? 100 : Math.max(20, Math.round(seg.fraction * 100))}%` }}
+                            />
+                          ) : null}
+                        </i>
+                      ))}
+                    </div>
+                  ) : null}
+                  {section.description ? (
+                    <p className="mb-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground sm:ml-[58px]">{section.description}</p>
+                  ) : null}
+                  {rows.length > 0 ? <ol className="ml-0 flex flex-col gap-2 sm:ml-[58px]">{rows.map(renderRow)}</ol> : null}
+                  {win.collapsible ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2.5 sm:ml-[58px]"
+                      aria-expanded={open}
+                      onClick={() => setExpanded((e) => ({ ...e, [section.id]: !open }))}
+                    >
+                      <ChevronDown className={cn('transition-transform duration-state ease-smooth', open && 'rotate-180')} aria-hidden />
+                      {open
+                        ? t(`${base}.syllabus.showFewer`)
+                        : t(list.length === 1 ? `${base}.syllabus.showAllOne` : `${base}.syllabus.showAll`, { count: list.length })}
+                    </Button>
+                  ) : null}
+                </section>
+              )
+            })}
+          </div>
+
+          <section className="mb-8 mt-10">
             <h2 className="mb-3.5 font-heading text-xl font-bold tracking-tight">{t(`${base}.whatYoullMaster.heading`)}</h2>
             <ul className="grid gap-2.5 sm:grid-cols-2 sm:gap-x-5">
               {whatYouLearn.map((item) => (
@@ -445,30 +553,19 @@ export function CourseDetailView({
             </div>
             <div className="flex flex-col gap-4 p-[18px]">
               <div className="flex items-center gap-3">
-                <Ring pct={progressPercentage} />
+                <ProgressRing pct={progressPercentage} />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold">
-                    {currentClass
-                      ? t(`${base}.syllabus.lessonOf`, { n: currentIndex + 1, total: totalLessons })
-                      : totalLessons > 0 && doneLessons >= totalLessons
-                        ? t(`${base}.syllabus.completed`)
-                        : t(`${base}.syllabus.notStarted`)}
-                  </p>
+                  <p className="text-sm font-semibold">{progressTitle}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {[currentClass?.title, remainingDuration > 0 ? t(`${base}.syllabus.left`, { duration: minutes(remainingDuration) }) : null].filter(Boolean).join(' · ')}
                   </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {[
-                  [sections.length, t(`${base}.stats.modules`)],
-                  [totalLessons, t(`${base}.stats.lessons`)],
-                  ...(totalDurationMinutes > 0 ? [[minutes(totalDurationMinutes), t(`${base}.stats.video`)]] : []),
-                  [levelLabel, t(`${base}.stats.level`)],
-                ].map(([v, l]) => (
-                  <div key={String(l)} className="rounded-lg bg-secondary px-3 py-2.5">
+                {stats.map(([v, l]) => (
+                  <div key={l} className="rounded-lg bg-secondary px-3 py-2.5">
                     <span className="block font-heading text-base font-bold leading-tight">{String(v)}</span>
-                    <span className="text-[11px] text-muted-foreground">{String(l)}</span>
+                    <span className="text-[11px] text-muted-foreground">{l}</span>
                   </div>
                 ))}
               </div>
@@ -508,13 +605,7 @@ export function CourseDetailView({
         </Dialog>
       ) : null}
 
-      <MobileCourseBar
-        courseId={course.id}
-        nextClassHref={nextClassHref}
-        courseTitle={course.title}
-        hasStarted={hasStarted}
-        progressPercentage={progressPercentage}
-      />
+      <MobileCourseBar progressPercentage={progressPercentage} title={progressTitle} subtitle={currentClass?.title} action={mobileAction} />
     </div>
   )
 }
