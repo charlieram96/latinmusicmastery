@@ -252,11 +252,16 @@
 .playsense-studio-notation svg circle,
 .playsense-studio-notation svg ellipse,
 .playsense-studio-notation svg polygon,
-.playsense-studio-notation svg polyline,
+.playsense-studio-notation svg polyline {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+/* VexFlow 5 draws glyphs (noteheads, clefs, rests) as text: fill only, or
+   a 1px outline makes every glyph look bold. */
 .playsense-studio-notation svg text,
 .playsense-studio-notation svg tspan {
   fill: currentColor !important;
-  stroke: currentColor !important;
+  stroke: none !important;
 }
 .playsense-studio-notation svg [fill="none"] {
   fill: none !important;
