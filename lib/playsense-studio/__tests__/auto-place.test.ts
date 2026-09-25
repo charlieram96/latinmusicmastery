@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MarkerState } from '@/components/playsense-studio/sync/marker-model';
-import { autoPlaceBars, lerpMarkers } from '../auto-place';
+import { autoPlaceBars, lerpMarkers, windowWithinCorridor } from '../auto-place';
 
 /** N bars of 4 QN laid at `spb` seconds per beat from `start`, onsets on every beat. */
 function laid(n: number, start: number, spb: number): MarkerState {
@@ -126,6 +126,32 @@ describe('autoPlaceBars', () => {
         expect(Math.abs(t - downbeats(truth)[i])).toBeLessThanOrEqual(0.02);
       });
     }
+  });
+});
+
+describe('windowWithinCorridor', () => {
+  const span = { startSeconds: 10, endSeconds: 20 };
+  it('leaves the window alone with no siblings', () => {
+    expect(windowWithinCorridor({ start: 0, end: 60 }, span, [])).toEqual({ start: 0, end: 60 });
+  });
+  it('narrows the end to a sibling that starts after the span', () => {
+    const siblings = [{ startSeconds: 25, endSeconds: 30 }];
+    expect(windowWithinCorridor({ start: 0, end: 60 }, span, siblings)).toEqual({ start: 0, end: 25 });
+  });
+  it('narrows the start to a sibling that ends before the span', () => {
+    const siblings = [{ startSeconds: 2, endSeconds: 5 }];
+    expect(windowWithinCorridor({ start: 0, end: 60 }, span, siblings)).toEqual({ start: 5, end: 60 });
+  });
+  it('narrows both sides with siblings on either side', () => {
+    const siblings = [
+      { startSeconds: 2, endSeconds: 5 },
+      { startSeconds: 25, endSeconds: 30 },
+    ];
+    expect(windowWithinCorridor({ start: 0, end: 60 }, span, siblings)).toEqual({ start: 5, end: 25 });
+  });
+  it('ignores a sibling that already overlaps the span (legacy data)', () => {
+    const siblings = [{ startSeconds: 15, endSeconds: 22 }];
+    expect(windowWithinCorridor({ start: 0, end: 60 }, span, siblings)).toEqual({ start: 0, end: 60 });
   });
 });
 

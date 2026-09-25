@@ -3,7 +3,7 @@
 // every bar on that line, then let each bar settle onto the hit under its first
 // attacked note. Pure: SyncPanel tweens to the result and keeps the old markers
 // for one-step undo.
-import type { MarkerState } from '@/components/playsense-studio/sync/marker-model';
+import { freeCorridor, type MarkerState, type TimeRange } from '@/components/playsense-studio/sync/marker-model';
 import { nearestHit } from './hits';
 
 const SETTLE_S = 0.09;
@@ -177,6 +177,25 @@ export function autoPlaceBars(
     };
   });
   return { state: { ...state, measures, tailVideoTimeSeconds: tail }, matched, settled };
+}
+
+/**
+ * Narrows a trim window to the free corridor around `span` (the section's own
+ * current footprint), so Auto-place never places a bar over a sibling
+ * section. `freeCorridor` returns ±Infinity on a side with no neighbour there
+ * (or when a neighbour already overlaps `span`), so Math.max/min leave that
+ * side of `window` untouched.
+ */
+export function windowWithinCorridor(
+  window: { start: number; end: number },
+  span: TimeRange,
+  siblingRanges: TimeRange[]
+): { start: number; end: number } {
+  const corridor = freeCorridor(span, siblingRanges);
+  return {
+    start: Math.max(window.start, corridor.lo),
+    end: Math.min(window.end, corridor.hi),
+  };
 }
 
 export function lerpMarkers(a: MarkerState, b: MarkerState, t: number): MarkerState {
