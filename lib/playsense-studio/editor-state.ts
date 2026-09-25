@@ -1052,8 +1052,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         delete e.grace;
       } else {
         const top = pitchedNotes(e).reduce((a, b) => (b.midi > a.midi ? b : a));
-        const to = stepPitch(top.midi, eventSpelling(top) ?? undefined, action.keyFifths, 1);
-        e.grace = [{ midi: to.midi, spelling: { step: to.spelling.step, alter: to.spelling.alter }, slash: action.slash }];
+        if (top.percussion) {
+          // A drum stroke's grace is the same stroke (a flam), not a pitch above.
+          e.grace = [{ midi: top.midi, percussion: clone(top.percussion), slash: action.slash }];
+        } else {
+          const to = stepPitch(top.midi, eventSpelling(top) ?? undefined, action.keyFifths, 1);
+          e.grace = [{ midi: to.midi, spelling: { step: to.spelling.step, alter: to.spelling.alter }, slash: action.slash }];
+        }
       }
       return withHistory(state, next);
     }
@@ -1086,7 +1091,11 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         delete merged.dots;
         delete merged.dotted;
         r.events.splice(start, members.length, merged);
-        return withHistory(state, next);
+        const result = withHistory(state, next);
+        // After withHistory, so a span on a member dropped from every pass is caught too.
+        const spans = pruneSpans(result.score);
+        if (spans) result.score.spans = spans;
+        return result;
       }
       if (eventDots(e) > 0) return state;
       const { n, m } = action;
@@ -1104,6 +1113,14 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         durationQN,
         tuplet: { ...tuplet },
       }));
+      // The tie leaves the group from its last note, not its first.
+      const last = rest[rest.length - 1];
+      if (first.tieToNext) { last.tieToNext = true; delete first.tieToNext; }
+      if (first.kind === 'chord' && last.kind === 'chord') {
+        first.notes.forEach((x, i) => {
+          if (x.tieToNext) { last.notes[i].tieToNext = true; delete x.tieToNext; }
+        });
+      }
       r.events.splice(r.eventIndex, 1, first, ...rest);
       return withHistory(state, next);
     }
@@ -1116,42 +1133,50 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const spans = next.spans ?? [];
       const ids = eventIdIndex(next);
       const group = ids.get(fromId)?.repeat;
-      // The passes of `from`'s repeat other than its own, each with its ids;
-      // a pass is skipped when an end isn't in that pass of the same repeat.
-      const otherPasses = (toId?: string) => {
-        if (!group) return [];
+      // The span `fromId → toId` on every pass of `from`'s repeat, own pass
+      // first. It is mirrored only when both ends sit in the same pass of the
+      // same repeat; a span across a pass boundary (or out of the repeat) stays
+      // single. A pass is skipped when either end is missing from it.
+      const mirrored = (toId: string) => {
+        const pairs = [{ from: fromId, to: toId }];
+        const toRepeat = ids.get(toId)?.repeat;
+        if (!group || toRepeat?.id !== group.id || toRepeat.pass !== group.pass) return pairs;
         const inPass = (id: string, p: number) => {
           const rep = ids.get(id)?.repeat;
           return rep?.id === group.id && rep.pass === p;
         };
-        const out: Array<{ from: string; to?: string }> = [];
         for (let p = 0; p < group.count; p++) {
           if (p === group.pass) continue;
           const f = passEventId(fromId, p);
-          const t = toId === undefined ? undefined : passEventId(toId, p);
-          if (!inPass(f, p) || (t !== undefined && !inPass(t, p))) continue;
-          out.push({ from: f, to: t });
+          const t = passEventId(toId, p);
+          if (inPass(f, p) && inPass(t, p)) pairs.push({ from: f, to: t });
         }
-        return out;
+        return pairs;
       };
+      const isPair = (pairs: Array<{ from: string; to: string }>) => (sp: { type: string; from: string; to: string }) =>
+        sp.type === spanType && pairs.some((p) => p.from === sp.from && p.to === sp.to);
       const sameAsFrom = !action.to || refKey(action.to) === refKey(action.from);
-      if (sameAsFrom && spans.some((s) => s.type === spanType && s.from === fromId)) {
-        const starts = new Set([fromId, ...otherPasses().map((p) => p.from)]);
-        next.spans = spans.filter((s) => !(s.type === spanType && starts.has(s.from)));
+      const starting = spans.filter((sp) => sp.type === spanType && sp.from === fromId);
+      if (sameAsFrom && starting.length) {
+        const gone = isPair(starting.flatMap((sp) => mirrored(sp.to)));
+        next.spans = spans.filter((sp) => !gone(sp));
         return withHistory(state, next);
       }
       const toRef = sameAsFrom ? nextEventRef(next, action.from) : action.to!;
+      // An automatic end is the next event in this bar or the next one, never further.
+      if (sameAsFrom && toRef && toRef.measureIndex > action.from.measureIndex + 1) return state;
       const [to] = toRef ? resolveRefs(next, [toRef]) : [];
       const toId = to?.event.id;
       if (!to || !toId || to.trackIndex !== from.trackIndex) return state;
       const [fm, fq] = readingPosition(from);
       const [tm, tq] = readingPosition(to);
       if (tm < fm || (tm === fm && tq < fq - QN_EPS)) return state;
-      const pairs = [{ from: fromId, to: toId }, ...otherPasses(toId).map((p) => ({ from: p.from, to: p.to! }))];
-      const exists = (p: { from: string; to: string }) => spans.some((s) => s.type === spanType && s.from === p.from && s.to === p.to);
+      const pairs = mirrored(toId);
+      const exists = (p: { from: string; to: string }) => spans.some(isPair([p]));
       if (exists(pairs[0])) {
         // The same span again (an explicit `to`): toggle it off on every pass.
-        next.spans = spans.filter((s) => !(s.type === spanType && pairs.some((p) => p.from === s.from && p.to === s.to)));
+        const gone = isPair(pairs);
+        next.spans = spans.filter((sp) => !gone(sp));
       } else {
         next.spans = [
           ...spans,

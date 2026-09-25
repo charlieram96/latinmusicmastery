@@ -46,7 +46,8 @@ export interface Spelling {
 /** n notes in the time of m (a triplet is 3:2). Events of one group share `id`. */
 export interface Tuplet { id: string; n: number; m: number }
 
-export interface GraceNote { midi: number; spelling?: Spelling; slash: boolean }
+/** A grace note; on a drum stroke, `percussion` makes it the same stroke (a flam). */
+export interface GraceNote { midi: number; spelling?: Spelling; slash: boolean; percussion?: PercussionNotation }
 
 /** A line between two events, referenced by event id. */
 export interface Span { id: string; type: 'slur' | 'cresc' | 'dim'; from: string; to: string }

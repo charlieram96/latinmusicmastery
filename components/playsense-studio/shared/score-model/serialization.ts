@@ -17,6 +17,14 @@ const spellingSchema = z.object({
   showAccidental: z.enum(['auto', 'always']).optional(),
 });
 
+const percussionSchema = z.object({
+  staffLine: z.string().regex(/^[a-g]\/[0-9]$/),
+  notehead: z.enum(['normal', 'x', 'ornate-x', 'plus', 'circled', 'slash', 'slashed', 'diamond', 'triangle-up', 'triangle-down', 'square']),
+  marcato: z.boolean().optional(),
+  strokeId: z.string().optional(),
+  sourceMidi: z.number().int().min(0).max(127).optional(),
+});
+
 const noteBaseShape = {
   durationQN: z.number().positive(),
   dotted: z.boolean().optional(),
@@ -31,21 +39,13 @@ const noteBaseShape = {
   ornament: z.enum(['trill', 'mordent', 'turn']).optional(),
   dynamic: z.enum(['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'fp', 'sfz']).optional(),
   text: z.string().min(1).max(60).optional(),
-  grace: z.array(z.object({ midi: z.number().int().min(0).max(127), spelling: spellingSchema.optional(), slash: z.boolean() })).min(1).max(4).optional(),
+  grace: z.array(z.object({ midi: z.number().int().min(0).max(127), spelling: spellingSchema.optional(), slash: z.boolean(), percussion: percussionSchema.optional() })).min(1).max(4).optional(),
 };
 
 const fingeringSchema = z.object({
   string: z.number().int().positive(),
   fret: z.number().int().min(0),
   finger: z.number().int().min(0).max(5).optional(),
-});
-
-const percussionSchema = z.object({
-  staffLine: z.string().regex(/^[a-g]\/[0-9]$/),
-  notehead: z.enum(['normal', 'x', 'ornate-x', 'plus', 'circled', 'slash', 'slashed', 'diamond', 'triangle-up', 'triangle-down', 'square']),
-  marcato: z.boolean().optional(),
-  strokeId: z.string().optional(),
-  sourceMidi: z.number().int().min(0).max(127).optional(),
 });
 
 const noteSchema = z.object({

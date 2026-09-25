@@ -163,3 +163,61 @@ describe('slurs', () => {
     expect(s1.past).toHaveLength(1);
   });
 });
+
+describe('fix round 1', () => {
+  const r = { trackIndex: 0, measureIndex: 0, voice: 0 as const, eventIndex: 0 };
+  it('a slur across a pass boundary is added once, not mirrored', () => {
+    let s = st(doc([bar(1, [n(60, 2, 'a'), n(62, 2, 'z')]), bar(2, [n(64, 4, 'c')])]));
+    s = editorReducer(s, { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 3, id: 'r' });
+    s = editorReducer(s, { type: 'toggle-span', spanType: 'slur', from: at(1, 1), to: at(2, 0) });
+    expect(s.score.spans?.map((x) => [x.from, x.to])).toEqual([['z~1', 'a~2']]);
+    s = editorReducer(s, { type: 'toggle-span', spanType: 'slur', from: at(1, 1) });
+    expect(s.score.spans).toEqual([]);
+  });
+  it('removing a slur across a pass boundary leaves the in-pass slurs of other passes', () => {
+    let s = st(doc([bar(1, [n(60, 2, 'a'), n(62, 2, 'z')]), bar(2, [n(64, 4, 'c')])]));
+    s = editorReducer(s, { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 3, id: 'r' });
+    s = editorReducer(s, { type: 'toggle-span', spanType: 'slur', from: at(0, 1), to: at(1, 0) });
+    s = editorReducer(s, { type: 'toggle-span', spanType: 'slur', from: at(1, 0), to: at(1, 1) });
+    expect(s.score.spans).toHaveLength(4);
+    s = editorReducer(s, { type: 'toggle-span', spanType: 'slur', from: at(0, 1) });
+    expect(s.score.spans?.map((x) => [x.from, x.to]).sort()).toEqual([['a', 'z'], ['a~1', 'z~1'], ['a~2', 'z~2']]);
+  });
+  it('a tuplet merge drops slurs orphaned by the merge', () => {
+    let s = editorReducer(st(doc([bar(1, [n(60, 1, 'q'), n(62, 3)])])), { type: 'apply-tuplet', ref: r, n: 3, m: 2 });
+    s = editorReducer(s, { type: 'toggle-span', spanType: 'slur', from: at(0, 1), to: at(0, 2) });
+    expect(s.score.spans).toHaveLength(1);
+    s = editorReducer(s, { type: 'apply-tuplet', ref: r, n: 3, m: 2 });
+    expect(s.score.spans).toEqual([]);
+  });
+  it('a tuplet merge drops orphaned slurs on every pass of a repeat', () => {
+    let s = st(doc([bar(1, [n(60, 1, 'q'), n(62, 3, 'w')]), bar(2, [n(64, 4, 'c')])]));
+    s = editorReducer(s, { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 2, id: 'r' });
+    s = editorReducer(s, { type: 'apply-tuplet', ref: r, n: 3, m: 2 });
+    s = editorReducer(s, { type: 'toggle-span', spanType: 'slur', from: at(0, 1), to: at(0, 2) });
+    expect(s.score.spans).toHaveLength(2);
+    s = editorReducer(s, { type: 'apply-tuplet', ref: at(1, 0), n: 3, m: 2 });
+    expect(ev(s, 0).map((e) => e.durationQN)).toEqual([1, 3]);
+    expect(s.score.spans).toEqual([]);
+    expect(repeatGroups(s.score.tracks[0])).toHaveLength(1);
+  });
+  it('a split moves the tie to the group’s last note, keeping the other marks on the first', () => {
+    const s = editorReducer(st(doc([bar(1, [{ ...n(60, 1, 'q'), tieToNext: true, dynamic: 'p' }, n(60, 3)])])), { type: 'apply-tuplet', ref: r, n: 3, m: 2 });
+    const [a, b, c] = ev(s);
+    expect(a).toMatchObject({ dynamic: 'p' });
+    expect(a).not.toHaveProperty('tieToNext');
+    expect(b).not.toHaveProperty('tieToNext');
+    expect(c).toMatchObject({ tieToNext: true });
+  });
+  it('a grace on a percussion stroke is the same stroke (a flam)', () => {
+    const percussion = { staffLine: 'c/5', notehead: 'normal' as const, strokeId: 'snare' };
+    const s = editorReducer(st(doc([bar(1, [{ kind: 'note', midi: 38, durationQN: 4, id: 'd', percussion }])])), { type: 'toggle-event-grace', ref: r, slash: true, keyFifths: 0 });
+    expect(ev(s)[0].grace).toEqual([{ midi: 38, percussion, slash: true }]);
+  });
+  it('an automatic slur end never skips a bar', () => {
+    const s0 = st(doc([bar(1, [n(60, 4, 'a')], [n(48, 4, 'v')]), bar(2, [n(62, 4, 'b')]), bar(3, [n(64, 4, 'c')], [n(50, 4, 'w')])]));
+    expect(editorReducer(s0, { type: 'toggle-span', spanType: 'slur', from: at(0, 0, 1) })).toBe(s0);
+    const s1 = editorReducer(s0, { type: 'toggle-span', spanType: 'slur', from: at(0, 0) });
+    expect(s1.score.spans?.map((x) => [x.from, x.to])).toEqual([['a', 'b']]);
+  });
+});
