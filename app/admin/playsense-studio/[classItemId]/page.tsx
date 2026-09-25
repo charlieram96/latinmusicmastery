@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import {
   getExerciseMedia,
   getScoreDocumentForClassItem,
-  getScoreSectionsForClassItem,
+  getStudioScoreSectionsForClassItem,
 } from '@/app/actions/playsense-studio';
 import { ExerciseStudio } from './exercise-studio';
 import { StudioWorkspace } from './studio-workspace';
@@ -57,7 +57,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
   // point in the video). They're authored in their own sections workspace, which
   // handles the empty list itself — no page-level setup screen.
   if (classItem.item_type === 'VIDEO') {
-    const sections = await getScoreSectionsForClassItem(classItemId);
+    const sections = await getStudioScoreSectionsForClassItem(classItemId);
     if (sections.error) notFound();
     return (
       <VideoSectionsWorkspace
@@ -79,7 +79,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
   // (the student's Watch & Learn) and a separate graded score for the rhythm
   // highway. ExerciseStudio shells both workspaces behind a part toggle.
   if (classItem.item_type === 'EXERCISE') {
-    const sections = await getScoreSectionsForClassItem(classItemId);
+    const sections = await getStudioScoreSectionsForClassItem(classItemId);
     if (sections.error) notFound();
     const scoreResult = classItem.score_document_id
       ? await getScoreDocumentForClassItem(classItemId)
@@ -113,7 +113,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
         initialExerciseMedia={exerciseMedia}
         // Bound server actions — ExerciseStudio must not import the actions
         // module itself (deadlocks the Turbopack production build; see its note).
-        fetchSections={getScoreSectionsForClassItem.bind(null, classItemId)}
+        fetchSections={getStudioScoreSectionsForClassItem.bind(null, classItemId)}
         fetchExercise={getScoreDocumentForClassItem.bind(null, classItemId)}
         fetchExerciseMedia={getExerciseMedia.bind(null, classItemId)}
       />

@@ -14,7 +14,7 @@ import { Activity, ArrowLeft, FileUp, Loader2, Music, PanelBottom, Plus, Rows3, 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import {
-  getScoreSectionsForClassItem,
+  getStudioScoreSectionsForClassItem,
   createBlankSection,
   createSectionFromImport,
   deleteSection,
@@ -147,7 +147,7 @@ function VideoSectionsBody({
   const [newSecOpen, setNewSecOpen] = useState(false);
 
   const refetch = useCallback(async (selectId?: string) => {
-    const res = await getScoreSectionsForClassItem(classItemId);
+    const res = await getStudioScoreSectionsForClassItem(classItemId);
     if (res.error || !res.data) {
       setError(res.error ?? 'Failed to load sections');
       return;

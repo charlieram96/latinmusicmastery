@@ -176,8 +176,10 @@ export interface ClassItemScoreSection extends ClassItemScorePayload {
   videoStartSeconds: number | null;
   videoEndSeconds: number | null;
   /** The admin's unpublished draft for this section (studio_versions), or null.
-   *  Students never receive this. The Studio opens on it when present. */
-  studioDraft: StudioDraft | null;
+   *  Only set by getStudioScoreSectionsForClassItem (admin-only, below);
+   *  the plain student reader leaves this unset. Students never receive it —
+   *  the Studio opens on it when present. */
+  studioDraft?: StudioDraft | null;
   /** One video second known to land on a beat, for the student click track.
    *  Null = this section has no click. Marks ANY beat, not necessarily a
    *  downbeat, which is why the click is uniform. */
@@ -187,7 +189,11 @@ export interface ClassItemScoreSection extends ClassItemScorePayload {
   metronomeAnchorQn: number | null;
 }
 
-/** All scored sections for a class item, ordered by section_index. */
+/** All scored sections for a class item, ordered by section_index. Draft-free:
+ *  this is ALSO the student reader (components/class-viewer/class-item-renderer.tsx
+ *  calls it directly, with no admin session), so it must never call
+ *  getStudioDrafts (admin-only — students would just get an error / []).
+ *  Admin UI wanting drafts uses getStudioScoreSectionsForClassItem below. */
 export async function getScoreSectionsForClassItem(
   classItemId: string
 ): Promise<{ data?: ClassItemScoreSection[]; error?: string }> {
@@ -216,17 +222,27 @@ export async function getScoreSectionsForClassItem(
       label: row.label,
       videoStartSeconds: row.video_start_seconds,
       videoEndSeconds: row.video_end_seconds,
-      studioDraft: null,
       metronomeAnchorSeconds: row.metronome_anchor_seconds,
       metronomeAnchorQn: row.metronome_anchor_qn,
     });
   }
 
-  const drafts = await getStudioDrafts(out.map((s) => ({ kind: 'section' as const, id: s.sectionId })));
-  if (drafts.error) return { error: drafts.error };
-  for (const s of out) s.studioDraft = drafts.data?.[`section:${s.sectionId}`] ?? null;
-
   return { data: out };
+}
+
+/** Same sections as above, PLUS each one's unpublished draft (studioDraft).
+ *  Admin-only in effect: getStudioDrafts itself requires admin and errors
+ *  otherwise. Used by the Studio's own pages/workspaces, never by the
+ *  student-facing reader. */
+export async function getStudioScoreSectionsForClassItem(
+  classItemId: string
+): Promise<{ data?: ClassItemScoreSection[]; error?: string }> {
+  const res = await getScoreSectionsForClassItem(classItemId);
+  if (res.error || !res.data) return res;
+  const drafts = await getStudioDrafts(res.data.map((s) => ({ kind: 'section' as const, id: s.sectionId })));
+  if (drafts.error) return { error: drafts.error };
+  for (const s of res.data) s.studioDraft = drafts.data?.[`section:${s.sectionId}`] ?? null;
+  return { data: res.data };
 }
 
 // ============================================
