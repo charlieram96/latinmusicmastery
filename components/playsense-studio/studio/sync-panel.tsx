@@ -43,7 +43,7 @@ import { TransportBar } from '@/components/playsense-studio/player/transport/tra
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
 import { SNAP_PX, barFlags, firstAttackTime, flagText, snapBarTime, snapSectionShift } from '@/lib/playsense-studio/hits';
-import { autoPlaceBars, lerpMarkers } from '@/lib/playsense-studio/auto-place';
+import { autoPlaceBars, lerpMarkers, windowWithinCorridor } from '@/lib/playsense-studio/auto-place';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
@@ -677,12 +677,28 @@ export function SyncPanel({
   }, [markers]);
 
   const runAutoPlace = useCallback(() => {
-    const res = autoPlaceBars(markersRef.current, hits, {
-      start: trimWindow.startSeconds,
-      end: Number.isFinite(trimWindow.endSeconds)
-        ? trimWindow.endSeconds
-        : (videoDurationSeconds ?? clock.durationSeconds ?? Infinity),
-    });
+    // The duration is 0 (not null) before the video's metadata loads, and
+    // `videoDurationSeconds ?? clock.durationSeconds ?? …` wouldn't catch
+    // that (0 isn't nullish) — trust a duration only once it's actually > 0,
+    // so the window stays unbounded instead of collapsing to zero-width.
+    const knownDuration =
+      videoDurationSeconds && videoDurationSeconds > 0
+        ? videoDurationSeconds
+        : clock.durationSeconds > 0
+          ? clock.durationSeconds
+          : null;
+    const trimBounds = trimRange(
+      { trimInSeconds: effectiveTrim.trimInSeconds, trimOutSeconds: effectiveTrim.trimOutSeconds },
+      knownDuration
+    );
+    // Never place a bar over a sibling section: narrow the trim window to the
+    // free corridor around this section's OWN current span.
+    const win = windowWithinCorridor(
+      { start: trimBounds.startSeconds, end: trimBounds.endSeconds },
+      markerSpan(markersRef.current),
+      siblingRanges
+    );
+    const res = autoPlaceBars(markersRef.current, hits, win);
     if (!res) {
       setAutoPlaceNotice('Not enough clear hits to place the bars.');
       return;
@@ -719,7 +735,7 @@ export function SyncPanel({
       }
     };
     tweenRafRef.current = requestAnimationFrame(tick);
-  }, [hits, trimWindow.startSeconds, trimWindow.endSeconds, videoDurationSeconds, clock]);
+  }, [hits, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock, siblingRanges]);
 
   // Cancel an in-flight tween on unmount.
   useEffect(() => {
