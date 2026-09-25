@@ -86,14 +86,6 @@ function VideoSectionsBody({
   // Set by the import dialog's onConfirm so onImported can select the new section.
   const pendingSelectRef = useRef<string | undefined>(undefined);
 
-  // Mirrors selectedId so the `changed` handlers below (registered once per
-  // section-id set, not per render) always refetch relative to whatever is
-  // currently selected, not whatever was selected when they were registered.
-  const selectedIdRef = useRef(selectedId);
-  useEffect(() => {
-    selectedIdRef.current = selectedId;
-  }, [selectedId]);
-
   // The trim belongs to the VIDEO, which outlives any one section editor, so
   // it is owned here rather than inside ScoreSectionEditor.
   const [trim, setTrim] = useState<MediaTrim>(
@@ -162,14 +154,13 @@ function VideoSectionsBody({
   }, [classItemId]);
 
   // Refetch (reseeding sections not currently mounted) whenever another part of
-  // the Studio publishes or discards that section's draft. Re-registers only
-  // when the set of section ids changes — selectedId is read through the ref
-  // above so the handler itself is never stale.
+  // the Studio publishes or discards that section's draft. refetch() with no
+  // argument already keeps whatever is currently selected (falling back to the
+  // first section only if that one's gone) — re-registers only when the set of
+  // section ids changes, not on every render.
   const sectionIdsKey = sections.map((s) => s.sectionId).join('|');
   useEffect(() => {
-    const unregisters = sections.map((s) =>
-      register(`section:${s.sectionId}`, { changed: () => void refetch(selectedIdRef.current ?? undefined) })
-    );
+    const unregisters = sections.map((s) => register(`section:${s.sectionId}`, { changed: () => void refetch() }));
     return () => unregisters.forEach((u) => u());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sectionIdsKey, register, refetch]);
