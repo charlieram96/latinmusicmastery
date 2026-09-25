@@ -315,3 +315,41 @@ describe('useStudioDraft — fix round 1 (drafts review): onDraftContent', () =>
     expect(acts.saveStudioDraft).not.toHaveBeenCalled();
   });
 });
+
+// ---- Task 8 fix round 1: registerPreFlush, so a debounced child edit (e.g.
+// SyncPanel's drag/anchor timers) lands before flush()/publish snapshots. ----
+
+describe('useStudioDraft — task 8 fix round 1: registerPreFlush', () => {
+  it('flush() runs a registered pre-flush before saving, so the save includes its patch', async () => {
+    mount(<Editor />);
+    const unregister = api.registerPreFlush(() => api.setTiming({ params: { fromPreFlush: true } }));
+    let result: { error?: string } | undefined;
+    await act(async () => { result = await api.flush(); });
+    expect(result).toEqual({});
+    expect(acts.saveStudioDraft).toHaveBeenCalledWith(
+      expect.objectContaining({ timing: expect.objectContaining({ params: { fromPreFlush: true } }) })
+    );
+    unregister();
+  });
+
+  it('ctx.publish flushes a registered pre-flush before saving, so the publish includes its patch', async () => {
+    mount(<Editor />);
+    const unregister = api.registerPreFlush(() => api.setTiming({ params: { fromPreFlush: true } }));
+    await act(async () => { await ctx.publish(owner); });
+    expect(acts.saveStudioDraft).toHaveBeenCalledWith(
+      expect.objectContaining({ timing: expect.objectContaining({ params: { fromPreFlush: true } }) })
+    );
+    expect(acts.saveStudioDraft.mock.invocationCallOrder[0]).toBeLessThan(acts.publishStudioDraft.mock.invocationCallOrder[0]);
+    unregister();
+  });
+
+  it('unregistering a pre-flush stops it from running on a later flush', async () => {
+    mount(<Editor />);
+    const fn = vi.fn();
+    const unregister = api.registerPreFlush(fn);
+    unregister();
+    act(() => edit('B'));
+    await act(async () => { await api.flush(); });
+    expect(fn).not.toHaveBeenCalled();
+  });
+});

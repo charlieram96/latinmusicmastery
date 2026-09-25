@@ -20,6 +20,10 @@ export interface StudioDraftApi {
   setTiming(patch: Partial<StudioTiming>): void;
   replaceTiming(t: StudioTiming): void;
   flush(): Promise<{ error?: string }>;
+  /** Registers a fn that `flush()` runs synchronously, before it snapshots and
+   *  saves — e.g. so a child (SyncPanel) can fold in a still-debounced drag or
+   *  anchor edit right before a Publish. Returns an unregister fn. */
+  registerPreFlush(fn: () => void): () => void;
   saveState: 'idle' | 'saving' | 'saved' | 'error';
   error: string | null;
   pending: boolean;
@@ -86,6 +90,14 @@ export function useStudioDraft(opts: {
   // clobber it once it finally resolves.
   const generationRef = useRef(0);
 
+  // Fns registered by a child (e.g. SyncPanel) to run right before a flush
+  // snapshots and saves — see registerPreFlush below.
+  const preFlushFns = useRef(new Set<() => void>());
+  const registerPreFlush = useCallback((fn: () => void) => {
+    preFlushFns.current.add(fn);
+    return () => { preFlushFns.current.delete(fn); };
+  }, []);
+
   const setTiming = useCallback((patch: Partial<StudioTiming>) => {
     const next = { ...timingRef.current, ...patch };
     timingRef.current = next;
@@ -150,6 +162,10 @@ export function useStudioDraft(opts: {
   useEffect(() => { setPending(key, pending); }, [setPending, key, pending]);
 
   const flush = useCallback(async (): Promise<{ error?: string }> => {
+    // Synchronous, before the snapshot: a pre-flush fn (e.g. SyncPanel's) calls
+    // setTiming directly, which writes latest.current itself (not just state),
+    // so save() below reads the fresh value even though it hasn't re-rendered.
+    preFlushFns.current.forEach((fn) => fn());
     setSaveState((s) => (s === 'error' ? 'idle' : s));
     return save();
   }, [save]);
@@ -179,14 +195,23 @@ export function useStudioDraft(opts: {
   // at call time, not at effect-setup time, so it doesn't matter that this
   // effect's own closure over it is fixed from mount.
   useEffect(() => {
+    // Same Set object for the component's whole life (only ever mutated via
+    // add/delete, never reassigned), so capturing it here rather than reading
+    // `preFlushFns.current` from inside the timeout below is equivalent — and
+    // keeps the linter from mistaking it for a DOM-node ref.
+    const fns = preFlushFns.current;
     return () => {
       setPending(key, false);
       setTimeout(() => {
         // Read AFTER the deferred tick (see above) so a descendant's own
         // cleanup-time write (e.g. SyncPanel's last setTiming) is already in
-        // `latest`. Notify the host with this final snapshot itself — before
-        // the silent save below even starts — so it doesn't have to wait on
-        // that round trip to have the section's truest last-known content.
+        // `latest`. Run any registered pre-flush fns first — same reasoning:
+        // SyncPanel's own registered fn flushes its debounced drag/anchor
+        // timers here too. Notify the host with this final snapshot itself —
+        // before the silent save below even starts — so it doesn't have to
+        // wait on that round trip to have the section's truest last-known
+        // content.
+        fns.forEach((fn) => fn());
         const snap = latest.current;
         if (snap.isDirty || snap.timingDirty) {
           onDraftContentRef.current?.({ score: snap.score, timing: snap.timing });
@@ -215,5 +240,5 @@ export function useStudioDraft(opts: {
     setStatus(memoOwner, { label });
   }, [memoOwner, label, setStatus]);
 
-  return { timing, timingEpoch, setTiming, replaceTiming, flush, saveState, error, pending };
+  return { timing, timingEpoch, setTiming, replaceTiming, flush, registerPreFlush, saveState, error, pending };
 }
