@@ -10,7 +10,7 @@
 // accessors, never from local state — so they track the score, including
 // after an undo.
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import type {
   Articulation,
   Dynamic,
@@ -67,9 +67,22 @@ function formatOffset(ms: number): string {
   return `${sign}${body} ms`;
 }
 
-export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timing, watchLike }: {
+// Fix round 1: a mousedown on any of this popover's own buttons would
+// otherwise move focus onto it — and since the popover is `role="dialog"`,
+// `isTypingTarget` then treats every zoom key as typing and note entry stops
+// working right after using a More tab. The note toolbar's buttons already
+// do this (mousedown's default focus-move is what's cancelled, not the
+// click). Only the Text input and its Set submit are meant to take focus.
+const preventFocus = (e: ReactMouseEvent) => e.preventDefault();
+
+export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timing, watchLike, eventKey }: {
   anchor: PopoverAnchor; tab: MoreTab; onTab: (t: MoreTab) => void; onClose: () => void;
   event: MusicalEvent | null; editing: ZoomEditing; timing?: NoteTimingProps; watchLike: boolean;
+  /** Identifies the note at the zoom cursor (e.g. `measureIndex:voice:index`),
+   *  so the Text tab can tell "the same note's text changed" apart from
+   *  "the cursor landed on a different note" even when the two notes' text
+   *  happens to read the same (including both empty). */
+  eventKey: string | null;
 }) {
   const hint = tab === 'timing'
     ? (timing ? 'Nudge moves only this note against the recording.' : undefined)
@@ -83,6 +96,7 @@ export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timin
             type="button"
             className="st-mpop-chip"
             aria-pressed={tab === t.id}
+            onMouseDown={preventFocus}
             onClick={() => onTab(t.id)}
           >
             {t.label}
@@ -93,7 +107,7 @@ export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timin
       {tab === 'tuplets' && <TupletsTab editing={editing} event={event} />}
       {tab === 'marks' && <MarksTab editing={editing} event={event} />}
       {tab === 'dynamics' && <DynamicsTab editing={editing} event={event} />}
-      {tab === 'text' && <TextTab editing={editing} event={event} />}
+      {tab === 'text' && <TextTab editing={editing} event={event} eventKey={eventKey} />}
       {tab === 'timing' && <TimingTab timing={timing} />}
     </MeasurePopover>
   );
@@ -102,11 +116,11 @@ export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timin
 function DurationsTab({ editing }: { editing: ZoomEditing }) {
   return (
     <div className="st-mpop-row">
-      <button type="button" className="st-mpop-chip" onClick={() => editing.setValue('32')}>32nd</button>
-      <button type="button" className="st-mpop-chip" onClick={() => editing.setValue('64')}>64th</button>
-      <button type="button" className="st-mpop-chip" onClick={() => editing.cycleDots(2)}>Double dot</button>
-      <button type="button" className="st-mpop-chip" onClick={() => editing.accidental(-2)}>Double flat</button>
-      <button type="button" className="st-mpop-chip" onClick={() => editing.accidental(2)}>Double sharp</button>
+      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.setValue('32')}>32nd</button>
+      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.setValue('64')}>64th</button>
+      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.cycleDots(2)}>Double dot</button>
+      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.accidental(-2)}>Double flat</button>
+      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.accidental(2)}>Double sharp</button>
     </div>
   );
 }
@@ -121,6 +135,7 @@ function TupletsTab({ editing, event }: { editing: ZoomEditing; event: MusicalEv
           type="button"
           className="st-mpop-chip"
           aria-pressed={!!current && current.n === n && current.m === m}
+          onMouseDown={preventFocus}
           onClick={() => editing.tuplet(n, m)}
         >
           {n}:{m}
@@ -142,6 +157,7 @@ function MarksTab({ editing, event }: { editing: ZoomEditing; event: MusicalEven
             type="button"
             className="st-mpop-chip"
             aria-pressed={articulations.includes(a.id)}
+            onMouseDown={preventFocus}
             onClick={() => editing.articulation(a.id)}
           >
             {a.label}
@@ -155,13 +171,14 @@ function MarksTab({ editing, event }: { editing: ZoomEditing; event: MusicalEven
             type="button"
             className="st-mpop-chip"
             aria-pressed={ornament === o.id}
+            onMouseDown={preventFocus}
             onClick={() => editing.ornament(o.id)}
           >
             {o.label}
           </button>
         ))}
-        <button type="button" className="st-mpop-chip" onClick={() => editing.grace(true)}>Acciaccatura</button>
-        <button type="button" className="st-mpop-chip" onClick={() => editing.grace(false)}>Appoggiatura</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.grace(true)}>Acciaccatura</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.grace(false)}>Appoggiatura</button>
       </div>
     </>
   );
@@ -178,6 +195,7 @@ function DynamicsTab({ editing, event }: { editing: ZoomEditing; event: MusicalE
             type="button"
             className="st-mpop-chip"
             aria-pressed={current === d}
+            onMouseDown={preventFocus}
             onClick={() => editing.dynamic(d)}
           >
             {d}
@@ -185,23 +203,25 @@ function DynamicsTab({ editing, event }: { editing: ZoomEditing; event: MusicalE
         ))}
       </div>
       <div className="st-mpop-row">
-        <button type="button" className="st-mpop-chip" onClick={() => editing.slur('cresc')}>Crescendo</button>
-        <button type="button" className="st-mpop-chip" onClick={() => editing.slur('dim')}>Diminuendo</button>
-        <button type="button" className="st-mpop-chip" onClick={() => editing.slur('slur')}>Slur (S)</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.slur('cresc')}>Crescendo</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.slur('dim')}>Diminuendo</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.slur('slur')}>Slur (S)</button>
       </div>
     </>
   );
 }
 
-function TextTab({ editing, event }: { editing: ZoomEditing; event: MusicalEvent | null }) {
+function TextTab({ editing, event, eventKey }: { editing: ZoomEditing; event: MusicalEvent | null; eventKey: string | null }) {
   // Re-seeds the field from the event's text without an effect (React's
-  // "adjust state during render" pattern): comparing against the text last
-  // seen catches a different note landing under the cursor mid-edit.
+  // "adjust state during render" pattern). Fix round 1: keyed on the note's
+  // identity (eventKey), not its text — two different notes can share the
+  // same text (including both empty), which let an uncommitted typed value
+  // silently survive a cursor move onto the wrong note.
   const eventText = event?.text ?? '';
   const [value, setValue] = useState(eventText);
-  const [seenText, setSeenText] = useState(eventText);
-  if (eventText !== seenText) {
-    setSeenText(eventText);
+  const [seenKey, setSeenKey] = useState(eventKey);
+  if (eventKey !== seenKey) {
+    setSeenKey(eventKey);
     setValue(eventText);
   }
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -222,7 +242,7 @@ function TextTab({ editing, event }: { editing: ZoomEditing; event: MusicalEvent
       </form>
       <div className="st-mpop-row">
         {TEXT_CHIPS.map((c) => (
-          <button key={c} type="button" className="st-mpop-chip" onClick={() => editing.text(c)}>{c}</button>
+          <button key={c} type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.text(c)}>{c}</button>
         ))}
       </div>
     </>
@@ -237,12 +257,12 @@ function TimingTab({ timing }: { timing?: NoteTimingProps }) {
     <>
       <p className="st-mpop-row">Plays at {formatTime(timing.actualSeconds)}</p>
       <div className="st-mpop-row">
-        <button type="button" className="st-mpop-chip" onClick={() => timing.onNudge(-5)}>−5 ms</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => timing.onNudge(-5)}>−5 ms</button>
         <span className="font-mono tabular-nums">{formatOffset(timing.offsetMs)}</span>
-        <button type="button" className="st-mpop-chip" onClick={() => timing.onNudge(5)}>+5 ms</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => timing.onNudge(5)}>+5 ms</button>
       </div>
       <div className="st-mpop-row">
-        <button type="button" className="st-mpop-chip" onClick={timing.onReset}>Reset</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={timing.onReset}>Reset</button>
       </div>
     </>
   );

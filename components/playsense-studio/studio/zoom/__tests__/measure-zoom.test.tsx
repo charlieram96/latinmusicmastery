@@ -263,4 +263,32 @@ describe('IntegratedEditor measure zoom', () => {
       Object.defineProperty(HTMLElement.prototype, 'offsetHeight', heightDesc);
     }
   });
+
+  // Fix round 1 (Task 9, Bug 3): the More popover no longer keeps the anchor
+  // it was opened with — it's positioned under the toolbar's own (live,
+  // clamped) position every render, so it keeps following the cursor instead
+  // of going stale.
+  it('the More popover recomputes its position from the toolbar as the cursor moves', () => {
+    renderEditor();
+    key('ArrowRight'); // select m.1
+    key('Enter'); // open the zoom — cursor starts on m.1's first note
+    act(() => { host.querySelector<HTMLButtonElement>('button[aria-label="More"]')!.click(); });
+
+    const popover = () => host.querySelector<HTMLElement>('[role="dialog"][aria-label="More"]');
+    const toolbar = () => host.querySelector<HTMLElement>('[data-testid="note-toolbar"]')!;
+    expect(popover()).not.toBeNull();
+    // Directly under the toolbar: same left, top plus the toolbar's measured
+    // height (0 here — jsdom never lays anything out).
+    expect(popover()!.style.left).toBe(toolbar().style.left);
+    expect(popover()!.style.top).toBe(toolbar().style.top);
+    const beforeLeft = popover()!.style.left;
+
+    // Walk to the bar's second note — a different x under a real layout —
+    // without closing the popover.
+    key('ArrowRight');
+    expect(popover()).not.toBeNull();
+    expect(popover()!.style.left).not.toBe(beforeLeft);
+    expect(popover()!.style.left).toBe(toolbar().style.left);
+    expect(popover()!.style.top).toBe(toolbar().style.top);
+  });
 });

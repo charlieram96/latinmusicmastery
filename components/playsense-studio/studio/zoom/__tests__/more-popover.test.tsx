@@ -60,6 +60,7 @@ function render(overrides: Partial<React.ComponentProps<typeof MorePopover>> = {
         event={null}
         editing={editing}
         watchLike={false}
+        eventKey={null}
         {...overrides}
       />,
     );
@@ -270,6 +271,75 @@ describe('MorePopover', () => {
       expect(timing.onReset).toHaveBeenCalledTimes(1);
     });
   });
+
+  // Fix round 1: every action button (tabs, chips, Durations/Tuplets/Marks/
+  // Dynamics/Timing) must keep focus out of the dialog on mousedown, as the
+  // note toolbar's own buttons do — otherwise a keydown that follows lands on
+  // an element inside role="dialog" and isTypingTarget blocks it (Bug 1).
+  // Only the Text input and its Set submit are meant to take focus.
+  describe('Fix round 1 — focus stays out of the dialog', () => {
+    const timing = {
+      offsetMs: 12, gridSeconds: 1, actualSeconds: 1.5,
+      onNudge: vi.fn(), onSnap: vi.fn(), onReset: vi.fn(),
+    };
+    const tuplEvent: MusicalEvent = { kind: 'note', midi: 60, durationQN: 1 / 3, tuplet: { id: 't1', n: 3, m: 2 } };
+    const marksEvent: MusicalEvent = { kind: 'note', midi: 60, durationQN: 1, articulations: ['accent'], ornament: 'trill' };
+    const dynEvent: MusicalEvent = { kind: 'note', midi: 60, durationQN: 1, dynamic: 'mf' };
+
+    it.each<MoreTab>(['durations', 'tuplets', 'marks', 'dynamics', 'text', 'timing'])(
+      'every button prevents mousedown default on the %s tab, except the Text Set submit',
+      (tab) => {
+        const event = tab === 'tuplets' ? tuplEvent : tab === 'marks' ? marksEvent : tab === 'dynamics' ? dynEvent : null;
+        render({ tab, event, timing });
+        for (const btn of buttons()) {
+          const ev = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+          act(() => { btn.dispatchEvent(ev); });
+          if (btn.type === 'submit') {
+            expect(ev.defaultPrevented).toBe(false);
+          } else {
+            expect(ev.defaultPrevented).toBe(true);
+          }
+        }
+      },
+    );
+  });
+
+  describe('Fix round 1 — Text tab re-seeds on note identity, not text', () => {
+    it('re-seeds when the cursor moves to a different note even if its text matches', () => {
+      const eventA: MusicalEvent = { kind: 'note', midi: 60, durationQN: 1, text: '' };
+      const eventB: MusicalEvent = { kind: 'note', midi: 62, durationQN: 1, text: '' };
+      const { editing, onTab, onClose } = render({ tab: 'text', event: eventA, eventKey: 'm0:0:0' });
+      const input = () => host.querySelector('[aria-label="Text"]') as HTMLInputElement;
+      type(input(), 'dolce'); // typed but never submitted
+      expect(input().value).toBe('dolce');
+      act(() => {
+        root.render(
+          <MorePopover
+            anchor={{ left: 0, top: 0 }} tab="text" onTab={onTab} onClose={onClose}
+            event={eventB} editing={editing} watchLike={false} eventKey="m0:0:1"
+          />,
+        );
+      });
+      // The new note's (empty) text wins — the old draft doesn't leak onto it.
+      expect(input().value).toBe('');
+    });
+
+    it('keeps an in-progress draft across a re-render of the same note (identity unchanged)', () => {
+      const eventA: MusicalEvent = { kind: 'note', midi: 60, durationQN: 1, text: '' };
+      const { editing, onTab, onClose } = render({ tab: 'text', event: eventA, eventKey: 'm0:0:0' });
+      const input = () => host.querySelector('[aria-label="Text"]') as HTMLInputElement;
+      type(input(), 'dolce');
+      act(() => {
+        root.render(
+          <MorePopover
+            anchor={{ left: 0, top: 0 }} tab="text" onTab={onTab} onClose={onClose}
+            event={eventA} editing={editing} watchLike={false} eventKey="m0:0:0"
+          />,
+        );
+      });
+      expect(input().value).toBe('dolce');
+    });
+  });
 });
 
 // ---- Review Focus 5: typing in the Text input never runs note entry -------
@@ -310,6 +380,7 @@ function TypingHarness({ tab, dispatchSpy }: { tab: MoreTab; dispatchSpy: (a: Ed
       event={editing.currentEvent()}
       editing={editing}
       watchLike={false}
+      eventKey="0:0:0"
     />
   );
 }
@@ -326,5 +397,38 @@ describe('MorePopover Text tab — Review Focus 5', () => {
       input.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', bubbles: true, cancelable: true }));
     });
     expect(dispatchSpy).not.toHaveBeenCalled();
+  });
+});
+
+// ---- Fix round 1, Bug 1: zoom keys keep working after a popover button click ----
+//
+// jsdom doesn't itself move focus on a synthetic mousedown/click (unlike a
+// real browser's default action for a focusable control), so the test plays
+// that default action out explicitly: focus only follows when the mousedown
+// wasn't prevented — exactly the branch this fix adds.
+
+describe('MorePopover — Fix round 1: clicking a tab button never steals the zoom keys', () => {
+  it('clicking Tuplets → 3:2 applies it, and a following key still enters a note', () => {
+    const dispatchSpy = vi.fn();
+    act(() => {
+      root.render(<TypingHarness tab="tuplets" dispatchSpy={dispatchSpy} />);
+    });
+    const btn = byLabel('3:2');
+    act(() => {
+      const down = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+      btn.dispatchEvent(down);
+      // What a real browser does by default on mousedown, unless prevented.
+      if (!down.defaultPrevented) btn.focus();
+      btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+    expect(dispatchSpy).toHaveBeenCalled(); // the tuplet was applied
+    expect(document.activeElement).not.toBe(btn); // focus never moved onto it
+
+    dispatchSpy.mockClear();
+    const target = document.activeElement ?? document.body;
+    act(() => {
+      target.dispatchEvent(new KeyboardEvent('keydown', { key: 'c', bubbles: true, cancelable: true }));
+    });
+    expect(dispatchSpy).toHaveBeenCalled(); // note entry still runs
   });
 });

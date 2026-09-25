@@ -200,9 +200,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [repeatPop, setRepeatPop] = useState<{ anchor: PopoverAnchor } | null>(null);
   const [gapPop, setGapPop] = useState<{ gap: number; anchor: PopoverAnchor } | null>(null);
   const [barPop, setBarPop] = useState<{ anchor: PopoverAnchor } | null>(null);
-  // The note toolbar's "More ▾" popover — its anchor while open, and the
-  // last tab picked (remembered across opens/closes, reset only on unmount).
-  const [morePop, setMorePop] = useState<{ anchor: PopoverAnchor } | null>(null);
+  // The note toolbar's "More ▾" popover — just an open flag (fix round 1:
+  // its position is recomputed every render from the toolbar's current,
+  // measured position below, not stored) — and the last tab picked
+  // (remembered across opens/closes, reset only on unmount).
+  const [morePop, setMorePop] = useState(false);
   const [moreTab, setMoreTab] = useState<MoreTab>('durations');
   // The measure zoom (one bar drawn large over the strip), or null when closed.
   // `zoomOrigin` is the bar's rect in the strip for the enter/exit animation;
@@ -819,7 +821,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     setZoom(null);
     setZoomClosing(false);
     zoomLayout.current = null;
-    setMorePop(null);
+    setMorePop(false);
     if (m !== undefined) selectBars({ anchor: m, focus: m });
   }, [zoom, selectBars]);
 
@@ -880,6 +882,14 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     const events = zoomEvents(zoom.cursor.measureIndex, zoom.cursor.voice);
     return cursorRange(zoom.cursor, events.length).some((i) => i >= 0 && i < events.length);
   }, [zoom, zoomEvents]);
+
+  // Identifies the note at the zoom cursor for the More ▾ → Text tab (fix
+  // round 1): two different notes can share the same text (including both
+  // empty), so re-seeding the field on the text value alone let a typed but
+  // uncommitted value survive a cursor move onto the wrong note.
+  const zoomEventKey: string | null = zoom
+    ? `${zoom.cursor.measureIndex}:${zoom.cursor.voice}:${zoom.cursor.index}`
+    : null;
 
   // Duration/dots shown reflect the selected note when there is one, else the
   // pending value/dots the zoom will write next (ZoomState.value/dots).
@@ -1384,18 +1394,19 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                         hasSelection={zoomHasSelection}
                         percussion={zoomToolbarPercussion}
                         editing={zoomEditing}
-                        onMore={(morePopAnchor) => setMorePop({ anchor: morePopAnchor })}
+                        onMore={() => setMorePop(true)}
                       />
                       {morePop && (
                         <MorePopover
-                          anchor={morePop.anchor}
+                          anchor={{ left: pos.left, top: pos.top + noteToolbarSize.h }}
                           tab={moreTab}
                           onTab={setMoreTab}
-                          onClose={() => setMorePop(null)}
+                          onClose={() => setMorePop(false)}
                           event={zoomCurrentEvent}
                           editing={zoomEditing}
                           timing={noteTiming}
                           watchLike={!!noteTiming}
+                          eventKey={zoomEventKey}
                         />
                       )}
                     </>

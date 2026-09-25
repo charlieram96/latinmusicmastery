@@ -12,7 +12,6 @@
 import type { Ref } from 'react';
 import { Trash2 } from 'lucide-react';
 import { KEY_VALUE, VALUE_NAME, VALUE_QN, type NoteValue } from '@/lib/playsense-studio/rhythm';
-import type { PopoverAnchor } from '../measure/popover';
 import type { ZoomEditing } from './use-zoom-editing';
 import { NoteIcon, RestIcon } from './note-glyphs';
 
@@ -44,8 +43,11 @@ export interface NoteToolbarProps {
   /** Set on a percussion track: replaces ♭♮♯ with one button per stroke. */
   percussion: NoteToolbarPercussion | null;
   editing: ZoomEditing;
-  /** Task 9 builds the popover; for now this just records where it would open. */
-  onMore: (anchor: PopoverAnchor) => void;
+  /** Opens the More ▾ popover. The caller (IntegratedEditor) recomputes its
+   *  own position every render from this toolbar's current, measured
+   *  position (fix round 1) rather than an anchor captured here at click
+   *  time, so it keeps following the toolbar as the cursor moves. */
+  onMore: () => void;
 }
 
 const TOOLBAR_DURATIONS: NoteValue[] = ['w', 'h', 'q', '8', '16'];
@@ -202,7 +204,7 @@ export function NoteToolbar({
         aria-label="More"
         title="Everything else"
         onMouseDown={(e) => e.preventDefault()}
-        onClick={() => onMore({ left, top: top + 36 })}
+        onClick={() => onMore()}
       >
         More ▾
       </button>
