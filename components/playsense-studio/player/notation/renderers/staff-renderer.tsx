@@ -51,6 +51,7 @@ import type {
 import { scoreCursorAt, scoreScrollOffset, scoreReadingStops, scoreReadingOffset, scoreVerticalOffset, type ScoreReadingStop, type ScoreReadingRow } from '@/lib/playsense-studio/notation-playback';
 import { packLessonScoreRows } from '@/lib/playsense-studio/notation-layout';
 import { createNotationInterlude } from './notation-interlude';
+import { noteStateAt } from '@/lib/playsense-studio/notation/staff-n1';
 import './staff-renderer.css';
 import { themeVexflowSvg } from '@/lib/playsense-studio/svg-theme';
 
@@ -81,6 +82,9 @@ interface NoteHit {
   height: number;
   /** Which system (row) this note lives on. Always 0 in scroll mode. */
   system: number;
+  /** Block index of the bar, and the model-x a note's tail runs to before the barline. */
+  bar: number;
+  barEndX: number;
 }
 
 const SYSTEM_PADDING_X = 12;
@@ -169,6 +173,12 @@ class StaffRendererImpl implements ScoreRenderer {
   private hits: NoteHit[] = [];
   // Per-note groups let emphasis change without disturbing connected beams.
   private noteEls: Array<{ group: SVGElement | null }> = [];
+  /** How many notes (from the start) have finished sounding. */
+  private playedCount = 0;
+  /** Every SVG element of row k lives in rowGroups[k]; its HTML helpers in rowDivs[k]. */
+  private rowGroups: SVGGElement[] = [];
+  private rowDivs: HTMLDivElement[] = [];
+  private diamondEl: HTMLSpanElement | null = null;
   // Per-measure geometry + start time, used to light the current measure.
   private measureGeoms: Array<{
     x: number;
@@ -176,6 +186,7 @@ class StaffRendererImpl implements ScoreRenderer {
     width: number;
     startMs: number;
     endMs: number;
+    system: number;
   }> = [];
   private measurePanels: SVGGElement[] = [];
   private measureProgressEl: SVGRectElement | null = null;
@@ -358,6 +369,10 @@ class StaffRendererImpl implements ScoreRenderer {
     this.leadingPlacement = null;
     this.hits = [];
     this.noteEls = [];
+    this.playedCount = 0;
+    this.rowGroups = [];
+    this.rowDivs = [];
+    this.diamondEl = null;
     this.measureGeoms = [];
     this.measurePanels = [];
     this.beatLabels = [];
@@ -566,6 +581,14 @@ class StaffRendererImpl implements ScoreRenderer {
     rendererDiv.style.touchAction = el.hasAttribute('data-score-interactive') ? 'none' : 'pan-y';
     viewport.appendChild(rendererDiv);
     this.rendererDiv = rendererDiv;
+    // HTML helpers (note names, counts, interludes) share the SVG rows' grouping.
+    this.rowDivs = Array.from({ length: this.systemCount }, (_, k) => {
+      const row = document.createElement('div');
+      row.className = 'ps-staff-row';
+      row.dataset.scoreRow = String(k);
+      rendererDiv.appendChild(row);
+      return row;
+    });
 
     this.renderer = new Renderer(rendererDiv, Renderer.Backends.SVG);
     this.renderer.resize(this.totalWidth, this.stageHeight);
@@ -576,14 +599,30 @@ class StaffRendererImpl implements ScoreRenderer {
       vexNote: StaveNote;
       descriptor: VexEventDescriptor;
       system: number;
+      bar: number;
+      barEndX: number;
     }> = [];
     const placed: PlacedNote[] = [];
 
     this.measureGeoms = [];
+    // One SVG group per row, so rows can dim (stacked) or page (paged) without re-engraving.
+    this.rowGroups = [];
+    let openRow = -1;
+    const openRowsThrough = (system: number) => {
+      while (openRow < system) {
+        if (openRow >= 0) ctx.closeGroup();
+        openRow++;
+        const group = ctx.openGroup('ps-row') as SVGGElement;
+        group.setAttribute('data-score-row', String(openRow));
+        this.rowGroups.push(group);
+      }
+    };
     for (const p of plan.placements) {
+      openRowsThrough(p.system);
       if (p.isGap) continue; // video guidance is rendered separately below
       const block = measureBlocks[p.blockIndex];
       this.measureGeoms.push({
+        system: p.system,
         x: p.x,
         y: p.y,
         width: p.width,
@@ -623,7 +662,8 @@ class StaffRendererImpl implements ScoreRenderer {
       drawMeasure(ctx, stave, built);
 
       block.events.forEach((d, idx) => {
-        allNotes.push({ vexNote: built.notes[0][idx], descriptor: d, system: p.system });
+        allNotes.push({ vexNote: built.notes[0][idx], descriptor: d, system: p.system,
+          bar: p.blockIndex, barEndX: p.x + p.width - 8 });
       });
       block.events.forEach((d, idx) => {
         placed.push({ id: d.id, note: built.notes[0][idx], system: p.system, hasDynamic: !!d.dynamic });
@@ -633,21 +673,34 @@ class StaffRendererImpl implements ScoreRenderer {
       });
     }
 
-    // Draw held pitches across chords and barlines, with partial ties at row turns.
+    openRowsThrough(this.systemCount - 1);
+    if (openRow >= 0) ctx.closeGroup();
+
+    // Ties and spans are drawn after every row exists; each moves into the row it belongs to.
+    const drawInRow = (system: number, draw: () => void) => {
+      const group = ctx.openGroup('ps-row-mark') as SVGGElement;
+      try { draw(); } finally { ctx.closeGroup(); }
+      this.rowGroups[system]?.appendChild(group);
+    };
+    // Draw held pitches across chords and barlines, with half-ties on both sides of a row turn.
     allNotes.forEach((first, i) => {
       const next = allNotes[i + 1];
       if (!next) return;
       const indices = scoreTieIndices(first.descriptor, next.descriptor);
       if (!indices.firstIndexes.length) return;
       if (first.system === next.system) {
-        new StaveTie({ firstNote: first.vexNote, lastNote: next.vexNote, ...indices }).setContext(ctx).draw();
+        drawInRow(first.system, () => new StaveTie({ firstNote: first.vexNote, lastNote: next.vexNote, ...indices }).setContext(ctx).draw());
       } else {
-        new StaveTie({ firstNote: first.vexNote, firstIndexes: indices.firstIndexes, lastIndexes: indices.firstIndexes }).setContext(ctx).draw();
-        new StaveTie({ lastNote: next.vexNote, firstIndexes: indices.lastIndexes, lastIndexes: indices.lastIndexes }).setContext(ctx).draw();
+        drawInRow(first.system, () => new StaveTie({ firstNote: first.vexNote, firstIndexes: indices.firstIndexes, lastIndexes: indices.firstIndexes }).setContext(ctx).draw());
+        drawInRow(next.system, () => new StaveTie({ lastNote: next.vexNote, firstIndexes: indices.lastIndexes, lastIndexes: indices.lastIndexes }).setContext(ctx).draw());
       }
     });
 
-    drawSpanSegments(ctx, spanSegments(score.spans, placed));
+    const noteSystem = new Map(placed.map(p => [p.note, p.system] as const));
+    for (const segment of spanSegments(score.spans, placed)) {
+      const anchor = segment.from ?? segment.to;
+      drawInRow(anchor ? noteSystem.get(anchor) ?? 0 : 0, () => drawSpanSegments(ctx, [segment]));
+    }
 
     // ---- Capture hit boxes + ms positions ----
     this.totalDurationMs = qnToTrackMs(track, score, qnAtEnd(measureBlocks));
@@ -658,7 +711,7 @@ class StaffRendererImpl implements ScoreRenderer {
     this.gapStartMs = this.totalDurationMs;
     if (this.gapMs > 0) this.totalDurationMs += this.gapMs;
 
-    this.hits = allNotes.map(({ vexNote, descriptor, system }) => {
+    this.hits = allNotes.map(({ vexNote, descriptor, system, bar, barEndX }) => {
       const bbox = vexNote.getBoundingBox();
       return {
         qn: descriptor.qnStart,
@@ -671,11 +724,14 @@ class StaffRendererImpl implements ScoreRenderer {
         width: bbox.getW(),
         height: bbox.getH(),
         system,
+        bar,
+        barEndX,
       };
     });
 
     // CurrentColor tints the whole note group, preserving beam/stem alignment.
     this.activeNoteIdx = -1;
+    this.playedCount = 0;
     this.noteEls = allNotes.map(({ vexNote, descriptor }) => {
       const group = vexNote.getSVGElement() ?? null;
       if (group) { group.setAttribute('data-score-note', descriptor.isRest ? 'rest' : 'note'); group.setAttribute('data-note-state', 'upcoming'); }
@@ -701,14 +757,16 @@ class StaffRendererImpl implements ScoreRenderer {
       position: 'absolute',
       top: `${(this.staveTop + this.staffLineTop - CURSOR_OVERHANG) * this.scale}px`,
       left: '0px',
-      width: `${2 * this.scale}px`,
       height: `${(STAFF_LINE_SPAN + 2 * CURSOR_OVERHANG) * this.scale}px`,
-      background: 'hsl(var(--primary))',
       pointerEvents: 'none',
       transform: 'translateX(0px)',
       willChange: 'transform',
-      opacity: '0.85',
+      zIndex: '2',
     } as CSSStyleDeclaration);
+    // The diamond on top pulses on every beat (see pulseBeat).
+    this.diamondEl = document.createElement('span');
+    this.diamondEl.className = 'ps-staff-playhead-diamond';
+    this.cursorEl.appendChild(this.diamondEl);
     // In scroll mode the cursor lives in the viewport (fixed anchor, clipped).
     // In wrapped mode it lives in the scrolling content so it tracks the row.
     (wrapped ? rendererDiv : viewport).appendChild(this.cursorEl);
@@ -802,7 +860,7 @@ class StaffRendererImpl implements ScoreRenderer {
         wording.setAttribute('dx', '3');
         wording.textContent = 'times';
         instruction.append(count, wording);
-        svg.appendChild(instruction);
+        (this.rowGroups[g.system] ?? svg).appendChild(instruction);
       });
 
       const bg = document.createElementNS(NS, 'rect');
@@ -869,7 +927,7 @@ class StaffRendererImpl implements ScoreRenderer {
       // The frame extends equally above/below the staff without changing its spacing.
       for (const placement of plan.placements.filter(p => p.isGap)) {
         const leading = placement.isGap === 'leading';
-        this.interludes.push(createNotationInterlude(rendererDiv, {
+        this.interludes.push(createNotationInterlude(this.rowDivs[placement.system] ?? rendererDiv, {
           kind: leading ? 'leading' : 'trailing',
           x: placement.x * this.scale,
           y: (placement.y + this.staffLineTop) * this.scale - INTERLUDE_EXTRA_HEIGHT / 2,
@@ -1169,26 +1227,35 @@ class StaffRendererImpl implements ScoreRenderer {
       idx < 0 ? 'upcoming' : i < idx ? 'played' : i === idx ? 'active' : 'upcoming'));
   }
 
-  /** Tint the active note or rest without scaling connected stems and beams. */
-  private updateActiveNote(): void {
+  /** Played notes dim, the sounding one lights. Played progress stays while the cursor is hidden. */
+  private updateNoteStates(): void {
     if (this.noteEls.length === 0) return;
     const inGap = this.lastPlaybackMs < 0 || this.lastPlaybackMs >= this.gapStartMs;
-    let idx =
-      this.cursorVisible && !inGap
-        ? this.indexAtOrBefore(this.hits, this.lastPlaybackMs, 'ms')
-        : -1;
-    if (idx >= 0 && this.lastPlaybackMs >= this.hits[idx].endMs) idx = -1;
-    if (idx === this.activeNoteIdx) return;
-
+    const { active, played } = this.lastPlaybackMs < 0
+      ? { active: -1, played: 0 }
+      : noteStateAt(this.lastPlaybackMs, this.hits);
+    const shownActive = this.cursorVisible && !inGap ? active : -1;
+    if (played === this.playedCount && shownActive === this.activeNoteIdx) return;
+    const lo = Math.min(played, this.playedCount);
+    const hi = Math.max(played, this.playedCount);
+    for (let k = lo; k < hi; k++) {
+      this.noteEls[k]?.group?.setAttribute('data-note-state', k < played ? 'played' : 'upcoming');
+    }
     const prev = this.noteEls[this.activeNoteIdx]?.group;
-    if (prev) {
-      prev.setAttribute('data-note-state', 'upcoming');
-    }
-    const next = this.noteEls[idx]?.group;
-    if (next) {
-      next.setAttribute('data-note-state', 'active');
-    }
-    this.activeNoteIdx = idx;
+    if (prev) prev.setAttribute('data-note-state', this.activeNoteIdx < played ? 'played' : 'upcoming');
+    this.noteEls[shownActive]?.group?.setAttribute('data-note-state', 'active');
+    this.playedCount = played;
+    this.activeNoteIdx = shownActive;
+  }
+
+  /** Restart the diamond's beat pulse (skipped under reduced motion). */
+  private pulseBeat(): void {
+    const diamond = this.diamondEl;
+    if (!diamond || typeof diamond.animate !== 'function' || prefersReducedMotion()) return;
+    diamond.animate(
+      [{ transform: 'rotate(45deg) scale(1.7)' }, { transform: 'rotate(45deg) scale(1)' }],
+      { duration: 260, easing: 'cubic-bezier(.22,1,.36,1)' },
+    );
   }
 
   private planReadingStops(): void {
@@ -1210,7 +1277,7 @@ class StaffRendererImpl implements ScoreRenderer {
         else this.verticalReadingRows.push({ y, startMs: this.gapStartMs, endMs: this.totalDurationMs });
       }
       this.rowReadingStops = Array.from({ length: this.systemCount }, (_, system) => scoreReadingStops(
-        this.measureGeoms.filter(g => Math.round((g.y - this.staveTop) / this.systemPitch) === system)
+        this.measureGeoms.filter(g => g.system === system)
           .map(g => ({ ...g, x: g.x * scale, width: g.width * scale })),
         this.beatLabels.filter(b => b.system === system).map(b => ({ ms: b.ms, x: b.x * scale })),
         this.hits.filter(h => h.system === system).map(h => ({ ms: h.ms, x: h.x * scale })),
@@ -1236,7 +1303,7 @@ class StaffRendererImpl implements ScoreRenderer {
     // These live inside the SVG (model coords), so they work in both modes
     // without per-mode handling.
     this.updateActiveMeasure();
-    this.updateActiveNote();
+    this.updateNoteStates();
     const g = this.measureGeoms[this.activeMeasureIdx];
     if (this.measureProgressEl) {
       this.measureProgressEl.setAttribute('opacity', g ? '1' : '0');
@@ -1254,6 +1321,7 @@ class StaffRendererImpl implements ScoreRenderer {
       this.beatLabels[this.activeBeatIdx]?.el.setAttribute('data-active', 'false');
       this.beatLabels[activeBeat]?.el.setAttribute('data-active', 'true');
       this.activeBeatIdx = activeBeat;
+      if (activeBeat >= 0) this.pulseBeat();
     }
 
     if (this.layoutMode === 'wrapped') {
@@ -1266,7 +1334,7 @@ class StaffRendererImpl implements ScoreRenderer {
       this.cursorEl.style.top = `${top}px`;
       this.cursorEl.style.transform = `translateX(${x}px)`;
       this.cursorEl.style.opacity =
-        this.cursorVisible && !inInterlude && this.hits.length > 0 ? '0.9' : '0';
+        this.cursorVisible && !inInterlude && this.hits.length > 0 ? '1' : '0';
 
       // Read ahead continuously; never wait for the bottom row to be clipped.
       if (this.viewportEl && this.autoFollow && this.cursorVisible) {
@@ -1292,7 +1360,7 @@ class StaffRendererImpl implements ScoreRenderer {
     // Turn instantly in space; only opacity settles. A sliding page would make
     // students chase the notes and put the cursor out of sync with the glyphs.
     if (steadyReading && staffTranslate !== this.staffTranslate
-      && this.cursorVisible && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      && this.cursorVisible && !prefersReducedMotion()) {
       this.rendererDiv.getAnimations().forEach(animation => animation.cancel());
       this.rendererDiv.animate([{ opacity: .65 }, { opacity: 1 }], { duration: 140, easing: 'ease-out' });
     }
@@ -1302,7 +1370,7 @@ class StaffRendererImpl implements ScoreRenderer {
     const cursorX = staffTranslate + playbackScaledX;
     this.cursorEl.style.transform = `translateX(${cursorX}px)`;
     const visible = cursorX >= -2 && cursorX <= this.viewportWidth + 2;
-    this.cursorEl.style.opacity = this.cursorVisible && !inInterlude && visible ? '0.85' : '0';
+    this.cursorEl.style.opacity = this.cursorVisible && !inInterlude && visible ? '1' : '0';
   }
 
   /** Place the translucent ghost playhead at the click-landing position for a
@@ -1478,6 +1546,11 @@ class StaffRendererImpl implements ScoreRenderer {
       beat: t < 0.5 ? a.beat : b.beat,
     };
   }
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 function clampZoom(zoom: number): number {
