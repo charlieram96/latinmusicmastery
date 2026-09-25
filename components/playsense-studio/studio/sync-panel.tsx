@@ -13,7 +13,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, ChevronsLeftRight, FilePlus2, Loader2, Move, Music2, Repeat } from 'lucide-react';
+import { AudioLines, ChevronsLeftRight, FilePlus2, Loader2, Move, Music2, Repeat, Undo2, Wand2 } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -43,6 +43,7 @@ import { TransportBar } from '@/components/playsense-studio/player/transport/tra
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
 import { SNAP_PX, barFlags, firstAttackTime, flagText, snapBarTime, snapSectionShift } from '@/lib/playsense-studio/hits';
+import { autoPlaceBars, lerpMarkers } from '@/lib/playsense-studio/auto-place';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
@@ -217,6 +218,12 @@ const TIMING_DEBOUNCE_MS = 1500;
 /** Stable empty array so `peaks?.hits ?? EMPTY_HITS` never churns deps with a
  *  fresh `[]` every render when there are no detected hits yet. */
 const EMPTY_HITS: number[] = [];
+
+/** Auto-place tween length (ms) and its ease-out curve. */
+const AUTO_PLACE_TWEEN_MS = 300;
+function easeOut(p: number): number {
+  return 1 - (1 - p) ** 3;
+}
 
 function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
   const m = state.measures.find((mm) => mm.measureNumber === ref.measureNumber);
@@ -637,6 +644,96 @@ export function SyncPanel({
     }
   }, [trimmed, clock, clock.isPlaying, clock.currentSeconds, trimWindow.endSeconds]);
 
+  // --- Auto-place bars (spec §7) --------------------------------------------
+  // Fits one steady tempo to the detected hits, lays every bar on it, then lets
+  // each bar settle onto the hit under its first note (autoPlaceBars, pure).
+  // Tweens to the result over 300 ms (skipped under reduced motion) and keeps
+  // the pre-placement markers around for a one-step undo. Timing still reaches
+  // the draft only through the existing setMarkers + setDirty(true) path below.
+  const [autoPlaceUndo, setAutoPlaceUndo] = useState<MarkerState | null>(null);
+  const placedRef = useRef<MarkerState | null>(null);
+  const [autoPlaceNotice, setAutoPlaceNotice] = useState<string | null>(null);
+  const tweenRafRef = useRef<number | null>(null);
+  const tweeningRef = useRef(false);
+
+  // The undo chip is a one-step affordance: it retires as soon as the markers
+  // change by anything OTHER than the placement landing (which sets markers to
+  // the very object autoPlaceBars produced), and it must NOT retire mid-tween,
+  // since every tween frame calls setMarkers with a freshly-lerped object.
+  useEffect(() => {
+    if (tweeningRef.current) return;
+    if (autoPlaceUndo && markers !== placedRef.current) setAutoPlaceUndo(null);
+  }, [markers, autoPlaceUndo]);
+
+  // The failure notice is transient: gone after 6 s, or sooner if anything else
+  // moves the markers.
+  useEffect(() => {
+    if (!autoPlaceNotice) return;
+    const id = setTimeout(() => setAutoPlaceNotice(null), 6000);
+    return () => clearTimeout(id);
+  }, [autoPlaceNotice]);
+  useEffect(() => {
+    setAutoPlaceNotice(null);
+  }, [markers]);
+
+  const runAutoPlace = useCallback(() => {
+    const res = autoPlaceBars(markersRef.current, hits, {
+      start: trimWindow.startSeconds,
+      end: Number.isFinite(trimWindow.endSeconds)
+        ? trimWindow.endSeconds
+        : (videoDurationSeconds ?? clock.durationSeconds ?? Infinity),
+    });
+    if (!res) {
+      setAutoPlaceNotice('Not enough clear hits to place the bars.');
+      return;
+    }
+    const from = markersRef.current;
+    setAutoPlaceUndo(from);
+    placedRef.current = res.state;
+
+    if (tweenRafRef.current !== null) {
+      cancelAnimationFrame(tweenRafRef.current);
+      tweenRafRef.current = null;
+    }
+
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    if (reducedMotion) {
+      tweeningRef.current = false;
+      setMarkers(res.state);
+      setDirty(true);
+      return;
+    }
+
+    tweeningRef.current = true;
+    const startedAt = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - startedAt) / AUTO_PLACE_TWEEN_MS);
+      setMarkers(lerpMarkers(from, res.state, easeOut(p)));
+      if (p < 1) {
+        tweenRafRef.current = requestAnimationFrame(tick);
+      } else {
+        tweenRafRef.current = null;
+        tweeningRef.current = false;
+        setMarkers(res.state);
+        setDirty(true);
+      }
+    };
+    tweenRafRef.current = requestAnimationFrame(tick);
+  }, [hits, trimWindow.startSeconds, trimWindow.endSeconds, videoDurationSeconds, clock]);
+
+  // Cancel an in-flight tween on unmount.
+  useEffect(() => {
+    return () => {
+      if (tweenRafRef.current !== null) cancelAnimationFrame(tweenRafRef.current);
+    };
+  }, []);
+
+  const undoAutoPlace = useCallback(() => {
+    if (!autoPlaceUndo) return;
+    setMarkers(autoPlaceUndo);
+    setDirty(true);
+    setAutoPlaceUndo(null);
+  }, [autoPlaceUndo]);
 
   // Timing-only per-measure slots — the editor zips these with extractTrackEvents
   // for the ACTIVE track inside IntegratedEditor (so track-switching doesn't churn SyncPanel).
@@ -1226,6 +1323,28 @@ export function SyncPanel({
                 <AudioLines className="h-4 w-4" />
                 <span className="hidden lg:inline">Anchor at playhead</span>
               </button>
+            )}
+
+            <button
+              type="button"
+              onClick={runAutoPlace}
+              disabled={!hits.length}
+              className="st-chip"
+              title={hits.length ? 'Fit the bars to the recording' : 'Re-analyze audio to find the hits'}
+            >
+              <Wand2 className="h-4 w-4" />
+              <span className="hidden lg:inline">Auto-place bars</span>
+            </button>
+            {autoPlaceUndo && (
+              <button type="button" onClick={undoAutoPlace} className="st-chip" title="Put the bars back where they were">
+                <Undo2 className="h-4 w-4" />
+                Undo auto-place
+              </button>
+            )}
+            {autoPlaceNotice && (
+              <span className="text-xs text-muted-foreground" role="status">
+                {autoPlaceNotice}
+              </span>
             )}
 
             <div className="ml-auto flex items-center gap-1.5">
