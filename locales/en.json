@@ -2071,6 +2071,22 @@
           "title": "Your path",
           "module": "Module {n} · {title}",
           "courseMap": "Course map"
+        },
+        "streak": {
+          "title": "Practice streak",
+          "days": "{count} days",
+          "daysOne": "{count} day",
+          "best": "Best: {count} days.",
+          "bestOne": "Best: {count} day.",
+          "weeklyGoal": "Weekly goal",
+          "goalProgress": "{done} of {goal} lessons",
+          "toGo": "{count} to go",
+          "reached": "Reached",
+          "heatLabel": "Practice over the last 5 weeks",
+          "fiveWeeksAgo": "5 weeks ago",
+          "today": "Today",
+          "cell": "{date}: {count} lessons",
+          "cellOne": "{date}: {count} lesson"
         }
       }
     },

@@ -12,7 +12,7 @@ import { ContinueCard } from '@/components/dashboard/home/continue-card'
 import { CourseList } from '@/components/dashboard/home/course-list'
 import { RecommendedSection } from '@/components/dashboard/home/recommended-section'
 import { FeedbackCard } from '@/components/dashboard/home/feedback-card'
-import { PracticeCalendar } from '@/components/dashboard/home/practice-calendar'
+import { StreakCard } from '@/components/dashboard/home/streak-card'
 import { YourPathCard } from '@/components/dashboard/home/your-path-card'
 import { yourPathFor, type YourPath } from '@/lib/dashboard/your-path'
 import { MasterClassCard } from '@/components/dashboard/home/master-class-card'
@@ -406,6 +406,9 @@ export default async function DashboardPage() {
   return (
     <>
     <PageBackground />
+    {/* z-[1] lifts the content over the fixed z-0 background. It makes a stacking
+        context, which is fine: the header, rail and mobile nav are z-40/50 outside
+        it, and every overlay on this page is portaled or stays inside its card. */}
     <div className="relative z-[1] w-full space-y-6 lg:space-y-8">
       <GreetingRow firstName={data.firstName} streak={data.streak} weekDone={data.weekDone} weekGoal={data.weekGoal} />
       <ContinueCard card={data.continueCard} />
@@ -418,7 +421,7 @@ export default async function DashboardPage() {
           <FeedbackCard feedback={data.feedback} />
         </div>
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-          <PracticeCalendar
+          <StreakCard
             cells={data.calendar}
             weekDone={data.weekDone}
             weekGoal={data.weekGoal}

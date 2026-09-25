@@ -1,0 +1,13 @@
+/* The streak flame's gentle flicker; off under reduced motion. */
+@keyframes flicker {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  30% { transform: scale(1.06, 0.96) rotate(-3deg); }
+  60% { transform: scale(0.97, 1.05) rotate(2deg); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .flicker {
+    animation: flicker 1.6s ease-in-out infinite;
+    transform-origin: 50% 90%;
+  }
+}

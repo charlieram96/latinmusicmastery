@@ -2071,6 +2071,22 @@
           "title": "Tu camino",
           "module": "Módulo {n} · {title}",
           "courseMap": "Mapa del curso"
+        },
+        "streak": {
+          "title": "Racha de práctica",
+          "days": "{count} días",
+          "daysOne": "{count} día",
+          "best": "Mejor: {count} días.",
+          "bestOne": "Mejor: {count} día.",
+          "weeklyGoal": "Meta semanal",
+          "goalProgress": "{done} de {goal} lecciones",
+          "toGo": "faltan {count}",
+          "reached": "Cumplida",
+          "heatLabel": "Práctica de las últimas 5 semanas",
+          "fiveWeeksAgo": "Hace 5 semanas",
+          "today": "Hoy",
+          "cell": "{date}: {count} lecciones",
+          "cellOne": "{date}: {count} lección"
         }
       }
     },
