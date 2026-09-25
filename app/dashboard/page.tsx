@@ -250,8 +250,10 @@ export default async function DashboardPage() {
           nextClassTitle: classes[index + 1]?.title ?? null,
           segments,
         }
-        yourPath = yourPathFor(course, completed, cls.id)
       }
+      // The path shows even when the course is finished (index -1): it then
+      // ends on the last lesson and its checkpoint, with nothing current.
+      yourPath = yourPathFor(course, completed, index >= 0 ? classes[index]?.id ?? null : null)
     }
   }
 
