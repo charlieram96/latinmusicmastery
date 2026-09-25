@@ -2066,6 +2066,11 @@
           "tunerBody": "Afina antes de tocar",
           "playSense": "Play Sense",
           "playSenseBody": "Practica un patrón"
+        },
+        "path": {
+          "title": "Tu camino",
+          "module": "Módulo {n} · {title}",
+          "courseMap": "Mapa del curso"
         }
       }
     },
