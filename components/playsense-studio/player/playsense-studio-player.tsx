@@ -36,6 +36,7 @@ import {
 import { Minus, Plus } from 'lucide-react';
 import { SplitWorkspace, WorkspaceLayoutSwitcher } from './split-workspace';
 import { useWorkspaceLayout } from './use-workspace-layout';
+import { WorkspaceToolsPortal } from './workspace-tools-slot';
 import { WATCH_WORKSPACE } from '@/lib/playsense-studio/workspace-layout';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
@@ -690,7 +691,8 @@ export function PlaysenseStudioPlayer({
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-                    <WorkspaceLayoutSwitcher controller={workspace} />
+                    {/* In a lesson the switcher lives in the action bar. */}
+                    <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} /></WorkspaceToolsPortal>
                     <StaffLayoutSwitch value={notationLayout} onChange={setNotationLayout} />
                   </div>
                 </div>

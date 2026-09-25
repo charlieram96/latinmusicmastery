@@ -33,6 +33,8 @@ import { ExerciseModeFrame } from './exercise-mode-frame'
 import { ExerciseScoreWorkspaceBridge } from './exercise-workspace'
 import { SplitWorkspace, WorkspaceLayoutSwitcher } from '@/components/playsense-studio/player/split-workspace'
 import { useWorkspaceLayout } from '@/components/playsense-studio/player/use-workspace-layout'
+import { WorkspaceToolsPortal } from '@/components/playsense-studio/player/workspace-tools-slot'
+import { useStaffLayoutPreference } from '@/components/playsense-studio/player/notation/staff-layout-switch'
 import { PLAY_WORKSPACE } from '@/lib/playsense-studio/workspace-layout'
 import { useLessonActivity } from './lesson-progress-context'
 import { finishedExercise } from '@/lib/courses/lesson-completion'
@@ -90,7 +92,9 @@ function ScoreExerciseSession({
   const completePerformance = useLessonActivity('performance')
   // Play opens with the staff and highway filling the stage and the teacher
   // video floating bottom right (24 % wide); the student can re-lay it out.
-  const workspace = useWorkspaceLayout('play', PLAY_WORKSPACE)
+  // Remembered per staff layout, like watch (lmm-workspace:play:stacked / :horizontal).
+  const [staffLayout, setStaffLayout] = useStaffLayoutPreference()
+  const workspace = useWorkspaceLayout(`play:${staffLayout}`, PLAY_WORKSPACE)
   // The student's mix over the backing tracks: every track plays, each at the
   // level the student set (on top of the authored level) or muted. Remembered
   // per viewer; hydrated after mount so the server and first client render agree.
@@ -304,7 +308,7 @@ function ScoreExerciseSession({
     <ExerciseScore score={score} currentMs={staffMs} getCurrentMs={getStaffMs}
       playing={session.sessionState === 'playing' || session.sessionState === 'paused'} pass={Math.floor(session.playheadProgress * loopCount) + 1}
       getPass={() => Math.floor(Math.max(0, session.getElapsedSeconds()) / exerciseDurationSec * loopCount) + 1}
-      passCount={loopCount} onDurationKnown={setStaffDurationMs}/>
+      passCount={loopCount} onDurationKnown={setStaffDurationMs} staffLayout={staffLayout} onStaffLayoutChange={setStaffLayout}/>
   ) : null
 
   const stageEl = (
@@ -407,7 +411,7 @@ function ScoreExerciseSession({
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            {exerciseVideo && <WorkspaceLayoutSwitcher controller={workspace} />}
+            {exerciseVideo && <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} /></WorkspaceToolsPortal>}
             {/* Backing-track mixer — a mute and a level per track, usable
                 before and during the attempt (changes ramp live). */}
             {backingTracks && backingTracks.length > 0 && (

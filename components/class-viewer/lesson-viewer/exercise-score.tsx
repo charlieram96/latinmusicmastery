@@ -11,6 +11,7 @@ import { useTranslation } from '@/components/language-provider'
 import { repeatProjection } from '@/lib/playsense-studio/repeats'
 import { trackDurationMs, walkMeasures } from '@/lib/playsense-studio/time-mapping'
 import { exerciseReadingScore, exerciseReadingTime } from '@/lib/playsense-studio/exercise-reading-score'
+import type { StaffLayoutChoice } from '@/lib/playsense-studio/notation/staff-n1'
 import { useExerciseWorkspace } from './exercise-workspace'
 import './exercise-score.css'
 
@@ -23,11 +24,16 @@ interface ExerciseScoreProps {
   getPass?: () => number
   passCount: number
   onDurationKnown: (duration: number) => void
+  /** Controlled staff layout, when the parent keys other state by it (the play workspace). */
+  staffLayout?: StaffLayoutChoice
+  onStaffLayoutChange?: (next: StaffLayoutChoice) => void
 }
 
-export function ExerciseScore({ score, currentMs, getCurrentMs, playing, pass, getPass, passCount, onDurationKnown }: ExerciseScoreProps) {
+export function ExerciseScore({ score, currentMs, getCurrentMs, playing, pass, getPass, passCount, onDurationKnown, staffLayout, onStaffLayoutChange }: ExerciseScoreProps) {
   const { t } = useTranslation()
-  const [layout, setLayout] = useStaffLayoutPreference()
+  const [ownLayout, setOwnLayout] = useStaffLayoutPreference()
+  const layout = staffLayout ?? ownLayout
+  const setLayout = onStaffLayoutChange ?? setOwnLayout
   const stacked = layout === 'stacked'
   const [autoFollow, setAutoFollow] = useState(true)
   const [zoom, setZoom] = useState(1)
