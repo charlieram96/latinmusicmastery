@@ -1,5 +1,12 @@
 {
-  "lessonView": {"videoToggle": "Vídeo", "scoreToggle": "Partitura","label": "Vista de la lección", "both": "Vídeo + partitura", "video": "Solo vídeo", "score": "Solo partitura"},
+  "lessonView": {
+    "videoToggle": "Vídeo",
+    "scoreToggle": "Partitura",
+    "label": "Vista de la lección",
+    "both": "Vídeo + partitura",
+    "video": "Solo vídeo",
+    "score": "Solo partitura"
+  },
   "common": {
     "language": "Idioma",
     "changeLanguage": "Cambiar idioma",
@@ -1873,6 +1880,28 @@
           "lessonOf": "Lección {n} de {total}",
           "left": "faltan {duration}",
           "inYourPlan": "Incluido en tu plan"
+        },
+        "path": {
+          "continue": "Continuar",
+          "start": "Empezar",
+          "minutes": "{n} min",
+          "lessonN": "Lección {n}",
+          "checkpoint": "Punto de control del módulo {n}",
+          "moreOne": "{count} más",
+          "more": "{count} más",
+          "prev": "Lecciones anteriores",
+          "next": "Lecciones siguientes",
+          "state": {
+            "done": "Hecha",
+            "current": "Sigue",
+            "upcoming": "Próximamente"
+          },
+          "types": {
+            "video": "Video",
+            "play": "Tocar",
+            "quiz": "Quiz",
+            "other": "Lectura"
+          }
         }
       },
       "modules": {

@@ -1,5 +1,12 @@
 {
-  "lessonView": {"videoToggle": "Video", "scoreToggle": "Score","label": "Lesson view", "both": "Video + score", "video": "Video only", "score": "Score only"},
+  "lessonView": {
+    "videoToggle": "Video",
+    "scoreToggle": "Score",
+    "label": "Lesson view",
+    "both": "Video + score",
+    "video": "Video only",
+    "score": "Score only"
+  },
   "common": {
     "language": "Language",
     "changeLanguage": "Change language",
@@ -1873,6 +1880,28 @@
           "lessonOf": "Lesson {n} of {total}",
           "left": "{duration} left",
           "inYourPlan": "Included in your plan"
+        },
+        "path": {
+          "continue": "Continue",
+          "start": "Start",
+          "minutes": "{n} min",
+          "lessonN": "Lesson {n}",
+          "checkpoint": "Module {n} checkpoint",
+          "moreOne": "{count} more",
+          "more": "{count} more",
+          "prev": "Earlier lessons",
+          "next": "Later lessons",
+          "state": {
+            "done": "Done",
+            "current": "Up next",
+            "upcoming": "Coming up"
+          },
+          "types": {
+            "video": "Video",
+            "play": "Play along",
+            "quiz": "Quiz",
+            "other": "Reading"
+          }
         }
       },
       "modules": {
