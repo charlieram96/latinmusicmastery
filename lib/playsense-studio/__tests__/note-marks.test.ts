@@ -117,6 +117,16 @@ describe('tuplets', () => {
   });
 });
 
+describe('final review fixes', () => {
+  const r = { trackIndex: 0, measureIndex: 0, voice: 0 as const, eventIndex: 0 };
+  const t3 = (midi: number): MusicalEvent => ({ ...n(midi, 1 / 3), triplet: true });
+  it('T on member 4 of six legacy triplets merges only the drawn group of members 3–5', () => {
+    const s0 = st(doc([bar(1, [t3(60), t3(62), t3(64), t3(65), t3(67), t3(69), n(71, 2)])]));
+    const s1 = editorReducer(s0, { type: 'apply-tuplet', ref: { ...r, eventIndex: 4 }, n: 3, m: 2 });
+    expect(ev(s1)).toEqual([t3(60), t3(62), t3(64), { kind: 'note', midi: 65, durationQN: 1, id: 'n65' }, n(71, 2)]);
+  });
+});
+
 describe('slurs', () => {
   it('adds a slur to the next note, then toggles it off', () => {
     const s0 = st(doc([bar(1, [n(60, 2, 'a')]), bar(2, [n(62, 4, 'b')])]));

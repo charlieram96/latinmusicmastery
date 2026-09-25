@@ -34,6 +34,7 @@ import {
 import { getPercStrokes, resolvePercStroke, strokeNotation } from '@/lib/playsense-studio/perc-strokes';
 import { CLEF_REF_INDEX, letterAbove, letterPitch, pitchIndex, type Pitch } from '@/lib/playsense-studio/pitch';
 import { soundingQN, VALUE_NAME, writtenValue, type NoteValue } from '@/lib/playsense-studio/rhythm';
+import { legacyTripletGroupAt } from '@/lib/playsense-studio/legacy-triplets';
 import type { NotationClef } from '@/lib/playsense-studio/score-to-vexflow';
 import { isFillerRest, occupiedQN, QN_EPS } from '@/lib/playsense-studio/time-mapping';
 import { isTypingTarget } from '@/lib/playsense-studio/typing-target';
@@ -411,7 +412,8 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
         actions.forEach((a) => o.dispatch(a));
         // The cursor sits on the group's first note (a merge lands there too).
         const t = eventTuplet(e);
-        const first = t?.id ? events.findIndex((x) => eventTuplet(x)?.id === t.id) : index;
+        const first = t?.id ? events.findIndex((x) => eventTuplet(x)?.id === t.id)
+          : t ? (legacyTripletGroupAt(events, index)?.[0] ?? index) : index;
         setCursor(o, { ...c, index: first >= 0 ? first : index, anchor: null });
       },
 

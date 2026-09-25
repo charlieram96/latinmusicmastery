@@ -21,7 +21,7 @@ import {
 import { isPercussion, percussionNotation } from './perc-strokes';
 import { eventArticulations, eventDots, eventTuplet, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
 import { createAccidentalMemory, keyAlter, spellMidi, vexKey, type AccidentalCode, type SpelledPitch } from './notation/accidentals';
-import { VALUE_QN, writtenValue } from './rhythm';
+import { legacyTripletGroups } from './legacy-triplets';
 // notation/accidentals.ts imports midiToKeyString from this file. That circular
 // import is safe: both sides only use each other inside functions, never at
 // module top level.
@@ -268,20 +268,6 @@ const REST_KEY_V2: Record<NotationClef, string> = { treble: 'f/4', bass: 'a/2', 
 const ACCIDENTAL_BY_ALTER: Record<number, AccidentalCode> = { [-2]: 'bb', [-1]: 'b', 0: 'n', 1: '#', 2: '##' };
 
 /**
- * The beat-grid unit a legacy (id-less) triplet group closes against, from the
- * group's first written note value alone — independent of the time signature's
- * beat length, which for meters like 2/2 or 6/8 doesn't match the value's own
- * natural beat (see task-12 fix round 1). A 16th or shorter closes every half
- * beat; an 8th or a quarter closes every beat; a half or whole closes every
- * 2 or 4 quarter notes respectively.
- */
-function legacyTripletUnit(writtenQN: number | null): number {
-  if (writtenQN === null || writtenQN <= VALUE_QN['16']) return 0.5;
-  if (writtenQN <= VALUE_QN['q']) return 1;
-  return writtenQN; // half (2) or whole (4)
-}
-
-/**
  * Extract a flat list of VexEventDescriptors for a single track, with
  * cumulative QN positions ready for cursor mapping. Tempo changes do not
  * affect QN positions — only the score-internal time math (time-mapping.ts)
@@ -367,19 +353,17 @@ export function extractTrackEvents(
     if (voice2Raw.length === 0) tieCarry[2] = [];
 
     // Per-voice event loop, shared by voice 1 and voice 2. Legacy (id-less)
-    // triplets are grouped by beat position: a group closes once the running
-    // sounding position within the bar lands on a multiple of `unit` (or at a
-    // non-triplet event — see the loop body below).
+    // triplets are grouped by legacyTripletGroups — the same groups the editor
+    // merges and re-values — and each group gets its own fresh id.
     const describeVoice = (events: MusicalEvent[], voiceNo: 1 | 2): VexEventDescriptor[] => {
       const out: VexEventDescriptor[] = [];
       let qnInMeasure = 0;
-      let legacyOpen = false;
-      let legacyGroupIndex = 0;
-      let legacyId: string | null = null;
-      let legacyUnit = 0;
-      let legacyGroupStartQN = 0;
+      const legacyIdAt = new Map<number, string>();
+      legacyTripletGroups(events).forEach((group, g) => {
+        for (const i of group) legacyIdAt.set(i, `legacy-${measure.number}-${voiceNo}-${g}`);
+      });
 
-      for (const event of events) {
+      for (const [eventIndex, event] of events.entries()) {
         const beatInMeasure = qnInMeasure / beatQN + 1;
         const dots = eventDots(event);
         const dotted = dots >= 1;
@@ -390,29 +374,8 @@ export function extractTrackEvents(
         let tuplet: { id: string; n: number; m: number } | null = null;
         if (rawTuplet?.id) {
           tuplet = { id: rawTuplet.id, n: rawTuplet.n, m: rawTuplet.m };
-          legacyOpen = false;
         } else if (rawTuplet) {
-          // Legacy `triplet: true` with no id. A fresh id is taken whenever a
-          // group opens, so a group cut short (e.g. by a rest) doesn't leave
-          // the next one to reuse its id. `unit` is fixed from the group's
-          // first written value (see legacyTripletUnit) — not from the time
-          // signature's beat length, which can disagree with it (e.g. 2/2's
-          // half-note beat vs. an eighth-triplet's natural one-beat unit).
-          if (!legacyOpen) {
-            legacyId = `legacy-${measure.number}-${voiceNo}-${legacyGroupIndex++}`;
-            legacyOpen = true;
-            legacyGroupStartQN = qnInMeasure;
-            const wv = writtenValue(event);
-            legacyUnit = legacyTripletUnit(wv !== null ? VALUE_QN[wv] : null);
-          }
-          tuplet = { id: legacyId!, n: rawTuplet.n, m: rawTuplet.m };
-          const posAfter = qnInMeasure + event.durationQN;
-          const nearestMultiple = Math.round(posAfter / legacyUnit) * legacyUnit;
-          const onGrid = Math.abs(posAfter - nearestMultiple) < 1e-6;
-          const groupLength = posAfter - legacyGroupStartQN;
-          if (onGrid || groupLength >= 2 * legacyUnit - 1e-6) legacyOpen = false;
-        } else {
-          legacyOpen = false;
+          tuplet = { id: legacyIdAt.get(eventIndex)!, n: rawTuplet.n, m: rawTuplet.m };
         }
 
         let keys: string[];

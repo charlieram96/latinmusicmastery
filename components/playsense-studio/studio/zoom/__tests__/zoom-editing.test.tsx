@@ -168,6 +168,16 @@ describe('useZoomEditing keys', () => {
     expect(latest.zoom?.cursor.index).toBe(1);
   });
 
+  it('t on member 4 of six legacy triplets merges only its drawn group and lands on its start', () => {
+    const t3 = (midi: number): MusicalEvent => ({ ...n(midi, 1 / 3), triplet: true });
+    const { latest } = mount(doc([t3(60), t3(62), t3(64), t3(65), t3(67), t3(69), n(71, 2)]), { cursor: { index: 4 } });
+    key('t');
+    expect(events(latest.score).map((e) => [e.durationQN, !!e.triplet])).toEqual([
+      [expect.closeTo(1 / 3, 9), true], [expect.closeTo(1 / 3, 9), true], [expect.closeTo(1 / 3, 9), true], [1, false], [2, false],
+    ]);
+    expect(latest.zoom?.cursor.index).toBe(3);
+  });
+
   it('t on a dotted note flashes and changes nothing', () => {
     const { latest, flash } = mount(doc([{ ...n(60, 1.5), dots: 1 }]));
     key('ArrowLeft');

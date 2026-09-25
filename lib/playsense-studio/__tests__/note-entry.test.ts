@@ -169,6 +169,14 @@ describe('note entry: fix round 1', () => {
     const all = editorReducer(s0, { type: 'set-events-rhythm', refs: [r0(0), r0(1), r0(2)], value: '16' });
     expect(ev(all).slice(0, 3).map((e) => [e.durationQN, e.triplet])).toEqual([[0.25, undefined], [0.25, undefined], [0.25, undefined]]);
   });
+  it('allows a value change on one whole drawn group of a longer legacy run', () => {
+    const t3 = (midi: number): MusicalEvent => ({ ...n(midi, 1 / 3), triplet: true });
+    const s0 = st(doc([bar(1, [t3(60), t3(62), t3(64), t3(65), t3(67), t3(69), n(71, 2)])]));
+    const s1 = editorReducer(s0, { type: 'set-events-rhythm', refs: [r0(3), r0(4), r0(5)], value: '16' });
+    expect(s1).not.toBe(s0);
+    expect(ev(s1).slice(3, 6).map((e) => [e.durationQN, e.triplet])).toEqual([[0.25, undefined], [0.25, undefined], [0.25, undefined]]);
+    expect(ev(s1).slice(0, 3)).toEqual(ev(s0).slice(0, 3));
+  });
   it('refuses to add a chord note to a percussion note', () => {
     const s0 = st(doc([bar(1, [{ kind: 'note', id: 'p', midi: 38, durationQN: 1, percussion: { staffLine: 'C5', notehead: 'normal' } }])]));
     expect(editorReducer(s0, { type: 'add-chord-note', ref: r0(0), midi: 42 })).toBe(s0);

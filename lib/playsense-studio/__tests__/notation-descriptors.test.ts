@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { extractTrackEvents } from '../score-to-vexflow'
+import { legacyTripletGroups } from '../legacy-triplets'
 import { REFERENCE_EXCERPT_FIXTURE as F, GUITAR_LICK_FIXTURE, CONGA_TUMBAO_FIXTURE } from '../score-fixtures'
 import { VALUE_QN, type NoteValue } from '../rhythm'
 import { measureLengthInQN } from '../time-mapping'
@@ -233,6 +234,41 @@ describe('legacy triplet grouping by beat position', () => {
     const ev = extractTrackEvents(track, [4, 4], 0)[0].events
     expect(ev[1].tuplet!.id).toBe(ev[2].tuplet!.id)
     expect(ev[2].tuplet!.id).toBe(ev[3].tuplet!.id)
+  })
+
+  // Final review I2: an off-beat run never lands on the beat grid, so it has
+  // to close on its own length instead of running on to the 2 × unit valve.
+  const offBeatGroups = (leadQN: number) => {
+    const track: Track = { ...GUITAR_LICK_FIXTURE.tracks[0], measures: [{ number: 1, voices: [{ number: 1, events: [
+      { kind: 'note' as const, midi: 60, durationQN: leadQN },
+      ...[60, 62, 64, 65, 67, 69].map(midi => ({ kind: 'note' as const, midi, durationQN: 1 / 3, triplet: true })),
+    ] }] }] }
+    const ev = extractTrackEvents(track, [4, 4], 0)[0].events.slice(1)
+    return ev.map(d => d.tuplet!.id)
+  }
+  it('splits six eighth triplets after an eighth into 3 + 3', () => {
+    const ids = offBeatGroups(0.5)
+    expect(new Set(ids.slice(0, 3)).size).toBe(1)
+    expect(new Set(ids.slice(3)).size).toBe(1)
+    expect(ids[0]).not.toBe(ids[3])
+  })
+  it('splits six eighth triplets after a dotted quarter into 3 + 3', () => {
+    const ids = offBeatGroups(1.5)
+    expect(new Set(ids.slice(0, 3)).size).toBe(1)
+    expect(new Set(ids.slice(3)).size).toBe(1)
+    expect(ids[0]).not.toBe(ids[3])
+  })
+})
+
+describe('legacyTripletGroups', () => {
+  const t = (durationQN: number) => ({ kind: 'note' as const, midi: 60, durationQN, triplet: true })
+  it('lists the event indices of each drawn group', () => {
+    expect(legacyTripletGroups([t(1 / 3), t(1 / 3), t(1 / 3), t(1 / 3), t(1 / 3), t(1 / 3)])).toEqual([[0, 1, 2], [3, 4, 5]])
+    expect(legacyTripletGroups([{ kind: 'rest', durationQN: 0.5 }, t(1 / 3), t(1 / 3), t(1 / 3), t(1 / 3), t(1 / 3), t(1 / 3)]))
+      .toEqual([[1, 2, 3], [4, 5, 6]])
+  })
+  it('ignores tuplets that carry an id', () => {
+    expect(legacyTripletGroups([{ kind: 'note', midi: 60, durationQN: 1 / 3, tuplet: { id: 'a', n: 3, m: 2 } }, t(1 / 3)])).toEqual([[1]])
   })
 })
 

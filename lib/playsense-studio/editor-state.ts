@@ -36,6 +36,7 @@ import { eventArticulations, eventDots, eventSpelling, eventTuplet, tupletScale 
 import { octavePitch, semitonePitch, spelledMidi, stepPitch, type Pitch } from './pitch';
 import { VALUE_QN, soundingQN, valueFromQN, writtenValue, type NoteValue } from './rhythm';
 import { spellMidi } from './notation/accidentals';
+import { legacyTripletGroupAt } from './legacy-triplets';
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -308,22 +309,13 @@ function tidyChordAt(events: MusicalEvent[], index: number): void {
 /**
  * The indices of the tuplet group holding `events[index]`: every event in
  * the voice sharing its tuplet id or, for an id-less or legacy triplet, the
- * run of neighbouring id-less events with the same n:m (the renderer groups
- * consecutive events the same way).
+ * group the renderer draws around it (legacyTripletGroups).
  */
 function tupletGroup(events: MusicalEvent[], index: number): number[] {
   const t = eventTuplet(events[index]);
   if (!t) return [];
   if (t.id) return events.flatMap((e, i) => (eventTuplet(e)?.id === t.id ? [i] : []));
-  const same = (i: number) => {
-    const u = i >= 0 && i < events.length ? eventTuplet(events[i]) : null;
-    return !!u && !u.id && u.n === t.n && u.m === t.m;
-  };
-  let start = index;
-  let end = index;
-  while (same(start - 1)) start--;
-  while (same(end + 1)) end++;
-  return Array.from({ length: end - start + 1 }, (_, k) => start + k);
+  return legacyTripletGroupAt(events, index) ?? [index];
 }
 
 /** Where every event id sits: its bar and that bar's repeat tag. */
