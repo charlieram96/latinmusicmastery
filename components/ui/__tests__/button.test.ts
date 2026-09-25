@@ -13,6 +13,14 @@ describe('chunky button variants', () => {
     expect(cls).not.toContain('active:scale-[0.98]')
   })
 
+  it('press timing uses arbitrary properties Tailwind can emit (utility forms with var() are ambiguous and emit nothing)', () => {
+    const cls = buttonVariants({ variant: 'chunky' })
+    expect(cls).toContain('[transition-duration:var(--dur-tap)]')
+    expect(cls).toContain('[transition-timing-function:var(--ease-out)]')
+    expect(cls).not.toMatch(/(^|\s)duration-\[var/)
+    expect(cls).not.toMatch(/(^|\s)ease-\[var/)
+  })
+
   it('tones use their own deep edge colour', () => {
     expect(buttonVariants({ variant: 'chunky-success' })).toContain('shadow-[0_4px_0_hsl(var(--success-deep))]')
     expect(buttonVariants({ variant: 'chunky-danger' })).toContain('shadow-[0_4px_0_hsl(var(--danger-deep))]')

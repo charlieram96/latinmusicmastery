@@ -55,6 +55,37 @@ describe('PathStrip', () => {
     expect(bubbles[0].textContent).toContain('dashboard.pages.course.path.minutes(12)')
   })
 
+  it('centres the bubble without relying on the bob animation (reduced motion)', () => {
+    render()
+    const bubble = host.querySelector('[data-path-bubble]') as HTMLElement
+    expect(bubble.className.split(/\s+/)).toContain('-translate-x-1/2')
+  })
+
+  it('leaves room inside the scroller for the bubble above every node and the labels at the sides', () => {
+    render([...ITEMS, lesson('d', 4, 'upcoming'), lesson('e', 5, 'upcoming'), lesson('f', 6, 'upcoming')])
+    const nodes = host.querySelectorAll<HTMLElement>('[data-path-node]')
+    expect(nodes).toHaveLength(7) // six lessons + the checkpoint
+    for (const node of nodes) {
+      // the bubble reaches 34px + ~52px tall + 6px of bob above the node centre
+      expect(parseFloat(node.style.top)).toBeGreaterThanOrEqual(96)
+      // half a 110px label must fit left of the first node
+      expect(parseFloat(node.style.left)).toBeGreaterThanOrEqual(58)
+    }
+  })
+
+  it('renders the lesson card outside the scroller, only while a node is hovered', () => {
+    render()
+    expect(host.querySelectorAll('[role="tooltip"]')).toHaveLength(0)
+    const node = host.querySelectorAll<HTMLElement>('[data-path-node]')[1]
+    act(() => { node.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })) })
+    const tip = host.querySelector('[role="tooltip"]') as HTMLElement
+    expect(tip).not.toBeNull()
+    expect(tip.closest('[data-path-scroller]')).toBeNull()
+    expect(tip.textContent).toContain('Lesson b')
+    act(() => { node.dispatchEvent(new MouseEvent('mouseout', { bubbles: true })) })
+    expect(host.querySelectorAll('[role="tooltip"]')).toHaveLength(0)
+  })
+
   it('renders the gap count', () => {
     render()
     expect(host.textContent).toContain('dashboard.pages.course.path.more(4)')

@@ -69,7 +69,9 @@ export function buildPathNodes(
 ): PathNode[] {
   const all = sections.flatMap((s) => s.classes)
   const known = currentClassId !== null && all.some((c) => c.id === currentClassId)
-  const currentId = known ? currentClassId : all.find((c) => !isDone(c))?.id ?? null
+  // A finished course has no "current" lesson, even if the caller passes the last one viewed.
+  const finished = all.length > 0 && all.every(isDone)
+  const currentId = finished ? null : known ? currentClassId : all.find((c) => !isDone(c))?.id ?? null
 
   const nodes: PathNode[] = []
   let number = 0

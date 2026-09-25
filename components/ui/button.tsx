@@ -4,11 +4,11 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
-// Arbitrary values (not the duration-tap / ease-smooth shorthands) so tailwind-merge
-// recognises them and drops the base `duration-200`; unknown named keys would survive the merge.
-// The easing is an arbitrary property: an ease utility with a var() value is ambiguous to Tailwind.
+// Timing is set with arbitrary properties: Tailwind emits nothing for duration or
+// ease utilities given a var() value (ambiguous with tailwindcss-animate), and
+// arbitrary properties are emitted last, so they beat the base `duration-200`.
 const CHUNKY_BASE =
-  "rounded-[14px] font-heading font-extrabold uppercase tracking-[0.02em] transition-[transform,box-shadow,filter] duration-[var(--dur-tap)] [transition-timing-function:var(--ease-out)] " +
+  "rounded-[14px] font-heading font-extrabold uppercase tracking-[0.02em] transition-[transform,box-shadow,filter] [transition-duration:var(--dur-tap)] [transition-timing-function:var(--ease-out)] " +
   "active:scale-100 active:translate-y-[4px] active:shadow-none " +
   "disabled:opacity-100 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-[0_4px_0_hsl(var(--border))]"
 

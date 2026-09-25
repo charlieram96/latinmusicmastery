@@ -52,6 +52,13 @@ describe('buildPathNodes', () => {
     expect(nodes.at(-1)).toMatchObject({ kind: 'checkpoint', state: 'done' })
   })
 
+  it('a finished course has no current even when a current id is passed', () => {
+    const done: PathSectionInput[] = [{ id: 's', title: 'S', classes: [cls('x', 1, 1), cls('y', 2, 2)] }]
+    const nodes = buildPathNodes('son', done, 'y')
+    expect(nodes.some((n) => n.state === 'current')).toBe(false)
+    expect(nodes.find((n) => n.kind === 'lesson' && n.id === 'y')).toMatchObject({ state: 'done' })
+  })
+
   it('a checkpoint is done only when every lesson in its module is done', () => {
     const nodes = buildPathNodes('son', COURSE, null)
     const cps = nodes.filter((n) => n.kind === 'checkpoint')
