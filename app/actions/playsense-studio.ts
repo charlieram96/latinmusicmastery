@@ -11,12 +11,16 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { requireAdmin } from '@/lib/supabase/require-admin';
 import {
   normalizeClip,
   normalizeMediaTrim,
   type MediaTrim,
 } from '@/lib/playsense-studio/clip-model';
+import { clearUnpublishedDrafts } from '@/lib/playsense-studio/drafts/server';
+import { readNudges } from '@/lib/playsense-studio/drafts/timing';
 import { rebaseAnchor, secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
+import { getStudioDrafts, type StudioDraft } from '@/app/actions/studio-drafts';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 // ============================================
@@ -51,22 +55,8 @@ export interface ClassItemScorePayload {
     /** Per-note timing nudges (params.nudges) — the studio's authoritative
      *  list; the waypoints above already include their effect. */
     nudges: Array<{ qn: number; deltaSeconds: number }>;
+    params?: Record<string, unknown>;
   } | null;
-}
-
-/** params.nudges, defensively: anything malformed is dropped. */
-function readNudges(params: unknown): Array<{ qn: number; deltaSeconds: number }> {
-  const raw = (params as { nudges?: unknown } | null)?.nudges;
-  if (!Array.isArray(raw)) return [];
-  const out: Array<{ qn: number; deltaSeconds: number }> = [];
-  for (const n of raw) {
-    const qn = (n as { qn?: unknown })?.qn;
-    const deltaSeconds = (n as { deltaSeconds?: unknown })?.deltaSeconds;
-    if (typeof qn === 'number' && Number.isFinite(qn) && typeof deltaSeconds === 'number' && Number.isFinite(deltaSeconds)) {
-      out.push({ qn, deltaSeconds });
-    }
-  }
-  return out;
 }
 
 /** Load one time map's header + waypoints (or null). Shared by the active-map
@@ -102,6 +92,7 @@ async function loadTimeMap(
         beatInMeasure: w.beat_in_measure,
       })),
       nudges: readNudges(tm.params),
+      params: (tm.params ?? {}) as Record<string, unknown>,
     },
   };
 }
@@ -184,9 +175,11 @@ export interface ClassItemScoreSection extends ClassItemScorePayload {
   label: string | null;
   videoStartSeconds: number | null;
   videoEndSeconds: number | null;
-  /** Admin-only autosaved sync draft (not yet Published). Null when none.
-   *  Students never receive this — the studio seeds its markers from it. */
-  draftTimeMap: ClassItemScorePayload['activeTimeMap'];
+  /** The admin's unpublished draft for this section (studio_versions), or null.
+   *  Only set by getStudioScoreSectionsForClassItem (admin-only, below);
+   *  the plain student reader leaves this unset. Students never receive it —
+   *  the Studio opens on it when present. */
+  studioDraft?: StudioDraft | null;
   /** One video second known to land on a beat, for the student click track.
    *  Null = this section has no click. Marks ANY beat, not necessarily a
    *  downbeat, which is why the click is uniform. */
@@ -196,7 +189,11 @@ export interface ClassItemScoreSection extends ClassItemScorePayload {
   metronomeAnchorQn: number | null;
 }
 
-/** All scored sections for a class item, ordered by section_index. */
+/** All scored sections for a class item, ordered by section_index. Draft-free:
+ *  this is ALSO the student reader (components/class-viewer/class-item-renderer.tsx
+ *  calls it directly, with no admin session), so it must never call
+ *  getStudioDrafts (admin-only — students would just get an error / []).
+ *  Admin UI wanting drafts uses getStudioScoreSectionsForClassItem below. */
 export async function getScoreSectionsForClassItem(
   classItemId: string
 ): Promise<{ data?: ClassItemScoreSection[]; error?: string }> {
@@ -205,7 +202,7 @@ export async function getScoreSectionsForClassItem(
   const { data: rows, error } = await supabase
     .from('class_item_score_sections')
     .select(
-      'id, section_index, label, score_document_id, active_time_map_id, draft_time_map_id, video_start_seconds, video_end_seconds, metronome_anchor_seconds, metronome_anchor_qn'
+      'id, section_index, label, score_document_id, active_time_map_id, video_start_seconds, video_end_seconds, metronome_anchor_seconds, metronome_anchor_qn'
     )
     .eq('class_item_id', classItemId)
     .order('section_index', { ascending: true });
@@ -218,9 +215,6 @@ export async function getScoreSectionsForClassItem(
     if (payload.error || !payload.data) {
       return { error: payload.error ?? 'Failed to load a section score' };
     }
-    // Admin-only draft (transient) — only fetched when a section actually has one.
-    const draft = await loadTimeMap(supabase, row.draft_time_map_id);
-    if (draft.error) return { error: draft.error };
     out.push({
       ...payload.data,
       sectionId: row.id,
@@ -228,13 +222,27 @@ export async function getScoreSectionsForClassItem(
       label: row.label,
       videoStartSeconds: row.video_start_seconds,
       videoEndSeconds: row.video_end_seconds,
-      draftTimeMap: draft.data ?? null,
       metronomeAnchorSeconds: row.metronome_anchor_seconds,
       metronomeAnchorQn: row.metronome_anchor_qn,
     });
   }
 
   return { data: out };
+}
+
+/** Same sections as above, PLUS each one's unpublished draft (studioDraft).
+ *  Admin-only in effect: getStudioDrafts itself requires admin and errors
+ *  otherwise. Used by the Studio's own pages/workspaces, never by the
+ *  student-facing reader. */
+export async function getStudioScoreSectionsForClassItem(
+  classItemId: string
+): Promise<{ data?: ClassItemScoreSection[]; error?: string }> {
+  const res = await getScoreSectionsForClassItem(classItemId);
+  if (res.error || !res.data) return res;
+  const drafts = await getStudioDrafts(res.data.map((s) => ({ kind: 'section' as const, id: s.sectionId })));
+  if (drafts.error) return { error: drafts.error };
+  for (const s of res.data) s.studioDraft = drafts.data?.[`section:${s.sectionId}`] ?? null;
+  return { data: res.data };
 }
 
 // ============================================
@@ -408,23 +416,6 @@ export type ScoreOwner =
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
-/** Resolve the current user and assert admin. Returns userId or an error. */
-async function requireAdmin(
-  supabase: SupabaseServerClient
-): Promise<{ userId: string } | { error: string }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single();
-  if (!profile?.is_admin) return { error: 'Admin only' };
-  return { userId: user.id };
-}
-
 /** Validate + insert a score_documents row and its score_tracks. Cleans up the
  *  document if track insertion fails. Returns the new score_document id. */
 async function insertScore(
@@ -550,6 +541,10 @@ export async function attachScoreFromImport(
   // time maps). A failure here must not fail the import.
   if (prevScoreId && prevScoreId !== docId) {
     await supabase.from('score_documents').delete().eq('id', prevScoreId);
+    // This class item already had a score, so this is a replace: drop any
+    // unpublished draft so it can't overwrite the new score on publish.
+    const cleared = await clearUnpublishedDrafts(supabase, { kind: 'exercise', id: input.classItemId });
+    if (cleared.error) return { error: cleared.error };
   }
 
   revalidatePath('/dashboard');
@@ -822,116 +817,6 @@ export async function publishTimeMap(
   return { timeMapId: tmRow.id };
 }
 
-// Autosave a section's sync as a HIDDEN DRAFT (admin-only). Unlike publishTimeMap
-// this never touches active_time_map_id / video range / overlap — students keep
-// seeing the last Published alignment. Bounded to one draft map per section: an
-// existing draft is updated in place (safe — students never read it); otherwise a
-// new map is created and pointed at by draft_time_map_id. Publish consumes it.
-export async function saveSectionDraftTimeMap(input: {
-  classItemId: string;
-  scoreDocumentId: string;
-  sectionId: string;
-  method: string;
-  params: unknown;
-  waypoints: Array<{
-    musicalPositionQN: number;
-    videoTimeSeconds: number;
-    measureNumber: number | null;
-    beatInMeasure: number | null;
-  }>;
-}): Promise<{ timeMapId?: string; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single();
-  if (!profile?.is_admin) return { error: 'Admin only' };
-
-  if (input.waypoints.length < 2) {
-    return { error: 'Need at least two waypoints to save a draft.' };
-  }
-  // Same strict-monotonic invariant the player relies on.
-  const sorted = [...input.waypoints].sort((a, b) => a.musicalPositionQN - b.musicalPositionQN);
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i].musicalPositionQN <= sorted[i - 1].musicalPositionQN) {
-      return { error: 'Waypoints have duplicate musical positions.' };
-    }
-    if (sorted[i].videoTimeSeconds <= sorted[i - 1].videoTimeSeconds) {
-      return { error: 'Waypoints must be strictly increasing in video time.' };
-    }
-  }
-
-  const { data: sec, error: secErr } = await supabase
-    .from('class_item_score_sections')
-    .select('draft_time_map_id')
-    .eq('id', input.sectionId)
-    .single();
-  if (secErr) return { error: secErr.message };
-
-  const waypointRows = (mapId: string) =>
-    sorted.map((w) => ({
-      time_map_id: mapId,
-      musical_position_qn: w.musicalPositionQN,
-      video_time_seconds: w.videoTimeSeconds,
-      measure_number: w.measureNumber,
-      beat_in_measure: w.beatInMeasure,
-    }));
-
-  let draftId = sec?.draft_time_map_id as string | null;
-
-  if (draftId) {
-    // Update the existing draft map in place.
-    const { error: updErr } = await supabase
-      .from('score_time_maps')
-      .update({ method: input.method, params: input.params as unknown as never })
-      .eq('id', draftId);
-    if (updErr) return { error: updErr.message };
-    const { error: delErr } = await supabase
-      .from('score_time_waypoints')
-      .delete()
-      .eq('time_map_id', draftId);
-    if (delErr) return { error: delErr.message };
-    const { error: wpErr } = await supabase.from('score_time_waypoints').insert(waypointRows(draftId));
-    if (wpErr) return { error: wpErr.message };
-    return { timeMapId: draftId };
-  }
-
-  // No draft yet: create one and point the section at it.
-  const { data: tmRow, error: tmErr } = await supabase
-    .from('score_time_maps')
-    .insert({
-      score_document_id: input.scoreDocumentId,
-      class_item_id: input.classItemId,
-      method: input.method,
-      params: input.params as unknown as never,
-      created_by: user.id,
-    })
-    .select('id')
-    .single();
-  if (tmErr || !tmRow) return { error: tmErr?.message ?? 'Insert failed' };
-  draftId = tmRow.id;
-
-  const { error: wpErr } = await supabase.from('score_time_waypoints').insert(waypointRows(draftId));
-  if (wpErr) {
-    await supabase.from('score_time_maps').delete().eq('id', draftId);
-    return { error: wpErr.message };
-  }
-
-  const { error: linkErr } = await supabase
-    .from('class_item_score_sections')
-    .update({ draft_time_map_id: draftId, updated_at: new Date().toISOString() })
-    .eq('id', input.sectionId);
-  if (linkErr) return { error: linkErr.message };
-
-  return { timeMapId: draftId };
-}
-
 // ============================================
 // M8 — blank score creation (author from scratch)
 // ============================================
@@ -1058,6 +943,11 @@ export async function detachScoreFromClassItem(
     .eq('id', classItemId);
 
   if (error) return { error: error.message };
+
+  // No score means no draft can publish against it anymore.
+  const cleared = await clearUnpublishedDrafts(supabase, { kind: 'exercise', id: classItemId });
+  if (cleared.error) return { error: cleared.error };
+
   revalidatePath('/dashboard');
   return { success: true };
 }
@@ -1188,6 +1078,11 @@ export async function replaceSectionScore(input: {
   if (prevScoreId && prevScoreId !== inserted.docId) {
     await supabase.from('score_documents').delete().eq('id', prevScoreId);
   }
+
+  // The section now points at the new document; drop any unpublished draft so
+  // it can't overwrite the new score on publish.
+  const cleared = await clearUnpublishedDrafts(supabase, { kind: 'section', id: input.sectionId });
+  if (cleared.error) return { error: cleared.error };
 
   revalidatePath('/dashboard');
   return { scoreDocumentId: inserted.docId };
@@ -1541,6 +1436,8 @@ export interface ExerciseMedia {
   videoTrimOutSeconds: number | null;
   /** One video second known to land on a beat, for the studio click. */
   metronomeAnchorSeconds: number | null;
+  /** The musical position (quarter notes) that anchor second lands on. */
+  metronomeAnchorQn: number | null;
   /** Optional time map syncing the play-along video to the graded score's beats.
    *  When present, consumers position the video by musical position; otherwise
    *  they fall back to the linear crop (videoStartSeconds). */
@@ -1557,7 +1454,7 @@ export async function getExerciseMedia(
   const { data: item, error: itemErr } = await supabase
     .from('class_items')
     .select(
-      'exercise_video_url, exercise_video_start_seconds, exercise_video_trim_in_seconds, exercise_video_trim_out_seconds, exercise_time_map_id, metronome_anchor_seconds'
+      'exercise_video_url, exercise_video_start_seconds, exercise_video_trim_in_seconds, exercise_video_trim_out_seconds, exercise_time_map_id, metronome_anchor_seconds, metronome_anchor_qn'
     )
     .eq('id', classItemId)
     .single();
@@ -1610,6 +1507,7 @@ export async function getExerciseMedia(
       videoStartSeconds: item.exercise_video_trim_in_seconds ?? item.exercise_video_start_seconds ?? 0,
       videoTrimOutSeconds: item.exercise_video_trim_out_seconds,
       metronomeAnchorSeconds: item.metronome_anchor_seconds,
+      metronomeAnchorQn: item.metronome_anchor_qn,
       timeMap,
       backingTracks: (tracks ?? []).map((t) => ({
         id: t.id,

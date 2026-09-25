@@ -12,25 +12,37 @@
 //
 // This thin shell owns which part is showing and injects a segmented toggle
 // into whichever workspace's app bar is mounted. Switching parts refetches the
-// target part's data first — both workspaces autosave to the DB but seed from
+// target part's data first — both workspaces autosave to drafts but seed from
 // props on mount, so a stale `initial*` would otherwise resurrect old state.
+//
+// It's also the ROOT StudioDraftsProvider for the whole class item: both parts'
+// owners (the exercise score + every Watch section) are seeded here, once, so
+// the unpublished count/leave-page warning cover both parts even while only one
+// is mounted.
 //
 // NOTE: the refetchers arrive as BOUND SERVER ACTIONS (props from page.tsx)
 // instead of being imported here — importing the actions module directly from
 // this client file deadlocks the Turbopack production build (Next 16.0.10;
 // reproduced deterministically: ~45s of compile, then a permanent idle hang).
+// Type-only imports (erased at compile time) are fine, and so is importing a
+// plain `lib/` module (queueStudioSave below) — the deadlock is specific to
+// the 'use server' actions module itself.
 
 import { Loader2, MonitorPlay, Target } from 'lucide-react';
-import { useState, useTransition } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
 import type { MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type {
   ClassItemScorePayload,
   ClassItemScoreSection,
   ExerciseMedia,
 } from '@/app/actions/playsense-studio';
+import type { StudioDraft } from '@/app/actions/studio-drafts';
+import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { StudioSetup } from '@/components/playsense-studio/studio/studio-setup';
 import { WatchVideoSetup } from '@/components/playsense-studio/studio/watch-video-setup';
+import { StudioDraftsProvider, useStudioDrafts } from '@/components/playsense-studio/studio/drafts/drafts-context';
+import { UnpublishedDot } from '@/components/playsense-studio/studio/drafts/unpublished-dot';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { StudioWorkspace } from './studio-workspace';
 import { VideoSectionsWorkspace } from './video-sections-workspace';
@@ -60,10 +72,13 @@ export interface ExerciseStudioProps {
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
   /** Exercise play-part media (optional cropped video + backing tracks). */
   initialExerciseMedia: ExerciseMedia | null;
+  /** The exercise score's unpublished draft, or null when there is none. */
+  initialExerciseDraft: StudioDraft | null;
   /** Bound server actions (see module note) used to refresh a part on switch. */
   fetchSections: () => Promise<{ data?: ClassItemScoreSection[]; error?: string }>;
   fetchExercise: () => Promise<{ data?: ClassItemScorePayload; error?: string }>;
   fetchExerciseMedia: () => Promise<{ data?: ExerciseMedia; error?: string }>;
+  fetchExerciseDraft: () => Promise<{ data?: Record<string, StudioDraft>; error?: string }>;
 }
 
 export function ExerciseStudio({
@@ -78,9 +93,11 @@ export function ExerciseStudio({
   initialScore,
   activeTimeMap,
   initialExerciseMedia,
+  initialExerciseDraft,
   fetchSections,
   fetchExercise,
   fetchExerciseMedia,
+  fetchExerciseDraft,
 }: ExerciseStudioProps) {
   // Default to the graded score — it's the item's reason to exist, and the
   // setup/replace flows (which remount this component) land there too.
@@ -93,6 +110,7 @@ export function ExerciseStudio({
     scoreDocumentId && initialScore ? { scoreDocumentId, initialScore, activeTimeMap } : null
   );
   const [exerciseMedia, setExerciseMedia] = useState(initialExerciseMedia);
+  const [exerciseDraft, setExerciseDraft] = useState<StudioDraft | null>(initialExerciseDraft);
   // Bump on every refetch so the remounting workspace reseeds from fresh data.
   const [switchCount, setSwitchCount] = useState(0);
 
@@ -113,7 +131,20 @@ export function ExerciseStudio({
       } else {
         // "No score document attached" just means StudioSetup should render.
         // The media panel seeds from props on mount, so refresh it alongside.
-        const [res, mediaRes] = await Promise.all([fetchExercise(), fetchExerciseMedia()]);
+        // The draft fetch runs on the same queue key useStudioDraft's autosave
+        // and the drafts-context's publish/discard use for this owner, so it
+        // resolves after any of those still in flight instead of racing them.
+        const [res, mediaRes, draftRes] = await Promise.all([
+          fetchExercise(),
+          fetchExerciseMedia(),
+          queueStudioSave(`draft:exercise:${classItemId}`, () => fetchExerciseDraft()),
+        ]);
+        if (draftRes.error) {
+          // Abort the switch — same as the fetchSections error path above:
+          // show the error, don't change part, and keep the cached draft.
+          setError(draftRes.error);
+          return;
+        }
         setExercisePayload(
           res.data
             ? {
@@ -124,6 +155,7 @@ export function ExerciseStudio({
             : null
         );
         if (mediaRes.data) setExerciseMedia(mediaRes.data);
+        setExerciseDraft(draftRes.data?.['exercise:' + classItemId] ?? null);
       }
       setSwitchCount((c) => c + 1);
       setPart(next);
@@ -131,6 +163,112 @@ export function ExerciseStudio({
   };
 
   const toggle = (
+    <PartToggle
+      classItemId={classItemId}
+      videoUrl={videoUrl}
+      part={part}
+      switchPart={switchPart}
+      isSwitching={isSwitching}
+      error={error}
+    />
+  );
+
+  let content: React.ReactNode;
+  if (part === 'watch') {
+    content = !videoUrl ? (
+      // No demo video yet — upload it here; router.refresh() re-enters with it.
+      <WatchVideoSetup classItemId={classItemId} classItemTitle={title} appBarExtra={toggle} />
+    ) : (
+      <VideoSectionsWorkspace
+        key={`watch-${switchCount}`}
+        classItemId={classItemId}
+        backHref={backHref}
+        title={title}
+        videoUrl={videoUrl}
+        videoDurationSeconds={videoDurationSeconds}
+        initialTrim={initialTrim}
+        initialSections={sections}
+        appBarExtra={toggle}
+      />
+    );
+  } else if (!exercisePayload) {
+    content = (
+      <StudioSetup
+        classItemId={classItemId}
+        classItemTitle={title}
+        backHref={backHref}
+        appBarExtra={toggle}
+      />
+    );
+  } else {
+    content = (
+      <StudioWorkspace
+        key={`exercise-${switchCount}-${exercisePayload.scoreDocumentId}`}
+        owner={{ kind: 'classItem', classItemId }}
+        backHref={backHref}
+        mode="exercise"
+        title={title}
+        videoUrl={videoUrl}
+        scoreDocumentId={exercisePayload.scoreDocumentId}
+        initialScore={exercisePayload.initialScore}
+        activeTimeMap={exercisePayload.activeTimeMap}
+        videoDurationSeconds={videoDurationSeconds}
+        appBarExtra={toggle}
+        exerciseMedia={exerciseMedia}
+        studioDraft={exerciseDraft}
+        onDraftContent={(c) => setExerciseDraft({ ...c, updatedAt: new Date().toISOString() })}
+      />
+    );
+  }
+
+  const clearExerciseDraft = useCallback(() => setExerciseDraft(null), []);
+
+  const initialSectionOwners = initialSections.map((s) => ({
+    owner: { kind: 'section' as const, id: s.sectionId },
+    label: s.studioDraft?.score.title ?? s.scoreDocument.title,
+    unpublished: s.studioDraft != null,
+  }));
+
+  return (
+    <StudioDraftsProvider
+      owners={[
+        { owner: { kind: 'exercise' as const, id: classItemId }, label: 'Exercise', unpublished: !!initialExerciseDraft },
+        ...initialSectionOwners,
+      ]}
+    >
+      {/* Stale-seed guard: a publish or discard on the exercise owner may land
+          while this part isn't mounted (e.g. from a global Publish popover
+          while Watch is showing) — clear the cached draft so switching back
+          to Exercise doesn't resurrect it ahead of the switch's own refetch. */}
+      <ExerciseDraftChangedWatcher classItemId={classItemId} onChanged={clearExerciseDraft} />
+      {content}
+    </StudioDraftsProvider>
+  );
+}
+
+/** The Watch/Exercise segmented toggle, injected into whichever workspace's
+ *  app bar is mounted. Reads the shared drafts context (both parts' owners
+ *  are seeded at the root, above) to show a gold dot on a part with an
+ *  unpublished draft — even the one not currently on screen. */
+function PartToggle({
+  classItemId,
+  videoUrl,
+  part,
+  switchPart,
+  isSwitching,
+  error,
+}: {
+  classItemId: string;
+  videoUrl: string | null;
+  part: Part;
+  switchPart: (next: Part) => void;
+  isSwitching: boolean;
+  error: string | null;
+}) {
+  const { statuses } = useStudioDrafts();
+  const watchUnpublished = Object.values(statuses).some((s) => s.owner.kind === 'section' && s.unpublished);
+  const exerciseUnpublished = !!statuses[`exercise:${classItemId}`]?.unpublished;
+  return (
     <div className="flex items-center gap-2">
       <div className="st-seg" role="radiogroup" aria-label="Exercise part">
         <button
@@ -147,6 +285,7 @@ export function ExerciseStudio({
         >
           <MonitorPlay className="h-3.5 w-3.5" />
           Watch
+          {watchUnpublished && <UnpublishedDot />}
         </button>
         <button
           type="button"
@@ -158,60 +297,28 @@ export function ExerciseStudio({
         >
           <Target className="h-3.5 w-3.5" />
           Exercise
+          {exerciseUnpublished && <UnpublishedDot />}
         </button>
       </div>
       {isSwitching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
       {error && <span className="text-xs text-destructive">{error}</span>}
     </div>
   );
+}
 
-  if (part === 'watch') {
-    if (!videoUrl) {
-      // No demo video yet — upload it here; router.refresh() re-enters with it.
-      return (
-        <WatchVideoSetup classItemId={classItemId} classItemTitle={title} appBarExtra={toggle} />
-      );
-    }
-    return (
-      <VideoSectionsWorkspace
-        key={`watch-${switchCount}`}
-        classItemId={classItemId}
-        backHref={backHref}
-        title={title}
-        videoUrl={videoUrl}
-        videoDurationSeconds={videoDurationSeconds}
-        initialTrim={initialTrim}
-        initialSections={sections}
-        appBarExtra={toggle}
-      />
-    );
-  }
-
-  if (!exercisePayload) {
-    return (
-      <StudioSetup
-        classItemId={classItemId}
-        classItemTitle={title}
-        backHref={backHref}
-        appBarExtra={toggle}
-      />
-    );
-  }
-
-  return (
-    <StudioWorkspace
-      key={`exercise-${switchCount}-${exercisePayload.scoreDocumentId}`}
-      owner={{ kind: 'classItem', classItemId }}
-      backHref={backHref}
-      mode="exercise"
-      title={title}
-      videoUrl={videoUrl}
-      scoreDocumentId={exercisePayload.scoreDocumentId}
-      initialScore={exercisePayload.initialScore}
-      activeTimeMap={exercisePayload.activeTimeMap}
-      videoDurationSeconds={videoDurationSeconds}
-      appBarExtra={toggle}
-      exerciseMedia={exerciseMedia}
-    />
+/** Reaches the (now-root) drafts context to clear the cached exercise draft
+ *  whenever that owner is published or discarded, from anywhere. */
+function ExerciseDraftChangedWatcher({
+  classItemId,
+  onChanged,
+}: {
+  classItemId: string;
+  onChanged: () => void;
+}) {
+  const { register } = useStudioDrafts();
+  useEffect(
+    () => register(`exercise:${classItemId}`, { changed: onChanged }),
+    [classItemId, onChanged, register]
   );
+  return null;
 }

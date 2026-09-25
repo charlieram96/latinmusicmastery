@@ -236,6 +236,7 @@ export type Database = {
           active_time_map_id: string | null
           class_item_id: string
           created_at: string | null
+          /** @deprecated Superseded by studio_versions (Studio rework P6). */
           draft_time_map_id: string | null
           id: string
           label: string | null
@@ -252,6 +253,7 @@ export type Database = {
           active_time_map_id?: string | null
           class_item_id: string
           created_at?: string | null
+          /** @deprecated Superseded by studio_versions (Studio rework P6). */
           draft_time_map_id?: string | null
           id?: string
           label?: string | null
@@ -268,6 +270,7 @@ export type Database = {
           active_time_map_id?: string | null
           class_item_id?: string
           created_at?: string | null
+          /** @deprecated Superseded by studio_versions (Studio rework P6). */
           draft_time_map_id?: string | null
           id?: string
           label?: string | null
@@ -1883,6 +1886,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      studio_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          owner_id: string
+          owner_kind: string
+          score: Json
+          timing: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          owner_id: string
+          owner_kind: string
+          score: Json
+          timing: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          owner_id?: string
+          owner_kind?: string
+          score?: Json
+          timing?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       subscription_courses: {
         Row: {
