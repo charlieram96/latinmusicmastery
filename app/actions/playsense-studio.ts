@@ -525,7 +525,8 @@ export async function attachScoreFromImport(
     await supabase.from('score_documents').delete().eq('id', prevScoreId);
     // This class item already had a score, so this is a replace: drop any
     // unpublished draft so it can't overwrite the new score on publish.
-    await clearUnpublishedDrafts(supabase, { kind: 'exercise', id: input.classItemId });
+    const cleared = await clearUnpublishedDrafts(supabase, { kind: 'exercise', id: input.classItemId });
+    if (cleared.error) return { error: cleared.error };
   }
 
   revalidatePath('/dashboard');
@@ -924,6 +925,11 @@ export async function detachScoreFromClassItem(
     .eq('id', classItemId);
 
   if (error) return { error: error.message };
+
+  // No score means no draft can publish against it anymore.
+  const cleared = await clearUnpublishedDrafts(supabase, { kind: 'exercise', id: classItemId });
+  if (cleared.error) return { error: cleared.error };
+
   revalidatePath('/dashboard');
   return { success: true };
 }
@@ -1057,7 +1063,8 @@ export async function replaceSectionScore(input: {
 
   // The section now points at the new document; drop any unpublished draft so
   // it can't overwrite the new score on publish.
-  await clearUnpublishedDrafts(supabase, { kind: 'section', id: input.sectionId });
+  const cleared = await clearUnpublishedDrafts(supabase, { kind: 'section', id: input.sectionId });
+  if (cleared.error) return { error: cleared.error };
 
   revalidatePath('/dashboard');
   return { scoreDocumentId: inserted.docId };
