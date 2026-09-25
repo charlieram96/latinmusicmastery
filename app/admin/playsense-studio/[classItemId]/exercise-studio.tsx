@@ -24,7 +24,9 @@
 // instead of being imported here — importing the actions module directly from
 // this client file deadlocks the Turbopack production build (Next 16.0.10;
 // reproduced deterministically: ~45s of compile, then a permanent idle hang).
-// Type-only imports (erased at compile time) are fine.
+// Type-only imports (erased at compile time) are fine, and so is importing a
+// plain `lib/` module (queueStudioSave below) — the deadlock is specific to
+// the 'use server' actions module itself.
 
 import { Loader2, MonitorPlay, Target } from 'lucide-react';
 import { useCallback, useEffect, useState, useTransition } from 'react';
@@ -35,6 +37,7 @@ import type {
   ExerciseMedia,
 } from '@/app/actions/playsense-studio';
 import type { StudioDraft } from '@/app/actions/studio-drafts';
+import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { StudioSetup } from '@/components/playsense-studio/studio/studio-setup';
 import { WatchVideoSetup } from '@/components/playsense-studio/studio/watch-video-setup';
@@ -127,11 +130,20 @@ export function ExerciseStudio({
       } else {
         // "No score document attached" just means StudioSetup should render.
         // The media panel seeds from props on mount, so refresh it alongside.
+        // The draft fetch runs on the same queue key useStudioDraft's autosave
+        // and the drafts-context's publish/discard use for this owner, so it
+        // resolves after any of those still in flight instead of racing them.
         const [res, mediaRes, draftRes] = await Promise.all([
           fetchExercise(),
           fetchExerciseMedia(),
-          fetchExerciseDraft(),
+          queueStudioSave(`draft:exercise:${classItemId}`, () => fetchExerciseDraft()),
         ]);
+        if (draftRes.error) {
+          // Abort the switch — same as the fetchSections error path above:
+          // show the error, don't change part, and keep the cached draft.
+          setError(draftRes.error);
+          return;
+        }
         setExercisePayload(
           res.data
             ? {
