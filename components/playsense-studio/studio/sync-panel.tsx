@@ -455,7 +455,8 @@ export function SyncPanel({
   // recursive call goes through a ref that's always current.
   const studioDispatchRef = useRef(studioDispatch);
   studioDispatchRef.current = studioDispatch;
-  // Every video sync target saves directly to its active map.
+  // Every video sync target hands its timing to the host's draft (onTimingChange);
+  // nothing reaches the live map until Publish.
   const timingAutosave = showSync;
   // Editing a failed snapshot allows autosave to try again.
   useEffect(() => { setError(null); }, [markers, score]);
