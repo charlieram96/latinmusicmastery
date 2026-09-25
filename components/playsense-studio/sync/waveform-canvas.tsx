@@ -22,6 +22,8 @@ export interface MarkerHandle {
   beatInMeasure: number;
   isDownbeat: boolean;
   videoTimeSeconds: number;
+  /** This bar's first note or tempo looks off the recording (Task 5). */
+  flagged?: boolean;
 }
 
 export type DragMode = 'single' | 'all-after';
@@ -103,6 +105,7 @@ interface ThemeColors {
   selected: string;
   playhead: string;
   tail: string;
+  flag: string;
 }
 
 function readTheme(el: HTMLElement): ThemeColors {
@@ -121,6 +124,7 @@ function readTheme(el: HTMLElement): ThemeColors {
     selected: v('--gold-highlight', '#d4a017'),
     playhead: v('--primary', 'hsl(30 85% 55%)'),
     tail: v('--muted-foreground', '#9ca3af'),
+    flag: v('--destructive', '#dc2626'),
   };
 }
 
@@ -416,6 +420,13 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       ctx.fillStyle = theme.measureText;
       ctx.textBaseline = 'middle';
       ctx.fillText(label, x + 5, 2 + (LABEL_BAND - 6) / 2 + 0.5);
+
+      if (hnd.flagged) {
+        ctx.fillStyle = theme.flag;
+        ctx.beginPath();
+        ctx.arc(x + chipW - 1, 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     // Tail boundary.

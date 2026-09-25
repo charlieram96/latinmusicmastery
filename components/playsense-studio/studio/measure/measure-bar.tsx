@@ -22,6 +22,8 @@ export function MeasureBar({ ref, ...props }: {
   /** The bar's root, so the editor can measure its width and keep it on screen. */
   ref?: Ref<HTMLDivElement>;
   left: number; top: number; label: string; startSeconds: number; bpm: number | null; looping: boolean;
+  /** Why the selected bars' timing looks off the recording, if it does (Task 5). */
+  flag?: string | null;
   canLoop: boolean; problems: { dup: string | null; paste: string | null; clear: string | null; del: string | null };
   onEdit: () => void; onLoop: () => void; onRepeat: (a: PopoverAnchor) => void; onDup: () => void;
   onCopy: () => void; onPaste: () => void; onBar: (a: PopoverAnchor) => void; onClear: () => void; onDelete: () => void;
@@ -56,6 +58,12 @@ export function MeasureBar({ ref, ...props }: {
           <>
             {' · '}
             <span title="Tempo these bars play at">≈{props.bpm.toFixed(1)} BPM</span>
+          </>
+        )}
+        {props.flag && (
+          <>
+            {' · '}
+            <span className="st-fbar-flag" title={props.flag}>{props.flag}</span>
           </>
         )}
       </span>

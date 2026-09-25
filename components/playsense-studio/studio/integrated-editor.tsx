@@ -90,6 +90,8 @@ export interface IntegratedEditorMeasureTiming {
   measureNumber: number;
   startVideoTimeSeconds: number;
   endVideoTimeSeconds: number;
+  /** Why this bar's timing looks off the recording, if it does (Task 5). */
+  flag?: string | null;
 }
 
 export interface IntegratedEditorProps {
@@ -924,6 +926,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 label={rangeLabel}
                 startSeconds={measureTimings[bounds[0]].startVideoTimeSeconds}
                 bpm={barBpm}
+                flag={measureTimings.slice(bounds[0], bounds[1] + 1).find((t) => t.flag)?.flag ?? null}
                 looping={barLooping}
                 canLoop={!!onLoopMeasures}
                 problems={{ dup: dupProblem, paste: pasteProblem, clear: null, del: deleteProblem }}

@@ -42,7 +42,7 @@ import { useVideoTransportClock } from '@/components/playsense-studio/player/sta
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
-import { SNAP_PX, firstAttackTime, snapBarTime, snapSectionShift } from '@/lib/playsense-studio/hits';
+import { SNAP_PX, barFlags, firstAttackTime, flagText, snapBarTime, snapSectionShift } from '@/lib/playsense-studio/hits';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
@@ -583,6 +583,10 @@ export function SyncPanel({
   }, [clock.currentSeconds, clock.isPlaying, pps, scrollLeft, viewportWidth, clampScroll]);
 
   // --- Derived draw data ---
+  // Bars whose first note or tempo looks off the recording (spec §7). Empty
+  // (no flags, no dots, Auto-place disabled) whenever there are no hits yet.
+  const flags = useMemo(() => barFlags(markers, hits), [markers, hits]);
+
   const handles: MarkerHandle[] = useMemo(
     () =>
       orderedMarkers(markers)
@@ -592,8 +596,9 @@ export function SyncPanel({
           beatInMeasure: o.ref!.beatInMeasure,
           isDownbeat: o.ref!.beatInMeasure === 1,
           videoTimeSeconds: o.videoTimeSeconds,
+          flagged: flags.has(o.ref!.measureNumber) && o.ref!.beatInMeasure === 1,
         })),
-    [markers]
+    [markers, flags]
   );
 
   // --- Main-track trim -----------------------------------------------------
@@ -642,16 +647,18 @@ export function SyncPanel({
     const fresh = markers.measures.map((m, i) => {
       const next = markers.measures[i + 1];
       const endVideoTimeSeconds = next ? next.beats[0].videoTimeSeconds : markers.tailVideoTimeSeconds;
+      const flag = flags.get(m.measureNumber);
       return {
         measureNumber: m.measureNumber,
         startVideoTimeSeconds: m.beats[0].videoTimeSeconds,
         endVideoTimeSeconds,
+        flag: flag ? flagText(flag) : null,
       };
     });
     const stable = stableTimings(measureTimingsRef.current, fresh);
     measureTimingsRef.current = stable;
     return stable;
-  }, [markers]);
+  }, [markers, flags]);
 
   const recordingSource = useMemo<MidiRecordingSource>(() => ({
     videoUrl, videoRef, onPosition: clock.seek,
@@ -1522,6 +1529,11 @@ export function SyncPanel({
                   <span className="st-status-pip" /> {markers.measures.length} measure
                   {markers.measures.length === 1 ? '' : 's'} on the grid
                 </div>
+                {flags.size > 0 && (
+                  <p className="text-xs text-destructive">
+                    {flags.size === 1 ? '1 bar looks off' : `${flags.size} bars look off`}
+                  </p>
+                )}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="st-status-pip warn" /> Anchor at{' '}
                   <b className="font-mono tabular-nums text-foreground">{anchorSeconds.toFixed(1)}s</b> ·{' '}
