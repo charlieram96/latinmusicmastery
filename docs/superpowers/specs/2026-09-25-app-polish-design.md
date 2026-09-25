@@ -52,7 +52,7 @@ Add these to `app/globals.css` `:root` and expose them in `tailwind.config.js` a
 - Add a `PageBackground` component at `components/dashboard/page-background.tsx`.
 - It draws an absolutely positioned SVG behind the scrolling content, and it does not scroll with it:
   - three bundles of five wavy staff lines
-  - about 16 scattered Bravura note glyphs
+  - about 16 scattered note shapes drawn as SVG (quarters, eighths, beamed pairs). Bravura isn't loaded on the dashboard, so glyph text would render as boxes
   - a 2-3 clave figure
   - a soft amber radial glow in the top right
 - Opacity is about 6–8% in both themes, using one ink token per theme.
@@ -67,14 +67,14 @@ Add these to `app/globals.css` `:root` and expose them in `tailwind.config.js` a
 ### 1.5 Path strip (shared by course detail and dashboard)
 - **Pure helper `lib/courses/path-nodes.ts`**
   - Input: the course structure (modules → lessons, the progress per lesson, the current lesson).
-  - Output: an ordered list of nodes `{ kind: 'lesson' | 'checkpoint', state: 'done' | 'current' | 'locked', lessonId?, moduleIndex, title, types, minutes, href }`.
+  - Output: an ordered list of nodes `{ kind: 'lesson' | 'checkpoint', state: 'done' | 'current' | 'upcoming', lessonId?, moduleIndex, title, types, minutes, href }`.
   - A `checkpoint` node closes each module and links to that module's overview page (`moduleOverviewHref`). It is not a new quiz.
   - Unit-test it with vitest.
 - **Component `components/course/path-strip.tsx`**, horizontal:
   - Nodes: 56px circular 3D buttons, 6px bottom shadow.
     - Done: amber with a check.
     - Current: amber with a play icon and a 1.6s ring pulse, plus a bobbing "CONTINUE · N min" bubble above it.
-    - Locked: muted, showing its lesson-type icon (video, play along, quiz).
+    - Upcoming: muted, showing its lesson-type icon (video, play along, quiz). The name avoids "locked", which means paywalled elsewhere in the app.
     - Checkpoint: a trophy chest, gold when the module is complete.
   - Connectors are wavy (small sine offset per node): solid amber up to the current node, dashed after it.
   - Each node's title sits under it, clamped to 2 lines. Hover or focus shows a small card with the lesson number, state, title, types and minutes.
