@@ -16,6 +16,17 @@ function laid(n: number, start: number, spb: number): MarkerState {
 }
 const downbeats = (s: MarkerState) => s.measures.map((m) => m.beats[0].videoTimeSeconds);
 
+/** Deterministic PRNG (mulberry32) so the noise tests are reproducible. */
+function seededRandom(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 describe('autoPlaceBars', () => {
   it('fits a steady tempo to the hits even when the markers start far off', () => {
     const truth = laid(8, 2.0, 0.5); // 120 bpm starting at 2.0 s
@@ -82,6 +93,39 @@ describe('autoPlaceBars', () => {
     // The whole-bar-early regression this guards against lands at 3.0 (a full
     // 4-beat bar before the true downbeat) — make sure we're nowhere near it.
     expect(Math.abs(downbeats(res.state)[0] - 3.0)).toBeGreaterThan(1);
+  });
+  it('rejects noise that would otherwise pass a many-to-one gate', () => {
+    const rnd = seededRandom(12345);
+    const hits = Array.from({ length: 250 }, () => rnd() * 45).sort((x, y) => x - y);
+    const state = laid(16, 5.0, 0.5); // no real playing among the hits at all
+    expect(autoPlaceBars(state, hits, { start: 0, end: 60 })).toBeNull();
+  });
+  it('with a real recording buried in noise, either lands correctly or refuses — never garbage', () => {
+    const truth = laid(16, 5.0, 0.5);
+    const real = truth.measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
+    const rnd = seededRandom(999);
+    const noise = Array.from({ length: 200 }, () => rnd() * 45);
+    const hits = [...real, ...noise].sort((x, y) => x - y);
+    const res = autoPlaceBars(laid(16, 5.3, 0.5), hits, { start: 0, end: 60 }); // 0.3 s off
+    if (res === null) {
+      expect(res).toBeNull();
+    } else {
+      downbeats(res.state).forEach((t, i) => {
+        expect(Math.abs(t - downbeats(truth)[i])).toBeLessThanOrEqual(0.02);
+      });
+    }
+  });
+  it('with the tempo laid 20% too fast against real hits, either corrects or refuses — never garbage', () => {
+    const truth = laid(8, 2.0, 0.5); // 120 bpm
+    const hits = truth.measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
+    const res = autoPlaceBars(laid(8, 2.0, 0.4), hits, { start: 0, end: 60 }); // spb 20% smaller = 20% faster
+    if (res === null) {
+      expect(res).toBeNull();
+    } else {
+      downbeats(res.state).forEach((t, i) => {
+        expect(Math.abs(t - downbeats(truth)[i])).toBeLessThanOrEqual(0.02);
+      });
+    }
   });
 });
 

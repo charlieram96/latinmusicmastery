@@ -7,15 +7,42 @@ import type { MarkerState } from '@/components/playsense-studio/sync/marker-mode
 import { nearestHit } from './hits';
 
 const SETTLE_S = 0.09;
+/** Final-acceptance thresholds (spec §7 fix round 1): a one-to-one match
+ *  ratio and an RMS-residual ceiling tight enough that noise can't pass. */
+const MIN_MATCH_RATIO = 0.7;
+const MAX_RMS_S = 0.04;
 
 interface Onset { qn: number }
+
+/** For each `predicted` time (qn-ordered), the nearest not-yet-used hit
+ *  within `tol`, else null. Each hit is consumed at most once, so a hit that
+ *  happens to sit near several onsets can't be double-counted as if it
+ *  matched all of them — the many-to-one gate that noise reliably passed. */
+function matchOneToOne(predicted: number[], hits: number[], tol: number): Array<number | null> {
+  const used = new Array<boolean>(hits.length).fill(false);
+  return predicted.map((p) => {
+    let bestIdx = -1;
+    let bestDist = Infinity;
+    for (let j = 0; j < hits.length; j++) {
+      if (used[j]) continue;
+      const d = Math.abs(hits[j] - p);
+      if (d <= tol && d < bestDist) {
+        bestDist = d;
+        bestIdx = j;
+      }
+    }
+    if (bestIdx === -1) return null;
+    used[bestIdx] = true;
+    return hits[bestIdx];
+  });
+}
 
 export function autoPlaceBars(
   state: MarkerState,
   allHits: number[],
   window: { start: number; end: number }
 ): { state: MarkerState; matched: number; settled: number } | null {
-  const hits = allHits.filter((h) => h >= window.start && h <= window.end);
+  const hits = allHits.filter((h) => h >= window.start && h <= window.end).sort((x, y) => x - y);
   const onsets: Onset[] = state.measures.flatMap((m) => m.onsetQNs.map((qn) => ({ qn })));
   if (onsets.length < 4 || hits.length < 4 || state.measures.length === 0) return null;
 
@@ -87,7 +114,30 @@ export function autoPlaceBars(
     matched = pairs.length;
     if (n === onsets.length) break;
   }
-  if (b <= 0 || matched < 4 || matched < onsets.length / 2) return null;
+  if (b <= 0) return null;
+
+  // Final acceptance gate: a clean ONE-TO-ONE match against the fitted line
+  // (each hit used at most once), unlike the many-to-one matching above, which
+  // is only good enough to steer the iterative fit — noise easily has SOME
+  // hit near many different onsets, but not one each. At least 70% of the
+  // onsets must land their own hit, and the matched pairs' RMS residual
+  // against the line must be tight: real playing lines up far better than
+  // 40 ms RMS against a correct fit; noise essentially never does.
+  {
+    const finalTol = Math.min(0.12, 0.3 * b);
+    const predicted = onsets.map((o) => a + b * (o.qn - qn0));
+    const finalMatches = matchOneToOne(predicted, hits, finalTol);
+    let matchCount = 0;
+    let sumSq = 0;
+    finalMatches.forEach((h, i) => {
+      if (h === null) return;
+      matchCount++;
+      sumSq += (h - predicted[i]) ** 2;
+    });
+    matched = matchCount;
+    if (matched < MIN_MATCH_RATIO * onsets.length) return null;
+    if (Math.sqrt(sumSq / matched) > MAX_RMS_S) return null;
+  }
 
   const at = (qn: number) => a + b * (qn - qn0);
   // Lay the downbeats, then settle each onto the hit under its first note.
