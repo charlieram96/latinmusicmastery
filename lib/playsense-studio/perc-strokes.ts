@@ -107,3 +107,13 @@ export function percussionNotation(instrument: Instrument, note: { midi: number;
   const stroke = midiToPercStroke(instrument, note.midi);
   return { staffLine: stroke?.staffLine ?? 'b/4', notehead: stroke?.notehead ?? stroke?.noteType ?? 'normal', marcato: stroke?.marcato };
 }
+
+/** The written notation a stroke is entered with (its position, notehead and id). */
+export function strokeNotation(stroke: PercStroke): PercussionNotation {
+  return {
+    staffLine: stroke.staffLine,
+    notehead: stroke.notehead ?? stroke.noteType ?? 'normal',
+    strokeId: stroke.id,
+    ...(stroke.marcato ? { marcato: true } : {}),
+  };
+}

@@ -17,6 +17,7 @@ import type {
   Dynamic,
   MusicalEvent,
   Ornament,
+  PercussionNotation,
   ScoreDocument,
 } from '@/components/playsense-studio/shared/score-model/types';
 import { eventDots, eventTuplet } from '@/components/playsense-studio/shared/score-model/accessors';
@@ -30,6 +31,7 @@ import {
   type CursorContext,
   type NoteCursor,
 } from '@/lib/playsense-studio/note-cursor';
+import { getPercStrokes, resolvePercStroke, strokeNotation } from '@/lib/playsense-studio/perc-strokes';
 import { CLEF_REF_INDEX, letterAbove, letterPitch, pitchIndex } from '@/lib/playsense-studio/pitch';
 import { soundingQN, VALUE_NAME, writtenValue, type NoteValue } from '@/lib/playsense-studio/rhythm';
 import type { NotationClef } from '@/lib/playsense-studio/score-to-vexflow';
@@ -203,9 +205,13 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
     /**
      * Write at the cursor: over an event (then advance), or appended at the
      * end when it fits (then on to the next bar once this one is full). A
-     * note over a bar holding only a filler rest replaces it through the append.
+     * bar holding only a filler rest is written through the append, which
+     * replaces the filler (overwriting it would fill the whole bar).
      */
-    const enter = (o: ZoomEditingOptions, write: { kind: 'note' | 'rest'; midi?: number; spelling?: { step: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'; alter: -2 | -1 | 0 | 1 | 2 } }) => {
+    const enter = (o: ZoomEditingOptions, write: {
+      kind: 'note' | 'rest'; midi?: number; percussion?: PercussionNotation;
+      spelling?: { step: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'; alter: -2 | -1 | 0 | 1 | 2 };
+    }) => {
       const z = o.zoom;
       if (!z) return;
       const c = z.cursor;
@@ -213,9 +219,11 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
       const events = ctx.events(c.measureIndex, c.voice);
       const barQN = ctx.barQN(c.measureIndex);
       const filler = isFiller(events, c.voice, barQN);
-      const pitch = write.kind === 'note' ? { midi: write.midi, ...(write.spelling ? { spelling: write.spelling } : {}) } : {};
+      const pitch = write.kind === 'note'
+        ? { midi: write.midi, ...(write.spelling ? { spelling: write.spelling } : {}), ...(write.percussion ? { percussion: write.percussion } : {}) }
+        : {};
 
-      if (c.index !== 'end' && !(filler && write.kind === 'note')) {
+      if (c.index !== 'end' && !filler) {
         o.dispatch({ type: 'write-event', at: { ...refAt(o, c, c.index) }, kind: write.kind, ...pitch });
         moveTo(o, advanceCursor(c, ctx), 1);
         return;
@@ -301,7 +309,10 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
       },
 
       enterStroke(midi) {
-        enter(get(), { kind: 'note', midi });
+        const o = get();
+        const instrument = trackOf(o)?.instrument;
+        const stroke = instrument ? getPercStrokes(instrument)?.find((s) => s.midi === midi) : undefined;
+        enter(o, { kind: 'note', midi, ...(stroke ? { percussion: strokeNotation(stroke) } : {}) });
       },
 
       setValue(value) {
@@ -415,11 +426,29 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
         const o = get();
         const refs = pitchedRefs(o);
         if (!refs) return;
+        if (o.percussion) {
+          // A drum part has no pitch to move: ↑/↓ step through the instrument's
+          // strokes instead (the old editor's stepSelectedPitch).
+          const instrument = trackOf(o)?.instrument;
+          const strokes = (instrument && getPercStrokes(instrument)) || [];
+          if (!instrument || !strokes.length) return;
+          for (const r of refs) {
+            const e = eventOf(o, r);
+            if (e?.kind !== 'note') continue; // a stacked stroke (chord) keeps its strokes
+            const id = resolvePercStroke(instrument, e)?.id;
+            const at = strokes.findIndex((s) => s.id === id);
+            const next = strokes[Math.min(Math.max(at + dir, 0), strokes.length - 1)];
+            if (!next || (at >= 0 && strokes[at] === next)) continue;
+            o.dispatch({ type: 'write-event', at: r, kind: 'note', midi: next.midi, percussion: strokeNotation(next) });
+          }
+          return;
+        }
         o.dispatch({ type: 'transpose-events', refs, kind: how, dir, keyFifths: o.keyFifthsAt(refs[0].measureIndex) });
       },
 
       accidental(alter) {
         const o = get();
+        if (o.percussion) return; // strokes have no accidentals
         const refs = pitchedRefs(o);
         if (!refs) return;
         o.dispatch({ type: 'set-events-accidental', refs, alter, keyFifths: o.keyFifthsAt(refs[0].measureIndex) });

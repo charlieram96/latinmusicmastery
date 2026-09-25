@@ -253,6 +253,40 @@ describe('useZoomEditing keys', () => {
     expect(midis(latest.score)).toEqual([62]);
   });
 
+  it('5 then r in a bar holding only a filler rest writes a quarter rest and stays in the bar', () => {
+    const { latest } = mount(doc([{ kind: 'rest', durationQN: 4, id: 'r0' }]), { cursor: { index: 0 } });
+    key('5');
+    key('r');
+    expect(events(latest.score).map((e) => [e.kind, e.durationQN])).toEqual([['rest', 1]]);
+    expect(latest.zoom?.cursor).toEqual({ measureIndex: 0, voice: 0, index: 'end', anchor: null });
+    expect(latest.zoom?.measureIndex).toBe(0);
+  });
+
+  it('a stroke typed over a filler rest replaces it rather than filling the bar', () => {
+    const { latest } = mount(doc([{ kind: 'rest', durationQN: 4, id: 'r0' }], [], 'perc-conga'), { percussion: true, cursor: { index: 0 } });
+    act(() => latest.editing.enterStroke(64));
+    expect(events(latest.score).map((e) => [e.kind, e.durationQN])).toEqual([['note', 1]]);
+  });
+
+  it('writes a stroke with its notation; ↑/↓ step through the strokes and accidentals do nothing', () => {
+    const { latest } = mount(doc([], [], 'perc-conga'), { percussion: true });
+    act(() => latest.editing.enterStroke(64)); // Open · high
+    expect(events(latest.score)[0]).toMatchObject({ kind: 'note', midi: 64, percussion: { strokeId: 'open-high', staffLine: 'e/5', notehead: 'normal' } });
+    key('ArrowLeft');
+    key('ArrowUp');
+    expect(events(latest.score)[0]).toMatchObject({ kind: 'note', midi: 63, durationQN: 1, percussion: { strokeId: 'open-low', staffLine: 'd/5', notehead: 'normal' } });
+    key('ArrowDown');
+    expect(events(latest.score)[0]).toMatchObject({ midi: 64, percussion: { strokeId: 'open-high' } });
+    key('ArrowDown'); // already the first stroke
+    expect(events(latest.score)[0]).toMatchObject({ midi: 64 });
+    const before = latest.score;
+    act(() => latest.editing.accidental(1));
+    key('ArrowUp', { shiftKey: true });
+    expect(events(latest.score)[0]).toMatchObject({ midi: 63 }); // ⇧↑ steps a stroke too, never a semitone
+    act(() => latest.dispatch({ type: 'undo' }));
+    expect(latest.score).toEqual(before);
+  });
+
   it('ignores keys typed into a field (Review Focus 5)', () => {
     const { latest } = mount(doc([n(60)]));
     const input = document.createElement('input');
