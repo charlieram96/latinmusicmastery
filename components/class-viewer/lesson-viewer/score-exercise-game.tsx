@@ -350,6 +350,7 @@ function ScoreExerciseSession({
           micOpen={session.isListening}
           micHeard={micHeard}
           deviceLabel={deviceLabel}
+          micError={session.isListening ? null : session.audioError}
           onTestMic={() => { testedMode.current = session.audioMode; session.testMic() }}
           calibrating={session.isCalibrating}
           calibrationBeat={session.calibrationBeat}

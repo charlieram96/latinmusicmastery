@@ -57,6 +57,14 @@ describe('ReadyCheck', () => {
     expect(onStart).toHaveBeenCalledOnce()
   })
 
+  it('explains a blocked microphone in the input panel', () => {
+    act(() => root.render(<ReadyCheck {...base} audioMode="headphones" micError="Microphone permission was denied." />))
+    const panel = host.querySelector('[data-ready-panel=input]')!
+    expect(panel.querySelector('[role=alert]')?.textContent).toContain('Microphone permission was denied.')
+    expect(panel.textContent).not.toContain('ready.waiting')
+    expect(panel.getAttribute('data-check')).toBe('todo')
+  })
+
   it('measures timing on request and shows the progress', () => {
     const onCalibrate = vi.fn()
     act(() => root.render(<ReadyCheck {...base} audioMode="headphones" onCalibrate={onCalibrate} />))

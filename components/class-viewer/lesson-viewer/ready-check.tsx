@@ -26,6 +26,8 @@ export interface ReadyCheckProps {
   micOpen: boolean
   micHeard: boolean
   deviceLabel: string | null
+  /** Why the mic could not open (permission denied, no device), if it failed. */
+  micError?: string | null
   onTestMic: () => void
   calibrating: boolean
   calibrationBeat: number
@@ -61,7 +63,7 @@ function Panel({ id, state, art, title, children }: { id: string; state: CheckSt
 
 export function ReadyCheck(props: ReadyCheckProps) {
   const { t } = useTranslation()
-  const { instrument, audioMode, onMode, inputLevel, micOpen, micHeard, deviceLabel, onTestMic, calibrating, calibrationBeat,
+  const { instrument, audioMode, onMode, inputLevel, micOpen, micHeard, deviceLabel, micError = null, onTestMic, calibrating, calibrationBeat,
     totalCalibrationBeats, calibrationError, latencyMs, onCalibrate, bleConnected, bleConnecting, bleError, onConnectBle, preview, meta, onStart } = props
   const checks = readyChecks({ audioMode, micOpen, micHeard, calibrated: latencyMs != null, calibrating, bleConnected })
   const modes = availableInputModes(instrument)
@@ -110,9 +112,11 @@ export function ReadyCheck(props: ReadyCheckProps) {
               </Button>}
             </>
               : <>
-                <p className="text-sm text-muted-foreground" aria-live="polite">
-                  {micHeard ? t(`${BASE}.heard`, { device }) : micOpen ? t(`${BASE}.listening`, { device }) : t(`${BASE}.waiting`)}
-                </p>
+                {micError && !micOpen
+                  ? <p role="alert" className="text-sm text-danger">{micError}</p>
+                  : <p className="text-sm text-muted-foreground" aria-live="polite">
+                    {micHeard ? t(`${BASE}.heard`, { device }) : micOpen ? t(`${BASE}.listening`, { device }) : t(`${BASE}.waiting`)}
+                  </p>}
                 {!micOpen && <Button type="button" variant="outline" size="sm" className="w-fit" onClick={onTestMic}><Mic className="h-3.5 w-3.5" />{t(`${BASE}.testMic`)}</Button>}
               </>}
       </Panel>
