@@ -1425,8 +1425,8 @@ class StaffRendererImpl implements ScoreRenderer {
 
   private planReadingStops(): void {
     const scale = this.scale;
-    if (this.layoutMode === 'paged') return;
-    if (this.layoutMode === 'wrapped') {
+    // Rows (stacked or paged) turn within a row only when a bar is wider than the pane.
+    if (this.layoutMode !== 'scroll') {
       this.rowReadingStops = Array.from({ length: this.systemCount }, (_, system) => scoreReadingStops(
         this.measureGeoms.filter(g => g.system === system)
           .map(g => ({ ...g, x: g.x * scale, width: g.width * scale })),
@@ -1480,7 +1480,12 @@ class StaffRendererImpl implements ScoreRenderer {
       this.cursorEl.style.opacity =
         this.cursorVisible && !inInterlude && this.hits.length > 0 && onShow ? '1' : '0';
       if (this.bandEl) this.bandEl.style.visibility = paged && this.bandSystem !== this.currentPage ? 'hidden' : '';
-      if (paged) return;
+      if (paged) {
+        // A page wider than a narrow pane holds still and turns within itself at barlines or beats.
+        const left = -scoreReadingOffset(this.lastViewMs, this.rowReadingStops[this.currentPage] ?? []);
+        if (this.viewportEl && Math.abs(this.viewportEl.scrollLeft - left) > 1) this.viewportEl.scrollLeft = left;
+        return;
+      }
 
       if (pos.system !== this.currentRow) {
         this.currentRow = pos.system;
