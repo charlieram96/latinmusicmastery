@@ -143,7 +143,6 @@ export function ScoreSectionEditor({
       <SyncPanel
         key={draft.timingEpoch}
         classItemId={classItemId}
-        scoreDocumentId={scoreDocumentId}
         sectionId={sectionId}
         mode="video"
         videoUrl={videoUrl}
@@ -154,7 +153,8 @@ export function ScoreSectionEditor({
         initialMetronomeAnchorSeconds={initialMetronomeAnchorSeconds}
         trim={trim}
         onTrimDrag={onTrimDrag}
-        onPublished={onChanged}
+        onTimingChange={draft.setTiming}
+        onTimingSaved={onChanged}
         inspectorEl={inspectorEl}
         transportEl={transportEl}
         monitorEl={monitorEl}

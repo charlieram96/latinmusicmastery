@@ -4,8 +4,9 @@
 //
 // Video audio waveform with numbered draggable measure markers (expandable to
 // per-beat handles), notation aligned beneath, transport + per-measure loop +
-// seed controls + zoom + Publish. Output is the same `drag` time map the student
-// player consumes.
+// seed controls + zoom. Output is the same `drag` timing the student player
+// eventually gets — this panel hands it to the host's draft; Publish
+// (elsewhere in the Studio) is what makes it live.
 //
 // Receives the CURRENT score from the parent (which owns it via useEditor). When
 // the score's measure structure changes, the markers are RECONCILED in place so
@@ -25,7 +26,6 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
-import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import { clampToTrim, trimRange, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import { secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
 import { beatGridFromAnchor } from '@/lib/playsense-studio/beat-grid';
@@ -34,11 +34,8 @@ import {
   writeStoredClickVolume,
 } from '@/lib/playsense-studio/click-track';
 import { useVideoClickTrack } from '@/components/playsense-studio/player/state/use-video-click-track';
-import {
-  setClassItemMetronomeAnchor,
-  setSectionMetronomeAnchor,
-} from '@/app/actions/playsense-studio';
-import { publishTimeMap, saveScoreDocument } from '@/app/actions/playsense-studio';
+import { timingPatchFromMarkers } from '@/lib/playsense-studio/drafts/timing-patch';
+import type { StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
@@ -49,8 +46,6 @@ import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
   EPS,
   clearNudge,
-  countNudges,
-  enforceMonotonic,
   freeCorridor,
   gridTime,
   markerSpan,
@@ -113,12 +108,11 @@ export interface StudioNoteSelection {
 
 export interface SyncPanelProps {
   classItemId: string;
-  scoreDocumentId: string;
-  /** When set, Publish writes into this section (its active map + video range). */
+  /** The section being synced, when this panel edits one section's video timing —
+   *  scopes the click anchor to it. */
   sectionId?: string;
-  /** Which owner pointer Publish updates. Defaults to 'section' when sectionId is
-   *  set, else 'classItem'. 'exercise' targets class_items.exercise_time_map_id —
-   *  the play-along video synced to the graded score. */
+  /** Scopes the click anchor when there's no `sectionId`: 'exercise' anchors to
+   *  the class item's own play-along sync. */
   publishTarget?: 'classItem' | 'section' | 'exercise';
   /** 'video' = sync the score to the audio; 'exercise' = no sync, demo + highway. */
   mode: 'video' | 'exercise';
@@ -126,11 +120,13 @@ export interface SyncPanelProps {
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
-  /** True when this section already has an autosaved sync draft not yet Published. */
-  hasDraft?: boolean;
+  /** Hands a timing (and/or click-anchor) edit to the host's draft — the panel
+   *  never writes timing live itself. */
+  onTimingChange: (patch: Partial<StudioTiming>) => void;
   videoDurationSeconds: number | null;
-  /** Fired after a successful Publish (e.g. so a section list can refresh ranges). */
-  onPublished?: () => void;
+  /** Fired once a timing edit has been handed off to the draft (`dirty` clears) —
+   *  e.g. so a host can react without waiting on the debounced autosave. */
+  onTimingSaved?: () => void;
   /** App-shell slot the inspector (note + sync status) portals into (left rail). */
   inspectorEl?: HTMLElement | null;
   /** App-shell slot the transport bar portals into (video mode only). */
@@ -222,7 +218,6 @@ function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
 
 export function SyncPanel({
   classItemId,
-  scoreDocumentId,
   sectionId,
   publishTarget,
   mode,
@@ -230,9 +225,9 @@ export function SyncPanel({
   score,
   dispatch,
   activeTimeMap,
-  hasDraft,
+  onTimingChange,
   videoDurationSeconds,
-  onPublished,
+  onTimingSaved,
   inspectorEl,
   transportEl,
   monitorEl,
@@ -251,9 +246,9 @@ export function SyncPanel({
   const [selection, setSelection] = useState<StudioNoteSelection | null>(null);
   const handleSelectionChange = useCallback((s: StudioNoteSelection | null) => setSelection(s), []);
 
-  // The full "sync to audio" experience (waveform + draggable markers + transport
-  // + Publish) only renders for VIDEO lessons with a video. Exercises and songs
-  // edit the staff on a fixed-BPM grid with no time map.
+  // The full "sync to audio" experience (waveform + draggable markers +
+  // transport) only renders for VIDEO lessons with a video. Exercises and
+  // songs edit the staff on a fixed-BPM grid with no time map.
   const showSync = mode === 'video' && !!videoUrl;
 
   // Waveform lane height — the admin trades it against the measure strip with
@@ -289,7 +284,7 @@ export function SyncPanel({
     }
     return seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, 0));
   });
-  const [dirty, setDirty] = useState(!!hasDraft);
+  const [dirty, setDirty] = useState(false);
   // Faint note-onset ticks over the waveform — default on (they're low-opacity).
   const [showNotes, setShowNotes] = useState(true);
 
@@ -301,8 +296,6 @@ export function SyncPanel({
   const previousScore = useRef(score);
   const recordingMarkerHistory = useRef(new WeakMap<ScoreDocument, MarkerState>());
   const anchorRefreshRef = useRef(false);
-  /** Awaitable anchor write, assigned once the anchor state exists below. */
-  const writeAnchorRef = useRef<() => Promise<void>>(async () => {});
   // A refused structural edit (or one that would overlap a sibling section).
   const [editNotice, setEditNotice] = useState<string | null>(null);
   useEffect(() => {
@@ -321,8 +314,8 @@ export function SyncPanel({
       setMarkers((prev) => recordedMarkers ?? reconcileMarkers(prev, score.tracks[0], score));
       setDirty(true);
       // The qn axis moved under the click anchor: keep its SECOND and re-derive
-      // its qn before the next publish (see saveTiming), or the server's
-      // qn-based rebase would slide the click along the video.
+      // its qn before the next timing hand-off (see saveTiming), or a later
+      // publish's qn-based rebase would slide the click along the video.
       anchorRefreshRef.current = true;
     }
   }, [sig, score]);
@@ -455,8 +448,6 @@ export function SyncPanel({
   // recursive call goes through a ref that's always current.
   const studioDispatchRef = useRef(studioDispatch);
   studioDispatchRef.current = studioDispatch;
-  const [savingTiming, setSavingTiming] = useState(false);
-  const savingTimingRef = useRef(false);
   // Every video sync target saves directly to its active map.
   const timingAutosave = showSync;
   // Editing a failed snapshot allows autosave to try again.
@@ -896,62 +887,63 @@ export function SyncPanel({
     onZoomBy: zoomBy,
   };
 
-  // Serialize the matching score and active timing map with all other score writes.
-  const saveTiming = useCallback(async (opts?: { silent?: boolean }) => {
-    if (!timingAutosave || (savingTimingRef.current && !opts?.silent)) return;
+  // --- Metronome anchor state ----------------------------------------------
+  // Declared ahead of saveTiming (below), which folds a pending anchor edit
+  // into the same patch handed to the draft — see anchorTimingPatch.
+  //
+  // One beat of the recording. With the section's notated tempo it defines the
+  // student click's phase, so the click lands on the performance instead of on
+  // whenever the student pressed play.
+  const [metronomeAnchor, setMetronomeAnchor] = useState<number | null>(
+    initialMetronomeAnchorSeconds ?? null
+  );
+  const anchorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const anchorRef = useRef(metronomeAnchor);
+  anchorRef.current = metronomeAnchor;
+
+  /** The pending anchor as a timing patch, computed from the LIVE markers
+   *  (what the admin is looking at) rather than the last-saved map. */
+  const anchorTimingPatch = useCallback((): Pick<StudioTiming, 'anchor'> => {
+    const seconds = anchorRef.current;
+    if (seconds == null) return { anchor: null };
+    const qn = secondsToQn(
+      markerStateToWaypoints(markersRef.current, { includeBeats: 'edited-beats' }).map((w) => ({
+        musicalPositionQN: w.musicalPositionQN,
+        videoTimeSeconds: w.videoTimeSeconds,
+      })),
+      seconds
+    );
+    return { anchor: { seconds, qn } };
+  }, []);
+
+  // Hand the live timing (and any pending anchor move) to the host's draft —
+  // this panel never writes it live. Publish, elsewhere in the Studio, is what
+  // eventually makes it visible to students.
+  const saveTiming = useCallback((opts?: { silent?: boolean }) => {
+    if (!timingAutosave) return;
     const snapshot = markers;
-    const scoreSnapshot = score;
-    const waypoints = enforceMonotonic(markerStateToWaypoints(snapshot, { includeBeats: 'edited-beats' }));
-    if (waypoints.length < 2) {
+    const patch = timingPatchFromMarkers(snapshot, { pps, peaksCached: decodeState === 'ready' });
+    if (!patch) {
       if (!opts?.silent) setError('Add a measure before saving its timing.');
       return;
     }
-    savingTimingRef.current = true;
-    if (!opts?.silent) { setSavingTiming(true); setError(null); }
-    try {
-      const result = await queueStudioSave(scoreDocumentId, async () => {
-        const saved = await saveScoreDocument({ scoreDocumentId, scoreDocument: scoreSnapshot });
-        if (saved.error) return saved;
-        if (anchorRefreshRef.current) {
-          // Structure changed since the last publish: re-derive the anchor's qn
-          // from the markers being published so the server rebase keeps its second.
-          anchorRefreshRef.current = false;
-          await writeAnchorRef.current();
-        }
-        const editedBeats = snapshot.measures.flatMap((m) => m.beats
-          .filter((b) => b.edited && b.beatInMeasure !== 1)
-          .map((b) => ({ measure: m.measureNumber, beat: b.beatInMeasure })));
-        return publishTimeMap({ classItemId, scoreDocumentId, sectionId, target: publishTarget,
-          method: 'drag',
-          params: {
-            editedBeats,
-            nudges: nudgeList(snapshot),
-            nudgedNotes: countNudges(snapshot),
-            pps,
-            peaksCached: decodeState === 'ready',
-            version: 1,
-          },
-          waypoints, makeActive: true });
-      });
-      if (opts?.silent) return;
-      if (result.error) { setError(result.error); return; }
-      if (markersRef.current === snapshot && scoreRef.current === scoreSnapshot) {
-        setDirty(false);
-        onPublished?.();
-      }
-    } catch {
-      if (!opts?.silent) setError('Could not save timing. Check your connection and retry.');
-    } finally {
-      savingTimingRef.current = false;
-      if (!opts?.silent) setSavingTiming(false);
+    // Structure changed since the anchor was last saved: re-derive its qn from
+    // the markers being handed off so a later rebase keeps its second.
+    const anchorPatch = anchorRefreshRef.current ? anchorTimingPatch() : null;
+    anchorRefreshRef.current = false;
+    onTimingChange({ ...patch, ...(anchorPatch ?? {}) });
+    if (opts?.silent) return;
+    if (markersRef.current === snapshot) {
+      setDirty(false);
+      onTimingSaved?.();
     }
-  }, [timingAutosave, markers, score, scoreDocumentId, classItemId, sectionId, publishTarget, pps, decodeState, onPublished]);
+  }, [timingAutosave, markers, pps, decodeState, onTimingChange, onTimingSaved, anchorTimingPatch]);
 
   useEffect(() => {
-    if (!timingAutosave || !dirty || savingTiming || placeArmed || error) return;
-    const id = setTimeout(() => { void saveTiming(); }, TIMING_DEBOUNCE_MS);
+    if (!timingAutosave || !dirty || placeArmed || error) return;
+    const id = setTimeout(() => { saveTiming(); }, TIMING_DEBOUNCE_MS);
     return () => clearTimeout(id);
-  }, [timingAutosave, dirty, savingTiming, placeArmed, error, saveTiming]);
+  }, [timingAutosave, dirty, placeArmed, error, saveTiming]);
 
   // Best-effort flush when switching sections; browser shutdown may interrupt it.
   const saveTimingRef = useRef(saveTiming);
@@ -964,7 +956,7 @@ export function SyncPanel({
   });
   useEffect(() => {
     return () => {
-      if (dirtyRef.current) void saveTimingRef.current({ silent: true });
+      if (dirtyRef.current) saveTimingRef.current({ silent: true });
     };
   }, []);
 
@@ -985,52 +977,14 @@ export function SyncPanel({
     [sectionId, publishTarget, classItemId]
   );
 
-  // One beat of the recording. With the section's notated tempo it defines the
-  // student click's phase, so the click lands on the performance instead of on
-  // whenever the student pressed play.
-  const [metronomeAnchor, setMetronomeAnchor] = useState<number | null>(
-    initialMetronomeAnchorSeconds ?? null
-  );
-  const anchorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const anchorRef = useRef(metronomeAnchor);
-  anchorRef.current = metronomeAnchor;
-
-  const persistAnchor = useCallback(async () => {
+  const persistAnchor = useCallback(() => {
     if (!anchorOwner) return;
-    const seconds = anchorRef.current;
-    // Record what the second MEANT musically, from the LIVE markers rather than
-    // the last published map — those are what the admin is looking at.
-    const qn =
-      seconds == null
-        ? null
-        : secondsToQn(
-            markerStateToWaypoints(markersRef.current, { includeBeats: 'edited-beats' }).map(
-              (w) => ({
-                musicalPositionQN: w.musicalPositionQN,
-                videoTimeSeconds: w.videoTimeSeconds,
-              })
-            ),
-            seconds
-          );
-    if (anchorOwner.kind === 'section') {
-      await setSectionMetronomeAnchor({
-        sectionId: anchorOwner.id,
-        anchorSeconds: seconds,
-        anchorQn: qn,
-      });
-    } else {
-      await setClassItemMetronomeAnchor({
-        classItemId: anchorOwner.id,
-        anchorSeconds: seconds,
-        anchorQn: qn,
-      });
-    }
-  }, [anchorOwner]);
-  writeAnchorRef.current = () => (anchorRef.current == null ? Promise.resolve() : persistAnchor());
+    onTimingChange(anchorTimingPatch());
+  }, [anchorOwner, onTimingChange, anchorTimingPatch]);
 
   const scheduleAnchorSave = useCallback(() => {
     if (anchorTimerRef.current) clearTimeout(anchorTimerRef.current);
-    anchorTimerRef.current = setTimeout(() => { void persistAnchor(); }, 500);
+    anchorTimerRef.current = setTimeout(() => { persistAnchor(); }, 500);
   }, [persistAnchor]);
 
   const handleAnchorDrag = useCallback(
@@ -1486,8 +1440,8 @@ export function SyncPanel({
               <div className="st-icard">
                 {error && (
                   <div className="flex justify-end">
-                    <button type="button" className="st-chip" disabled={savingTiming}
-                      onClick={() => { void saveTiming(); }}>Retry save</button>
+                    <button type="button" className="st-chip"
+                      onClick={() => { saveTiming(); }}>Retry save</button>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-xs">
@@ -1513,16 +1467,16 @@ export function SyncPanel({
                     score&rsquo;s tempo to match if you want the click to sit on the recording.
                   </p>
                 )}
-                {/* Show whether the latest timing has reached the active map. */}
+                {/* Show whether the latest timing has been handed off to the draft. */}
                 {timingAutosave && (
                   <div className="flex items-center gap-2 text-xs">
                     {error ? (
                       <><span className="st-status-pip warn" /> <span>Timing not saved</span></>
-                    ) : savingTiming || dirty ? (
-                      <><span className="st-status-pip warn" /> <span className="text-muted-foreground">Saving timing…</span></>
+                    ) : dirty ? (
+                      <><span className="st-status-pip warn" /> <span className="text-muted-foreground">Saving to draft…</span></>
 
                     ) : (
-                      <><span className="st-status-pip" /> <span className="text-muted-foreground">Live — students see this sync</span></>
+                      <><span className="st-status-pip" /> <span className="text-muted-foreground">Saved to draft</span></>
                     )}
                   </div>
                 )}

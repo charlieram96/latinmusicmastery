@@ -432,7 +432,6 @@ function StudioWorkspaceBody({
             <SyncPanel
               key={draft.timingEpoch}
               classItemId={mediaOwnerId}
-              scoreDocumentId={scoreDocumentId}
               mode="video"
               publishTarget="exercise"
               videoUrl={exerciseVideoUrl}
@@ -457,14 +456,14 @@ function StudioWorkspaceBody({
               transportEl={transportEl}
               monitorEl={monitorEl}
               scoreActionsEl={scoreActionsEl}
-              onPublished={() => setExerciseStage('syncVideo')}
+              onTimingChange={draft.setTiming}
+              onTimingSaved={() => setExerciseStage('syncVideo')}
             />
           ) : (
             <>
               <SyncPanel
                 key={draft.timingEpoch}
                 classItemId={mediaOwnerId}
-                scoreDocumentId={scoreDocumentId}
                 mode={mode}
                 videoUrl={videoUrl}
                 score={state.score}
@@ -480,6 +479,7 @@ function StudioWorkspaceBody({
                 transportEl={transportEl}
                 monitorEl={monitorEl}
                 scoreActionsEl={scoreActionsEl}
+                onTimingChange={draft.setTiming}
               />
 
               {/* Exercise mode: the student's falling-notes view lives right under
