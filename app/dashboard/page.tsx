@@ -17,6 +17,7 @@ import { MasterClassCard } from '@/components/dashboard/home/master-class-card'
 import { ToolTiles } from '@/components/dashboard/home/tool-tiles'
 import { MilestonesCard } from '@/components/dashboard/home/milestones-card'
 import { UpgradeCard } from '@/components/dashboard/home/upgrade-card'
+import { PageBackground } from '@/components/dashboard/page-background'
 import type {
   ContinueCard as ContinueCardData,
   FeedbackSummary,
@@ -396,7 +397,9 @@ export default async function DashboardPage() {
 
   // ── Render ───────────────────────────────────────────────────────
   return (
-    <div className="w-full space-y-6 lg:space-y-8">
+    <>
+    <PageBackground />
+    <div className="relative z-[1] w-full space-y-6 lg:space-y-8">
       <GreetingRow firstName={data.firstName} streak={data.streak} weekDone={data.weekDone} weekGoal={data.weekGoal} />
       <ContinueCard card={data.continueCard} />
 
@@ -421,5 +424,6 @@ export default async function DashboardPage() {
         </aside>
       </div>
     </div>
+    </>
   )
 }
