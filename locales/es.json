@@ -2395,6 +2395,38 @@
         "tracksOn": "{on} de {total} activas",
         "tracksHint": "Silencia una pista o ajusta su nivel. Los cambios se aplican mientras tocas.",
         "preparing": "Preparando la prueba…"
+      },
+      "lessonMode": {
+        "crumbLabel": "Curso y módulo",
+        "partsLabel": "Partes de la lección",
+        "partDone": "Hecho",
+        "aboutAndComments": "Acerca de y comentarios",
+        "closeLesson": "Cerrar lección",
+        "backToCourse": "Volver al curso",
+        "rail": {
+          "label": "Lecciones de este módulo",
+          "moduleProgress": "{done} de {total} lecciones completadas en este módulo",
+          "moduleOf": "{course} · Módulo {n}",
+          "settings": "Ajustes de la lección",
+          "paywalled": "Incluida con una suscripción",
+          "kind": {
+            "video": "Video",
+            "play": "Toca junto",
+            "quiz": "Quiz",
+            "other": "Lección"
+          },
+          "minutes": "{count} min"
+        },
+        "drawer": {
+          "title": "Acerca de esta lección",
+          "about": "Acerca de",
+          "comments": "Comentarios",
+          "commentsCount": "Comentarios · {count}",
+          "lessons": "Lecciones",
+          "close": "Cerrar",
+          "noDescription": "Esta lección aún no tiene descripción."
+        },
+        "finishLesson": "Terminar lección"
       }
     }
   }

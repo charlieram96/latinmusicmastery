@@ -2395,6 +2395,38 @@
         "tracksOn": "{on} of {total} on",
         "tracksHint": "Mute a track or set its level. Changes apply while you play.",
         "preparing": "Preparing the test…"
+      },
+      "lessonMode": {
+        "crumbLabel": "Course and module",
+        "partsLabel": "Lesson parts",
+        "partDone": "Done",
+        "aboutAndComments": "About & comments",
+        "closeLesson": "Close lesson",
+        "backToCourse": "Back to course",
+        "rail": {
+          "label": "Lessons in this module",
+          "moduleProgress": "{done} of {total} lessons done in this module",
+          "moduleOf": "{course} · Module {n}",
+          "settings": "Lesson settings",
+          "paywalled": "Included with a subscription",
+          "kind": {
+            "video": "Video",
+            "play": "Play along",
+            "quiz": "Quiz",
+            "other": "Lesson"
+          },
+          "minutes": "{count} min"
+        },
+        "drawer": {
+          "title": "About this lesson",
+          "about": "About",
+          "comments": "Comments",
+          "commentsCount": "Comments · {count}",
+          "lessons": "Lessons",
+          "close": "Close",
+          "noDescription": "No description for this lesson yet."
+        },
+        "finishLesson": "Finish lesson"
       }
     }
   }
