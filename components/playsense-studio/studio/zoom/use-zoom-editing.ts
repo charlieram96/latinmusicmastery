@@ -32,7 +32,7 @@ import {
   type NoteCursor,
 } from '@/lib/playsense-studio/note-cursor';
 import { getPercStrokes, resolvePercStroke, strokeNotation } from '@/lib/playsense-studio/perc-strokes';
-import { CLEF_REF_INDEX, letterAbove, letterPitch, pitchIndex } from '@/lib/playsense-studio/pitch';
+import { CLEF_REF_INDEX, letterAbove, letterPitch, pitchIndex, type Pitch } from '@/lib/playsense-studio/pitch';
 import { soundingQN, VALUE_NAME, writtenValue, type NoteValue } from '@/lib/playsense-studio/rhythm';
 import type { NotationClef } from '@/lib/playsense-studio/score-to-vexflow';
 import { isFillerRest, occupiedQN, QN_EPS } from '@/lib/playsense-studio/time-mapping';
@@ -42,6 +42,8 @@ import type { ZoomState } from './measure-zoom';
 
 export interface ZoomEditing {
   enterLetter(letter: string, chord: boolean): void;
+  /** The pencil's click: append this pitch at the end of the cursor's bar and voice (the letter path's fit check and flash). */
+  enterPitch(midi: number, spelling: Pitch['spelling']): void;
   enterRest(): void;
   /** Percussion entry: the stroke's midi. */
   enterStroke(midi: number): void;
@@ -62,6 +64,8 @@ export interface ZoomEditing {
   bar(dir: 1 | -1): void;
   selectedRefs(): EventRef[];
   currentEvent(): MusicalEvent | null;
+  /** The event at `eventIndex` of `voice` in the zoomed bar, with its ref (the zoom's pointer). */
+  eventAt(voice: 0 | 1, eventIndex: number): { ref: EventRef; event: MusicalEvent } | null;
 }
 
 export interface ZoomEditingOptions {
@@ -207,14 +211,15 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
      * end when it fits (then on to the next bar once this one is full). A
      * bar holding only a filler rest is written through the append, which
      * replaces the filler (overwriting it would fill the whole bar).
+     * `append` writes at the end whatever the cursor sits on (the pencil).
      */
     const enter = (o: ZoomEditingOptions, write: {
       kind: 'note' | 'rest'; midi?: number; percussion?: PercussionNotation;
       spelling?: { step: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'; alter: -2 | -1 | 0 | 1 | 2 };
-    }) => {
+    }, append = false) => {
       const z = o.zoom;
       if (!z) return;
-      const c = z.cursor;
+      const c: NoteCursor = append ? { ...z.cursor, index: 'end', anchor: null } : z.cursor;
       const ctx = contextOf(o);
       const events = ctx.events(c.measureIndex, c.voice);
       const barQN = ctx.barQN(c.measureIndex);
@@ -302,6 +307,17 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
         const near = entryReference(z.cursor, contextOf(o), key, CLEF_REF_INDEX[o.clefAt(m)]);
         const p = letterPitch(letter, near, key);
         enter(o, { kind: 'note', midi: p.midi, spelling: p.spelling });
+      },
+
+      enterPitch(midi, spelling) {
+        const o = get();
+        if (!o.zoom) return;
+        // Pitches never land on a drum part (Review Focus 4); strokes come from the toolbar.
+        if (o.percussion) {
+          o.flash(MSG_PICK_STROKE);
+          return;
+        }
+        enter(o, { kind: 'note', midi, spelling }, true);
       },
 
       enterRest() {
@@ -532,6 +548,13 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
 
       selectedRefs: () => selectedRefsOf(get()),
       currentEvent: () => currentEventOf(get()),
+      eventAt(voice, eventIndex) {
+        const o = get();
+        if (!o.zoom) return null;
+        const m = o.zoom.measureIndex;
+        const event = voiceEvents(o, m, voice)[eventIndex];
+        return event ? { ref: { trackIndex: o.trackIndex, measureIndex: m, voice, eventIndex }, event } : null;
+      },
     };
     return api;
   }, []);

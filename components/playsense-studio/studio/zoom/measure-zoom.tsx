@@ -12,16 +12,34 @@
 //   • another bar: the center slides 40 px in from the side it came from, 220 ms;
 //   • close (the close button, or `closing` turning true): the reverse of the
 //     enter, 240 ms, then onClose.
+//
+// Pointer editing in the center (v6's focusPointerDown / focusPointerMove):
+//   • a press on a note of the cursor's voice selects it (⇧ extends the
+//     range); without ⇧ it also starts a pitch drag on a note or chord, every
+//     note moving by the same diatonic steps in the key (a drum stroke snaps
+//     to the nearest stroke line instead). The release commits one edit.
+//   • the other voice's notes are drawn at half opacity and ignore the pointer.
+//   • pencil mode: a gold ghost notehead follows the pointer over empty
+//     staff, and a click appends a note of the current value at that line.
 
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback, useEffect, useLayoutEffect, useRef, useState,
+  type Dispatch, type PointerEvent as ReactPointerEvent, type ReactNode,
+} from 'react';
+import type { EditorAction, EventRef } from '@/lib/playsense-studio/editor-state';
 import type { MeasureFill } from '@/lib/playsense-studio/measure-fill';
 import type { NoteCursor } from '@/lib/playsense-studio/note-cursor';
+import { strokeNotation, type PercStroke } from '@/lib/playsense-studio/perc-strokes';
+import { keyPitchAt, pitchName } from '@/lib/playsense-studio/pitch';
 import type { NoteValue } from '@/lib/playsense-studio/rhythm';
+import type { NotationClef } from '@/lib/playsense-studio/score-to-vexflow';
 import { measureLengthInQN } from '@/lib/playsense-studio/time-mapping';
+import { dragSteps, indexForLine, snapStroke, stepPitches, type SpelledPitch } from '@/lib/playsense-studio/zoom-pointer';
 import type { Span } from '@/components/playsense-studio/shared/score-model/types';
 import type { MeasureStripItem } from '../editable-measure-strip';
-import { ZoomStaff, type ZoomLayout } from './zoom-staff';
+import type { ZoomEditing } from './use-zoom-editing';
+import { ZoomStaff, type ZoomHit, type ZoomLayout } from './zoom-staff';
 
 export interface ZoomState { measureIndex: number; cursor: NoteCursor; value: NoteValue; dots: 0 | 1 | 2; pencil: boolean }
 
@@ -41,6 +59,17 @@ export interface MeasureZoomProps {
   onNav: (dir: 1 | -1) => void;
   onClose: () => void;
   onLayout: (l: ZoomLayout) => void;
+  /** The zoom's editing handlers (the pencil's append goes through them). */
+  editing: ZoomEditing;
+  /** A pitch drag commits straight to the reducer (one undo step). */
+  dispatch: Dispatch<EditorAction>;
+  /** A press on a note moves the cursor (select, or ⇧ extend). */
+  onCursor: (c: NoteCursor) => void;
+  /** The zoomed bar's clef and key, for the pencil's pitch and the drag's steps. */
+  clef: NotationClef;
+  keyFifths: number;
+  /** The percussion track's strokes (a drag snaps to their lines), else null. */
+  percStrokes: PercStroke[] | null;
   /**
    * Toolbar and popovers (Tasks 8–10). A function is called with the center
    * column's width and height (for clamping a floating bar inside it, the
@@ -58,6 +87,24 @@ const METER_ROW_H = 18;
 const FALLBACK_WIDTH = 800;
 const CENTER_SCALE = 1.5;
 const SLIVER_SCALE = 0.7;
+/** Half a stave space, unscaled: one diatonic step. */
+const STEP_PX = 5;
+/** Slack around a note's box for a press to still take it. */
+const HIT_PAD = 3;
+/** The pencil reaches this far past the stave (lines, 0 = top line). */
+const GHOST_LINES: [number, number] = [-5, 9];
+
+interface PitchDrag {
+  pointerId: number;
+  y0: number;
+  ref: EventRef;
+  hit: ZoomHit;
+  /** The note or chord's pitches before the drag. */
+  notes: SpelledPitch[];
+  /** A drum stroke's midi (the drag snaps to stroke lines), else null. */
+  strokeMidi: number | null;
+  steps: number;
+}
 
 const ENTER = { duration: 340, easing: 'cubic-bezier(.2,.8,.2,1)' };
 const EXIT = { duration: 240, easing: 'cubic-bezier(.4,0,.8,.4)' };
@@ -80,7 +127,7 @@ const noop = () => {};
 
 export function MeasureZoom({
   items, zoom, height, spans, fill, bpm, percussion, origin, closing = false,
-  onVoice, onNav, onClose, onLayout, children,
+  onVoice, onNav, onClose, onLayout, editing, dispatch, onCursor, clef, keyFifths, percStrokes, children,
 }: MeasureZoomProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const centerRef = useRef<HTMLDivElement | null>(null);
@@ -183,7 +230,129 @@ export function MeasureZoom({
 
   const barQN = measureLengthInQN(ts);
   const meterEvents = item ? (voice === 0 ? item.events : item.voice2Events ?? []) : [];
-  const showVoices = !!item && (item.voice2Events?.length > 0 || voice === 1);
+  // V2 is always offered on a pitched track, so a first voice-2 note can be entered.
+  const showVoices = !!item && (item.voice2Events?.length > 0 || voice === 1 || !percussion);
+
+  // ---- Pointer editing ---------------------------------------------------------
+
+  const drag = useRef<PitchDrag | null>(null);
+  const [tip, setTip] = useState<{ left: number; top: number; text: string } | null>(null);
+  const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
+
+  const localPoint = (e: { clientX: number; clientY: number }) => {
+    const r = centerRef.current?.getBoundingClientRect();
+    return { x: e.clientX - (r?.left ?? 0), y: e.clientY - (r?.top ?? 0) };
+  };
+
+  /** The cursor voice's note under (x, y); the other voice never takes the pointer. */
+  const hitAt = (x: number, y: number): ZoomHit | null =>
+    layout?.hits.find((h) => h.voice === voice
+      && x >= h.x - HIT_PAD && x <= h.x + h.w + HIT_PAD
+      && y >= h.y - HIT_PAD && y <= h.y + h.h + HIT_PAD) ?? null;
+
+  /** The pencil's stave line at y: snapped to half-lines, kept near the stave. */
+  const pencilLine = (l: ZoomLayout, y: number) =>
+    Math.max(GHOST_LINES[0], Math.min(GHOST_LINES[1], Math.round(l.lineForY(y) * 2) / 2));
+
+  const pxPerStep = STEP_PX * CENTER_SCALE;
+
+  /** The drag's result: new pitches (or a stroke), and their names for the tooltip. */
+  const dragResult = (d: PitchDrag, steps: number) => {
+    if (d.strokeMidi !== null) {
+      const midi = snapStroke(percStrokes ?? [], d.strokeMidi, steps);
+      return { midis: [midi], text: percStrokes?.find((s) => s.midi === midi)?.label ?? '' };
+    }
+    const next = stepPitches(d.notes, steps, keyFifths);
+    return { midis: next.map((p) => p.midi), text: next.map((p) => pitchName(p.midi, p.spelling, keyFifths)).join(' ') };
+  };
+
+  const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || !layout) return;
+    const p = localPoint(e);
+    const hit = hitAt(p.x, p.y);
+    if (hit) {
+      e.preventDefault();
+      const c = zoom.cursor;
+      if (e.shiftKey) {
+        const here = c.measureIndex === i && c.voice === voice;
+        const anchor = here ? c.anchor ?? (typeof c.index === 'number' ? c.index : hit.eventIndex) : hit.eventIndex;
+        onCursor({ measureIndex: i, voice, index: hit.eventIndex, anchor });
+        return;
+      }
+      onCursor({ measureIndex: i, voice, index: hit.eventIndex, anchor: null });
+      const at = editing.eventAt(voice, hit.eventIndex);
+      if (!at || at.event.kind === 'rest') return;
+      let strokeMidi: number | null = null;
+      if (percussion) {
+        // A stacked stroke (chord) keeps its strokes, as ↑/↓ does.
+        if (at.event.kind !== 'note' || !percStrokes?.length) return;
+        strokeMidi = at.event.midi;
+      }
+      const notes = at.event.kind === 'chord' ? at.event.notes : [at.event];
+      drag.current = {
+        pointerId: e.pointerId, y0: p.y, ref: at.ref, hit, strokeMidi, steps: 0,
+        notes: notes.map((n) => ({ midi: n.midi, spelling: n.spelling })),
+      };
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        /* noop */
+      }
+      return;
+    }
+    if (zoom.pencil) {
+      e.preventDefault();
+      const pitch = keyPitchAt(indexForLine(pencilLine(layout, p.y), clef), keyFifths);
+      editing.enterPitch(pitch.midi, pitch.spelling);
+    }
+  };
+
+  const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const p = localPoint(e);
+    const d = drag.current;
+    if (d) {
+      if (d.pointerId !== e.pointerId) return;
+      const steps = dragSteps(d.y0, p.y, pxPerStep);
+      if (steps === d.steps) return;
+      d.steps = steps;
+      if (steps === 0) {
+        setTip(null);
+        return;
+      }
+      setTip({ left: d.hit.x + d.hit.w / 2, top: d.hit.y - steps * pxPerStep - 6, text: dragResult(d, steps).text });
+      return;
+    }
+    if (!zoom.pencil || !layout || hitAt(p.x, p.y)) {
+      if (ghost) setGhost(null);
+      return;
+    }
+    const y = layout.yForLine(pencilLine(layout, p.y));
+    if (!ghost || ghost.x !== p.x || ghost.y !== y) setGhost({ x: p.x, y });
+  };
+
+  const endDrag = (e: ReactPointerEvent<HTMLDivElement>, commit: boolean) => {
+    const d = drag.current;
+    if (!d || d.pointerId !== e.pointerId) return;
+    drag.current = null;
+    setTip(null);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+    if (!commit) return;
+    const steps = dragSteps(d.y0, localPoint(e).y, pxPerStep);
+    if (steps === 0) return;
+    const { midis } = dragResult(d, steps);
+    if (d.strokeMidi !== null) {
+      const stroke = percStrokes?.find((s) => s.midi === midis[0]);
+      if (!stroke || stroke.midi === d.strokeMidi) return;
+      dispatch({ type: 'write-event', at: d.ref, kind: 'note', midi: stroke.midi, percussion: strokeNotation(stroke) });
+      return;
+    }
+    if (midis.every((m, k) => m === d.notes[k].midi)) return;
+    dispatch({ type: 'set-event-pitches', ref: d.ref, midis });
+  };
 
   const sliver = (side: 'prev' | 'next', neighbour: MeasureStripItem | undefined) => (
     <div
@@ -236,7 +405,17 @@ export function MeasureZoom({
 
       {sliver('prev', prev)}
 
-      <div ref={centerRef} className="st-zoom-center" style={{ gridColumn: 2, gridRow: 2 }}>
+      <div
+        ref={centerRef}
+        className="st-zoom-center"
+        style={{ gridColumn: 2, gridRow: 2, touchAction: 'none', cursor: zoom.pencil ? 'crosshair' : 'default' }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={(e) => endDrag(e, true)}
+        onPointerCancel={(e) => endDrag(e, false)}
+        onLostPointerCapture={(e) => endDrag(e, false)}
+        onPointerLeave={() => setGhost(null)}
+      >
         {Array.from({ length: beats }, (_, b) => (
           <div
             key={b}
@@ -247,7 +426,18 @@ export function MeasureZoom({
             <span>{b + 1}</span>
           </div>
         ))}
-        <ZoomStaff item={item} width={centerW} height={bodyH} scale={CENTER_SCALE} spans={spans} onLayout={handleLayout} />
+        <ZoomStaff
+          item={item} width={centerW} height={bodyH} scale={CENTER_SCALE} spans={spans}
+          dimVoice={voice === 0 ? 1 : 0} onLayout={handleLayout}
+        />
+        {zoom.pencil && ghost && (
+          <div className="st-zoom-ghost" aria-hidden style={{ left: ghost.x - 5.5, top: ghost.y - 4 }} />
+        )}
+        {tip && (
+          <div className="st-zoom-tip" role="status" style={{ left: tip.left, top: tip.top }}>
+            {tip.text}
+          </div>
+        )}
       </div>
 
       {sliver('next', next)}

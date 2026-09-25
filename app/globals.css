@@ -735,6 +735,10 @@ html:has([data-marketing]) {
 .st-zoom-meter > i { display: block; height: 100%; background: hsl(var(--primary)); transition: width .2s cubic-bezier(.2,.8,.2,1); }
 .st-zoom-meter > i.is-rest { opacity: .4; }
 .st-zoom-meter.is-over > i { background: hsl(var(--destructive)); }
+.st-zoom-ghost { position: absolute; width: 11px; height: 8px; border-radius: 50%; background: hsl(var(--gold-highlight)); opacity: .75;
+  transform: rotate(-20deg); pointer-events: none; }
+.st-zoom-tip { position: absolute; transform: translate(-50%, -100%); padding: 1px 6px; border-radius: 4px; pointer-events: none; white-space: nowrap;
+  font: 600 10px ui-monospace, monospace; background: hsl(var(--foreground)); color: hsl(var(--background)); box-shadow: 0 1px 4px rgba(0,0,0,.3); z-index: 2; }
 @media (prefers-reduced-motion: reduce) { .st-zoom-meter > i, .st-zoom-sliver { transition: none; } }
 
 /* The waveform lane — its own bordered surface inside the (borderless) stage. */

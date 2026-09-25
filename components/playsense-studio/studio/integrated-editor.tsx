@@ -6,7 +6,8 @@
 // compact track bar + view tabs + an editing toolbar + the active view:
 //   • Staff (default, main): the audio-aligned EditableMeasureStrip — click a
 //     bar to select it (drag or ⇧-click for several, double-click to open it);
-//     click a note to select it; drag a note vertically to change its pitch.
+//     click a note to open its bar in the measure zoom on that note (pitch
+//     drags, the pencil and voice 2 live in the zoom).
 //     Clicks never add notes — the Add note button appends one with the
 //     toolbar's current pitch/duration/modifiers. A measure bar floats over the
 //     selected bars with every bar-level action; useMeasureKeys holds their keys.
@@ -35,7 +36,7 @@ import {
 import { fillIssues, measureFill, type MeasureFill } from '@/lib/playsense-studio/measure-fill';
 import { eventDots, eventTuplet } from '@/components/playsense-studio/shared/score-model/accessors';
 import { writtenValue, type NoteValue } from '@/lib/playsense-studio/rhythm';
-import { cursorRange } from '@/lib/playsense-studio/note-cursor';
+import { cursorRange, type NoteCursor } from '@/lib/playsense-studio/note-cursor';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type {
   Chord,
@@ -667,12 +668,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     };
   }, [activeTrack, targetMeasureIndex, stripItems, score.initialTimeSignature, duration, dotted, triplet]);
 
-  const handleSelectEvent = useCallback((ref: SelectedEventRef) => {
-    setSelected(ref);
-    setMeasureRange({ anchor: ref.measureIndex, focus: ref.measureIndex });
-    selectionChanged();
-  }, [selectionChanged]);
-
   // Insert a note (or rest) into a given measure using the toolbar values.
   const insertIntoMeasure = useCallback(
     (measureIndex: number) => {
@@ -707,21 +702,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     if (capacity.full) return; // measure full — the reducer would no-op anyway
     insertIntoMeasure(targetMeasureIndex);
   }, [capacity.full, targetMeasureIndex, insertIntoMeasure]);
-
-  // Pitch from staff drag commits here.
-  const handleSetPitch = useCallback(
-    (ref: SelectedEventRef, midi: number) => {
-      dispatch({
-        type: 'set-event-pitch',
-        trackIndex: activeTrackIndex,
-        measureIndex: ref.measureIndex,
-        eventIndex: ref.eventIndex,
-        midi,
-      });
-      setSelected(ref);
-    },
-    [activeTrackIndex, dispatch]
-  );
 
   const handleRequestZoomTo = useCallback(
     (measureIndex: number) => {
@@ -809,6 +789,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     const m = zoom.measureIndex;
     setZoom({ ...zoom, cursor: { measureIndex: m, voice, index: zoomEvents(m, voice).length ? 0 : 'end', anchor: null } });
   }, [zoom, zoomEvents]);
+
+  // A press on a note in the zoom moves its cursor there.
+  const setZoomCursor = useCallback((cursor: NoteCursor) => {
+    setZoom((z) => (z ? { ...z, cursor } : z));
+  }, []);
 
   // Close: the zoom plays its exit toward the bar's rect now, then finishZoomClose.
   const closeZoom = useCallback(() => {
@@ -1320,13 +1305,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               gapProblems={gapProblems}
               newBars={newBars}
               onRepeatBandClick={onRepeatBandClick}
-              onSelectEvent={handleSelectEvent}
+              onOpenNote={openMeasure}
               onRequestZoomTo={handleRequestZoomTo}
-              onSetPitch={handleSetPitch}
-              accidental={pitchAcc}
-              keyFifths={score.initialKeyFifths}
-              isPercussion={percussion}
-              percStrokes={percStrokes}
               onWheelZoom={(factor, anchorPx) => {
                 const nextPps = Math.max(8, Math.min(600, pixelsPerSecond * factor));
                 const anchorSeconds = (scrollLeftPx + anchorPx) / pixelsPerSecond;
@@ -1372,6 +1352,12 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 onNav={navZoom}
                 onClose={finishZoomClose}
                 onLayout={(l) => { zoomLayout.current = l; }}
+                editing={zoomEditing}
+                dispatch={dispatch}
+                onCursor={setZoomCursor}
+                clef={zoomClefAt(zoom.measureIndex)}
+                keyFifths={zoomKeyFifthsAt(zoom.measureIndex)}
+                percStrokes={percStrokes}
               >
                 {({ centerW, bodyH, layout }) => {
                   const anchor = noteToolbarAnchor(layout);
@@ -1395,6 +1381,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                         percussion={zoomToolbarPercussion}
                         editing={zoomEditing}
                         onMore={() => setMorePop(true)}
+                        pencil={zoom.pencil}
+                        onPencil={() => setZoom({ ...zoom, pencil: !zoom.pencil })}
                       />
                       {morePop && (
                         <MorePopover

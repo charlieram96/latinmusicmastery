@@ -25,7 +25,8 @@ export function spelledMidi(step: Step, alter: number, octave: number): number {
   return (octave + 1) * 12 + STEP_SEMITONE[step] + alter;
 }
 
-function keyPitch(i: number, keyFifths: number): Pitch {
+/** The pitch at staff index `i`, with the key's accidental (the pencil's click). */
+export function keyPitchAt(i: number, keyFifths: number): Pitch {
   const { step, octave } = fromStaffIndex(i);
   const alter = keyAlter(step, keyFifths) as Alter;
   const midi = spelledMidi(step, alter, octave);
@@ -52,18 +53,18 @@ export function letterPitch(letter: string, nearIndex: number, keyFifths: number
     const i = o * 7 + si;
     if (Math.abs(i - nearIndex) < Math.abs(best - nearIndex)) best = i;
   }
-  return keyPitch(best, keyFifths);
+  return keyPitchAt(best, keyFifths);
 }
 
 export function letterAbove(letter: string, belowIndex: number, keyFifths: number): Pitch {
   const step = letter.toUpperCase() as Step;
   let i = belowIndex + 1;
   while (fromStaffIndex(i).step !== step) i++;
-  return keyPitch(i, keyFifths);
+  return keyPitchAt(i, keyFifths);
 }
 
 export function stepPitch(midi: number, spelling: Pitch['spelling'] | undefined, keyFifths: number, dir: 1 | -1): Pitch {
-  return keyPitch(pitchIndex(midi, spelling, keyFifths) + dir, keyFifths);
+  return keyPitchAt(pitchIndex(midi, spelling, keyFifths) + dir, keyFifths);
 }
 
 export function semitonePitch(midi: number, dir: 1 | -1, keyFifths: number): Pitch {
@@ -82,7 +83,7 @@ export function octavePitch(midi: number, spelling: Pitch['spelling'] | undefine
   const s = spellMidi(midi, { spelling, keyFifths });
   const target = midi + 12 * dir;
   const clamped = clampMidi(target);
-  // As in keyPitch: a clamp at the keyboard's edges must respell from the
+  // As in keyPitchAt: a clamp at the keyboard's edges must respell from the
   // clamped midi, or the returned spelling would name a different pitch.
   if (clamped !== target) {
     const cs = spellMidi(clamped, { keyFifths });

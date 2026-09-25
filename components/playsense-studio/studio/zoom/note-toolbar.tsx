@@ -2,15 +2,16 @@
 
 // PlaySense Studio — the floating note toolbar over the measure zoom's center
 // column (spec §6; v6's renderNoteBar): info chip, durations, dot/rest/tie,
-// accidentals (or percussion strokes), triplet, "More" (Task 9's popover) and
-// delete. Shares the selected-bars toolbar's `.st-fbar` shell and pop-in.
+// accidentals (or percussion strokes), triplet, "More" (Task 9's popover), the
+// pencil (click-to-add) and delete. Shares the selected-bars toolbar's
+// `.st-fbar` shell and pop-in.
 //
 // Buttons take focus out of the loop with onMouseDown's preventDefault, so the
 // zoom's own keydown listener (registered on window) keeps working while a
 // button is clicked.
 
 import type { Ref } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { KEY_VALUE, VALUE_NAME, VALUE_QN, type NoteValue } from '@/lib/playsense-studio/rhythm';
 import type { ZoomEditing } from './use-zoom-editing';
 import { NoteIcon, RestIcon } from './note-glyphs';
@@ -48,6 +49,9 @@ export interface NoteToolbarProps {
    *  position (fix round 1) rather than an anchor captured here at click
    *  time, so it keeps following the toolbar as the cursor moves. */
   onMore: () => void;
+  /** Click-to-add mode (ZoomState.pencil); the button toggles it, as N does. */
+  pencil: boolean;
+  onPencil: () => void;
 }
 
 const TOOLBAR_DURATIONS: NoteValue[] = ['w', 'h', 'q', '8', '16'];
@@ -95,6 +99,7 @@ export function clampNoteToolbarPosition(
 
 export function NoteToolbar({
   ref, left, top, maxWidth, info, value, dots, isRest, tie, tripletOn, hasSelection, percussion, editing, onMore,
+  pencil, onPencil,
 }: NoteToolbarProps) {
   return (
     <div
@@ -207,6 +212,17 @@ export function NoteToolbar({
         onClick={() => onMore()}
       >
         More ▾
+      </button>
+
+      <button
+        type="button"
+        aria-label="Pencil"
+        title="Click to add (N)"
+        aria-pressed={pencil}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => onPencil()}
+      >
+        <Pencil className="h-3.5 w-3.5" />
       </button>
 
       {hasSelection && (

@@ -37,12 +37,14 @@ export interface ZoomStaffProps {
   height: number;
   scale: number;
   spans?: Span[];
+  /** Draw this voice's notes at half opacity (the voice not being edited). */
+  dimVoice?: 0 | 1;
   onLayout: (l: ZoomLayout) => void;
 }
 
 const EMPTY: ZoomLayout = { hits: [], noteStartX: 0, noteEndX: 0, lineForY: () => 0, yForLine: () => 0 };
 
-function draw(el: HTMLDivElement, { item, width, height, scale, spans }: Omit<ZoomStaffProps, 'onLayout'>): ZoomLayout {
+function draw(el: HTMLDivElement, { item, width, height, scale, spans, dimVoice }: Omit<ZoomStaffProps, 'onLayout'>): ZoomLayout {
   const renderer = new Renderer(el, Renderer.Backends.SVG);
   renderer.resize(width, height);
   const ctx = renderer.getContext();
@@ -93,6 +95,10 @@ function draw(el: HTMLDivElement, { item, width, height, scale, spans }: Omit<Zo
       return { voice, eventIndex: i, x: bb.getX() * scale, y: bb.getY() * scale, w: bb.getW() * scale, h: bb.getH() * scale };
     };
     layout.hits = [...notes.map(box(0)), ...notes2.map(box(1))];
+
+    if (dimVoice !== undefined) {
+      for (const n of dimVoice === 0 ? notes : notes2) n.getSVGElement()?.setAttribute('opacity', '0.5');
+    }
   }
 
   const svg = el.querySelector('svg');
@@ -100,7 +106,7 @@ function draw(el: HTMLDivElement, { item, width, height, scale, spans }: Omit<Zo
   return layout;
 }
 
-export function ZoomStaff({ item, width, height, scale, spans, onLayout }: ZoomStaffProps) {
+export function ZoomStaff({ item, width, height, scale, spans, dimVoice, onLayout }: ZoomStaffProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   // Latest callback, read by the draw effect without making it a redraw trigger.
   const layoutCb = useRef(onLayout);
@@ -115,7 +121,7 @@ export function ZoomStaff({ item, width, height, scale, spans, onLayout }: ZoomS
     let layout = EMPTY;
     if (width > 0 && height > 0) {
       try {
-        layout = draw(el, { item, width, height, scale, spans });
+        layout = draw(el, { item, width, height, scale, spans, dimVoice });
       } catch {
         // A bar VexFlow can't lay out reports no hits; its stave may still have drawn.
         layout = EMPTY;
@@ -125,7 +131,7 @@ export function ZoomStaff({ item, width, height, scale, spans, onLayout }: ZoomS
     return () => {
       el.innerHTML = '';
     };
-  }, [item, width, height, scale, spans]);
+  }, [item, width, height, scale, spans, dimVoice]);
 
   return <div ref={hostRef} className="pointer-events-none absolute left-0 top-0" style={{ width, height }} />;
 }

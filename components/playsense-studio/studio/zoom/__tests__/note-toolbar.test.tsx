@@ -21,6 +21,7 @@ afterEach(async () => {
 function makeEditing(): ZoomEditing {
   return {
     enterLetter: vi.fn(),
+    enterPitch: vi.fn(),
     enterRest: vi.fn(),
     enterStroke: vi.fn(),
     setValue: vi.fn(),
@@ -40,10 +41,11 @@ function makeEditing(): ZoomEditing {
     bar: vi.fn(),
     selectedRefs: vi.fn(() => []),
     currentEvent: vi.fn(() => null),
+    eventAt: vi.fn(() => null),
   };
 }
 
-const baseProps = (): Omit<NoteToolbarProps, 'editing' | 'onMore'> => ({
+const baseProps = (): Omit<NoteToolbarProps, 'editing' | 'onMore' | 'onPencil'> => ({
   left: 100,
   top: 50,
   info: 'E4',
@@ -54,15 +56,17 @@ const baseProps = (): Omit<NoteToolbarProps, 'editing' | 'onMore'> => ({
   tripletOn: false,
   hasSelection: true,
   percussion: null,
+  pencil: false,
 });
 
 function render(overrides: Partial<NoteToolbarProps> = {}) {
   const editing = makeEditing();
   const onMore = vi.fn();
+  const onPencil = vi.fn();
   act(() => {
-    root.render(<NoteToolbar {...baseProps()} editing={editing} onMore={onMore} {...overrides} />);
+    root.render(<NoteToolbar {...baseProps()} editing={editing} onMore={onMore} onPencil={onPencil} {...overrides} />);
   });
-  return { editing, onMore };
+  return { editing, onMore, onPencil };
 }
 
 const buttons = () => Array.from(host.querySelectorAll('button'));
@@ -78,8 +82,20 @@ describe('NoteToolbar', () => {
       'Whole', 'Half', 'Quarter', '8th', '16th',
       'Dot', 'Rest', 'Tie',
       'Flat', 'Natural', 'Sharp',
-      'Triplet', 'More', 'Delete',
+      'Triplet', 'More', 'Pencil', 'Delete',
     ]);
+  });
+
+  it('toggles the pencil from its button, titled with its key', () => {
+    const { onPencil } = render({ pencil: true });
+    const pencil = byLabel('Pencil');
+    expect(pencil.getAttribute('title')).toBe('Click to add (N)');
+    expect(pencil.getAttribute('aria-pressed')).toBe('true');
+    const down = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+    act(() => { pencil.dispatchEvent(down); });
+    expect(down.defaultPrevented).toBe(true);
+    act(() => { pencil.click(); });
+    expect(onPencil).toHaveBeenCalledTimes(1);
   });
 
   it('marks the current value, dot, rest, tie and triplet pressed', () => {
@@ -151,7 +167,7 @@ describe('NoteToolbar', () => {
   it('forwards a ref to its root element, tagged for measuring', () => {
     let node: HTMLDivElement | null = null;
     act(() => {
-      root.render(<NoteToolbar {...baseProps()} editing={makeEditing()} onMore={vi.fn()} ref={(el) => { node = el; }} />);
+      root.render(<NoteToolbar {...baseProps()} editing={makeEditing()} onMore={vi.fn()} onPencil={vi.fn()} ref={(el) => { node = el; }} />);
     });
     expect(node).not.toBeNull();
     expect(node).toBe(host.querySelector('[data-testid="note-toolbar"]'));

@@ -24,6 +24,7 @@ afterEach(async () => {
 function makeEditing(): ZoomEditing {
   return {
     enterLetter: vi.fn(),
+    enterPitch: vi.fn(),
     enterRest: vi.fn(),
     enterStroke: vi.fn(),
     setValue: vi.fn(),
@@ -43,6 +44,7 @@ function makeEditing(): ZoomEditing {
     bar: vi.fn(),
     selectedRefs: vi.fn(() => []),
     currentEvent: vi.fn(() => null),
+    eventAt: vi.fn(() => null),
   };
 }
 

@@ -12,10 +12,10 @@
 // or empty staff) selects that bar, ⇧-click extends the selection from its
 // anchor, and a drag across bars selects every bar the pointer passes over
 // (auto-scrolling near either edge). A double-click opens the bar. Clicking a
-// note selects the note; dragging a note vertically still changes its pitch
-// until the measure zoom takes that over. Moving bars in time lives on the
-// waveform's number chips, not here. Below ~46 px wide a measure becomes a
-// placeholder that selects on click and opens on double-click.
+// note opens its bar in the measure zoom with that note selected (pitch drags
+// live in the zoom). Moving bars in time lives on the waveform's number chips,
+// not here. Below ~46 px wide a measure becomes a placeholder that selects on
+// click and opens on double-click.
 //
 // Hit-testing: after VexFlow lays out the notes, each note's getBoundingBox()
 // is captured inside the same try block as the bar's draw and reported up to
@@ -29,22 +29,14 @@
 // with `height: height - REP_H`, so anything nested inside a measure block
 // (the header band, the gapfill) is already in the right place — it inherits
 // the shift from its positioned ancestor. Overlays drawn at the CONTAINER
-// level instead (the selection highlight, the drag chip, the gap "+"
-// buttons) read raw note bboxes and video-time-derived x's that don't know
-// about the lane, so each must add REP_H itself, exactly once, when it turns
+// level instead (the selection highlight, the gap "+" buttons) read raw note
+// bboxes and video-time-derived x's that don't know about the lane, so each must add REP_H itself, exactly once, when it turns
 // a staff-local y into a container-space one. Task 14 follows this rule too.
 
 import { Plus } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { beatsText, fillTitle, type MeasureFill } from '@/lib/playsense-studio/measure-fill';
-import {
-  diatonicToMidi,
-  midiToDiatonic,
-  type NotationClef,
-  type VexEventDescriptor,
-} from '@/lib/playsense-studio/score-to-vexflow';
-import type { PercStroke } from '@/lib/playsense-studio/perc-strokes';
-import { pitchName } from '@/lib/playsense-studio/pitch';
+import type { NotationClef, VexEventDescriptor } from '@/lib/playsense-studio/score-to-vexflow';
 import type { Span } from '@/components/playsense-studio/shared/score-model/types';
 import { measureAtX } from '@/lib/playsense-studio/measure-selection';
 import { REP_H, RepeatLane, repeatBands, type RepeatBand } from './measure/repeat-lane';
@@ -122,18 +114,9 @@ export interface EditableMeasureStripProps {
   newBars?: Set<number>;
   /** A repeat-lane band was clicked: open the repeat menu at this anchor. */
   onRepeatBandClick?: (band: RepeatBand, anchor: PopoverAnchor) => void;
-  onSelectEvent: (ref: SelectedEventRef) => void;
+  /** A click on a note: open its bar in the measure zoom on that note. */
+  onOpenNote: (measureIndex: number, eventIndex: number) => void;
   onRequestZoomTo: (measureIndex: number) => void;
-  /** Commit a pitch change after a drag (or click-drag) on a note. */
-  onSetPitch: (ref: SelectedEventRef, midi: number) => void;
-  /** Toolbar accidental (-1/0/+1), applied to staff drag for pitched tracks. */
-  accidental: number;
-  /** Key signature for spelling (fifths). */
-  keyFifths: number;
-  /** True when the active track is percussion (drag snaps to stroke lines). */
-  isPercussion: boolean;
-  /** Stroke palette for the active percussion track (null for pitched). */
-  percStrokes: PercStroke[] | null;
   /** Horizontal wheel/trackpad pan over the staff (shared timeline scroll). */
   onScrollByPx?: (dx: number) => void;
   onWheelZoom?: (factor: number, anchorPx: number) => void;
@@ -143,23 +126,9 @@ export interface EditableMeasureStripProps {
 const DEFAULT_HEIGHT = 220;
 /** Height of the header band (measure number, capacity) at the top of each measure block. */
 const HANDLE_BAND_PX = 28;
-/** Pixels per diatonic staff step (half of VexFlow's 10px line spacing). */
-const STEP_PX = 5;
-/** A press must travel this far vertically before a pitch drag starts, so a
- *  slightly-wobbly click never transposes the note. */
+/** A press must travel this far before a drag across bars starts, so a
+ *  slightly-wobbly click stays a click. */
 const DRAG_THRESHOLD_PX = 4;
-
-interface DragState {
-  measureIndex: number;
-  eventIndex: number;
-  originalMidi: number;
-  currentMidi: number;
-  /** Container-space Y of the POINTER at pointerdown — deltas are measured from
-   *  the grab point, not the glyph center, so a click can't jump the pitch. */
-  startY: number;
-  pointerId: number;
-  moved: boolean;
-}
 
 /** A press on a bar that may become a drag across bars (container-space x). */
 interface SelectionDrag {
@@ -193,19 +162,13 @@ export function EditableMeasureStrip({
   onSelectMeasureRange,
   onOpenMeasure,
   onSelectionDragChange,
-  onSelectEvent,
-  onSetPitch,
-  accidental,
-  keyFifths,
-  isPercussion,
-  percStrokes,
+  onOpenNote,
   onScrollByPx,
   onWheelZoom,
   height = DEFAULT_HEIGHT,
 }: EditableMeasureStripProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
-  const [dragging, setDragging] = useState<DragState | null>(null);
   const selDrag = useRef<SelectionDrag | null>(null);
   // Which note the cursor is over (cursor feedback only) — state for the CSS
   // cursor, mirrored in a ref so pointermove only re-renders on identity change.
@@ -420,34 +383,7 @@ export function EditableMeasureStrip({
     setBboxVersion((v) => v + 1);
   }, []);
 
-  // Map a cursor Y (container space) to a target MIDI, given the drag's grab point.
-  const dragTargetMidi = useCallback(
-    (drag: DragState, cursorY: number): number => {
-      const deltaSteps = Math.round((drag.startY - cursorY) / STEP_PX);
-      if (deltaSteps === 0) return drag.originalMidi;
-      if (isPercussion && percStrokes && percStrokes.length > 0) {
-        const anchorDia = keyToDiatonic(
-          percStrokes.find((s) => s.midi === drag.originalMidi)?.staffLine ?? 'c/5'
-        );
-        const targetDia = anchorDia + deltaSteps;
-        const original = percStrokes.find(s => s.midi === drag.originalMidi);
-        let best = original ?? percStrokes[0];
-        let bestDist = Infinity;
-        for (const s of percStrokes) {
-          const d = Math.abs(keyToDiatonic(s.staffLine) - targetDia);
-          const sameHead = (s.notehead ?? s.noteType) === (original?.notehead ?? original?.noteType);
-          const bestSameHead = (best.notehead ?? best.noteType) === (original?.notehead ?? original?.noteType);
-          if (d < bestDist || (d === bestDist && sameHead && !bestSameHead)) {
-            bestDist = d;
-            best = s;
-          }
-        }
-        return best.midi;
-      }
-      return diatonicToMidi(midiToDiatonic(drag.originalMidi) + deltaSteps, accidental, keyFifths);
-    },
-    [isPercussion, percStrokes, accidental, keyFifths]
-  );
+  const barWidth = (item: MeasureStripItem) => videoTimeToX(item.endVideoTimeSeconds) - videoTimeToX(item.startVideoTimeSeconds);
 
   // Closest note to a local x, within tolerance (~40px or 1/n of the measure).
   const hitAt = (item: MeasureStripItem, localX: number, measureWidth: number): MeasureHit | null => {
@@ -471,32 +407,13 @@ export function EditableMeasureStrip({
     // Stop native selection/drag gestures before they start (the blue-highlight bug).
     e.preventDefault();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const containerTop = containerRef.current?.getBoundingClientRect().top ?? rect.top;
     // The header band always means the bar; on the staff, a note under the
-    // pointer takes the press.
+    // pointer takes the press and opens the zoom on it.
     const inHeader = e.clientY - rect.top < HANDLE_BAND_PX;
-    const hit = inHeader ? null : hitAt(item, e.clientX - rect.left, rect.width);
+    const hit = inHeader ? null : hitAt(item, e.clientX - rect.left, barWidth(item));
 
     if (hit && !e.shiftKey) {
-      onSelectEvent({ measureIndex: item.measureIndex, eventIndex: hit.eventIndex });
-      // Seed a pitch drag if this event is a pitched/percussion note (has a midi).
-      const ev = item.events[hit.eventIndex];
-      if (ev && ev.midi != null) {
-        setDragging({
-          measureIndex: item.measureIndex,
-          eventIndex: hit.eventIndex,
-          originalMidi: ev.midi,
-          currentMidi: ev.midi,
-          startY: e.clientY - containerTop,
-          pointerId: e.pointerId,
-          moved: false,
-        });
-        try {
-          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-        } catch {
-          /* noop */
-        }
-      }
+      onOpenNote(item.measureIndex, hit.eventIndex);
       return;
     }
     onSelectMeasure?.(item.measureIndex, e.shiftKey);
@@ -504,50 +421,12 @@ export function EditableMeasureStrip({
   };
 
   const handlePointerMove = (e: React.PointerEvent, item: MeasureStripItem) => {
-    if (dragging && dragging.pointerId === e.pointerId) {
-      const container = containerRef.current;
-      if (!container) return;
-      const cursorY = e.clientY - container.getBoundingClientRect().top;
-      // Dead zone: ignore sub-threshold wobble so clicks never transpose.
-      if (!dragging.moved && Math.abs(dragging.startY - cursorY) < DRAG_THRESHOLD_PX) return;
-      const nextMidi = dragTargetMidi(dragging, cursorY);
-      if (nextMidi !== dragging.currentMidi || !dragging.moved) {
-        setDragging({ ...dragging, currentMidi: nextMidi, moved: true });
-      }
-      return;
-    }
-    // Not dragging: hover feedback for the cursor.
+    // Hover feedback for the cursor.
     if (selDrag.current?.moved) return;
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const inHeader = e.clientY - rect.top < HANDLE_BAND_PX;
-    const hit = inHeader ? null : hitAt(item, e.clientX - rect.left, rect.width);
+    const hit = inHeader ? null : hitAt(item, e.clientX - rect.left, barWidth(item));
     setHover(hit ? { measureIndex: item.measureIndex, eventIndex: hit.eventIndex } : null);
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (!dragging || dragging.pointerId !== e.pointerId) return;
-    try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {
-      /* noop */
-    }
-    if (dragging.currentMidi !== dragging.originalMidi) {
-      onSetPitch(
-        { measureIndex: dragging.measureIndex, eventIndex: dragging.eventIndex },
-        dragging.currentMidi
-      );
-    }
-    setDragging(null);
-  };
-
-  const handlePointerCancel = (e: React.PointerEvent) => {
-    if (dragging?.pointerId !== e.pointerId) return;
-    try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {
-      /* noop */
-    }
-    setDragging(null);
   };
 
   // Selection highlight position — recomputed every render (reads from the ref Map).
@@ -559,48 +438,16 @@ export function EditableMeasureStrip({
     const hit = hits?.find((h) => h.eventIndex === selected.eventIndex);
     if (!hit) return null;
     const startX = videoTimeToX(item.startVideoTimeSeconds);
-    // While dragging this note, lift the highlight by the live pitch delta so
-    // the feedback tracks the cursor before the model commits on release.
-    let dragOffsetY = 0;
-    if (dragging && dragging.measureIndex === selected.measureIndex && dragging.eventIndex === selected.eventIndex) {
-      const before = isPercussion && percStrokes
-        ? keyToDiatonic(percStrokes.find((s) => s.midi === dragging.originalMidi)?.staffLine ?? 'c/5')
-        : midiToDiatonic(dragging.originalMidi);
-      const after = isPercussion && percStrokes
-        ? keyToDiatonic(percStrokes.find((s) => s.midi === dragging.currentMidi)?.staffLine ?? 'c/5')
-        : midiToDiatonic(dragging.currentMidi);
-      dragOffsetY = (before - after) * STEP_PX;
-    }
     return {
       // hit.y is staff-local (0 at the top of the ContinuousStaff's SVG); the staff
       // itself sits at container y = REP_H, so the overlay adds it back once.
       left: startX + hit.x - 3,
-      top: REP_H + hit.y - 3 + dragOffsetY,
+      top: REP_H + hit.y - 3,
       width: hit.w + 6,
       height: hit.h + 6,
     };
   })();
   void bboxVersion; // dep marker so the overlay re-renders when bboxes update
-
-  // Pitch chip text shown while dragging.
-  const dragChip = dragging
-    ? (() => {
-        const item = measures.find((m) => m.measureIndex === dragging.measureIndex);
-        if (!item) return null;
-        const hits = hitsByMeasure.current.get(dragging.measureIndex);
-        const hit = hits?.find((h) => h.eventIndex === dragging.eventIndex);
-        if (!hit) return null;
-        const startX = videoTimeToX(item.startVideoTimeSeconds);
-        const label =
-          isPercussion && percStrokes
-            ? percStrokes.find((s) => s.midi === dragging.currentMidi)?.label ?? ''
-            : pitchName(dragging.currentMidi);
-        // highlight.top already includes REP_H when it exists; the fallback
-        // (highlight absent, e.g. a fresh drag before selection catches up)
-        // adds it here so both paths land in the same container coordinates.
-        return { left: startX + hit.x, top: (highlight?.top ?? REP_H + hit.y) - 16, label };
-      })()
-    : null;
 
   return (
     <div
@@ -648,11 +495,8 @@ export function EditableMeasureStrip({
           );
         }
 
-        const cursor = dragging
-          ? 'grabbing'
-          : hovered?.measureIndex === item.measureIndex
-            ? 'ns-resize' // a note is under the cursor — drag ↕ changes its pitch
-            : 'default';
+        // A note under the cursor opens the zoom on it.
+        const cursor = hovered?.measureIndex === item.measureIndex ? 'pointer' : 'default';
         return (
           <div
             key={item.measureIndex}
@@ -661,8 +505,6 @@ export function EditableMeasureStrip({
             style={{ left: startX, top: REP_H, width, height: height - REP_H, cursor, touchAction: 'none' }}
             onPointerDown={(e) => handlePointerDown(e, item)}
             onPointerMove={(e) => handlePointerMove(e, item)}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerCancel}
             onPointerLeave={() => {
               if (hovered?.measureIndex === item.measureIndex) setHover(null);
             }}
@@ -704,9 +546,9 @@ export function EditableMeasureStrip({
       <RepeatLane bands={bands} onBandClick={onRepeatBandClick ?? (() => {})} />
 
       {/* "+" at every barline gap (and both ends): opens the gap menu (empty /
-          copy / paste). Hidden during drags and where a neighbouring bar is
+          copy / paste). Hidden where a neighbouring bar is
           too narrow to read. */}
-      {onGapClick && !dragging && measures.length > 0 &&
+      {onGapClick && measures.length > 0 &&
         Array.from({ length: measures.length + 1 }, (_, gap) => {
           const before = measures[gap - 1];
           const after = measures[gap];
@@ -743,15 +585,6 @@ export function EditableMeasureStrip({
         />
       )}
 
-      {dragChip && dragChip.label && (
-        <div
-          className="pointer-events-none absolute z-10 rounded bg-foreground px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-background shadow"
-          style={{ left: dragChip.left, top: Math.max(0, dragChip.top) }}
-        >
-          {dragChip.label}
-        </div>
-      )}
-
       {/* Playback playhead — mirrors the waveform's 2px --primary line. Positioned
           via RAF (see effect above); starts hidden until the loop places it. */}
       {getCurrentSeconds && (
@@ -763,13 +596,4 @@ export function EditableMeasureStrip({
       )}
     </div>
   );
-}
-
-// Parse a VexFlow key string ('g/5', 'c#/4') to a continuous diatonic index
-// (octave*7 + letterIndex). Used to snap percussion drags to stroke lines.
-const LETTER_TO_INDEX: Record<string, number> = { c: 0, d: 1, e: 2, f: 3, g: 4, a: 5, b: 6 };
-function keyToDiatonic(key: string): number {
-  const m = key.match(/^([a-gA-G])[#b]?\/(-?\d+)$/);
-  if (!m) return 0;
-  return Number(m[2]) * 7 + (LETTER_TO_INDEX[m[1].toLowerCase()] ?? 0);
 }

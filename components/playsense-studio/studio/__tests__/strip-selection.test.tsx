@@ -3,7 +3,9 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { measureFill } from '@/lib/playsense-studio/measure-fill';
-import { EditableMeasureStrip, type MeasureStripItem } from '../editable-measure-strip';
+import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
+import type { Track } from '@/components/playsense-studio/shared/score-model/types';
+import { EditableMeasureStrip, type EditableMeasureStripProps, type MeasureStripItem } from '../editable-measure-strip';
 
 beforeAll(() => {
   // VexFlow measures text through a canvas; jsdom has none.
@@ -51,15 +53,14 @@ const items: MeasureStripItem[] = Array.from({ length: 4 }, (_, i) => ({
   fill: measureFill([], undefined, [4, 4]),
 }));
 
-function mount(pixelsPerSecond = 100) {
+function mount(pixelsPerSecond = 100, measures = items) {
   const cb = {
     onSelectMeasure: vi.fn(),
     onSelectMeasureRange: vi.fn(),
     onOpenMeasure: vi.fn(),
     onInsertMeasureAt: vi.fn(),
-    onSelectEvent: vi.fn(),
+    onOpenNote: vi.fn(),
     onRequestZoomTo: vi.fn(),
-    onSetPitch: vi.fn(),
     onScrollByPx: vi.fn(),
     onWheelZoom: vi.fn(),
     onSelectionDragChange: vi.fn(),
@@ -67,8 +68,7 @@ function mount(pixelsPerSecond = 100) {
   act(() => {
     root.render(
       <EditableMeasureStrip
-        measures={items} pixelsPerSecond={pixelsPerSecond} scrollLeftPx={0} selected={null}
-        accidental={0} keyFifths={0} isPercussion={false} percStrokes={null}
+        measures={measures} pixelsPerSecond={pixelsPerSecond} scrollLeftPx={0} selected={null}
         {...cb}
       />,
     );
@@ -173,10 +173,41 @@ describe('EditableMeasureStrip bar selection', () => {
     act(() => { vi.advanceTimersByTime(20); });
     expect(cb.onSelectMeasure).toHaveBeenCalledTimes(1);
     expect(cb.onSelectMeasure).toHaveBeenCalledWith(0, false);
-    expect(cb.onSelectEvent).not.toHaveBeenCalled();
-    expect(cb.onSetPitch).not.toHaveBeenCalled();
     for (const [name, fn] of Object.entries(cb)) {
       if (name !== 'onSelectMeasure') expect(fn, name).not.toHaveBeenCalled();
+    }
+    // Pitch drags moved into the measure zoom: the strip has no note-mutating
+    // callback at all (checked at compile time: the old props are gone) ...
+    const gone: [Extract<keyof EditableMeasureStripProps, 'onSetPitch' | 'onSelectEvent'>] extends [never] ? true : false = true;
+    expect(gone).toBe(true);
+    // ... and every callback it's handed selects, opens, scrolls or zooms.
+    const readOnly = ['onSelectMeasure', 'onSelectMeasureRange', 'onOpenMeasure', 'onOpenNote', 'onInsertMeasureAt',
+      'onRequestZoomTo', 'onScrollByPx', 'onWheelZoom', 'onSelectionDragChange'];
+    expect(Object.keys(cb).filter((k) => !readOnly.includes(k))).toEqual([]);
+  });
+
+  it('a click on a note opens the zoom on it and never changes it', () => {
+    const track: Track = {
+      index: 0, instrument: 'piano', displayName: 'P', tuning: null, stringMultiplicity: 1, channel: 0, defaultView: 'staff',
+      measures: [0, 1, 2, 3].map((i) => ({ number: i + 1, voices: [{ number: 1, events: [{ kind: 'note' as const, midi: 67, durationQN: 4, id: `w${i}` }] }] })),
+    };
+    const withNotes: MeasureStripItem[] = extractTrackEvents(track, [4, 4], 0).map((b, i) => ({
+      ...items[i], events: b.events, voice2Events: b.voice2Events, fill: measureFill(b.measure.voices[0].events, undefined, [4, 4]),
+    }));
+    const cb = mount(200, withNotes); // 200 px bars
+    act(() => { vi.advanceTimersByTime(50); }); // the staff draws (and reports its hits) on a frame
+    // Sweep bar 1's staff for its note. jsdom lays nothing out, so the bar's
+    // rect sits at 0 and clientX is bar-local; the hit boxes are VexFlow's.
+    let opened = false;
+    for (let x = 0; x < 200 && !opened; x += 8) {
+      pointer(bar(1), 'pointerdown', x, 120);
+      pointer(bar(1), 'pointerup', x, 120);
+      act(() => { vi.advanceTimersByTime(20); });
+      opened = cb.onOpenNote.mock.calls.length > 0;
+    }
+    expect(cb.onOpenNote).toHaveBeenCalledWith(1, 0);
+    for (const [name, fn] of Object.entries(cb)) {
+      if (name !== 'onOpenNote' && name !== 'onSelectMeasure') expect(fn, name).not.toHaveBeenCalled();
     }
   });
 });
