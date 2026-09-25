@@ -110,6 +110,13 @@ describe('performance to playable score', () => {
     for (const bar of score.tracks[0].measures) expect(bar.voices[0].events.reduce((sum, e) => sum + e.durationQN, 0)).toBeCloseTo(3);
     expect(scoreToExerciseDefinition(score).events[0].duration).toBe(1);
   });
+  it('gives every note, chord and rest event a unique string id', () => {
+    const score = scoreWith(take([note(0, 60, 0, 500), note(1, 64, 500, 1000), note(2, 67, 500, 1500)]), .25);
+    const events = score.tracks[0].measures.flatMap(m => m.voices[0].events);
+    expect(events.length).toBeGreaterThan(0);
+    for (const event of events) expect(typeof event.id).toBe('string');
+    expect(new Set(events.map(e => e.id)).size).toBe(events.length);
+  });
   it('engraves only the tied pitches even when chord indices change', () => {
     const score = scoreWith(take([note(0, 64, 0, 1500), note(1, 60, 500, 1000)]), .25);
     const events = extractTrackEvents(score.tracks[0], [4, 4])[0].events;

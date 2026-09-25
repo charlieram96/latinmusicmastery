@@ -6,14 +6,25 @@ import type { Span } from '@/components/playsense-studio/shared/score-model/type
 export interface PlacedNote { id?: string; note: StaveNote; system: number; hasDynamic?: boolean }
 export interface SpanSegment { type: 'slur' | 'cresc' | 'dim'; from?: StaveNote; to?: StaveNote; fromHasDynamic?: boolean }
 
-export function spanSegments(spans: Span[] | undefined, placed: PlacedNote[]): SpanSegment[] {
+export function spanSegments(spans: Span[] | undefined, placed: PlacedNote[], opts?: { openEnds?: boolean }): SpanSegment[] {
   if (!spans?.length) return []
   const index = new Map<string, number>()
   placed.forEach((p, i) => { if (p.id && !index.has(p.id)) index.set(p.id, i) })
   const out: SpanSegment[] = []
   for (const s of spans) {
     const ia = index.get(s.from), ib = index.get(s.to)
-    if (ia === undefined || ib === undefined || ia >= ib) continue
+    if (ia === undefined || ib === undefined) {
+      // One end is outside the admin strip's drawn window entirely (not just on
+      // another system, which the placed-note walk below already handles). A
+      // slur still shows as an open curve to the window edge; a hairpin needs
+      // both ends, so it's dropped.
+      if (opts?.openEnds && s.type === 'slur') {
+        if (ia !== undefined) out.push({ type: 'slur', from: placed[ia].note, to: undefined })
+        else if (ib !== undefined) out.push({ type: 'slur', from: undefined, to: placed[ib].note })
+      }
+      continue
+    }
+    if (ia >= ib) continue
     const a = placed[ia], b = placed[ib]
     if (a.system === b.system) { out.push({ type: s.type, from: a.note, to: b.note, fromHasDynamic: !!a.hasDynamic }); continue }
 

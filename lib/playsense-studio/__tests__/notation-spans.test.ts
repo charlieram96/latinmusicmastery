@@ -86,6 +86,30 @@ describe('spanSegments', () => {
     ], placed)).toEqual([])
     expect(spanSegments(undefined, placed)).toEqual([])
   })
+
+  describe('openEnds (the admin strip\'s drawn window)', () => {
+    it('without the option, a slur with only one end placed yields nothing, as before', () => {
+      expect(spanSegments([{ id: 's', type: 'slur', from: 'b', to: 'z' }], placed)).toEqual([])
+      expect(spanSegments([{ id: 's', type: 'slur', from: 'z', to: 'b' }], placed)).toEqual([])
+    })
+    it('with the option, a slur whose "from" is placed but "to" is outside the window draws an open curve', () => {
+      expect(spanSegments([{ id: 's', type: 'slur', from: 'b', to: 'z' }], placed, { openEnds: true })).toEqual([
+        { type: 'slur', from: placed[1].note, to: undefined },
+      ])
+    })
+    it('with the option, a slur whose "to" is placed but "from" is outside the window draws an open curve', () => {
+      expect(spanSegments([{ id: 's', type: 'slur', from: 'z', to: 'b' }], placed, { openEnds: true })).toEqual([
+        { type: 'slur', from: undefined, to: placed[1].note },
+      ])
+    })
+    it('with the option, a hairpin with only one end placed still yields nothing', () => {
+      expect(spanSegments([{ id: 's', type: 'cresc', from: 'b', to: 'z' }], placed, { openEnds: true })).toEqual([])
+      expect(spanSegments([{ id: 's', type: 'dim', from: 'z', to: 'b' }], placed, { openEnds: true })).toEqual([])
+    })
+    it('with the option, a span with neither end placed still yields nothing', () => {
+      expect(spanSegments([{ id: 's', type: 'slur', from: 'y', to: 'z' }], placed, { openEnds: true })).toEqual([])
+    })
+  })
 })
 
 // Builds a stave with two formatted, drawn StaveNotes — the same

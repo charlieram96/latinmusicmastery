@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { extractTrackEvents } from '../score-to-vexflow'
-import { REFERENCE_EXCERPT_FIXTURE as F, GUITAR_LICK_FIXTURE } from '../score-fixtures'
+import { REFERENCE_EXCERPT_FIXTURE as F, GUITAR_LICK_FIXTURE, CONGA_TUMBAO_FIXTURE } from '../score-fixtures'
 import { VALUE_QN, type NoteValue } from '../rhythm'
 import { measureLengthInQN } from '../time-mapping'
 import { parseScoreDocument } from '@/components/playsense-studio/shared/score-model/serialization'
-import type { Track } from '@/components/playsense-studio/shared/score-model/types'
+import type { Note, Track } from '@/components/playsense-studio/shared/score-model/types'
 
 const blocks = () => extractTrackEvents(F.tracks[0], F.initialTimeSignature, F.initialKeyFifths)
 
@@ -22,6 +22,16 @@ describe('richer descriptors', () => {
     expect(b4.events[2].articulations).toEqual(['accent', 'tenuto'])
     expect(b5.events[0]).toMatchObject({ dots: 1, durationCode: 'h', dynamic: 'ff', articulations: ['marcato'] })
     expect(b2.events[3]).toMatchObject({ articulation: 'staccato', articulations: ['staccato'] }) // legacy field read through the accessor
+  })
+  it('gives a percussion flam grace its stroke\'s own staffLine key, notehead and no accidental', () => {
+    const score = structuredClone(CONGA_TUMBAO_FIXTURE)
+    const track = score.tracks[0]
+    const host = track.measures[0].voices[0].events[0] as Note
+    const stroke = { staffLine: 'g/5', notehead: 'x' as const, strokeId: 'slap' }
+    host.percussion = stroke
+    host.grace = [{ midi: host.midi, percussion: stroke, slash: true }]
+    const d = extractTrackEvents(track, score.initialTimeSignature)[0].events[0]
+    expect(d.grace).toEqual([{ keys: [stroke.staffLine], accidentals: [null], slash: true, percussion: stroke }])
   })
   it('applies the accidental rules and key changes', () => {
     const [b1, b2, b3, b4] = blocks()

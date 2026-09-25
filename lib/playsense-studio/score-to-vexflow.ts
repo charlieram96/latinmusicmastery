@@ -206,6 +206,8 @@ export interface GraceDescriptor {
   keys: string[];
   accidentals: Array<AccidentalCode | null>;
   slash: boolean;
+  /** Set for a percussion flam grace — its stroke's own notation, key and all. */
+  percussion?: PercussionNotation;
 }
 
 export interface VexEventDescriptor {
@@ -462,8 +464,14 @@ export function extractTrackEvents(
           accidentals = [null];
         }
 
-        // Grace notes are spelled against the key only — no bar memory.
+        // Grace notes are spelled against the key only — no bar memory. A
+        // percussion flam grace gets its stroke's own key and notehead, the
+        // same way a main percussion note does, and no accidental.
         const grace = event.grace?.map(g => {
+          if (g.percussion) {
+            const stroke = percussionNotation(track.instrument, g);
+            return { keys: [stroke.staffLine], accidentals: [null], slash: g.slash, percussion: stroke };
+          }
           const spelled = spellMidi(g.midi, { spelling: g.spelling, keyFifths: measureKeyFifths });
           const accidental = spelled.alter !== keyAlter(spelled.step, measureKeyFifths) ? ACCIDENTAL_BY_ALTER[spelled.alter] : null;
           return { keys: [vexKey(spelled)], accidentals: [accidental], slash: g.slash };

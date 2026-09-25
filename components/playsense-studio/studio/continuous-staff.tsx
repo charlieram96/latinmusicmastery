@@ -154,7 +154,7 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
     }
   }
 
-  drawSpanSegments(ctx, spanSegments(spans, placed));
+  drawSpanSegments(ctx, spanSegments(spans, placed, { openEnds: true }));
 
   const svg = el.querySelector('svg');
   if (svg) themeVexflowSvg(svg as SVGSVGElement);
