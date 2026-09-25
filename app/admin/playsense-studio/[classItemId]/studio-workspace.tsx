@@ -92,10 +92,15 @@ function draftOwnerOf(owner: StudioOwner): { kind: 'exercise' | 'song'; id: stri
 }
 
 export function StudioWorkspace(props: StudioWorkspaceProps) {
-  const { owner, title, studioDraft } = props;
+  const { owner, mode = 'video', title, studioDraft } = props;
   const draftOwner = draftOwnerOf(owner);
+  // The exercise score's draft label is always "Exercise" (there's only one
+  // per class item); other owners (legacy single-score lessons, songs) use
+  // their own title.
+  const isExercise = mode === 'exercise' && owner.kind === 'classItem';
+  const label = isExercise ? 'Exercise' : title;
   return (
-    <StudioDraftsProvider owners={[{ owner: draftOwner, label: title, unpublished: !!studioDraft }]}>
+    <StudioDraftsProvider owners={[{ owner: draftOwner, label, unpublished: !!studioDraft }]}>
       <StudioWorkspaceBody {...props} />
     </StudioDraftsProvider>
   );
@@ -134,7 +139,7 @@ function StudioWorkspaceBody({
   const { state, dispatch, undo, redo, canUndo, canRedo, markClean, replaceScore } = useEditor(seed.score);
   const draft = useStudioDraft({
     owner: draftOwner,
-    label: title,
+    label: isExercise ? 'Exercise' : title,
     score: state.score,
     isDirty: state.isDirty,
     markClean,
@@ -184,16 +189,15 @@ function StudioWorkspaceBody({
   });
 
   // Uploading/removing the play-along video invalidates any prior sync map —
-  // and any trim, which was measured against the old file's timeline.
+  // and any trim, which was measured against the old file's timeline. This
+  // must reach the draft: setTiming (not replaceTiming) marks it dirty so the
+  // reset itself autosaves — otherwise a stale map could still be published
+  // for a video that no longer matches it (or, for a removal, is gone).
   const handleExerciseVideoChange = (url: string | null) => {
     setExerciseVideoUrl(url);
     setExerciseTrim({ trimInSeconds: 0, trimOutSeconds: null });
-    if (!url) {
-      setExerciseStage('score');
-      // The live map was already nulled by updateExerciseVideo — a stale
-      // draft map must not be republished for a video that's now gone.
-      draft.replaceTiming({ ...EMPTY_TIMING, anchor: draft.timing.anchor });
-    }
+    draft.setTiming({ ...EMPTY_TIMING, anchor: draft.timing.anchor });
+    if (!url) setExerciseStage('score');
   };
 
   // Trim handles report a raw timeline position; the pure model clamps it, and
@@ -465,7 +469,12 @@ function StudioWorkspaceBody({
                 videoUrl={videoUrl}
                 score={state.score}
                 dispatch={dispatch}
-                activeTimeMap={seed.timeMap}
+                // Exercise mode's score stage has no video of its own — it
+                // must not seed its markers from the play-along map that
+                // `seed.timeMap` would derive for this owner+mode. Only
+                // non-exercise modes (video lessons, songs) open on the
+                // draft-aware seed.
+                activeTimeMap={isExercise ? activeTimeMap : seed.timeMap}
                 videoDurationSeconds={videoDurationSeconds}
                 inspectorEl={inspectorEl}
                 transportEl={transportEl}
