@@ -21,6 +21,7 @@ import {
 import { isPercussion, percussionNotation } from './perc-strokes';
 import { eventArticulations, eventDots, eventTuplet, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
 import { createAccidentalMemory, keyAlter, spellMidi, vexKey, type AccidentalCode, type SpelledPitch } from './notation/accidentals';
+import { VALUE_QN, writtenValue } from './rhythm';
 // notation/accidentals.ts imports midiToKeyString from this file. That circular
 // import is safe: both sides only use each other inside functions, never at
 // module top level.
@@ -350,16 +351,17 @@ export function extractTrackEvents(
     if (voice2Raw.length === 0) tieCarry[2] = [];
 
     // Per-voice event loop, shared by voice 1 and voice 2. Legacy (id-less)
-    // triplets are grouped by written duration: a group closes once it spans
-    // three of its smallest written value (or at a non-triplet event).
+    // triplets are grouped by beat position: a group closes once the running
+    // sounding position within the bar lands on a multiple of `unit` (or at a
+    // non-triplet event — see the loop body below).
     const describeVoice = (events: MusicalEvent[], voiceNo: 1 | 2): VexEventDescriptor[] => {
       const out: VexEventDescriptor[] = [];
       let qnInMeasure = 0;
       let legacyOpen = false;
-      let legacyTotal = 0;
-      let legacySmallest = Infinity;
       let legacyGroupIndex = 0;
       let legacyId: string | null = null;
+      let legacyUnit = 0;
+      let legacyGroupStartQN = 0;
 
       for (const event of events) {
         const beatInMeasure = qnInMeasure / beatQN + 1;
@@ -374,21 +376,24 @@ export function extractTrackEvents(
           tuplet = { id: rawTuplet.id, n: rawTuplet.n, m: rawTuplet.m };
           legacyOpen = false;
         } else if (rawTuplet) {
-          // Legacy `triplet: true` with no id. durationQN is the sounding
-          // (scaled) length, so the written value is durationQN / scale. A
-          // fresh id is taken whenever a group opens, so a group cut short
-          // (e.g. by a rest) doesn't leave the next one to reuse its id.
-          const written = event.durationQN / tupletScale(event);
+          // Legacy `triplet: true` with no id. A fresh id is taken whenever a
+          // group opens, so a group cut short (e.g. by a rest) doesn't leave
+          // the next one to reuse its id. `unit` is fixed from the group's
+          // first written value: the beat when that value is an eighth or
+          // longer, half a beat otherwise.
           if (!legacyOpen) {
             legacyId = `legacy-${measure.number}-${voiceNo}-${legacyGroupIndex++}`;
             legacyOpen = true;
-            legacyTotal = 0;
-            legacySmallest = Infinity;
+            legacyGroupStartQN = qnInMeasure;
+            const wv = writtenValue(event);
+            legacyUnit = wv !== null && VALUE_QN[wv] >= VALUE_QN['8'] ? beatQN : beatQN / 2;
           }
           tuplet = { id: legacyId!, n: rawTuplet.n, m: rawTuplet.m };
-          legacyTotal += written;
-          legacySmallest = Math.min(legacySmallest, written);
-          if (legacyTotal >= 3 * legacySmallest - 1e-6) legacyOpen = false;
+          const posAfter = qnInMeasure + event.durationQN;
+          const nearestMultiple = Math.round(posAfter / legacyUnit) * legacyUnit;
+          const onGrid = Math.abs(posAfter - nearestMultiple) < 1e-6;
+          const groupLength = posAfter - legacyGroupStartQN;
+          if (onGrid || groupLength >= 2 * legacyUnit - 1e-6) legacyOpen = false;
         } else {
           legacyOpen = false;
         }

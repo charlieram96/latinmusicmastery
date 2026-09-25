@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { extractTrackEvents } from '../score-to-vexflow'
 import { REFERENCE_EXCERPT_FIXTURE as F, GUITAR_LICK_FIXTURE } from '../score-fixtures'
+import { VALUE_QN, type NoteValue } from '../rhythm'
 import { parseScoreDocument } from '@/components/playsense-studio/shared/score-model/serialization'
 import type { Track } from '@/components/playsense-studio/shared/score-model/types'
 
@@ -53,11 +54,13 @@ describe('richer descriptors', () => {
     expect(ev[6].tuplet).toBeNull()
   })
   it('gives a legacy triplet run a fresh id after a gap, instead of reusing the first run\'s id', () => {
-    // T T, rest, T T T — two runs of legacy (id-less) triplets separated by a non-triplet event.
+    // T T, rest, T T T — two runs of legacy (id-less) triplets separated by a
+    // non-triplet event. The rest is sized to land the second run back on a
+    // beat boundary (2.0), so it forms one clean group of three.
     const legacy: Track = { ...GUITAR_LICK_FIXTURE.tracks[0], measures: [{ number: 1, voices: [{ number: 1, events: [
       { kind: 'note' as const, midi: 60, durationQN: 1 / 3, triplet: true },
       { kind: 'note' as const, midi: 62, durationQN: 1 / 3, triplet: true },
-      { kind: 'rest' as const, durationQN: 1 },
+      { kind: 'rest' as const, durationQN: 4 / 3 },
       { kind: 'note' as const, midi: 64, durationQN: 1 / 3, triplet: true },
       { kind: 'note' as const, midi: 65, durationQN: 1 / 3, triplet: true },
       { kind: 'note' as const, midi: 67, durationQN: 1 / 3, triplet: true },
@@ -148,29 +151,37 @@ describe('accidentals across both voices', () => {
   })
 })
 
-describe('legacy triplet grouping by written duration', () => {
-  // Written QN values; legacy triplets store the scaled length (written × 2/3).
-  const groupsOf = (written: number[]) => {
-    const fill = 4 - written.reduce((a, w) => a + w * 2 / 3, 0)
+describe('legacy triplet grouping by beat position', () => {
+  // NoteValue tokens for id-less (legacy `triplet: true`, 3:2) events. A group
+  // closes once the running sounding position within the bar lands on a
+  // multiple of `unit` — the beat when the group's first written value is an
+  // eighth or longer, half a beat otherwise — or once its sounding length
+  // reaches 2 × unit, whichever comes first.
+  const groupsOf = (values: NoteValue[]) => {
+    const fill = 4 - values.reduce((a, v) => a + VALUE_QN[v] * 2 / 3, 0)
     const track: Track = { ...GUITAR_LICK_FIXTURE.tracks[0], measures: [{ number: 1, voices: [{ number: 1, events: [
-      ...written.map(w => ({ kind: 'note' as const, midi: 60, durationQN: w * 2 / 3, triplet: true })),
+      ...values.map(v => ({ kind: 'note' as const, midi: 60, durationQN: VALUE_QN[v] * 2 / 3, triplet: true })),
       ...(fill > 1e-9 ? [{ kind: 'rest' as const, durationQN: fill }] : []),
     ] }] }] }
-    const ev = extractTrackEvents(track, [4, 4], 0)[0].events.slice(0, written.length)
-    const out: number[][] = []
+    const ev = extractTrackEvents(track, [4, 4], 0)[0].events.slice(0, values.length)
+    const out: NoteValue[][] = []
     ev.forEach((d, i) => {
-      if (i > 0 && ev[i - 1].tuplet!.id === d.tuplet!.id) out[out.length - 1].push(written[i])
-      else out.push([written[i]])
+      if (i > 0 && ev[i - 1].tuplet!.id === d.tuplet!.id) out[out.length - 1].push(values[i])
+      else out.push([values[i]])
     })
     return out
   }
-  it('closes a group once it spans three of its smallest value', () => {
-    expect(groupsOf([0.5, 0.5, 0.5])).toEqual([[0.5, 0.5, 0.5]])
-    expect(groupsOf([1, 1, 1])).toEqual([[1, 1, 1]])
-    expect(groupsOf([1, 0.5])).toEqual([[1, 0.5]])
-    expect(groupsOf([1, 0.5, 0.5])).toEqual([[1, 0.5], [0.5]])
-    expect(groupsOf([0.5, 0.5, 0.5, 0.5, 0.5, 0.5])).toEqual([[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]])
-    expect(groupsOf([0.25, 0.25, 0.25, 0.25, 0.25, 0.25])).toEqual([[0.25, 0.25, 0.25], [0.25, 0.25, 0.25]])
+  it('keeps a group together until the beat, not a fixed count of the smallest value', () => {
+    // [8,16,16,8] sums to one full beat — the old "3 × smallest" rule split this.
+    expect(groupsOf(['8', '16', '16', '8'])).toEqual([['8', '16', '16', '8']])
+    expect(groupsOf(['q', '8'])).toEqual([['q', '8']])
+    expect(groupsOf(['q', 'q', 'q'])).toEqual([['q', 'q', 'q']])
+    expect(groupsOf(['8', '8', '8', '8', '8', '8'])).toEqual([['8', '8', '8'], ['8', '8', '8']])
+    expect(groupsOf(['16', '16', '16', '16', '16', '16'])).toEqual([['16', '16', '16'], ['16', '16', '16']])
+  })
+  it('starts a new group as soon as the previous one lands on the beat', () => {
+    // q+8 fills exactly one beat, so the third event opens a fresh group.
+    expect(groupsOf(['q', '8', '8'])).toEqual([['q', '8'], ['8']])
   })
   it('closes an open group at a non-triplet event', () => {
     const track: Track = { ...GUITAR_LICK_FIXTURE.tracks[0], measures: [{ number: 1, voices: [{ number: 1, events: [

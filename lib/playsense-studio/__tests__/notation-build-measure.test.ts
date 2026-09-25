@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { extractTrackEvents } from '../score-to-vexflow'
 import { REFERENCE_EXCERPT_FIXTURE as F } from '../score-fixtures'
 import { beamGroups, buildMeasure, descriptorToStaveNote, formatMeasure, staveHeader } from '../notation/build-measure'
+import type { VexEventDescriptor } from '../score-to-vexflow'
 import type { Dynamic, Track } from '@/components/playsense-studio/shared/score-model/types'
 
 beforeAll(() => {
@@ -20,6 +21,28 @@ describe('beamGroups', () => {
     expect(beamGroups(b1.events, [3, 4])).toEqual([[1, 2, 3], [4, 5, 6, 7]])
     expect(beamGroups(b2.events, [3, 4])).toEqual([])       // an eighth alone after a rest isn't beamed
     expect(beamGroups(b3.events, [3, 4])).toEqual([[1, 2, 3, 4, 5]])
+  })
+
+  // Every event is a plain (non-tuplet, non-rest) eighth note, at eighth-index i (0-based).
+  const eighths = (count: number): VexEventDescriptor[] =>
+    Array.from({ length: count }, (_, i) => ({ beatInMeasure: i + 1, durationCode: '8', isRest: false, tuplet: null })) as unknown as VexEventDescriptor[]
+
+  it('beams additive x/8 meters in their natural groups', () => {
+    // 7/8 = 2+2+3; the 8th event is a rest, so it never joins a group.
+    const seven = eighths(8)
+    seven[7] = { ...seven[7], isRest: true }
+    expect(beamGroups(seven, [7, 8])).toEqual([[0, 1], [2, 3], [4, 5, 6]])
+    // 5/8 = 3+2.
+    expect(beamGroups(eighths(5), [5, 8])).toEqual([[0, 1, 2], [3, 4]])
+    // 8/8 = 3+3+2, 10/8 = 3+3+2+2, 11/8 = 3+3+3+2.
+    expect(beamGroups(eighths(8), [8, 8])).toEqual([[0, 1, 2], [3, 4, 5], [6, 7]])
+    expect(beamGroups(eighths(10), [10, 8])).toEqual([[0, 1, 2], [3, 4, 5], [6, 7], [8, 9]])
+    expect(beamGroups(eighths(11), [11, 8])).toEqual([[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10]])
+  })
+
+  it('still beams by quarter for other x/8 meters', () => {
+    // 4/8 isn't one of the additive meters, so it keeps the old per-quarter (2-eighth) grouping.
+    expect(beamGroups(eighths(4), [4, 8])).toEqual([[0, 1], [2, 3]])
   })
 })
 

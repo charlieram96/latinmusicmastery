@@ -15,9 +15,31 @@ const ORN: Record<OrnamentKind, string> = { trill: 'tr', mordent: 'mordent', tur
 const DYN: Record<Dynamic, string> = { ppp: '\uE52A', pp: '\uE52B', p: '\uE520', mp: '\uE52C', mf: '\uE52D', f: '\uE522', ff: '\uE52F', fff: '\uE530', fp: '\uE534', sfz: '\uE539' }
 const BEAMABLE = new Set(['8', '16', '32', '64', '128'])
 
-/** Beam per beat (a dotted quarter in compound meters); tuplet groups stay whole. */
+// x/8 meters that aren't compound (num % 3 !== 0) beam in these eighth-note
+// groups instead of by the quarter. Other x/8 numerators keep the old
+// per-quarter grouping.
+const ADDITIVE_EIGHTH_GROUPS: Record<number, number[]> = {
+  5: [3, 2],
+  7: [2, 2, 3],
+  8: [3, 3, 2],
+  10: [3, 3, 2, 2],
+  11: [3, 3, 3, 2],
+}
+
+/** Which additive group (0-based) an eighth-index falls into, given its bar's grouping pattern. */
+function additiveGroupIndex(eighthIndex: number, pattern: number[]): number {
+  let cum = 0
+  for (let g = 0; g < pattern.length; g++) {
+    cum += pattern[g]
+    if (eighthIndex < cum - 1e-9) return g
+  }
+  return pattern.length - 1
+}
+
+/** Beam per beat (a dotted quarter in compound meters, or the natural groups of an additive x/8 meter); tuplet groups stay whole. */
 export function beamGroups(ds: VexEventDescriptor[], ts: [number, number]): number[][] {
   const [num, den] = ts
+  const additive = den === 8 && num % 3 !== 0 ? ADDITIVE_EIGHTH_GROUPS[num] : undefined
   const beatQN = den === 8 && num % 3 === 0 ? 1.5 : den === 2 ? 2 : den === 8 ? 1 : 4 / den
   const groups: number[][] = []
   let run: number[] = []
@@ -25,7 +47,11 @@ export function beamGroups(ds: VexEventDescriptor[], ts: [number, number]): numb
   const end = () => { if (run.length > 1) groups.push(run); run = []; runKey = null }
   ds.forEach((d, i) => {
     const qn = (d.beatInMeasure - 1) * (4 / den)
-    const key = d.tuplet ? `T${d.tuplet.id}` : `B${Math.floor(qn / beatQN + 1e-9)}`
+    const key = d.tuplet
+      ? `T${d.tuplet.id}`
+      : additive
+        ? `B${additiveGroupIndex(Math.round(qn / 0.5), additive)}`
+        : `B${Math.floor(qn / beatQN + 1e-9)}`
     if (!d.isRest && BEAMABLE.has(d.durationCode)) {
       if (runKey !== key) end()
       run.push(i)
