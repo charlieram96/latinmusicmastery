@@ -72,6 +72,29 @@ describe('autoPlaceBars', () => {
     const res = autoPlaceBars(laid(8, 0, 0.5), hits, window)!;
     expect(res).not.toBeNull();
     expect(res.state.tailVideoTimeSeconds).toBeLessThanOrEqual(window.end);
+    // The last bar keeps the fitted spacing: no squeeze toward the clamped tail.
+    const lastBar = res.state.measures[7].beats.map((b) => b.videoTimeSeconds);
+    lastBar.forEach((t, j) => expect(t).toBeCloseTo(14.0 + 0.5 * j, 3));
+    lastBar.forEach((t) => expect(t).toBeLessThan(res.state.tailVideoTimeSeconds));
+  });
+  it('clips last-bar beats that would fall past a clamped tail instead of squeezing the bar', () => {
+    const truth = laid(8, 0, 0.5);
+    const hits = truth.measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
+    const res = autoPlaceBars(laid(8, 0, 0.5), hits, { start: 0, end: 15.2 })!; // cuts into beat 4 of bar 8
+    expect(res).not.toBeNull();
+    expect(res.state.tailVideoTimeSeconds).toBeCloseTo(15.2, 6);
+    const lastBar = res.state.measures[7].beats.map((b) => b.videoTimeSeconds);
+    expect(lastBar[0]).toBeCloseTo(14.0, 3);
+    expect(lastBar[1]).toBeCloseTo(14.5, 3);
+    expect(lastBar[2]).toBeCloseTo(15.0, 3);
+    expect(lastBar[3]).toBeLessThan(15.2);
+    expect(lastBar[3]).toBeGreaterThan(15.1);
+    for (let j = 1; j < 4; j++) expect(lastBar[j]).toBeGreaterThan(lastBar[j - 1]);
+  });
+  it('refuses when the last downbeat sits right at the trim end', () => {
+    const truth = laid(8, 0, 0.5);
+    const hits = truth.measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds)).filter((h) => h <= 14.03);
+    expect(autoPlaceBars(laid(8, 0, 0.5), hits, { start: 0, end: 14.03 })).toBeNull();
   });
   it('does not let a count-in shift already-correct markers a bar early', () => {
     const truth = laid(16, 5.0, 0.5); // 120 bpm, 16 bars starting at 5.0 s
@@ -94,27 +117,6 @@ describe('autoPlaceBars', () => {
     // 4-beat bar before the true downbeat) — make sure we're nowhere near it.
     expect(Math.abs(downbeats(res.state)[0] - 3.0)).toBeGreaterThan(1);
   });
-  it('rejects noise that would otherwise pass a many-to-one gate', () => {
-    const rnd = seededRandom(12345);
-    const hits = Array.from({ length: 250 }, () => rnd() * 45).sort((x, y) => x - y);
-    const state = laid(16, 5.0, 0.5); // no real playing among the hits at all
-    expect(autoPlaceBars(state, hits, { start: 0, end: 60 })).toBeNull();
-  });
-  it('with a real recording buried in noise, either lands correctly or refuses — never garbage', () => {
-    const truth = laid(16, 5.0, 0.5);
-    const real = truth.measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
-    const rnd = seededRandom(999);
-    const noise = Array.from({ length: 200 }, () => rnd() * 45);
-    const hits = [...real, ...noise].sort((x, y) => x - y);
-    const res = autoPlaceBars(laid(16, 5.3, 0.5), hits, { start: 0, end: 60 }); // 0.3 s off
-    if (res === null) {
-      expect(res).toBeNull();
-    } else {
-      downbeats(res.state).forEach((t, i) => {
-        expect(Math.abs(t - downbeats(truth)[i])).toBeLessThanOrEqual(0.02);
-      });
-    }
-  });
   it('with the tempo laid 20% too fast against real hits, either corrects or refuses — never garbage', () => {
     const truth = laid(8, 2.0, 0.5); // 120 bpm
     const hits = truth.measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
@@ -126,6 +128,91 @@ describe('autoPlaceBars', () => {
         expect(Math.abs(t - downbeats(truth)[i])).toBeLessThanOrEqual(0.02);
       });
     }
+  });
+});
+
+/** 16 bars at 120 bpm from 5.0 s, one hit per beat, each jittered by up to ±`jitter` s. */
+function played(rnd: () => number, jitter: number, missed: number[] = []): number[] {
+  return Array.from({ length: 64 }, (_, k) => 5.0 + 0.5 * k + (rnd() * 2 - 1) * jitter).filter((_, k) => !missed.includes(k));
+}
+const SEEDS = Array.from({ length: 10 }, (_, i) => 101 + i * 7919);
+
+describe('autoPlaceBars robustness', () => {
+  it('lands on the true downbeat past a count-in, a missed hit and a 1-2% tempo error', () => {
+    for (const seed of SEEDS) {
+      for (const missed of [2, 10, 20]) {
+        for (const spb of [0.495, 0.49]) {
+          const rnd = seededRandom(seed);
+          const countIn = [3.0, 3.5, 4.0, 4.5].map((t) => t + (rnd() * 2 - 1) * 0.006);
+          const hits = [...countIn, ...played(rnd, 0.006, [missed])];
+          const res = autoPlaceBars(laid(16, 5.0, spb), hits, { start: 0, end: 60 });
+          expect(res, `seed ${seed} missed ${missed} spb ${spb}`).not.toBeNull();
+          expect(Math.abs(downbeats(res!.state)[0] - 5.0), `seed ${seed} missed ${missed} spb ${spb}`).toBeLessThanOrEqual(0.02);
+        }
+      }
+    }
+  });
+  it('pulls markers laid up to a beat late back onto the true downbeat', () => {
+    for (const seed of SEEDS) {
+      for (const late of [0.26, 0.3, 0.4, 0.5]) {
+        const hits = played(seededRandom(seed), 0.006);
+        const res = autoPlaceBars(laid(16, 5.0 + late, 0.5), hits, { start: 0, end: 60 });
+        expect(res, `seed ${seed} late ${late}`).not.toBeNull();
+        expect(Math.abs(downbeats(res!.state)[0] - 5.0), `seed ${seed} late ${late}`).toBeLessThanOrEqual(0.02);
+      }
+    }
+  });
+  it('with real playing buried in noise, lands on the truth or refuses, never a beat off', () => {
+    for (const seed of SEEDS) {
+      for (const off of [0, 0.3, 0.5]) {
+        const rnd = seededRandom(seed);
+        const real = played(rnd, 0.006);
+        // Noise sits off the beat grid (12 ms = twice the detection accuracy).
+        // A noise hit ON the grid just past the last note is indistinguishable
+        // from one more played note: then the one-beat-late reading is exactly
+        // as good as the truth and the markers rightly decide (seed 23858 has
+        // one 0.7 ms from the 37.0 slot).
+        const noise = Array.from({ length: 200 }, () => rnd() * 45).filter((t) => {
+          const phase = (((t - 5.0) % 0.5) + 0.5) % 0.5;
+          return Math.min(phase, 0.5 - phase) > 0.012;
+        });
+        const res = autoPlaceBars(laid(16, 5.0 + off, 0.5), [...real, ...noise], { start: 0, end: 60 });
+        const label = `seed ${seed} off ${off}`;
+        if (res === null) continue;
+        const first = downbeats(res.state)[0];
+        expect(Math.abs(first - 5.0), label).toBeLessThanOrEqual(0.02);
+        expect(Math.abs(first - 4.5), label).toBeGreaterThan(0.02);
+        expect(Math.abs(first - 5.5), label).toBeGreaterThan(0.02);
+      }
+    }
+  });
+  it('refuses pure noise', () => {
+    for (const count of [250, 300]) {
+      for (let seed = 1; seed <= 20; seed++) {
+        const rnd = seededRandom(seed * 104729);
+        const hits = Array.from({ length: count }, () => rnd() * 45);
+        expect(autoPlaceBars(laid(16, 5.0, 0.5), hits, { start: 0, end: 60 }), `count ${count} seed ${seed}`).toBeNull();
+      }
+    }
+  });
+  it('places a 10-minute section against dense hits in well under 50 ms', () => {
+    const rnd = seededRandom(7);
+    const bars = 300; // 10 minutes at 120 bpm
+    const hits: number[] = [];
+    for (let k = 0; k < bars * 4; k++) {
+      const t = 5.0 + 0.5 * k;
+      hits.push(t + (rnd() * 2 - 1) * 0.006);
+      hits.push(t + rnd() * 0.5, t + rnd() * 0.5, t + rnd() * 0.5); // ghost notes and noise: 8 hits a second
+    }
+    hits.sort((x, y) => x - y);
+    const state = laid(bars, 5.2, 0.49);
+    autoPlaceBars(state, hits, { start: 0, end: 700 }); // warm up the JIT
+    const t0 = performance.now();
+    const res = autoPlaceBars(state, hits, { start: 0, end: 700 });
+    const ms = performance.now() - t0;
+    expect(res).not.toBeNull();
+    expect(Math.abs(downbeats(res!.state)[0] - 5.0)).toBeLessThanOrEqual(0.02);
+    expect(ms).toBeLessThan(50);
   });
 });
 

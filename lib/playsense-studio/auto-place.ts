@@ -3,7 +3,7 @@
 // every bar on that line, then let each bar settle onto the hit under its first
 // attacked note. Pure: SyncPanel tweens to the result and keeps the old markers
 // for one-step undo.
-import { freeCorridor, type MarkerState, type TimeRange } from '@/components/playsense-studio/sync/marker-model';
+import { EPS, freeCorridor, type MarkerState, type TimeRange } from '@/components/playsense-studio/sync/marker-model';
 import { nearestHit } from './hits';
 
 const SETTLE_S = 0.09;
@@ -12,29 +12,138 @@ const SETTLE_S = 0.09;
 const MIN_MATCH_RATIO = 0.7;
 const MAX_RMS_S = 0.04;
 
-interface Onset { qn: number }
+/** Candidate offsets are the hits within this many seconds of the markers'
+ *  current first-onset time. */
+const SEARCH_S = 2;
+/** Floor on the residual sigma used to tell equal-count fits apart, so
+ *  jitter-free (synthetic) hits don't make every tiny residual look loose. */
+const TIE_SIGMA_FLOOR_S = 0.002;
 
-/** For each `predicted` time (qn-ordered), the nearest not-yet-used hit
- *  within `tol`, else null. Each hit is consumed at most once, so a hit that
- *  happens to sit near several onsets can't be double-counted as if it
- *  matched all of them — the many-to-one gate that noise reliably passed. */
+/** Index of the first hit >= t (hits sorted ascending). */
+function lowerBound(hits: number[], t: number): number {
+  let lo = 0;
+  let hi = hits.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (hits[mid] < t) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/** For each `predicted` time (in order), the nearest not-yet-used hit within
+ *  `tol`, else null. Each hit is consumed at most once, so a hit that happens
+ *  to sit near several onsets can't be counted as if it matched all of them
+ *  (the many-to-one gate that noise reliably passed). Binary search plus a
+ *  short scan past used hits keeps it O(n log h) on long, dense recordings. */
 function matchOneToOne(predicted: number[], hits: number[], tol: number): Array<number | null> {
-  const used = new Array<boolean>(hits.length).fill(false);
+  const used = new Uint8Array(hits.length);
   return predicted.map((p) => {
-    let bestIdx = -1;
-    let bestDist = Infinity;
-    for (let j = 0; j < hits.length; j++) {
+    const i = lowerBound(hits, p);
+    let best = -1;
+    for (let j = i - 1; j >= 0 && p - hits[j] <= tol; j--) {
+      if (!used[j]) { best = j; break; }
+    }
+    for (let j = i; j < hits.length && hits[j] - p <= tol; j++) {
       if (used[j]) continue;
-      const d = Math.abs(hits[j] - p);
-      if (d <= tol && d < bestDist) {
-        bestDist = d;
-        bestIdx = j;
+      if (best === -1 || hits[j] - p < p - hits[best]) best = j;
+      break;
+    }
+    if (best === -1) return null;
+    used[best] = 1;
+    return hits[best];
+  });
+}
+
+const fitTol = (b: number) => Math.min(0.12, 0.3 * b);
+
+/** The growing-window least-squares fit: time = a + b * x, x = qn - qn0.
+ *  Starts on the first 8 onsets and doubles the window each pass, matching
+ *  each onset to its nearest hit (many-to-one is fine here: this only steers). */
+function refineFit(xs: number[], hits: number[], a0: number, b0: number): { a: number; b: number } {
+  let a = a0;
+  let b = b0;
+  for (let n = Math.min(8, xs.length); ; n = Math.min(xs.length, n * 2)) {
+    const tol = fitTol(b);
+    let count = 0;
+    let sx = 0;
+    let sy = 0;
+    const px: number[] = [];
+    const py: number[] = [];
+    for (let k = 0; k < n; k++) {
+      const h = nearestHit(hits, a + b * xs[k], tol);
+      if (h === null) continue;
+      px.push(xs[k]);
+      py.push(h);
+      sx += xs[k];
+      sy += h;
+      count++;
+    }
+    if (count >= 3) {
+      const mx = sx / count;
+      const my = sy / count;
+      let sxx = 0;
+      let sxy = 0;
+      for (let k = 0; k < count; k++) {
+        sxx += (px[k] - mx) ** 2;
+        sxy += (px[k] - mx) * (py[k] - my);
+      }
+      if (sxx > 0 && sxy > 0) {
+        b = sxy / sxx;
+        a = my - b * mx;
       }
     }
-    if (bestIdx === -1) return null;
-    used[bestIdx] = true;
-    return hits[bestIdx];
+    if (n === xs.length) break;
+  }
+  return { a, b };
+}
+
+interface Fit { a: number; b: number; count: number; rms: number; residuals: number[]; dist: number }
+
+/** One-to-one matched count, the matched pairs' absolute residuals and their
+ *  RMS, for a fitted line over every onset. */
+function scoreFit(xs: number[], hits: number[], a: number, b: number): Omit<Fit, 'a' | 'b' | 'dist'> {
+  const predicted = xs.map((x) => a + b * x);
+  const matches = matchOneToOne(predicted, hits, fitTol(b));
+  const residuals: number[] = [];
+  let sumSq = 0;
+  matches.forEach((h, i) => {
+    if (h === null) return;
+    const r = Math.abs(h - predicted[i]);
+    residuals.push(r);
+    sumSq += r * r;
   });
+  const count = residuals.length;
+  return { count, residuals, rms: count ? Math.sqrt(sumSq / count) : Infinity };
+}
+
+/**
+ * Picks the refined fit. The most one-to-one matches wins. Among equal counts
+ * the fit nearest the current offset wins: a steady count-in continuing the
+ * same tempo grid lines up exactly as many onsets as the true downbeat, and
+ * only the markers know which one the user meant. RMS decides after that.
+ *
+ * One refinement: an equal-count fit is only a true tie when its matches are
+ * as tight as the others'. Two readings a beat apart share every hit but the
+ * ones at the ends, so when one of them needs an extra LOOSE match (a residual
+ * over 3 sigma, sigma being the tightest tied fit's RMS, floored at 2 ms) to
+ * reach the same count, that match is a stray noise hit rather than a played
+ * note, and the fit drops out before the nearest-offset rule. Without this,
+ * noise landing just past the last note lets a beat-shifted reading tie the
+ * truth and win on proximity. A sloppy note shared by every reading counts
+ * against all of them equally, so it changes nothing.
+ */
+function pickFit(fits: Fit[]): Fit | null {
+  if (!fits.length) return null;
+  const top = Math.max(...fits.map((f) => f.count));
+  const tied = fits.filter((f) => f.count === top);
+  const sigma = Math.max(Math.min(...tied.map((f) => f.rms)), TIE_SIGMA_FLOOR_S);
+  const loose = (f: Fit) => f.residuals.filter((r) => r > 3 * sigma).length;
+  const fewest = Math.min(...tied.map(loose));
+  const close = tied.filter((f) => loose(f) === fewest);
+  return close.reduce((best, f) =>
+    f.dist < best.dist - 1e-6 || (Math.abs(f.dist - best.dist) <= 1e-6 && f.rms < best.rms) ? f : best
+  );
 }
 
 export function autoPlaceBars(
@@ -43,101 +152,40 @@ export function autoPlaceBars(
   window: { start: number; end: number }
 ): { state: MarkerState; matched: number; settled: number } | null {
   const hits = allHits.filter((h) => h >= window.start && h <= window.end).sort((x, y) => x - y);
-  const onsets: Onset[] = state.measures.flatMap((m) => m.onsetQNs.map((qn) => ({ qn })));
-  if (onsets.length < 4 || hits.length < 4 || state.measures.length === 0) return null;
+  const onsetQNs = state.measures.flatMap((m) => m.onsetQNs);
+  if (onsetQNs.length < 4 || hits.length < 4 || state.measures.length === 0) return null;
 
   // Start from the current markers: time = a + b * (qn - qn0).
-  const qn0 = onsets[0].qn;
+  const qn0 = onsetQNs[0];
+  const xs = onsetQNs.map((qn) => qn - qn0);
   const first = state.measures[0];
   const last = state.measures[state.measures.length - 1];
   const spanQN = state.tailQN - first.downbeatQN;
-  let b = spanQN > 0 ? (state.tailVideoTimeSeconds - first.beats[0].videoTimeSeconds) / spanQN : 0.5;
-  let a = first.beats[0].videoTimeSeconds + (qn0 - first.downbeatQN) * b;
+  const b0 = spanQN > 0 ? (state.tailVideoTimeSeconds - first.beats[0].videoTimeSeconds) / spanQN : 0.5;
+  if (!(b0 > 0)) return null;
+  const a0 = first.beats[0].videoTimeSeconds + (qn0 - first.downbeatQN) * b0;
 
-  // Coarse offset search: the markers may start well away from the playing
-  // (further than the fit tolerance), so first try putting the first onset on
-  // each hit within ±2 s and keep the offset that lines up the most onsets.
-  // Scored over up to 32 onsets (8 bars) rather than 8, so a short-lived
-  // coincidence doesn't look as good as the real alignment.
-  //
-  // A PERFECT tie (every probed onset matches) is a genuine ambiguity — most
-  // often a steady count-in click continuing the very same tempo grid as the
-  // real playing, so it lines up exactly as many onsets as the true downbeat.
-  // Those ties go to the candidate NEAREST the markers' current position, not
-  // the earliest hit — otherwise a count-in reliably wins (it's first in
-  // ascending order) and drags an already-correct bar a whole count-in early.
-  // A merely-highest (imperfect) tie means the coarse tempo estimate itself is
-  // still off — e.g. wrong start AND wrong tempo together — and every
-  // candidate aliases the same way against it; here "nearest" carries no real
-  // signal (proximity to a wrong `a` is coincidental), so the earliest match
-  // is kept, same as before, and the growing-window fit below does the real
-  // work of finding the true tempo.
-  {
-    const seedA = a;
-    const tol0 = Math.min(0.12, 0.3 * b);
-    const probe = onsets.slice(0, Math.min(32, onsets.length));
-    let bestA = a;
-    let bestCount = -1;
-    let bestDist = Infinity;
-    for (const h of hits) {
-      if (Math.abs(h - seedA) > 2) continue;
-      const count = probe.filter((o) => nearestHit(hits, h + b * (o.qn - qn0), tol0) !== null).length;
-      const dist = Math.abs(h - seedA);
-      const isPerfect = count === probe.length;
-      const better = count > bestCount || (count === bestCount && isPerfect && dist < bestDist);
-      if (better) {
-        bestCount = count;
-        bestDist = dist;
-        bestA = h;
-      }
-    }
-    a = bestA;
+  // Offset search. The markers may start well away from the playing (further
+  // than the fit tolerance), so seed the fit at every hit within ±2 s of the
+  // current first-onset time (and at the current offset itself), refine each
+  // with the growing-window fit, and score the refined line over ALL onsets.
+  const seeds = [a0];
+  for (let i = lowerBound(hits, a0 - SEARCH_S); i < hits.length && hits[i] <= a0 + SEARCH_S; i++) seeds.push(hits[i]);
+  const fits: Fit[] = [];
+  for (const seed of seeds) {
+    const { a, b } = refineFit(xs, hits, seed, b0);
+    if (!(b > 0)) continue;
+    fits.push({ a, b, ...scoreFit(xs, hits, a, b), dist: Math.abs(a - a0) });
   }
+  const best = pickFit(fits);
+  if (!best) return null;
+  const { a, b } = best;
+  const matched = best.count;
 
-  let matched = 0;
-  for (let n = Math.min(8, onsets.length); ; n = Math.min(onsets.length, n * 2)) {
-    const tol = Math.min(0.12, 0.3 * b);
-    const pairs: Array<[number, number]> = [];
-    for (const o of onsets.slice(0, n)) {
-      const h = nearestHit(hits, a + b * (o.qn - qn0), tol);
-      if (h !== null) pairs.push([o.qn - qn0, h]);
-    }
-    if (pairs.length >= 3) {
-      const mx = pairs.reduce((s, p) => s + p[0], 0) / pairs.length;
-      const my = pairs.reduce((s, p) => s + p[1], 0) / pairs.length;
-      const sxx = pairs.reduce((s, p) => s + (p[0] - mx) ** 2, 0);
-      if (sxx > 0) {
-        b = pairs.reduce((s, p) => s + (p[0] - mx) * (p[1] - my), 0) / sxx;
-        a = my - b * mx;
-      }
-    }
-    matched = pairs.length;
-    if (n === onsets.length) break;
-  }
-  if (b <= 0) return null;
-
-  // Final acceptance gate: a clean ONE-TO-ONE match against the fitted line
-  // (each hit used at most once), unlike the many-to-one matching above, which
-  // is only good enough to steer the iterative fit — noise easily has SOME
-  // hit near many different onsets, but not one each. At least 70% of the
-  // onsets must land their own hit, and the matched pairs' RMS residual
-  // against the line must be tight: real playing lines up far better than
-  // 40 ms RMS against a correct fit; noise essentially never does.
-  {
-    const finalTol = Math.min(0.12, 0.3 * b);
-    const predicted = onsets.map((o) => a + b * (o.qn - qn0));
-    const finalMatches = matchOneToOne(predicted, hits, finalTol);
-    let matchCount = 0;
-    let sumSq = 0;
-    finalMatches.forEach((h, i) => {
-      if (h === null) return;
-      matchCount++;
-      sumSq += (h - predicted[i]) ** 2;
-    });
-    matched = matchCount;
-    if (matched < MIN_MATCH_RATIO * onsets.length) return null;
-    if (Math.sqrt(sumSq / matched) > MAX_RMS_S) return null;
-  }
+  // Final acceptance gate: at least 70% of the onsets land their own hit, and
+  // the matched pairs sit tight on the line. Real playing lines up far better
+  // than 40 ms RMS against a correct fit; noise essentially never does.
+  if (matched < MIN_MATCH_RATIO * onsetQNs.length || best.rms > MAX_RMS_S) return null;
 
   const at = (qn: number) => a + b * (qn - qn0);
   // Lay the downbeats, then settle each onto the hit under its first note.
@@ -153,24 +201,31 @@ export function autoPlaceBars(
     const nextOk = i === downs.length - 1 || next < at(state.measures[i + 1].downbeatQN) - 0.01;
     if (prevOk && nextOk) { downs[i] = next; if (Math.abs(h - predicted) > 1e-6) settled++; }
   });
-  let tail = downs[downs.length - 1] + (state.tailQN - last.downbeatQN) * b;
 
-  // Keep every BAR inside the window — that's the hard constraint. The tail is
-  // softer: a trim-out landing just past the natural tail (e.g. right after the
-  // last note's hit) is a false failure, not a real one, so it's clamped to the
-  // window end instead (floored 0.05 s past the last downbeat) rather than
-  // failing the whole placement.
+  // Every BAR stays inside the window. The tail is softer: a trim-out just
+  // short of the natural tail clamps it, as long as the last bar keeps at
+  // least 50 ms. The last bar keeps the fitted beat spacing; beats that would
+  // fall past a clamped tail are clipped just under it rather than squeezing
+  // the whole bar.
   const lo = window.start;
   const hi = window.end;
-  if (downs.some((d) => d < lo || d > hi)) return null;
-  const minTail = downs[downs.length - 1] + 0.05;
-  tail = Math.max(minTail, Math.min(tail, hi));
+  const lastDown = downs[downs.length - 1];
+  if (downs.some((d) => d < lo || d > hi) || lastDown + 0.05 > hi) return null;
+  const tail = Math.min(lastDown + (state.tailQN - last.downbeatQN) * b, hi);
 
   const measures = state.measures.map((m, i) => {
     const start = downs[i];
-    const end = i + 1 < downs.length ? downs[i + 1] : tail;
-    const endQN = i + 1 < state.measures.length ? state.measures[i + 1].downbeatQN : state.tailQN;
-    const secPerQN = (end - start) / (endQN - m.downbeatQN);
+    if (i === downs.length - 1) {
+      const times = m.beats.map((bt) => start + (bt.musicalPositionQN - m.downbeatQN) * b);
+      // Clip from the end so clipped beats stay strictly increasing below the tail.
+      for (let j = times.length - 1, ceiling = tail - EPS; j > 0; j--, ceiling -= EPS) {
+        if (times[j] > ceiling) times[j] = ceiling;
+        else break;
+      }
+      return { ...m, beats: m.beats.map((bt, j) => ({ ...bt, videoTimeSeconds: times[j], edited: false })) };
+    }
+    const end = downs[i + 1];
+    const secPerQN = (end - start) / (state.measures[i + 1].downbeatQN - m.downbeatQN);
     return {
       ...m,
       beats: m.beats.map((bt) => ({ ...bt, videoTimeSeconds: start + (bt.musicalPositionQN - m.downbeatQN) * secPerQN, edited: false })),
