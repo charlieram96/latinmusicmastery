@@ -1002,7 +1002,7 @@ export function SyncPanel({
 
   const scheduleAnchorSave = useCallback(() => {
     if (anchorTimerRef.current) clearTimeout(anchorTimerRef.current);
-    anchorTimerRef.current = setTimeout(() => { persistAnchor(); }, 500);
+    anchorTimerRef.current = setTimeout(() => { anchorTimerRef.current = null; persistAnchor(); }, 500);
   }, [persistAnchor]);
 
   const handleAnchorDrag = useCallback(
