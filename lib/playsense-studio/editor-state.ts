@@ -10,12 +10,15 @@ import { repeatGroups } from './repeats';
 import { insertMidiMeasures } from './midi-recording';
 import { applyMeasureEdit, contextAt, emptyMeasure, type MeasureClip } from './measure-edits';
 import { stripCopyTags } from './measure-clipboard';
-import { ensureScoreEventIds, newEventId, pruneSpans, withPassIds } from './event-ids';
+import { ensureScoreEventIds, newEventId, passEventId, pruneSpans, withPassIds } from './event-ids';
 import type {
+  Articulation,
   Chord,
+  Dynamic,
   Measure,
   MusicalEvent,
   Note,
+  Ornament,
   PercussionNotation,
   Rest,
   ScoreDocument,
@@ -29,9 +32,9 @@ import {
   measureLengthInQN,
   occupiedQN,
 } from './time-mapping';
-import { eventDots, eventSpelling, eventTuplet, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
+import { eventArticulations, eventDots, eventSpelling, eventTuplet, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
 import { octavePitch, semitonePitch, spelledMidi, stepPitch, type Pitch } from './pitch';
-import { soundingQN, writtenValue, type NoteValue } from './rhythm';
+import { VALUE_QN, soundingQN, valueFromQN, writtenValue, type NoteValue } from './rhythm';
 import { spellMidi } from './notation/accidentals';
 
 // ---------------------------------------------------------------------------
@@ -140,6 +143,15 @@ export type EditorAction =
   | { type: 'set-events-accidental'; refs: EventRef[]; alter: -2 | -1 | 0 | 1 | 2; keyFifths: number }
   | { type: 'set-event-pitches'; ref: EventRef; midis: number[] }
   | { type: 'delete-events'; refs: EventRef[] }
+  // Marks, tuplets and spans (the measure zoom's toolbar and More ▾ tabs).
+  | { type: 'toggle-events-articulation'; refs: EventRef[]; articulation: Articulation }
+  | { type: 'set-events-ornament'; refs: EventRef[]; ornament: Ornament | null }
+  | { type: 'set-events-dynamic'; refs: EventRef[]; dynamic: Dynamic | null }
+  | { type: 'set-event-text'; ref: EventRef; text: string | null }
+  | { type: 'toggle-event-grace'; ref: EventRef; slash: boolean; keyFifths: number }
+  | { type: 'toggle-event-tie'; ref: EventRef }
+  | { type: 'apply-tuplet'; ref: EventRef; n: number; m: number }
+  | { type: 'toggle-span'; spanType: 'slur' | 'cresc' | 'dim'; from: EventRef; to?: EventRef }
   | { type: 'undo' }
   | { type: 'redo' }
   | { type: 'mark-clean' }
@@ -312,6 +324,40 @@ function tupletGroup(events: MusicalEvent[], index: number): number[] {
   while (same(start - 1)) start--;
   while (same(end + 1)) end++;
   return Array.from({ length: end - start + 1 }, (_, k) => start + k);
+}
+
+/** Where every event id sits: its bar and that bar's repeat tag. */
+function eventIdIndex(score: ScoreDocument): Map<string, { trackIndex: number; measureIndex: number; repeat?: Measure['repeat'] }> {
+  const out = new Map<string, { trackIndex: number; measureIndex: number; repeat?: Measure['repeat'] }>();
+  score.tracks.forEach((t, trackIndex) => t.measures.forEach((m, measureIndex) => {
+    for (const v of m.voices) for (const e of v.events) if (e.id) out.set(e.id, { trackIndex, measureIndex, repeat: m.repeat });
+  }));
+  return out;
+}
+
+/** The event after `r` in its voice, crossing into later bars; null at the end. */
+function nextEventRef(score: ScoreDocument, r: EventRef): EventRef | null {
+  const track = score.tracks[r.trackIndex];
+  if (!track) return null;
+  for (let mi = r.measureIndex; mi < track.measures.length; mi++) {
+    const events = track.measures[mi].voices[r.voice]?.events ?? [];
+    const start = mi === r.measureIndex ? r.eventIndex + 1 : 0;
+    if (start < events.length) return { ...r, measureIndex: mi, eventIndex: start };
+  }
+  return null;
+}
+
+/** Where an event starts in reading order: its bar, then its onset in the bar. */
+function readingPosition(r: ResolvedRef): [number, number] {
+  return [r.measureIndex, occupiedQN(r.events.slice(0, r.eventIndex))];
+}
+
+/** Only the pitch content of an event: a note's pitch, a chord's notes, or a bare rest. */
+function pitchContent(e: MusicalEvent): Note | Chord | Rest {
+  const notePitch = (x: PitchedNote) => ({ midi: x.midi, ...pick(x, ['spelling', 'spellingHint', 'percussion'] as const) });
+  if (e.kind === 'note') return { kind: 'note', durationQN: e.durationQN, ...notePitch(e) };
+  if (e.kind === 'chord') return { kind: 'chord', durationQN: e.durationQN, notes: e.notes.map(notePitch) };
+  return { kind: 'rest', durationQN: e.durationQN };
 }
 
 const RHYTHM_KEYS = ['id', 'durationQN', 'dots', 'dotted', 'tuplet', 'triplet'] as const;
@@ -956,6 +1002,163 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const spans = pruneSpans(result.score);
       if (spans) result.score.spans = spans;
       return result;
+    }
+    case 'toggle-events-articulation': {
+      const next = clone(state.score);
+      const refs = resolveRefs(next, action.refs).filter((r) => r.event.kind !== 'rest');
+      const changed = mutateEach(refs, (e) => {
+        const current = eventArticulations(e);
+        const marks = current.includes(action.articulation)
+          ? current.filter((a) => a !== action.articulation)
+          : [...current, action.articulation];
+        if (marks.length) e.articulations = marks;
+        else delete e.articulations;
+        delete e.articulation;
+      });
+      return changed ? withHistory(state, next) : state;
+    }
+    case 'set-events-ornament': {
+      const next = clone(state.score);
+      const refs = resolveRefs(next, action.refs).filter((r) => r.event.kind !== 'rest');
+      const changed = mutateEach(refs, (e) => {
+        if (action.ornament) e.ornament = action.ornament;
+        else delete e.ornament;
+      });
+      return changed ? withHistory(state, next) : state;
+    }
+    case 'set-events-dynamic': {
+      const next = clone(state.score);
+      const changed = mutateEach(resolveRefs(next, action.refs), (e) => {
+        if (action.dynamic) e.dynamic = action.dynamic;
+        else delete e.dynamic;
+      });
+      return changed ? withHistory(state, next) : state;
+    }
+    case 'set-event-text': {
+      const next = clone(state.score);
+      const text = (action.text ?? '').trim().slice(0, 60);
+      const changed = mutateEach(resolveRefs(next, [action.ref]), (e) => {
+        if (text) e.text = text;
+        else delete e.text;
+      });
+      return changed ? withHistory(state, next) : state;
+    }
+    case 'toggle-event-grace': {
+      const next = clone(state.score);
+      const [r] = resolveRefs(next, [action.ref]);
+      if (!r || r.event.kind === 'rest') return state;
+      const e = r.event;
+      if (e.grace?.length && e.grace.every((g) => g.slash === action.slash)) {
+        delete e.grace;
+      } else {
+        const top = pitchedNotes(e).reduce((a, b) => (b.midi > a.midi ? b : a));
+        const to = stepPitch(top.midi, eventSpelling(top) ?? undefined, action.keyFifths, 1);
+        e.grace = [{ midi: to.midi, spelling: { step: to.spelling.step, alter: to.spelling.alter }, slash: action.slash }];
+      }
+      return withHistory(state, next);
+    }
+    case 'toggle-event-tie': {
+      const next = clone(state.score);
+      const [r] = resolveRefs(next, [action.ref]);
+      if (!r || r.event.kind === 'rest') return state;
+      if (r.event.tieToNext) delete r.event.tieToNext;
+      else r.event.tieToNext = true;
+      return withHistory(state, next);
+    }
+    case 'apply-tuplet': {
+      const next = clone(state.score);
+      const [r] = resolveRefs(next, [action.ref]);
+      if (!r) return state;
+      const e = r.event;
+      if (eventTuplet(e)) {
+        // Merge back: the contiguous run of the group holding this event.
+        const group = new Set(tupletGroup(r.events, r.eventIndex));
+        let start = r.eventIndex;
+        let end = r.eventIndex;
+        while (group.has(start - 1)) start--;
+        while (group.has(end + 1)) end++;
+        const members = r.events.slice(start, end + 1);
+        const value = valueFromQN(members.reduce((sum, x) => sum + x.durationQN, 0));
+        if (!value) return state;
+        const merged = { ...members[0], durationQN: VALUE_QN[value] };
+        delete merged.tuplet;
+        delete merged.triplet;
+        delete merged.dots;
+        delete merged.dotted;
+        r.events.splice(start, members.length, merged);
+        return withHistory(state, next);
+      }
+      if (eventDots(e) > 0) return state;
+      const { n, m } = action;
+      if (!Number.isInteger(n) || !Number.isInteger(m) || n < 2 || m < 1) return state;
+      const written = writtenValue(e);
+      const base = written ? valueFromQN(VALUE_QN[written] / m) : null;
+      if (!base) return state;
+      const durationQN = (VALUE_QN[base] * m) / n;
+      const tuplet = { id: newTupletId(), n, m };
+      const first: MusicalEvent = { ...e, durationQN, tuplet: { ...tuplet } };
+      delete first.triplet;
+      const rest = Array.from({ length: n - 1 }, (): MusicalEvent => ({
+        ...pitchContent(e),
+        id: newEventId(),
+        durationQN,
+        tuplet: { ...tuplet },
+      }));
+      r.events.splice(r.eventIndex, 1, first, ...rest);
+      return withHistory(state, next);
+    }
+    case 'toggle-span': {
+      const next = clone(state.score);
+      const { spanType } = action;
+      const [from] = resolveRefs(next, [action.from]);
+      const fromId = from?.event.id;
+      if (!from || !fromId) return state;
+      const spans = next.spans ?? [];
+      const ids = eventIdIndex(next);
+      const group = ids.get(fromId)?.repeat;
+      // The passes of `from`'s repeat other than its own, each with its ids;
+      // a pass is skipped when an end isn't in that pass of the same repeat.
+      const otherPasses = (toId?: string) => {
+        if (!group) return [];
+        const inPass = (id: string, p: number) => {
+          const rep = ids.get(id)?.repeat;
+          return rep?.id === group.id && rep.pass === p;
+        };
+        const out: Array<{ from: string; to?: string }> = [];
+        for (let p = 0; p < group.count; p++) {
+          if (p === group.pass) continue;
+          const f = passEventId(fromId, p);
+          const t = toId === undefined ? undefined : passEventId(toId, p);
+          if (!inPass(f, p) || (t !== undefined && !inPass(t, p))) continue;
+          out.push({ from: f, to: t });
+        }
+        return out;
+      };
+      const sameAsFrom = !action.to || refKey(action.to) === refKey(action.from);
+      if (sameAsFrom && spans.some((s) => s.type === spanType && s.from === fromId)) {
+        const starts = new Set([fromId, ...otherPasses().map((p) => p.from)]);
+        next.spans = spans.filter((s) => !(s.type === spanType && starts.has(s.from)));
+        return withHistory(state, next);
+      }
+      const toRef = sameAsFrom ? nextEventRef(next, action.from) : action.to!;
+      const [to] = toRef ? resolveRefs(next, [toRef]) : [];
+      const toId = to?.event.id;
+      if (!to || !toId || to.trackIndex !== from.trackIndex) return state;
+      const [fm, fq] = readingPosition(from);
+      const [tm, tq] = readingPosition(to);
+      if (tm < fm || (tm === fm && tq < fq - QN_EPS)) return state;
+      const pairs = [{ from: fromId, to: toId }, ...otherPasses(toId).map((p) => ({ from: p.from, to: p.to! }))];
+      const exists = (p: { from: string; to: string }) => spans.some((s) => s.type === spanType && s.from === p.from && s.to === p.to);
+      if (exists(pairs[0])) {
+        // The same span again (an explicit `to`): toggle it off on every pass.
+        next.spans = spans.filter((s) => !(s.type === spanType && pairs.some((p) => p.from === s.from && p.to === s.to)));
+      } else {
+        next.spans = [
+          ...spans,
+          ...pairs.filter((p) => !exists(p)).map((p) => ({ id: 's' + newEventId().slice(1), type: spanType, ...p })),
+        ];
+      }
+      return withHistory(state, next);
     }
     default:
       return state;
