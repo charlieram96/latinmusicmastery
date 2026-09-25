@@ -213,4 +213,26 @@ describe('PathStrip', () => {
     expect(pair.className.split(/\s+/)).toEqual(expect.arrayContaining(['bottom-full', 'top-auto', 'right-0']))
     expect(pair.className.split(/\s+/)).not.toContain('top-0')
   })
+
+  it('each node snaps through a real 2px anchor (Chrome ignores zero-size snap areas)', () => {
+    render()
+    for (const node of host.querySelectorAll<HTMLElement>('[data-path-node]')) {
+      expect(node.style.scrollSnapAlign).toBe('')
+      const anchor = node.querySelector<HTMLElement>('[data-snap-anchor]')!
+      expect(anchor.style.scrollSnapAlign).toBe('center')
+      expect(anchor.className.split(/\s+/)).toEqual(expect.arrayContaining(['w-[2px]', 'h-[2px]', '-left-px', '-top-px']))
+    }
+  })
+
+  it('marks a first touch tap so the global page loader ignores it; the navigating tap is unmarked', () => {
+    render()
+    const link = host.querySelector('[data-path-scroller] a[href="/l/c"]')!
+    pointer(link, 'pointerdown', 'touch')
+    expect(link.hasAttribute('data-no-page-loader')).toBe(true)
+    click(link)
+    pointer(link, 'pointerdown', 'touch')
+    expect(link.hasAttribute('data-no-page-loader')).toBe(false)
+    pointer(link, 'pointerdown', 'mouse')
+    expect(link.hasAttribute('data-no-page-loader')).toBe(false)
+  })
 })

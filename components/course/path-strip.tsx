@@ -201,12 +201,21 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
                 key={item.id}
                 data-path-node
                 className="group absolute"
-                style={{ left: x, top: y, scrollSnapAlign: 'center' }}
-                onPointerDown={(e) => { touch.current = e.pointerType !== 'mouse' }}
+                style={{ left: x, top: y }}
+                onPointerDown={(e) => {
+                  touch.current = e.pointerType !== 'mouse'
+                  // A first tap only opens the card: keep the global page loader
+                  // (a capture-phase link listener) from showing for it.
+                  const willPin = isLesson && touch.current && !(tip?.index === i && tip.pinned)
+                  e.currentTarget.querySelector('a')?.toggleAttribute('data-no-page-loader', willPin)
+                }}
                 onPointerEnter={(e) => { if (e.pointerType === 'mouse') touch.current = false }}
                 onKeyDown={() => { touch.current = false }}
                 {...hover}
               >
+                {/* Snap point centred on the node. The wrapper is 0×0, and Chrome ignores
+                    zero-size snap areas (every scroll then snapped back to the start). */}
+                <span data-snap-anchor aria-hidden className="pointer-events-none absolute -left-px -top-px h-[2px] w-[2px]" style={{ scrollSnapAlign: 'center' }} />
                 {current && isLesson && (
                   <div data-path-bubble className="pointer-events-none absolute bottom-[34px] left-1/2 z-[2] grid -translate-x-1/2 justify-items-center whitespace-nowrap rounded-xl border-2 border-border bg-card px-3 py-1.5 text-[13px] font-extrabold text-primary shadow-lift group-focus-within:opacity-0 group-hover:opacity-0 motion-safe:animate-bob">
                     <span className="uppercase">{t(`${T}.continue`)}</span>
