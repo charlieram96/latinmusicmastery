@@ -226,4 +226,41 @@ describe('IntegratedEditor measure zoom', () => {
     key('Escape');
     expect(barInfo()).toContain('m.2');
   });
+
+  // Fix round 1: a percussion track's stroke row can be far wider (and
+  // wrap taller) than the note toolbar's 520px pre-measure fallback. jsdom
+  // never lays anything out, so offsetWidth/offsetHeight are stubbed to
+  // stand in for a real (measured) oversized toolbar.
+  it('measures the note toolbar and clamps it inside the zoom', () => {
+    const widthDesc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')!;
+    const heightDesc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight')!;
+    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+      configurable: true,
+      get(this: HTMLElement) { return this.getAttribute('data-testid') === 'note-toolbar' ? 900 : 0; },
+    });
+    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+      configurable: true,
+      get(this: HTMLElement) { return this.getAttribute('data-testid') === 'note-toolbar' ? 300 : 0; },
+    });
+    try {
+      renderEditor();
+      key('ArrowRight');
+      key('Enter');
+      const bar = host.querySelector<HTMLElement>('[data-testid="note-toolbar"]');
+      expect(bar).not.toBeNull();
+      // The center column is the jsdom fallback panel (800px) minus its two
+      // 104px slivers = 592px. A 900px-wide bar can't fit either way, so its
+      // clamp bound collapses to its own half-width from the left edge.
+      expect(bar!.style.left).toBe('458px');
+      // The center row (well under 300px here) is shorter than the bar, so
+      // it clamps flush to the row's top instead of running past its bottom.
+      expect(bar!.style.top).toBe('0px');
+      // Kept inside the center column: capped at its width minus 16px.
+      expect(bar!.style.maxWidth).toBe('576px');
+      expect(bar!.style.flexWrap).toBe('wrap');
+    } finally {
+      Object.defineProperty(HTMLElement.prototype, 'offsetWidth', widthDesc);
+      Object.defineProperty(HTMLElement.prototype, 'offsetHeight', heightDesc);
+    }
+  });
 });

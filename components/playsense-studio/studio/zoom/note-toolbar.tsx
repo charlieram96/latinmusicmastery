@@ -9,11 +9,12 @@
 // zoom's own keydown listener (registered on window) keeps working while a
 // button is clicked.
 
+import type { Ref } from 'react';
 import { Trash2 } from 'lucide-react';
 import { KEY_VALUE, VALUE_NAME, VALUE_QN, type NoteValue } from '@/lib/playsense-studio/rhythm';
 import type { PopoverAnchor } from '../measure/popover';
 import type { ZoomEditing } from './use-zoom-editing';
-import { NoteIcon } from './note-glyphs';
+import { NoteIcon, RestIcon } from './note-glyphs';
 
 export interface NoteToolbarPercussion {
   strokes: { midi: number; label: string }[];
@@ -21,9 +22,17 @@ export interface NoteToolbarPercussion {
 }
 
 export interface NoteToolbarProps {
+  /** So the caller can measure the toolbar's real `offsetWidth`/`offsetHeight`
+   *  (a percussion track's stroke buttons can run wide or wrap tall) and
+   *  clamp `left`/`top` against them, the way the measure bar measures itself
+   *  against the viewport. */
+  ref?: Ref<HTMLDivElement>;
   /** Zoom-center px; the toolbar centres itself on `left` with translateX(-50%). */
   left: number;
   top: number;
+  /** Keeps the toolbar inside the center column: long percussion stroke rows
+   *  wrap onto further lines instead of overflowing it. */
+  maxWidth?: number;
   /** A note's name, a chord's names joined by spaces, 'rest', or 'add' at 'end'. */
   info: string;
   value: NoteValue;
@@ -53,11 +62,50 @@ const ACCIDENTALS: Array<{ alter: -1 | 0 | 1; label: string; title: string }> = 
   { alter: 1, label: '♯', title: 'Sharp' },
 ];
 
+/** Before the toolbar's first paint, there's nothing to measure yet — a
+ *  percussion track's stroke row is usually wider than a pitched one, so a
+ *  wide guess errs toward not overflowing on that very first frame. */
+export const NOTE_TOOLBAR_WIDTH_FALLBACK = 520;
+
+/**
+ * Clamp a toolbar anchored at `(x, top)` so it stays inside the zoom's center
+ * column/row, using its own measured size — the measure bar's clamp
+ * (`Math.max(half, Math.min(bound - half, x))`), applied on both axes. A
+ * `size.w`/`size.h` of 0 (nothing measured yet, e.g. the toolbar's first
+ * frame) leaves that axis unclamped, since there's nothing yet to clamp with;
+ * `centerW`/`bodyH` of 0 (the zoom itself unmeasured) does the same.
+ */
+export function clampNoteToolbarPosition(
+  x: number,
+  top: number,
+  size: { w: number; h: number },
+  bounds: { centerW: number; bodyH: number },
+): { left: number; top: number } {
+  const halfW = size.w / 2 + 8;
+  const left = bounds.centerW > 0 && size.w > 0
+    ? Math.max(halfW, Math.min(bounds.centerW - halfW, x))
+    : x;
+  const clampedTop = bounds.bodyH > 0 && size.h > 0
+    ? Math.max(0, Math.min(bounds.bodyH - size.h, top))
+    : top;
+  return { left, top: clampedTop };
+}
+
 export function NoteToolbar({
-  left, top, info, value, dots, isRest, tie, tripletOn, hasSelection, percussion, editing, onMore,
+  ref, left, top, maxWidth, info, value, dots, isRest, tie, tripletOn, hasSelection, percussion, editing, onMore,
 }: NoteToolbarProps) {
   return (
-    <div className="st-fbar" role="toolbar" aria-label="Note" style={{ left, top, gridColumn: 2, gridRow: 2 }}>
+    <div
+      ref={ref}
+      className="st-fbar"
+      role="toolbar"
+      aria-label="Note"
+      data-testid="note-toolbar"
+      style={{
+        left, top, gridColumn: 2, gridRow: 2,
+        ...(maxWidth !== undefined ? { maxWidth, flexWrap: 'wrap' } : {}),
+      }}
+    >
       <span className="st-fbar-info">{info}</span>
 
       {TOOLBAR_DURATIONS.map((v) => (
@@ -93,7 +141,7 @@ export function NoteToolbar({
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => editing.enterRest()}
       >
-        Rest
+        <RestIcon /> Rest
       </button>
 
       <button

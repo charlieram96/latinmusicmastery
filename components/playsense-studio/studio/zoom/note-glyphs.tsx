@@ -35,3 +35,13 @@ export function NoteIcon({ durationQN }: { durationQN: number }) {
     </svg>
   );
 }
+
+/** Simple half-rest-on-a-line icon (the 𝄽 glyph is also tofu-prone). */
+export function RestIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden focusable="false">
+      <line x1="2" y1="11.5" x2="14" y2="11.5" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="5" y="7.2" width="6" height="4.3" rx="0.6" fill="currentColor" />
+    </svg>
+  );
+}

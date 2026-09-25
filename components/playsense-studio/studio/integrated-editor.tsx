@@ -66,8 +66,8 @@ import { MidiRecordButton, type MidiRecordingSource } from './midi-record-button
 import { MeasureZoom, type ZoomState } from './zoom/measure-zoom';
 import { useZoomEditing } from './zoom/use-zoom-editing';
 import type { ZoomLayout } from './zoom/zoom-staff';
-import { NoteIcon } from './zoom/note-glyphs';
-import { NoteToolbar, type NoteToolbarPercussion } from './zoom/note-toolbar';
+import { NoteIcon, RestIcon } from './zoom/note-glyphs';
+import { clampNoteToolbarPosition, NoteToolbar, NOTE_TOOLBAR_WIDTH_FALLBACK, type NoteToolbarPercussion } from './zoom/note-toolbar';
 
 type Articulation = 'staccato' | 'accent' | 'tenuto';
 
@@ -82,22 +82,9 @@ const DURATION_OPTIONS: Array<{ value: number; label: string; key?: string }> = 
   { value: 0.03125, label: '128th' },
 ];
 
-/** Simple half-rest-on-a-line icon (the 𝄽 glyph is also tofu-prone). */
-function RestIcon() {
-  return (
-    <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden focusable="false">
-      <line x1="2" y1="11.5" x2="14" y2="11.5" stroke="currentColor" strokeWidth="1.4" />
-      <rect x="5" y="7.2" width="6" height="4.3" rx="0.6" fill="currentColor" />
-    </svg>
-  );
-}
 // The Insert toolbar shows the common durations inline; the rest live behind "more".
 const COMMON_DURATIONS = DURATION_OPTIONS.slice(0, 5); // whole … 16th
 const RARE_DURATIONS = DURATION_OPTIONS.slice(5); // 32nd … 128th
-
-// The note toolbar's own width isn't measured (its interface takes no ref),
-// so this fallback stands in for it when clamping it inside the center column.
-const NOTE_TOOLBAR_WIDTH_FALLBACK = 520;
 
 const INSTRUMENT_OPTIONS: Array<{ value: Instrument; label: string }> = [
   { value: 'staff', label: 'Staff' },
@@ -913,11 +900,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     return pitchName(zoomCurrentEvent.midi, zoomCurrentEvent.spelling, key);
   })();
 
-  // Placed under the cursor's note box (or just after the last note at 'end'),
-  // then clamped inside the center column the way the measure bar is clamped
-  // against the viewport — the toolbar's own width isn't measured (its
-  // interface takes no ref), so a fallback stands in for it throughout.
-  const noteToolbarPos = useCallback((layout: ZoomLayout | null, centerW: number) => {
+  // Anchored under the cursor's note box (or just after the last note at
+  // 'end'); clamped into the center column/row against the toolbar's own
+  // measured size below (fix round 1 — a percussion track's stroke row can
+  // run wide, or wrap tall, well past the 520 fallback).
+  const noteToolbarAnchor = useCallback((layout: ZoomLayout | null) => {
     if (!zoom || !layout) return null;
     const c = zoom.cursor;
     let x: number;
@@ -933,10 +920,19 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       const last = voiceHits[voiceHits.length - 1];
       hitBottom = last ? last.y + last.h : layout.yForLine(2);
     }
-    const half = NOTE_TOOLBAR_WIDTH_FALLBACK / 2 + 8;
-    const left = centerW > 0 ? Math.max(half, Math.min(centerW - half, x)) : x;
-    return { left, top: hitBottom + 14 };
+    return { x, top: hitBottom + 14 };
   }, [zoom]);
+
+  // The toolbar's real rendered size, so it can be clamped against its own
+  // footprint instead of a guess — the measure bar's `measureBarRef`/
+  // `barWidth` pattern, on both axes. `w` starts at the pre-paint fallback;
+  // `h` starts at 0 (unclamped) since there's no equivalent guess for height.
+  const [noteToolbarSize, setNoteToolbarSize] = useState({ w: NOTE_TOOLBAR_WIDTH_FALLBACK, h: 0 });
+  const noteToolbarRef = (el: HTMLDivElement | null) => {
+    const w = el?.offsetWidth ?? 0;
+    const h = el?.offsetHeight ?? 0;
+    if (w > 0 && (w !== noteToolbarSize.w || h !== noteToolbarSize.h)) setNoteToolbarSize({ w, h });
+  };
 
   // ---- Toolbar control handlers ---------------------------------------------
 
@@ -1359,13 +1355,17 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 onClose={finishZoomClose}
                 onLayout={(l) => { zoomLayout.current = l; }}
               >
-                {({ centerW, layout }) => {
-                  const pos = noteToolbarPos(layout, centerW);
-                  if (!pos) return null;
+                {({ centerW, bodyH, layout }) => {
+                  const anchor = noteToolbarAnchor(layout);
+                  if (!anchor) return null;
+                  const pos = clampNoteToolbarPosition(anchor.x, anchor.top, noteToolbarSize, { centerW, bodyH });
+                  const maxWidth = centerW > 0 ? Math.max(0, centerW - 16) : undefined;
                   return (
                     <NoteToolbar
+                      ref={noteToolbarRef}
                       left={pos.left}
                       top={pos.top}
+                      maxWidth={maxWidth}
                       info={zoomInfo}
                       value={zoomValue}
                       dots={zoomDots}
@@ -1375,7 +1375,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                       hasSelection={zoomHasSelection}
                       percussion={zoomToolbarPercussion}
                       editing={zoomEditing}
-                      onMore={(anchor) => setMorePop({ anchor })}
+                      onMore={(morePopAnchor) => setMorePop({ anchor: morePopAnchor })}
                     />
                   );
                 }}
