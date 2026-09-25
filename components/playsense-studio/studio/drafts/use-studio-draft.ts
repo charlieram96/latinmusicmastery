@@ -25,6 +25,16 @@ export interface StudioDraftApi {
   pending: boolean;
 }
 
+/**
+ * Autosaves one owner's score + timing to a draft row.
+ *
+ * Hosts must remount this hook per owner: key the component that calls it by
+ * `ownerKey(owner)` (e.g. `<Workspace key={ownerKey(owner)} .../>`). The hook
+ * treats `owner` as fixed for its whole life — the debounce timers and the
+ * unmount flush below close over it once, at mount, and never re-read it. In
+ * development, changing `owner.kind`/`owner.id` without remounting logs a
+ * console.error instead of silently saving under the wrong key.
+ */
 export function useStudioDraft(opts: {
   owner: StudioDraftOwner;
   label: string;
@@ -125,18 +135,39 @@ export function useStudioDraft(opts: {
 
   useEffect(() => register(key, { flush, adopt }), [register, key, flush, adopt]);
 
-  // Unmount: wait one tick so children's cleanup setTiming calls land first.
+  // Mount-only: this must fire exactly once, at unmount — not whenever `key`
+  // or `setPending` happen to change (see the file's "hosts must remount per
+  // owner" contract above) — so `owner`/`key` are captured once here, from
+  // mount, deliberately not re-read on every render.
+  //
+  // React removes an unmounting subtree parent-first: this cleanup runs
+  // *before* a descendant's (e.g. a SyncPanel child's own cleanup, which can
+  // call setTiming one last time). `latest`/`timingRef` are the same ref
+  // objects that child mutates directly, so deferring the actual read by a
+  // tick — past the whole synchronous unmount pass, this component's cleanup
+  // and every descendant's — picks up its write too. `save` reads `latest`
+  // at call time, not at effect-setup time, so it doesn't matter that this
+  // effect's own closure over it is fixed from mount.
   useEffect(() => {
     return () => {
       setPending(key, false);
       setTimeout(() => { void save({ silent: true }); }, 0);
     };
-    // `save` intentionally not in deps: it always reads `latest.current`, which
-    // is updated synchronously during render (including a child's own unmount
-    // cleanup that runs before this one), so any render's `save` closure sees
-    // the final values once the deferred tick runs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, setPending]);
+  }, []);
+
+  // Dev-only: catch a host that violates the "stable owner" contract above
+  // instead of silently saving the new owner's edits under the old key (or
+  // vice versa).
+  const mountKeyRef = useRef(key);
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' && key !== mountKeyRef.current) {
+      console.error(
+        `useStudioDraft: owner changed from "${mountKeyRef.current}" to "${key}" without remounting. ` +
+        'Host components must key by ownerKey(owner).'
+      );
+    }
+  }, [key]);
 
   useEffect(() => {
     // Keep the popover label fresh without treating a label-only change as an edit.

@@ -175,4 +175,27 @@ describe('useStudioDraft — fix round 1: draft safety', () => {
     // The stale save must not resurrect the unpublished flag.
     expect(ctx.statuses['section:sec-1'].unpublished).toBe(false);
   });
+
+  it('logs a dev warning when the owner key changes without a remount', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    function Wrapper({ id }: { id: string }) {
+      useStudioDraft({
+        owner: { kind: 'section', id }, label: 'Intro', score: { title: 'A' } as never, isDirty: false,
+        markClean: () => {}, replaceScore: () => {}, initialTiming: EMPTY_TIMING,
+      });
+      return null;
+    }
+    act(() => root.render(
+      <StudioDraftsProvider owners={[{ owner, label: 'Intro', unpublished: false }]}><Probe /><Wrapper id="sec-1" /></StudioDraftsProvider>
+    ));
+    expect(spy).not.toHaveBeenCalled();
+    // Same component instance (no key change on Wrapper itself), different owner id:
+    // this must never happen from a well-behaved host, but the hook should say so.
+    act(() => root.render(
+      <StudioDraftsProvider owners={[{ owner, label: 'Intro', unpublished: false }]}><Probe /><Wrapper id="sec-2" /></StudioDraftsProvider>
+    ));
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(String(spy.mock.calls[0][0])).toContain('useStudioDraft');
+    spy.mockRestore();
+  });
 });
