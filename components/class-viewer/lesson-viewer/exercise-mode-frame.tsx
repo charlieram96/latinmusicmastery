@@ -6,6 +6,7 @@ import { Eye, Maximize2, Minimize2, Music2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
 import { lessonExerciseHeight } from '@/lib/playsense-studio/lesson-viewport'
+import { useLessonFrame } from './lesson-mode/lesson-frame'
 import './exercise-mode.css'
 
 /** Resize the existing lesson in place: no portal, second player, or session restart.
@@ -18,7 +19,9 @@ export function ExerciseModeFrame({ title, hasScore, preview, onWatchDemo, child
   children: ReactNode
 }) {
   const { t } = useTranslation()
-  const [immersive, setImmersive] = useState(true)
+  // The lesson shell is already immersive: there the frame only fits the stage.
+  const inLesson = !!useLessonFrame()
+  const [immersive, setImmersive] = useState(!inLesson)
   const [showScore, setShowScore] = useState(true)
   const frame = useRef<HTMLDivElement>(null)
   const modeButton = useRef<HTMLButtonElement>(null)
@@ -84,8 +87,8 @@ export function ExerciseModeFrame({ title, hasScore, preview, onWatchDemo, child
     setImmersive(value => !value)
   }
 
-  return <div ref={frame} className="ps-exercise-mode" data-exercise-immersive={immersive} data-score-visible={showScore}>
-    <header className="ps-exercise-toolbar">
+  return <div ref={frame} className="ps-exercise-mode" data-exercise-immersive={immersive} data-score-visible={showScore} data-lesson-mode={inLesson || undefined}>
+    {!inLesson && <header className="ps-exercise-toolbar">
       <div className="ps-exercise-identity"><Image src="/logo-solo-color.svg" alt="Latin Music Mastery" width={32} height={24} /><div><span>PlaySense <i>/</i> {preview ? 'Lesson preview' : 'Exercise'}</span><h2 title={title}>{title}</h2></div></div>
       <div className="ps-exercise-view-controls" role="group" aria-label="Exercise view">
         {hasScore && <Button type="button" variant="ghost" size="sm" onClick={() => setShowScore(value => !value)} aria-pressed={showScore} aria-label="Show musical score"><Music2 size={16} /><span>Score</span></Button>}
@@ -94,7 +97,7 @@ export function ExerciseModeFrame({ title, hasScore, preview, onWatchDemo, child
           {immersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<span>{immersive ? 'Lesson view' : 'Exercise mode'}</span>{immersive && <kbd>esc</kbd>}
         </Button>
       </div>
-    </header>
+    </header>}
     <div className="ps-exercise-content">{children}</div>
   </div>
 }

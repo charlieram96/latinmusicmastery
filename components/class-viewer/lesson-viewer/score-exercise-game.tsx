@@ -38,6 +38,8 @@ import { useStaffLayoutPreference } from '@/components/playsense-studio/player/n
 import { PLAY_WORKSPACE } from '@/lib/playsense-studio/workspace-layout'
 import { useLessonActivity } from './lesson-progress-context'
 import { ReadyCheck } from './ready-check'
+import { LessonTransport } from './lesson-transport'
+import { LessonAction, useLessonFrame } from './lesson-mode/lesson-frame'
 import { StaffRenderer } from '@/components/playsense-studio/player/notation/renderers/staff-renderer'
 import { usePlaysense } from '@/contexts/playsense-context'
 import { finishedExercise } from '@/lib/courses/lesson-completion'
@@ -94,6 +96,7 @@ function ScoreExerciseSession({
   const { t } = useTranslation()
   const completePerformance = useLessonActivity('performance')
   const playsense = usePlaysense()
+  const inLesson = !!useLessonFrame()
   // Play opens with the staff and highway filling the stage and the teacher
   // video floating bottom right (24 % wide); the student can re-lay it out.
   // Remembered per staff layout, like watch (lmm-workspace:play:stacked / :horizontal).
@@ -385,6 +388,76 @@ function ScoreExerciseSession({
     )
   }
 
+  // Backing-track mixer — a mute and a level per track, usable before and
+  // during the attempt (changes ramp live). In a lesson it sits in the transport.
+  const mixer = backingTracks && backingTracks.length > 0 ? (
+    <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    {t('dashboard.classViewer.exercise.playAlongWith')}
+                    <Badge variant={tracksOn === 0 ? 'outline' : 'secondary'} className="ml-0.5 tabular-nums">
+                      {tracksOn}/{backingTracks.length}
+                    </Badge>
+                    <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-72 p-0">
+                  <div className="flex items-baseline justify-between border-b border-border px-3 py-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t('dashboard.classViewer.exercise.playAlongWith')}
+                    </p>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">
+                      {t('dashboard.classViewer.exercise.tracksOn', { on: tracksOn, total: backingTracks.length })}
+                    </span>
+                  </div>
+                  <ul className="flex max-h-[280px] flex-col overflow-y-auto py-1">
+                    {backingTracks.map((track) => {
+                      const entry = entryFor(track.id)
+                      return (
+                        <li key={track.id} className={`flex items-center gap-2.5 px-3 py-2 ${entry.muted ? 'opacity-60' : ''}`}>
+                          <button
+                            type="button"
+                            onClick={() => updateMix(track.id, { muted: !entry.muted })}
+                            aria-pressed={!entry.muted}
+                            aria-label={`${entry.muted ? 'Unmute' : 'Mute'} ${track.label}`}
+                            title={entry.muted ? 'Unmute' : 'Mute'}
+                            className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
+                              entry.muted ? 'text-muted-foreground hover:bg-muted hover:text-foreground' : 'bg-primary/15 text-primary hover:bg-primary/25'
+                            }`}
+                          >
+                            {entry.muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                          </button>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-baseline justify-between gap-2">
+                              <span className="truncate text-sm font-medium text-foreground">{track.label}</span>
+                              <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                                {Math.round(entry.level * 100)}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              value={entry.level}
+                              disabled={entry.muted}
+                              onChange={(e) => updateMix(track.id, { level: Number(e.target.value) })}
+                              className="mt-1 h-1.5 w-full cursor-pointer accent-primary disabled:cursor-default"
+                              aria-label={`${track.label} level`}
+                            />
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  <p className="border-t border-border px-3 py-2 text-[11px] leading-snug text-muted-foreground">
+                    {t('dashboard.classViewer.exercise.tracksHint')}
+                  </p>
+                </PopoverContent>
+              </Popover>
+  ) : null
+
   const hasStaff = showCanvas && !!score
   const scoreEl = hasStaff && score ? (
     <ExerciseScore score={score} currentMs={staffMs} getCurrentMs={getStaffMs}
@@ -483,7 +556,8 @@ function ScoreExerciseSession({
 
   return (
     <div className="ps-lesson-game rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-      {isActive && (
+      {isActive && inLesson && exerciseVideo && <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} /></WorkspaceToolsPortal>}
+      {isActive && !inLesson && (
         <div className="ps-lesson-game-heading flex items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-2.5" data-has-tools={!!backingTracks?.length || !!exerciseVideo}>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground">{preview ? 'Lesson preview' : t('dashboard.classViewer.exercise.yourTurn')}</p>
@@ -494,75 +568,7 @@ function ScoreExerciseSession({
 
           <div className="flex shrink-0 items-center gap-2">
             {exerciseVideo && <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} /></WorkspaceToolsPortal>}
-            {/* Backing-track mixer — a mute and a level per track, usable
-                before and during the attempt (changes ramp live). */}
-            {backingTracks && backingTracks.length > 0 && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5">
-                    <SlidersHorizontal className="h-3.5 w-3.5" />
-                    {t('dashboard.classViewer.exercise.playAlongWith')}
-                    <Badge variant={tracksOn === 0 ? 'outline' : 'secondary'} className="ml-0.5 tabular-nums">
-                      {tracksOn}/{backingTracks.length}
-                    </Badge>
-                    <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-72 p-0">
-                  <div className="flex items-baseline justify-between border-b border-border px-3 py-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t('dashboard.classViewer.exercise.playAlongWith')}
-                    </p>
-                    <span className="text-[11px] tabular-nums text-muted-foreground">
-                      {t('dashboard.classViewer.exercise.tracksOn', { on: tracksOn, total: backingTracks.length })}
-                    </span>
-                  </div>
-                  <ul className="flex max-h-[280px] flex-col overflow-y-auto py-1">
-                    {backingTracks.map((track) => {
-                      const entry = entryFor(track.id)
-                      return (
-                        <li key={track.id} className={`flex items-center gap-2.5 px-3 py-2 ${entry.muted ? 'opacity-60' : ''}`}>
-                          <button
-                            type="button"
-                            onClick={() => updateMix(track.id, { muted: !entry.muted })}
-                            aria-pressed={!entry.muted}
-                            aria-label={`${entry.muted ? 'Unmute' : 'Mute'} ${track.label}`}
-                            title={entry.muted ? 'Unmute' : 'Mute'}
-                            className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
-                              entry.muted ? 'text-muted-foreground hover:bg-muted hover:text-foreground' : 'bg-primary/15 text-primary hover:bg-primary/25'
-                            }`}
-                          >
-                            {entry.muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-                          </button>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-baseline justify-between gap-2">
-                              <span className="truncate text-sm font-medium text-foreground">{track.label}</span>
-                              <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
-                                {Math.round(entry.level * 100)}
-                              </span>
-                            </div>
-                            <input
-                              type="range"
-                              min={0}
-                              max={1}
-                              step={0.05}
-                              value={entry.level}
-                              disabled={entry.muted}
-                              onChange={(e) => updateMix(track.id, { level: Number(e.target.value) })}
-                              className="mt-1 h-1.5 w-full cursor-pointer accent-primary disabled:cursor-default"
-                              aria-label={`${track.label} level`}
-                            />
-                          </div>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                  <p className="border-t border-border px-3 py-2 text-[11px] leading-snug text-muted-foreground">
-                    {t('dashboard.classViewer.exercise.tracksHint')}
-                  </p>
-                </PopoverContent>
-              </Popover>
-            )}
+            {mixer}
           </div>
         </div>
       )}
@@ -596,7 +602,26 @@ function ScoreExerciseSession({
         <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => void session.startExercise()}>Replay preview</Button><Button size="sm" onClick={demoSession.review}>View results</Button></div>
       </div>}
 
-      {!preview && session.exercise && isActive && !showAudioModePrompt && !showPlaysenseTest && (
+      {!preview && inLesson && session.exercise && isActive && !showAudioModePrompt && !showPlaysenseTest && (
+        <LessonAction>
+          <LessonTransport
+            state={session.sessionState as 'selecting' | 'countdown' | 'playing' | 'paused'}
+            bpm={session.exercise.bpm}
+            countdownBeat={session.countdownBeat}
+            click={session.audioMetronome}
+            mix={mixer}
+            onStart={() => void session.startExercise()}
+            onPause={session.pauseExercise}
+            onResume={session.resumeExercise}
+            onRestart={() => void session.restartExercise()}
+            onFinish={session.stopExercise}
+            onClickToggle={() => session.setAudioMetronome(!session.audioMetronome)}
+            onWatchDemo={onWatchDemo}
+          />
+        </LessonAction>
+      )}
+
+      {!preview && !inLesson && session.exercise && isActive && !showAudioModePrompt && !showPlaysenseTest && (
         <div className="ps-lesson-transport">
         <NowPlayingBar
           exercise={session.exercise}

@@ -2500,6 +2500,20 @@
           "start": "Empezar a tocar",
           "meta": "{bars} compases · {bpm} BPM"
         },
+        "transport": {
+          "label": "Reproducción",
+          "pause": "Pausa",
+          "resume": "Continuar",
+          "restart": "Empezar de nuevo",
+          "bpm": "{bpm} BPM",
+          "click": "Clic",
+          "clickOn": "Apagar el clic",
+          "clickOff": "Encender el clic",
+          "watchDemo": "Ver la demostración",
+          "finish": "Terminar toma",
+          "countIn": "Cuenta {beat}",
+          "start": "Empezar a tocar"
+        },
         "finishLesson": "Terminar lección"
       }
     }

@@ -2500,6 +2500,20 @@
           "start": "Start playing",
           "meta": "{bars} bars · {bpm} BPM"
         },
+        "transport": {
+          "label": "Playback",
+          "pause": "Pause",
+          "resume": "Resume",
+          "restart": "Start over",
+          "bpm": "{bpm} BPM",
+          "click": "Click",
+          "clickOn": "Turn the click off",
+          "clickOff": "Turn the click on",
+          "watchDemo": "Watch the demo",
+          "finish": "Finish take",
+          "countIn": "Count-in {beat}",
+          "start": "Start playing"
+        },
         "finishLesson": "Finish lesson"
       }
     }

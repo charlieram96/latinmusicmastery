@@ -142,8 +142,8 @@ export function ReadyCheck(props: ReadyCheckProps) {
     </div>
 
     <LessonAction>
-      <ActionMessage live icon={<Check className={cn('h-5 w-5', allSet && 'text-success')} strokeWidth={3} />}
-        title={checks.canStart ? t(`${BASE}.allSet`) : t(`${BASE}.pickMode`)} detail={summary || undefined} />
+      <ActionMessage live icon={checks.canStart ? <Check className={cn('h-5 w-5', allSet && 'text-success')} strokeWidth={3} /> : <Headphones className="h-5 w-5" />}
+        title={allSet ? t(`${BASE}.allSet`) : checks.canStart ? t(`${BASE}.readyWhenYouAre`) : t(`${BASE}.pickMode`)} detail={summary || undefined} />
       <Button type="button" variant="chunky-success" data-primary="" data-ready-start disabled={!checks.canStart} onClick={onStart}>
         {t(`${BASE}.start`)}
       </Button>
