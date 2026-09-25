@@ -60,6 +60,7 @@ import { PianoRollView } from './piano-roll-view';
 import { PercussionStrokePicker } from './percussion-stroke-picker';
 import { MidiRecordButton, type MidiRecordingSource } from './midi-record-button';
 import { MeasureZoom, type ZoomState } from './zoom/measure-zoom';
+import { useZoomEditing } from './zoom/use-zoom-editing';
 import type { ZoomLayout } from './zoom/zoom-staff';
 
 type Articulation = 'staccato' | 'accent' | 'tenuto';
@@ -800,21 +801,31 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     });
   }, [barRect, zoomWaveformTo, selectBars, zoomEvents]);
 
-  // ‹ › (and ⌘←/→): move the zoom to the neighbouring bar, cursor at its start
-  // going forward or its end going back.
-  const navZoom = useCallback((dir: 1 | -1) => {
-    if (!zoom) return;
-    const target = zoom.measureIndex + dir;
-    if (target < 0 || target >= measureCount) return;
-    zoomWaveformTo(target);
-    setMeasureRange({ anchor: target, focus: target });
-    const voice = zoom.cursor.voice;
-    setZoom({
-      ...zoom,
-      measureIndex: target,
-      cursor: { measureIndex: target, voice, index: dir === 1 && zoomEvents(target, voice).length ? 0 : 'end', anchor: null },
+  // Move the open zoom to bar `index`: the timeline zooms to it, it's the
+  // selected bar, and the zoom slides it in (MeasureZoom animates a changed
+  // measureIndex). A cursor already placed in that bar (the zoom's keys walk
+  // or type into it) is kept; otherwise it sits at the bar's start going
+  // forward or its end going back.
+  const openBar = useCallback((index: number, dir: 1 | -1) => {
+    if (index < 0 || index >= measureCount) return;
+    zoomWaveformTo(index);
+    setMeasureRange({ anchor: index, focus: index });
+    setZoom((z) => {
+      if (!z) return z;
+      if (z.measureIndex === index && z.cursor.measureIndex === index) return z;
+      const voice = z.cursor.voice;
+      return {
+        ...z,
+        measureIndex: index,
+        cursor: { measureIndex: index, voice, index: dir === 1 && zoomEvents(index, voice).length ? 0 : 'end', anchor: null },
+      };
     });
-  }, [zoom, measureCount, zoomWaveformTo, zoomEvents]);
+  }, [measureCount, zoomWaveformTo, zoomEvents]);
+
+  // ‹ › : the neighbouring bar.
+  const navZoom = useCallback((dir: 1 | -1) => {
+    if (zoom) openBar(zoom.measureIndex + dir, dir);
+  }, [zoom, openBar]);
 
   const setZoomVoice = useCallback((voice: 0 | 1) => {
     if (!zoom) return;
@@ -839,11 +850,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // The note selection follows the zoom cursor: a voice-1 event under it is the
   // selected note (SyncPanel's inspector, [ / ] nudges, the waveform handle);
   // anything else ('end', voice 2) selects no note. Adjusted during render
-  // whenever the zoom state changes (whoever changed it), so it lands in the
-  // same commit as the cursor move.
-  const [syncedZoom, setSyncedZoom] = useState<ZoomState | null>(null);
-  if (zoom !== syncedZoom) {
-    setSyncedZoom(zoom);
+  // whenever the zoom state or the track changes (whoever changed it: an edit,
+  // an undo), so it lands in the same commit as the cursor move.
+  const [synced, setSynced] = useState<{ zoom: ZoomState | null; track: typeof activeTrack }>({ zoom: null, track: activeTrack });
+  if (zoom !== synced.zoom || activeTrack !== synced.track) {
+    setSynced({ zoom, track: activeTrack });
     if (zoom) {
       const c = zoom.cursor;
       const eventIndex = c.voice === 0 && typeof c.index === 'number' && zoomEvents(c.measureIndex, 0)[c.index] ? c.index : null;
@@ -855,17 +866,19 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     }
   }
 
-  // Esc closes the zoom (Task 7's zoom keys take this over).
-  useEffect(() => {
-    if (!zoomOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || isTypingTarget(e.target)) return;
-      e.preventDefault();
-      closeZoom();
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [zoomOpen, closeZoom]);
+  // Note editing in the zoom: its keys (Esc closes it) and, later, its toolbar.
+  // The hook clamps the cursor when the score changes under the zoom.
+  const zoomKeyFifthsAt = useCallback((m: number) => tracked[m]?.keyFifths ?? score.initialKeyFifths, [tracked, score.initialKeyFifths]);
+  const zoomClefAt = useCallback((m: number) => tracked[m]?.clef ?? 'treble', [tracked]);
+  const zoomBarQNAt = useCallback(
+    (m: number) => measureLengthInQN(tracked[m]?.timeSignature ?? score.initialTimeSignature),
+    [tracked, score.initialTimeSignature]
+  );
+  useZoomEditing({
+    score, dispatch, trackIndex: activeTrackIndex, zoom, setZoom,
+    keyFifthsAt: zoomKeyFifthsAt, clefAt: zoomClefAt, barQNAt: zoomBarQNAt,
+    percussion, flash: showFlash, openBar, close: closeZoom,
+  });
 
   // A zoomed bar that no longer exists (undo, a delete elsewhere) closes the zoom.
   if (zoom && zoom.measureIndex >= measureCount) {
