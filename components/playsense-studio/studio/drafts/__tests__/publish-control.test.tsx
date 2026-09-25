@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const acts = vi.hoisted(() => ({ saveStudioDraft: vi.fn(), publishStudioDraft: vi.fn(), discardStudioDraft: vi.fn(), getPublishPreview: vi.fn() }));
 vi.mock('@/app/actions/studio-drafts', () => acts);
-import { StudioDraftsProvider } from '../drafts-context';
+import { StudioDraftsProvider, useStudioDrafts } from '../drafts-context';
 import { PublishControl } from '../publish-control';
 
 let root: Root;
@@ -24,12 +24,19 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 
-function mount(unpub: [boolean, boolean]) {
+function Register({ onFlush }: { onFlush: () => Promise<void> }) {
+  const { register } = useStudioDrafts();
+  React.useEffect(() => register('section:a', { flush: onFlush }), [register, onFlush]);
+  return null;
+}
+
+function mount(unpub: [boolean, boolean], extra?: React.ReactNode) {
   act(() => root.render(
     <StudioDraftsProvider owners={[
       { owner: { kind: 'section', id: 'a' }, label: 'Intro', unpublished: unpub[0] },
       { owner: { kind: 'exercise', id: 'ci' }, label: 'Exercise', unpublished: unpub[1] },
     ]}>
+      {extra}
       <PublishControl />
     </StudioDraftsProvider>
   ));
@@ -72,5 +79,17 @@ describe('PublishControl', () => {
     await flush();
     expect(host.querySelector('[role="dialog"]')!.textContent).toContain('overlaps the section "Verse"');
     expect(host.textContent).toContain('1 unpublished change');
+  });
+  it('flushes pending autosaves before fetching the preview, so it shows the last edit', async () => {
+    let release!: () => void;
+    const onFlush = vi.fn(() => new Promise<void>((r) => { release = r; }));
+    mount([true, true], <Register onFlush={onFlush} />);
+    act(() => btn('Publish').click());
+    await flush();
+    expect(onFlush).toHaveBeenCalledTimes(1);
+    expect(acts.getPublishPreview).not.toHaveBeenCalled();
+    await act(async () => { release(); });
+    await flush();
+    expect(acts.getPublishPreview).toHaveBeenCalledWith([{ kind: 'section', id: 'a' }, { kind: 'exercise', id: 'ci' }]);
   });
 });

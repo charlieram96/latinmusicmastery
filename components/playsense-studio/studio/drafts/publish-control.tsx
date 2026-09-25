@@ -13,7 +13,7 @@ import { ownerKey } from '@/lib/playsense-studio/drafts/types';
 import { useStudioDrafts } from './drafts-context';
 
 export function PublishControl() {
-  const { statuses, publish, discard } = useStudioDrafts();
+  const { statuses, publish, discard, flush } = useStudioDrafts();
   const parts = Object.values(statuses).filter((s) => s.unpublished);
   const n = parts.length;
   const [open, setOpen] = useState(false);
@@ -25,12 +25,22 @@ export function PublishControl() {
   useEffect(() => {
     if (!open) return;
     let live = true;
-    void getPublishPreview(parts.map((p) => p.owner)).then((res) => { if (live && res.data) setPreview(res.data); });
+    const owners = parts.map((p) => p.owner);
+    // Flush pending autosaves first, so the preview diffs the last edit rather
+    // than the draft row as it stood before the debounce fired. A failed flush
+    // still shows the preview; Publish itself refuses past that error.
+    void (async () => {
+      await Promise.all(owners.map((o) => flush(ownerKey(o)).catch(() => ({}))));
+      if (!live) return;
+      const res = await getPublishPreview(owners);
+      if (live && res.data) setPreview(res.data);
+    })();
     const onDown = (e: MouseEvent) => { if (!boxRef.current?.contains(e.target as Node)) setOpen(false); };
     document.addEventListener('mousedown', onDown);
     return () => { live = false; document.removeEventListener('mousedown', onDown); };
     // Deliberately only re-runs on open/close: `parts` is re-derived from
-    // `statuses` every render, so it can't be a stable dependency itself.
+    // `statuses` every render, so it can't be a stable dependency itself
+    // (and `flush` is a stable callback).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
