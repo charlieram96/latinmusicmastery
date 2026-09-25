@@ -14,14 +14,13 @@
 // into the right rail + bottom dock.
 
 import { FileUp, Redo2, Save, Undo2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { replaceSectionScore } from '@/app/actions/playsense-studio';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
 import { useStudioDraft } from '@/components/playsense-studio/studio/drafts/use-studio-draft';
-import type { StudioTiming } from '@/lib/playsense-studio/drafts/timing';
+import { timingToTimeMap, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import type { MediaTrim } from '@/lib/playsense-studio/clip-model';
-import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
 import type { LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
@@ -35,13 +34,11 @@ export interface ScoreSectionEditorProps {
   sectionId: string;
   scoreDocumentId: string;
   initialScore: ScoreDocument;
-  activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
-  /** Seeds the SyncPanel's markers: the draft's timing when one exists, else live. */
+  /** Seeds the editor's draft timing (and so SyncPanel's markers and click
+   *  anchor): the draft's timing when one exists, else live. */
   initialTiming: StudioTiming;
   videoUrl: string | null;
   videoDurationSeconds: number | null;
-  /** The section's stored click anchor, seeded into SyncPanel. */
-  initialMetronomeAnchorSeconds?: number | null;
   /** Usable region of the lesson video, owned by the workspace above. */
   trim?: MediaTrim;
   onTrimDrag?: (edge: 'in' | 'out', videoTimeSeconds: number) => void;
@@ -69,11 +66,9 @@ export function ScoreSectionEditor({
   sectionId,
   scoreDocumentId,
   initialScore,
-  activeTimeMap,
   initialTiming,
   videoUrl,
   videoDurationSeconds,
-  initialMetronomeAnchorSeconds,
   trim,
   onTrimDrag,
   onChanged,
@@ -99,6 +94,12 @@ export function ScoreSectionEditor({
     initialTiming,
     onDraftContent,
   });
+
+  // SyncPanel seeds from the draft's timing, not the mount-time props: Restore
+  // and Discard replace draft.timing and bump draft.timingEpoch, remounting
+  // SyncPanel on the adopted timing. SyncPanel reads these only on mount, so
+  // drags in between don't reseed it.
+  const draftTimeMap = useMemo(() => timingToTimeMap(draft.timing), [draft.timing]);
 
   // App-bar slot SyncPanel portals its "Add score" chip into (state, not a ref,
   // so the portal renders once the node mounts).
@@ -149,9 +150,9 @@ export function ScoreSectionEditor({
         videoUrl={videoUrl}
         score={state.score}
         dispatch={dispatch}
-        activeTimeMap={activeTimeMap}
+        activeTimeMap={draftTimeMap}
         videoDurationSeconds={videoDurationSeconds}
-        initialMetronomeAnchorSeconds={initialMetronomeAnchorSeconds}
+        initialMetronomeAnchorSeconds={draft.timing.anchor?.seconds ?? null}
         trim={trim}
         onTrimDrag={onTrimDrag}
         onTimingChange={draft.setTiming}

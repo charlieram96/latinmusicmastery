@@ -426,11 +426,9 @@ function VideoSectionsBody({
               // Seeded from the admin's unpublished draft when present, else the
               // last Published content. Students only ever get the live rows.
               initialScore={seed.score}
-              activeTimeMap={seed.timeMap}
               initialTiming={seed.timing}
               videoUrl={videoUrl}
               videoDurationSeconds={videoDurationSeconds}
-              initialMetronomeAnchorSeconds={seed.anchorSeconds}
               trim={trim}
               onTrimDrag={handleTrimDrag}
               onChanged={() => void refetch(selected.sectionId)}

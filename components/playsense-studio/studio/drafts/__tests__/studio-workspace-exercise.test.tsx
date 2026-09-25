@@ -38,7 +38,7 @@ vi.mock('@/app/actions/studio-drafts', () => acts);
 
 import { StudioWorkspace } from '@/app/admin/playsense-studio/[classItemId]/studio-workspace';
 import { StudioDraftsProvider, useStudioDrafts, type StudioDraftsValue } from '@/components/playsense-studio/studio/drafts/drafts-context';
-import { EMPTY_TIMING } from '@/lib/playsense-studio/drafts/timing';
+import { EMPTY_TIMING, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import type { ExerciseMedia } from '@/app/actions/playsense-studio';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
@@ -186,6 +186,39 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
       id: 'draft',
       method: 'drag',
       waypoints: [wp(0, 0), wp(4, 2)],
+      nudges: [],
+    });
+  });
+
+  it('after a restore/discard adopt, the remounted SyncPanel seeds from the adopted timing, not the old seed', () => {
+    const liveMap: PlaysenseStudioPlayerTimeMap = { id: 'live-map', method: 'drag', waypoints: [wp(0, 0), wp(4, 2)] };
+    act(() => {
+      root.render(
+        <StudioDraftsProvider owners={[]}>
+          <Probe />
+          <StudioWorkspace
+            owner={{ kind: 'classItem', classItemId: 'ci-2' }}
+            mode="video"
+            title="Legacy lesson"
+            videoUrl="https://example.com/lesson.mp4"
+            scoreDocumentId="doc-2"
+            initialScore={SCORE}
+            activeTimeMap={liveMap}
+            videoDurationSeconds={120}
+          />
+        </StudioDraftsProvider>
+      );
+    });
+
+    const restored: StudioTiming = { method: 'drag', params: { nudges: [] }, waypoints: [wp(0, 5), wp(4, 9)], anchor: null };
+    act(() => {
+      ctx.notifyAdopt('exercise:ci-2', { score: SCORE, timing: restored });
+    });
+
+    expect(stub.syncPanelCalls.at(-1)?.activeTimeMap).toEqual({
+      id: 'draft',
+      method: 'drag',
+      waypoints: [wp(0, 5), wp(4, 9)],
       nudges: [],
     });
   });

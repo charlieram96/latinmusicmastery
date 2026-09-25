@@ -178,9 +178,11 @@ function StudioWorkspaceBody({
   const [exerciseVideoUrl, setExerciseVideoUrl] = useState<string | null>(
     exerciseMedia?.videoUrl ?? null
   );
-  // The exercise time map follows the draft, not separate state, so restoring
-  // or discarding (which replaces draft.timing wholesale) reseeds it too.
-  const exerciseTimeMap = useMemo(() => timingToTimeMap(draft.timing), [draft.timing]);
+  // SyncPanel seeds follow the draft, not the mount-time `seed`, so restoring
+  // or discarding (which replaces draft.timing wholesale and bumps
+  // draft.timingEpoch) remounts SyncPanel on the adopted timing. SyncPanel
+  // reads these only on mount, so drags in between don't reseed it.
+  const draftTimeMap = useMemo(() => timingToTimeMap(draft.timing), [draft.timing]);
   const showExerciseSync = isExercise && exerciseStage === 'syncVideo' && !!exerciseVideoUrl;
 
   // Usable region of the play-along video. Owned here, next to the video URL,
@@ -416,7 +418,7 @@ function StudioWorkspaceBody({
                       classItemId={owner.classItemId}
                       scoreLengthSeconds={scoreLengthSeconds}
                       initialMedia={exerciseMedia}
-                      hasTimeMap={!!exerciseTimeMap}
+                      hasTimeMap={!!draftTimeMap}
                       onVideoChange={handleExerciseVideoChange}
                     />
                   ),
@@ -443,7 +445,7 @@ function StudioWorkspaceBody({
               videoUrl={exerciseVideoUrl}
               score={state.score}
               dispatch={dispatch}
-              activeTimeMap={exerciseTimeMap}
+              activeTimeMap={draftTimeMap}
               videoDurationSeconds={null}
               trim={exerciseTrim}
               onTrimDrag={handleExerciseTrimDrag}
@@ -453,7 +455,7 @@ function StudioWorkspaceBody({
                   <BackingLanesPanel
                     classItemId={owner.classItemId}
                     tracks={exerciseMedia.backingTracks}
-                    timeMap={exerciseTimeMap}
+                    timeMap={draftTimeMap}
                     view={v}
                   />
                 ) : null
@@ -476,11 +478,11 @@ function StudioWorkspaceBody({
                 score={state.score}
                 dispatch={dispatch}
                 // Exercise mode's score stage has no video of its own — it
-                // must not seed its markers from the play-along map that
-                // `seed.timeMap` would derive for this owner+mode. Only
-                // non-exercise modes (video lessons, songs) open on the
-                // draft-aware seed.
-                activeTimeMap={isExercise ? activeTimeMap : seed.timeMap}
+                // must not seed its markers from the play-along map that the
+                // draft timing holds for this owner+mode. Only non-exercise
+                // modes (video lessons, songs) open on the draft's timing.
+                activeTimeMap={isExercise ? activeTimeMap : draftTimeMap}
+                initialMetronomeAnchorSeconds={isExercise ? null : (draft.timing.anchor?.seconds ?? null)}
                 videoDurationSeconds={videoDurationSeconds}
                 inspectorEl={inspectorEl}
                 transportEl={transportEl}
