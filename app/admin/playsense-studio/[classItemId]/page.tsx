@@ -5,6 +5,7 @@ import {
   getScoreDocumentForClassItem,
   getStudioScoreSectionsForClassItem,
 } from '@/app/actions/playsense-studio';
+import { getStudioDrafts } from '@/app/actions/studio-drafts';
 import { ExerciseStudio } from './exercise-studio';
 import { StudioWorkspace } from './studio-workspace';
 import { VideoSectionsWorkspace } from './video-sections-workspace';
@@ -92,6 +93,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
       timeMap: null,
       backingTracks: [],
     };
+    const drafts = await getStudioDrafts([{ kind: 'exercise', id: classItemId }]);
     return (
       <ExerciseStudio
         // Remount when the graded score is attached/replaced, so the editor
@@ -111,11 +113,13 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
         initialScore={scoreResult?.data?.scoreDocument.parsedScore ?? null}
         activeTimeMap={scoreResult?.data?.activeTimeMap ?? null}
         initialExerciseMedia={exerciseMedia}
+        initialExerciseDraft={drafts.data?.[`exercise:${classItemId}`] ?? null}
         // Bound server actions — ExerciseStudio must not import the actions
         // module itself (deadlocks the Turbopack production build; see its note).
         fetchSections={getStudioScoreSectionsForClassItem.bind(null, classItemId)}
         fetchExercise={getScoreDocumentForClassItem.bind(null, classItemId)}
         fetchExerciseMedia={getExerciseMedia.bind(null, classItemId)}
+        fetchExerciseDraft={getStudioDrafts.bind(null, [{ kind: 'exercise', id: classItemId }])}
       />
     );
   }
@@ -129,6 +133,8 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
 
   const result = await getScoreDocumentForClassItem(classItemId);
   if (!result.data) notFound();
+
+  const drafts = await getStudioDrafts([{ kind: 'exercise', id: classItemId }]);
 
   return (
     <StudioWorkspace
@@ -144,6 +150,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
       initialScore={result.data.scoreDocument.parsedScore}
       activeTimeMap={result.data.activeTimeMap}
       videoDurationSeconds={classItem.video_duration_seconds}
+      studioDraft={drafts.data?.[`exercise:${classItemId}`] ?? null}
     />
   );
 }

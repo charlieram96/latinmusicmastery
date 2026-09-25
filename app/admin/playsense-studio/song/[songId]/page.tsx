@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getScoreDocumentForSong } from '@/app/actions/playsense-studio';
+import { getStudioDrafts } from '@/app/actions/studio-drafts';
 import { StudioWorkspace } from '../../[classItemId]/studio-workspace';
 
 interface PageProps {
@@ -30,6 +31,8 @@ export default async function PlaysenseStudioSongPage({ params }: PageProps) {
 
   const { scoreDocument, song } = result.data;
 
+  const drafts = await getStudioDrafts([{ kind: 'song', id: song.id }]);
+
   return (
     <StudioWorkspace
       // Songs are always score-backed (created with a blank score) and never have
@@ -48,6 +51,7 @@ export default async function PlaysenseStudioSongPage({ params }: PageProps) {
       initialScore={scoreDocument.parsedScore}
       activeTimeMap={null}
       videoDurationSeconds={null}
+      studioDraft={drafts.data?.[`song:${song.id}`] ?? null}
     />
   );
 }
