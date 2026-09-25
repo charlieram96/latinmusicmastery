@@ -117,4 +117,13 @@ describe('reading, restoring and discarding drafts', () => {
     expect(res.data!.score.title).toBe('Tumbao');
     expect(res.data!.timing).toEqual(EMPTY_TIMING);
   });
+  it('returns an error for an unknown owner instead of a silent null', async () => {
+    const res = await discardStudioDraft({ kind: 'section', id: 'nope' });
+    expect(res.data).toBeUndefined();
+    expect(res.error).toBeTruthy();
+  });
+  it('rejects a non-admin', async () => {
+    h.fake = createFakeSupabase({ studio_versions: [] }, { isAdmin: false });
+    expect((await discardStudioDraft(section)).error).toBe('Admin only');
+  });
 });

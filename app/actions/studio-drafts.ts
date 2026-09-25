@@ -116,11 +116,12 @@ export async function restoreStudioVersion(input: {
   const supabase = await createClient();
   const admin = await requireAdmin(supabase);
   if ('error' in admin) return { error: admin.error };
-  const { data: row } = await supabase
+  const { data: row, error } = await supabase
     .from('studio_versions')
     .select('owner_kind, owner_id, score, timing')
     .eq('id', input.versionId)
     .maybeSingle();
+  if (error) return { error: error.message };
   if (!row || row.owner_kind !== input.owner.kind || row.owner_id !== input.owner.id) return { error: 'Version not found' };
   const content = { score: row.score as unknown as ScoreDocument, timing: row.timing as unknown as StudioTiming };
   // Always a fresh row: a restore is its own history entry.
@@ -139,7 +140,7 @@ export async function discardStudioDraft(
   const cleared = await clearUnpublishedDrafts(supabase, owner);
   if (cleared.error) return { error: cleared.error };
   const resolved = await resolveOwner(supabase, owner);
-  if (resolved.error) return { data: null };
+  if (resolved.error) return { error: resolved.error };
   const liveContent = await loadLiveContent(supabase, resolved.data!);
   if (liveContent.error) return { error: liveContent.error };
   return { data: { ...liveContent.data!, updatedAt: '' } };
