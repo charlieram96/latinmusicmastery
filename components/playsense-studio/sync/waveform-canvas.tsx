@@ -63,7 +63,7 @@ export interface WaveformCanvasProps {
   getCurrentSeconds: () => number;
   onSeek: (seconds: number) => void;
   onSelect: (target: DragTarget) => void;
-  onMarkerDrag: (ref: MarkerRef, videoTimeSeconds: number, mode: DragMode) => void;
+  onMarkerDrag: (ref: MarkerRef, videoTimeSeconds: number, mode: DragMode, mods: { snap: boolean }) => void;
   onTailDrag: (videoTimeSeconds: number) => void;
   onDragEnd: () => void;
   onScrollByPx: (dx: number) => void;
@@ -706,7 +706,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         const t = xToVideoTime(x);
         if (target.kind === 'tail') onTailDragRef.current(t);
         else if (target.kind === 'marker') {
-          onMarkerDragRef.current(target.ref, t, dragAllRef.current ? 'all-after' : 'single');
+          const ripple = dragAllRef.current !== e.altKey;
+          onMarkerDragRef.current(target.ref, t, ripple ? 'all-after' : 'single', { snap: !e.metaKey });
         } else if (target.kind === 'note') {
           onNoteDragRef.current?.(t);
         }

@@ -17,6 +17,7 @@ import { AudioLines, ChevronsLeftRight, FilePlus2, Loader2, Move, Music2, Repeat
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -41,6 +42,7 @@ import { useVideoTransportClock } from '@/components/playsense-studio/player/sta
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
+import { SNAP_PX, firstAttackTime, snapBarTime, snapSectionShift } from '@/lib/playsense-studio/hits';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
@@ -212,6 +214,9 @@ function writeStoredValue(key: string, value: string): void {
 }
 
 const TIMING_DEBOUNCE_MS = 1500;
+/** Stable empty array so `peaks?.hits ?? EMPTY_HITS` never churns deps with a
+ *  fresh `[]` every render when there are no detected hits yet. */
+const EMPTY_HITS: number[] = [];
 
 function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
   const m = state.measures.find((mm) => mm.measureNumber === ref.measureNumber);
@@ -392,6 +397,19 @@ export function SyncPanel({
   const [peaks, setPeaks] = useState<WaveformPeaks | null>(null);
   const [decodeState, setDecodeState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
+
+  // Detected hits + the live zoom, mirrored into refs so the drag callbacks
+  // (read by the canvas/lane's pointer handlers, which never re-bind mid-drag)
+  // always see the latest values without becoming a dep of those callbacks.
+  // Assigned in an effect, not at render time: this repo's eslint (react-hooks
+  // v7 / React Compiler rules) rejects a ref write during render.
+  const hits = peaks?.hits ?? EMPTY_HITS;
+  const hitsRef = useRef(hits);
+  const ppsRef = useRef(pps);
+  useLayoutEffect(() => {
+    hitsRef.current = hits;
+    ppsRef.current = pps;
+  }, [hits, pps]);
 
   // --- Active timing autosave ---
   const [error, setError] = useState<string | null>(null);
@@ -735,21 +753,33 @@ export function SyncPanel({
   // --- Marker interaction handlers ---
   // Both drags clamp against the sibling-section corridor so a section can
   // never be dragged into a neighbor's video range.
-  const handleMarkerDrag = useCallback((ref: MarkerRef, videoTimeSeconds: number, mode: DragMode) => {
+  const handleMarkerDrag = useCallback((ref: MarkerRef, videoTimeSeconds: number, mode: DragMode, mods?: { snap: boolean }) => {
     setMarkers((s) => {
+      // Snap first, then run every existing clamp below on the snapped value —
+      // a snap must never itself break the corridor or neighbour clamps.
+      let proposed = videoTimeSeconds;
+      if (mods?.snap !== false && hitsRef.current.length) {
+        const mi = s.measures.findIndex((m) => m.measureNumber === ref.measureNumber);
+        const barStart = mi >= 0 ? s.measures[mi].beats[0].videoTimeSeconds : null;
+        // Only downbeats snap to their first attacked note; an expanded beat
+        // handle snaps only to its own bar line.
+        const first = ref.beatInMeasure === 1 && mi >= 0 ? firstAttackTime(s, mi) : null;
+        const offset = first !== null && barStart !== null ? first - barStart : null;
+        proposed = snapBarTime(videoTimeSeconds, offset, hitsRef.current, SNAP_PX / ppsRef.current).time;
+      }
       const { lo, hi } = corridorRef.current;
       if (mode === 'all-after') {
         const current = findBeatTime(s, ref);
         if (current === null) return s;
         const span = markerSpan(s);
-        let delta = videoTimeSeconds - current;
+        let delta = proposed - current;
         delta = Math.min(delta, hi - EPS - span.endSeconds); // right wall via the tail
         delta = Math.max(delta, lo + EPS - span.startSeconds); // left wall via the first downbeat
         return shiftMarkersFrom(s, ref, delta);
       }
       // Single drags only reach a wall at the span's edges; interior markers are
       // already clamped against their neighbors inside setMarkerTime.
-      const clamped = Math.min(Math.max(videoTimeSeconds, lo + EPS), hi - EPS);
+      const clamped = Math.min(Math.max(proposed, lo + EPS), hi - EPS);
       return setMarkerTime(s, ref, clamped);
     });
     setDirty(true);
@@ -765,7 +795,7 @@ export function SyncPanel({
   // not read live from corridorRef — so a sibling's range can't shift under
   // the drag mid-gesture (the live corridor moves as `markers` itself moves).
   const sectionDragBase = useRef<{ base: MarkerState; corridor: { lo: number; hi: number } } | null>(null);
-  const onSectionDrag = useCallback((delta: number, phase: 'move' | 'end') => {
+  const onSectionDrag = useCallback((delta: number, phase: 'move' | 'end', mods?: { snap: boolean }) => {
     if (!sectionDragBase.current) {
       const base = markersRef.current;
       sectionDragBase.current = { base, corridor: freeCorridor(markerSpan(base), siblingRanges) };
@@ -773,7 +803,15 @@ export function SyncPanel({
     const { base, corridor } = sectionDragBase.current;
     const first = base.measures[0];
     if (first) {
-      const shift = clampSectionShift(markerSpan(base), corridor, videoDurationSeconds ?? null, delta);
+      // Snap first (the section's first attacked note onto a hit), then run
+      // the existing corridor/duration clamp on the snapped delta.
+      let d = delta;
+      if (mods?.snap !== false && hitsRef.current.length) {
+        const idx = base.measures.findIndex((m) => m.onsetQNs.length > 0);
+        const firstNote = idx >= 0 ? firstAttackTime(base, idx) : base.measures[0].beats[0].videoTimeSeconds;
+        if (firstNote !== null) d = snapSectionShift(firstNote, delta, hitsRef.current, SNAP_PX / ppsRef.current);
+      }
+      const shift = clampSectionShift(markerSpan(base), corridor, videoDurationSeconds ?? null, d);
       setMarkers(shiftMarkersFrom(base, { measureNumber: first.measureNumber, beatInMeasure: 1 }, shift));
     }
     if (phase === 'end') {

@@ -44,8 +44,9 @@ export interface SectionsLaneProps {
   scrollLeftPx: number;
   onSelectSection: (sectionId: string) => void;
   /** Reports the active section being dragged along the video, in delta
-   *  seconds from where the drag started. Absent = the active block sits still. */
-  onDragActive?: (deltaSeconds: number, phase: 'move' | 'end') => void;
+   *  seconds from where the drag started. Absent = the active block sits still.
+   *  `mods.snap` is false while ⌘ is held for that move/end. */
+  onDragActive?: (deltaSeconds: number, phase: 'move' | 'end', mods?: { snap: boolean }) => void;
 }
 
 /** Below this, a pointerdown-then-up on the active block is a click, not a drag. */
@@ -86,7 +87,7 @@ export function SectionsLane({
       if (Math.abs(dx) < DRAG_DEAD_ZONE_PX) return;
       d.dragging = true;
     }
-    onDragActive?.(dx / pixelsPerSecond, 'move');
+    onDragActive?.(dx / pixelsPerSecond, 'move', { snap: !e.metaKey });
   };
   // Shared by pointerup, pointercancel and lostpointercapture: whichever fires
   // first ends the drag (reporting 'end' if it had really started) and clears
@@ -102,7 +103,7 @@ export function SectionsLane({
       /* noop */
     }
     if (d.dragging) {
-      onDragActive?.((e.clientX - d.startX) / pixelsPerSecond, 'end');
+      onDragActive?.((e.clientX - d.startX) / pixelsPerSecond, 'end', { snap: !e.metaKey });
       suppressClickRef.current = true;
       // The trailing click can land outside the lane entirely (the pointer
       // drifted off it before release), in which case onClickCapture below

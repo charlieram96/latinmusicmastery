@@ -50,8 +50,8 @@ describe('SectionsLane drag', () => {
 
   const block = () => host.querySelector('.st-section-block.is-active') as HTMLButtonElement;
   const sibling = () => host.querySelector('.st-section-block:not(.is-active)') as HTMLButtonElement;
-  const ptr = (el: Element, type: string, x: number) => {
-    const e = new MouseEvent(type, { bubbles: true, clientX: x, clientY: 10 });
+  const ptr = (el: Element, type: string, x: number, mods: { metaKey?: boolean } = {}) => {
+    const e = new MouseEvent(type, { bubbles: true, clientX: x, clientY: 10, metaKey: mods.metaKey ?? false });
     Object.defineProperty(e, 'pointerId', { value: 1 });
     act(() => {
       el.dispatchEvent(e);
@@ -80,9 +80,9 @@ describe('SectionsLane drag', () => {
     ptr(el, 'pointerup', 120);
 
     expect(onDragActive.mock.calls).toEqual([
-      [0.6, 'move'],
-      [2, 'move'],
-      [2, 'end'],
+      [0.6, 'move', { snap: true }],
+      [2, 'move', { snap: true }],
+      [2, 'end', { snap: true }],
     ]);
 
     // The browser's own trailing click after the drag must not reselect.
@@ -109,8 +109,8 @@ describe('SectionsLane drag', () => {
     ptr(el, 'pointercancel', 130);
 
     expect(onDragActive.mock.calls).toEqual([
-      [2, 'move'],
-      [3, 'end'],
+      [2, 'move', { snap: true }],
+      [3, 'end', { snap: true }],
     ]);
   });
 
@@ -120,8 +120,8 @@ describe('SectionsLane drag', () => {
     ptr(el, 'pointermove', 120);
     ptr(el, 'pointerup', 120);
     expect(onDragActive.mock.calls).toEqual([
-      [2, 'move'],
-      [2, 'end'],
+      [2, 'move', { snap: true }],
+      [2, 'end', { snap: true }],
     ]);
 
     // The real trailing click landed off the lane entirely (e.g. the pointer
@@ -134,5 +134,16 @@ describe('SectionsLane drag', () => {
 
     click(sibling());
     expect(onSelectSection).toHaveBeenCalledWith('b');
+  });
+
+  it('reports snap: false while ⌘ is held during a section drag', () => {
+    const el = block();
+    ptr(el, 'pointerdown', 100);
+    // Past the dead zone with ⌘ held: (120 - 100) / 10 pps = 2s.
+    ptr(el, 'pointermove', 120, { metaKey: true });
+    expect(onDragActive).toHaveBeenLastCalledWith(expect.any(Number), 'move', { snap: false });
+
+    ptr(el, 'pointerup', 120, { metaKey: true });
+    expect(onDragActive).toHaveBeenLastCalledWith(expect.any(Number), 'end', { snap: false });
   });
 });
