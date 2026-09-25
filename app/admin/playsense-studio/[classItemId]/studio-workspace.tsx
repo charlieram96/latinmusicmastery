@@ -458,6 +458,7 @@ function StudioWorkspaceBody({
               scoreActionsEl={scoreActionsEl}
               onTimingChange={draft.setTiming}
               onTimingSaved={() => setExerciseStage('syncVideo')}
+              registerTimingFlush={draft.registerPreFlush}
             />
           ) : (
             <>
@@ -480,6 +481,7 @@ function StudioWorkspaceBody({
                 monitorEl={monitorEl}
                 scoreActionsEl={scoreActionsEl}
                 onTimingChange={draft.setTiming}
+                registerTimingFlush={draft.registerPreFlush}
               />
 
               {/* Exercise mode: the student's falling-notes view lives right under

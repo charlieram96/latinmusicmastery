@@ -127,6 +127,10 @@ export interface SyncPanelProps {
   /** Fired once a timing edit has been handed off to the draft (`dirty` clears) —
    *  e.g. so a host can react without waiting on the debounced autosave. */
   onTimingSaved?: () => void;
+  /** The host draft's `registerPreFlush` — lets Publish (or any flush) pull in
+   *  a still-debounced drag or anchor edit before it snapshots and saves,
+   *  instead of racing this panel's own 1.5 s / 500 ms timers. */
+  registerTimingFlush?: (fn: () => void) => () => void;
   /** App-shell slot the inspector (note + sync status) portals into (left rail). */
   inspectorEl?: HTMLElement | null;
   /** App-shell slot the transport bar portals into (video mode only). */
@@ -228,6 +232,7 @@ export function SyncPanel({
   onTimingChange,
   videoDurationSeconds,
   onTimingSaved,
+  registerTimingFlush,
   inspectorEl,
   transportEl,
   monitorEl,
@@ -275,9 +280,11 @@ export function SyncPanel({
   const editorAreaRef = useRef<HTMLDivElement | null>(null);
 
   // --- Marker state ---
-  // A published map wins; otherwise lay the measures from 0 at the score's tempo.
-  // The admin repositions them with Import-at-playhead and by dragging — the video
-  // has no single tempo, so there's no auto-fit across the audio.
+  // `activeTimeMap` is the host's SEED — the draft's timing when there is one,
+  // else the published map — and wins when it has one; otherwise lay the
+  // measures from 0 at the score's tempo. The admin repositions them with
+  // Import-at-playhead and by dragging — the video has no single tempo, so
+  // there's no auto-fit across the audio.
   const [markers, setMarkers] = useState<MarkerState>(() => {
     if (activeTimeMap && activeTimeMap.waypoints.length >= 2) {
       return seedMarkerState(track, score, activeTimeMap.waypoints, activeTimeMap.nudges ?? []);
@@ -939,10 +946,17 @@ export function SyncPanel({
     }
   }, [timingAutosave, markers, pps, decodeState, onTimingChange, onTimingSaved, anchorTimingPatch]);
 
+  // The pending debounce's timer id, so a registered pre-flush (below) can
+  // cancel it and hand the timing off immediately instead of racing it.
+  const timingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!timingAutosave || !dirty || placeArmed || error) return;
-    const id = setTimeout(() => { saveTiming(); }, TIMING_DEBOUNCE_MS);
-    return () => clearTimeout(id);
+    const id = setTimeout(() => { timingTimerRef.current = null; saveTiming(); }, TIMING_DEBOUNCE_MS);
+    timingTimerRef.current = id;
+    return () => {
+      clearTimeout(id);
+      timingTimerRef.current = null;
+    };
   }, [timingAutosave, dirty, placeArmed, error, saveTiming]);
 
   // Best-effort flush when switching sections; browser shutdown may interrupt it.
@@ -953,6 +967,10 @@ export function SyncPanel({
   const dirtyRef = useRef(dirty);
   useEffect(() => {
     dirtyRef.current = dirty;
+  });
+  const placeArmedRef = useRef(placeArmed);
+  useEffect(() => {
+    placeArmedRef.current = placeArmed;
   });
   useEffect(() => {
     return () => {
@@ -1013,6 +1031,29 @@ export function SyncPanel({
     []
   );
 
+  // Let the host's draft (registerTimingFlush = draft.registerPreFlush) pull
+  // in a still-debounced drag or anchor edit right before it snapshots and
+  // saves — e.g. so pressing Publish right after a drag publishes that drag
+  // instead of racing its 1.5 s / 500 ms timers. Refs throughout so this
+  // closure, registered once, always acts on the latest state.
+  useEffect(() => {
+    if (!registerTimingFlush) return;
+    return registerTimingFlush(() => {
+      if (timingTimerRef.current) {
+        clearTimeout(timingTimerRef.current);
+        timingTimerRef.current = null;
+      }
+      if (dirtyRef.current && !placeArmedRef.current) {
+        saveTimingRef.current();
+      }
+      if (anchorTimerRef.current) {
+        clearTimeout(anchorTimerRef.current);
+        anchorTimerRef.current = null;
+        persistAnchorRef.current();
+      }
+    });
+  }, [registerTimingFlush]);
+
   /** What the click actually uses — the stored anchor, else the score's start. */
   const anchorSeconds = metronomeAnchor ?? seededAnchorSeconds;
 
@@ -1022,7 +1063,7 @@ export function SyncPanel({
   // admin could not hear what they were aligning the anchor to, which is the
   // one thing this stage is for.
   //
-  // The grid is built from the LIVE markers rather than the published map, so
+  // The grid is built from the LIVE markers rather than the seeded map, so
   // dragging a marker or the anchor is audible immediately.
   const [clickOn, setClickOn] = useState(false);
   const [clickVolume, setClickVolume] = useState(readStoredClickVolume);
@@ -1438,12 +1479,6 @@ export function SyncPanel({
             {/* Sync status */}
             {showSync && (
               <div className="st-icard">
-                {error && (
-                  <div className="flex justify-end">
-                    <button type="button" className="st-chip"
-                      onClick={() => { saveTiming(); }}>Retry save</button>
-                  </div>
-                )}
                 <div className="flex items-center gap-2 text-xs">
                   <span className="st-status-pip" /> {markers.measures.length} measure
                   {markers.measures.length === 1 ? '' : 's'} on the grid
@@ -1467,16 +1502,15 @@ export function SyncPanel({
                     score&rsquo;s tempo to match if you want the click to sit on the recording.
                   </p>
                 )}
-                {/* Show whether the latest timing has been handed off to the draft. */}
-                {timingAutosave && (
+                {/* Only shown while there's something to say — once the timing
+                    is handed off to the draft, the host's app-bar autosave
+                    status ("Draft saved" etc.) is authoritative. */}
+                {timingAutosave && (error || dirty) && (
                   <div className="flex items-center gap-2 text-xs">
                     {error ? (
                       <><span className="st-status-pip warn" /> <span>Timing not saved</span></>
-                    ) : dirty ? (
-                      <><span className="st-status-pip warn" /> <span className="text-muted-foreground">Saving to draft…</span></>
-
                     ) : (
-                      <><span className="st-status-pip" /> <span className="text-muted-foreground">Saved to draft</span></>
+                      <><span className="st-status-pip warn" /> <span className="text-muted-foreground">Saving to draft…</span></>
                     )}
                   </div>
                 )}

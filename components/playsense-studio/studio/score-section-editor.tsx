@@ -44,7 +44,7 @@ export interface ScoreSectionEditorProps {
   /** Usable region of the lesson video, owned by the workspace above. */
   trim?: MediaTrim;
   onTrimDrag?: (edge: 'in' | 'out', videoTimeSeconds: number) => void;
-  /** Re-fetch sections (ranges / score swapped). Called after publish or replace. */
+  /** Re-fetch sections (ranges / score swapped). Called after Replace score. */
   onChanged: () => void;
   /** The latest content actually sent to (or pending for, at unmount) this
    *  section's draft — lets the host cache it locally so reselecting this
@@ -154,7 +154,7 @@ export function ScoreSectionEditor({
         trim={trim}
         onTrimDrag={onTrimDrag}
         onTimingChange={draft.setTiming}
-        onTimingSaved={onChanged}
+        registerTimingFlush={draft.registerPreFlush}
         inspectorEl={inspectorEl}
         transportEl={transportEl}
         monitorEl={monitorEl}
