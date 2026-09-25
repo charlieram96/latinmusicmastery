@@ -18,7 +18,13 @@ let api: StudioDraftApi;
 let ctx: StudioDraftsValue;
 let edit: (title: string) => void;
 
-function Editor({ onUnmountTiming }: { onUnmountTiming?: boolean }) {
+function Editor({
+  onUnmountTiming,
+  onDraftContent,
+}: {
+  onUnmountTiming?: boolean;
+  onDraftContent?: (c: { score: S; timing: typeof EMPTY_TIMING }) => void;
+}) {
   const [state, dispatch] = useReducer(
     (s: { score: S; isDirty: boolean }, a: { type: 'edit'; title: string } | { type: 'clean' } | { type: 'replace'; score: S }) =>
       a.type === 'edit' ? { score: { title: a.title }, isDirty: true } : a.type === 'clean' ? { ...s, isDirty: false } : { score: a.score, isDirty: false },
@@ -29,6 +35,7 @@ function Editor({ onUnmountTiming }: { onUnmountTiming?: boolean }) {
     owner, label: 'Intro', score: state.score as never, isDirty: state.isDirty,
     markClean: () => dispatch({ type: 'clean' }), replaceScore: (s) => dispatch({ type: 'replace', score: s as never }),
     initialTiming: EMPTY_TIMING,
+    onDraftContent: onDraftContent as never,
   });
   useLayoutEffect(() => { api = draftApi; }, [draftApi]);
   return <>{onUnmountTiming && <TimingChild setTiming={draftApi.setTiming} />}</>;
@@ -258,5 +265,53 @@ describe('useStudioDraft — fix round 2: a queued save cannot resurrect a disca
 
     expect(acts.saveStudioDraft).not.toHaveBeenCalledWith(expect.objectContaining({ score: { title: 'B' } }));
     expect(ctx.statuses['section:sec-1'].unpublished).toBe(false);
+  });
+});
+
+// ---- Fix round 1 (drafts review): onDraftContent, so a host can cache the
+// latest draft content locally (e.g. to reseed a section reopened later)
+// without waiting for a refetch. --------------------------------------------
+
+describe('useStudioDraft — fix round 1 (drafts review): onDraftContent', () => {
+  it('a successful save calls onDraftContent with the sent content', async () => {
+    const onDraftContent = vi.fn();
+    mount(<Editor onDraftContent={onDraftContent} />);
+    act(() => edit('B'));
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    expect(onDraftContent).toHaveBeenCalledWith({ score: { title: 'B' }, timing: EMPTY_TIMING });
+  });
+
+  it('a silent (unmount-triggered) save also calls onDraftContent once it resolves', async () => {
+    const onDraftContent = vi.fn();
+    mount(<Editor onDraftContent={onDraftContent} />);
+    act(() => edit('B'));
+    act(() => root.render(<StudioDraftsProvider owners={[]}><Probe /></StudioDraftsProvider>));
+    await act(async () => { vi.advanceTimersByTime(0); });
+    expect(acts.saveStudioDraft).toHaveBeenCalledTimes(1);
+    expect(onDraftContent).toHaveBeenCalledWith({ score: { title: 'B' }, timing: EMPTY_TIMING });
+  });
+
+  it('the unmount flush notifies onDraftContent synchronously inside the deferred tick, before the silent save is sent, only when something was pending', async () => {
+    const onDraftContent = vi.fn();
+    mount(<Editor onDraftContent={onDraftContent} />);
+    act(() => edit('B'));
+    act(() => root.render(<StudioDraftsProvider owners={[]}><Probe /></StudioDraftsProvider>));
+    // Still inside the deferred (setTimeout 0) window: neither the notify nor
+    // the save has run yet.
+    expect(onDraftContent).not.toHaveBeenCalled();
+    expect(acts.saveStudioDraft).not.toHaveBeenCalled();
+    await act(async () => { vi.advanceTimersByTime(0); });
+    expect(onDraftContent).toHaveBeenCalledWith({ score: { title: 'B' }, timing: EMPTY_TIMING });
+    expect(onDraftContent.mock.invocationCallOrder[0]).toBeLessThan(acts.saveStudioDraft.mock.invocationCallOrder[0]);
+  });
+
+  it('the unmount flush does not call onDraftContent when nothing was pending', async () => {
+    const onDraftContent = vi.fn();
+    mount(<Editor onDraftContent={onDraftContent} />);
+    // No edit — nothing dirty at unmount time.
+    act(() => root.render(<StudioDraftsProvider owners={[]}><Probe /></StudioDraftsProvider>));
+    await act(async () => { vi.advanceTimersByTime(0); });
+    expect(onDraftContent).not.toHaveBeenCalled();
+    expect(acts.saveStudioDraft).not.toHaveBeenCalled();
   });
 });

@@ -46,6 +46,10 @@ export interface ScoreSectionEditorProps {
   onTrimDrag?: (edge: 'in' | 'out', videoTimeSeconds: number) => void;
   /** Re-fetch sections (ranges / score swapped). Called after publish or replace. */
   onChanged: () => void;
+  /** The latest content actually sent to (or pending for, at unmount) this
+   *  section's draft — lets the host cache it locally so reselecting this
+   *  section later seeds from it without waiting for a refetch. */
+  onDraftContent?: (c: { score: ScoreDocument; timing: StudioTiming }) => void;
   /** All of this class item's sections — drives the timeline lane + overlap guard. */
   sections: LaneSection[];
   onSelectSection: (sectionId: string) => void;
@@ -72,6 +76,7 @@ export function ScoreSectionEditor({
   trim,
   onTrimDrag,
   onChanged,
+  onDraftContent,
   sections,
   onSelectSection,
   appBarEl,
@@ -91,6 +96,7 @@ export function ScoreSectionEditor({
     markClean,
     replaceScore,
     initialTiming,
+    onDraftContent,
   });
 
   // App-bar slot SyncPanel portals its "Add score" chip into (state, not a ref,

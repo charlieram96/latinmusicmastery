@@ -43,8 +43,19 @@ export function useStudioDraft(opts: {
   markClean: () => void;
   replaceScore: (s: ScoreDocument) => void;
   initialTiming: StudioTiming;
+  /** Notified with whatever content was just sent to (or was about to be sent
+   *  to, at unmount) the draft — lets a host cache it locally, e.g. so a
+   *  section reopened later seeds from it without waiting for a refetch. */
+  onDraftContent?: (c: { score: ScoreDocument; timing: StudioTiming }) => void;
 }): StudioDraftApi {
   const { owner, label, score, isDirty, markClean, replaceScore } = opts;
+  // Kept in a ref, not a `save`/effect dependency: a host typically passes a
+  // fresh closure every render, and we only ever need the latest one at call
+  // time, not to react to it changing.
+  const onDraftContentRef = useRef(opts.onDraftContent);
+  useEffect(() => {
+    onDraftContentRef.current = opts.onDraftContent;
+  });
   // Stable across renders as long as kind/id don't change, even if the host
   // passes a fresh `{ kind, id }` literal every render — an inline owner
   // object must never restart the debounce timer below. Used everywhere
@@ -119,6 +130,7 @@ export function useStudioDraft(opts: {
       return { error: res.error };
     }
     setStatus(memoOwner, { unpublished: true, label: snap.label });
+    onDraftContentRef.current?.({ score: snap.score, timing: snap.timing });
     if (saveOpts?.silent) return {};
     setSaveState('saved');
     // Only clean what this save covered; later edits keep their dirty flags.
@@ -169,7 +181,18 @@ export function useStudioDraft(opts: {
   useEffect(() => {
     return () => {
       setPending(key, false);
-      setTimeout(() => { void save({ silent: true }); }, 0);
+      setTimeout(() => {
+        // Read AFTER the deferred tick (see above) so a descendant's own
+        // cleanup-time write (e.g. SyncPanel's last setTiming) is already in
+        // `latest`. Notify the host with this final snapshot itself — before
+        // the silent save below even starts — so it doesn't have to wait on
+        // that round trip to have the section's truest last-known content.
+        const snap = latest.current;
+        if (snap.isDirty || snap.timingDirty) {
+          onDraftContentRef.current?.({ score: snap.score, timing: snap.timing });
+        }
+        void save({ silent: true });
+      }, 0);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

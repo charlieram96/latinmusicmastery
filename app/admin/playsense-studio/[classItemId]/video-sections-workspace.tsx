@@ -434,6 +434,12 @@ function VideoSectionsBody({
               trim={trim}
               onTrimDrag={handleTrimDrag}
               onChanged={() => void refetch(selected.sectionId)}
+              onDraftContent={(c) => {
+                const id = selected.sectionId;
+                setSections((prev) =>
+                  prev.map((s) => (s.sectionId === id ? { ...s, studioDraft: { ...c, updatedAt: new Date().toISOString() } } : s))
+                );
+              }}
               sections={laneSections}
               onSelectSection={setSelectedId}
               appBarEl={appBarEl}
