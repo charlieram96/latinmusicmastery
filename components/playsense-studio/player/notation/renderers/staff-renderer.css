@@ -15,17 +15,21 @@
 @keyframes ps-note-pop { 0% { transform:scale(1); } 40% { transform:scale(1.2); } 100% { transform:scale(1.06); } }
 .ps-score-engraving [data-score-row] { transition:opacity .35s var(--ease-out); }
 .ps-score-engraving .ps-staff-row { position:absolute; inset:0; pointer-events:none; }
-.ps-score-engraving.playsense-studio-notation svg [data-score-measure-dot] { fill:hsl(var(--muted-foreground) / .3)!important; stroke:none!important; }
-.ps-score-engraving.playsense-studio-notation svg [data-state=active] [data-score-measure-dot] { fill:hsl(var(--primary))!important; }
-.ps-score-engraving.playsense-studio-notation svg [data-score-measure-label] { font-family:var(--font-inter),system-ui,sans-serif; font-size:7.5px; font-weight:550; letter-spacing:.9px; fill:hsl(var(--muted-foreground) / .8)!important; stroke:none!important; }
-.ps-score-engraving.playsense-studio-notation svg [data-state=active] [data-score-measure-label] { fill:hsl(var(--primary))!important; }
-.ps-score-engraving.playsense-studio-notation svg [data-score-progress-track] { fill:hsl(var(--foreground) / .07)!important; stroke:none!important; }
-.ps-score-engraving.playsense-studio-notation svg [data-state=played] [data-score-progress-track] { fill:hsl(var(--primary) / .22)!important; }
-.ps-score-engraving.playsense-studio-notation svg [data-score-progress] { fill:hsl(var(--primary))!important; stroke:none!important; }
-.ps-score-engraving.playsense-studio-notation svg [data-score-beat] { font-family:var(--font-inter),system-ui,sans-serif; font-size:8px; font-weight:500; fill:hsl(var(--muted-foreground) / .7)!important; stroke:none!important; }
-.ps-score-engraving.playsense-studio-notation svg [data-score-beat][data-active=true] { fill:hsl(var(--primary))!important; font-weight:750; }
 .ps-score-engraving .ps-staff-playhead { width:3px; margin-left:-1.5px; border-radius:3px; background:linear-gradient(180deg,hsl(var(--primary) / .15),hsl(var(--primary)) 30%,hsl(var(--primary)) 70%,hsl(var(--primary) / .15)); box-shadow:0 0 12px hsl(var(--primary) / .45); }
 .ps-score-engraving .ps-staff-playhead-diamond { position:absolute; top:-9px; left:50%; width:9px; height:9px; margin-left:-4.5px; border-radius:2px; background:hsl(var(--primary)); transform:rotate(45deg); }
+.ps-score-engraving .ps-staff-band { position:absolute; top:0; left:0; border-radius:10px; background:hsl(var(--primary) / .07); pointer-events:none; opacity:0; transition:transform var(--dur-turn) var(--ease-out),width var(--dur-turn) var(--ease-out),opacity .3s ease; }
+.ps-score-engraving .ps-staff-name { position:absolute; transform:translate(-50%,-50%); min-width:20px; height:20px; padding:0 5px; border-radius:6px; display:grid; place-items:center; font:700 11px/1 var(--font-inter),system-ui,sans-serif; white-space:nowrap; background:hsl(var(--muted)); color:hsl(var(--muted-foreground)); transition:transform var(--dur-state) var(--ease-spring),background-color var(--dur-state),color var(--dur-state),opacity .3s ease; }
+.ps-score-engraving .ps-staff-name[data-active=true] { background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); transform:translate(-50%,-50%) scale(1.18); }
+.ps-score-engraving .ps-staff-name[data-past=true] { opacity:.4; }
+.ps-score-engraving .ps-staff-count { position:absolute; transform:translate(-50%,-50%); font:600 11px/1 var(--font-inter),system-ui,sans-serif; color:hsl(var(--muted-foreground) / .75); transition:color var(--dur-tap),transform var(--dur-tap) var(--ease-spring); }
+.ps-score-engraving .ps-staff-count[data-beat=true] { font-weight:800; color:hsl(var(--muted-foreground)); }
+.ps-score-engraving .ps-staff-count[data-active=true] { color:hsl(var(--primary)); transform:translate(-50%,-50%) scale(1.3); }
+.ps-score-engraving .ps-staff-next { position:absolute; top:0; left:0; width:26px; height:26px; margin:-13px 0 0 -13px; border-radius:50%; border:2px solid hsl(var(--primary) / .45); pointer-events:none; z-index:1; }
+.ps-score-engraving .ps-staff-next[hidden] { display:none; }
+.ps-score-engraving .ps-staff-next::after { content:''; position:absolute; inset:-2px; border-radius:50%; border:2px solid hsl(var(--primary)); opacity:0; }
+@media (prefers-reduced-motion:no-preference) { .ps-score-engraving .ps-staff-next::after { animation:ps-next-ring 1s var(--ease-out) infinite; } }
+@keyframes ps-next-ring { 0% { transform:scale(.7); opacity:.9; } 100% { transform:scale(1.5); opacity:0; } }
+.ps-score-engraving.playsense-studio-notation svg [data-score-bar-number] { font-family:Georgia,'Times New Roman',serif; font-size:11px; font-style:italic; fill:hsl(var(--muted-foreground))!important; stroke:none!important; }
 .ps-exercise-score .ps-staff-viewport { mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 20px),transparent); }
 .ps-score-engraving:not([data-score-interactive]) .ps-staff-content { touch-action:pan-y!important; }
 .ps-score-engraving[data-score-layout-mode=wrapped]:not([data-score-interactive]) .ps-staff-content { touch-action:pan-x pan-y!important; }

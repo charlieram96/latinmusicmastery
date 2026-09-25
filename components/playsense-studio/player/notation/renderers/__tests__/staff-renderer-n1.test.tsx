@@ -59,3 +59,48 @@ describe('playhead', () => {
     expect(host.querySelector('.ps-staff-playhead .ps-staff-playhead-diamond')).not.toBeNull()
   })
 })
+describe('bar band and labels', () => {
+  it('replaces the MEASURE labels with one band', () => {
+    draw({ currentMs: 2500 })
+    expect(host.textContent).not.toMatch(/MEASURE/)
+    expect(host.querySelectorAll('.ps-staff-band')).toHaveLength(1)
+  })
+  it('numbers every row after the first', () => {
+    draw({})
+    const rows = host.querySelectorAll('svg > g[data-score-row]').length
+    expect(host.querySelectorAll('[data-score-bar-number]')).toHaveLength(rows - 1)
+  })
+})
+
+describe('helpers', () => {
+  it('names each attack and lights the current one', () => {
+    draw({ currentMs: 600 })
+    const chips = [...host.querySelectorAll('.ps-staff-name')]
+    expect(chips.slice(0, 4).map(c => c.textContent)).toEqual(['C', 'D', 'E', 'F'])
+    expect(chips[1].getAttribute('data-active')).toBe('true')
+  })
+  it('uses solfege when asked', () => {
+    draw({ helpers: { and: 'y', noteNames: 'solfege' } })
+    expect(host.querySelector('.ps-staff-name')?.textContent).toBe('Do')
+    expect([...host.querySelectorAll('.ps-staff-count')].slice(0, 2).map(c => c.textContent)).toEqual(['1', 'y'])
+  })
+  it('no chip under a tied continuation', () => {
+    const tied = scale({}, () => [{ kind: 'note', midi: 60, durationQN: 2, tieToNext: true }, { kind: 'note', midi: 60, durationQN: 2 }])
+    draw({ score: tied })
+    expect(host.querySelectorAll('.ps-staff-name')).toHaveLength(4)
+  })
+  it('counts eighths under every bar', () => {
+    draw({})
+    expect(host.querySelectorAll('.ps-staff-count')).toHaveLength(32)
+  })
+  it('rings the next attack while playing', () => {
+    draw({ currentMs: 600 })
+    expect(host.querySelector('.ps-staff-next')?.hasAttribute('hidden')).toBe(false)
+  })
+  it('percussion shows no note names', async () => {
+    const { CONGA_TUMBAO_FIXTURE } = await import('@/lib/playsense-studio/score-fixtures')
+    draw({ score: CONGA_TUMBAO_FIXTURE })
+    expect(host.querySelectorAll('.ps-staff-name')).toHaveLength(0)
+    expect(host.querySelectorAll('.ps-staff-count').length).toBeGreaterThan(0)
+  })
+})
