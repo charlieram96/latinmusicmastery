@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { extractTrackEvents } from '../score-to-vexflow'
 import { REFERENCE_EXCERPT_FIXTURE as F, GUITAR_LICK_FIXTURE } from '../score-fixtures'
 import { VALUE_QN, type NoteValue } from '../rhythm'
+import { measureLengthInQN } from '../time-mapping'
 import { parseScoreDocument } from '@/components/playsense-studio/shared/score-model/serialization'
 import type { Track } from '@/components/playsense-studio/shared/score-model/types'
 
@@ -154,16 +155,17 @@ describe('accidentals across both voices', () => {
 describe('legacy triplet grouping by beat position', () => {
   // NoteValue tokens for id-less (legacy `triplet: true`, 3:2) events. A group
   // closes once the running sounding position within the bar lands on a
-  // multiple of `unit` — the beat when the group's first written value is an
-  // eighth or longer, half a beat otherwise — or once its sounding length
-  // reaches 2 × unit, whichever comes first.
-  const groupsOf = (values: NoteValue[]) => {
-    const fill = 4 - values.reduce((a, v) => a + VALUE_QN[v] * 2 / 3, 0)
+  // multiple of `unit` — fixed from the group's first written value alone
+  // (a 16th or shorter → half a beat, an 8th or a quarter → a beat, a half →
+  // 2 QN, a whole → 4 QN), regardless of the time signature's own beat length
+  // — or once its sounding length reaches 2 × unit, whichever comes first.
+  const groupsOf = (values: NoteValue[], ts: [number, number] = [4, 4]) => {
+    const fill = measureLengthInQN(ts) - values.reduce((a, v) => a + VALUE_QN[v] * 2 / 3, 0)
     const track: Track = { ...GUITAR_LICK_FIXTURE.tracks[0], measures: [{ number: 1, voices: [{ number: 1, events: [
       ...values.map(v => ({ kind: 'note' as const, midi: 60, durationQN: VALUE_QN[v] * 2 / 3, triplet: true })),
       ...(fill > 1e-9 ? [{ kind: 'rest' as const, durationQN: fill }] : []),
     ] }] }] }
-    const ev = extractTrackEvents(track, [4, 4], 0)[0].events.slice(0, values.length)
+    const ev = extractTrackEvents(track, ts, 0)[0].events.slice(0, values.length)
     const out: NoteValue[][] = []
     ev.forEach((d, i) => {
       if (i > 0 && ev[i - 1].tuplet!.id === d.tuplet!.id) out[out.length - 1].push(values[i])
@@ -192,6 +194,35 @@ describe('legacy triplet grouping by beat position', () => {
     const ev = extractTrackEvents(track, [4, 4], 0)[0].events
     expect(ev[1].tuplet).toBeNull()
     expect(ev[0].tuplet!.id).not.toBe(ev[2].tuplet!.id)
+  })
+
+  // Fix round 1: the unit was deriving from the time signature's beat length
+  // (beatQN), which disagrees with the written value's own natural beat for
+  // meters like 2/2 (half-note beat) and 6/8 (dotted-quarter beat).
+  it('splits an eighth-triplet run from a following sixteenth-triplet run in 2/2, instead of merging into one group of six', () => {
+    // Eighth triplets get unit=1 (not beatQN=2), so they close after 3; the
+    // sixteenth triplets that follow get unit=0.5 and form their own group.
+    expect(groupsOf(['8', '8', '8', '16', '16', '16'], [2, 2])).toEqual([
+      ['8', '8', '8'], ['16', '16', '16'],
+    ])
+  })
+  it('keeps a run of half-note triplets in 4/4 as one group, instead of splitting 2 + 1', () => {
+    // Half gets unit=2 (not beatQN=1), so the safety valve (2 × unit = 4) no
+    // longer cuts in after the second note.
+    expect(groupsOf(['h', 'h', 'h'])).toEqual([['h', 'h', 'h']])
+  })
+  it('keeps a run of quarter-note triplets in 6/8 as one group', () => {
+    // Quarter gets unit=1 (not beatQN=0.5), so the run isn't cut short.
+    expect(groupsOf(['q', 'q', 'q'], [6, 8])).toEqual([['q', 'q', 'q']])
+  })
+  it('groups eighth triplets starting on beat 2, after a quarter rest, as one group', () => {
+    const track: Track = { ...GUITAR_LICK_FIXTURE.tracks[0], measures: [{ number: 1, voices: [{ number: 1, events: [
+      { kind: 'rest' as const, durationQN: 1 },
+      ...[60, 62, 64].map(midi => ({ kind: 'note' as const, midi, durationQN: 1 / 3, triplet: true })),
+    ] }] }] }
+    const ev = extractTrackEvents(track, [4, 4], 0)[0].events
+    expect(ev[1].tuplet!.id).toBe(ev[2].tuplet!.id)
+    expect(ev[2].tuplet!.id).toBe(ev[3].tuplet!.id)
   })
 })
 

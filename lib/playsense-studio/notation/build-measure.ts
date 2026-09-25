@@ -50,7 +50,7 @@ export function beamGroups(ds: VexEventDescriptor[], ts: [number, number]): numb
     const key = d.tuplet
       ? `T${d.tuplet.id}`
       : additive
-        ? `B${additiveGroupIndex(Math.round(qn / 0.5), additive)}`
+        ? `B${additiveGroupIndex(Math.floor(qn / 0.5 + 1e-9), additive)}`
         : `B${Math.floor(qn / beatQN + 1e-9)}`
     if (!d.isRest && BEAMABLE.has(d.durationCode)) {
       if (runKey !== key) end()

@@ -266,6 +266,20 @@ const REST_KEY_V2: Record<NotationClef, string> = { treble: 'f/4', bass: 'a/2', 
 const ACCIDENTAL_BY_ALTER: Record<number, AccidentalCode> = { [-2]: 'bb', [-1]: 'b', 0: 'n', 1: '#', 2: '##' };
 
 /**
+ * The beat-grid unit a legacy (id-less) triplet group closes against, from the
+ * group's first written note value alone — independent of the time signature's
+ * beat length, which for meters like 2/2 or 6/8 doesn't match the value's own
+ * natural beat (see task-12 fix round 1). A 16th or shorter closes every half
+ * beat; an 8th or a quarter closes every beat; a half or whole closes every
+ * 2 or 4 quarter notes respectively.
+ */
+function legacyTripletUnit(writtenQN: number | null): number {
+  if (writtenQN === null || writtenQN <= VALUE_QN['16']) return 0.5;
+  if (writtenQN <= VALUE_QN['q']) return 1;
+  return writtenQN; // half (2) or whole (4)
+}
+
+/**
  * Extract a flat list of VexEventDescriptors for a single track, with
  * cumulative QN positions ready for cursor mapping. Tempo changes do not
  * affect QN positions — only the score-internal time math (time-mapping.ts)
@@ -379,14 +393,15 @@ export function extractTrackEvents(
           // Legacy `triplet: true` with no id. A fresh id is taken whenever a
           // group opens, so a group cut short (e.g. by a rest) doesn't leave
           // the next one to reuse its id. `unit` is fixed from the group's
-          // first written value: the beat when that value is an eighth or
-          // longer, half a beat otherwise.
+          // first written value (see legacyTripletUnit) — not from the time
+          // signature's beat length, which can disagree with it (e.g. 2/2's
+          // half-note beat vs. an eighth-triplet's natural one-beat unit).
           if (!legacyOpen) {
             legacyId = `legacy-${measure.number}-${voiceNo}-${legacyGroupIndex++}`;
             legacyOpen = true;
             legacyGroupStartQN = qnInMeasure;
             const wv = writtenValue(event);
-            legacyUnit = wv !== null && VALUE_QN[wv] >= VALUE_QN['8'] ? beatQN : beatQN / 2;
+            legacyUnit = legacyTripletUnit(wv !== null ? VALUE_QN[wv] : null);
           }
           tuplet = { id: legacyId!, n: rawTuplet.n, m: rawTuplet.m };
           const posAfter = qnInMeasure + event.durationQN;

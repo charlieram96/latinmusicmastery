@@ -44,6 +44,19 @@ describe('beamGroups', () => {
     // 4/8 isn't one of the additive meters, so it keeps the old per-quarter (2-eighth) grouping.
     expect(beamGroups(eighths(4), [4, 8])).toEqual([[0, 1], [2, 3]])
   })
+
+  // Every event is a plain (non-tuplet, non-rest) sixteenth note, at sixteenth-index i (0-based).
+  const sixteenths = (count: number): VexEventDescriptor[] =>
+    Array.from({ length: count }, (_, i) => ({ beatInMeasure: i * 0.5 + 1, durationCode: '16', isRest: false, tuplet: null })) as unknown as VexEventDescriptor[]
+
+  it('beams additive sixteenths by the eighth they start in, not the eighth they round to', () => {
+    // Fix round 1: Math.round moved a sixteenth on the "and" of an eighth into
+    // the next eighth, which could move it into the wrong additive group.
+    // 7/8 = 2+2+3 eighths = 4+4+6 sixteenths.
+    expect(beamGroups(sixteenths(14), [7, 8])).toEqual([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11, 12, 13]])
+    // 5/8 = 3+2 eighths = 6+4 sixteenths.
+    expect(beamGroups(sixteenths(10), [5, 8])).toEqual([[0, 1, 2, 3, 4, 5], [6, 7, 8, 9]])
+  })
 })
 
 describe('descriptorToStaveNote', () => {
