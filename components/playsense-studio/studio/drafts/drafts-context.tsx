@@ -134,7 +134,15 @@ function RootProvider({ owners, children }: { owners: OwnerStatus[]; children: R
       return r;
     });
     if (res.error) return { error: res.error };
-    setStatus(owner, { unpublished: false });
+    // A discarded section's title reverts to the live score's — otherwise a
+    // discarded draft's title would linger in the rail and lane for a section
+    // that isn't mounted. Exercise and song labels are fixed (or reseeded by
+    // their own host on refetch), so they're left alone.
+    if (owner.kind === 'section' && res.data) {
+      setStatus(owner, { unpublished: false, label: res.data.score.title });
+    } else {
+      setStatus(owner, { unpublished: false });
+    }
     each(key).forEach((h) => h.changed?.());
     return {};
   }, [notifyAdopt, setStatus]);

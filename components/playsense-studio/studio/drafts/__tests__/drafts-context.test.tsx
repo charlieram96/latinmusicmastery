@@ -4,6 +4,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/app/actions/studio-drafts', () => ({ saveStudioDraft: vi.fn(), publishStudioDraft: vi.fn(), discardStudioDraft: vi.fn() }));
+import { discardStudioDraft } from '@/app/actions/studio-drafts';
+import { EMPTY_TIMING } from '@/lib/playsense-studio/drafts/timing';
+import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { StudioDraftsProvider, useStudioDrafts, type StudioDraftsValue } from '../drafts-context';
 
 let root: Root;
@@ -55,5 +58,29 @@ describe('StudioDraftsProvider', () => {
     const unpub = new Event('beforeunload', { cancelable: true });
     window.dispatchEvent(unpub);
     expect(unpub.defaultPrevented).toBe(true);
+  });
+  it('discard resets a SECTION owner\'s label to the live score title', async () => {
+    vi.mocked(discardStudioDraft).mockResolvedValueOnce({
+      data: { score: { title: 'Live Title' } as ScoreDocument, timing: EMPTY_TIMING, updatedAt: '' },
+    });
+    act(() => root.render(
+      <StudioDraftsProvider owners={[{ owner: { kind: 'section', id: 's1' }, label: 'Draft Title', unpublished: true }]}>
+        <Outer />
+      </StudioDraftsProvider>
+    ));
+    await act(async () => { await outer.discard({ kind: 'section', id: 's1' }); });
+    expect(outer.statuses['section:s1']).toEqual({ owner: { kind: 'section', id: 's1' }, label: 'Live Title', unpublished: false });
+  });
+  it('discard on an EXERCISE owner leaves its label as-is', async () => {
+    vi.mocked(discardStudioDraft).mockResolvedValueOnce({
+      data: { score: { title: 'Live Title' } as ScoreDocument, timing: EMPTY_TIMING, updatedAt: '' },
+    });
+    act(() => root.render(
+      <StudioDraftsProvider owners={[{ owner: { kind: 'exercise', id: 'ci-1' }, label: 'Exercise', unpublished: true }]}>
+        <Outer />
+      </StudioDraftsProvider>
+    ));
+    await act(async () => { await outer.discard({ kind: 'exercise', id: 'ci-1' }); });
+    expect(outer.statuses['exercise:ci-1']).toEqual({ owner: { kind: 'exercise', id: 'ci-1' }, label: 'Exercise', unpublished: false });
   });
 });

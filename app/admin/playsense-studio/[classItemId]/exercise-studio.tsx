@@ -42,6 +42,7 @@ import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio
 import { StudioSetup } from '@/components/playsense-studio/studio/studio-setup';
 import { WatchVideoSetup } from '@/components/playsense-studio/studio/watch-video-setup';
 import { StudioDraftsProvider, useStudioDrafts } from '@/components/playsense-studio/studio/drafts/drafts-context';
+import { UnpublishedDot } from '@/components/playsense-studio/studio/drafts/unpublished-dot';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { StudioWorkspace } from './studio-workspace';
 import { VideoSectionsWorkspace } from './video-sections-workspace';
@@ -162,38 +163,14 @@ export function ExerciseStudio({
   };
 
   const toggle = (
-    <div className="flex items-center gap-2">
-      <div className="st-seg" role="radiogroup" aria-label="Exercise part">
-        <button
-          type="button"
-          className={part === 'watch' ? 'is-on' : ''}
-          role="radio"
-          aria-checked={part === 'watch'}
-          onClick={() => switchPart('watch')}
-          title={
-            videoUrl
-              ? 'Watch part — sync scored sections to the demo video'
-              : 'Watch part — upload the demo video, then sync scored sections to it'
-          }
-        >
-          <MonitorPlay className="h-3.5 w-3.5" />
-          Watch
-        </button>
-        <button
-          type="button"
-          className={part === 'exercise' ? 'is-on' : ''}
-          role="radio"
-          aria-checked={part === 'exercise'}
-          onClick={() => switchPart('exercise')}
-          title="Exercise part — the graded score students play on the rhythm highway"
-        >
-          <Target className="h-3.5 w-3.5" />
-          Exercise
-        </button>
-      </div>
-      {isSwitching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-      {error && <span className="text-xs text-destructive">{error}</span>}
-    </div>
+    <PartToggle
+      classItemId={classItemId}
+      videoUrl={videoUrl}
+      part={part}
+      switchPart={switchPart}
+      isSwitching={isSwitching}
+      error={error}
+    />
   );
 
   let content: React.ReactNode;
@@ -266,6 +243,66 @@ export function ExerciseStudio({
       <ExerciseDraftChangedWatcher classItemId={classItemId} onChanged={clearExerciseDraft} />
       {content}
     </StudioDraftsProvider>
+  );
+}
+
+/** The Watch/Exercise segmented toggle, injected into whichever workspace's
+ *  app bar is mounted. Reads the shared drafts context (both parts' owners
+ *  are seeded at the root, above) to show a gold dot on a part with an
+ *  unpublished draft — even the one not currently on screen. */
+function PartToggle({
+  classItemId,
+  videoUrl,
+  part,
+  switchPart,
+  isSwitching,
+  error,
+}: {
+  classItemId: string;
+  videoUrl: string | null;
+  part: Part;
+  switchPart: (next: Part) => void;
+  isSwitching: boolean;
+  error: string | null;
+}) {
+  const { statuses } = useStudioDrafts();
+  const watchUnpublished = Object.values(statuses).some((s) => s.owner.kind === 'section' && s.unpublished);
+  const exerciseUnpublished = !!statuses[`exercise:${classItemId}`]?.unpublished;
+  return (
+    <div className="flex items-center gap-2">
+      <div className="st-seg" role="radiogroup" aria-label="Exercise part">
+        <button
+          type="button"
+          className={part === 'watch' ? 'is-on' : ''}
+          role="radio"
+          aria-checked={part === 'watch'}
+          onClick={() => switchPart('watch')}
+          title={
+            videoUrl
+              ? 'Watch part — sync scored sections to the demo video'
+              : 'Watch part — upload the demo video, then sync scored sections to it'
+          }
+        >
+          <MonitorPlay className="h-3.5 w-3.5" />
+          Watch
+          {watchUnpublished && <UnpublishedDot />}
+        </button>
+        <button
+          type="button"
+          className={part === 'exercise' ? 'is-on' : ''}
+          role="radio"
+          aria-checked={part === 'exercise'}
+          onClick={() => switchPart('exercise')}
+          title="Exercise part — the graded score students play on the rhythm highway"
+        >
+          <Target className="h-3.5 w-3.5" />
+          Exercise
+          {exerciseUnpublished && <UnpublishedDot />}
+        </button>
+      </div>
+      {isSwitching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+      {error && <span className="text-xs text-destructive">{error}</span>}
+    </div>
   );
 }
 

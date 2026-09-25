@@ -34,6 +34,7 @@ import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
 import { useStudioDraft } from '@/components/playsense-studio/studio/drafts/use-studio-draft';
 import { StudioDraftsProvider } from '@/components/playsense-studio/studio/drafts/drafts-context';
+import { PublishControl } from '@/components/playsense-studio/studio/drafts/publish-control';
 import { workspaceSeed } from '@/lib/playsense-studio/drafts/seed';
 import { EMPTY_TIMING, timingToTimeMap, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
@@ -352,6 +353,8 @@ function StudioWorkspaceBody({
               }
             />
           )}
+
+          <PublishControl />
 
           <span className="mx-0.5 h-6 w-px bg-border" />
 

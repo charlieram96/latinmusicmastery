@@ -27,6 +27,7 @@ import { HoverRail } from '@/components/playsense-studio/studio/shell/hover-rail
 import { FloatingVideo } from '@/components/playsense-studio/studio/shell/floating-video';
 import { StudioDraftsProvider, useStudioDrafts } from '@/components/playsense-studio/studio/drafts/drafts-context';
 import { UnpublishedDot } from '@/components/playsense-studio/studio/drafts/unpublished-dot';
+import { PublishControl } from '@/components/playsense-studio/studio/drafts/publish-control';
 import { sectionSeed } from '@/lib/playsense-studio/drafts/seed';
 import { cn } from '@/lib/utils';
 import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
@@ -245,6 +246,8 @@ function VideoSectionsBody({
             <PanelBottom className="h-4 w-4" />
             <span className="hidden sm:inline">Preview</span>
           </button>
+          <PublishControl />
+
           {/* The active section editor portals its Save/undo/redo/replace here. */}
           <div ref={setAppBarEl} className="flex items-center gap-2" />
         </div>
