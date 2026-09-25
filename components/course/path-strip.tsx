@@ -53,8 +53,16 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
   // first tap on a lesson pins its card (with a "Go to lesson" link) instead of
   // navigating, and the compatibility mouse/focus events it fires are ignored.
   const touch = useRef(false)
-  const [tip, setTip] = useState<{ index: number; left: number; top: number; pinned: boolean } | null>(null)
+  // Node index whose next click pins its card, decided once at pointerdown so the
+  // click and the page-loader flag always agree (the card may close in between).
+  const pinNext = useRef<number | null>(null)
+  const goRef = useRef<HTMLAnchorElement>(null)
+  // `key` ties the card to the items it was opened on; a new path closes it.
+  const [tip, setTip] = useState<{ key: string; index: number; left: number; top: number; pinned: boolean } | null>(null)
   const compact = size === 'compact'
+  // Tap-to-pin cards on touch (course page). Compact strips sit in small cards
+  // that could clip a pinned card, so they navigate on the first tap.
+  const tapCards = !compact
   // Compact strips measure their container so a phone gets a tighter step.
   const [narrow, setNarrow] = useState(false)
   useEffect(() => {
@@ -87,6 +95,10 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
   }, [currentIndex, STEP, SIDE, itemsKey])
 
   const pinned = tip?.pinned ?? false
+  // A pinned card is a dialog: move focus to its Go link so screen readers announce it.
+  useEffect(() => {
+    if (pinned) goRef.current?.focus()
+  }, [pinned, tip?.index])
   useEffect(() => {
     if (!pinned) return
     const onDown = (e: PointerEvent) => {
@@ -114,7 +126,7 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
     const x = pos[index].x - scrollLeft
     // Keep the card inside the strip horizontally.
     const left = outerWidth > CARD_W ? Math.min(Math.max(x, CARD_W / 2), outerWidth - CARD_W / 2) : x
-    setTip({ index, left, top: pos[index].y - (compact ? 26 : 34), pinned: pin })
+    setTip({ key: itemsKey, index, left, top: pos[index].y - (compact ? 26 : 34), pinned: pin })
   }
   // Hover and focus cards close when the pointer or focus leaves; a pinned (tapped) card stays.
   const hideTip = () => setTip((cur) => (cur?.pinned ? cur : null))
@@ -132,7 +144,8 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
     })
   }
 
-  const tipItem = tip ? (items[tip.index] as PathLessonNode) : null
+  const tipNode = tip && tip.key === itemsKey ? items[tip.index] : undefined
+  const tipItem: PathLessonNode | null = tipNode?.kind === 'lesson' ? tipNode : null
 
   return (
     <div ref={outer} className={cn('relative', className)} role="group" aria-label={ariaLabel}>
@@ -151,7 +164,7 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
         data-path-scroller
         data-anchor={currentIndex === -1 ? 'end' : 'current'}
         onScroll={() => setTip(null)}
-        className="overflow-x-auto overflow-y-hidden [scroll-snap-type:x_proximity] [scrollbar-width:thin] max-md:[scroll-snap-type:x_mandatory]"
+        className={cn('overflow-x-auto overflow-y-hidden [scroll-snap-type:x_proximity] [scrollbar-width:thin]', !compact && 'max-md:[scroll-snap-type:x_mandatory]')}
       >
         <div className="relative" style={{ width, height }}>
           {flags.map((f) => {
@@ -221,13 +234,18 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
                 style={{ left: x, top: y }}
                 onPointerDown={(e) => {
                   touch.current = e.pointerType !== 'mouse'
+                  const willPin = tapCards && isLesson && touch.current && !(tipItem && tip?.index === i && tip.pinned)
+                  pinNext.current = willPin ? i : null
                   // A first tap only opens the card: keep the global page loader
                   // (a capture-phase link listener) from showing for it.
-                  const willPin = isLesson && touch.current && !(tip?.index === i && tip.pinned)
                   e.currentTarget.querySelector('a')?.toggleAttribute('data-no-page-loader', willPin)
                 }}
                 onPointerEnter={(e) => { if (e.pointerType === 'mouse') touch.current = false }}
-                onKeyDown={() => { touch.current = false }}
+                onKeyDown={(e) => {
+                  touch.current = false
+                  pinNext.current = null
+                  e.currentTarget.querySelector('a')?.removeAttribute('data-no-page-loader')
+                }}
                 {...hover}
               >
                 {/* Snap point centred on the node. The wrapper is 0×0, and Chrome ignores
@@ -251,10 +269,13 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
                   href={item.href}
                   aria-label={isLesson ? `${t(`${T}.lessonN`, { n: item.number })}: ${item.title}` : label}
                   aria-current={current ? 'step' : undefined}
-                  aria-describedby={tip?.index === i ? tipId : undefined}
+                  aria-describedby={tipItem && tip?.index === i && !tip.pinned ? tipId : undefined}
                   onClick={(e) => {
-                    if (!isLesson || !touch.current || (tip?.index === i && tip.pinned)) return
+                    if (pinNext.current !== i) return
+                    pinNext.current = null
                     e.preventDefault()
+                    // The loader listener already ran; a later click on this link should show it.
+                    e.currentTarget.removeAttribute('data-no-page-loader')
                     showTip(i, true)
                   }}
                   className={cn(
@@ -295,7 +316,8 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
         <div
           ref={cardRef}
           id={tipId}
-          role="tooltip"
+          role={tip.pinned ? 'dialog' : 'tooltip'}
+          aria-label={tip.pinned ? `${t(`${T}.lessonN`, { n: tipItem.number })}: ${tipItem.title}` : undefined}
           className={cn(
             'absolute z-20 w-52 -translate-x-1/2 -translate-y-full rounded-xl border border-border bg-popover p-3 text-left shadow-pop',
             tip.pinned ? 'pointer-events-auto' : 'pointer-events-none'
@@ -312,7 +334,7 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
             {tipItem.minutes !== null && ` · ${t(`${T}.minutes`, { n: tipItem.minutes })}`}
           </p>
           {tip.pinned && (
-            <Link href={tipItem.href} className="mt-2.5 inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">
+            <Link ref={goRef} href={tipItem.href} className="mt-2.5 inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">
               {t(`${T}.goToLesson`)}
               <ChevronRight className="size-4" aria-hidden />
             </Link>

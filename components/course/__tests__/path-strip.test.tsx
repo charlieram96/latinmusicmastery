@@ -154,7 +154,7 @@ describe('PathStrip', () => {
     const link = host.querySelector('[data-path-scroller] a[href="/l/c"]')!
     pointer(link, 'pointerdown', 'touch')
     expect(click(link)).toBe(true)
-    const tip = host.querySelector('[role="tooltip"]') as HTMLElement
+    const tip = host.querySelector('[role="dialog"]') as HTMLElement
     expect(tip.textContent).toContain('Lesson c')
     expect(tip.querySelector('a[href="/l/c"]')?.textContent).toContain('dashboard.pages.course.path.goToLesson')
     pointer(link, 'pointerdown', 'touch')
@@ -173,10 +173,10 @@ describe('PathStrip', () => {
     const link = host.querySelector('a[href="/l/c"]')!
     pointer(link, 'pointerdown', 'touch'); click(link)
     pointer(document.body, 'pointerdown', 'touch')
-    expect(host.querySelector('[role="tooltip"]')).toBeNull()
+    expect(host.querySelector('[role="dialog"]')).toBeNull()
     pointer(link, 'pointerdown', 'touch'); click(link)
     act(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })) })
-    expect(host.querySelector('[role="tooltip"]')).toBeNull()
+    expect(host.querySelector('[role="dialog"]')).toBeNull()
   })
 
   it('touch compatibility mouse events do not open the hover card', () => {
@@ -285,5 +285,53 @@ describe('PathStrip', () => {
     expect(l.slice(0, 2)).toEqual([60, 178])
     expect((host.querySelector('[data-path-label]') as HTMLElement).style.width).toBe('110px')
     expect((host.querySelector('[data-path-bubble]') as HTMLElement).className.split(/\s+/)).toContain('bottom-[34px]')
+  })
+
+  describe('review fixes', () => {
+    it('a pinned card is a labelled dialog and takes focus on its Go link (screen readers hear it)', () => {
+      render()
+      const link = host.querySelector('[data-path-scroller] a[href="/l/c"]')!
+      pointer(link, 'pointerdown', 'touch'); click(link)
+      const card = host.querySelector('[role="dialog"]') as HTMLElement
+      expect(card.getAttribute('aria-label')).toContain('Lesson c')
+      expect(document.activeElement).toBe(card.querySelector('a'))
+      expect(host.querySelector('[role="tooltip"]')).toBeNull()
+    })
+
+    it('compact strips navigate on the first tap (no card to clip inside a dashboard card)', () => {
+      act(() => root.render(<PathStrip items={ITEMS} ariaLabel="p" size="compact" />))
+      const link = host.querySelector('a[href="/l/c"]')!
+      pointer(link, 'pointerdown', 'touch')
+      expect(link.hasAttribute('data-no-page-loader')).toBe(false)
+      expect(click(link)).toBe(false)
+    })
+
+    it('the tap decision made at pointerdown holds even if the card closes before the click', () => {
+      render()
+      const link = host.querySelector('[data-path-scroller] a[href="/l/c"]')!
+      pointer(link, 'pointerdown', 'touch'); click(link) // pinned
+      pointer(link, 'pointerdown', 'touch') // second tap: navigate (loader allowed)
+      act(() => { host.querySelector('[data-path-scroller]')!.dispatchEvent(new Event('scroll')) }) // closes the card
+      expect(click(link)).toBe(false)
+    })
+
+    it('keyboard use clears a stale no-loader flag', () => {
+      render()
+      const link = host.querySelector<HTMLAnchorElement>('[data-path-scroller] a[href="/l/c"]')!
+      pointer(link, 'pointerdown', 'touch')
+      expect(link.hasAttribute('data-no-page-loader')).toBe(true)
+      act(() => { link.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })) })
+      expect(link.hasAttribute('data-no-page-loader')).toBe(false)
+    })
+
+    it('a card open when the items change closes instead of reading a non-lesson', () => {
+      render()
+      const node = host.querySelectorAll<HTMLElement>('[data-path-node]')[2]
+      act(() => { node.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })) })
+      expect(host.querySelector('[role="tooltip"]')).not.toBeNull()
+      const shifted: PathItem[] = [lesson('x', 1, 'done'), lesson('y', 2, 'current'), { kind: 'gap', id: 'g2', count: 3 }, ITEMS[4]]
+      expect(() => render(shifted)).not.toThrow()
+      expect(host.querySelector('[role="tooltip"]')).toBeNull()
+    })
   })
 })

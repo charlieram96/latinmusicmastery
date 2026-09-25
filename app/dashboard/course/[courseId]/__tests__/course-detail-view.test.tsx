@@ -127,7 +127,10 @@ describe('CourseDetailView (C3)', () => {
     const enters = [...host.querySelectorAll<HTMLElement>('[data-enter]')]
     expect(enters.length).toBeGreaterThanOrEqual(3) // header, summary card, phone bar
     for (const b of enters) expect(b.dataset.variant).toBe('chunky')
-    expect(enters.some((b) => b.textContent === `${P}.syllabus.go`)).toBe(true)
+    // WCAG 2.5.3: the accessible name starts with the visible "Go" (no overriding aria-label)
+    const go = enters.find((b) => b.textContent?.startsWith(`${P}.syllabus.go`)) as HTMLElement
+    expect(go.getAttribute('aria-label')).toBeNull()
+    expect(go.querySelector('.sr-only')?.textContent).toContain(`${P}.continueLesson`)
   })
 
   it('finished course: every module collapsed, heading still counts', () => {

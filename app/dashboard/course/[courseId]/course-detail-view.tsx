@@ -263,10 +263,10 @@ export function CourseDetailView({
         isNewCourse={!hasStarted}
         variant="chunky"
         size="sm"
-        aria-label={hasStarted ? t(`${base}.continueLesson`) : t(`${base}.startLesson`)}
       >
         <Play className="fill-current" aria-hidden />
         {t(`${base}.syllabus.go`)}
+        <span className="sr-only"> · {hasStarted ? t(`${base}.continueLesson`) : t(`${base}.startLesson`)}</span>
       </EnterCourseModeButton>
     ) : (
       primaryCta('sm')
@@ -390,7 +390,7 @@ export function CourseDetailView({
           {/* ── Your path: laid on the page, no card ── */}
           {pathNodes.length > 0 ? (
             <section aria-labelledby="your-path" className="mt-7">
-              <div className="mb-1 flex min-h-9 items-baseline gap-2.5 pr-24">
+              <div className="mb-1 flex min-h-9 items-baseline gap-2.5 sm:pr-24">
                 <h2 id="your-path" className="whitespace-nowrap font-heading text-xl font-bold tracking-tight">{t(`${base}.path.heading`)}</h2>
                 <span className="truncate text-[13px] tabular-nums text-muted-foreground">
                   · {t(totalLessons === 1 ? `${base}.path.doneOfOne` : `${base}.path.doneOf`, { done: doneLessons, total: totalLessons })}
