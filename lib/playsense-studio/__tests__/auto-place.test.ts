@@ -62,6 +62,27 @@ describe('autoPlaceBars', () => {
     expect(res).not.toBeNull();
     expect(res.state.tailVideoTimeSeconds).toBeLessThanOrEqual(window.end);
   });
+  it('does not let a count-in shift already-correct markers a bar early', () => {
+    const truth = laid(16, 5.0, 0.5); // 120 bpm, 16 bars starting at 5.0 s
+    const real = truth.measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
+    const countIn = [3.0, 3.5, 4.0, 4.5]; // 4 clicks, same tempo, 2 s before the downbeat
+    const hits = [...countIn, ...real];
+    const res = autoPlaceBars(laid(16, 5.0, 0.5), hits, { start: 0, end: 60 })!;
+    expect(res).not.toBeNull();
+    expect(downbeats(res.state)[0]).toBeCloseTo(5.0, 2);
+  });
+  it('recovers the true downbeat from a count-in even when the markers are a bit off', () => {
+    const truth = laid(16, 5.0, 0.5);
+    const real = truth.measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
+    const countIn = [3.0, 3.5, 4.0, 4.5];
+    const hits = [...countIn, ...real];
+    const res = autoPlaceBars(laid(16, 5.1, 0.5), hits, { start: 0, end: 60 })!;
+    expect(res).not.toBeNull();
+    expect(downbeats(res.state)[0]).toBeCloseTo(5.0, 2);
+    // The whole-bar-early regression this guards against lands at 3.0 (a full
+    // 4-beat bar before the true downbeat) — make sure we're nowhere near it.
+    expect(Math.abs(downbeats(res.state)[0] - 3.0)).toBeGreaterThan(1);
+  });
 });
 
 describe('lerpMarkers', () => {

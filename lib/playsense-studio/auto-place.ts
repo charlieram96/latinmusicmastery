@@ -30,15 +30,39 @@ export function autoPlaceBars(
   // Coarse offset search: the markers may start well away from the playing
   // (further than the fit tolerance), so first try putting the first onset on
   // each hit within ±2 s and keep the offset that lines up the most onsets.
+  // Scored over up to 32 onsets (8 bars) rather than 8, so a short-lived
+  // coincidence doesn't look as good as the real alignment.
+  //
+  // A PERFECT tie (every probed onset matches) is a genuine ambiguity — most
+  // often a steady count-in click continuing the very same tempo grid as the
+  // real playing, so it lines up exactly as many onsets as the true downbeat.
+  // Those ties go to the candidate NEAREST the markers' current position, not
+  // the earliest hit — otherwise a count-in reliably wins (it's first in
+  // ascending order) and drags an already-correct bar a whole count-in early.
+  // A merely-highest (imperfect) tie means the coarse tempo estimate itself is
+  // still off — e.g. wrong start AND wrong tempo together — and every
+  // candidate aliases the same way against it; here "nearest" carries no real
+  // signal (proximity to a wrong `a` is coincidental), so the earliest match
+  // is kept, same as before, and the growing-window fit below does the real
+  // work of finding the true tempo.
   {
+    const seedA = a;
     const tol0 = Math.min(0.12, 0.3 * b);
-    const probe = onsets.slice(0, 8);
+    const probe = onsets.slice(0, Math.min(32, onsets.length));
     let bestA = a;
     let bestCount = -1;
+    let bestDist = Infinity;
     for (const h of hits) {
-      if (Math.abs(h - a) > 2) continue;
+      if (Math.abs(h - seedA) > 2) continue;
       const count = probe.filter((o) => nearestHit(hits, h + b * (o.qn - qn0), tol0) !== null).length;
-      if (count > bestCount) { bestCount = count; bestA = h; }
+      const dist = Math.abs(h - seedA);
+      const isPerfect = count === probe.length;
+      const better = count > bestCount || (count === bestCount && isPerfect && dist < bestDist);
+      if (better) {
+        bestCount = count;
+        bestDist = dist;
+        bestA = h;
+      }
     }
     a = bestA;
   }
