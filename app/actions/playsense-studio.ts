@@ -11,6 +11,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { requireAdmin } from '@/lib/supabase/require-admin';
 import {
   normalizeClip,
   normalizeMediaTrim,
@@ -408,23 +409,6 @@ export type ScoreOwner =
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
-/** Resolve the current user and assert admin. Returns userId or an error. */
-async function requireAdmin(
-  supabase: SupabaseServerClient
-): Promise<{ userId: string } | { error: string }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single();
-  if (!profile?.is_admin) return { error: 'Admin only' };
-  return { userId: user.id };
-}
-
 /** Validate + insert a score_documents row and its score_tracks. Cleans up the
  *  document if track insertion fails. Returns the new score_document id. */
 async function insertScore(
@@ -820,116 +804,6 @@ export async function publishTimeMap(
 
   revalidatePath('/dashboard');
   return { timeMapId: tmRow.id };
-}
-
-// Autosave a section's sync as a HIDDEN DRAFT (admin-only). Unlike publishTimeMap
-// this never touches active_time_map_id / video range / overlap — students keep
-// seeing the last Published alignment. Bounded to one draft map per section: an
-// existing draft is updated in place (safe — students never read it); otherwise a
-// new map is created and pointed at by draft_time_map_id. Publish consumes it.
-export async function saveSectionDraftTimeMap(input: {
-  classItemId: string;
-  scoreDocumentId: string;
-  sectionId: string;
-  method: string;
-  params: unknown;
-  waypoints: Array<{
-    musicalPositionQN: number;
-    videoTimeSeconds: number;
-    measureNumber: number | null;
-    beatInMeasure: number | null;
-  }>;
-}): Promise<{ timeMapId?: string; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single();
-  if (!profile?.is_admin) return { error: 'Admin only' };
-
-  if (input.waypoints.length < 2) {
-    return { error: 'Need at least two waypoints to save a draft.' };
-  }
-  // Same strict-monotonic invariant the player relies on.
-  const sorted = [...input.waypoints].sort((a, b) => a.musicalPositionQN - b.musicalPositionQN);
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i].musicalPositionQN <= sorted[i - 1].musicalPositionQN) {
-      return { error: 'Waypoints have duplicate musical positions.' };
-    }
-    if (sorted[i].videoTimeSeconds <= sorted[i - 1].videoTimeSeconds) {
-      return { error: 'Waypoints must be strictly increasing in video time.' };
-    }
-  }
-
-  const { data: sec, error: secErr } = await supabase
-    .from('class_item_score_sections')
-    .select('draft_time_map_id')
-    .eq('id', input.sectionId)
-    .single();
-  if (secErr) return { error: secErr.message };
-
-  const waypointRows = (mapId: string) =>
-    sorted.map((w) => ({
-      time_map_id: mapId,
-      musical_position_qn: w.musicalPositionQN,
-      video_time_seconds: w.videoTimeSeconds,
-      measure_number: w.measureNumber,
-      beat_in_measure: w.beatInMeasure,
-    }));
-
-  let draftId = sec?.draft_time_map_id as string | null;
-
-  if (draftId) {
-    // Update the existing draft map in place.
-    const { error: updErr } = await supabase
-      .from('score_time_maps')
-      .update({ method: input.method, params: input.params as unknown as never })
-      .eq('id', draftId);
-    if (updErr) return { error: updErr.message };
-    const { error: delErr } = await supabase
-      .from('score_time_waypoints')
-      .delete()
-      .eq('time_map_id', draftId);
-    if (delErr) return { error: delErr.message };
-    const { error: wpErr } = await supabase.from('score_time_waypoints').insert(waypointRows(draftId));
-    if (wpErr) return { error: wpErr.message };
-    return { timeMapId: draftId };
-  }
-
-  // No draft yet: create one and point the section at it.
-  const { data: tmRow, error: tmErr } = await supabase
-    .from('score_time_maps')
-    .insert({
-      score_document_id: input.scoreDocumentId,
-      class_item_id: input.classItemId,
-      method: input.method,
-      params: input.params as unknown as never,
-      created_by: user.id,
-    })
-    .select('id')
-    .single();
-  if (tmErr || !tmRow) return { error: tmErr?.message ?? 'Insert failed' };
-  draftId = tmRow.id;
-
-  const { error: wpErr } = await supabase.from('score_time_waypoints').insert(waypointRows(draftId));
-  if (wpErr) {
-    await supabase.from('score_time_maps').delete().eq('id', draftId);
-    return { error: wpErr.message };
-  }
-
-  const { error: linkErr } = await supabase
-    .from('class_item_score_sections')
-    .update({ draft_time_map_id: draftId, updated_at: new Date().toISOString() })
-    .eq('id', input.sectionId);
-  if (linkErr) return { error: linkErr.message };
-
-  return { timeMapId: draftId };
 }
 
 // ============================================
