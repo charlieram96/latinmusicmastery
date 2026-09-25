@@ -2495,6 +2495,7 @@
           "timingSkipped": "Not needed with MIDI.",
           "preview": "What you’ll play",
           "allSet": "Everything sounds right",
+          "readyWhenYouAre": "Ready when you are",
           "pickMode": "Choose headphones or speakers to start",
           "summary": "{parts}",
           "start": "Start playing",

@@ -2495,6 +2495,7 @@
           "timingSkipped": "No hace falta con MIDI.",
           "preview": "Lo que vas a tocar",
           "allSet": "Todo suena bien",
+          "readyWhenYouAre": "Listo cuando quieras",
           "pickMode": "Elige audífonos o altavoces para empezar",
           "summary": "{parts}",
           "start": "Empezar a tocar",
