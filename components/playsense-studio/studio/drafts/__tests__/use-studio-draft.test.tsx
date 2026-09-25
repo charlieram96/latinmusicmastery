@@ -231,3 +231,32 @@ describe('useStudioDraft — fix round 1: draft safety', () => {
     expect(acts.saveStudioDraft).toHaveBeenCalledTimes(1);
   });
 });
+
+// ---- Fix round 2: a save queued behind a discard must not send stale content --
+
+describe('useStudioDraft — fix round 2: a queued save cannot resurrect a discard', () => {
+  it('a debounced save queued behind an in-flight discard never sends the pre-discard content', async () => {
+    let resolveDiscard!: (v: unknown) => void;
+    acts.discardStudioDraft.mockImplementation(() => new Promise((resolve) => { resolveDiscard = resolve; }));
+    mount(<Editor />);
+    act(() => edit('B'));
+
+    let discardPromise!: Promise<{ error?: string }>;
+    act(() => { discardPromise = ctx.discard(owner); });
+
+    // The debounce fires while the discard is still in flight: the resulting
+    // save queues behind it instead of running immediately.
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    expect(acts.saveStudioDraft).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveDiscard({ data: { score: { title: 'Live' }, timing: EMPTY_TIMING, updatedAt: '' } });
+      await discardPromise;
+      // Let the now-stale, queued save's turn come up and finish.
+      for (let i = 0; i < 10; i++) await Promise.resolve();
+    });
+
+    expect(acts.saveStudioDraft).not.toHaveBeenCalledWith(expect.objectContaining({ score: { title: 'B' } }));
+    expect(ctx.statuses['section:sec-1'].unpublished).toBe(false);
+  });
+});

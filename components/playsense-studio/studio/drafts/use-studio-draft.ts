@@ -100,12 +100,19 @@ export function useStudioDraft(opts: {
     if (!snap.isDirty && !snap.timingDirty) return {};
     const myGeneration = generationRef.current;
     if (!saveOpts?.silent) { setSaveState('saving'); setError(null); }
-    const res = await queueStudioSave(`draft:${key}`, () =>
-      saveStudioDraft({ owner: memoOwner, score: snap.score, timing: snap.timing })
-    ).catch(() => ({ error: 'Could not save. Check your connection and retry.' } as { error: string; updatedAt?: string }));
-    // Content was replaced (discard/restore) while this save was on the
-    // wire: its result no longer describes the current draft, so it must not
-    // touch saveState, the unpublished flag, or the dirty flags.
+    const res = await queueStudioSave(`draft:${key}`, () => {
+      // This save may have queued behind another write on the same owner
+      // (e.g. a discard) that replaced the content before this one's turn
+      // came up. Re-check right here, at send time — not just when save()
+      // was first called — because sending stale content now would
+      // resurrect it as a new draft row once it reaches the server.
+      if (generationRef.current !== myGeneration) return Promise.resolve<{ error?: string; updatedAt?: string }>({});
+      return saveStudioDraft({ owner: memoOwner, score: snap.score, timing: snap.timing });
+    }).catch(() => ({ error: 'Could not save. Check your connection and retry.' } as { error: string; updatedAt?: string }));
+    // Stale either at send time (caught above) or by the time this round
+    // trip finished: either way, don't touch saveState, the unpublished
+    // flag, or the dirty flags — the result no longer describes the
+    // current draft.
     if (generationRef.current !== myGeneration) return res.error ? { error: res.error } : {};
     if (res.error) {
       if (!saveOpts?.silent) { setSaveState('error'); setError(res.error); }

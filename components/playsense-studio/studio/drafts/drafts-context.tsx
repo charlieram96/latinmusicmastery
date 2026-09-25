@@ -120,10 +120,20 @@ function RootProvider({ owners, children }: { owners: OwnerStatus[]; children: R
   const discard = useCallback(async (owner: StudioDraftOwner) => {
     const key = ownerKey(owner);
     // Same reasoning as publish: wait behind any in-flight save on this owner
-    // instead of racing it.
-    const res = await queueStudioSave(`draft:${key}`, () => discardStudioDraft(owner));
+    // instead of racing it. notifyAdopt (which bumps the owner's generation,
+    // invalidating an in-flight save) runs INSIDE this queued write, right
+    // after discardStudioDraft succeeds — not after this whole call resolves
+    // — so the bump is guaranteed, by the queue's own chaining, to happen
+    // before the next queued write (e.g. a debounced save that queued behind
+    // this discard) gets its turn. Relying on that write to notice the bump
+    // only afterward would be too late: it would already have sent the
+    // pre-discard content to the server as a new draft row.
+    const res = await queueStudioSave(`draft:${key}`, async () => {
+      const r = await discardStudioDraft(owner);
+      if (r.data) notifyAdopt(key, { score: r.data.score, timing: r.data.timing });
+      return r;
+    });
     if (res.error) return { error: res.error };
-    if (res.data) notifyAdopt(key, { score: res.data.score, timing: res.data.timing });
     setStatus(owner, { unpublished: false });
     each(key).forEach((h) => h.changed?.());
     return {};
