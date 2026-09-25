@@ -17,6 +17,7 @@ import {
   normalizeMediaTrim,
   type MediaTrim,
 } from '@/lib/playsense-studio/clip-model';
+import { clearUnpublishedDrafts } from '@/lib/playsense-studio/drafts/server';
 import { readNudges } from '@/lib/playsense-studio/drafts/timing';
 import { rebaseAnchor, secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -522,6 +523,9 @@ export async function attachScoreFromImport(
   // time maps). A failure here must not fail the import.
   if (prevScoreId && prevScoreId !== docId) {
     await supabase.from('score_documents').delete().eq('id', prevScoreId);
+    // This class item already had a score, so this is a replace: drop any
+    // unpublished draft so it can't overwrite the new score on publish.
+    await clearUnpublishedDrafts(supabase, { kind: 'exercise', id: input.classItemId });
   }
 
   revalidatePath('/dashboard');
@@ -1050,6 +1054,10 @@ export async function replaceSectionScore(input: {
   if (prevScoreId && prevScoreId !== inserted.docId) {
     await supabase.from('score_documents').delete().eq('id', prevScoreId);
   }
+
+  // The section now points at the new document; drop any unpublished draft so
+  // it can't overwrite the new score on publish.
+  await clearUnpublishedDrafts(supabase, { kind: 'section', id: input.sectionId });
 
   revalidatePath('/dashboard');
   return { scoreDocumentId: inserted.docId };

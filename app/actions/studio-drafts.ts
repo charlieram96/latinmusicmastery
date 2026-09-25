@@ -7,6 +7,13 @@ import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/lib/supabase/require-admin';
 import { parseScoreDocument } from '@/components/playsense-studio/shared/score-model/serialization';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import {
+  publishTimeMap,
+  saveScoreDocument,
+  setClassItemMetronomeAnchor,
+  setSectionMetronomeAnchor,
+} from '@/app/actions/playsense-studio';
+import { diffParts, summarizeChanges } from '@/lib/playsense-studio/drafts/changes';
 import { latestPublished, planDraftWrite, unpublishedDraft } from '@/lib/playsense-studio/drafts/policy';
 import { studioTimingSchema, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { ownerKey, type StudioDraftOwner } from '@/lib/playsense-studio/drafts/types';
@@ -144,4 +151,78 @@ export async function discardStudioDraft(
   const liveContent = await loadLiveContent(supabase, resolved.data!);
   if (liveContent.error) return { error: liveContent.error };
   return { data: { ...liveContent.data!, updatedAt: '' } };
+}
+
+async function readUnpublished(supabase: Awaited<ReturnType<typeof createClient>>, owner: StudioDraftOwner) {
+  const meta = await listVersionMeta(supabase, owner);
+  if (meta.error) return { error: meta.error };
+  const d = unpublishedDraft(meta.data ?? []);
+  if (!d) return { data: null };
+  const { data, error } = await supabase.from('studio_versions').select('score, timing').eq('id', d.id).single();
+  if (error || !data) return { error: error?.message ?? 'Draft not found' };
+  return { data: { score: data.score as unknown as ScoreDocument, timing: data.timing as unknown as StudioTiming } };
+}
+
+/** Draft → live, through the same actions the Studio used to call directly.
+ *  Order: timing (its validation refuses before any write), score, anchor,
+ *  then the published history row. Each part is written only if it changed. */
+export async function publishStudioDraft(
+  owner: StudioDraftOwner
+): Promise<{ publishedAt?: string; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+  const draft = await readUnpublished(supabase, owner);
+  if (draft.error) return { error: draft.error };
+  if (!draft.data) return { error: 'Nothing to publish' };
+  const resolved = await resolveOwner(supabase, owner);
+  if (resolved.error) return { error: resolved.error };
+  const r = resolved.data!;
+  const liveContent = await loadLiveContent(supabase, r);
+  if (liveContent.error) return { error: liveContent.error };
+  const parts = diffParts(liveContent.data!, draft.data);
+  const { score, timing } = draft.data;
+
+  if (r.target && parts.timing && timing.waypoints.length >= 2) {
+    const res = await publishTimeMap({
+      classItemId: r.classItemId!, scoreDocumentId: r.scoreDocumentId, sectionId: r.sectionId ?? undefined,
+      target: r.target, method: timing.method, params: timing.params, waypoints: timing.waypoints, makeActive: true,
+    });
+    if (res.error) return { error: res.error };
+  }
+  if (parts.score) {
+    const res = await saveScoreDocument({ scoreDocumentId: r.scoreDocumentId, scoreDocument: score });
+    if (res.error) return { error: res.error };
+  }
+  if (r.anchorKind && parts.anchor) {
+    const anchorSeconds = timing.anchor?.seconds ?? null;
+    const anchorQn = timing.anchor?.qn ?? null;
+    const res = r.anchorKind === 'section'
+      ? await setSectionMetronomeAnchor({ sectionId: r.sectionId!, anchorSeconds, anchorQn })
+      : await setClassItemMetronomeAnchor({ classItemId: r.classItemId!, anchorSeconds, anchorQn });
+    if (res.error) return { error: res.error };
+  }
+  const ins = await insertVersion(supabase, owner, 'published', draft.data, admin.userId);
+  if (ins.error) return { error: ins.error };
+  return { publishedAt: ins.data!.updatedAt };
+}
+
+export async function getPublishPreview(
+  owners: StudioDraftOwner[]
+): Promise<{ data?: Record<string, string[]>; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+  const out: Record<string, string[]> = {};
+  for (const owner of owners) {
+    const draft = await readUnpublished(supabase, owner);
+    if (draft.error) return { error: draft.error };
+    if (!draft.data) continue;
+    const resolved = await resolveOwner(supabase, owner);
+    if (resolved.error) return { error: resolved.error };
+    const liveContent = await loadLiveContent(supabase, resolved.data!);
+    if (liveContent.error) return { error: liveContent.error };
+    out[ownerKey(owner)] = summarizeChanges(liveContent.data!, draft.data);
+  }
+  return { data: out };
 }
