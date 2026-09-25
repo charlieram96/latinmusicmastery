@@ -1,0 +1,40 @@
+/* Lesson mode (L2 immersive). Plain CSS over the app tokens, like exercise-mode.css. */
+
+/* ───────── Action bar ───────── */
+.lx-action { position:relative; z-index:5; display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:14px 22px;
+  border-top:2px solid hsl(var(--border)); background:hsl(var(--card));
+  transition:background-color var(--dur-state) var(--ease-out), border-color var(--dur-state) var(--ease-out); }
+.lx-action[data-tone=success] { background:hsl(var(--success) / .12); border-top-color:hsl(var(--success) / .4); animation:lx-rise-ok 300ms var(--ease-out); }
+.lx-action[data-tone=danger] { background:hsl(var(--danger) / .1); border-top-color:hsl(var(--danger) / .4); animation:lx-rise-bad 300ms var(--ease-out); }
+@keyframes lx-rise-ok { from { transform:translateY(14px); opacity:.6; } to { transform:none; opacity:1; } }
+@keyframes lx-rise-bad { from { transform:translateY(14px); opacity:.6; } to { transform:none; opacity:1; } }
+.lx-action-progress { position:absolute; left:0; right:0; top:-2px; height:2px; overflow:hidden; pointer-events:none; }
+.lx-action-progress i { display:block; height:100%; background:hsl(var(--primary)); transform-origin:left;
+  transition:transform 500ms var(--ease-out); }
+.lx-action[data-tone=success] .lx-action-progress, .lx-action[data-tone=danger] .lx-action-progress { opacity:0; }
+.lx-action-tools:empty { display:none; }
+.lx-action-tools { display:flex; align-items:center; gap:6px; }
+.lx-action-host { display:contents; }
+.lx-action-host[hidden] { display:none; }
+.lx-action-prev { display:grid; place-items:center; width:36px; height:36px; border-radius:10px; color:hsl(var(--muted-foreground)); }
+.lx-action-prev:hover { background:hsl(var(--muted)); color:hsl(var(--foreground)); }
+.lx-action-prev:focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:2px; }
+.lx-msg { flex:1; min-width:200px; display:flex; align-items:center; gap:12px; }
+.lx-msg-badge { width:44px; height:44px; flex:none; border-radius:50%; display:grid; place-items:center; background:hsl(var(--muted)); color:hsl(var(--foreground)); }
+.lx-msg b { display:block; font-family:var(--font-montserrat), system-ui, sans-serif; font-size:16px; font-weight:800; line-height:1.25; }
+.lx-msg span { display:block; font-size:13px; line-height:1.4; color:hsl(var(--muted-foreground)); }
+.lx-action[data-tone=success] .lx-msg, .lx-action[data-tone=success] .lx-msg span { color:hsl(var(--success)); }
+.lx-action[data-tone=success] .lx-msg-badge { background:hsl(var(--success)); color:#fff; }
+.lx-action[data-tone=danger] .lx-msg, .lx-action[data-tone=danger] .lx-msg span { color:hsl(var(--danger)); }
+.lx-action[data-tone=danger] .lx-msg-badge { background:hsl(var(--danger)); color:#fff; }
+.lx-action-inline { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 0; }
+
+@media (max-width:767px) {
+  .lx-action { gap:8px; padding:12px; }
+  .lx-action .lx-msg span { display:none; }
+  .lx-action .lx-primary, .lx-action [data-primary] { flex:1 1 100%; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .lx-action[data-tone=success], .lx-action[data-tone=danger] { animation:none; }
+  .lx-action, .lx-action-progress i { transition:none; }
+}
