@@ -4,12 +4,14 @@
 //
 // When a VIDEO lesson has no notation attached, we still want the resizable
 // split feel of the PlaySense player rather than a giant full-width video.
-// This reuses the shared SplitWorkspace shell: the video sits in the primary
-// pane (sensibly sized, not stretched edge-to-edge of the page) and an
-// "About this lesson" panel fills the secondary pane.
+// This reuses the lesson workspace: the video sits in the media region
+// (sensibly sized, not stretched edge-to-edge of the page) and an "About this
+// lesson" panel fills the music region. Only side and stack make sense here.
 
 import { Clock } from 'lucide-react'
-import { SplitWorkspace, OrientationToggle } from '@/components/playsense-studio/player/split-workspace'
+import { SplitWorkspace, WorkspaceLayoutSwitcher } from '@/components/playsense-studio/player/split-workspace'
+import { useWorkspaceLayout } from '@/components/playsense-studio/player/use-workspace-layout'
+import { WATCH_WORKSPACE, type WorkspaceLayout, type WorkspaceState } from '@/lib/playsense-studio/workspace-layout'
 import { Badge } from '@/components/ui/badge'
 import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
 import { useTranslation } from '@/components/language-provider'
@@ -23,6 +25,9 @@ interface VideoInfoSplitProps {
   bpm: number | null
   keySignature: string | null
 }
+
+const INFO_WORKSPACE: WorkspaceState = { ...WATCH_WORKSPACE, split: 55 }
+const INFO_LAYOUTS: readonly WorkspaceLayout[] = ['side', 'stack']
 
 function formatDuration(seconds: number | null): string | null {
   if (!seconds || seconds <= 0) return null
@@ -44,10 +49,12 @@ export function VideoInfoSplit({
   const durationLabel = formatDuration(durationSeconds)
   const hasFacts = Boolean(durationLabel || bpm || keySignature)
   const hasBody = Boolean(description || richContent)
+  const workspace = useWorkspaceLayout('video-info', INFO_WORKSPACE, { layouts: INFO_LAYOUTS })
 
   return (
     <SplitWorkspace
-      primary={
+      controller={workspace}
+      media={
         <div className="flex flex-1 items-center justify-center overflow-hidden p-3">
           <video
             src={videoUrl}
@@ -58,7 +65,8 @@ export function VideoInfoSplit({
           />
         </div>
       }
-      secondaryHeader={({ orient, setOrient }) => (
+      music={
+        <>
         <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-border bg-secondary px-4 py-2.5">
           <div className="min-w-0">
             <div className="text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
@@ -68,10 +76,8 @@ export function VideoInfoSplit({
               {title}
             </div>
           </div>
-          <OrientationToggle value={orient} onChange={setOrient} />
+          <WorkspaceLayoutSwitcher controller={workspace} />
         </div>
-      )}
-      secondary={
         <div className="min-h-0 flex-1 space-y-4 overflow-auto p-4 text-foreground">
           {hasFacts && (
             <div className="flex flex-wrap items-center gap-2">
@@ -104,6 +110,7 @@ export function VideoInfoSplit({
             </p>
           )}
         </div>
+        </>
       }
     />
   )

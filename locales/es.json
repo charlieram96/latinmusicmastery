@@ -30,6 +30,18 @@
     "smaller": "Notación más pequeña",
     "larger": "Notación más grande"
   },
+  "lessonWorkspace": {
+    "layout": "Diseño del espacio",
+    "side": "Lado a lado",
+    "stack": "Apilado",
+    "pip": "Imagen en imagen",
+    "music": "Solo música",
+    "swap": "Intercambiar lados",
+    "resize": "Cambiar tamaño de video y música",
+    "resizeMusic": "Cambiar tamaño de partitura y autopista",
+    "resizeHint": "Arrastra para cambiar el tamaño · flechas para ajustar · doble clic para restablecer",
+    "resizePip": "Arrastra para cambiar el tamaño del video"
+  },
   "common": {
     "language": "Idioma",
     "changeLanguage": "Cambiar idioma",

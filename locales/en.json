@@ -30,6 +30,18 @@
     "smaller": "Smaller notation",
     "larger": "Larger notation"
   },
+  "lessonWorkspace": {
+    "layout": "Workspace layout",
+    "side": "Side by side",
+    "stack": "Stacked",
+    "pip": "Picture in picture",
+    "music": "Music only",
+    "swap": "Swap sides",
+    "resize": "Resize video and music",
+    "resizeMusic": "Resize staff and highway",
+    "resizeHint": "Drag to resize · arrow keys to adjust · double-click to reset",
+    "resizePip": "Drag to resize the video"
+  },
   "common": {
     "language": "Language",
     "changeLanguage": "Change language",

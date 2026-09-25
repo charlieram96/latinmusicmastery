@@ -30,7 +30,10 @@ import { ArrowLeft, ChevronDown, SlidersHorizontal, Volume2, VolumeX } from 'luc
 import { DEFAULT_MIX_ENTRY, readStoredBackingMix, writeStoredBackingMix, type BackingMix } from '@/lib/play-sense/backing-mix'
 import { useTranslation } from '@/components/language-provider'
 import { ExerciseModeFrame } from './exercise-mode-frame'
-import { DEFAULT_EXERCISE_LAYOUT, ExerciseWorkspace } from './exercise-workspace'
+import { ExerciseScoreWorkspaceBridge } from './exercise-workspace'
+import { SplitWorkspace, WorkspaceLayoutSwitcher } from '@/components/playsense-studio/player/split-workspace'
+import { useWorkspaceLayout } from '@/components/playsense-studio/player/use-workspace-layout'
+import { PLAY_WORKSPACE } from '@/lib/playsense-studio/workspace-layout'
 import { useLessonActivity } from './lesson-progress-context'
 import { finishedExercise } from '@/lib/courses/lesson-completion'
 
@@ -70,7 +73,7 @@ interface ScoreExerciseGameProps {
  * the standalone /play-sense stage (components/play-sense/stage/stage-player.tsx).
  */
 export function ScoreExerciseGame(props: ScoreExerciseGameProps) {
-  return <ExerciseModeFrame title={props.exercise.title} hasVideo={!!props.exerciseVideo} hasScore={!!props.score} preview={props.preview ?? false} onWatchDemo={props.onWatchDemo}>
+  return <ExerciseModeFrame title={props.exercise.title} hasScore={!!props.score} preview={props.preview ?? false} onWatchDemo={props.onWatchDemo}>
     <ScoreExerciseSession {...props} />
   </ExerciseModeFrame>
 }
@@ -85,7 +88,9 @@ function ScoreExerciseSession({
 }: ScoreExerciseGameProps) {
   const { t } = useTranslation()
   const completePerformance = useLessonActivity('performance')
-  const [workspaceLayout, setWorkspaceLayout] = useState(DEFAULT_EXERCISE_LAYOUT)
+  // Play opens with the staff and highway filling the stage and the teacher
+  // video floating bottom right (24 % wide); the student can re-lay it out.
+  const workspace = useWorkspaceLayout('play', PLAY_WORKSPACE)
   // The student's mix over the backing tracks: every track plays, each at the
   // level the student set (on top of the authored level) or muted. Remembered
   // per viewer; hydrated after mount so the server and first client render agree.
@@ -294,10 +299,106 @@ function ScoreExerciseSession({
     )
   }
 
+  const hasStaff = showCanvas && !!score
+  const scoreEl = hasStaff && score ? (
+    <ExerciseScore score={score} currentMs={staffMs} getCurrentMs={getStaffMs}
+      playing={session.sessionState === 'playing' || session.sessionState === 'paused'} pass={Math.floor(session.playheadProgress * loopCount) + 1}
+      getPass={() => Math.floor(Math.max(0, session.getElapsedSeconds()) / exerciseDurationSec * loopCount) + 1}
+      passCount={loopCount} onDurationKnown={setStaffDurationMs}/>
+  ) : null
+
+  const stageEl = (
+    <div className="ps-lesson-stage relative h-full min-h-0 flex-1 bg-black">
+      {showCanvas && session.exercise ? (
+        <>
+          <GlassHighway
+            attemptId={preview ? demoSession.attempt : undefined}
+            exercise={session.exercise}
+            sessionState={session.sessionState}
+            playheadProgress={session.playheadProgress}
+            getElapsedSeconds={session.getElapsedSeconds}
+            currentScore={session.currentScore}
+            currentCombo={session.currentCombo}
+            currentAccuracy={session.currentAccuracy}
+            metronomeBeat={session.metronomeBeat}
+            countdownBeat={session.countdownBeat}
+            eventResultsLength={session.eventResults.length}
+            eventResults={session.eventResults}
+            dimAlpha={showAudioModePrompt || showPlaysenseTest ? 0.55 : 0}
+            showThemePicker={!exerciseVideo}
+            fill
+          />
+
+          {(session.sessionState === 'playing' || session.sessionState === 'paused') && (
+            <div className="ps-lesson-stage-title absolute left-5 top-[104px] z-20 flex flex-col gap-0.5 pointer-events-none">
+              <span className="text-xs font-semibold text-white/60 tracking-wide drop-shadow-sm">
+                {session.exercise.title}
+              </span>
+              <span className="text-xs font-mono text-white/50 drop-shadow-sm">
+                {session.exercise.bpm} BPM &middot; {session.exercise.timeSignature[0]}/
+                {session.exercise.timeSignature[1]}
+              </span>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+          {t('dashboard.classViewer.exercise.preparing')}
+        </div>
+      )}
+    </div>
+  )
+
+  // Session prompts cover the whole workspace, not just the highway.
+  const overlays = showCanvas && session.exercise ? (
+    <>
+      <AnimatePresence>
+        {showAudioModePrompt && (
+          <motion.div
+            key="audio-mode-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="ps-lesson-overlay absolute inset-0 z-30 flex items-center justify-center bg-background/55 p-4 backdrop-blur-[2px]"
+          >
+            <div className="w-full max-w-md">
+              <AudioModePrompt
+                onSelect={session.setAudioMode}
+                instrument={session.exercise.instrument}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showPlaysenseTest && (
+          <motion.div
+            key="playsense-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="ps-lesson-overlay absolute inset-0 z-30 flex items-center justify-center bg-background/55 p-4 backdrop-blur-[2px]"
+          >
+            <div className="w-full max-w-lg">
+              <PlaysenseTestPanel
+                instrument={session.exercise.instrument}
+                onReady={session.startExercise}
+                onBack={session.clearAudioMode}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  ) : null
+
   return (
     <div className="ps-lesson-game rounded-xl border border-border bg-card overflow-hidden flex flex-col">
       {isActive && (
-        <div className="ps-lesson-game-heading flex items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-2.5" data-has-tracks={!!backingTracks?.length}>
+        <div className="ps-lesson-game-heading flex items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-2.5" data-has-tools={!!backingTracks?.length || !!exerciseVideo}>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground">{preview ? 'Lesson preview' : t('dashboard.classViewer.exercise.yourTurn')}</p>
             <p className="truncate text-xs text-muted-foreground">
@@ -306,6 +407,7 @@ function ScoreExerciseSession({
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            {exerciseVideo && <WorkspaceLayoutSwitcher controller={workspace} />}
             {/* Backing-track mixer — a mute and a level per track, usable
                 before and during the attempt (changes ramp live). */}
             {backingTracks && backingTracks.length > 0 && (
@@ -379,112 +481,29 @@ function ScoreExerciseSession({
         </div>
       )}
 
-      <ExerciseWorkspace layout={workspaceLayout} onLayoutChange={setWorkspaceLayout} score={showCanvas && score && (
-        <ExerciseScore score={score} currentMs={staffMs} getCurrentMs={getStaffMs}
-          playing={session.sessionState === 'playing' || session.sessionState === 'paused'} pass={Math.floor(session.playheadProgress * loopCount) + 1}
-          getPass={() => Math.floor(Math.max(0, session.getElapsedSeconds()) / exerciseDurationSec * loopCount) + 1}
-          passCount={loopCount} onDurationKnown={setStaffDurationMs}/>
-      )}>
-
-      {/* Immersive stage: a tall, full-width highway with the demo video as a
-          small PiP. */}
-      <div className={`ps-lesson-stage relative bg-black ${preview ? 'h-[calc(100dvh-530px)] min-h-[420px]' : 'h-[76vh] min-h-[460px]'}`}>
-        {showCanvas && session.exercise ? (
-          <>
-            <GlassHighway
-              attemptId={preview ? demoSession.attempt : undefined}
-              exercise={session.exercise}
-              sessionState={session.sessionState}
-              playheadProgress={session.playheadProgress}
-              getElapsedSeconds={session.getElapsedSeconds}
-              currentScore={session.currentScore}
-              currentCombo={session.currentCombo}
-              currentAccuracy={session.currentAccuracy}
-              metronomeBeat={session.metronomeBeat}
-              countdownBeat={session.countdownBeat}
-              eventResultsLength={session.eventResults.length}
-              eventResults={session.eventResults}
-              dimAlpha={showAudioModePrompt || showPlaysenseTest ? 0.55 : 0}
-              showThemePicker={!exerciseVideo}
-              fill
-            />
-
-            {/* Demo video — small floating picture-in-picture, muted, follows
-                the engine clock. */}
-            {exerciseVideo && (
-              <div className="ps-lesson-video absolute right-3 top-3 z-20 w-44 overflow-hidden rounded-lg bg-black shadow-2xl ring-1 ring-white/15 sm:w-52">
-                <video
-                  ref={videoRef}
-                  src={exerciseVideo.url}
-                  muted
-                  playsInline
-                  preload="auto"
-                  className="aspect-video w-full object-contain"
-                  aria-label="Instructor reference video"
-                />
-              </div>
-            )}
-
-            <AnimatePresence>
-              {showAudioModePrompt && (
-                <motion.div
-                  key="audio-mode-overlay"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="ps-lesson-overlay absolute inset-0 z-30 flex items-center justify-center p-4"
-                >
-                  <div className="w-full max-w-md">
-                    <AudioModePrompt
-                      onSelect={session.setAudioMode}
-                      instrument={session.exercise.instrument}
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-              {showPlaysenseTest && (
-                <motion.div
-                  key="playsense-overlay"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="ps-lesson-overlay absolute inset-0 z-30 flex items-center justify-center p-4"
-                >
-                  <div className="w-full max-w-lg">
-                    <PlaysenseTestPanel
-                      instrument={session.exercise.instrument}
-                      onReady={session.startExercise}
-                      onBack={session.clearAudioMode}
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {(session.sessionState === 'playing' || session.sessionState === 'paused') && (
-              <div className="ps-lesson-stage-title absolute left-5 top-[104px] z-20 flex flex-col gap-0.5 pointer-events-none">
-                <span className="text-xs font-semibold text-white/60 tracking-wide drop-shadow-sm">
-                  {session.exercise.title}
-                </span>
-                <span className="text-xs font-mono text-white/50 drop-shadow-sm">
-                  {session.exercise.bpm} BPM &middot; {session.exercise.timeSignature[0]}/
-                  {session.exercise.timeSignature[1]}
-                </span>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            {t('dashboard.classViewer.exercise.preparing')}
-          </div>
+      {/* The lesson workspace: staff over the highway, the demo video
+          floating in a corner (or beside them — the student's choice). */}
+      <ExerciseScoreWorkspaceBridge controller={workspace}>
+      <SplitWorkspace
+        controller={workspace}
+        frame="fill"
+        media={exerciseVideo && (
+          // Muted, follows the engine clock (see the sync effect above).
+          <video
+            ref={videoRef}
+            src={exerciseVideo.url}
+            muted
+            playsInline
+            preload="auto"
+            className="h-full w-full bg-black object-contain"
+            aria-label="Instructor reference video"
+          />
         )}
-      </div>
-      </ExerciseWorkspace>
+        music={hasStaff ? scoreEl : stageEl}
+        highway={hasStaff ? stageEl : undefined}
+        overlay={overlays}
+      />
+      </ExerciseScoreWorkspaceBridge>
 
       {preview && isActive && <div className="ps-lesson-preview-controls flex items-center justify-between gap-3 border-t border-border px-4 py-3">
         <span className="text-xs text-muted-foreground">Demo · muted video · results are not saved</span>
