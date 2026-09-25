@@ -44,6 +44,7 @@ import {
   type VexEventDescriptor,
 } from '@/lib/playsense-studio/score-to-vexflow';
 import type { PercStroke } from '@/lib/playsense-studio/perc-strokes';
+import { pitchName } from '@/lib/playsense-studio/pitch';
 import type { Span } from '@/components/playsense-studio/shared/score-model/types';
 import { measureAtX } from '@/lib/playsense-studio/measure-selection';
 import { REP_H, RepeatLane, repeatBands, type RepeatBand } from './measure/repeat-lane';
@@ -593,7 +594,7 @@ export function EditableMeasureStrip({
         const label =
           isPercussion && percStrokes
             ? percStrokes.find((s) => s.midi === dragging.currentMidi)?.label ?? ''
-            : midiToName(dragging.currentMidi);
+            : pitchName(dragging.currentMidi);
         // highlight.top already includes REP_H when it exists; the fallback
         // (highlight absent, e.g. a fresh drag before selection catches up)
         // adds it here so both paths land in the same container coordinates.
@@ -771,11 +772,4 @@ function keyToDiatonic(key: string): number {
   const m = key.match(/^([a-gA-G])[#b]?\/(-?\d+)$/);
   if (!m) return 0;
   return Number(m[2]) * 7 + (LETTER_TO_INDEX[m[1].toLowerCase()] ?? 0);
-}
-
-function midiToName(midi: number): string {
-  const pc = ((midi % 12) + 12) % 12;
-  const octave = Math.floor(midi / 12) - 1;
-  const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
-  return `${names[pc]}${octave}`;
 }

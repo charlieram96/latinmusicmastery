@@ -22,6 +22,8 @@ import { ChevronDown, MoreHorizontal, Music, Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch } from 'react';
 import { diatonicToMidi, extractTrackEvents, midiToDiatonic } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion, resolvePercStroke } from '@/lib/playsense-studio/perc-strokes';
+import { midiToParts } from '@/lib/playsense-studio/pitch';
+import { STEP_SEMITONE } from '@/lib/playsense-studio/notation/accidentals';
 import {
   QN_EPS,
   beatLengthInQN,
@@ -146,8 +148,6 @@ const ARTICULATION_OPTIONS: Array<{ value: Articulation; label: string; title: s
   { value: 'accent', label: '>', title: 'Accent' },
   { value: 'tenuto', label: '–', title: 'Tenuto' },
 ];
-const STEP_MAP: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-
 type EditorTab = 'staff' | 'piano-roll';
 
 import { repeatGroups } from '@/lib/playsense-studio/repeats';
@@ -361,7 +361,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
 
   const currentMidi = useMemo(() => {
     if (percussion) return percMidi ?? percStrokes?.[0]?.midi ?? 60;
-    return Math.max(0, Math.min(127, (pitchOctave + 1) * 12 + STEP_MAP[pitchLetter] + pitchAcc));
+    return Math.max(0, Math.min(127, (pitchOctave + 1) * 12 + STEP_SEMITONE[pitchLetter as keyof typeof STEP_SEMITONE] + pitchAcc));
   }, [percussion, percMidi, percStrokes, pitchLetter, pitchAcc, pitchOctave]);
 
   const selectedEvent = useMemo(() => {
@@ -429,7 +429,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   );
 
   const pitchedMidiFrom = (letter: string, acc: number, octave: number) =>
-    Math.max(0, Math.min(127, (octave + 1) * 12 + STEP_MAP[letter] + acc));
+    Math.max(0, Math.min(127, (octave + 1) * 12 + STEP_SEMITONE[letter as keyof typeof STEP_SEMITONE] + acc));
 
   // Keyboard editing — Esc clear · Del remove · ⏎ add · ↑/↓ pitch (⇧ = octave /
   // stroke) · ←/→ walk the selection · 1-5 durations · "." dot · "t" triplet ·
@@ -1476,24 +1476,3 @@ function formatBeats(beats: number): string {
 // Moved to lib/playsense-studio/typing-target.ts (the measure keys hook needs
 // it without importing this file); re-exported for existing importers.
 export { isTypingTarget };
-
-function midiToParts(midi: number): { letter: string; accidental: number; octave: number } {
-  const pc = ((midi % 12) + 12) % 12;
-  const octave = Math.floor(midi / 12) - 1;
-  const table: Record<number, [string, number]> = {
-    0: ['C', 0],
-    1: ['C', 1],
-    2: ['D', 0],
-    3: ['D', 1],
-    4: ['E', 0],
-    5: ['F', 0],
-    6: ['F', 1],
-    7: ['G', 0],
-    8: ['G', 1],
-    9: ['A', 0],
-    10: ['A', 1],
-    11: ['B', 0],
-  };
-  const [letter, accidental] = table[pc];
-  return { letter, accidental, octave };
-}

@@ -7,7 +7,7 @@ import { midiToKeyString } from '../score-to-vexflow'
 export type AccidentalCode = '#' | 'b' | 'n' | '##' | 'bb'
 export interface SpelledPitch { step: Spelling['step']; alter: Spelling['alter']; octave: number; showAccidental?: 'auto' | 'always' }
 
-const STEP_SEMITONE: Record<Spelling['step'], number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+export const STEP_SEMITONE: Record<Spelling['step'], number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
 const ALTER_TEXT: Record<number, string> = { [-2]: 'bb', [-1]: 'b', 0: '', 1: '#', 2: '##' }
 const ALTER_CODE: Record<number, AccidentalCode> = { [-2]: 'bb', [-1]: 'b', 0: 'n', 1: '#', 2: '##' }
 const SHARP_ORDER = 'FCGDAEB'
