@@ -155,7 +155,7 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
     expect(acts.saveStudioDraft).toHaveBeenCalledWith(
       expect.objectContaining({
         owner: { kind: 'exercise', id: 'ci-1' },
-        timing: { ...EMPTY_TIMING, anchor: { seconds: 1.5, qn: null } },
+        timing: { ...EMPTY_TIMING, anchor: { seconds: 1.5, qn: 0 } },
       })
     );
   });
