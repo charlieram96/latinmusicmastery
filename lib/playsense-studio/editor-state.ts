@@ -270,6 +270,50 @@ function pick<T extends object, K extends keyof T>(o: T, keys: readonly K[]): Pa
   return out;
 }
 
+/**
+ * Sort a chord's notes by midi and drop repeated pitches (the first one
+ * stays). A chord left with one note becomes that note, keeping the event's
+ * own fields and id.
+ */
+function tidyChordAt(events: MusicalEvent[], index: number): void {
+  const e = events[index];
+  if (e?.kind !== 'chord') return;
+  const seen = new Set<number>();
+  const notes = [...e.notes]
+    .sort((a, b) => a.midi - b.midi)
+    .filter((x) => (seen.has(x.midi) ? false : (seen.add(x.midi), true)));
+  if (notes.length !== 1) { e.notes = notes; return; }
+  const { kind: _kind, notes: _notes, ...base } = e;
+  const only = notes[0];
+  events[index] = {
+    ...pick(only, ['tieToNext', 'spellingHint', 'spelling', 'percussion', 'fingering'] as const),
+    ...base,
+    kind: 'note',
+    midi: only.midi,
+  };
+}
+
+/**
+ * The indices of the tuplet group holding `events[index]`: every event in
+ * the voice sharing its tuplet id or, for an id-less or legacy triplet, the
+ * run of neighbouring id-less events with the same n:m (the renderer groups
+ * consecutive events the same way).
+ */
+function tupletGroup(events: MusicalEvent[], index: number): number[] {
+  const t = eventTuplet(events[index]);
+  if (!t) return [];
+  if (t.id) return events.flatMap((e, i) => (eventTuplet(e)?.id === t.id ? [i] : []));
+  const same = (i: number) => {
+    const u = i >= 0 && i < events.length ? eventTuplet(events[i]) : null;
+    return !!u && !u.id && u.n === t.n && u.m === t.m;
+  };
+  let start = index;
+  let end = index;
+  while (same(start - 1)) start--;
+  while (same(end + 1)) end++;
+  return Array.from({ length: end - start + 1 }, (_, k) => start + k);
+}
+
 const RHYTHM_KEYS = ['id', 'durationQN', 'dots', 'dotted', 'tuplet', 'triplet'] as const;
 const NOTE_KEEP_KEYS = [...RHYTHM_KEYS, 'tieToNext', 'dynamic', 'text'] as const;
 const MARK_KEYS = ['articulations', 'articulation', 'ornament', 'grace', 'slurToNext'] as const;
@@ -782,6 +826,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const next = clone(state.score);
       const [r] = resolveRefs(next, [action.ref]);
       if (!r || r.event.kind === 'rest') return state;
+      // A percussion stroke has no pitch to stack on.
+      if (r.event.kind === 'note' && r.event.percussion) return state;
       const added = { midi: action.midi, ...(action.spelling ? { spelling: action.spelling } : {}) };
       const byMidi = (a: { midi: number }, b: { midi: number }) => a.midi - b.midi;
       if (r.event.kind === 'note') {
@@ -805,9 +851,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         // A new value leaves the tuplet, so it has to take the whole group with it.
         const picked = new Set(refs.map(refKey));
         for (const r of refs) {
-          const id = eventTuplet(r.event)?.id;
-          if (!id) continue;
-          const partial = r.events.some((e, i) => eventTuplet(e)?.id === id && !picked.has(refKey({ ...r, eventIndex: i })));
+          const partial = tupletGroup(r.events, r.eventIndex).some((i) => !picked.has(refKey({ ...r, eventIndex: i })));
           if (partial) return state;
         }
       }
@@ -842,7 +886,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'transpose-events': {
       const next = clone(state.score);
       const { kind, dir, keyFifths } = action;
-      const changed = mutateEach(resolveRefs(next, action.refs), (e) => {
+      const refs = resolveRefs(next, action.refs);
+      const changed = mutateEach(refs, (e) => {
         for (const p of pitchedNotes(e)) {
           if (p.percussion) continue;
           const spelling = eventSpelling(p) ?? undefined;
@@ -856,12 +901,15 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           delete p.spellingHint;
         }
       });
-      return changed ? withHistory(state, next) : state;
+      if (!changed) return state;
+      refs.forEach((r) => tidyChordAt(r.events, r.eventIndex));
+      return withHistory(state, next);
     }
     case 'set-events-accidental': {
       const next = clone(state.score);
       const { alter, keyFifths } = action;
-      const changed = mutateEach(resolveRefs(next, action.refs), (e) => {
+      const refs = resolveRefs(next, action.refs);
+      const changed = mutateEach(refs, (e) => {
         for (const p of pitchedNotes(e)) {
           if (p.percussion) continue;
           const s = spellMidi(p.midi, { spelling: p.spelling, spellingHint: p.spellingHint, keyFifths });
@@ -872,7 +920,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           delete p.spellingHint;
         }
       });
-      return changed ? withHistory(state, next) : state;
+      if (!changed) return state;
+      refs.forEach((r) => tidyChordAt(r.events, r.eventIndex));
+      return withHistory(state, next);
     }
     case 'set-event-pitches': {
       const next = clone(state.score);
@@ -888,6 +938,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         delete p.spelling;
         delete p.spellingHint;
       });
+      tidyChordAt(r.events, r.eventIndex);
       return withHistory(state, next);
     }
     case 'delete-events': {

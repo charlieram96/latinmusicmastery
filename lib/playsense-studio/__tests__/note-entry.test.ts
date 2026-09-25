@@ -144,3 +144,33 @@ describe('note entry: further rules', () => {
     expect(ev(s1, 1)[0]).toMatchObject({ midi: 72, id: 'x~1' });
   });
 });
+
+describe('note entry: fix round 1', () => {
+  const r0 = (eventIndex: number) => ({ ...at(0, 0), eventIndex });
+
+  it('a step transpose that merges chord notes collapses the chord to one note', () => {
+    const chord: MusicalEvent = { kind: 'chord', id: 'c', durationQN: 1, tieToNext: true, notes: [{ midi: 60 }, { midi: 61 }] };
+    const s = editorReducer(st(doc([bar(1, [chord])])), { type: 'transpose-events', refs: [r0(0)], kind: 'step', dir: 1, keyFifths: 0 });
+    expect(ev(s)[0]).toEqual({ kind: 'note', id: 'c', durationQN: 1, tieToNext: true, midi: 62, spelling: { step: 'D', alter: 0 } });
+  });
+  it('re-sorts chord notes and drops duplicates after an accidental or a pitch drag', () => {
+    const chord: MusicalEvent = { kind: 'chord', id: 'c', durationQN: 1, notes: [{ midi: 60 }, { midi: 64 }, { midi: 67 }] };
+    const s0 = st(doc([bar(1, [chord])]));
+    const dragged = editorReducer(s0, { type: 'set-event-pitches', ref: r0(0), midis: [67, 62, 67] });
+    expect(ev(dragged)[0]).toMatchObject({ kind: 'chord', notes: [{ midi: 62 }, { midi: 67 }] });
+    const sharp = editorReducer(st(doc([bar(1, [{ kind: 'chord', id: 'c', durationQN: 1, notes: [{ midi: 62 }, { midi: 63, spelling: { step: 'D', alter: 1 } }] }])])),
+      { type: 'set-events-accidental', refs: [r0(0)], alter: -1, keyFifths: 0 });
+    expect(ev(sharp)[0]).toMatchObject({ kind: 'note', midi: 61, spelling: { step: 'D', alter: -1, showAccidental: 'always' } });
+  });
+  it('refuses a value change on part of a legacy triplet run', () => {
+    const t3 = (midi: number): MusicalEvent => ({ ...n(midi, 1 / 3), triplet: true });
+    const s0 = st(doc([bar(1, [t3(60), t3(62), t3(64), n(65, 2)])]));
+    expect(editorReducer(s0, { type: 'set-events-rhythm', refs: [r0(0)], value: 'q' })).toBe(s0);
+    const all = editorReducer(s0, { type: 'set-events-rhythm', refs: [r0(0), r0(1), r0(2)], value: '16' });
+    expect(ev(all).slice(0, 3).map((e) => [e.durationQN, e.triplet])).toEqual([[0.25, undefined], [0.25, undefined], [0.25, undefined]]);
+  });
+  it('refuses to add a chord note to a percussion note', () => {
+    const s0 = st(doc([bar(1, [{ kind: 'note', id: 'p', midi: 38, durationQN: 1, percussion: { staffLine: 'C5', notehead: 'normal' } }])]));
+    expect(editorReducer(s0, { type: 'add-chord-note', ref: r0(0), midi: 42 })).toBe(s0);
+  });
+});
