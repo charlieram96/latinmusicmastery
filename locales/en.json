@@ -1880,6 +1880,7 @@
           "lessonOf": "Lesson {n} of {total}",
           "left": "{duration} left",
           "inYourPlan": "Included in your plan",
+          "showAllOne": "Show {count} lesson",
           "showAll": "Show all {count} lessons",
           "showFewer": "Show fewer",
           "go": "Go"

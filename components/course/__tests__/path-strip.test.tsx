@@ -206,4 +206,11 @@ describe('PathStrip', () => {
     render()
     expect(host.querySelector('[data-path-flag]')).toBeNull()
   })
+
+  it('arrowsClassName places the arrow pair (e.g. up in a heading row)', () => {
+    act(() => root.render(<PathStrip items={ITEMS} ariaLabel="p" showArrows arrowsClassName="bottom-full top-auto" />))
+    const pair = host.querySelector('button[aria-label="dashboard.pages.course.path.next"]')!.parentElement!
+    expect(pair.className.split(/\s+/)).toEqual(expect.arrayContaining(['bottom-full', 'top-auto', 'right-0']))
+    expect(pair.className.split(/\s+/)).not.toContain('top-0')
+  })
 })

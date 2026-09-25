@@ -4,7 +4,7 @@ import es from '@/locales/es.json'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const get = (o: unknown, path: string) => path.split('.').reduce<any>((a, k) => a?.[k], o)
-const KEYS = ['path.heading', 'path.doneOfOne', 'path.doneOf', 'path.module', 'path.goToLesson', 'syllabus.showAll', 'syllabus.showFewer', 'syllabus.go']
+const KEYS = ['path.heading', 'path.doneOfOne', 'path.doneOf', 'path.module', 'path.goToLesson', 'syllabus.showAllOne', 'syllabus.showAll', 'syllabus.showFewer', 'syllabus.go']
 
 describe('course page locale keys', () => {
   it.each(KEYS)('%s exists in en and es', (k) => {

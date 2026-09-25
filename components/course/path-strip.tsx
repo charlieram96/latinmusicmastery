@@ -27,6 +27,8 @@ interface PathStripProps {
   showArrows?: boolean
   /** Mark where each module starts with a flag linking to its overview (course page). */
   showModuleFlags?: boolean
+  /** Extra classes for the arrow pair, e.g. to lift it into a heading row above the strip. */
+  arrowsClassName?: string
   className?: string
   ariaLabel: string
 }
@@ -36,7 +38,7 @@ interface PathStripProps {
  * solid up to the current lesson, dotted after. Scrolls itself so the current
  * lesson (or the end, once the course is finished) is in view.
  */
-export function PathStrip({ items, size = 'default', showArrows = false, showModuleFlags = false, className, ariaLabel }: PathStripProps) {
+export function PathStrip({ items, size = 'default', showArrows = false, showModuleFlags = false, arrowsClassName, className, ariaLabel }: PathStripProps) {
   const { t } = useTranslation()
   const outer = useRef<HTMLDivElement>(null)
   const scroller = useRef<HTMLDivElement>(null)
@@ -118,7 +120,7 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
   return (
     <div ref={outer} className={cn('relative', className)} role="group" aria-label={ariaLabel}>
       {showArrows && (
-        <div className="absolute right-0 top-0 z-10 flex gap-2">
+        <div className={cn('absolute right-0 top-0 z-10 flex gap-2', arrowsClassName)}>
           <button type="button" aria-label={t(`${T}.prev`)} onClick={() => scroll(-1)} className="grid size-9 place-items-center rounded-lg border border-border bg-card shadow-card hover:bg-accent">
             <ChevronLeft className="size-4" />
           </button>
