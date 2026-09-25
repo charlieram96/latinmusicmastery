@@ -17,8 +17,13 @@ const TYPE_ICON: Record<PathLessonType, typeof Video> = { video: Video, play: Mu
 // too), so they need no room here.
 const TOP_PLAIN = 116
 const TOP_FLAGS = 140
-const SIDE = 60
-const WAVE = 18
+// Compact (dashboard card): a one-line bubble (26px offset + ~26px + 6px of bob)
+// over 40×36 nodes on a flatter wave, so the whole strip is 144px tall.
+const COMPACT = { top: 74, wave: 10, below: 70, step: 104, side: 52, label: 92 }
+// Compact in a narrow container (phones): five nodes fit in 324px, the inside of a card on a 390px screen.
+const COMPACT_NARROW = { ...COMPACT, step: 64, side: 34, label: 60 }
+const NARROW_BELOW = 480
+const DEFAULT = { wave: 18, below: 110, step: 118, side: 60, label: 110 }
 const CARD_W = 208
 
 interface PathStripProps {
@@ -50,12 +55,24 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
   const touch = useRef(false)
   const [tip, setTip] = useState<{ index: number; left: number; top: number; pinned: boolean } | null>(null)
   const compact = size === 'compact'
-  const STEP = compact ? 104 : 118
-  const TOP = showModuleFlags ? TOP_FLAGS : TOP_PLAIN
+  // Compact strips measure their container so a phone gets a tighter step.
+  const [narrow, setNarrow] = useState(false)
+  useEffect(() => {
+    const el = outer.current
+    if (!compact || !el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(([entry]) => setNarrow(entry.contentRect.width < NARROW_BELOW))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [compact])
+  const geo = compact ? (narrow ? COMPACT_NARROW : COMPACT) : DEFAULT
+  const STEP = geo.step
+  const SIDE = geo.side
+  const WAVE = geo.wave
+  const TOP = compact ? COMPACT.top : showModuleFlags ? TOP_FLAGS : TOP_PLAIN
 
   const pos = items.map((_, i) => ({ x: SIDE + i * STEP, y: Math.round(TOP + Math.sin(i * 1.1) * WAVE) }))
   const width = SIDE * 2 + Math.max(0, items.length - 1) * STEP
-  const height = TOP + (compact ? 96 : 110)
+  const height = TOP + geo.below
   const currentIndex = items.findIndex((i) => i.kind !== 'gap' && i.state === 'current')
   // The connector is solid up to the current lesson (or everything, once finished).
   const solidUntil = currentIndex === -1 ? items.length - 1 : currentIndex
@@ -67,7 +84,7 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
     if (!el) return
     const target = currentIndex === -1 ? el.scrollWidth : SIDE + currentIndex * STEP - el.clientWidth / 2
     el.scrollLeft = Math.max(0, target)
-  }, [currentIndex, STEP, itemsKey])
+  }, [currentIndex, STEP, SIDE, itemsKey])
 
   const pinned = tip?.pinned ?? false
   useEffect(() => {
@@ -97,7 +114,7 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
     const x = pos[index].x - scrollLeft
     // Keep the card inside the strip horizontally.
     const left = outerWidth > CARD_W ? Math.min(Math.max(x, CARD_W / 2), outerWidth - CARD_W / 2) : x
-    setTip({ index, left, top: pos[index].y - 34, pinned: pin })
+    setTip({ index, left, top: pos[index].y - (compact ? 26 : 34), pinned: pin })
   }
   // Hover and focus cards close when the pointer or focus leaves; a pinned (tapped) card stays.
   const hideTip = () => setTip((cur) => (cur?.pinned ? cur : null))
@@ -217,7 +234,15 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
                     zero-size snap areas (every scroll then snapped back to the start). */}
                 <span data-snap-anchor aria-hidden className="pointer-events-none absolute -left-px -top-px h-[2px] w-[2px]" style={{ scrollSnapAlign: 'center' }} />
                 {current && isLesson && (
-                  <div data-path-bubble className="pointer-events-none absolute bottom-[34px] left-1/2 z-[2] grid -translate-x-1/2 justify-items-center whitespace-nowrap rounded-xl border-2 border-border bg-card px-3 py-1.5 text-[13px] font-extrabold text-primary shadow-lift group-focus-within:opacity-0 group-hover:opacity-0 motion-safe:animate-bob">
+                  <div
+                    data-path-bubble
+                    className={cn(
+                      'pointer-events-none absolute left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap border-2 border-border bg-card font-extrabold text-primary shadow-lift group-focus-within:opacity-0 group-hover:opacity-0 motion-safe:animate-bob',
+                      compact
+                        ? 'bottom-[26px] flex items-baseline gap-1.5 rounded-lg px-2 py-0.5 text-[11px]'
+                        : 'bottom-[34px] grid justify-items-center rounded-xl px-3 py-1.5 text-[13px]'
+                    )}
+                  >
                     <span className="uppercase">{t(`${T}.continue`)}</span>
                     {item.minutes !== null && <span className="text-[11px] font-semibold text-muted-foreground">{t(`${T}.minutes`, { n: item.minutes })}</span>}
                   </div>
@@ -234,7 +259,7 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
                   }}
                   className={cn(
                     'absolute left-0 top-0 grid -translate-x-1/2 -translate-y-1/2 place-items-center transition-[transform,box-shadow] duration-tap ease-smooth active:translate-y-[calc(-50%+6px)] active:shadow-none',
-                    compact ? 'h-[42px] w-[46px]' : 'h-[52px] w-[56px]',
+                    compact ? 'h-[36px] w-[40px]' : 'h-[52px] w-[56px]',
                     isLesson ? 'rounded-full' : 'rounded-[18px]',
                     done || current
                       ? isLesson
@@ -249,7 +274,15 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
                   {current && <span aria-hidden className="absolute -inset-2 rounded-full border-[3px] border-primary/60 motion-safe:animate-ring-pulse" />}
                   <Icon className={cn(compact ? 'size-5' : 'size-6', done && isLesson && 'stroke-[3]')} />
                 </Link>
-                <span className={cn('absolute left-0 top-[34px] line-clamp-2 w-[110px] -translate-x-1/2 text-center text-[11px] leading-tight', current ? 'font-bold text-foreground' : 'font-medium text-muted-foreground')}>
+                <span
+                  data-path-label
+                  className={cn(
+                    'absolute left-0 line-clamp-2 -translate-x-1/2 text-center leading-tight',
+                    compact ? 'top-[30px] text-[10px]' : 'top-[34px] text-[11px]',
+                    current ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'
+                  )}
+                  style={{ width: geo.label }}
+                >
                   {label}
                 </span>
               </div>

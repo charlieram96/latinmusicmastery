@@ -235,4 +235,55 @@ describe('PathStrip', () => {
     pointer(link, 'pointerdown', 'mouse')
     expect(link.hasAttribute('data-no-page-loader')).toBe(false)
   })
+
+  describe('compact (dashboard card)', () => {
+    const many: PathItem[] = [lesson('a', 1, 'done'), lesson('b', 2, 'current'), ...['c', 'd', 'e', 'f'].map((id, k) => lesson(id, k + 3, 'upcoming'))]
+    const renderCompact = () => act(() => root.render(<PathStrip items={many} ariaLabel="p" size="compact" />))
+    const track = () => host.querySelector('[data-path-scroller] > div') as HTMLElement
+    const lefts = () => [...host.querySelectorAll<HTMLElement>('[data-path-node]')].map((n) => parseFloat(n.style.left))
+
+    it('is 140-150px tall and still leaves room for its smaller bubble above every node', () => {
+      renderCompact()
+      const h = parseFloat(track().style.height)
+      expect(h).toBeGreaterThanOrEqual(140)
+      expect(h).toBeLessThanOrEqual(150)
+      // compact bubble: 26px offset + ~26px tall + 6px of bob
+      for (const n of host.querySelectorAll<HTMLElement>('[data-path-node]')) expect(parseFloat(n.style.top)).toBeGreaterThanOrEqual(58)
+      const bubble = host.querySelector('[data-path-bubble]') as HTMLElement
+      expect(bubble.className.split(/\s+/)).toContain('bottom-[26px]')
+    })
+
+    it('labels are narrower than the step, so neighbours never touch', () => {
+      renderCompact()
+      const step = lefts()[1] - lefts()[0]
+      const label = host.querySelector('[data-path-label]') as HTMLElement
+      expect(parseFloat(label.style.width)).toBeLessThanOrEqual(step - 8)
+    })
+
+    it('fits five nodes in a phone card (≈324px inside a 390px screen)', () => {
+      let cb: ResizeObserverCallback = () => {}
+      class RO { constructor(c: ResizeObserverCallback) { cb = c } observe() {} disconnect() {} unobserve() {} }
+      vi.stubGlobal('ResizeObserver', RO)
+      try {
+        renderCompact()
+        act(() => cb([{ contentRect: { width: 324 } } as ResizeObserverEntry], {} as ResizeObserver))
+        const l = lefts()
+        const side = l[0]
+        expect(l[4] + side).toBeLessThanOrEqual(324)
+        const label = host.querySelector('[data-path-label]') as HTMLElement
+        expect(parseFloat(label.style.width)).toBeLessThanOrEqual(l[1] - l[0] - 4)
+      } finally {
+        vi.unstubAllGlobals()
+      }
+    })
+  })
+
+  it('the default size keeps its geometry', () => {
+    render()
+    expect(parseFloat((host.querySelector('[data-path-scroller] > div') as HTMLElement).style.height)).toBe(226)
+    const l = [...host.querySelectorAll<HTMLElement>('[data-path-node]')].map((n) => parseFloat(n.style.left))
+    expect(l.slice(0, 2)).toEqual([60, 178])
+    expect((host.querySelector('[data-path-label]') as HTMLElement).style.width).toBe('110px')
+    expect((host.querySelector('[data-path-bubble]') as HTMLElement).className.split(/\s+/)).toContain('bottom-[34px]')
+  })
 })
