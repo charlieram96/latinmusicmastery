@@ -3,7 +3,7 @@
 // One owner's autosave-to-draft. Replaces the hosts' old persist() that wrote
 // the live score directly. Score changes arrive via useEditor's isDirty; timing
 // changes via setTiming (SyncPanel). Both are saved together as one draft row.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { saveStudioDraft } from '@/app/actions/studio-drafts';
 import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -59,9 +59,15 @@ export function useStudioDraft(opts: {
   const [saveState, setSaveState] = useState<StudioDraftApi['saveState']>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  // Latest values for timers and the unmount flush.
+  // Latest values for timers and the unmount flush. Written from a layout
+  // effect (never during render — a ref write during render is disallowed
+  // and can run more than once without committing under Strict Mode);
+  // `setTiming`/`replaceTiming` below still write it directly, since those
+  // only ever run from an event handler or a cleanup, never during render.
   const latest = useRef({ score, isDirty, timing, timingDirty, label });
-  latest.current = { score, isDirty, timing, timingDirty, label };
+  useLayoutEffect(() => {
+    latest.current = { score, isDirty, timing, timingDirty, label };
+  });
   const timingRef = useRef(timing);
 
   // Invalidates an in-flight save: bumped whenever fresh content is adopted
