@@ -16,8 +16,10 @@ import type {
   Measure,
   MusicalEvent,
   Note,
+  PercussionNotation,
   Rest,
   ScoreDocument,
+  Spelling,
   Track,
 } from '@/components/playsense-studio/shared/score-model/types';
 import {
@@ -27,7 +29,10 @@ import {
   measureLengthInQN,
   occupiedQN,
 } from './time-mapping';
-import { eventDots, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
+import { eventDots, eventSpelling, eventTuplet, tupletScale } from '@/components/playsense-studio/shared/score-model/accessors';
+import { octavePitch, semitonePitch, spelledMidi, stepPitch, type Pitch } from './pitch';
+import { soundingQN, writtenValue, type NoteValue } from './rhythm';
+import { spellMidi } from './notation/accidentals';
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -53,6 +58,11 @@ export interface MeasurePropsPatch {
   endBarline?: 'double' | null; // 'final' stays with set-measure-final-bar
   volta?: '1.' | '2.' | null;
 }
+
+/** One event in the score, addressed by bar, voice (0 = graded voice 1, 1 = voice 2) and index. */
+export interface EventRef { trackIndex: number; measureIndex: number; voice: 0 | 1; eventIndex: number }
+/** Where a written event lands: over an existing event, or appended at the voice's end. */
+export interface EntryAt { trackIndex: number; measureIndex: number; voice: 0 | 1; eventIndex: number | 'end' }
 
 export type EditorAction =
   | {
@@ -112,6 +122,24 @@ export type EditorAction =
     }
   | { type: 'convert-event-kind'; trackIndex: number; measureIndex: number; eventIndex: number; to: 'note' | 'rest'; midi?: number }
   | { type: 'delete-event'; trackIndex: number; measureIndex: number; eventIndex: number }
+  // Voice-aware note entry (the measure zoom). The actions above stay for the
+  // piano roll and the older controls.
+  | {
+      type: 'write-event';
+      at: EntryAt;
+      kind: 'note' | 'rest';
+      midi?: number;
+      spelling?: Spelling;
+      percussion?: PercussionNotation;
+      value?: NoteValue;
+      dots?: 0 | 1 | 2;
+    }
+  | { type: 'add-chord-note'; ref: EventRef; midi: number; spelling?: Spelling }
+  | { type: 'set-events-rhythm'; refs: EventRef[]; value?: NoteValue; dots?: 0 | 1 | 2 }
+  | { type: 'transpose-events'; refs: EventRef[]; kind: 'step' | 'semi' | 'oct'; dir: 1 | -1; keyFifths: number }
+  | { type: 'set-events-accidental'; refs: EventRef[]; alter: -2 | -1 | 0 | 1 | 2; keyFifths: number }
+  | { type: 'set-event-pitches'; ref: EventRef; midis: number[] }
+  | { type: 'delete-events'; refs: EventRef[] }
   | { type: 'undo' }
   | { type: 'redo' }
   | { type: 'mark-clean' }
@@ -176,6 +204,94 @@ function overflowsMeasure(
   const ts = effectiveTimeSignatureAt(track, initialTimeSignature, measureIndex);
   const others = occupiedQN(events) - (events[eventIndex]?.durationQN ?? 0);
   return others + nextDuration > measureLengthInQN(ts) + QN_EPS;
+}
+
+// ---------------------------------------------------------------------------
+// Voice-aware note entry helpers (the measure zoom)
+// ---------------------------------------------------------------------------
+
+/** A bar's events in one voice; `create` adds an empty voice 2 when it's missing. */
+function voiceEvents(track: Track, measureIndex: number, voice: 0 | 1, create = false): MusicalEvent[] | null {
+  const m = track.measures[measureIndex];
+  if (!m) return null;
+  if (!m.voices[voice]) {
+    if (!create || voice !== 1) return null;
+    m.voices[1] = { number: 2, events: [] };
+  }
+  return m.voices[voice].events;
+}
+
+function barLengthQN(score: ScoreDocument, track: Track, measureIndex: number): number {
+  return measureLengthInQN(effectiveTimeSignatureAt(track, score.initialTimeSignature, measureIndex));
+}
+
+const voiceKey = (r: EventRef) => `${r.trackIndex}:${r.measureIndex}:${r.voice}`;
+const refKey = (r: EventRef) => `${voiceKey(r)}:${r.eventIndex}`;
+
+type ResolvedRef = EventRef & { event: MusicalEvent; events: MusicalEvent[] };
+
+/** The refs that point at an event in `score`, once each, in the order given. */
+function resolveRefs(score: ScoreDocument, refs: EventRef[]): ResolvedRef[] {
+  const seen = new Set<string>();
+  const out: ResolvedRef[] = [];
+  for (const r of refs) {
+    const key = refKey(r);
+    const track = score.tracks[r.trackIndex];
+    const events = track ? voiceEvents(track, r.measureIndex, r.voice) : null;
+    const event = events?.[r.eventIndex];
+    if (seen.has(key) || !events || !event) continue;
+    seen.add(key);
+    out.push({ ...r, event, events });
+  }
+  return out;
+}
+
+type PitchedNote = Pick<Note, 'midi' | 'spelling' | 'spellingHint' | 'percussion'>;
+
+/** The notes that carry a pitch: the note itself, a chord's notes, none for a rest. */
+function pitchedNotes(e: MusicalEvent): PitchedNote[] {
+  return e.kind === 'note' ? [e] : e.kind === 'chord' ? e.notes : [];
+}
+
+/** Run `fn` on every referenced event; true when any of them changed. */
+function mutateEach(refs: ResolvedRef[], fn: (e: MusicalEvent) => void): boolean {
+  let changed = false;
+  for (const r of refs) {
+    const before = JSON.stringify(r.event);
+    fn(r.event);
+    if (JSON.stringify(r.event) !== before) changed = true;
+  }
+  return changed;
+}
+
+function pick<T extends object, K extends keyof T>(o: T, keys: readonly K[]): Partial<Pick<T, K>> {
+  const out: Partial<Pick<T, K>> = {};
+  for (const k of keys) if (o[k] !== undefined) out[k] = o[k];
+  return out;
+}
+
+const RHYTHM_KEYS = ['id', 'durationQN', 'dots', 'dotted', 'tuplet', 'triplet'] as const;
+const NOTE_KEEP_KEYS = [...RHYTHM_KEYS, 'tieToNext', 'dynamic', 'text'] as const;
+const MARK_KEYS = ['articulations', 'articulation', 'ornament', 'grace', 'slurToNext'] as const;
+
+/** Overwrite with a single note: the rhythm, tie, dynamic and text stay; a chord
+ *  collapses; a note or chord keeps its marks, a rest brings none. */
+function overwriteNote(old: MusicalEvent, midi: number, spelling?: Spelling, percussion?: PercussionNotation): Note {
+  return {
+    ...pick(old, NOTE_KEEP_KEYS),
+    ...(old.kind === 'rest' ? {} : pick(old, MARK_KEYS)),
+    kind: 'note',
+    midi,
+    durationQN: old.durationQN,
+    ...(spelling ? { spelling } : {}),
+    ...(percussion ? { percussion } : {}),
+  };
+}
+
+/** Overwrite with a rest: the rhythm (and a dynamic or text) stay; tie, marks,
+ *  ornament and grace go. */
+function overwriteRest(old: MusicalEvent): Rest {
+  return { ...pick(old, [...RHYTHM_KEYS, 'dynamic', 'text'] as const), kind: 'rest', durationQN: old.durationQN };
 }
 
 function withHistory(state: EditorState, nextScore: ScoreDocument): EditorState {
@@ -621,6 +737,173 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const result = withHistory(state, next);
       // After withHistory, so a note removed from every pass of a repeat is caught too.
       if (result.score.spans) result.score.spans = pruneSpans(result.score);
+      return result;
+    }
+    case 'write-event': {
+      const { at } = action;
+      if (action.kind === 'note' && action.midi === undefined) return state;
+      const next = clone(state.score);
+      const track = next.tracks[at.trackIndex];
+      if (!track) return state;
+      if (at.eventIndex === 'end') {
+        if (!action.value) return state;
+        const events = voiceEvents(track, at.measureIndex, at.voice, true);
+        if (!events) return state;
+        const ts = effectiveTimeSignatureAt(track, next.initialTimeSignature, at.measureIndex);
+        // A lone full-bar placeholder rest in voice 1 gives way to the first real event.
+        if (at.voice === 0 && isFillerRest(events, ts)) events.length = 0;
+        const dots = action.dots ?? 0;
+        const durationQN = soundingQN(action.value, dots, null);
+        // Refuse rather than overfill the bar (the zoom flashes "m.N is full").
+        if (occupiedQN(events) + durationQN > measureLengthInQN(ts) + QN_EPS) return state;
+        const rhythm = { id: newEventId(), durationQN, ...(dots > 0 ? { dots: dots as 1 | 2 } : {}) };
+        events.push(action.kind === 'note'
+          ? {
+              kind: 'note',
+              midi: action.midi!,
+              ...rhythm,
+              ...(action.spelling ? { spelling: action.spelling } : {}),
+              ...(action.percussion ? { percussion: action.percussion } : {}),
+            }
+          : { kind: 'rest', ...rhythm });
+        return withHistory(state, next);
+      }
+      const events = voiceEvents(track, at.measureIndex, at.voice);
+      const old = events?.[at.eventIndex];
+      if (!events || !old) return state;
+      const written = action.kind === 'note'
+        ? overwriteNote(old, action.midi!, action.spelling, action.percussion)
+        : overwriteRest(old);
+      if (JSON.stringify(written) === JSON.stringify(old)) return state;
+      events[at.eventIndex] = written;
+      return withHistory(state, next);
+    }
+    case 'add-chord-note': {
+      const next = clone(state.score);
+      const [r] = resolveRefs(next, [action.ref]);
+      if (!r || r.event.kind === 'rest') return state;
+      const added = { midi: action.midi, ...(action.spelling ? { spelling: action.spelling } : {}) };
+      const byMidi = (a: { midi: number }, b: { midi: number }) => a.midi - b.midi;
+      if (r.event.kind === 'note') {
+        if (r.event.midi === action.midi) return state;
+        const { kind: _kind, midi: _midi, spelling: _sp, spellingHint: _hint, percussion: _perc, fingering: _fing, ...base } = r.event;
+        const first = pick(r.event, ['spellingHint', 'spelling', 'percussion', 'fingering'] as const);
+        const chord: Chord = { ...base, kind: 'chord', notes: [{ midi: r.event.midi, ...first }, added].sort(byMidi) };
+        r.events[r.eventIndex] = chord;
+      } else {
+        if (r.event.notes.some((x) => x.midi === action.midi)) return state;
+        r.event.notes = [...r.event.notes, added].sort(byMidi);
+      }
+      return withHistory(state, next);
+    }
+    case 'set-events-rhythm': {
+      if (action.value === undefined && action.dots === undefined) return state;
+      const next = clone(state.score);
+      const refs = resolveRefs(next, action.refs);
+      if (!refs.length) return state;
+      if (action.value !== undefined) {
+        // A new value leaves the tuplet, so it has to take the whole group with it.
+        const picked = new Set(refs.map(refKey));
+        for (const r of refs) {
+          const id = eventTuplet(r.event)?.id;
+          if (!id) continue;
+          const partial = r.events.some((e, i) => eventTuplet(e)?.id === id && !picked.has(refKey({ ...r, eventIndex: i })));
+          if (partial) return state;
+        }
+      }
+      const voices = new Map<string, { r: ResolvedRef; before: number }>();
+      for (const r of refs) if (!voices.has(voiceKey(r))) voices.set(voiceKey(r), { r, before: occupiedQN(r.events) });
+      const changed = mutateEach(refs, (e) => {
+        const dots = action.dots ?? eventDots(e);
+        let durationQN: number;
+        if (action.value !== undefined) {
+          durationQN = soundingQN(action.value, dots, null);
+          delete e.tuplet;
+          delete e.triplet;
+        } else {
+          const value = writtenValue(e);
+          if (!value) return; // an unwritable length (e.g. from MIDI) keeps its rhythm
+          durationQN = soundingQN(value, dots, eventTuplet(e));
+        }
+        e.durationQN = durationQN;
+        if (dots > 0) e.dots = dots as 1 | 2;
+        else delete e.dots;
+        delete e.dotted;
+      });
+      if (!changed) return state;
+      for (const { r, before } of voices.values()) {
+        const after = occupiedQN(r.events);
+        const len = barLengthQN(next, next.tracks[r.trackIndex], r.measureIndex);
+        // A bar that was already over (an import) may still shrink.
+        if (after > len + QN_EPS && after > before + QN_EPS) return state;
+      }
+      return withHistory(state, next);
+    }
+    case 'transpose-events': {
+      const next = clone(state.score);
+      const { kind, dir, keyFifths } = action;
+      const changed = mutateEach(resolveRefs(next, action.refs), (e) => {
+        for (const p of pitchedNotes(e)) {
+          if (p.percussion) continue;
+          const spelling = eventSpelling(p) ?? undefined;
+          const to: Pitch = kind === 'step'
+            ? stepPitch(p.midi, spelling, keyFifths, dir)
+            : kind === 'semi'
+              ? semitonePitch(p.midi, dir, keyFifths)
+              : octavePitch(p.midi, spelling, keyFifths, dir);
+          p.midi = to.midi;
+          p.spelling = { step: to.spelling.step, alter: to.spelling.alter };
+          delete p.spellingHint;
+        }
+      });
+      return changed ? withHistory(state, next) : state;
+    }
+    case 'set-events-accidental': {
+      const next = clone(state.score);
+      const { alter, keyFifths } = action;
+      const changed = mutateEach(resolveRefs(next, action.refs), (e) => {
+        for (const p of pitchedNotes(e)) {
+          if (p.percussion) continue;
+          const s = spellMidi(p.midi, { spelling: p.spelling, spellingHint: p.spellingHint, keyFifths });
+          const midi = spelledMidi(s.step, alter, s.octave);
+          if (midi < 0 || midi > 127) continue;
+          p.midi = midi;
+          p.spelling = { step: s.step, alter, showAccidental: 'always' };
+          delete p.spellingHint;
+        }
+      });
+      return changed ? withHistory(state, next) : state;
+    }
+    case 'set-event-pitches': {
+      const next = clone(state.score);
+      const [r] = resolveRefs(next, [action.ref]);
+      const notes = r ? pitchedNotes(r.event) : [];
+      const { midis } = action;
+      if (!notes.length || notes.length !== midis.length) return state;
+      if (!midis.every((m) => Number.isInteger(m) && m >= 0 && m <= 127)) return state;
+      if (notes.every((p, i) => p.midi === midis[i])) return state;
+      notes.forEach((p, i) => {
+        p.midi = midis[i];
+        // A spelling names the old pitch; the new one takes the key's default.
+        delete p.spelling;
+        delete p.spellingHint;
+      });
+      return withHistory(state, next);
+    }
+    case 'delete-events': {
+      const next = clone(state.score);
+      const refs = resolveRefs(next, action.refs);
+      if (!refs.length) return state;
+      // Highest index first so earlier indices in the same voice stay valid.
+      for (const r of [...refs].sort((a, b) => b.eventIndex - a.eventIndex)) r.events.splice(r.eventIndex, 1);
+      for (const r of refs) {
+        const m = next.tracks[r.trackIndex].measures[r.measureIndex];
+        if (r.voice === 1 && m.voices[1]?.events.length === 0) m.voices.splice(1, 1);
+      }
+      const result = withHistory(state, next);
+      // After withHistory, so an event removed from every pass of a repeat is caught too.
+      const spans = pruneSpans(result.score);
+      if (spans) result.score.spans = spans;
       return result;
     }
     default:
