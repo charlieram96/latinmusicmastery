@@ -43,7 +43,8 @@ import { TransportBar } from '@/components/playsense-studio/player/transport/tra
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
 import { SNAP_PX, barFlags, firstAttackTime, flagText, snapBarTime, snapSectionShift } from '@/lib/playsense-studio/hits';
-import { autoPlaceBars, lerpMarkers, windowWithinCorridor } from '@/lib/playsense-studio/auto-place';
+import { autoPlaceBars, windowWithinCorridor } from '@/lib/playsense-studio/auto-place';
+import { useMarkerTween } from './use-marker-tween';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import {
@@ -218,12 +219,6 @@ const TIMING_DEBOUNCE_MS = 1500;
 /** Stable empty array so `peaks?.hits ?? EMPTY_HITS` never churns deps with a
  *  fresh `[]` every render when there are no detected hits yet. */
 const EMPTY_HITS: number[] = [];
-
-/** Auto-place tween length (ms) and its ease-out curve. */
-const AUTO_PLACE_TWEEN_MS = 300;
-function easeOut(p: number): number {
-  return 1 - (1 - p) ** 3;
-}
 
 function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
   const m = state.measures.find((mm) => mm.measureNumber === ref.measureNumber);
@@ -653,22 +648,23 @@ export function SyncPanel({
   const [autoPlaceUndo, setAutoPlaceUndo] = useState<MarkerState | null>(null);
   const placedRef = useRef<MarkerState | null>(null);
   const [autoPlaceNotice, setAutoPlaceNotice] = useState<string | null>(null);
-  const tweenRafRef = useRef<number | null>(null);
-  const tweeningRef = useRef(false);
-  // What the tween itself last wrote to `markers` — each frame checks this
-  // against the CURRENT markers (via a functional update) before writing the
-  // next one, so a drag, a structural edit or a reconcile that lands mid-tween
-  // wins outright instead of being clobbered by the next frame.
-  const lastWrittenRef = useRef<MarkerState | null>(null);
+  // The tween writes plain values and yields to any other marker write (see
+  // useMarkerTween). Called before the undo-retiring effect below, so a
+  // foreign write has already stopped the tween when that effect looks.
+  const { start: startTween, cancel: cancelTween, running: tweenRunning } = useMarkerTween({
+    markers,
+    setMarkers,
+    onDone: () => setDirty(true),
+  });
 
   // The undo chip is a one-step affordance: it retires as soon as the markers
   // change by anything OTHER than the placement landing (which sets markers to
   // the very object autoPlaceBars produced), and it must NOT retire mid-tween,
   // since every tween frame calls setMarkers with a freshly-lerped object.
   useEffect(() => {
-    if (tweeningRef.current) return;
+    if (tweenRunning.current) return;
     if (autoPlaceUndo && markers !== placedRef.current) setAutoPlaceUndo(null);
-  }, [markers, autoPlaceUndo]);
+  }, [markers, autoPlaceUndo, tweenRunning]);
 
   // The failure notice is transient: gone after 6 s, or sooner if anything else
   // moves the markers.
@@ -684,7 +680,7 @@ export function SyncPanel({
   const runAutoPlace = useCallback(() => {
     // A tween is already animating toward a placement — ignore a second click
     // rather than racing it (undo would otherwise point at the wrong "before").
-    if (tweeningRef.current) return;
+    if (tweenRunning.current) return;
     // The duration is 0 (not null) before the video's metadata loads, and
     // `videoDurationSeconds ?? clock.durationSeconds ?? …` wouldn't catch
     // that (0 isn't nullish) — trust a duration only once it's actually > 0,
@@ -715,63 +711,18 @@ export function SyncPanel({
     setAutoPlaceUndo(from);
     placedRef.current = res.state;
 
-    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    if (reducedMotion) {
-      setMarkers(res.state);
-      setDirty(true);
-      return;
-    }
-
-    lastWrittenRef.current = from;
-    tweeningRef.current = true;
-    const startedAt = performance.now();
-    const tick = (now: number) => {
-      const p = Math.min(1, (now - startedAt) / AUTO_PLACE_TWEEN_MS);
-      const next = p < 1 ? lerpMarkers(from, res.state, easeOut(p)) : res.state;
-      let applied = false;
-      setMarkers((prev) => {
-        // Something else (a drag, a structural edit, a reconcile) wrote to
-        // markers since our last frame — that change wins; stop the tween
-        // instead of overwriting it on the next frame.
-        if (prev !== lastWrittenRef.current) return prev;
-        applied = true;
-        lastWrittenRef.current = next;
-        return next;
-      });
-      if (!applied) {
-        tweenRafRef.current = null;
-        tweeningRef.current = false;
-        return;
-      }
-      if (p < 1) {
-        tweenRafRef.current = requestAnimationFrame(tick);
-      } else {
-        tweenRafRef.current = null;
-        tweeningRef.current = false;
-        setDirty(true);
-      }
-    };
-    tweenRafRef.current = requestAnimationFrame(tick);
-  }, [hits, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock, siblingRanges]);
-
-  // Cancel an in-flight tween on unmount.
-  useEffect(() => {
-    return () => {
-      if (tweenRafRef.current !== null) cancelAnimationFrame(tweenRafRef.current);
-    };
-  }, []);
+    // Ends by writing res.state and setDirty(true) (onDone); reduced motion
+    // jumps straight there.
+    startTween(from, res.state);
+  }, [hits, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock, siblingRanges, startTween, tweenRunning]);
 
   const undoAutoPlace = useCallback(() => {
     if (!autoPlaceUndo) return;
-    if (tweenRafRef.current !== null) {
-      cancelAnimationFrame(tweenRafRef.current);
-      tweenRafRef.current = null;
-    }
-    tweeningRef.current = false;
+    cancelTween();
     setMarkers(autoPlaceUndo);
     setDirty(true);
     setAutoPlaceUndo(null);
-  }, [autoPlaceUndo]);
+  }, [autoPlaceUndo, cancelTween]);
 
   // Timing-only per-measure slots — the editor zips these with extractTrackEvents
   // for the ACTIVE track inside IntegratedEditor (so track-switching doesn't churn SyncPanel).
