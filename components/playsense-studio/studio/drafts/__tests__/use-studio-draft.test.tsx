@@ -114,3 +114,18 @@ describe('useStudioDraft', () => {
     expect(acts.saveStudioDraft).toHaveBeenCalledTimes(1);
   });
 });
+
+// ---- Fix round 1: the draft data can never be wrong -------------------------
+
+describe('useStudioDraft — fix round 1: draft safety', () => {
+  it('publish stops and returns the error when the flush fails, without calling publishStudioDraft', async () => {
+    acts.saveStudioDraft.mockResolvedValue({ error: 'Admin only' });
+    mount(<Editor />);
+    act(() => edit('B'));
+    let result: { error?: string } | undefined;
+    await act(async () => { result = await ctx.publish(owner); });
+    expect(result).toEqual({ error: 'Admin only' });
+    expect(acts.publishStudioDraft).not.toHaveBeenCalled();
+    expect(ctx.statuses['section:sec-1'].unpublished).toBe(false);
+  });
+});

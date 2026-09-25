@@ -16,7 +16,8 @@ export interface OwnerStatus {
 }
 
 export interface OwnerHandlers {
-  flush?: () => Promise<void>;
+  /** Resolves any error from the pending autosave; publish refuses to run past one. */
+  flush?: () => Promise<{ error?: string } | void>;
   adopt?: (c: StudioContent) => void;
   changed?: () => void;
 }
@@ -26,7 +27,7 @@ export interface StudioDraftsValue {
   setStatus(owner: StudioDraftOwner, patch: { label?: string; unpublished?: boolean }): void;
   setPending(key: string, pending: boolean): void;
   register(key: string, handlers: OwnerHandlers): () => void;
-  flush(key: string): Promise<void>;
+  flush(key: string): Promise<{ error?: string }>;
   publish(owner: StudioDraftOwner): Promise<{ error?: string }>;
   discard(owner: StudioDraftOwner): Promise<{ error?: string }>;
   notifyAdopt(key: string, content: StudioContent): void;
@@ -91,8 +92,10 @@ function RootProvider({ owners, children }: { owners: OwnerStatus[]; children: R
 
   const each = (key: string) => [...(handlers.current.get(key) ?? [])];
 
-  const flush = useCallback(async (key: string) => {
-    await Promise.all(each(key).map((h) => h.flush?.()));
+  const flush = useCallback(async (key: string): Promise<{ error?: string }> => {
+    const results = await Promise.all(each(key).map((h) => h.flush?.()));
+    const failed = results.find((r): r is { error: string } => !!r && !!r.error);
+    return failed ? { error: failed.error } : {};
   }, []);
 
   const notifyAdopt = useCallback((key: string, content: StudioContent) => {
@@ -101,7 +104,8 @@ function RootProvider({ owners, children }: { owners: OwnerStatus[]; children: R
 
   const publish = useCallback(async (owner: StudioDraftOwner) => {
     const key = ownerKey(owner);
-    await flush(key);
+    const flushed = await flush(key);
+    if (flushed.error) return { error: flushed.error };
     const res = await publishStudioDraft(owner);
     if (res.error) return { error: res.error };
     setStatus(owner, { unpublished: false });

@@ -19,7 +19,7 @@ export interface StudioDraftApi {
   timingEpoch: number;
   setTiming(patch: Partial<StudioTiming>): void;
   replaceTiming(t: StudioTiming): void;
-  flush(): Promise<void>;
+  flush(): Promise<{ error?: string }>;
   saveState: 'idle' | 'saving' | 'saved' | 'error';
   error: string | null;
   pending: boolean;
@@ -69,23 +69,24 @@ export function useStudioDraft(opts: {
 
   const { setStatus, setPending, register } = ctx;
 
-  const save = useCallback(async (saveOpts?: { silent?: boolean }) => {
+  const save = useCallback(async (saveOpts?: { silent?: boolean }): Promise<{ error?: string }> => {
     const snap = latest.current;
-    if (!snap.isDirty && !snap.timingDirty) return;
+    if (!snap.isDirty && !snap.timingDirty) return {};
     if (!saveOpts?.silent) { setSaveState('saving'); setError(null); }
     const res = await queueStudioSave(`draft:${key}`, () =>
       saveStudioDraft({ owner, score: snap.score, timing: snap.timing })
     ).catch(() => ({ error: 'Could not save. Check your connection and retry.' } as { error: string; updatedAt?: string }));
     if (res.error) {
       if (!saveOpts?.silent) { setSaveState('error'); setError(res.error); }
-      return;
+      return { error: res.error };
     }
     setStatus(owner, { unpublished: true, label: snap.label });
-    if (saveOpts?.silent) return;
+    if (saveOpts?.silent) return {};
     setSaveState('saved');
     // Only clean what this save covered; later edits keep their dirty flags.
     if (latest.current.score === snap.score) markClean();
     if (timingRef.current === snap.timing) { latest.current.timingDirty = false; setTimingDirty(false); }
+    return {};
   }, [key, owner, markClean, setStatus]);
 
   // Debounced autosave; a failed save waits for flush() (Save now / publish).
@@ -98,9 +99,9 @@ export function useStudioDraft(opts: {
   const pending = isDirty || timingDirty;
   useEffect(() => { setPending(key, pending); }, [setPending, key, pending]);
 
-  const flush = useCallback(async () => {
+  const flush = useCallback(async (): Promise<{ error?: string }> => {
     setSaveState((s) => (s === 'error' ? 'idle' : s));
-    await save();
+    return save();
   }, [save]);
 
   const adopt = useCallback((c: { score: ScoreDocument; timing: StudioTiming }) => {
