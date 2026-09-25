@@ -70,7 +70,7 @@ export function FeedbackCard({ feedback }: { feedback: FeedbackSummary }) {
           </div>
         </div>
         <div className="flex shrink-0 gap-2 md:flex-col md:items-stretch">
-          <Button asChild size="sm">
+          <Button asChild size="sm" variant={feedback.kind === 'completed' ? 'chunky' : 'default'}>
             <Link href="/dashboard/feedback">
               {feedback.kind === 'completed' ? (
                 <>

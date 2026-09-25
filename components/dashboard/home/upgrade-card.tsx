@@ -24,7 +24,7 @@ export function UpgradeCard({ hasSubscription }: { hasSubscription: boolean }) {
         </h2>
       </div>
       <p className="text-xs text-muted-foreground">{t('dashboard.pages.home.subscriptionCta.body')}</p>
-      <Button asChild size="sm" className="self-start">
+      <Button asChild variant="chunky" size="sm" className="self-start">
         <Link href="/dashboard/subscribe">{t('dashboard.pages.subscription.empty.cta')}</Link>
       </Button>
     </section>

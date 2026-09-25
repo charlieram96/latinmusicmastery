@@ -134,7 +134,7 @@ export function ContinueCard({ card }: { card: ContinueCardData | null }) {
         </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <Button asChild size="lg">
+          <Button asChild variant="chunky">
             <Link href={card.resumeHref}>
               <Play className="h-4 w-4 fill-current" />
               {isFresh ? t(`${BASE}.start`) : t(`${BASE}.resume`)}
