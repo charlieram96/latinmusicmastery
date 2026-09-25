@@ -12,6 +12,8 @@ const CHUNKY_BASE =
   "active:scale-100 active:translate-y-[4px] active:shadow-none " +
   "disabled:opacity-100 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-[0_4px_0_hsl(var(--border))]"
 
+const CHUNKY_VARIANTS = ["chunky", "chunky-success", "chunky-danger", "chunky-ghost"] as const
+
 const baseButtonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive active:scale-[0.98]",
   {
@@ -48,6 +50,13 @@ const baseButtonVariants = cva(
         "icon-lg": "size-11",
       },
     },
+    // Chunky buttons size by padding (the spec's 8px 14px / 12px 22px), not the
+    // shared fixed heights; tailwind-merge drops the shared h-/px- they replace.
+    compoundVariants: [
+      { variant: [...CHUNKY_VARIANTS], size: "sm", class: "h-auto gap-1.5 px-[14px] py-2 text-xs has-[>svg]:px-[14px]" },
+      { variant: [...CHUNKY_VARIANTS], size: "default", class: "h-auto px-[22px] py-3 text-sm has-[>svg]:px-[22px]" },
+      { variant: [...CHUNKY_VARIANTS], size: "lg", class: "h-auto px-7 py-3.5 text-base has-[>svg]:px-7" },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",
