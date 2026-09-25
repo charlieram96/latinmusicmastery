@@ -104,7 +104,7 @@ export function FocusStage({
     return () => window.removeEventListener('keydown', onKey)
   }, [q, isGraded, index, check, next, engine])
 
-  if (frame) {
+  if (frame && !frame.noClaim) {
     const outcome = isGraded ? outcomeOf(score) : null
     const wideInput = WIDE_INPUTS.has(q.question_type)
     const FeedbackIcon = outcome === 'ok' ? Check : outcome === 'part' ? Minus : X

@@ -19,6 +19,8 @@ export interface LessonFrameValue {
   claim: (id: string, claim: { tone: ActionTone } | null) => void
   advance: () => void
   teacherName: string | null
+  /** Inside a lesson but must not take over the action bar (see OutsideLessonFrame). */
+  noClaim?: boolean
 }
 
 const FrameContext = createContext<LessonFrameValue | null>(null)
@@ -27,9 +29,12 @@ export function LessonFrameProvider({ value, children }: { value: LessonFrameVal
   return <FrameContext.Provider value={value}>{children}</FrameContext.Provider>
 }
 
-/** Content that must not claim the action bar (an exercise's follow-up questions sit under its game). */
+/** Content that must not claim the action bar (an exercise's follow-up questions sit under its game).
+    It keeps the lesson's advance(), so finishing it still leads to the celebration. */
 export function OutsideLessonFrame({ children }: { children: ReactNode }) {
-  return <FrameContext.Provider value={null}>{children}</FrameContext.Provider>
+  const frame = useContext(FrameContext)
+  const value = useMemo(() => frame && { ...frame, noClaim: true }, [frame])
+  return <FrameContext.Provider value={value}>{children}</FrameContext.Provider>
 }
 
 export function useLessonFrame(): LessonFrameValue | null {
@@ -62,10 +67,10 @@ export function useActionClaims() {
 export function LessonAction({ tone = 'neutral', className, children }: { tone?: ActionTone; className?: string; children: ReactNode }) {
   const frame = useLessonFrame()
   const id = useId()
-  const claim = frame?.claim
+  const claim = frame?.noClaim ? undefined : frame?.claim
   useLayoutEffect(() => { claim?.(id, { tone }) }, [claim, id, tone])
   useLayoutEffect(() => () => claim?.(id, null), [claim, id])
-  if (!frame) return <div className={cn('lx-action-inline', className)} data-tone={tone}>{children}</div>
+  if (!frame || frame.noClaim) return <div className={cn('lx-action-inline', className)} data-tone={tone}>{children}</div>
   return frame.actionHost && frame.topClaim === id ? createPortal(children, frame.actionHost) : null
 }
 

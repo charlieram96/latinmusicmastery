@@ -56,7 +56,7 @@ export function QuizRunner({ questions, kind = 'Quiz', settings, nextHref = null
 
   const body = (
     <MotionConfig reducedMotion="user">
-      <div className={cn(styles.root, inLesson && styles.rootLesson)}>
+      <div data-quiz-root className={cn(styles.root, inLesson && styles.rootLesson)}>
         {mode === 'sheet' ? (
           <ExamSheet questions={ordered} engine={engine} kindLabel={kindLabel} title={title} nextHref={nextHref} onSubmit={() => setFinished(true)} onRestart={restart} />
         ) : finished ? (

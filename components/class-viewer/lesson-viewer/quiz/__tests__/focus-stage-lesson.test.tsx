@@ -97,6 +97,20 @@ describe('FocusStage in a lesson', () => {
     expect([...host.querySelectorAll('button')].some(b => b.textContent?.includes('Check'))).toBe(true)
   })
 
+  it('an exercise’s follow-up questions still continue through the lesson (so it can celebrate)', () => {
+    act(() => root.render(<Lesson runner kind="Exercise" />))
+    const inPanel = (text: string) => [...host.querySelectorAll('[data-quiz-root] button')].find(b => b.textContent?.includes(text)) as HTMLButtonElement
+    for (const answer of ['True', 'False']) {
+      act(() => tile(answer).click())
+      act(() => inPanel('Check').click())
+      act(() => (inPanel('Continue') ?? inPanel('See results')).click())
+    }
+    advance.mockClear()
+    act(() => inPanel('Continue').click())
+    expect(advance).toHaveBeenCalledOnce()
+    expect(bar().querySelector('button')).toBeNull()
+  })
+
   it('keeps the in-panel feedback and buttons outside a lesson', () => {
     act(() => root.render(<Stage />))
     act(() => tile('True').click())

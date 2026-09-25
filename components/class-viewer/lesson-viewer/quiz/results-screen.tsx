@@ -192,7 +192,8 @@ export function ResultsScreen({
   }, [])
 
   const frame = useLessonFrame()
-  const actions = (column: boolean) => frame ? (
+  const claiming = !!frame && !frame.noClaim
+  const actions = (column: boolean) => claiming ? (
     !wide && missed > 0 ? (
       <Button variant="ghost" size="lg" className="rounded-xl" onClick={() => setFilter('missed')}>
         {t('dashboard.classViewer.quiz.results.reviewMissed', { count: missed })}
@@ -200,7 +201,11 @@ export function ResultsScreen({
     ) : null
   ) : (
     <div className={cn('flex flex-wrap justify-center gap-2.5', column && 'w-full flex-col')}>
-      {nextHref && (
+      {frame ? (
+        <Button size="lg" className={cn('rounded-xl', column && 'w-full')} onClick={frame.advance}>
+          {t('dashboard.classViewer.quiz.results.continueNext')} <ArrowRight className="h-4 w-4" />
+        </Button>
+      ) : nextHref && (
         <Button asChild size="lg" className={cn('rounded-xl', column && 'w-full')}>
           <Link href={nextHref}>
             {t('dashboard.classViewer.quiz.results.continueNext')} <ArrowRight className="h-4 w-4" />
@@ -235,7 +240,7 @@ export function ResultsScreen({
 
   return (
     <div ref={ref}>
-      {frame && (
+      {claiming && frame && (
         <LessonAction tone={pct >= 70 ? 'success' : 'neutral'}>
           <ActionMessage live icon={<Trophy className="h-5 w-5" />} title={headline}
             detail={`${scoreLabel} / ${questions.length} ${t('dashboard.classViewer.quiz.results.correct')}`} />
