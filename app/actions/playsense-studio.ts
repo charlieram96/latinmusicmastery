@@ -20,6 +20,7 @@ import {
 import { clearUnpublishedDrafts } from '@/lib/playsense-studio/drafts/server';
 import { readNudges } from '@/lib/playsense-studio/drafts/timing';
 import { rebaseAnchor, secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
+import { getStudioDrafts, type StudioDraft } from '@/app/actions/studio-drafts';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 // ============================================
@@ -174,9 +175,9 @@ export interface ClassItemScoreSection extends ClassItemScorePayload {
   label: string | null;
   videoStartSeconds: number | null;
   videoEndSeconds: number | null;
-  /** Admin-only autosaved sync draft (not yet Published). Null when none.
-   *  Students never receive this — the studio seeds its markers from it. */
-  draftTimeMap: ClassItemScorePayload['activeTimeMap'];
+  /** The admin's unpublished draft for this section (studio_versions), or null.
+   *  Students never receive this. The Studio opens on it when present. */
+  studioDraft: StudioDraft | null;
   /** One video second known to land on a beat, for the student click track.
    *  Null = this section has no click. Marks ANY beat, not necessarily a
    *  downbeat, which is why the click is uniform. */
@@ -195,7 +196,7 @@ export async function getScoreSectionsForClassItem(
   const { data: rows, error } = await supabase
     .from('class_item_score_sections')
     .select(
-      'id, section_index, label, score_document_id, active_time_map_id, draft_time_map_id, video_start_seconds, video_end_seconds, metronome_anchor_seconds, metronome_anchor_qn'
+      'id, section_index, label, score_document_id, active_time_map_id, video_start_seconds, video_end_seconds, metronome_anchor_seconds, metronome_anchor_qn'
     )
     .eq('class_item_id', classItemId)
     .order('section_index', { ascending: true });
@@ -208,9 +209,6 @@ export async function getScoreSectionsForClassItem(
     if (payload.error || !payload.data) {
       return { error: payload.error ?? 'Failed to load a section score' };
     }
-    // Admin-only draft (transient) — only fetched when a section actually has one.
-    const draft = await loadTimeMap(supabase, row.draft_time_map_id);
-    if (draft.error) return { error: draft.error };
     out.push({
       ...payload.data,
       sectionId: row.id,
@@ -218,11 +216,15 @@ export async function getScoreSectionsForClassItem(
       label: row.label,
       videoStartSeconds: row.video_start_seconds,
       videoEndSeconds: row.video_end_seconds,
-      draftTimeMap: draft.data ?? null,
+      studioDraft: null,
       metronomeAnchorSeconds: row.metronome_anchor_seconds,
       metronomeAnchorQn: row.metronome_anchor_qn,
     });
   }
+
+  const drafts = await getStudioDrafts(out.map((s) => ({ kind: 'section' as const, id: s.sectionId })));
+  if (drafts.error) return { error: drafts.error };
+  for (const s of out) s.studioDraft = drafts.data?.[`section:${s.sectionId}`] ?? null;
 
   return { data: out };
 }

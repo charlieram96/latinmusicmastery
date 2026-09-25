@@ -25,6 +25,9 @@ import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-im
 import { sectionColor, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { HoverRail } from '@/components/playsense-studio/studio/shell/hover-rail';
 import { FloatingVideo } from '@/components/playsense-studio/studio/shell/floating-video';
+import { StudioDraftsProvider, useStudioDrafts } from '@/components/playsense-studio/studio/drafts/drafts-context';
+import { UnpublishedDot } from '@/components/playsense-studio/studio/drafts/unpublished-dot';
+import { sectionSeed } from '@/lib/playsense-studio/drafts/seed';
 import { cn } from '@/lib/utils';
 import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import { updateClassItemVideoTrim } from '@/app/actions/playsense-studio';
@@ -50,7 +53,22 @@ function fmt(s: number | null): string {
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-export function VideoSectionsWorkspace({
+export function VideoSectionsWorkspace(props: VideoSectionsWorkspaceProps) {
+  const { initialSections } = props;
+  return (
+    <StudioDraftsProvider
+      owners={initialSections.map((s) => ({
+        owner: { kind: 'section', id: s.sectionId },
+        label: s.studioDraft?.score.title ?? s.scoreDocument.title,
+        unpublished: s.studioDraft != null,
+      }))}
+    >
+      <VideoSectionsBody {...props} />
+    </StudioDraftsProvider>
+  );
+}
+
+function VideoSectionsBody({
   classItemId,
   backHref = '/admin/courses',
   title,
@@ -60,12 +78,21 @@ export function VideoSectionsWorkspace({
   initialSections,
   appBarExtra,
 }: VideoSectionsWorkspaceProps) {
+  const { statuses, register } = useStudioDrafts();
   const [sections, setSections] = useState(initialSections);
   const [selectedId, setSelectedId] = useState<string | null>(initialSections[0]?.sectionId ?? null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   // Set by the import dialog's onConfirm so onImported can select the new section.
   const pendingSelectRef = useRef<string | undefined>(undefined);
+
+  // Mirrors selectedId so the `changed` handlers below (registered once per
+  // section-id set, not per render) always refetch relative to whatever is
+  // currently selected, not whatever was selected when they were registered.
+  const selectedIdRef = useRef(selectedId);
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
 
   // The trim belongs to the VIDEO, which outlives any one section editor, so
   // it is owned here rather than inside ScoreSectionEditor.
@@ -119,19 +146,33 @@ export function VideoSectionsWorkspace({
   // "New section" popover (Build measures / Import score at playhead).
   const [newSecOpen, setNewSecOpen] = useState(false);
 
-  const refetch = async (selectId?: string) => {
+  const refetch = useCallback(async (selectId?: string) => {
     const res = await getScoreSectionsForClassItem(classItemId);
     if (res.error || !res.data) {
       setError(res.error ?? 'Failed to load sections');
       return;
     }
-    setSections(res.data);
+    const data = res.data;
+    setSections(data);
     if (selectId !== undefined) {
       setSelectedId(selectId);
-    } else if (!res.data.some((s) => s.sectionId === selectedId)) {
-      setSelectedId(res.data[0]?.sectionId ?? null);
+    } else {
+      setSelectedId((cur) => (data.some((s) => s.sectionId === cur) ? cur : (data[0]?.sectionId ?? null)));
     }
-  };
+  }, [classItemId]);
+
+  // Refetch (reseeding sections not currently mounted) whenever another part of
+  // the Studio publishes or discards that section's draft. Re-registers only
+  // when the set of section ids changes — selectedId is read through the ref
+  // above so the handler itself is never stale.
+  const sectionIdsKey = sections.map((s) => s.sectionId).join('|');
+  useEffect(() => {
+    const unregisters = sections.map((s) =>
+      register(`section:${s.sectionId}`, { changed: () => void refetch(selectedIdRef.current ?? undefined) })
+    );
+    return () => unregisters.forEach((u) => u());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sectionIdsKey, register, refetch]);
 
   const addBlank = () => {
     setError(null);
@@ -159,6 +200,9 @@ export function VideoSectionsWorkspace({
   };
 
   const selected = sections.find((s) => s.sectionId === selectedId) ?? null;
+  // What the editor opens on: the section's unpublished draft, else the live
+  // content students see.
+  const seed = selected ? sectionSeed(selected) : null;
 
   // Timeline-lane view of the sections (the active one renders live from its
   // markers inside SyncPanel; siblings use their published video ranges).
@@ -302,7 +346,8 @@ export function VideoSectionsWorkspace({
                       {sections.map((s, i) => {
                         const isSel = s.sectionId === selectedId;
                         const instrument = s.tracks[0]?.instrument ?? '—';
-                        const name = s.scoreDocument.title;
+                        const name = s.studioDraft?.score.title ?? s.scoreDocument.title;
+                        const unpublished = statuses[`section:${s.sectionId}`]?.unpublished;
                         return (
                           <li key={s.sectionId}>
                             <div
@@ -323,13 +368,16 @@ export function VideoSectionsWorkspace({
                                   aria-hidden
                                 />
                                 <span className="min-w-0 flex-1">
-                                  <span
-                                    className={cn(
-                                      'block truncate text-[13px] font-medium',
-                                      isSel ? 'text-primary' : 'text-foreground'
-                                    )}
-                                  >
-                                    {name}
+                                  <span className="flex items-center gap-1.5">
+                                    <span
+                                      className={cn(
+                                        'truncate text-[13px] font-medium',
+                                        isSel ? 'text-primary' : 'text-foreground'
+                                      )}
+                                    >
+                                      {name}
+                                    </span>
+                                    {unpublished && <UnpublishedDot />}
                                   </span>
                                   <span className="block truncate font-mono text-[10px] text-muted-foreground">
                                     {instrument} ·{' '}
@@ -369,20 +417,20 @@ export function VideoSectionsWorkspace({
 
         {/* Center: the active section editor (or an empty state). */}
         <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 md:p-4">
-          {selected ? (
+          {selected && seed ? (
             <ScoreSectionEditor
               key={`${selected.sectionId}:${selected.scoreDocument.id}`}
               classItemId={classItemId}
               sectionId={selected.sectionId}
               scoreDocumentId={selected.scoreDocument.id}
-              initialScore={selected.scoreDocument.parsedScore}
-              // Seed the sync markers from the admin's autosaved draft when present,
-              // else the last Published map. Students only ever get activeTimeMap.
-              activeTimeMap={selected.draftTimeMap ?? selected.activeTimeMap}
-              hasDraft={selected.draftTimeMap != null}
+              // Seeded from the admin's unpublished draft when present, else the
+              // last Published content. Students only ever get the live rows.
+              initialScore={seed.score}
+              activeTimeMap={seed.timeMap}
+              initialTiming={seed.timing}
               videoUrl={videoUrl}
               videoDurationSeconds={videoDurationSeconds}
-              initialMetronomeAnchorSeconds={selected.metronomeAnchorSeconds}
+              initialMetronomeAnchorSeconds={seed.anchorSeconds}
               trim={trim}
               onTrimDrag={handleTrimDrag}
               onChanged={() => void refetch(selected.sectionId)}

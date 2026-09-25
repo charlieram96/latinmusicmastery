@@ -365,6 +365,7 @@ html:has([data-marketing]) {
 .st-hrail-dot.is-ok { background: hsl(var(--success)); }
 .st-hrail-dot.is-warn { background: hsl(var(--gold-highlight)); }
 .st-hrail-dot.is-bad { background: hsl(var(--destructive)); }
+.st-unpub-dot { display: inline-block; width: 7px; height: 7px; border-radius: 9999px; background: hsl(var(--gold-highlight)); flex-shrink: 0; }
 .st-hrail-body {
   flex: 0 0 288px; width: 288px; overflow-y: auto; padding: 14px 16px 24px;
   opacity: 0; transform: translateX(-8px);

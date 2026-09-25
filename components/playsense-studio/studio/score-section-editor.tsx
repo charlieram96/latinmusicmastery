@@ -13,12 +13,13 @@
 // preview → the bottom drawer. SyncPanel itself portals its inspector + transport
 // into the right rail + bottom dock.
 
-import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import { FileUp, Redo2, Save, Undo2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { saveScoreDocument, replaceSectionScore } from '@/app/actions/playsense-studio';
+import { replaceSectionScore } from '@/app/actions/playsense-studio';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
+import { useStudioDraft } from '@/components/playsense-studio/studio/drafts/use-studio-draft';
+import type { StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import type { MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
@@ -34,8 +35,8 @@ export interface ScoreSectionEditorProps {
   scoreDocumentId: string;
   initialScore: ScoreDocument;
   activeTimeMap: PlaysenseStudioPlayerTimeMap | null;
-  /** True when this section has an autosaved sync draft not yet Published. */
-  hasDraft?: boolean;
+  /** Seeds the SyncPanel's markers: the draft's timing when one exists, else live. */
+  initialTiming: StudioTiming;
   videoUrl: string | null;
   videoDurationSeconds: number | null;
   /** The section's stored click anchor, seeded into SyncPanel. */
@@ -58,15 +59,13 @@ export interface ScoreSectionEditorProps {
   highwayOpen: boolean;
 }
 
-const AUTOSAVE_INTERVAL_MS = 1000;
-
 export function ScoreSectionEditor({
   classItemId,
   sectionId,
   scoreDocumentId,
   initialScore,
   activeTimeMap,
-  hasDraft,
+  initialTiming,
   videoUrl,
   videoDurationSeconds,
   initialMetronomeAnchorSeconds,
@@ -83,69 +82,31 @@ export function ScoreSectionEditor({
   drawerEl,
   highwayOpen,
 }: ScoreSectionEditorProps) {
-  const { state, dispatch, undo, redo, canUndo, canRedo, markClean } = useEditor(initialScore);
+  const { state, dispatch, undo, redo, canUndo, canRedo, markClean, replaceScore } = useEditor(initialScore);
+  const draft = useStudioDraft({
+    owner: { kind: 'section', id: sectionId },
+    label: state.score.title,
+    score: state.score,
+    isDirty: state.isDirty,
+    markClean,
+    replaceScore,
+    initialTiming,
+  });
 
-  const [savingState, setSavingState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   // App-bar slot SyncPanel portals its "Add score" chip into (state, not a ref,
   // so the portal renders once the node mounts).
   const [scoreActionsEl, setScoreActionsEl] = useState<HTMLElement | null>(null);
-  const [isPending, startTransition] = useTransition();
 
-  // Latest editor state, mirrored so timers/handlers/unmount always read the
-  // newest score (never a stale closure). savingRef prevents overlapping saves.
-  const stateRef = useRef(state);
-  useEffect(() => {
-    stateRef.current = state;
-  });
-  const savingRef = useRef(false);
   // The section name shown in the sidebar/lane IS the score title; refetch to
-  // refresh it only when the title actually changed (renames are rare).
+  // refresh it only when the title actually changed (renames are rare), and only
+  // once that rename has actually made it into the saved draft.
   const lastSyncedTitleRef = useRef(initialScore.title);
-
-  const persist = useCallback(() => {
-    const snap = stateRef.current;
-    if (!snap.isDirty || savingRef.current) return;
-    savingRef.current = true;
-    setSavingState('saving');
-    setErrorMessage(null);
-    startTransition(async () => {
-      const result = await queueStudioSave(scoreDocumentId, () => saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score })).catch(() => ({ error: 'Could not save. Check your connection and retry.' }));
-      savingRef.current = false;
-      if (result.error) {
-        setSavingState('error');
-        setErrorMessage(result.error);
-        return;
-      }
-      setSavingState('saved');
-      // Only clean if no edit landed during the save; the reducer clones on every
-      // edit, so an unchanged reference means nothing newer is pending.
-      if (stateRef.current.score === snap.score) markClean();
-      if (snap.score.title !== lastSyncedTitleRef.current) {
-        lastSyncedTitleRef.current = snap.score.title;
-        onChanged();
-      }
-    });
-  }, [scoreDocumentId, markClean, onChanged]);
-
-  // Save after editing pauses, including edits made during the previous save.
   useEffect(() => {
-    if (!state.isDirty || isPending || savingState === 'error') return;
-    const id = setTimeout(persist, AUTOSAVE_INTERVAL_MS);
-    return () => clearTimeout(id);
-  }, [persist, state.score, state.isDirty, isPending, savingState]);
-
-  // Flush a pending edit on unmount (e.g. switching sections) so nothing within
-  // the autosave window is lost. Fire-and-forget: no local state / no onChanged
-  // (the closed-over onChanged would reselect the section we just left).
-  useEffect(() => {
-    return () => {
-      const snap = stateRef.current;
-      if (snap.isDirty) {
-        void queueStudioSave(scoreDocumentId, () => saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score })).catch(() => undefined);
-      }
-    };
-  }, [scoreDocumentId]);
+    if (draft.saveState === 'saved' && state.score.title !== lastSyncedTitleRef.current) {
+      lastSyncedTitleRef.current = state.score.title;
+      onChanged();
+    }
+  }, [draft.saveState, state.score.title, onChanged]);
 
   // Cmd/Ctrl+Z = undo, +Shift = redo (or Ctrl+Y), Cmd/Ctrl+S = save now.
   useEffect(() => {
@@ -163,23 +124,24 @@ export function ScoreSectionEditor({
         redo();
       } else if (e.key === 's' || e.key === 'S') {
         e.preventDefault();
-        persist();
+        void draft.flush();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [undo, redo, persist]);
+  }, [undo, redo, draft]);
 
   return (
     <>
       {/* Center: error banner + the SyncPanel stage. */}
-      {errorMessage && (
+      {draft.error && (
         <p className="mb-3 shrink-0 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {errorMessage}
+          {draft.error}
         </p>
       )}
 
       <SyncPanel
+        key={draft.timingEpoch}
         classItemId={classItemId}
         scoreDocumentId={scoreDocumentId}
         sectionId={sectionId}
@@ -188,7 +150,6 @@ export function ScoreSectionEditor({
         score={state.score}
         dispatch={dispatch}
         activeTimeMap={activeTimeMap}
-        hasDraft={hasDraft}
         videoDurationSeconds={videoDurationSeconds}
         initialMetronomeAnchorSeconds={initialMetronomeAnchorSeconds}
         trim={trim}
@@ -241,21 +202,23 @@ export function ScoreSectionEditor({
               <Redo2 className="h-4 w-4" />
             </button>
             <span role="status" className="text-right text-xs tabular-nums text-muted-foreground">
-              {savingState === 'saving' || isPending
-                ? 'Saving…'
-                : state.isDirty
-                  ? (savingState === 'error' ? 'Save failed' : 'Saving soon…')
-                  : savingState === 'saved'
-                    ? 'All changes saved'
-                    : 'Autosave on'}
+              {draft.saveState === 'saving'
+                ? 'Saving draft…'
+                : draft.saveState === 'error'
+                  ? 'Save failed'
+                  : draft.pending
+                    ? 'Saving soon…'
+                    : draft.saveState === 'saved'
+                      ? 'Draft saved'
+                      : 'Autosave on'}
             </span>
             <button
-              onClick={persist}
-              disabled={!state.isDirty || isPending}
+              onClick={() => void draft.flush()}
+              disabled={!draft.pending}
               className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save className="h-4 w-4" />
-              <span className="hidden sm:inline">{savingState === 'error' ? 'Retry save' : 'Save now'}</span>
+              <span className="hidden sm:inline">{draft.saveState === 'error' ? 'Retry save' : 'Save now'}</span>
             </button>
           </>,
           appBarEl,
