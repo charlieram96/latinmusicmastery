@@ -32,6 +32,10 @@ export default async function PlaysenseStudioSongPage({ params }: PageProps) {
   const { scoreDocument, song } = result.data;
 
   const drafts = await getStudioDrafts([{ kind: 'song', id: song.id }]);
+  // A draft-load error must not open the Studio on live: the next edit would
+  // autosave over the unseen draft, and Publish would push live-plus-edit.
+  // Same handling as the class item Studio's sections path.
+  if (drafts.error) notFound();
 
   return (
     <StudioWorkspace

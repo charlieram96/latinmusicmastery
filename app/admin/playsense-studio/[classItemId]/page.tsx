@@ -95,6 +95,10 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
       backingTracks: [],
     };
     const drafts = await getStudioDrafts([{ kind: 'exercise', id: classItemId }]);
+    // A draft-load error must not open the Studio on live: the next edit would
+    // autosave over the unseen draft, and Publish would push live-plus-edit.
+    // Same handling as the sections path above.
+    if (drafts.error) notFound();
     return (
       <ExerciseStudio
         // Remount when the graded score is attached/replaced, so the editor
@@ -136,6 +140,10 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
   if (!result.data) notFound();
 
   const drafts = await getStudioDrafts([{ kind: 'exercise', id: classItemId }]);
+  // A draft-load error must not open the Studio on live: the next edit would
+  // autosave over the unseen draft, and Publish would push live-plus-edit.
+  // Same handling as the sections path.
+  if (drafts.error) notFound();
 
   return (
     <StudioWorkspace
