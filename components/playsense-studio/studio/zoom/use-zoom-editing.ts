@@ -371,35 +371,32 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
         if (!z) return;
         const c = z.cursor;
         const ctx = contextOf(o);
-        let events = ctx.events(c.measureIndex, c.voice);
-        let score = o.score;
-        let index: number;
-        const actions: EditorAction[] = [];
+        const events = ctx.events(c.measureIndex, c.voice);
         if (c.index === 'end') {
-          // Nothing under the cursor: append a rest of the current value to split.
+          // Nothing under the cursor: append a rest of the current value and
+          // split it, in one action so one undo takes both back.
           const barQN = ctx.barQN(c.measureIndex);
           const base = isFiller(events, c.voice, barQN) ? [] : events;
           if (occupiedQN(base) + soundingQN(z.value, 0) > barQN + QN_EPS) {
             o.flash(barFullMessage(measureNumber(o, c.measureIndex)));
             return;
           }
-          const append: EditorAction = {
-            type: 'write-event',
-            at: { trackIndex: o.trackIndex, measureIndex: c.measureIndex, voice: c.voice, eventIndex: 'end' },
-            kind: 'rest', value: z.value, dots: 0,
-          };
-          const state: EditorState = { score, past: [], future: [], isDirty: false };
-          score = editorReducer(state, append).score;
-          events = score.tracks[o.trackIndex]?.measures[c.measureIndex]?.voices[c.voice]?.events ?? [];
-          index = events.length - 1;
-          actions.push(append);
-        } else {
-          index = c.index;
+          const at = { trackIndex: o.trackIndex, measureIndex: c.measureIndex, voice: c.voice, eventIndex: 'end' as const };
+          const apply: EditorAction = { type: 'apply-tuplet', at, value: z.value, n, m };
+          if (!wouldChange(o.score, apply)) {
+            o.flash(tupletSplitMessage(VALUE_NAME[z.value].toLowerCase(), n, m));
+            return;
+          }
+          o.dispatch(apply);
+          // The cursor sits on the group's first note: the appended rest.
+          setCursor(o, { ...c, index: base.length, anchor: null });
+          return;
         }
+        const index = c.index;
         const e = events[index];
         if (!e) return;
         const apply: EditorAction = { type: 'apply-tuplet', ref: refAt(o, c, index), n, m };
-        if (!wouldChange(score, apply)) {
+        if (!wouldChange(o.score, apply)) {
           const written = writtenValue(e);
           o.flash(
             eventTuplet(e) ? MSG_TUPLET_MERGE
@@ -408,8 +405,7 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
           );
           return;
         }
-        actions.push(apply);
-        actions.forEach((a) => o.dispatch(a));
+        o.dispatch(apply);
         // The cursor sits on the group's first note (a merge lands there too).
         const t = eventTuplet(e);
         const first = t?.id ? events.findIndex((x) => eventTuplet(x)?.id === t.id)

@@ -152,6 +152,8 @@ export type EditorAction =
   | { type: 'toggle-event-grace'; ref: EventRef; slash: boolean; keyFifths: number }
   | { type: 'toggle-event-tie'; ref: EventRef }
   | { type: 'apply-tuplet'; ref: EventRef; n: number; m: number }
+  /** A tuplet at the voice's end: appends a rest of `value` and splits it, as one undo step. */
+  | { type: 'apply-tuplet'; at: EntryAt; value: NoteValue; n: number; m: number }
   | { type: 'toggle-span'; spanType: 'slur' | 'cresc' | 'dim'; from: EventRef; to?: EventRef }
   | { type: 'undo' }
   | { type: 'redo' }
@@ -1063,6 +1065,20 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return withHistory(state, next);
     }
     case 'apply-tuplet': {
+      if ('at' in action) {
+        const { at, value, n, m } = action;
+        if (at.eventIndex !== 'end') {
+          return editorReducer(state, { type: 'apply-tuplet', ref: { ...at, eventIndex: at.eventIndex }, n, m });
+        }
+        // write-event checks the fit (and clears a lone filler rest).
+        const appended = editorReducer(state, { type: 'write-event', at, kind: 'rest', value, dots: 0 });
+        if (appended === state) return state;
+        const events = appended.score.tracks[at.trackIndex]?.measures[at.measureIndex]?.voices[at.voice]?.events ?? [];
+        const split = editorReducer(appended, { type: 'apply-tuplet', ref: { ...at, eventIndex: events.length - 1 }, n, m });
+        if (split === appended) return state;
+        // Both steps land as one history entry.
+        return { ...split, past: [...state.past, state.score].slice(-HISTORY_LIMIT) };
+      }
       const next = clone(state.score);
       const [r] = resolveRefs(next, [action.ref]);
       if (!r) return state;

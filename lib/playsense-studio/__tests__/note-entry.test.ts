@@ -185,6 +185,9 @@ describe('note entry: fix round 1', () => {
     expect(s1.score.tracks[0].measures[0].voices[0]).toEqual(s0.score.tracks[0].measures[0].voices[0]);
     const s2 = editorReducer(s1, { type: 'apply-tuplet', ref: v2, n: 3, m: 2 });
     expect(s2.score.tracks[0].measures[0].voices[0]).toEqual(s0.score.tracks[0].measures[0].voices[0]);
+    const s3 = editorReducer(s0, { type: 'apply-tuplet', at: at(0, 'end', 1), value: 'q', n: 3, m: 2 });
+    expect(ev(s3, 0, 1)).toHaveLength(5);
+    expect(s3.score.tracks[0].measures[0].voices[0]).toEqual(s0.score.tracks[0].measures[0].voices[0]);
   });
   it('refuses to add a chord note to a percussion note', () => {
     const s0 = st(doc([bar(1, [{ kind: 'note', id: 'p', midi: 38, durationQN: 1, percussion: { staffLine: 'C5', notehead: 'normal' } }])]));

@@ -136,6 +136,18 @@ describe('final review fixes', () => {
     s = editorReducer(s, { type: 'apply-tuplet', ref: r, n: 3, m: 2 });
     expect(ev(s)[0]).toEqual(chord);
   });
+  it('a tuplet at the end of a bar appends and splits a rest in one undo step', () => {
+    const s0 = st(doc([bar(1, [n(60, 3)])]));
+    const s1 = editorReducer(s0, { type: 'apply-tuplet', at: { ...r, eventIndex: 'end' }, value: 'q', n: 3, m: 2 });
+    expect(ev(s1).map((e) => [e.kind, e.durationQN])).toEqual([['note', 3], ...Array(3).fill(['rest', expect.closeTo(1 / 3, 9)])]);
+    expect(new Set(ev(s1).slice(1).map((e) => e.tuplet?.id)).size).toBe(1);
+    expect(s1.past).toHaveLength(1);
+    expect(editorReducer(s1, { type: 'undo' }).score).toEqual(s0.score);
+  });
+  it('refuses a tuplet at the end of a bar that has no room', () => {
+    const s0 = st(doc([bar(1, [n(60, 3.5)])]));
+    expect(editorReducer(s0, { type: 'apply-tuplet', at: { ...r, eventIndex: 'end' }, value: 'q', n: 3, m: 2 })).toBe(s0);
+  });
 });
 
 describe('slurs', () => {
