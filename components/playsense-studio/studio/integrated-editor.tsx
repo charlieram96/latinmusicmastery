@@ -59,6 +59,8 @@ import { isTypingTarget } from '@/lib/playsense-studio/typing-target';
 import { PianoRollView } from './piano-roll-view';
 import { PercussionStrokePicker } from './percussion-stroke-picker';
 import { MidiRecordButton, type MidiRecordingSource } from './midi-record-button';
+import { MeasureZoom, type ZoomState } from './zoom/measure-zoom';
+import type { ZoomLayout } from './zoom/zoom-staff';
 
 type Articulation = 'staccato' | 'accent' | 'tenuto';
 
@@ -227,6 +229,16 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [repeatPop, setRepeatPop] = useState<{ anchor: PopoverAnchor } | null>(null);
   const [gapPop, setGapPop] = useState<{ gap: number; anchor: PopoverAnchor } | null>(null);
   const [barPop, setBarPop] = useState<{ anchor: PopoverAnchor } | null>(null);
+  // The measure zoom (one bar drawn large over the strip), or null when closed.
+  // `zoomOrigin` is the bar's rect in the strip for the enter/exit animation;
+  // `zoomClosing` asks the zoom to play its exit and then call back to close.
+  const [zoom, setZoom] = useState<ZoomState | null>(null);
+  const [zoomOrigin, setZoomOrigin] = useState<{ left: number; width: number } | null>(null);
+  const [zoomClosing, setZoomClosing] = useState(false);
+  const zoomOpen = zoom !== null;
+  // The zoomed bar's note layout (hits, beat span, line math) for the zoom's
+  // pointer and toolbar work in later tasks.
+  const zoomLayout = useRef<ZoomLayout | null>(null);
   // A menu belongs to the bars it opened on: every key or click that changes
   // the bar selection closes whichever menu is open.
   const closeMenus = useCallback(() => {
@@ -439,7 +451,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // a selected NOTE; the same keys on selected bars live in useMeasureKeys.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (!selected || isTypingTarget(e.target)) return;
+      // The zoom owns its keys while it's open (its selection follows its cursor).
+      if (!selected || zoomOpen || isTypingTarget(e.target)) return;
       if (e.key === 'Escape') {
         e.preventDefault();
         setSelected(null);
@@ -457,7 +470,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [selected, dispatch, activeTrackIndex]);
+  }, [selected, zoomOpen, dispatch, activeTrackIndex]);
 
   // Extract the active track's notation once per score edit. Kept apart from
   // stripItems so moving sync markers (measureTimings) doesn't re-extract.
@@ -746,17 +759,119 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     [stripItems, viewportWidth, onRequestZoom]
   );
 
-  // Open a bar: until the measure zoom exists, zoom the timeline so the bar
-  // fills 56% of the viewport, centred, and select it.
-  const openMeasure = useCallback((index: number) => {
+  // Zoom the timeline so bar `index` fills 56% of the viewport, centred.
+  const zoomWaveformTo = useCallback((index: number) => {
     const t = measureTimings[index];
-    if (!t || viewportWidth <= 0) return;
+    if (!t || viewportWidth <= 0) return false;
     const span = Math.max(0.05, t.endVideoTimeSeconds - t.startVideoTimeSeconds);
     const pps = Math.min(600, Math.max(8, (viewportWidth * 0.56) / span));
     const scroll = Math.max(0, t.startVideoTimeSeconds * pps - (viewportWidth - span * pps) / 2);
-    selectBars({ anchor: index, focus: index });
     onRequestZoom(pps, scroll);
-  }, [measureTimings, viewportWidth, onRequestZoom, selectBars]);
+    return true;
+  }, [measureTimings, viewportWidth, onRequestZoom]);
+
+  // A bar's rect in the strip right now (strip x, before any zoom it asks for).
+  const barRect = useCallback((index: number) => {
+    const t = measureTimings[index];
+    if (!t) return null;
+    const left = t.startVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
+    return { left, width: Math.max(1, (t.endVideoTimeSeconds - t.startVideoTimeSeconds) * pixelsPerSecond) };
+  }, [measureTimings, pixelsPerSecond, scrollLeftPx]);
+
+  const zoomEvents = useCallback(
+    (measureIndex: number, voice: 0 | 1) => activeTrack?.measures[measureIndex]?.voices[voice]?.events ?? [],
+    [activeTrack]
+  );
+
+  // Open a bar in the measure zoom: the timeline zooms to it, it's selected,
+  // and the cursor sits on `eventIndex` (else its first event, else the end).
+  const openMeasure = useCallback((index: number, eventIndex?: number) => {
+    const origin = barRect(index);
+    if (!zoomWaveformTo(index)) return;
+    selectBars({ anchor: index, focus: index });
+    setZoomOrigin(origin);
+    setZoomClosing(false);
+    setZoom({
+      measureIndex: index,
+      cursor: { measureIndex: index, voice: 0, index: eventIndex ?? (zoomEvents(index, 0).length ? 0 : 'end'), anchor: null },
+      value: 'q',
+      dots: 0,
+      pencil: false,
+    });
+  }, [barRect, zoomWaveformTo, selectBars, zoomEvents]);
+
+  // ‹ › (and ⌘←/→): move the zoom to the neighbouring bar, cursor at its start
+  // going forward or its end going back.
+  const navZoom = useCallback((dir: 1 | -1) => {
+    if (!zoom) return;
+    const target = zoom.measureIndex + dir;
+    if (target < 0 || target >= measureCount) return;
+    zoomWaveformTo(target);
+    setMeasureRange({ anchor: target, focus: target });
+    const voice = zoom.cursor.voice;
+    setZoom({
+      ...zoom,
+      measureIndex: target,
+      cursor: { measureIndex: target, voice, index: dir === 1 && zoomEvents(target, voice).length ? 0 : 'end', anchor: null },
+    });
+  }, [zoom, measureCount, zoomWaveformTo, zoomEvents]);
+
+  const setZoomVoice = useCallback((voice: 0 | 1) => {
+    if (!zoom) return;
+    const m = zoom.measureIndex;
+    setZoom({ ...zoom, cursor: { measureIndex: m, voice, index: zoomEvents(m, voice).length ? 0 : 'end', anchor: null } });
+  }, [zoom, zoomEvents]);
+
+  // Close: the zoom plays its exit toward the bar's rect now, then finishZoomClose.
+  const closeZoom = useCallback(() => {
+    if (!zoom) return;
+    setZoomOrigin(barRect(zoom.measureIndex));
+    setZoomClosing(true);
+  }, [zoom, barRect]);
+  const finishZoomClose = useCallback(() => {
+    const m = zoom?.measureIndex;
+    setZoom(null);
+    setZoomClosing(false);
+    zoomLayout.current = null;
+    if (m !== undefined) selectBars({ anchor: m, focus: m });
+  }, [zoom, selectBars]);
+
+  // The note selection follows the zoom cursor: a voice-1 event under it is the
+  // selected note (SyncPanel's inspector, [ / ] nudges, the waveform handle);
+  // anything else ('end', voice 2) selects no note. Adjusted during render
+  // whenever the zoom state changes (whoever changed it), so it lands in the
+  // same commit as the cursor move.
+  const [syncedZoom, setSyncedZoom] = useState<ZoomState | null>(null);
+  if (zoom !== syncedZoom) {
+    setSyncedZoom(zoom);
+    if (zoom) {
+      const c = zoom.cursor;
+      const eventIndex = c.voice === 0 && typeof c.index === 'number' && zoomEvents(c.measureIndex, 0)[c.index] ? c.index : null;
+      if (eventIndex === null) {
+        if (selected !== null) setSelected(null);
+      } else if (!selected || selected.measureIndex !== c.measureIndex || selected.eventIndex !== eventIndex) {
+        setSelected({ measureIndex: c.measureIndex, eventIndex });
+      }
+    }
+  }
+
+  // Esc closes the zoom (Task 7's zoom keys take this over).
+  useEffect(() => {
+    if (!zoomOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || isTypingTarget(e.target)) return;
+      e.preventDefault();
+      closeZoom();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [zoomOpen, closeZoom]);
+
+  // A zoomed bar that no longer exists (undo, a delete elsewhere) closes the zoom.
+  if (zoom && zoom.measureIndex >= measureCount) {
+    setZoom(null);
+    setZoomClosing(false);
+  }
 
   // ---- Toolbar control handlers ---------------------------------------------
 
@@ -893,7 +1008,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (isTypingTarget(e.target)) return;
+      if (zoomOpen || isTypingTarget(e.target)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
       if (e.key === 'Enter') {
@@ -961,7 +1076,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // ---- The floating measure bar ----------------------------------------------
 
   useMeasureKeys({
-    enabled: selected === null && editorTab === 'staff',
+    enabled: selected === null && !zoom && editorTab === 'staff',
     count: measureCount,
     selection: measureRange,
     onSelection: selectBars,
@@ -981,7 +1096,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     const w = el?.offsetWidth ?? 0;
     if (w > 0 && w !== barWidth) setBarWidth(w);
   };
-  const barPos = bounds && !selected && !selDragging ? (() => {
+  const barPos = bounds && !selected && !selDragging && !zoom ? (() => {
     const a = measureTimings[bounds[0]], b = measureTimings[bounds[1]];
     if (!a || !b) return null;
     const l = a.startVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
@@ -1007,6 +1122,15 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     return (qn / seconds) * 60;
   })();
   const barLooping = !!bounds && !!loopedRange && loopedRange[0] === bounds[0] && loopedRange[1] === bounds[1];
+  // The zoomed bar's tempo: barBpm's formula for that one bar.
+  const zoomBpm = (() => {
+    if (!zoom) return null;
+    const t = measureTimings[zoom.measureIndex];
+    const b = tracked[zoom.measureIndex];
+    if (!t || !b) return null;
+    const seconds = t.endVideoTimeSeconds - t.startVideoTimeSeconds;
+    return seconds > 0 ? (measureLengthInQN(b.timeSignature) / seconds) * 60 : null;
+  })();
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
@@ -1021,7 +1145,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           ).map((t) => (
             <button
               key={t.id}
-              onClick={() => setEditorTab(t.id)}
+              onClick={() => {
+                setEditorTab(t.id);
+                // The zoom lives over the staff strip; leaving it closes the zoom.
+                if (t.id !== 'staff' && zoom) finishZoomClose();
+              }}
               className={editorTab === t.id ? 'is-on' : ''}
             >
               {t.label}
@@ -1150,13 +1278,30 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 onDelete={deleteRange}
               />
             )}
-            {shortcutsOpen && (
+            {zoom && stripItems[zoom.measureIndex] && (
+              <MeasureZoom
+                items={stripItems}
+                zoom={zoom}
+                height={staffHeight}
+                spans={score.spans}
+                fill={stripItems[zoom.measureIndex].fill}
+                bpm={zoomBpm}
+                percussion={percussion}
+                origin={zoomOrigin}
+                closing={zoomClosing}
+                onVoice={setZoomVoice}
+                onNav={navZoom}
+                onClose={finishZoomClose}
+                onLayout={(l) => { zoomLayout.current = l; }}
+              />
+            )}
+            {shortcutsOpen && !zoom && (
               <ShortcutsPopover
                 anchor={{ left: Math.max(8, viewportWidth - 330), top: REP_H + 4 }}
                 onClose={() => setShortcutsOpen(false)}
               />
             )}
-            {repeatPop && rangeStart !== null && rangeEnd !== null && (
+            {repeatPop && !zoom && rangeStart !== null && rangeEnd !== null && (
               <RepeatPopover
                 anchor={repeatPop.anchor}
                 range={[rangeStart, rangeEnd]}
@@ -1186,7 +1331,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 onClose={() => setRepeatPop(null)}
               />
             )}
-            {gapPop && activeTrack && (
+            {gapPop && !zoom && activeTrack && (
               <GapMenu
                 anchor={gapPop.anchor}
                 gap={gapPop.gap}
@@ -1216,7 +1361,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 onClose={() => setGapPop(null)}
               />
             )}
-            {barPop && activeTrack && rangeStart !== null && barPopCurrent && (
+            {barPop && !zoom && activeTrack && rangeStart !== null && barPopCurrent && (
               <BarPopover
                 anchor={barPop.anchor}
                 measureIndex={rangeStart}
@@ -1229,7 +1374,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               />
             )}
           </div>
-          <div className="st-strip-foot">
+          {!zoom && <div className="st-strip-foot">
             {issues.length > 0 && (
               <button type="button" className={`st-issue-chip${anyOver ? ' is-bad' : ''}`} onClick={nextIssue} title="Jump to the next bar that doesn’t add up">
                 {issues.length === 1 ? '1 bar doesn’t add up' : `${issues.length} bars don’t add up`} · {issues.slice(0, 3).map((i) => `m.${stripItems[i].measureNumber}`).join(', ')}{issues.length > 3 ? '…' : ''} ▾
@@ -1254,7 +1399,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             >
               ?
             </button>
-          </div>
+          </div>}
         </>
       )}
       {editorTab === 'piano-roll' && (

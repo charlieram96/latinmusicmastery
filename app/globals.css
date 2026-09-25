@@ -717,6 +717,26 @@ html:has([data-marketing]) {
 .is-new { transform-origin: left center; animation: st-grow .35s cubic-bezier(.2,.8,.2,1); }
 @media (prefers-reduced-motion: reduce) { .is-new { animation: none; } }
 
+/* The measure zoom: one bar drawn large over the strip, its neighbours as
+   dimmed slivers. The root is .st-zoom-overlay because .st-zoom is already the
+   timeline's zoom slider. */
+.st-zoom-overlay { position: absolute; inset: 0; z-index: 46; display: grid; grid-template-columns: minmax(56px, 13%) 1fr minmax(56px, 13%);
+  grid-template-rows: 30px 1fr 18px; background: hsl(var(--card)); border-radius: 10px; overflow: hidden; }
+.st-zoom-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 0 10px; font-size: 12px; }
+.st-zoom-sliver { position: relative; opacity: .35; cursor: pointer; transition: opacity .15s; }
+.st-zoom-sliver:hover { opacity: .7; }
+.st-zoom-sliver-label { position: absolute; top: 2px; left: 6px; font: 10px ui-monospace, monospace; color: hsl(var(--muted-foreground)); }
+.st-zoom-center { position: relative; }
+.st-zoom-band { position: absolute; top: 0; bottom: 0; pointer-events: none; }
+.st-zoom-band[data-odd='true'] { background: rgba(255,255,255,.022); }
+.st-zoom-band > span { position: absolute; top: 2px; left: 4px; font: 10px ui-monospace, monospace; color: hsl(var(--muted-foreground)); }
+.st-zoom-meter { grid-column: 2; display: flex; gap: 1px; height: 8px; margin: 5px 0; border-radius: 4px; overflow: hidden;
+  background: repeating-linear-gradient(135deg, hsl(var(--muted)) 0 4px, transparent 4px 8px); }
+.st-zoom-meter > i { display: block; height: 100%; background: hsl(var(--primary)); transition: width .2s cubic-bezier(.2,.8,.2,1); }
+.st-zoom-meter > i.is-rest { opacity: .4; }
+.st-zoom-meter.is-over > i { background: hsl(var(--destructive)); }
+@media (prefers-reduced-motion: reduce) { .st-zoom-meter > i, .st-zoom-sliver { transition: none; } }
+
 /* The waveform lane — its own bordered surface inside the (borderless) stage. */
 .st-wave-lane {
   border: 1px solid hsl(var(--border));
