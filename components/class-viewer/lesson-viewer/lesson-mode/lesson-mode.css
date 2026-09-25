@@ -7,6 +7,8 @@
 .lx-fill { position:relative; min-height:100%; padding:16px 16px 20px; }
 @media (min-width:768px) { .lx-fill { padding:18px 32px 24px; } }
 .lx-fill[hidden] { display:none; }
+/* The stage already frames the workspace; no rules above and below it. */
+.lx-stage .ws-frame[data-frame=bleed] { border-block:0; background:transparent; }
 @media (max-width:767px) { .lx { grid-template-columns:minmax(0,1fr); } }
 
 /* ───────── Action bar ───────── */
@@ -95,7 +97,7 @@
 .lx-mod small { overflow:hidden; text-overflow:ellipsis; font-size:12px; color:hsl(var(--muted-foreground)); }
 .lx-reveal { opacity:0; transition:opacity 150ms; }
 .lx-rail:hover .lx-reveal, .lx-rail[data-expanded=true] .lx-reveal { opacity:1; }
-.lx-list { flex:1; min-height:0; display:flex; flex-direction:column; gap:4px; position:relative; overflow-y:auto; overflow-x:hidden; scrollbar-width:none; }
+.lx-list { flex:0 1 auto; min-height:0; padding:2px 0 2px 2px; margin-left:-2px; display:flex; flex-direction:column; gap:4px; position:relative; overflow-y:auto; overflow-x:hidden; scrollbar-width:none; }
 .lx-list::before { content:""; position:absolute; left:23px; top:20px; bottom:20px; width:2px; background:hsl(var(--sidebar-border)); }
 .lx-ls { position:relative; display:flex; align-items:center; gap:12px; height:48px; padding:0 8px 0 4px; border-radius:12px; white-space:nowrap; color:hsl(var(--foreground)); }
 .lx-ls:hover { background:hsl(var(--sidebar-accent)); }

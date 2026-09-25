@@ -7,6 +7,7 @@
 
 import { useCallback, useMemo, useState, type MouseEvent, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import type { markClassItemComplete } from '@/app/actions/progress'
 import { useTranslation } from '@/components/language-provider'
 import { WorkspaceToolsSlotProvider } from '@/components/playsense-studio/player/workspace-tools-slot'
 import { summarizeLessonProgress, type LessonProgressInput } from '@/lib/courses/lesson-progress-summary'
@@ -39,11 +40,13 @@ export interface LessonModeShellProps {
   teacherName: string | null
   nextLesson: NextLessonCard | null
   body: ReactNode
+  /** Local previews pass a no-op so nothing writes student progress. */
+  saveCompletion?: typeof markClassItemComplete
 }
 
 export function LessonModeShell(props: LessonModeShellProps) {
   return <LessonProgressProvider key={props.lesson.id} itemIds={props.progress?.itemIds ?? []}
-    initialCompletedItemIds={props.progress?.completedItemIds ?? []}>
+    initialCompletedItemIds={props.progress?.completedItemIds ?? []} saveCompletion={props.saveCompletion}>
     <LessonModeFrame {...props} />
   </LessonProgressProvider>
 }

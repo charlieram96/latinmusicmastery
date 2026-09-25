@@ -13,13 +13,14 @@ interface LessonProgress {
 const ProgressContext = createContext<LessonProgress | null>(null)
 const ActivityContext = createContext<((activity: LessonActivity) => void) | null>(null)
 
-export function LessonProgressProvider({ itemIds, initialCompletedItemIds, children, saveCompletion = markClassItemComplete }: {
+export function LessonProgressProvider({ itemIds, initialCompletedItemIds, children, saveCompletion: saveOverride }: {
   itemIds: string[]
   initialCompletedItemIds: string[]
   children: ReactNode
   /** Also supports a local preview that never writes student progress. */
   saveCompletion?: typeof markClassItemComplete
 }) {
+  const saveCompletion = saveOverride ?? markClassItemComplete
   const [items, setItems] = useState<Record<string, ItemCompletion>>({})
   const itemsRef = useRef(items)
   const completedItemIds = useMemo(() => itemIds.filter(id => initialCompletedItemIds.includes(id) || items[id]?.status === 'complete'), [itemIds, initialCompletedItemIds, items])
