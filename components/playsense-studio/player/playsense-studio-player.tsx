@@ -710,10 +710,10 @@ export function PlaysenseStudioPlayer({
                   </NotationZoomLayer>
                   <NotationZoomControl zoom={zoom} onZoom={setZoom} />
                 </div>
-                {!transportWithVideo && <div className="flex-shrink-0 border-t border-border bg-card px-3 py-2">{transportEl}</div>}
               </>
             }
             overlay={overlayEl}
+            footer={!transportWithVideo && <div className="px-3 py-2">{transportEl}</div>}
           />
         </div>
 

@@ -69,6 +69,8 @@ export interface SplitWorkspaceProps {
   highway?: ReactNode;
   /** Absolute layer over the whole workspace (prompts, end-of-demo card). */
   overlay?: ReactNode;
+  /** Full-width strip below the stage, clear of the floating video (e.g. the transport in PiP). */
+  footer?: ReactNode;
   /**
    * 'card' — bordered box, `initialHeight` tall (capped to the viewport in a lesson).
    * 'bleed' — edge to edge, fitted to the viewport above the lesson footer.
@@ -85,6 +87,7 @@ export function SplitWorkspace({
   music,
   highway,
   overlay,
+  footer,
   frame = 'card',
   initialHeight = 560,
   className,
@@ -375,6 +378,7 @@ export function SplitWorkspace({
         </div>
         {overlay}
       </div>
+      {footer && <div className="ws-footer">{footer}</div>}
     </div>
   );
 }

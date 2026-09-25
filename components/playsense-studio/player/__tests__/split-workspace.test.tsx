@@ -83,6 +83,21 @@ describe('SplitWorkspace frame', () => {
   })
 })
 
+describe('SplitWorkspace footer', () => {
+  it('renders the footer below the stage, outside the PiP area', () => {
+    const controller = { current: null as WorkspaceController | null }
+    function WithFooter() {
+      const c = useWorkspaceLayout('f', PLAY_WORKSPACE)
+      useEffect(() => { controller.current = c })
+      return <SplitWorkspace controller={c} frame="fill" media={<video />} music={<div />} footer={<div data-footer />} />
+    }
+    act(() => { root.render(<WithFooter />) })
+    const footer = q('[data-footer]')
+    expect(footer.closest('.ws')).toBeNull()
+    expect(footer.closest('[data-lesson-workspace]')).not.toBeNull()
+  })
+})
+
 describe('SplitWorkspace divider', () => {
   it('renders the watch default: side with the divider at 44 %', () => {
     render()

@@ -2,13 +2,14 @@
    Layout = data-layout on .ws; sizes = --ws-lead (leading region %), --ws-staff
    (staff share of the music region %), --ws-pipw (PiP width %). */
 
-.ws-frame { position:relative; min-width:0; min-height:0; padding:12px; }
+.ws-frame { position:relative; display:flex; flex-direction:column; gap:10px; min-width:0; min-height:0; padding:12px; }
 .ws-frame[data-frame=card] { border:1px solid hsl(var(--border)); border-radius:12px; background:hsl(var(--card)); }
 .ws-frame[data-frame=bleed] { border-block:1px solid hsl(var(--border)); background:hsl(var(--background)); }
 .ws-frame[data-frame=fill] { flex:1 1 auto; min-height:0; }
 
-.ws { --ws-lead:50; --ws-staff:54; --ws-pipw:24; position:relative; display:grid; width:100%; height:100%; min-height:0; }
-.ws-pane { position:relative; min-width:0; min-height:0; border-radius:16px; overflow:hidden; }
+.ws { --ws-lead:50; --ws-staff:54; --ws-pipw:24; position:relative; display:grid; flex:1 1 auto; width:100%; min-height:0; }
+.ws-footer { flex:none; min-width:0; border:1px solid hsl(var(--border)); border-radius:14px; overflow:hidden; background:hsl(var(--card)); }
+.ws-pane { position:relative; min-width:0; min-height:0; border-radius:16px; overflow:hidden; isolation:isolate; }
 .ws-media { display:flex; flex-direction:column; background:#000; box-shadow:0 12px 32px -14px hsl(0 0% 0% / .55); }
 .ws-music { display:flex; flex-direction:column; background:hsl(var(--card)); border:1px solid hsl(var(--border)); box-shadow:0 6px 24px hsl(0 0% 0% / .08); }
 .ws-staff { position:relative; display:flex; flex-direction:column; flex:1 1 100%; min-height:0; min-width:0; }
@@ -56,8 +57,8 @@
 .ws[data-layout=pip] .ws-media[data-grabbing] { cursor:grabbing; box-shadow:0 30px 70px -20px hsl(0 0% 0% / .7), 0 0 0 3px hsl(var(--primary)); }
 .ws[data-layout=pip][data-corner=br] .ws-media { right:16px; bottom:16px; }
 .ws[data-layout=pip][data-corner=bl] .ws-media { left:16px; bottom:16px; }
-.ws[data-layout=pip][data-corner=tr] .ws-media { right:16px; top:58px; }
-.ws[data-layout=pip][data-corner=tl] .ws-media { left:16px; top:58px; }
+.ws[data-layout=pip][data-corner=tr] .ws-media { right:16px; top:76px; }
+.ws[data-layout=pip][data-corner=tl] .ws-media { left:16px; top:76px; }
 
 /* PiP resize handle on the inner corner */
 .ws-pip-resize { display:none; }
