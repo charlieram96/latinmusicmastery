@@ -46,23 +46,27 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 
 **3a done 2026-09-24** (shell, strip selection, beat counts, measure bar, repeat/gap/Bar menus, tempo-mark confirmation, section drag, event ids, continuous staff). 3b — measure zoom and note editing — follows.
 
-### Plan 3b (next)
+### Plan 3b — done 2026-09-25
 
-- the measure zoom (the animation, slivers, beat bands, fill meter)
-- the floating note toolbar and the More ▾ tabs
-- the full keyboard map
-- V1/V2 editing
-- drag to change pitch, moved from the strip into the zoom
-- pencil click-to-add
-- span editing (slur, cresc/dim), with span mirroring across repeat passes via `passEventId`
-- tuplet group editing consistency
-- beam grouping for additive meters
-- the legacy triplet `[8,16,16,8]` grouping
-- the footer hint wording `⏎ edit notes`
-- a slur or hairpin whose far end is outside the continuous staff's drawn window isn't drawn; draw it open at the window edge
-- debounce the continuous staff's redraw during zoom (each zoom tick redraws the whole window)
-- the one-row transport: still two rows (TransportBar is shared with the student player, so it's redone with Plan 7's Hear/Loop controls)
-- MIDI-recorded notes get event ids only on the next open; assign them when recorded
+- the measure zoom (the animation, slivers, beat bands, fill meter) (done)
+- the floating note toolbar and the More ▾ tabs (done)
+- the full keyboard map (done)
+- V1/V2 editing (done)
+- drag to change pitch, moved from the strip into the zoom (done)
+- pencil click-to-add (done)
+- span editing (slur, cresc/dim), with span mirroring across repeat passes via `passEventId` (done)
+- tuplet group editing consistency (done)
+- beam grouping for additive meters (done)
+- the legacy triplet `[8,16,16,8]` grouping (done)
+- the footer hint wording `⏎ edit notes` (done)
+- a slur or hairpin whose far end is outside the continuous staff's drawn window isn't drawn; draw it open at the window edge (done)
+- debounce the continuous staff's redraw during zoom (done in the Plan 3a final fix)
+
+**Follow-ups from 3b:**
+- the pencil and ghost ignore the dimmed voice
+- picking a different tuplet ratio on a tuplet group merges instead of switching (as in v6)
+- dead CSS in the old insert toolbar block of app/globals.css
+- the zoom's staves redraw on timing changes
 
 ## Plan 6 — Drafts, publish, history (spec §9)
 
@@ -108,6 +112,8 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
 - Hear Recording / Score / Both: a score synth through the same timeline map.
 - Loop the selection at 100%, 75% or 50% with `preservesPitch`.
 - Web MIDI entry with on-screen keys in the measure zoom; chords from notes within 45 ms.
+- the one-row transport: still two rows (TransportBar is shared with the student player, so it's redone with Plan 7's Hear/Loop controls)
+- MIDI-recorded notes get event ids only on the next open; assign them when recorded
 
 ## Carried forward from Plan 1 reviews
 
