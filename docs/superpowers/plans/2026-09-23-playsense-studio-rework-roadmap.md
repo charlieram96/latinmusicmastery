@@ -81,6 +81,24 @@ P6 comes before P4 and P5 because it changes every save path. Doing it once, bef
   - History panel with restore
 - **Deprecation:** `draft_time_map_id` is marked deprecated.
 
+### Plan 6 — done 2026-09-25
+
+Branch feat/studio-rework-p6; plan `2026-09-25-studio-rework-p6-drafts-publish-history.md`. Before this plan, sync timing autosave published live on every drag. Now nothing in the Studio reaches students except Publish and the immediate actions (trim, media, backing tracks, sections, Replace score, song visibility). Migration 043 must be applied before this ships: until then the admin Studio cannot load drafts.
+
+Settled while building:
+- The student section reader stays draft-free. The admin page uses `getStudioScoreSectionsForClassItem`.
+- A null draft anchor means "keep live", so publish never clears a click anchor. The published history row records what actually went live, re-read after publishTimeMap rebases or seeds the anchor.
+- Publish and discard (and restore) run in the owner's save queue. A generation counter drops saves overtaken by an adopt, and SyncPanel's own debounces drain through a pre-flush before any flush.
+
+**Follow-ups from 6:**
+- One draft row per owner, so two admins editing the same part are last-write-wins.
+- Undoing back to the live content still counts as unpublished. A no-diff publish still records a history row.
+- `getStudioDrafts` reads owners one at a time. Section loading now costs 1–2 extra queries per section on the admin page.
+- The legacy `classItem` branch of `publishTimeMap` still doesn't delete superseded maps.
+- SyncPanel's unmount flush doesn't check `placeArmed`.
+- The publish popover has no Escape or focus handling, and History shows no per-row busy spinner.
+- The local section cache is patched before the unmount save's outcome is known.
+
 ## Plan 4 — Watch timing and Flex (spec §7)
 
 - Onset detection in the peaks worker, with `hits` cached in the peaks JSON.
