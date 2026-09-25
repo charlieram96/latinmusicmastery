@@ -25,6 +25,7 @@ import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio
 import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
 import type { LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
+import { HistoryPanel } from '@/components/playsense-studio/studio/drafts/history-panel';
 import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta-editor';
 import { HighwayPreview } from '@/components/playsense-studio/studio/highway-preview';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -182,6 +183,7 @@ export function ScoreSectionEditor({
                 </button>
               }
             />
+            <HistoryPanel owner={{ kind: 'section', id: sectionId }} />
             <span className="mx-0.5 h-6 w-px bg-border" />
             <button
               onClick={undo}
