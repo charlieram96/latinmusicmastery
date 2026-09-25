@@ -16,7 +16,7 @@ export interface RailLesson {
   number: number
 }
 
-type RailSectionInput = PathSectionInput & { classes: (PathSectionInput['classes'][number] & { is_free?: boolean | null })[] }
+type RailSectionInput = Omit<PathSectionInput, 'classes'> & { classes: (PathSectionInput['classes'][number] & { is_free?: boolean | null })[] }
 
 /** A lesson with a play-along is a play-along; otherwise video, then quiz. */
 function mainKind(types: PathLessonType[]): PathLessonType {
