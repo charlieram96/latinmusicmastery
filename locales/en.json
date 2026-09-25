@@ -1879,7 +1879,10 @@
           "freePreview": "Free preview",
           "lessonOf": "Lesson {n} of {total}",
           "left": "{duration} left",
-          "inYourPlan": "Included in your plan"
+          "inYourPlan": "Included in your plan",
+          "showAll": "Show all {count} lessons",
+          "showFewer": "Show fewer",
+          "go": "Go"
         },
         "path": {
           "continue": "Continue",
@@ -1901,7 +1904,12 @@
             "play": "Play along",
             "quiz": "Quiz",
             "other": "Reading"
-          }
+          },
+          "heading": "Your path",
+          "doneOfOne": "{done} of {total} lesson done",
+          "doneOf": "{done} of {total} lessons done",
+          "module": "Module {n}",
+          "goToLesson": "Go to lesson"
         }
       },
       "modules": {

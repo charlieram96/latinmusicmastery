@@ -1879,7 +1879,10 @@
           "freePreview": "Vista previa gratis",
           "lessonOf": "Lección {n} de {total}",
           "left": "faltan {duration}",
-          "inYourPlan": "Incluido en tu plan"
+          "inYourPlan": "Incluido en tu plan",
+          "showAll": "Ver las {count} lecciones",
+          "showFewer": "Ver menos",
+          "go": "Ir"
         },
         "path": {
           "continue": "Continuar",
@@ -1899,9 +1902,14 @@
           "types": {
             "video": "Video",
             "play": "Tocar",
-            "quiz": "Quiz",
+            "quiz": "Cuestionario",
             "other": "Lectura"
-          }
+          },
+          "heading": "Tu camino",
+          "doneOfOne": "{done} de {total} lección hecha",
+          "doneOf": "{done} de {total} lecciones hechas",
+          "module": "Módulo {n}",
+          "goToLesson": "Ir a la lección"
         }
       },
       "modules": {
