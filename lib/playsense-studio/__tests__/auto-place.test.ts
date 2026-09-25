@@ -53,6 +53,15 @@ describe('autoPlaceBars', () => {
     const hits = laid(4, 0, 0.5).measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
     expect(autoPlaceBars(s, hits, { start: 0, end: 60 })!.state.measures[1].nudges).toEqual([{ qn: 5, deltaSeconds: 0.02 }]);
   });
+  it('clamps the tail to the trim end instead of failing when it lands just past it', () => {
+    const truth = laid(8, 0, 0.5); // 8 bars; natural tail sits at 16.0 s
+    const hits = truth.measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
+    const lastHit = hits[hits.length - 1]; // 15.5
+    const window = { start: 0, end: lastHit + 0.2 }; // 15.7 — short of the natural 16.0 tail
+    const res = autoPlaceBars(laid(8, 0, 0.5), hits, window)!;
+    expect(res).not.toBeNull();
+    expect(res.state.tailVideoTimeSeconds).toBeLessThanOrEqual(window.end);
+  });
 });
 
 describe('lerpMarkers', () => {

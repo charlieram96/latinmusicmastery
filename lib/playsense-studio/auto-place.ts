@@ -81,11 +81,16 @@ export function autoPlaceBars(
   });
   let tail = downs[downs.length - 1] + (state.tailQN - last.downbeatQN) * b;
 
-  // Keep everything inside the window.
+  // Keep every BAR inside the window — that's the hard constraint. The tail is
+  // softer: a trim-out landing just past the natural tail (e.g. right after the
+  // last note's hit) is a false failure, not a real one, so it's clamped to the
+  // window end instead (floored 0.05 s past the last downbeat) rather than
+  // failing the whole placement.
   const lo = window.start;
   const hi = window.end;
-  if (downs[0] < lo || tail > hi) return null;
-  tail = Math.min(tail, hi);
+  if (downs.some((d) => d < lo || d > hi)) return null;
+  const minTail = downs[downs.length - 1] + 0.05;
+  tail = Math.max(minTail, Math.min(tail, hi));
 
   const measures = state.measures.map((m, i) => {
     const start = downs[i];
