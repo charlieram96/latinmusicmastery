@@ -1082,6 +1082,17 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         delete merged.triplet;
         delete merged.dots;
         delete merged.dotted;
+        // The tie leaves the group from its last note, so it comes back from there.
+        const last = members[members.length - 1];
+        if (last.kind !== 'rest' && last.tieToNext) merged.tieToNext = true;
+        else delete merged.tieToNext;
+        if (merged.kind === 'chord') {
+          const tiedOut = new Set(last.kind === 'chord' ? last.notes.filter((x) => x.tieToNext).map((x) => x.midi) : []);
+          merged.notes = merged.notes.map((x) => {
+            const { tieToNext: _tie, ...note } = x;
+            return tiedOut.has(x.midi) ? { ...note, tieToNext: true } : note;
+          });
+        }
         r.events.splice(start, members.length, merged);
         const result = withHistory(state, next);
         // After withHistory, so a span on a member dropped from every pass is caught too.

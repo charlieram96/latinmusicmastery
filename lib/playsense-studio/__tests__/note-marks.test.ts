@@ -125,6 +125,17 @@ describe('final review fixes', () => {
     const s1 = editorReducer(s0, { type: 'apply-tuplet', ref: { ...r, eventIndex: 4 }, n: 3, m: 2 });
     expect(ev(s1)).toEqual([t3(60), t3(62), t3(64), { kind: 'note', midi: 65, durationQN: 1, id: 'n65' }, n(71, 2)]);
   });
+  it('a split then a merge keeps the tie leaving the group', () => {
+    let s = editorReducer(st(doc([bar(1, [{ ...n(60, 1, 'q'), tieToNext: true }, n(60, 3)])])), { type: 'apply-tuplet', ref: r, n: 3, m: 2 });
+    s = editorReducer(s, { type: 'apply-tuplet', ref: r, n: 3, m: 2 });
+    expect(ev(s)[0]).toEqual({ kind: 'note', midi: 60, durationQN: 1, id: 'q', tieToNext: true });
+  });
+  it('a split then a merge keeps a chord note’s own tie', () => {
+    const chord: MusicalEvent = { kind: 'chord', id: 'c', durationQN: 1, notes: [{ midi: 60, tieToNext: true }, { midi: 64 }] };
+    let s = editorReducer(st(doc([bar(1, [chord, n(60, 3)])])), { type: 'apply-tuplet', ref: r, n: 3, m: 2 });
+    s = editorReducer(s, { type: 'apply-tuplet', ref: r, n: 3, m: 2 });
+    expect(ev(s)[0]).toEqual(chord);
+  });
 });
 
 describe('slurs', () => {
