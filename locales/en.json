@@ -7,6 +7,29 @@
     "video": "Video only",
     "score": "Score only"
   },
+  "staff": {
+    "countAnd": "&",
+    "layout": {
+      "label": "Staff layout",
+      "stacked": "Stacked",
+      "horizontal": "Horizontal"
+    },
+    "score": "Score",
+    "scoreAria": "Musical score",
+    "bar": "Bar",
+    "barAria": "Bar {bar} of {total}, beat {beat}",
+    "pass": "Pass {pass} / {total}",
+    "follow": "Follow",
+    "followAria": "Follow the current bar",
+    "followOnTitle": "Following playback. Turn off to browse the score.",
+    "followOffTitle": "Resume following the current bar.",
+    "following": "Following your music",
+    "browsing": "Browse at your own pace",
+    "scrollHint": "Scroll to read ahead",
+    "size": "Notation size",
+    "smaller": "Smaller notation",
+    "larger": "Larger notation"
+  },
   "common": {
     "language": "Language",
     "changeLanguage": "Change language",

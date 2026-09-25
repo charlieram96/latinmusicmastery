@@ -34,7 +34,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Rows3, MoveHorizontal, Minus, Plus } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import { SplitWorkspace, OrientationToggle } from './split-workspace';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
@@ -43,7 +43,9 @@ import {
   ZOOM_MIN,
   ZOOM_MAX,
   type SelectedRange,
+  type StaffLayoutMode,
 } from './notation/renderers/staff-renderer';
+import { StaffLayoutSwitch, staffLayoutMode, useStaffLayoutPreference } from './notation/staff-layout-switch';
 import { StaffScrubBar } from './notation/staff-scrub-bar';
 import { ClipsPanel } from './clips/clips-panel';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
@@ -500,9 +502,9 @@ export function PlaysenseStudioPlayer({
     try { localStorage.setItem('lmm-lesson-view', view); } catch { /* Session choice still works. */ }
   };
 
-  // Notation pane staff layout — stacked staves vs. single horizontal scroll
-  // (only used when layout === 'split'). Pane geometry lives in SplitWorkspace.
-  const [notationLayout, setNotationLayout] = useState<'wrapped' | 'scroll'>('wrapped');
+  // Notation pane staff layout — stacked rows or horizontal pages, the student's
+  // saved choice (only used when layout === 'split'). Pane geometry lives in SplitWorkspace.
+  const [notationLayout, setNotationLayout] = useStaffLayoutPreference();
 
   // Notation zoom (split layout) — pinch or slider scales the staff. 1 = default.
   const [zoom, setZoom] = useState(1);
@@ -590,8 +592,8 @@ export function PlaysenseStudioPlayer({
 
   // Wrapped (stacked staves) only in the split workspace; the legacy stack
   // layout keeps the single horizontal scrolling line.
-  const staffLayout: 'wrapped' | 'scroll' =
-    layout === 'split' ? notationLayout : 'scroll';
+  const staffLayout: StaffLayoutMode =
+    layout === 'split' ? staffLayoutMode(notationLayout) : 'scroll';
 
   const staffEl = (
     <StaffRenderer
@@ -701,7 +703,7 @@ export function PlaysenseStudioPlayer({
                   })}
                 </div>
                 {lessonView !== 'video' && <div className="flex items-center gap-1">
-                  <NotationLayoutToggle value={notationLayout} onChange={setNotationLayout} />
+                  <StaffLayoutSwitch value={notationLayout} onChange={setNotationLayout} />
                   {lessonView === 'both' && <OrientationToggle value={orient} onChange={setOrient} />}
                 </div>}
               </div>
@@ -892,50 +894,6 @@ function NotationZoomControl({
         className="min-w-[34px] rounded-full px-1 text-center text-[10px] font-semibold tabular-nums text-muted-foreground transition-colors hover:text-foreground"
       >
         {Math.round(zoom * 100)}%
-      </button>
-    </div>
-  );
-}
-
-// Icon-only notation toggle: stacked staves ↔ single horizontal scroll.
-function NotationLayoutToggle({
-  value,
-  onChange,
-}: {
-  value: 'wrapped' | 'scroll';
-  onChange: (v: 'wrapped' | 'scroll') => void;
-}) {
-  return (
-    <div
-      role="group"
-      aria-label="Notation layout"
-      className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full border border-border bg-secondary p-0.5"
-    >
-      <button
-        type="button"
-        onClick={() => onChange('wrapped')}
-        title="Stacked staves"
-        aria-label="Stacked staves"
-        className={`grid h-[26px] w-7 place-items-center rounded-full transition-colors ${
-          value === 'wrapped'
-            ? 'bg-primary/[0.16] text-primary'
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-      >
-        <Rows3 className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('scroll')}
-        title="Horizontal scroll"
-        aria-label="Horizontal scroll"
-        className={`grid h-[26px] w-7 place-items-center rounded-full transition-colors ${
-          value === 'scroll'
-            ? 'bg-primary/[0.16] text-primary'
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-      >
-        <MoveHorizontal className="h-4 w-4" />
       </button>
     </div>
   );

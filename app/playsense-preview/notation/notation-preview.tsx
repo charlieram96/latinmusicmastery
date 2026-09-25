@@ -56,7 +56,10 @@ export function NotationPreview({ score }: { score: ScoreDocument }) {
           <Button size="sm" variant="outline" onClick={() => seek(scoreEnd + 178500)}>Video midpoint</Button>
         </div>
       </div>
-      <section aria-label="Horizontal score" className="rounded-lg border border-border bg-card p-5">
+      <section aria-label="Paged score" className="rounded-lg border border-border bg-card p-5">
+        <StaffRenderer {...notation} layoutMode="paged" />
+      </section>
+      <section aria-label="Continuous score" className="rounded-lg border border-border bg-card p-5">
         <StaffRenderer {...notation} layoutMode="scroll" />
       </section>
       <section aria-label="Stacked score" className="h-[640px] w-[760px] max-w-full rounded-lg border border-border bg-card p-5">

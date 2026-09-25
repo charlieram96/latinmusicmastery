@@ -20,10 +20,7 @@
 .ps-score-beats i { width:5px; height:5px; margin:0; border-radius:50%; background:hsl(var(--foreground) / .13); }
 .ps-score-beats i[data-active=true] { background:hsl(var(--primary)); box-shadow:0 0 0 3px hsl(var(--primary) / .1); }
 .ps-score-tools { display:flex; align-items:center; gap:14px; }
-.ps-score-follow { display:flex; gap:2px; padding:3px; border:1px solid hsl(var(--border)); border-radius:9px; background:hsl(var(--background) / .25); }
 .ps-score-tools [data-slot=button] { height:27px; min-height:27px; padding:0 8px; gap:5px; border-radius:6px; font-size:10px; color:hsl(var(--muted-foreground)); box-shadow:none; }
-.ps-score-follow [aria-pressed=true] { background:hsl(var(--foreground) / .075); color:hsl(var(--foreground)); box-shadow:0 1px 3px hsl(0 0% 0% / .08); }
-.ps-score-follow [aria-pressed=true] svg { color:hsl(var(--primary)); }
 .ps-score-zoom { display:flex; align-items:center; padding-left:10px; border-left:1px solid hsl(var(--border)); }
 .ps-score-zoom>span { min-width:34px; text-align:center; font-size:9px; }
 .ps-score-zoom [data-slot=button] { padding:0 5px; }
@@ -41,6 +38,8 @@
 .ps-score-panel-control [data-slot=button] { height:26px; padding:0 7px; font-size:10px; }
 .ps-score-layout-menu .ps-score-layout-note { padding-top:12px; margin-top:8px; border-top:1px solid hsl(var(--border)); font-size:10px; }
 .ps-exercise-score[data-score-layout=vertical] { container-type:size; container-name:score-card; }
+/* A strip on top has no height of its own; stacked rows get a window that shows about two rows. */
+.ps-exercise-score:not([data-score-layout=vertical])[data-staff-layout=stacked] .ps-score-sheet { height:clamp(240px,42dvh,420px); padding-top:6px; }
 .ps-exercise-score[data-score-layout=vertical] .ps-score-toolbar { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px 8px; flex-shrink:0; margin:0 16px; padding:12px 0 10px; }
 .ps-exercise-score[data-score-layout=vertical] .ps-score-identity { grid-area:1/1; display:flex; }
 .ps-exercise-score[data-score-layout=vertical] .ps-score-layout-trigger { grid-area:1/2; justify-self:end; }
@@ -74,7 +73,7 @@
   .ps-score-location { gap:10px; }
   .ps-score-location small { padding-left:10px; }
   .ps-score-tools { gap:3px; margin-left:auto; }
-  .ps-score-follow button>span,.ps-score-zoom>span,.ps-score-beats { display:none; }
+  .ps-score-zoom>span,.ps-score-beats { display:none; }
   .ps-score-zoom { padding-left:3px; }
   .ps-score-tools [data-slot=button] { min-width:28px; min-height:30px; height:30px; padding-inline:6px; }
   .ps-score-layout-trigger>span { display:none; }
