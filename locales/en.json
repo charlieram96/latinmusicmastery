@@ -2515,6 +2515,41 @@
           "countIn": "Count-in {beat}",
           "start": "Start playing"
         },
+        "part": {
+          "eyebrow": "Practice complete",
+          "heading": {
+            "great": "¡Qué sabor!",
+            "good": "You found the groove.",
+            "ok": "The groove is taking shape.",
+            "low": "Every take is a step forward."
+          },
+          "first": "Your first take of this exercise.",
+          "better": "Your cleanest take so far, up from {prev}%.",
+          "same": "Right at your best of {prev}%.",
+          "below": "Your best so far is {prev}%. Keep at it.",
+          "accuracy": "accuracy",
+          "accuracyLabel": "Accuracy {value}%",
+          "cleanBars": "Clean bars",
+          "bestCombo": "Best combo",
+          "time": "Time",
+          "barByBar": "Bar by bar",
+          "barHint": "Each tile is one bar of the exercise",
+          "legend": {
+            "clean": "Clean",
+            "close": "Early or late",
+            "miss": "Missed notes",
+            "rest": "Rest"
+          },
+          "barLabel": "Bar {n}: {status}",
+          "practiceBars": "Practice bars {bars} slowly, then take it again.",
+          "practiceBar": "Practice bar {bars} slowly, then take it again.",
+          "saved": "Saved to your progress",
+          "savedDetail": "Replay any time from the lesson list.",
+          "demo": "Demo results · not saved",
+          "again": "Again",
+          "continue": "Continue",
+          "watch": "Watch the demo again"
+        },
         "finishLesson": "Finish lesson"
       }
     }

@@ -2515,6 +2515,41 @@
           "countIn": "Cuenta {beat}",
           "start": "Empezar a tocar"
         },
+        "part": {
+          "eyebrow": "Práctica completada",
+          "heading": {
+            "great": "¡Qué sabor!",
+            "good": "Encontraste el groove.",
+            "ok": "El groove va tomando forma.",
+            "low": "Cada toma es un paso adelante."
+          },
+          "first": "Tu primera toma de este ejercicio.",
+          "better": "Tu toma más limpia hasta ahora, desde {prev}%.",
+          "same": "Justo en tu mejor marca de {prev}%.",
+          "below": "Tu mejor marca es {prev}%. Sigue así.",
+          "accuracy": "precisión",
+          "accuracyLabel": "Precisión {value}%",
+          "cleanBars": "Compases limpios",
+          "bestCombo": "Mejor combo",
+          "time": "Tiempo",
+          "barByBar": "Compás por compás",
+          "barHint": "Cada casilla es un compás del ejercicio",
+          "legend": {
+            "clean": "Limpio",
+            "close": "Adelantado o atrasado",
+            "miss": "Notas perdidas",
+            "rest": "Silencio"
+          },
+          "barLabel": "Compás {n}: {status}",
+          "practiceBars": "Practica los compases {bars} despacio y vuelve a tocar.",
+          "practiceBar": "Practica el compás {bars} despacio y vuelve a tocar.",
+          "saved": "Guardado en tu progreso",
+          "savedDetail": "Repítelo cuando quieras desde la lista de lecciones.",
+          "demo": "Resultados de demostración · no se guardan",
+          "again": "Otra vez",
+          "continue": "Continuar",
+          "watch": "Ver la demostración otra vez"
+        },
         "finishLesson": "Terminar lección"
       }
     }

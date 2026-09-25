@@ -19,10 +19,11 @@ import { ExerciseScore } from './exercise-score'
 import { exerciseScoreTime } from '@/lib/playsense-studio/notation-playback'
 import { NowPlayingBar } from '@/components/play-sense/now-playing-bar'
 import { CalibrationWizard } from '@/components/play-sense/calibration-wizard'
-import { ResultsSummary } from '@/components/play-sense/results-summary'
 import { AudioModePrompt } from '@/components/play-sense/audio-mode-prompt'
 import { PlaysenseTestPanel } from '@/components/play-sense/playsense-test-panel'
-import { saveAttempt } from '@/app/actions/play-sense'
+import { getUserAttempts, saveAttempt } from '@/app/actions/play-sense'
+import { bestPreviousAccuracy, buildBarResults } from '@/lib/play-sense/bar-results'
+import { PartDone } from './part-done'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
@@ -96,7 +97,8 @@ function ScoreExerciseSession({
   const { t } = useTranslation()
   const completePerformance = useLessonActivity('performance')
   const playsense = usePlaysense()
-  const inLesson = !!useLessonFrame()
+  const frame = useLessonFrame()
+  const inLesson = !!frame
   // Play opens with the staff and highway filling the stage and the teacher
   // video floating bottom right (24 % wide); the student can re-lay it out.
   // Remembered per staff layout, like watch (lmm-workspace:play:stacked / :horizontal).
@@ -250,6 +252,29 @@ function ScoreExerciseSession({
     }
   }, [preview, session.sessionState, session.attemptStats, session.exercise, session.eventResults])
 
+  // The student's best accuracy on this exercise, for Part done's comparison:
+  // saved takes, plus takes finished in this visit; frozen when a take starts.
+  const [bestAccuracy, setBestAccuracy] = useState<number | null>(null)
+  const [takeBaseline, setTakeBaseline] = useState<number | null>(null)
+  useEffect(() => {
+    if (preview) return
+    let live = true
+    getUserAttempts(exercise.id)
+      .then(rows => { if (live) setBestAccuracy(best => maxOrNull(best, bestPreviousAccuracy(rows as { accuracy: number | null }[]))) })
+      .catch(() => {})
+    return () => { live = false }
+  }, [exercise.id, preview])
+  useEffect(() => {
+    if (session.sessionState === 'countdown') setTakeBaseline(bestAccuracy)
+  }, [session.sessionState, bestAccuracy])
+  useEffect(() => {
+    if (session.sessionState === 'results' && session.attemptStats) setBestAccuracy(best => maxOrNull(best, session.attemptStats!.accuracy))
+  }, [session.sessionState, session.attemptStats])
+  const playAgain = () => {
+    session.retry()
+    void session.startExercise()
+  }
+
   const isActive =
     session.sessionState === 'selecting' ||
     session.sessionState === 'countdown' ||
@@ -373,14 +398,16 @@ function ScoreExerciseSession({
     )
   }
 
-  // Results — full panel
+  // Part done — the take's accuracy and a bar-by-bar strip
   if (session.sessionState === 'results' && session.attemptStats && session.exercise) {
     return (
-      <div className="ps-lesson-results rounded-xl border border-border bg-card p-4">
-        <ResultsSummary
+      <div className="ps-lesson-results">
+        <PartDone
           stats={session.attemptStats}
-          exerciseTitle={session.exercise.title}
-          onRetry={session.retry}
+          bars={buildBarResults(session.exercise, session.eventResults)}
+          previousBest={takeBaseline}
+          onAgain={playAgain}
+          onContinue={frame ? frame.advance : undefined}
           onWatchDemo={onWatchDemo}
           demo={preview}
         />
@@ -662,4 +689,8 @@ function ScoreExerciseSession({
       )}
     </div>
   )
+}
+
+function maxOrNull(a: number | null, b: number | null): number | null {
+  return a == null ? b : b == null ? a : Math.max(a, b)
 }
