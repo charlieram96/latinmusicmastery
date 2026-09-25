@@ -62,15 +62,25 @@ function LessonModeFrame({ course, module, lesson, rail, parts, activeIndex, pro
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [celebrating, setCelebrating] = useState(false)
 
+  // Opening another part (a tab, browser Back) leaves the celebration.
+  const [celebratedPart, setCelebratedPart] = useState(activeIndex)
+  if (celebrating && celebratedPart !== activeIndex) setCelebrating(false)
+  if (!celebrating && celebratedPart !== activeIndex) setCelebratedPart(activeIndex)
+
   const courseHref = `/dashboard/course/${course.id}`
   const completedItemIds = live?.completedItemIds ?? progress?.completedItemIds ?? []
   const added = progress ? completedItemIds.filter(id => !progress.completedItemIds.includes(id)).length : 0
   const summary = progress
     ? summarizeLessonProgress(progress, { completedItemIds, item: progress.activeItemId ? live?.items[progress.activeItemId] : undefined })
     : null
+  // A part whose save is still in flight counts as finished for the celebration:
+  // the student has done the work, and a failed save keeps its Retry in the bar.
+  const saving = progress ? progress.itemIds.filter(id => live?.items[id]?.status === 'saving' && !completedItemIds.includes(id)) : []
+  const finishedHere = added + saving.length
+  const lessonFinished = !!progress && progress.totalItems > 0 && completedItemIds.filter(id => progress.itemIds.includes(id)).length + saving.length === progress.totalItems
   // Celebrate only a lesson finished in this visit, from its last part.
-  const celebrate = !!practice && !!summary && !summary.hasNextPart && summary.lessonDone && added > 0
-  const stats = useMemo(() => practice ? celebrationStats(practice.dateKeys, practice.today, added) : null, [practice, added])
+  const celebrate = !!practice && !!summary && !summary.hasNextPart && lessonFinished && finishedHere > 0
+  const stats = useMemo(() => practice ? celebrationStats(practice.dateKeys, practice.today, finishedHere) : null, [practice, finishedHere])
 
   const advance = useCallback(() => {
     if (!summary) { router.push(courseHref); return }

@@ -93,6 +93,25 @@ describe('LessonModeShell', () => {
     expect(host.querySelector('[data-lesson-action-bar] [data-done-next]')).not.toBeNull()
   })
 
+  it('leaves the celebration when the student opens another part', async () => {
+    act(() => root.render(<LessonModeShell {...props(1, ['a'])} />))
+    await act(async () => (host.querySelector('[data-finish]') as HTMLButtonElement).click())
+    act(() => (host.querySelector('[data-continue]') as HTMLButtonElement).click())
+    expect(host.querySelector('[data-lesson-done]')).not.toBeNull()
+    act(() => root.render(<LessonModeShell {...props(0, ['a'])} />))
+    expect(host.querySelector('[data-lesson-done]')).toBeNull()
+    expect(host.querySelector('.lx-fill')?.hasAttribute('hidden')).toBe(false)
+  })
+
+  it('celebrates while the last part is still saving', async () => {
+    const never = () => new Promise<{ success: true }>(() => {})
+    act(() => root.render(<LessonModeShell {...props(1, ['a'])} saveCompletion={never} />))
+    await act(async () => (host.querySelector('[data-finish]') as HTMLButtonElement).click())
+    act(() => (host.querySelector('[data-continue]') as HTMLButtonElement).click())
+    expect(push).not.toHaveBeenCalled()
+    expect(host.querySelector('[data-lesson-done]')).not.toBeNull()
+  })
+
   it('goes straight on when the lesson was already complete', () => {
     act(() => root.render(<LessonModeShell {...props(1, ['a', 'b'])} />))
     act(() => (host.querySelector('[data-continue]') as HTMLButtonElement).click())
