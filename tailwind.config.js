@@ -29,6 +29,7 @@ module.exports = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          deep: "hsl(var(--primary-deep))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -65,9 +66,9 @@ module.exports = {
         },
         sunken: "hsl(var(--surface-sunken))",
         raised: "hsl(var(--surface-raised))",
-        success: "hsl(var(--success))",
+        success: { DEFAULT: "hsl(var(--success))", deep: "hsl(var(--success-deep))" },
         warning: "hsl(var(--warning))",
-        danger: "hsl(var(--danger))",
+        danger: { DEFAULT: "hsl(var(--danger))", deep: "hsl(var(--danger-deep))" },
         info: "hsl(var(--info))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar))",
@@ -95,7 +96,19 @@ module.exports = {
         pop: 'var(--shadow-pop)',
         'warm': '0 1px 2px hsl(var(--shadow-warm) / 0.06), 0 8px 24px -12px hsl(var(--shadow-warm) / 0.12)',
       },
+      transitionTimingFunction: {
+        smooth: 'var(--ease-out)',
+        spring: 'var(--ease-spring)',
+      },
+      transitionDuration: {
+        tap: 'var(--dur-tap)',
+        state: 'var(--dur-state)',
+        pop: 'var(--dur-pop)',
+        turn: 'var(--dur-turn)',
+      },
       keyframes: {
+        bob: { '0%, 100%': { transform: 'translate(-50%, 0)' }, '50%': { transform: 'translate(-50%, -6px)' } },
+        'ring-pulse': { '0%': { transform: 'scale(.85)', opacity: '.9' }, '100%': { transform: 'scale(1.45)', opacity: '0' } },
         "accordion-down": {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -138,6 +151,8 @@ module.exports = {
         },
       },
       animation: {
+        bob: 'bob 1.6s ease-in-out infinite',
+        'ring-pulse': 'ring-pulse 1.6s cubic-bezier(.22,1,.36,1) infinite',
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in-up": "fade-in-up 0.3s ease-out",

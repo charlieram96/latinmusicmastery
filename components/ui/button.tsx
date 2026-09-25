@@ -4,7 +4,14 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
-const buttonVariants = cva(
+// Arbitrary values (not the duration-tap / ease-smooth shorthands) so tailwind-merge
+// recognises them and drops the base `duration-200`; unknown named keys would survive the merge.
+const CHUNKY_BASE =
+  "rounded-[14px] font-heading font-extrabold uppercase tracking-[0.02em] transition-[transform,box-shadow,filter] duration-[var(--dur-tap)] ease-[var(--ease-out)] " +
+  "active:scale-100 active:translate-y-[4px] active:shadow-none " +
+  "disabled:opacity-100 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-[0_4px_0_hsl(var(--border))]"
+
+const baseButtonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive active:scale-[0.98]",
   {
     variants: {
@@ -25,6 +32,11 @@ const buttonVariants = cva(
         /** Translucent control for use on imagery (covers, the backdrop card). */
         ondark:
           "border border-white/20 bg-white/[0.12] text-white backdrop-blur-md hover:bg-white/20",
+        /** The playful primary action: 3D bottom edge that sinks on press. One per screen. */
+        chunky: CHUNKY_BASE + " bg-primary text-primary-foreground shadow-[0_4px_0_hsl(var(--primary-deep))] hover:brightness-105",
+        "chunky-success": CHUNKY_BASE + " bg-success text-white shadow-[0_4px_0_hsl(var(--success-deep))] hover:brightness-105",
+        "chunky-danger": CHUNKY_BASE + " bg-danger text-white shadow-[0_4px_0_hsl(var(--danger-deep))] hover:brightness-105",
+        "chunky-ghost": CHUNKY_BASE + " bg-card text-foreground shadow-[0_4px_0_hsl(var(--border)),inset_0_0_0_2px_hsl(var(--border))] hover:bg-accent",
       },
       size: {
         default: "h-10 px-5 py-2 has-[>svg]:px-4",
@@ -42,6 +54,12 @@ const buttonVariants = cva(
   }
 )
 
+/** cva output run through tailwind-merge, so a variant can override base classes
+    (the chunky press-down replaces the base press-shrink). */
+function buttonVariants(...args: Parameters<typeof baseButtonVariants>) {
+  return cn(baseButtonVariants(...args))
+}
+
 function Button({
   className,
   variant,
@@ -49,7 +67,7 @@ function Button({
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
+  VariantProps<typeof baseButtonVariants> & {
     asChild?: boolean
   }) {
   const Comp = asChild ? Slot : "button"
