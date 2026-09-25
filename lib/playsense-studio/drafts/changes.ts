@@ -1,5 +1,5 @@
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
-import type { StudioTiming } from './timing';
+import type { StudioAnchor, StudioTiming } from './timing';
 
 export interface StudioContent {
   score: ScoreDocument;
@@ -15,14 +15,23 @@ const timingCanon = (t: StudioTiming) =>
     nudges: t.params.nudges ?? [],
     waypoints: t.waypoints.map((w) => [round(w.musicalPositionQN), round(w.videoTimeSeconds)]),
   });
-const anchorCanon = (t: StudioTiming) =>
-  t.anchor ? canon([round(t.anchor.seconds), t.anchor.qn == null ? null : round(t.anchor.qn)]) : 'null';
+const anchorCanon = (a: StudioAnchor | null) =>
+  a ? canon([round(a.seconds), a.qn == null ? null : round(a.qn)]) : 'null';
+
+/** publishTimeMap seeds/rebases the live anchor itself, and the Studio UI never
+ *  clears one — it only sets one. So a null draft anchor means "never touched",
+ *  not "cleared": it's never a change, and (in publishStudioDraft) never written. */
+export function anchorChanged(live: StudioAnchor | null, draft: StudioAnchor | null): boolean {
+  return draft != null && anchorCanon(draft) !== anchorCanon(live);
+}
 
 export function diffParts(live: StudioContent, draft: StudioContent) {
   return {
     score: canon(live.score) !== canon(draft.score),
-    timing: timingCanon(live.timing) !== timingCanon(draft.timing),
-    anchor: anchorCanon(live.timing) !== anchorCanon(draft.timing),
+    // Fewer than two waypoints can't publish (publishTimeMap requires at least
+    // two), so a draft that thin is never "changed" timing.
+    timing: draft.timing.waypoints.length >= 2 && timingCanon(live.timing) !== timingCanon(draft.timing),
+    anchor: anchorChanged(live.timing.anchor, draft.timing.anchor),
   };
 }
 

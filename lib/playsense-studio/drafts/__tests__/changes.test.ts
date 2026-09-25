@@ -28,4 +28,14 @@ describe('change summary', () => {
     expect(summarizeChanges({ ...live, score: score('A', [m(60), m(62), m(64)]) }, { ...live, score: score('A', [m(60)]) }))
       .toEqual(['2 bars removed']);
   });
+  it('treats a null draft anchor as "keep live", never a change', () => {
+    const live = { score: score('A', []), timing: { ...timed(1), anchor: { seconds: 1, qn: 0 } } };
+    const draft = { score: score('A', []), timing: { ...timed(1), anchor: null } };
+    expect(diffParts(live, draft)).toEqual({ score: false, timing: false, anchor: false });
+  });
+  it('treats a draft with fewer than two waypoints as unable to publish timing', () => {
+    const live = { score: score('A', []), timing: timed(1) };
+    const draft = { score: score('A', []), timing: EMPTY_TIMING };
+    expect(diffParts(live, draft)).toEqual({ score: false, timing: false, anchor: false });
+  });
 });
