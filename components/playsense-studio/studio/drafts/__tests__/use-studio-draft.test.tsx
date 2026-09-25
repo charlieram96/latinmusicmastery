@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import React, { act, useEffect, useLayoutEffect, useReducer } from 'react';
+import React, { act, useCallback, useEffect, useLayoutEffect, useReducer } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -197,5 +197,37 @@ describe('useStudioDraft — fix round 1: draft safety', () => {
     expect(spy).toHaveBeenCalledTimes(1);
     expect(String(spy.mock.calls[0][0])).toContain('useStudioDraft');
     spy.mockRestore();
+  });
+
+  it('a new but equal owner object does not restart the debounce', async () => {
+    function StableEditor({ ownerObj }: { ownerObj: typeof owner }) {
+      const [state, dispatch] = useReducer(
+        (s: { score: S; isDirty: boolean }, a: { type: 'edit'; title: string } | { type: 'clean' }) =>
+          a.type === 'edit' ? { score: { title: a.title }, isDirty: true } : { ...s, isDirty: false },
+        { score: { title: 'A' }, isDirty: false }
+      );
+      useLayoutEffect(() => { edit = (title: string) => dispatch({ type: 'edit', title }); }, [dispatch]);
+      const markClean = useCallback(() => dispatch({ type: 'clean' }), []);
+      const replaceScore = useCallback(() => {}, []);
+      useStudioDraft({
+        owner: ownerObj, label: 'Intro', score: state.score as never, isDirty: state.isDirty,
+        markClean, replaceScore, initialTiming: EMPTY_TIMING,
+      });
+      return null;
+    }
+    const render = () => act(() => root.render(
+      <StudioDraftsProvider owners={[{ owner, label: 'Intro', unpublished: false }]}>
+        <Probe /><StableEditor ownerObj={{ kind: 'section', id: 'sec-1' }} />
+      </StudioDraftsProvider>
+    ));
+    render();
+    act(() => edit('B'));
+    await act(async () => { vi.advanceTimersByTime(500); });
+    expect(acts.saveStudioDraft).not.toHaveBeenCalled();
+    // Re-render with a brand-new owner object carrying the same kind/id — the
+    // debounce timer set 500ms ago must survive this, not restart.
+    render();
+    await act(async () => { vi.advanceTimersByTime(500); });
+    expect(acts.saveStudioDraft).toHaveBeenCalledTimes(1);
   });
 });

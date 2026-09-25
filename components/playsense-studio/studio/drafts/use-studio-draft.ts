@@ -3,7 +3,7 @@
 // One owner's autosave-to-draft. Replaces the hosts' old persist() that wrote
 // the live score directly. Score changes arrive via useEditor's isDirty; timing
 // changes via setTiming (SyncPanel). Both are saved together as one draft row.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { saveStudioDraft } from '@/app/actions/studio-drafts';
 import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -45,7 +45,12 @@ export function useStudioDraft(opts: {
   initialTiming: StudioTiming;
 }): StudioDraftApi {
   const { owner, label, score, isDirty, markClean, replaceScore } = opts;
-  const key = ownerKey(owner);
+  // Stable across renders as long as kind/id don't change, even if the host
+  // passes a fresh `{ kind, id }` literal every render — an inline owner
+  // object must never restart the debounce timer below. Used everywhere
+  // instead of the raw `owner` prop.
+  const memoOwner = useMemo<StudioDraftOwner>(() => ({ kind: owner.kind, id: owner.id }), [owner.kind, owner.id]);
+  const key = ownerKey(memoOwner);
   const ctx = useStudioDrafts();
 
   const [timing, setTimingState] = useState(opts.initialTiming);
@@ -90,7 +95,7 @@ export function useStudioDraft(opts: {
     const myGeneration = generationRef.current;
     if (!saveOpts?.silent) { setSaveState('saving'); setError(null); }
     const res = await queueStudioSave(`draft:${key}`, () =>
-      saveStudioDraft({ owner, score: snap.score, timing: snap.timing })
+      saveStudioDraft({ owner: memoOwner, score: snap.score, timing: snap.timing })
     ).catch(() => ({ error: 'Could not save. Check your connection and retry.' } as { error: string; updatedAt?: string }));
     // Content was replaced (discard/restore) while this save was on the
     // wire: its result no longer describes the current draft, so it must not
@@ -100,14 +105,14 @@ export function useStudioDraft(opts: {
       if (!saveOpts?.silent) { setSaveState('error'); setError(res.error); }
       return { error: res.error };
     }
-    setStatus(owner, { unpublished: true, label: snap.label });
+    setStatus(memoOwner, { unpublished: true, label: snap.label });
     if (saveOpts?.silent) return {};
     setSaveState('saved');
     // Only clean what this save covered; later edits keep their dirty flags.
     if (latest.current.score === snap.score) markClean();
     if (timingRef.current === snap.timing) { latest.current.timingDirty = false; setTimingDirty(false); }
     return {};
-  }, [key, owner, markClean, setStatus]);
+  }, [key, memoOwner, markClean, setStatus]);
 
   // Debounced autosave; a failed save waits for flush() (Save now / publish).
   useEffect(() => {
@@ -171,8 +176,8 @@ export function useStudioDraft(opts: {
 
   useEffect(() => {
     // Keep the popover label fresh without treating a label-only change as an edit.
-    setStatus(owner, { label });
-  }, [owner, label, setStatus]);
+    setStatus(memoOwner, { label });
+  }, [memoOwner, label, setStatus]);
 
   return { timing, timingEpoch, setTiming, replaceTiming, flush, saveState, error, pending };
 }
