@@ -19,15 +19,12 @@ export interface CursorContext {
 
 /**
  * The selected event indices in `c`'s bar/voice: the inclusive range from the
- * anchor (if set) to the current index. `cursorRange` has no bar-length
- * context, so when the current index is 'end' with an anchor set, it resolves
- * 'end' relative to the anchor (one past it) rather than the bar's true last
- * event — the only shape that combination can take in practice, since
- * crossing bars always clears the anchor (see `walkCursor`).
+ * anchor (if set) to the current index, where 'end' counts as `len − 1`, the
+ * bar's last real event. `len` is the event count for `c`'s bar/voice.
  */
-export function cursorRange(c: NoteCursor): number[] {
+export function cursorRange(c: NoteCursor, len: number): number[] {
   if (c.anchor === null) return c.index === 'end' ? [] : [c.index];
-  const end = c.index === 'end' ? c.anchor + 1 : c.index;
+  const end = c.index === 'end' ? len - 1 : c.index;
   const lo = Math.min(c.anchor, end);
   const hi = Math.max(c.anchor, end);
   const range: number[] = [];
@@ -92,12 +89,17 @@ export function walkCursor(c: NoteCursor, dir: 1 | -1, extend: boolean, ctx: Cur
   return { ...c, index: positions[newPosIdx], anchor };
 }
 
-/** Clamp the cursor after edits: an out-of-range index becomes 'end', an out-of-range bar clamps to the last one. */
+/**
+ * Clamp the cursor after edits: an out-of-range index becomes 'end', an
+ * out-of-range bar clamps to the last one, and a stale anchor (past the bar's
+ * new length) clamps to `len − 1`, or is dropped to null if the bar is empty.
+ */
 export function clampCursor(c: NoteCursor, ctx: CursorContext): NoteCursor {
   const measureIndex = Math.max(0, Math.min(c.measureIndex, ctx.count - 1));
   const len = ctx.events(measureIndex, c.voice).length;
   const index = c.index !== 'end' && c.index >= len ? 'end' : c.index;
-  return { ...c, measureIndex, index };
+  const anchor = c.anchor === null ? null : len === 0 ? null : Math.min(c.anchor, len - 1);
+  return { ...c, measureIndex, index, anchor };
 }
 
 /** The staff index of a note/chord's top pitch, or null for a rest. */
