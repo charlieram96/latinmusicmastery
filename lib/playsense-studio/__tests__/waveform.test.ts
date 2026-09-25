@@ -125,4 +125,17 @@ describe('serialize / deserialize', () => {
     expect(() => deserializePeaks('not json')).toThrow();
     expect(() => deserializePeaks(JSON.stringify({ version: 1 }))).toThrow();
   });
+
+  it('round-trips optional hits and still accepts peaks without them', () => {
+    const base = computePeaks(new Float32Array([0, 0.5, -0.5, 0]), 8000, 0.0005, 2);
+    const withHits = { ...base, hits: [0.1, 0.25] };
+    expect(deserializePeaks(serializePeaks(withHits)).hits).toEqual([0.1, 0.25]);
+    expect(deserializePeaks(serializePeaks(base)).hits).toBeUndefined();
+  });
+
+  it('rejects malformed hits', () => {
+    const base = computePeaks(new Float32Array([0, 0.5]), 8000, 0.00025, 1);
+    expect(() => deserializePeaks(JSON.stringify({ ...base, hits: ['x'] }))).toThrow();
+    expect(() => deserializePeaks(JSON.stringify({ ...base, hits: [0.3, 0.1] }))).toThrow();
+  });
 });

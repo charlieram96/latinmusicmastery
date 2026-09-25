@@ -20,6 +20,8 @@ export interface WaveformPeaks {
   sampleRate: number;
   /** Interleaved min/max per bucket, int8 [-127, 127]. length = bucketCount * 2. */
   data: number[];
+  /** Detected hits in seconds (sorted); absent in caches older than Studio rework P4a. */
+  hits?: number[];
 }
 
 const QUANT = 127;
@@ -140,6 +142,14 @@ export function deserializePeaks(json: string): WaveformPeaks {
   if (p.data.length !== p.bucketCount * 2) {
     throw new Error('WaveformPeaks: data length does not match bucketCount');
   }
+  if (p.hits !== undefined) {
+    if (!Array.isArray(p.hits) || !p.hits.every((h) => typeof h === 'number' && Number.isFinite(h))) {
+      throw new Error('WaveformPeaks: invalid hits');
+    }
+    for (let i = 1; i < p.hits.length; i++) {
+      if ((p.hits[i] as number) < (p.hits[i - 1] as number)) throw new Error('WaveformPeaks: hits not sorted');
+    }
+  }
 
   return {
     version: 1,
@@ -147,5 +157,6 @@ export function deserializePeaks(json: string): WaveformPeaks {
     bucketCount: p.bucketCount,
     sampleRate: p.sampleRate,
     data: p.data as number[],
+    ...(p.hits !== undefined ? { hits: p.hits as number[] } : {}),
   };
 }

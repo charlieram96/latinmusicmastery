@@ -18,6 +18,7 @@ import {
   waveformBucketCount,
   type WaveformPeaks,
 } from '@/lib/playsense-studio/waveform';
+import { detectHits } from '@/lib/playsense-studio/onset-detect';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 
@@ -40,6 +41,8 @@ export interface DecodeOptions {
   /** Called with progress 0..1 during the network download. */
   onProgress?: (fraction: number) => void;
   signal?: AbortSignal;
+  /** Detect hits from the mixdown after decode. Default true; lane peaks pass false. */
+  withHits?: boolean;
 }
 
 /**
@@ -79,7 +82,9 @@ export async function decodeVideoPeaks(
       ? bucketCountFor(decoded.duration, opts.bucketsPerSecond)
       : waveformBucketCount(decoded.duration));
 
-  return computePeaks(mono, targetSampleRate, decoded.duration, targetBuckets);
+  const peaks = computePeaks(mono, targetSampleRate, decoded.duration, targetBuckets);
+  if (opts.withHits !== false) peaks.hits = detectHits(mono, targetSampleRate);
+  return peaks;
 }
 
 /**
@@ -167,6 +172,7 @@ export async function loadOrComputeLanePeaks(
   const peaks = await decodeVideoPeaks(audioUrl, {
     ...opts,
     bucketsPerSecond: opts.bucketsPerSecond ?? LANE_BUCKETS_PER_SECOND,
+    withHits: false,
   });
 
   try {
