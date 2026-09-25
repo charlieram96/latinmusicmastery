@@ -316,7 +316,7 @@ export interface WorkspaceController {
   swap(): void                               // FLIP-captured
   update(patch: Partial<WorkspaceState>): void  // no FLIP (drags, keys, resets)
   /** Set by <SplitWorkspace>: measures the regions right before a layout change. */
-  beforeLayoutChange: { current: (() => void) | null }
+  beforeLayoutChangeRef: { current: (() => void) | null }
 }
 export function useWorkspaceLayout(kind: string, defaults: WorkspaceState, options?: { layouts?: readonly WorkspaceLayout[] }): WorkspaceController
 export const PHONE_QUERY = '(max-width: 767px)'
@@ -326,7 +326,7 @@ export const PHONE_QUERY = '(max-width: 767px)'
   - starts from the defaults on the first render, then hydrates from `localStorage['lmm-workspace:watch:wrapped']`;
   - `update({split: 60})` saves the serialized state under the kind's key;
   - changing `kind` re-reads that kind's stored state;
-  - `setLayout('stack')` calls `beforeLayoutChange.current` before the state changes, and ignores a layout not in `layouts`;
+  - `setLayout('stack')` calls `beforeLayoutChangeRef.current` before the state changes, and ignores a layout not in `layouts`;
   - `swap()` from pip mirrors the corner and saves;
   - with `matchMedia('(max-width: 767px)')` matching, `layout` is `stack` while `state.layout` stays `side`;
   - a throwing `localStorage` does not break it.
@@ -346,7 +346,7 @@ export const PHONE_QUERY = '(max-width: 767px)'
 export function useWorkspaceLayout(kind, defaults, { layouts = WORKSPACE_LAYOUTS } = {}) {
   const [state, setState] = useState(defaults)
   const [narrow, setNarrow] = useState(false)
-  const beforeLayoutChange = useRef<(() => void) | null>(null)
+  const beforeLayoutChangeRef = useRef<(() => void) | null>(null)
   const kindRef = useRef(kind)
   kindRef.current = kind
   // defaults/layouts are read once per kind: callers pass module constants.
@@ -369,13 +369,13 @@ export function useWorkspaceLayout(kind, defaults, { layouts = WORKSPACE_LAYOUTS
   }), [])
   const setLayout = useCallback((layout) => {
     if (!layouts.includes(layout)) return
-    beforeLayoutChange.current?.()
+    beforeLayoutChangeRef.current?.()
     commit(s => ({ ...s, layout }))
   }, [commit, layouts])
-  const swap = useCallback(() => { beforeLayoutChange.current?.(); commit(swapWorkspace) }, [commit])
+  const swap = useCallback(() => { beforeLayoutChangeRef.current?.(); commit(swapWorkspace) }, [commit])
   const update = useCallback((patch) => commit(s => ({ ...s, ...patch })), [commit])
   return useMemo(() => ({ kind, state, layout: effectiveLayout(state.layout, narrow), narrow, layouts, defaults,
-    setLayout, swap, update, beforeLayoutChange }), [...])
+    setLayout, swap, update, beforeLayoutChangeRef }), [...])
 }
 ```
 (Side effects inside a state updater run twice under StrictMode; writing the same value twice is harmless.)
@@ -430,7 +430,7 @@ export function WorkspaceLayoutSwitcher(props: { controller: WorkspaceController
 
 - [ ] **Step 2: Run to fail.** `npx vitest run components/playsense-studio/player/__tests__/split-workspace.test.tsx`
 
-- [ ] **Step 3: Implement** the shell (height fitting kept from the old component, minus the knob), the divider/PiP pointer handlers (window listeners; CSS variables written directly while dragging; one `controller.update` on release; 4 px drag threshold on the PiP with a one-shot capture-phase click swallow after a real drag), FLIP (`controller.beforeLayoutChange` measures both regions; a layout effect keyed on layout/swap/corner plays `el.animate` translate+scale 440 ms `cubic-bezier(.22,1,.36,1)`, or a .92 fade-scale-in for a region that had no box; skipped when `prefers-reduced-motion: reduce`), the PiP spring (`cubic-bezier(.34,1.56,.64,1)`, 440 ms) and the switcher (sliding amber indicator measured from the pressed button; `side` hidden when `controller.narrow`). CSS follows lab `.ws-*`: 16 px divider track, grip 4×44 → 72 + primary ring on hover/focus/drag, % pill, 12 px music divider, PiP `width: min(100% - 32px, max(180px, pipw%))` with 16 px insets (58 px from the top), `.ws-anim` grid transition 360 ms, phone PiP min 140 px, reduced motion kills transitions.
+- [ ] **Step 3: Implement** the shell (height fitting kept from the old component, minus the knob), the divider/PiP pointer handlers (window listeners; CSS variables written directly while dragging; one `controller.update` on release; 4 px drag threshold on the PiP with a one-shot capture-phase click swallow after a real drag), FLIP (`controller.beforeLayoutChangeRef` measures both regions; a layout effect keyed on layout/swap/corner plays `el.animate` translate+scale 440 ms `cubic-bezier(.22,1,.36,1)`, or a .92 fade-scale-in for a region that had no box; skipped when `prefers-reduced-motion: reduce`), the PiP spring (`cubic-bezier(.34,1.56,.64,1)`, 440 ms) and the switcher (sliding amber indicator measured from the pressed button; `side` hidden when `controller.narrow`). CSS follows lab `.ws-*`: 16 px divider track, grip 4×44 → 72 + primary ring on hover/focus/drag, % pill, 12 px music divider, PiP `width: min(100% - 32px, max(180px, pipw%))` with 16 px insets (58 px from the top), `.ws-anim` grid transition 360 ms, phone PiP min 140 px, reduced motion kills transitions.
 
 - [ ] **Step 4: Add the strings** with a node script that inserts only the `lessonWorkspace` block after `lessonView` in both locale files.
 

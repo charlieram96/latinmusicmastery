@@ -36,7 +36,7 @@ export interface WorkspaceController {
   /** Commit a geometry change (drags, keys, resets); not animated. */
   update: (patch: Partial<WorkspaceState>) => void;
   /** Set by <SplitWorkspace>: measures the regions right before a layout change. */
-  beforeLayoutChange: { current: (() => void) | null };
+  beforeLayoutChangeRef: { current: (() => void) | null };
 }
 
 export function useWorkspaceLayout(
@@ -46,7 +46,7 @@ export function useWorkspaceLayout(
 ): WorkspaceController {
   const [state, setState] = useState<WorkspaceState>(defaults);
   const [narrow, setNarrow] = useState(false);
-  const beforeLayoutChange = useRef<(() => void) | null>(null);
+  const beforeLayoutChangeRef = useRef<(() => void) | null>(null);
   const kindRef = useRef(kind);
   const configRef = useRef({ defaults, layouts });
   useEffect(() => {
@@ -80,12 +80,12 @@ export function useWorkspaceLayout(
 
   const setLayout = useCallback((layout: WorkspaceLayout) => {
     if (!configRef.current.layouts.includes(layout)) return;
-    beforeLayoutChange.current?.();
+    beforeLayoutChangeRef.current?.();
     commit((s) => ({ ...s, layout }));
   }, [commit]);
 
   const swap = useCallback(() => {
-    beforeLayoutChange.current?.();
+    beforeLayoutChangeRef.current?.();
     commit(swapWorkspace);
   }, [commit]);
 
@@ -93,6 +93,6 @@ export function useWorkspaceLayout(
 
   return useMemo(() => ({
     kind, state, layout: effectiveLayout(state.layout, narrow), narrow, layouts, defaults,
-    setLayout, swap, update, beforeLayoutChange,
+    setLayout, swap, update, beforeLayoutChangeRef,
   }), [kind, state, narrow, layouts, defaults, setLayout, swap, update]);
 }

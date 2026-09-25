@@ -69,7 +69,7 @@ describe('useWorkspaceLayout', () => {
   it('measures for FLIP before a layout change and ignores layouts the view lacks', () => {
     render('watch:wrapped', ['side', 'stack'])
     const seen: string[] = []
-    ctl.beforeLayoutChange.current = () => seen.push(ctl.state.layout)
+    ctl.beforeLayoutChangeRef.current = () => seen.push(ctl.state.layout)
     act(() => ctl.setLayout('stack'))
     expect(seen).toEqual(['side'])
     expect(ctl.state.layout).toBe('stack')

@@ -1,101 +1,116 @@
 'use client';
 
-// Resizable two-pane workspace shell.
+// The lesson workspace: the teacher video (media) next to the music (the
+// staff, and while playing the highway below it with its own divider).
 //
-// Extracted from PlaysenseStudioPlayer's split layout so the same drag-knob +
-// orientation chrome can wrap any pair of panes — the with-score player
-// (video | notation) and the no-score video lesson (video | "about" panel).
+// Layouts: side | stack | pip (music fills, the video floats in a corner) |
+// music (no video), plus swap. Geometry is CSS grid driven by data attributes
+// and CSS variables (split-workspace.css). The DOM order never changes
+// between layouts, so the <video>, the staff renderer and the highway are
+// never remounted. Drags write the CSS variables directly and commit to the
+// controller once, on release, so nothing re-renders per pointer move.
 //
-// The shell owns only the geometry (split %, workspace height, row/column
-// orientation) and the diagonal corner knob; pane *contents* are supplied by
-// the consumer. The knob rebalances the split on its primary axis and adjusts
-// the overall height on the other axis (double-click resets). In the
-// full-bleed lesson frame the height is capped at the space above the lesson
-// footer, and when the panes are stacked the knob only moves the split — the
-// workspace never grows past the viewport it was fitted to.
+// State lives in useWorkspaceLayout so the switcher (WorkspaceLayoutSwitcher)
+// can be rendered anywhere, e.g. in the lesson action bar.
 
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
-  type MouseEvent as ReactMouseEvent,
-  type TouchEvent as ReactTouchEvent,
 } from 'react';
-import { Columns2, Rows2 } from 'lucide-react';
+import { ArrowLeftRight, Columns2, Music2, PictureInPicture2, Rows2, type LucideIcon } from 'lucide-react';
+import { useTranslation } from '@/components/language-provider';
+import { cn } from '@/lib/utils';
 import { lessonExerciseHeight } from '@/lib/playsense-studio/lesson-viewport';
+import {
+  MUSIC_SPLIT_BOUNDS,
+  SPLIT_BOUNDS,
+  SPLIT_STEP,
+  clamp,
+  leadingSplit,
+  nearestCorner,
+  nudgeSplit,
+  resizePipWidth,
+  splitFromPointer,
+  type WorkspaceLayout,
+  type WorkspaceState,
+} from '@/lib/playsense-studio/workspace-layout';
+import type { WorkspaceController } from './use-workspace-layout';
+import './split-workspace.css';
 
-const SPLIT_MIN = 28;
-const SPLIT_MAX = 72;
-// Stacked, a letterboxed 16:9 video needs far less height than the score
-// does, so the split favours the secondary pane (side by side uses initialSplit).
-const COLUMN_SPLIT = 40;
-const H_MIN = 360;
-const hMax = () =>
-  Math.round((typeof window !== 'undefined' ? window.innerHeight : 1000) * 0.92);
+const EASE_OUT = 'cubic-bezier(.22,1,.36,1)';
+const EASE_SPRING = 'cubic-bezier(.34,1.56,.64,1)';
+const FLIP_MS = 440;
+const RESET_MS = 360;
+/** Pointer travel below this is a tap on the PiP, not a drag. */
+const DRAG_THRESHOLD = 4;
+/** Never start a PiP drag from the video's own controls. */
+const NO_DRAG = '[data-ws-nodrag], video[controls], input, select, textarea, a, [role="slider"]';
+const TILT = { min: -3, max: 3 };
 
-export interface SplitWorkspaceSecondaryHeaderCtx {
-  orient: 'row' | 'column';
-  setOrient: (v: 'row' | 'column') => void;
-  isRow: boolean;
-}
+const reducedMotion = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export interface SplitWorkspaceProps {
-  visiblePane?: 'both' | 'primary' | 'secondary';
-  /** Fills the primary (video) pane edge-to-edge. */
-  primary: ReactNode;
-  /** Fills the secondary pane body (below its header). */
-  secondary: ReactNode;
-  /** Renders the secondary pane's header bar; receives orientation controls. */
-  secondaryHeader: (ctx: SplitWorkspaceSecondaryHeaderCtx) => ReactNode;
-  /** % of the workspace given to the primary pane (default 55). */
-  initialSplit?: number;
-  /** Workspace height in px (default 560). Ignored when frame='bleed'. */
-  initialHeight?: number;
+  controller: WorkspaceController;
+  /** The teacher video. Omitted → the music fills the workspace. */
+  media?: ReactNode;
+  /** The staff pane. */
+  music: ReactNode;
+  /** Shown below the staff with its own horizontal divider (while playing). */
+  highway?: ReactNode;
+  /** Absolute layer over the whole workspace (prompts, end-of-demo card). */
+  overlay?: ReactNode;
   /**
-   * 'card' (default) — rounded, bordered box at a fixed height.
-   * 'bleed' — full-bleed: no border/radius, height grows to fill the viewport
-   * below the workspace's top edge (still resizable via the knob).
+   * 'card' — bordered box, `initialHeight` tall (capped to the viewport in a lesson).
+   * 'bleed' — edge to edge, fitted to the viewport above the lesson footer.
+   * 'fill' — the parent sizes it.
    */
-  frame?: 'card' | 'bleed';
+  frame?: 'card' | 'bleed' | 'fill';
+  initialHeight?: number;
+  className?: string;
 }
 
 export function SplitWorkspace({
-  primary,
-  secondary,
-  secondaryHeader,
-  initialSplit = 55,
-  initialHeight = 560,
+  controller,
+  media,
+  music,
+  highway,
+  overlay,
   frame = 'card',
-  visiblePane = 'both',
+  initialHeight = 560,
+  className,
 }: SplitWorkspaceProps) {
-  const bleed = frame === 'bleed';
-  const [orient, setOrient] = useState<'row' | 'column'>('row');
-  const [split, setSplit] = useState(initialSplit); // % given to the primary pane
-  const [workspaceH, setWorkspaceH] = useState(initialHeight);
-  const [userSized, setUserSized] = useState(false);
-  const [knobDragging, setKnobDragging] = useState(false);
-  const workspaceRef = useRef<HTMLDivElement | null>(null);
-  // Height that fills the space above the lesson footer — the knob's ceiling
-  // in the bleed frame, so a drag can never push the workspace under it.
-  const fitHRef = useRef(initialHeight);
-  const isRow = orient === 'row';
+  const { t } = useTranslation();
+  const { state, update, setLayout, defaults, beforeLayoutChangeRef } = controller;
+  const hasMedia = media != null && media !== false;
+  const layout: WorkspaceLayout = hasMedia ? controller.layout : 'music';
+  const lead = leadingSplit(state.split, state.swap);
 
-  // A width split has no meaning as a height split, so each orientation
-  // starts from its own default.
-  const changeOrient = useCallback((v: 'row' | 'column') => {
-    setOrient(v);
-    setSplit(v === 'row' ? initialSplit : COLUMN_SPLIT);
-  }, [initialSplit]);
+  const frameRef = useRef<HTMLDivElement | null>(null);
+  const wsRef = useRef<HTMLDivElement | null>(null);
+  const mediaRef = useRef<HTMLDivElement | null>(null);
+  const musicRef = useRef<HTMLDivElement | null>(null);
+  const pctRef = useRef<HTMLSpanElement | null>(null);
+  const flipFrom = useRef<(DOMRect | null)[] | null>(null);
+  const pipFrom = useRef<DOMRect | null>(null);
+  const stateRef = useRef<WorkspaceState>(state);
+  useEffect(() => { stateRef.current = state; });
 
-  // Fit before paint, including the fixed lesson footer and the resize handle.
-  // Natural (unscrolled) position prevents page scrolling from enlarging it.
-  // Once the user has sized it we stop growing it, but the bleed frame still
-  // shrinks with the viewport so it never overlaps the footer.
+  // ---- Height: fit to the viewport above the lesson footer ----
+  const [height, setHeight] = useState(initialHeight);
   useLayoutEffect(() => {
-    const el = workspaceRef.current;
-    if (!el) return;
+    const el = frameRef.current;
+    if (!el || frame === 'fill') return;
+    const bleed = frame === 'bleed';
     const lesson = el.closest<HTMLElement>('[data-lesson-shell]');
     if (!bleed && !lesson) return;
     const scroller = el.closest<HTMLElement>('[data-dashboard-main]');
@@ -107,9 +122,7 @@ export function SplitWorkspace({
       const bottom = Math.min(visibleBottom, scroller?.getBoundingClientRect().bottom ?? visibleBottom);
       const available = lessonExerciseHeight(bottom, el.getBoundingClientRect().top,
         scroller?.scrollTop ?? window.scrollY, (footer?.getBoundingClientRect().height ?? 0) + 8);
-      const fitted = bleed ? available : Math.min(initialHeight, available);
-      fitHRef.current = fitted;
-      setWorkspaceH((prev) => (!userSized ? fitted : bleed ? Math.min(prev, fitted) : prev));
+      setHeight(bleed ? available : Math.min(initialHeight, available));
     };
     const schedule = () => { if (!pending) pending = requestAnimationFrame(fit); };
     const observer = new ResizeObserver(schedule);
@@ -125,186 +138,314 @@ export function SplitWorkspace({
       window.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('resize', schedule);
     };
-  }, [bleed, userSized, initialHeight]);
+  }, [frame, initialHeight]);
 
-  const resetSize = useCallback(() => {
-    setSplit(isRow ? initialSplit : COLUMN_SPLIT);
-    setUserSized(false);
-    if (!bleed) setWorkspaceH(initialHeight);
-  }, [isRow, bleed, initialSplit, initialHeight]);
+  // ---- FLIP: measure before a layout change, animate after it lands ----
+  useEffect(() => {
+    beforeLayoutChangeRef.current = () => {
+      flipFrom.current = reducedMotion()
+        ? null
+        : [mediaRef.current, musicRef.current].map((el) => el?.getBoundingClientRect() ?? null);
+    };
+    return () => { beforeLayoutChangeRef.current = null; };
+  }, [beforeLayoutChangeRef]);
 
-  // Delta-based 2-axis drag: primary axis rebalances the split, the other axis
-  // changes the overall workspace height. Stacked panes in the bleed frame
-  // keep their fitted height — only the split moves.
-  const heightLocked = bleed && !isRow;
-  const clampH = useCallback(
-    (h: number) => Math.max(H_MIN, Math.min(bleed ? fitHRef.current : hMax(), h)),
-    [bleed]
-  );
-  const startKnob = useCallback(
-    (e: ReactMouseEvent | ReactTouchEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const rect = workspaceRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const point = 'touches' in e ? e.touches[0] : e;
-      const sx = point.clientX;
-      const sy = point.clientY;
-      const start = { sx, sy, split, h: workspaceH, w: rect.width, ht: rect.height };
-      setKnobDragging(true);
-      if (!heightLocked) setUserSized(true);
-      document.body.style.userSelect = 'none';
+  useLayoutEffect(() => {
+    const from = flipFrom.current;
+    flipFrom.current = null;
+    if (!from) return;
+    [mediaRef.current, musicRef.current].forEach((el, i) => {
+      if (!el || typeof el.animate !== 'function') return;
+      const to = el.getBoundingClientRect();
+      if (!to.width) return;
+      const was = from[i];
+      if (!was || !was.width) {
+        el.animate([{ opacity: 0, transform: 'scale(.92)' }, { opacity: 1, transform: 'none' }], { duration: FLIP_MS, easing: EASE_OUT });
+        return;
+      }
+      el.animate([
+        { transformOrigin: '0 0', transform: `translate(${was.left - to.left}px, ${was.top - to.top}px) scale(${was.width / to.width}, ${was.height / to.height})` },
+        { transformOrigin: '0 0', transform: 'none' },
+      ], { duration: FLIP_MS, easing: EASE_OUT });
+    });
+  }, [layout, state.swap, state.corner]);
 
-      const onMove = (ev: MouseEvent | TouchEvent) => {
-        const p = 'touches' in ev ? ev.touches[0] : ev;
-        const dx = p.clientX - start.sx;
-        const dy = p.clientY - start.sy;
-        if (isRow) {
-          setSplit(
-            Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, start.split + (dx / start.w) * 100))
-          );
-          setWorkspaceH(clampH(start.h + dy));
-        } else {
-          setSplit(
-            Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, start.split + (dy / start.ht) * 100))
-          );
-          if (!heightLocked) setWorkspaceH(clampH(start.h + dx));
-        }
-      };
-      const onUp = () => {
-        setKnobDragging(false);
-        document.body.style.userSelect = '';
-        window.removeEventListener('mousemove', onMove);
-        window.removeEventListener('mouseup', onUp);
-        window.removeEventListener('touchmove', onMove);
-        window.removeEventListener('touchend', onUp);
-      };
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup', onUp);
-      window.addEventListener('touchmove', onMove, { passive: false });
-      window.addEventListener('touchend', onUp);
-    },
-    [isRow, split, workspaceH, heightLocked, clampH]
-  );
+  // ---- PiP spring to its new corner ----
+  const springPip = useCallback(() => {
+    const el = mediaRef.current;
+    const from = pipFrom.current;
+    pipFrom.current = null;
+    if (!el || !from || reducedMotion() || typeof el.animate !== 'function') return;
+    const to = el.getBoundingClientRect();
+    el.animate(
+      [{ transform: `translate(${from.left - to.left}px, ${from.top - to.top}px)` }, { transform: 'none' }],
+      { duration: FLIP_MS, easing: EASE_SPRING },
+    );
+  }, []);
+  useLayoutEffect(() => { springPip(); }, [state.corner, springPip]);
+
+  // ---- Divider reset (double-click) with a grid transition ----
+  const reset = (patch: Partial<WorkspaceState>) => {
+    const ws = wsRef.current;
+    if (ws && !reducedMotion()) {
+      ws.dataset.anim = '';
+      window.setTimeout(() => { delete ws.dataset.anim; }, RESET_MS + 40);
+    }
+    update(patch);
+  };
+
+  // ---- Divider drags ----
+  const startSplitDrag = (which: 'split' | 'music') => (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const ws = wsRef.current;
+    const box = which === 'split' ? ws : musicRef.current;
+    if (!ws || !box) return;
+    e.preventDefault();
+    const div = e.currentTarget;
+    div.focus({ preventScroll: true });
+    const r = box.getBoundingClientRect();
+    const vertical = which === 'music' || layout === 'stack';
+    const bounds = which === 'split' ? SPLIT_BOUNDS : MUSIC_SPLIT_BOUNDS;
+    const swap = stateRef.current.swap;
+    let value: number | null = null;
+    ws.dataset.dragging = '';
+    div.dataset.active = '';
+    if (which === 'split' && pctRef.current) pctRef.current.textContent = `${Math.round(leadingSplit(stateRef.current.split, swap))}%`;
+    const move = (ev: PointerEvent) => {
+      value = splitFromPointer(vertical ? ev.clientY : ev.clientX, vertical ? r.top : r.left, vertical ? r.height : r.width, bounds);
+      ws.style.setProperty(which === 'split' ? '--ws-lead' : '--ws-staff', String(value));
+      div.setAttribute('aria-valuenow', String(Math.round(value)));
+      if (which === 'split' && pctRef.current) pctRef.current.textContent = `${Math.round(value)}%`;
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      delete ws.dataset.dragging;
+      delete div.dataset.active;
+      if (value == null) return;
+      update(which === 'split' ? { split: leadingSplit(value, swap) } : { musicSplit: value });
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  };
+
+  const onSplitKey = (which: 'split' | 'music') => (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const vertical = which === 'music' || layout === 'stack';
+    const steps: Record<string, number> = vertical
+      ? { ArrowUp: -SPLIT_STEP, ArrowDown: SPLIT_STEP }
+      : { ArrowLeft: -SPLIT_STEP, ArrowRight: SPLIT_STEP };
+    const delta = steps[e.key];
+    if (!delta) return;
+    e.preventDefault();
+    if (which === 'split') update({ split: leadingSplit(nudgeSplit(lead, delta), state.swap) });
+    else update({ musicSplit: nudgeSplit(state.musicSplit, delta, MUSIC_SPLIT_BOUNDS) });
+  };
+
+  // ---- PiP: drag anywhere but the controls; resize from the inner corner ----
+  const onMediaPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (layout !== 'pip' || e.button !== 0) return;
+    const target = e.target as Element;
+    if (target.closest(NO_DRAG)) return;
+    const el = mediaRef.current;
+    const ws = wsRef.current;
+    if (!el || !ws) return;
+    const sizing = !!target.closest('.ws-pip-resize');
+    if (sizing) e.preventDefault();
+    const box = ws.getBoundingClientRect();
+    const start = el.getBoundingClientRect();
+    const { corner, pipWidth } = stateRef.current;
+    const x0 = e.clientX;
+    const y0 = e.clientY;
+    let dragging = false;
+    let width = pipWidth;
+    let last = { dx: 0, dy: 0 };
+    const move = (ev: PointerEvent) => {
+      const dx = ev.clientX - x0;
+      const dy = ev.clientY - y0;
+      last = { dx, dy };
+      if (!dragging) {
+        if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+        dragging = true;
+        el.dataset.grabbing = '';
+        ws.dataset.dragging = '';
+      }
+      if (sizing) {
+        width = resizePipWidth(pipWidth, dx, corner, box.width);
+        ws.style.setProperty('--ws-pipw', String(width));
+      } else {
+        el.style.transform = `translate(${dx}px, ${dy}px) rotate(${clamp(dx / 60, TILT)}deg)`;
+      }
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      if (!dragging) return;
+      delete el.dataset.grabbing;
+      delete ws.dataset.dragging;
+      // The click that ends a drag is not a tap on whatever lies under it.
+      const swallow = (ev: Event) => { ev.stopPropagation(); ev.preventDefault(); };
+      el.addEventListener('click', swallow, { capture: true, once: true });
+      window.setTimeout(() => el.removeEventListener('click', swallow, { capture: true }), 0);
+      if (sizing) { update({ pipWidth: width }); return; }
+      const next = nearestCorner({ x: start.left + start.width / 2 + last.dx, y: start.top + start.height / 2 + last.dy }, box);
+      pipFrom.current = el.getBoundingClientRect();
+      el.style.transform = '';
+      if (next === corner) springPip();
+      else update({ corner: next });
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  };
+
+  const onMediaDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (layout !== 'pip' || (e.target as Element).closest(NO_DRAG)) return;
+    setLayout('side');
+  };
+
+  const splitActive = layout === 'side' || layout === 'stack';
 
   return (
     <div
-      ref={workspaceRef}
+      ref={frameRef}
       data-lesson-workspace=""
-      className={
-        bleed
-          ? 'relative overflow-visible border-y border-border bg-card'
-          : 'relative overflow-visible rounded-xl border border-border bg-card'
-      }
-      style={{ height: workspaceH }}
+      data-frame={frame}
+      className={cn('ws-frame', className)}
+      style={frame === 'fill' ? undefined : { height }}
     >
       <div
-        className="flex h-full items-stretch"
-        style={{ flexDirection: isRow ? 'row' : 'column' }}
+        ref={wsRef}
+        className="ws"
+        data-layout={layout}
+        data-swap={state.swap}
+        data-corner={state.corner}
+        style={{ '--ws-lead': lead, '--ws-staff': state.musicSplit, '--ws-pipw': state.pipWidth } as CSSProperties}
       >
-        {/* Primary pane */}
-        <div
-          className="flex min-h-0 min-w-0 flex-col bg-black"
-          style={{ flex: visiblePane === 'both' ? `${split} 1 0` : '1 1 0', display: visiblePane === 'secondary' ? 'none' : undefined }}
-        >
-          {visiblePane === 'primary' && secondaryHeader({ orient, setOrient: changeOrient, isRow })}
-          {primary}
+        {hasMedia && (
+          <div ref={mediaRef} className="ws-pane ws-media" onPointerDown={onMediaPointerDown} onDoubleClick={onMediaDoubleClick}>
+            {media}
+            <span className="ws-pip-resize" aria-hidden="true" title={t('lessonWorkspace.resizePip')} />
+          </div>
+        )}
+        {hasMedia && (
+          <div
+            className="ws-div"
+            role="separator"
+            tabIndex={splitActive ? 0 : -1}
+            aria-orientation={layout === 'stack' ? 'horizontal' : 'vertical'}
+            aria-valuemin={SPLIT_BOUNDS.min}
+            aria-valuemax={SPLIT_BOUNDS.max}
+            aria-valuenow={Math.round(lead)}
+            aria-label={t('lessonWorkspace.resize')}
+            title={t('lessonWorkspace.resizeHint')}
+            onPointerDown={startSplitDrag('split')}
+            onKeyDown={onSplitKey('split')}
+            onDoubleClick={() => reset({ split: defaults.split })}
+          >
+            <span className="ws-grip" />
+            <span ref={pctRef} className="ws-pct" aria-hidden="true" />
+          </div>
+        )}
+        <div ref={musicRef} className="ws-pane ws-music">
+          <div className="ws-staff">{music}</div>
+          {highway && (
+            <>
+              <div
+                className="ws-div2"
+                role="separator"
+                tabIndex={0}
+                aria-orientation="horizontal"
+                aria-valuemin={MUSIC_SPLIT_BOUNDS.min}
+                aria-valuemax={MUSIC_SPLIT_BOUNDS.max}
+                aria-valuenow={Math.round(state.musicSplit)}
+                aria-label={t('lessonWorkspace.resizeMusic')}
+                title={t('lessonWorkspace.resizeHint')}
+                onPointerDown={startSplitDrag('music')}
+                onKeyDown={onSplitKey('music')}
+                onDoubleClick={() => reset({ musicSplit: defaults.musicSplit })}
+              >
+                <span className="ws-grip" />
+              </div>
+              <div className="ws-highway">{highway}</div>
+            </>
+          )}
         </div>
-
-        {/* Secondary pane */}
-        <div
-          className="flex min-h-0 min-w-0 flex-col bg-card"
-          style={{
-            flex: visiblePane === 'both' ? `${100 - split} 1 0` : '1 1 0',
-            display: visiblePane === 'primary' ? 'none' : undefined,
-            borderLeft: visiblePane === 'both' && isRow ? '1px solid hsl(var(--border))' : 'none',
-            borderTop: visiblePane === 'both' && !isRow ? '1px solid hsl(var(--border))' : 'none',
-          }}
-        >
-          {secondaryHeader({ orient, setOrient: changeOrient, isRow })}
-          {secondary}
-        </div>
+        {overlay}
       </div>
-
-      {/* Single diagonal corner knob — resizes split + height together. */}
-      <button
-        type="button"
-        hidden={visiblePane !== 'both'}
-        onMouseDown={startKnob}
-        onTouchStart={startKnob}
-        onDoubleClick={resetSize}
-        aria-label="Resize"
-        title="Drag to adjust the split and height · double-click to reset"
-        className={[
-          'absolute z-[12] grid h-[30px] w-[30px] place-items-center rounded-full border bg-secondary text-muted-foreground shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-colors hover:border-primary hover:bg-primary hover:text-white',
-          isRow ? 'cursor-[nwse-resize]' : 'cursor-[ns-resize]',
-          knobDragging ? 'border-primary bg-primary text-white' : 'border-border',
-        ].join(' ')}
-        style={
-          isRow
-            ? { left: `${split}%`, bottom: -15, transform: 'translateX(-50%)' }
-            : { top: `${split}%`, right: -15, transform: 'translateY(-50%)' }
-        }
-      >
-        <svg
-          width="17"
-          height="17"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ transform: isRow ? 'rotate(45deg)' : 'rotate(90deg)' }}
-        >
-          <polyline points="7 5 2 12 7 19" />
-          <polyline points="17 5 22 12 17 19" />
-        </svg>
-      </button>
     </div>
   );
 }
 
-// Icon-only orientation toggle: side-by-side ↔ stacked. Shared by both the
-// PlaySense player header and the no-score video panel header.
-export function OrientationToggle({
-  value,
-  onChange,
-}: {
-  value: 'row' | 'column';
-  onChange: (v: 'row' | 'column') => void;
-}) {
+const LAYOUT_OPTIONS: { value: WorkspaceLayout; icon: LucideIcon }[] = [
+  { value: 'side', icon: Columns2 },
+  { value: 'stack', icon: Rows2 },
+  { value: 'pip', icon: PictureInPicture2 },
+  { value: 'music', icon: Music2 },
+];
+
+/** Layout picker for a workspace. Render it wherever the view keeps its tools. */
+export function WorkspaceLayoutSwitcher({ controller, className }: { controller: WorkspaceController; className?: string }) {
+  const { t } = useTranslation();
+  const groupRef = useRef<HTMLDivElement | null>(null);
+  const indicatorRef = useRef<HTMLSpanElement | null>(null);
+  const options = LAYOUT_OPTIONS.filter(
+    (o) => controller.layouts.includes(o.value) && !(controller.narrow && o.value === 'side'),
+  );
+
+  // Slide the amber indicator under the pressed button (direct DOM write).
+  useLayoutEffect(() => {
+    const indicator = indicatorRef.current;
+    const pressed = groupRef.current?.querySelector<HTMLElement>('[data-layout-option][aria-pressed="true"]');
+    if (!indicator) return;
+    if (!pressed) { indicator.style.opacity = '0'; return; }
+    indicator.style.opacity = '1';
+    indicator.style.left = `${pressed.offsetLeft}px`;
+    indicator.style.width = `${pressed.offsetWidth}px`;
+  }, [controller.layout, options.length]);
+
+  if (controller.layouts.length < 2) return null;
+
   return (
     <div
+      ref={groupRef}
       role="group"
-      aria-label="Layout"
-      className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full border border-border bg-secondary p-0.5"
+      aria-label={t('lessonWorkspace.layout')}
+      className={cn('relative inline-flex flex-shrink-0 items-center gap-0.5 rounded-xl border border-border bg-secondary p-1', className)}
     >
+      <span
+        ref={indicatorRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-1 top-1 rounded-lg bg-primary opacity-0 shadow-[0_3px_0_hsl(var(--primary-deep))] transition-[left,width] duration-pop ease-spring motion-reduce:transition-none"
+      />
+      {options.map(({ value, icon: Icon }) => {
+        const label = t(`lessonWorkspace.${value}`);
+        return (
+          <button
+            key={value}
+            type="button"
+            data-layout-option=""
+            aria-pressed={controller.layout === value}
+            aria-label={label}
+            title={label}
+            onClick={() => controller.setLayout(value)}
+            className="relative z-[1] grid h-[30px] w-8 place-items-center rounded-lg text-muted-foreground transition-colors duration-state hover:text-foreground aria-pressed:text-primary-foreground aria-pressed:hover:text-primary-foreground"
+          >
+            <Icon className="h-4 w-4" />
+          </button>
+        );
+      })}
+      <span aria-hidden="true" className="mx-1 h-[18px] w-px bg-border" />
       <button
         type="button"
-        onClick={() => onChange('row')}
-        title="Side by side"
-        aria-label="Side by side"
-        className={`grid h-[26px] w-7 place-items-center rounded-full transition-colors ${
-          value === 'row'
-            ? 'bg-primary/[0.16] text-primary'
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
+        aria-label={t('lessonWorkspace.swap')}
+        title={t('lessonWorkspace.swap')}
+        onClick={controller.swap}
+        className="relative z-[1] grid h-[30px] w-8 place-items-center rounded-lg text-muted-foreground transition-colors duration-state hover:text-foreground"
       >
-        <Columns2 className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('column')}
-        title="Stacked"
-        aria-label="Stacked"
-        className={`grid h-[26px] w-7 place-items-center rounded-full transition-colors ${
-          value === 'column'
-            ? 'bg-primary/[0.16] text-primary'
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-      >
-        <Rows2 className="h-4 w-4" />
+        <ArrowLeftRight className="h-4 w-4" />
       </button>
     </div>
   );
