@@ -1956,7 +1956,9 @@
             "teacher": "Más de {teacher}, quien enseña tu curso {course}.",
             "new": "Nuevo este mes.",
             "popular": "Popular entre nuevos estudiantes."
-          }
+          },
+          "previewCta": "Vista previa",
+          "lessonsOne": "{count} lección"
         },
         "newBadge": "Nuevo",
         "nextMilestones": "Próximos logros",
