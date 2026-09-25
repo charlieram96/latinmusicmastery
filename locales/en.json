@@ -2459,6 +2459,47 @@
           "detail": "Tap a section to loop it. Drag the divider to resize, or pick a layout.",
           "yourTurn": "Your turn"
         },
+        "ready": {
+          "eyebrow": "Before you play",
+          "title": "Ready check",
+          "intro": "Three checks in one step. They fill in by themselves; change anything that’s wrong.",
+          "done": "Done",
+          "sound": "Sound",
+          "soundHint": "Headphones keep the backing track out of your mic.",
+          "modes": {
+            "headphones": "Headphones",
+            "speaker-safe": "Speakers",
+            "midi": "MIDI",
+            "playsense": "PlaySense"
+          },
+          "microphone": "Microphone",
+          "midi": "MIDI instrument",
+          "midiHint": "Exact notes from your MIDI instrument. No microphone needed.",
+          "playsense": "PlaySense",
+          "playsenseConnected": "Your PlaySense is connected.",
+          "playsenseConnect": "Connect PlaySense",
+          "playsenseConnecting": "Connecting…",
+          "playsenseFailed": "Could not connect. Turn the device on and try again.",
+          "pickFirst": "Choose how you’ll hear the band first.",
+          "defaultMic": "Your microphone",
+          "heard": "{device} · hearing you clearly",
+          "listening": "{device} · play a note or clap",
+          "waiting": "Waiting for microphone access…",
+          "testMic": "Test microphone",
+          "timing": "Timing",
+          "timingHint": "Play along to the clicks so we can measure your delay.",
+          "measure": "Measure",
+          "measureAgain": "Measure again",
+          "measuring": "Play along with the clicks: {beat} of {total}",
+          "latency": "Latency measured: {ms} ms",
+          "timingSkipped": "Not needed with MIDI.",
+          "preview": "What you’ll play",
+          "allSet": "Everything sounds right",
+          "pickMode": "Choose headphones or speakers to start",
+          "summary": "{parts}",
+          "start": "Start playing",
+          "meta": "{bars} bars · {bpm} BPM"
+        },
         "finishLesson": "Finish lesson"
       }
     }

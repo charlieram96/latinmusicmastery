@@ -2459,6 +2459,47 @@
           "detail": "Toca una sección para repetirla. Arrastra el divisor o elige un diseño.",
           "yourTurn": "Tu turno"
         },
+        "ready": {
+          "eyebrow": "Antes de tocar",
+          "title": "Revisión",
+          "intro": "Tres revisiones en un paso. Se completan solas; cambia lo que no esté bien.",
+          "done": "Listo",
+          "sound": "Sonido",
+          "soundHint": "Con audífonos la pista no se mete en tu micrófono.",
+          "modes": {
+            "headphones": "Audífonos",
+            "speaker-safe": "Altavoces",
+            "midi": "MIDI",
+            "playsense": "PlaySense"
+          },
+          "microphone": "Micrófono",
+          "midi": "Instrumento MIDI",
+          "midiHint": "Notas exactas desde tu instrumento MIDI. Sin micrófono.",
+          "playsense": "PlaySense",
+          "playsenseConnected": "Tu PlaySense está conectado.",
+          "playsenseConnect": "Conectar PlaySense",
+          "playsenseConnecting": "Conectando…",
+          "playsenseFailed": "No se pudo conectar. Enciende el dispositivo e inténtalo de nuevo.",
+          "pickFirst": "Primero elige cómo vas a escuchar a la banda.",
+          "defaultMic": "Tu micrófono",
+          "heard": "{device} · te escucha bien",
+          "listening": "{device} · toca una nota o aplaude",
+          "waiting": "Esperando acceso al micrófono…",
+          "testMic": "Probar micrófono",
+          "timing": "Tiempo",
+          "timingHint": "Toca junto a los clics para medir tu retraso.",
+          "measure": "Medir",
+          "measureAgain": "Medir de nuevo",
+          "measuring": "Toca junto a los clics: {beat} de {total}",
+          "latency": "Latencia medida: {ms} ms",
+          "timingSkipped": "No hace falta con MIDI.",
+          "preview": "Lo que vas a tocar",
+          "allSet": "Todo suena bien",
+          "pickMode": "Elige audífonos o altavoces para empezar",
+          "summary": "{parts}",
+          "start": "Empezar a tocar",
+          "meta": "{bars} compases · {bpm} BPM"
+        },
         "finishLesson": "Terminar lección"
       }
     }

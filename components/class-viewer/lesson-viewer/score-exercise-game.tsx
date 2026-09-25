@@ -37,6 +37,9 @@ import { WorkspaceToolsPortal } from '@/components/playsense-studio/player/works
 import { useStaffLayoutPreference } from '@/components/playsense-studio/player/notation/staff-layout-switch'
 import { PLAY_WORKSPACE } from '@/lib/playsense-studio/workspace-layout'
 import { useLessonActivity } from './lesson-progress-context'
+import { ReadyCheck } from './ready-check'
+import { StaffRenderer } from '@/components/playsense-studio/player/notation/renderers/staff-renderer'
+import { usePlaysense } from '@/contexts/playsense-context'
 import { finishedExercise } from '@/lib/courses/lesson-completion'
 
 interface ScoreExerciseGameProps {
@@ -90,6 +93,7 @@ function ScoreExerciseSession({
 }: ScoreExerciseGameProps) {
   const { t } = useTranslation()
   const completePerformance = useLessonActivity('performance')
+  const playsense = usePlaysense()
   // Play opens with the staff and highway filling the stage and the teacher
   // video floating bottom right (24 % wide); the student can re-lay it out.
   // Remembered per staff layout, like watch (lmm-workspace:play:stacked / :horizontal).
@@ -254,10 +258,88 @@ function ScoreExerciseSession({
   const showAudioModePrompt =
     session.sessionState === 'selecting' && session.audioMode === null
 
+  // ── Ready check: input, mic and timing on one screen before the first take ──
+  const [readyConfirmed, setReadyConfirmed] = useState(false)
+  const showReady = !preview && !readyConfirmed && !!session.exercise &&
+    (session.sessionState === 'selecting' || session.sessionState === 'calibrating')
+  const micMode = session.audioMode === 'headphones' || session.audioMode === 'speaker-safe'
+  const [micHeard, setMicHeard] = useState(false)
+  const [deviceLabel, setDeviceLabel] = useState<string | null>(null)
+  const [ble, setBle] = useState<{ connecting: boolean; error: boolean }>({ connecting: false, error: false })
+  const testedMode = useRef<string | null>(null)
+  // The mic test opens by itself once a mic mode is chosen (and again after a switch).
+  useEffect(() => {
+    if (!showReady || !micMode || session.sessionState !== 'selecting') return
+    if (session.isListening || testedMode.current === session.audioMode) return
+    testedMode.current = session.audioMode
+    session.testMic()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showReady, micMode, session.audioMode, session.isListening, session.sessionState])
+  useEffect(() => {
+    if (showReady && session.isListening && session.inputLevel > 0.08) setMicHeard(true)
+  }, [showReady, session.isListening, session.inputLevel])
+  // A new input must prove itself again.
+  const [heardMode, setHeardMode] = useState(session.audioMode)
+  if (heardMode !== session.audioMode) { setHeardMode(session.audioMode); setMicHeard(false) }
+  useEffect(() => {
+    if (!showReady || !session.isListening || !navigator.mediaDevices?.enumerateDevices) return
+    let live = true
+    void navigator.mediaDevices.enumerateDevices().then(devices => {
+      const inputs = devices.filter(d => d.kind === 'audioinput')
+      const device = inputs.find(d => d.deviceId === 'default') ?? inputs[0]
+      if (live) setDeviceLabel(device?.label?.replace(/^Default - /, '') || null)
+    }).catch(() => {})
+    return () => { live = false }
+  }, [showReady, session.isListening])
+  const connectBle = async () => {
+    setBle({ connecting: true, error: false })
+    try {
+      await playsense.connect()
+      setBle({ connecting: false, error: !playsense.isConnected() })
+    } catch {
+      setBle({ connecting: false, error: true })
+    }
+  }
+  const startFromReady = () => {
+    setReadyConfirmed(true)
+    void session.startExercise()
+  }
+
   const showPlaysenseTest =
     session.sessionState === 'selecting' &&
     session.audioMode === 'playsense' &&
     !!session.exercise
+
+  if (showReady && session.exercise) {
+    const ex = session.exercise
+    return (
+      <div className="ps-lesson-ready">
+        <ReadyCheck
+          instrument={ex.instrument}
+          audioMode={session.audioMode}
+          onMode={session.setAudioMode}
+          inputLevel={session.inputLevel}
+          micOpen={session.isListening}
+          micHeard={micHeard}
+          deviceLabel={deviceLabel}
+          onTestMic={() => { testedMode.current = session.audioMode; session.testMic() }}
+          calibrating={session.isCalibrating}
+          calibrationBeat={session.calibrationBeat}
+          totalCalibrationBeats={session.totalCalibrationBeats}
+          calibrationError={session.calibrationError}
+          latencyMs={session.audioMode === 'midi' ? null : session.calibrationData?.latencyMs ?? null}
+          onCalibrate={session.startCalibration}
+          bleConnected={playsense.connectionStatus === 'connected'}
+          bleConnecting={ble.connecting}
+          bleError={ble.error}
+          onConnectBle={() => void connectBle()}
+          preview={score ? <StaffRenderer score={score} trackIndex={0} currentMs={0} showCursor={false} autoFollow={false} compact layoutMode="paged" className="h-full" /> : null}
+          meta={t('dashboard.classViewer.lessonMode.ready.meta', { bars: ex.measures, bpm: Math.round(ex.bpm) })}
+          onStart={startFromReady}
+        />
+      </div>
+    )
+  }
 
   // Calibrating — full panel
   if (session.sessionState === 'calibrating') {
