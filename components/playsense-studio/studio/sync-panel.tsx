@@ -1659,13 +1659,14 @@ export function SyncPanel({
   }, []);
 
   // The element is portalled, so set the property rather than relying on a prop
-  // surviving the move.
+  // surviving the move. A new element mounts when the monitor moves between
+  // inline and the floating window (monitorEl), so that re-applies it too.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     video.muted = hearMute(hear, videoMuted);
     video.volume = videoVolume;
-  }, [hear, videoMuted, videoVolume, videoUrl]);
+  }, [hear, videoMuted, videoVolume, videoUrl, monitorEl]);
   const handleClickVolumeChange = useCallback((v: number) => {
     setClickVolume(v);
     writeStoredClickVolume(v);
@@ -1708,6 +1709,10 @@ export function SyncPanel({
   // The written notes of track 0 (the one the markers time), in MEDIA seconds
   // like the click: noteTime (nudges included) through the flex map, so they
   // land where the overlay draws them.
+  const synthLoop = useMemo(
+    () => (clock.loopEnabled && clock.loopA !== null && clock.loopB !== null ? { a: clock.loopA, b: clock.loopB } : null),
+    [clock.loopEnabled, clock.loopA, clock.loopB]
+  );
   const synthNotes = useMemo(
     () => (showSync && hear !== 'recording' ? toMediaNotes(scoreSynthNotes(score, 0, markers), flexMap) : []),
     [showSync, hear, score, markers, flexMap]
@@ -1717,6 +1722,7 @@ export function SyncPanel({
     notes: synthNotes,
     enabled: showSync && hear !== 'recording',
     smoothRateChanges: !flexMap.isIdentity,
+    loop: synthLoop,
   });
 
   // A single anchor plus a constant tempo cannot follow a performance that
@@ -1913,7 +1919,8 @@ export function SyncPanel({
               >
                 <Repeat className="h-4 w-4" />
               </button>
-              {loopEnabled && (
+              {/* Also while slowed after the loop ends, so the speed never hides. */}
+              {(loopEnabled || Math.abs(displayedRate - 1) > 1e-3) && (
                 <div className="st-seg" role="radiogroup" aria-label="Loop speed" title="Loop speed — the recording keeps its pitch">
                   <span className="px-1 text-xs text-muted-foreground">Loop speed</span>
                   {LOOP_SPEEDS.map((speed) => (

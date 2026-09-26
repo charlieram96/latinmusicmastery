@@ -38,8 +38,10 @@ export function useScoreSynth(options: {
   volume?: number;
   /** As in useVideoClickTrack: re-anchor rather than restart on a flex rate change. */
   smoothRateChanges?: boolean;
+  /** The running A/B loop in MEDIA seconds, so the wrap never sounds the next bar. */
+  loop?: { a: number; b: number } | null;
 }) {
-  const { videoRef, notes, enabled, volume = 1, smoothRateChanges = false } = options;
+  const { videoRef, notes, enabled, volume = 1, smoothRateChanges = false, loop = null } = options;
 
   const synthRef = useRef<ScoreSynth | null>(null);
   if (synthRef.current === null && typeof window !== 'undefined') {
@@ -61,6 +63,12 @@ export function useScoreSynth(options: {
   useEffect(() => {
     synthRef.current?.setVolume(volume);
   }, [volume]);
+
+  const loopA = loop?.a ?? null;
+  const loopB = loop?.b ?? null;
+  useEffect(() => {
+    synthRef.current?.setLoop(loopA !== null && loopB !== null ? { a: loopA, b: loopB } : null);
+  }, [loopA, loopB]);
 
   const smoothRateRef = useRef(smoothRateChanges);
   useEffect(() => {
@@ -157,10 +165,11 @@ export function useScoreSynth(options: {
   }, [videoEl, enabled]);
 
   // Close the context on unmount; a leaked one keeps the tab's audio alive.
+  // The synth itself is kept (close() drops only its context, which
+  // ensureContext() recreates), so a Strict Mode remount still has its notes.
   useEffect(
     () => () => {
       synthRef.current?.close();
-      synthRef.current = null;
     },
     []
   );

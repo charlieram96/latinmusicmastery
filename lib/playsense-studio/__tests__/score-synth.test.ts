@@ -416,4 +416,53 @@ describe('ScoreSynth scheduling', () => {
     expect(ctx.createOscillator).toHaveBeenCalledTimes(3);
     synth.teardown();
   });
+
+  it('schedules nothing at or past the loop end, and cuts a note held over it', () => {
+    const { ctx, starts } = createFakeAudioContext();
+    const synth = new ScoreSynth(() => ctx);
+    synth.setLoop({ a: 0, b: 1.05 });
+    synth.setNotes([
+      { start: 1.02, end: 1.5, midi: 60, voice: 1, percussion: false }, // held over B: cut at B
+      { start: 1.05, end: 1.5, midi: 62, voice: 1, percussion: false }, // at B: the next pass
+    ]);
+    synth.start(1, 1);
+    expect(starts).toHaveLength(1);
+    expect(starts[0]).toBeCloseTo(0.02);
+    const osc = (ctx.createOscillator as unknown as { mock: { results: Array<{ value: { stop: ReturnType<typeof vi.fn> } }> } }).mock.results[0].value;
+    // Stopped by the loop end (media 1.05 -> ctx 0.05) plus the release, not by the note's own end.
+    expect(osc.stop.mock.calls[0][0]).toBeLessThan(0.2);
+    synth.teardown();
+  });
+
+  it("sounds a downbeat nudged just before the loop's start when the loop wraps", () => {
+    const { ctx, starts } = createFakeAudioContext();
+    const synth = new ScoreSynth(() => ctx);
+    synth.setLoop({ a: 2, b: 4 });
+    synth.setNotes([{ start: 1.98, end: 2.4, midi: 60, voice: 1, percussion: false }]);
+    synth.start(2.005, 1); // the wrap's seek lands a little after A
+    expect(starts).toHaveLength(1);
+    synth.teardown();
+  });
+
+  it('does not reach back before the play position away from a loop start', () => {
+    const { ctx, starts } = createFakeAudioContext();
+    const synth = new ScoreSynth(() => ctx);
+    synth.setNotes([{ start: 1.98, end: 2.4, midi: 60, voice: 1, percussion: false }]);
+    synth.start(2.005, 1);
+    expect(starts).toHaveLength(0);
+    synth.teardown();
+  });
+
+  it('does not schedule a note twice when the notes are replaced while playing', () => {
+    const { ctx, starts } = createFakeAudioContext();
+    const synth = new ScoreSynth(() => ctx);
+    const notes: SynthNote[] = [{ start: 0.05, end: 0.3, midi: 60, voice: 1, percussion: false }];
+    synth.setNotes(notes);
+    synth.start(0, 1);
+    expect(starts).toHaveLength(1);
+    synth.setNotes([...notes]);
+    (synth as unknown as { tick(lift: boolean): void }).tick(false);
+    expect(starts).toHaveLength(1);
+    synth.teardown();
+  });
 });

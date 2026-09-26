@@ -13,6 +13,7 @@ vi.mock('@/lib/playsense-studio/score-synth', () => ({
   ScoreSynth: class {
     setNotes = setNotes;
     setVolume() {}
+    setLoop() {}
     ensureContext() {
       return { state: 'running', resume: () => Promise.resolve() };
     }

@@ -22,7 +22,12 @@ export function useMidiInput(enabled: boolean, onNoteOn: (midi: number, atMs: nu
       onNoteOnRef.current(data[1], event.timeStamp);
     };
     const attach = (access: MIDIAccess) => {
-      access.inputs.forEach(input => input.addEventListener('midimessage', handleMessage));
+      access.inputs.forEach(input => {
+        input.addEventListener('midimessage', handleMessage);
+        // Adding a listener opens the port implicitly in Chrome; open it
+        // explicitly for engines that lag the spec.
+        void input.open?.().catch(() => {});
+      });
     };
     const detach = (access: MIDIAccess) => {
       access.inputs.forEach(input => input.removeEventListener('midimessage', handleMessage));
@@ -46,6 +51,8 @@ export function useMidiInput(enabled: boolean, onNoteOn: (midi: number, atMs: nu
         access.addEventListener('statechange', handleStateChange);
         setStatus('ready');
       } catch {
+        // Forget a refusal (or a dismissed prompt): reopening the panel asks again.
+        accessPromiseRef.current = null;
         if (!cancelled) setStatus('unavailable');
       }
     })();

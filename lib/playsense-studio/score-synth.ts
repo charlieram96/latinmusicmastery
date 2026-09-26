@@ -138,6 +138,12 @@ const PERC_DURATION_SEC = 0.03;
 const PERC_FILTER_HZ = 1800;
 const PERC_PEAK = 0.3;
 
+/** A restart this close to the loop's A takes the notes just before A too: a
+ *  downbeat nudged early, or a seek the browser lands a frame late. */
+const LOOP_START_GRACE_SEC = 0.04;
+/** A note at the loop's B belongs to the next pass (it's the next bar's downbeat). */
+const LOOP_END_EPS_SEC = 0.002;
+
 /** Small tail past the decay so `.stop()` never clips the release. */
 const STOP_MARGIN_SEC = 0.02;
 
@@ -173,6 +179,10 @@ export class ScoreSynth {
   private nextIndex = 0;
   private anchor: SynthAnchor | null = null;
   private volume = 1;
+  /** The running A/B loop in MEDIA seconds, or null. */
+  private loop: { a: number; b: number } | null = null;
+  /** The start of the last note the tick advanced past (scheduled or dropped). */
+  private scheduledThrough = -Infinity;
 
   constructor(ctxFactory?: () => AudioContext) {
     this.ctxFactory = ctxFactory ?? defaultAudioContext;
@@ -198,8 +208,18 @@ export class ScoreSynth {
     this.starts = notes.map((n) => n.start);
     if (this.anchor && this.ctx) {
       const media = this.mediaNow();
-      if (media != null) this.nextIndex = firstIndexAtOrAfter(this.starts, media);
+      // Resume past what the tick already handled, so notes already on the
+      // bus aren't scheduled a second time (an edit while playing).
+      if (media != null) {
+        this.nextIndex = firstIndexAtOrAfter(this.starts, Math.max(media, this.scheduledThrough + 1e-6));
+      }
     }
+  }
+
+  /** The running loop in MEDIA seconds: nothing at or past B is scheduled, and
+   *  a note held over B is cut there, so the wrap never plays the next bar. */
+  setLoop(loop: { a: number; b: number } | null) {
+    this.loop = loop && loop.b > loop.a ? loop : null;
   }
 
   setVolume(v: number) {
@@ -221,7 +241,10 @@ export class ScoreSynth {
     this.bus.connect(ctx.destination);
 
     this.anchor = { ctxStartSeconds: ctx.currentTime, mediaStartSeconds: mediaNow, rate };
-    this.nextIndex = firstIndexAtOrAfter(this.starts, mediaNow);
+    const nearLoopStart = this.loop != null && Math.abs(mediaNow - this.loop.a) <= LOOP_START_GRACE_SEC;
+    const from = nearLoopStart ? Math.min(mediaNow, this.loop!.a) - LOOP_START_GRACE_SEC : mediaNow;
+    this.nextIndex = firstIndexAtOrAfter(this.starts, from);
+    this.scheduledThrough = -Infinity;
 
     this.timer = setInterval(() => this.tick(false), TICK_MS);
     // The first tick of a fresh start lifts notes at the play position up to
@@ -318,6 +341,9 @@ export class ScoreSynth {
       // ALWAYS advance, even when we drop the note below, so a re-anchor can
       // never replay one (same invariant as ClickTrack.tick).
       this.nextIndex += 1;
+      this.scheduledThrough = note.start;
+      const loop = this.loop;
+      if (loop && note.start >= loop.b - LOOP_END_EPS_SEC) continue;
 
       let when = toCtxTime(note.start);
       if (when < now + lead) {
@@ -325,7 +351,8 @@ export class ScoreSynth {
         when = now + lead;
       }
 
-      const whenEnd = Math.max(when, toCtxTime(note.end));
+      const end = loop && note.end > loop.b ? loop.b : note.end;
+      const whenEnd = Math.max(when, toCtxTime(end));
       this.scheduleNote(ctx, note, when, whenEnd);
     }
   }

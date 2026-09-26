@@ -118,6 +118,19 @@ describe('useMidiInput', () => {
     expect(onNoteOn).toHaveBeenCalledExactlyOnceWith(64, 1);
   });
 
+  it('asks again when re-enabled after a refusal', async () => {
+    const request = vi.fn()
+      .mockRejectedValueOnce(new DOMException('Denied', 'NotAllowedError'))
+      .mockResolvedValueOnce(access);
+    Object.defineProperty(navigator, 'requestMIDIAccess', { configurable: true, value: request });
+    await render(true);
+    expect(result?.status).toBe('unavailable');
+    await render(false);
+    await render(true);
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(result?.status).toBe('ready');
+  });
+
   it('detaches its listeners on unmount', async () => {
     Object.defineProperty(navigator, 'requestMIDIAccess', { configurable: true, value: vi.fn(async () => access) });
     await render(true);
