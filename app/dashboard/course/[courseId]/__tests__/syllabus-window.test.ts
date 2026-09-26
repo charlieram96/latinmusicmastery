@@ -8,9 +8,15 @@ describe('syllabusWindow', () => {
     expect(syllabusWindow(ids, 'e')).toEqual({ visible: ['c', 'd', 'e', 'f', 'g'], collapsible: true })
   })
 
-  it('clamps at module edges', () => {
-    expect(syllabusWindow(ids, 'a').visible).toEqual(['a', 'b', 'c'])
-    expect(syllabusWindow(ids, 'h').visible).toEqual(['f', 'g', 'h'])
+  it('shifts at module edges to keep five rows', () => {
+    expect(syllabusWindow(ids, 'a').visible).toEqual(['a', 'b', 'c', 'd', 'e'])
+    expect(syllabusWindow(ids, 'b').visible).toEqual(['a', 'b', 'c', 'd', 'e'])
+    expect(syllabusWindow(ids, 'h').visible).toEqual(['d', 'e', 'f', 'g', 'h'])
+    expect(syllabusWindow(ids, 'g').visible).toEqual(['d', 'e', 'f', 'g', 'h'])
+  })
+
+  it('a module shorter than the window shows every lesson', () => {
+    expect(syllabusWindow(['a', 'b', 'c'], 'a')).toEqual({ visible: ['a', 'b', 'c'], collapsible: false })
   })
 
   it('no toggle when the window covers the module', () => {
