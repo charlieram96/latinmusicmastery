@@ -33,6 +33,9 @@
 /* Stacked rows: the row being read at full ink, past rows faded, upcoming rows nearly full. Paged: one page on show. */
 .ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=past] { opacity:.45; }
 .ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=next] { opacity:.88; }
+/* A past row already fades as a whole: its played notes and chips don't dim a second time (40% of 45%). */
+.ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=past] [data-score-note][data-note-state=played] { opacity:1; }
+.ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=past] .ps-staff-name[data-past=true] { opacity:1; }
 .ps-score-engraving [data-page-state=hidden] { visibility:hidden; }
 .ps-score-engraving[data-score-layout-mode=paged] .ps-staff-viewport { overflow:hidden; }
 .ps-exercise-score .ps-staff-viewport { mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 20px),transparent); }

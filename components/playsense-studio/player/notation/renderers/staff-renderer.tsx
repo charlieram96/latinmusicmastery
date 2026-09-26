@@ -100,6 +100,13 @@ interface NoteHit {
   barEndX: number;
 }
 
+/** One voice's notes in time order (they never overlap within a voice). */
+interface NoteLane {
+  notes: Array<{ group: SVGElement | null; rest: boolean; ms: number; endMs: number }>;
+  played: number;
+  active: number;
+}
+
 const SYSTEM_PADDING_X = 12;
 const STAVE_TOP = 24;
 // VexFlow default Stave: ~4 blank line-spaces above the staff at 10px each, so
@@ -184,10 +191,11 @@ class StaffRendererImpl implements ScoreRenderer {
   private leadingLabel = '';
   private leadingPlacement: MeasurePlacement | null = null;
   private hits: NoteHit[] = [];
-  // Per-note groups let emphasis change without disturbing connected beams.
-  private noteEls: Array<{ group: SVGElement | null }> = [];
-  /** How many notes (from the start) have finished sounding. */
-  private playedCount = 0;
+  /**
+   * Per-voice note groups, in time order, so emphasis changes without disturbing connected beams.
+   * Each lane keeps how many notes have finished sounding and which one is lit.
+   */
+  private noteLanes: NoteLane[] = [];
   /** Every SVG element of row k lives in rowGroups[k]; its HTML helpers in rowDivs[k]. */
   private rowGroups: SVGGElement[] = [];
   private rowDivs: HTMLDivElement[] = [];
@@ -233,7 +241,6 @@ class StaffRendererImpl implements ScoreRenderer {
   private followMode: StaffFollowMode = 'flow';
   private autoFollow = true;
   private staffTranslate = 0;
-  private activeNoteIdx = -1;
   private activeMeasureIdx = -1;
   private systemRanges: Array<{ start: number; end: number }> = [];
   /** Right-edge model-x of each system's row (for end-of-row playhead sweep). */
@@ -400,8 +407,7 @@ class StaffRendererImpl implements ScoreRenderer {
     this.interludes = [];
     this.leadingPlacement = null;
     this.hits = [];
-    this.noteEls = [];
-    this.playedCount = 0;
+    this.noteLanes = [];
     this.rowGroups = [];
     this.rowDivs = [];
     this.diamondEl = null;
@@ -423,7 +429,6 @@ class StaffRendererImpl implements ScoreRenderer {
     if (this.glideFrame && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(this.glideFrame);
     this.glideFrame = 0;
     this.staffTranslate = 0;
-    this.activeNoteIdx = -1;
     this.activeMeasureIdx = -1;
     this.systemRanges = [];
     this.systemRowEndX = [];
@@ -662,6 +667,7 @@ class StaffRendererImpl implements ScoreRenderer {
       pitched: boolean;
     }> = [];
     const placed: PlacedNote[] = [];
+    const voice2Notes: Array<{ vexNote: StaveNote; descriptor: VexEventDescriptor }> = [];
 
     this.measureGeoms = [];
     // One SVG group per row, so rows can dim (stacked) or page (paged) without re-engraving.
@@ -729,6 +735,7 @@ class StaffRendererImpl implements ScoreRenderer {
       });
       (block.voice2Events ?? []).forEach((d, idx) => {
         placed.push({ id: d.id, note: built.notes[1][idx], system: p.system, hasDynamic: !!d.dynamic });
+        voice2Notes.push({ vexNote: built.notes[1][idx], descriptor: d });
       });
     }
 
@@ -788,14 +795,23 @@ class StaffRendererImpl implements ScoreRenderer {
       };
     });
 
-    // CurrentColor tints the whole note group, preserving beam/stem alignment.
-    this.activeNoteIdx = -1;
-    this.playedCount = 0;
-    this.noteEls = allNotes.map(({ vexNote, descriptor }) => {
-      const group = vexNote.getSVGElement() ?? null;
-      if (group) { group.setAttribute('data-score-note', descriptor.isRest ? 'rest' : 'note'); group.setAttribute('data-note-state', 'upcoming'); }
-      return { group };
+    // CurrentColor tints the whole note group, preserving beam/stem alignment. Every voice gets states.
+    const lane = (notes: ReadonlyArray<{ vexNote: StaveNote; descriptor: VexEventDescriptor }>, voice: number): NoteLane => ({
+      played: 0,
+      active: -1,
+      notes: notes.map(({ vexNote, descriptor }) => {
+        const group = vexNote.getSVGElement() ?? null;
+        if (group) {
+          group.setAttribute('data-score-note', descriptor.isRest ? 'rest' : 'note');
+          group.setAttribute('data-voice', String(voice));
+          group.setAttribute('data-note-state', 'upcoming');
+        }
+        return { group, rest: descriptor.isRest,
+          ms: qnToTrackMs(track, score, descriptor.qnStart),
+          endMs: qnToTrackMs(track, score, descriptor.qnStart + descriptor.durationQN) };
+      }),
     });
+    this.noteLanes = [lane(allNotes, 1), lane(voice2Notes, 2)];
 
     // Contiguous hit ranges per system (hits are pushed row-by-row, left to right).
     this.systemRanges = Array.from({ length: this.systemCount }, () => ({
@@ -1398,25 +1414,28 @@ class StaffRendererImpl implements ScoreRenderer {
     this.bandSystem = g.system;
   }
 
-  /** Played notes dim, the sounding one lights. Played progress stays while the cursor is hidden. */
+  /**
+   * Played notes dim, the sounding one lights, in every voice. Played progress stays while the
+   * cursor is hidden. A sounding rest is never lit (it keeps its ink until it has passed).
+   */
   private updateNoteStates(): void {
-    if (this.noteEls.length === 0) return;
-    const inGap = this.lastPlaybackMs < 0 || this.lastPlaybackMs >= this.gapStartMs;
-    const { active, played } = this.lastPlaybackMs < 0
-      ? { active: -1, played: 0 }
-      : noteStateAt(this.lastPlaybackMs, this.hits);
-    const shownActive = this.cursorVisible && !inGap ? active : -1;
-    if (played === this.playedCount && shownActive === this.activeNoteIdx) return;
-    const lo = Math.min(played, this.playedCount);
-    const hi = Math.max(played, this.playedCount);
-    for (let k = lo; k < hi; k++) {
-      this.noteEls[k]?.group?.setAttribute('data-note-state', k < played ? 'played' : 'upcoming');
+    const ms = this.lastPlaybackMs;
+    const inGap = ms < 0 || ms >= this.gapStartMs;
+    for (const lane of this.noteLanes) {
+      if (lane.notes.length === 0) continue;
+      const { active, played } = ms < 0 ? { active: -1, played: 0 } : noteStateAt(ms, lane.notes);
+      const shownActive = this.cursorVisible && !inGap && !lane.notes[active]?.rest ? active : -1;
+      if (played === lane.played && shownActive === lane.active) continue;
+      const lo = Math.min(played, lane.played);
+      const hi = Math.max(played, lane.played);
+      for (let k = lo; k < hi; k++) {
+        lane.notes[k]?.group?.setAttribute('data-note-state', k < played ? 'played' : 'upcoming');
+      }
+      lane.notes[lane.active]?.group?.setAttribute('data-note-state', lane.active < played ? 'played' : 'upcoming');
+      lane.notes[shownActive]?.group?.setAttribute('data-note-state', 'active');
+      lane.played = played;
+      lane.active = shownActive;
     }
-    const prev = this.noteEls[this.activeNoteIdx]?.group;
-    if (prev) prev.setAttribute('data-note-state', this.activeNoteIdx < played ? 'played' : 'upcoming');
-    this.noteEls[shownActive]?.group?.setAttribute('data-note-state', 'active');
-    this.playedCount = played;
-    this.activeNoteIdx = shownActive;
   }
 
   /** Restart the diamond's beat pulse (skipped under reduced motion). */

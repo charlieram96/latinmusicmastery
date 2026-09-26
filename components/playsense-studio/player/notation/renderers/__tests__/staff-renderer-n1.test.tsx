@@ -168,3 +168,32 @@ describe('review fixes', () => {
     expect(host.querySelectorAll('[data-row-state]')).toHaveLength(0)
   })
 })
+
+describe('note states for every voice (minors)', () => {
+  /** Voice 1: four quarters; voice 2: two halves underneath. */
+  const twoVoices = () => {
+    const score = scale()
+    score.tracks[0].measures.forEach(m => m.voices.push({ number: 2, events: [48, 50].map(midi => ({ kind: 'note', midi, durationQN: 2 })) } as never))
+    return score
+  }
+  const voice2 = () => [...host.querySelectorAll('[data-score-note][data-voice="2"]')].map(n => n.getAttribute('data-note-state'))
+  it('dims and lights voice-2 notes too, and clears them on a seek back', () => {
+    draw({ score: twoVoices(), currentMs: 1200 })
+    expect(voice2().slice(0, 3)).toEqual(['played', 'active', 'upcoming'])
+    draw({ score: twoVoices(), currentMs: 100 })
+    expect(voice2().slice(0, 2)).toEqual(['active', 'upcoming'])
+  })
+  it('never lights a sounding rest, and dims it once it has passed', () => {
+    const rests = scale({}, () => [{ kind: 'note', midi: 60, durationQN: 1 }, { kind: 'rest', durationQN: 1 }, { kind: 'note', midi: 64, durationQN: 2 }])
+    draw({ score: rests, currentMs: 700 })
+    expect(states().slice(0, 3)).toEqual(['played', 'upcoming', 'upcoming'])
+    draw({ score: rests, currentMs: 1200 })
+    expect(states().slice(0, 3)).toEqual(['played', 'played', 'active'])
+  })
+  it('does not dim played notes twice inside a faded past row', async () => {
+    const { readFileSync } = await import('node:fs')
+    const css = readFileSync('components/playsense-studio/player/notation/renderers/staff-renderer.css', 'utf8')
+    expect(css).toMatch(/\[data-row-state=past\] \[data-score-note\]\[data-note-state=played\][^{]*\{ opacity:1; \}/)
+    expect(css).toMatch(/\[data-row-state=past\] \.ps-staff-name\[data-past=true\][^{]*\{ opacity:1; \}/)
+  })
+})
