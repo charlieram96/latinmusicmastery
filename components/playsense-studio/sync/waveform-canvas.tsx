@@ -113,6 +113,8 @@ export interface WaveformCanvasProps {
   onBackgroundDrag?: (deltaSeconds: number, phase: 'move' | 'end', mods: { snap: boolean }) => void;
   /** The running A/B loop in TIMELINE seconds, drawn as a gold bracket. */
   loop?: { a: number; b: number } | null;
+  /** The selected bar range in TIMELINE seconds, tinted on the waveform. */
+  selection?: { a: number; b: number } | null;
 }
 
 const DEFAULT_HEIGHT = 240;
@@ -221,6 +223,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     markersLocked = false,
     onBackgroundDrag,
     loop = null,
+    selection = null,
   } = props;
 
   const onZoomByRef = useRef(onZoomBy);
@@ -284,6 +287,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   const flexModeRef = useRef(flexMode);
   const flexPointsRef = useRef(flexPoints);
   const loopRef = useRef(loop);
+  const selectionRef = useRef(selection);
   const hitsTimelineRef = useRef(hitsTimeline);
   const noteTimesRef = useRef(noteTimes);
   const onFlexAddRef = useRef(onFlexAdd);
@@ -295,6 +299,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     flexModeRef.current = flexMode;
     flexPointsRef.current = flexPoints;
     loopRef.current = loop;
+    selectionRef.current = selection;
     hitsTimelineRef.current = hitsTimeline;
     noteTimesRef.current = noteTimes;
     onFlexAddRef.current = onFlexAdd;
@@ -370,6 +375,13 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       if (x1 < 0 || x0 > w) continue;
       ctx.fillStyle = dDst > dSrc ? TINT_SLOWER : TINT_FASTER;
       ctx.fillRect(x0, waveTop, x1 - x0, waveH);
+    }
+
+    // The selected bars: a flat tint at 7%, no edges, under the loop bracket.
+    const sel = selectionRef.current;
+    if (sel && sel.b > sel.a) {
+      const x0 = videoTimeToX(sel.a), x1 = videoTimeToX(sel.b);
+      if (x1 >= 0 && x0 <= w) { ctx.fillStyle = theme.measureFill; ctx.globalAlpha = 0.07; ctx.fillRect(x0, waveTop, x1 - x0, waveH); ctx.globalAlpha = 1; }
     }
 
     // The A/B loop: a gold band at 12% with 2px edges, under the peaks.
@@ -764,6 +776,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     hitsTimeline,
     noteTimes,
     loop,
+    selection,
   ]);
 
   // ---- Playhead overlay RAF -----------------------------------------------

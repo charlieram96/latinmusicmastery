@@ -1418,6 +1418,17 @@ export function SyncPanel({
     () => (loopEnabled && loopA !== null && loopB !== null ? { a: loopA, b: loopB } : null),
     [loopEnabled, loopA, loopB]
   );
+  // The selected bar range, mirrored out of IntegratedEditor, converted to
+  // timeline seconds so the waveform can tint the same span (Task 6). One
+  // object per range change, like waveLoop above, so the waveform doesn't
+  // redraw every frame.
+  const [barRange, setBarRange] = useState<[number, number] | null>(null);
+  const waveSelection = useMemo(() => {
+    if (!barRange) return null;
+    const a = markers.measures[barRange[0]]?.beats[0]?.videoTimeSeconds;
+    const b = markers.measures[barRange[1] + 1]?.beats[0]?.videoTimeSeconds ?? markers.tailVideoTimeSeconds;
+    return a !== undefined && b > a ? { a, b } : null;
+  }, [barRange, markers]);
   const zoomBy = (factor: number, anchorPx = viewportWidth / 2) => {
     setPps((p) => {
       const nextPps = clamp(p * factor, MIN_PPS, MAX_PPS);
@@ -1795,6 +1806,7 @@ export function SyncPanel({
                 <div className="st-wave-lane relative flex-shrink-0">
                   <WaveformCanvas
                     loop={waveLoop}
+                    selection={waveSelection}
                     bare
                     height={waveH}
                     peaks={peaks}
@@ -1959,6 +1971,7 @@ export function SyncPanel({
                   flexInfo={showSync && !graded ? flexInfoForBounds : undefined}
                   quantizeProblem={hits.length ? null : 'Needs the audio analysed first'}
                   onZoomOpenChange={setZoomOpen}
+                  onMeasureRangeChange={setBarRange}
                 />
               </div>
 

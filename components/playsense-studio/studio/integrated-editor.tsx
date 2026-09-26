@@ -122,6 +122,10 @@ export interface IntegratedEditorProps {
   /** Reports whether the measure zoom is open (it uses letter keys, e.g. F,
    *  that SyncPanel binds only while it is closed). Pass a stable callback. */
   onZoomOpenChange?: (open: boolean) => void;
+  /** The selected bar range (inclusive indices), or null when nothing (or a
+   *  single note) is selected. Lets SyncPanel tint the waveform over the
+   *  selected bars' time span. */
+  onMeasureRangeChange?: (range: [number, number] | null) => void;
 }
 
 /** A repeat's closing bar (with dots) replaces any final bar on that measure. */
@@ -151,6 +155,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   flexInfo,
   quantizeProblem,
   onZoomOpenChange,
+  onMeasureRangeChange,
 }: IntegratedEditorProps) {
   // Single-track studio: the score model still holds Track[], but the editor
   // always authors track 0.
@@ -352,6 +357,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         keyChanged: tracked[i].keyChanged,
         clefChanged: tracked[i].clefChanged,
         fill: measureFills[i],
+        flag: measureTimings[i]?.flag ?? null,
       });
     }
     return out;
@@ -773,6 +779,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // Centred over the selected bars (clamped so the bar stays on screen), in
   // container space: the staff below the repeat lane starts at REP_H.
   const bounds = selectionBounds(measureRange);
+  // Reported out to SyncPanel so it can tint the waveform over these bars.
+  const boundsKey = bounds ? `${bounds[0]}:${bounds[1]}` : '';
+  useEffect(() => { onMeasureRangeChange?.(bounds ? [bounds[0], bounds[1]] : null); }, [boundsKey]); // eslint-disable-line react-hooks/exhaustive-deps
   // The bar's rendered width (it varies with the label); 600 until measured.
   const [barWidth, setBarWidth] = useState(600);
   const measureBarRef = (el: HTMLDivElement | null) => {

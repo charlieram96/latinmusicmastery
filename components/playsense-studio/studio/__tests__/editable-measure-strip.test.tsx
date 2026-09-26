@@ -41,7 +41,11 @@ afterEach(async () => {
 
 const noop = () => {};
 
-function renderStrip(track: Track, keyFifths = 0) {
+function renderStrip(
+  track: Track,
+  keyFifths = 0,
+  opts: { selectedMeasures?: [number, number] | null; flags?: Record<number, string> } = {},
+) {
   const items: MeasureStripItem[] = extractTrackEvents(track, [4, 4], keyFifths).map((b, i) => ({
     measureIndex: i,
     measureNumber: b.measure.number,
@@ -57,11 +61,13 @@ function renderStrip(track: Track, keyFifths = 0) {
     keyChanged: b.keyChanged,
     clefChanged: b.clefChanged,
     fill: measureFill(b.measure.voices[0]?.events ?? [], b.measure.voices[1]?.events, b.timeSignature),
+    flag: opts.flags?.[i] ?? null,
   }));
   act(() => {
     root.render(
       <EditableMeasureStrip
         measures={items} pixelsPerSecond={100} scrollLeftPx={0} selected={null}
+        selectedMeasures={opts.selectedMeasures ?? null}
         onOpenNote={noop} onSelectMeasureRange={noop} onOpenMeasure={noop} onRequestZoomTo={noop}
       />,
     );
@@ -96,5 +102,25 @@ describe('EditableMeasureStrip', () => {
     expect(sigs).toHaveLength(2);
     const sig = sigs[1];
     expect((sig?.textContent ?? '').split('').length - 1).toBe(2);
+  });
+
+  it('draws the mockup header: number, flag dot, beat count; no pass text', () => {
+    renderStrip(base([
+      { number: 1, voices: [{ number: 1, events: [{ kind: 'note', midi: 60, durationQN: 4 }] }] },
+    ]), 0, { flags: { 0: 'no hit near its first note' } });
+    const block = host.querySelector('[data-measure-index="0"]')!;
+    const hb = block.querySelector('.st-hb')!;
+    expect(hb.textContent).toContain('1');
+    expect(hb.querySelector('.st-flagdot')?.getAttribute('title')).toBe('Timing: no hit near its first note');
+    expect(hb.textContent).not.toMatch(/pass/);
+  });
+
+  it('marks a selected bar with is-sel instead of a ring', () => {
+    renderStrip(base([
+      { number: 1, voices: [{ number: 1, events: [{ kind: 'note', midi: 60, durationQN: 4 }] }] },
+    ]), 0, { selectedMeasures: [0, 0] });
+    const block = host.querySelector('[data-measure-index="0"]')!;
+    expect(block.classList.contains('is-sel')).toBe(true);
+    expect(block.className).not.toMatch(/ring-2/);
   });
 });
