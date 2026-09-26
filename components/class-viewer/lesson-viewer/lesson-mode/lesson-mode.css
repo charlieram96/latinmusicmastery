@@ -78,7 +78,7 @@
   .lx-parts { grid-column:1 / -1; grid-row:2; justify-content:center; }
   .lx-part { padding:6px 10px 10px; }
   .lx-part .lx-part-label { display:none; }
-  .lx-part[aria-selected=true] .lx-part-label { display:inline; }
+  .lx-part[aria-current=step] .lx-part-label { display:inline; }
   .lx-crumb { display:none; }
 }
 @media (prefers-reduced-motion:reduce) { .lx-part-track i, .lx-part, .lx-icon-btn { transition:none; } }

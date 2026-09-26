@@ -39,6 +39,10 @@ describe('LessonDone', () => {
   it('shows the new streak and the weekly goal with today’s lesson added', () => {
     render()
     expect(host.querySelector('[data-streak-value]')?.textContent).toBe('5')
+    // The labelled streak block is a graphic with a name, not an anonymous div (L4).
+    const streak = host.querySelector('.lx-streak-big')!
+    expect(streak.getAttribute('role')).toBe('img')
+    expect(streak.getAttribute('aria-label')).toBeTruthy()
     const segments = [...host.querySelectorAll('[data-week-segment]')]
     expect(segments).toHaveLength(6)
     expect(segments.map(s => s.getAttribute('data-state'))).toEqual(['done', 'done', 'done', 'new', 'todo', 'todo'])

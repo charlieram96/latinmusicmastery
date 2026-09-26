@@ -39,7 +39,7 @@ export function LessonDone({ stats, lessonTitle, partCount, nextLesson, courseHr
   return <section data-lesson-done className="lx-done" aria-labelledby="lx-done-title">
     <Confetti />
     <div className="lx-dn-hero">
-      <div className="lx-streak-big" aria-label={`${streak.after} ${t(streak.after === 1 ? `${base}.streakOne` : `${base}.streak`)}`}>
+      <div className="lx-streak-big" role="img" aria-label={`${streak.after} ${t(streak.after === 1 ? `${base}.streakOne` : `${base}.streak`)}`}>
         <span className="lx-flame" aria-hidden><Flame className="h-full w-full" strokeWidth={1.4} /></span>
         <span className="lx-flip tabular-nums" aria-hidden>
           {streak.before !== streak.after && <span className="lx-flip-old">{streak.before}</span>}
