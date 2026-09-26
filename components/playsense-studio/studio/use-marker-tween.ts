@@ -6,7 +6,7 @@
 // wins. Updaters with side effects were unreliable here: React may run them
 // late (other updates pending, like the clock's per-frame setState during
 // playback) or twice (StrictMode).
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { lerpMarkers } from '@/lib/playsense-studio/auto-place';
 import type { MarkerState } from '@/components/playsense-studio/sync/marker-model';
 
@@ -24,6 +24,8 @@ export interface MarkerTween {
   /** True while frames are still being written. A ref, so effects and event
    *  handlers read the live value without re-rendering. */
   running: { readonly current: boolean };
+  /** The same as `running`, as rendered state, for UI (a disabled button). */
+  active: boolean;
 }
 
 export function useMarkerTween(opts: {
@@ -34,6 +36,7 @@ export function useMarkerTween(opts: {
   const { markers, setMarkers, onDone } = opts;
   const rafRef = useRef<number | null>(null);
   const runningRef = useRef(false);
+  const [active, setActive] = useState(false);
   const lastWrittenRef = useRef<MarkerState | null>(null);
   // The latest callbacks, so a tween started in an older render calls the
   // current ones.
@@ -48,6 +51,7 @@ export function useMarkerTween(opts: {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
     runningRef.current = false;
+    setActive(false);
   }, []);
 
   const write = useCallback((m: MarkerState) => {
@@ -66,6 +70,7 @@ export function useMarkerTween(opts: {
       }
       lastWrittenRef.current = from;
       runningRef.current = true;
+      setActive(true);
       let startedAt: number | null = null;
       const tick = (now: number) => {
         rafRef.current = null;
@@ -78,6 +83,7 @@ export function useMarkerTween(opts: {
           return;
         }
         runningRef.current = false;
+        setActive(false);
         write(to);
         onDoneRef.current(to);
       };
@@ -94,5 +100,5 @@ export function useMarkerTween(opts: {
 
   useEffect(() => cancel, [cancel]);
 
-  return { start, cancel, running: runningRef };
+  return { start, cancel, running: runningRef, active };
 }

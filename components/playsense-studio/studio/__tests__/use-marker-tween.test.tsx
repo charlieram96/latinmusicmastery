@@ -88,6 +88,7 @@ describe('useMarkerTween', () => {
     mount(onDone);
     act(() => api.current!.tween.start(FROM, TO));
     expect(api.current!.tween.running.current).toBe(true);
+    expect(api.current!.tween.active).toBe(true); // rendered, so a button can disable itself
     frame();
     frame(100);
     const mid = api.current!.markers.measures[0].beats[0].videoTimeSeconds;
@@ -96,6 +97,7 @@ describe('useMarkerTween', () => {
     for (let i = 0; i < 30; i++) frame();
     expect(api.current!.markers).toBe(TO);
     expect(api.current!.tween.running.current).toBe(false);
+    expect(api.current!.tween.active).toBe(false);
     expect(onDone).toHaveBeenCalledTimes(1);
     expect(onDone).toHaveBeenCalledWith(TO);
   });
@@ -110,6 +112,7 @@ describe('useMarkerTween', () => {
     for (let i = 0; i < 30; i++) frame();
     expect(api.current!.markers).toBe(FOREIGN);
     expect(api.current!.tween.running.current).toBe(false);
+    expect(api.current!.tween.active).toBe(false);
     expect(onDone).not.toHaveBeenCalled();
   });
 
@@ -123,6 +126,7 @@ describe('useMarkerTween', () => {
     act(() => api.current!.tween.cancel());
     for (let i = 0; i < 30; i++) frame();
     expect(api.current!.markers).toBe(at);
+    expect(api.current!.tween.active).toBe(false);
     expect(onDone).not.toHaveBeenCalled();
   });
 
