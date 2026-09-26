@@ -242,6 +242,20 @@ describe('MeasureZoom', () => {
     const root = host.querySelector('[data-testid="measure-zoom"]')!;
     expect(root.classList.contains('playsense-studio-notation')).toBe(true);
   });
+
+  // Final review Important 1: the force-currentColor rule under
+  // .playsense-studio-notation would otherwise fill lucide's outline icons
+  // solid. The header icons must carry lucide's own `lucide` class so the
+  // higher-specificity override in globals.css (svg.lucide, svg.lucide *)
+  // can restore fill: none.
+  it('marks header icons with the lucide class so the notation fill-force can\'t solidify them', () => {
+    mount(1);
+    const head = host.querySelector('.st-zoom-head')!;
+    const chevron = head.querySelector('[aria-label="Previous bar"] svg')!;
+    expect(chevron.classList.contains('lucide')).toBe(true);
+    const css = readFileSync(resolve(process.cwd(), 'app/globals.css'), 'utf8');
+    expect(css).toMatch(/\.playsense-studio-notation svg\.lucide,\s*\n\.playsense-studio-notation svg\.lucide \* \{\s*\n\s*fill: none !important;/);
+  });
 });
 
 // ---- IntegratedEditor: ⏎ opens the zoom, Esc closes it -----------------------

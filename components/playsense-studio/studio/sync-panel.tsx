@@ -805,8 +805,11 @@ export function SyncPanel({
         seekMediaFor(flexMap, seconds, trimmed ? effectiveTrim : null, videoDurationSeconds ?? clock.durationSeconds ?? null)
       );
       // The seek's target may be off-screen (a section jump, a loop wrap) —
-      // bring it into view rather than leaving the view where it was.
-      const next = followScroll(seconds, pps, scrollLeft, viewportWidth, viewBounds);
+      // bring it into view rather than leaving the view where it was. Unlike
+      // the play-along auto-page above, only page when the target is truly
+      // off-screen (edge: 0): a waveform-scrub seek near an edge shouldn't
+      // re-page a target that's already visible, which would fight the drag.
+      const next = followScroll(seconds, pps, scrollLeft, viewportWidth, viewBounds, { edge: 0 });
       if (next !== null) setScrollLeft(next);
     },
     [clock, flexMap, trimmed, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock.durationSeconds, pps, scrollLeft, viewportWidth, viewBounds]
@@ -1955,7 +1958,8 @@ export function SyncPanel({
                 <IntegratedEditor
                   score={score}
                   dispatch={studioDispatch}
-                  notice={editNotice}
+                  notice={editNotice ?? autoPlaceNotice ?? alignNotice}
+                  noticeAction={autoPlaceUndo ? { label: 'Undo', onClick: undoAutoPlace } : undefined}
                   measureTimings={measureTimings}
                   getCurrentSeconds={getTimelineSeconds}
                   recordingSource={recordingSource}
@@ -2043,7 +2047,7 @@ export function SyncPanel({
             onImported={() => {}}
             onCloseAutoFocus={scoreActionsCloseAutoFocus}
             trigger={
-              <button type="button" className="st-mpop-item flex items-center gap-2" title="Add measures from another file after the last measure">
+              <button type="button" className="st-mpop-item has-icon" title="Add measures from another file after the last measure">
                 <FilePlus2 className="h-4 w-4" />
                 Add measures from a file
               </button>

@@ -256,6 +256,14 @@
   fill: currentColor !important;
   stroke: currentColor !important;
 }
+/* Lucide icons (chevrons, Piano, Pencil, Minimize2, Trash2, ChevronDown, …)
+   are outline icons: they set `fill="none"` on their own <svg>, but each
+   path/line inside still matches the force rule above and renders solid.
+   Higher specificity (two classes) beats it while keeping stroke: currentColor. */
+.playsense-studio-notation svg.lucide,
+.playsense-studio-notation svg.lucide * {
+  fill: none !important;
+}
 /* VexFlow 5 draws glyphs (noteheads, clefs, rests) as text: fill only, or
    a 1px outline makes every glyph look bold. */
 .playsense-studio-notation svg text,
@@ -689,7 +697,10 @@ html:has([data-marketing]) {
    and hide it. */
 .st-mbox.is-sel.st-measure-focus { box-shadow: inset 0 0 0 1.5px hsl(var(--primary) / .8), inset 0 -3px 0 hsl(var(--gold-highlight)); }
 .st-mbox.is-over { background: hsl(var(--destructive) / .06); }
-.st-mbox.is-narrow { display: grid; place-items: start center; padding-top: 4px; font-size: 10px; color: hsl(var(--muted-foreground)); }
+.st-mbox.is-narrow { display: grid; place-items: start center; padding-top: 4px; font-size: 10px; color: hsl(var(--muted-foreground));
+  /* Higher specificity than the base rule's border-left: 1px solid transparent
+     above, so the narrow placeholder's own dashed left edge survives. */
+  border-left: 1px dashed hsl(var(--border)); }
 .st-flagdot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: hsl(var(--gold-highlight)); }
 
 /* Per-bar beat count chip (header band), the hatched gap for missing time,
@@ -764,6 +775,9 @@ html:has([data-marketing]) {
 .st-mpop-chip[aria-pressed='true'] { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
 .st-mpop-chip:disabled, .st-mpop-item:disabled { opacity: .4; cursor: not-allowed; }
 .st-mpop-item { display: block; width: 100%; text-align: left; }
+/* An item with a leading icon (e.g. "Add measures from a file") needs the
+   flex row back — the block display above wins over Tailwind's `flex`. */
+.st-mpop-item.has-icon { display: flex; align-items: center; gap: 8px; }
 .st-mpop-hint { margin-top: 6px; font-size: 11px; line-height: 1.4; color: hsl(var(--muted-foreground)); }
 
 /* The floating measure bar over the selected bars. Centred on `left` by the
@@ -803,6 +817,10 @@ html:has([data-marketing]) {
 .st-toast { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); z-index: 60; max-width: calc(100% - 32px);
   padding: 9px 14px; border-radius: 10px; font-size: 12.5px; background: hsl(22 14% 12%);
   border: 1px solid hsl(0 0% 100% / .14); box-shadow: 0 10px 30px rgba(0,0,0,.55); animation: st-pop .18s cubic-bezier(.2,.8,.2,1); }
+.st-toast button { margin-left: 10px; border: 0; background: none; color: hsl(var(--primary)); font-weight: 600; padding: 0; }
+/* Structural-edit errors (IntegratedEditor's `notice`) turn the toast red;
+   local flash confirmations ("Cleared. Timing kept.") stay neutral. */
+.st-toast.is-bad { color: hsl(var(--destructive)); border-color: hsl(var(--destructive) / .45); }
 
 /* A bar just inserted by the gap menu (empty / copy / paste) grows in from the
    left so the new bar(s) read as new. */
@@ -960,6 +978,10 @@ html:has([data-marketing]) {
 .st-wtools .st-seg { padding: 2px; }
 .st-wtools .st-seg button { height: 22px; font-size: 11px; padding: 0 7px; }
 .st-wtools .st-divline { height: 16px; margin: 0 3px; }
+/* The zoom slider brings its own 34px pill with a background and border —
+   too tall for the 32px WaveTools cluster and doubled-up on chrome. Flatten
+   it to an inline control here. */
+.st-wtools .st-zoom { height: 26px; padding: 0 2px; background: none; border: 0; }
 .st-wtools-auto { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 7px;
   font-size: 11.5px; font-weight: 600; background: hsl(var(--primary) / .14); color: hsl(var(--primary)); }
 .st-wtools-auto:hover:not(:disabled) { background: hsl(var(--primary) / .24); }

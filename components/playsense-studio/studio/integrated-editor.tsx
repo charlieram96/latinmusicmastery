@@ -81,8 +81,15 @@ export interface IntegratedEditorMeasureTiming {
 export interface IntegratedEditorProps {
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
-  /** A refused structural edit, shown inline in the editor bar. */
+  /** A refused structural edit, or another sync-panel notice (Auto-place /
+   *  Auto-align failing), shown in the stage toast in red. Distinct from the
+   *  editor's own local `flash` (a neutral confirmation), which the toast
+   *  falls back to when this is unset. */
   notice?: string | null;
+  /** Shown as a button at the end of the toast while `notice` is displaying
+   *  (e.g. "Undo" for an Auto-place that's still undoable). Ignored while the
+   *  toast is showing `flash` instead. */
+  noticeAction?: { label: string; onClick: () => void } | null;
   /** Per-measure audio span from the markers (track 0). */
   measureTimings: IntegratedEditorMeasureTiming[];
   /** Live playback position (video seconds) for the staff-lane playhead. */
@@ -138,6 +145,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   score,
   dispatch,
   notice,
+  noticeAction,
   measureTimings,
   getCurrentSeconds,
   recordingSource,
@@ -1056,12 +1064,24 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         </>
       )}
       {editorTab === 'piano-roll' && (
-        <div className="relative min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-card p-3">
+        // The corner is `position: absolute` against the nearest positioned
+        // ancestor — it must be that ancestor's non-scrolling wrapper, not a
+        // sibling INSIDE the scroller, or it scrolls away with the roll.
+        <div className="relative min-h-0 flex-1">
+          <div className="h-full overflow-y-auto rounded-md border border-border bg-card p-3">
+            <PianoRollView score={score} activeTrackIndex={activeTrackIndex} dispatch={dispatch} />
+          </div>
           {stripCorner}
-          <PianoRollView score={score} activeTrackIndex={activeTrackIndex} dispatch={dispatch} />
         </div>
       )}
-      {(notice || flash) && <p role="status" className="st-toast">{notice ?? flash}</p>}
+      {(notice || flash) && (
+        <p role="status" className={`st-toast${notice ? ' is-bad' : ''}`}>
+          {notice ?? flash}
+          {notice && noticeAction && (
+            <button type="button" onClick={noticeAction.onClick}>{noticeAction.label}</button>
+          )}
+        </p>
+      )}
     </div>
   );
 });

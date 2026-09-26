@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import React, { act } from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Track } from '@/components/playsense-studio/shared/score-model/types';
@@ -133,5 +135,15 @@ describe('EditableMeasureStrip', () => {
     expect(block.classList.contains('is-narrow')).toBe(true);
     expect(block.classList.contains('is-sel')).toBe(true);
     expect(block.className).not.toMatch(/ring-2/);
+  });
+
+  // Final review Minor 5: the base `.st-mbox` rule's `border-left: 1px solid
+  // transparent` used to beat the narrow placeholder's own dashed left edge
+  // (same specificity, later in Tailwind's cascade). `.st-mbox.is-narrow` has
+  // two classes, so it now wins regardless of source order.
+  it('gives the narrow placeholder its own dashed left border, overriding the base rule', () => {
+    const css = readFileSync(resolve(process.cwd(), 'app/globals.css'), 'utf8');
+    const rule = css.match(/\.st-mbox\.is-narrow\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(rule).toMatch(/border-left:\s*1px dashed hsl\(var\(--border\)\)/);
   });
 });

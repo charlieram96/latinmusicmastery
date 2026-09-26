@@ -39,6 +39,16 @@ describe('followScroll', () => {
   it('jumps back to t when it is off to the left (a loop wrap or a seek)', () => {
     expect(followScroll(2, 100, 1000, 1000, B)).toBe(0); // 200 - 250 clamps to 0
   });
+
+  // Final review Important 2: a waveform-scrub seek near an edge shouldn't
+  // re-page a target that's already on screen, only a truly off-screen one.
+  it('with { edge: 0 }, only pages when the target is actually off-screen', () => {
+    // x = 950, 95% of the viewport — visible under edge: 0, but the default
+    // edge: 0.1 would have paged it (see the 90%-edge test above).
+    expect(followScroll(19.5, 100, 1000, 1000, B, { edge: 0 })).toBeNull();
+    // x = -800, off the left edge — still pages even with edge: 0.
+    expect(followScroll(2, 100, 1000, 1000, B, { edge: 0 })).toBe(0);
+  });
 });
 
 describe('anchorPxFor', () => {

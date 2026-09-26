@@ -4,7 +4,9 @@
 // editor are stubbed so the test drives the panel's own wiring: grid bar
 // lines from bar 1 (locked), the bar 1 drag with snap, Auto-align, the
 // count-in / pre-roll controls and the "notes on a hit" readout.
-import { act } from 'react';
+import { act, type ReactNode } from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,6 +21,7 @@ const stub = vi.hoisted(() => ({
   },
   lanes: [] as Array<{ sections: Array<{ label: string }>; activeRange: { startSeconds: number; endSeconds: number }; onDragActive?: DragFn }>,
   hits: [] as number[],
+  editor: null as null | { notice?: string | null; noticeAction?: { label: string; onClick: () => void } | null },
 }));
 
 vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({}) }));
@@ -39,12 +42,19 @@ vi.mock('@/components/playsense-studio/sync/sections-lane', () => ({
   },
 }));
 vi.mock('@/components/playsense-studio/studio/integrated-editor', () => ({
-  IntegratedEditor: () => null,
+  IntegratedEditor: (p: { notice?: string | null; noticeAction?: { label: string; onClick: () => void } | null }) => {
+    stub.editor = p;
+    return null;
+  },
   isTypingTarget: () => false,
 }));
 vi.mock('@/components/playsense-studio/sync/reference-monitor', () => ({ ReferenceMonitor: () => null }));
 vi.mock('@/components/playsense-studio/player/transport/transport-bar', () => ({ TransportBar: () => null }));
-vi.mock('@/components/playsense-studio/studio/score-import-dialog', () => ({ ScoreImportDialog: () => null }));
+// Rendering the trigger as-is (no dialog machinery) is enough to check the
+// "Add measures from a file" button's own markup (Final review Minor 3).
+vi.mock('@/components/playsense-studio/studio/score-import-dialog', () => ({
+  ScoreImportDialog: (p: { trigger: ReactNode }) => p.trigger,
+}));
 vi.mock('@/components/playsense-studio/player/state/use-video-click-track', () => ({ useVideoClickTrack: () => {} }));
 
 import { SyncPanel } from '../sync-panel';
@@ -76,6 +86,7 @@ const ONSETS = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5];
 
 let host: HTMLDivElement;
 let inspectorHost: HTMLDivElement;
+let scoreActionsHost: HTMLDivElement;
 let root: Root;
 const onPlayChange = vi.fn();
 const onTimingChange = vi.fn();
@@ -107,6 +118,7 @@ async function renderPanel(play = { bar1Seconds: 2 as number | null, countInBars
         onPlayChange={onPlayChange}
         gradedOnsets={ONSETS}
         inspectorEl={inspectorHost}
+        scoreActionsEl={scoreActionsHost}
       />
     );
   });
@@ -117,6 +129,8 @@ const downbeats = () => stub.canvas!.handles.filter((h) => h.isDownbeat).map((h)
 const lane = () => stub.lanes.at(-1)!;
 const button = (text: string) =>
   Array.from(host.querySelectorAll('button')).find((b) => b.textContent?.trim() === text);
+const scoreActionsButton = (text: string) =>
+  Array.from(scoreActionsHost.querySelectorAll('button')).find((b) => b.textContent?.trim() === text);
 // Placement, anchor, re-analyze and the graded controls (Count-in, Pre-roll,
 // the on-hit readout) moved into the left panel's Sync status, which SyncPanel
 // renders through `inspectorEl` (Studio layout pass, Task 4).
@@ -128,6 +142,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   stub.canvas = null;
   stub.lanes = [];
+  stub.editor = null;
   // Hits 10 ms after where the notes land with bar 1 at 3.0.
   stub.hits = ONSETS.map((o) => 3.01 + o);
   onPlayChange.mockReset();
@@ -136,12 +151,15 @@ beforeEach(() => {
   document.body.appendChild(host);
   inspectorHost = document.createElement('div');
   document.body.appendChild(inspectorHost);
+  scoreActionsHost = document.createElement('div');
+  document.body.appendChild(scoreActionsHost);
   root = createRoot(host);
 });
 afterEach(() => {
   act(() => root.unmount());
   host.remove();
   inspectorHost.remove();
+  scoreActionsHost.remove();
   vi.useRealTimers();
 });
 
@@ -203,6 +221,18 @@ describe('SyncPanel graded mode', () => {
     expect(inspectorHost.textContent).not.toContain('notes on a hit');
   });
 
+  // Final review Important 3: the failure used to reach only the hover rail's
+  // SyncActions (opacity 0 until hovered) — it must also reach the stage
+  // toast, wired through IntegratedEditor's `notice` prop.
+  it('a failed Auto-align reaches the stage toast, with no undo to offer', async () => {
+    stub.hits = [50]; // present (button stays enabled) but nowhere near any onset window
+    await renderPanel();
+    expect(stub.editor?.notice).toBeNull();
+    act(() => button('Auto-align')!.click());
+    expect(stub.editor?.notice).toBe('Not enough clear hits to align the exercise.');
+    expect(stub.editor?.noticeAction).toBeFalsy();
+  });
+
   it('dragging the Exercise block shifts bar 1, snapping the first onset onto a hit', async () => {
     await renderPanel();
     // 0.95 s puts the first note at 2.95; the hit at 3.01 is within 8 px at 40 px/s.
@@ -225,5 +255,19 @@ describe('SyncPanel graded mode', () => {
     await renderPanel();
     act(() => vi.advanceTimersByTime(5000));
     expect(onTimingChange).not.toHaveBeenCalled();
+  });
+
+  // Final review Minor 3: Tailwind's `flex items-center gap-2` on this button
+  // lost to `.st-mpop-item { display: block }`. A dedicated `has-icon`
+  // modifier restores the row.
+  it('gives "Add measures from a file" its own has-icon row, not a bare block item', async () => {
+    await renderPanel();
+    const btn = scoreActionsButton('Add measures from a file')!;
+    expect(btn.className).toBe('st-mpop-item has-icon');
+    expect(btn.firstElementChild?.tagName.toLowerCase()).toBe('svg'); // the FilePlus2 icon leads the label
+    const css = readFileSync(resolve(process.cwd(), 'app/globals.css'), 'utf8');
+    const rule = css.match(/\.st-mpop-item\.has-icon\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(rule).toMatch(/display:\s*flex/);
+    expect(rule).toMatch(/gap:\s*8px/);
   });
 });

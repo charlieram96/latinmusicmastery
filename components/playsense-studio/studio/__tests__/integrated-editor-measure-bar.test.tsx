@@ -224,6 +224,19 @@ describe('IntegratedEditor measure bar', () => {
     expect(dispatched(dispatch, 'add-note')).toHaveLength(0);
   });
 
+  // Final review Minor 4: the corner (position: absolute) used to sit INSIDE
+  // the piano-roll's own overflow-y-auto scroller, so it scrolled away. It
+  // must be a sibling of the scroller, pinned against a non-scrolling wrapper.
+  it('keeps the corner outside the piano-roll scroller so it stays pinned', () => {
+    render();
+    const tab = host.querySelector<HTMLButtonElement>('[aria-label="Piano-roll"]')!;
+    act(() => { tab.click(); });
+    const corner = host.querySelector('.st-strip-corner')!;
+    const scroller = host.querySelector('.overflow-y-auto')!;
+    expect(scroller.contains(corner)).toBe(false);
+    expect(corner.parentElement).toBe(scroller.parentElement);
+  });
+
   it('Clear empties the bars and says the timing stayed', () => {
     const { dispatch } = render();
     key('ArrowRight');
@@ -232,6 +245,41 @@ describe('IntegratedEditor measure bar', () => {
     expect(host.textContent).toContain('Cleared. Timing kept.');
     act(() => { vi.advanceTimersByTime(2600); });
     expect(host.textContent).not.toContain('Cleared. Timing kept.');
+  });
+
+  // Final review Important 3 / Minor 2: `notice` (a SyncPanel-level failure,
+  // e.g. a refused edit or a failed Auto-place/Auto-align) turns the toast
+  // red and, given `noticeAction`, adds a button to it. The local `flash`
+  // confirmation stays neutral and never gets a button.
+  it('the flash toast (a neutral confirmation) is not styled as an error', () => {
+    render();
+    key('ArrowRight');
+    act(() => { barButton('Clear').click(); });
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.textContent).toBe('Cleared. Timing kept.');
+    expect(toast.classList.contains('is-bad')).toBe(false);
+    expect(toast.querySelector('button')).toBeNull();
+  });
+
+  it('shows a passed-in notice as a red toast, with an action button when given', () => {
+    const onUndo = vi.fn();
+    render({ notice: 'Not enough clear hits to place the bars.', noticeAction: { label: 'Undo', onClick: onUndo } });
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.classList.contains('is-bad')).toBe(true);
+    expect(toast.textContent).toBe('Not enough clear hits to place the bars.Undo');
+    const btn = toast.querySelector('button')!;
+    expect(btn.textContent).toBe('Undo');
+    act(() => { btn.click(); });
+    expect(onUndo).toHaveBeenCalledTimes(1);
+  });
+
+  it('notice wins over flash and shows no button without a noticeAction', () => {
+    render({ notice: 'Not enough clear hits to align the exercise.' });
+    key('ArrowRight');
+    act(() => { barButton('Clear').click(); }); // would also set the flash
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.textContent).toBe('Not enough clear hits to align the exercise.');
+    expect(toast.querySelector('button')).toBeNull();
   });
 
   it('Copy says what it copied', () => {
