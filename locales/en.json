@@ -2491,7 +2491,8 @@
           "pickMode": "Choose headphones or speakers to start",
           "summary": "{parts}",
           "start": "Start playing",
-          "meta": "{bars} bars · {bpm} BPM"
+          "meta": "{bars} bars · {bpm} BPM",
+          "measuringTitle": "Measuring your timing…"
         },
         "transport": {
           "label": "Playback",

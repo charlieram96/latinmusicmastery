@@ -2491,7 +2491,8 @@
           "pickMode": "Elige audífonos o altavoces para empezar",
           "summary": "{parts}",
           "start": "Empezar a tocar",
-          "meta": "{bars} compases · {bpm} BPM"
+          "meta": "{bars} compases · {bpm} BPM",
+          "measuringTitle": "Midiendo tu tiempo…"
         },
         "transport": {
           "label": "Reproducción",
