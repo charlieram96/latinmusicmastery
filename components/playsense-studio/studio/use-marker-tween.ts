@@ -21,6 +21,10 @@ export interface MarkerTween {
   start(from: MarkerState, to: MarkerState): void;
   /** Stop where it is. onDone is not called. */
   cancel(): void;
+  /** Jump to the end now: write the final state, call onDone once, and return
+   *  that state (null when nothing is running). For a flush that can't wait
+   *  for the frames, like a pre-publish flush or unmount. */
+  finish(): MarkerState | null;
   /** True while frames are still being written. A ref, so effects and event
    *  handlers read the live value without re-rendering. */
   running: { readonly current: boolean };
@@ -38,6 +42,7 @@ export function useMarkerTween(opts: {
   const runningRef = useRef(false);
   const [active, setActive] = useState(false);
   const lastWrittenRef = useRef<MarkerState | null>(null);
+  const targetRef = useRef<MarkerState | null>(null);
   // The latest callbacks, so a tween started in an older render calls the
   // current ones.
   const setMarkersRef = useRef(setMarkers);
@@ -47,12 +52,17 @@ export function useMarkerTween(opts: {
     onDoneRef.current = onDone;
   });
 
-  const cancel = useCallback(() => {
+  const stopFrames = useCallback(() => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
-    runningRef.current = false;
-    setActive(false);
   }, []);
+
+  const cancel = useCallback(() => {
+    stopFrames();
+    runningRef.current = false;
+    targetRef.current = null;
+    setActive(false);
+  }, [stopFrames]);
 
   const write = useCallback((m: MarkerState) => {
     lastWrittenRef.current = m;
@@ -69,6 +79,7 @@ export function useMarkerTween(opts: {
         return;
       }
       lastWrittenRef.current = from;
+      targetRef.current = to;
       runningRef.current = true;
       setActive(true);
       let startedAt: number | null = null;
@@ -83,6 +94,7 @@ export function useMarkerTween(opts: {
           return;
         }
         runningRef.current = false;
+        targetRef.current = null;
         setActive(false);
         write(to);
         onDoneRef.current(to);
@@ -98,7 +110,19 @@ export function useMarkerTween(opts: {
     if (runningRef.current && markers !== lastWrittenRef.current) cancel();
   }, [markers, cancel]);
 
-  useEffect(() => cancel, [cancel]);
+  const finish = useCallback((): MarkerState | null => {
+    const to = targetRef.current;
+    if (!runningRef.current || !to) return null;
+    cancel();
+    write(to);
+    onDoneRef.current(to);
+    return to;
+  }, [cancel, write]);
 
-  return { start, cancel, running: runningRef, active };
+  // On unmount only stop the frames. A running tween keeps its target, so the
+  // owner's own unmount flush can still finish() it and hand off the final
+  // placement, whichever cleanup React runs first.
+  useEffect(() => stopFrames, [stopFrames]);
+
+  return { start, cancel, finish, running: runningRef, active };
 }

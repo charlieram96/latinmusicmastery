@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import React, { act, useEffect, useState } from 'react';
+import React, { act, useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MarkerState } from '@/components/playsense-studio/sync/marker-model';
@@ -34,7 +34,12 @@ function frame(ms = 16) {
 
 type Api = { tween: ReturnType<typeof useMarkerTween>; markers: MarkerState; setMarkers: (m: MarkerState) => void };
 
-function Harness({ onDone, api }: { onDone: (m: MarkerState) => void; api: { current: Api | null } }) {
+function Harness({ onDone, api, onUnmount }: {
+  onDone: (m: MarkerState) => void;
+  api: { current: Api | null };
+  /** Runs from an unmount cleanup declared AFTER the hook, like SyncPanel's flush. */
+  onUnmount?: (tween: ReturnType<typeof useMarkerTween>) => void;
+}) {
   const [markers, setMarkers] = useState(FROM);
   // Competes with the tween every frame, like the playback clock does.
   const [, setTick] = useState(0);
@@ -49,6 +54,11 @@ function Harness({ onDone, api }: { onDone: (m: MarkerState) => void; api: { cur
   useEffect(() => {
     api.current = { tween, markers, setMarkers };
   }, [api, tween, markers]);
+  const tweenRef = useRef(tween);
+  useEffect(() => {
+    tweenRef.current = tween;
+  });
+  useEffect(() => () => onUnmount?.(tweenRef.current), [onUnmount]);
   return <span data-first={markers.measures[0].beats[0].videoTimeSeconds} />;
 }
 
@@ -78,8 +88,8 @@ afterEach(() => {
   api.current = null;
 });
 
-function mount(onDone: (m: MarkerState) => void) {
-  act(() => root.render(<React.StrictMode><Harness onDone={onDone} api={api} /></React.StrictMode>));
+function mount(onDone: (m: MarkerState) => void, onUnmount?: (tween: ReturnType<typeof useMarkerTween>) => void) {
+  act(() => root.render(<React.StrictMode><Harness onDone={onDone} api={api} onUnmount={onUnmount} /></React.StrictMode>));
 }
 
 describe('useMarkerTween', () => {
@@ -139,6 +149,60 @@ describe('useMarkerTween', () => {
     expect(queue.size).toBe(0);
     for (let i = 0; i < 30; i++) frame();
     expect(onDone).not.toHaveBeenCalled();
+    root = createRoot(host); // afterEach unmounts again
+  });
+
+  it('finish() lands the final state at once, calls onDone once, and stops the frames', () => {
+    const onDone = vi.fn();
+    mount(onDone);
+    act(() => api.current!.tween.start(FROM, TO));
+    frame();
+    frame(100);
+    expect(api.current!.markers).not.toBe(TO); // mid-tween
+    let landed: MarkerState | null = null;
+    act(() => { landed = api.current!.tween.finish(); });
+    expect(landed).toBe(TO);
+    expect(api.current!.markers).toBe(TO);
+    expect(api.current!.tween.running.current).toBe(false);
+    expect(api.current!.tween.active).toBe(false);
+    for (let i = 0; i < 30; i++) frame();
+    expect(api.current!.markers).toBe(TO);
+    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(onDone).toHaveBeenCalledWith(TO);
+    // Nothing left to finish.
+    act(() => { landed = api.current!.tween.finish(); });
+    expect(landed).toBeNull();
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('finish() does nothing when idle, after cancel, or after a foreign write', () => {
+    const onDone = vi.fn();
+    mount(onDone);
+    expect(api.current!.tween.finish()).toBeNull();
+    act(() => api.current!.tween.start(FROM, TO));
+    frame();
+    act(() => api.current!.tween.cancel());
+    expect(api.current!.tween.finish()).toBeNull();
+    act(() => api.current!.tween.start(api.current!.markers, TO));
+    frame();
+    act(() => api.current!.setMarkers(FOREIGN));
+    expect(api.current!.tween.finish()).toBeNull();
+    expect(api.current!.markers).toBe(FOREIGN);
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it('an unmount flush can still finish() a running tween and get the final state', () => {
+    const onDone = vi.fn();
+    const flushed: Array<MarkerState | null> = [];
+    mount(onDone, (tween) => flushed.push(tween.finish()));
+    act(() => api.current!.tween.start(FROM, TO));
+    frame();
+    frame(100);
+    act(() => root.unmount());
+    expect(queue.size).toBe(0);
+    expect(flushed[flushed.length - 1]).toBe(TO);
+    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(onDone).toHaveBeenCalledWith(TO);
     root = createRoot(host); // afterEach unmounts again
   });
 

@@ -661,7 +661,7 @@ export function SyncPanel({
   // The tween writes plain values and yields to any other marker write (see
   // useMarkerTween). Called before the undo-retiring effect below, so a
   // foreign write has already stopped the tween when that effect looks.
-  const { start: startTween, cancel: cancelTween, running: tweenRunning, active: tweenActive } = useMarkerTween({
+  const { start: startTween, cancel: cancelTween, finish: finishTween, running: tweenRunning, active: tweenActive } = useMarkerTween({
     markers,
     setMarkers,
     onDone: () => setDirty(true),
@@ -1068,9 +1068,12 @@ export function SyncPanel({
   // Hand the live timing (and any pending anchor move) to the host's draft —
   // this panel never writes it live. Publish, elsewhere in the Studio, is what
   // eventually makes it visible to students.
-  const saveTiming = useCallback((opts?: { silent?: boolean }) => {
+  // `snapshot` hands off an explicit state instead of this render's `markers`:
+  // a flush that just finished the Auto-place tween (finishLandingTween) has
+  // the final placement before React has re-rendered with it.
+  const saveTiming = useCallback((opts?: { silent?: boolean; snapshot?: MarkerState }) => {
     if (!timingAutosave) return;
-    const snapshot = markers;
+    const snapshot = opts?.snapshot ?? markers;
     const patch = timingPatchFromMarkers(snapshot, { pps, peaksCached: decodeState === 'ready' });
     if (!patch) {
       if (!opts?.silent) setError('Add a measure before saving its timing.');
@@ -1114,11 +1117,23 @@ export function SyncPanel({
   useEffect(() => {
     placeArmedRef.current = placeArmed;
   });
+  // A flush mustn't hand off a half-drawn Auto-place frame: land the tween on
+  // its final placement first. It counts as an edit (dirty), and the refs are
+  // brought up to date by hand because React hasn't re-rendered yet. Returns
+  // the placement to hand off, or undefined when no tween was running.
+  const finishLandingTween = useCallback((): MarkerState | undefined => {
+    const landed = finishTween();
+    if (!landed) return undefined;
+    markersRef.current = landed;
+    dirtyRef.current = true;
+    return landed;
+  }, [finishTween]);
   useEffect(() => {
     return () => {
-      if (dirtyRef.current) saveTimingRef.current({ silent: true });
+      const landed = finishLandingTween();
+      if (dirtyRef.current) saveTimingRef.current({ silent: true, snapshot: landed });
     };
-  }, []);
+  }, [finishLandingTween]);
 
   const seededAnchorSeconds = markers.measures[0]?.beats[0]?.videoTimeSeconds ?? 0;
 
@@ -1185,8 +1200,9 @@ export function SyncPanel({
         clearTimeout(timingTimerRef.current);
         timingTimerRef.current = null;
       }
+      const landed = finishLandingTween();
       if (dirtyRef.current && !placeArmedRef.current) {
-        saveTimingRef.current();
+        saveTimingRef.current({ snapshot: landed });
       }
       if (anchorTimerRef.current) {
         clearTimeout(anchorTimerRef.current);
@@ -1194,7 +1210,7 @@ export function SyncPanel({
         persistAnchorRef.current();
       }
     });
-  }, [registerTimingFlush]);
+  }, [registerTimingFlush, finishLandingTween]);
 
   /** What the click actually uses — the stored anchor, else the score's start. */
   const anchorSeconds = metronomeAnchor ?? seededAnchorSeconds;
