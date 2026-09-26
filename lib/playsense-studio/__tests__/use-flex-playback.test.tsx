@@ -139,6 +139,51 @@ describe('useFlexPlayback', () => {
     expect((video as unknown as { webkitPreservesPitch: boolean }).webkitPreservesPitch).toBe(true);
   });
 
+  it('writes mozPreservesPitch too, when the property exists', () => {
+    const video = new FakeVideo();
+    (video as unknown as { mozPreservesPitch: boolean }).mozPreservesPitch = false;
+    video.paused = false;
+    video.currentTime = 11;
+    mount(video, THREE_POINT, 1);
+    frame();
+    expect(video.preservesPitch).toBe(true);
+    expect((video as unknown as { mozPreservesPitch: boolean }).mozPreservesPitch).toBe(true);
+  });
+
+  it('resets preservesPitch (and the vendor variants) back to false when the map returns to identity', () => {
+    const video = new FakeVideo();
+    (video as unknown as { webkitPreservesPitch: boolean }).webkitPreservesPitch = false;
+    (video as unknown as { mozPreservesPitch: boolean }).mozPreservesPitch = false;
+    video.paused = false;
+    video.currentTime = 11;
+    mount(video, THREE_POINT, 1);
+    frame();
+    expect(video.preservesPitch).toBe(true);
+    expect((video as unknown as { webkitPreservesPitch: boolean }).webkitPreservesPitch).toBe(true);
+
+    update(video, IDENTITY, 1);
+    expect(video.preservesPitch).toBe(false);
+    expect((video as unknown as { webkitPreservesPitch: boolean }).webkitPreservesPitch).toBe(false);
+    expect((video as unknown as { mozPreservesPitch: boolean }).mozPreservesPitch).toBe(false);
+    expect(video.playbackRate).toBeCloseTo(1); // userSpeed, once, no loop
+    expect(queue.size).toBe(0);
+  });
+
+  it('starts driving the rate when flex turns on mid-playback (identity → non-identity while playing)', () => {
+    const video = new FakeVideo();
+    video.paused = false;
+    video.currentTime = 11;
+    mount(video, IDENTITY, 0.75);
+    expect(video.playbackRate).toBeCloseTo(0.75);
+    expect(queue.size).toBe(0); // no loop yet: still identity
+
+    update(video, THREE_POINT, 1);
+    expect(video.preservesPitch).toBe(true);
+    expect(queue.size).toBeGreaterThan(0); // the loop picked up immediately, without a play event
+    frame();
+    expect(video.playbackRate).toBeCloseTo(0.8); // media 11, computed from the now-active map
+  });
+
   it('writes only when the change exceeds 0.001', () => {
     const video = new FakeVideo();
     video.paused = false;
@@ -197,5 +242,31 @@ describe('useFlexPlayback', () => {
     act(() => root.unmount());
     expect(queue.size).toBe(0);
     root = createRoot(host); // afterEach unmounts again
+  });
+
+  it('picks up a video that attaches on a later render (e.g. portalled into a floating PiP)', () => {
+    // A plain mutable object standing in for a ref whose .current is set
+    // imperatively by a real DOM ref callback that only fires once the
+    // portal target exists — not through useRef's one-time initial value.
+    const lateRef: { current: HTMLVideoElement | null } = { current: null };
+    function LateHarness({ map, userSpeed }: { map: FlexMap; userSpeed: number }) {
+      useFlexPlayback(lateRef, map, userSpeed);
+      return null;
+    }
+    act(() => root.render(<LateHarness map={THREE_POINT} userSpeed={1} />));
+    expect(queue.size).toBe(0); // nothing to drive yet
+
+    const video = new FakeVideo();
+    video.paused = false;
+    video.currentTime = 11;
+    lateRef.current = video as unknown as HTMLVideoElement;
+    // The owner re-renders (unrelated to this hook's own props) once the
+    // portalled <video> exists; the hook's no-dep poll effect picks up the
+    // now-attached element from that same commit.
+    act(() => root.render(<LateHarness map={THREE_POINT} userSpeed={1} />));
+
+    frame();
+    expect(video.playbackRate).toBeCloseTo(0.8);
+    expect(video.preservesPitch).toBe(true);
   });
 });

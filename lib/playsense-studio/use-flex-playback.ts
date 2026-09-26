@@ -4,7 +4,7 @@
 // menu into the video element's actual playbackRate, frame by frame while
 // playing. The transport itself still shows userSpeed — this hook only
 // drives the element, never the UI.
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { FlexMap } from './flex';
 
 const WRITE_EPS = 1e-3;
@@ -42,6 +42,11 @@ export function useFlexPlayback(
   const mapRef = useRef(map);
   const userSpeedRef = useRef(userSpeed);
   const rafRef = useRef<number | null>(null);
+  // True once this hook has actually turned preservesPitch on for the
+  // current video, so a map that starts (and stays) identity never touches
+  // the property at all, but one that goes non-identity → identity again
+  // gets its own write undone.
+  const pitchOnRef = useRef(false);
   // Set by the wiring effect below; re-invoked whenever map/userSpeed change
   // so an identity map keeps tracking userSpeed and a map that stops being
   // identity mid-playback picks the loop back up without waiting for a play
@@ -54,9 +59,20 @@ export function useFlexPlayback(
     syncRef.current();
   }, [map, userSpeed]);
 
+  // Track the underlying element in state so the wiring effect re-runs when
+  // the video mounts LATE — e.g. rendered through a React portal a render
+  // after this hook's owner mounted (SyncPanel's floating PiP does exactly
+  // this). A no-dep effect polls the ref each commit; the updater bails when
+  // the element is unchanged, so no extra renders once it's bound. Mirrors
+  // use-video-transport-clock.ts.
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
+  useEffect(() => {
+    setVideoEl((prev) => (prev === videoRef.current ? prev : videoRef.current));
+  });
+
   useEffect(() => {
     if (!enabled) return;
-    const video = videoRef.current as PitchPreservingVideo | null;
+    const video = videoEl as PitchPreservingVideo | null;
     if (!video) return;
 
     const setPreservesPitch = (on: boolean) => {
@@ -93,9 +109,14 @@ export function useFlexPlayback(
     const sync = () => {
       if (mapRef.current.isIdentity) {
         stopLoop();
+        if (pitchOnRef.current) {
+          pitchOnRef.current = false;
+          setPreservesPitch(false);
+        }
         applyRate(userSpeedRef.current);
         return;
       }
+      pitchOnRef.current = true;
       setPreservesPitch(true);
       if (video.paused) stopLoop();
       else startLoop();
@@ -115,5 +136,5 @@ export function useFlexPlayback(
       stopLoop();
       syncRef.current = () => {};
     };
-  }, [videoRef, enabled]);
+  }, [videoEl, enabled]);
 }
