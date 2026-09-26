@@ -2060,7 +2060,6 @@
           "afternoon": "Good afternoon, {name}",
           "evening": "Good evening, {name}"
         },
-        "weeklyGoalChip": "{done} of {goal} lessons",
         "continue": {
           "lesson": "Lesson",
           "eyebrow": "{course}, lesson {n} of {total}",
@@ -2128,6 +2127,7 @@
           "bestOne": "Best: {count} day.",
           "weeklyGoal": "Weekly goal",
           "goalProgress": "{done} of {goal} lessons",
+          "goalExceeded": "{goal} of {goal} lessons · +{extra} extra",
           "toGo": "{count} to go",
           "reached": "Reached",
           "heatLabel": "Practice over the last 5 weeks",

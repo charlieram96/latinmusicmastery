@@ -2060,7 +2060,6 @@
           "afternoon": "Buenas tardes, {name}",
           "evening": "Buenas noches, {name}"
         },
-        "weeklyGoalChip": "{done} de {goal} lecciones",
         "continue": {
           "lesson": "Lección",
           "eyebrow": "{course}, lección {n} de {total}",
@@ -2128,6 +2127,7 @@
           "bestOne": "Mejor: {count} día.",
           "weeklyGoal": "Meta semanal",
           "goalProgress": "{done} de {goal} lecciones",
+          "goalExceeded": "{goal} de {goal} lecciones · +{extra} extra",
           "toGo": "faltan {count}",
           "reached": "Cumplida",
           "heatLabel": "Práctica de las últimas 5 semanas",

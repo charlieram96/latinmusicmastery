@@ -5,6 +5,7 @@ import { useTranslation } from '@/components/language-provider'
 import type { CalendarCell } from '@/lib/dashboard/practice-calendar'
 import { cn } from '@/lib/utils'
 import styles from './streak-card.module.css'
+import { weeklyGoalText } from './weekly-goal'
 
 interface StreakCardProps {
   cells: CalendarCell[]
@@ -72,7 +73,7 @@ export function StreakCard({ cells, weekDone, weekGoal, streak, bestStreak }: St
           <span>
             <b className="font-semibold text-foreground">{t(`${BASE}.weeklyGoal`)}</b>
             <span aria-hidden> · </span>
-            <span className="tabular-nums">{t(`${BASE}.goalProgress`, { done: weekDone, goal: weekGoal })}</span>
+            <span className="tabular-nums">{weeklyGoalText(t, weekDone, weekGoal)}</span>
           </span>
           <span className={cn('shrink-0 font-semibold', toGo > 0 ? 'text-primary' : 'text-success')}>
             {toGo > 0 ? t(`${BASE}.toGo`, { count: toGo }) : t(`${BASE}.reached`)}
