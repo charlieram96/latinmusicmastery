@@ -7,12 +7,7 @@ import type { BackingTrack, ExerciseMedia } from '@/app/actions/playsense-studio
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import { getLoopDuration, getSessionCountInSeconds } from '@/lib/play-sense/exercise-utils'
 import { timelineToEngineSeconds } from '@/lib/play-sense/backing-track-timing'
-import { gridSecondsAtQN } from '@/lib/play-sense/grid'
 import { expectedMediaTime, followRate, type PlayMedia } from '@/lib/play-sense/play-follow'
-import {
-  WaypointTimeMap,
-  type SyncMethod,
-} from '@/components/playsense-studio/shared/time-map/time-map'
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
 import { useStageDemoSession } from '@/hooks/use-stage-demo-session'
@@ -76,6 +71,7 @@ interface ScoreExerciseGameProps {
     startSeconds: number
     /** End of the usable region; null = play to the end. */
     trimOutSeconds?: number | null
+    /** The older exercise time map. No longer read here: bar 1 places the video and its backing tracks. */
     timeMap: PlaysenseStudioPlayerTimeMap | null
   } | null
 }
@@ -144,38 +140,33 @@ function ScoreExerciseSession({
   const loopSeconds = useMemo(() => getLoopDuration(exercise), [exercise])
   const exerciseDurationSec = loopSeconds * exercise.loopCount
   const countInBars = play?.countInBars ?? 1
-  // Legacy placement for backing tracks without a musical position: the older
-  // exercise time map, when one was published.
-  const videoMap = useMemo(() => {
-    const tm = exerciseVideo?.timeMap
-    if (!tm || tm.waypoints.length < 2) return null
-    try {
-      return new WaypointTimeMap(tm.id, tm.method as SyncMethod, tm.waypoints)
-    } catch {
-      return null
-    }
-  }, [exerciseVideo])
+  // Where the play-along shows bar 1: the published bar 1, else the trim
+  // in-point (exerciseVideo.startSeconds IS the trim in-point; 040 folded the
+  // old crop into it).
+  const bar1 = exerciseVideo ? play?.bar1Seconds ?? exerciseVideo.startSeconds : null
 
-  // Backing tracks: a clip with a musical position lands on the grid there
-  // (bar 1 = engine 0); older clips convert their video-timeline position.
+  // Backing tracks. With a video they are placed against it, so on the clock
+  // (video = bar 1 + engine) a clip starts at its timeline position less bar 1.
+  // Students never read positionQn: live rows carry stale values. Without a
+  // video, the timeline IS the score grid, placed exactly as before.
   const placedTracks = useMemo(
     () =>
       (backingTracks ?? []).map((track) => ({
         id: track.id,
         audioUrl: track.audioUrl,
-        startSeconds: track.positionQn != null && exercise.grid
-          ? gridSecondsAtQN(exercise.grid, track.positionQn)
+        startSeconds: bar1 !== null
+          ? track.timelineStartSeconds - bar1
           : timelineToEngineSeconds(
               track.timelineStartSeconds,
-              videoMap,
+              null,
               { bpm: exercise.bpm, timeSignature: exercise.timeSignature, grid: exercise.grid },
-              exerciseVideo?.startSeconds ?? 0
+              0
             ),
         trimInSeconds: track.trimInSeconds,
         trimOutSeconds: track.trimOutSeconds,
         gain: track.gain,
       })),
-    [backingTracks, videoMap, exercise.bpm, exercise.timeSignature, exercise.grid, exerciseVideo]
+    [backingTracks, bar1, exercise.bpm, exercise.timeSignature, exercise.grid]
   )
 
   // An explicit (possibly empty) selection only when backing tracks are
@@ -187,16 +178,14 @@ function ScoreExerciseSession({
   const stableExercise = useMemo(() => exercise, [exercise])
 
   // Where the video shows bar 1 and how it behaves around the count-in.
-  // exerciseVideo.startSeconds IS the trim in-point (040 folded the old crop
-  // into it); an unplaced bar 1 falls back to it.
-  const playMedia = useMemo<PlayMedia | null>(() => exerciseVideo ? {
-    bar1: play?.bar1Seconds ?? exerciseVideo.startSeconds,
+  const playMedia = useMemo<PlayMedia | null>(() => exerciseVideo && bar1 !== null ? {
+    bar1,
     trimIn: exerciseVideo.startSeconds,
     trimOut: exerciseVideo.trimOutSeconds ?? null,
     countInSeconds: getSessionCountInSeconds(exercise, countInBars),
     preroll: play?.preroll ?? true,
     loopSeconds,
-  } : null, [exerciseVideo, play, exercise, countInBars, loopSeconds])
+  } : null, [exerciseVideo, bar1, play, exercise, countInBars, loopSeconds])
 
   // Each frame, ask where the video should be at the engine time and trim its
   // rate toward it (±3 %); hard-seek only on a large drift or a loop wrap.

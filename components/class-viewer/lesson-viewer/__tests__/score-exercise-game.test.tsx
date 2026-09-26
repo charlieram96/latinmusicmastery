@@ -44,6 +44,7 @@ const actions = vi.hoisted(() => ({
 vi.mock('@/app/actions/play-sense', () => actions)
 
 import { ScoreExerciseGame } from '../score-exercise-game'
+import { timelineToEngineSeconds } from '@/lib/play-sense/backing-track-timing'
 
 const exercise = {
   id: 'ex1', title: 'Tumbao', bpm: 90, timeSignature: [4, 4], measures: 2, loopCount: 1, instrument: 'congas',
@@ -204,14 +205,22 @@ describe('ScoreExerciseGame play settings (Studio rework P5)', () => {
     expect(sessionOptions.countInBars).toBe(1)
   })
 
-  it('places a backing track from its musical position through the grid, else by its timeline position', () => {
-    const track = { id: 't1', label: 'Bass', audioUrl: 'https://a.test/bass.mp3', timelineStartSeconds: 3, trimInSeconds: 0.5, trimOutSeconds: null, gain: 1, positionQn: 10, timeMapId: null, orderIndex: 0, sourceDurationSeconds: null }
-    render({ exercise: graded, play, backingTracks: [track, { ...track, id: 't2', positionQn: null }] })
-    const placed = sessionOptions.backingTracks as Array<{ id: string; startSeconds: number; trimInSeconds: number }>
-    expect(placed[0].startSeconds).toBeCloseTo(16 / 3 + 2, 9)
-    expect(placed[0].trimInSeconds).toBe(0.5)
-    // No map, no position: the timeline position less the media origin, as before.
-    expect(placed[1].startSeconds).toBe(3)
+  const bass = { id: 't1', label: 'Bass', audioUrl: 'https://a.test/bass.mp3', timelineStartSeconds: 5.346, trimInSeconds: 0.5, trimOutSeconds: null, gain: 1, positionQn: -3.96, timeMapId: null, orderIndex: 0, sourceDurationSeconds: null }
+  const placed = () => sessionOptions.backingTracks as Array<{ id: string; startSeconds: number; trimInSeconds: number }>
+
+  it('with a video, starts a backing track at its timeline position less bar 1, ignoring a stale positionQn', () => {
+    render({ exercise: graded, play: { ...play, bar1Seconds: 5.34 }, backingTracks: [bass] })
+    expect(placed()[0].startSeconds).toBeCloseTo(0.006, 9)
+    expect(placed()[0].trimInSeconds).toBe(0.5)
+    // Bar 1 unset: the trim-in point is bar 1.
+    render({ exercise: graded, play: { ...play, bar1Seconds: null }, backingTracks: [bass], exerciseVideo: { ...video, startSeconds: 2 } })
+    expect(placed()[0].startSeconds).toBeCloseTo(3.346, 9)
+  })
+
+  it('without a video, places a backing track exactly as before', () => {
+    render({ exercise: graded, play, backingTracks: [bass], exerciseVideo: null })
+    const old = timelineToEngineSeconds(bass.timelineStartSeconds, null, { bpm: graded.bpm, timeSignature: graded.timeSignature, grid: graded.grid }, 0)
+    expect(placed()[0].startSeconds).toBe(old)
   })
 
   describe('the video follows the engine clock', () => {
