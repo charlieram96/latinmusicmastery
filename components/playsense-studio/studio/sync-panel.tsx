@@ -35,6 +35,9 @@ import {
   writeStoredClickVolume,
 } from '@/lib/playsense-studio/click-track';
 import { useVideoClickTrack } from '@/components/playsense-studio/player/state/use-video-click-track';
+import { useScoreSynth } from '@/components/playsense-studio/player/state/use-score-synth';
+import { scoreSynthNotes, toMediaNotes } from '@/lib/playsense-studio/score-synth';
+import { HEAR_OPTIONS, hearMute, readHear, writeHear, type Hear } from '@/lib/playsense-studio/hear';
 import { timingPatchFromMarkers } from '@/lib/playsense-studio/drafts/timing-patch';
 import type { StudioPlay, StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { autoAlign, onHitCount } from '@/lib/playsense-studio/auto-align';
@@ -1637,14 +1640,22 @@ export function SyncPanel({
     if (volume > 0 && videoMuted) handleVideoMutedChange(false);
   }, [videoMuted, handleVideoMutedChange]);
 
+  // Hear: the recording, the written score, or both. Score mutes the element
+  // without touching the admin's own mute, so going back restores it.
+  const [hear, setHear] = useState<Hear>(readHear);
+  const handleHearChange = useCallback((next: Hear) => {
+    setHear(next);
+    writeHear(next);
+  }, []);
+
   // The element is portalled, so set the property rather than relying on a prop
   // surviving the move.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    video.muted = videoMuted;
+    video.muted = hearMute(hear, videoMuted);
     video.volume = videoVolume;
-  }, [videoMuted, videoVolume, videoUrl]);
+  }, [hear, videoMuted, videoVolume, videoUrl]);
   const handleClickVolumeChange = useCallback((v: number) => {
     setClickVolume(v);
     writeStoredClickVolume(v);
@@ -1681,6 +1692,20 @@ export function SyncPanel({
     volume: clickVolume,
     // Flexed: the rate driver changes the rate at each flex boundary, so the
     // click re-anchors there instead of restarting (which clips it).
+    smoothRateChanges: !flexMap.isIdentity,
+  });
+
+  // The written notes of track 0 (the one the markers time), in MEDIA seconds
+  // like the click: noteTime (nudges included) through the flex map, so they
+  // land where the overlay draws them.
+  const synthNotes = useMemo(
+    () => (showSync && hear !== 'recording' ? toMediaNotes(scoreSynthNotes(score, 0, markers), flexMap) : []),
+    [showSync, hear, score, markers, flexMap]
+  );
+  useScoreSynth({
+    videoRef,
+    notes: synthNotes,
+    enabled: showSync && hear !== 'recording',
     smoothRateChanges: !flexMap.isIdentity,
   });
 
@@ -1840,6 +1865,21 @@ export function SyncPanel({
             )}
 
             <div className="ml-auto flex items-center gap-1.5">
+              <div className="st-seg" role="radiogroup" aria-label="Hear" title="Hear the recording, the written score, or both">
+                <span className="px-1 text-xs text-muted-foreground">Hear</span>
+                {HEAR_OPTIONS.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={hear === value}
+                    className={hear === value ? 'is-on' : ''}
+                    onClick={() => handleHearChange(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               {decodeState === 'loading' && (
                 <span className="text-xs text-muted-foreground">
                   {progress >= 1 ? 'Processing audio…' : `Downloading audio… ${progress > 0 ? `${Math.round(progress * 100)}%` : ''}`}

@@ -236,6 +236,12 @@ export class ScoreSynth {
     this.anchor = { ctxStartSeconds: this.ctx.currentTime, mediaStartSeconds: mediaNow, rate };
   }
 
+  /** How far the media clock has drifted from what we scheduled, in seconds (see ClickTrack.drift). */
+  drift(mediaSeconds: number): number | null {
+    const predicted = this.mediaNow();
+    return predicted == null ? null : mediaSeconds - predicted;
+  }
+
   /** Silence scheduled notes (gain bus to 0) and stop the tick. */
   teardown() {
     if (this.timer !== null) {
