@@ -240,9 +240,15 @@ function StudioWorkspaceBody({
     return out;
   }, [isExercise, state.score]);
   const gradedBar1 = exercisePlay.bar1Seconds ?? exerciseTrim.trimInSeconds;
-  // Backing clips record position_qn on the tempo grid from bar 1.
+  // Backing clips record position_qn on the tempo grid from bar 1. Without a
+  // grid, or when the result isn't finite, it returns undefined so the save
+  // skips the position_qn write (never a NaN in the column).
   const mediaToQN = useCallback(
-    (mediaSeconds: number) => (gradedGrid ? gridQNAtSeconds(gradedGrid, mediaSeconds - gradedBar1) : 0),
+    (mediaSeconds: number): number | undefined => {
+      if (!gradedGrid) return undefined;
+      const qn = gridQNAtSeconds(gradedGrid, mediaSeconds - gradedBar1);
+      return Number.isFinite(qn) ? qn : undefined;
+    },
     [gradedGrid, gradedBar1]
   );
 
@@ -269,10 +275,11 @@ function StudioWorkspaceBody({
   const [copyMenuOpen, setCopyMenuOpen] = useState(false);
   const applyCopiedSection = useCallback(
     (source: ScoreDocument, sectionTitle: string) => {
+      // The menu closes either way: a declined confirm is a finished choice.
+      setCopyMenuOpen(false);
       if (!window.confirm(`Replace the exercise notes with "${sectionTitle}"? You can undo this.`)) return;
       const current = state.score;
       dispatch({ type: 'apply-structural-score', score: copySectionScore(source, current), expectedScore: current });
-      setCopyMenuOpen(false);
     },
     [dispatch, state.score]
   );

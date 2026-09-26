@@ -52,8 +52,8 @@ export interface BackingLanesPanelProps {
   timeMap: PlaysenseStudioPlayerTimeMap | null;
   /** Graded owners (no time map): media seconds → quarter notes from bar 1,
    *  through the score's tempo grid. When given it is what position_qn records,
-   *  and no time map id is stored. */
-  mediaToQN?: (mediaSeconds: number) => number;
+   *  and no time map id is stored. Undefined skips the position_qn write. */
+  mediaToQN?: (mediaSeconds: number) => number | undefined;
   view: TimelineView;
 }
 

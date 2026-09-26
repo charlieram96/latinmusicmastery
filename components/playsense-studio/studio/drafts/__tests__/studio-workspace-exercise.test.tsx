@@ -221,6 +221,51 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
     );
   });
 
+  const lanesMediaToQN = (score: ScoreDocument) => {
+    act(() => {
+      root.render(
+        <StudioDraftsProvider owners={[]}>
+          <StudioWorkspace
+            owner={{ kind: 'classItem', classItemId: 'ci-1' }}
+            mode="exercise"
+            title="Clave 101"
+            videoUrl={null}
+            scoreDocumentId="doc-1"
+            initialScore={score}
+            activeTimeMap={null}
+            videoDurationSeconds={null}
+            exerciseMedia={exerciseMedia}
+          />
+        </StudioDraftsProvider>
+      );
+    });
+    const sync = Array.from(host.querySelectorAll('button')).find((b) => b.textContent?.includes('Sync video'))!;
+    act(() => {
+      sync.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    const render = stub.syncPanelCalls.at(-1)!.props.renderBackingLanes as (v: unknown) => React.ReactElement<{
+      mediaToQN: (s: number) => number | undefined;
+    }>;
+    return render({}).props.mediaToQN;
+  };
+  const conga = (measures: ScoreDocument['tracks'][number]['measures']): ScoreDocument => ({
+    ...SCORE,
+    tracks: [{ index: 0, instrument: 'perc-conga', displayName: 'Conga', tuning: null, stringMultiplicity: 1, channel: null, defaultView: 'rhythm-grid', measures }],
+  });
+
+  it('mediaToQN maps a score with no measures to 0, never NaN', () => {
+    expect(lanesMediaToQN(conga([]))(5)).toBe(0);
+  });
+
+  it('mediaToQN skips the position_qn write (undefined) when the result is not finite', () => {
+    const mediaToQN = lanesMediaToQN(
+      conga([{ number: 1, voices: [{ number: 1, events: [{ kind: 'note', id: 'x', midi: 60, durationQN: 4 }] }] }])
+    );
+    // Bar 1 defaults to the trim-in (0); 96 bpm → 1.6 qn/s.
+    expect(mediaToQN(1.25)).toBeCloseTo(2, 12);
+    expect(mediaToQN(Number.NaN)).toBeUndefined();
+  });
+
   it('non-exercise modes keep the class item title as the label and seed the SyncPanel from the draft-aware seed', () => {
     const liveMap: PlaysenseStudioPlayerTimeMap = { id: 'live-map', method: 'drag', waypoints: [wp(0, 0), wp(4, 2)] };
     act(() => {
@@ -516,6 +561,8 @@ describe('StudioWorkspace — Student preview and copy notes (Studio rework P5, 
 
     const last = stub.syncPanelCalls.at(-1)!;
     expect(last.props.score).toEqual(SCORE_WITH_NOTES);
+    // The menu closes after the decline too.
+    expect(Array.from(host.querySelectorAll('button')).some((b) => b.textContent === 'Verse A')).toBe(false);
     confirmSpy.mockRestore();
   });
 
