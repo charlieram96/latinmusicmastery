@@ -1,12 +1,4 @@
 {
-  "lessonView": {
-    "videoToggle": "Video",
-    "scoreToggle": "Score",
-    "label": "Lesson view",
-    "both": "Video + score",
-    "video": "Video only",
-    "score": "Score only"
-  },
   "staff": {
     "countAnd": "&",
     "layout": {
