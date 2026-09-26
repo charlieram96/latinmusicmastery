@@ -27,7 +27,10 @@ vi.mock('@/components/ui/popover', () => ({
 }))
 vi.mock('../exercise-score', async () => {
   const bridge = await vi.importActual<typeof import('../exercise-workspace')>('../exercise-workspace')
-  return { ExerciseScore: () => <div data-score data-position={bridge.useExerciseWorkspace()?.position} /> }
+  return { ExerciseScore: () => {
+    const ws = bridge.useExerciseWorkspace()
+    return <div data-score data-position={ws?.position}><button type="button" data-pick-top onClick={() => ws?.setPosition('top')} /></div>
+  } }
 })
 vi.mock('@/components/playsense-studio/player/notation/renderers/staff-renderer', () => ({ StaffRenderer: () => null }))
 vi.mock('@/components/playsense-studio/player/notation/staff-layout-switch', () => ({ useStaffLayoutPreference: () => ['stacked', () => {}] }))
@@ -162,6 +165,15 @@ describe('ScoreExerciseGame score shape without a video', () => {
     stored('stack')
     session = { ...baseSession(), exercise, sessionState: 'playing' }
     render({ score, exerciseVideo: null })
+    expect(host.querySelector('[data-score]')?.getAttribute('data-position')).toBe('right')
+  })
+
+  it('without a video, the score cannot change the saved layout of exercises that have one', () => {
+    stored('pip')
+    session = { ...baseSession(), exercise, sessionState: 'playing' }
+    render({ score, exerciseVideo: null })
+    act(() => host.querySelector<HTMLButtonElement>('[data-pick-top]')!.click())
+    expect(JSON.parse(localStorage.getItem('lmm-workspace:play:stacked')!).layout).toBe('pip')
     expect(host.querySelector('[data-score]')?.getAttribute('data-position')).toBe('right')
   })
 })

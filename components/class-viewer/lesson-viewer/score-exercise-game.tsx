@@ -111,7 +111,11 @@ function ScoreExerciseSession({
   // stored layout the student can neither see nor change here.
   const hasVideo = !!exerciseVideo
   const scoreWorkspace = useMemo(
-    () => hasVideo ? workspace : { ...workspace, layout: 'music' as const, state: { ...workspace.state, layout: 'music' as const, swap: false } },
+    // Read-only: nothing here may rewrite the layout saved for exercises that do have a video.
+    () => hasVideo ? workspace : {
+      ...workspace, layout: 'music' as const, state: { ...workspace.state, layout: 'music' as const, swap: false },
+      setLayout: () => {}, swap: () => {}, update: () => {}, beforeLayoutChangeRef: { current: null },
+    },
     [hasVideo, workspace],
   )
   // The student's mix over the backing tracks: every track plays, each at the
