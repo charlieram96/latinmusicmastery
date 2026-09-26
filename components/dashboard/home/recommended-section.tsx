@@ -108,7 +108,7 @@ function PosterCard({ course, reason, priority }: { course: RecommendedCourse; r
     <Link
       href={course.href}
       data-poster
-      className="group relative isolate flex aspect-[4/5] w-[62%] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-2xl text-white shadow-[0_4px_0_hsl(0_0%_0%/0.25)] outline-none transition-[transform,box-shadow] duration-pop ease-smooth hover:shadow-[0_8px_0_hsl(0_0%_0%/0.22)] focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:hover:-translate-y-1 md:w-auto"
+      className="group relative isolate flex aspect-[4/5] w-[62%] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-2xl md:max-h-[360px] text-white shadow-[0_4px_0_hsl(0_0%_0%/0.25)] outline-none transition-[transform,box-shadow] duration-pop ease-smooth hover:shadow-[0_8px_0_hsl(0_0%_0%/0.22)] focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:hover:-translate-y-1 md:w-full"
     >
       <span data-art aria-hidden className="absolute inset-0 -z-10 transition-transform duration-500 ease-smooth motion-safe:group-hover:scale-[1.06]">
         {course.thumbnailUrl ? (

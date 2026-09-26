@@ -90,7 +90,9 @@ describe('RecommendedSection posters', () => {
     // Track min is 50%-7px (2 columns) below an 800px container and 25%-11px (4 columns) from it,
     // so with the 14px gap a third column never fits.
     expect(tokens(list)).toEqual(expect.arrayContaining(['flex', 'snap-x', 'snap-mandatory', 'overflow-x-auto', 'md:grid', 'gap-3.5', 'md:grid-cols-[repeat(auto-fill,minmax(clamp(calc(25%-11px),calc((800px-100%)*999),calc(50%-7px)),1fr))]']))
-    for (const p of posters()) expect(tokens(p)).toEqual(expect.arrayContaining(['w-[62%]', 'shrink-0', 'snap-start', 'md:w-auto']))
+    for (const p of posters()) expect(tokens(p)).toEqual(expect.arrayContaining(['w-[62%]', 'shrink-0', 'snap-start', 'md:w-full']))
+    // 2×2 posters in a ~700px column would be ~440px tall each: cap their height from md.
+    for (const p of posters()) expect(tokens(p)).toContain('md:max-h-[360px]')
   })
 
   it('keeps Preview visible on phones and reveals it on hover from md', () => {
