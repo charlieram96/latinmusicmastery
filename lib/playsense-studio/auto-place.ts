@@ -11,13 +11,31 @@ const SETTLE_S = 0.09;
  *  ratio and an RMS-residual ceiling tight enough that noise can't pass. */
 const MIN_MATCH_RATIO = 0.7;
 const MAX_RMS_S = 0.04;
+/** Fix round 3: also this share of the onsets within TIGHT_S of their hit. */
+const MIN_TIGHT_RATIO = 0.7;
 
-/** Candidate offsets are the hits within this many seconds of the markers'
- *  current first-onset time. */
-const SEARCH_S = 2;
-/** Floor on the residual sigma used to tell equal-count fits apart, so
- *  jitter-free (synthetic) hits don't make every tiny residual look loose. */
-const TIE_SIGMA_FLOOR_S = 0.002;
+/** Auto-place is a LOCAL refinement: the markers decide which beat is which,
+ *  and only the fine offset and the tempo move. Offset candidates are hits
+ *  within half a beat of where the markers put the notes in the first
+ *  OPENING_SEED_QN quarter notes (not just the first note, so a missed first
+ *  hit still leaves candidates). */
+const OPENING_SEED_QN = 3;
+/** A refined line must stay within half a beat of the markers, measured at
+ *  the middle of the first OPENING_CHECK_ONSETS onsets. */
+const OPENING_CHECK_ONSETS = 8;
+/** Each fit window is re-fitted at these tightening tolerances. Loose enough
+ *  for a sloppy note, tight enough to drop a line tilted across the notes. */
+const POLISH_TOLS_S = [0.06, 0.04, 0.04];
+/** The anchored opening fit: slopes within this fraction of the markers'
+ *  tempo, scored by onsets within ANCHOR_TOL_S of a hit. */
+const SLOPE_RANGE = 0.1;
+const ANCHOR_TOL_S = 0.02;
+/** Candidates rank first by onsets matched within this (the bar flag's "more
+ *  than 30 ms off" line), then by the gate's wide count, then by RMS. Among
+ *  dense extra hits the wide 0.12 s tolerance matches nearly every onset on
+ *  any line, so the wide count alone can prefer a loose line (40 ms RMS)
+ *  with one more match over the tight line through the played notes. */
+const TIGHT_S = 0.03;
 
 /** Index of the first hit >= t (hits sorted ascending). */
 function lowerBound(hits: number[], t: number): number {
@@ -57,93 +75,129 @@ function matchOneToOne(predicted: number[], hits: number[], tol: number): Array<
 
 const fitTol = (b: number) => Math.min(0.12, 0.3 * b);
 
-/** The growing-window least-squares fit: time = a + b * x, x = qn - qn0.
- *  Starts on the first 8 onsets and doubles the window each pass, matching
- *  each onset to its nearest hit (many-to-one is fine here: this only steers). */
-function refineFit(xs: number[], hits: number[], a0: number, b0: number): { a: number; b: number } {
-  let a = a0;
-  let b = b0;
-  for (let n = Math.min(8, xs.length); ; n = Math.min(xs.length, n * 2)) {
-    const tol = fitTol(b);
+/** Least-squares line through the one-to-one matches of `xs` within `tol`,
+ *  or null with fewer than 3 matches or a non-positive slope. */
+function fitMatches(xs: number[], hits: number[], a: number, b: number, tol: number): { a: number; b: number } | null {
+  const matches = matchOneToOne(xs.map((x) => a + b * x), hits, tol);
+  const px: number[] = [];
+  const py: number[] = [];
+  matches.forEach((h, k) => {
+    if (h === null) return;
+    px.push(xs[k]);
+    py.push(h);
+  });
+  const count = px.length;
+  if (count < 3) return null;
+  const mx = px.reduce((sum, x) => sum + x, 0) / count;
+  const my = py.reduce((sum, y) => sum + y, 0) / count;
+  let sxx = 0;
+  let sxy = 0;
+  for (let k = 0; k < count; k++) {
+    sxx += (px[k] - mx) ** 2;
+    sxy += (px[k] - mx) * (py[k] - my);
+  }
+  if (sxx === 0) return { a: a + my - (a + b * mx), b }; // one distinct position: shift only
+  if (sxy <= 0) return null;
+  const nb = sxy / sxx;
+  return { a: my - nb * mx, b: nb };
+}
+
+/** Tempo from the seed: the seed hit is taken as right, so only the slope is
+ *  unknown. Try the slope through every hit near an opening onset (within
+ *  ±SLOPE_RANGE of the markers' tempo) and keep the one that puts the most
+ *  opening onsets within ANCHOR_TOL_S of a hit, then refit on those. Dense
+ *  extra hits drag a plain least-squares fit of the opening off by a percent
+ *  or two, which is a whole beat by the end of a long section. */
+function anchoredOpening(
+  xs: number[],
+  hits: number[],
+  anchor: { x: number; t: number },
+  b0: number
+): { a: number; b: number } | null {
+  const win = xs.slice(0, Math.min(8, xs.length));
+  const tol = fitTol(b0);
+  let bestB = b0;
+  let bestCount = -1;
+  let bestSse = Infinity;
+  const consider = (b: number) => {
+    const a = anchor.t - b * anchor.x;
+    const matches = matchOneToOne(win.map((x) => a + b * x), hits, ANCHOR_TOL_S);
     let count = 0;
-    let sx = 0;
-    let sy = 0;
-    const px: number[] = [];
-    const py: number[] = [];
-    for (let k = 0; k < n; k++) {
-      const h = nearestHit(hits, a + b * xs[k], tol);
-      if (h === null) continue;
-      px.push(xs[k]);
-      py.push(h);
-      sx += xs[k];
-      sy += h;
+    let sse = 0;
+    matches.forEach((h, k) => {
+      if (h === null) return;
       count++;
+      sse += (h - (a + b * win[k])) ** 2;
+    });
+    if (count > bestCount || (count === bestCount && sse < bestSse)) {
+      bestB = b;
+      bestCount = count;
+      bestSse = sse;
     }
-    if (count >= 3) {
-      const mx = sx / count;
-      const my = sy / count;
-      let sxx = 0;
-      let sxy = 0;
-      for (let k = 0; k < count; k++) {
-        sxx += (px[k] - mx) ** 2;
-        sxy += (px[k] - mx) * (py[k] - my);
-      }
-      if (sxx > 0 && sxy > 0) {
-        b = sxy / sxx;
-        a = my - b * mx;
-      }
+  };
+  consider(b0);
+  for (const x of win) {
+    if (x === anchor.x) continue;
+    const p = anchor.t + b0 * (x - anchor.x);
+    for (let i = lowerBound(hits, p - tol); i < hits.length && hits[i] <= p + tol; i++) {
+      const b = (hits[i] - anchor.t) / (x - anchor.x);
+      if (Math.abs(b / b0 - 1) <= SLOPE_RANGE) consider(b);
+    }
+  }
+  const a = anchor.t - bestB * anchor.x;
+  return fitMatches(win, hits, a, bestB, ANCHOR_TOL_S) ?? { a, b: bestB };
+}
+
+/** The growing-window least-squares fit: time = a + b * x, x = qn - qn0.
+ *  Starts on the first 8 onsets (from `anchoredOpening` when the seed is a
+ *  hit) and doubles the window each pass. Matching is one-to-one (each hit
+ *  used once), so dense extra hits can't all pile onto the line, and each
+ *  window's fit is trimmed at tightening tolerances (POLISH_TOLS_S): with the
+ *  wide fit tolerance alone, a line tilted across the played notes can match
+ *  them all loosely (tens of ms RMS) and outscore the tight line through
+ *  them. A window with fewer than 3 matches ends the candidate (null):
+ *  carrying an unfitted line into a wider window is how a fit used to lock on
+ *  a whole beat away. */
+function refineFit(
+  xs: number[],
+  hits: number[],
+  a0: number,
+  b0: number,
+  anchor: { x: number; t: number } | null
+): { a: number; b: number } | null {
+  let line: { a: number; b: number } | null = anchor ? anchoredOpening(xs, hits, anchor, b0) : { a: a0, b: b0 };
+  if (!line) return null;
+  for (let n = Math.min(8, xs.length); ; n = Math.min(xs.length, n * 2)) {
+    const win = xs.slice(0, n);
+    line = fitMatches(win, hits, line.a, line.b, fitTol(line.b));
+    if (!line) return null;
+    for (const tol of POLISH_TOLS_S) {
+      const next = fitMatches(win, hits, line.a, line.b, Math.min(tol, fitTol(line.b)));
+      if (!next) break;
+      line = next;
     }
     if (n === xs.length) break;
   }
-  return { a, b };
+  return line;
 }
 
-interface Fit { a: number; b: number; count: number; rms: number; residuals: number[]; dist: number }
+interface Fit { a: number; b: number; count: number; tight: number; rms: number }
 
-/** One-to-one matched count, the matched pairs' absolute residuals and their
- *  RMS, for a fitted line over every onset. */
-function scoreFit(xs: number[], hits: number[], a: number, b: number): Omit<Fit, 'a' | 'b' | 'dist'> {
+/** One-to-one matched count, how many of those sit within TIGHT_S, and the
+ *  matched pairs' RMS residual for a fitted line over every onset. */
+function scoreFit(xs: number[], hits: number[], a: number, b: number): Omit<Fit, 'a' | 'b'> {
   const predicted = xs.map((x) => a + b * x);
   const matches = matchOneToOne(predicted, hits, fitTol(b));
-  const residuals: number[] = [];
+  let count = 0;
+  let tight = 0;
   let sumSq = 0;
   matches.forEach((h, i) => {
     if (h === null) return;
-    const r = Math.abs(h - predicted[i]);
-    residuals.push(r);
-    sumSq += r * r;
+    count++;
+    if (Math.abs(h - predicted[i]) <= TIGHT_S) tight++;
+    sumSq += (h - predicted[i]) ** 2;
   });
-  const count = residuals.length;
-  return { count, residuals, rms: count ? Math.sqrt(sumSq / count) : Infinity };
-}
-
-/**
- * Picks the refined fit. The most one-to-one matches wins. Among equal counts
- * the fit nearest the current offset wins: a steady count-in continuing the
- * same tempo grid lines up exactly as many onsets as the true downbeat, and
- * only the markers know which one the user meant. RMS decides after that.
- *
- * One refinement: an equal-count fit is only a true tie when its matches are
- * as tight as the others'. Two readings a beat apart share every hit but the
- * ones at the ends, so when one of them needs an extra LOOSE match (a residual
- * over 3 sigma, sigma being the tightest tied fit's RMS, floored at 2 ms) to
- * reach the same count, that match is a stray noise hit rather than a played
- * note, and the fit drops out before the nearest-offset rule. Without this,
- * noise landing just past the last note lets a beat-shifted reading tie the
- * truth and win on proximity. A sloppy note shared by every reading counts
- * against all of them equally, so it changes nothing.
- */
-function pickFit(fits: Fit[]): Fit | null {
-  if (!fits.length) return null;
-  const top = Math.max(...fits.map((f) => f.count));
-  const tied = fits.filter((f) => f.count === top);
-  const sigma = Math.max(Math.min(...tied.map((f) => f.rms)), TIE_SIGMA_FLOOR_S);
-  const loose = (f: Fit) => f.residuals.filter((r) => r > 3 * sigma).length;
-  const fewest = Math.min(...tied.map(loose));
-  const close = tied.filter((f) => loose(f) === fewest);
-  return close.reduce((best, f) =>
-    f.dist < best.dist - 1e-6 || (Math.abs(f.dist - best.dist) <= 1e-6 && f.rms < best.rms) ? f : best
-  );
+  return { count, tight, rms: count ? Math.sqrt(sumSq / count) : Infinity };
 }
 
 export function autoPlaceBars(
@@ -165,19 +219,40 @@ export function autoPlaceBars(
   if (!(b0 > 0)) return null;
   const a0 = first.beats[0].videoTimeSeconds + (qn0 - first.downbeatQN) * b0;
 
-  // Offset search. The markers may start well away from the playing (further
-  // than the fit tolerance), so seed the fit at every hit within ±2 s of the
-  // current first-onset time (and at the current offset itself), refine each
-  // with the growing-window fit, and score the refined line over ALL onsets.
-  const seeds = [a0];
-  for (let i = lowerBound(hits, a0 - SEARCH_S); i < hits.length && hits[i] <= a0 + SEARCH_S; i++) seeds.push(hits[i]);
-  const fits: Fit[] = [];
-  for (const seed of seeds) {
-    const { a, b } = refineFit(xs, hits, seed, b0);
-    if (!(b > 0)) continue;
-    fits.push({ a, b, ...scoreFit(xs, hits, a, b), dist: Math.abs(a - a0) });
+  // Local search. Seed the fit at the current offset, and at every offset
+  // that puts one of the opening notes on a hit within half a beat of where
+  // the markers have it. Refine each seed, drop any line that has drifted half
+  // a beat or more from the markers over the opening, and keep the one with
+  // the most onsets within TIGHT_S of a hit (one-to-one, over ALL onsets),
+  // then the most within the wide tolerance, then the lowest RMS.
+  // Whole-beat alternatives (a count-in, playing that continues past the
+  // section, a stray hit past the end) are never considered: the markers
+  // decide which beat is which.
+  const half = 0.5 * b0;
+  const seeds: Array<{ d: number; anchor: { x: number; t: number } | null }> = [{ d: 0, anchor: null }];
+  for (let k = 0; k < xs.length && (k === 0 || xs[k] <= OPENING_SEED_QN); k++) {
+    const p = a0 + b0 * xs[k];
+    for (let i = lowerBound(hits, p - half); i < hits.length && hits[i] <= p + half; i++) {
+      seeds.push({ d: hits[i] - p, anchor: { x: xs[k], t: hits[i] } });
+    }
   }
-  const best = pickFit(fits);
+  const checkN = Math.min(OPENING_CHECK_ONSETS, xs.length);
+  const xm = xs.slice(0, checkN).reduce((sum, x) => sum + x, 0) / checkN;
+  let best: Fit | null = null;
+  for (const { d, anchor } of seeds) {
+    const fit = refineFit(xs, hits, a0 + d, b0, anchor);
+    if (!fit) continue;
+    const { a, b } = fit;
+    if (Math.abs(a + b * xm - (a0 + b0 * xm)) >= 0.5 * b) continue;
+    const score = scoreFit(xs, hits, a, b);
+    if (
+      !best ||
+      score.tight > best.tight ||
+      (score.tight === best.tight && (score.count > best.count || (score.count === best.count && score.rms < best.rms)))
+    ) {
+      best = { a, b, ...score };
+    }
+  }
   if (!best) return null;
   const { a, b } = best;
   const matched = best.count;
@@ -186,6 +261,10 @@ export function autoPlaceBars(
   // the matched pairs sit tight on the line. Real playing lines up far better
   // than 40 ms RMS against a correct fit; noise essentially never does.
   if (matched < MIN_MATCH_RATIO * onsetQNs.length || best.rms > MAX_RMS_S) return null;
+  // And at least 70% of the onsets sit within TIGHT_S. Dense noise (300 hits
+  // over 45 s) puts some hit within 0.12 s of 80% of any line's onsets at
+  // around 40 ms RMS, right on the gate; played notes sit within a few ms.
+  if (best.tight < MIN_TIGHT_RATIO * onsetQNs.length) return null;
 
   const at = (qn: number) => a + b * (qn - qn0);
   // Lay the downbeats, then settle each onto the hit under its first note.
