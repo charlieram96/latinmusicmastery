@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { scoreToExerciseDefinition, buildExerciseGrid } from '../score-to-exercise'
-import { generateExpectedTimestamps, getExerciseDuration, getLoopDuration } from '../exercise-utils'
+import { generateExpectedTimestamps, getExerciseDuration, getLoopDuration, beatToTimestamp } from '../exercise-utils'
 import type { ScoreDocument, MusicalEvent } from '@/components/playsense-studio/shared/score-model/types'
 import { GUITAR_LICK_FIXTURE } from '@/lib/playsense-studio/score-fixtures'
 
@@ -65,6 +65,34 @@ describe('exercise grid (meter changes honoured, tempo changes ignored)', () => 
     const uniform151 = generateExpectedTimestamps({ ...ex, grid: undefined }).map(e => e.timestamp)
     expect(withGrid).toHaveLength(uniform151.length)
     withGrid.forEach((v, i) => expect(v).toBeCloseTo(uniform151[i], 9))
+  })
+
+  it('gives bar 3 at 4s and bar 4 at 8s for a 4/4-at-120 score with a confirmed tempo change to 60 at bar 3', () => {
+    const score: ScoreDocument = {
+      schemaVersion: 1, title: 'x', sourceFormat: 'native', initialTempo: 120, initialTimeSignature: [4, 4], initialKeyFifths: 0,
+      tempoMarksConfirmed: true,
+      tracks: [{ index: 0, instrument: 'guitar', displayName: 'g', tuning: null, stringMultiplicity: 1, channel: null, defaultView: 'staff', measures: [
+        { number: 1, voices: [{ number: 1, events: [q(60, 4)] }] },
+        { number: 2, voices: [{ number: 1, events: [q(60, 4)] }] },
+        { number: 3, tempoChange: 60, voices: [{ number: 1, events: [q(60, 4)] }] },
+        { number: 4, voices: [{ number: 1, events: [q(60, 4)] }] },
+      ] }],
+    }
+    const g = buildExerciseGrid(score, score.tracks[0])
+    expect(g.measureStartSec).toEqual([0, 2, 4, 8, 12])
+    expect(g.secPerQN).toEqual([0.5, 0.5, 1, 1])
+  })
+
+  it('keeps the old uniform-tempo grid when tempoMarksConfirmed is unset, even with tempoChange present', () => {
+    const g = buildExerciseGrid(changing, changing.tracks[0])
+    expect(g.secPerQN.every((v) => v === 0.5)).toBe(true)
+  })
+
+  it("beatToTimestamp doesn't return NaN for a measure number beyond the grid", () => {
+    const g = buildExerciseGrid(changing, changing.tracks[0])
+    const t = beatToTimestamp({ beat: 1, measure: 99, instrument: 'guitar', technique: 'open', hand: 'R', duration: 1, vexKey: 'c/4', accent: false }, 120, [4, 4], 0, 3, 0, g)
+    expect(Number.isNaN(t)).toBe(false)
+    expect(t).toBeGreaterThan(0)
   })
 
   it("uses bar 1's own time signature for bpm/timeSignature when it differs from the score default", () => {
