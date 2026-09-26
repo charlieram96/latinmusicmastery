@@ -265,7 +265,7 @@ Rulings, the plan's plus the ones made while building:
 **Follow-ups from the layout pass:**
 - `viewBounds`/`fitTarget` aren't memoised: `seekClamped` identity churns, plus one new eslint warning; the follow effect can page back over a manual pan while playing (pre-existing design); a graded one-shot fit could lock early if play/trim arrive async (no such caller today)
 - the transport-row scrubber comment was dropped; `.st-transport-scrub > div` relies on the scrubber's DOM shape
-- wave-tools notices use index keys; the Student-preview and Auto-align titles are shorter than the mockup's (no jam variant)
+- `sync-actions.tsx` notices use index keys; the Student-preview and Auto-align titles are shorter than the mockup's (no jam variant)
 - the far-right bar's beat chip can still hide under the corner at the end of the view (mockup-mandated position; scrolling reveals it)
 - the mockup's `.mbox.out/.rep/.copy` states aren't ported (the live strip never applied them; not in the plan); the narrow bar placeholder has no focus-marker class (pre-existing)
 - `--teal`/`--ok` stage tokens aren't defined (literals repeated); the More popover's anchor assumes 320px and doesn't follow the toolbar, and it lingers during a keyboard zoom exit; its head `ResizeObserver` runs once (`[]` deps); `repeatPass!` is repeated
@@ -281,6 +281,8 @@ Rulings, the plan's plus the ones made while building:
 5. Open the zoom on a drum part. The staff is white and fills the height. The toolbar sits in the header. Strokes are one chip.
 6. Check it at 1280 × 800. Nothing wraps in the app bar, and the zoom header wraps its toolbar under the title.
 7. The student lesson player's transport is unchanged.
+8. Zoom header icons (‹ › Keys Pencil Done, trash, stroke ▾) render as outlines, not solid shapes.
+9. Scrub the waveform to its right edge: the view doesn't run away.
 
 ## Carried forward from Plan 1 reviews
 
