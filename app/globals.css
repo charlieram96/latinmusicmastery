@@ -849,10 +849,11 @@ html:has([data-marketing]) {
 }
 .st-stage-bottombar .st-zoom { height: 28px; padding: 0 6px; }
 
-/* The Studio's one-row transport (mockup .st-transport). The student player
-   keeps TransportBar's stacked layout. */
-.st-transport-row { display: flex; align-items: center; gap: 10px; height: 54px; padding: 0 14px;
-  border-top: 1px solid hsl(var(--border)); background: hsl(var(--card)); }
+/* The Studio's one-row transport (mockup .st-transport). Layout only — the
+   existing .st-transport wrapper already supplies the mockup's chrome
+   (border-top, card background, 54px height). The student player keeps
+   TransportBar's stacked layout. */
+.st-transport-row { display: flex; align-items: center; gap: 10px; width: 100%; }
 .st-transport-scrub { flex: 1; min-width: 80px; }
 .st-transport-row .st-transport-scrub > div { height: 28px; }
 
