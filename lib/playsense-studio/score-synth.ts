@@ -242,7 +242,7 @@ export class ScoreSynth {
 
     this.anchor = { ctxStartSeconds: ctx.currentTime, mediaStartSeconds: mediaNow, rate };
     const nearLoopStart = this.loop != null && Math.abs(mediaNow - this.loop.a) <= LOOP_START_GRACE_SEC;
-    const from = nearLoopStart ? Math.min(mediaNow, this.loop!.a) - LOOP_START_GRACE_SEC : mediaNow;
+    const from = nearLoopStart ? Math.min(mediaNow, this.loop!.a - LOOP_START_GRACE_SEC) : mediaNow;
     this.nextIndex = firstIndexAtOrAfter(this.starts, from);
     this.scheduledThrough = -Infinity;
 

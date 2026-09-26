@@ -1660,13 +1660,14 @@ export function SyncPanel({
 
   // The element is portalled, so set the property rather than relying on a prop
   // surviving the move. A new element mounts when the monitor moves between
-  // inline and the floating window (monitorEl), so that re-applies it too.
+  // inline and the floating window (monitorEl), or the sync stage swaps in
+  // (showSync), so those re-apply it too.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     video.muted = hearMute(hear, videoMuted);
     video.volume = videoVolume;
-  }, [hear, videoMuted, videoVolume, videoUrl, monitorEl]);
+  }, [hear, videoMuted, videoVolume, videoUrl, monitorEl, showSync]);
   const handleClickVolumeChange = useCallback((v: number) => {
     setClickVolume(v);
     writeStoredClickVolume(v);
