@@ -51,7 +51,8 @@ describe('LessonActionBar announcements and focus (L3)', () => {
     await act(async () => root.render(<Harness part={false} />))
     const region = live()
     expect(region.getAttribute('role')).toBe('status')
-    expect(region.textContent).toContain('Lesson in progress')
+    // Title and detail read as two sentences, not run together.
+    expect(region.textContent).toMatch(/^Lesson in progress\. \S/)
     await act(async () => root.render(<Harness part />))
     expect(live()).toBe(region)
     expect(region.textContent).toContain('Check your answer')

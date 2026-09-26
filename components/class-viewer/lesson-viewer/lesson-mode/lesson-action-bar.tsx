@@ -78,7 +78,10 @@ function useActionBarA11y(barRef: { current: HTMLElement | null }, liveRef: { cu
     let focused: Element | null = null
     const sync = () => {
       const message = [...bar.querySelectorAll('.lx-msg')].find(m => !m.closest('[hidden]'))
-      const text = (message?.textContent ?? '').replace(/\s+/g, ' ').trim()
+      const clean = (el: Element | null | undefined) => (el?.textContent ?? '').replace(/\s+/g, ' ').trim()
+      const title = clean(message?.querySelector('b'))
+      const detail = clean(message?.querySelector('.lx-msg-detail'))
+      const text = [title, detail].filter(Boolean).map(part => /[.!?…]$/.test(part) ? part : `${part}.`).join(' ')
       const live = liveRef.current
       if (live && live.textContent !== text) live.textContent = text
       const lost = focused && !focused.isConnected
