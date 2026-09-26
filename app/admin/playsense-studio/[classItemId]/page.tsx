@@ -93,6 +93,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
       metronomeAnchorQn: null,
       timeMap: null,
       backingTracks: [],
+      play: { bar1Seconds: null, countInBars: 1, preroll: true },
     };
     const drafts = await getStudioDrafts([{ kind: 'exercise', id: classItemId }]);
     // A draft-load error must not open the Studio on live: the next edit would

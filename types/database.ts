@@ -345,6 +345,9 @@ export type Database = {
           metronome_anchor_time_map_id: string | null
           options: Json | null
           order_index: number
+          play_bar1_seconds: number | null
+          play_count_in_bars: number
+          play_preroll: boolean
           question: string | null
           question_type: string | null
           quiz_settings: Json
@@ -383,6 +386,9 @@ export type Database = {
           metronome_anchor_time_map_id?: string | null
           options?: Json | null
           order_index?: number
+          play_bar1_seconds?: number | null
+          play_count_in_bars?: number
+          play_preroll?: boolean
           question?: string | null
           question_type?: string | null
           quiz_settings?: Json
@@ -421,6 +427,9 @@ export type Database = {
           metronome_anchor_time_map_id?: string | null
           options?: Json | null
           order_index?: number
+          play_bar1_seconds?: number | null
+          play_count_in_bars?: number
+          play_preroll?: boolean
           question?: string | null
           question_type?: string | null
           quiz_settings?: Json

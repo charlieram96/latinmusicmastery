@@ -63,6 +63,7 @@ const exerciseMedia: ExerciseMedia = {
   metronomeAnchorQn: 0,
   timeMap: { id: 'ex-map', method: 'drag', waypoints: [wp(0, 0.5), wp(4, 2.5)], nudges: [] },
   backingTracks: [],
+  play: { bar1Seconds: null, countInBars: 1, preroll: true },
 };
 
 let host: HTMLDivElement;
