@@ -310,9 +310,13 @@ class StaffRendererImpl implements ScoreRenderer {
     compact = false,
     leadingGapMs = 0,
     leadingGapLabel = '',
-    helpers: StaffHelpers | false = DEFAULT_HELPERS
+    helpers: StaffHelpers | false = DEFAULT_HELPERS,
+    /** Where playback and the view already are, so the first page shown is the right one (no turn from page 1). */
+    initial: { playbackMs: number; viewMs: number } = { playbackMs: 0, viewMs: 0 }
   ): void {
     this.destroy();
+    this.lastPlaybackMs = initial.playbackMs;
+    this.lastViewMs = initial.viewMs;
     this.container = el;
     this.score = score;
     this.trackIndex = trackIndex;
@@ -2025,7 +2029,8 @@ function StaffRendererView({
       compact,
       leadingMsRef.current,
       leadingLabelRef.current,
-      helpersRef.current
+      helpersRef.current,
+      { playbackMs: currentMsRef.current, viewMs: viewMsRef.current ?? currentMsRef.current }
     );
 
     const unsubSeek = impl.onSeek((target) => onSeekRef.current?.(target));

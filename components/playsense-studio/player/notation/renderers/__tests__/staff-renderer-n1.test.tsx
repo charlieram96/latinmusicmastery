@@ -225,9 +225,10 @@ describe('paged interludes and turns (minors)', () => {
     Element.prototype.animate = animate as never
     ;(Element.prototype as { getAnimations?: unknown }).getAnimations = () => []
     try {
-      draw({ layoutMode: 'paged', currentMs: 500, loopAMs: 2200, loopBMs: 3000 })
+      const score = scale()
+      draw({ score, layoutMode: 'paged', currentMs: 500, loopAMs: 2200, loopBMs: 3000 })
       animated.length = 0
-      draw({ layoutMode: 'paged', currentMs: 2500, loopAMs: 2200, loopBMs: 3000 })
+      draw({ score, layoutMode: 'paged', currentMs: 2500, loopAMs: 2200, loopBMs: 3000 })
       const fadedIn = (el: Element | null) => animated.some(a => a.el === el && a.frames[0]?.opacity === 0 && (a.frames.at(-1)?.offset ?? 1) < 1)
       expect(fadedIn(host.querySelector('.ps-staff-playhead'))).toBe(true)
       expect(fadedIn(host.querySelector('.ps-staff-band'))).toBe(true)
@@ -257,5 +258,66 @@ describe('paged row in a tall pane (minors)', () => {
     const el = host.querySelector('.ps-score-engraving') as HTMLElement
     expect(el.style.height).toMatch(/px$/)
     expect(el.style.minHeight).toBe('')
+  })
+})
+
+describe('test gaps (minors)', () => {
+  it('a chord shows one chip, naming its top note', () => {
+    const chords = scale({}, () => [{ kind: 'chord', notes: [{ midi: 67 }, { midi: 60 }, { midi: 64 }], durationQN: 4 }])
+    draw({ score: chords })
+    const chips = [...host.querySelectorAll('.ps-staff-name')].map(c => c.textContent)
+    expect(chips).toEqual(['G', 'G', 'G', 'G'])
+  })
+  it('a paged turn backwards slides the new page in from the left', () => {
+    const calls: Array<{ el: Element; frames: Keyframe[] }> = []
+    const restore = [Element.prototype.animate, (Element.prototype as { getAnimations?: unknown }).getAnimations]
+    Element.prototype.animate = function (this: Element, frames: Keyframe[]) {
+      calls.push({ el: this, frames })
+      return { cancel() {}, onfinish: null } as unknown as Animation
+    } as never
+    ;(Element.prototype as { getAnimations?: unknown }).getAnimations = () => []
+    try {
+      const score = scale()
+      draw({ score, layoutMode: 'paged', currentMs: 2500 })
+      calls.length = 0
+      draw({ score, layoutMode: 'paged', currentMs: 500 })
+      const page0 = host.querySelector('svg > g[data-score-row="0"]')
+      const page1 = host.querySelector('svg > g[data-score-row="1"]')
+      expect(page0?.getAttribute('data-page-state')).toBe('current')
+      expect(calls.find(c => c.el === page0)?.frames[0].transform).toBe('translateX(-12%)')
+      expect(calls.find(c => c.el === page1)?.frames.at(-1)?.transform).toBe('translateX(12%)')
+    } finally {
+      Element.prototype.animate = restore[0] as never
+      ;(Element.prototype as { getAnimations?: unknown }).getAnimations = restore[1]
+    }
+  })
+  it('the trailing interlude is its own page after the music', () => {
+    draw({ layoutMode: 'paged', currentMs: 8500, trailingGapMs: 1000 })
+    const rows = [...host.querySelectorAll('.ps-staff-row')]
+    const current = host.querySelector('.ps-staff-row[data-page-state=current]')
+    expect(current).toBe(rows.at(-1))
+    expect(current!.querySelector('.ps-notation-interlude')).not.toBeNull()
+    expect(host.querySelector('svg > g[data-score-row][data-page-state=current] [data-score-note]')).toBeNull()
+    expect((host.querySelector('.ps-staff-playhead') as HTMLElement).style.opacity).toBe('0')
+  })
+})
+
+describe('mounting mid-piece (minors)', () => {
+  it('opens a paged staff on the current page without a turn from the first page', () => {
+    const rows: Element[] = []
+    const restore = [Element.prototype.animate, (Element.prototype as { getAnimations?: unknown }).getAnimations]
+    Element.prototype.animate = function (this: Element) {
+      if (this.hasAttribute('data-score-row')) rows.push(this)
+      return { cancel() {}, onfinish: null } as unknown as Animation
+    } as never
+    ;(Element.prototype as { getAnimations?: unknown }).getAnimations = () => []
+    try {
+      draw({ layoutMode: 'paged', currentMs: 4500 })
+      expect(host.querySelector('svg > g[data-score-row="2"]')?.getAttribute('data-page-state')).toBe('current')
+      expect(rows).toHaveLength(0)
+    } finally {
+      Element.prototype.animate = restore[0] as never
+      ;(Element.prototype as { getAnimations?: unknown }).getAnimations = restore[1]
+    }
   })
 })
