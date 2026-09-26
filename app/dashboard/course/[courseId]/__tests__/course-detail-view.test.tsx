@@ -156,4 +156,68 @@ describe('CourseDetailView (C3)', () => {
     expect(host.textContent).toContain('dashboard.pages.teachers.viewProfile')
     expect(host.textContent).toContain('Develop your timbal technique.')
   })
+
+  describe('polish minors', () => {
+    const allDone = (sections = SECTIONS) => sections.map((s) => ({ ...s, classes: s.classes.map((c) => ({ ...c, completedItems: c.totalItems })) }))
+
+    it('C1: a finished course offers Review course into lesson 1 instead of a disabled Coming soon', () => {
+      render({ sections: allDone(), nextClassId: null, completedItems: 14, progressPercentage: 100 })
+      expect(host.textContent).not.toContain(`${P}.comingSoon`)
+      const reviews = [...host.querySelectorAll<HTMLElement>('[data-enter]')].filter((b) => b.textContent?.includes(`${P}.reviewCourse`))
+      expect(reviews.length).toBeGreaterThanOrEqual(3) // header, summary card, phone bar
+      for (const b of reviews) expect(b.dataset.href).toBe('/dashboard/course/son/class/a')
+      expect(host.textContent).toContain(`${P}.syllabus.completed`)
+    })
+
+    it('C1/C2: empty lessons do not stop a course from being finished (path, CTA and progress line agree)', () => {
+      const withEmpty = allDone([
+        { id: 's1', title: 'Welcome', description: null, classes: [cls('a', 2), cls('x', 0, 0)] },
+        { id: 's2', title: 'Rhythm', description: null, classes: [cls('b', 2)] },
+      ])
+      render({ sections: withEmpty, nextClassId: null, totalItems: 4, completedItems: 4, progressPercentage: 100 })
+      const path = host.querySelector('section[aria-labelledby="your-path"]') as HTMLElement
+      expect(path.querySelector('[aria-current="step"]')).toBeNull()
+      expect(host.textContent).toContain(`${P}.reviewCourse`)
+      expect(host.textContent).not.toContain(`${P}.syllabus.notStarted(`)
+      expect(host.querySelector('[data-bar-title]')?.textContent).toBe(`${P}.syllabus.completed`)
+    })
+
+    it('C2: the path current lesson is the syllabus current lesson, past an empty lesson', () => {
+      const secs = [{ id: 's1', title: 'Welcome', description: null, classes: [cls('a', 2), cls('x', 0, 0), cls('b', 0)] }]
+      render({ sections: secs, nextClassId: 'b', totalItems: 4, completedItems: 2 })
+      const path = host.querySelector('section[aria-labelledby="your-path"]') as HTMLElement
+      expect(path.querySelector('[aria-current="step"]')?.getAttribute('href')).toBe('/dashboard/course/son/class/b')
+      const currentRow = [...moduleSection('s1').querySelectorAll('li a')].find((a) => a.className.includes('border-primary'))
+      expect(currentRow?.getAttribute('href')).toBe('/dashboard/course/son/class/b')
+    })
+
+    it('C3: path nodes follow the syllabus href rule for non-students', () => {
+      const secs = [{ id: 's1', title: 'Welcome', description: null, classes: [{ ...cls('a', 0), is_free: true }, cls('b', 0)] }]
+      render({ sections: secs, nextClassId: 'a', isStudent: false, locked: false, totalItems: 4, completedItems: 0, hasStarted: false })
+      const nodes = [...host.querySelectorAll('section[aria-labelledby="your-path"] [data-path-scroller] [data-path-node] a')].map((a) => a.getAttribute('href'))
+      expect(nodes[0]).toBe('/dashboard/course/son/class/a')
+      expect(nodes[1]).toBe('/dashboard/subscribe?instrument=Timbal&course=cid')
+      const rows = [...moduleSection('s1').querySelectorAll('li a')].map((a) => a.getAttribute('href'))
+      expect(rows).toEqual(nodes.slice(0, 2))
+    })
+
+    it('C4: the locked phone bar stacks its wide action on its own row', () => {
+      render({ locked: true, isStudent: false })
+      expect(host.querySelector('[data-mobile-bar]')?.getAttribute('data-stacked')).toBe('true')
+      render()
+      expect(host.querySelector('[data-mobile-bar]')?.getAttribute('data-stacked')).toBe('false')
+    })
+
+    it('C7: Show all controls the module lesson list, even while it is empty', () => {
+      render()
+      for (const id of ['s1', 's2']) {
+        const toggle = moduleSection(id).querySelector('button') as HTMLButtonElement
+        const listId = toggle.getAttribute('aria-controls')
+        expect(listId).toBeTruthy()
+        const list = document.getElementById(listId!)
+        expect(list?.tagName).toBe('OL')
+        expect(moduleSection(id).contains(list)).toBe(true)
+      }
+    })
+  })
 })

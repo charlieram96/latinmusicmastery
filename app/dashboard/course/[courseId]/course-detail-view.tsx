@@ -19,6 +19,7 @@ import {
   Music,
   Play,
   Plus,
+  RotateCcw,
   Target,
   Video,
 } from 'lucide-react'
@@ -104,6 +105,7 @@ export function CourseDetailView({
   teacher,
   difficultyKey,
   totalItems,
+  completedItems,
   totalDurationMinutes,
   remainingDuration,
   progressPercentage,
@@ -129,6 +131,14 @@ export function CourseDetailView({
   const doneLessons = classes.filter(classDone).length
   const currentIndex = nextClassId ? classes.findIndex((c) => c.id === nextClassId) : -1
   const currentClass = currentIndex >= 0 ? classes[currentIndex] : null
+  // Finished = every item done. Lessons with no items yet never block this (the
+  // server's nextClassId skips them too), so it is not "every lesson done".
+  const courseFinished = totalItems > 0 && completedItems >= totalItems
+  const firstLesson = classes.find((c) => c.totalItems > 0) ?? classes[0]
+  const reviewHref = firstLesson ? `/dashboard/course/${courseId}/class/${firstLesson.id}` : undefined
+  const subscribeHref = `/dashboard/subscribe?instrument=${encodeURIComponent(course.instrument ?? '')}&course=${course.id}`
+  // One link rule for syllabus rows and path nodes: non-students go to subscribe unless the lesson is free.
+  const lessonHref = (c: ClassRow) => (isStudent || !!c.is_free ? `/dashboard/course/${courseId}/class/${c.id}` : subscribeHref)
   const levelLabel = course.difficulty ? t(`${base}.difficulty.${difficultyKey}`) : t(`${base}.allLevels`)
   const minutes = (n: number) => {
     const h = Math.floor(n / 60)
@@ -158,20 +168,21 @@ export function CourseDetailView({
             title: c.title || t(`${base}.syllabus.lessonFallback`, { number: n }),
             totalItems: c.totalItems,
             completedItems: c.completedItems,
+            href: lessonHref(c),
             items: (c.items ?? []).flatMap((it) => (it.item_type ? [{ item_type: it.item_type, video_duration_seconds: it.video_duration_seconds }] : [])),
           }
         }),
       })),
       nextClassId
     )
-    // moduleTitle only depends on t
+    // moduleTitle only depends on t; lessonHref on the ids and isStudent
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId, sections, nextClassId, t])
+  }, [courseId, sections, nextClassId, t, isStudent, course.id, course.instrument])
 
   // The summary card's progress line, shared with the phone bar.
   const progressTitle = currentClass
     ? t(`${base}.syllabus.lessonOf`, { n: currentIndex + 1, total: totalLessons })
-    : totalLessons > 0 && doneLessons >= totalLessons
+    : courseFinished || (totalLessons > 0 && doneLessons >= totalLessons)
       ? t(`${base}.syllabus.completed`)
       : t(`${base}.syllabus.notStarted`)
 
@@ -196,7 +207,7 @@ export function CourseDetailView({
       </Button>
     ) : locked ? (
       <Button asChild variant="chunky" size={size} className={className}>
-        <Link href={`/dashboard/subscribe?instrument=${encodeURIComponent(course.instrument ?? '')}&course=${course.id}`}>
+        <Link href={subscribeHref}>
           <Lock aria-hidden />
           {t(`${base}.subscribeToUnlock`)}
         </Link>
@@ -213,6 +224,19 @@ export function CourseDetailView({
       >
         <Play className="fill-current" aria-hidden />
         {hasStarted ? t(`${base}.continueLesson`) : t(`${base}.startLesson`)}
+      </EnterCourseModeButton>
+    ) : courseFinished && reviewHref ? (
+      <EnterCourseModeButton
+        courseId={course.id}
+        href={reviewHref}
+        courseTitle={course.title}
+        isNewCourse={false}
+        variant="chunky"
+        size={size}
+        className={className}
+      >
+        <RotateCcw aria-hidden />
+        {t(`${base}.reviewCourse`)}
       </EnterCourseModeButton>
     ) : (
       <Button variant="chunky" size={size} disabled className={className}>
@@ -277,7 +301,7 @@ export function CourseDetailView({
     const done = classDone(cls)
     const current = cls.id === nextClassId
     const accessible = isStudent || !!cls.is_free
-    const href = accessible ? `/dashboard/course/${courseId}/class/${cls.id}` : `/dashboard/subscribe?instrument=${encodeURIComponent(course.instrument ?? '')}&course=${course.id}`
+    const href = lessonHref(cls)
     const mins = classMinutes(cls)
     const sub = [itemKinds(cls) || t(cls.totalItems === 1 ? `${base}.itemCountOne` : `${base}.itemCountOther`, { count: cls.totalItems })]
     if (current && cls.totalItems > 0) sub.push(t(`${base}.syllabus.itemsDone`, { done: cls.completedItems, total: cls.totalItems }))
@@ -322,7 +346,7 @@ export function CourseDetailView({
   }
 
   return (
-    <div className="pb-24 lg:pb-0">
+    <div className={cn('lg:pb-0', locked ? 'pb-36' : 'pb-24')}>
       <HeaderTitleOverride title={course.title} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -454,13 +478,18 @@ export function CourseDetailView({
                   {section.description ? (
                     <p className="mb-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground sm:ml-[58px]">{section.description}</p>
                   ) : null}
-                  {rows.length > 0 ? <ol className="ml-0 flex flex-col gap-2 sm:ml-[58px]">{rows.map(renderRow)}</ol> : null}
+                  {list.length > 0 ? (
+                    <ol id={`module-${section.id}-lessons`} className={cn('ml-0 flex-col gap-2 sm:ml-[58px]', rows.length === 0 ? 'hidden' : 'flex')}>
+                      {rows.map(renderRow)}
+                    </ol>
+                  ) : null}
                   {win.collapsible ? (
                     <Button
                       variant="outline"
                       size="sm"
                       className="mt-2.5 sm:ml-[58px]"
                       aria-expanded={open}
+                      aria-controls={`module-${section.id}-lessons`}
                       onClick={() => setExpanded((e) => ({ ...e, [section.id]: !open }))}
                     >
                       <ChevronDown className={cn('transition-transform duration-state ease-smooth', open && 'rotate-180')} aria-hidden />
@@ -605,7 +634,7 @@ export function CourseDetailView({
         </Dialog>
       ) : null}
 
-      <MobileCourseBar progressPercentage={progressPercentage} title={progressTitle} subtitle={currentClass?.title} action={mobileAction} />
+      <MobileCourseBar progressPercentage={progressPercentage} title={progressTitle} subtitle={currentClass?.title} action={mobileAction} stacked={locked} />
     </div>
   )
 }
