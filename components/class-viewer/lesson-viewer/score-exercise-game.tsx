@@ -791,7 +791,7 @@ function ScoreExerciseSession({
       )}
 
       {preview && isActive && <div className="ps-lesson-preview-controls flex items-center justify-between gap-3 border-t border-border px-4 py-3">
-        <span className="text-xs text-muted-foreground">Demo · muted video · results are not saved</span>
+        <span className="text-xs text-muted-foreground">{mediaAudible ? 'Demo · jam track · results are not saved' : 'Demo · muted video · results are not saved'}</span>
         <div className="flex gap-2"><Button size="sm" variant="outline" onClick={start}>Replay preview</Button><Button size="sm" onClick={demoSession.review}>View results</Button></div>
       </div>}
 

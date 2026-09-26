@@ -484,3 +484,14 @@ describe('ScoreExerciseGame audible jam track on Safari/iOS (final fix 1)', () =
     expect(host.textContent).not.toContain('Tap to enable sound')
   })
 })
+
+describe('ScoreExerciseGame preview footer (final fix 6)', () => {
+  it('reads "Demo · jam track" for a jam, "Demo · muted video" otherwise', () => {
+    session = { ...baseSession(), exercise, sessionState: 'playing' }
+    render({ mediaAudible: true })
+    expect(host.textContent).toContain('Demo · jam track')
+    expect(host.textContent).not.toContain('muted video')
+    render()
+    expect(host.textContent).toContain('Demo · muted video')
+  })
+})
