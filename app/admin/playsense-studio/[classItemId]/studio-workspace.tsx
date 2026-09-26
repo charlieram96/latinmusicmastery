@@ -36,6 +36,7 @@ import { useStudioDraft } from '@/components/playsense-studio/studio/drafts/use-
 import { StudioDraftsProvider } from '@/components/playsense-studio/studio/drafts/drafts-context';
 import { PublishControl } from '@/components/playsense-studio/studio/drafts/publish-control';
 import { HistoryPanel } from '@/components/playsense-studio/studio/drafts/history-panel';
+import { SaveStatus } from '@/components/playsense-studio/studio/drafts/save-status';
 import { ScoreMenu } from '@/components/playsense-studio/studio/score-menu';
 import { workspaceSeed } from '@/lib/playsense-studio/drafts/seed';
 import { EMPTY_TIMING, timingToTimeMap, type StudioPlay, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
@@ -189,6 +190,17 @@ function StudioWorkspaceBody({
   // Portal slot the floating PiP's body renders into; SyncPanel portals the
   // reference monitor there instead of the inspector.
   const [monitorEl, setMonitorEl] = useState<HTMLDivElement | null>(null);
+
+  // The Score ▾ menu's own chip: every dialog opened from inside it (Replace,
+  // and SyncPanel's portalled "Add score") returns focus here on close, since
+  // Radix's default target — the item itself — sits inside the menu's
+  // now-hidden panel by the time the dialog closes and can't be focused.
+  // Fix round 1 (Task 10 review).
+  const scoreMenuChipRef = useRef<HTMLButtonElement>(null);
+  const returnFocusToScoreMenu = (e: Event) => {
+    e.preventDefault();
+    scoreMenuChipRef.current?.focus();
+  };
 
   // Student "highway" preview, as a collapsible bottom drawer.
   const [highwayOpen, setHighwayOpen] = useState(false);
@@ -491,11 +503,12 @@ function StudioWorkspaceBody({
           )}
 
           {owner.kind === 'classItem' && (
-            <ScoreMenu>
+            <ScoreMenu chipRef={scoreMenuChipRef}>
               <span ref={setScoreActionsEl} className="contents" />
               <ScoreImportDialog
                 classItemId={owner.classItemId}
                 mode="replace"
+                onCloseAutoFocus={returnFocusToScoreMenu}
                 trigger={
                   <button type="button" className="st-mpop-item">Replace this lesson&apos;s score…</button>
                 }
@@ -528,25 +541,7 @@ function StudioWorkspaceBody({
             <Redo2 className="h-4 w-4" />
           </button>
 
-          <span role="status" className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span
-              className={`st-status-pip${
-                draft.saveState === 'error' ? ' bad' : draft.pending || draft.saveState === 'saving' ? ' warn' : ''
-              }`}
-            />
-            {draft.saveState === 'error' ? (
-              <>
-                Save failed ·{' '}
-                <button type="button" className="underline" onClick={() => void draft.flush()}>
-                  Retry
-                </button>
-              </>
-            ) : draft.pending || draft.saveState === 'saving' ? (
-              'Saving…'
-            ) : (
-              'Saved'
-            )}
-          </span>
+          <SaveStatus saveState={draft.saveState} pending={draft.pending} flush={draft.flush} />
         </div>
       </header>
 
@@ -615,6 +610,7 @@ function StudioWorkspaceBody({
               transportEl={transportEl}
               monitorEl={monitorEl}
               scoreActionsEl={scoreActionsEl}
+              scoreActionsCloseAutoFocus={returnFocusToScoreMenu}
               onTimingChange={draft.setTiming}
               onTimingSaved={() => setExerciseStage('syncVideo')}
               registerTimingFlush={draft.registerPreFlush}
@@ -639,6 +635,7 @@ function StudioWorkspaceBody({
                 transportEl={transportEl}
                 monitorEl={monitorEl}
                 scoreActionsEl={scoreActionsEl}
+                scoreActionsCloseAutoFocus={returnFocusToScoreMenu}
                 onTimingChange={draft.setTiming}
                 registerTimingFlush={draft.registerPreFlush}
               />

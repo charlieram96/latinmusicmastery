@@ -110,7 +110,7 @@ import { collectOnsets, onsetForSelection } from '@/lib/playsense-studio/note-on
 import { isStructuralAction } from '@/lib/playsense-studio/measure-edits';
 import { stripCopyTags, writeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
 import { clipFromMeasures, prepareStructuralEdit } from '@/components/playsense-studio/sync/structural-timing';
-import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
+import { ScoreImportDialog, type ScoreImportDialogProps } from '@/components/playsense-studio/studio/score-import-dialog';
 import type { ScoreDocument, Track } from '@/components/playsense-studio/shared/score-model/types';
 import type { MidiRecordingSource } from './midi-record-button';
 import { ReferenceMonitor } from '@/components/playsense-studio/sync/reference-monitor';
@@ -177,6 +177,12 @@ export interface SyncPanelProps {
   /** App-bar slot for score-level actions this panel owns ("Add score"), so the
    *  appended measures get their timing through the panel's structural path. */
   scoreActionsEl?: HTMLElement | null;
+  /** Forwarded to the "Add score" dialog's `onCloseAutoFocus` — lets the host
+   *  (whose ScoreMenu this chip lives inside) return focus to its own Score ▾
+   *  chip on close, since this dialog's trigger is a React SIBLING of that
+   *  menu (portalled into `scoreActionsEl`, one of the menu's own children)
+   *  and can't reach the chip's ref any other way. */
+  scoreActionsCloseAutoFocus?: ScoreImportDialogProps['onCloseAutoFocus'];
   /** Sibling scored sections — drives the sections lane + overlap prevention. */
   sectionsContext?: {
     sections: LaneSection[];
@@ -302,6 +308,7 @@ export function SyncPanel({
   transportEl,
   monitorEl,
   scoreActionsEl,
+  scoreActionsCloseAutoFocus,
   sectionsContext,
   renderBackingLanes,
   initialMetronomeAnchorSeconds,
@@ -2034,6 +2041,7 @@ export function SyncPanel({
               return {};
             }}
             onImported={() => {}}
+            onCloseAutoFocus={scoreActionsCloseAutoFocus}
             trigger={
               <button type="button" className="st-mpop-item flex items-center gap-2" title="Add measures from another file after the last measure">
                 <FilePlus2 className="h-4 w-4" />

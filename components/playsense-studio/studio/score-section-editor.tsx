@@ -14,7 +14,7 @@
 // into the right rail + bottom dock.
 
 import { Redo2, Undo2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { replaceSectionScore } from '@/app/actions/playsense-studio';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
@@ -25,6 +25,7 @@ import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
 import type { LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import { HistoryPanel } from '@/components/playsense-studio/studio/drafts/history-panel';
+import { SaveStatus } from '@/components/playsense-studio/studio/drafts/save-status';
 import { ScoreMenu } from '@/components/playsense-studio/studio/score-menu';
 import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta-editor';
 import { HighwayPreview } from '@/components/playsense-studio/studio/highway-preview';
@@ -113,6 +114,17 @@ export function ScoreSectionEditor({
   // so the portal renders once the node mounts).
   const [scoreActionsEl, setScoreActionsEl] = useState<HTMLElement | null>(null);
 
+  // The Score ▾ menu's own chip: every dialog opened from inside it (Replace,
+  // Export, and SyncPanel's portalled "Add score") returns focus here on
+  // close, since Radix's default target — the item itself — sits inside the
+  // menu's now-hidden panel by the time the dialog closes and can't be
+  // focused. Fix round 1 (Task 10 review).
+  const scoreMenuChipRef = useRef<HTMLButtonElement>(null);
+  const returnFocusToScoreMenu = (e: Event) => {
+    e.preventDefault();
+    scoreMenuChipRef.current?.focus();
+  };
+
   // The sidebar row / lane label reads the live title straight from the
   // Studio-drafts status (useStudioDraft's own effect keeps `statuses[key].label`
   // in step with `state.score.title` on every render) — no refetch needed just
@@ -169,6 +181,7 @@ export function ScoreSectionEditor({
         transportEl={transportEl}
         monitorEl={monitorEl}
         scoreActionsEl={scoreActionsEl}
+        scoreActionsCloseAutoFocus={returnFocusToScoreMenu}
         sectionsContext={{ sections, activeSectionId: sectionId, onSelectSection }}
       />
 
@@ -176,7 +189,7 @@ export function ScoreSectionEditor({
       {appBarEl &&
         createPortal(
           <>
-            <ScoreMenu>
+            <ScoreMenu chipRef={scoreMenuChipRef}>
               {/* SyncPanel portals its "Add score" item here. */}
               <span ref={setScoreActionsEl} className="contents" />
               <ScoreImportDialog
@@ -186,6 +199,7 @@ export function ScoreSectionEditor({
                   replaceSectionScore({ sectionId, scoreDocument: score, sourceFilename: filename })
                 }
                 onImported={onChanged}
+                onCloseAutoFocus={returnFocusToScoreMenu}
                 trigger={
                   <button type="button" className="st-mpop-item">Replace this section&apos;s score…</button>
                 }
@@ -196,6 +210,7 @@ export function ScoreSectionEditor({
                 sectionIndex={sectionIndex}
                 sectionCount={sectionCount}
                 classItemId={classItemId}
+                onCloseAutoFocus={returnFocusToScoreMenu}
                 trigger={
                   <button type="button" className="st-mpop-item">Export PDF, MusicXML or MIDI…</button>
                 }
@@ -221,25 +236,7 @@ export function ScoreSectionEditor({
             >
               <Redo2 className="h-4 w-4" />
             </button>
-            <span role="status" className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span
-                className={`st-status-pip${
-                  draft.saveState === 'error' ? ' bad' : draft.pending || draft.saveState === 'saving' ? ' warn' : ''
-                }`}
-              />
-              {draft.saveState === 'error' ? (
-                <>
-                  Save failed ·{' '}
-                  <button type="button" className="underline" onClick={() => void draft.flush()}>
-                    Retry
-                  </button>
-                </>
-              ) : draft.pending || draft.saveState === 'saving' ? (
-                'Saving…'
-              ) : (
-                'Saved'
-              )}
-            </span>
+            <SaveStatus saveState={draft.saveState} pending={draft.pending} flush={draft.flush} />
           </>,
           appBarEl,
         )}
