@@ -269,6 +269,13 @@ function TimingTab({ timing, voice }: { timing?: NoteTimingProps; voice: 0 | 1 }
       <div className="st-mpop-row">
         <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={timing.onReset}>Reset</button>
       </div>
+      {timing.onFlex && (
+        <div className="st-mpop-row">
+          <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={timing.onFlex}>
+            Flex the recording onto this note
+          </button>
+        </div>
+      )}
     </>
   );
 }

@@ -6,7 +6,7 @@
 
 import type { ReactNode, Ref } from 'react';
 import {
-  ClipboardPaste, Copy, CopyPlus, Eraser, Maximize2, Repeat, Repeat1, SlidersHorizontal, Trash2,
+  ClipboardPaste, Copy, CopyPlus, Eraser, Magnet, Maximize2, Repeat, Repeat1, SlidersHorizontal, Trash2,
 } from 'lucide-react';
 import type { PopoverAnchor } from './popover';
 
@@ -24,9 +24,18 @@ export function MeasureBar({ ref, ...props }: {
   left: number; top: number; label: string; startSeconds: number; bpm: number | null; looping: boolean;
   /** Why the selected bars' timing looks off the recording, if it does (Task 5). */
   flag?: string | null;
+  /** "flexed ±<m> ms" when the selection carries flex, else null (Task 7). */
+  flexInfo?: string | null;
   canLoop: boolean; problems: { dup: string | null; paste: string | null; clear: string | null; del: string | null };
   onEdit: () => void; onLoop: () => void; onRepeat: (a: PopoverAnchor) => void; onDup: () => void;
   onCopy: () => void; onPaste: () => void; onBar: (a: PopoverAnchor) => void; onClear: () => void; onDelete: () => void;
+  /** Opens the Quantize popover. Omitted (undefined) hides the button entirely
+   *  — the lesson isn't a Watch section, so there's no recording to quantize
+   *  against (Task 7). */
+  onQuantize?: (a: PopoverAnchor) => void;
+  /** Why Quantize can't run right now (e.g. no hits yet); disables the button
+   *  and explains why, same as the other problem-gated actions. */
+  quantizeProblem?: string | null;
 }) {
   const { left, top, problems } = props;
   const menuAnchor = { left, top: top + 40 };
@@ -66,6 +75,12 @@ export function MeasureBar({ ref, ...props }: {
             <span className="st-fbar-flag" title={props.flag}>{props.flag}</span>
           </>
         )}
+        {props.flexInfo && (
+          <>
+            {' · '}
+            <span className="st-fbar-flex" title="This range has flex applied">{props.flexInfo}</span>
+          </>
+        )}
       </span>
       {btn('Edit', 'Zoom in (⏎)', <Maximize2 className={icon} />, props.onEdit)}
       {btn('Loop', 'Loop these bars', <Repeat1 className={icon} />, props.onLoop, {
@@ -77,6 +92,9 @@ export function MeasureBar({ ref, ...props }: {
       {btn('Copy', 'Copy (⌘C)', <Copy className={icon} />, props.onCopy)}
       {btn('Paste', 'Paste after (⌘V)', <ClipboardPaste className={icon} />, props.onPaste, { problem: problems.paste })}
       {btn('Bar properties', 'Time, key, clef, tempo, barlines', <SlidersHorizontal className={icon} />, () => props.onBar(menuAnchor), { text: 'Bar ▾' })}
+      {props.onQuantize && btn('Quantize', 'Quantize to the score', <Magnet className={icon} />, () => props.onQuantize!(menuAnchor), {
+        problem: props.quantizeProblem,
+      })}
       <span className="st-fbar-sep" aria-hidden />
       {btn('Clear', 'Empty these bars, keep their timing', <Eraser className={icon} />, props.onClear, { problem: problems.clear })}
       {btn('Delete', 'Delete (⌫)', <Trash2 className={icon} />, props.onDelete, { problem: problems.del })}

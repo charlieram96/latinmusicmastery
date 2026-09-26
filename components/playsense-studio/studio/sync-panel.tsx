@@ -44,7 +44,7 @@ import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
 import { SNAP_PX, barFlags, firstAttackTime, flagText, snapMarkerDrag, snapSectionShift } from '@/lib/playsense-studio/hits';
 import { autoPlaceBars, windowWithinCorridor } from '@/lib/playsense-studio/auto-place';
-import { FlexMap, addFlexAtHit, moveFlexPoint, removeFlexPoint, type FlexPoint } from '@/lib/playsense-studio/flex';
+import { FlexMap, addFlexAtHit, moveFlexPoint, quantizePlan, removeFlexPoint, resetFlexRange, type FlexPoint } from '@/lib/playsense-studio/flex';
 import { snapToNearest } from '@/lib/playsense-studio/clip-model';
 import { clickTimesInMedia } from '@/lib/playsense-studio/flex-player';
 import { useFlexPlayback } from '@/lib/playsense-studio/use-flex-playback';
@@ -889,23 +889,6 @@ export function SyncPanel({
     setDirty(true);
   }, []);
 
-  // The selected note's timing (video-synced lessons only) — one object
-  // shared by the inspector's NoteDetails and the zoom's More ▾ → Timing tab.
-  const noteTiming: NoteTimingProps | undefined = useMemo(
-    () =>
-      showSync && selectedOnset
-        ? {
-            offsetMs: selectedNoteDelta * 1000,
-            gridSeconds: gridTime(markers, selectedOnset.qn),
-            actualSeconds: selectedNoteTime ?? 0,
-            onNudge: nudgeSelected,
-            onSnap: snapSelectedToPlayhead,
-            onReset: resetSelected,
-          }
-        : undefined,
-    [showSync, selectedOnset, selectedNoteDelta, markers, selectedNoteTime, nudgeSelected, snapSelectedToPlayhead, resetSelected]
-  );
-
   // `[` / `]` nudge the selected note by 5 ms (Shift: 20 ms). Unused by the
   // notation editor's own key map.
   const nudgeKeysActive = showSync && selectedOnset !== null;
@@ -961,6 +944,123 @@ export function SyncPanel({
     [noteTimes, flexSpan]
   );
   const handleFlexRemove = useCallback((index: number) => setFlex((f) => removeFlexPoint(f, index)), []);
+
+  // "Flex the recording onto this note" (Task 7): the Timing tab's action for
+  // the selected note. Finds the closest hit — compared in TIMELINE time,
+  // within 90 ms of the note's current (grid + nudge) time — pins a flex point
+  // there (addFlexAtHit), then drags that point's dst onto the note's exact
+  // time (moveFlexPoint). A no-op when nothing is close enough.
+  const flexNoteOntoHit = useCallback(() => {
+    if (selectedNoteTime === null) return;
+    let bestIndex = -1;
+    let bestDiff = Infinity;
+    for (let i = 0; i < hitsTimeline.length; i++) {
+      const diff = Math.abs(hitsTimeline[i] - selectedNoteTime);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIndex = i;
+      }
+    }
+    if (bestIndex < 0 || bestDiff > 0.09) return;
+    const hitMedia = hits[bestIndex];
+    setFlex((f) => {
+      const withHit = addFlexAtHit(f, hitMedia, hits, flexSpan);
+      const index = withHit.findIndex((pt) => pt.src === hitMedia);
+      return index < 0 ? withHit : moveFlexPoint(withHit, index, selectedNoteTime, flexSpan);
+    });
+  }, [selectedNoteTime, hitsTimeline, hits, flexSpan]);
+
+  // The selected note's timing (video-synced lessons only) — one object
+  // shared by the inspector's NoteDetails and the zoom's More ▾ → Timing tab.
+  const noteTiming: NoteTimingProps | undefined = useMemo(
+    () =>
+      showSync && selectedOnset
+        ? {
+            offsetMs: selectedNoteDelta * 1000,
+            gridSeconds: gridTime(markers, selectedOnset.qn),
+            actualSeconds: selectedNoteTime ?? 0,
+            onNudge: nudgeSelected,
+            onSnap: snapSelectedToPlayhead,
+            onReset: resetSelected,
+            onFlex: flexNoteOntoHit,
+          }
+        : undefined,
+    [showSync, selectedOnset, selectedNoteDelta, markers, selectedNoteTime, nudgeSelected, snapSelectedToPlayhead, resetSelected, flexNoteOntoHit]
+  );
+
+  // --- Quantize (Task 7): the measure bar's Quantize popover ---
+  // `range` here is the SELECTED BARS' timeline span (from measureTimings) —
+  // unlike `flexSpan` above (the whole section), Quantize and Reset flex only
+  // ever touch points that land inside the current selection.
+  const rangeForBounds = useCallback(
+    (start: number, end: number) => ({
+      start: measureTimings[start]?.startVideoTimeSeconds ?? 0,
+      end: measureTimings[end]?.endVideoTimeSeconds ?? 0,
+    }),
+    [measureTimings]
+  );
+  // Seconds of one quarter note at the selection's tempo: its video span over
+  // its QN span, read off the markers the same way bentMeasureIndices does
+  // (downbeatQN / tailQN) rather than the track's time signatures, since
+  // SyncPanel doesn't otherwise need those. Falls back to a 120 BPM guess
+  // (0.5 s/QN) when the span can't be measured — defensive only, since the
+  // selection always has a first measure while Quantize is shown.
+  const beatSecondsForBounds = useCallback(
+    (start: number, end: number) => {
+      const a = markers.measures[start];
+      if (!a) return 0.5;
+      const nextQN = markers.measures[end + 1]?.downbeatQN ?? markers.tailQN;
+      const qnSpan = nextQN - a.downbeatQN;
+      if (qnSpan <= 0) return 0.5;
+      const { start: s, end: e } = rangeForBounds(start, end);
+      return (e - s) / qnSpan;
+    },
+    [markers, rangeForBounds]
+  );
+  const quantizePlanFor = useCallback(
+    (start: number, end: number, strength: number) =>
+      quantizePlan({
+        points: flex,
+        notesTimeline: noteTimes,
+        hitsMedia: hits,
+        beatSeconds: beatSecondsForBounds(start, end),
+        range: rangeForBounds(start, end),
+        strength: strength / 100,
+      }),
+    [flex, noteTimes, hits, beatSecondsForBounds, rangeForBounds]
+  );
+  const onQuantizePlan = useCallback(
+    (start: number, end: number, strength: number) => {
+      const { moved, largestMs } = quantizePlanFor(start, end, strength);
+      return { moved, largestMs };
+    },
+    [quantizePlanFor]
+  );
+  const onQuantizeApply = useCallback(
+    (start: number, end: number, strength: number) => {
+      setFlex(quantizePlanFor(start, end, strength).points);
+    },
+    [quantizePlanFor]
+  );
+  const onResetFlexRange = useCallback(
+    (start: number, end: number) => {
+      const range = rangeForBounds(start, end);
+      setFlex((f) => resetFlexRange(f, range));
+    },
+    [rangeForBounds]
+  );
+  // "flexed ±<m> ms": the largest divergence from identity among the flex
+  // points landing in bars [start, end], or null when none do.
+  const flexInfoForBounds = useCallback(
+    (start: number, end: number): string | null => {
+      const range = rangeForBounds(start, end);
+      const inside = flex.filter((pt) => pt.dst >= range.start && pt.dst <= range.end);
+      if (!inside.length) return null;
+      const largestMs = Math.round(Math.max(...inside.map((pt) => Math.abs(pt.dst - pt.src) * 1000)));
+      return `flexed ±${largestMs} ms`;
+    },
+    [flex, rangeForBounds]
+  );
 
   // --- Marker interaction handlers ---
   // Both drags clamp against the sibling-section corridor so a section can
@@ -1694,6 +1794,11 @@ export function SyncPanel({
                   onLoopMeasures={showSync ? loopMeasures : undefined}
                   loopedRange={showSync ? loopedRange : null}
                   noteTiming={noteTiming}
+                  onQuantizePlan={showSync ? onQuantizePlan : undefined}
+                  onQuantizeApply={showSync ? onQuantizeApply : undefined}
+                  onResetFlex={showSync ? onResetFlexRange : undefined}
+                  flexInfo={showSync ? flexInfoForBounds : undefined}
+                  quantizeProblem={hits.length ? null : 'Needs the audio analysed first'}
                   onZoomOpenChange={setZoomOpen}
                 />
               </div>

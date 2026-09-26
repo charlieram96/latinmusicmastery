@@ -22,7 +22,7 @@ const noProblems = { dup: null, paste: null, clear: null, del: null };
 function render(props: Partial<React.ComponentProps<typeof MeasureBar>> = {}) {
   const cb = {
     onEdit: vi.fn(), onLoop: vi.fn(), onRepeat: vi.fn(), onDup: vi.fn(), onCopy: vi.fn(),
-    onPaste: vi.fn(), onBar: vi.fn(), onClear: vi.fn(), onDelete: vi.fn(),
+    onPaste: vi.fn(), onBar: vi.fn(), onClear: vi.fn(), onDelete: vi.fn(), onQuantize: vi.fn(),
   };
   act(() => {
     root.render(
@@ -46,7 +46,7 @@ describe('MeasureBar', () => {
     expect(info).toContain('0:12.3');
     expect(info).toContain('≈96.4 BPM');
     expect(buttons().map((b) => b.getAttribute('aria-label'))).toEqual([
-      'Edit', 'Loop', 'Repeat', 'Duplicate', 'Copy', 'Paste', 'Bar properties', 'Clear', 'Delete',
+      'Edit', 'Loop', 'Repeat', 'Duplicate', 'Copy', 'Paste', 'Bar properties', 'Quantize', 'Clear', 'Delete',
     ]);
   });
 
@@ -86,13 +86,45 @@ describe('MeasureBar', () => {
     expect(host.querySelector('.st-fbar-flag')).toBeNull();
   });
 
+  it('shows the flexed info in the bar info', () => {
+    render({ flexInfo: 'flexed ±35 ms' });
+    const info = host.querySelector('.st-fbar-info')!;
+    expect(info.textContent).toContain('flexed ±35 ms');
+    const flexEl = info.querySelector('.st-fbar-flex')!;
+    expect(flexEl).not.toBeNull();
+    expect(flexEl.textContent).toBe('flexed ±35 ms');
+  });
+
+  it('leaves the flexed info out when there is none', () => {
+    render({ flexInfo: null });
+    expect(host.querySelector('.st-fbar-flex')).toBeNull();
+  });
+
   it('opens the menus just under the bar', () => {
     const cb = render();
     act(() => { byName('Repeat').click(); });
     expect(cb.onRepeat).toHaveBeenCalledWith({ left: 300, top: 160 });
     act(() => { byName('Bar properties').click(); });
     expect(cb.onBar).toHaveBeenCalledWith({ left: 300, top: 160 });
+    act(() => { byName('Quantize').click(); });
+    expect(cb.onQuantize).toHaveBeenCalledWith({ left: 300, top: 160 });
     act(() => { byName('Duplicate').click(); });
     expect(cb.onDup).toHaveBeenCalledTimes(1);
+  });
+
+  describe('Quantize (Task 7)', () => {
+    it('hides the button when there is no onQuantize', () => {
+      render({ onQuantize: undefined });
+      expect(buttons().find((b) => b.getAttribute('aria-label') === 'Quantize')).toBeUndefined();
+    });
+
+    it('disables the button with a quantizeProblem and explains why', () => {
+      const cb = render({ quantizeProblem: 'Needs the audio analysed first' });
+      const q = byName('Quantize');
+      expect(q.disabled).toBe(true);
+      expect(q.title).toBe('Needs the audio analysed first');
+      act(() => { q.click(); });
+      expect(cb.onQuantize).not.toHaveBeenCalled();
+    });
   });
 });

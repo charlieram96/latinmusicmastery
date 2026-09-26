@@ -283,6 +283,20 @@ describe('MorePopover', () => {
       act(() => { byLabel('Reset').click(); });
       expect(timing.onReset).toHaveBeenCalledTimes(1);
     });
+
+    it('shows "Flex the recording onto this note" only when onFlex is present, and calls it', () => {
+      const timing = {
+        offsetMs: 12, gridSeconds: 1, actualSeconds: 1.5,
+        onNudge: vi.fn(), onSnap: vi.fn(), onReset: vi.fn(),
+      };
+      render({ tab: 'timing', timing });
+      expect(byLabel('Flex the recording onto this note')).toBeUndefined();
+
+      const onFlex = vi.fn();
+      render({ tab: 'timing', timing: { ...timing, onFlex } });
+      act(() => { byLabel('Flex the recording onto this note').click(); });
+      expect(onFlex).toHaveBeenCalledTimes(1);
+    });
   });
 
   // Fix round 1: every action button (tabs, chips, Durations/Tuplets/Marks/
