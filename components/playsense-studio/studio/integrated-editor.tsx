@@ -785,6 +785,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     onPaste: pasteAfterRange,
     onDuplicate: duplicateRange,
     onDelete: deleteRange,
+    onLoop: onLoopMeasures,
   });
 
   // Centred over the selected bars (clamped so the bar stays on screen), in

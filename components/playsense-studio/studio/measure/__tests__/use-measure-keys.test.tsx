@@ -28,6 +28,7 @@ function Probe(props: Opts) {
 function mount(over: Partial<Opts> = {}) {
   const cb = {
     onSelection: vi.fn(), onOpen: vi.fn(), onCopy: vi.fn(), onPaste: vi.fn(), onDuplicate: vi.fn(), onDelete: vi.fn(),
+    onLoop: vi.fn(),
   };
   const selection: MeasureSelection | null = { anchor: 2, focus: 2 };
   act(() => { root.render(<Probe enabled count={6} selection={selection} {...cb} {...over} />); });
@@ -138,5 +139,21 @@ describe('useMeasureKeys', () => {
     } finally {
       window.getSelection()!.removeAllRanges();
     }
+  });
+  it('L loops the selected bars', () => {
+    const cb = mount({ selection: { anchor: 1, focus: 3 } });
+    const e = key('l');
+    expect(cb.onLoop).toHaveBeenCalledWith(1, 3);
+    expect(e.defaultPrevented).toBe(true);
+  });
+
+  it('L does nothing while typing, with no selection, or with ⌘', () => {
+    const cb = mount();
+    key('l', {}, host.querySelector('input')!);
+    key('l', { metaKey: true });
+    expect(cb.onLoop).not.toHaveBeenCalled();
+    const none = mount({ selection: null });
+    key('l');
+    expect(none.onLoop).not.toHaveBeenCalled();
   });
 });

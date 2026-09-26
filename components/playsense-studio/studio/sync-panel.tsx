@@ -38,6 +38,7 @@ import { useVideoClickTrack } from '@/components/playsense-studio/player/state/u
 import { useScoreSynth } from '@/components/playsense-studio/player/state/use-score-synth';
 import { scoreSynthNotes, toMediaNotes } from '@/lib/playsense-studio/score-synth';
 import { HEAR_OPTIONS, hearMute, readHear, writeHear, type Hear } from '@/lib/playsense-studio/hear';
+import { applyStudioRate, LOOP_SPEEDS } from '@/lib/playsense-studio/studio-rate';
 import { timingPatchFromMarkers } from '@/lib/playsense-studio/drafts/timing-patch';
 import type { StudioPlay, StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { autoAlign, onHitCount } from '@/lib/playsense-studio/auto-align';
@@ -407,9 +408,12 @@ export function SyncPanel({
   const [userSpeed, setUserSpeed] = useState(1);
   useFlexPlayback(videoRef, flexMap, userSpeed, !flexMap.isIdentity);
   const displayedRate = flexMap.isIdentity ? clock.playbackRate : userSpeed;
+  // Unflexed, the Studio sets the element's rate itself, keeping pitch (a
+  // slowed loop stays in key); flexed, useFlexPlayback does both.
   const onDisplayedRateChange = flexMap.isIdentity
     ? (rate: number) => {
-        clock.setPlaybackRate(rate);
+        const video = videoRef.current;
+        if (video) applyStudioRate(video, rate);
         setUserSpeed(rate);
       }
     : setUserSpeed;
@@ -1903,6 +1907,23 @@ export function SyncPanel({
               >
                 <Repeat className="h-4 w-4" />
               </button>
+              {loopEnabled && (
+                <div className="st-seg" role="radiogroup" aria-label="Loop speed" title="Loop speed — the recording keeps its pitch">
+                  <span className="px-1 text-xs text-muted-foreground">Loop speed</span>
+                  {LOOP_SPEEDS.map((speed) => (
+                    <button
+                      key={speed}
+                      type="button"
+                      role="radio"
+                      aria-checked={Math.abs(displayedRate - speed) < 1e-3}
+                      className={Math.abs(displayedRate - speed) < 1e-3 ? 'is-on' : ''}
+                      onClick={() => onDisplayedRateChange(speed)}
+                    >
+                      {Math.round(speed * 100)}%
+                    </button>
+                  ))}
+                </div>
+              )}
               {decodeState !== 'loading' && (
                 <button
                   type="button"
@@ -1936,6 +1957,7 @@ export function SyncPanel({
               {showSync && (
                 <div className="st-wave-lane relative flex-shrink-0">
                   <WaveformCanvas
+                    loop={loopEnabled && loopA !== null && loopB !== null ? { a: loopA, b: loopB } : null}
                     bare
                     height={waveH}
                     peaks={peaks}
@@ -2277,6 +2299,7 @@ export function SyncPanel({
         createPortal(
           <div className="st-transport">
             <TransportBar
+              loopHint="Loop the selected bars with L, or drag on the staff"
               currentSeconds={timelineNow}
               durationSeconds={clock.durationSeconds}
               isPlaying={clock.isPlaying}

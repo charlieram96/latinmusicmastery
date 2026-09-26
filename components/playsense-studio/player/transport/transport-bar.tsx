@@ -41,6 +41,8 @@ interface TransportBarProps {
   loopEnabled: boolean;
   onToggleLoop: () => void;
   onClearLoop: () => void;
+  /** The loop button's hint while no range is set; the Studio adds its L key. */
+  loopHint?: string;
 
   // Click-track context
   bpm: number;
@@ -86,6 +88,7 @@ export function TransportBar({
   loopEnabled,
   onToggleLoop,
   onClearLoop,
+  loopHint = 'Drag on the staff to set a loop range',
   bpm,
   beatsPerMeasure,
   clickOn = false,
@@ -270,7 +273,7 @@ export function TransportBar({
             }
             title={
               loopA === null || loopB === null
-                ? 'Drag on the staff to set a loop range'
+                ? loopHint
                 : loopEnabled
                   ? 'Loop on'
                   : 'Loop off'

@@ -1,7 +1,8 @@
 'use client';
 
 // Bar-level keys in the strip: ←/→ move the selection (⇧ extends), ⏎ opens,
-// ⌘C/⌘V/⌘D copy, paste after and duplicate, ⌫ deletes, Esc clears. Off while a
+// ⌘C/⌘V/⌘D copy, paste after and duplicate, ⌫ deletes, L loops the selected
+// bars (when the strip can loop), Esc clears. Off while a
 // note is selected (note keys own the arrows then) and while typing anywhere;
 // ⏎ leaves a focused button alone and ⌘C leaves a page text selection alone.
 
@@ -13,6 +14,8 @@ export function useMeasureKeys(opts: {
   enabled: boolean; count: number; selection: MeasureSelection | null;
   onSelection: (sel: MeasureSelection | null) => void; onOpen: (index: number) => void;
   onCopy: () => void; onPaste: () => void; onDuplicate: () => void; onDelete: () => void;
+  /** L: loop the selected bars, or stop that loop (loopMeasures toggles). */
+  onLoop?: (start: number, end: number) => void;
 }) {
   const ref = useRef(opts);
   useEffect(() => {
@@ -37,6 +40,10 @@ export function useMeasureKeys(opts: {
         e.preventDefault(); o.onOpen(bounds[0]); return;
       }
       if (!mod && (e.key === 'Backspace' || e.key === 'Delete')) { e.preventDefault(); o.onDelete(); return; }
+      if (!mod && (e.key === 'l' || e.key === 'L')) {
+        if (o.onLoop) { e.preventDefault(); o.onLoop(bounds[0], bounds[1]); }
+        return;
+      }
       if (mod && !e.shiftKey) {
         const k = e.key.toLowerCase();
         // ⌘C with page text selected copies that text, as the browser would.
