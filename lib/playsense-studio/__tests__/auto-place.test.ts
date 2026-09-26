@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { MarkerState } from '@/components/playsense-studio/sync/marker-model';
+import { noteTime, type MarkerState } from '@/components/playsense-studio/sync/marker-model';
 import { autoPlaceBars, lerpMarkers, windowWithinCorridor } from '../auto-place';
+import { barFlags } from '../hits';
 
 /** N bars of 4 QN laid at `spb` seconds per beat from `start`, onsets on every beat. */
 function laid(n: number, start: number, spb: number): MarkerState {
@@ -63,6 +64,22 @@ describe('autoPlaceBars', () => {
     (s.measures[1] as unknown as { nudges: unknown[] }).nudges = [{ qn: 5, deltaSeconds: 0.02 }];
     const hits = laid(4, 0, 0.5).measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
     expect(autoPlaceBars(s, hits, { start: 0, end: 60 })!.state.measures[1].nudges).toEqual([{ qn: 5, deltaSeconds: 0.02 }]);
+  });
+  it('places a nudged note by its effective time: its bar lands with the nudged note on its hit', () => {
+    const truth = laid(6, 1.0, 0.5);
+    const hits = truth.measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
+    hits[8] += 0.04; // bar 3's downbeat note was played 40 ms late...
+    for (const start of [1.0, 1.08]) {
+      const s = laid(6, start, 0.5);
+      // ...and the admin already nudged that note +40 ms onto it.
+      (s.measures[2] as unknown as { nudges: unknown[] }).nudges = [{ qn: 8, deltaSeconds: 0.04 }];
+      const res = autoPlaceBars(s, hits, { start: 0, end: 60 })!;
+      expect(res, `start ${start}`).not.toBeNull();
+      // The grid stays on the beat; the nudge carries the note onto the late hit.
+      expect(res.state.measures[2].beats[0].videoTimeSeconds).toBeCloseTo(5.0, 3);
+      expect(noteTime(res.state, 8)).toBeCloseTo(5.04, 3);
+      expect(barFlags(res.state, hits).get(3), `start ${start}`).toBeUndefined();
+    }
   });
   it('clamps the tail to the trim end instead of failing when it lands just past it', () => {
     const truth = laid(8, 0, 0.5); // 8 bars; natural tail sits at 16.0 s

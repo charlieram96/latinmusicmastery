@@ -3,7 +3,12 @@
 // every bar on that line, then let each bar settle onto the hit under its first
 // attacked note. Pure: SyncPanel tweens to the result and keeps the old markers
 // for one-step undo.
-import { EPS, freeCorridor, type MarkerState, type TimeRange } from '@/components/playsense-studio/sync/marker-model';
+//
+// The fitted line is the GRID (time = a + b * x). Every prediction compared
+// with a hit is a note's EFFECTIVE time, grid plus its nudge (`ds`, aligned
+// with `xs`), the same time the flags and snapping use (noteTime). Nudges are
+// kept, so a nudged note lands on its hit once the grid under it is placed.
+import { EPS, freeCorridor, type MarkerState, type MeasureMarker, type TimeRange } from '@/components/playsense-studio/sync/marker-model';
 import { nearestHit } from './hits';
 
 const SETTLE_S = 0.09;
@@ -57,6 +62,13 @@ const LOCALITY_SPACING_FRACTION = 0.45;
 const FIT_TOL_MAX_S = 0.12;
 const FIT_TOL_BEATS = 0.3;
 
+/** Same-onset tolerance in QN (marker-model's QN_MATCH_TOLERANCE). */
+const QN_MATCH_TOLERANCE = 1e-6;
+/** An onset's nudge within its bar, 0 when none (nudgeDelta, without the bar lookup). */
+function nudgeOf(m: MeasureMarker, qn: number): number {
+  return m.nudges.find((n) => Math.abs(n.qn - qn) < QN_MATCH_TOLERANCE)?.deltaSeconds ?? 0;
+}
+
 /** Index of the first hit >= t (hits sorted ascending). */
 function lowerBound(hits: number[], t: number): number {
   let lo = 0;
@@ -95,16 +107,17 @@ function matchOneToOne(predicted: number[], hits: number[], tol: number): Array<
 
 const fitTol = (b: number) => Math.min(FIT_TOL_MAX_S, FIT_TOL_BEATS * b);
 
-/** Least-squares line through the one-to-one matches of `xs` within `tol`,
- *  or null with fewer than 3 matches or a non-positive slope. */
-function fitMatches(xs: number[], hits: number[], a: number, b: number, tol: number): { a: number; b: number } | null {
-  const matches = matchOneToOne(xs.map((x) => a + b * x), hits, tol);
+/** Least-squares grid line through the one-to-one matches of `xs` (effective
+ *  times a + b * x + d) within `tol`, or null with fewer than 3 matches or a
+ *  non-positive slope. Each matched hit is taken back to grid time (h - d). */
+function fitMatches(xs: number[], ds: number[], hits: number[], a: number, b: number, tol: number): { a: number; b: number } | null {
+  const matches = matchOneToOne(xs.map((x, k) => a + b * x + ds[k]), hits, tol);
   const px: number[] = [];
   const py: number[] = [];
   matches.forEach((h, k) => {
     if (h === null) return;
     px.push(xs[k]);
-    py.push(h);
+    py.push(h - ds[k]);
   });
   const count = px.length;
   if (count < 3) return null;
@@ -130,24 +143,27 @@ function fitMatches(xs: number[], hits: number[], a: number, b: number, tol: num
  *  or two, which is a whole beat by the end of a long section. */
 function anchoredOpening(
   xs: number[],
+  ds: number[],
   hits: number[],
   anchor: { x: number; t: number },
   b0: number
 ): { a: number; b: number } {
-  const win = xs.slice(0, Math.min(OPENING_CHECK_ONSETS, xs.length));
+  const n = Math.min(OPENING_CHECK_ONSETS, xs.length);
+  const win = xs.slice(0, n);
+  const dwin = ds.slice(0, n);
   const tol = fitTol(b0);
   let bestB = b0;
   let bestCount = -1;
   let bestSse = Infinity;
   const consider = (b: number) => {
     const a = anchor.t - b * anchor.x;
-    const matches = matchOneToOne(win.map((x) => a + b * x), hits, ANCHOR_TOL_S);
+    const matches = matchOneToOne(win.map((x, k) => a + b * x + dwin[k]), hits, ANCHOR_TOL_S);
     let count = 0;
     let sse = 0;
     matches.forEach((h, k) => {
       if (h === null) return;
       count++;
-      sse += (h - (a + b * win[k])) ** 2;
+      sse += (h - (a + b * win[k] + dwin[k])) ** 2;
     });
     if (count > bestCount || (count === bestCount && sse < bestSse)) {
       bestB = b;
@@ -156,16 +172,16 @@ function anchoredOpening(
     }
   };
   consider(b0);
-  for (const x of win) {
-    if (x === anchor.x) continue;
-    const p = anchor.t + b0 * (x - anchor.x);
+  win.forEach((x, k) => {
+    if (x === anchor.x) return;
+    const p = anchor.t + b0 * (x - anchor.x) + dwin[k];
     for (let i = lowerBound(hits, p - tol); i < hits.length && hits[i] <= p + tol; i++) {
-      const b = (hits[i] - anchor.t) / (x - anchor.x);
+      const b = (hits[i] - dwin[k] - anchor.t) / (x - anchor.x);
       if (Math.abs(b / b0 - 1) <= SLOPE_RANGE) consider(b);
     }
-  }
+  });
   const a = anchor.t - bestB * anchor.x;
-  return fitMatches(win, hits, a, bestB, ANCHOR_TOL_S) ?? { a, b: bestB };
+  return fitMatches(win, dwin, hits, a, bestB, ANCHOR_TOL_S) ?? { a, b: bestB };
 }
 
 /** The growing-window least-squares fit: time = a + b * x, x = qn - qn0.
@@ -180,18 +196,20 @@ function anchoredOpening(
  *  a whole beat away. */
 function refineFit(
   xs: number[],
+  ds: number[],
   hits: number[],
   a0: number,
   b0: number,
   anchor: { x: number; t: number } | null
 ): { a: number; b: number } | null {
-  let line: { a: number; b: number } | null = anchor ? anchoredOpening(xs, hits, anchor, b0) : { a: a0, b: b0 };
+  let line: { a: number; b: number } | null = anchor ? anchoredOpening(xs, ds, hits, anchor, b0) : { a: a0, b: b0 };
   for (let n = Math.min(OPENING_CHECK_ONSETS, xs.length); ; n = Math.min(xs.length, n * 2)) {
     const win = xs.slice(0, n);
-    line = fitMatches(win, hits, line.a, line.b, fitTol(line.b));
+    const dwin = ds.slice(0, n);
+    line = fitMatches(win, dwin, hits, line.a, line.b, fitTol(line.b));
     if (!line) return null;
     for (const tol of POLISH_TOLS_S) {
-      const next = fitMatches(win, hits, line.a, line.b, Math.min(tol, fitTol(line.b)));
+      const next = fitMatches(win, dwin, hits, line.a, line.b, Math.min(tol, fitTol(line.b)));
       if (!next) break;
       line = next;
     }
@@ -204,8 +222,8 @@ interface Fit { a: number; b: number; count: number; tight: number; rms: number 
 
 /** One-to-one matched count, how many of those sit within TIGHT_S, and the
  *  matched pairs' RMS residual for a fitted line over every onset. */
-function scoreFit(xs: number[], hits: number[], a: number, b: number): Omit<Fit, 'a' | 'b'> {
-  const predicted = xs.map((x) => a + b * x);
+function scoreFit(xs: number[], ds: number[], hits: number[], a: number, b: number): Omit<Fit, 'a' | 'b'> {
+  const predicted = xs.map((x, k) => a + b * x + ds[k]);
   const matches = matchOneToOne(predicted, hits, fitTol(b));
   let count = 0;
   let tight = 0;
@@ -226,6 +244,8 @@ export function autoPlaceBars(
 ): { state: MarkerState; matched: number; settled: number } | null {
   const hits = allHits.filter((h) => h >= window.start && h <= window.end).sort((x, y) => x - y);
   const onsetQNs = state.measures.flatMap((m) => m.onsetQNs);
+  // Each onset's nudge (0 when none), aligned with onsetQNs / xs.
+  const ds = state.measures.flatMap((m) => m.onsetQNs.map((qn) => nudgeOf(m, qn)));
   if (onsetQNs.length < 4 || hits.length < 4 || state.measures.length === 0) return null;
 
   // Start from the current markers: time = a + b * (qn - qn0).
@@ -262,9 +282,10 @@ export function autoPlaceBars(
   // decide which note is which.
   const seeds: Array<{ d: number; anchor: { x: number; t: number } | null }> = [{ d: 0, anchor: null }];
   for (let k = 0; k < xs.length && xs[k] <= OPENING_SEED_QN; k++) {
-    const p = a0 + b0 * xs[k];
+    const p = a0 + b0 * xs[k] + ds[k];
     for (let i = lowerBound(hits, p - localityRadius); i < hits.length && hits[i] <= p + localityRadius; i++) {
-      seeds.push({ d: hits[i] - p, anchor: { x: xs[k], t: hits[i] } });
+      // The anchor is in grid time: the hit minus the note's nudge.
+      seeds.push({ d: hits[i] - p, anchor: { x: xs[k], t: hits[i] - ds[k] } });
     }
   }
   const better = (s: Fit, cur: Fit): boolean => {
@@ -279,12 +300,12 @@ export function autoPlaceBars(
   };
   let best: Fit | null = null;
   for (const { d, anchor } of seeds) {
-    const fit = refineFit(xs, hits, a0 + d, b0, anchor);
+    const fit = refineFit(xs, ds, hits, a0 + d, b0, anchor);
     if (!fit) continue;
     const { a, b } = fit;
     const xc = anchor ? anchor.x : 0;
     if (Math.abs(a + b * xc - (a0 + b0 * xc)) >= localityRadius) continue;
-    const cand: Fit = { a, b, ...scoreFit(xs, hits, a, b) };
+    const cand: Fit = { a, b, ...scoreFit(xs, ds, hits, a, b) };
     if (!best || better(cand, best)) best = cand;
   }
   if (!best) return null;
@@ -308,7 +329,7 @@ export function autoPlaceBars(
   let settled = 0;
   state.measures.forEach((m, i) => {
     if (!m.onsetQNs.length) return;
-    const predicted = at(m.onsetQNs[0]);
+    const predicted = at(m.onsetQNs[0]) + nudgeOf(m, m.onsetQNs[0]);
     const h = nearestHit(hits, predicted, SETTLE_S);
     if (h === null) return;
     const next = downs[i] + (h - predicted);
