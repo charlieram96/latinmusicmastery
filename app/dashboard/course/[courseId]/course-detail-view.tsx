@@ -129,6 +129,8 @@ export function CourseDetailView({
   const totalLessons = classes.length
   const classDone = (c: ClassRow) => c.totalItems > 0 && c.completedItems === c.totalItems
   const doneLessons = classes.filter(classDone).length
+  // Lessons with no items yet can't be finished, so the "N of M done" line leaves them out.
+  const finishableLessons = classes.filter((c) => c.totalItems > 0).length
   const currentIndex = nextClassId ? classes.findIndex((c) => c.id === nextClassId) : -1
   const currentClass = currentIndex >= 0 ? classes[currentIndex] : null
   // Finished = every item done. Lessons with no items yet never block this (the
@@ -417,7 +419,7 @@ export function CourseDetailView({
               <div className="mb-1 flex min-h-9 items-baseline gap-2.5 sm:pr-24">
                 <h2 id="your-path" className="whitespace-nowrap font-heading text-xl font-bold tracking-tight">{t(`${base}.path.heading`)}</h2>
                 <span className="truncate text-[13px] tabular-nums text-muted-foreground">
-                  · {t(totalLessons === 1 ? `${base}.path.doneOfOne` : `${base}.path.doneOf`, { done: doneLessons, total: totalLessons })}
+                  · {t(finishableLessons === 1 ? `${base}.path.doneOfOne` : `${base}.path.doneOf`, { done: doneLessons, total: finishableLessons })}
                 </span>
               </div>
               <PathStrip

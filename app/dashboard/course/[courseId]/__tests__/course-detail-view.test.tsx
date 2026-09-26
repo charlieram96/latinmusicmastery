@@ -230,5 +230,11 @@ describe('CourseDetailView (C3)', () => {
       const cp = host.querySelector('section[aria-labelledby="your-path"] a[href="/dashboard/course/son/module/s1"]')
       expect(cp).not.toBeNull()
     })
+  
+    it('C2: the path done count leaves out lessons with no items yet, so a finished course reads N of N', () => {
+      const secs = [{ id: 's1', title: 'Welcome', description: null, classes: [cls('a', 2), cls('x', 0, 0), cls('b', 2)] }]
+      render({ sections: secs, nextClassId: null, totalItems: 4, completedItems: 4, progressPercentage: 100 })
+      expect(host.querySelector('section[aria-labelledby="your-path"]')?.textContent).toContain(`${P}.path.doneOf(2,2)`)
+    })
   })
 })
