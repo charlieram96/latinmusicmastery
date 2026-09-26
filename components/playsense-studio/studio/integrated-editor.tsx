@@ -21,6 +21,7 @@
 // put while you edit pitches/durations.
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion, resolvePercStroke } from '@/lib/playsense-studio/perc-strokes';
 import { pitchName } from '@/lib/playsense-studio/pitch';
@@ -843,7 +844,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           track name/instrument moved to the Score panel, notice/flash to a toast). */}
       {editorTab === 'staff' && (
         <>
-          <div ref={staffWrapRef} className="relative min-h-0 flex-1">
+          <div ref={staffWrapRef} className="relative min-h-0 flex-1" data-testid="staff-wrap">
             <EditableMeasureStrip
               measures={stripItems}
               spans={score.spans}
@@ -870,6 +871,32 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               onScrollByPx={onScrollByPx}
               height={staffHeight}
             />
+            {!zoom && <div className="st-strip-foot">
+              {issues.length > 0 && (
+                <button type="button" className={`st-issue-chip${anyOver ? ' is-bad' : ''}`} onClick={nextIssue} title="Jump to the next bar that doesn’t add up">
+                  {issues.length === 1 ? '1 bar doesn’t add up' : `${issues.length} bars don’t add up`} · {issues.slice(0, 3).map((i) => `m.${stripItems[i].measureNumber}`).join(', ')}{issues.length > 3 ? '…' : ''} <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <span className="truncate">
+                {measureRange
+                  ? <><kbd>⏎</kbd> edit notes · <kbd>⌘D</kbd> duplicate · <kbd>⌫</kbd> delete · <kbd>esc</kbd> deselect</>
+                  : 'Drag across bars to select · double-click a bar to edit its notes · scroll to zoom'}
+              </span>
+              <button
+                type="button"
+                className="st-help-btn"
+                aria-label="Keyboard shortcuts"
+                title="Keyboard shortcuts"
+                aria-expanded={shortcutsOpen}
+                onPointerDown={() => { shortcutsWasOpen.current = shortcutsOpen; }}
+                onClick={() => {
+                  setShortcutsOpen(!shortcutsWasOpen.current);
+                  shortcutsWasOpen.current = false;
+                }}
+              >
+                ?
+              </button>
+            </div>}
             {stripCorner}
             {barPos && bounds && (
               <MeasureBar
@@ -881,6 +908,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 bpm={barBpm}
                 flag={measureTimings.slice(bounds[0], bounds[1] + 1).find((t) => t.flag)?.flag ?? null}
                 flexInfo={flexInfo?.(bounds[0], bounds[1]) ?? null}
+                repeatCount={repeatGroupAtRange?.count ?? null}
                 looping={barLooping}
                 canLoop={!!onLoopMeasures}
                 problems={{ dup: dupProblem, paste: pasteProblem, clear: null, del: deleteProblem }}
@@ -1054,32 +1082,6 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               />
             )}
           </div>
-          {!zoom && <div className="st-strip-foot">
-            {issues.length > 0 && (
-              <button type="button" className={`st-issue-chip${anyOver ? ' is-bad' : ''}`} onClick={nextIssue} title="Jump to the next bar that doesn’t add up">
-                {issues.length === 1 ? '1 bar doesn’t add up' : `${issues.length} bars don’t add up`} · {issues.slice(0, 3).map((i) => `m.${stripItems[i].measureNumber}`).join(', ')}{issues.length > 3 ? '…' : ''} ▾
-              </button>
-            )}
-            <span className="truncate">
-              {measureRange
-                ? '⏎ edit notes · ⌘D duplicate · ⌫ delete · esc deselect'
-                : 'Drag across bars to select · double-click a bar to edit its notes · scroll to zoom'}
-            </span>
-            <button
-              type="button"
-              className="ml-auto grid h-6 w-6 place-items-center rounded-full border border-border text-[11px]"
-              aria-label="Keyboard shortcuts"
-              title="Keyboard shortcuts"
-              aria-expanded={shortcutsOpen}
-              onPointerDown={() => { shortcutsWasOpen.current = shortcutsOpen; }}
-              onClick={() => {
-                setShortcutsOpen(!shortcutsWasOpen.current);
-                shortcutsWasOpen.current = false;
-              }}
-            >
-              ?
-            </button>
-          </div>}
         </>
       )}
       {editorTab === 'piano-roll' && (

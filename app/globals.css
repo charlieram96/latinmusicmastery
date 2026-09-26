@@ -701,12 +701,32 @@ html:has([data-marketing]) {
   font-size: 10px; color: hsl(var(--gold-highlight));
   background: repeating-linear-gradient(135deg, hsl(var(--gold-highlight) / .14) 0 6px, transparent 6px 12px);
 }
-.st-strip-foot { display: flex; align-items: center; gap: 12px; min-height: 28px; padding: 4px 2px 0; font-size: 11px; color: hsl(var(--muted-foreground)); }
-.st-issue-chip {
-  display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px;
-  background: hsl(var(--gold-highlight) / .16); color: hsl(var(--gold-highlight)); font-weight: 600;
+/* Floats over the strip's bottom edge instead of taking a row below it (Task
+   7). right: 250px clears the floating reference video (.st-pip, 236px wide)
+   that always sits over the strip's bottom-right on the sync path, so the "?"
+   help button stays clickable. */
+.st-strip-foot {
+  position: absolute; left: 8px; right: 250px; bottom: 8px; z-index: 17; display: flex; align-items: center; gap: 8px;
+  pointer-events: none; min-height: 0; padding: 0; font-size: 11px; color: hsl(var(--muted-foreground) / .85);
 }
-.st-issue-chip.is-bad { background: hsl(var(--destructive) / .16); color: hsl(var(--destructive)); }
+.st-strip-foot > * { pointer-events: auto; }
+.st-strip-foot > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-strip-foot kbd {
+  font: 10px var(--font-mono, ui-monospace, monospace); background: hsl(var(--muted)); border: 1px solid hsl(var(--border));
+  border-radius: 4px; padding: 0 5px; color: hsl(var(--foreground) / .85);
+}
+.st-issue-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 999px;
+  border: 1px solid hsl(var(--gold-highlight) / .4); background: hsl(var(--gold-highlight) / .12);
+  color: hsl(var(--gold-highlight)); font-size: 11.5px; font-weight: 600; white-space: nowrap;
+}
+.st-issue-chip.is-bad { border-color: hsl(var(--destructive) / .45); background: hsl(var(--destructive) / .12); color: hsl(var(--destructive)); }
+.st-help-btn {
+  display: inline-flex; align-items: center; justify-content: center; margin-left: auto; width: 24px; height: 24px;
+  border-radius: 999px; border: 1px solid hsl(var(--border)); background: hsl(var(--card));
+  color: hsl(var(--muted-foreground)); font-size: 12px; font-weight: 700;
+}
+.st-help-btn:hover { color: hsl(var(--foreground)); }
 
 /* The repeat lane (one band per pass, reserved at the strip's top edge) and
    the small pinned menu it (and later measure menus) open. */
@@ -742,19 +762,24 @@ html:has([data-marketing]) {
    translateX, which its pop-in keyframe keeps so the bar doesn't jump sideways. */
 .st-fbar {
   position: absolute; z-index: 45; display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 12px;
-  transform: translateX(-50%); background: hsl(var(--card)); border: 1px solid hsl(var(--border));
-  box-shadow: 0 14px 36px rgba(0,0,0,.5); animation: st-fbar-pop .16s cubic-bezier(.2,.8,.2,1); white-space: nowrap;
+  transform: translateX(-50%); background: hsl(22 14% 11% / .97); border: 1px solid hsl(0 0% 100% / .14);
+  box-shadow: 0 12px 32px rgba(0,0,0,.55); backdrop-filter: blur(8px);
+  animation: st-fbar-pop .16s cubic-bezier(.2,.8,.2,1); white-space: nowrap;
 }
 @keyframes st-fbar-pop {
   from { opacity: 0; transform: translateX(-50%) translateY(5px) scale(.97); }
   to { opacity: 1; transform: translateX(-50%); }
 }
-.st-fbar button { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 8px; border-radius: 8px; font-size: 12px; }
+.st-fbar button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 30px; min-width: 30px;
+  padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 600;
+}
 .st-fbar button:hover:not(:disabled) { background: hsl(var(--muted)); }
 .st-fbar button:disabled { opacity: .4; cursor: not-allowed; }
 .st-fbar button[aria-pressed='true'] { color: hsl(var(--primary)); }
-.st-fbar .st-fbar-info { padding: 0 8px; font: 11px var(--font-mono, ui-monospace, monospace); color: hsl(var(--muted-foreground)); }
-.st-fbar-flag { color: hsl(var(--destructive)); font-weight: 600; }
+.st-fbar button.is-danger:hover:not(:disabled) { background: hsl(var(--destructive) / .15); color: hsl(var(--destructive)); }
+.st-fbar .st-fbar-info { display: inline-flex; gap: 8px; align-items: center; padding: 0 8px; font: 11px var(--font-mono, ui-monospace, monospace); color: hsl(var(--muted-foreground)); }
+.st-fbar-kbd { font: 10px var(--font-mono, ui-monospace, monospace); opacity: .55; }
 .st-fbar .st-fbar-sep { width: 1px; height: 18px; margin: 0 4px; background: hsl(var(--border)); }
 @media (prefers-reduced-motion: reduce) { .st-fbar { animation: none; } }
 

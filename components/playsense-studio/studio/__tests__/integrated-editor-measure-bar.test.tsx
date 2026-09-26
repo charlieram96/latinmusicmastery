@@ -79,7 +79,20 @@ describe('IntegratedEditor measure bar', () => {
     const info = toolbar()!.querySelector('.st-fbar-info')!.textContent!;
     expect(info).toContain('m.1–2');
     expect(info).toContain('0:00.0');
-    expect(info).toContain('≈120.0 BPM');
+    expect(info).toContain('≈120.0');
+    expect(info).not.toContain('BPM');
+  });
+
+  it('shows ×n on Repeat when the selected bars are in a repeat group', () => {
+    const repMeasures = [0, 1, 2, 3].map((i) => ({
+      number: i + 1,
+      voices: [{ number: 1, events: [{ kind: 'note' as const, midi: 60, durationQN: 4 }] }],
+      repeat: { id: 'r1', pass: Math.floor(i / 2), offset: i % 2, length: 2, count: 2 },
+    }));
+    const repScore: ScoreDocument = { ...score, tracks: [{ ...score.tracks[0], measures: repMeasures }] };
+    render({ score: repScore, measureTimings: timingsFor(4) });
+    key('ArrowRight'); // selects bar 1 (index 0), inside the repeat group's first pass
+    expect(barButton('Repeat').textContent).toContain('×2');
   });
 
   it('can’t loop without a video, and loops the selected bars with one', () => {
@@ -278,6 +291,16 @@ describe('IntegratedEditor measure bar', () => {
     expect(toolbar()).not.toBeNull();
     key('Escape');
     expect(toolbar()).toBeNull();
+  });
+
+  it('floats the footer inside the staff wrapper, and changes the hint when bars are selected', () => {
+    render();
+    const wrap = host.querySelector('[data-testid="staff-wrap"]')!;
+    const foot = host.querySelector('.st-strip-foot')!;
+    expect(wrap.contains(foot)).toBe(true);
+    expect(foot.textContent).toContain('Drag across bars to select');
+    key('ArrowRight');
+    expect(host.querySelector('.st-strip-foot')!.textContent).toContain('edit notes');
   });
 
   it('the footer “?” lists the strip shortcuts', () => {
