@@ -35,8 +35,8 @@ function mount(over: Partial<Opts> = {}) {
   return cb;
 }
 
-function key(k: string, mods: { metaKey?: boolean; shiftKey?: boolean } = {}, target: EventTarget = window) {
-  const e = new KeyboardEvent('keydown', { key: k, metaKey: !!mods.metaKey, shiftKey: !!mods.shiftKey, bubbles: true, cancelable: true });
+function key(k: string, mods: { metaKey?: boolean; shiftKey?: boolean; repeat?: boolean } = {}, target: EventTarget = window) {
+  const e = new KeyboardEvent('keydown', { key: k, metaKey: !!mods.metaKey, shiftKey: !!mods.shiftKey, repeat: !!mods.repeat, bubbles: true, cancelable: true });
   act(() => { target.dispatchEvent(e); });
   return e;
 }
@@ -155,5 +155,13 @@ describe('useMeasureKeys', () => {
     const none = mount({ selection: null });
     key('l');
     expect(none.onLoop).not.toHaveBeenCalled();
+  });
+
+  it('a held L (auto-repeat) toggles the loop only once', () => {
+    const cb = mount();
+    key('l');
+    key('l', { repeat: true });
+    key('l', { repeat: true });
+    expect(cb.onLoop).toHaveBeenCalledTimes(1);
   });
 });

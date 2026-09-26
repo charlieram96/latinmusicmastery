@@ -1384,6 +1384,12 @@ export function SyncPanel({
     }
     return null;
   }, [markers, loopEnabled, loopA, loopB]);
+  // One object per loop change: the waveform redraws when this changes, and
+  // the panel re-renders every frame while playing.
+  const waveLoop = useMemo(
+    () => (loopEnabled && loopA !== null && loopB !== null ? { a: loopA, b: loopB } : null),
+    [loopEnabled, loopA, loopB]
+  );
   const loopSelectedMeasure = () => {
     if (!selected || selected === 'tail') return;
     const i = markers.measures.findIndex((m) => m.measureNumber === selected.measureNumber);
@@ -1957,7 +1963,7 @@ export function SyncPanel({
               {showSync && (
                 <div className="st-wave-lane relative flex-shrink-0">
                   <WaveformCanvas
-                    loop={loopEnabled && loopA !== null && loopB !== null ? { a: loopA, b: loopB } : null}
+                    loop={waveLoop}
                     bare
                     height={waveH}
                     peaks={peaks}

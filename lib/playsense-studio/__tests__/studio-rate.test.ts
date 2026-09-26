@@ -17,4 +17,12 @@ describe('applyStudioRate', () => {
     expect(video.webkitPreservesPitch).toBe(true);
     expect(video.mozPreservesPitch).toBe(true);
   });
+
+  it("clamps to the transport clock's bounds", () => {
+    const video = document.createElement('video');
+    applyStudioRate(video, 9);
+    expect(video.playbackRate).toBe(4);
+    applyStudioRate(video, 0);
+    expect(video.playbackRate).toBe(0.1);
+  });
 });

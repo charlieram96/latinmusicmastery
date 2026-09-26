@@ -218,7 +218,7 @@ Rulings:
 - **The transport** stays two rows. Hear and Loop speed live in the Studio's context bar.
 - **Hear is Studio-only.** Students don't get a Score mode.
 - **The loop hint** is a TransportBar prop: the Studio mentions L, students keep "Drag on the staff".
-- **Backing tracks.** With them playing, use-backing-mixer still turns pitch preservation off on a rate change (video and backing stay in one key, like tape).
+- **Backing tracks.** When a section has backing tracks, use-backing-mixer still turns pitch preservation off on a rate change (video and backing stay in one key, like tape). With none, it leaves the Studio's setting alone.
 - **Chords.** A key click is always a new note: chords come from a MIDI keyboard, or ⇧ with a letter. Drum MIDI writes at the cursor (enterStroke); pitched MIDI appends (enterPitch).
 
 **Follow-ups from 7:**

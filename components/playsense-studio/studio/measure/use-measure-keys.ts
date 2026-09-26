@@ -41,7 +41,8 @@ export function useMeasureKeys(opts: {
       }
       if (!mod && (e.key === 'Backspace' || e.key === 'Delete')) { e.preventDefault(); o.onDelete(); return; }
       if (!mod && (e.key === 'l' || e.key === 'L')) {
-        if (o.onLoop) { e.preventDefault(); o.onLoop(bounds[0], bounds[1]); }
+        // A held L auto-repeats; the loop toggles, so only the first press counts.
+        if (o.onLoop && !e.repeat) { e.preventDefault(); o.onLoop(bounds[0], bounds[1]); }
         return;
       }
       if (mod && !e.shiftKey) {

@@ -13,9 +13,13 @@ type PitchPreservingVideo = HTMLVideoElement & {
 
 export const LOOP_SPEEDS = [1, 0.75, 0.5] as const;
 
+/** The transport clock's own bounds (use-video-transport-clock). */
+const MIN_RATE = 0.1;
+const MAX_RATE = 4;
+
 export function applyStudioRate(video: PitchPreservingVideo, rate: number): void {
   video.preservesPitch = true;
   if ('webkitPreservesPitch' in video) video.webkitPreservesPitch = true;
   if ('mozPreservesPitch' in video) video.mozPreservesPitch = true;
-  video.playbackRate = rate;
+  video.playbackRate = Math.max(MIN_RATE, Math.min(rate, MAX_RATE));
 }
