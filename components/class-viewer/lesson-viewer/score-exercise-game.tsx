@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
 import type { BackingTrack, ExerciseMedia } from '@/app/actions/playsense-studio'
@@ -44,6 +44,20 @@ import { StaffRenderer } from '@/components/playsense-studio/player/notation/ren
 import { usePlaysense } from '@/contexts/playsense-context'
 import { finishedExercise } from '@/lib/courses/lesson-completion'
 
+type PitchPreservingMedia = HTMLMediaElement & {
+  webkitPreservesPitch?: boolean
+  mozPreservesPitch?: boolean
+}
+
+// Module-level, not a closure: mirrors lib/playsense-studio/use-flex-playback.ts's
+// own setFlexPitch — a plain DOM element parameter rather than a captured
+// value the React Compiler lint would flag as a render-time mutation.
+function setPreservesPitch(el: PitchPreservingMedia): void {
+  el.preservesPitch = true
+  if ('webkitPreservesPitch' in el) el.webkitPreservesPitch = true
+  if ('mozPreservesPitch' in el) el.mozPreservesPitch = true
+}
+
 interface ScoreExerciseGameProps {
   /** The exercise derived from the authored score (see lib/play-sense/score-to-exercise). */
   exercise: ExerciseDefinition
@@ -63,8 +77,9 @@ interface ScoreExerciseGameProps {
    *  applies to every take; bar 1 and pre-roll place the play-along video.
    *  Absent = a one-bar count-in, pre-roll on, bar 1 at the video's trim-in. */
   play?: ExerciseMedia['play'] | null
-  /** Optional exercise-part video: plays MUTED, following the engine clock
-   *  from `play.bar1Seconds` (or the trim-in point when bar 1 is unset). */
+  /** Optional exercise-part video: plays MUTED by default, following the
+   *  engine clock from `play.bar1Seconds` (or the trim-in point when bar 1
+   *  is unset). See `mediaAudible` for the one exception. */
   exerciseVideo?: {
     url: string
     /** Trim in-point: where the usable region of the video starts. */
@@ -74,6 +89,13 @@ interface ScoreExerciseGameProps {
     /** The older exercise time map. No longer read here: bar 1 places the video and its backing tracks. */
     timeMap: PlaysenseStudioPlayerTimeMap | null
   } | null
+  /** A jam session's own track (Studio rework P5, Task 8 fix round 1): unlike
+   *  an exercise's silent reference video, the student must actually hear
+   *  this one, so the media element plays UNMUTED and with pitch
+   *  preservation forced on — the clock-follow effect trims its rate by up
+   *  to ±3%, and an unpitched rate change would slide the key. Exercises
+   *  never set this; it defaults to false (muted, no forced pitch setting). */
+  mediaAudible?: boolean
 }
 
 /**
@@ -97,6 +119,7 @@ function ScoreExerciseSession({
   exerciseVideo,
   play,
   preview = false,
+  mediaAudible = false,
 }: ScoreExerciseGameProps) {
   const { t } = useTranslation()
   const completePerformance = useLessonActivity('performance')
@@ -137,6 +160,16 @@ function ScoreExerciseSession({
 
   // --- Optional exercise video, following the engine clock ---
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  // mediaAudible (a jam session's own track) forces pitch preservation on at
+  // mount, since the clock-follow effect below trims playbackRate by up to
+  // ±3% every frame and an unpitched rate change would slide the key.
+  const attachVideoRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      videoRef.current = el
+      if (el && mediaAudible) setPreservesPitch(el)
+    },
+    [mediaAudible]
+  )
   const loopSeconds = useMemo(() => getLoopDuration(exercise), [exercise])
   const exerciseDurationSec = loopSeconds * exercise.loopCount
   const countInBars = play?.countInBars ?? 1
@@ -673,11 +706,12 @@ function ScoreExerciseSession({
         frame="fill"
         // Only once the session is live: a paused video beside "Preparing…" reads as broken.
         media={exerciseVideo && showCanvas && (
-          // Muted, follows the engine clock (see the sync effect above).
+          // Muted (unless mediaAudible — a jam's own track), follows the
+          // engine clock (see the sync effect above).
           <video
-            ref={videoRef}
+            ref={attachVideoRef}
             src={exerciseVideo.url}
-            muted
+            muted={!mediaAudible}
             playsInline
             preload="auto"
             className="h-full w-full bg-black object-contain"

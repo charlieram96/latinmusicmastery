@@ -103,6 +103,16 @@ describe('StudentPreviewDialog', () => {
     });
     expect(gameCalls[0].exerciseVideo ?? null).toBeNull();
     expect(gameCalls[0].play ?? null).toBeNull();
+    expect(gameCalls[0].mediaAudible ?? false).toBe(false);
+  });
+
+  it('passes mediaAudible through to the game, for a jam session preview (Studio rework P5, Task 8 fix round 1)', () => {
+    act(() => {
+      root.render(
+        <StudentPreviewDialog exercise={EXERCISE} score={SCORE} onClose={vi.fn()} mediaAudible />
+      );
+    });
+    expect(gameCalls[0].mediaAudible).toBe(true);
   });
 
   it('closes on Escape', () => {

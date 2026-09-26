@@ -46,6 +46,9 @@ export interface StudentPreviewDialogProps {
   play?: ExerciseMedia['play'] | null;
   /** The part's backing tracks (even an empty array — see ScoreExerciseGame's own prop doc). */
   backingTracks?: BackingTrack[];
+  /** A jam session's own track plays audibly (Studio rework P5, Task 8 fix
+   *  round 1) — see ScoreExerciseGame's own prop doc. Exercises leave this unset. */
+  mediaAudible?: boolean;
   onClose: () => void;
 }
 
@@ -58,6 +61,7 @@ export function StudentPreviewDialog({
   exerciseVideo = null,
   play = null,
   backingTracks = [],
+  mediaAudible = false,
   onClose,
 }: StudentPreviewDialogProps) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -97,6 +101,7 @@ export function StudentPreviewDialog({
         exerciseVideo={exerciseVideo}
         play={play}
         backingTracks={backingTracks}
+        mediaAudible={mediaAudible}
       />
     </div>
   );

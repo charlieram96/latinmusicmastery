@@ -343,8 +343,11 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
           <CardContent className="space-y-4">
             {/* A jam session's whole score is graded (Studio rework P5, Task 8):
                 the same ScoreExerciseGame an EXERCISE's play part uses, with
-                the jam's own audio_url as its (muted-video-shaped) media.
-                Without a score, this keeps the legacy audio/video/embed path. */}
+                the jam's own audio_url as its media — played AUDIBLY
+                (mediaAudible, fix round 1), unlike an exercise's silent
+                reference video, since it's the track the student plays along
+                with. Without a score, this keeps the legacy audio/video/embed
+                path. */}
             {jamRendersGradedGame(item.item_type, !!playsenseStudioData) && playsenseStudioData ? (
               <ScoreExerciseGame
                 exercise={scoreToExerciseDefinition(playsenseStudioData.scoreDocument.parsedScore, {
@@ -356,6 +359,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
                 backingTracks={backingTracks}
                 exerciseVideo={exerciseVideo}
                 play={exerciseMedia?.play ?? null}
+                mediaAudible
               />
             ) : (
               <>

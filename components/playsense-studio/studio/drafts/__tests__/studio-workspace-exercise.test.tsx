@@ -401,6 +401,35 @@ describe('StudioWorkspace — Student preview and copy notes (Studio rework P5, 
     });
     expect(call.backingTracks).toBe(exerciseMedia.backingTracks);
     expect((call.exercise as { title: string }).title).toBe('Graded');
+    expect(call.mediaAudible).toBe(false);
+  });
+
+  it('feeds the preview dialog mediaAudible=true for a jam session (Studio rework P5, Task 8 fix round 1)', () => {
+    act(() => {
+      root.render(
+        <StudioDraftsProvider owners={[]}>
+          <StudioWorkspace
+            owner={{ kind: 'classItem', classItemId: 'ci-1' }}
+            mode="exercise"
+            itemType="JAM_SESSION"
+            title="Jam"
+            videoUrl={null}
+            scoreDocumentId="doc-1"
+            initialScore={SCORE_WITH_NOTES}
+            activeTimeMap={null}
+            videoDurationSeconds={null}
+            exerciseMedia={exerciseMedia}
+          />
+        </StudioDraftsProvider>
+      );
+    });
+
+    const btn = Array.from(host.querySelectorAll('button')).find((b) => b.textContent?.includes('Student preview'))!;
+    act(() => {
+      btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(stub.previewCalls[0].mediaAudible).toBe(true);
   });
 
   it("lists the Watch sections under \"Copy notes from a Watch section\" and applies a confirmed pick as an undoable structural edit", () => {

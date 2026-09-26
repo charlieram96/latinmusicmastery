@@ -690,6 +690,7 @@ function StudioWorkspaceBody({
           exerciseVideo={previewVideo}
           play={exercisePlay}
           backingTracks={exerciseMedia?.backingTracks}
+          mediaAudible={jam}
           onClose={() => setPreviewOpen(false)}
         />
       )}

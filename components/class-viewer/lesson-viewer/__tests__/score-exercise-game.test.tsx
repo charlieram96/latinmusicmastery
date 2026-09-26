@@ -94,6 +94,22 @@ describe('ScoreExerciseGame workspace media (W4)', () => {
     render()
     expect(host.querySelector('video')?.getAttribute('aria-label')).toBe('dashboard.classViewer.exercise.referenceVideo')
   })
+
+  it('is muted, with no pitch preservation forced, when mediaAudible is unset (an exercise\'s play-along video)', () => {
+    session = { ...baseSession(), exercise, sessionState: 'playing' }
+    render()
+    const el = host.querySelector('video') as HTMLVideoElement
+    expect(el.muted).toBe(true)
+    expect((el as unknown as { preservesPitch?: boolean }).preservesPitch).toBeUndefined()
+  })
+
+  it('renders unmuted with pitch preservation when mediaAudible (a jam session\'s own track — Studio rework P5, Task 8 fix round 1)', () => {
+    session = { ...baseSession(), exercise, sessionState: 'playing' }
+    render({ mediaAudible: true })
+    const el = host.querySelector('video') as HTMLVideoElement
+    expect(el.muted).toBe(false)
+    expect((el as unknown as { preservesPitch: boolean }).preservesPitch).toBe(true)
+  })
 })
 
 const stats = (accuracy: number) => ({ score: accuracy, accuracy, perfectCount: 1, goodCount: 0, okCount: 0, missCount: 1, extraHits: 0,
