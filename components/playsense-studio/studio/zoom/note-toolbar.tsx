@@ -15,6 +15,7 @@ import { Trash2 } from 'lucide-react';
 import { KEY_VALUE, VALUE_NAME, VALUE_QN, type NoteValue } from '@/lib/playsense-studio/rhythm';
 import type { ZoomEditing } from './use-zoom-editing';
 import { NoteIcon, RestIcon } from './note-glyphs';
+import { StrokeMenu } from './stroke-menu';
 
 export interface NoteToolbarPercussion {
   strokes: { midi: number; label: string }[];
@@ -32,7 +33,7 @@ export interface NoteToolbarProps {
   tie: boolean;
   tripletOn: boolean;
   hasSelection: boolean;
-  /** Set on a percussion track: replaces ♭♮♯ with one button per stroke. */
+  /** Set on a percussion track: replaces ♭♮♯ with one Stroke chip (StrokeMenu). */
   percussion: NoteToolbarPercussion | null;
   editing: ZoomEditing;
   /** Opens the More ▾ popover (the caller anchors it under the docked toolbar). */
@@ -116,19 +117,13 @@ export function NoteToolbar({
       <span className="st-fbar-sep" aria-hidden />
 
       {percussion
-        ? percussion.strokes.map((s) => (
-            <button
-              key={s.midi}
-              type="button"
-              aria-label={s.label}
-              title={s.label}
-              aria-pressed={percussion.current === s.midi}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editing.enterStroke(s.midi)}
-            >
-              {s.label}
-            </button>
-          ))
+        ? (
+            <StrokeMenu
+              strokes={percussion.strokes}
+              current={percussion.current}
+              onPick={(m) => editing.enterStroke(m)}
+            />
+          )
         : ACCIDENTALS.map((a) => (
             <button
               key={a.alter}

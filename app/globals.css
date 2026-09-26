@@ -826,6 +826,18 @@ html:has([data-marketing]) {
    its own line under the title instead of covering the notes. */
 .st-zoom-dock { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; padding: 4px 0; }
 .st-fbar.is-docked { position: static; transform: none; animation: none; box-shadow: none; }
+/* The drum track's Stroke chip list (Task 9, mockup .pop .pal.list). Portaled
+   to document.body and positioned `fixed` from the chip's own screen
+   coordinates (computed in JS): the zoom overlay clips its contents
+   (`.st-zoom-overlay`'s `overflow: hidden`) and the docked toolbar's
+   `backdrop-filter` would otherwise re-anchor a fixed child to itself instead
+   of the viewport, so the list has to live and be positioned outside both. */
+.st-stroke-list { position: fixed; z-index: 60; width: 220px; max-height: 320px; overflow-y: auto;
+  display: grid; gap: 4px; padding: 8px; border-radius: 12px; background: hsl(22 14% 10% / .98);
+  border: 1px solid hsl(0 0% 100% / .14); box-shadow: 0 18px 44px rgba(0,0,0,.6); }
+.st-stroke-list button { justify-content: flex-start; height: 34px; padding: 0 10px; border-radius: 8px; font-size: 12.5px; font-weight: 500;
+  background: hsl(24 12% 13%); border: 1px solid hsl(0 0% 100% / .08); }
+.st-stroke-list button.is-on { border-color: hsl(var(--primary)); background: hsl(var(--primary) / .14); color: hsl(var(--primary)); }
 .st-zoom-sliver { position: relative; opacity: .35; cursor: pointer; transition: opacity .15s; }
 .st-zoom-sliver:hover { opacity: .7; }
 .st-zoom-sliver-label { position: absolute; top: 2px; left: 6px; font: 10px ui-monospace, monospace; color: hsl(var(--muted-foreground)); }

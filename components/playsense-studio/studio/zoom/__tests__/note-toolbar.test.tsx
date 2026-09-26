@@ -109,7 +109,7 @@ describe('NoteToolbar', () => {
     expect(buttons().find((b) => b.getAttribute('aria-label') === 'Delete')).toBeUndefined();
   });
 
-  it('shows stroke buttons instead of ♭♮♯ on a percussion track', () => {
+  it('shows one Stroke chip instead of ♭♮♯ on a percussion track, opening a list to pick a stroke', () => {
     const { editing } = render({
       percussion: {
         strokes: [{ midi: 60, label: 'Open' }, { midi: 61, label: 'Slap' }],
@@ -119,12 +119,18 @@ describe('NoteToolbar', () => {
     expect(buttons().find((b) => b.getAttribute('aria-label') === 'Flat')).toBeUndefined();
     expect(buttons().find((b) => b.getAttribute('aria-label') === 'Natural')).toBeUndefined();
     expect(buttons().find((b) => b.getAttribute('aria-label') === 'Sharp')).toBeUndefined();
-    const strokeButtons = buttons().filter((b) => ['Open', 'Slap'].includes(b.getAttribute('aria-label') ?? ''));
-    expect(strokeButtons).toHaveLength(2);
-    expect(byLabel('Open').getAttribute('aria-pressed')).toBe('true');
-    expect(byLabel('Slap').getAttribute('aria-pressed')).toBe('false');
-    act(() => { byLabel('Slap').click(); });
+    const chip = host.querySelector('[aria-haspopup="listbox"]') as HTMLButtonElement;
+    expect(chip).not.toBeNull();
+    expect(chip.textContent).toContain('Open');
+    // The list portals to document.body (Task 9's clipping check: the zoom
+    // overlay clips, and the docked toolbar's backdrop-filter would
+    // otherwise mis-anchor a fixed child), so its rows live on `document`.
+    act(() => { chip.click(); });
+    const opts = document.querySelectorAll('[role="option"]');
+    expect(opts).toHaveLength(2);
+    act(() => { (opts[1] as HTMLButtonElement).click(); });
     expect(editing.enterStroke).toHaveBeenCalledWith(61);
+    expect(document.querySelector('[role="listbox"]')).toBeNull();
   });
 
   it('calls onMore when "More ▾" is clicked', () => {
