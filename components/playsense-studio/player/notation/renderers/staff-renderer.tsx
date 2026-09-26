@@ -8,8 +8,7 @@
 // via direct DOM mutation at 60fps.
 //
 // Two layout modes:
-//   • 'scroll'  — one horizontal staff, followed continuously or held in
-//                 steady phrases with turns at measure/beat boundaries.
+//   • 'scroll'  — one horizontal staff, followed continuously.
 //   • 'wrapped' — measures wrap into several staves stacked vertically (like a
 //                 page of sheet music); the pane advances gradually with the
 //                 music, keeping upcoming rows in view. This is the default for the
@@ -78,7 +77,6 @@ export interface StaffHelpers {
   noteNames: NoteNameStyle;
 }
 const DEFAULT_HELPERS: StaffHelpers = { and: '&', noteNames: 'letters' };
-export type StaffFollowMode = 'flow' | 'measure';
 
 interface NoteHit {
   /** Cumulative QN at the start of this event. */
@@ -224,7 +222,6 @@ class StaffRendererImpl implements ScoreRenderer {
   /** Model-y offsets (from a stave's y) of the note-name and count rows. */
   private namesY = 0;
   private countsY = 0;
-  private readingStops: ScoreReadingStop[] = [];
   private rowReadingStops: ScoreReadingStop[][] = [];
   /** Stacked follow: the row being read and the glide towards it. */
   private currentRow = -1;
@@ -239,7 +236,6 @@ class StaffRendererImpl implements ScoreRenderer {
   private staveTop = STAVE_TOP;
   private staffLineTop = STAFF_LINE_TOP;
   private staffFootprint = 132;
-  private followMode: StaffFollowMode = 'flow';
   private autoFollow = true;
   private staffTranslate = 0;
   private activeMeasureIdx = -1;
@@ -312,7 +308,6 @@ class StaffRendererImpl implements ScoreRenderer {
     trailingGapMs = 0,
     trailingGapLabel = '',
     compact = false,
-    followMode: StaffFollowMode = 'flow',
     leadingGapMs = 0,
     leadingGapLabel = '',
     helpers: StaffHelpers | false = DEFAULT_HELPERS
@@ -323,7 +318,6 @@ class StaffRendererImpl implements ScoreRenderer {
     this.trackIndex = trackIndex;
     this.layoutMode = layoutMode;
     this.staveTop = compact ? 8 : STAVE_TOP;
-    this.followMode = followMode;
     this.scale = BASE_SCALE * clampZoom(zoom);
     this.gapMs = Math.max(0, trailingGapMs);
     this.gapLabel = trailingGapLabel;
@@ -422,7 +416,6 @@ class StaffRendererImpl implements ScoreRenderer {
     this.bandSystem = -1;
     this.nextRingEl = null;
     this.activeBeatIdx = -1;
-    this.readingStops = [];
     this.rowReadingStops = [];
     this.currentRow = -1;
     this.currentPage = -1;
@@ -538,7 +531,6 @@ class StaffRendererImpl implements ScoreRenderer {
     if (!el || !score) return;
     this.teardownDom();
     el.style.position = 'relative';
-    el.dataset.followMode = this.followMode;
     el.dataset.scoreLayoutMode = this.layoutMode;
 
     const track = score.tracks[this.trackIndex];
@@ -1198,12 +1190,6 @@ class StaffRendererImpl implements ScoreRenderer {
     this.applyLayout();
   }
 
-  setFollowMode(mode: StaffFollowMode): void {
-    this.followMode = mode;
-    if (this.container) this.container.dataset.followMode = mode;
-    this.applyLayout();
-  }
-
   setAutoFollow(enabled: boolean): void {
     if (this.autoFollow === enabled) return;
     this.autoFollow = enabled;
@@ -1456,24 +1442,16 @@ class StaffRendererImpl implements ScoreRenderer {
   private planReadingStops(): void {
     const scale = this.scale;
     // Rows (stacked or paged) turn within a row only when a bar is wider than the pane.
-    if (this.layoutMode !== 'scroll') {
-      this.rowReadingStops = Array.from({ length: this.systemCount }, (_, system) => scoreReadingStops(
-        this.measureGeoms.filter(g => g.system === system)
-          .map(g => ({ ...g, x: g.x * scale, width: g.width * scale })),
-        this.beatMarks.filter(b => b.system === system).map(b => ({ ms: b.ms, x: b.x * scale })),
-        this.hits.filter(h => h.system === system).map(h => ({ ms: h.ms, x: h.x * scale })),
-        this.viewportWidth,
-        (this.systemRowEndX[system] + SYSTEM_PADDING_X) * scale,
-      ));
-      return;
-    }
-    this.readingStops = scoreReadingStops(
-      this.measureGeoms.map(g => ({ ...g, x: g.x * scale, width: g.width * scale })),
-      this.beatMarks.map(b => ({ ms: b.ms, x: b.x * scale })),
-      this.hits.map(h => ({ ms: h.ms, x: h.x * scale })),
+    // The scroll line follows continuously and needs no stops.
+    if (this.layoutMode === 'scroll') { this.rowReadingStops = []; return; }
+    this.rowReadingStops = Array.from({ length: this.systemCount }, (_, system) => scoreReadingStops(
+      this.measureGeoms.filter(g => g.system === system)
+        .map(g => ({ ...g, x: g.x * scale, width: g.width * scale })),
+      this.beatMarks.filter(b => b.system === system).map(b => ({ ms: b.ms, x: b.x * scale })),
+      this.hits.filter(h => h.system === system).map(h => ({ ms: h.ms, x: h.x * scale })),
       this.viewportWidth,
-      this.totalWidth * scale,
-    );
+      (this.systemRowEndX[system] + SYSTEM_PADDING_X) * scale,
+    ));
   }
 
   private applyLayout(): void {
@@ -1539,19 +1517,10 @@ class StaffRendererImpl implements ScoreRenderer {
     const viewScaledX = this.msToCursorX(this.lastViewMs) * this.scale;
     const playbackScaledX = this.msToCursorX(this.lastPlaybackMs) * this.scale;
 
-    const steadyReading = this.followMode === 'measure' && this.lastViewMs >= 0 && this.lastViewMs < this.gapStartMs;
     const viewingInterlude = this.lastViewMs < 0 || (this.gapMs > 0 && this.lastViewMs >= this.gapStartMs);
     const shortPhraseInset = Math.max(0, (this.viewportWidth - this.totalWidth * this.scale) / 2);
-    const staffTranslate = shortPhraseInset || (steadyReading
-      ? scoreReadingOffset(this.lastViewMs, this.readingStops)
-      : scoreScrollOffset(viewScaledX, this.viewportWidth, this.totalWidth * this.scale, viewingInterlude ? .5 : CURSOR_ANCHOR_FRACTION));
-    // Turn instantly in space; only opacity settles. A sliding page would make
-    // students chase the notes and put the cursor out of sync with the glyphs.
-    if (steadyReading && staffTranslate !== this.staffTranslate
-      && this.cursorVisible && !prefersReducedMotion()) {
-      this.rendererDiv.getAnimations().forEach(animation => animation.cancel());
-      this.rendererDiv.animate([{ opacity: .65 }, { opacity: 1 }], { duration: 140, easing: 'ease-out' });
-    }
+    const staffTranslate = shortPhraseInset
+      || scoreScrollOffset(viewScaledX, this.viewportWidth, this.totalWidth * this.scale, viewingInterlude ? .5 : CURSOR_ANCHOR_FRACTION);
     this.staffTranslate = staffTranslate;
     this.rendererDiv.style.transform = `translateX(${staffTranslate}px)`;
 
@@ -1903,7 +1872,6 @@ export interface StaffRendererProps {
   /** Optional live playback clock. Enables frame-accurate following without React updates. */
   getCurrentMs?: () => number;
   compact?: boolean;
-  followMode?: StaffFollowMode;
   /** Follow the active staff row. Disable to read ahead without interruption. */
   autoFollow?: boolean;
   /** Score-relative ms anchored at the cursor anchor. Defaults to currentMs (auto-follow). */
@@ -1963,7 +1931,6 @@ function StaffRendererView({
   currentMs,
   getCurrentMs,
   compact = false,
-  followMode = 'flow',
   autoFollow = true,
   viewMs,
   loopAMs,
@@ -1995,7 +1962,6 @@ function StaffRendererView({
   const rendererRef = useRef<StaffRendererImpl | null>(null);
   const clockRef = useRef(getCurrentMs);
   const hasLiveClock = !!getCurrentMs;
-  const followRef = useRef(followMode);
   const autoFollowRef = useRef(autoFollow);
   const zoomRef = useRef(zoom);
   const showCursorRef = useRef(showCursor);
@@ -2015,7 +1981,6 @@ function StaffRendererView({
 
   useEffect(() => {
     clockRef.current = getCurrentMs;
-    followRef.current = followMode;
     autoFollowRef.current = autoFollow;
     zoomRef.current = zoom;
     showCursorRef.current = showCursor;
@@ -2027,7 +1992,7 @@ function StaffRendererView({
     viewMsRef.current = viewMs;
     loopARef.current = loopAMs;
     loopBRef.current = loopBMs;
-  }, [getCurrentMs, followMode, autoFollow, zoom, showCursor, trailingGapMs, trailingGapLabel, leadingGapMs, leadingGapLabel, currentMs, viewMs, loopAMs, loopBMs]);
+  }, [getCurrentMs, autoFollow, zoom, showCursor, trailingGapMs, trailingGapLabel, leadingGapMs, leadingGapLabel, currentMs, viewMs, loopAMs, loopBMs]);
 
   useEffect(() => {
     onSeekRef.current = onSeek;
@@ -2055,7 +2020,6 @@ function StaffRendererView({
       gapMsRef.current,
       gapLabelRef.current,
       compact,
-      followRef.current,
       leadingMsRef.current,
       leadingLabelRef.current,
       helpersRef.current
@@ -2097,7 +2061,6 @@ function StaffRendererView({
     return () => cancelAnimationFrame(frame);
   }, [hasLiveClock]);
 
-  useEffect(() => { rendererRef.current?.setFollowMode(followMode); }, [followMode]);
   useEffect(() => { rendererRef.current?.setAutoFollow(autoFollow); }, [autoFollow]);
 
   useEffect(() => {
