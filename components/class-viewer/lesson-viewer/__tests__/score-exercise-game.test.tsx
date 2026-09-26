@@ -338,6 +338,48 @@ describe('ScoreExerciseGame play settings (Studio rework P5)', () => {
       expect(seeks).toEqual([7])
     })
 
+    it('an audible track hard-seeks onto the clock on its first running frame, once (final fix 5)', () => {
+      let e = 0.2
+      session = { ...baseSession(), exercise, sessionState: 'playing', getElapsedSeconds: () => e }
+      currentTime = 5
+      render({ preview: false, play: { ...play, preroll: false }, mediaAudible: true })
+      tick()
+      // Paused on bar 1: a rate trim and play(), no seek yet.
+      expect(seeks).toEqual([])
+      expect(paused).toBe(false)
+      // The element starts late: it still shows bar 1 when it is running.
+      e = 0.4
+      tick()
+      expect(seeks).toEqual([5.4])
+      expect(rate).toBe(1)
+      // Later drift goes back to the gentle rate trim.
+      e = 0.5; currentTime = 5.45
+      tick()
+      expect(seeks).toEqual([5.4])
+      expect(rate).toBeCloseTo(1.025, 9)
+    })
+
+    it('a muted video keeps the gentle rate trim for its start lag', () => {
+      let e = 0.2
+      session = { ...baseSession(), exercise, sessionState: 'playing', getElapsedSeconds: () => e }
+      currentTime = 5
+      render({ preview: false, play: { ...play, preroll: false } })
+      tick()
+      e = 0.4
+      tick()
+      expect(seeks).toEqual([])
+      expect(rate).toBeCloseTo(1.03, 9)
+    })
+
+    it('shows the sound notice when the follow loop\'s play() is refused on an audible track', async () => {
+      vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => Promise.reject(new DOMException('no gesture', 'NotAllowedError')))
+      session = { ...baseSession(), exercise, sessionState: 'playing', getElapsedSeconds: () => 0.2 }
+      render({ preview: false, play, mediaAudible: true })
+      tick()
+      await act(async () => {})
+      expect(host.textContent).toContain('Tap to enable sound')
+    })
+
     it('seeks exactly once per loop wrap, and cancels its frame on unmount', () => {
       let e = 0
       session = { ...baseSession(), exercise, sessionState: 'playing', getElapsedSeconds: () => e }
@@ -356,5 +398,89 @@ describe('ScoreExerciseGame play settings (Studio rework P5)', () => {
       expect(cancelled).toContain(pending)
       root = createRoot(host)
     })
+  })
+})
+
+describe('ScoreExerciseGame audible jam track on Safari/iOS (final fix 1)', () => {
+  let calls: string[]
+  let played: HTMLMediaElement[]
+  beforeEach(() => {
+    calls = []; played = []
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function (this: HTMLMediaElement) {
+      calls.push('play'); played.push(this)
+      return Promise.resolve()
+    })
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => { calls.push('pause') })
+  })
+  const click = (el: Element | null) => act(() => { el!.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+
+  it('plays the track inside the Ready check Start click, before the take starts, and shows that same element', () => {
+    const startExercise = vi.fn(async () => { calls.push('start') })
+    session = { ...baseSession(), exercise, sessionState: 'selecting', startExercise }
+    render({ preview: false, mediaAudible: true })
+    // No stage yet, so no media in the page.
+    expect(host.querySelector('video')).toBeNull()
+    click(host.querySelector('[data-ready-start]'))
+    expect(calls.slice(0, 3)).toEqual(['play', 'pause', 'start'])
+    session = { ...session, sessionState: 'countdown' }
+    render({ preview: false, mediaAudible: true })
+    // The primed element is the one the stage shows (unlocked for later plays).
+    expect(host.querySelector('video')).toBe(played[0])
+    expect((played[0] as HTMLVideoElement).muted).toBe(false)
+  })
+
+  it('plays the track inside the Part done Again (Retry) click', () => {
+    const startExercise = vi.fn(async () => { calls.push('start') })
+    const retry = vi.fn(() => { calls.push('retry') })
+    session = { ...baseSession(), exercise, sessionState: 'results', attemptStats: stats(50), eventResults: [hit(0, 'perfect'), hit(1, 'miss')], startExercise, retry }
+    render({ preview: false, mediaAudible: true })
+    click(host.querySelector('[data-part-again]'))
+    expect(calls).toEqual(['retry', 'play', 'pause', 'start'])
+  })
+
+  it('plays the track inside the transport Start click', () => {
+    const startExercise = vi.fn(async () => { calls.push('start') })
+    session = { ...baseSession(), exercise, sessionState: 'paused', startExercise }
+    render({ preview: false, mediaAudible: true })
+    act(() => { (nowPlaying as unknown as { onStart: () => void }).onStart() })
+    expect(calls).toEqual(['play', 'pause', 'start'])
+  })
+
+  it('does not prime a muted exercise video', () => {
+    const startExercise = vi.fn(async () => { calls.push('start') })
+    session = { ...baseSession(), exercise, sessionState: 'selecting', startExercise }
+    render({ preview: false })
+    click(host.querySelector('[data-ready-start]'))
+    expect(calls).toEqual(['start'])
+  })
+
+  it('a refused play() shows "Tap to enable sound", whose button retries play() inside its click', async () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'play')
+      .mockImplementationOnce(() => { calls.push('play'); return Promise.reject(new DOMException('no gesture', 'NotAllowedError')) })
+      .mockImplementation(() => { calls.push('play'); return Promise.resolve() })
+    session = { ...baseSession(), exercise, sessionState: 'selecting' }
+    render({ preview: false, mediaAudible: true })
+    click(host.querySelector('[data-ready-start]'))
+    await act(async () => {})
+    session = { ...session, sessionState: 'countdown' }
+    render({ preview: false, mediaAudible: true })
+    expect(host.textContent).toContain('Tap to enable sound')
+    calls = []
+    const enable = [...host.querySelectorAll('button')].find(b => b.textContent?.includes('Enable sound'))!
+    click(enable)
+    await act(async () => {})
+    expect(calls).toEqual(['play', 'pause'])
+    expect(host.textContent).not.toContain('Tap to enable sound')
+  })
+
+  it('a play() cut short by the priming pause is not a refusal', async () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => Promise.reject(new DOMException('interrupted by pause', 'AbortError')))
+    session = { ...baseSession(), exercise, sessionState: 'selecting' }
+    render({ preview: false, mediaAudible: true })
+    click(host.querySelector('[data-ready-start]'))
+    await act(async () => {})
+    session = { ...session, sessionState: 'countdown' }
+    render({ preview: false, mediaAudible: true })
+    expect(host.textContent).not.toContain('Tap to enable sound')
   })
 })

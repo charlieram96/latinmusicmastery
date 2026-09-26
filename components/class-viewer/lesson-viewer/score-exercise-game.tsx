@@ -58,6 +58,30 @@ function setPreservesPitch(el: PitchPreservingMedia): void {
   if ('mozPreservesPitch' in el) el.mozPreservesPitch = true
 }
 
+const MEDIA_CLASS = 'h-full w-full bg-black object-contain'
+
+// The play-along element is created once and kept (see ensureMediaEl): this
+// applies the current props to it. Muted unless audible (a jam's own track),
+// which also forces pitch preservation (the follow trims the rate ±3 %).
+function applyMediaProps(el: HTMLVideoElement, url: string, audible: boolean, label: string): void {
+  if (el.getAttribute('src') !== url) el.src = url
+  el.muted = !audible
+  el.toggleAttribute('muted', !audible)
+  el.setAttribute('playsinline', '')
+  el.preload = 'auto'
+  el.className = MEDIA_CLASS
+  el.setAttribute('aria-label', label)
+  if (audible) setPreservesPitch(el as PitchPreservingMedia)
+}
+
+/** A play() refused by the browser's autoplay policy (not a play() cut short by a pause). */
+function isAutoplayRefusal(err: unknown): boolean {
+  return (err as { name?: string } | null)?.name === 'NotAllowedError'
+}
+
+/** Beyond this start lag an audible track hard-seeks once it is running. */
+const START_SEEK_SECONDS = 0.03
+
 interface ScoreExerciseGameProps {
   /** The exercise derived from the authored score (see lib/play-sense/score-to-exercise). */
   exercise: ExerciseDefinition
@@ -159,17 +183,46 @@ function ScoreExerciseSession({
   const tracksOn = (backingTracks ?? []).filter((track) => !entryFor(track.id).muted).length
 
   // --- Optional exercise video, following the engine clock ---
+  // One element for the whole visit, created on first use and moved into the
+  // workspace while the stage shows. An audible track (a jam) must be played
+  // inside a click to satisfy Safari/iOS autoplay rules, and the Ready check
+  // and Part done screens, where Start/Retry are clicked, show no media: the
+  // element they prime has to be the one that plays afterwards.
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  // mediaAudible (a jam session's own track) forces pitch preservation on at
-  // mount, since the clock-follow effect below trims playbackRate by up to
-  // ±3% every frame and an unpitched rate change would slide the key.
-  const attachVideoRef = useCallback(
-    (el: HTMLVideoElement | null) => {
-      videoRef.current = el
-      if (el && mediaAudible) setPreservesPitch(el)
-    },
-    [mediaAudible]
-  )
+  const videoUrl = exerciseVideo?.url ?? null
+  const videoLabel = t('dashboard.classViewer.exercise.referenceVideo')
+  const ensureMediaEl = useCallback((): HTMLVideoElement | null => {
+    if (!videoUrl) return null
+    const el = videoRef.current ?? document.createElement('video')
+    videoRef.current = el
+    applyMediaProps(el, videoUrl, mediaAudible, videoLabel)
+    return el
+  }, [videoUrl, mediaAudible, videoLabel])
+  useEffect(() => {
+    if (videoRef.current) ensureMediaEl()
+  }, [ensureMediaEl])
+  const mountMedia = useCallback((slot: HTMLDivElement | null) => {
+    const el = slot ? ensureMediaEl() : null
+    if (!slot || !el) return
+    slot.appendChild(el)
+    return () => { if (el.parentNode === slot) slot.removeChild(el) }
+  }, [ensureMediaEl])
+
+  // Safari/iOS may still refuse an audible play(): offer a tap to retry it.
+  const [soundBlocked, setSoundBlocked] = useState(false)
+  /** Play the audible track synchronously inside a click (Start, Retry, the
+   *  notice), then pause it again: the follow loop positions and runs it. */
+  const primeMedia = () => {
+    if (!mediaAudible) return
+    const v = ensureMediaEl()
+    if (!v) return
+    const wasPaused = v.paused
+    const started = v.play()
+    if (wasPaused) v.pause()
+    setSoundBlocked(false)
+    void started?.catch((err) => { if (isAutoplayRefusal(err)) setSoundBlocked(true) })
+  }
+  const start = () => { primeMedia(); void session.startExercise() }
   const loopSeconds = useMemo(() => getLoopDuration(exercise), [exercise])
   const exerciseDurationSec = loopSeconds * exercise.loopCount
   const countInBars = play?.countInBars ?? 1
@@ -240,6 +293,9 @@ function ScoreExerciseSession({
     const userSpeed = 1
     let raf = 0
     let lastPass: number | null = null
+    // An audible track's element starts late (play() latency); the rate trim
+    // would take seconds to close that, so it hard-seeks once it is running.
+    let startSeek = mediaAudible
     const tick = () => {
       const e = getElapsedSeconds()
       const { media, playing } = expectedMediaTime(playMedia, e)
@@ -254,21 +310,29 @@ function ScoreExerciseSession({
         // Hold the last frame until the next pass brings bar 1 back inside:
         // no play() (on an ended element it restarts from 0) and no seek.
         if (!v.paused) v.pause()
+        startSeek = mediaAudible
       } else if (!playing) {
         if (!v.paused) v.pause()
         if (!v.seeking && Math.abs(v.currentTime - media) > 0.05) v.currentTime = media
+        startSeek = mediaAudible
       } else {
         // A seek already in flight: let it land before correcting again.
         if (!v.seeking) {
           const { rate, seekTo } = followRate(media, v.currentTime, userSpeed)
-          if (seekTo !== null || wrapped || v.ended) {
+          // The first frame an audible track is actually running: land it on
+          // the clock at once (see startSeek).
+          const startLag = startSeek && !v.paused && Math.abs(media - v.currentTime) > START_SEEK_SECONDS
+          if (!v.paused) startSeek = false
+          if (seekTo !== null || wrapped || v.ended || startLag) {
             v.currentTime = seekTo ?? media
             v.playbackRate = userSpeed
           } else if (Math.abs(v.playbackRate - rate) > 0.0005) {
             v.playbackRate = rate
           }
         }
-        if (v.paused && !v.ended) void v.play().catch(() => {})
+        if (v.paused && !v.ended) {
+          void v.play().catch((err) => { if (mediaAudible && isAutoplayRefusal(err)) setSoundBlocked(true) })
+        }
       }
       raf = requestAnimationFrame(tick)
     }
@@ -276,7 +340,7 @@ function ScoreExerciseSession({
     // No pause here: the next state's run decides (a count-in running into
     // bar 1 must not blip the pre-roll).
     return () => cancelAnimationFrame(raf)
-  }, [session.sessionState, getElapsedSeconds, playMedia])
+  }, [session.sessionState, getElapsedSeconds, playMedia, mediaAudible])
 
   // ExerciseScore reports the active track's single-pass duration. Its side
   // layout combines this local clock with the pass index to read continuously
@@ -361,6 +425,7 @@ function ScoreExerciseSession({
   }
   const playAgain = () => {
     session.retry()
+    primeMedia()
     void session.startExercise()
   }
 
@@ -423,7 +488,7 @@ function ScoreExerciseSession({
   }
   const startFromReady = () => {
     setReadyConfirmed(true)
-    void session.startExercise()
+    start()
   }
 
   const showPlaysenseTest =
@@ -483,7 +548,7 @@ function ScoreExerciseSession({
             totalCalibrationBeats={session.totalCalibrationBeats}
             calibrationError={session.calibrationError}
             onStartCalibration={session.startCalibration}
-            onSkip={() => session.startExercise()}
+            onSkip={start}
             onClearCalibration={() => session.startCalibration()}
             audioMode={session.audioMode}
           />
@@ -669,7 +734,7 @@ function ScoreExerciseSession({
             <div className="w-full max-w-lg">
               <PlaysenseTestPanel
                 instrument={session.exercise.instrument}
-                onReady={session.startExercise}
+                onReady={start}
                 onBack={session.clearAudioMode}
               />
             </div>
@@ -706,17 +771,9 @@ function ScoreExerciseSession({
         frame="fill"
         // Only once the session is live: a paused video beside "Preparing…" reads as broken.
         media={exerciseVideo && showCanvas && (
-          // Muted (unless mediaAudible — a jam's own track), follows the
-          // engine clock (see the sync effect above).
-          <video
-            ref={attachVideoRef}
-            src={exerciseVideo.url}
-            muted={!mediaAudible}
-            playsInline
-            preload="auto"
-            className="h-full w-full bg-black object-contain"
-            aria-label={t('dashboard.classViewer.exercise.referenceVideo')}
-          />
+          // The kept <video> (see ensureMediaEl): muted unless mediaAudible —
+          // a jam's own track — and following the engine clock.
+          <div ref={mountMedia} className="h-full min-h-0 w-full" data-exercise-media="" />
         )}
         music={hasStaff ? scoreEl : stageEl}
         highway={hasStaff ? stageEl : undefined}
@@ -724,9 +781,18 @@ function ScoreExerciseSession({
       />
       </ExerciseScoreWorkspaceBridge>
 
+      {mediaAudible && soundBlocked && isActive && (
+        <div className="ps-lesson-sound-blocked flex items-center justify-between gap-3 border-t border-border bg-primary/5 px-4 py-2" role="status">
+          <span className="text-xs text-muted-foreground">Tap to enable sound</span>
+          <Button size="sm" variant="outline" onClick={primeMedia}>
+            <Volume2 className="h-3.5 w-3.5" /> Enable sound
+          </Button>
+        </div>
+      )}
+
       {preview && isActive && <div className="ps-lesson-preview-controls flex items-center justify-between gap-3 border-t border-border px-4 py-3">
         <span className="text-xs text-muted-foreground">Demo · muted video · results are not saved</span>
-        <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => void session.startExercise()}>Replay preview</Button><Button size="sm" onClick={demoSession.review}>View results</Button></div>
+        <div className="flex gap-2"><Button size="sm" variant="outline" onClick={start}>Replay preview</Button><Button size="sm" onClick={demoSession.review}>View results</Button></div>
       </div>}
 
       {!preview && inLesson && session.exercise && isActive && !showAudioModePrompt && !showPlaysenseTest && (
@@ -737,10 +803,10 @@ function ScoreExerciseSession({
             countdownBeat={session.countdownBeat}
             click={session.audioMetronome}
             mix={mixer}
-            onStart={() => void session.startExercise()}
+            onStart={start}
             onPause={session.pauseExercise}
-            onResume={session.resumeExercise}
-            onRestart={() => void session.restartExercise()}
+            onResume={() => { primeMedia(); session.resumeExercise() }}
+            onRestart={() => { primeMedia(); void session.restartExercise() }}
             onFinish={finishTake}
             onClickToggle={() => session.setAudioMetronome(!session.audioMetronome)}
             onWatchDemo={onWatchDemo}
@@ -768,11 +834,11 @@ function ScoreExerciseSession({
           currentCombo={session.currentCombo}
           currentAccuracy={session.currentAccuracy}
           lastHitGrade={session.lastHitGrade}
-          onStart={session.startExercise}
+          onStart={start}
           onStop={finishTake}
           onPause={session.pauseExercise}
-          onResume={session.resumeExercise}
-          onRestart={() => void session.restartExercise()}
+          onResume={() => { primeMedia(); session.resumeExercise() }}
+          onRestart={() => { primeMedia(); void session.restartExercise() }}
           onCalibrate={session.startCalibration}
           onTestMic={session.testMic}
           onStopTestMic={session.stopTestMic}
