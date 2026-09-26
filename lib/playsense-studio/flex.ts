@@ -4,26 +4,29 @@
 // before.
 //
 // Identity edges. Outside its outermost points the map carries the outermost
-// point's offset (dst - src), so the map is only identity there when the
-// outermost points are themselves identity. Every path keeps that true:
-// - addFlexAtHit pins an identity anchor at the span edge (span.start/end
-//   +/- EDGE_INSET) on any side where the new point has no point or neighbour
-//   hit to lean on;
-// - moveFlexPoint refuses to drag the first or last point when it is an
-//   anchor, and removeFlexPoint refuses to remove it individually;
-// - removeFlexPoint clears to [] once no real (non-anchor) point remains;
-// - readFlex normalizes stored data: a non-identity first point gets an
-//   identity anchor prepended at min(src, dst) - EDGE_PAD, and a non-identity
-//   last point one appended at max(src, dst) + EDGE_PAD, so the list stays
-//   strictly monotonic in both src and dst. Identity outer points are left
-//   alone, so already-valid data reads back unchanged.
+// point's offset (dst - src), so it is identity there only when the outermost
+// points are themselves identity; FlexMap then returns the input exactly.
+// One helper guarantees it: normalizeEdges prepends an identity anchor at
+// min(src, dst) - EDGE_PAD when the first point isn't identity, and appends
+// one at max(src, dst) + EDGE_PAD when the last isn't, which keeps src and dst
+// strictly increasing. readFlex (on load) and every edit function (add, move,
+// remove, resetFlexRange, quantizePlan) end with it, so the invariant holds
+// for any edit sequence (flex-property.test.ts checks it). Beyond that:
+// - addFlexAtHit also pins identity anchors just inside the span edges
+//   (EDGE_INSET) on a side with no point, so edges usually sit in the span;
+// - the outermost anchors can't be dragged or removed on their own;
+// - remove and reset drop anchors that no longer border a real (non-anchor)
+//   point, and return [] once only anchors remain.
+// A normalized anchor can land up to EDGE_PAD outside the section span (a real
+// point within the inset of an edge, or legacy data); the map is identity
+// there, so it means the same in both domains.
 export interface FlexPoint { src: number; dst: number; anchor: boolean }
 export const FLEX_RATE_MIN = 0.5;
 export const FLEX_RATE_MAX = 2;
 const EPS = 1e-3;
 /** How far inside the span edge addFlexAtHit pins its identity edge anchor. */
 const EDGE_INSET = 0.01;
-/** How far beyond a non-identity outer point readFlex adds its identity anchor. */
+/** How far beyond a non-identity outer point normalizeEdges adds its identity anchor. */
 const EDGE_PAD = 0.05;
 const isIdentityPoint = (q: FlexPoint) => Math.abs(q.src - q.dst) < 1e-9;
 
@@ -40,23 +43,45 @@ export function readFlex(params: unknown): FlexPoint[] {
     const last = out[out.length - 1];
     if (!last || (q.src > last.src + EPS / 10 && q.dst > last.dst + EPS / 10)) out.push(q);
   }
-  if (!out.length) return out;
+  return normalizeEdges(out);
+}
+
+/** Keep the map identity outside its points: an identity anchor just beyond a
+ *  non-identity first or last point (see the header). Idempotent. */
+export function normalizeEdges(points: FlexPoint[]): FlexPoint[] {
+  if (!points.length) return points;
+  let out = points;
   const first = out[0];
   if (!isIdentityPoint(first)) {
     const t = Math.min(first.src, first.dst) - EDGE_PAD;
-    out.unshift({ src: t, dst: t, anchor: true });
+    out = [{ src: t, dst: t, anchor: true }, ...out];
   }
   const tail = out[out.length - 1];
   if (!isIdentityPoint(tail)) {
     const t = Math.max(tail.src, tail.dst) + EDGE_PAD;
-    out.push({ src: t, dst: t, anchor: true });
+    out = [...out, { src: t, dst: t, anchor: true }];
   }
   return out;
 }
 
+/** Drop anchors that no longer border a real point; [] when only anchors are
+ *  left; then normalize the edges. */
+function tidy(points: FlexPoint[]): FlexPoint[] {
+  const swept = points.filter((q, i) => !q.anchor || (points[i - 1] && !points[i - 1].anchor) || (points[i + 1] && !points[i + 1].anchor));
+  if (!swept.some((q) => !q.anchor)) return [];
+  return normalizeEdges(swept);
+}
+
+/** x shifted by an outer point's offset: exactly x when that point is identity. */
+function offsetBy(x: number, from: number, to: number): number {
+  const off = to - from;
+  return Math.abs(off) < 1e-9 ? x : x + off;
+}
+
 function interp(x: number, xs: number[], ys: number[]): number {
-  if (!xs.length || x <= xs[0]) return x - (xs[0] ?? x) + (ys[0] ?? x);
-  if (x >= xs[xs.length - 1]) return x - xs[xs.length - 1] + ys[ys.length - 1];
+  if (!xs.length) return x;
+  if (x <= xs[0]) return offsetBy(x, xs[0], ys[0]);
+  if (x >= xs[xs.length - 1]) return offsetBy(x, xs[xs.length - 1], ys[ys.length - 1]);
   let lo = 0;
   let hi = xs.length - 1;
   while (hi - lo > 1) {
@@ -146,7 +171,7 @@ export function addFlexAtHit(points: FlexPoint[], hitMedia: number, hitsMedia: n
     out.push({ src: highEdge, dst: highEdge, anchor: true });
   }
   out = out.sort((a, b) => a.src - b.src);
-  return out;
+  return normalizeEdges(out);
 }
 
 const isOuterAnchor = (points: FlexPoint[], index: number) =>
@@ -160,23 +185,17 @@ export function moveFlexPoint(points: FlexPoint[], index: number, dst: number, s
   if (lo > hi) return points; // neighbours are closer than 2*EPS: no room to move within
   const out = points.slice();
   out[index] = { ...out[index], dst: Math.min(hi, Math.max(lo, dst)) };
-  return out;
+  return normalizeEdges(out);
 }
 
 export function removeFlexPoint(points: FlexPoint[], index: number): FlexPoint[] {
   if (index < 0 || index >= points.length) return points;
   if (isOuterAnchor(points, index)) return points; // identity edges aren't removed on their own
-  const out = points.filter((_, i) => i !== index);
-  if (!out.some((q) => !q.anchor)) return [];
-  // Drop inner anchors that no longer border a real (non-anchor) point. The
-  // outermost anchors stay: they hold the identity edges.
-  const last = out.length - 1;
-  return out.filter((q, i) => !q.anchor || i === 0 || i === last
-    || (out[i - 1] && !out[i - 1].anchor) || (out[i + 1] && !out[i + 1].anchor));
+  return tidy(points.filter((_, i) => i !== index));
 }
 
 export function resetFlexRange(points: FlexPoint[], range: { start: number; end: number }): FlexPoint[] {
-  return points.filter((q) => q.dst < range.start - EPS || q.dst > range.end + EPS);
+  return tidy(points.filter((q) => q.dst < range.start - EPS || q.dst > range.end + EPS));
 }
 
 export function quantizePlan(input: {
@@ -230,7 +249,8 @@ export function quantizePlan(input: {
     lastKeptDst = c.dst;
   }
 
-  const points = readFlex({ flex: [...fixed, ...moves] });
+  const read = readFlex({ flex: [...fixed, ...moves] }); // normalizes the edges
+  const points = read.some((q) => !q.anchor) ? read : [];
   const largestMs = diffs.reduce((m, d) => Math.max(m, d), 0);
   return { points, moved: moves.length, largestMs };
 }

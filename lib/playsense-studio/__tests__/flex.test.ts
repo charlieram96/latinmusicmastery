@@ -47,7 +47,9 @@ describe('flex edits', () => {
     expect(moveFlexPoint(pts, 1, 12.4, span)[1].dst).toBeCloseTo(12.4);
     expect(moveFlexPoint(pts, 1, 20, span)[1].dst).toBeLessThan(14);
     expect(moveFlexPoint(pts, 1, 1, span)[1].dst).toBeGreaterThan(10);
-    expect(moveFlexPoint([p(10, 10)], 0, 0.001, { start: 5, end: 20 })[0].dst).toBeGreaterThan(5);
+    const lone = moveFlexPoint([p(10, 10)], 0, 0.001, { start: 5, end: 20 });
+    expect(lone.find((q) => !q.anchor)!.dst).toBeGreaterThan(5);
+    expect(lone[0]).toEqual(p(lone[0].src, lone[0].src, true)); // an identity edge was added
   });
   it('removes a point and orphaned anchors', () => {
     const pts = [p(10, 10, true), p(12, 12), p(14, 14, true)];
@@ -121,11 +123,10 @@ describe('flex edits', () => {
     const withInner = [p(0.01, 0.01, true), p(10, 10, true), p(12, 12.2), p(14, 14, true), p(99.99, 99.99, true)];
     expect(removeFlexPoint(withInner, 2)).toEqual([]);
   });
-  it('identity edges: removing an inner point keeps the outer anchors', () => {
+  it('identity edges: removing an inner point drops its orphaned anchors and stays identity outside', () => {
     const pts = [p(0.01, 0.01, true), p(12, 12.2), p(20, 20, true), p(30, 30.4), p(99.99, 99.99, true)];
     const out = removeFlexPoint(pts, 1);
-    expect(out[0]).toEqual(p(0.01, 0.01, true));
-    expect(out[out.length - 1]).toEqual(p(99.99, 99.99, true));
+    expect(out).toEqual([p(20, 20, true), p(30, 30.4), p(99.99, 99.99, true)]);
     const m = new FlexMap(out);
     expect(m.toTimeline(0)).toBe(0);
     expect(m.toTimeline(150)).toBe(150);
