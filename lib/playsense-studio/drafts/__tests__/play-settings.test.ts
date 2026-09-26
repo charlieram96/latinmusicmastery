@@ -81,6 +81,19 @@ describe('getExerciseMedia — play settings', () => {
     expect(res.data!.videoUrl).toBe('https://example.com/jam.mp3');
     expect(res.data!.play).toEqual({ bar1Seconds: 2.5, countInBars: 2, preroll: false });
   });
+
+  it("falls back to the jam's video_url when it has no audio_url", async () => {
+    seedJamSession({ audio_url: null, video_url: 'https://example.com/jam.mp4' });
+    const res = await getExerciseMedia('ci-jam');
+    expect(res.error).toBeUndefined();
+    expect(res.data!.videoUrl).toBe('https://example.com/jam.mp4');
+  });
+
+  it('prefers the jam audio_url over its video_url', async () => {
+    seedJamSession({ video_url: 'https://example.com/jam.mp4' });
+    const res = await getExerciseMedia('ci-jam');
+    expect(res.data!.videoUrl).toBe('https://example.com/jam.mp3');
+  });
 });
 
 describe('setPlaySettings', () => {

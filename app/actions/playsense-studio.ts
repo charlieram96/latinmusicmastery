@@ -1455,9 +1455,10 @@ export interface ExerciseMedia {
 }
 
 /** Read the exercise part's media. Any authenticated user (students included).
- *  For a JAM_SESSION item the media is class_items.audio_url (the whole score
- *  is graded), and the exercise-video-only columns (crop/trim/exercise time
- *  map) are skipped — a jam session never has an exercise video. */
+ *  For a JAM_SESSION item the media is class_items.audio_url, else its
+ *  video_url (the whole score is graded), and the exercise-video-only columns
+ *  (crop/trim/exercise time map) are skipped — a jam session never has an
+ *  exercise video. */
 export async function getExerciseMedia(
   classItemId: string
 ): Promise<{ data?: ExerciseMedia; error?: string }> {
@@ -1466,7 +1467,7 @@ export async function getExerciseMedia(
   const { data: item, error: itemErr } = await supabase
     .from('class_items')
     .select(
-      'item_type, audio_url, exercise_video_url, exercise_video_start_seconds, exercise_video_trim_in_seconds, exercise_video_trim_out_seconds, exercise_time_map_id, metronome_anchor_seconds, metronome_anchor_qn, play_bar1_seconds, play_count_in_bars, play_preroll'
+      'item_type, audio_url, video_url, exercise_video_url, exercise_video_start_seconds, exercise_video_trim_in_seconds, exercise_video_trim_out_seconds, exercise_time_map_id, metronome_anchor_seconds, metronome_anchor_qn, play_bar1_seconds, play_count_in_bars, play_preroll'
     )
     .eq('id', classItemId)
     .single();
@@ -1517,9 +1518,9 @@ export async function getExerciseMedia(
 
   return {
     data: {
-      // A jam session's media is the class item's audio_url; an exercise's is
-      // its own play-along video.
-      videoUrl: isJamSession ? item.audio_url : item.exercise_video_url,
+      // A jam session's media is the class item's audio_url (its video_url when
+      // it only has a video); an exercise's is its own play-along video.
+      videoUrl: isJamSession ? (item.audio_url ?? item.video_url) : item.exercise_video_url,
       // Trim in-point is the source of truth; fall back to the legacy crop for
       // any row written before 040's backfill. Meaningless for a jam session
       // (no crop UI exists for it), but harmless to compute.
