@@ -499,7 +499,8 @@ export function SyncPanel({
   // audio"). Cached in storage for next time. The grid + markers are fully
   // usable before analysis, so we don't pay the fetch/decode cost on entry.
   const analyzeCancelRef = useRef(false);
-  const runAnalysis = useCallback(() => {
+  // `force` skips the cache read (see loadOrComputePeaks).
+  const runAnalysis = useCallback((opts?: { force?: boolean }) => {
     if (!videoUrl) return;
     analyzeCancelRef.current = false;
     setDecodeState('loading');
@@ -509,6 +510,7 @@ export function SyncPanel({
         const { loadOrComputePeaks } = await import('@/lib/playsense-studio/waveform-decode');
         const supabase = createClient();
         const result = await loadOrComputePeaks(classItemId, videoUrl, supabase, {
+          force: opts?.force,
           onProgress: (f) => !analyzeCancelRef.current && setProgress(f),
         });
         if (!analyzeCancelRef.current) {
@@ -520,6 +522,14 @@ export function SyncPanel({
       }
     })();
   }, [classItemId, videoUrl]);
+
+  // The user's Analyze / Re-analyze. Peaks from before hits existed (the legacy
+  // v2 cache) would just be read back from the cache, so decode afresh; that
+  // writes the v3 cache, with hits. Never automatic on open: the entry effect
+  // below only decodes on a full cache miss.
+  const reanalyze = useCallback(() => {
+    runAnalysis({ force: peaks !== null && peaks.hits === undefined });
+  }, [runAnalysis, peaks]);
 
   // Cancel any in-flight decode on unmount.
   useEffect(() => () => { analyzeCancelRef.current = true; }, []);
@@ -1367,7 +1377,7 @@ export function SyncPanel({
               {decodeState !== 'loading' && (
                 <button
                   type="button"
-                  onClick={runAnalysis}
+                  onClick={reanalyze}
                   className="st-chip"
                   title={
                     decodeState === 'idle'
@@ -1437,7 +1447,7 @@ export function SyncPanel({
                           ? "Couldn't read this video's audio."
                           : 'No waveform yet.'}
                       </p>
-                      <button type="button" onClick={runAnalysis} className="st-btn-primary">
+                      <button type="button" onClick={reanalyze} className="st-btn-primary">
                         <AudioLines className="h-4 w-4" />
                         {decodeState === 'error' ? 'Retry analysis' : 'Analyze audio'}
                       </button>

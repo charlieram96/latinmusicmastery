@@ -45,6 +45,12 @@ export interface DecodeOptions {
   withHits?: boolean;
 }
 
+export interface LoadPeaksOptions extends DecodeOptions {
+  /** Skip the cache read and decode afresh (the result is still cached). Re-analyze
+   *  passes this when the current peaks predate hits, or it would just read them back. */
+  force?: boolean;
+}
+
 /**
  * Fetch a media file's bytes, decode its audio, and return compact peaks.
  * Media-agnostic despite the name: it only ever touches the audio track, so
@@ -99,12 +105,14 @@ export async function loadOrComputePeaks(
   classItemId: string,
   videoUrl: string,
   supabase: SupabaseClient<Database>,
-  opts: DecodeOptions = {}
+  opts: LoadPeaksOptions = {}
 ): Promise<WaveformPeaks> {
   const path = waveformPath(classItemId, videoUrl);
 
-  const cached = await tryLoadCache(supabase, path, opts.signal);
-  if (cached) return cached;
+  if (!opts.force) {
+    const cached = await tryLoadCache(supabase, path, opts.signal);
+    if (cached) return cached;
+  }
 
   const peaks = await decodeVideoPeaks(videoUrl, opts);
 
@@ -127,6 +135,8 @@ export async function loadOrComputePeaks(
  * Cache-ONLY lookup: return previously-cached peaks for this class item/video,
  * or null if none exist. Never decodes — cheap enough to run on page entry so a
  * once-analyzed video shows its waveform automatically without re-clicking.
+ * Tries the current path first, then the legacy v2 one (peaks without hits),
+ * so an old video still shows its waveform and asks for Re-analyze.
  */
 export async function loadCachedPeaks(
   classItemId: string,
@@ -134,16 +144,28 @@ export async function loadCachedPeaks(
   supabase: SupabaseClient<Database>,
   signal?: AbortSignal
 ): Promise<WaveformPeaks | null> {
-  return tryLoadCache(supabase, waveformPath(classItemId, videoUrl), signal);
+  return (
+    (await tryLoadCache(supabase, waveformPath(classItemId, videoUrl), signal)) ??
+    (await tryLoadCache(supabase, legacyWaveformPath(classItemId, videoUrl), signal))
+  );
 }
 
+/**
+ * Where peaks are written. v3 (Studio rework P4a) carries `hits`. A fresh
+ * object rather than an overwrite of v2, which the CDN may hold for a year.
+ */
 export function waveformPath(classItemId: string, videoUrl: string): string {
+  return `peaks/${classItemId}-${shortHash(videoUrl)}-hires-v3.json`;
+}
+
+/** The pre-P4a cache path: the same peaks, never any `hits`. Read-only now. */
+export function legacyWaveformPath(classItemId: string, videoUrl: string): string {
   return `peaks/${classItemId}-${shortHash(videoUrl)}-hires-v2.json`;
 }
 
 /**
  * Cache path for a backing-track lane. A distinct suffix from the main
- * waveform's `-hires-v2` keeps the two resolutions from ever colliding for the
+ * waveform's `-hires-v*` keeps the two resolutions from ever colliding for the
  * same owner+url pair.
  */
 export function laneWaveformPath(ownerId: string, audioUrl: string): string {

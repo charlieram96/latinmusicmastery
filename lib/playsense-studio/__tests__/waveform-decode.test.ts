@@ -1,5 +1,14 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { decodeVideoPeaks } from '../waveform-decode';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database';
+import {
+  decodeVideoPeaks,
+  legacyWaveformPath,
+  loadCachedPeaks,
+  loadOrComputePeaks,
+  waveformPath,
+} from '../waveform-decode';
+import { serializePeaks, type WaveformPeaks } from '../waveform';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -75,4 +84,84 @@ it('computes hits during decode unless asked not to', async () => {
 
   const lane = await decodeVideoPeaks('https://x/v.mp4', { withHits: false });
   expect(lane.hits).toBeUndefined();
+});
+
+// --- The peaks cache (storage mocked; nothing real is touched) ---
+
+const CDN = 'https://cdn.test/';
+const OLD: WaveformPeaks = { version: 1, durationSeconds: 2, bucketCount: 1, sampleRate: SR, data: [0, 0] };
+const NEW: WaveformPeaks = { ...OLD, hits: [0.5] };
+
+/** A storage mock whose public URL is CDN + path, plus a fetch serving `objects`
+ *  (by path) and a decodable video at every other URL. */
+function storage(objects: Record<string, WaveformPeaks>) {
+  const upload = vi.fn(async () => ({ data: null, error: null }));
+  const supabase = {
+    storage: {
+      from: () => ({
+        getPublicUrl: (path: string) => ({ data: { publicUrl: CDN + path } }),
+        upload,
+      }),
+    },
+  } as unknown as SupabaseClient<Database>;
+  const channel = burstChannel(2, [0.5, 1.0]);
+  class OfflineContext {
+    decodeAudioData = async () => ({ duration: 2, numberOfChannels: 1, getChannelData: () => channel });
+  }
+  vi.stubGlobal('window', { OfflineAudioContext: OfflineContext });
+  const fetchMock = vi.fn(async (url: string) => {
+    if (url.startsWith(CDN)) {
+      const hit = objects[url.slice(CDN.length)];
+      return hit
+        ? { ok: true, text: async () => serializePeaks(hit) }
+        : { ok: false, status: 404, text: async () => '' };
+    }
+    return { ok: true, headers: new Headers(), arrayBuffer: async () => new ArrayBuffer(8) };
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  const videoFetches = () => fetchMock.mock.calls.filter(([u]) => !String(u).startsWith(CDN)).length;
+  return { supabase, upload, videoFetches };
+}
+
+it('writes peaks to a fresh v3 path and keeps the v2 path for reading old caches', () => {
+  expect(waveformPath('ci', 'https://x/v.mp4')).toMatch(/^peaks\/ci-[0-9a-z]+-hires-v3\.json$/);
+  expect(legacyWaveformPath('ci', 'https://x/v.mp4')).toMatch(/^peaks\/ci-[0-9a-z]+-hires-v2\.json$/);
+  expect(legacyWaveformPath('ci', 'https://x/v.mp4').replace('-v2', '-v3')).toBe(waveformPath('ci', 'https://x/v.mp4'));
+});
+
+it('loadCachedPeaks tries v3 first, then falls back to v2 (no hits), then null', async () => {
+  const url = 'https://x/v.mp4';
+  const both = storage({ [waveformPath('ci', url)]: NEW, [legacyWaveformPath('ci', url)]: OLD });
+  expect(await loadCachedPeaks('ci', url, both.supabase)).toEqual(NEW);
+
+  const legacyOnly = storage({ [legacyWaveformPath('ci', url)]: OLD });
+  const old = await loadCachedPeaks('ci', url, legacyOnly.supabase);
+  expect(old).toEqual(OLD);
+  expect(old!.hits).toBeUndefined();
+
+  const none = storage({});
+  expect(await loadCachedPeaks('ci', url, none.supabase)).toBeNull();
+  expect(none.videoFetches()).toBe(0); // cache-only: never downloads the video
+});
+
+it('loadOrComputePeaks reads the v3 cache unless forced; forced, it decodes and writes v3', async () => {
+  const url = 'https://x/v.mp4';
+  const cached = storage({ [waveformPath('ci', url)]: OLD });
+  expect(await loadOrComputePeaks('ci', url, cached.supabase)).toEqual(OLD);
+  expect(cached.videoFetches()).toBe(0);
+
+  const forced = storage({ [waveformPath('ci', url)]: OLD });
+  const peaks = await loadOrComputePeaks('ci', url, forced.supabase, { force: true });
+  expect(forced.videoFetches()).toBe(1);
+  expect(peaks.hits?.length).toBe(2);
+  expect(forced.upload).toHaveBeenCalledTimes(1);
+  expect((forced.upload.mock.calls[0] as unknown[])[0]).toBe(waveformPath('ci', url));
+});
+
+it('loadOrComputePeaks does not read the legacy v2 cache (it has no hits), so a miss decodes', async () => {
+  const url = 'https://x/v.mp4';
+  const legacyOnly = storage({ [legacyWaveformPath('ci', url)]: OLD });
+  const peaks = await loadOrComputePeaks('ci', url, legacyOnly.supabase);
+  expect(peaks.hits?.length).toBe(2);
+  expect(legacyOnly.videoFetches()).toBe(1);
 });
