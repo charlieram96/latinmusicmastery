@@ -18,7 +18,7 @@ import {
   type MediaTrim,
 } from '@/lib/playsense-studio/clip-model';
 import { clearUnpublishedDrafts } from '@/lib/playsense-studio/drafts/server';
-import { readNudges } from '@/lib/playsense-studio/drafts/timing';
+import { playFromRow, readNudges } from '@/lib/playsense-studio/drafts/timing';
 import { readFlex, type FlexPoint } from '@/lib/playsense-studio/flex';
 import { rebaseAnchor, secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
 import { getStudioDrafts, type StudioDraft } from '@/app/actions/studio-drafts';
@@ -1434,8 +1434,9 @@ export interface ExerciseMedia {
   videoUrl: string | null;
   /** Where the usable region of the play-along video starts. This is the trim
    *  in-point (migration 040 folded the older linear crop into it), so existing
-   *  cropWindow() callers keep working and automatically honour the trim.
-   *  Ignored when `timeMap` is set (the map fully positions the video). */
+   *  cropWindow() callers keep working and automatically honour the trim. The
+   *  play-along is positioned by `play` (bar 1, count-in, pre-roll); this is
+   *  its clamp, and bar 1 when `play.bar1Seconds` is unset. */
   videoStartSeconds: number;
   /** End of the usable region; null = play to the end of the video. */
   videoTrimOutSeconds: number | null;
@@ -1443,14 +1444,23 @@ export interface ExerciseMedia {
   metronomeAnchorSeconds: number | null;
   /** The musical position (quarter notes) that anchor second lands on. */
   metronomeAnchorQn: number | null;
-  /** Optional time map syncing the play-along video to the graded score's beats.
-   *  When present, consumers position the video by musical position; otherwise
-   *  they fall back to the linear crop (videoStartSeconds). */
+  /** The older exercise time map (exercise_time_map_id), read-only since the
+   *  Studio rework P5: graded owners no longer publish one, and the student
+   *  play-along no longer reads it — `play` (bar 1 and the play settings)
+   *  positions the media. Always null for a jam session. */
   timeMap: ClassItemScorePayload['activeTimeMap'];
   backingTracks: BackingTrack[];
+  /** Studio rework P5: where bar 1 of the graded grid lands on the media, and
+   *  the count-in / pre-roll behaviour around it. bar1Seconds is null until an
+   *  admin places it (or a legacy play-along is backfilled — see migration 044). */
+  play: { bar1Seconds: number | null; countInBars: 1 | 2; preroll: boolean };
 }
 
-/** Read the exercise part's media. Any authenticated user (students included). */
+/** Read the exercise part's media. Any authenticated user (students included).
+ *  For a JAM_SESSION item the media is class_items.audio_url, else its
+ *  video_url (the whole score is graded), and the exercise-video-only columns
+ *  (crop/trim/exercise time map) are skipped — a jam session never has an
+ *  exercise video. */
 export async function getExerciseMedia(
   classItemId: string
 ): Promise<{ data?: ExerciseMedia; error?: string }> {
@@ -1459,11 +1469,13 @@ export async function getExerciseMedia(
   const { data: item, error: itemErr } = await supabase
     .from('class_items')
     .select(
-      'exercise_video_url, exercise_video_start_seconds, exercise_video_trim_in_seconds, exercise_video_trim_out_seconds, exercise_time_map_id, metronome_anchor_seconds, metronome_anchor_qn'
+      'item_type, audio_url, video_url, exercise_video_url, exercise_video_start_seconds, exercise_video_trim_in_seconds, exercise_video_trim_out_seconds, exercise_time_map_id, metronome_anchor_seconds, metronome_anchor_qn, play_bar1_seconds, play_count_in_bars, play_preroll'
     )
     .eq('id', classItemId)
     .single();
   if (itemErr || !item) return { error: itemErr?.message ?? 'Class item not found' };
+
+  const isJamSession = item.item_type === 'JAM_SESSION';
 
   const { data: tracks, error: tracksErr } = await supabase
     .from('class_item_backing_tracks')
@@ -1475,8 +1487,10 @@ export async function getExerciseMedia(
   if (tracksErr) return { error: tracksErr.message };
 
   // Load the exercise video's time map (same waypoint shape as fetchScorePayload).
+  // A JAM_SESSION never has an exercise video or its own sync map — the whole
+  // score is graded and placed by play_bar1_seconds instead.
   let timeMap: ExerciseMedia['timeMap'] = null;
-  if (item.exercise_video_url && item.exercise_time_map_id) {
+  if (!isJamSession && item.exercise_video_url && item.exercise_time_map_id) {
     const { data: tm, error: tmErr } = await supabase
       .from('score_time_maps')
       .select('id, method, params')
@@ -1506,9 +1520,12 @@ export async function getExerciseMedia(
 
   return {
     data: {
-      videoUrl: item.exercise_video_url,
+      // A jam session's media is the class item's audio_url (its video_url when
+      // it only has a video); an exercise's is its own play-along video.
+      videoUrl: isJamSession ? (item.audio_url ?? item.video_url) : item.exercise_video_url,
       // Trim in-point is the source of truth; fall back to the legacy crop for
-      // any row written before 040's backfill.
+      // any row written before 040's backfill. Meaningless for a jam session
+      // (no crop UI exists for it), but harmless to compute.
       videoStartSeconds: item.exercise_video_trim_in_seconds ?? item.exercise_video_start_seconds ?? 0,
       videoTrimOutSeconds: item.exercise_video_trim_out_seconds,
       metronomeAnchorSeconds: item.metronome_anchor_seconds,
@@ -1527,8 +1544,40 @@ export async function getExerciseMedia(
         timeMapId: t.time_map_id,
         gain: t.gain ?? 1,
       })),
+      play: playFromRow(item),
     },
   };
+}
+
+/** Studio rework P5: place bar 1 of a graded owner's grid on its media, and set
+ *  the count-in / pre-roll around it. Admin-only, shared by EXERCISE and
+ *  JAM_SESSION items (both use the same play_* columns). */
+export async function setPlaySettings(input: {
+  classItemId: string;
+  bar1Seconds: number | null;
+  countInBars: 1 | 2;
+  preroll: boolean;
+}): Promise<{ success?: true; error?: string }> {
+  const supabase = await createClient();
+  const admin = await requireAdmin(supabase);
+  if ('error' in admin) return { error: admin.error };
+
+  if (input.countInBars !== 1 && input.countInBars !== 2) {
+    return { error: 'countInBars must be 1 or 2' };
+  }
+
+  const { error } = await supabase
+    .from('class_items')
+    .update({
+      play_bar1_seconds: input.bar1Seconds,
+      play_count_in_bars: input.countInBars,
+      play_preroll: input.preroll,
+    })
+    .eq('id', input.classItemId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/playsense-studio/${input.classItemId}`);
+  return { success: true };
 }
 
 /** Set or clear the exercise-part video + its crop start. Clearing resets the crop. */

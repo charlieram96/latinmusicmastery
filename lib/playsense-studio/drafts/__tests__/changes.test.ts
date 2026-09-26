@@ -16,7 +16,7 @@ describe('change summary', () => {
   it('ignores event ids assigned on open', () => {
     const live = { score: score('A', [m(60, 'a')]), timing: EMPTY_TIMING };
     const draft = { score: score('A', [m(60, 'b')]), timing: EMPTY_TIMING };
-    expect(diffParts(live, draft)).toEqual({ score: false, timing: false, anchor: false });
+    expect(diffParts(live, draft)).toEqual({ score: false, timing: false, anchor: false, play: false });
     expect(summarizeChanges(live, draft)).toEqual(['No changes from the live version']);
   });
   it('counts changed, added and removed bars, title, timing and anchor', () => {
@@ -31,17 +31,33 @@ describe('change summary', () => {
   it('treats a null draft anchor as "keep live", never a change', () => {
     const live = { score: score('A', []), timing: { ...timed(1), anchor: { seconds: 1, qn: 0 } } };
     const draft = { score: score('A', []), timing: { ...timed(1), anchor: null } };
-    expect(diffParts(live, draft)).toEqual({ score: false, timing: false, anchor: false });
+    expect(diffParts(live, draft)).toEqual({ score: false, timing: false, anchor: false, play: false });
   });
   it('treats a draft with fewer than two waypoints as unable to publish timing', () => {
     const live = { score: score('A', []), timing: timed(1) };
     const draft = { score: score('A', []), timing: EMPTY_TIMING };
-    expect(diffParts(live, draft)).toEqual({ score: false, timing: false, anchor: false });
+    expect(diffParts(live, draft)).toEqual({ score: false, timing: false, anchor: false, play: false });
   });
   it('a flex-only edit counts as a timing change', () => {
     const live = { score: score('A', [m(60)]), timing: timed(1) };
     const draft = { score: score('A', [m(60)]), timing: { ...timed(1), params: { flex: [{ src: 1.2, dst: 1.25, anchor: false }] } } };
     expect(diffParts(live, draft).timing).toBe(true);
     expect(summarizeChanges(live, draft)).toContain('Timing changed');
+  });
+  it('a play-only change is the only thing reported, for a graded owner', () => {
+    const live = { score: score('A', [m(60)]), timing: { ...EMPTY_TIMING, play: { bar1Seconds: 1, countInBars: 1 as const, preroll: true } } };
+    const draft = { score: score('A', [m(60)]), timing: { ...EMPTY_TIMING, play: { bar1Seconds: 2.5, countInBars: 2 as const, preroll: false } } };
+    expect(diffParts(live, draft)).toEqual({ score: false, timing: false, anchor: false, play: true });
+    expect(summarizeChanges(live, draft)).toEqual(['Play-along timing changed']);
+  });
+  it('never reports a play change when neither side has one', () => {
+    const live = { score: score('A', []), timing: EMPTY_TIMING };
+    const draft = { score: score('A', []), timing: EMPTY_TIMING };
+    expect(diffParts(live, draft).play).toBe(false);
+  });
+  it('treats a missing draft play as "keep live", never a change — same rule as anchor', () => {
+    const live = { score: score('A', []), timing: { ...EMPTY_TIMING, play: { bar1Seconds: 1, countInBars: 1 as const, preroll: true } } };
+    const draft = { score: score('A', []), timing: EMPTY_TIMING };
+    expect(diffParts(live, draft).play).toBe(false);
   });
 });

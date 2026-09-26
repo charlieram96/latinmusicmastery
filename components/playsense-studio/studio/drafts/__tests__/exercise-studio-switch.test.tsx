@@ -11,13 +11,13 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const stub = vi.hoisted(() => ({
-  studioMounts: [] as Array<{ studioDraft: unknown }>,
+  studioMounts: [] as Array<{ studioDraft: unknown; copySources: unknown }>,
   sectionsMountCount: 0,
 }));
 
 vi.mock('@/app/admin/playsense-studio/[classItemId]/studio-workspace', () => ({
-  StudioWorkspace: (props: { studioDraft: unknown; appBarExtra?: React.ReactNode }) => {
-    stub.studioMounts.push({ studioDraft: props.studioDraft });
+  StudioWorkspace: (props: { studioDraft: unknown; copySources: unknown; appBarExtra?: React.ReactNode }) => {
+    stub.studioMounts.push({ studioDraft: props.studioDraft, copySources: props.copySources });
     return <div>{props.appBarExtra}</div>;
   },
 }));
@@ -30,6 +30,7 @@ vi.mock('@/app/admin/playsense-studio/[classItemId]/video-sections-workspace', (
 
 import { ExerciseStudio } from '@/app/admin/playsense-studio/[classItemId]/exercise-studio';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import type { ClassItemScoreSection } from '@/app/actions/playsense-studio';
 
 const SCORE = { title: 'Graded' } as unknown as ScoreDocument;
 
@@ -116,5 +117,69 @@ describe('ExerciseStudio — switching to Exercise aborts when the draft fetch f
     await clickToggle('Exercise');
     expect(stub.studioMounts.length).toBeGreaterThan(studioMountsAfterWatch);
     expect(stub.studioMounts.at(-1)?.studioDraft).toBeNull();
+  });
+});
+
+describe('ExerciseStudio — copy sources (Studio rework P5, Task 7)', () => {
+  const sectionScore = (title: string) => ({ title } as unknown as ScoreDocument);
+
+  const SECTION_A = {
+    sectionId: 'sec-a',
+    sectionIndex: 0,
+    label: 'stale creation-time label',
+    videoStartSeconds: 0,
+    videoEndSeconds: 10,
+    metronomeAnchorSeconds: null,
+    metronomeAnchorQn: null,
+    scoreDocument: { id: 'sd-a', title: 'Verse A', composer: null, parsedScore: sectionScore('Verse A') },
+    tracks: [],
+    activeTimeMap: null,
+    studioDraft: null,
+  } as unknown as ClassItemScoreSection;
+
+  const SECTION_B_WITH_DRAFT = {
+    sectionId: 'sec-b',
+    sectionIndex: 1,
+    label: 'stale creation-time label b',
+    videoStartSeconds: 10,
+    videoEndSeconds: 20,
+    metronomeAnchorSeconds: null,
+    metronomeAnchorQn: null,
+    scoreDocument: { id: 'sd-b', title: 'Chorus (live)', composer: null, parsedScore: sectionScore('Chorus (live)') },
+    tracks: [],
+    activeTimeMap: null,
+    studioDraft: {
+      score: sectionScore('Chorus (draft)'),
+      timing: { method: 'drag' as const, params: {}, waypoints: [], anchor: null },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+  } as unknown as ClassItemScoreSection;
+
+  it("passes the Watch sections into StudioWorkspace as copy sources, preferring each section's own draft score/title", () => {
+    act(() => {
+      root.render(
+        <ExerciseStudio
+          classItemId="ci-1"
+          title="Lesson"
+          videoUrl="https://example.com/video.mp4"
+          videoDurationSeconds={60}
+          initialSections={[SECTION_A, SECTION_B_WITH_DRAFT]}
+          scoreDocumentId="doc-1"
+          initialScore={SCORE}
+          activeTimeMap={null}
+          initialExerciseMedia={null}
+          initialExerciseDraft={null}
+          fetchSections={vi.fn()}
+          fetchExercise={vi.fn()}
+          fetchExerciseMedia={vi.fn()}
+          fetchExerciseDraft={vi.fn()}
+        />
+      );
+    });
+
+    expect(stub.studioMounts.at(-1)?.copySources).toEqual([
+      { id: 'sec-a', title: 'Verse A', score: SECTION_A.scoreDocument.parsedScore },
+      { id: 'sec-b', title: 'Chorus (draft)', score: SECTION_B_WITH_DRAFT.studioDraft!.score },
+    ]);
   });
 });

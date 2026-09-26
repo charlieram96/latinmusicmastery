@@ -120,19 +120,22 @@ function engineBpm(quarterNoteBpm: number, timeSignature: [number, number]): num
  * mid-score time-signature changes; the engine's uniform `bpm` + `timeSignature`
  * only ever reflect measure 1.
  *
- * Deliberately ignores `m.tempoChange`: the live scores carry stale per-measure
- * tempo values left over from MusicXML import that disagree with the
- * admin-set `initialTempo` (the Studio's only tempo control), so honouring them
- * would re-time live grading against a value the admin never set. Every
- * measure runs at `score.initialTempo` until Plan 3 gives tempo marks a
- * visible editor and the engine can trust them.
+ * Honours `m.tempoChange` (quarter-note BPM, in force from that measure to the
+ * next one that sets it) only when `score.tempoMarksConfirmed === true` — the
+ * admin has reviewed the per-bar marks and confirmed they're intentional.
+ * Until then every measure runs at `score.initialTempo`: live scores can carry
+ * stale per-measure tempo values left over from MusicXML import that disagree
+ * with the admin-set `initialTempo` (the Studio's only tempo control before
+ * marks are confirmed), so honouring them un-reviewed would re-time live
+ * grading against a value the admin never set.
  */
 export function buildExerciseGrid(score: ScoreDocument, track: Track): ExerciseGrid {
   const measureStartSec = [0], measureStartQN = [0], secPerQN: number[] = [], beatQN: number[] = []
   let ts = score.initialTimeSignature
-  const spq = 60 / score.initialTempo
+  let spq = 60 / score.initialTempo
   for (const m of track.measures) {
     if (m.timeSignature) ts = m.timeSignature
+    if (score.tempoMarksConfirmed && m.tempoChange !== undefined) spq = 60 / m.tempoChange
     const bar = measureLengthInQN(ts)
     secPerQN.push(spq)
     beatQN.push(beatLengthInQN(ts))

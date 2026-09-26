@@ -8,16 +8,26 @@ const waypointSchema = z.object({
   beatInMeasure: z.number().nullable(),
 });
 
+/** Studio rework P5: bar 1 placement + count-in/pre-roll for a graded owner
+ *  (EXERCISE, JAM_SESSION). Optional — only graded owners ever set it. */
+const playSchema = z.object({
+  bar1Seconds: z.number().nullable(),
+  countInBars: z.union([z.literal(1), z.literal(2)]),
+  preroll: z.boolean(),
+});
+
 export const studioTimingSchema = z.object({
   method: z.enum(['tempo', 'tap', 'drag', 'midi']),
   params: z.record(z.string(), z.unknown()),
   waypoints: z.array(waypointSchema),
   anchor: z.object({ seconds: z.number(), qn: z.number().nullable() }).nullable(),
+  play: playSchema.optional(),
 });
 
 export type StudioTiming = z.infer<typeof studioTimingSchema>;
 export type StudioWaypoint = StudioTiming['waypoints'][number];
 export type StudioAnchor = NonNullable<StudioTiming['anchor']>;
+export type StudioPlay = NonNullable<StudioTiming['play']>;
 export type StudioNudge = { qn: number; deltaSeconds: number };
 
 /** A song, or an owner never synced: no waypoints, no anchor. */
@@ -32,6 +42,19 @@ export function readNudges(params: unknown): StudioNudge[] {
       !!n && typeof n.qn === 'number' && Number.isFinite(n.qn) &&
       typeof n.deltaSeconds === 'number' && Number.isFinite(n.deltaSeconds)
   );
+}
+
+/** Coerces class_items' three play_* columns the same way everywhere.
+ *  getExerciseMedia (the student read) and resolveOwner (the Studio draft
+ *  seed) must never disagree on these defaults — otherwise an admin who never
+ *  touched play settings could still see a phantom "Play-along timing
+ *  changed" from the two sides computing slightly different values. */
+export function playFromRow(row: { play_bar1_seconds: number | null; play_count_in_bars: number; play_preroll: boolean }): StudioPlay {
+  return {
+    bar1Seconds: row.play_bar1_seconds ?? null,
+    countInBars: row.play_count_in_bars === 2 ? 2 : 1,
+    preroll: row.play_preroll ?? true,
+  };
 }
 
 const METHODS = ['tempo', 'tap', 'drag', 'midi'] as const;

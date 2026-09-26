@@ -2410,7 +2410,9 @@
         "mute": "Mute",
         "unmute": "Unmute",
         "trackLevel": "{track} level",
-        "referenceVideo": "Instructor reference video"
+        "referenceVideo": "Instructor reference video",
+        "enableSoundHint": "Tap to enable sound",
+        "enableSound": "Enable sound"
       },
       "lessonMode": {
         "crumbLabel": "Course and module",

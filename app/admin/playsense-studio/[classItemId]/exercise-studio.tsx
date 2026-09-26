@@ -29,7 +29,7 @@
 // the 'use server' actions module itself.
 
 import { Loader2, MonitorPlay, Target } from 'lucide-react';
-import { useCallback, useEffect, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import type { MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type {
   ClassItemScorePayload,
@@ -113,6 +113,20 @@ export function ExerciseStudio({
   const [exerciseDraft, setExerciseDraft] = useState<StudioDraft | null>(initialExerciseDraft);
   // Bump on every refetch so the remounting workspace reseeds from fresh data.
   const [switchCount, setSwitchCount] = useState(0);
+
+  // "Copy notes from a Watch section" (Studio rework P5, Task 7): each Watch
+  // section's score, preferring its own unpublished draft when there is one —
+  // copying should hand over what the admin is currently authoring, not a
+  // stale published version.
+  const copySources = useMemo(
+    () =>
+      sections.map((s) => ({
+        id: s.sectionId,
+        title: s.studioDraft?.score.title ?? s.scoreDocument.title,
+        score: s.studioDraft?.score ?? s.scoreDocument.parsedScore,
+      })),
+    [sections]
+  );
 
   const switchPart = (next: Part) => {
     if (next === part || isSwitching) return;
@@ -217,6 +231,7 @@ export function ExerciseStudio({
         exerciseMedia={exerciseMedia}
         studioDraft={exerciseDraft}
         onDraftContent={(c) => setExerciseDraft({ ...c, updatedAt: new Date().toISOString() })}
+        copySources={copySources}
       />
     );
   }

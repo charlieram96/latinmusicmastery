@@ -14,7 +14,7 @@ import {
 import { ScoreExerciseGame } from './score-exercise-game'
 import { ActionMessage, LessonAction } from './lesson-mode/lesson-frame'
 import { useTranslation } from '@/components/language-provider'
-import type { BackingTrack } from '@/app/actions/playsense-studio'
+import type { BackingTrack, ExerciseMedia } from '@/app/actions/playsense-studio'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
 
@@ -33,14 +33,17 @@ interface ExerciseViewProps {
   playerLayout?: 'stack' | 'split'
   /** Instrument backing tracks for the play part (student selects before starting). */
   backingTracks?: BackingTrack[]
-  /** Optional exercise-part video. Cropped to the score's length, or synced to
-   *  the notation via `timeMap` when one is published. */
+  /** Optional exercise-part video, placed by `play` (bar 1 and the play
+   *  settings) within its trim. `timeMap` is the older exercise map, no longer
+   *  read by the game. */
   exerciseVideo?: {
     url: string
     startSeconds: number
     trimOutSeconds?: number | null
     timeMap: PlaysenseStudioPlayerTimeMap | null
   } | null
+  /** Published play settings (count-in, bar 1, pre-roll) for the graded game. */
+  play?: ExerciseMedia['play'] | null
   /** Named in the Watch message ("Watch {teacher} play it once"). */
   teacherName?: string | null
 }
@@ -64,6 +67,7 @@ export function ExerciseView({
   playerLayout = 'stack',
   backingTracks,
   exerciseVideo,
+  play = null,
   teacherName = null,
 }: ExerciseViewProps) {
   // Demo first: start in Watch when there's a video; otherwise go straight to play.
@@ -96,6 +100,7 @@ export function ExerciseView({
         score={score}
         backingTracks={backingTracks}
         exerciseVideo={exerciseVideo}
+        play={play}
       />
     )
   }
@@ -215,6 +220,7 @@ export function ExerciseView({
       onWatchDemo={goToWatch}
       backingTracks={backingTracks}
       exerciseVideo={exerciseVideo}
+      play={play}
     />
   )
 }

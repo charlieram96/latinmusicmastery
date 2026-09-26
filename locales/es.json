@@ -2410,7 +2410,9 @@
         "mute": "Silenciar",
         "unmute": "Activar sonido",
         "trackLevel": "Volumen de {track}",
-        "referenceVideo": "Video de referencia del instructor"
+        "referenceVideo": "Video de referencia del instructor",
+        "enableSoundHint": "Toca para activar el sonido",
+        "enableSound": "Activar sonido"
       },
       "lessonMode": {
         "crumbLabel": "Curso y módulo",

@@ -20,7 +20,7 @@
 // ExerciseStudio, already has one higher up — see drafts-context.tsx) so it
 // can be mounted standalone from a page.tsx.
 
-import { ArrowLeft, Activity, FileUp, Film, MonitorPlay, Music, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
+import { ArrowLeft, Activity, Copy, Eye, FileUp, Film, MonitorPlay, Music, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
@@ -37,7 +37,10 @@ import { StudioDraftsProvider } from '@/components/playsense-studio/studio/draft
 import { PublishControl } from '@/components/playsense-studio/studio/drafts/publish-control';
 import { HistoryPanel } from '@/components/playsense-studio/studio/drafts/history-panel';
 import { workspaceSeed } from '@/lib/playsense-studio/drafts/seed';
-import { EMPTY_TIMING, timingToTimeMap, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
+import { EMPTY_TIMING, timingToTimeMap, type StudioPlay, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
+import { buildExerciseGrid, scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise';
+import { generateExpectedTimestamps } from '@/lib/play-sense/exercise-utils';
+import { gridQNAtSeconds } from '@/lib/play-sense/grid';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
@@ -49,6 +52,12 @@ import { HoverRail } from '@/components/playsense-studio/studio/shell/hover-rail
 import { FloatingVideo } from '@/components/playsense-studio/studio/shell/floating-video';
 import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { copySectionScore } from '@/lib/playsense-studio/copy-section';
+import { StudentPreviewDialog } from '@/components/playsense-studio/studio/student-preview-dialog';
+
+/** A graded part with no placement yet: bar 1 at the trim-in, a 1-bar
+ *  count-in, pre-roll on (the migration 044 defaults). */
+const DEFAULT_PLAY: StudioPlay = { bar1Seconds: null, countInBars: 1, preroll: true };
 
 export type StudioOwner =
   | { kind: 'classItem'; classItemId: string }
@@ -69,6 +78,10 @@ export interface StudioWorkspaceProps {
   backHref?: string;
   /** Class-item authoring mode. Songs (no video) ignore this — defaults to 'video'. */
   mode?: StudioMode;
+  /** Class-item authoring, graded workspace only (Studio rework P5, Task 8):
+   *  which item_type this is, so the media rail can tell a jam's own track
+   *  (authored in the course editor) from an exercise's play-along video. */
+  itemType?: 'EXERCISE' | 'JAM_SESSION';
   title: string;
   videoUrl: string | null;
   scoreDocumentId: string;
@@ -85,6 +98,9 @@ export interface StudioWorkspaceProps {
    *  owner's draft — lets a host (e.g. ExerciseStudio) cache it locally so
    *  switching back to this part later reseeds from it without a refetch. */
   onDraftContent?: (c: { score: ScoreDocument; timing: StudioTiming }) => void;
+  /** EXERCISE items only (Studio rework P5): the Watch sections' scores,
+   *  offered by "Copy notes from a Watch section" in the exercise score stage. */
+  copySources?: Array<{ id: string; title: string; score: ScoreDocument }>;
 }
 
 /** The draft owner a StudioWorkspace saves under: a class item's own score
@@ -112,6 +128,7 @@ function StudioWorkspaceBody({
   owner,
   backHref: classItemBackHref = '/admin/courses',
   mode = 'video',
+  itemType,
   title,
   videoUrl,
   scoreDocumentId,
@@ -122,12 +139,17 @@ function StudioWorkspaceBody({
   exerciseMedia,
   studioDraft,
   onDraftContent,
+  copySources = [],
 }: StudioWorkspaceProps) {
   const draftOwner = draftOwnerOf(owner);
 
   // The exercise studio shows the highway inline (under the notation) and the
   // play-part media panel in the rail; other modes keep the preview drawer.
   const isExercise = mode === 'exercise' && owner.kind === 'classItem';
+  // A jam session's graded workspace (Studio rework P5, Task 8): same shell as
+  // an exercise's play part, but its media is class_items.audio_url, authored
+  // in the course editor rather than uploaded here.
+  const jam = itemType === 'JAM_SESSION';
 
   // What this workspace opens on: the owner's unpublished draft, else live.
   // Mount-only — a later prop change (e.g. a parent refetch) doesn't reseed an
@@ -192,15 +214,86 @@ function StudioWorkspaceBody({
     trimOutSeconds: exerciseMedia?.videoTrimOutSeconds ?? null,
   });
 
-  // Uploading/removing the play-along video invalidates any prior sync map —
-  // and any trim, which was measured against the old file's timeline. This
+  // --- Graded play-along (Studio rework P5) ---
+  // The exercise's play settings live in the draft's `timing.play`; bar 1
+  // falls back to the trim-in point until the admin places it. The graded
+  // onsets (one loop, seconds from bar 1, one per distinct onset — a chord is
+  // one onset) are what Auto-align and the "notes on a hit" readout measure.
+  // A draft saved before P5 has no `play` (publish reads that as "keep live"),
+  // so it shows the live settings rather than the defaults.
+  const exercisePlay: StudioPlay = draft.timing.play ?? exerciseMedia?.play ?? DEFAULT_PLAY;
+  const handlePlayChange = useCallback(
+    (patch: Partial<StudioPlay>) => draft.setTiming({ play: { ...exercisePlay, ...patch } }),
+    [draft, exercisePlay]
+  );
+  const gradedGrid = useMemo(
+    () => (isExercise && state.score.tracks[0] ? buildExerciseGrid(state.score, state.score.tracks[0]) : null),
+    [isExercise, state.score]
+  );
+  // One exercise definition of the draft score, shared by the graded onsets
+  // and the Student preview.
+  const draftExercise = useMemo(() => scoreToExerciseDefinition(state.score), [state.score]);
+  const gradedOnsets = useMemo(() => {
+    if (!isExercise) return [];
+    const out: number[] = [];
+    for (const e of generateExpectedTimestamps({ ...draftExercise, loopCount: 1 })) {
+      if (!out.length || e.timestamp - out[out.length - 1] > 1e-6) out.push(e.timestamp);
+    }
+    return out;
+  }, [isExercise, draftExercise]);
+  const gradedBar1 = exercisePlay.bar1Seconds ?? exerciseTrim.trimInSeconds;
+  // Backing clips record position_qn on the tempo grid from bar 1. Without a
+  // grid, or when the result isn't finite, it returns undefined so the save
+  // skips the position_qn write (never a NaN in the column).
+  const mediaToQN = useCallback(
+    (mediaSeconds: number): number | undefined => {
+      if (!gradedGrid) return undefined;
+      const qn = gridQNAtSeconds(gradedGrid, mediaSeconds - gradedBar1);
+      return Number.isFinite(qn) ? qn : undefined;
+    },
+    [gradedGrid, gradedBar1]
+  );
+
+  // --- Student preview (Studio rework P5, Task 7) ---
+  // The real ScoreExerciseGame, in preview mode, over the draft's own score,
+  // play settings, current (possibly unsaved) media and backing tracks — so
+  // the preview can never drift from what students see.
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const previewVideo = useMemo(
+    () =>
+      exerciseVideoUrl
+        ? {
+            url: exerciseVideoUrl,
+            startSeconds: exerciseTrim.trimInSeconds,
+            trimOutSeconds: exerciseTrim.trimOutSeconds,
+            timeMap: null,
+          }
+        : null,
+    [exerciseVideoUrl, exerciseTrim]
+  );
+
+  // --- Copy notes from a Watch section (Studio rework P5, Task 7) ---
+  const [copyMenuOpen, setCopyMenuOpen] = useState(false);
+  const applyCopiedSection = useCallback(
+    (source: ScoreDocument, sectionTitle: string) => {
+      // The menu closes either way: a declined confirm is a finished choice.
+      setCopyMenuOpen(false);
+      if (!window.confirm(`Replace the exercise notes with "${sectionTitle}"? You can undo this.`)) return;
+      const current = state.score;
+      dispatch({ type: 'apply-structural-score', score: copySectionScore(source, current), expectedScore: current });
+    },
+    [dispatch, state.score]
+  );
+
+  // Uploading/removing the play-along video invalidates any prior placement —
+  // bar 1 and any trim were measured against the old file's timeline. This
   // must reach the draft: setTiming (not replaceTiming) marks it dirty so the
-  // reset itself autosaves — otherwise a stale map could still be published
-  // for a video that no longer matches it (or, for a removal, is gone).
+  // reset itself autosaves — otherwise a stale placement could still be
+  // published for a video that no longer matches it (or, for a removal, is gone).
   const handleExerciseVideoChange = (url: string | null) => {
     setExerciseVideoUrl(url);
     setExerciseTrim({ trimInSeconds: 0, trimOutSeconds: null });
-    draft.setTiming({ ...EMPTY_TIMING, anchor: draft.timing.anchor });
+    draft.setTiming({ ...EMPTY_TIMING, anchor: draft.timing.anchor, play: { ...exercisePlay, bar1Seconds: null } });
     if (!url) setExerciseStage('score');
   };
 
@@ -322,6 +415,49 @@ function StudioWorkspaceBody({
             </button>
           </div>
         )}
+
+        {/* Exercise score stage only: replace the graded notes wholesale with
+            a Watch section's (Studio rework P5, Task 7). */}
+        {isExercise && exerciseStage === 'score' && (
+          <div className="relative">
+            <button
+              type="button"
+              className="st-chip"
+              onClick={() => setCopyMenuOpen((v) => !v)}
+              disabled={copySources.length === 0}
+              aria-haspopup="true"
+              aria-expanded={copyMenuOpen}
+              title={
+                copySources.length === 0
+                  ? 'No Watch sections to copy notes from yet'
+                  : "Replace the exercise notes with a Watch section's"
+              }
+            >
+              <Copy className="h-4 w-4" />
+              <span className="hidden lg:inline">Copy notes from a Watch section</span>
+            </button>
+            {copyMenuOpen && copySources.length > 0 && (
+              <>
+                <div className="st-pop-scrim" onClick={() => setCopyMenuOpen(false)} />
+                <div className="st-pop">
+                  <span className="st-pop-label">Copy notes from a Watch section</span>
+                  {copySources.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="st-pop-item"
+                      onClick={() => applyCopiedSection(s.score, s.title)}
+                    >
+                      <span className="tx">
+                        <span className="t">{s.title}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
         {owner.kind === 'song' && <SongMetaControls owner={owner} />}
 
         <div className="ml-auto flex items-center gap-2">
@@ -336,6 +472,20 @@ function StudioWorkspaceBody({
             >
               <PanelBottom className="h-4 w-4" />
               <span className="hidden sm:inline">Preview</span>
+            </button>
+          )}
+
+          {/* Runs the real student game in preview mode (exercises and jam
+              sessions alike — Studio rework P5, Task 7). */}
+          {isExercise && (
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(true)}
+              className="st-chip"
+              title="Preview the exercise the way a student plays it"
+            >
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline">Student preview</span>
             </button>
           )}
 
@@ -418,8 +568,8 @@ function StudioWorkspaceBody({
                       classItemId={owner.classItemId}
                       scoreLengthSeconds={scoreLengthSeconds}
                       initialMedia={exerciseMedia}
-                      hasTimeMap={!!draftTimeMap}
                       onVideoChange={handleExerciseVideoChange}
+                      jam={jam}
                     />
                   ),
                 }]
@@ -436,26 +586,32 @@ function StudioWorkspaceBody({
           )}
 
           {showExerciseSync ? (
-            // Sync the play-along video to the graded score → exercise_time_map_id.
+            // Place the play-along video under the graded score: bar 1 on the
+            // tempo grid (timing.play), never a drag map. Legacy waypoints or an
+            // anchor on an old exercise draft are ignored here.
             <SyncPanel
               key={draft.timingEpoch}
               classItemId={mediaOwnerId}
-              mode="video"
+              mode="graded"
               publishTarget="exercise"
               videoUrl={exerciseVideoUrl}
               score={state.score}
               dispatch={dispatch}
-              activeTimeMap={draftTimeMap}
+              activeTimeMap={null}
               videoDurationSeconds={null}
               trim={exerciseTrim}
               onTrimDrag={handleExerciseTrimDrag}
-              initialMetronomeAnchorSeconds={draft.timing.anchor?.seconds ?? null}
+              initialMetronomeAnchorSeconds={null}
+              play={exercisePlay}
+              onPlayChange={handlePlayChange}
+              gradedOnsets={gradedOnsets}
               renderBackingLanes={(v) =>
                 owner.kind === 'classItem' && exerciseMedia ? (
                   <BackingLanesPanel
                     classItemId={owner.classItemId}
                     tracks={exerciseMedia.backingTracks}
-                    timeMap={draftTimeMap}
+                    timeMap={null}
+                    mediaToQN={mediaToQN}
                     view={v}
                   />
                 ) : null
@@ -532,6 +688,18 @@ function StudioWorkspaceBody({
             />
           </div>
         </div>
+      )}
+
+      {isExercise && previewOpen && (
+        <StudentPreviewDialog
+          exercise={draftExercise}
+          score={state.score}
+          exerciseVideo={previewVideo}
+          play={exercisePlay}
+          backingTracks={exerciseMedia?.backingTracks}
+          mediaAudible={jam}
+          onClose={() => setPreviewOpen(false)}
+        />
       )}
     </div>
   );

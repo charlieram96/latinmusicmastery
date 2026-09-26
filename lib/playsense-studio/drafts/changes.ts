@@ -19,12 +19,21 @@ const timingCanon = (t: StudioTiming) =>
   });
 const anchorCanon = (a: StudioAnchor | null) =>
   a ? canon([round(a.seconds), a.qn == null ? null : round(a.qn)]) : 'null';
+const playCanon = (p: StudioTiming['play']) =>
+  p ? canon([p.bar1Seconds == null ? null : round(p.bar1Seconds), p.countInBars, p.preroll]) : 'null';
 
 /** publishTimeMap seeds/rebases the live anchor itself, and the Studio UI never
  *  clears one — it only sets one. So a null draft anchor means "never touched",
  *  not "cleared": it's never a change, and (in publishStudioDraft) never written. */
 export function anchorChanged(live: StudioAnchor | null, draft: StudioAnchor | null): boolean {
   return draft != null && anchorCanon(draft) !== anchorCanon(live);
+}
+
+/** Same rule as anchorChanged: a missing draft play (undefined — every
+ *  non-graded owner, or a graded one whose editor hasn't loaded it yet) means
+ *  "keep live", not "cleared", so it's never a change. */
+function playChanged(live: StudioTiming['play'], draft: StudioTiming['play']): boolean {
+  return draft != null && playCanon(draft) !== playCanon(live);
 }
 
 export function diffParts(live: StudioContent, draft: StudioContent) {
@@ -34,6 +43,8 @@ export function diffParts(live: StudioContent, draft: StudioContent) {
     // two), so a draft that thin is never "changed" timing.
     timing: draft.timing.waypoints.length >= 2 && timingCanon(live.timing) !== timingCanon(draft.timing),
     anchor: anchorChanged(live.timing.anchor, draft.timing.anchor),
+    // Graded owners (EXERCISE, JAM_SESSION) only: bar 1 + count-in/pre-roll.
+    play: playChanged(live.timing.play, draft.timing.play),
   };
 }
 
@@ -53,6 +64,7 @@ export function summarizeChanges(live: StudioContent, draft: StudioContent): str
   const parts = diffParts(live, draft);
   if (parts.timing) lines.push('Timing changed');
   if (parts.anchor) lines.push('Click anchor changed');
+  if (parts.play) lines.push('Play-along timing changed');
   if (!lines.length && parts.score) lines.push('Score details changed');
   return lines.length ? lines : ['No changes from the live version'];
 }

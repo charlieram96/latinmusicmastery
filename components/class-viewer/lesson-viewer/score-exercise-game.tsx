@@ -1,16 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
-import type { BackingTrack } from '@/app/actions/playsense-studio'
+import type { BackingTrack, ExerciseMedia } from '@/app/actions/playsense-studio'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
-import { getExerciseDuration } from '@/lib/play-sense/exercise-utils'
+import { getLoopDuration, getSessionCountInSeconds } from '@/lib/play-sense/exercise-utils'
 import { timelineToEngineSeconds } from '@/lib/play-sense/backing-track-timing'
-import {
-  WaypointTimeMap,
-  type SyncMethod,
-} from '@/components/playsense-studio/shared/time-map/time-map'
+import { expectedMediaTime, followRate, type PlayMedia } from '@/lib/play-sense/play-follow'
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
 import { useStageDemoSession } from '@/hooks/use-stage-demo-session'
@@ -47,6 +44,44 @@ import { StaffRenderer } from '@/components/playsense-studio/player/notation/ren
 import { usePlaysense } from '@/contexts/playsense-context'
 import { finishedExercise } from '@/lib/courses/lesson-completion'
 
+type PitchPreservingMedia = HTMLMediaElement & {
+  webkitPreservesPitch?: boolean
+  mozPreservesPitch?: boolean
+}
+
+// Module-level, not a closure: mirrors lib/playsense-studio/use-flex-playback.ts's
+// own setFlexPitch — a plain DOM element parameter rather than a captured
+// value the React Compiler lint would flag as a render-time mutation.
+function setPreservesPitch(el: PitchPreservingMedia): void {
+  el.preservesPitch = true
+  if ('webkitPreservesPitch' in el) el.webkitPreservesPitch = true
+  if ('mozPreservesPitch' in el) el.mozPreservesPitch = true
+}
+
+const MEDIA_CLASS = 'h-full w-full bg-black object-contain'
+
+// The play-along element is created once and kept (see ensureMediaEl): this
+// applies the current props to it. Muted unless audible (a jam's own track),
+// which also forces pitch preservation (the follow trims the rate ±3 %).
+function applyMediaProps(el: HTMLVideoElement, url: string, audible: boolean, label: string): void {
+  if (el.getAttribute('src') !== url) el.src = url
+  el.muted = !audible
+  el.toggleAttribute('muted', !audible)
+  el.setAttribute('playsinline', '')
+  el.preload = 'auto'
+  el.className = MEDIA_CLASS
+  el.setAttribute('aria-label', label)
+  if (audible) setPreservesPitch(el as PitchPreservingMedia)
+}
+
+/** A play() refused by the browser's autoplay policy (not a play() cut short by a pause). */
+function isAutoplayRefusal(err: unknown): boolean {
+  return (err as { name?: string } | null)?.name === 'NotAllowedError'
+}
+
+/** Beyond this start lag an audible track hard-seeks once it is running. */
+const START_SEEK_SECONDS = 0.03
+
 interface ScoreExerciseGameProps {
   /** The exercise derived from the authored score (see lib/play-sense/score-to-exercise). */
   exercise: ExerciseDefinition
@@ -62,17 +97,29 @@ interface ScoreExerciseGameProps {
    *  engine's backing audio. Each track carries its own position and trim,
    *  set in the studio and converted to engine time here. */
   backingTracks?: BackingTrack[]
-  /** Optional exercise-part video: plays MUTED in sync with the engine clock.
-   *  Positioned by `timeMap` (beat-accurate) when published, else by its crop
-   *  offset (window length = the score's length). */
+  /** The published play settings (Studio rework P5): the count-in length
+   *  applies to every take; bar 1 and pre-roll place the play-along video.
+   *  Absent = a one-bar count-in, pre-roll on, bar 1 at the video's trim-in. */
+  play?: ExerciseMedia['play'] | null
+  /** Optional exercise-part video: plays MUTED by default, following the
+   *  engine clock from `play.bar1Seconds` (or the trim-in point when bar 1
+   *  is unset). See `mediaAudible` for the one exception. */
   exerciseVideo?: {
     url: string
     /** Trim in-point: where the usable region of the video starts. */
     startSeconds: number
     /** End of the usable region; null = play to the end. */
     trimOutSeconds?: number | null
+    /** The older exercise time map. No longer read here: bar 1 places the video and its backing tracks. */
     timeMap: PlaysenseStudioPlayerTimeMap | null
   } | null
+  /** A jam session's own track (Studio rework P5, Task 8 fix round 1): unlike
+   *  an exercise's silent reference video, the student must actually hear
+   *  this one, so the media element plays UNMUTED and with pitch
+   *  preservation forced on — the clock-follow effect trims its rate by up
+   *  to ±3%, and an unpitched rate change would slide the key. Exercises
+   *  never set this; it defaults to false (muted, no forced pitch setting). */
+  mediaAudible?: boolean
 }
 
 /**
@@ -94,7 +141,9 @@ function ScoreExerciseSession({
   onWatchDemo,
   backingTracks,
   exerciseVideo,
+  play,
   preview = false,
+  mediaAudible = false,
 }: ScoreExerciseGameProps) {
   const { t } = useTranslation()
   const completePerformance = useLessonActivity('performance')
@@ -133,90 +182,165 @@ function ScoreExerciseSession({
   const entryFor = (id: string) => mix[id] ?? DEFAULT_MIX_ENTRY
   const tracksOn = (backingTracks ?? []).filter((track) => !entryFor(track.id).muted).length
 
-  // --- Optional exercise video, synced to the engine clock ---
-  // Muted visual reference: seek to the start on countdown, play during
-  // 'playing', and re-seek only when drifted (>0.35s) so it stays smooth.
-  // When a time map is published the video is positioned by musical position
-  // (beat-accurate); otherwise it falls back to the linear crop offset.
+  // --- Optional exercise video, following the engine clock ---
+  // One element for the whole visit, created on first use and moved into the
+  // workspace while the stage shows. An audible track (a jam) must be played
+  // inside a click to satisfy Safari/iOS autoplay rules, and the Ready check
+  // and Part done screens, where Start/Retry are clicked, show no media: the
+  // element they prime has to be the one that plays afterwards.
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const exerciseDurationSec = useMemo(() => getExerciseDuration(exercise), [exercise])
-  const videoMap = useMemo(() => {
-    const tm = exerciseVideo?.timeMap
-    if (!tm || tm.waypoints.length < 2) return null
-    try {
-      return new WaypointTimeMap(tm.id, tm.method as SyncMethod, tm.waypoints)
-    } catch {
-      return null
-    }
-  }, [exerciseVideo])
+  const videoUrl = exerciseVideo?.url ?? null
+  const videoLabel = t('dashboard.classViewer.exercise.referenceVideo')
+  const ensureMediaEl = useCallback((): HTMLVideoElement | null => {
+    if (!videoUrl) return null
+    const el = videoRef.current ?? document.createElement('video')
+    videoRef.current = el
+    applyMediaProps(el, videoUrl, mediaAudible, videoLabel)
+    return el
+  }, [videoUrl, mediaAudible, videoLabel])
+  useEffect(() => {
+    if (videoRef.current) ensureMediaEl()
+  }, [ensureMediaEl])
+  const mountMedia = useCallback((slot: HTMLDivElement | null) => {
+    const el = slot ? ensureMediaEl() : null
+    if (!slot || !el) return
+    slot.appendChild(el)
+    return () => { if (el.parentNode === slot) slot.removeChild(el) }
+  }, [ensureMediaEl])
 
-  // Studio placement is stored on the VIDEO timeline; the engine runs on a
-  // fixed-BPM grid whose t0 is measure 1 beat 1. Convert here, where the time
-  // map already exists, and hand the session clips already in engine seconds —
-  // that keeps time-map knowledge in exactly one place.
+  // Safari/iOS may still refuse an audible play(): offer a tap to retry it.
+  const [soundBlocked, setSoundBlocked] = useState(false)
+  /** Play the audible track synchronously inside a click (Start, Retry, the
+   *  notice), then pause it again: the follow loop positions and runs it. */
+  const primeMedia = () => {
+    if (!mediaAudible) return
+    const v = ensureMediaEl()
+    if (!v) return
+    const wasPaused = v.paused
+    const started = v.play()
+    if (wasPaused) v.pause()
+    setSoundBlocked(false)
+    void started?.catch((err) => { if (isAutoplayRefusal(err)) setSoundBlocked(true) })
+  }
+  const start = () => { primeMedia(); void session.startExercise() }
+  const loopSeconds = useMemo(() => getLoopDuration(exercise), [exercise])
+  const exerciseDurationSec = loopSeconds * exercise.loopCount
+  const countInBars = play?.countInBars ?? 1
+  // Where the play-along shows bar 1: the published bar 1, else the trim
+  // in-point (exerciseVideo.startSeconds IS the trim in-point; 040 folded the
+  // old crop into it).
+  const bar1 = exerciseVideo ? play?.bar1Seconds ?? exerciseVideo.startSeconds : null
+
+  // Backing tracks. With a video they are placed against it, so on the clock
+  // (video = bar 1 + engine) a clip starts at its timeline position less bar 1.
+  // Students never read positionQn: live rows carry stale values. Without a
+  // video, the timeline IS the score grid, placed exactly as before.
   const placedTracks = useMemo(
     () =>
       (backingTracks ?? []).map((track) => ({
         id: track.id,
         audioUrl: track.audioUrl,
-        startSeconds: timelineToEngineSeconds(
-          track.timelineStartSeconds,
-          videoMap,
-          { bpm: exercise.bpm, timeSignature: exercise.timeSignature, grid: exercise.grid },
-          exerciseVideo?.startSeconds ?? 0
-        ),
+        startSeconds: bar1 !== null
+          ? track.timelineStartSeconds - bar1
+          : timelineToEngineSeconds(
+              track.timelineStartSeconds,
+              null,
+              { bpm: exercise.bpm, timeSignature: exercise.timeSignature, grid: exercise.grid },
+              0
+            ),
         trimInSeconds: track.trimInSeconds,
         trimOutSeconds: track.trimOutSeconds,
         gain: track.gain,
       })),
-    [backingTracks, videoMap, exercise.bpm, exercise.timeSignature, exercise.grid, exerciseVideo]
+    [backingTracks, bar1, exercise.bpm, exercise.timeSignature, exercise.grid]
   )
 
   // An explicit (possibly empty) selection only when backing tracks are
   // authored; otherwise the legacy path (exercise.audioUrl) stays in charge.
-  const liveSession = useExerciseSession(backingTracks ? { backingTracks: placedTracks, backingMix: mix } : {})
+  const liveSession = useExerciseSession(backingTracks ? { backingTracks: placedTracks, backingMix: mix, countInBars } : { countInBars })
   const demoExercises = useMemo(() => [exercise], [exercise])
   const demoSession = useStageDemoSession(demoExercises, preview)
   const session = preview ? { ...liveSession, ...demoSession.overrides } : liveSession
   const stableExercise = useMemo(() => exercise, [exercise])
 
+  // Where the video shows bar 1 and how it behaves around the count-in.
+  const playMedia = useMemo<PlayMedia | null>(() => exerciseVideo && bar1 !== null ? {
+    bar1,
+    trimIn: exerciseVideo.startSeconds,
+    trimOut: exerciseVideo.trimOutSeconds ?? null,
+    countInSeconds: getSessionCountInSeconds(exercise, countInBars),
+    preroll: play?.preroll ?? true,
+    loopSeconds,
+  } : null, [exerciseVideo, bar1, play, exercise, countInBars, loopSeconds])
+
+  // Each frame, ask where the video should be at the engine time and trim its
+  // rate toward it (±3 %); hard-seek only on a large drift or a loop wrap.
+  const getElapsedSeconds = session.getElapsedSeconds
   useEffect(() => {
     const v = videoRef.current
-    if (!v || !exerciseVideo) return
-    // The map covers one pass; progress spans all loops — fold it back per pass.
-    const loops = Math.max(1, exercise.loopCount || 1)
-    // exerciseVideo.startSeconds IS the trim in-point (040 folded the old crop
-    // into it), so the usable region starts no earlier than there.
-    const trimIn = exerciseVideo.startSeconds
-    const trimOut = exerciseVideo.trimOutSeconds ?? Infinity
-    const videoStart = Math.max(videoMap ? videoMap.videoStart : trimIn, trimIn)
-    if (session.sessionState === 'playing') {
-      let expected: number
-      if (videoMap) {
-        const withinPass = (session.playheadProgress * loops) % 1
-        expected = videoMap.toVideoTime(withinPass * videoMap.totalQN)
-      } else {
-        expected = videoStart + session.playheadProgress * exerciseDurationSec
-      }
-      expected = Math.min(Math.max(expected, trimIn), trimOut)
-      if (Math.abs(v.currentTime - expected) > 0.35) v.currentTime = expected
-      if (v.currentTime >= trimOut) {
-        if (!v.paused) v.pause()
-      } else if (v.paused) void v.play().catch(() => {})
-    } else if (session.sessionState === 'countdown') {
+    if (!v || !playMedia) return
+    const state = session.sessionState
+    if (state !== 'countdown' && state !== 'playing') {
       if (!v.paused) v.pause()
-      if (Math.abs(v.currentTime - videoStart) > 0.05) v.currentTime = videoStart
-    } else if (!v.paused) {
-      v.pause()
+      // Before a take, rest on the frame the take will start from.
+      if (state === 'selecting') {
+        const first = expectedMediaTime(playMedia, -playMedia.countInSeconds).media
+        if (Math.abs(v.currentTime - first) > 0.05) v.currentTime = first
+      }
+      return
     }
-  }, [
-    session.sessionState,
-    session.playheadProgress,
-    exerciseVideo,
-    exerciseDurationSec,
-    videoMap,
-    exercise.loopCount,
-  ])
+    // The game has no student speed control today: the engine always runs at the score's tempo.
+    const userSpeed = 1
+    let raf = 0
+    let lastPass: number | null = null
+    // An audible track's element starts late (play() latency); the rate trim
+    // would take seconds to close that, so it hard-seeks once it is running.
+    let startSeek = mediaAudible
+    const tick = () => {
+      const e = getElapsedSeconds()
+      const { media, playing } = expectedMediaTime(playMedia, e)
+      const pass = e >= 0 && playMedia.loopSeconds > 0 ? Math.floor(e / playMedia.loopSeconds) : null
+      const wrapped = pass !== null && lastPass !== null && pass !== lastPass
+      lastPass = pass
+      // The end of the file is a trim-out too: live passes can run past it.
+      // Once known, fold the element's duration into the effective end.
+      let endAt = playMedia.trimOut ?? Infinity
+      if (Number.isFinite(v.duration)) endAt = Math.min(endAt, v.duration - 0.05)
+      if (playing && media >= endAt) {
+        // Hold the last frame until the next pass brings bar 1 back inside:
+        // no play() (on an ended element it restarts from 0) and no seek.
+        if (!v.paused) v.pause()
+        startSeek = mediaAudible
+      } else if (!playing) {
+        if (!v.paused) v.pause()
+        if (!v.seeking && Math.abs(v.currentTime - media) > 0.05) v.currentTime = media
+        startSeek = mediaAudible
+      } else {
+        // A seek already in flight: let it land before correcting again.
+        if (!v.seeking) {
+          const { rate, seekTo } = followRate(media, v.currentTime, userSpeed)
+          // The first frame an audible track is actually running: land it on
+          // the clock at once (see startSeek).
+          const startLag = startSeek && !v.paused && Math.abs(media - v.currentTime) > START_SEEK_SECONDS
+          if (!v.paused) startSeek = false
+          if (seekTo !== null || wrapped || v.ended || startLag) {
+            v.currentTime = seekTo ?? media
+            v.playbackRate = userSpeed
+          } else if (Math.abs(v.playbackRate - rate) > 0.0005) {
+            v.playbackRate = rate
+          }
+        }
+        if (v.paused && !v.ended) {
+          void v.play().catch((err) => { if (mediaAudible && isAutoplayRefusal(err)) setSoundBlocked(true) })
+        }
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    // No pause here: the next state's run decides (a count-in running into
+    // bar 1 must not blip the pre-roll).
+    return () => cancelAnimationFrame(raf)
+  }, [session.sessionState, getElapsedSeconds, playMedia, mediaAudible])
 
   // ExerciseScore reports the active track's single-pass duration. Its side
   // layout combines this local clock with the pass index to read continuously
@@ -301,6 +425,7 @@ function ScoreExerciseSession({
   }
   const playAgain = () => {
     session.retry()
+    primeMedia()
     void session.startExercise()
   }
 
@@ -363,7 +488,7 @@ function ScoreExerciseSession({
   }
   const startFromReady = () => {
     setReadyConfirmed(true)
-    void session.startExercise()
+    start()
   }
 
   const showPlaysenseTest =
@@ -423,7 +548,7 @@ function ScoreExerciseSession({
             totalCalibrationBeats={session.totalCalibrationBeats}
             calibrationError={session.calibrationError}
             onStartCalibration={session.startCalibration}
-            onSkip={() => session.startExercise()}
+            onSkip={start}
             onClearCalibration={() => session.startCalibration()}
             audioMode={session.audioMode}
           />
@@ -609,7 +734,7 @@ function ScoreExerciseSession({
             <div className="w-full max-w-lg">
               <PlaysenseTestPanel
                 instrument={session.exercise.instrument}
-                onReady={session.startExercise}
+                onReady={start}
                 onBack={session.clearAudioMode}
               />
             </div>
@@ -646,16 +771,9 @@ function ScoreExerciseSession({
         frame="fill"
         // Only once the session is live: a paused video beside "Preparing…" reads as broken.
         media={exerciseVideo && showCanvas && (
-          // Muted, follows the engine clock (see the sync effect above).
-          <video
-            ref={videoRef}
-            src={exerciseVideo.url}
-            muted
-            playsInline
-            preload="auto"
-            className="h-full w-full bg-black object-contain"
-            aria-label={t('dashboard.classViewer.exercise.referenceVideo')}
-          />
+          // The kept <video> (see ensureMediaEl): muted unless mediaAudible —
+          // a jam's own track — and following the engine clock.
+          <div ref={mountMedia} className="h-full min-h-0 w-full" data-exercise-media="" />
         )}
         music={hasStaff ? scoreEl : stageEl}
         highway={hasStaff ? stageEl : undefined}
@@ -663,9 +781,18 @@ function ScoreExerciseSession({
       />
       </ExerciseScoreWorkspaceBridge>
 
+      {mediaAudible && soundBlocked && isActive && (
+        <div className="ps-lesson-sound-blocked flex items-center justify-between gap-3 border-t border-border bg-primary/5 px-4 py-2" role="status">
+          <span className="text-xs text-muted-foreground">{t('dashboard.classViewer.exercise.enableSoundHint')}</span>
+          <Button size="sm" variant="outline" onClick={primeMedia}>
+            <Volume2 className="h-3.5 w-3.5" /> {t('dashboard.classViewer.exercise.enableSound')}
+          </Button>
+        </div>
+      )}
+
       {preview && isActive && <div className="ps-lesson-preview-controls flex items-center justify-between gap-3 border-t border-border px-4 py-3">
-        <span className="text-xs text-muted-foreground">Demo · muted video · results are not saved</span>
-        <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => void session.startExercise()}>Replay preview</Button><Button size="sm" onClick={demoSession.review}>View results</Button></div>
+        <span className="text-xs text-muted-foreground">{mediaAudible ? 'Demo · jam track · results are not saved' : 'Demo · muted video · results are not saved'}</span>
+        <div className="flex gap-2"><Button size="sm" variant="outline" onClick={start}>Replay preview</Button><Button size="sm" onClick={demoSession.review}>View results</Button></div>
       </div>}
 
       {!preview && inLesson && session.exercise && isActive && !showAudioModePrompt && !showPlaysenseTest && (
@@ -676,10 +803,10 @@ function ScoreExerciseSession({
             countdownBeat={session.countdownBeat}
             click={session.audioMetronome}
             mix={mixer}
-            onStart={() => void session.startExercise()}
+            onStart={start}
             onPause={session.pauseExercise}
-            onResume={session.resumeExercise}
-            onRestart={() => void session.restartExercise()}
+            onResume={() => { primeMedia(); session.resumeExercise() }}
+            onRestart={() => { primeMedia(); void session.restartExercise() }}
             onFinish={finishTake}
             onClickToggle={() => session.setAudioMetronome(!session.audioMetronome)}
             onWatchDemo={onWatchDemo}
@@ -707,11 +834,11 @@ function ScoreExerciseSession({
           currentCombo={session.currentCombo}
           currentAccuracy={session.currentAccuracy}
           lastHitGrade={session.lastHitGrade}
-          onStart={session.startExercise}
+          onStart={start}
           onStop={finishTake}
           onPause={session.pauseExercise}
-          onResume={session.resumeExercise}
-          onRestart={() => void session.restartExercise()}
+          onResume={() => { primeMedia(); session.resumeExercise() }}
+          onRestart={() => { primeMedia(); void session.restartExercise() }}
           onCalibrate={session.startCalibration}
           onTestMic={session.testMic}
           onStopTestMic={session.stopTestMic}

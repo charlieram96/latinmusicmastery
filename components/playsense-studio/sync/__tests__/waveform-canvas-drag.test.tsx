@@ -280,3 +280,81 @@ describe('WaveformCanvas trim drag', () => {
     expect(calls).toEqual([[15, 'all-after', { snap: false }]]);
   });
 });
+
+describe('WaveformCanvas locked markers + background drag (graded mode)', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    global.IS_REACT_ACT_ENVIRONMENT = true;
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('a press on a locked marker drags the background shift instead, and ⌘ turns the snap off', () => {
+    const shifts: Array<[number, string, boolean]> = [];
+    const markerCalls: number[] = [];
+    const seeks: number[] = [];
+    act(() => {
+      root.render(
+        <WaveformCanvas
+          peaks={null}
+          durationSeconds={60}
+          handles={[{ measureNumber: 1, beatInMeasure: 1, isDownbeat: true, videoTimeSeconds: 5 }]}
+          noteTicks={[]}
+          showNotes={false}
+          tailVideoTimeSeconds={60}
+          pixelsPerSecond={PPS}
+          scrollLeftPx={0}
+          dragAll
+          selected={null}
+          getCurrentSeconds={() => 0}
+          onSeek={(t) => seeks.push(t)}
+          onSelect={() => {}}
+          onMarkerDrag={(_r, t) => markerCalls.push(t)}
+          onTailDrag={() => {}}
+          onDragEnd={() => {}}
+          onScrollByPx={() => {}}
+          onViewportWidth={() => {}}
+          markersLocked
+          onBackgroundDrag={(d, phase, mods) => shifts.push([d, phase, mods.snap])}
+        />
+      );
+    });
+    const overlay = container.querySelectorAll('canvas')[1];
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerdown', 50, 100));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointermove', 80, 100));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointermove', 100, 100, { metaKey: true }));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerup', 100, 100, { metaKey: true }));
+    });
+    expect(markerCalls).toEqual([]);
+    expect(seeks).toEqual([]);
+    expect(shifts).toEqual([
+      [3, 'move', true],
+      [5, 'move', false],
+      [5, 'end', false],
+    ]);
+
+    // A plain click still seeks.
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerdown', 200, 100));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerup', 200, 100));
+    });
+    expect(seeks).toEqual([20]);
+  });
+});

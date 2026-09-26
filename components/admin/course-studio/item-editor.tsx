@@ -315,6 +315,10 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
             keySignature={item.key_signature}
             onChange={handleJamChange}
           />
+          <PlaysenseStudioScoreAttach
+            classItemId={item.id}
+            currentScoreDocumentId={scoreDocumentId}
+          />
         </div>
       )}
 

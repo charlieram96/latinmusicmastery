@@ -13,7 +13,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, ChevronsLeftRight, FilePlus2, Loader2, Move, Music2, Repeat, Spline, Undo2, Wand2 } from 'lucide-react';
+import { AudioLines, ChevronsLeftRight, Crosshair, FilePlus2, Loader2, Move, Music2, Repeat, Spline, Undo2, Wand2 } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -36,7 +36,12 @@ import {
 } from '@/lib/playsense-studio/click-track';
 import { useVideoClickTrack } from '@/components/playsense-studio/player/state/use-video-click-track';
 import { timingPatchFromMarkers } from '@/lib/playsense-studio/drafts/timing-patch';
-import type { StudioTiming } from '@/lib/playsense-studio/drafts/timing';
+import type { StudioPlay, StudioTiming } from '@/lib/playsense-studio/drafts/timing';
+import { autoAlign, onHitCount } from '@/lib/playsense-studio/auto-align';
+import { buildExerciseGrid } from '@/lib/play-sense/score-to-exercise';
+import { gridBeats, gridLoopSeconds } from '@/lib/play-sense/grid';
+import type { ExerciseGrid } from '@/lib/play-sense/types';
+import type { Waypoint } from '@/components/playsense-studio/shared/time-map/time-map';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
@@ -99,7 +104,7 @@ import { isStructuralAction } from '@/lib/playsense-studio/measure-edits';
 import { stripCopyTags, writeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
 import { clipFromMeasures, prepareStructuralEdit } from '@/components/playsense-studio/sync/structural-timing';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
-import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import type { ScoreDocument, Track } from '@/components/playsense-studio/shared/score-model/types';
 import type { MidiRecordingSource } from './midi-record-button';
 import { ReferenceMonitor } from '@/components/playsense-studio/sync/reference-monitor';
 import { formatTime, NoteDetails, type NoteTimingProps } from '@/components/playsense-studio/studio/note-details';
@@ -123,8 +128,18 @@ export interface SyncPanelProps {
   /** Scopes the click anchor when there's no `sectionId`: 'exercise' anchors to
    *  the class item's own play-along sync. */
   publishTarget?: 'classItem' | 'section' | 'exercise';
-  /** 'video' = sync the score to the audio; 'exercise' = no sync, demo + highway. */
-  mode: 'video' | 'exercise';
+  /** 'video' = sync the score to the audio; 'exercise' = no sync, demo + highway;
+   *  'graded' = a graded part's play-along media (EXERCISE, JAM_SESSION): the
+   *  bar lines are the score's tempo grid from bar 1 and can't be dragged — the
+   *  admin places bar 1 only (Studio rework P5). */
+  mode: 'video' | 'exercise' | 'graded';
+  /** Graded mode: bar 1 + count-in + pre-roll (the draft's `timing.play`). */
+  play?: StudioPlay;
+  /** Graded mode: hands a play-settings edit to the host's draft. */
+  onPlayChange?: (patch: Partial<StudioPlay>) => void;
+  /** Graded mode: the graded onsets of one loop, in seconds from bar 1,
+   *  ascending — what Auto-align and the "notes on a hit" readout measure. */
+  gradedOnsets?: number[];
   videoUrl: string | null;
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
@@ -228,6 +243,28 @@ const IDENTITY_FLEX = new FlexMap([]);
 /** The flex a wholesale bar move leaves behind: one stable object, so the
  *  Auto-place undo can tell a later flex edit from its own clear. */
 const NO_FLEX: FlexPoint[] = [];
+const EMPTY_ONSETS: number[] = [];
+/** Graded mode's sections lane: the one Exercise block, from bar 1 for a loop. */
+const GRADED_LANE: LaneSection[] = [{ sectionId: 'exercise', label: 'Exercise', startSeconds: null, endSeconds: null }];
+
+/** Graded mode's bar lines: one downbeat per measure at bar 1 + the grid's
+ *  measure start, plus the tail at the end of one loop. */
+function gridWaypoints(grid: ExerciseGrid, track: Track, bar1: number): Waypoint[] {
+  const out: Waypoint[] = track.measures.map((m, i) => ({
+    musicalPositionQN: grid.measureStartQN[i],
+    videoTimeSeconds: bar1 + grid.measureStartSec[i],
+    measureNumber: m.number,
+    beatInMeasure: 1,
+  }));
+  const last = grid.measureStartSec.length - 1;
+  out.push({
+    musicalPositionQN: grid.measureStartQN[last],
+    videoTimeSeconds: bar1 + grid.measureStartSec[last],
+    measureNumber: null,
+    beatInMeasure: null,
+  });
+  return out;
+}
 
 function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
   const m = state.measures.find((mm) => mm.measureNumber === ref.measureNumber);
@@ -258,8 +295,12 @@ export function SyncPanel({
   initialMetronomeAnchorSeconds,
   trim,
   onTrimDrag,
+  play,
+  onPlayChange,
+  gradedOnsets = EMPTY_ONSETS,
 }: SyncPanelProps) {
   const track = score.tracks[0];
+  const graded = mode === 'graded';
 
   // Note selection, mirrored out of the (memoized) IntegratedEditor so the right
   // rail inspector can show the selected note. The editor stays the source of
@@ -270,7 +311,7 @@ export function SyncPanel({
   // The full "sync to audio" experience (waveform + draggable markers +
   // transport) only renders for VIDEO lessons with a video. Exercises and
   // songs edit the staff on a fixed-BPM grid with no time map.
-  const showSync = mode === 'video' && !!videoUrl;
+  const showSync = (mode === 'video' || graded) && !!videoUrl;
 
   // Waveform lane height — the admin trades it against the measure strip with
   // the StageSplitter. Per-viewer, so it's read/written to localStorage.
@@ -301,13 +342,36 @@ export function SyncPanel({
   // measures from 0 at the score's tempo. The admin repositions them with
   // Import-at-playhead and by dragging — the video has no single tempo, so
   // there's no auto-fit across the audio.
-  const [markers, setMarkers] = useState<MarkerState>(() => {
-    if (activeTimeMap && activeTimeMap.waypoints.length >= 2) {
+  const [markerState, setMarkers] = useState<MarkerState>(() => {
+    // Graded mode never reads a seeded map: legacy exercise drafts can still
+    // carry the old drag waypoints, and bar 1 replaces them.
+    if (!graded && activeTimeMap && activeTimeMap.waypoints.length >= 2) {
       return seedMarkerState(track, score, activeTimeMap.waypoints, activeTimeMap.nudges ?? []);
     }
     return seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, 0));
   });
   const [dirty, setDirty] = useState(false);
+
+  // --- Graded mode: bar 1 on the tempo grid ---
+  // The bar lines are derived, never edited: bar i sits at bar 1 +
+  // grid.measureStartSec[i] — the same clock the student game runs. A drag of
+  // the Exercise block (or the waveform) previews in `dragBar1` and reaches
+  // the draft once, on release. Without a placement, bar 1 is the trim-in.
+  const gradedGrid = useMemo<ExerciseGrid | null>(
+    () => (graded && track ? buildExerciseGrid(score, track) : null),
+    [graded, score, track]
+  );
+  const [dragBar1, setDragBar1] = useState<number | null>(null);
+  const committedBar1 = play?.bar1Seconds ?? trim?.trimInSeconds ?? 0;
+  const bar1 = dragBar1 ?? committedBar1;
+  const gradedMarkers = useMemo(
+    () => (gradedGrid && track ? seedMarkerState(track, score, gridWaypoints(gradedGrid, track, bar1)) : null),
+    [gradedGrid, track, score, bar1]
+  );
+  // Everything below reads `markers`; in graded mode the edits that write
+  // `markerState` (reconcile, structural edits, recordings) are simply never
+  // shown — and never handed to the draft (timingAutosave is off).
+  const markers = gradedMarkers ?? markerState;
 
   // --- Flex Time (spec §7) ---
   // The warp between MEDIA time (the video element: clock, trim, detected hits,
@@ -316,7 +380,7 @@ export function SyncPanel({
   // draft with them (saveTiming). With no points every conversion below is an
   // exact pass-through, so unflexed sections behave exactly as before.
   // Edited on the waveform in Flex mode (Task 6) and by Quantize (Task 7).
-  const [flex, setFlex] = useState<FlexPoint[]>(() => activeTimeMap?.flex ?? []);
+  const [flex, setFlex] = useState<FlexPoint[]>(() => (graded ? NO_FLEX : activeTimeMap?.flex ?? []));
   // Flex mode (the context-bar chip, or F while the measure zoom is closed —
   // the zoom uses F as a note letter, so IntegratedEditor reports its state).
   const [flexMode, setFlexMode] = useState(false);
@@ -440,9 +504,10 @@ export function SyncPanel({
   // How long the score runs at its own tempo (honors per-measure tempo changes)
   // — i.e. how much waveform the placed section will occupy.
   const scoreSpanSeconds = useMemo(() => {
+    if (gradedGrid) return gridLoopSeconds(gradedGrid);
     const wps = buildWaypoints(score, score.initialTempo, 0);
     return wps.length ? wps[wps.length - 1].videoTimeSeconds : 0;
-  }, [score]);
+  }, [score, gradedGrid]);
   // clock.currentSeconds is React state, so the ghost tracks scrubbing/playback.
   // The playhead in TIMELINE time: what every marker-space consumer reads.
   const timelineNow = flexMap.toTimeline(clock.currentSeconds);
@@ -546,7 +611,9 @@ export function SyncPanel({
   studioDispatchRef.current = studioDispatch;
   // Every video sync target hands its timing to the host's draft (onTimingChange);
   // nothing reaches the live map until Publish.
-  const timingAutosave = showSync;
+  // Graded parts never publish a time map: bar 1 reaches the draft through
+  // onPlayChange instead.
+  const timingAutosave = showSync && !graded;
   // Editing a failed snapshot allows autosave to try again.
   useEffect(() => { setError(null); }, [markers, score]);
 
@@ -916,7 +983,7 @@ export function SyncPanel({
 
   // `[` / `]` nudge the selected note by 5 ms (Shift: 20 ms). Unused by the
   // notation editor's own key map.
-  const nudgeKeysActive = showSync && selectedOnset !== null;
+  const nudgeKeysActive = showSync && !graded && selectedOnset !== null;
   useEffect(() => {
     if (!nudgeKeysActive) return;
     const onKey = (e: KeyboardEvent) => {
@@ -933,7 +1000,7 @@ export function SyncPanel({
   // F toggles Flex mode — never while the measure zoom is open (F is a note
   // letter there), never while typing, and never with a modifier.
   useEffect(() => {
-    if (!showSync || zoomOpen) return;
+    if (!showSync || graded || zoomOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
       if (e.key !== 'f' && e.key !== 'F') return;
@@ -942,7 +1009,7 @@ export function SyncPanel({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showSync, zoomOpen]);
+  }, [showSync, graded, zoomOpen]);
 
   // --- Flex editing on the waveform (Task 6) ---
   // Points live strictly inside the section's bar span (first downbeat … tail),
@@ -1002,7 +1069,7 @@ export function SyncPanel({
   // shared by the inspector's NoteDetails and the zoom's More ▾ → Timing tab.
   const noteTiming: NoteTimingProps | undefined = useMemo(
     () =>
-      showSync && selectedOnset
+      showSync && !graded && selectedOnset
         ? {
             offsetMs: selectedNoteDelta * 1000,
             gridSeconds: gridTime(markers, selectedOnset.qn),
@@ -1014,7 +1081,7 @@ export function SyncPanel({
             flexProblem: flexNoteProblem,
           }
         : undefined,
-    [showSync, selectedOnset, selectedNoteDelta, markers, selectedNoteTime, nudgeSelected, snapSelectedToPlayhead, resetSelected, flexNoteOntoHit, flexNoteProblem]
+    [showSync, graded, selectedOnset, selectedNoteDelta, markers, selectedNoteTime, nudgeSelected, snapSelectedToPlayhead, resetSelected, flexNoteOntoHit, flexNoteProblem]
   );
 
   // --- Quantize (Task 7): the measure bar's Quantize popover ---
@@ -1164,6 +1231,54 @@ export function SyncPanel({
     }
   }, [videoDurationSeconds, siblingRanges, flex.length, hits, clearFlexForBarMove]);
 
+  // --- Graded: bar 1 ---
+  // Dragging the Exercise block or the waveform shifts bar 1 by the drag's
+  // delta, snapping the first graded onset onto a hit within SNAP_PX (⌘ skips
+  // the snap). The base is captured at drag start; the preview lives in
+  // `dragBar1` and the draft hears about it once, on release.
+  const bar1DragBase = useRef<number | null>(null);
+  const onBar1Drag = useCallback(
+    (delta: number, phase: 'move' | 'end', mods?: { snap: boolean }) => {
+      if (bar1DragBase.current === null) bar1DragBase.current = committedBar1;
+      const base = bar1DragBase.current;
+      let d = delta;
+      const first = gradedOnsets[0];
+      if (mods?.snap !== false && first !== undefined && hitsRef.current.length) {
+        d = snapSectionShift(base + first, delta, hitsRef.current, SNAP_PX / ppsRef.current);
+      }
+      const next = Math.max(0, base + d);
+      if (phase === 'move') {
+        setDragBar1(next);
+        return;
+      }
+      bar1DragBase.current = null;
+      setDragBar1(null);
+      if (Math.abs(next - base) > 1e-9) onPlayChange?.({ bar1Seconds: next });
+    },
+    [committedBar1, gradedOnsets, onPlayChange]
+  );
+
+  // Auto-align: the bar 1 that lands the most graded onsets on hits.
+  const [alignNotice, setAlignNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (!alignNotice) return;
+    const id = setTimeout(() => setAlignNotice(null), 6000);
+    return () => clearTimeout(id);
+  }, [alignNotice]);
+  const runAutoAlign = useCallback(() => {
+    const next = autoAlign(gradedOnsets, hits, committedBar1);
+    if (next === null) {
+      setAlignNotice('Not enough clear hits to align the exercise.');
+      return;
+    }
+    setAlignNotice(null);
+    onPlayChange?.({ bar1Seconds: next });
+  }, [gradedOnsets, hits, committedBar1, onPlayChange]);
+  const onHit = useMemo(
+    () => (graded ? onHitCount(gradedOnsets, hits, bar1) : null),
+    [graded, gradedOnsets, hits, bar1]
+  );
+
   const handleSelect = useCallback((target: DragTarget) => {
     // Explicit per-kind: an unhandled kind used to fall through to
     // `target.ref` and set `selected` to undefined.
@@ -1182,6 +1297,12 @@ export function SyncPanel({
   // the score's own tempo (the single tempo source). The admin then drags to align.
   const confirmPlacement = useCallback(() => {
     if (ghostConflict) return;
+    // Graded: placing is just putting bar 1 at the playhead (no flex here).
+    if (graded) {
+      onPlayChange?.({ bar1Seconds: Math.max(0, getMediaSeconds()) });
+      setPlaceArmed(false);
+      return;
+    }
     if (
       dirty &&
       !window.confirm('Placing re-lays the measures from the playhead and replaces your dragged positions. Continue?')
@@ -1197,7 +1318,7 @@ export function SyncPanel({
     setDirty(true);
     setSelected(null);
     setPlaceArmed(false);
-  }, [track, score, dirty, ghostConflict, getTimelineSeconds, getMediaSeconds, flex.length, clearFlexForBarMove]);
+  }, [track, score, dirty, ghostConflict, getTimelineSeconds, getMediaSeconds, flex.length, clearFlexForBarMove, graded, onPlayChange]);
 
   // Per-beat handles follow the selection: selecting a measure (or one of its
   // beats) reveals that measure's beat markers; everything else stays collapsed.
@@ -1412,12 +1533,15 @@ export function SyncPanel({
   // is what kept the whole feature invisible to exercises.
   const anchorOwner = useMemo<{ kind: 'section' | 'classItem'; id: string } | null>(
     () =>
-      sectionId
+      // Graded parts take their click from the grid (spec §8): no anchor.
+      graded
+        ? null
+        : sectionId
         ? { kind: 'section', id: sectionId }
         : publishTarget === 'exercise'
           ? { kind: 'classItem', id: classItemId }
           : null,
-    [sectionId, publishTarget, classItemId]
+    [graded, sectionId, publishTarget, classItemId]
   );
 
   const persistAnchor = useCallback(() => {
@@ -1529,13 +1653,17 @@ export function SyncPanel({
   const liveSpan = markerSpan(markers);
   const clickGrid = useMemo(
     () =>
-      beatGridFromAnchor(
-        anchorSeconds,
-        score.initialTempo,
-        liveSpan.startSeconds,
-        liveSpan.endSeconds
-      ),
-    [anchorSeconds, score.initialTempo, liveSpan.startSeconds, liveSpan.endSeconds]
+      // Graded: every beat of one pass of the tempo grid, from bar 1 — what the
+      // student's metronome plays.
+      gradedGrid
+        ? gridBeats(gradedGrid).map((b) => bar1 + b.seconds)
+        : beatGridFromAnchor(
+            anchorSeconds,
+            score.initialTempo,
+            liveSpan.startSeconds,
+            liveSpan.endSeconds
+          ),
+    [gradedGrid, bar1, anchorSeconds, score.initialTempo, liveSpan.startSeconds, liveSpan.endSeconds]
   );
 
   // The grid is TIMELINE (the notated tempo); the click is scheduled against
@@ -1620,6 +1748,59 @@ export function SyncPanel({
               </button>
             )}
 
+            {graded ? (
+              <>
+                <button
+                  type="button"
+                  onClick={runAutoAlign}
+                  disabled={!hits.length}
+                  className="st-chip"
+                  title={
+                    hits.length
+                      ? 'Move bar 1 so the most notes land on a hit'
+                      : 'Re-analyze audio to find the hits'
+                  }
+                >
+                  <Crosshair className="h-4 w-4" />
+                  Auto-align
+                </button>
+                <span className="st-sec-label">Count-in</span>
+                <div className="st-seg" role="radiogroup" aria-label="Count-in">
+                  {([1, 2] as const).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      role="radio"
+                      aria-checked={(play?.countInBars ?? 1) === n}
+                      className={(play?.countInBars ?? 1) === n ? 'is-on' : ''}
+                      onClick={() => onPlayChange?.({ countInBars: n })}
+                    >
+                      {n === 1 ? '1 bar' : '2 bars'}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onPlayChange?.({ preroll: !(play?.preroll ?? true) })}
+                  className={`st-chip${(play?.preroll ?? true) ? ' is-on' : ''}`}
+                  aria-pressed={play?.preroll ?? true}
+                  title="Play the video through the count-in, instead of waiting at bar 1"
+                >
+                  Pre-roll video
+                </button>
+                {onHit && hits.length > 0 && (
+                  <span className="text-xs tabular-nums text-muted-foreground" role="status">
+                    {onHit.k}/{onHit.n} notes on a hit
+                  </span>
+                )}
+                {alignNotice && (
+                  <span className="text-xs text-muted-foreground" role="status">
+                    {alignNotice}
+                  </span>
+                )}
+              </>
+            ) : (
+            <>
             <button
               type="button"
               onClick={runAutoPlace}
@@ -1654,6 +1835,8 @@ export function SyncPanel({
               <span className="text-xs text-muted-foreground" role="status">
                 {autoPlaceNotice}
               </span>
+            )}
+            </>
             )}
 
             <div className="ml-auto flex items-center gap-1.5">
@@ -1720,8 +1903,10 @@ export function SyncPanel({
                     handles={handles}
                     noteTicks={ticks}
                     showNotes={showNotes}
-                    selectedNote={selectedNoteHandle}
-                    onNoteDrag={handleNoteDrag}
+                    selectedNote={graded ? null : selectedNoteHandle}
+                    onNoteDrag={graded ? undefined : handleNoteDrag}
+                    markersLocked={graded}
+                    onBackgroundDrag={graded ? onBar1Drag : undefined}
                     tailVideoTimeSeconds={markers.tailVideoTimeSeconds}
                     pixelsPerSecond={pps}
                     scrollLeftPx={scrollLeft}
@@ -1734,7 +1919,7 @@ export function SyncPanel({
                     mediaDurationSeconds={videoDurationSeconds ?? clock.durationSeconds}
                     onTrimDrag={onTrimDrag ? handleTrimDrag : undefined}
                     warp={flexMap}
-                    flexMode={flexMode}
+                    flexMode={flexMode && !graded}
                     flexPoints={flex}
                     hitsTimeline={hitsTimeline}
                     noteTimes={noteTimes}
@@ -1768,6 +1953,19 @@ export function SyncPanel({
                     </div>
                   )}
 
+                  {graded && (
+                    <SectionsLane
+                      sections={GRADED_LANE}
+                      activeSectionId={GRADED_LANE[0].sectionId}
+                      activeRange={markerSpan(markers)}
+                      ghostRange={ghostRange}
+                      ghostConflict={false}
+                      pixelsPerSecond={pps}
+                      scrollLeftPx={scrollLeft}
+                      onSelectSection={() => {}}
+                      onDragActive={onBar1Drag}
+                    />
+                  )}
                   {sectionsContext && (
                     <SectionsLane
                       sections={sectionsContext.sections}
@@ -1799,6 +1997,7 @@ export function SyncPanel({
                   {/* Zoom and the marker drag mode float over the waveform — they
                       act on THIS lane (its number chips use dragAll). */}
                   <div className="st-zoom-float">
+                    {!graded && (
                     <div className="st-seg" role="radiogroup" aria-label="Drag mode">
                       <button
                         type="button"
@@ -1819,6 +2018,7 @@ export function SyncPanel({
                         Single
                       </button>
                     </div>
+                    )}
                     <ZoomSlider pps={pps} onZoomTo={zoomTo} onZoomBy={zoomBy} onFit={fitZoom} />
                   </div>
                 </div>
@@ -1849,10 +2049,10 @@ export function SyncPanel({
                   onLoopMeasures={showSync ? loopMeasures : undefined}
                   loopedRange={showSync ? loopedRange : null}
                   noteTiming={noteTiming}
-                  onQuantizePlan={showSync ? onQuantizePlan : undefined}
-                  onQuantizeApply={showSync ? onQuantizeApply : undefined}
-                  onResetFlex={showSync ? onResetFlexRange : undefined}
-                  flexInfo={showSync ? flexInfoForBounds : undefined}
+                  onQuantizePlan={showSync && !graded ? onQuantizePlan : undefined}
+                  onQuantizeApply={showSync && !graded ? onQuantizeApply : undefined}
+                  onResetFlex={showSync && !graded ? onResetFlexRange : undefined}
+                  flexInfo={showSync && !graded ? flexInfoForBounds : undefined}
                   quantizeProblem={hits.length ? null : 'Needs the audio analysed first'}
                   onZoomOpenChange={setZoomOpen}
                 />
@@ -1976,11 +2176,19 @@ export function SyncPanel({
                     {flags.size === 1 ? '1 bar looks off' : `${flags.size} bars look off`}
                   </p>
                 )}
+                {graded ? (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="st-status-pip" /> Bar 1 at{' '}
+                    <b className="font-mono tabular-nums text-foreground">{bar1.toFixed(2)}s</b> ·{' '}
+                    {score.initialTempo} BPM
+                  </div>
+                ) : (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="st-status-pip warn" /> Anchor at{' '}
                   <b className="font-mono tabular-nums text-foreground">{anchorSeconds.toFixed(1)}s</b> ·{' '}
                   {score.initialTempo} BPM
                 </div>
+                )}
                 {anchorOwner && metronomeAnchor == null && (
                   <p className="text-[11px] leading-snug text-muted-foreground">
                     No click anchor yet — it will default to the score&rsquo;s start.
@@ -2046,7 +2254,7 @@ export function SyncPanel({
               beatsPerMeasure={score.initialTimeSignature[0]}
               clickOn={clickOn}
               onClickOnChange={setClickOn}
-              clickAligned={metronomeAnchor != null}
+              clickAligned={graded || metronomeAnchor != null}
               clickVolume={clickVolume}
               onClickVolumeChange={handleClickVolumeChange}
               videoMuted={videoMuted}

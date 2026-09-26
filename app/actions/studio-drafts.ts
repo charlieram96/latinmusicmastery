@@ -11,14 +11,15 @@ import {
   publishTimeMap,
   saveScoreDocument,
   setClassItemMetronomeAnchor,
+  setPlaySettings,
   setSectionMetronomeAnchor,
 } from '@/app/actions/playsense-studio';
-import { anchorChanged, diffParts, summarizeChanges } from '@/lib/playsense-studio/drafts/changes';
+import { anchorChanged, diffParts, summarizeChanges, type StudioContent } from '@/lib/playsense-studio/drafts/changes';
 import { latestPublished, planDraftWrite, unpublishedDraft } from '@/lib/playsense-studio/drafts/policy';
 import { studioTimingSchema, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { ownerKey, type StudioDraftOwner } from '@/lib/playsense-studio/drafts/types';
 import {
-  clearUnpublishedDrafts, insertVersion, listVersionMeta, loadLiveContent, pruneDrafts, resolveOwner,
+  clearUnpublishedDrafts, insertVersion, listVersionMeta, loadLiveContent, pruneDrafts, resolveOwner, type ResolvedOwner,
 } from '@/lib/playsense-studio/drafts/server';
 
 export interface StudioDraft {
@@ -163,9 +164,23 @@ async function readUnpublished(supabase: Awaited<ReturnType<typeof createClient>
   return { data: { score: data.score as unknown as ScoreDocument, timing: data.timing as unknown as StudioTiming } };
 }
 
+/** A graded owner (target 'graded': EXERCISE, JAM_SESSION — Studio rework P5)
+ *  never publishes a time map or a click anchor; bar 1 replaces both. A draft
+ *  saved before the rework can still carry a stale waypoints/anchor pair left
+ *  over from the old exercise-sync flow, so diff/summarize against it as if
+ *  those were already cleared — otherwise the publish preview (and the
+ *  publish itself) would report changes publish never makes. */
+function normalizeGradedDraft(target: ResolvedOwner['target'], content: StudioContent): StudioContent {
+  return target === 'graded' ? { ...content, timing: { ...content.timing, waypoints: [], anchor: null } } : content;
+}
+
 /** Draft → live, through the same actions the Studio used to call directly.
  *  Order: timing (its validation refuses before any write), score, anchor,
  *  then the published history row. Each part is written only if it changed.
+ *
+ *  A graded owner (target 'graded': EXERCISE, JAM_SESSION — Studio rework P5)
+ *  never publishes a time map or an anchor; it writes play settings (bar 1,
+ *  count-in, pre-roll) through setPlaySettings instead.
  *
  *  publishTimeMap can itself seed or rebase the live click anchor (e.g. seeding
  *  it from the first waypoint when it was null), so once timing has published,
@@ -187,7 +202,7 @@ export async function publishStudioDraft(
   let r = resolved.data!;
   const liveContent = await loadLiveContent(supabase, r);
   if (liveContent.error) return { error: liveContent.error };
-  const parts = diffParts(liveContent.data!, draft.data);
+  const parts = diffParts(liveContent.data!, normalizeGradedDraft(r.target, draft.data));
   const { score, timing } = draft.data;
   // "Anchor touched" is decided against the PRE-publish live anchor. Seeds copy
   // the live anchor into every draft, and publishTimeMap may rebase the live
@@ -196,10 +211,13 @@ export async function publishStudioDraft(
   const anchorTouched = anchorChanged(liveContent.data!.timing.anchor, timing.anchor);
 
   let timingPublished = false;
-  if (r.target && parts.timing && timing.waypoints.length >= 2) {
+  // A graded owner (EXERCISE, JAM_SESSION) never publishes a time map — bar 1
+  // places the media instead (see the setPlaySettings call below).
+  const timingTarget = r.target && r.target !== 'graded' ? r.target : null;
+  if (timingTarget && parts.timing && timing.waypoints.length >= 2) {
     const res = await publishTimeMap({
       classItemId: r.classItemId!, scoreDocumentId: r.scoreDocumentId, sectionId: r.sectionId ?? undefined,
-      target: r.target, method: timing.method, params: timing.params, waypoints: timing.waypoints, makeActive: true,
+      target: timingTarget, method: timing.method, params: timing.params, waypoints: timing.waypoints, makeActive: true,
     });
     if (res.error) return { error: res.error };
     timingPublished = true;
@@ -207,6 +225,15 @@ export async function publishStudioDraft(
     const reResolved = await resolveOwner(supabase, owner);
     if (reResolved.error) return { error: reResolved.error };
     r = reResolved.data!;
+  }
+  if (r.target === 'graded' && parts.play && timing.play) {
+    const res = await setPlaySettings({
+      classItemId: r.classItemId!,
+      bar1Seconds: timing.play.bar1Seconds,
+      countInBars: timing.play.countInBars,
+      preroll: timing.play.preroll,
+    });
+    if (res.error) return { error: res.error };
   }
   if (parts.score) {
     const res = await saveScoreDocument({ scoreDocumentId: r.scoreDocumentId, scoreDocument: score });
@@ -255,7 +282,7 @@ export async function getPublishPreview(
     if (resolved.error) return { error: resolved.error };
     const liveContent = await loadLiveContent(supabase, resolved.data!);
     if (liveContent.error) return { error: liveContent.error };
-    out[ownerKey(owner)] = summarizeChanges(liveContent.data!, draft.data);
+    out[ownerKey(owner)] = summarizeChanges(liveContent.data!, normalizeGradedDraft(resolved.data!.target, draft.data));
   }
   return { data: out };
 }
