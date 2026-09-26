@@ -1537,6 +1537,9 @@ export function SyncPanel({
     grid: showSync ? clickGridMedia : [],
     enabled: clickOn && showSync,
     volume: clickVolume,
+    // Flexed: the rate driver changes the rate at each flex boundary, so the
+    // click re-anchors there instead of restarting (which clips it).
+    smoothRateChanges: !flexMap.isIdentity,
   });
 
   // A single anchor plus a constant tempo cannot follow a performance that

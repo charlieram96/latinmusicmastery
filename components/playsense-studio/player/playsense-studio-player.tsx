@@ -99,7 +99,8 @@ export interface PlaysenseStudioPlayerTimeMap {
    *  carry their effect; the player never reads this. */
   nudges?: Array<{ qn: number; deltaSeconds: number }>;
   /** Flex Time map (spec §7): Watch sections only, never the graded
-   *  play-along. Task 4 applies it to playback; unset/empty is identity. */
+   *  play-along. The player's rate driver (useFlexPlayback), cursor, seeks,
+   *  loops and click all go through it; unset/empty is identity. */
   flex?: FlexPoint[];
 }
 
@@ -340,7 +341,16 @@ export function PlaysenseStudioPlayer({
   // so there is nothing to align a click to here.
   const clickAligned = activeSection?.metronomeAnchorSeconds != null;
 
-  useVideoClickTrack({ videoRef, grid: clickGrid, enabled: clickOn, volume: clickVolume });
+  // With flex anywhere in the lesson the rate driver changes playbackRate at
+  // every flex boundary, so the click re-anchors on a ratechange instead of
+  // restarting (which clips it). Lesson-wide rather than per displayed
+  // section, so the switch can't flip in the same moment the driver hands a
+  // boundary's rate back. Unflexed lessons keep the restart path.
+  const lessonFlexed = useMemo(
+    () => normalizedSections.some((section) => !new FlexMap(section.activeTimeMap?.flex ?? []).isIdentity),
+    [normalizedSections]
+  );
+  useVideoClickTrack({ videoRef, grid: clickGrid, enabled: clickOn, volume: clickVolume, smoothRateChanges: lessonFlexed });
 
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
