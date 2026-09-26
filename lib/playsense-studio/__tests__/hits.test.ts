@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { MarkerState } from '@/components/playsense-studio/sync/marker-model';
-import { barFlags, firstAttackTime, flagText, nearestHit, snapBarTime, snapSectionShift } from '../hits';
+import { EPS, setMarkerTime, type MarkerState } from '@/components/playsense-studio/sync/marker-model';
+import { barFlags, firstAttackTime, flagText, nearestHit, snapBarTime, snapMarkerDrag, snapSectionShift } from '../hits';
 
 /** Bars of 4 QN starting at `starts` (seconds), with first onsets `firstOnsetQN[i]` (absolute qn). */
 function state(starts: number[], tail: number, firstOnsetQN: (number | null)[]): MarkerState {
@@ -83,5 +83,55 @@ describe('hits helpers', () => {
     expect(flagText({ kind: 'no-hit' })).toBe('No hit near the first note');
     expect(flagText({ kind: 'off', ms: 42 })).toBe('First note 42 ms off the recording');
     expect(flagText({ kind: 'tempo', pct: 7 })).toBe('Tempo 7% off the other bars');
+  });
+});
+
+describe('snapMarkerDrag', () => {
+  const beat = (s: MarkerState, bar: number, b: number) => s.measures[bar - 1].beats[b - 1].videoTimeSeconds;
+  /** SyncPanel's single-drag path after the snap: the corridor wall, then setMarkerTime's neighbour clamp. */
+  const dropSingle = (s: MarkerState, bar: number, b: number, t: number, wall: { lo: number; hi: number }) =>
+    setMarkerTime(s, { measureNumber: bar, beatInMeasure: b }, Math.min(Math.max(t, wall.lo + EPS), wall.hi - EPS));
+
+  it('snaps a downbeat by its bar line or its first note, whichever is closer', () => {
+    // Bar 2 spans 2..4 with its first note on beat 2 (qn 5, at 2.5 s).
+    const s = state([0, 2, 4], 6, [0, 5, 8]);
+    const bar2 = { measureNumber: 2, beatInMeasure: 1 };
+    expect(snapMarkerDrag(s, bar2, 2.1, [2.08], 0.05)).toBeCloseTo(2.08); // the line
+    expect(snapMarkerDrag(s, bar2, 2.1, [2.63], 0.05)).toBeCloseTo(2.13); // the note, 0.5 s in
+    expect(snapMarkerDrag(s, bar2, 2.1, [2.3], 0.05)).toBe(2.1); // nothing in reach
+    expect(snapMarkerDrag(s, bar2, 2.1, [], 0.05)).toBe(2.1); // no hits: no snapping
+  });
+
+  it('snaps an expanded beat handle only to its own line, never its bar\'s first note', () => {
+    // Bar 1's first note is on beat 2 (0.5 s after its line).
+    const s = state([0, 2, 4], 6, [1, 4, 8]);
+    const beat3 = { measureNumber: 1, beatInMeasure: 3 };
+    expect(snapMarkerDrag(s, beat3, 1.02, [1.0], 0.05)).toBeCloseTo(1.0);
+    // 1.52 is where a downbeat-style first-note snap would reach; a beat ignores it.
+    expect(snapMarkerDrag(s, beat3, 1.02, [1.52], 0.05)).toBe(1.02);
+  });
+
+  it('snaps first and clamps after: a hit past the corridor wall ends at the wall (Review Focus 3)', () => {
+    // A sibling section ends at 0.9 s; its last hit (0.88) is within reach.
+    const s = state([1, 3, 5], 7, [0, 4, 8]);
+    const wall = { lo: 0.9, hi: Infinity };
+    const snapped = snapMarkerDrag(s, { measureNumber: 1, beatInMeasure: 1 }, 0.92, [0.88], 0.05);
+    expect(snapped).toBeCloseTo(0.88);
+    const out = dropSingle(s, 1, 1, snapped, wall);
+    expect(beat(out, 1, 1)).toBeCloseTo(0.9 + EPS, 9);
+    expect(beat(out, 1, 1)).toBeGreaterThan(wall.lo);
+  });
+
+  it('snaps first and clamps after: a hit past the previous bar stops short of it', () => {
+    const s = state([1, 3, 5], 7, [0, 4, 8]);
+    // Dragging bar 2 down to 1.02 with a hit at 0.99 (just before bar 1's line).
+    const snapped = snapMarkerDrag(s, { measureNumber: 2, beatInMeasure: 1 }, 1.02, [0.99], 0.05);
+    expect(snapped).toBeCloseTo(0.99);
+    const out = dropSingle(s, 2, 1, snapped, { lo: -Infinity, hi: Infinity });
+    // Clamped above bar 1's last beat, and the markers stay in order.
+    expect(beat(out, 2, 1)).toBeGreaterThan(beat(out, 1, 4));
+    expect(beat(out, 1, 1)).toBe(1);
+    const times = out.measures.flatMap((m) => m.beats.map((b) => b.videoTimeSeconds));
+    for (let k = 1; k < times.length; k++) expect(times[k]).toBeGreaterThan(times[k - 1]);
   });
 });

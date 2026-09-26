@@ -3,6 +3,7 @@
 // whose first note or tempo doesn't match the recording (spec §7).
 import {
   anchorTimeMap,
+  type MarkerRef,
   type MarkerState,
   type MeasureMarker,
 } from '@/components/playsense-studio/sync/marker-model';
@@ -80,6 +81,31 @@ export function snapBarTime(
     }
   }
   return best ? { time: best.time, snapped: true } : { time: proposed, snapped: false };
+}
+
+/**
+ * Where a dragged marker snaps, before any clamp: a downbeat snaps its bar
+ * line or its first attacked note onto a hit, whichever is closer; an expanded
+ * beat handle snaps only its own line. The caller clamps the result against
+ * its neighbours and the corridor afterwards, so a snap never breaks a clamp.
+ *
+ * The first-note offset is measured on the markers as they are. A ripple
+ * drag moves the whole bar, so the note keeps that offset exactly; a single
+ * drag moves only the downbeat and re-spreads the bar, so there the snapped
+ * note is approximate (off by however much its offset stretches).
+ */
+export function snapMarkerDrag(
+  state: MarkerState,
+  ref: MarkerRef,
+  proposed: number,
+  hits: number[],
+  tol: number
+): number {
+  if (!hits.length) return proposed;
+  const mi = state.measures.findIndex((m) => m.measureNumber === ref.measureNumber);
+  const first = ref.beatInMeasure === 1 && mi >= 0 ? firstAttackTime(state, mi) : null;
+  const offset = first !== null ? first - state.measures[mi].beats[0].videoTimeSeconds : null;
+  return snapBarTime(proposed, offset, hits, tol).time;
 }
 
 export function snapSectionShift(firstNoteTime: number, delta: number, hits: number[], tol: number): number {

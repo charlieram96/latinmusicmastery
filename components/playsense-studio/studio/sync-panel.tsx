@@ -42,7 +42,7 @@ import { useVideoTransportClock } from '@/components/playsense-studio/player/sta
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
-import { SNAP_PX, barFlags, firstAttackTime, flagText, snapBarTime, snapSectionShift } from '@/lib/playsense-studio/hits';
+import { SNAP_PX, barFlags, firstAttackTime, flagText, snapMarkerDrag, snapSectionShift } from '@/lib/playsense-studio/hits';
 import { autoPlaceBars, windowWithinCorridor } from '@/lib/playsense-studio/auto-place';
 import { useMarkerTween } from './use-marker-tween';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
@@ -860,16 +860,13 @@ export function SyncPanel({
     setMarkers((s) => {
       // Snap first, then run every existing clamp below on the snapped value —
       // a snap must never itself break the corridor or neighbour clamps.
-      let proposed = videoTimeSeconds;
-      if (mods?.snap !== false && hitsRef.current.length) {
-        const mi = s.measures.findIndex((m) => m.measureNumber === ref.measureNumber);
-        const barStart = mi >= 0 ? s.measures[mi].beats[0].videoTimeSeconds : null;
-        // Only downbeats snap to their first attacked note; an expanded beat
-        // handle snaps only to its own bar line.
-        const first = ref.beatInMeasure === 1 && mi >= 0 ? firstAttackTime(s, mi) : null;
-        const offset = first !== null && barStart !== null ? first - barStart : null;
-        proposed = snapBarTime(videoTimeSeconds, offset, hitsRef.current, SNAP_PX / ppsRef.current).time;
-      }
+      // Only downbeats snap to their first attacked note; an expanded beat
+      // handle snaps only to its own line. In single mode the first-note
+      // offset is approximate (only the downbeat moves, so the bar re-spreads).
+      const proposed =
+        mods?.snap !== false
+          ? snapMarkerDrag(s, ref, videoTimeSeconds, hitsRef.current, SNAP_PX / ppsRef.current)
+          : videoTimeSeconds;
       const { lo, hi } = corridorRef.current;
       if (mode === 'all-after') {
         const current = findBeatTime(s, ref);
