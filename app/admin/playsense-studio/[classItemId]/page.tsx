@@ -4,6 +4,7 @@ import {
   getExerciseMedia,
   getScoreDocumentForClassItem,
   getStudioScoreSectionsForClassItem,
+  type ExerciseMedia,
 } from '@/app/actions/playsense-studio';
 import { getStudioDrafts } from '@/app/actions/studio-drafts';
 import { ExerciseStudio } from './exercise-studio';
@@ -11,12 +12,25 @@ import { StudioWorkspace } from './studio-workspace';
 import { VideoSectionsWorkspace } from './video-sections-workspace';
 import { StudioSetup } from '@/components/playsense-studio/studio/studio-setup';
 import { adminStudioBackHref } from '@/lib/playsense-studio/admin-nav';
+import { studioModeFor } from '@/lib/playsense-studio/studio-mode';
 
 interface PageProps {
   params: Promise<{ classItemId: string }>;
 }
 
 export const dynamic = 'force-dynamic';
+
+/** A graded owner (EXERCISE, JAM_SESSION) with no media authored yet. */
+const DEFAULT_EXERCISE_MEDIA: ExerciseMedia = {
+  videoUrl: null,
+  videoStartSeconds: 0,
+  videoTrimOutSeconds: null,
+  metronomeAnchorSeconds: null,
+  metronomeAnchorQn: null,
+  timeMap: null,
+  backingTracks: [],
+  play: { bar1Seconds: null, countInBars: 1, preroll: true },
+};
 
 export default async function PlaysenseStudioPage({ params }: PageProps) {
   const { classItemId } = await params;
@@ -54,10 +68,12 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
     itemId: classItem.id,
   });
 
+  const mode = studioModeFor(classItem.item_type);
+
   // VIDEO lessons support MULTIPLE scored sections (each anchored at a different
   // point in the video). They're authored in their own sections workspace, which
   // handles the empty list itself — no page-level setup screen.
-  if (classItem.item_type === 'VIDEO') {
+  if (mode === 'videoSections') {
     const sections = await getStudioScoreSectionsForClassItem(classItemId);
     if (sections.error) notFound();
     return (
@@ -79,22 +95,13 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
   // EXERCISE items have TWO parts: scored sections synced to the demo video
   // (the student's Watch & Learn) and a separate graded score for the rhythm
   // highway. ExerciseStudio shells both workspaces behind a part toggle.
-  if (classItem.item_type === 'EXERCISE') {
+  if (mode === 'exerciseStudio') {
     const sections = await getStudioScoreSectionsForClassItem(classItemId);
     if (sections.error) notFound();
     const scoreResult = classItem.score_document_id
       ? await getScoreDocumentForClassItem(classItemId)
       : null;
-    const exerciseMedia = (await getExerciseMedia(classItemId)).data ?? {
-      videoUrl: null,
-      videoStartSeconds: 0,
-      videoTrimOutSeconds: null,
-      metronomeAnchorSeconds: null,
-      metronomeAnchorQn: null,
-      timeMap: null,
-      backingTracks: [],
-      play: { bar1Seconds: null, countInBars: 1, preroll: true },
-    };
+    const exerciseMedia = (await getExerciseMedia(classItemId)).data ?? DEFAULT_EXERCISE_MEDIA;
     const drafts = await getStudioDrafts([{ kind: 'exercise', id: classItemId }]);
     // A draft-load error must not open the Studio on live: the next edit would
     // autosave over the unseen draft, and Publish would push live-plus-edit.
@@ -126,6 +133,48 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
         fetchExercise={getScoreDocumentForClassItem.bind(null, classItemId)}
         fetchExerciseMedia={getExerciseMedia.bind(null, classItemId)}
         fetchExerciseDraft={getStudioDrafts.bind(null, [{ kind: 'exercise', id: classItemId }])}
+      />
+    );
+  }
+
+  // JAM_SESSION: the whole score is graded, with no Watch part alongside it —
+  // the same graded shell EXERCISE uses for its play part (StudioWorkspace
+  // mode="exercise"), fed straight from the top instead of behind
+  // ExerciseStudio's toggle. Its media is the class item's own audio_url
+  // (Task 1's getExerciseMedia), authored in the course editor, not uploaded
+  // here — see ExerciseMediaPanel's `jam` branch.
+  if (mode === 'gradedWorkspace') {
+    // No score yet → setup (import/create) lives here in the Studio.
+    if (!classItem.score_document_id) {
+      return (
+        <StudioSetup classItemId={classItemId} classItemTitle={classItem.title} backHref={backHref} />
+      );
+    }
+    const scoreResult = await getScoreDocumentForClassItem(classItemId);
+    if (!scoreResult.data) notFound();
+    const exerciseMedia = (await getExerciseMedia(classItemId)).data ?? DEFAULT_EXERCISE_MEDIA;
+    const drafts = await getStudioDrafts([{ kind: 'exercise', id: classItemId }]);
+    // A draft-load error must not open the Studio on live: the next edit would
+    // autosave over the unseen draft, and Publish would push live-plus-edit.
+    // Same handling as the exerciseStudio branch above.
+    if (drafts.error) notFound();
+    return (
+      <StudioWorkspace
+        // Remount when the attached score changes (e.g. after Replace), so the
+        // editor reseeds from the new document instead of keeping stale state.
+        key={classItem.score_document_id}
+        owner={{ kind: 'classItem', classItemId }}
+        backHref={backHref}
+        mode="exercise"
+        itemType="JAM_SESSION"
+        title={classItem.title}
+        videoUrl={classItem.video_url}
+        scoreDocumentId={classItem.score_document_id}
+        initialScore={scoreResult.data.scoreDocument.parsedScore}
+        activeTimeMap={scoreResult.data.activeTimeMap}
+        videoDurationSeconds={classItem.video_duration_seconds}
+        exerciseMedia={exerciseMedia}
+        studioDraft={drafts.data?.[`exercise:${classItemId}`] ?? null}
       />
     );
   }

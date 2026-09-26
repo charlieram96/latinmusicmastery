@@ -9,7 +9,7 @@ import {
   getScoreSectionsForClassItem,
   logPlaysenseStudioEvent,
 } from '@/app/actions/playsense-studio'
-import { resolveLegacyAudioUrl } from '@/lib/play-sense/exercise-media'
+import { jamRendersGradedGame, resolveLegacyAudioUrl, toExerciseVideo } from '@/lib/play-sense/exercise-media'
 import { getQuizQuestions } from '@/app/actions/quiz'
 import { readQuizSettings } from '@/lib/quiz/quiz-settings'
 import { getServerTranslator } from '@/lib/i18n/server'
@@ -87,12 +87,12 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
           ? item.video_url
           : null
 
-  // Exercises can be score-only (rhythm-highway test with no reference video), so
-  // they fetch the score whenever one is attached; other types need a media URL
-  // to drive the cursor.
+  // Exercises and jam sessions can be score-only (the graded highway needs no
+  // reference media), so they fetch the score whenever one is attached; other
+  // types need a media URL to drive the cursor.
   const needsScore =
     item.score_document_id &&
-    (playsenseStudioMediaUrl || item.item_type === 'EXERCISE')
+    (playsenseStudioMediaUrl || item.item_type === 'EXERCISE' || item.item_type === 'JAM_SESSION')
 
   const playsenseStudioData =
     playsenseStudioEnabled && needsScore
@@ -140,19 +140,15 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
     />
   }
 
-  // EXERCISE play-part media: optional cropped video + instrument backing
-  // tracks the student selects before playing.
+  // Graded play-part media: an EXERCISE's optional cropped video + instrument
+  // backing tracks the student selects before playing, or (Studio rework P5,
+  // Task 8) a JAM_SESSION's own audio_url carried the same way.
   const exerciseMedia =
-    item.item_type === 'EXERCISE' ? (await getExerciseMedia(item.id)).data ?? null : null
+    item.item_type === 'EXERCISE' || item.item_type === 'JAM_SESSION'
+      ? (await getExerciseMedia(item.id)).data ?? null
+      : null
   const backingTracks = exerciseMedia?.backingTracks ?? []
-  const exerciseVideo = exerciseMedia?.videoUrl
-    ? {
-        url: exerciseMedia.videoUrl,
-        startSeconds: exerciseMedia.videoStartSeconds,
-        trimOutSeconds: exerciseMedia.videoTrimOutSeconds,
-        timeMap: exerciseMedia.timeMap,
-      }
-    : null
+  const exerciseVideo = toExerciseVideo(exerciseMedia)
 
   // Quizzes (and legacy quiz-style exercises) are a series of questions stored
   // in quiz_questions. Fetch them server-side so the runner renders immediately.
@@ -345,14 +341,21 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {playsenseStudioData && playsenseStudioMediaUrl ? (
-              <PlaysenseStudioPlayer
-                classItemId={item.id}
-                videoUrl={playsenseStudioMediaUrl}
+            {/* A jam session's whole score is graded (Studio rework P5, Task 8):
+                the same ScoreExerciseGame an EXERCISE's play part uses, with
+                the jam's own audio_url as its (muted-video-shaped) media.
+                Without a score, this keeps the legacy audio/video/embed path. */}
+            {jamRendersGradedGame(item.item_type, !!playsenseStudioData) && playsenseStudioData ? (
+              <ScoreExerciseGame
+                exercise={scoreToExerciseDefinition(playsenseStudioData.scoreDocument.parsedScore, {
+                  id: item.id,
+                  title: item.title,
+                  description: item.description ?? undefined,
+                })}
                 score={playsenseStudioData.scoreDocument.parsedScore}
-                tracks={playsenseStudioData.tracks}
-                activeTimeMap={playsenseStudioData.activeTimeMap}
-                layout={playerLayout}
+                backingTracks={backingTracks}
+                exerciseVideo={exerciseVideo}
+                play={exerciseMedia?.play ?? null}
               />
             ) : (
               <>

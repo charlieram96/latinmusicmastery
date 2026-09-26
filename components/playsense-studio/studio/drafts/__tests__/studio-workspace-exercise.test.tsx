@@ -15,6 +15,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn(), push: 
 const stub = vi.hoisted(() => ({
   syncPanelCalls: [] as Array<{ activeTimeMap: unknown; mode: string; props: Record<string, unknown> }>,
   previewCalls: [] as Array<Record<string, unknown>>,
+  mediaPanelCalls: [] as Array<Record<string, unknown>>,
 }));
 vi.mock('@/components/playsense-studio/studio/sync-panel', () => ({
   SyncPanel: (props: { activeTimeMap: unknown; mode: string }) => {
@@ -23,11 +24,14 @@ vi.mock('@/components/playsense-studio/studio/sync-panel', () => ({
   },
 }));
 vi.mock('@/components/playsense-studio/studio/exercise-media-panel', () => ({
-  ExerciseMediaPanel: (props: { onVideoChange: (url: string | null) => void }) => (
-    <button type="button" onClick={() => props.onVideoChange(null)}>
-      remove video
-    </button>
-  ),
+  ExerciseMediaPanel: (props: { onVideoChange: (url: string | null) => void }) => {
+    stub.mediaPanelCalls.push(props as unknown as Record<string, unknown>);
+    return (
+      <button type="button" onClick={() => props.onVideoChange(null)}>
+        remove video
+      </button>
+    );
+  },
 }));
 vi.mock('@/components/playsense-studio/studio/backing-lanes-panel', () => ({ BackingLanesPanel: () => null }));
 vi.mock('@/components/playsense-studio/studio/highway-preview', () => ({ HighwayPreview: () => null }));
@@ -90,6 +94,7 @@ beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   stub.syncPanelCalls = [];
   stub.previewCalls = [];
+  stub.mediaPanelCalls = [];
   acts.saveStudioDraft.mockReset();
   acts.saveStudioDraft.mockResolvedValue({ updatedAt: '2026-01-01T00:00:00.000Z' });
   host = document.createElement('div');
@@ -279,6 +284,49 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
       nudges: [],
       flex: [],
     });
+  });
+
+  it('passes jam=false to the media panel for an EXERCISE (the default, no itemType)', () => {
+    act(() => {
+      root.render(
+        <StudioDraftsProvider owners={[]}>
+          <StudioWorkspace
+            owner={{ kind: 'classItem', classItemId: 'ci-1' }}
+            mode="exercise"
+            title="Clave 101"
+            videoUrl={null}
+            scoreDocumentId="doc-1"
+            initialScore={SCORE}
+            activeTimeMap={null}
+            videoDurationSeconds={null}
+            exerciseMedia={exerciseMedia}
+          />
+        </StudioDraftsProvider>
+      );
+    });
+    expect(stub.mediaPanelCalls.at(-1)?.jam).toBe(false);
+  });
+
+  it('passes jam=true to the media panel for a JAM_SESSION (Studio rework P5, Task 8)', () => {
+    act(() => {
+      root.render(
+        <StudioDraftsProvider owners={[]}>
+          <StudioWorkspace
+            owner={{ kind: 'classItem', classItemId: 'ci-1' }}
+            mode="exercise"
+            itemType="JAM_SESSION"
+            title="Jam"
+            videoUrl={null}
+            scoreDocumentId="doc-1"
+            initialScore={SCORE}
+            activeTimeMap={null}
+            videoDurationSeconds={null}
+            exerciseMedia={exerciseMedia}
+          />
+        </StudioDraftsProvider>
+      );
+    });
+    expect(stub.mediaPanelCalls.at(-1)?.jam).toBe(true);
   });
 });
 

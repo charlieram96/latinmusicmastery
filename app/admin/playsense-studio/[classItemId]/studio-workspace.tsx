@@ -78,6 +78,10 @@ export interface StudioWorkspaceProps {
   backHref?: string;
   /** Class-item authoring mode. Songs (no video) ignore this — defaults to 'video'. */
   mode?: StudioMode;
+  /** Class-item authoring, graded workspace only (Studio rework P5, Task 8):
+   *  which item_type this is, so the media rail can tell a jam's own track
+   *  (authored in the course editor) from an exercise's play-along video. */
+  itemType?: 'EXERCISE' | 'JAM_SESSION';
   title: string;
   videoUrl: string | null;
   scoreDocumentId: string;
@@ -124,6 +128,7 @@ function StudioWorkspaceBody({
   owner,
   backHref: classItemBackHref = '/admin/courses',
   mode = 'video',
+  itemType,
   title,
   videoUrl,
   scoreDocumentId,
@@ -141,6 +146,10 @@ function StudioWorkspaceBody({
   // The exercise studio shows the highway inline (under the notation) and the
   // play-part media panel in the rail; other modes keep the preview drawer.
   const isExercise = mode === 'exercise' && owner.kind === 'classItem';
+  // A jam session's graded workspace (Studio rework P5, Task 8): same shell as
+  // an exercise's play part, but its media is class_items.audio_url, authored
+  // in the course editor rather than uploaded here.
+  const jam = itemType === 'JAM_SESSION';
 
   // What this workspace opens on: the owner's unpublished draft, else live.
   // Mount-only — a later prop change (e.g. a parent refetch) doesn't reseed an
@@ -553,6 +562,7 @@ function StudioWorkspaceBody({
                       initialMedia={exerciseMedia}
                       hasTimeMap={exercisePlay.bar1Seconds != null}
                       onVideoChange={handleExerciseVideoChange}
+                      jam={jam}
                     />
                   ),
                 }]

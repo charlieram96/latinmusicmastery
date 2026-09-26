@@ -2,6 +2,8 @@
 // video + instrument backing tracks). No DOM, no I/O — unit-tested in
 // __tests__/exercise-media.test.ts.
 
+import type { ExerciseMedia } from '@/app/actions/playsense-studio'
+
 export interface CropWindow {
   /** Largest valid start offset, or null when the video duration is unknown. */
   maxStart: number | null
@@ -42,4 +44,36 @@ export function resolveLegacyAudioUrl(args: {
 }): string | undefined {
   if (args.hasBackingTracks || args.hasExerciseVideo) return undefined
   return args.legacyMediaUrl ?? undefined
+}
+
+export interface ExerciseVideoProp {
+  url: string
+  startSeconds: number
+  trimOutSeconds: number | null
+  timeMap: ExerciseMedia['timeMap']
+}
+
+/**
+ * The play-part media handed to ScoreExerciseGame/ExerciseView: an EXERCISE's
+ * own play-along video, or (Studio rework P5, Task 8) a JAM_SESSION's
+ * `audio_url` carried the same way by `getExerciseMedia`. Null once there's
+ * no media to place — the game then shows just the staff + highway.
+ */
+export function toExerciseVideo(media: ExerciseMedia | null): ExerciseVideoProp | null {
+  if (!media?.videoUrl) return null
+  return {
+    url: media.videoUrl,
+    startSeconds: media.videoStartSeconds,
+    trimOutSeconds: media.videoTrimOutSeconds,
+    timeMap: media.timeMap,
+  }
+}
+
+/**
+ * A JAM_SESSION's student view (Studio rework P5, Task 8): the graded
+ * ScoreExerciseGame once a score is attached and its PlaySense Studio data
+ * has loaded, otherwise the legacy audio/video/embed path.
+ */
+export function jamRendersGradedGame(itemType: string, hasScoreData: boolean): boolean {
+  return itemType === 'JAM_SESSION' && hasScoreData
 }
