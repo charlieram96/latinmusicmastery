@@ -29,7 +29,7 @@ describe('FlexMap', () => {
     expect(new FlexMap([p(0, 0), p(1, 5)]).rateAtMedia(0.5)).toBe(0.5); // clamped
   });
   it('reads params defensively', () => {
-    expect(readFlex({ flex: [p(2, 2), { src: 'x' }, p(1, 1), p(3, 2.5)] })).toEqual([p(1, 1), p(2, 2), p(3, 2.5)]);
+    expect(readFlex({ flex: [p(2, 2), { src: 'x' }, p(1, 1), p(3, 2.5)] })).toEqual([p(1, 1), p(2, 2), p(3, 2.5), p(3.05, 3.05, true)]); // + identity tail
     expect(readFlex({ flex: [p(1, 1), p(2, 0.5)] })).toEqual([p(1, 1)]); // non-monotonic dst dropped
     expect(readFlex(null)).toEqual([]);
   });
@@ -75,9 +75,9 @@ describe('flex edits', () => {
     const r = quantizePlan({ points: [], notesTimeline: [0.8, 0.85], hitsMedia: [0.5, 0.9], beatSeconds: 1.05, range: { start: 0, end: 1.2 }, strength: 1 });
     expect(r.moved).toBe(r.points.filter((q) => !q.anchor).length);
   });
-  it('adds a point with no anchors when the hit is not in hitsMedia', () => {
+  it('adds a point with only identity edge anchors when the hit is not in hitsMedia', () => {
     const pts = addFlexAtHit([], 13, [10, 12, 14, 16], span);
-    expect(pts).toEqual([p(13, 13)]);
+    expect(pts).toEqual([p(0.01, 0.01, true), p(13, 13), p(99.99, 99.99, true)]);
   });
   it('moveFlexPoint returns the points unchanged when neighbours are too close, or the index is out of range', () => {
     const tight = [p(0, 10, true), p(1, 10.0007), p(2, 10.0015, true)];
@@ -90,5 +90,54 @@ describe('flex edits', () => {
     const pts = [p(10, 10, true), p(12, 12), p(14, 14, true)];
     expect(removeFlexPoint(pts, 5)).toBe(pts);
     expect(removeFlexPoint(pts, -1)).toBe(pts);
+  });
+
+  it('identity edges: an unpaired outer point leaves the map identity outside the points', () => {
+    // 16 is the last hit: no right neighbour, so the right edge gets an identity anchor.
+    const pts = addFlexAtHit([], 16, [10, 12, 14, 16], span);
+    expect(pts).toEqual([p(14, 14, true), p(16, 16), p(99.99, 99.99, true)]);
+    const moved = moveFlexPoint(pts, 1, 16.3, span);
+    const m = new FlexMap(moved);
+    expect(m.toTimeline(5)).toBe(5);
+    expect(m.toTimeline(99.995)).toBeCloseTo(99.995, 9);
+    expect(m.toTimeline(150)).toBe(150);
+    // a lone point with no hits at all gets both edges
+    const lone = moveFlexPoint(addFlexAtHit([], 50, [], span), 1, 50.4, span);
+    const lm = new FlexMap(lone);
+    expect(lm.toTimeline(0)).toBe(0);
+    expect(lm.toTimeline(120)).toBe(120);
+    expect(lm.toTimeline(50)).toBeCloseTo(50.4);
+  });
+  it('identity edges: the outer anchors cannot be dragged or removed on their own', () => {
+    const pts = [p(10, 10, true), p(12, 12.3), p(14, 14, true)];
+    expect(moveFlexPoint(pts, 0, 10.5, span)).toBe(pts);
+    expect(moveFlexPoint(pts, 2, 13.5, span)).toBe(pts);
+    expect(removeFlexPoint(pts, 0)).toBe(pts);
+    expect(removeFlexPoint(pts, 2)).toBe(pts);
+  });
+  it('identity edges: removing the last real point clears to []', () => {
+    const pts = addFlexAtHit([], 50, [], span);
+    expect(removeFlexPoint(pts, 1)).toEqual([]);
+    const withInner = [p(0.01, 0.01, true), p(10, 10, true), p(12, 12.2), p(14, 14, true), p(99.99, 99.99, true)];
+    expect(removeFlexPoint(withInner, 2)).toEqual([]);
+  });
+  it('identity edges: removing an inner point keeps the outer anchors', () => {
+    const pts = [p(0.01, 0.01, true), p(12, 12.2), p(20, 20, true), p(30, 30.4), p(99.99, 99.99, true)];
+    const out = removeFlexPoint(pts, 1);
+    expect(out[0]).toEqual(p(0.01, 0.01, true));
+    expect(out[out.length - 1]).toEqual(p(99.99, 99.99, true));
+    const m = new FlexMap(out);
+    expect(m.toTimeline(0)).toBe(0);
+    expect(m.toTimeline(150)).toBe(150);
+  });
+  it('identity edges: a normalized load of a lone non-identity point stays identity outside it', () => {
+    const pts = readFlex({ flex: [p(10, 10.08)] });
+    expect(pts).toEqual([p(9.95, 9.95, true), p(10, 10.08), p(10.13, 10.13, true)]);
+    const m = new FlexMap(pts);
+    expect(m.toTimeline(20)).toBe(20);
+    expect(m.toTimeline(0)).toBe(0);
+    expect(m.toTimeline(10)).toBeCloseTo(10.08);
+    // identity outer points read back unchanged
+    expect(readFlex({ flex: [p(9, 9, true), p(10, 10.08), p(11, 11, true)] })).toEqual([p(9, 9, true), p(10, 10.08), p(11, 11, true)]);
   });
 });

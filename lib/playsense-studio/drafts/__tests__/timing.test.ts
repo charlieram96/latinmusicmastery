@@ -25,9 +25,9 @@ describe('studio timing', () => {
     expect(timingToTimeMap(EMPTY_TIMING)).toBeNull();
   });
   it('carries flex from params into the map shape', () => {
-    const t = { ...EMPTY_TIMING, params: { flex: [{ src: 1, dst: 1.1, anchor: false }, { src: 2, dst: 2, anchor: true }] },
+    const t = { ...EMPTY_TIMING, params: { flex: [{ src: 0.5, dst: 0.5, anchor: true }, { src: 1, dst: 1.1, anchor: false }, { src: 2, dst: 2, anchor: true }] },
       waypoints: [wp(0, 0), wp(4, 4)] };
-    expect(timingToTimeMap(t)?.flex).toEqual([{ src: 1, dst: 1.1, anchor: false }, { src: 2, dst: 2, anchor: true }]);
+    expect(timingToTimeMap(t)?.flex).toEqual([{ src: 0.5, dst: 0.5, anchor: true }, { src: 1, dst: 1.1, anchor: false }, { src: 2, dst: 2, anchor: true }]);
   });
   it('drops malformed nudges and rejects malformed timing', () => {
     expect(readNudges({ nudges: [{ qn: 1, deltaSeconds: 0.1 }, { qn: 'x' }] })).toEqual([{ qn: 1, deltaSeconds: 0.1 }]);
