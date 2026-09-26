@@ -38,10 +38,15 @@ import { measureLengthInQN } from '@/lib/playsense-studio/time-mapping';
 import { dragSteps, indexForLine, snapStroke, stepPitches, type SpelledPitch } from '@/lib/playsense-studio/zoom-pointer';
 import type { Span } from '@/components/playsense-studio/shared/score-model/types';
 import type { MeasureStripItem } from '../editable-measure-strip';
+import { DEFAULT_OCTAVE, KeysPanel } from './keys-panel';
 import type { ZoomEditing } from './use-zoom-editing';
 import { ZoomStaff, type ZoomHit, type ZoomLayout } from './zoom-staff';
 
-export interface ZoomState { measureIndex: number; cursor: NoteCursor; value: NoteValue; dots: 0 | 1 | 2; pencil: boolean }
+export interface ZoomState {
+  measureIndex: number; cursor: NoteCursor; value: NoteValue; dots: 0 | 1 | 2; pencil: boolean;
+  /** The Keys panel (K), and the on-screen keyboard's octave while it's open (Task 5). */
+  keysOpen?: boolean; octave?: number;
+}
 
 export interface MeasureZoomProps {
   items: MeasureStripItem[];
@@ -441,6 +446,21 @@ export function MeasureZoom({
           </div>
         )}
       </div>
+
+      {/* Its own layer over the staff's cell, outside the staff's pointer
+          handlers, so a key click never reaches the pencil or a drag. */}
+      {zoom.keysOpen && (
+        <div className="st-keys-dock" style={{ gridColumn: 2, gridRow: 2 }}>
+          <KeysPanel
+            onPitch={(midi) => editing.enterMidiPitch?.(midi)}
+            onChordPitch={(midi) => editing.addMidiChordPitch?.(midi)}
+            percussion={percussion}
+            status={editing.midiStatus ?? 'idle'}
+            octave={zoom.octave ?? DEFAULT_OCTAVE}
+            onOctave={(delta) => editing.onOctave?.(delta)}
+          />
+        </div>
+      )}
 
       {sliver('next', next)}
 

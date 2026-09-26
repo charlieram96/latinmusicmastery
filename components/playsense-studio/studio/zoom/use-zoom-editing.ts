@@ -11,7 +11,7 @@
 // running the reducer itself on the current score (never a loose copy of its
 // rules), and a flash says why instead of the edit silently doing nothing.
 
-import { useEffect, useLayoutEffect, useMemo, useRef, type Dispatch } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, type Dispatch } from 'react';
 import type {
   Articulation,
   Dynamic,
@@ -21,7 +21,10 @@ import type {
   ScoreDocument,
 } from '@/components/playsense-studio/shared/score-model/types';
 import { eventDots, eventTuplet } from '@/components/playsense-studio/shared/score-model/accessors';
+import { useMidiInput } from '@/hooks/use-midi-input';
 import { editorReducer, type EditorAction, type EditorState, type EventRef } from '@/lib/playsense-studio/editor-state';
+import { gmToStrokeMidi } from '@/lib/playsense-studio/gm-percussion';
+import { ChordGrouper } from '@/lib/playsense-studio/midi-chords';
 import {
   advanceCursor,
   clampCursor,
@@ -31,6 +34,7 @@ import {
   type CursorContext,
   type NoteCursor,
 } from '@/lib/playsense-studio/note-cursor';
+import { spellMidi } from '@/lib/playsense-studio/notation/accidentals';
 import { getPercStrokes, resolvePercStroke, strokeNotation } from '@/lib/playsense-studio/perc-strokes';
 import { CLEF_REF_INDEX, letterAbove, letterPitch, pitchIndex, type Pitch } from '@/lib/playsense-studio/pitch';
 import { soundingQN, VALUE_NAME, writtenValue, type NoteValue } from '@/lib/playsense-studio/rhythm';
@@ -39,7 +43,11 @@ import type { NotationClef } from '@/lib/playsense-studio/score-to-vexflow';
 import { isFillerRest, occupiedQN, QN_EPS } from '@/lib/playsense-studio/time-mapping';
 import { isTypingTarget } from '@/lib/playsense-studio/typing-target';
 import { zoomIntent, type ZoomIntent } from '@/lib/playsense-studio/zoom-keys';
+import { DEFAULT_OCTAVE, MAX_OCTAVE, MIN_OCTAVE, type MidiKeysStatus } from './keys-panel';
 import type { ZoomState } from './measure-zoom';
+
+/** A note struck within 45 ms of another forms a chord (Task 5, global constraints). */
+const CHORD_WINDOW_MS = 45;
 
 export interface ZoomEditing {
   enterLetter(letter: string, chord: boolean): void;
@@ -67,6 +75,23 @@ export interface ZoomEditing {
   currentEvent(): MusicalEvent | null;
   /** The event at `eventIndex` of `voice` in the zoomed bar, with its ref (the zoom's pointer). */
   eventAt(voice: 0 | 1, eventIndex: number): { ref: EventRef; event: MusicalEvent } | null;
+  /**
+   * A MIDI note-on or an on-screen key click (Task 5): a new note, spelled by
+   * the bar's key signature, or — on a percussion track — mapped through GM
+   * to a stroke. Optional only so the note-toolbar/more-popover tests' bare
+   * mocks (which never open the Keys panel) don't have to stub it.
+   */
+  enterMidiPitch?(midi: number): void;
+  /**
+   * A note struck within the chord grouper's window of the one just entered:
+   * added to that event (pitched), or just another stroke (percussion has no
+   * chords, so it behaves like enterMidiPitch).
+   */
+  addMidiChordPitch?(midi: number): void;
+  /** The Keys panel's MIDI status line. */
+  midiStatus?: MidiKeysStatus;
+  /** Shifts the on-screen keyboard's octave (±1, clamped MIN_OCTAVE..MAX_OCTAVE). */
+  onOctave?(delta: number): void;
 }
 
 export interface ZoomEditingOptions {
@@ -179,6 +204,10 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
     if (!sameCursor(clamped, zoom.cursor)) setZoom({ ...zoom, cursor: clamped });
   }, [score, zoom, setZoom, trackIndex, barQNAt]);
 
+  // The bar and voice the last MIDI note was appended to. enterPitch always
+  // appends, and may move the cursor on to the next bar once this one is
+  // full, so a chord note goes to that bar's last event, not the cursor's.
+  const lastMidiBar = useRef<{ measureIndex: number; voice: 0 | 1 } | null>(null);
   const editing = useMemo<ZoomEditing>(() => {
     const get = () => ref.current;
 
@@ -281,6 +310,49 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
         return null;
       }
       return refs;
+    };
+
+    /**
+     * A MIDI note-on or an on-screen key click (Task 5): a new note, spelled
+     * by the bar's key signature in force, or mapped through GM to a stroke
+     * on a percussion track. Strokes never chord (Review Focus 4's rule that
+     * pitches and letters never land on a drum part applies here too).
+     */
+
+    const enterFromMidi = (o: ZoomEditingOptions, midi: number) => {
+      if (!o.zoom) return;
+      if (o.percussion) {
+        const instrument = trackOf(o)?.instrument;
+        api.enterStroke(instrument ? gmToStrokeMidi(midi, instrument) : midi);
+        return;
+      }
+      const { measureIndex, voice } = o.zoom.cursor;
+      const { step, alter } = spellMidi(midi, { keyFifths: o.keyFifthsAt(measureIndex) });
+      lastMidiBar.current = { measureIndex, voice };
+      api.enterPitch(midi, { step, alter });
+    };
+
+    /**
+     * A note struck within the chord grouper's window of the one just
+     * entered: added to that event (the last one in lastMidiBar) with
+     * `add-chord-note`, or — with no such note, or on a percussion track,
+     * which has no chords — just another note (enterFromMidi).
+     */
+    const addChordFromMidi = (o: ZoomEditingOptions, midi: number) => {
+      if (!o.zoom || o.percussion) {
+        enterFromMidi(o, midi);
+        return;
+      }
+      const bar = lastMidiBar.current;
+      const events = bar ? voiceEvents(o, bar.measureIndex, bar.voice) : [];
+      const last = events.length - 1;
+      if (!bar || !isPitched(events[last])) {
+        enterFromMidi(o, midi);
+        return;
+      }
+      const { step, alter } = spellMidi(midi, { keyFifths: o.keyFifthsAt(bar.measureIndex) });
+      const ref: EventRef = { trackIndex: o.trackIndex, measureIndex: bar.measureIndex, voice: bar.voice, eventIndex: last };
+      o.dispatch({ type: 'add-chord-note', ref, midi, spelling: { step, alter } });
     };
 
     const api: ZoomEditing = {
@@ -553,6 +625,14 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
         const event = voiceEvents(o, m, voice)[eventIndex];
         return event ? { ref: { trackIndex: o.trackIndex, measureIndex: m, voice, eventIndex }, event } : null;
       },
+
+      enterMidiPitch(midi) {
+        enterFromMidi(get(), midi);
+      },
+
+      addMidiChordPitch(midi) {
+        addChordFromMidi(get(), midi);
+      },
     };
     return api;
   }, []);
@@ -572,6 +652,7 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
         case 'tie': return editing.toggleTie();
         case 'slur': return editing.slur('slur');
         case 'pencil': return o.zoom && o.setZoom({ ...o.zoom, pencil: !o.zoom.pencil });
+        case 'keys': return o.zoom && o.setZoom({ ...o.zoom, keysOpen: !o.zoom.keysOpen });
         case 'walk': return editing.walk(intent.dir, intent.extend);
         case 'bar': return editing.bar(intent.dir);
         case 'transpose': return editing.transpose(intent.how, intent.dir);
@@ -590,5 +671,33 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
     return () => window.removeEventListener('keydown', handler);
   }, [open, editing]);
 
-  return editing;
+  // ---- The Keys panel: MIDI input and the on-screen keyboard's octave (Task 5) ----
+  //
+  // One grouper for the hook's life, built on the first note-on, over
+  // `editing`'s stable methods (they read the latest score/zoom through
+  // `get()`), so a score change mid-chord never resets its window.
+  const grouperRef = useRef<ChordGrouper | null>(null);
+  const keysOpen = !!zoom?.keysOpen;
+  const { status: midiStatus } = useMidiInput(keysOpen, (midi, atMs) => {
+    grouperRef.current ??= new ChordGrouper(
+      (m: number) => editing.enterMidiPitch?.(m),
+      (m: number) => editing.addMidiChordPitch?.(m),
+      CHORD_WINDOW_MS,
+    );
+    grouperRef.current.noteOn(midi, atMs);
+  });
+
+  const onOctave = useCallback(
+    (delta: number) => {
+      if (!zoom) return;
+      const next = Math.max(MIN_OCTAVE, Math.min(MAX_OCTAVE, (zoom.octave ?? DEFAULT_OCTAVE) + delta));
+      setZoom({ ...zoom, octave: next });
+    },
+    [zoom, setZoom],
+  );
+
+  return useMemo(
+    () => ({ ...editing, midiStatus, onOctave }),
+    [editing, midiStatus, onOctave],
+  );
 }
