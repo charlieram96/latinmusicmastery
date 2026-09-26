@@ -31,7 +31,10 @@ export interface YourPath {
   moduleTitle: string
   /** Desktop slice: 2 before, current, 3 after, a "N more" gap, the module checkpoint. */
   items: PathItem[]
-  /** Phone slice: 1 before, current, 2 after and the checkpoint (5 nodes, no gap). */
+  /**
+   * Phone slice, 5 slots: 1 before, current, 2 after and the checkpoint; when
+   * lessons would be skipped, 1 after, a "N more" gap and the checkpoint.
+   */
   phoneItems: PathItem[]
 }
 
@@ -61,7 +64,8 @@ export function yourPathFor(
   if (!nodes.some((n) => n.kind === 'lesson')) return null
 
   const items = pathWindow(nodes, { before: 2, after: 3 })
-  const phoneItems = pathWindow(nodes, { before: 1, after: 2 }).filter((i) => i.kind !== 'gap')
+  const phoneWide = pathWindow(nodes, { before: 1, after: 2 })
+  const phoneItems = phoneWide.some((i) => i.kind === 'gap') ? pathWindow(nodes, { before: 1, after: 1 }) : phoneWide
   const lessons = items.filter((i) => i.kind === 'lesson')
   const anchor = lessons.find((i) => i.state === 'current') ?? lessons[lessons.length - 1]
   const moduleIndex = anchor && anchor.kind === 'lesson' ? anchor.moduleIndex : 0

@@ -77,4 +77,19 @@ describe('YourPathCard', () => {
     expect(header.className).toContain('relative')
     expect(header.className).toContain('z-10')
   })
+
+  it('D1: the module line also shows on phones, on its own line', () => {
+    render(PATH)
+    const line = host.querySelector('[data-path-module]') as HTMLElement
+    const cls = line.className.split(/\s+/)
+    expect(cls).not.toContain('hidden')
+    expect(cls).toEqual(expect.arrayContaining(['basis-full', 'sm:basis-auto']))
+  })
+
+  it('D2: an untitled module shows "Module N" with no trailing separator', () => {
+    render({ ...PATH, moduleTitle: '' })
+    const line = host.querySelector('[data-path-module]') as HTMLElement
+    expect(line.textContent).toContain('dashboard.pages.home.path.moduleOnly(3)')
+    expect(line.textContent).not.toContain('path.module(')
+  })
 })

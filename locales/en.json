@@ -2117,6 +2117,7 @@
         "path": {
           "title": "Your path",
           "module": "Module {n} · {title}",
+          "moduleOnly": "Module {n}",
           "courseMap": "Course map"
         },
         "streak": {

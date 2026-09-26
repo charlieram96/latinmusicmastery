@@ -2117,6 +2117,7 @@
         "path": {
           "title": "Tu camino",
           "module": "Módulo {n} · {title}",
+          "moduleOnly": "Módulo {n}",
           "courseMap": "Mapa del curso"
         },
         "streak": {

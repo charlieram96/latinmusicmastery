@@ -21,16 +21,19 @@ export function YourPathCard({ path }: { path: YourPath | null }) {
   return (
     <section aria-labelledby="home-path" className="rounded-xl border border-border bg-card px-4 pb-1 pt-3.5 shadow-card sm:px-5">
       {/* Above the strip: the strip's empty top band is pulled up under this row. */}
-      <div className="relative z-10 flex items-center gap-2">
+      <div className="relative z-10 flex flex-wrap items-center gap-x-2 gap-y-0.5">
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-primary/[0.14] text-primary">
           <Route className="h-4 w-4" aria-hidden />
         </span>
         <h2 id="home-path" className="shrink-0 text-base font-semibold">
           {label}
         </h2>
-        <span className="hidden min-w-0 truncate text-[13px] text-muted-foreground sm:inline">
-          <span aria-hidden>· </span>
-          {t(`${BASE}.module`, { n: path.moduleNumber, title: path.moduleTitle })}
+        {/* Phones: its own line under the title (after the course map link); sm+: inline after the title. */}
+        <span data-path-module className="order-last min-w-0 basis-full truncate pl-9 text-[13px] text-muted-foreground sm:order-none sm:basis-auto sm:pl-0">
+          <span aria-hidden className="hidden sm:inline">· </span>
+          {path.moduleTitle
+            ? t(`${BASE}.module`, { n: path.moduleNumber, title: path.moduleTitle })
+            : t(`${BASE}.moduleOnly`, { n: path.moduleNumber })}
         </span>
         <Link
           href={path.courseHref}
