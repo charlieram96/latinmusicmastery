@@ -25,7 +25,10 @@ vi.mock('@/components/ui/popover', () => ({
   PopoverTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   PopoverContent: ({ children }: { children: React.ReactNode }) => <div data-popover>{children}</div>,
 }))
-vi.mock('../exercise-score', () => ({ ExerciseScore: () => <div data-score /> }))
+vi.mock('../exercise-score', async () => {
+  const bridge = await vi.importActual<typeof import('../exercise-workspace')>('../exercise-workspace')
+  return { ExerciseScore: () => <div data-score data-position={bridge.useExerciseWorkspace()?.position} /> }
+})
 vi.mock('@/components/playsense-studio/player/notation/renderers/staff-renderer', () => ({ StaffRenderer: () => null }))
 vi.mock('@/components/playsense-studio/player/notation/staff-layout-switch', () => ({ useStaffLayoutPreference: () => ['stacked', () => {}] }))
 vi.mock('@/contexts/playsense-context', () => ({ usePlaysense: () => ({ connectionStatus: 'disconnected', connect: async () => {}, isConnected: () => false }) }))
@@ -57,6 +60,8 @@ let root: Root
 let host: HTMLDivElement
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+  const store = new Map<string, string>()
+  vi.stubGlobal('localStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, String(v)) }, removeItem: (k: string) => { store.delete(k) } })
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
   vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }))
   vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(async () => {})
@@ -139,5 +144,24 @@ describe('ScoreExerciseGame translations (L10)', () => {
     expect(labels).toContain('dashboard.classViewer.exercise.muteTrack(Bass)')
     expect(labels).toContain('dashboard.classViewer.exercise.trackLevel(Bass)')
     expect(labels.join(' ')).not.toMatch(/Mute Bass|Bass level/)
+  })
+})
+
+describe('ScoreExerciseGame score shape without a video', () => {
+  const score = { tracks: [] } as never
+  const stored = (layout: string) => localStorage.setItem('lmm-workspace:play:stacked', JSON.stringify({ v: 1, layout }))
+
+  it('with a video, the score follows the student’s workspace layout', () => {
+    stored('stack')
+    session = { ...baseSession(), exercise, sessionState: 'playing' }
+    render({ score })
+    expect(host.querySelector('[data-score]')?.getAttribute('data-position')).toBe('top')
+  })
+
+  it('without a video, the score keeps the music-only shape whatever layout is stored', () => {
+    stored('stack')
+    session = { ...baseSession(), exercise, sessionState: 'playing' }
+    render({ score, exerciseVideo: null })
+    expect(host.querySelector('[data-score]')?.getAttribute('data-position')).toBe('right')
   })
 })

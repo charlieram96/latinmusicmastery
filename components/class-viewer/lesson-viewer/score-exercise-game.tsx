@@ -106,6 +106,14 @@ function ScoreExerciseSession({
   // Remembered per staff layout, like watch (lmm-workspace:play:stacked / :horizontal).
   const [staffLayout, setStaffLayout] = useStaffLayoutPreference()
   const workspace = useWorkspaceLayout(`play:${staffLayout}`, PLAY_WORKSPACE)
+  // Without a teacher video there is nothing to lay out: the music fills the
+  // workspace (staff over highway), and the score's shape must not follow a
+  // stored layout the student can neither see nor change here.
+  const hasVideo = !!exerciseVideo
+  const scoreWorkspace = useMemo(
+    () => hasVideo ? workspace : { ...workspace, layout: 'music' as const, state: { ...workspace.state, layout: 'music' as const, swap: false } },
+    [hasVideo, workspace],
+  )
   // The student's mix over the backing tracks: every track plays, each at the
   // level the student set (on top of the authored level) or muted. Remembered
   // per viewer; hydrated after mount so the server and first client render agree.
@@ -626,7 +634,7 @@ function ScoreExerciseSession({
 
       {/* The lesson workspace: staff over the highway, the demo video
           floating in a corner (or beside them — the student's choice). */}
-      <ExerciseScoreWorkspaceBridge controller={workspace}>
+      <ExerciseScoreWorkspaceBridge controller={scoreWorkspace}>
       <SplitWorkspace
         controller={workspace}
         frame="fill"
