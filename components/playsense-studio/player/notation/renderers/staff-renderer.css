@@ -37,7 +37,9 @@
 .ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=past] [data-score-note][data-note-state=played] { opacity:1; }
 .ps-score-engraving[data-score-layout-mode=wrapped] [data-row-state=past] .ps-staff-name[data-past=true] { opacity:1; }
 .ps-score-engraving [data-page-state=hidden] { visibility:hidden; }
-.ps-score-engraving[data-score-layout-mode=paged] .ps-staff-viewport { overflow:hidden; }
+/* A paged row sits in the middle of a tall pane (auto margins centre without clipping when the pane is short). */
+.ps-score-engraving[data-score-layout-mode=paged] { display:flex; flex-direction:column; }
+.ps-score-engraving[data-score-layout-mode=paged] .ps-staff-viewport { overflow:hidden; flex-shrink:0; margin-block:auto; }
 .ps-exercise-score .ps-staff-viewport { mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 20px),transparent); }
 .ps-score-engraving:not([data-score-interactive]) .ps-staff-content { touch-action:pan-y!important; }
 .ps-score-engraving[data-score-layout-mode=wrapped]:not([data-score-interactive]) .ps-staff-content { touch-action:pan-x pan-y!important; }

@@ -620,7 +620,10 @@ class StaffRendererImpl implements ScoreRenderer {
       viewport.setAttribute('aria-label', 'Score measures');
     }
     el.appendChild(viewport);
-    el.style.height = wrapped ? '100%' : `${scaledStageHeight}px`;
+    // A paged row fills its pane (at least one row tall) and centres there; CSS does the centring.
+    const paged = this.layoutMode === 'paged';
+    el.style.height = wrapped || paged ? '100%' : `${scaledStageHeight}px`;
+    el.style.minHeight = paged ? `${scaledStageHeight}px` : '';
     this.viewportEl = viewport;
 
     const rendererDiv = document.createElement('div');
@@ -1655,7 +1658,7 @@ class StaffRendererImpl implements ScoreRenderer {
 
   destroy(): void {
     this.teardownDom();
-    if (this.container) this.container.style.height = '';
+    if (this.container) { this.container.style.height = ''; this.container.style.minHeight = ''; }
     this.container = null;
     this.score = null;
     this.scale = BASE_SCALE;

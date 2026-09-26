@@ -239,3 +239,23 @@ describe('paged interludes and turns (minors)', () => {
     }
   })
 })
+
+describe('paged row in a tall pane (minors)', () => {
+  it('fills its pane and centres the one-row viewport vertically', async () => {
+    draw({ layoutMode: 'paged' })
+    const el = host.querySelector('.ps-score-engraving') as HTMLElement
+    const viewport = host.querySelector('.ps-staff-viewport') as HTMLElement
+    expect(el.style.height).toBe('100%')
+    expect(el.style.minHeight).toBe(viewport.style.height)
+    const { readFileSync } = await import('node:fs')
+    const css = readFileSync('components/playsense-studio/player/notation/renderers/staff-renderer.css', 'utf8')
+    expect(css).toMatch(/\[data-score-layout-mode=paged\] \{[^}]*display:flex;[^}]*flex-direction:column/)
+    expect(css).toMatch(/\[data-score-layout-mode=paged\] \.ps-staff-viewport \{[^}]*margin-block:auto/)
+  })
+  it('keeps the scroll line at its own height', () => {
+    draw({ layoutMode: 'scroll' })
+    const el = host.querySelector('.ps-score-engraving') as HTMLElement
+    expect(el.style.height).toMatch(/px$/)
+    expect(el.style.minHeight).toBe('')
+  })
+})

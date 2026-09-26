@@ -605,7 +605,7 @@ export function PlaysenseStudioPlayer({
       loopAMs={loopAMs}
       loopBMs={loopBMs}
       layoutMode={staffLayout}
-      className={staffLayout === 'wrapped' ? 'min-h-0 flex-1' : undefined}
+      className={staffLayout !== 'scroll' ? 'min-h-0 flex-1' : undefined}
       zoom={layout === 'split' ? zoom : 1}
       showCursor={hasNotation || inTrailingGap || inLeadingGap}
       leadingGapMs={leadingGapMs}
@@ -711,14 +711,14 @@ export function PlaysenseStudioPlayer({
                     className="flex-shrink-0 border-b border-border px-3 py-2" />
                 )}
                 <div className="relative min-h-0 flex-1">
-                  {/* Wrapped staves scroll inside the renderer's own viewport, so the
-                      layer hands it every remaining pixel instead of nesting a
-                      second scroller; the single scrolling line keeps the padded
-                      page so the scrub bar clears the zoom control. */}
+                  {/* Stacked staves scroll inside the renderer's own viewport and a
+                      paged row centres in it, so the layer hands it every remaining
+                      pixel instead of nesting a second scroller; the single scrolling
+                      line keeps the padded page so the scrub bar clears the zoom control. */}
                   <NotationZoomLayer
                     zoom={zoom}
                     onZoom={setZoom}
-                    className={staffLayout === 'wrapped'
+                    className={staffLayout !== 'scroll'
                       ? 'flex h-full flex-col gap-2 overflow-hidden p-3'
                       : 'h-full space-y-2 overflow-auto p-3 pb-16'}
                   >

@@ -48,6 +48,9 @@
 .ps-exercise-score[data-score-layout=vertical] .ps-score-tools { grid-area:2/2; gap:6px; justify-content:flex-end; }
 .ps-exercise-score[data-score-layout=vertical] .ps-score-zoom { padding-left:6px; }
 .ps-exercise-score[data-score-layout=vertical] .ps-score-sheet { flex:1; min-height:0; position:relative; padding-top:8px; }
+/* A paged row fills the panel's height so the renderer can centre it. */
+.ps-exercise-score[data-score-layout=vertical][data-staff-layout=horizontal] .ps-score-sheet { display:flex; flex-direction:column; }
+.ps-exercise-score[data-score-layout=vertical][data-staff-layout=horizontal] .ps-score-sheet>.ps-score-engraving { flex:1 1 auto; }
 .ps-exercise-score[data-score-layout=vertical] .ps-staff-viewport { mask-image:linear-gradient(180deg,#000 calc(100% - 16px),transparent); overscroll-behavior:contain; }
 .ps-score-tools .ps-score-autofollow[aria-pressed=true] { background:hsl(var(--primary) / .08); color:hsl(var(--foreground)); }
 .ps-score-autofollow[aria-pressed=true] svg { color:hsl(var(--primary)); }
