@@ -116,20 +116,24 @@ export const DRAG_THRESHOLD_PX = 4;
 const GRIP_H = 6;
 /** The grip band's hit height — a little taller than the tick, for the pointer. */
 const GRIP_HIT_H = 12;
-/** Two clicks on one flex point within this many ms remove it. */
+/** Two clicks on one flex point within this many ms remove it (on the second
+ *  release, and only if that press didn't become a drag). */
 const DOUBLE_CLICK_MS = 400;
 const FLEX_AMBER = 'hsl(38 92% 50%)';
 const TINT_SLOWER = 'hsl(210 90% 55% / .14)';
 const TINT_FASTER = 'hsl(28 95% 55% / .14)';
 
-/** `+12 ms · 104%`: signed ms of dst − src, then 100 / the rate of the segment
- *  to the point's left (identity, so 100%, for the first point). */
+/** `+12 ms · 104%`: signed ms of dst − src, then the playback speed of the
+ *  segment to the point's left as a % (Δsrc/Δdst: slower is under 100;
+ *  identity, so 100%, for the first point), clamped for display to the rate
+ *  driver's [50, 200]. */
 export function flexDragLabel(points: readonly FlexPoint[], index: number): string {
   const p = points[index];
   const ms = Math.round((p.dst - p.src) * 1000);
   const prev = points[index - 1];
   const rate = prev && p.dst - prev.dst > 0 ? (p.src - prev.src) / (p.dst - prev.dst) : 1;
-  return `${ms >= 0 ? '+' : ''}${ms} ms · ${Math.round(100 / rate)}%`;
+  const pct = Math.min(200, Math.max(50, Math.round(100 * rate)));
+  return `${ms >= 0 ? '+' : ''}${ms} ms · ${pct}%`;
 }
 
 interface ThemeColors {
@@ -786,6 +790,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       | 'dragging-anchor'
       | 'pending-flex-add'
       | 'pending-flex'
+      | 'pending-flex-remove'
       | 'dragging-flex' = 'idle';
     let target: DragTarget | null = null;
     let startX = 0;
@@ -848,7 +853,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       return best?.target ?? null;
     };
 
-    /** Flex mode, below the chip band: the nearest point, anywhere down the wave. */
+    /** Flex mode, below the chip band and above the anchor band: the nearest
+     *  point (the metronome-anchor grip and tail stay reachable below). */
     const flexPointHitTest = (x: number): number => {
       let best = -1;
       let bestD = Infinity;
@@ -886,18 +892,16 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       // and never in the chip band, so bar chips and trim keep working.
       const y = localY(e);
       if (flexModeRef.current && y >= LABEL_BAND) {
-        const pi = onFlexDragRef.current ? flexPointHitTest(x) : -1;
+        const aboveAnchorBand = y <= overlay.clientHeight - ANCHOR_BAND;
+        const pi = onFlexDragRef.current && aboveAnchorBand ? flexPointHitTest(x) : -1;
         if (pi >= 0) {
           const now = performance.now();
-          if (lastFlexClick && lastFlexClick.index === pi && now - lastFlexClick.at <= DOUBLE_CLICK_MS) {
-            lastFlexClick = null;
-            mode = 'idle';
-            pointerId = null;
-            onFlexRemoveRef.current?.(pi);
-            return;
-          }
+          const second = !!lastFlexClick && lastFlexClick.index === pi && now - lastFlexClick.at <= DOUBLE_CLICK_MS;
+          lastFlexClick = null;
           flexIndex = pi;
-          mode = 'pending-flex';
+          // The second press only arms the removal: it happens on release if
+          // the pointer stayed put, and becomes a plain drag if it moved.
+          mode = second ? 'pending-flex-remove' : 'pending-flex';
           return;
         }
         if (y < LABEL_BAND + GRIP_HIT_H) {
@@ -947,7 +951,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       if (mode === 'pending-scrub' && moved) mode = 'scrubbing';
       if (mode === 'pending-trim' && moved) mode = 'dragging-trim';
       if (mode === 'pending-anchor' && moved) mode = 'dragging-anchor';
-      if (mode === 'pending-flex' && moved) {
+      if ((mode === 'pending-flex' || mode === 'pending-flex-remove') && moved) {
         mode = 'dragging-flex';
         flexDragRef.current = flexIndex;
       }
@@ -978,6 +982,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       lastFlexClick = null;
       if (mode === 'pending-flex-add' && Math.abs(localX(e) - startX) < DRAG_THRESHOLD_PX) {
         onFlexAddRef.current?.(flexIndex);
+      } else if (mode === 'pending-flex-remove') {
+        if (Math.abs(localX(e) - startX) < DRAG_THRESHOLD_PX) onFlexRemoveRef.current?.(flexIndex);
       } else if (mode === 'pending-flex') {
         lastFlexClick = { index: flexIndex, at: performance.now() };
       } else if (mode === 'dragging-flex') {

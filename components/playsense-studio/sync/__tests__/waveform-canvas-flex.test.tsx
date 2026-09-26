@@ -2,7 +2,8 @@
 //
 // Flex editing on the waveform (Flex Time, Task 6). In Flex mode the hits
 // show as grips along the top of the wave area (click one to add a point),
-// flex points drag (with ⌘ skipping the snap) and a double-click removes one.
+// flex points drag (with ⌘ skipping the snap) and a double-click removes one
+// (on release, and only if the second press didn't turn into a drag).
 // With Flex mode off the same pixels behave exactly as before.
 
 import { useState } from 'react';
@@ -98,8 +99,18 @@ describe('WaveformCanvas Flex editing', () => {
   let root: Root;
   let calls: Calls;
 
+  let restoreHeight: () => void;
+
   beforeEach(() => {
     global.IS_REACT_ACT_ENVIRONMENT = true;
+    // jsdom lays nothing out; give the overlay a real height so the bottom
+    // ANCHOR_BAND (18 px) sits at y 182..200, below BODY_Y.
+    const orig = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight');
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, get: () => 200 });
+    restoreHeight = () => {
+      if (orig) Object.defineProperty(HTMLElement.prototype, 'clientHeight', orig);
+      else delete (HTMLElement.prototype as { clientHeight?: number }).clientHeight;
+    };
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -109,6 +120,7 @@ describe('WaveformCanvas Flex editing', () => {
   afterEach(() => {
     act(() => root.unmount());
     container.remove();
+    restoreHeight();
   });
 
   const overlay = () => container.querySelectorAll('canvas')[1];
@@ -162,6 +174,41 @@ describe('WaveformCanvas Flex editing', () => {
     expect(calls.drag).toEqual([]);
   });
 
+  it('the second press removes only on release: removal waits for pointerup', () => {
+    act(() => root.render(<Harness flexMode calls={calls} points={POINTS} />));
+    fire('pointerdown', 300, BODY_Y);
+    fire('pointerup', 300, BODY_Y);
+    fire('pointerdown', 300, BODY_Y);
+    expect(calls.remove).toEqual([]);
+    fire('pointerup', 301, BODY_Y);
+    expect(calls.remove).toEqual([1]);
+  });
+
+  it('click-then-drag on a flex point drags it and does not remove it', () => {
+    act(() => root.render(<Harness flexMode calls={calls} points={POINTS} />));
+    fire('pointerdown', 300, BODY_Y);
+    fire('pointerup', 300, BODY_Y);
+    fire('pointerdown', 300, BODY_Y);
+    fire('pointermove', 310, BODY_Y);
+    fire('pointerup', 310, BODY_Y);
+    expect(calls.remove).toEqual([]);
+    expect(calls.drag).toEqual([[1, 31, { snap: true }]]);
+  });
+
+  it('a flex point is not grabbed in the bottom anchor band', () => {
+    act(() => root.render(<Harness flexMode calls={calls} points={POINTS} />));
+    // y 190 is inside the bottom ANCHOR_BAND (182..200): no flex drag there.
+    fire('pointerdown', 300, 190);
+    fire('pointermove', 320, 190);
+    fire('pointerup', 320, 190);
+    expect(calls.drag).toEqual([]);
+    fire('pointerdown', 300, 190);
+    fire('pointerup', 300, 190);
+    fire('pointerdown', 300, 190);
+    fire('pointerup', 300, 190);
+    expect(calls.remove).toEqual([]);
+  });
+
   it('with Flex mode off, the same click selects and drags the bar line as before', () => {
     act(() => root.render(<Harness flexMode={false} calls={calls} points={POINTS} />));
     fire('pointerdown', 51, GRIP_Y);
@@ -192,9 +239,9 @@ describe('WaveformCanvas Flex editing', () => {
 });
 
 describe('flexDragLabel', () => {
-  it('shows the signed offset and the left segment as a percentage', () => {
-    // 20→30 timeline plays 20→28 media: rate 0.8, so 125%.
-    expect(flexDragLabel(POINTS, 1)).toBe('+2000 ms · 125%');
+  it('shows the signed offset and the left segment\'s playback speed as a percentage', () => {
+    // 20→30 timeline plays 20→28 media: speed 0.8, so 80% (slower is under 100).
+    expect(flexDragLabel(POINTS, 1)).toBe('+2000 ms · 80%');
     const early: FlexPoint[] = [
       { src: 10, dst: 10, anchor: true },
       { src: 12.5, dst: 12.488, anchor: false },
@@ -202,6 +249,12 @@ describe('flexDragLabel', () => {
     expect(flexDragLabel(early, 1)).toBe('-12 ms · 100%');
     // The first point has identity to its left.
     expect(flexDragLabel(POINTS, 0)).toBe('+0 ms · 100%');
+  });
+  it('clamps the displayed speed to the driver\'s [50, 200]', () => {
+    const slow: FlexPoint[] = [{ src: 0, dst: 0, anchor: true }, { src: 1, dst: 5, anchor: false }];
+    expect(flexDragLabel(slow, 1)).toBe('+4000 ms · 50%');
+    const fast: FlexPoint[] = [{ src: 0, dst: 0, anchor: true }, { src: 5, dst: 1, anchor: false }];
+    expect(flexDragLabel(fast, 1)).toBe('-4000 ms · 200%');
   });
 });
 
