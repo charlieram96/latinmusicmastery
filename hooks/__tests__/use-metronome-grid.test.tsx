@@ -76,6 +76,15 @@ describe('useMetronome with a grid', () => {
 
     expect(relativeTimes(clicks, exerciseStart)).toEqual([0, 0.5, 1, 1.5, 2, 3, 4, 5])
     expect(relativeTimes(clicks.filter(c => c.downbeat), exerciseStart)).toEqual([0, 2])
+    clicks.length = 0
+
+    // Advance past the loop length (6 s): the next scheduled click must land
+    // exactly at the loop boundary and be a downbeat (the next pass's bar 1).
+    ;(ctx as unknown as { currentTime: number }).currentTime = exerciseStart + 6.05
+    act(() => { vi.advanceTimersByTime(30) })
+
+    expect(relativeTimes(clicks, exerciseStart)).toEqual([6])
+    expect(clicks[0].downbeat).toBe(true)
 
     act(() => { result.current.stopMetronome() })
   })
