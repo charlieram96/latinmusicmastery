@@ -24,6 +24,7 @@ import { PlaysenseTestPanel } from '@/components/play-sense/playsense-test-panel
 import { getBestAttemptAccuracy, saveAttempt } from '@/app/actions/play-sense'
 import { buildBarResults, reachedResults, takeBaseline } from '@/lib/play-sense/bar-results'
 import { computeStats } from '@/lib/play-sense/scoring'
+import { audioErrorKey } from '@/lib/play-sense/audio-errors'
 import { PartDone } from './part-done'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -289,6 +290,10 @@ function ScoreExerciseSession({
     void session.startExercise()
   }
 
+  // The input hooks report in English; show the ones we know in the student's language.
+  const errorKey = audioErrorKey(session.audioError)
+  const audioError = errorKey ? t(errorKey) : session.audioError
+
   const isActive =
     session.sessionState === 'selecting' ||
     session.sessionState === 'countdown' ||
@@ -364,7 +369,7 @@ function ScoreExerciseSession({
           micOpen={session.isListening}
           micHeard={micHeard}
           deviceLabel={deviceLabel}
-          micError={session.isListening ? null : session.audioError}
+          micError={session.isListening ? null : audioError}
           onTestMic={() => { testedMode.current = session.audioMode; session.testMic() }}
           calibrating={session.isCalibrating}
           calibrationBeat={session.calibrationBeat}
@@ -466,8 +471,8 @@ function ScoreExerciseSession({
                             type="button"
                             onClick={() => updateMix(track.id, { muted: !entry.muted })}
                             aria-pressed={!entry.muted}
-                            aria-label={`${entry.muted ? 'Unmute' : 'Mute'} ${track.label}`}
-                            title={entry.muted ? 'Unmute' : 'Mute'}
+                            aria-label={t(entry.muted ? 'dashboard.classViewer.exercise.unmuteTrack' : 'dashboard.classViewer.exercise.muteTrack', { track: track.label })}
+                            title={t(entry.muted ? 'dashboard.classViewer.exercise.unmute' : 'dashboard.classViewer.exercise.mute')}
                             className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
                               entry.muted ? 'text-muted-foreground hover:bg-muted hover:text-foreground' : 'bg-primary/15 text-primary hover:bg-primary/25'
                             }`}
@@ -490,7 +495,7 @@ function ScoreExerciseSession({
                               disabled={entry.muted}
                               onChange={(e) => updateMix(track.id, { level: Number(e.target.value) })}
                               className="mt-1 h-1.5 w-full cursor-pointer accent-primary disabled:cursor-default"
-                              aria-label={`${track.label} level`}
+                              aria-label={t('dashboard.classViewer.exercise.trackLevel', { track: track.label })}
                             />
                           </div>
                         </li>
@@ -635,7 +640,7 @@ function ScoreExerciseSession({
             playsInline
             preload="auto"
             className="h-full w-full bg-black object-contain"
-            aria-label="Instructor reference video"
+            aria-label={t('dashboard.classViewer.exercise.referenceVideo')}
           />
         )}
         music={hasStaff ? scoreEl : stageEl}
@@ -702,9 +707,9 @@ function ScoreExerciseSession({
         </div>
       )}
 
-      {session.audioError && (
+      {audioError && (
         <div className="m-4 p-3 rounded-xl border border-red-500/30 bg-destructive/10">
-          <p className="text-sm text-muted-foreground">{session.audioError}</p>
+          <p className="text-sm text-muted-foreground">{audioError}</p>
         </div>
       )}
     </div>

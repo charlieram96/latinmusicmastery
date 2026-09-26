@@ -2386,7 +2386,29 @@
         "playAlongWith": "Tocar junto con",
         "tracksOn": "{on} de {total} activas",
         "tracksHint": "Silencia una pista o ajusta su nivel. Los cambios se aplican mientras tocas.",
-        "preparing": "Preparando la prueba…"
+        "preparing": "Preparando la prueba…",
+        "audioErrors": {
+          "webAudio": "Tu navegador no puede procesar audio aquí. Prueba con Chrome, Edge, Firefox o Safari actualizados.",
+          "micDenied": "El acceso al micrófono está bloqueado. Haz clic en el candado o en la información del sitio en la barra de direcciones, permite el micrófono y vuelve a pulsar Reproducir.",
+          "micMissing": "No se encontró ningún micrófono. Conecta uno e inténtalo de nuevo.",
+          "micBusy": "Otra aplicación está usando tu micrófono. Ciérrala e inténtalo de nuevo.",
+          "worklet": "No se cargó el procesador de audio. Recarga la página e inténtalo de nuevo.",
+          "micFailed": "No se pudo acceder al micrófono. Inténtalo de nuevo.",
+          "midiUnsupported": "MIDI no está disponible en este navegador. Usa un navegador con Web MIDI o elige el micrófono.",
+          "midiMissing": "No hay ningún instrumento MIDI conectado. Conecta tu teclado y pulsa Reproducir.",
+          "midiDenied": "El acceso MIDI está bloqueado. Permite MIDI en tu navegador e inténtalo de nuevo.",
+          "midiFailed": "No se pudo conectar con tu instrumento MIDI. Revisa la conexión e inténtalo de nuevo.",
+          "bleMissing": "No hay ningún dispositivo PlaySense conectado. Conéctalo e inténtalo de nuevo.",
+          "bleFailed": "No se pudo iniciar la entrada PlaySense. Revisa la conexión e inténtalo de nuevo.",
+          "bleUnsupported": "Este navegador no admite Bluetooth. Usa Chrome o Edge.",
+          "bleDisconnected": "Tu dispositivo PlaySense se desconectó y no pudo reconectarse."
+        },
+        "muteTrack": "Silenciar {track}",
+        "unmuteTrack": "Activar {track}",
+        "mute": "Silenciar",
+        "unmute": "Activar sonido",
+        "trackLevel": "Volumen de {track}",
+        "referenceVideo": "Video de referencia del instructor"
       },
       "lessonMode": {
         "crumbLabel": "Curso y módulo",

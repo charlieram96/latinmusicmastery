@@ -19,6 +19,12 @@ vi.mock('@/components/play-sense/now-playing-bar', () => ({ NowPlayingBar: (p: {
 vi.mock('@/components/play-sense/calibration-wizard', () => ({ CalibrationWizard: () => null }))
 vi.mock('@/components/play-sense/audio-mode-prompt', () => ({ AudioModePrompt: () => null }))
 vi.mock('@/components/play-sense/playsense-test-panel', () => ({ PlaysenseTestPanel: () => null }))
+// The mixer's popover renders its content in place so its labels can be read.
+vi.mock('@/components/ui/popover', () => ({
+  Popover: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  PopoverTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  PopoverContent: ({ children }: { children: React.ReactNode }) => <div data-popover>{children}</div>,
+}))
 vi.mock('../exercise-score', () => ({ ExerciseScore: () => <div data-score /> }))
 vi.mock('@/components/playsense-studio/player/notation/renderers/staff-renderer', () => ({ StaffRenderer: () => null }))
 vi.mock('@/components/playsense-studio/player/notation/staff-layout-switch', () => ({ useStaffLayoutPreference: () => ['stacked', () => {}] }))
@@ -76,7 +82,7 @@ describe('ScoreExerciseGame workspace media (W4)', () => {
   it('shows the video once the session is live', () => {
     session = { ...baseSession(), exercise, sessionState: 'playing' }
     render()
-    expect(host.querySelector('video')).not.toBeNull()
+    expect(host.querySelector('video')?.getAttribute('aria-label')).toBe('dashboard.classViewer.exercise.referenceVideo')
   })
 })
 
@@ -114,5 +120,24 @@ describe('ScoreExerciseGame Part done', () => {
     expect(host.textContent).toContain('part.better(80)')
     expect(actions.getBestAttemptAccuracy).toHaveBeenCalledWith('ex1')
     expect(actions.getUserAttempts).not.toHaveBeenCalled()
+  })
+})
+
+describe('ScoreExerciseGame translations (L10)', () => {
+  it('shows a known input error in the student’s language', () => {
+    session = { ...baseSession(), exercise, sessionState: 'playing', audioError: 'No microphone found. Please connect a microphone and try again.' }
+    render({ preview: false })
+    expect(host.textContent).toContain('dashboard.classViewer.exercise.audioErrors.micMissing')
+    expect(host.textContent).not.toContain('No microphone found.')
+  })
+
+  it('labels the backing-track mixer through translations', () => {
+    session = { ...baseSession(), exercise, sessionState: 'playing' }
+    const track = { id: 't1', label: 'Bass', audioUrl: 'https://a.test/bass.mp3', timelineStartSeconds: 0, trimInSeconds: 0, trimOutSeconds: null, gain: 1 }
+    render({ preview: false, backingTracks: [track] as never })
+    const labels = [...document.body.querySelectorAll('[aria-label]')].map(el => el.getAttribute('aria-label'))
+    expect(labels).toContain('dashboard.classViewer.exercise.muteTrack(Bass)')
+    expect(labels).toContain('dashboard.classViewer.exercise.trackLevel(Bass)')
+    expect(labels.join(' ')).not.toMatch(/Mute Bass|Bass level/)
   })
 })
