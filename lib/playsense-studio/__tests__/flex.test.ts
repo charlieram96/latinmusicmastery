@@ -71,4 +71,24 @@ describe('flex edits', () => {
     const r = quantizePlan({ points: [], notesTimeline: [10, 10.1], hitsMedia: [10.05, 12], beatSeconds: 0.5, range: { start: 9.9, end: 10.5 }, strength: 1 });
     expect(r.moved).toBe(1);
   });
+  it('regression: moved matches the surviving non-anchor points, even when a match would cross another', () => {
+    const r = quantizePlan({ points: [], notesTimeline: [0.8, 0.85], hitsMedia: [0.5, 0.9], beatSeconds: 1.05, range: { start: 0, end: 1.2 }, strength: 1 });
+    expect(r.moved).toBe(r.points.filter((q) => !q.anchor).length);
+  });
+  it('adds a point with no anchors when the hit is not in hitsMedia', () => {
+    const pts = addFlexAtHit([], 13, [10, 12, 14, 16], span);
+    expect(pts).toEqual([p(13, 13)]);
+  });
+  it('moveFlexPoint returns the points unchanged when neighbours are too close, or the index is out of range', () => {
+    const tight = [p(0, 10, true), p(1, 10.0007), p(2, 10.0015, true)];
+    expect(moveFlexPoint(tight, 1, 10.001, { start: 0, end: 100 })).toBe(tight);
+    const pts = [p(10, 10, true), p(12, 12), p(14, 14, true)];
+    expect(moveFlexPoint(pts, 5, 13, span)).toBe(pts);
+    expect(moveFlexPoint(pts, -1, 13, span)).toBe(pts);
+  });
+  it('removeFlexPoint returns the points unchanged for an out-of-range index', () => {
+    const pts = [p(10, 10, true), p(12, 12), p(14, 14, true)];
+    expect(removeFlexPoint(pts, 5)).toBe(pts);
+    expect(removeFlexPoint(pts, -1)).toBe(pts);
+  });
 });

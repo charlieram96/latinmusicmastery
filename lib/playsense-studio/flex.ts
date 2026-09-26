@@ -54,9 +54,15 @@ export class FlexMap {
   segmentAtMedia(media: number): number {
     const s = this.srcs;
     if (!s.length || media < s[0]) return -1;
-    let i = 0;
-    while (i + 1 < s.length && s[i + 1] <= media) i++;
-    return i;
+    if (media >= s[s.length - 1]) return s.length - 1;
+    let lo = 0;
+    let hi = s.length - 1;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (s[mid] <= media) lo = mid;
+      else hi = mid;
+    }
+    return lo;
   }
   /** Media seconds per timeline second at a media time (1 outside the points), clamped to [FLEX_RATE_MIN, FLEX_RATE_MAX]. */
   rateAtMedia(media: number): number {
@@ -87,23 +93,31 @@ export function addFlexAtHit(points: FlexPoint[], hitMedia: number, hitsMedia: n
   }
   const sorted = hitsMedia.filter((h) => inSpan(h, span)).sort((a, b) => a - b);
   const idx = sorted.findIndex((h) => Math.abs(h - hitMedia) < EPS);
-  for (const n of [sorted[idx - 1], sorted[idx + 1]]) {
-    if (n === undefined || out.some((q) => Math.abs(q.src - n) < EPS)) continue;
-    out.push({ src: n, dst: map.toTimeline(n), anchor: true });
+  if (idx >= 0) {
+    // hitMedia is a real hit: pin its neighbours as anchors. When it isn't
+    // (idx -1), sorted[idx + 1] would otherwise alias sorted[0] and add a
+    // bogus anchor, so skip the loop entirely.
+    for (const n of [sorted[idx - 1], sorted[idx + 1]]) {
+      if (n === undefined || out.some((q) => Math.abs(q.src - n) < EPS)) continue;
+      out.push({ src: n, dst: map.toTimeline(n), anchor: true });
+    }
   }
   out = out.sort((a, b) => a.src - b.src);
   return out;
 }
 
 export function moveFlexPoint(points: FlexPoint[], index: number, dst: number, span: { start: number; end: number }): FlexPoint[] {
+  if (index < 0 || index >= points.length) return points;
   const lo = Math.max(span.start, index > 0 ? points[index - 1].dst : -Infinity) + EPS;
   const hi = Math.min(span.end, index < points.length - 1 ? points[index + 1].dst : Infinity) - EPS;
+  if (lo > hi) return points; // neighbours are closer than 2*EPS: no room to move within
   const out = points.slice();
   out[index] = { ...out[index], dst: Math.min(hi, Math.max(lo, dst)) };
   return out;
 }
 
 export function removeFlexPoint(points: FlexPoint[], index: number): FlexPoint[] {
+  if (index < 0 || index >= points.length) return points;
   const out = points.filter((_, i) => i !== index);
   // Drop anchors that no longer border a real (non-anchor) point.
   return out.filter((q, i) => !q.anchor || (out[i - 1] && !out[i - 1].anchor) || (out[i + 1] && !out[i + 1].anchor));
@@ -122,8 +136,7 @@ export function quantizePlan(input: {
   const tol = input.beatSeconds / 3;
   const hits = input.hitsMedia.map((h) => ({ media: h, t: current.toTimeline(h) })).filter((h) => h.t > range.start && h.t < range.end);
   const used = new Set<number>();
-  const moves: FlexPoint[] = [];
-  let largest = 0;
+  const candidates: { src: number; dst: number; diffMs: number }[] = [];
   for (const note of input.notesTimeline.filter((n) => n >= range.start && n <= range.end).sort((a, b) => a - b)) {
     let best = -1;
     for (let i = 0; i < hits.length; i++) {
@@ -134,13 +147,38 @@ export function quantizePlan(input: {
     used.add(best);
     const h = hits[best];
     const dst = h.t + strength * (note - h.t);
-    moves.push({ src: h.media, dst, anchor: false });
-    largest = Math.max(largest, Math.abs(note - h.t));
+    candidates.push({ src: h.media, dst, diffMs: Math.round(Math.abs(note - h.t) * 1000) });
   }
+
   const kept = resetFlexRange(input.points, range);
   const edges = [range.start, range.end]
     .filter((t) => !kept.some((q) => Math.abs(q.dst - t) < EPS))
     .map((t) => ({ src: current.toMedia(t), dst: t, anchor: true }));
-  const points = readFlex({ flex: [...kept, ...edges, ...moves] });
-  return { points, moved: moves.length, largestMs: Math.round(largest * 1000) };
+  const fixed = [...kept, ...edges];
+  const boundBelow = (dst: number) =>
+    fixed.reduce((b, f) => (f.dst < dst - EPS / 10 && f.dst > b ? f.dst : b), -Infinity);
+  const boundAbove = (dst: number) =>
+    fixed.reduce((b, f) => (f.dst > dst + EPS / 10 && f.dst < b ? f.dst : b), Infinity);
+
+  // A quantize match can land out of order (an earlier hit claimed by a
+  // later note, or vice versa). Walking the candidates in src order and
+  // requiring each kept move's dst to strictly clear both the previous kept
+  // move and its bordering fixed points keeps the result monotonic, and
+  // `moved`/`largestMs` only ever count what actually survives into `points`.
+  const moves: FlexPoint[] = [];
+  const diffs: number[] = [];
+  let lastKeptDst = -Infinity;
+  for (const c of candidates.slice().sort((a, b) => a.src - b.src)) {
+    if (c.dst <= lastKeptDst + EPS / 10) continue;
+    const lo = boundBelow(c.dst);
+    const hi = boundAbove(c.dst);
+    if (c.dst <= lo + EPS / 10 || c.dst >= hi - EPS / 10) continue;
+    moves.push({ src: c.src, dst: c.dst, anchor: false });
+    diffs.push(c.diffMs);
+    lastKeptDst = c.dst;
+  }
+
+  const points = readFlex({ flex: [...fixed, ...moves] });
+  const largestMs = diffs.reduce((m, d) => Math.max(m, d), 0);
+  return { points, moved: moves.length, largestMs };
 }
