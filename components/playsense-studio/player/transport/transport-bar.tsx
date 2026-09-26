@@ -12,6 +12,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react';
 import { ChronometerControl } from './chronometer-control';
 import type { ActiveSubtitleLang } from '../state/use-subtitle-tracks';
@@ -32,6 +33,12 @@ interface TransportBarProps {
   onRestart: () => void;
   onSeek: (seconds: number) => void;
   onRateChange: (rate: number) => void;
+
+  /** 'stacked' (default) is the two-row student player. 'row' is the Studio's
+   *  single-row transport (mockup .st-transport), with the scrubber inline. */
+  layout?: 'stacked' | 'row';
+  /** Extra controls rendered in the row layout, just before the volume block. */
+  extra?: ReactNode;
 
   // A/B loop — endpoints are set by dragging on the staff. The transport
   // exposes the toggle + clear so the user can disarm/clear without
@@ -83,6 +90,8 @@ export function TransportBar({
   onRestart,
   onSeek,
   onRateChange,
+  layout = 'stacked',
+  extra,
   loopA,
   loopB,
   loopEnabled,
@@ -137,9 +146,7 @@ export function TransportBar({
     setScrubbing(false);
   };
 
-  return (
-    <div className="space-y-2">
-      {/* Scrubber */}
+  const scrubber = (
       <div
         ref={trackRef}
         onPointerDown={onTrackPointerDown}
@@ -236,26 +243,32 @@ export function TransportBar({
           />
         </div>
       </div>
+  );
 
-      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-        <button
-          onClick={onToggle}
-          className="st-play-btn"
-          aria-label={isPlaying ? 'Pause' : 'Play'}
-        >
-          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-        </button>
+  const lead = (
+    <>
+      <button
+        onClick={onToggle}
+        className="st-play-btn"
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+      >
+        {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+      </button>
 
-        <button onClick={onRestart} className="st-iconbtn" aria-label="Restart">
-          <RotateCcw className="h-4 w-4" />
-        </button>
+      <button onClick={onRestart} className="st-iconbtn" aria-label="Restart">
+        <RotateCcw className="h-4 w-4" />
+      </button>
 
-        <span className="st-tp-time">
-          {formatSeconds(currentSeconds)}
-          <span className="sep">/</span>
-          {formatSeconds(durationSeconds)}
-        </span>
+      <span className="st-tp-time">
+        {formatSeconds(currentSeconds)}
+        <span className="sep">/</span>
+        {formatSeconds(durationSeconds)}
+      </span>
+    </>
+  );
 
+  const rest = (
+    <>
         {/* Loop control cluster — endpoints are set by dragging on the staff;
             this row only toggles + clears + offers the metronome. */}
         <div className="flex items-center gap-1 sm:ml-2">
@@ -342,6 +355,8 @@ export function TransportBar({
           </div>
         )}
 
+        {extra}
+
         {/* Reference-video audio. Only rendered where something owns it. */}
         {onVideoMutedChange && (
           <div className="ml-auto flex items-center gap-1.5">
@@ -383,6 +398,25 @@ export function TransportBar({
           clickVolume={clickVolume}
           onClickVolumeChange={onClickVolumeChange ?? (() => {})}
         />
+    </>
+  );
+
+  if (layout === 'row') {
+    return (
+      <div className="st-transport-row">
+        {lead}
+        <div className="st-transport-scrub">{scrubber}</div>
+        {rest}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {scrubber}
+      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+        {lead}
+        {rest}
       </div>
     </div>
   );

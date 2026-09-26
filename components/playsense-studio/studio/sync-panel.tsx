@@ -13,7 +13,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, ChevronsLeftRight, Crosshair, FilePlus2, Loader2, Move, Music2, Repeat, Spline, Undo2, Wand2 } from 'lucide-react';
+import { AudioLines, ChevronsLeftRight, Crosshair, FilePlus2, Loader2, Move, Music2, Spline, Undo2, Wand2 } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -37,8 +37,8 @@ import {
 import { useVideoClickTrack } from '@/components/playsense-studio/player/state/use-video-click-track';
 import { useScoreSynth } from '@/components/playsense-studio/player/state/use-score-synth';
 import { scoreSynthNotes, toMediaNotes } from '@/lib/playsense-studio/score-synth';
-import { HEAR_OPTIONS, hearMute, readHear, writeHear, type Hear } from '@/lib/playsense-studio/hear';
-import { applyStudioRate, LOOP_SPEEDS } from '@/lib/playsense-studio/studio-rate';
+import { hearMute, readHear, writeHear, type Hear } from '@/lib/playsense-studio/hear';
+import { applyStudioRate } from '@/lib/playsense-studio/studio-rate';
 import { timingPatchFromMarkers } from '@/lib/playsense-studio/drafts/timing-patch';
 import type { StudioPlay, StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { autoAlign, onHitCount } from '@/lib/playsense-studio/auto-align';
@@ -49,6 +49,7 @@ import type { Waypoint } from '@/components/playsense-studio/shared/time-map/tim
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
+import { HearControl, LoopSpeedControl } from '@/components/playsense-studio/studio/hear-control';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
 import { SNAP_PX, barFlags, firstAttackTime, flagText, snapMarkerDrag, snapSectionShift } from '@/lib/playsense-studio/hits';
@@ -1410,12 +1411,6 @@ export function SyncPanel({
     () => (loopEnabled && loopA !== null && loopB !== null ? { a: loopA, b: loopB } : null),
     [loopEnabled, loopA, loopB]
   );
-  const loopSelectedMeasure = () => {
-    if (!selected || selected === 'tail') return;
-    const i = markers.measures.findIndex((m) => m.measureNumber === selected.measureNumber);
-    if (i !== -1) loopMeasures(i, i);
-  };
-
   const zoomBy = (factor: number, anchorPx = viewportWidth / 2) => {
     setPps((p) => {
       const nextPps = clamp(p * factor, MIN_PPS, MAX_PPS);
@@ -1902,21 +1897,6 @@ export function SyncPanel({
             )}
 
             <div className="ml-auto flex items-center gap-1.5">
-              <div className="st-seg" role="radiogroup" aria-label="Hear" title="Hear the recording, the written score, or both">
-                <span className="px-1 text-xs text-muted-foreground">Hear</span>
-                {HEAR_OPTIONS.map(({ value, label }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    role="radio"
-                    aria-checked={hear === value}
-                    className={hear === value ? 'is-on' : ''}
-                    onClick={() => handleHearChange(value)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
               {decodeState === 'loading' && (
                 <span className="text-xs text-muted-foreground">
                   {progress >= 1 ? 'Processing audio…' : `Downloading audio… ${progress > 0 ? `${Math.round(progress * 100)}%` : ''}`}
@@ -1931,33 +1911,6 @@ export function SyncPanel({
               >
                 <Music2 className="h-4 w-4" />
               </button>
-              <button
-                type="button"
-                onClick={loopSelectedMeasure}
-                disabled={!selected || selected === 'tail'}
-                className="st-iconbtn"
-                title="Loop the selected measure"
-              >
-                <Repeat className="h-4 w-4" />
-              </button>
-              {/* Also while slowed after the loop ends, so the speed never hides. */}
-              {(loopEnabled || Math.abs(displayedRate - 1) > 1e-3) && (
-                <div className="st-seg" role="radiogroup" aria-label="Loop speed" title="Loop speed — the recording keeps its pitch">
-                  <span className="px-1 text-xs text-muted-foreground">Loop speed</span>
-                  {LOOP_SPEEDS.map((speed) => (
-                    <button
-                      key={speed}
-                      type="button"
-                      role="radio"
-                      aria-checked={Math.abs(displayedRate - speed) < 1e-3}
-                      className={Math.abs(displayedRate - speed) < 1e-3 ? 'is-on' : ''}
-                      onClick={() => onDisplayedRateChange(speed)}
-                    >
-                      {Math.round(speed * 100)}%
-                    </button>
-                  ))}
-                </div>
-              )}
               {decodeState !== 'loading' && (
                 <button
                   type="button"
@@ -2345,6 +2298,8 @@ export function SyncPanel({
         createPortal(
           <div className="st-transport">
             <TransportBar
+              layout="row"
+              extra={<>{(loopEnabled || Math.abs(displayedRate - 1) > 1e-3) && <LoopSpeedControl rate={displayedRate} onRate={onDisplayedRateChange} />}{showSync && <HearControl hear={hear} onHear={handleHearChange} />}</>}
               loopHint="Loop the selected bars with L, or drag on the staff"
               currentSeconds={timelineNow}
               durationSeconds={clock.durationSeconds}
