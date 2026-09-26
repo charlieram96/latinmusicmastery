@@ -334,4 +334,71 @@ describe('PathStrip', () => {
       expect(host.querySelector('[role="tooltip"]')).toBeNull()
     })
   })
+
+  describe('polish minors', () => {
+    const hover = (node: Element) => act(() => { node.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })) })
+    const escape = () => act(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
+
+    it('C5: Escape dismisses a hover card and a focus card (WCAG 1.4.13)', () => {
+      render()
+      const node = host.querySelectorAll<HTMLElement>('[data-path-node]')[2]
+      hover(node)
+      expect(host.querySelector('[role="tooltip"]')).not.toBeNull()
+      escape()
+      expect(host.querySelector('[role="tooltip"]')).toBeNull()
+      act(() => { node.querySelector('a')!.focus() })
+      expect(host.querySelector('[role="tooltip"]')).not.toBeNull()
+      escape()
+      expect(host.querySelector('[role="tooltip"]')).toBeNull()
+    })
+
+    it('C6: after a touch, pressing Tab anywhere brings keyboard focus cards back', () => {
+      render()
+      const links = host.querySelectorAll<HTMLAnchorElement>('[data-path-scroller] [data-path-node] a')
+      pointer(links[0], 'pointerdown', 'touch')
+      act(() => { document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true })) })
+      act(() => { links[2].focus() })
+      expect(host.querySelector('[role="tooltip"]')?.textContent).toContain('Lesson c')
+    })
+
+    it('C8: with arrows, a card near the right edge stays clear of the arrow pair', () => {
+      const desc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth')
+      Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get: () => 600 })
+      try {
+        const row = ['a', 'b', 'c', 'd', 'e'].map((id, k) => lesson(id, k + 1, k === 1 ? 'current' : 'upcoming'))
+        render(row)
+        hover(host.querySelectorAll('[data-path-node]')[4]) // x = 60 + 4 * 118 = 532
+        const card = host.querySelector('[role="tooltip"]') as HTMLElement
+        // right edge = left + half the 208px card; the arrow pair is 2 × 36px + 8px gap at the right
+        expect(parseFloat(card.style.left) + 104).toBeLessThanOrEqual(600 - 80)
+      } finally {
+        if (desc) Object.defineProperty(HTMLElement.prototype, 'clientWidth', desc)
+        else delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth
+      }
+    })
+
+    it('C10: compact cards render on document.body (fixed), so no ancestor can clip them, and close on scroll', () => {
+      act(() => root.render(<PathStrip items={ITEMS} ariaLabel="p" size="compact" />))
+      const node = host.querySelectorAll<HTMLElement>('[data-path-node]')[2]
+      hover(node)
+      expect(host.querySelector('[role="tooltip"]')).toBeNull()
+      const card = document.body.querySelector('[role="tooltip"]') as HTMLElement
+      expect(card).not.toBeNull()
+      expect(card.className.split(/\s+/)).toContain('fixed')
+      expect(card.textContent).toContain('Lesson c')
+      expect(node.querySelector('a')!.getAttribute('aria-describedby')).toBe(card.id)
+      act(() => { window.dispatchEvent(new Event('scroll')) })
+      expect(document.body.querySelector('[role="tooltip"]')).toBeNull()
+    })
+
+    it('C10: near the top of the viewport a compact card opens below the node', () => {
+      act(() => root.render(<PathStrip items={ITEMS} ariaLabel="p" size="compact" />))
+      const node = host.querySelectorAll<HTMLElement>('[data-path-node]')[2]
+      node.getBoundingClientRect = () => ({ left: 300, top: 60, right: 300, bottom: 60, width: 0, height: 0, x: 300, y: 60, toJSON: () => ({}) })
+      hover(node)
+      const card = document.body.querySelector('[role="tooltip"]') as HTMLElement
+      expect(parseFloat(card.style.top)).toBeGreaterThan(60)
+      expect(card.className.split(/\s+/)).not.toContain('-translate-y-full')
+    })
+  })
 })
