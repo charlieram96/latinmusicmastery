@@ -22,12 +22,39 @@ type PitchPreservingVideo = HTMLVideoElement & {
   mozPreservesPitch?: boolean;
 };
 
+// The element's own pitch-preservation values from just before this hook
+// first wrote any of them. The browser default is `true`, not `false` — so
+// "turn flex off" must restore whatever was actually there, not force a
+// hardcoded value, or an unflexed section loses pitch preservation for good
+// the first time playback passes through a flexed one (fix round 2).
+type PitchSnapshot = {
+  preservesPitch: boolean;
+  webkitPreservesPitch?: boolean;
+  mozPreservesPitch?: boolean;
+};
+
 // Module-level (not a closure inside the hook) so `video` is an ordinary
 // parameter rather than a value captured from `useState` — the repo's React
 // Compiler lint rule (react-hooks/immutability) flags a captured state value
 // being mutated directly, even for a DOM element that's inherently mutated
 // imperatively; a plain parameter doesn't trip it.
-//
+
+/** Turns pitch preservation on, recording the element's own prior values the
+ *  first time (per element) this hook touches them at all. Later calls are
+ *  a no-op on the snapshot: it must stay the value from BEFORE this hook's
+ *  very first write, not get overwritten by its own `true`. */
+function setFlexPitch(video: PitchPreservingVideo, priorPitchRef: { current: PitchSnapshot | null }): void {
+  if (priorPitchRef.current === null) {
+    const snapshot: PitchSnapshot = { preservesPitch: video.preservesPitch };
+    if ('webkitPreservesPitch' in video) snapshot.webkitPreservesPitch = video.webkitPreservesPitch;
+    if ('mozPreservesPitch' in video) snapshot.mozPreservesPitch = video.mozPreservesPitch;
+    priorPitchRef.current = snapshot;
+  }
+  video.preservesPitch = true;
+  if ('webkitPreservesPitch' in video) video.webkitPreservesPitch = true;
+  if ('mozPreservesPitch' in video) video.mozPreservesPitch = true;
+}
+
 // Fix round 1, issue #2: when the driver turns off (or the element binds
 // late while already off), undo anything a still-running instance may have
 // left on the element — a stale segment rate and/or preservesPitch — so a
@@ -36,16 +63,24 @@ type PitchPreservingVideo = HTMLVideoElement & {
 // this, the leftover rate also keeps re-triggering the element's own
 // `ratechange` event, so a listener like useVideoTransportClock's would keep
 // showing the stale value in the transport too.
+//
+// Fix round 2: the pitch part now restores the exact snapshot `setFlexPitch`
+// recorded, rather than hardcoding `false` — this is the single reset path
+// for both the "enabled flips to false" and "map goes back to identity"
+// cases, so there's nowhere else pitch preservation can be reset wrong.
+// Nothing is touched if this hook never wrote a pitch property in the first
+// place (`priorPitchRef.current` stays `null`).
 function resetToUserSpeed(
   video: PitchPreservingVideo,
   userSpeed: number,
-  pitchOnRef: { current: boolean }
+  priorPitchRef: { current: PitchSnapshot | null }
 ): void {
-  if (pitchOnRef.current) {
-    pitchOnRef.current = false;
-    video.preservesPitch = false;
-    if ('webkitPreservesPitch' in video) video.webkitPreservesPitch = false;
-    if ('mozPreservesPitch' in video) video.mozPreservesPitch = false;
+  const prior = priorPitchRef.current;
+  if (prior) {
+    priorPitchRef.current = null;
+    video.preservesPitch = prior.preservesPitch;
+    if (prior.webkitPreservesPitch !== undefined) video.webkitPreservesPitch = prior.webkitPreservesPitch;
+    if (prior.mozPreservesPitch !== undefined) video.mozPreservesPitch = prior.mozPreservesPitch;
   }
   if (Math.abs(video.playbackRate - userSpeed) > WRITE_EPS) {
     video.playbackRate = userSpeed;
@@ -72,11 +107,11 @@ export function useFlexPlayback(
   const mapRef = useRef(map);
   const userSpeedRef = useRef(userSpeed);
   const rafRef = useRef<number | null>(null);
-  // True once this hook has actually turned preservesPitch on for the
-  // current video, so a map that starts (and stays) identity never touches
-  // the property at all, but one that goes non-identity → identity again
-  // gets its own write undone.
-  const pitchOnRef = useRef(false);
+  // Null until this hook actually writes a pitch property on the current
+  // video, so a map that starts (and stays) identity never touches the
+  // property at all; once set, it holds the element's own values from just
+  // before that first write, for resetToUserSpeed to restore exactly.
+  const priorPitchRef = useRef<PitchSnapshot | null>(null);
   // Set by the wiring effect below; re-invoked whenever map/userSpeed change
   // so an identity map keeps tracking userSpeed and a map that stops being
   // identity mid-playback picks the loop back up without waiting for a play
@@ -105,15 +140,9 @@ export function useFlexPlayback(
     if (!video) return;
 
     if (!enabled) {
-      resetToUserSpeed(video, userSpeedRef.current, pitchOnRef);
+      resetToUserSpeed(video, userSpeedRef.current, priorPitchRef);
       return;
     }
-
-    const setPreservesPitch = (on: boolean) => {
-      video.preservesPitch = on;
-      if ('webkitPreservesPitch' in video) video.webkitPreservesPitch = on;
-      if ('mozPreservesPitch' in video) video.mozPreservesPitch = on;
-    };
 
     const applyRate = (rate: number) => {
       if (Math.abs(video.playbackRate - rate) > WRITE_EPS) video.playbackRate = rate;
@@ -143,15 +172,10 @@ export function useFlexPlayback(
     const sync = () => {
       if (mapRef.current.isIdentity) {
         stopLoop();
-        if (pitchOnRef.current) {
-          pitchOnRef.current = false;
-          setPreservesPitch(false);
-        }
-        applyRate(userSpeedRef.current);
+        resetToUserSpeed(video, userSpeedRef.current, priorPitchRef);
         return;
       }
-      pitchOnRef.current = true;
-      setPreservesPitch(true);
+      setFlexPitch(video, priorPitchRef);
       if (video.paused) stopLoop();
       else startLoop();
     };

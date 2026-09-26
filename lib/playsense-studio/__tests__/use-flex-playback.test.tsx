@@ -26,7 +26,7 @@ function frame(ms = 16) {
 class FakeVideo extends EventTarget {
   currentTime = 0;
   paused = true;
-  preservesPitch = false;
+  preservesPitch = true; // browsers default this to true
   rateWrites = 0;
   private _rate = 1;
   get playbackRate() { return this._rate; }
@@ -150,23 +150,44 @@ describe('useFlexPlayback', () => {
     expect((video as unknown as { mozPreservesPitch: boolean }).mozPreservesPitch).toBe(true);
   });
 
-  it('resets preservesPitch (and the vendor variants) back to false when the map returns to identity', () => {
-    const video = new FakeVideo();
+  it('restores each pitch property to its OWN recorded prior value when the map returns to identity (fix round 2)', () => {
+    const video = new FakeVideo(); // preservesPitch defaults to true, like a browser
     (video as unknown as { webkitPreservesPitch: boolean }).webkitPreservesPitch = false;
     (video as unknown as { mozPreservesPitch: boolean }).mozPreservesPitch = false;
     video.paused = false;
     video.currentTime = 11;
     mount(video, THREE_POINT, 1);
     frame();
-    expect(video.preservesPitch).toBe(true);
+    expect(video.preservesPitch).toBe(true); // was already true; still written, no visible change
     expect((video as unknown as { webkitPreservesPitch: boolean }).webkitPreservesPitch).toBe(true);
+    expect((video as unknown as { mozPreservesPitch: boolean }).mozPreservesPitch).toBe(true);
 
     update(video, IDENTITY, 1);
-    expect(video.preservesPitch).toBe(false);
+    // Each property goes back to what IT was before this hook ever touched
+    // it, not a hardcoded value: the standard property's prior was true, the
+    // vendor ones' priors were false, and both are correct here.
+    expect(video.preservesPitch).toBe(true);
     expect((video as unknown as { webkitPreservesPitch: boolean }).webkitPreservesPitch).toBe(false);
     expect((video as unknown as { mozPreservesPitch: boolean }).mozPreservesPitch).toBe(false);
     expect(video.playbackRate).toBeCloseTo(1); // userSpeed, once, no loop
     expect(queue.size).toBe(0);
+  });
+
+  it('leaves preservesPitch untouched by a reset if this hook never wrote it (fix round 2)', () => {
+    const video = new FakeVideo();
+    (video as unknown as { webkitPreservesPitch: boolean }).webkitPreservesPitch = false;
+    video.paused = false;
+    video.currentTime = 11;
+    mount(video, IDENTITY, 1); // always identity: the hook never turns pitch preservation on
+    expect(video.preservesPitch).toBe(true); // the browser default, untouched
+    expect((video as unknown as { webkitPreservesPitch: boolean }).webkitPreservesPitch).toBe(false);
+
+    // Something outside this hook changes it mid-lifecycle. Since the hook
+    // never wrote a pitch property itself, it has no snapshot to restore, so
+    // a re-sync (userSpeed changed, still identity) must leave this alone.
+    video.preservesPitch = false;
+    update(video, IDENTITY, 0.5);
+    expect(video.preservesPitch).toBe(false); // left exactly as the external write set it
   });
 
   it('starts driving the rate when flex turns on mid-playback (identity → non-identity while playing)', () => {
@@ -203,7 +224,7 @@ describe('useFlexPlayback', () => {
     mount(video, IDENTITY, 0.75);
     expect(video.playbackRate).toBeCloseTo(0.75);
     expect(video.rateWrites).toBe(1);
-    expect(video.preservesPitch).toBe(false); // untouched
+    expect(video.preservesPitch).toBe(true); // untouched (the browser's own default)
     expect(queue.size).toBe(0); // no rAF loop was scheduled
 
     update(video, IDENTITY, 0.5);
@@ -220,7 +241,7 @@ describe('useFlexPlayback', () => {
     mount(video, THREE_POINT, 0.5, false);
     expect(video.playbackRate).toBeCloseTo(0.5);
     expect(video.rateWrites).toBe(1);
-    expect(video.preservesPitch).toBe(false);
+    expect(video.preservesPitch).toBe(true); // never written (disabled from the start): left at the default
     expect(queue.size).toBe(0);
 
     // A play event is exactly the case a caller's own pre-existing rate
@@ -252,6 +273,7 @@ describe('useFlexPlayback', () => {
     update(video, THREE_POINT, 0.75, false);
     expect(video.playbackRate).toBeCloseTo(0.75); // userSpeed, not the stale 0.6
     expect(queue.size).toBe(0); // no loop left running
+    expect(video.preservesPitch).toBe(true); // restored, not forced false (fix round 2)
   });
 
   it('fix round 1: disabled → enabled picks the segment rate back up, not just userSpeed', () => {
