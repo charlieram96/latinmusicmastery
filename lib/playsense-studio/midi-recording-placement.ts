@@ -8,12 +8,21 @@ export type MidiRecordingDestination = 'playhead' | 'append' | 'replace';
 export type MidiRecordingPlan = ReturnType<typeof planMidiRecording>;
 export type MidiRecordingInsert = (next: ScoreDocument, waypoints: Waypoint[], expected: ScoreDocument) => void;
 
-/** Freeze the playhead and the current (including unsaved) video sync together. */
+/** Flex Time (spec §7): the section's MEDIA <-> TIMELINE warp (a FlexMap). */
+export interface MidiRecordingWarp { toTimeline(media: number): number; toMedia(timeline: number): number }
+
+/** Freeze the playhead and the current (including unsaved) video sync together.
+ *  `playheadSeconds` and the waypoints are TIMELINE time. Under flex, `warp`
+ *  maps the recording video's MEDIA time onto that timeline: the video starts
+ *  at `videoStartMedia`, and each take timestamp (media elapsed since then)
+ *  goes through `toTimeline` before the waypoints place it. Without a warp
+ *  both domains are the same and nothing changes. */
 export function planMidiRecording(score: ScoreDocument, trackIndex: number, options: {
   destination: MidiRecordingDestination;
   playheadSeconds?: number;
   startMeasure: number;
   waypoints?: Waypoint[];
+  warp?: MidiRecordingWarp;
 }) {
   const track = score.tracks[trackIndex];
   const walked = [...walkMeasures(track, score)];
@@ -52,7 +61,10 @@ export function planMidiRecording(score: ScoreDocument, trackIndex: number, opti
     bars.push({ startQN: qn - baseQN, endQN: endQN - baseQN, bpm: at.bpm, timeSignature: at.timeSignature });
     qn = endQN;
   }
-  return { start, baseQN, punchQN: Math.max(0, punchQN), videoStartSeconds, context, bars, map, waypoints };
+  const warp = options.warp;
+  const videoStartMedia = warp ? warp.toMedia(videoStartSeconds) : videoStartSeconds;
+  const toTimeline = (media: number) => (warp ? warp.toTimeline(media) : media);
+  return { start, baseQN, punchQN: Math.max(0, punchQN), videoStartSeconds, videoStartMedia, toTimeline, context, bars, map, waypoints };
 }
 
 function sliceEvents(events: MusicalEvent[], from: number, to: number, severEnd = false): MusicalEvent[] {
@@ -81,7 +93,8 @@ function sliceEvents(events: MusicalEvent[], from: number, to: number, severEnd 
 /** Map video timestamps back through the same beat anchors used by playback. */
 export function prepareMidiRecording(score: ScoreDocument, trackIndex: number, plan: MidiRecordingPlan, take: MidiTake, gridQN: number, gmPercussion: boolean) {
   const track = score.tracks[trackIndex];
-  const toQN = (ms: number) => plan.map.toMusicalPosition(plan.videoStartSeconds + ms / 1000) - plan.baseQN;
+  // Take timestamps are the recording video's MEDIA time since it started.
+  const toQN = (ms: number) => plan.map.toMusicalPosition(plan.toTimeline(plan.videoStartMedia + ms / 1000)) - plan.baseQN;
   const measures = midiTakeToMeasures(take, gridQN, track.instrument, gmPercussion, { toQN, bars: plan.bars });
   if (!measures.length) return { measures, replaceCount: 0, nextScore: score, waypoints: plan.waypoints };
   // Punching in halfway through a bar must not erase the notes before the cursor.

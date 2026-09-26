@@ -843,6 +843,9 @@ export function SyncPanel({
   const recordingSource = useMemo<MidiRecordingSource>(() => ({
     videoUrl, videoRef, onPosition: clock.seek,
     waypoints: markerStateToWaypoints(markers, { includeBeats: 'edited-beats' }),
+    // The recorder reads its own video's MEDIA time; the waypoints above are
+    // TIMELINE. Under flex it converts through the map (Flex Time, spec §7).
+    flex: flexMap.points.length ? flexMap : undefined,
     onInsert: (next, waypoints, expected) => {
       if (scoreRef.current !== expected) throw new Error('The score changed. Reopen the recorder before adding this take.');
       const nextMarkers = seedMarkerState(next.tracks[0], next, waypoints, nudgeList(markersRef.current));
@@ -852,7 +855,7 @@ export function SyncPanel({
       recordingMarkerHistory.current.set(next, nextMarkers);
       dispatch({ type: 'apply-midi-score', score: next, expectedScore: expected });
     },
-  }), [videoUrl, clock.seek, markers, showSync, siblingRanges, dispatch]);
+  }), [videoUrl, clock.seek, markers, flexMap, showSync, siblingRanges, dispatch]);
 
   // Note onsets (video seconds, all tracks) at their EFFECTIVE time — the
   // anchor grid plus any per-note nudge — for the waveform ticks.
