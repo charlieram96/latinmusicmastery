@@ -90,4 +90,14 @@ describe('a take stopped with Finish take (L2)', () => {
     expect(reachedResults(exercise, results, 0.5).map(r => r.eventIndex)).toEqual([0, 1])
     expect(reachedResults(exercise, results, null)).toBe(results)
   })
+
+  it('uses the score grid for where a take stopped when bars differ in length', () => {
+    // bar 1: 4/4 over 2s, bar 2: 2/4 over 1s, bar 3: 4/4 over 2s → bar 3 starts at 3s of 5s (0.6), not 2/3.
+    const ev = (measure: number) => ({ measure, beat: 1, instrument: 'piano', technique: 'open', hand: 'right', duration: 1, vexKey: 'c/4' })
+    const graded = { measures: 3, loopCount: 1, timeSignature: [4, 4] as [number, number], events: [ev(1), ev(2), ev(3)],
+      grid: { measureStartSec: [0, 2, 3, 5], measureStartQN: [0, 4, 6, 10], secPerQN: [0.5, 0.5, 0.5], beatQN: [1, 1, 1] } }
+    const results = [0, 1, 2].map(i => ({ eventIndex: i, grade: 'perfect', timing: 'on' }))
+    const bars = buildBarResults(graded as never, results as never, { reached: 0.62 })
+    expect(bars.map(b => b.status)).toEqual(['clean', 'clean', 'clean'])
+  })
 })

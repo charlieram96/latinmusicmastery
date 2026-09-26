@@ -294,6 +294,8 @@ function ScoreExerciseSession({
     if (session.sessionState === 'countdown') setStoppedAt(null)
   }, [session.sessionState])
   const finishTake = () => {
+    // Nothing has been played yet (still counting in): cancel back to the start, not a 0% Part done.
+    if (session.sessionState === 'countdown') { session.retry(); return }
     setStoppedAt(Math.min(1, Math.max(0, session.playheadProgress)))
     session.stopExercise()
   }

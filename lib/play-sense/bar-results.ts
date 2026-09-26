@@ -19,16 +19,26 @@ export interface BarResult {
   late: number
 }
 
-type BarExercise = Pick<ExerciseDefinition, 'measures' | 'events'> & Partial<Pick<ExerciseDefinition, 'timeSignature' | 'loopCount'>>
+type BarExercise = Pick<ExerciseDefinition, 'measures' | 'events'> & Partial<Pick<ExerciseDefinition, 'timeSignature' | 'loopCount' | 'grid'>>
 
-/** Where an event (by engine index) sits in the whole take, 0–1. */
+/** Where an event (by engine index) sits in the whole take, 0–1, on the same time scale as the playhead. */
 function eventPosition(exercise: BarExercise, index: number): number {
   const n = exercise.events.length
-  const measures = Math.max(1, exercise.measures, ...exercise.events.map(e => e.measure))
-  const beats = Math.max(1, exercise.timeSignature?.[0] ?? 4)
   const loops = Math.max(1, exercise.loopCount ?? 1)
   const event = exercise.events[index % n]
-  const within = (event.measure - 1 + (Math.max(1, event.beat ?? 1) - 1) / beats) / measures
+  const beat = Math.max(1, event.beat ?? 1) - 1
+  const grid = exercise.grid
+  const m = event.measure - 1
+  let within: number
+  if (grid && grid.measureStartSec.length > m + 1 && grid.measureStartSec[grid.measureStartSec.length - 1] > 0) {
+    // Scores with tempo or meter changes: bars differ in length, so place the event in seconds.
+    const loopSec = grid.measureStartSec[grid.measureStartSec.length - 1]
+    within = (grid.measureStartSec[m] + beat * grid.beatQN[m] * grid.secPerQN[m]) / loopSec
+  } else {
+    const measures = Math.max(1, exercise.measures, ...exercise.events.map(e => e.measure))
+    const beats = Math.max(1, exercise.timeSignature?.[0] ?? 4)
+    within = (m + beat / beats) / measures
+  }
   return (Math.floor(index / n) + within) / loops
 }
 

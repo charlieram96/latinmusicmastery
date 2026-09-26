@@ -85,9 +85,11 @@ function useActionBarA11y(barRef: { current: HTMLElement | null }, liveRef: { cu
       const live = liveRef.current
       if (live && live.textContent !== text) live.textContent = text
       const lost = focused && !focused.isConnected
+      if (!lost) return
+      // A removed control is forgotten either way; focus only moves when it had nowhere else to go.
+      focused = null
       const active = document.activeElement
-      if (lost && (!active || active === document.body)) {
-        focused = null
+      if (!active || active === document.body) {
         const next = bar.querySelector<HTMLElement>('[data-primary]:not(:disabled), [data-lesson-next]')
           ?? bar.querySelector<HTMLElement>('button:not(:disabled), a[href]')
         next?.focus({ preventScroll: true })
@@ -95,9 +97,14 @@ function useActionBarA11y(barRef: { current: HTMLElement | null }, liveRef: { cu
     }
     const onFocusIn = (event: FocusEvent) => { focused = event.target as Element }
     // Focus that leaves for somewhere else is no longer the bar's to restore; a removed element keeps it.
+    const timers = new Set<number>()
     const onFocusOut = (event: FocusEvent) => {
       const target = event.target as Element
-      window.setTimeout(() => { if (focused === target && target.isConnected && !bar.contains(document.activeElement)) focused = null }, 0)
+      const id = window.setTimeout(() => {
+        timers.delete(id)
+        if (focused === target && target.isConnected && !bar.contains(document.activeElement)) focused = null
+      }, 0)
+      timers.add(id)
     }
     const observer = new MutationObserver(sync)
     observer.observe(bar, { childList: true, subtree: true, characterData: true })
@@ -108,6 +115,7 @@ function useActionBarA11y(barRef: { current: HTMLElement | null }, liveRef: { cu
       observer.disconnect()
       bar.removeEventListener('focusin', onFocusIn)
       bar.removeEventListener('focusout', onFocusOut)
+      timers.forEach(id => window.clearTimeout(id))
     }
   }, [barRef, liveRef])
 }

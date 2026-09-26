@@ -110,6 +110,15 @@ describe('ScoreExerciseGame Part done', () => {
     expect(host.querySelector('[data-accuracy-ring]')?.getAttribute('aria-label')).toContain('(100)')
   })
 
+  it('Finish take during the count-in cancels back to the start instead of a 0% Part done', () => {
+    const retry = vi.fn(); const stop = vi.fn()
+    session = { ...baseSession(), exercise, sessionState: 'countdown', playheadProgress: 0, retry, stopExercise: stop }
+    render({ preview: false })
+    act(() => nowPlaying!.onStop())
+    expect(retry).toHaveBeenCalledTimes(1)
+    expect(stop).not.toHaveBeenCalled()
+  })
+
   it('a take that ran to the end counts every bar', () => {
     session = { ...baseSession(), exercise, sessionState: 'results', attemptStats: stats(50), eventResults: [hit(0, 'perfect'), hit(1, 'miss')] }
     render({ preview: false })

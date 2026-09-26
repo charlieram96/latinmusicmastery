@@ -77,6 +77,21 @@ describe('LessonActionBar announcements and focus (L3)', () => {
     expect(document.activeElement).toBe(outside)
     outside.remove()
   })
+
+  it('forgets a swapped-out control once focus has gone elsewhere, so a later change cannot steal focus', async () => {
+    const outside = document.createElement('button')
+    document.body.appendChild(outside)
+    await act(async () => root.render(<Harness part />))
+    bar().querySelector<HTMLButtonElement>('[data-check]')!.focus()
+    // Focus leaves and the focused control is swapped out in the same moment.
+    await act(async () => { outside.focus(); root.render(<Harness part second />) })
+    expect(document.activeElement).toBe(outside)
+    // Later the student clicks the page (focus on body) and the bar changes again.
+    outside.blur()
+    await act(async () => root.render(<Harness part={false} />))
+    expect(document.activeElement).toBe(document.body)
+    outside.remove()
+  })
 })
 
 describe('LessonActionBar', () => {
