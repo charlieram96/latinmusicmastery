@@ -234,6 +234,7 @@ class StaffRendererImpl implements ScoreRenderer {
   private glideLast = 0;
   /** Paged: the page on show. */
   private currentPage = -1;
+  private overlayFades: Animation[] = [];
   private activeBeatIdx = -1;
   private staveTop = STAVE_TOP;
   private staffLineTop = STAFF_LINE_TOP;
@@ -425,6 +426,8 @@ class StaffRendererImpl implements ScoreRenderer {
     this.rowReadingStops = [];
     this.currentRow = -1;
     this.currentPage = -1;
+    this.overlayFades.forEach(animation => animation.cancel());
+    this.overlayFades = [];
     this.glideY = -1;
     if (this.glideFrame && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(this.glideFrame);
     this.glideFrame = 0;
@@ -1099,9 +1102,10 @@ class StaffRendererImpl implements ScoreRenderer {
           );
           const startPos = this.xToTimePosition(startX, this.dragStartModelY ?? this.staveTop);
           const endPos = this.xToTimePosition(endX, this.dragCurrentModelY ?? this.dragStartModelY ?? this.staveTop);
-          const lo = Math.min(startPos.ms, endPos.ms);
-          const hi = Math.max(startPos.ms, endPos.ms);
-          if (hi > lo) {
+          // A range that starts or ends on a row without notes selects nothing.
+          const lo = startPos && endPos ? Math.min(startPos.ms, endPos.ms) : 0;
+          const hi = startPos && endPos ? Math.max(startPos.ms, endPos.ms) : 0;
+          if (startPos && endPos && hi > lo) {
             const loQn = Math.min(startPos.qn, endPos.qn);
             const hiQn = Math.max(startPos.qn, endPos.qn);
             const range: SelectedRange = {
@@ -1117,7 +1121,8 @@ class StaffRendererImpl implements ScoreRenderer {
             this.dragStartModelX,
             this.dragStartModelY ?? this.staveTop
           );
-          for (const listener of this.seekListeners) {
+          // A row without notes (a video interlude page) has nothing to seek to.
+          if (pos) for (const listener of this.seekListeners) {
             listener({ qn: pos.qn, measure: pos.measure, beat: pos.beat });
           }
         }
@@ -1622,6 +1627,26 @@ class StaffRendererImpl implements ScoreRenderer {
       }
     }
     this.setLoopMarkers(this.lastLoopAMs, this.lastLoopBMs);
+    this.fadeInOverlays(turn);
+  }
+
+  /**
+   * The playhead, bar band, next-note ring and loop markers live outside the rows, so they would
+   * jump to the new page before it slides in. They stay hidden for the first half of the turn and
+   * fade in as the page settles; the implicit end keyframe keeps each one's own opacity (a hidden
+   * cursor stays hidden).
+   */
+  private fadeInOverlays(turn: ReturnType<typeof pageTurn>): void {
+    this.overlayFades.forEach(animation => animation.cancel());
+    this.overlayFades = [];
+    if (turn.kind === 'instant') return;
+    const overlays = [this.cursorEl, this.bandEl, this.nextRingEl,
+      this.aMarkerLineEl, this.aMarkerLabelEl, this.bMarkerLineEl, this.bMarkerLabelEl];
+    for (const el of overlays) {
+      if (!el || typeof el.animate !== 'function') continue;
+      this.overlayFades.push(el.animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: .45 }],
+        { duration: turn.durationMs, easing: 'ease-out' }));
+    }
   }
 
   /** Place the translucent ghost playhead at the click-landing position for a
@@ -1629,6 +1654,7 @@ class StaffRendererImpl implements ScoreRenderer {
   private updateHoverCursor(modelX: number, modelY: number): void {
     if (!this.hoverCursorEl || this.hits.length === 0) return;
     const pos = this.xToTimePosition(modelX, modelY);
+    if (!pos) { this.hideHoverCursor(); return; }
     const cur = this.msToCursorPos(pos.ms);
     if (this.layoutMode !== 'scroll') {
       const top =
@@ -1723,24 +1749,23 @@ class StaffRendererImpl implements ScoreRenderer {
   }
 
   /**
-   * Map a model-space (x, y) to a continuous time position. In wrapped mode we
+   * Map a model-space (x, y) to a continuous time position. In row layouts we
    * first pick the system from y, then interpolate within that row's notes.
+   * Null for a row without notes (a video interlude or a blank bar).
    */
   private xToTimePosition(
     x: number,
     y: number
-  ): { ms: number; qn: number; measure: number; beat: number } {
+  ): { ms: number; qn: number; measure: number; beat: number } | null {
     if (this.hits.length === 0) return { ms: 0, qn: 0, measure: 1, beat: 1 };
 
     let loIdx = 0;
     let hiIdx = this.hits.length - 1;
     if (this.layoutMode !== 'scroll') {
-      const system = this.systemFromY(y);
-      const range = this.systemRanges[system];
-      if (range && range.start !== -1) {
-        loIdx = range.start;
-        hiIdx = range.end - 1;
-      }
+      const range = this.systemRanges[this.systemFromY(y)];
+      if (!range || range.start === -1) return null;
+      loIdx = range.start;
+      hiIdx = range.end - 1;
     }
     return this.interpInRange(x, loIdx, hiIdx);
   }

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import { StaffRenderer, type StaffRendererProps } from '../staff-renderer'
 
@@ -195,5 +195,47 @@ describe('note states for every voice (minors)', () => {
     const css = readFileSync('components/playsense-studio/player/notation/renderers/staff-renderer.css', 'utf8')
     expect(css).toMatch(/\[data-row-state=past\] \[data-score-note\]\[data-note-state=played\][^{]*\{ opacity:1; \}/)
     expect(css).toMatch(/\[data-row-state=past\] \.ps-staff-name\[data-past=true\][^{]*\{ opacity:1; \}/)
+  })
+})
+
+describe('paged interludes and turns (minors)', () => {
+  const click = (el: Element) => {
+    el.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 4, clientY: 90 }))
+    el.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 4, clientY: 90 }))
+  }
+  it('a click beside the interlude box on an interlude page seeks nowhere', () => {
+    const onSeek = vi.fn()
+    draw({ layoutMode: 'paged', currentMs: -500, leadingGapMs: 1000, onSeek })
+    click(host.querySelector('.ps-staff-content')!)
+    expect(onSeek).not.toHaveBeenCalled()
+  })
+  it('a click on a music page still seeks', () => {
+    const onSeek = vi.fn()
+    draw({ layoutMode: 'paged', currentMs: 500, onSeek })
+    click(host.querySelector('.ps-staff-content')!)
+    expect(onSeek).toHaveBeenCalledTimes(1)
+  })
+  it('fades the playhead, band, ring and loop markers in with the new page instead of jumping', () => {
+    const animated: Array<{ el: Element; frames: Keyframe[] }> = []
+    const animate = vi.fn(function (this: Element, frames: Keyframe[]) {
+      animated.push({ el: this, frames })
+      return { cancel() {}, onfinish: null } as unknown as Animation
+    })
+    const restore = [Element.prototype.animate, (Element.prototype as { getAnimations?: unknown }).getAnimations]
+    Element.prototype.animate = animate as never
+    ;(Element.prototype as { getAnimations?: unknown }).getAnimations = () => []
+    try {
+      draw({ layoutMode: 'paged', currentMs: 500, loopAMs: 2200, loopBMs: 3000 })
+      animated.length = 0
+      draw({ layoutMode: 'paged', currentMs: 2500, loopAMs: 2200, loopBMs: 3000 })
+      const fadedIn = (el: Element | null) => animated.some(a => a.el === el && a.frames[0]?.opacity === 0 && (a.frames.at(-1)?.offset ?? 1) < 1)
+      expect(fadedIn(host.querySelector('.ps-staff-playhead'))).toBe(true)
+      expect(fadedIn(host.querySelector('.ps-staff-band'))).toBe(true)
+      expect(fadedIn(host.querySelector('.ps-staff-next'))).toBe(true)
+      for (const marker of host.querySelectorAll('[data-playsense-studio-loop-marker]')) expect(fadedIn(marker)).toBe(true)
+    } finally {
+      Element.prototype.animate = restore[0] as never
+      ;(Element.prototype as { getAnimations?: unknown }).getAnimations = restore[1]
+    }
   })
 })
