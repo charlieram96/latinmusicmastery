@@ -3,11 +3,10 @@
 // PlaySense Studio — the measure zoom's Keys panel (K): an on-screen 2-octave
 // keyboard, an octave shift, and the MIDI keyboard's status line (spec §6,
 // Task 5). This component only turns a click into a midi number; whether that
-// midi becomes a spelled pitch or a percussion stroke, and whether it starts a
-// new note or joins one just entered, is use-zoom-editing's job (onPitch and
-// onChordPitch, the same functions a MIDI note-on drives through the chord
-// grouper). A click without ⇧ always starts a new note; ⇧+click adds it to the
-// chord just entered — the on-screen mirror of ⇧+letter.
+// midi becomes a spelled pitch or a percussion stroke is use-zoom-editing's
+// job (onPitch, the function a MIDI note-on drives through the chord grouper).
+// A click always enters a new note; chords come from a MIDI keyboard, or ⇧ with
+// a letter.
 //
 // Buttons take focus out of the loop with onMouseDown's preventDefault, so the
 // zoom's own keydown listener (registered on window) keeps working.
@@ -18,7 +17,7 @@ export type MidiKeysStatus = 'idle' | 'ready' | 'unavailable';
 
 export interface KeysPanelProps {
   onPitch: (midi: number) => void;
-  onChordPitch: (midi: number) => void;
+  /** Percussion: the keys are General MIDI drum notes, mapped to the track's strokes. */
   percussion: boolean;
   status: MidiKeysStatus;
   /** The on-screen keyboard's lower octave (C{octave}..B{octave+1}); clamped MIN_OCTAVE..MAX_OCTAVE. */
@@ -33,6 +32,7 @@ export const DEFAULT_OCTAVE = 4;
 export const MSG_MIDI_READY = 'MIDI keyboard ready';
 export const MSG_MIDI_FALLBACK = 'No MIDI keyboard — use the keys below';
 export const MSG_MIDI_LOOKING = 'Looking for a MIDI keyboard…';
+export const MSG_GM_DRUMS = 'Keys play General MIDI drums';
 
 interface KeyDef { name: string; semitone: number }
 
@@ -59,19 +59,19 @@ function octaveMidi(octave: number): number {
 
 const stopFocus = (e: ReactMouseEvent) => e.preventDefault();
 
-export function KeysPanel({ onPitch, onChordPitch, status, octave, onOctave }: KeysPanelProps) {
+export function KeysPanel({ onPitch, percussion, status, octave, onOctave }: KeysPanelProps) {
   const base = octaveMidi(octave);
 
   const press = (midi: number) => (e: ReactMouseEvent) => {
     e.preventDefault();
-    if (e.shiftKey) onChordPitch(midi);
-    else onPitch(midi);
+    onPitch(midi);
   };
 
   return (
     <div className="st-keys-panel" data-testid="keys-panel">
       <div className="st-keys-status" role="status">
         {status === 'ready' ? MSG_MIDI_READY : status === 'idle' ? MSG_MIDI_LOOKING : MSG_MIDI_FALLBACK}
+        {percussion && <> · {MSG_GM_DRUMS}</>}
       </div>
       <div className="st-keys-octave">
         <button

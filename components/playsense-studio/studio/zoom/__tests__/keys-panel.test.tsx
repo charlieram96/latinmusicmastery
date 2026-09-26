@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { KeysPanel, MSG_MIDI_FALLBACK, MSG_MIDI_READY, type KeysPanelProps } from '../keys-panel';
+import { KeysPanel, MSG_GM_DRUMS, MSG_MIDI_FALLBACK, MSG_MIDI_READY, type KeysPanelProps } from '../keys-panel';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -22,7 +22,7 @@ afterEach(() => {
 
 function render(props: Partial<KeysPanelProps> = {}) {
   const all: KeysPanelProps = {
-    onPitch: vi.fn(), onChordPitch: vi.fn(), onOctave: vi.fn(),
+    onPitch: vi.fn(), onOctave: vi.fn(),
     percussion: false, status: 'unavailable', octave: 4, ...props,
   };
   act(() => root.render(<KeysPanel {...all} />));
@@ -48,11 +48,17 @@ describe('KeysPanel', () => {
     expect(props.onPitch).toHaveBeenCalledWith(70);
   });
 
-  it('adds to the chord with ⇧+click', () => {
+  it('treats every click as a new note, ⇧ or not', () => {
     const props = render();
     click(host.querySelector('[data-testid="key-64"]')!, { shiftKey: true });
-    expect(props.onChordPitch).toHaveBeenCalledWith(64);
-    expect(props.onPitch).not.toHaveBeenCalled();
+    expect(props.onPitch).toHaveBeenCalledWith(64);
+  });
+
+  it('says the keys are GM drums on a percussion track', () => {
+    render({ percussion: true });
+    expect(host.textContent).toContain(MSG_GM_DRUMS);
+    render({ percussion: false });
+    expect(host.textContent).not.toContain(MSG_GM_DRUMS);
   });
 
   it('shifts the octave, and disables the shift at the ends of the range', () => {

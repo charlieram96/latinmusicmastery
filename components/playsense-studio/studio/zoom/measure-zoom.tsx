@@ -453,7 +453,6 @@ export function MeasureZoom({
         <div className="st-keys-dock" style={{ gridColumn: 2, gridRow: 2 }}>
           <KeysPanel
             onPitch={(midi) => editing.enterMidiPitch?.(midi)}
-            onChordPitch={(midi) => editing.addMidiChordPitch?.(midi)}
             percussion={percussion}
             status={editing.midiStatus ?? 'idle'}
             octave={zoom.octave ?? DEFAULT_OCTAVE}

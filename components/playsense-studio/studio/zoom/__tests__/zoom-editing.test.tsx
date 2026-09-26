@@ -440,6 +440,36 @@ describe('useZoomEditing Keys panel', () => {
     expect(midis(latest.score, 1)).toEqual([72]);
   });
 
+  it('makes a chord of note-ons that arrive before React re-renders', async () => {
+    const midiInput = new FakeMidiInput();
+    const access = new FakeMidiAccess();
+    access.inputs.set(midiInput.id, midiInput);
+    stubMidiAccess(async () => access);
+    const { latest } = mount(doc([n(55)]));
+    await keyAsync('k');
+    act(() => {
+      midiInput.message([0x90, 60, 100], 0);
+      midiInput.message([0x90, 64, 100], 5);
+      midiInput.message([0x90, 67, 100], 10);
+    });
+    expect(midis(latest.score)).toEqual([55, 'chord']);
+    expect((events(latest.score)[1] as Chord).notes.map((x) => x.midi)).toEqual([60, 64, 67]);
+  });
+
+  it('enters nothing, not a chord on an old note, when the bar is too full for the first note', async () => {
+    const midiInput = new FakeMidiInput();
+    const access = new FakeMidiAccess();
+    access.inputs.set(midiInput.id, midiInput);
+    stubMidiAccess(async () => access);
+    const { latest, flash } = mount(doc([n(60), n(62), n(64)]));
+    act(() => latest.editing.setValue('h'));
+    await keyAsync('k');
+    act(() => midiInput.message([0x90, 65, 100], 0));
+    act(() => midiInput.message([0x90, 69, 100], 20));
+    expect(flash).toHaveBeenCalled();
+    expect(midis(latest.score)).toEqual([60, 62, 64]);
+  });
+
   it('maps a GM percussion note to a stroke on a percussion score', async () => {
     const midiInput = new FakeMidiInput();
     const access = new FakeMidiAccess();
@@ -450,6 +480,18 @@ describe('useZoomEditing Keys panel', () => {
     // GM 63 (Open Hi Conga) maps to the conga's open-high stroke, midi 64.
     act(() => midiInput.message([0x90, 63, 100], 0));
     expect(midis(latest.score)).toEqual([64]);
+  });
+
+  it('enters a second stroke, not a chord, for percussion note-ons 20 ms apart', async () => {
+    const midiInput = new FakeMidiInput();
+    const access = new FakeMidiAccess();
+    access.inputs.set(midiInput.id, midiInput);
+    stubMidiAccess(async () => access);
+    const { latest } = mount(doc([], [], 'perc-conga'), { percussion: true });
+    await keyAsync('k');
+    act(() => midiInput.message([0x90, 63, 100], 0));
+    act(() => midiInput.message([0x90, 63, 100], 20));
+    expect(midis(latest.score)).toEqual([64, 64]);
   });
 
   it('shows the fallback text when MIDI access is refused, and an on-screen key click still enters a note (Review Focus 5)', async () => {

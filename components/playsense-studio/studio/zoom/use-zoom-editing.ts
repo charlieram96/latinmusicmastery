@@ -204,10 +204,10 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
     if (!sameCursor(clamped, zoom.cursor)) setZoom({ ...zoom, cursor: clamped });
   }, [score, zoom, setZoom, trackIndex, barQNAt]);
 
-  // The bar and voice the last MIDI note was appended to. enterPitch always
-  // appends, and may move the cursor on to the next bar once this one is
-  // full, so a chord note goes to that bar's last event, not the cursor's.
-  const lastMidiBar = useRef<{ measureIndex: number; voice: 0 | 1 } | null>(null);
+  // The event the last MIDI note (or key click) wrote, or null when it was
+  // refused. Its chord partners go there, not to the cursor, which may have
+  // moved on to the next bar.
+  const lastMidiRef = useRef<EventRef | null>(null);
   const editing = useMemo<ZoomEditing>(() => {
     const get = () => ref.current;
 
@@ -242,13 +242,14 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
      * bar holding only a filler rest is written through the append, which
      * replaces the filler (overwriting it would fill the whole bar).
      * `append` writes at the end whatever the cursor sits on (the pencil).
+     * Returns the ref it wrote, or null when it refused.
      */
     const enter = (o: ZoomEditingOptions, write: {
       kind: 'note' | 'rest'; midi?: number; percussion?: PercussionNotation;
       spelling?: { step: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'; alter: -2 | -1 | 0 | 1 | 2 };
-    }, append = false) => {
+    }, append = false): EventRef | null => {
       const z = o.zoom;
-      if (!z) return;
+      if (!z) return null;
       const c: NoteCursor = append ? { ...z.cursor, index: 'end', anchor: null } : z.cursor;
       const ctx = contextOf(o);
       const events = ctx.events(c.measureIndex, c.voice);
@@ -259,16 +260,17 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
         : {};
 
       if (c.index !== 'end' && !filler) {
-        o.dispatch({ type: 'write-event', at: { ...refAt(o, c, c.index) }, kind: write.kind, ...pitch });
+        const at = refAt(o, c, c.index);
+        o.dispatch({ type: 'write-event', at: { ...at }, kind: write.kind, ...pitch });
         moveTo(o, advanceCursor(c, ctx), 1);
-        return;
+        return at;
       }
 
       const base = filler ? [] : events;
       const add = soundingQN(z.value, z.dots);
       if (occupiedQN(base) + add > barQN + QN_EPS) {
         o.flash(barFullMessage(measureNumber(o, c.measureIndex)));
-        return;
+        return null;
       }
       o.dispatch({
         type: 'write-event',
@@ -279,6 +281,7 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
       const at: NoteCursor = { ...c, index: 'end', anchor: null };
       if (occupiedQN(predicted) >= barQN - QN_EPS) moveTo(o, advanceCursor(at, contextWith(ctx, c.measureIndex, c.voice, predicted)), 1);
       else setCursor(o, at);
+      return { trackIndex: o.trackIndex, measureIndex: c.measureIndex, voice: c.voice, eventIndex: base.length };
     };
 
     /** The note or chord the cursor sits on, else the one right before it. */
@@ -322,36 +325,32 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
     const enterFromMidi = (o: ZoomEditingOptions, midi: number) => {
       if (!o.zoom) return;
       if (o.percussion) {
+        lastMidiRef.current = null;
         const instrument = trackOf(o)?.instrument;
         api.enterStroke(instrument ? gmToStrokeMidi(midi, instrument) : midi);
         return;
       }
-      const { measureIndex, voice } = o.zoom.cursor;
-      const { step, alter } = spellMidi(midi, { keyFifths: o.keyFifthsAt(measureIndex) });
-      lastMidiBar.current = { measureIndex, voice };
-      api.enterPitch(midi, { step, alter });
+      const { step, alter } = spellMidi(midi, { keyFifths: o.keyFifthsAt(o.zoom.cursor.measureIndex) });
+      // enterPitch's path (append at the bar's end), keeping the ref it wrote.
+      lastMidiRef.current = enter(o, { kind: 'note', midi, spelling: { step, alter } }, true);
     };
 
     /**
      * A note struck within the chord grouper's window of the one just
-     * entered: added to that event (the last one in lastMidiBar) with
-     * `add-chord-note`, or — with no such note, or on a percussion track,
-     * which has no chords — just another note (enterFromMidi).
+     * entered: added with `add-chord-note` to the event that note wrote
+     * (lastMidiRef), or — when it wrote nothing, or on a percussion track,
+     * which has no chords — just another note (enterFromMidi). The ref is
+     * the one recorded at the append, not re-read from the score, so a chord
+     * whose note-ons arrive before React re-renders still lands on it (the
+     * reducer applies the queued dispatches in order).
      */
     const addChordFromMidi = (o: ZoomEditingOptions, midi: number) => {
-      if (!o.zoom || o.percussion) {
+      const ref = lastMidiRef.current;
+      if (!o.zoom || o.percussion || !ref) {
         enterFromMidi(o, midi);
         return;
       }
-      const bar = lastMidiBar.current;
-      const events = bar ? voiceEvents(o, bar.measureIndex, bar.voice) : [];
-      const last = events.length - 1;
-      if (!bar || !isPitched(events[last])) {
-        enterFromMidi(o, midi);
-        return;
-      }
-      const { step, alter } = spellMidi(midi, { keyFifths: o.keyFifthsAt(bar.measureIndex) });
-      const ref: EventRef = { trackIndex: o.trackIndex, measureIndex: bar.measureIndex, voice: bar.voice, eventIndex: last };
+      const { step, alter } = spellMidi(midi, { keyFifths: o.keyFifthsAt(ref.measureIndex) });
       o.dispatch({ type: 'add-chord-note', ref, midi, spelling: { step, alter } });
     };
 
