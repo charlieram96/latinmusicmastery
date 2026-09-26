@@ -651,7 +651,7 @@ export function SyncPanel({
   // The tween writes plain values and yields to any other marker write (see
   // useMarkerTween). Called before the undo-retiring effect below, so a
   // foreign write has already stopped the tween when that effect looks.
-  const { start: startTween, cancel: cancelTween, running: tweenRunning } = useMarkerTween({
+  const { start: startTween, cancel: cancelTween, running: tweenRunning, active: tweenActive } = useMarkerTween({
     markers,
     setMarkers,
     onDone: () => setDirty(true),
@@ -1317,9 +1317,13 @@ export function SyncPanel({
             <button
               type="button"
               onClick={runAutoPlace}
-              disabled={!hits.length}
+              disabled={!hits.length || tweenActive}
               className="st-chip"
-              title={hits.length ? 'Fit the bars to the recording' : 'Re-analyze audio to find the hits'}
+              title={
+                hits.length
+                  ? 'Fit the bars to the recording — place the first bar near its note first'
+                  : 'Re-analyze audio to find the hits'
+              }
             >
               <Wand2 className="h-4 w-4" />
               <span className="hidden lg:inline">Auto-place bars</span>
