@@ -107,6 +107,28 @@ Settled while building:
 - Student player: rate-driven video through flex segments with a rate trim instead of seeks.
 - **Gated on the P1 spike result.** If the spike fails, audio-only flex plus visual note placement.
 
+### Plan 4a — done 2026-09-26 (hits, snapping, Auto-place, flags)
+
+Plan `2026-09-25-studio-rework-p4a-hits-and-auto-place.md`. Plan 4 was split: **4b (Flex) still waits for the flex-spike device results.**
+
+What shipped:
+- **Hit detection.** An offline detector (log-energy flux, an adaptive block-median threshold, and a 30%-of-peak refinement) runs on the 8 kHz mixdown. Hits are cached as an optional `hits` field in the `-hires-v2` peaks JSON. Older caches have no hits, and the admin presses Re-analyze once.
+- **Snapping.** Bar chips and section drags snap to hits within 8 px. ⌘ skips the snap and ⌥ swaps ripple/single.
+- **Flags.** Bars get a chip dot, the measure bar shows the reason, and Sync status shows the count.
+- **Auto-place bars.** It glides the bars into place with a one-step "Undo auto-place".
+
+Settled while building:
+- **Auto-place is a local refinement.** The markers decide which beat is which, and Auto-place fixes the fine offset and tempo only. The candidate radius is min(0.5 beat, 0.45 × the smallest opening note spacing). A whole-beat jump from a count-in, from playing that continues past the section, or from noise is impossible by construction. The cost: the first bar must be placed near its note first, and the chip's title says so.
+- **A chance-aware gate.** It needs ≥ 12 tight matches, ≥ 70% of onsets, z ≥ 5 against the hit density, and RMS ≤ 40 ms. Sections with under 12 onsets always refuse.
+- **The tween** is a `useMarkerTween` hook with pure writes. A foreign marker write cancels it, and it is safe under StrictMode and during playback.
+
+**Follow-ups from 4a:**
+- A strong onset 0–150 ms after a dense loud passage can be missed (a detector property). It degrades to a "No hit near the first note" flag. Check this on real recordings.
+- Straight eighths with the first bar placed 0.3+ beat off land a whole eighth off, silently. The markers decide, as ruled.
+- A missed first note plus markers at the edge of the contract refuses (a safe null).
+- Very steady rubato-free playing is assumed. ±2% rubato and triplet swing refuse.
+- A same-batch foreign write during the 300 ms tween can be lost (a rare race).
+
 ## Plan 5 — Exercise and Jam, graded (spec §8)
 
 - **Migration:** `play_bar1_seconds`, `play_count_in_bars`, `play_preroll`, with the backfill from `exercise_time_map_id`.
