@@ -143,6 +143,43 @@ describe('scoreSynthNotes', () => {
     expect(notes.some((n) => n.midi === 59)).toBe(false);
   });
 
+  it('breaks a tie when the voice is absent in a measure, even if the pitch reappears later', () => {
+    // Voice 2 ties forward in m1, has no voice-2 entry at all in m2 (matching
+    // score-to-vexflow.ts:352-353's tieCarry reset on an empty voice), then
+    // reappears untied on the same pitch in m3. Expect two separate notes,
+    // not one note bridging the gap measure.
+    const gapScore = score([
+      {
+        number: 1,
+        voices: [
+          { number: 1, events: [{ kind: 'rest', durationQN: 4 }] },
+          { number: 2, events: [{ kind: 'note', midi: 55, durationQN: 4, tieToNext: true }] },
+        ],
+      },
+      {
+        number: 2,
+        voices: [{ number: 1, events: [{ kind: 'rest', durationQN: 4 }] }],
+      },
+      {
+        number: 3,
+        voices: [
+          { number: 1, events: [{ kind: 'rest', durationQN: 4 }] },
+          { number: 2, events: [{ kind: 'note', midi: 55, durationQN: 4 }] },
+        ],
+      },
+    ]);
+    const markers = seedMarkerState(gapScore.tracks[0], gapScore, buildWaypoints(gapScore, 120, 0));
+    const notes = scoreSynthNotes(gapScore, 0, markers);
+    const v2 = notes.filter((n) => n.voice === 2 && n.midi === 55);
+    expect(v2).toHaveLength(2);
+    // First note spans just measure 1 (qn 0-4 -> 0s-2s at 120bpm).
+    expect(v2[0].start).toBeCloseTo(0);
+    expect(v2[0].end).toBeCloseTo(2);
+    // Second note starts fresh in measure 3 (qn 8-12 -> 4s-6s).
+    expect(v2[1].start).toBeCloseTo(4);
+    expect(v2[1].end).toBeCloseTo(6);
+  });
+
   it('expands a chord to one note per pitch, all sounding together', () => {
     const chordScore = score([
       {
@@ -327,6 +364,56 @@ describe('ScoreSynth scheduling', () => {
     }).mock.results[1].value.gain;
     expect(gainResult.setValueAtTime).toHaveBeenCalledWith(0.3, expect.any(Number));
 
+    synth.teardown();
+  });
+  it('sounds a note that starts exactly where playback starts, lifted to the lead', () => {
+    const { ctx, starts } = createFakeAudioContext();
+    const synth = new ScoreSynth(() => ctx);
+    synth.setNotes([{ start: 0, end: 0.5, midi: 60, voice: 1, percussion: false }]);
+    synth.start(0, 1);
+    expect(starts).toHaveLength(1);
+    expect(starts[0]).toBeCloseTo(0.015);
+    synth.teardown();
+  });
+
+  it('still drops a note that comes due too late on a later tick', () => {
+    vi.useFakeTimers();
+    try {
+      const { ctx, raw, starts } = createFakeAudioContext();
+      const synth = new ScoreSynth(() => ctx);
+      synth.setNotes([{ start: 0.2, end: 0.5, midi: 60, voice: 1, percussion: false }]);
+      synth.start(0, 1); // 0.2 is past the first tick's horizon
+      expect(starts).toHaveLength(0);
+      raw.currentTime = 0.195; // the tick fires late: 0.2 < 0.195 + lead
+      vi.advanceTimersByTime(25);
+      expect(starts).toHaveLength(0);
+      synth.teardown();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('maps media time to context time at rate 0.75', () => {
+    const { ctx, starts } = createFakeAudioContext();
+    const synth = new ScoreSynth(() => ctx);
+    // media 1.06 is 0.06s of media past 1.0 -> 0.08s of context time at 0.75x.
+    synth.setNotes([{ start: 1.06, end: 1.2, midi: 60, voice: 1, percussion: false }]);
+    synth.start(1, 0.75);
+    expect(starts).toHaveLength(1);
+    expect(starts[0]).toBeCloseTo(0.08);
+    synth.teardown();
+  });
+
+  it('does not throw on degenerate notes', () => {
+    const { ctx } = createFakeAudioContext();
+    const synth = new ScoreSynth(() => ctx);
+    synth.setNotes([
+      { start: 0.03, end: 0.02, midi: 60, voice: 1, percussion: false },
+      { start: 0.04, end: 0.04, midi: 200, voice: 1, percussion: false },
+      { start: 0.05, end: 0.3, midi: -5, voice: 2, percussion: false },
+    ]);
+    expect(() => synth.start(0, 1)).not.toThrow();
+    expect(ctx.createOscillator).toHaveBeenCalledTimes(3);
     synth.teardown();
   });
 });

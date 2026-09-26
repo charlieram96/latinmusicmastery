@@ -17,7 +17,7 @@
 // pitch forward — mirroring the tieCarry bookkeeping extractTrackEvents does
 // for accidentals, but merging into one long note instead of just flagging
 // the continuation. A rest clears every open tie, matching tieCarry being
-// reset to [] on a rest there.
+// reset to [] on a rest there, and so does a measure where the voice is absent.
 
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
@@ -76,6 +76,9 @@ export function scoreSynthNotes(
 
     for (const block of blocks) {
       const events = voiceNo === 1 ? block.events : block.voice2Events;
+      // A voice with no events in a measure breaks its ties, as
+      // extractTrackEvents resets tieCarry for an empty voice.
+      if (events.length === 0) closeAllOpen();
       for (const ev of events) {
         if (ev.isRest) {
           // A rest breaks any tie in flight — matches extractTrackEvents
@@ -175,7 +178,8 @@ export class ScoreSynth {
     this.ctxFactory = ctxFactory ?? defaultAudioContext;
   }
 
-  private ensureContext(): AudioContext {
+  /** Create the context on first use; resume() it from a user gesture before start(). */
+  ensureContext(): AudioContext {
     if (!this.ctx) this.ctx = this.ctxFactory();
     return this.ctx;
   }
@@ -219,8 +223,10 @@ export class ScoreSynth {
     this.anchor = { ctxStartSeconds: ctx.currentTime, mediaStartSeconds: mediaNow, rate };
     this.nextIndex = firstIndexAtOrAfter(this.starts, mediaNow);
 
-    this.timer = setInterval(() => this.tick(), TICK_MS);
-    this.tick();
+    this.timer = setInterval(() => this.tick(false), TICK_MS);
+    // The first tick of a fresh start lifts notes at the play position up to
+    // the lead instead of dropping them: pressing play on a note must sound it.
+    this.tick(true);
   }
 
   /** Correct a stale media<->context mapping without restarting (see ClickTrack.reanchor). */
@@ -289,7 +295,7 @@ export class ScoreSynth {
     return Math.max(MIN_LEAD_FLOOR_SEC, Number.isFinite(reported) ? (reported as number) : 0);
   }
 
-  private tick() {
+  private tick(liftLateToLead: boolean) {
     const ctx = this.ctx;
     const anchor = this.anchor;
     if (!ctx || !anchor || !this.bus) return;
@@ -307,8 +313,11 @@ export class ScoreSynth {
       // never replay one (same invariant as ClickTrack.tick).
       this.nextIndex += 1;
 
-      const when = toCtxTime(note.start);
-      if (when < now + lead) continue; // too late to be on time: drop, never late
+      let when = toCtxTime(note.start);
+      if (when < now + lead) {
+        if (!liftLateToLead) continue; // too late to be on time: drop, never late
+        when = now + lead;
+      }
 
       const whenEnd = Math.max(when, toCtxTime(note.end));
       this.scheduleNote(ctx, note, when, whenEnd);
