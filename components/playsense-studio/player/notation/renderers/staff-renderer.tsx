@@ -924,7 +924,8 @@ class StaffRendererImpl implements ScoreRenderer {
         const repeat = measureBlocks[index].measure.repeat;
         if (!repeat || repeat.count <= 2 || repeat.offset !== repeat.length - 1) return;
         const right = g.x + g.width;
-        const nearbyTop = Math.min(...this.hits.filter(hit => hit.measure === measureBlocks[index].measure.number
+        // By bar index: bar numbers can repeat (every exercise pass restarts them).
+        const nearbyTop = Math.min(...this.hits.filter(hit => hit.bar === index
           && hit.x + hit.width >= right - 80).map(hit => hit.y));
         const instruction = document.createElementNS(NS, 'text');
         instruction.setAttribute('data-score-repeat-count', '');

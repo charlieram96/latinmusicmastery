@@ -59,8 +59,8 @@ export function ExerciseScore({ score, currentMs, getCurrentMs, playing, pass, g
   const beatMs = 60_000 / (active?.state.tempo ?? score.initialTempo) * 4 / signature[1]
   const beat = Math.min(signature[0] - 1, Math.floor(Math.max(0, displayMs - (active?.state.cumulativeMs ?? 0)) / beatMs))
 
-  // The HUD counts bars within the current pass.
-  const bar = measureIndex % passBars + 1
+  // The HUD shows the engraved number of the bar being read (numbers restart every pass).
+  const bar = active?.measure.number ?? measureIndex % passBars + 1
 
   return <section id={workspace?.scoreId} className="ps-lesson-notation ps-exercise-score" data-score-layout={vertical ? 'vertical' : 'horizontal'} data-staff-layout={layout} aria-label={t('staff.scoreAria')}>
     <header className="ps-score-toolbar">
