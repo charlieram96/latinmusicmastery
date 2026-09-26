@@ -400,5 +400,38 @@ describe('PathStrip', () => {
       expect(parseFloat(card.style.top)).toBeGreaterThan(60)
       expect(card.className.split(/\s+/)).not.toContain('-translate-y-full')
     })
+
+    it('a compact card flipped below the node clears its label (+56px)', () => {
+      act(() => root.render(<PathStrip items={ITEMS} ariaLabel="p" size="compact" />))
+      const node = host.querySelectorAll<HTMLElement>('[data-path-node]')[2]
+      node.getBoundingClientRect = () => ({ left: 300, top: 60, right: 300, bottom: 60, width: 0, height: 0, x: 300, y: 60, toJSON: () => ({}) })
+      hover(node)
+      const card = document.body.querySelector('[role="tooltip"]') as HTMLElement
+      expect(card.style.top).toBe('116px')
+    })
+
+    it('a compact card opened by keyboard focus follows its node on scroll instead of closing', () => {
+      act(() => root.render(<PathStrip items={ITEMS} ariaLabel="p" size="compact" />))
+      const node = host.querySelectorAll<HTMLElement>('[data-path-node]')[2]
+      let top = 400
+      node.getBoundingClientRect = () => ({ left: 300, top, right: 300, bottom: top, width: 0, height: 0, x: 300, y: top, toJSON: () => ({}) })
+      act(() => { node.querySelector('a')!.focus() })
+      const card = () => document.body.querySelector('[role="tooltip"]') as HTMLElement | null
+      expect(card()).not.toBeNull()
+      top = 300 // the browser scrolled the focused node into view
+      act(() => { window.dispatchEvent(new Event('scroll')) })
+      expect(card()).not.toBeNull()
+      expect(card()!.style.top).toBe(`${300 - 26}px`)
+    })
+
+    it('Escape on a pinned card returns focus to its node', () => {
+      render()
+      const link = host.querySelector('[data-path-scroller] a[href="/l/c"]') as HTMLAnchorElement
+      pointer(link, 'pointerdown', 'touch'); click(link)
+      expect(document.activeElement).toBe(host.querySelector('[role="dialog"] a'))
+      act(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
+      expect(host.querySelector('[role="dialog"]')).toBeNull()
+      expect(document.activeElement).toBe(link)
+    })
   })
 })

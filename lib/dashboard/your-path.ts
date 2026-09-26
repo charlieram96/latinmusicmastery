@@ -65,7 +65,8 @@ export function yourPathFor(
 
   const items = pathWindow(nodes, { before: 2, after: 3 })
   const phoneWide = pathWindow(nodes, { before: 1, after: 2 })
-  const phoneItems = phoneWide.some((i) => i.kind === 'gap') ? pathWindow(nodes, { before: 1, after: 1 }) : phoneWide
+  // Narrow only when the wide slice overflows the 5 phone slots.
+  const phoneItems = phoneWide.length > 5 ? pathWindow(nodes, { before: 1, after: 1 }) : phoneWide
   const lessons = items.filter((i) => i.kind === 'lesson')
   const anchor = lessons.find((i) => i.state === 'current') ?? lessons[lessons.length - 1]
   const moduleIndex = anchor && anchor.kind === 'lesson' ? anchor.moduleIndex : 0

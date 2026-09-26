@@ -81,4 +81,9 @@ describe('yourPathFor', () => {
     expect(path.items[0]).toMatchObject({ kind: 'lesson', types: ['play'], href: '/dashboard/course/c9/class/x', minutes: null })
     expect(path.courseHref).toBe('/dashboard/course/c9')
   })
+  it('keeps 5 phone slots when the current lesson is the first one and a gap follows', () => {
+    const path = yourPathFor(course, new Set(), null)!
+    // nothing before a1, so the wide phone slice (a1, a2, a3, gap, checkpoint) already fits
+    expect(ids(path.phoneItems)).toEqual(['a1', 'a2', 'a3', 'gap', 'checkpoint-A'])
+  })
 })

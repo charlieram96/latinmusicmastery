@@ -65,6 +65,13 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
   // `key` ties the card to the items it was opened on; a new path closes it.
   // `below` opens the card under the node (compact cards near the top of the viewport).
   const [tip, setTip] = useState<{ key: string; index: number; left: number; top: number; pinned: boolean; below: boolean } | null>(null)
+  const tipRef = useRef(tip)
+  useEffect(() => { tipRef.current = tip }, [tip])
+  // The node a compact card belongs to (re-measured on scroll), and the link a pinned card came from.
+  const tipNodeRef = useRef<HTMLElement | null>(null)
+  const pinnedLinkRef = useRef<HTMLAnchorElement | null>(null)
+  // Set while focus is handed back to a node, so it doesn't reopen a focus card.
+  const quietFocus = useRef(false)
   const compact = size === 'compact'
   // Tap-to-pin cards on touch (course page). Compact strips sit in small cards
   // that could clip a pinned card, so they navigate on the first tap.
@@ -105,22 +112,46 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       touch.current = false
-      if (e.key === 'Escape') setTip(null)
+      if (e.key !== 'Escape') return
+      const wasPinned = tipRef.current?.pinned
+      setTip(null)
+      // A pinned card took focus (its Go link): hand it back to the node it came from.
+      if (wasPinned && pinnedLinkRef.current) {
+        quietFocus.current = true
+        pinnedLinkRef.current.focus()
+        quietFocus.current = false
+      }
     }
     document.addEventListener('keydown', onKey, true)
     return () => document.removeEventListener('keydown', onKey, true)
   }, [])
 
-  // Compact cards are fixed to the viewport (portaled), so any scroll or resize makes them stale.
+  // Compact strips sit inside dashboard cards: the card is portaled to <body>
+  // and fixed to the node's spot in the viewport, so no ancestor can clip it.
+  // Near the top of the screen it opens below the node, clear of the node's label.
+  function placeCompact(node: HTMLElement) {
+    const r = node.getBoundingClientRect()
+    const vw = window.innerWidth
+    const left = vw > CARD_W + 16 ? Math.min(Math.max(r.left, CARD_W / 2 + 8), vw - CARD_W / 2 - 8) : r.left
+    const below = r.top < CARD_ROOM
+    return { left, top: below ? r.top + 56 : r.top - 26, below }
+  }
+
+  // Compact cards are fixed to the viewport (portaled), so a scroll or resize makes them stale.
+  // A hover card closes; a focus card follows its node (tabbing scrolls the node into view).
   const tipOpen = tip !== null
   useEffect(() => {
     if (!compact || !tipOpen) return
-    const close = () => setTip(null)
-    window.addEventListener('scroll', close, true)
-    window.addEventListener('resize', close)
+    const onMove = () => {
+      const node = tipNodeRef.current
+      if (node && node.contains(document.activeElement)) setTip((cur) => (cur ? { ...cur, ...placeCompact(node) } : cur))
+      else setTip(null)
+    }
+    window.addEventListener('scroll', onMove, true)
+    window.addEventListener('resize', onMove)
     return () => {
-      window.removeEventListener('scroll', close, true)
-      window.removeEventListener('resize', close)
+      window.removeEventListener('scroll', onMove, true)
+      window.removeEventListener('resize', onMove)
     }
   }, [compact, tipOpen])
 
@@ -147,13 +178,8 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
 
   const showTip = (index: number, pin = false, node?: HTMLElement) => {
     if (compact && node) {
-      // Compact strips sit inside dashboard cards: the card is portaled to <body>
-      // and fixed to the node's spot in the viewport, so no ancestor can clip it.
-      const r = node.getBoundingClientRect()
-      const vw = window.innerWidth
-      const left = vw > CARD_W + 16 ? Math.min(Math.max(r.left, CARD_W / 2 + 8), vw - CARD_W / 2 - 8) : r.left
-      const below = r.top < CARD_ROOM
-      setTip({ key: itemsKey, index, left, top: below ? r.top + 30 : r.top - 26, pinned: false, below })
+      tipNodeRef.current = node
+      setTip({ key: itemsKey, index, ...placeCompact(node), pinned: false })
       return
     }
     const scrollLeft = scroller.current?.scrollLeft ?? 0
@@ -261,7 +287,7 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
               ? {
                   onMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => { if (!touch.current) showTip(i, false, e.currentTarget) },
                   onMouseLeave: hideTip,
-                  onFocus: (e: React.FocusEvent<HTMLDivElement>) => { if (!touch.current) showTip(i, false, e.currentTarget) },
+                  onFocus: (e: React.FocusEvent<HTMLDivElement>) => { if (!touch.current && !quietFocus.current) showTip(i, false, e.currentTarget) },
                   onBlur: hideTip,
                 }
               : {}
@@ -315,6 +341,7 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
                     e.preventDefault()
                     // The loader listener already ran; a later click on this link should show it.
                     e.currentTarget.removeAttribute('data-no-page-loader')
+                    pinnedLinkRef.current = e.currentTarget
                     showTip(i, true)
                   }}
                   className={cn(
