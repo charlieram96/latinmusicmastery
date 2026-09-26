@@ -33,8 +33,9 @@ interface ExerciseViewProps {
   playerLayout?: 'stack' | 'split'
   /** Instrument backing tracks for the play part (student selects before starting). */
   backingTracks?: BackingTrack[]
-  /** Optional exercise-part video. Cropped to the score's length, or synced to
-   *  the notation via `timeMap` when one is published. */
+  /** Optional exercise-part video, placed by `play` (bar 1 and the play
+   *  settings) within its trim. `timeMap` is the older exercise map, no longer
+   *  read by the game. */
   exerciseVideo?: {
     url: string
     startSeconds: number

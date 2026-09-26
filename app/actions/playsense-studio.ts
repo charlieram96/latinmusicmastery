@@ -1434,8 +1434,9 @@ export interface ExerciseMedia {
   videoUrl: string | null;
   /** Where the usable region of the play-along video starts. This is the trim
    *  in-point (migration 040 folded the older linear crop into it), so existing
-   *  cropWindow() callers keep working and automatically honour the trim.
-   *  Ignored when `timeMap` is set (the map fully positions the video). */
+   *  cropWindow() callers keep working and automatically honour the trim. The
+   *  play-along is positioned by `play` (bar 1, count-in, pre-roll); this is
+   *  its clamp, and bar 1 when `play.bar1Seconds` is unset. */
   videoStartSeconds: number;
   /** End of the usable region; null = play to the end of the video. */
   videoTrimOutSeconds: number | null;
@@ -1443,9 +1444,10 @@ export interface ExerciseMedia {
   metronomeAnchorSeconds: number | null;
   /** The musical position (quarter notes) that anchor second lands on. */
   metronomeAnchorQn: number | null;
-  /** Optional time map syncing the play-along video to the graded score's beats.
-   *  When present, consumers position the video by musical position; otherwise
-   *  they fall back to the linear crop (videoStartSeconds). */
+  /** The older exercise time map (exercise_time_map_id), read-only since the
+   *  Studio rework P5: graded owners no longer publish one, and the student
+   *  play-along no longer reads it — `play` (bar 1 and the play settings)
+   *  positions the media. Always null for a jam session. */
   timeMap: ClassItemScorePayload['activeTimeMap'];
   backingTracks: BackingTrack[];
   /** Studio rework P5: where bar 1 of the graded grid lands on the media, and
