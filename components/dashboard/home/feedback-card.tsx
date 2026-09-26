@@ -18,7 +18,7 @@ export function FeedbackCard({ feedback }: { feedback: FeedbackSummary }) {
   if (feedback.kind === 'none') {
     return (
       <section aria-labelledby="home-feedback">
-        <SectionHeader title={t(`${base}.title`)} href="/dashboard/feedback" linkLabel={t(`${base}.allReviews`)} />
+        <SectionHeader id="home-feedback" title={t(`${base}.title`)} href="/dashboard/feedback" linkLabel={t(`${base}.allReviews`)} />
         <div className="flex flex-col items-start gap-4 rounded-xl border border-border bg-card p-5 shadow-card sm:flex-row sm:items-center">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary/[0.14] text-primary">
             <Video className="h-5 w-5" aria-hidden />
@@ -41,6 +41,7 @@ export function FeedbackCard({ feedback }: { feedback: FeedbackSummary }) {
   return (
     <section aria-labelledby="home-feedback">
       <SectionHeader
+        id="home-feedback"
         title={t(`${base}.title`)}
         count={feedback.kind === 'completed' ? t(`${base}.newCount`, { count: 1 }) : undefined}
         href="/dashboard/feedback"
