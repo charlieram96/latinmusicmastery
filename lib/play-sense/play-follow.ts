@@ -12,7 +12,7 @@ const RATE_GAIN = 0.5
 const MIN_TRIM = 0.97
 const MAX_TRIM = 1.03
 
-/** Media time the video should show at engine time e (e < 0 during the count-in). null = hold paused. */
+/** Media time the video should show at engine time e (e < 0 during the count-in). `playing: false` = hold paused on `media`. */
 export function expectedMediaTime(m: PlayMedia, e: number): { media: number; playing: boolean } {
   if (e < 0) {
     // Without pre-roll the video waits on bar 1 until the count-in ends.

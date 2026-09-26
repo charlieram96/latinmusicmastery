@@ -213,19 +213,29 @@ function ScoreExerciseSession({
       const pass = e >= 0 && playMedia.loopSeconds > 0 ? Math.floor(e / playMedia.loopSeconds) : null
       const wrapped = pass !== null && lastPass !== null && pass !== lastPass
       lastPass = pass
-      const atEnd = playMedia.trimOut !== null && media >= playMedia.trimOut
-      if (!playing || atEnd) {
+      // The end of the file is a trim-out too: live passes can run past it.
+      // Once known, fold the element's duration into the effective end.
+      let endAt = playMedia.trimOut ?? Infinity
+      if (Number.isFinite(v.duration)) endAt = Math.min(endAt, v.duration - 0.05)
+      if (playing && media >= endAt) {
+        // Hold the last frame until the next pass brings bar 1 back inside:
+        // no play() (on an ended element it restarts from 0) and no seek.
         if (!v.paused) v.pause()
-        if (Math.abs(v.currentTime - media) > 0.05) v.currentTime = media
+      } else if (!playing) {
+        if (!v.paused) v.pause()
+        if (!v.seeking && Math.abs(v.currentTime - media) > 0.05) v.currentTime = media
       } else {
-        const { rate, seekTo } = followRate(media, v.currentTime, userSpeed)
-        if (seekTo !== null || wrapped) {
-          v.currentTime = seekTo ?? media
-          v.playbackRate = userSpeed
-        } else if (Math.abs(v.playbackRate - rate) > 0.0005) {
-          v.playbackRate = rate
+        // A seek already in flight: let it land before correcting again.
+        if (!v.seeking) {
+          const { rate, seekTo } = followRate(media, v.currentTime, userSpeed)
+          if (seekTo !== null || wrapped || v.ended) {
+            v.currentTime = seekTo ?? media
+            v.playbackRate = userSpeed
+          } else if (Math.abs(v.playbackRate - rate) > 0.0005) {
+            v.playbackRate = rate
+          }
         }
-        if (v.paused) void v.play().catch(() => {})
+        if (v.paused && !v.ended) void v.play().catch(() => {})
       }
       raf = requestAnimationFrame(tick)
     }

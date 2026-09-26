@@ -228,17 +228,32 @@ describe('ScoreExerciseGame play settings (Studio rework P5)', () => {
     let currentTime: number
     let paused: boolean
     let rate: number
+    let duration: number
+    let seeking: boolean
+    let seeks: number[]
+    let plays: number
+    let cancelled: number[]
+    let nextFrame: number
     beforeEach(() => {
-      frames = []
-      vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { frames.push(cb); return frames.length })
-      vi.stubGlobal('cancelAnimationFrame', () => {})
-      currentTime = 0; paused = true; rate = 1
+      frames = []; cancelled = []; nextFrame = 0
+      vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { frames.push(cb); return ++nextFrame })
+      vi.stubGlobal('cancelAnimationFrame', (id: number) => { cancelled.push(id) })
+      currentTime = 0; paused = true; rate = 1; duration = NaN; seeking = false; seeks = []; plays = 0
       vi.spyOn(HTMLMediaElement.prototype, 'currentTime', 'get').mockImplementation(() => currentTime)
-      vi.spyOn(HTMLMediaElement.prototype, 'currentTime', 'set').mockImplementation((v: number) => { currentTime = v })
+      vi.spyOn(HTMLMediaElement.prototype, 'currentTime', 'set').mockImplementation((v: number) => { currentTime = v; seeks.push(v) })
+      vi.spyOn(HTMLMediaElement.prototype, 'duration', 'get').mockImplementation(() => duration)
+      // An element that reached the end of its file reports ended (and has paused itself).
+      vi.spyOn(HTMLMediaElement.prototype, 'ended', 'get').mockImplementation(() => Number.isFinite(duration) && currentTime >= duration)
+      vi.spyOn(HTMLMediaElement.prototype, 'seeking', 'get').mockImplementation(() => seeking)
       vi.spyOn(HTMLMediaElement.prototype, 'paused', 'get').mockImplementation(() => paused)
       vi.spyOn(HTMLMediaElement.prototype, 'playbackRate', 'get').mockImplementation(() => rate)
       vi.spyOn(HTMLMediaElement.prototype, 'playbackRate', 'set').mockImplementation((v: number) => { rate = v })
-      vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(async () => { paused = false })
+      vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(async () => {
+        plays++
+        // A real element restarts from 0 when play() is called after it ended.
+        if (Number.isFinite(duration) && currentTime >= duration) currentTime = 0
+        paused = false
+      })
       vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => { paused = true })
     })
     const tick = () => act(() => { const pending = frames; frames = []; pending.forEach(cb => cb(0)) })
@@ -266,6 +281,64 @@ describe('ScoreExerciseGame play settings (Studio rework P5)', () => {
       render({ preview: false, play: { ...play, bar1Seconds: null, preroll: false }, exerciseVideo: { ...video, startSeconds: 2 } })
       tick()
       expect(currentTime).toBe(2)
+    })
+
+    // `exercise`: 2 bars of 4/4 at 90 → a 16/3 s pass; bar 1 at 8 → the pass would run to 13.33 s.
+    const loop = 16 / 3
+
+    it('holds the last frame when the file ends before the pass does, then resumes at bar 1 on the next pass', () => {
+      duration = 12
+      let e = 3.8
+      session = { ...baseSession(), exercise, sessionState: 'playing', getElapsedSeconds: () => e }
+      currentTime = 11.8
+      render({ preview: false, play: { ...play, bar1Seconds: 8 } })
+      tick()
+      expect(paused).toBe(false)
+      // The element reaches the end of its file and pauses itself.
+      currentTime = 12; paused = true
+      const playsAtEnd = plays; const seeksAtEnd = seeks.length
+      for (e = 4.0; e < loop; e += 0.1) tick()
+      expect(plays).toBe(playsAtEnd)
+      expect(seeks.length).toBe(seeksAtEnd)
+      expect(currentTime).toBe(12)
+      expect(paused).toBe(true)
+      // The next pass brings bar 1 back inside the file.
+      e = loop + 0.01
+      tick()
+      expect(currentTime).toBeCloseTo(8.01, 9)
+      expect(paused).toBe(false)
+      expect(seeks).not.toContain(0)
+    })
+
+    it('neither seeks nor trims the rate while the element is still seeking', () => {
+      session = { ...baseSession(), exercise, sessionState: 'playing', getElapsedSeconds: () => 2 }
+      currentTime = 1; seeking = true
+      render({ preview: false, play })
+      tick(); tick()
+      expect(seeks).toEqual([])
+      expect(rate).toBe(1)
+      seeking = false
+      tick()
+      expect(seeks).toEqual([7])
+    })
+
+    it('seeks exactly once per loop wrap, and cancels its frame on unmount', () => {
+      let e = 0
+      session = { ...baseSession(), exercise, sessionState: 'playing', getElapsedSeconds: () => e }
+      currentTime = 5
+      render({ preview: false, play })
+      const dt = 1 / 60
+      for (; e < 2 * loop + 0.5; e += dt) {
+        tick()
+        currentTime += rate * dt
+      }
+      expect(seeks).toHaveLength(2)
+      expect(seeks[0]).toBeCloseTo(5, 1)
+      expect(seeks[1]).toBeCloseTo(5, 1)
+      const pending = nextFrame
+      act(() => root.unmount())
+      expect(cancelled).toContain(pending)
+      root = createRoot(host)
     })
   })
 })
