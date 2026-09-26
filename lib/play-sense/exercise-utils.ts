@@ -1,5 +1,6 @@
 import type { ExerciseDefinition, ExerciseEvent, ExerciseGrid } from './types'
 import type { ExpectedEvent } from './scoring'
+import { gridCountIn } from './grid'
 
 /**
  * A 1-based measure number clamped to a valid index into a grid's per-measure
@@ -122,6 +123,19 @@ export function getExerciseDuration(exercise: ExerciseDefinition): number {
  */
 export function getCountInDuration(bpm: number, countInBeats: number = 4): number {
   return (countInBeats * 60) / bpm
+}
+
+/**
+ * The count-in the exercise session actually plays, in seconds before bar 1.
+ * With a grid (a graded owner) it is `countInBars` × bar 1's numerator at bar
+ * 1's beat length; without one it is always a single bar at `exercise.bpm`, as
+ * before. The session and the play-along video both read it, so the video's
+ * pre-roll lines up with the clicks.
+ */
+export function getSessionCountInSeconds(exercise: ExerciseDefinition, countInBars: 1 | 2): number {
+  const beatsPerMeasure = exercise.timeSignature[0]
+  if (exercise.grid) return Math.max(0, -gridCountIn(exercise.grid, countInBars, beatsPerMeasure)[0])
+  return getCountInDuration(exercise.bpm, beatsPerMeasure)
 }
 
 /**

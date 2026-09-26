@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { scoreToExerciseDefinition, buildExerciseGrid } from '../score-to-exercise'
-import { generateExpectedTimestamps, getExerciseDuration, getLoopDuration, beatToTimestamp } from '../exercise-utils'
+import { generateExpectedTimestamps, getExerciseDuration, getLoopDuration, beatToTimestamp, getSessionCountInSeconds, getCountInDuration } from '../exercise-utils'
+import { gridCountIn, gridLoopSeconds } from '../grid'
 import type { ScoreDocument, MusicalEvent } from '@/components/playsense-studio/shared/score-model/types'
 import { GUITAR_LICK_FIXTURE } from '@/lib/playsense-studio/score-fixtures'
 
@@ -105,5 +106,35 @@ describe('exercise grid (meter changes honoured, tempo changes ignored)', () => 
     const ex = scoreToExerciseDefinition(score)
     expect(ex.timeSignature).toEqual([6, 8])
     expect(ex.bpm).toBe(120 * 2)
+  })
+
+  it('agrees with gridLoopSeconds on the loop length when tempo marks are confirmed (the playhead and the play-along share one pass)', () => {
+    const score: ScoreDocument = {
+      schemaVersion: 1, title: 'x', sourceFormat: 'native', initialTempo: 120, initialTimeSignature: [4, 4], initialKeyFifths: 0,
+      tempoMarksConfirmed: true,
+      tracks: [{ index: 0, instrument: 'guitar', displayName: 'g', tuning: null, stringMultiplicity: 1, channel: null, defaultView: 'staff', measures: [
+        { number: 1, voices: [{ number: 1, events: [q(60, 4)] }] },
+        { number: 2, voices: [{ number: 1, events: [q(60, 4)] }] },
+        { number: 3, tempoChange: 60, voices: [{ number: 1, events: [q(60, 4)] }] },
+      ] }],
+    }
+    const ex = scoreToExerciseDefinition(score)
+    expect(ex.grid).toBeDefined()
+    expect(getLoopDuration(ex)).toBe(gridLoopSeconds(ex.grid!))
+    expect(getLoopDuration(ex)).toBe(8)
+  })
+})
+
+describe('getSessionCountInSeconds (the count-in the session and the play-along share)', () => {
+  it("is countInBars of bar 1's beats at bar 1's beat length with a grid", () => {
+    const ex = scoreToExerciseDefinition(changing)
+    expect(getSessionCountInSeconds(ex, 1)).toBeCloseTo(-gridCountIn(ex.grid!, 1, 4)[0], 12)
+    expect(getSessionCountInSeconds(ex, 2)).toBeCloseTo(4, 12)
+  })
+
+  it('is always one bar at the exercise bpm without a grid', () => {
+    const ex = { ...scoreToExerciseDefinition(changing), grid: undefined }
+    expect(getSessionCountInSeconds(ex, 2)).toBe(getCountInDuration(ex.bpm, ex.timeSignature[0]))
+    expect(getSessionCountInSeconds(ex, 2)).toBe(2)
   })
 })

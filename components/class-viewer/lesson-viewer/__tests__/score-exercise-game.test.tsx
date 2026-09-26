@@ -11,7 +11,8 @@ vi.mock('next/image', () => ({ default: () => null }))
 
 // The engine is stubbed: each test sets the session it wants to see.
 let session: Record<string, unknown>
-vi.mock('@/hooks/use-exercise-session', () => ({ useExerciseSession: () => session }))
+let sessionOptions: Record<string, unknown> = {}
+vi.mock('@/hooks/use-exercise-session', () => ({ useExerciseSession: (options: Record<string, unknown>) => { sessionOptions = options; return session } }))
 vi.mock('@/hooks/use-stage-demo-session', () => ({ useStageDemoSession: () => ({ overrides: {}, attempt: 0, review: () => {} }) }))
 vi.mock('@/components/play-sense/stage-highway/StageHighway', () => ({ StageHighway: () => <div data-highway /> }))
 let nowPlaying: { onStop: () => void } | null = null
@@ -186,5 +187,76 @@ describe('ScoreExerciseGame score shape without a video', () => {
     const saved = localStorage.getItem('lmm-workspace:play:stacked')
     expect(saved === null || JSON.parse(saved).layout === 'pip').toBe(true)
     expect(host.querySelector('[data-score]')?.getAttribute('data-position')).toBe('right')
+  })
+})
+
+describe('ScoreExerciseGame play settings (Studio rework P5)', () => {
+  // 2 bars of 4/4 at 90 (secPerQN 2/3), then a confirmed change to 60 (1 s/qn).
+  const graded = { ...exercise, grid: { measureStartSec: [0, 8 / 3, 16 / 3, 28 / 3], measureStartQN: [0, 4, 8, 12], secPerQN: [2 / 3, 2 / 3, 1], beatQN: [1, 1, 1] }, measures: 3 } as unknown as ExerciseDefinition
+  const play = { bar1Seconds: 5, countInBars: 2 as const, preroll: true }
+
+  it('passes the published count-in into the session, with or without a video', () => {
+    render({ play })
+    expect(sessionOptions.countInBars).toBe(2)
+    render({ play, exerciseVideo: null })
+    expect(sessionOptions.countInBars).toBe(2)
+    render({ play: null })
+    expect(sessionOptions.countInBars).toBe(1)
+  })
+
+  it('places a backing track from its musical position through the grid, else by its timeline position', () => {
+    const track = { id: 't1', label: 'Bass', audioUrl: 'https://a.test/bass.mp3', timelineStartSeconds: 3, trimInSeconds: 0.5, trimOutSeconds: null, gain: 1, positionQn: 10, timeMapId: null, orderIndex: 0, sourceDurationSeconds: null }
+    render({ exercise: graded, play, backingTracks: [track, { ...track, id: 't2', positionQn: null }] })
+    const placed = sessionOptions.backingTracks as Array<{ id: string; startSeconds: number; trimInSeconds: number }>
+    expect(placed[0].startSeconds).toBeCloseTo(16 / 3 + 2, 9)
+    expect(placed[0].trimInSeconds).toBe(0.5)
+    // No map, no position: the timeline position less the media origin, as before.
+    expect(placed[1].startSeconds).toBe(3)
+  })
+
+  describe('the video follows the engine clock', () => {
+    let frames: FrameRequestCallback[]
+    let currentTime: number
+    let paused: boolean
+    let rate: number
+    beforeEach(() => {
+      frames = []
+      vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { frames.push(cb); return frames.length })
+      vi.stubGlobal('cancelAnimationFrame', () => {})
+      currentTime = 0; paused = true; rate = 1
+      vi.spyOn(HTMLMediaElement.prototype, 'currentTime', 'get').mockImplementation(() => currentTime)
+      vi.spyOn(HTMLMediaElement.prototype, 'currentTime', 'set').mockImplementation((v: number) => { currentTime = v })
+      vi.spyOn(HTMLMediaElement.prototype, 'paused', 'get').mockImplementation(() => paused)
+      vi.spyOn(HTMLMediaElement.prototype, 'playbackRate', 'get').mockImplementation(() => rate)
+      vi.spyOn(HTMLMediaElement.prototype, 'playbackRate', 'set').mockImplementation((v: number) => { rate = v })
+      vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(async () => { paused = false })
+      vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => { paused = true })
+    })
+    const tick = () => act(() => { const pending = frames; frames = []; pending.forEach(cb => cb(0)) })
+
+    it('runs the pre-roll during the count-in and trims its rate toward bar 1 + engine time', () => {
+      let e = -1
+      session = { ...baseSession(), exercise, sessionState: 'countdown', getElapsedSeconds: () => e }
+      render({ preview: false, play })
+      tick()
+      // 1 s before bar 1 → 4 s, far from 0: a hard seek, then play.
+      expect(currentTime).toBe(4)
+      expect(paused).toBe(false)
+      e = 2; currentTime = 6.98
+      tick()
+      expect(currentTime).toBe(6.98)
+      expect(rate).toBeCloseTo(1.01, 9)
+    })
+
+    it('holds at bar 1 without pre-roll, and at the trim-in point when bar 1 is unset', () => {
+      session = { ...baseSession(), exercise, sessionState: 'countdown', getElapsedSeconds: () => -1 }
+      render({ preview: false, play: { ...play, preroll: false } })
+      tick()
+      expect(currentTime).toBe(5)
+      expect(paused).toBe(true)
+      render({ preview: false, play: { ...play, bar1Seconds: null, preroll: false }, exerciseVideo: { ...video, startSeconds: 2 } })
+      tick()
+      expect(currentTime).toBe(2)
+    })
   })
 })

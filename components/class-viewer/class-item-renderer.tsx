@@ -323,6 +323,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
               playerLayout={playerLayout}
               backingTracks={backingTracks}
               exerciseVideo={exerciseVideo}
+              play={exerciseMedia?.play ?? null}
               teacherName={teacherName}
             />
           ) : null}
