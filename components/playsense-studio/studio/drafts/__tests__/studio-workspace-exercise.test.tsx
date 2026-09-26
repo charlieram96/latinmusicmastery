@@ -14,6 +14,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn(), push: 
 
 const stub = vi.hoisted(() => ({
   syncPanelCalls: [] as Array<{ activeTimeMap: unknown; mode: string; props: Record<string, unknown> }>,
+  previewCalls: [] as Array<Record<string, unknown>>,
 }));
 vi.mock('@/components/playsense-studio/studio/sync-panel', () => ({
   SyncPanel: (props: { activeTimeMap: unknown; mode: string }) => {
@@ -32,6 +33,12 @@ vi.mock('@/components/playsense-studio/studio/backing-lanes-panel', () => ({ Bac
 vi.mock('@/components/playsense-studio/studio/highway-preview', () => ({ HighwayPreview: () => null }));
 vi.mock('@/components/playsense-studio/studio/score-import-dialog', () => ({ ScoreImportDialog: () => null }));
 vi.mock('@/components/playsense-studio/studio/shell/floating-video', () => ({ FloatingVideo: () => null }));
+vi.mock('@/components/playsense-studio/studio/student-preview-dialog', () => ({
+  StudentPreviewDialog: (props: Record<string, unknown>) => {
+    stub.previewCalls.push(props);
+    return null;
+  },
+}));
 
 const acts = vi.hoisted(() => ({ saveStudioDraft: vi.fn() }));
 vi.mock('@/app/actions/studio-drafts', () => acts);
@@ -82,6 +89,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   stub.syncPanelCalls = [];
+  stub.previewCalls = [];
   acts.saveStudioDraft.mockReset();
   acts.saveStudioDraft.mockResolvedValue({ updatedAt: '2026-01-01T00:00:00.000Z' });
   host = document.createElement('div');
@@ -271,5 +279,190 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
       nudges: [],
       flex: [],
     });
+  });
+});
+
+describe('StudioWorkspace — Student preview and copy notes (Studio rework P5, Task 7)', () => {
+  const SCORE_WITH_NOTES: ScoreDocument = {
+    ...SCORE,
+    title: 'Graded',
+    tracks: [
+      {
+        index: 0,
+        instrument: 'perc-conga',
+        displayName: 'Conga',
+        tuning: null,
+        stringMultiplicity: 1,
+        channel: null,
+        defaultView: 'rhythm-grid',
+        measures: [{ number: 1, voices: [{ number: 1, events: [{ kind: 'note', id: 'x', midi: 60, durationQN: 4 }] }] }],
+      },
+    ],
+  };
+  const SECTION_SCORE: ScoreDocument = {
+    ...SCORE,
+    title: 'Verse A',
+    tracks: [
+      {
+        index: 0,
+        instrument: 'perc-conga',
+        displayName: 'Conga',
+        tuning: null,
+        stringMultiplicity: 1,
+        channel: null,
+        defaultView: 'rhythm-grid',
+        measures: [{ number: 1, voices: [{ number: 1, events: [{ kind: 'note', id: 'a', midi: 62, durationQN: 4 }] }] }],
+      },
+    ],
+  };
+
+  it('the Student preview chip opens the dialog fed the draft exercise, score, media and play settings', () => {
+    act(() => {
+      root.render(
+        <StudioDraftsProvider owners={[]}>
+          <StudioWorkspace
+            owner={{ kind: 'classItem', classItemId: 'ci-1' }}
+            mode="exercise"
+            title="Clave 101"
+            videoUrl={null}
+            scoreDocumentId="doc-1"
+            initialScore={SCORE_WITH_NOTES}
+            activeTimeMap={null}
+            videoDurationSeconds={null}
+            exerciseMedia={exerciseMedia}
+          />
+        </StudioDraftsProvider>
+      );
+    });
+
+    expect(stub.previewCalls).toHaveLength(0);
+    const btn = Array.from(host.querySelectorAll('button')).find((b) => b.textContent?.includes('Student preview'))!;
+    act(() => {
+      btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(stub.previewCalls).toHaveLength(1);
+    const call = stub.previewCalls[0];
+    expect(call.score).toEqual(SCORE_WITH_NOTES);
+    expect(call.play).toEqual(exerciseMedia.play);
+    expect(call.exerciseVideo).toEqual({
+      url: exerciseMedia.videoUrl,
+      startSeconds: exerciseMedia.videoStartSeconds,
+      trimOutSeconds: exerciseMedia.videoTrimOutSeconds,
+      timeMap: null,
+    });
+    expect(call.backingTracks).toBe(exerciseMedia.backingTracks);
+    expect((call.exercise as { title: string }).title).toBe('Graded');
+  });
+
+  it("lists the Watch sections under \"Copy notes from a Watch section\" and applies a confirmed pick as an undoable structural edit", () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    act(() => {
+      root.render(
+        <StudioDraftsProvider owners={[]}>
+          <StudioWorkspace
+            owner={{ kind: 'classItem', classItemId: 'ci-1' }}
+            mode="exercise"
+            title="Clave 101"
+            videoUrl={null}
+            scoreDocumentId="doc-1"
+            initialScore={SCORE_WITH_NOTES}
+            activeTimeMap={null}
+            videoDurationSeconds={null}
+            exerciseMedia={exerciseMedia}
+            copySources={[{ id: 'sec-1', title: 'Verse A', score: SECTION_SCORE }]}
+          />
+        </StudioDraftsProvider>
+      );
+    });
+
+    const menuBtn = Array.from(host.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Copy notes from a Watch section')
+    )!;
+    expect(menuBtn.hasAttribute('disabled')).toBe(false);
+    act(() => {
+      menuBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const sectionItem = Array.from(host.querySelectorAll('button')).find((b) => b.textContent === 'Verse A')!;
+    expect(sectionItem).toBeTruthy();
+    act(() => {
+      sectionItem.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(confirmSpy).toHaveBeenCalledWith('Replace the exercise notes with "Verse A"? You can undo this.');
+    // The score-stage SyncPanel gets the new, spliced-in score: the target's
+    // own title stays, the source's single note (a fresh id, midi 62) replaces
+    // the target's track-0 notation.
+    const last = stub.syncPanelCalls.at(-1)!;
+    const nextScore = last.props.score as ScoreDocument;
+    expect(nextScore.title).toBe('Graded');
+    const events = nextScore.tracks[0].measures[0].voices[0].events;
+    expect(events).toHaveLength(1);
+    expect(events[0].id).not.toBe('a');
+    expect((events[0] as { midi: number }).midi).toBe(62);
+
+    confirmSpy.mockRestore();
+  });
+
+  it('does not apply the copy when the confirm is declined', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    act(() => {
+      root.render(
+        <StudioDraftsProvider owners={[]}>
+          <StudioWorkspace
+            owner={{ kind: 'classItem', classItemId: 'ci-1' }}
+            mode="exercise"
+            title="Clave 101"
+            videoUrl={null}
+            scoreDocumentId="doc-1"
+            initialScore={SCORE_WITH_NOTES}
+            activeTimeMap={null}
+            videoDurationSeconds={null}
+            exerciseMedia={exerciseMedia}
+            copySources={[{ id: 'sec-1', title: 'Verse A', score: SECTION_SCORE }]}
+          />
+        </StudioDraftsProvider>
+      );
+    });
+
+    const menuBtn = Array.from(host.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Copy notes from a Watch section')
+    )!;
+    act(() => {
+      menuBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    const sectionItem = Array.from(host.querySelectorAll('button')).find((b) => b.textContent === 'Verse A')!;
+    act(() => {
+      sectionItem.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const last = stub.syncPanelCalls.at(-1)!;
+    expect(last.props.score).toEqual(SCORE_WITH_NOTES);
+    confirmSpy.mockRestore();
+  });
+
+  it('disables the copy-notes menu when there are no Watch sections yet', () => {
+    act(() => {
+      root.render(
+        <StudioDraftsProvider owners={[]}>
+          <StudioWorkspace
+            owner={{ kind: 'classItem', classItemId: 'ci-1' }}
+            mode="exercise"
+            title="Clave 101"
+            videoUrl={null}
+            scoreDocumentId="doc-1"
+            initialScore={SCORE_WITH_NOTES}
+            activeTimeMap={null}
+            videoDurationSeconds={null}
+            exerciseMedia={exerciseMedia}
+          />
+        </StudioDraftsProvider>
+      );
+    });
+    const menuBtn = Array.from(host.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Copy notes from a Watch section')
+    )!;
+    expect(menuBtn.hasAttribute('disabled')).toBe(true);
   });
 });

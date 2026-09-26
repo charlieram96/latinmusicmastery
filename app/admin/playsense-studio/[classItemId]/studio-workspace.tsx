@@ -20,7 +20,7 @@
 // ExerciseStudio, already has one higher up — see drafts-context.tsx) so it
 // can be mounted standalone from a page.tsx.
 
-import { ArrowLeft, Activity, FileUp, Film, MonitorPlay, Music, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
+import { ArrowLeft, Activity, Copy, Eye, FileUp, Film, MonitorPlay, Music, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
@@ -52,6 +52,8 @@ import { HoverRail } from '@/components/playsense-studio/studio/shell/hover-rail
 import { FloatingVideo } from '@/components/playsense-studio/studio/shell/floating-video';
 import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { copySectionScore } from '@/lib/playsense-studio/copy-section';
+import { StudentPreviewDialog } from '@/components/playsense-studio/studio/student-preview-dialog';
 
 /** A graded part with no placement yet: bar 1 at the trim-in, a 1-bar
  *  count-in, pre-roll on (the migration 044 defaults). */
@@ -92,6 +94,9 @@ export interface StudioWorkspaceProps {
    *  owner's draft — lets a host (e.g. ExerciseStudio) cache it locally so
    *  switching back to this part later reseeds from it without a refetch. */
   onDraftContent?: (c: { score: ScoreDocument; timing: StudioTiming }) => void;
+  /** EXERCISE items only (Studio rework P5): the Watch sections' scores,
+   *  offered by "Copy notes from a Watch section" in the exercise score stage. */
+  copySources?: Array<{ id: string; title: string; score: ScoreDocument }>;
 }
 
 /** The draft owner a StudioWorkspace saves under: a class item's own score
@@ -129,6 +134,7 @@ function StudioWorkspaceBody({
   exerciseMedia,
   studioDraft,
   onDraftContent,
+  copySources = [],
 }: StudioWorkspaceProps) {
   const draftOwner = draftOwnerOf(owner);
 
@@ -229,6 +235,37 @@ function StudioWorkspaceBody({
   const mediaToQN = useCallback(
     (mediaSeconds: number) => (gradedGrid ? gridQNAtSeconds(gradedGrid, mediaSeconds - gradedBar1) : 0),
     [gradedGrid, gradedBar1]
+  );
+
+  // --- Student preview (Studio rework P5, Task 7) ---
+  // The real ScoreExerciseGame, in preview mode, over the draft's own score,
+  // play settings, current (possibly unsaved) media and backing tracks — so
+  // the preview can never drift from what students see.
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const previewExercise = useMemo(() => scoreToExerciseDefinition(state.score), [state.score]);
+  const previewVideo = useMemo(
+    () =>
+      exerciseVideoUrl
+        ? {
+            url: exerciseVideoUrl,
+            startSeconds: exerciseTrim.trimInSeconds,
+            trimOutSeconds: exerciseTrim.trimOutSeconds,
+            timeMap: null,
+          }
+        : null,
+    [exerciseVideoUrl, exerciseTrim]
+  );
+
+  // --- Copy notes from a Watch section (Studio rework P5, Task 7) ---
+  const [copyMenuOpen, setCopyMenuOpen] = useState(false);
+  const applyCopiedSection = useCallback(
+    (source: ScoreDocument, sectionTitle: string) => {
+      if (!window.confirm(`Replace the exercise notes with "${sectionTitle}"? You can undo this.`)) return;
+      const current = state.score;
+      dispatch({ type: 'apply-structural-score', score: copySectionScore(source, current), expectedScore: current });
+      setCopyMenuOpen(false);
+    },
+    [dispatch, state.score]
   );
 
   // Uploading/removing the play-along video invalidates any prior placement —
@@ -361,6 +398,49 @@ function StudioWorkspaceBody({
             </button>
           </div>
         )}
+
+        {/* Exercise score stage only: replace the graded notes wholesale with
+            a Watch section's (Studio rework P5, Task 7). */}
+        {isExercise && exerciseStage === 'score' && (
+          <div className="relative">
+            <button
+              type="button"
+              className="st-chip"
+              onClick={() => setCopyMenuOpen((v) => !v)}
+              disabled={copySources.length === 0}
+              aria-haspopup="true"
+              aria-expanded={copyMenuOpen}
+              title={
+                copySources.length === 0
+                  ? 'No Watch sections to copy notes from yet'
+                  : "Replace the exercise notes with a Watch section's"
+              }
+            >
+              <Copy className="h-4 w-4" />
+              <span className="hidden lg:inline">Copy notes from a Watch section</span>
+            </button>
+            {copyMenuOpen && copySources.length > 0 && (
+              <>
+                <div className="st-pop-scrim" onClick={() => setCopyMenuOpen(false)} />
+                <div className="st-pop">
+                  <span className="st-pop-label">Copy notes from a Watch section</span>
+                  {copySources.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="st-pop-item"
+                      onClick={() => applyCopiedSection(s.score, s.title)}
+                    >
+                      <span className="tx">
+                        <span className="t">{s.title}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
         {owner.kind === 'song' && <SongMetaControls owner={owner} />}
 
         <div className="ml-auto flex items-center gap-2">
@@ -375,6 +455,20 @@ function StudioWorkspaceBody({
             >
               <PanelBottom className="h-4 w-4" />
               <span className="hidden sm:inline">Preview</span>
+            </button>
+          )}
+
+          {/* Runs the real student game in preview mode (exercises and jam
+              sessions alike — Studio rework P5, Task 7). */}
+          {isExercise && (
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(true)}
+              className="st-chip"
+              title="Preview the exercise the way a student plays it"
+            >
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline">Student preview</span>
             </button>
           )}
 
@@ -577,6 +671,17 @@ function StudioWorkspaceBody({
             />
           </div>
         </div>
+      )}
+
+      {isExercise && previewOpen && (
+        <StudentPreviewDialog
+          exercise={previewExercise}
+          score={state.score}
+          exerciseVideo={previewVideo}
+          play={exercisePlay}
+          backingTracks={exerciseMedia?.backingTracks}
+          onClose={() => setPreviewOpen(false)}
+        />
       )}
     </div>
   );
