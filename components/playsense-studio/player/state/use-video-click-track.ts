@@ -33,6 +33,18 @@ const RESYNC_THROTTLE_MS = 500;
 /** video.currentTime is frame-quantised, so a single sample is noisy. */
 const DRIFT_SAMPLES = 5;
 
+/** A cheap key over EVERY beat, rounded to the millisecond: a flex edit moves
+ *  interior beats only, so length + ends alone would miss it (FNV-1a). */
+export function clickGridKey(grid: readonly number[]): string {
+  let h = 0x811c9dc5;
+  for (const t of grid) {
+    const ms = Math.round(t * 1000);
+    h = Math.imul(h ^ (ms & 0xffff), 0x01000193);
+    h = Math.imul(h ^ ((ms >>> 16) & 0xffff), 0x01000193);
+  }
+  return `${grid.length}:${(h >>> 0).toString(36)}`;
+}
+
 export function useVideoClickTrack(options: {
   videoRef: RefObject<HTMLVideoElement | null>;
   /** Beat times in MEDIA seconds. Empty = nothing to play. */
@@ -57,7 +69,7 @@ export function useVideoClickTrack(options: {
   });
 
   // ---- Volatile inputs, each through its own imperative setter -----------
-  const gridKey = `${grid.length}:${grid[0] ?? ''}:${grid[grid.length - 1] ?? ''}`;
+  const gridKey = clickGridKey(grid);
   useEffect(() => {
     trackRef.current?.setGrid(grid);
     // eslint-disable-next-line react-hooks/exhaustive-deps
