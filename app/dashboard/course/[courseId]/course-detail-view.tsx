@@ -418,9 +418,11 @@ export function CourseDetailView({
             <section aria-labelledby="your-path" className="mt-7">
               <div className="mb-1 flex min-h-9 items-baseline gap-2.5 sm:pr-24">
                 <h2 id="your-path" className="whitespace-nowrap font-heading text-xl font-bold tracking-tight">{t(`${base}.path.heading`)}</h2>
-                <span className="truncate text-[13px] tabular-nums text-muted-foreground">
-                  · {t(finishableLessons === 1 ? `${base}.path.doneOfOne` : `${base}.path.doneOf`, { done: doneLessons, total: finishableLessons })}
-                </span>
+                {finishableLessons > 0 ? (
+                  <span className="truncate text-[13px] tabular-nums text-muted-foreground">
+                    · {t(finishableLessons === 1 ? `${base}.path.doneOfOne` : `${base}.path.doneOf`, { done: doneLessons, total: finishableLessons })}
+                  </span>
+                ) : null}
               </div>
               <PathStrip
                 items={pathNodes}

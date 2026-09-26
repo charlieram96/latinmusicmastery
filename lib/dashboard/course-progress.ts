@@ -51,7 +51,7 @@ export const progressTime = (p: ProgressLike) => new Date(p.updated_at ?? p.crea
 /**
  * The class the learner is "on": the one holding their most recent progress row,
  * or the next unfinished class when that one is complete. `null` when the course
- * has no progress at all, or when every class is done.
+ * has no progress at all, or when every class with items is done.
  */
 export function currentClassIndexFor(
   classes: ClassLike[],
@@ -66,9 +66,12 @@ export function currentClassIndexFor(
   if (!latest) return null
   const idx = itemToIndex.get(latest.class_item_id) ?? 0
   if (!classIsDone(classes[idx], completed)) return idx
-  const next = classes.findIndex((c, i) => i > idx && !classIsDone(c, completed))
+  // A class with no items yet is never "open": it can't be finished, so it never
+  // becomes the current lesson (the course page's nextClassId skips it the same way).
+  const open = (c: ClassLike) => (c.items?.length ?? 0) > 0 && !classIsDone(c, completed)
+  const next = classes.findIndex((c, i) => i > idx && open(c))
   if (next !== -1) return next
-  const anyOpen = classes.findIndex((c) => !classIsDone(c, completed))
+  const anyOpen = classes.findIndex(open)
   return anyOpen === -1 ? null : anyOpen
 }
 

@@ -236,5 +236,12 @@ describe('CourseDetailView (C3)', () => {
       render({ sections: secs, nextClassId: null, totalItems: 4, completedItems: 4, progressPercentage: 100 })
       expect(host.querySelector('section[aria-labelledby="your-path"]')?.textContent).toContain(`${P}.path.doneOf(2,2)`)
     })
+  
+    it('review: a course whose lessons are all still empty shows no "0 of 0 done" count', () => {
+      const secs = [{ id: 's1', title: 'Welcome', description: null, classes: [cls('x', 0, 0), cls('y', 0, 0)] }]
+      render({ sections: secs, nextClassId: null, totalItems: 0, completedItems: 0, progressPercentage: 0, hasStarted: false })
+      const path = host.querySelector('section[aria-labelledby="your-path"]') as HTMLElement
+      expect(path.textContent).not.toContain(`${P}.path.doneOf`)
+    })
   })
 })

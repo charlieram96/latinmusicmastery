@@ -92,4 +92,10 @@ describe('YourPathCard', () => {
     expect(line.textContent).toContain('dashboard.pages.home.path.moduleOnly(3)')
     expect(line.textContent).not.toContain('path.module(')
   })
+
+  it('review: the header wraps only on phones; from sm a long module title truncates on one row', () => {
+    render(PATH)
+    const row = host.querySelector('h2')!.parentElement!
+    expect(row.className.split(/\s+/)).toEqual(expect.arrayContaining(['flex-wrap', 'sm:flex-nowrap']))
+  })
 })

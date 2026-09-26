@@ -21,7 +21,7 @@ export function YourPathCard({ path }: { path: YourPath | null }) {
   return (
     <section aria-labelledby="home-path" className="rounded-xl border border-border bg-card px-4 pb-1 pt-3.5 shadow-card sm:px-5">
       {/* Above the strip: the strip's empty top band is pulled up under this row. */}
-      <div className="relative z-10 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+      <div className="relative z-10 flex flex-wrap items-center sm:flex-nowrap gap-x-2 gap-y-0.5">
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-primary/[0.14] text-primary">
           <Route className="h-4 w-4" aria-hidden />
         </span>
