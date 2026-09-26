@@ -15,6 +15,8 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { bucketMinMax, type WaveformPeaks } from '@/lib/playsense-studio/waveform';
+import type { FlexMap } from '@/lib/playsense-studio/flex';
+import { mediaForColumn } from '@/lib/playsense-studio/warp-draw';
 import type { MarkerRef } from './marker-model';
 
 export interface MarkerHandle {
@@ -85,6 +87,10 @@ export interface WaveformCanvasProps {
    *  byte-for-byte the old behaviour. */
   metronomeAnchorSeconds?: number | null;
   onAnchorDrag?: (videoTimeSeconds: number) => void;
+  /** Flex Time: the canvas lays out TIMELINE time; the peaks are MEDIA time,
+   *  so each column reads the media its timeline span maps to. Omitted or
+   *  identity draws exactly as before. Every other draw is already timeline. */
+  warp?: FlexMap;
 }
 
 const DEFAULT_HEIGHT = 240;
@@ -159,6 +165,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     onTrimDrag,
     metronomeAnchorSeconds,
     onAnchorDrag,
+    warp,
   } = props;
 
   const onZoomByRef = useRef(onZoomBy);
@@ -263,7 +270,33 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     const mid = waveTop + waveH / 2;
 
     // Peaks
-    if (peaks && peaks.bucketCount > 0 && durationSeconds > 0) {
+    if (peaks && peaks.bucketCount > 0 && durationSeconds > 0 && warp && !warp.isIdentity) {
+      // Warped: walk the screen columns in timeline time and aggregate the
+      // buckets over the media span each column maps to.
+      const secPerBucket = peaks.durationSeconds / peaks.bucketCount;
+      ctx.strokeStyle = theme.wave;
+      ctx.globalAlpha = 0.55;
+      ctx.beginPath();
+      for (let x = 0; x < w; x++) {
+        const [m0, m1] = mediaForColumn(warp, xToVideoTime(x), xToVideoTime(x + 1));
+        const first = Math.max(0, Math.floor(m0 / secPerBucket));
+        const last = Math.min(peaks.bucketCount - 1, Math.max(first, Math.ceil(m1 / secPerBucket) - 1));
+        if (last < first) continue;
+        let min = Infinity;
+        let max = -Infinity;
+        for (let i = first; i <= last; i++) {
+          const peak = bucketMinMax(peaks, i);
+          min = Math.min(min, peak.min);
+          max = Math.max(max, peak.max);
+        }
+        const yTop = mid - max * (waveH / 2);
+        const yBot = mid - min * (waveH / 2);
+        ctx.moveTo(x + 0.5, yTop);
+        ctx.lineTo(x + 0.5, Math.max(yBot, yTop + 0.5));
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else if (peaks && peaks.bucketCount > 0 && durationSeconds > 0) {
       const secPerBucket = peaks.durationSeconds / peaks.bucketCount;
       const firstT = xToVideoTime(0);
       const lastT = xToVideoTime(w);
@@ -509,6 +542,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     showNotes,
     videoTimeToX,
     xToVideoTime,
+    warp,
   ]);
 
   // ---- Sizing + DPR --------------------------------------------------------

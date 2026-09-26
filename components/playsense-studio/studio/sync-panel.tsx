@@ -44,6 +44,9 @@ import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
 import { SNAP_PX, barFlags, firstAttackTime, flagText, snapMarkerDrag, snapSectionShift } from '@/lib/playsense-studio/hits';
 import { autoPlaceBars, windowWithinCorridor } from '@/lib/playsense-studio/auto-place';
+import { FlexMap, type FlexPoint } from '@/lib/playsense-studio/flex';
+import { clickTimesInMedia } from '@/lib/playsense-studio/flex-player';
+import { useFlexPlayback } from '@/lib/playsense-studio/use-flex-playback';
 import { useMarkerTween } from './use-marker-tween';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
@@ -299,6 +302,41 @@ export function SyncPanel({
     return seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, 0));
   });
   const [dirty, setDirty] = useState(false);
+
+  // --- Flex Time (spec §7) ---
+  // The warp between MEDIA time (the video element: clock, trim, detected hits,
+  // peaks) and TIMELINE time (markers, notes, anchor, the canvas x-axis). Seeded
+  // from the host's draft/published map like the markers, and handed back to the
+  // draft with them (saveTiming). With no points every conversion below is an
+  // exact pass-through, so unflexed sections behave exactly as before.
+  // (The editors — Task 6's waveform points, Task 7's Quantize — destructure
+  // the setter; nothing in this panel changes flex yet.)
+  const [flex] = useState<FlexPoint[]>(() => activeTimeMap?.flex ?? []);
+  const flexMap = useMemo(() => new FlexMap(flex), [flex]);
+  // Any flex change marks the timing dirty — the same path as a marker change —
+  // so it reaches the draft on the next save. Watching the state (rather than
+  // wrapping setFlex) means no future editor can change flex without it.
+  const flexSeenRef = useRef(flex);
+  useEffect(() => {
+    if (flexSeenRef.current === flex) return;
+    flexSeenRef.current = flex;
+    setDirty(true);
+  }, [flex]);
+
+  // Admin audio through the warp — the student player's wiring (Task 4): with
+  // flex the transport shows/sets `userSpeed` and useFlexPlayback multiplies it
+  // by the current segment's rate; with none the hook is disabled and the
+  // clock's own rate wiring drives the element exactly as before, while keeping
+  // `userSpeed` in step so a speed chosen before flexing isn't lost.
+  const [userSpeed, setUserSpeed] = useState(1);
+  useFlexPlayback(videoRef, flexMap, userSpeed, !flexMap.isIdentity);
+  const displayedRate = flexMap.isIdentity ? clock.playbackRate : userSpeed;
+  const onDisplayedRateChange = flexMap.isIdentity
+    ? (rate: number) => {
+        clock.setPlaybackRate(rate);
+        setUserSpeed(rate);
+      }
+    : setUserSpeed;
   // Faint note-onset ticks over the waveform — default on (they're low-opacity).
   const [showNotes, setShowNotes] = useState(true);
 
@@ -390,8 +428,16 @@ export function SyncPanel({
     return wps.length ? wps[wps.length - 1].videoTimeSeconds : 0;
   }, [score]);
   // clock.currentSeconds is React state, so the ghost tracks scrubbing/playback.
+  // The playhead in TIMELINE time: what every marker-space consumer reads.
+  const timelineNow = flexMap.toTimeline(clock.currentSeconds);
+  /** Frame-rate getter for the canvases/editor playheads, in TIMELINE time. */
+  const getMediaSeconds = clock.getCurrentSeconds;
+  const getTimelineSeconds = useCallback(
+    () => flexMap.toTimeline(getMediaSeconds()),
+    [flexMap, getMediaSeconds]
+  );
   const ghostRange: TimeRange | null = placeArmed
-    ? { startSeconds: clock.currentSeconds, endSeconds: clock.currentSeconds + scoreSpanSeconds }
+    ? { startSeconds: timelineNow, endSeconds: timelineNow + scoreSpanSeconds }
     : null;
   const ghostConflict = ghostRange !== null && siblingRanges.some((r) => rangesOverlap(ghostRange, r));
 
@@ -405,13 +451,20 @@ export function SyncPanel({
   // always see the latest values without becoming a dep of those callbacks.
   // Assigned in an effect, not at render time: this repo's eslint (react-hooks
   // v7 / React Compiler rules) rejects a ref write during render.
+  // `hits` are MEDIA seconds (detected in the audio); everything that compares
+  // them with markers — snapping, bar flags, Auto-place — uses `hitsTimeline`.
+  // `hits.length` stays the "have hits" check. Same array when unflexed.
   const hits = peaks?.hits ?? EMPTY_HITS;
-  const hitsRef = useRef(hits);
+  const hitsTimeline = useMemo(
+    () => (flexMap.points.length ? hits.map((h) => flexMap.toTimeline(h)) : hits),
+    [hits, flexMap]
+  );
+  const hitsRef = useRef(hitsTimeline);
   const ppsRef = useRef(pps);
   useLayoutEffect(() => {
-    hitsRef.current = hits;
+    hitsRef.current = hitsTimeline;
     ppsRef.current = pps;
-  }, [hits, pps]);
+  }, [hitsTimeline, pps]);
 
   // --- Active timing autosave ---
   const [error, setError] = useState<string | null>(null);
@@ -588,16 +641,16 @@ export function SyncPanel({
   // Auto-scroll so the playhead stays in view during playback.
   useEffect(() => {
     if (!clock.isPlaying || viewportWidth === 0) return;
-    const x = clock.currentSeconds * pps - scrollLeft;
+    const x = timelineNow * pps - scrollLeft;
     if (x < viewportWidth * 0.1 || x > viewportWidth * 0.85) {
-      setScrollLeft(clampScroll(clock.currentSeconds * pps - viewportWidth * 0.15));
+      setScrollLeft(clampScroll(timelineNow * pps - viewportWidth * 0.15));
     }
-  }, [clock.currentSeconds, clock.isPlaying, pps, scrollLeft, viewportWidth, clampScroll]);
+  }, [timelineNow, clock.isPlaying, pps, scrollLeft, viewportWidth, clampScroll]);
 
   // --- Derived draw data ---
   // Bars whose first note or tempo looks off the recording (spec §7). Empty
   // (no flags, no dots, Auto-place disabled) whenever there are no hits yet.
-  const flags = useMemo(() => barFlags(markers, hits), [markers, hits]);
+  const flags = useMemo(() => barFlags(markers, hitsTimeline), [markers, hitsTimeline]);
 
   const handles: MarkerHandle[] = useMemo(
     () =>
@@ -623,16 +676,26 @@ export function SyncPanel({
     [effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock.durationSeconds]
   );
 
-  /** Every seek entry point goes through here so trim can't be stepped over. */
+  /** Every seek entry point goes through here so trim can't be stepped over.
+   *  Takes TIMELINE seconds; trim is MEDIA, so convert, clamp, then seek. */
   const seekClamped = useCallback(
     (seconds: number) => {
+      const media = flexMap.toMedia(seconds);
       clock.seek(
         trimmed
-          ? clampToTrim(seconds, effectiveTrim, videoDurationSeconds ?? clock.durationSeconds ?? null)
-          : seconds
+          ? clampToTrim(media, effectiveTrim, videoDurationSeconds ?? clock.durationSeconds ?? null)
+          : media
       );
     },
-    [clock, trimmed, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock.durationSeconds]
+    [clock, flexMap, trimmed, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock.durationSeconds]
+  );
+
+  // Trim is stored in MEDIA; the canvas draws and drags it in TIMELINE time.
+  const trimInTimeline = trim ? flexMap.toTimeline(trim.trimInSeconds) : undefined;
+  const trimOutTimeline = trim?.trimOutSeconds != null ? flexMap.toTimeline(trim.trimOutSeconds) : null;
+  const handleTrimDrag = useCallback(
+    (edge: 'in' | 'out', timelineSeconds: number) => onTrimDrag?.(edge, flexMap.toMedia(timelineSeconds)),
+    [onTrimDrag, flexMap]
   );
 
   // Stop at the out-point. currentSeconds is published at RAF rate while
@@ -707,12 +770,14 @@ export function SyncPanel({
     );
     // Never place a bar over a sibling section: narrow the trim window to the
     // free corridor around this section's OWN current span.
+    // trimRange is MEDIA; the window is compared with markers and hits in
+    // TIMELINE time, so convert its edges (a pass-through when unflexed).
     const win = windowWithinCorridor(
-      { start: trimBounds.startSeconds, end: trimBounds.endSeconds },
+      { start: flexMap.toTimeline(trimBounds.startSeconds), end: flexMap.toTimeline(trimBounds.endSeconds) },
       markerSpan(markersRef.current),
       siblingRanges
     );
-    const res = autoPlaceBars(markersRef.current, hits, win);
+    const res = autoPlaceBars(markersRef.current, hitsTimeline, win);
     if (!res) {
       setAutoPlaceNotice('Not enough clear hits to place the bars.');
       return;
@@ -724,7 +789,7 @@ export function SyncPanel({
     // Ends by writing res.state and setDirty(true) (onDone); reduced motion
     // jumps straight there.
     startTween(from, res.state);
-  }, [hits, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock, siblingRanges, startTween, tweenRunning]);
+  }, [hitsTimeline, flexMap, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock, siblingRanges, startTween, tweenRunning]);
 
   const undoAutoPlace = useCallback(() => {
     if (!autoPlaceUndo) return;
@@ -808,10 +873,10 @@ export function SyncPanel({
   const snapSelectedToPlayhead = useCallback(() => {
     const onset = selectedOnsetRef.current;
     if (!onset) return;
-    const at = clock.getCurrentSeconds();
+    const at = getTimelineSeconds();
     setMarkers((s) => setNoteTime(s, onset.qn, at));
     setDirty(true);
-  }, [clock]);
+  }, [getTimelineSeconds]);
 
   const resetSelected = useCallback(() => {
     const onset = selectedOnsetRef.current;
@@ -944,11 +1009,11 @@ export function SyncPanel({
     ) {
       return;
     }
-    setMarkers(seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, clock.getCurrentSeconds())));
+    setMarkers(seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, getTimelineSeconds())));
     setDirty(true);
     setSelected(null);
     setPlaceArmed(false);
-  }, [track, score, dirty, ghostConflict, clock]);
+  }, [track, score, dirty, ghostConflict, getTimelineSeconds]);
 
   // Per-beat handles follow the selection: selecting a measure (or one of its
   // beats) reveals that measure's beat markers; everything else stays collapsed.
@@ -966,7 +1031,15 @@ export function SyncPanel({
 
   // A/B loop over bars start..end (from the first bar's downbeat to the next
   // bar's, or the tail). Asking for the range already looping clears it.
-  const { loopEnabled, loopA, loopB, loadLoop, clearLoop } = clock;
+  // The clock loops in MEDIA time; loopA/loopB here are its points in TIMELINE
+  // time (bar lines), and loadLoop gets them back in MEDIA.
+  const { loopEnabled, loadLoop: loadMediaLoop, clearLoop } = clock;
+  const loopA = clock.loopA === null ? null : flexMap.toTimeline(clock.loopA);
+  const loopB = clock.loopB === null ? null : flexMap.toTimeline(clock.loopB);
+  const loadLoop = useCallback(
+    (a: number, b: number) => loadMediaLoop(flexMap.toMedia(a), flexMap.toMedia(b)),
+    [loadMediaLoop, flexMap]
+  );
   const loopMeasures = useCallback((start: number, end: number) => {
     const a = markers.measures[start]?.beats[0]?.videoTimeSeconds;
     const b = markers.measures[end + 1]?.beats[0]?.videoTimeSeconds ?? markers.tailVideoTimeSeconds;
@@ -1026,7 +1099,9 @@ export function SyncPanel({
     timelineDurationSeconds: timelineDuration,
     viewportWidth,
     snapTimes: handles.filter((h) => h.isDownbeat).map((h) => h.videoTimeSeconds),
-    getCurrentSeconds: clock.getCurrentSeconds,
+    // Lane playheads share the waveform's TIMELINE x-space. (usableRegion
+    // above stays MEDIA: the backing mixer compares it with video.currentTime.)
+    getCurrentSeconds: getTimelineSeconds,
     isPlaying: clock.isPlaying,
     playbackRate: clock.playbackRate,
     onScrollByPx: handleScrollByPx,
@@ -1071,8 +1146,7 @@ export function SyncPanel({
   const saveTiming = useCallback((opts?: { silent?: boolean; snapshot?: MarkerState }) => {
     if (!timingAutosave) return;
     const snapshot = opts?.snapshot ?? markers;
-    // TODO(Task 5): pass the panel's live flex state instead of [].
-    const patch = timingPatchFromMarkers(snapshot, { pps, peaksCached: decodeState === 'ready', flex: [] });
+    const patch = timingPatchFromMarkers(snapshot, { pps, peaksCached: decodeState === 'ready', flex });
     if (!patch) {
       if (!opts?.silent) setError('Add a measure before saving its timing.');
       return;
@@ -1087,7 +1161,7 @@ export function SyncPanel({
       setDirty(false);
       onTimingSaved?.();
     }
-  }, [timingAutosave, markers, pps, decodeState, onTimingChange, onTimingSaved, anchorTimingPatch]);
+  }, [timingAutosave, markers, flex, pps, decodeState, onTimingChange, onTimingSaved, anchorTimingPatch]);
 
   // The pending debounce's timer id, so a registered pre-flush (below) can
   // cancel it and hand the timing off immediately instead of racing it.
@@ -1169,9 +1243,10 @@ export function SyncPanel({
   );
 
   const setAnchorAtPlayhead = useCallback(() => {
-    setMetronomeAnchor(Math.max(0, clock.getCurrentSeconds()));
+    // TIMELINE time, like the markers it's measured against (anchorTimingPatch).
+    setMetronomeAnchor(Math.max(0, getTimelineSeconds()));
     scheduleAnchorSave();
-  }, [clock, scheduleAnchorSave]);
+  }, [getTimelineSeconds, scheduleAnchorSave]);
 
   // Flush a pending anchor if the section unmounts mid-edit.
   const persistAnchorRef = useRef(persistAnchor);
@@ -1267,9 +1342,17 @@ export function SyncPanel({
     [anchorSeconds, score.initialTempo, liveSpan.startSeconds, liveSpan.endSeconds]
   );
 
+  // The grid is TIMELINE (the notated tempo); the click is scheduled against
+  // the video, so map it to MEDIA — it then follows the stretched recording,
+  // as the student's does. Same array when unflexed.
+  const clickGridMedia = useMemo(
+    () => (flexMap.points.length ? clickTimesInMedia(flexMap, clickGrid) : clickGrid),
+    [flexMap, clickGrid]
+  );
+
   useVideoClickTrack({
     videoRef,
-    grid: showSync ? clickGrid : [],
+    grid: showSync ? clickGridMedia : [],
     enabled: clickOn && showSync,
     volume: clickVolume,
   });
@@ -1435,12 +1518,13 @@ export function SyncPanel({
                     scrollLeftPx={scrollLeft}
                     dragAll={dragAll}
                     selected={selected}
-                    getCurrentSeconds={clock.getCurrentSeconds}
+                    getCurrentSeconds={getTimelineSeconds}
                     onSeek={seekClamped}
-                    trimInSeconds={trim?.trimInSeconds}
-                    trimOutSeconds={trim?.trimOutSeconds ?? null}
+                    trimInSeconds={trimInTimeline}
+                    trimOutSeconds={trimOutTimeline}
                     mediaDurationSeconds={videoDurationSeconds ?? clock.durationSeconds}
-                    onTrimDrag={onTrimDrag}
+                    onTrimDrag={onTrimDrag ? handleTrimDrag : undefined}
+                    warp={flexMap}
                     metronomeAnchorSeconds={anchorOwner ? anchorSeconds : undefined}
                     onAnchorDrag={anchorOwner ? handleAnchorDrag : undefined}
                     onSelect={handleSelect}
@@ -1534,7 +1618,7 @@ export function SyncPanel({
                   dispatch={studioDispatch}
                   notice={editNotice}
                   measureTimings={measureTimings}
-                  getCurrentSeconds={clock.getCurrentSeconds}
+                  getCurrentSeconds={getTimelineSeconds}
                   recordingSource={recordingSource}
                   pixelsPerSecond={pps}
                   scrollLeftPx={scrollLeft}
@@ -1723,16 +1807,16 @@ export function SyncPanel({
         createPortal(
           <div className="st-transport">
             <TransportBar
-              currentSeconds={clock.currentSeconds}
+              currentSeconds={timelineNow}
               durationSeconds={clock.durationSeconds}
               isPlaying={clock.isPlaying}
-              playbackRate={clock.playbackRate}
+              playbackRate={displayedRate}
               onToggle={clock.toggle}
               onRestart={() => clock.seek(trimWindow.startSeconds)}
               onSeek={seekClamped}
-              onRateChange={clock.setPlaybackRate}
-              loopA={clock.loopA}
-              loopB={clock.loopB}
+              onRateChange={onDisplayedRateChange}
+              loopA={loopA}
+              loopB={loopB}
               loopEnabled={clock.loopEnabled}
               onToggleLoop={() => clock.setLoopEnabled(!clock.loopEnabled)}
               onClearLoop={clock.clearLoop}
