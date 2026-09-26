@@ -29,6 +29,13 @@ export function anchorChanged(live: StudioAnchor | null, draft: StudioAnchor | n
   return draft != null && anchorCanon(draft) !== anchorCanon(live);
 }
 
+/** Same rule as anchorChanged: a missing draft play (undefined — every
+ *  non-graded owner, or a graded one whose editor hasn't loaded it yet) means
+ *  "keep live", not "cleared", so it's never a change. */
+function playChanged(live: StudioTiming['play'], draft: StudioTiming['play']): boolean {
+  return draft != null && playCanon(draft) !== playCanon(live);
+}
+
 export function diffParts(live: StudioContent, draft: StudioContent) {
   return {
     score: canon(live.score) !== canon(draft.score),
@@ -37,9 +44,7 @@ export function diffParts(live: StudioContent, draft: StudioContent) {
     timing: draft.timing.waypoints.length >= 2 && timingCanon(live.timing) !== timingCanon(draft.timing),
     anchor: anchorChanged(live.timing.anchor, draft.timing.anchor),
     // Graded owners (EXERCISE, JAM_SESSION) only: bar 1 + count-in/pre-roll.
-    // Both sides are undefined for every other owner, so this is never a
-    // phantom change there.
-    play: playCanon(live.timing.play) !== playCanon(draft.timing.play),
+    play: playChanged(live.timing.play, draft.timing.play),
   };
 }
 

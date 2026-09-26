@@ -44,6 +44,19 @@ export function readNudges(params: unknown): StudioNudge[] {
   );
 }
 
+/** Coerces class_items' three play_* columns the same way everywhere.
+ *  getExerciseMedia (the student read) and resolveOwner (the Studio draft
+ *  seed) must never disagree on these defaults — otherwise an admin who never
+ *  touched play settings could still see a phantom "Play-along timing
+ *  changed" from the two sides computing slightly different values. */
+export function playFromRow(row: { play_bar1_seconds: number | null; play_count_in_bars: number; play_preroll: boolean }): StudioPlay {
+  return {
+    bar1Seconds: row.play_bar1_seconds ?? null,
+    countInBars: row.play_count_in_bars === 2 ? 2 : 1,
+    preroll: row.play_preroll ?? true,
+  };
+}
+
 const METHODS = ['tempo', 'tap', 'drag', 'midi'] as const;
 
 /** Seed a draft timing from the live map (as the Studio loads it) and anchor. */

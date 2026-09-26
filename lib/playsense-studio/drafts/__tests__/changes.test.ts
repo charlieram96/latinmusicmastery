@@ -55,4 +55,9 @@ describe('change summary', () => {
     const draft = { score: score('A', []), timing: EMPTY_TIMING };
     expect(diffParts(live, draft).play).toBe(false);
   });
+  it('treats a missing draft play as "keep live", never a change — same rule as anchor', () => {
+    const live = { score: score('A', []), timing: { ...EMPTY_TIMING, play: { bar1Seconds: 1, countInBars: 1 as const, preroll: true } } };
+    const draft = { score: score('A', []), timing: EMPTY_TIMING };
+    expect(diffParts(live, draft).play).toBe(false);
+  });
 });

@@ -3,7 +3,7 @@
 import type { createClient } from '@/lib/supabase/server';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { draftIdsToPrune, unpublishedDraft } from './policy';
-import { timingFromLive, type StudioAnchor, type StudioPlay, type StudioTiming } from './timing';
+import { playFromRow, timingFromLive, type StudioAnchor, type StudioPlay, type StudioTiming } from './timing';
 import type { StudioDraftOwner, VersionMeta } from './types';
 
 type Supa = Awaited<ReturnType<typeof createClient>>;
@@ -48,7 +48,7 @@ export async function resolveOwner(supabase: Supa, owner: StudioDraftOwner): Pro
     const { data, error } = await supabase
       .from('class_items')
       .select(
-        'id, item_type, score_document_id, active_time_map_id, exercise_time_map_id, metronome_anchor_seconds, metronome_anchor_qn, play_bar1_seconds, play_count_in_bars, play_preroll'
+        'id, item_type, score_document_id, active_time_map_id, exercise_time_map_id, play_bar1_seconds, play_count_in_bars, play_preroll'
       )
       .eq('id', owner.id)
       .single();
@@ -64,11 +64,7 @@ export async function resolveOwner(supabase: Supa, owner: StudioDraftOwner): Pro
       liveTimeMapId: isGraded ? null : data.active_time_map_id,
       anchorKind: null,
       liveAnchor: null,
-      livePlay: isGraded ? {
-        bar1Seconds: data.play_bar1_seconds,
-        countInBars: (data.play_count_in_bars === 2 ? 2 : 1) as 1 | 2,
-        preroll: data.play_preroll ?? true,
-      } : null,
+      livePlay: isGraded ? playFromRow(data) : null,
     } };
   }
   const { data, error } = await supabase.from('play_sense_songs').select('id, score_document_id').eq('id', owner.id).single();

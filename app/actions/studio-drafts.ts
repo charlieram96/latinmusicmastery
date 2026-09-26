@@ -14,12 +14,12 @@ import {
   setPlaySettings,
   setSectionMetronomeAnchor,
 } from '@/app/actions/playsense-studio';
-import { anchorChanged, diffParts, summarizeChanges } from '@/lib/playsense-studio/drafts/changes';
+import { anchorChanged, diffParts, summarizeChanges, type StudioContent } from '@/lib/playsense-studio/drafts/changes';
 import { latestPublished, planDraftWrite, unpublishedDraft } from '@/lib/playsense-studio/drafts/policy';
 import { studioTimingSchema, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { ownerKey, type StudioDraftOwner } from '@/lib/playsense-studio/drafts/types';
 import {
-  clearUnpublishedDrafts, insertVersion, listVersionMeta, loadLiveContent, pruneDrafts, resolveOwner,
+  clearUnpublishedDrafts, insertVersion, listVersionMeta, loadLiveContent, pruneDrafts, resolveOwner, type ResolvedOwner,
 } from '@/lib/playsense-studio/drafts/server';
 
 export interface StudioDraft {
@@ -164,6 +164,16 @@ async function readUnpublished(supabase: Awaited<ReturnType<typeof createClient>
   return { data: { score: data.score as unknown as ScoreDocument, timing: data.timing as unknown as StudioTiming } };
 }
 
+/** A graded owner (target 'graded': EXERCISE, JAM_SESSION — Studio rework P5)
+ *  never publishes a time map or a click anchor; bar 1 replaces both. A draft
+ *  saved before the rework can still carry a stale waypoints/anchor pair left
+ *  over from the old exercise-sync flow, so diff/summarize against it as if
+ *  those were already cleared — otherwise the publish preview (and the
+ *  publish itself) would report changes publish never makes. */
+function normalizeGradedDraft(target: ResolvedOwner['target'], content: StudioContent): StudioContent {
+  return target === 'graded' ? { ...content, timing: { ...content.timing, waypoints: [], anchor: null } } : content;
+}
+
 /** Draft → live, through the same actions the Studio used to call directly.
  *  Order: timing (its validation refuses before any write), score, anchor,
  *  then the published history row. Each part is written only if it changed.
@@ -192,7 +202,7 @@ export async function publishStudioDraft(
   let r = resolved.data!;
   const liveContent = await loadLiveContent(supabase, r);
   if (liveContent.error) return { error: liveContent.error };
-  const parts = diffParts(liveContent.data!, draft.data);
+  const parts = diffParts(liveContent.data!, normalizeGradedDraft(r.target, draft.data));
   const { score, timing } = draft.data;
   // "Anchor touched" is decided against the PRE-publish live anchor. Seeds copy
   // the live anchor into every draft, and publishTimeMap may rebase the live
@@ -272,7 +282,7 @@ export async function getPublishPreview(
     if (resolved.error) return { error: resolved.error };
     const liveContent = await loadLiveContent(supabase, resolved.data!);
     if (liveContent.error) return { error: liveContent.error };
-    out[ownerKey(owner)] = summarizeChanges(liveContent.data!, draft.data);
+    out[ownerKey(owner)] = summarizeChanges(liveContent.data!, normalizeGradedDraft(resolved.data!.target, draft.data));
   }
   return { data: out };
 }

@@ -18,7 +18,7 @@ import {
   type MediaTrim,
 } from '@/lib/playsense-studio/clip-model';
 import { clearUnpublishedDrafts } from '@/lib/playsense-studio/drafts/server';
-import { readNudges } from '@/lib/playsense-studio/drafts/timing';
+import { playFromRow, readNudges } from '@/lib/playsense-studio/drafts/timing';
 import { readFlex, type FlexPoint } from '@/lib/playsense-studio/flex';
 import { rebaseAnchor, secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
 import { getStudioDrafts, type StudioDraft } from '@/app/actions/studio-drafts';
@@ -1541,11 +1541,7 @@ export async function getExerciseMedia(
         timeMapId: t.time_map_id,
         gain: t.gain ?? 1,
       })),
-      play: {
-        bar1Seconds: item.play_bar1_seconds,
-        countInBars: (item.play_count_in_bars === 2 ? 2 : 1) as 1 | 2,
-        preroll: item.play_preroll ?? true,
-      },
+      play: playFromRow(item),
     },
   };
 }

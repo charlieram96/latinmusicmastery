@@ -194,6 +194,11 @@ describe('publishStudioDraft', () => {
     expect(live.publishTimeMap).not.toHaveBeenCalled();
     expect(live.setClassItemMetronomeAnchor).not.toHaveBeenCalled();
     expect(live.setSectionMetronomeAnchor).not.toHaveBeenCalled();
+    // The published row must record the graded reality — no time map, no
+    // anchor — not the legacy draft's stale waypoints/anchor pair.
+    const [pub] = h.fake!.tables.studio_versions.filter((r) => r.kind === 'published');
+    expect((pub.timing as StudioTiming).waypoints).toEqual([]);
+    expect((pub.timing as StudioTiming).anchor).toBeNull();
   });
   it('says timing is live but asks to press Publish again when the score save fails after it', async () => {
     seed({ score: { ...SCORE, title: 'New' }, timing: { ...TIMED, waypoints: [wp(0, 1.5), wp(4, 3.5)] } });
@@ -242,7 +247,7 @@ describe('publishStudioDraft', () => {
     expect(live.setPlaySettings).toHaveBeenCalledWith({ classItemId: 'ci-1', bar1Seconds: 0.5, countInBars: 1, preroll: true });
     expect(live.publishTimeMap).not.toHaveBeenCalled();
   });
-  it('a play-only change (score and play settings both unchanged except play) still publishes the columns', async () => {
+  it('a play-only change publishes only the play columns', async () => {
     const exercise = { kind: 'exercise' as const, id: 'ci-1' };
     // Live play is (1, 1, true) — same as seedGraded's default. Only preroll differs in the draft.
     seedGraded('EXERCISE', { timing: { ...GRADED_TIMED, play: { bar1Seconds: 1, countInBars: 1, preroll: false } } });
@@ -297,5 +302,14 @@ describe('getPublishPreview', () => {
     seed({ score: { ...SCORE, title: 'New' } });
     const res = await getPublishPreview([section]);
     expect(res.data).toEqual({ 'section:sec-1': ['Title changed'] });
+  });
+  it('reports no changes for a legacy EXERCISE draft that still carries a stale time map and anchor', async () => {
+    // seedExercise's default draft (no overrides) is the old, pre-P5 shape:
+    // waypoints and an anchor matching the class item's stale metronome
+    // columns. None of that is ever published for a graded owner now, so the
+    // preview must not list it as a pending change.
+    seedExercise({});
+    const res = await getPublishPreview([{ kind: 'exercise', id: 'ci-1' }]);
+    expect(res.data).toEqual({ 'exercise:ci-1': ['No changes from the live version'] });
   });
 });
