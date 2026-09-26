@@ -44,7 +44,7 @@ const noop = () => {};
 function renderStrip(
   track: Track,
   keyFifths = 0,
-  opts: { selectedMeasures?: [number, number] | null; flags?: Record<number, string> } = {},
+  opts: { selectedMeasures?: [number, number] | null; flags?: Record<number, string>; pixelsPerSecond?: number } = {},
 ) {
   const items: MeasureStripItem[] = extractTrackEvents(track, [4, 4], keyFifths).map((b, i) => ({
     measureIndex: i,
@@ -66,7 +66,7 @@ function renderStrip(
   act(() => {
     root.render(
       <EditableMeasureStrip
-        measures={items} pixelsPerSecond={100} scrollLeftPx={0} selected={null}
+        measures={items} pixelsPerSecond={opts.pixelsPerSecond ?? 100} scrollLeftPx={0} selected={null}
         selectedMeasures={opts.selectedMeasures ?? null}
         onOpenNote={noop} onSelectMeasureRange={noop} onOpenMeasure={noop} onRequestZoomTo={noop}
       />,
@@ -120,6 +120,17 @@ describe('EditableMeasureStrip', () => {
       { number: 1, voices: [{ number: 1, events: [{ kind: 'note', midi: 60, durationQN: 4 }] }] },
     ]), 0, { selectedMeasures: [0, 0] });
     const block = host.querySelector('[data-measure-index="0"]')!;
+    expect(block.classList.contains('is-sel')).toBe(true);
+    expect(block.className).not.toMatch(/ring-2/);
+  });
+
+  it('marks a narrow placeholder bar in the selection with is-sel, no ring', () => {
+    renderStrip(base([
+      { number: 1, voices: [{ number: 1, events: [{ kind: 'note', midi: 60, durationQN: 4 }] }] },
+      { number: 2, voices: [{ number: 1, events: [{ kind: 'note', midi: 62, durationQN: 4 }] }] },
+    ]), 0, { selectedMeasures: [0, 1], pixelsPerSecond: 20 });
+    const block = host.querySelector('[data-measure-index="0"]')!;
+    expect(block.classList.contains('is-narrow')).toBe(true);
     expect(block.classList.contains('is-sel')).toBe(true);
     expect(block.className).not.toMatch(/ring-2/);
   });
