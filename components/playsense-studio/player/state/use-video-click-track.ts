@@ -12,6 +12,7 @@
 // The rule that matters, copied deliberately:
 //   seeking / waiting / stalled / pause / ended -> TEAR DOWN, schedule nothing
 //   play / playing / seeked / ratechange        -> SCHEDULE, tear nothing down
+// (With smoothRateChanges, a ratechange on a running click re-anchors instead.)
 // Inverting those is the classic "audio never comes back after a seek" bug.
 //
 // The structural rule that keeps it that way: the effect that binds media
@@ -33,6 +34,18 @@ const RESYNC_THROTTLE_MS = 500;
 /** video.currentTime is frame-quantised, so a single sample is noisy. */
 const DRIFT_SAMPLES = 5;
 
+/** A cheap key over EVERY beat, rounded to the millisecond: a flex edit moves
+ *  interior beats only, so length + ends alone would miss it (FNV-1a). */
+export function clickGridKey(grid: readonly number[]): string {
+  let h = 0x811c9dc5;
+  for (const t of grid) {
+    const ms = Math.round(t * 1000);
+    h = Math.imul(h ^ (ms & 0xffff), 0x01000193);
+    h = Math.imul(h ^ ((ms >>> 16) & 0xffff), 0x01000193);
+  }
+  return `${grid.length}:${(h >>> 0).toString(36)}`;
+}
+
 export function useVideoClickTrack(options: {
   videoRef: RefObject<HTMLVideoElement | null>;
   /** Beat times in MEDIA seconds. Empty = nothing to play. */
@@ -41,8 +54,15 @@ export function useVideoClickTrack(options: {
   volume?: number;
   /** Nudge for the offset between the element's audio path and the context's. */
   offsetSeconds?: number;
+  /** Flex: the rate driver changes playbackRate at every flex boundary, and a
+   *  restart there (teardown + fade) clips the click. When true, a ratechange
+   *  while the click is running RE-ANCHORS instead — the beat times are
+   *  constants, only the media->context mapping changed. Off (the default),
+   *  a ratechange restarts exactly as before, so unflexed lessons are
+   *  untouched. */
+  smoothRateChanges?: boolean;
 }) {
-  const { videoRef, grid, enabled, volume = 0.2, offsetSeconds = 0 } = options;
+  const { videoRef, grid, enabled, volume = 0.2, offsetSeconds = 0, smoothRateChanges = false } = options;
 
   const trackRef = useRef<ClickTrack | null>(null);
   if (trackRef.current === null && typeof window !== 'undefined') {
@@ -57,7 +77,7 @@ export function useVideoClickTrack(options: {
   });
 
   // ---- Volatile inputs, each through its own imperative setter -----------
-  const gridKey = `${grid.length}:${grid[0] ?? ''}:${grid[grid.length - 1] ?? ''}`;
+  const gridKey = clickGridKey(grid);
   useEffect(() => {
     trackRef.current?.setGrid(grid);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,6 +90,13 @@ export function useVideoClickTrack(options: {
   useEffect(() => {
     trackRef.current?.setOffsetSeconds(offsetSeconds);
   }, [offsetSeconds]);
+
+  // Read by the ratechange listener; a ref so the transport effect below
+  // keeps its [videoEl, enabled] dependencies.
+  const smoothRateRef = useRef(smoothRateChanges);
+  useEffect(() => {
+    smoothRateRef.current = smoothRateChanges;
+  }, [smoothRateChanges]);
 
   // ---- Transport wiring: depends on [videoEl, enabled] only ---------------
   useEffect(() => {
@@ -103,6 +130,15 @@ export function useVideoClickTrack(options: {
       if (!video.paused) resumeThenSchedule();
     };
     const onTeardown = () => track.teardown();
+    const onRateChange = () => {
+      if (smoothRateRef.current && track.isRunning && !video.paused) {
+        track.reanchor(video.currentTime, video.playbackRate);
+        samples.length = 0;
+        lastResyncAt = Date.now();
+        return;
+      }
+      onResume();
+    };
 
     // Turning the click on mid-playback should start it immediately.
     if (!video.paused) resumeThenSchedule();
@@ -110,7 +146,7 @@ export function useVideoClickTrack(options: {
     video.addEventListener('play', resumeThenSchedule);
     video.addEventListener('playing', onResume);
     video.addEventListener('seeked', onResume);
-    video.addEventListener('ratechange', onResume);
+    video.addEventListener('ratechange', onRateChange);
     video.addEventListener('pause', onTeardown);
     video.addEventListener('ended', onTeardown);
     video.addEventListener('seeking', onTeardown);
@@ -147,7 +183,7 @@ export function useVideoClickTrack(options: {
       video.removeEventListener('play', resumeThenSchedule);
       video.removeEventListener('playing', onResume);
       video.removeEventListener('seeked', onResume);
-      video.removeEventListener('ratechange', onResume);
+      video.removeEventListener('ratechange', onRateChange);
       video.removeEventListener('pause', onTeardown);
       video.removeEventListener('ended', onTeardown);
       video.removeEventListener('seeking', onTeardown);

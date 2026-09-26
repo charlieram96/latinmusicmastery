@@ -22,6 +22,13 @@ export interface NoteTimingProps {
   onNudge: (deltaMs: number) => void;
   onSnap: () => void;
   onReset: () => void;
+  /** "Flex the recording onto this note" (Task 7 of Plan 4b): pins a flex
+   *  point at the nearest hit and drags it onto this note's time. Omitted
+   *  hides the zoom's Timing-tab button for it. */
+  onFlex?: () => void;
+  /** Why onFlex can't run right now (e.g. `No hit near this note`): the button
+   *  shows disabled with this as its title. Null/absent = available. */
+  flexProblem?: string | null;
 }
 
 // Details for the selected note, shown in the left-rail inspector. Pitch and

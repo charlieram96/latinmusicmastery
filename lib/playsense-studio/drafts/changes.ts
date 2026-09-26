@@ -1,4 +1,5 @@
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { readFlex } from '@/lib/playsense-studio/flex';
 import type { StudioAnchor, StudioTiming } from './timing';
 
 export interface StudioContent {
@@ -13,6 +14,7 @@ const timingCanon = (t: StudioTiming) =>
   canon({
     method: t.method,
     nudges: t.params.nudges ?? [],
+    flex: readFlex(t.params).map((f) => [round(f.src), round(f.dst), f.anchor]),
     waypoints: t.waypoints.map((w) => [round(w.musicalPositionQN), round(w.videoTimeSeconds)]),
   });
 const anchorCanon = (a: StudioAnchor | null) =>

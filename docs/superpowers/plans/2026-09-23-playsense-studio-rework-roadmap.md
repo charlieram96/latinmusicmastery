@@ -107,6 +107,31 @@ Settled while building:
 - Student player: rate-driven video through flex segments with a rate trim instead of seeks.
 - **Gated on the P1 spike result.** If the spike fails, audio-only flex plus visual note placement.
 
+### Plan 4b — done 2026-09-26 (Flex Time)
+
+Plan `2026-09-26-studio-rework-p4b-flex.md`. The flex-spike gate was treated as passed on the user's instruction ("assume it works now"). **Record the spike results when the user runs `/flex-spike`.**
+
+What shipped:
+- **The flex map.** `params.flex = {src, dst, anchor}[]` is a monotonic warp between media time (the video file) and timeline time (bars and notes). It is identity outside its points and when empty, so unflexed lessons are unchanged.
+- **Students.** The cursor, seeks, loops and click follow the flexed timeline. The video rate is set per segment with `preservesPitch`, multiplied by the student's own speed.
+- **The Studio.** The admin works in timeline time, with conversions at the clock, seeks and trim. The waveform draws through the warp, and hits are converted for snapping, flags and Auto-place.
+- **Flex tools.** A Flex toggle (a chip, and F when the zoom is closed); hit grips; points with anchors, dragged with note snapping and a `±ms · %` label; blue/orange stretch tints. Quantize (strength, preview, Apply, Reset flex) is in the measure bar, and "Flex the recording onto this note" in the Timing tab.
+
+Settled while building:
+- **No drift trim.** The notation is derived from the video's own media time, so it can't drift.
+- **The rate driver** is disabled when there's no flex. On handoff it restores the user's speed and the element's own pitch setting.
+- **Flex points** lie inside the section span.
+- **The label %** is the playback speed of the segment to the left.
+- **Identity edges.** Every edit normalizes the flex so the map is identity outside its outermost points. This is guarded by a 500-sequence property test.
+- **Moving all the bars clears the flex.** Section drag, Auto-place and placement clear it, with a notice, and Auto-place's undo restores it.
+
+**Follow-ups from 4b:**
+- Backing-lane clips (media) and the playhead (timeline) differ slightly inside a flexed region.
+- The per-hook pitch snapshot doesn't track an element swap while flexed.
+- A flexed section drag draws against the still-flexed waveform until it's released.
+- One click may land slightly off at a flex boundary (the 120 ms look-ahead).
+- Browser and ear checks are pending, including the flex-spike device results.
+
 ### Plan 4a — done 2026-09-26 (hits, snapping, Auto-place, flags)
 
 Plan `2026-09-25-studio-rework-p4a-hits-and-auto-place.md`. Plan 4 was split: **4b (Flex) still waits for the flex-spike device results.**

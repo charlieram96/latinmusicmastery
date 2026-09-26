@@ -45,6 +45,7 @@ import {
 import { RepeatPopover } from './measure/repeat-popover';
 import { GapMenu } from './measure/gap-menu';
 import { BarPopover } from './measure/bar-popover';
+import { QuantizePopover } from './measure/quantize-popover';
 import { MeasureBar } from './measure/measure-bar';
 import { ShortcutsPopover } from './measure/shortcuts-popover';
 import { useMeasureKeys } from './measure/use-measure-keys';
@@ -123,6 +124,22 @@ export interface IntegratedEditorProps {
    *  only) — the same object SyncPanel builds for its NoteDetails inspector,
    *  threaded down to the zoom's More ▾ → Timing tab. */
   noteTiming?: NoteTimingProps;
+  /** Quantize (Task 7 of Plan 4b): a live preview for bars [start, end] at a
+   *  candidate strength (0–100), without writing anything. Omitted (no video
+   *  to quantize against) hides the measure bar's Quantize button entirely. */
+  onQuantizePlan?: (start: number, end: number, strength: number) => { moved: number; largestMs: number };
+  /** Commits a Quantize plan at `strength` to the selected bars' flex. */
+  onQuantizeApply?: (start: number, end: number, strength: number) => void;
+  /** Removes any flex whose points land inside bars [start, end]. */
+  onResetFlex?: (start: number, end: number) => void;
+  /** "flexed ±<m> ms" for bars [start, end], or null when none of them carry
+   *  flex — shown as an info suffix on the measure bar. */
+  flexInfo?: (start: number, end: number) => string | null;
+  /** Why Quantize can't run right now (e.g. no hits yet); null when it can. */
+  quantizeProblem?: string | null;
+  /** Reports whether the measure zoom is open (it uses letter keys, e.g. F,
+   *  that SyncPanel binds only while it is closed). Pass a stable callback. */
+  onZoomOpenChange?: (open: boolean) => void;
 }
 
 /** A repeat's closing bar (with dots) replaces any final bar on that measure. */
@@ -146,6 +163,12 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   onLoopMeasures,
   loopedRange = null,
   noteTiming,
+  onQuantizePlan,
+  onQuantizeApply,
+  onResetFlex,
+  flexInfo,
+  quantizeProblem,
+  onZoomOpenChange,
 }: IntegratedEditorProps) {
   // Single-track studio: the score model still holds Track[], but the editor
   // always authors track 0.
@@ -164,6 +187,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [repeatPop, setRepeatPop] = useState<{ anchor: PopoverAnchor } | null>(null);
   const [gapPop, setGapPop] = useState<{ gap: number; anchor: PopoverAnchor } | null>(null);
   const [barPop, setBarPop] = useState<{ anchor: PopoverAnchor } | null>(null);
+  const [quantizePop, setQuantizePop] = useState<{ anchor: PopoverAnchor } | null>(null);
   // The note toolbar's "More ▾" popover — just an open flag (fix round 1:
   // its position is recomputed every render from the toolbar's current,
   // measured position below, not stored) — and the last tab picked
@@ -186,6 +210,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     setRepeatPop(null);
     setGapPop(null);
     setBarPop(null);
+    setQuantizePop(null);
   }, []);
   // Bars an insert/paste/duplicate is about to add. The parent may still refuse
   // the edit (SyncPanel refuses one that would run into a sibling section, which
@@ -626,6 +651,14 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     percussion, flash: showFlash, openBar, close: closeZoom,
   });
 
+  // Tell the parent when the zoom opens or closes (and that it's closed on unmount).
+  const zoomOpen = zoom !== null;
+  useEffect(() => {
+    if (!onZoomOpenChange) return;
+    onZoomOpenChange(zoomOpen);
+    return () => onZoomOpenChange(false);
+  }, [zoomOpen, onZoomOpenChange]);
+
   // A zoomed bar that no longer exists (undo, a delete elsewhere) closes the zoom.
   if (zoom && zoom.measureIndex >= measureCount) {
     setZoom(null);
@@ -927,6 +960,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 startSeconds={measureTimings[bounds[0]].startVideoTimeSeconds}
                 bpm={barBpm}
                 flag={measureTimings.slice(bounds[0], bounds[1] + 1).find((t) => t.flag)?.flag ?? null}
+                flexInfo={flexInfo?.(bounds[0], bounds[1]) ?? null}
                 looping={barLooping}
                 canLoop={!!onLoopMeasures}
                 problems={{ dup: dupProblem, paste: pasteProblem, clear: null, del: deleteProblem }}
@@ -939,6 +973,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 onBar={(anchor) => setBarPop({ anchor })}
                 onClear={clearRange}
                 onDelete={deleteRange}
+                onQuantize={onQuantizePlan ? (anchor) => setQuantizePop({ anchor }) : undefined}
+                quantizeProblem={quantizeProblem}
               />
             )}
             {zoom && stripItems[zoom.measureIndex] && (
@@ -1083,6 +1119,18 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 onPatch={(p) => dispatch({ type: 'set-measure-props', trackIndex: activeTrackIndex, measureIndex: rangeStart, props: p })}
                 onFinal={(final) => dispatch({ type: 'set-measure-final-bar', trackIndex: activeTrackIndex, measureIndex: rangeStart, final })}
                 onClose={() => setBarPop(null)}
+              />
+            )}
+            {quantizePop && !zoom && rangeStart !== null && rangeEnd !== null && onQuantizePlan && (
+              <QuantizePopover
+                anchor={quantizePop.anchor}
+                plan={(strength) => onQuantizePlan(rangeStart, rangeEnd, strength)}
+                onApply={(strength) => {
+                  onQuantizeApply?.(rangeStart, rangeEnd, strength);
+                  setQuantizePop(null);
+                }}
+                onReset={() => onResetFlex?.(rangeStart, rangeEnd)}
+                onClose={() => setQuantizePop(null)}
               />
             )}
           </div>

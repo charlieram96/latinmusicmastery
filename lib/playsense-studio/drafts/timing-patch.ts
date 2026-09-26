@@ -8,11 +8,12 @@ import {
   nudgeList,
   type MarkerState,
 } from '@/components/playsense-studio/sync/marker-model';
+import type { FlexPoint } from '@/lib/playsense-studio/flex';
 import type { StudioTiming } from './timing';
 
 export function timingPatchFromMarkers(
   markers: MarkerState,
-  opts: { pps: number; peaksCached: boolean }
+  opts: { pps: number; peaksCached: boolean; flex: FlexPoint[] }
 ): Pick<StudioTiming, 'method' | 'params' | 'waypoints'> | null {
   const waypoints = enforceMonotonic(markerStateToWaypoints(markers, { includeBeats: 'edited-beats' }));
   if (waypoints.length < 2) return null;
@@ -28,6 +29,7 @@ export function timingPatchFromMarkers(
       pps: opts.pps,
       peaksCached: opts.peaksCached,
       version: 1,
+      ...(opts.flex.length ? { flex: opts.flex } : {}),
     },
     waypoints,
   };

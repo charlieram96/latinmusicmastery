@@ -36,9 +36,15 @@ const SCORE: ScoreDocument = {
 describe('timingPatchFromMarkers', () => {
   it('builds the drag timing a publish needs, with nudges in params', () => {
     const markers = seedMarkerState(SCORE.tracks[0], SCORE, buildWaypoints(SCORE, SCORE.initialTempo, 0));
-    const patch = timingPatchFromMarkers(markers, { pps: 40, peaksCached: true })!;
+    const patch = timingPatchFromMarkers(markers, { pps: 40, peaksCached: true, flex: [] })!;
     expect(patch.method).toBe('drag');
     expect(patch.waypoints.length).toBeGreaterThanOrEqual(2);
     expect(patch.params).toMatchObject({ editedBeats: [], nudges: [], nudgedNotes: 0, pps: 40, peaksCached: true, version: 1 });
+  });
+  it('keeps flex in the timing params', () => {
+    const markers = seedMarkerState(SCORE.tracks[0], SCORE, buildWaypoints(SCORE, SCORE.initialTempo, 0));
+    const patch = timingPatchFromMarkers(markers, { pps: 40, peaksCached: true, flex: [{ src: 1, dst: 1.05, anchor: false }] })!;
+    expect(patch.params.flex).toEqual([{ src: 1, dst: 1.05, anchor: false }]);
+    expect(timingPatchFromMarkers(markers, { pps: 40, peaksCached: true, flex: [] })!.params.flex).toBeUndefined();
   });
 });

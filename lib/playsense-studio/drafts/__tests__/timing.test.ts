@@ -21,8 +21,13 @@ describe('studio timing', () => {
   });
   it('turns a draft timing back into the map shape the SyncPanel seeds from', () => {
     const t = timingFromLive({ method: 'drag', params: { nudges: [{ qn: 2, deltaSeconds: -0.01 }] }, waypoints: [wp(0, 0), wp(4, 2)] }, null);
-    expect(timingToTimeMap(t)).toEqual({ id: 'draft', method: 'drag', waypoints: [wp(0, 0), wp(4, 2)], nudges: [{ qn: 2, deltaSeconds: -0.01 }] });
+    expect(timingToTimeMap(t)).toEqual({ id: 'draft', method: 'drag', waypoints: [wp(0, 0), wp(4, 2)], nudges: [{ qn: 2, deltaSeconds: -0.01 }], flex: [] });
     expect(timingToTimeMap(EMPTY_TIMING)).toBeNull();
+  });
+  it('carries flex from params into the map shape', () => {
+    const t = { ...EMPTY_TIMING, params: { flex: [{ src: 0.5, dst: 0.5, anchor: true }, { src: 1, dst: 1.1, anchor: false }, { src: 2, dst: 2, anchor: true }] },
+      waypoints: [wp(0, 0), wp(4, 4)] };
+    expect(timingToTimeMap(t)?.flex).toEqual([{ src: 0.5, dst: 0.5, anchor: true }, { src: 1, dst: 1.1, anchor: false }, { src: 2, dst: 2, anchor: true }]);
   });
   it('drops malformed nudges and rejects malformed timing', () => {
     expect(readNudges({ nudges: [{ qn: 1, deltaSeconds: 0.1 }, { qn: 'x' }] })).toEqual([{ qn: 1, deltaSeconds: 0.1 }]);

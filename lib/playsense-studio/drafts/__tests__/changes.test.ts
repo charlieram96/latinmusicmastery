@@ -38,4 +38,10 @@ describe('change summary', () => {
     const draft = { score: score('A', []), timing: EMPTY_TIMING };
     expect(diffParts(live, draft)).toEqual({ score: false, timing: false, anchor: false });
   });
+  it('a flex-only edit counts as a timing change', () => {
+    const live = { score: score('A', [m(60)]), timing: timed(1) };
+    const draft = { score: score('A', [m(60)]), timing: { ...timed(1), params: { flex: [{ src: 1.2, dst: 1.25, anchor: false }] } } };
+    expect(diffParts(live, draft).timing).toBe(true);
+    expect(summarizeChanges(live, draft)).toContain('Timing changed');
+  });
 });

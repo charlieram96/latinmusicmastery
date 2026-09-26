@@ -19,6 +19,7 @@ import {
 } from '@/lib/playsense-studio/clip-model';
 import { clearUnpublishedDrafts } from '@/lib/playsense-studio/drafts/server';
 import { readNudges } from '@/lib/playsense-studio/drafts/timing';
+import { readFlex, type FlexPoint } from '@/lib/playsense-studio/flex';
 import { rebaseAnchor, secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
 import { getStudioDrafts, type StudioDraft } from '@/app/actions/studio-drafts';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -55,6 +56,9 @@ export interface ClassItemScorePayload {
     /** Per-note timing nudges (params.nudges) — the studio's authoritative
      *  list; the waypoints above already include their effect. */
     nudges: Array<{ qn: number; deltaSeconds: number }>;
+    /** Flex Time map (params.flex), parsed. getExerciseMedia never sets this —
+     *  the graded play-along is never flexed. */
+    flex?: FlexPoint[];
     params?: Record<string, unknown>;
   } | null;
 }
@@ -92,6 +96,7 @@ async function loadTimeMap(
         beatInMeasure: w.beat_in_measure,
       })),
       nudges: readNudges(tm.params),
+      flex: readFlex(tm.params),
       params: (tm.params ?? {}) as Record<string, unknown>,
     },
   };

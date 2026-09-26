@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { readFlex, type FlexPoint } from '@/lib/playsense-studio/flex';
 
 const waypointSchema = z.object({
   musicalPositionQN: z.number(),
@@ -60,7 +61,8 @@ export function timingToTimeMap(t: StudioTiming): {
   method: string;
   waypoints: StudioWaypoint[];
   nudges: StudioNudge[];
+  flex: FlexPoint[];
 } | null {
   if (t.waypoints.length < 2) return null;
-  return { id: 'draft', method: t.method, waypoints: t.waypoints, nudges: readNudges(t.params) };
+  return { id: 'draft', method: t.method, waypoints: t.waypoints, nudges: readNudges(t.params), flex: readFlex(t.params) };
 }

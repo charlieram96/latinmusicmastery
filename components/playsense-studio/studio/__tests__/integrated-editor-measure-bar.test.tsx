@@ -229,6 +229,15 @@ describe('IntegratedEditor measure bar', () => {
     expect(host.textContent).toContain('Copied m.1–2 with its timing.');
   });
 
+  it('reports the measure zoom opening, so SyncPanel can leave F to it', () => {
+    const onZoomOpenChange = vi.fn();
+    render({ score: makeScore(3, 1), onZoomOpenChange });
+    expect(onZoomOpenChange).toHaveBeenLastCalledWith(false);
+    key('ArrowRight');
+    key('Enter');
+    expect(onZoomOpenChange).toHaveBeenLastCalledWith(true);
+  });
+
   it('⏎ zooms into the bar instead of adding a note', () => {
     const { dispatch, onRequestZoom } = render({ score: makeScore(3, 1) });
     key('ArrowRight');

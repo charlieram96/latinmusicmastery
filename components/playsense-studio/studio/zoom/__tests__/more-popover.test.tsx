@@ -283,6 +283,40 @@ describe('MorePopover', () => {
       act(() => { byLabel('Reset').click(); });
       expect(timing.onReset).toHaveBeenCalledTimes(1);
     });
+
+    it('shows "Flex the recording onto this note" only when onFlex is present, and calls it', () => {
+      const timing = {
+        offsetMs: 12, gridSeconds: 1, actualSeconds: 1.5,
+        onNudge: vi.fn(), onSnap: vi.fn(), onReset: vi.fn(),
+      };
+      render({ tab: 'timing', timing });
+      expect(byLabel('Flex the recording onto this note')).toBeUndefined();
+
+      const onFlex = vi.fn();
+      render({ tab: 'timing', timing: { ...timing, onFlex } });
+      act(() => { byLabel('Flex the recording onto this note').click(); });
+      expect(onFlex).toHaveBeenCalledTimes(1);
+    });
+
+    it('disables "Flex the recording onto this note" with the problem as its title', () => {
+      const onFlex = vi.fn();
+      const timing = {
+        offsetMs: 0, gridSeconds: 1, actualSeconds: 1,
+        onNudge: vi.fn(), onSnap: vi.fn(), onReset: vi.fn(), onFlex,
+        flexProblem: 'No hit near this note',
+      };
+      render({ tab: 'timing', timing });
+      const button = byLabel('Flex the recording onto this note') as HTMLButtonElement;
+      expect(button.disabled).toBe(true);
+      expect(button.title).toBe('No hit near this note');
+      act(() => { button.click(); });
+      expect(onFlex).not.toHaveBeenCalled();
+
+      render({ tab: 'timing', timing: { ...timing, flexProblem: null } });
+      const enabled = byLabel('Flex the recording onto this note') as HTMLButtonElement;
+      expect(enabled.disabled).toBe(false);
+      expect(enabled.title).toBe('');
+    });
   });
 
   // Fix round 1: every action button (tabs, chips, Durations/Tuplets/Marks/
