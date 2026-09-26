@@ -260,6 +260,127 @@ describe('autoPlaceBars: a local refinement', () => {
   });
 });
 
+/** `bars` bars of 4 QN from `start` at `spb`, with the onsets in `pattern`
+ *  (QN within the bar) in every bar. */
+function patterned(bars: number, start: number, spb: number, pattern: number[]): MarkerState {
+  const s = laid(bars, start, spb);
+  s.measures.forEach((m, i) => {
+    (m as unknown as { onsetQNs: number[] }).onsetQNs = pattern.map((q) => i * 4 + q);
+  });
+  return s;
+}
+/** The pattern played at `spb` from 5.0 s for bars `fromBar`..`toBar - 1`
+ *  (negative bars are before the section), each hit jittered by up to ±6 ms. */
+function playedPattern(rnd: () => number, spb: number, pattern: number[], fromBar: number, toBar: number): number[] {
+  const out: number[] = [];
+  for (let bar = fromBar; bar < toBar; bar++) {
+    for (const q of pattern) out.push(5.0 + (bar * 4 + q) * spb + (rnd() * 2 - 1) * 0.006);
+  }
+  return out;
+}
+const EIGHTHS = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5];
+const QUARTERS = [0, 1, 2, 3];
+const SYNCOPATED = [0, 1, 1.5, 2.5, 3];
+const SPARSE = [0, 2];
+const R4_SEEDS = [11, 23, 37, 41];
+
+describe('autoPlaceBars: note-spacing locality and a chance-aware gate', () => {
+  it('lands straight eighths exactly when the markers are within 0.2 beat (0.4 of an eighth), even with continuous playing', () => {
+    for (const bpm of [90, 150]) {
+      const spb = 60 / bpm;
+      for (const bars of [8, 24]) {
+        for (const seed of R4_SEEDS) {
+          for (const beats of [-0.2, -0.1, 0, 0.1, 0.2]) {
+            for (const err of [-0.02, 0, 0.02]) {
+              // Playing runs two bars either side of the section, so a line one
+              // eighth off matches every onset too: only the markers can decide.
+              const hits = playedPattern(seededRandom(seed), spb, EIGHTHS, -2, bars + 2);
+              const res = autoPlaceBars(patterned(bars, 5.0 + beats * spb, spb * (1 + err), EIGHTHS), hits, { start: 0, end: 5.0 + (bars + 2) * 4 * spb + 5 });
+              const label = `${bpm} bpm, ${bars} bars, seed ${seed}, ${beats} beat, spb ${err * 100}%`;
+              expect(res, label).not.toBeNull();
+              downbeats(res!.state).forEach((t, i) => expect(Math.abs(t - (5.0 + 4 * i * spb)), `${label}, bar ${i + 1}`).toBeLessThanOrEqual(0.015));
+            }
+          }
+        }
+      }
+    }
+  });
+  it('never jumps a whole eighth from the markers when they sit 0.3-0.5 beat off: the nearest eighth alignment, or null', () => {
+    for (const bpm of [90, 150]) {
+      const spb = 60 / bpm;
+      const eighth = 0.5 * spb;
+      for (const bars of [8, 24]) {
+        for (const continuous of [false, true]) {
+          for (const seed of R4_SEEDS) {
+            for (const beats of [-0.5, -0.4, -0.3, 0.3, 0.4, 0.5]) {
+              for (const err of [-0.02, 0, 0.02]) {
+                const hits = playedPattern(seededRandom(seed), spb, EIGHTHS, continuous ? -2 : 0, continuous ? bars + 2 : bars);
+                const from = 5.0 + beats * spb;
+                const res = autoPlaceBars(patterned(bars, from, spb * (1 + err), EIGHTHS), hits, { start: 0, end: 5.0 + (bars + 2) * 4 * spb + 5 });
+                if (res === null) continue;
+                const label = `${bpm} bpm, ${bars} bars, ${continuous ? 'continuous' : 'section only'}, seed ${seed}, ${beats} beat, spb ${err * 100}%`;
+                const first = downbeats(res.state)[0];
+                // The eighth alignment nearest the markers (0.3-0.5 beat off
+                // rounds to one eighth off).
+                const nearest = 5.0 + Math.round(beats / 0.5) * eighth;
+                expect(Math.abs(first - nearest), label).toBeLessThanOrEqual(0.02);
+                expect(Math.abs(first - from), label).toBeLessThan(eighth);
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+  it('refuses pure noise for short and long sections', () => {
+    const sections: Array<{ name: string; bars: number; pattern: number[] }> = [
+      { name: 'sparse 4 bars (8 onsets)', bars: 4, pattern: SPARSE },
+      { name: 'sparse 8 bars (16 onsets)', bars: 8, pattern: SPARSE },
+      { name: 'quarters 4 bars (16 onsets)', bars: 4, pattern: QUARTERS },
+      { name: 'syncopated 4 bars (20 onsets)', bars: 4, pattern: SYNCOPATED },
+      { name: 'quarters 16 bars (64 onsets)', bars: 16, pattern: QUARTERS },
+    ];
+    for (const sec of sections) {
+      for (const count of [200, 300]) {
+        for (let seed = 1; seed <= 20; seed++) {
+          const hits = scatter(seededRandom(seed * 7919), count);
+          for (const start of [5.0, 5.2]) {
+            expect(autoPlaceBars(patterned(sec.bars, start, 0.5, sec.pattern), hits, { start: 0, end: 45 }), `${sec.name}, ${count} hits, seed ${seed}, start ${start}`).toBeNull();
+          }
+        }
+      }
+    }
+  });
+  it('places clean short sections exactly', () => {
+    const cases: Array<{ name: string; pattern: number[]; spacingQN: number }> = [
+      { name: 'quarters 4 bars (16 onsets)', pattern: QUARTERS, spacingQN: 1 },
+      { name: 'syncopated 4 bars (20 onsets)', pattern: SYNCOPATED, spacingQN: 0.5 },
+    ];
+    for (const c of cases) {
+      for (const seed of R4_SEEDS) {
+        // Markers within 0.4 of the smallest opening onset spacing.
+        for (const frac of [-0.4, -0.2, 0, 0.2, 0.4]) {
+          for (const err of [-0.02, 0, 0.02]) {
+            const hits = playedPattern(seededRandom(seed), 0.5, c.pattern, 0, 4);
+            const res = autoPlaceBars(patterned(4, 5.0 + frac * c.spacingQN * 0.5, 0.5 * (1 + err), c.pattern), hits, { start: 0, end: 60 });
+            const label = `${c.name}, seed ${seed}, ${frac} spacing, spb ${err * 100}%`;
+            expect(res, label).not.toBeNull();
+            downbeats(res!.state).forEach((t, i) => expect(Math.abs(t - (5.0 + 2 * i)), `${label}, bar ${i + 1}`).toBeLessThanOrEqual(0.015));
+          }
+        }
+      }
+    }
+  });
+  it('refuses a clean sparse 4-bar section: its 8 onsets are under the 12-match minimum', () => {
+    // The chance-aware gate needs at least 12 onsets matched within 30 ms, so
+    // a section with only 8 onsets can never be placed, however clean.
+    for (const seed of R4_SEEDS) {
+      const hits = playedPattern(seededRandom(seed), 0.5, SPARSE, 0, 4);
+      expect(autoPlaceBars(patterned(4, 5.0, 0.5, SPARSE), hits, { start: 0, end: 60 }), `seed ${seed}`).toBeNull();
+    }
+  });
+});
+
 describe('windowWithinCorridor', () => {
   const span = { startSeconds: 10, endSeconds: 20 };
   it('leaves the window alone with no siblings', () => {
