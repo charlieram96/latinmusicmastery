@@ -135,13 +135,18 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   // Streak and weekly goal: the dashboard's source (completed parts, local day keys).
   const { data: completionRows } = await supabase
     .from('class_item_progress')
-    .select('completed_at')
+    .select('completed_at, class_item_id')
     .eq('user_id', user.id)
     .eq('completed', true)
     .not('completed_at', 'is', null)
+  const today = todayKey()
+  const lessonItemIds = new Set(items.map((item: { id: string }) => item.id))
+  const dateKeys = (completionRows ?? []).map((r) => dateKeyFor(r.completed_at as string))
   const practice = {
-    dateKeys: (completionRows ?? []).map((r) => dateKeyFor(r.completed_at as string)),
-    today: todayKey(),
+    dateKeys,
+    today,
+    // This lesson's parts already saved today: the celebration's "before" leaves them out.
+    lessonToday: (completionRows ?? []).filter((r, i) => dateKeys[i] === today && lessonItemIds.has(r.class_item_id as string)).length,
   }
 
   const difficulty = course.difficulty ? String(course.difficulty).toLowerCase() : null

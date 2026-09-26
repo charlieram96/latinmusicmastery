@@ -15,6 +15,19 @@ describe('celebrationStats', () => {
     expect(s.streak).toEqual({ before: 2, after: 2 })
   })
 
+  it('counts today as extended by this lesson when its only practice today came from this lesson (L8)', () => {
+    // An earlier part of this lesson was saved today and is already in the server's keys.
+    const s = celebrationStats(['2026-09-24', '2026-09-25'], today, 1, 1)
+    expect(s.streak).toEqual({ before: 1, after: 2 })
+    expect(s.week).toEqual({ before: 1, after: 3, goal: 6 })
+    expect(s.milestones[0]).toMatchObject({ before: 1, after: 3 })
+  })
+
+  it('keeps the streak flat when other practice today came before this lesson (L8)', () => {
+    const s = celebrationStats(['2026-09-24', '2026-09-25', '2026-09-25'], today, 1, 1)
+    expect(s.streak).toEqual({ before: 2, after: 2 })
+  })
+
   it('starts a new streak after a gap', () => {
     expect(celebrationStats(['2026-09-01'], today, 1).streak).toEqual({ before: 0, after: 1 })
   })

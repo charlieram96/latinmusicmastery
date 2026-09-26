@@ -32,8 +32,9 @@ export interface LessonModeShellProps {
   activeIndex: number
   /** Null for a paywalled lesson: no parts to complete. */
   progress: LessonProgressInput | null
-  /** Completion day keys (the dashboard's streak source) and today's key. */
-  practice: { dateKeys: string[]; today: string } | null
+  /** Completion day keys (the dashboard's streak source), today's key, and how many of today's keys
+      are this lesson's parts (so the celebration's "before" is the state before this lesson). */
+  practice: { dateKeys: string[]; today: string; lessonToday?: number } | null
   about: { description: string | null; meta: LessonMeta }
   comments: ReactNode
   commentCount: number
@@ -80,7 +81,7 @@ function LessonModeFrame({ course, module, lesson, rail, parts, activeIndex, pro
   const lessonFinished = !!progress && progress.totalItems > 0 && completedItemIds.filter(id => progress.itemIds.includes(id)).length + saving.length === progress.totalItems
   // Celebrate only a lesson finished in this visit, from its last part.
   const celebrate = !!practice && !!summary && !summary.hasNextPart && lessonFinished && finishedHere > 0
-  const stats = useMemo(() => practice ? celebrationStats(practice.dateKeys, practice.today, finishedHere) : null, [practice, finishedHere])
+  const stats = useMemo(() => practice ? celebrationStats(practice.dateKeys, practice.today, finishedHere, practice.lessonToday ?? 0) : null, [practice, finishedHere])
 
   // advance() is stable (it reads the latest state from a ref) so the frame
   // value, and every part reading it, does not change on each shell render.
