@@ -122,6 +122,15 @@ Settled while building:
 - **The rate driver** is disabled when there's no flex. On handoff it restores the user's speed and the element's own pitch setting.
 - **Flex points** lie inside the section span.
 - **The label %** is the playback speed of the segment to the left.
+- **Identity edges.** Every edit normalizes the flex so the map is identity outside its outermost points. This is guarded by a 500-sequence property test.
+- **Moving all the bars clears the flex.** Section drag, Auto-place and placement clear it, with a notice, and Auto-place's undo restores it.
+
+**Follow-ups from 4b:**
+- Backing-lane clips (media) and the playhead (timeline) differ slightly inside a flexed region.
+- The per-hook pitch snapshot doesn't track an element swap while flexed.
+- A flexed section drag draws against the still-flexed waveform until it's released.
+- One click may land slightly off at a flex boundary (the 120 ms look-ahead).
+- Browser and ear checks are pending, including the flex-spike device results.
 
 ### Plan 4a — done 2026-09-26 (hits, snapping, Auto-place, flags)
 
