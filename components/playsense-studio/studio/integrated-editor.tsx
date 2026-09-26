@@ -57,7 +57,7 @@ import { MidiRecordButton, type MidiRecordingSource } from './midi-record-button
 import { MeasureZoom, type ZoomState } from './zoom/measure-zoom';
 import { useZoomEditing } from './zoom/use-zoom-editing';
 import type { ZoomLayout } from './zoom/zoom-staff';
-import { clampNoteToolbarPosition, NoteToolbar, NOTE_TOOLBAR_WIDTH_FALLBACK, type NoteToolbarPercussion } from './zoom/note-toolbar';
+import { NoteToolbar, type NoteToolbarPercussion } from './zoom/note-toolbar';
 import { MorePopover, type MoreTab } from './zoom/more-popover';
 import type { NoteTimingProps } from './note-details';
 import { StripCorner } from './strip-corner';
@@ -176,11 +176,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [gapPop, setGapPop] = useState<{ gap: number; anchor: PopoverAnchor } | null>(null);
   const [barPop, setBarPop] = useState<{ anchor: PopoverAnchor } | null>(null);
   const [quantizePop, setQuantizePop] = useState<{ anchor: PopoverAnchor } | null>(null);
-  // The note toolbar's "More ▾" popover — just an open flag (fix round 1:
-  // its position is recomputed every render from the toolbar's current,
-  // measured position below, not stored) — and the last tab picked
-  // (remembered across opens/closes, reset only on unmount).
-  const [morePop, setMorePop] = useState(false);
+  // The note toolbar's "More ▾" popover — its anchor under the docked toolbar
+  // (read from the toolbar's rect when More is clicked), or null when closed —
+  // and the last tab picked (remembered across opens/closes, reset only on unmount).
+  const [morePop, setMorePop] = useState<PopoverAnchor | null>(null);
   const [moreTab, setMoreTab] = useState<MoreTab>('durations');
   // The measure zoom (one bar drawn large over the strip), or null when closed.
   // `zoomOrigin` is the bar's rect in the strip for the enter/exit animation;
@@ -189,8 +188,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [zoomOrigin, setZoomOrigin] = useState<{ left: number; width: number } | null>(null);
   const [zoomClosing, setZoomClosing] = useState(false);
   // The zoomed bar's note layout (hits, beat span, line math) — a stash for
-  // other zoom work; the note toolbar below reads MeasureZoom's own (reactive)
-  // layout instead, since a ref write here doesn't request a re-render.
+  // other zoom work (a ref write here doesn't request a re-render).
   const zoomLayout = useRef<ZoomLayout | null>(null);
   // A menu belongs to the bars it opened on: every key or click that changes
   // the bar selection closes whichever menu is open.
@@ -603,7 +601,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     setZoom(null);
     setZoomClosing(false);
     zoomLayout.current = null;
-    setMorePop(false);
+    setMorePop(null);
     if (m !== undefined) selectBars({ anchor: m, focus: m });
   }, [zoom, selectBars]);
 
@@ -654,7 +652,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     setZoomClosing(false);
   }
 
-  // ---- The floating note toolbar (Task 8) ------------------------------------
+  // ---- The docked note toolbar (Task 8) --------------------------------------
 
   // The event at the zoom cursor — null at 'end', or when the cursor sits on a
   // voice with nothing there. Drives the toolbar's info chip and its on/off
@@ -708,38 +706,16 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     return pitchName(zoomCurrentEvent.midi, zoomCurrentEvent.spelling, key);
   })();
 
-  // Anchored under the cursor's note box (or just after the last note at
-  // 'end'); clamped into the center column/row against the toolbar's own
-  // measured size below (fix round 1 — a percussion track's stroke row can
-  // run wide, or wrap tall, well past the 520 fallback).
-  const noteToolbarAnchor = useCallback((layout: ZoomLayout | null) => {
-    if (!zoom || !layout) return null;
-    const c = zoom.cursor;
-    let x: number;
-    let hitBottom: number;
-    if (c.index !== 'end') {
-      const hit = layout.hits.find((h) => h.voice === c.voice && h.eventIndex === c.index);
-      if (!hit) return null;
-      x = hit.x + hit.w / 2;
-      hitBottom = hit.y + hit.h;
-    } else {
-      x = layout.noteEndX;
-      const voiceHits = layout.hits.filter((h) => h.voice === c.voice);
-      const last = voiceHits[voiceHits.length - 1];
-      hitBottom = last ? last.y + last.h : layout.yForLine(2);
-    }
-    return { x, top: hitBottom + 14 };
-  }, [zoom]);
-
-  // The toolbar's real rendered size, so it can be clamped against its own
-  // footprint instead of a guess — the measure bar's `measureBarRef`/
-  // `barWidth` pattern, on both axes. `w` starts at the pre-paint fallback;
-  // `h` starts at 0 (unclamped) since there's no equivalent guess for height.
-  const [noteToolbarSize, setNoteToolbarSize] = useState({ w: NOTE_TOOLBAR_WIDTH_FALLBACK, h: 0 });
-  const noteToolbarRef = (el: HTMLDivElement | null) => {
-    const w = el?.offsetWidth ?? 0;
-    const h = el?.offsetHeight ?? 0;
-    if (w > 0 && (w !== noteToolbarSize.w || h !== noteToolbarSize.h)) setNoteToolbarSize({ w, h });
+  // More ▾ opens under the docked toolbar's right end, in staffWrapRef's
+  // coordinates (the popover is its child). Read at the click, not in render.
+  const noteToolbarRef = useRef<HTMLDivElement | null>(null);
+  const openMore = () => {
+    const tb = noteToolbarRef.current?.getBoundingClientRect();
+    const wrap = staffWrapRef.current?.getBoundingClientRect();
+    setMorePop({
+      left: tb && wrap ? Math.max(8, tb.right - wrap.left - 320) : 8,
+      top: tb && wrap ? tb.bottom - wrap.top + 6 : 52,
+    });
   };
 
   // Bars that don't add up — drives the strip footer's issue chip and its
@@ -946,50 +922,45 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 clef={zoomClefAt(zoom.measureIndex)}
                 keyFifths={zoomKeyFifthsAt(zoom.measureIndex)}
                 percStrokes={percStrokes}
-              >
-                {({ centerW, bodyH, layout }) => {
-                  const anchor = noteToolbarAnchor(layout);
-                  if (!anchor) return null;
-                  const pos = clampNoteToolbarPosition(anchor.x, anchor.top, noteToolbarSize, { centerW, bodyH });
-                  const maxWidth = centerW > 0 ? Math.max(0, centerW - 16) : undefined;
-                  return (
-                    <>
-                      <NoteToolbar
-                        ref={noteToolbarRef}
-                        left={pos.left}
-                        top={pos.top}
-                        maxWidth={maxWidth}
-                        info={zoomInfo}
-                        value={zoomValue}
-                        dots={zoomDots}
-                        isRest={zoomCurrentEvent?.kind === 'rest'}
-                        tie={!!zoomCurrentEvent && zoomCurrentEvent.kind !== 'rest' && !!zoomCurrentEvent.tieToNext}
-                        tripletOn={!!zoomTupletHere && zoomTupletHere.n === 3 && zoomTupletHere.m === 2}
-                        hasSelection={zoomHasSelection}
-                        percussion={zoomToolbarPercussion}
-                        editing={zoomEditing}
-                        onMore={() => setMorePop(true)}
-                        pencil={zoom.pencil}
-                        onPencil={() => setZoom({ ...zoom, pencil: !zoom.pencil })}
-                      />
-                      {morePop && (
-                        <MorePopover
-                          anchor={{ left: pos.left, top: pos.top + noteToolbarSize.h }}
-                          tab={moreTab}
-                          onTab={setMoreTab}
-                          onClose={() => setMorePop(false)}
-                          event={zoomCurrentEvent}
-                          editing={zoomEditing}
-                          timing={noteTiming}
-                          watchLike={!!noteTiming}
-                          eventKey={zoomEventKey}
-                          voice={zoom.cursor.voice}
-                        />
-                      )}
-                    </>
-                  );
+                toolbar={(
+                  <NoteToolbar
+                    ref={noteToolbarRef}
+                    info={zoomInfo}
+                    value={zoomValue}
+                    dots={zoomDots}
+                    isRest={zoomCurrentEvent?.kind === 'rest'}
+                    tie={!!zoomCurrentEvent && zoomCurrentEvent.kind !== 'rest' && !!zoomCurrentEvent.tieToNext}
+                    tripletOn={!!zoomTupletHere && zoomTupletHere.n === 3 && zoomTupletHere.m === 2}
+                    hasSelection={zoomHasSelection}
+                    percussion={zoomToolbarPercussion}
+                    editing={zoomEditing}
+                    onMore={openMore}
+                  />
+                )}
+                onToggleKeys={() => setZoom({ ...zoom, keysOpen: !zoom.keysOpen })}
+                onTogglePencil={() => setZoom({ ...zoom, pencil: !zoom.pencil })}
+                meta={{
+                  startSeconds: measureTimings[zoom.measureIndex]?.startVideoTimeSeconds ?? 0,
+                  flag: measureTimings[zoom.measureIndex]?.flag ?? null,
+                  repeatPass: stripItems[zoom.measureIndex].repeatPass
+                    ? { pass: stripItems[zoom.measureIndex].repeatPass!.pass, count: stripItems[zoom.measureIndex].repeatPass!.count }
+                    : null,
                 }}
-              </MeasureZoom>
+              />
+            )}
+            {zoom && morePop && (
+              <MorePopover
+                anchor={morePop}
+                tab={moreTab}
+                onTab={setMoreTab}
+                onClose={() => setMorePop(null)}
+                event={zoomCurrentEvent}
+                editing={zoomEditing}
+                timing={noteTiming}
+                watchLike={!!noteTiming}
+                eventKey={zoomEventKey}
+                voice={zoom.cursor.voice}
+              />
             )}
             {shortcutsOpen && !zoom && (
               <ShortcutsPopover

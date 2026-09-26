@@ -2,7 +2,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { clampNoteToolbarPosition, NoteToolbar, type NoteToolbarProps } from '../note-toolbar';
+import { NoteToolbar, type NoteToolbarProps } from '../note-toolbar';
 import type { ZoomEditing } from '../use-zoom-editing';
 
 let root: Root;
@@ -45,9 +45,7 @@ function makeEditing(): ZoomEditing {
   };
 }
 
-const baseProps = (): Omit<NoteToolbarProps, 'editing' | 'onMore' | 'onPencil'> => ({
-  left: 100,
-  top: 50,
+const baseProps = (): Omit<NoteToolbarProps, 'editing' | 'onMore'> => ({
   info: 'E4',
   value: 'q',
   dots: 0,
@@ -56,17 +54,15 @@ const baseProps = (): Omit<NoteToolbarProps, 'editing' | 'onMore' | 'onPencil'> 
   tripletOn: false,
   hasSelection: true,
   percussion: null,
-  pencil: false,
 });
 
 function render(overrides: Partial<NoteToolbarProps> = {}) {
   const editing = makeEditing();
   const onMore = vi.fn();
-  const onPencil = vi.fn();
   act(() => {
-    root.render(<NoteToolbar {...baseProps()} editing={editing} onMore={onMore} onPencil={onPencil} {...overrides} />);
+    root.render(<NoteToolbar {...baseProps()} editing={editing} onMore={onMore} {...overrides} />);
   });
-  return { editing, onMore, onPencil };
+  return { editing, onMore };
 }
 
 const buttons = () => Array.from(host.querySelectorAll('button'));
@@ -82,20 +78,8 @@ describe('NoteToolbar', () => {
       'Whole', 'Half', 'Quarter', '8th', '16th',
       'Dot', 'Rest', 'Tie',
       'Flat', 'Natural', 'Sharp',
-      'Triplet', 'More', 'Pencil', 'Delete',
+      'Triplet', 'More', 'Delete',
     ]);
-  });
-
-  it('toggles the pencil from its button, titled with its key', () => {
-    const { onPencil } = render({ pencil: true });
-    const pencil = byLabel('Pencil');
-    expect(pencil.getAttribute('title')).toBe('Click to add (N)');
-    expect(pencil.getAttribute('aria-pressed')).toBe('true');
-    const down = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
-    act(() => { pencil.dispatchEvent(down); });
-    expect(down.defaultPrevented).toBe(true);
-    act(() => { pencil.click(); });
-    expect(onPencil).toHaveBeenCalledTimes(1);
   });
 
   it('marks the current value, dot, rest, tie and triplet pressed', () => {
@@ -162,55 +146,19 @@ describe('NoteToolbar', () => {
     expect(byLabel('Rest').querySelector('svg')).not.toBeNull();
   });
 
-  // Fix round 1: the caller measures the toolbar's real size to clamp it, and
-  // caps its width so a long percussion stroke row wraps instead of overflowing.
-  it('forwards a ref to its root element, tagged for measuring', () => {
+  it('forwards a ref to its root element', () => {
     let node: HTMLDivElement | null = null;
     act(() => {
-      root.render(<NoteToolbar {...baseProps()} editing={makeEditing()} onMore={vi.fn()} onPencil={vi.fn()} ref={(el) => { node = el; }} />);
+      root.render(<NoteToolbar {...baseProps()} editing={makeEditing()} onMore={vi.fn()} ref={(el) => { node = el; }} />);
     });
     expect(node).not.toBeNull();
     expect(node).toBe(host.querySelector('[data-testid="note-toolbar"]'));
   });
 
-  it('caps its width and wraps when given maxWidth, and stays unbounded without it', () => {
-    render({ maxWidth: 300 });
+  it('renders docked: static, with no position of its own', () => {
+    render();
     const bar = host.querySelector<HTMLElement>('[role="toolbar"]')!;
-    expect(bar.style.maxWidth).toBe('300px');
-    expect(bar.style.flexWrap).toBe('wrap');
-
-    render({ maxWidth: undefined });
-    const bar2 = host.querySelector<HTMLElement>('[role="toolbar"]')!;
-    expect(bar2.style.maxWidth).toBe('');
-    expect(bar2.style.flexWrap).toBe('');
-  });
-});
-
-describe('clampNoteToolbarPosition', () => {
-  it('leaves the anchor alone when nothing is measured yet', () => {
-    expect(clampNoteToolbarPosition(10, 20, { w: 0, h: 0 }, { centerW: 0, bodyH: 0 })).toEqual({ left: 10, top: 20 });
-  });
-
-  it('clamps left inside [halfW, centerW - halfW]', () => {
-    // halfW = 200/2 + 8 = 108; bound = [108, 592 - 108] = [108, 484].
-    expect(clampNoteToolbarPosition(0, 0, { w: 200, h: 0 }, { centerW: 592, bodyH: 0 }).left).toBe(108);
-    expect(clampNoteToolbarPosition(1000, 0, { w: 200, h: 0 }, { centerW: 592, bodyH: 0 }).left).toBe(484);
-    expect(clampNoteToolbarPosition(300, 0, { w: 200, h: 0 }, { centerW: 592, bodyH: 0 }).left).toBe(300);
-  });
-
-  it('clamps top inside [0, bodyH - height]', () => {
-    expect(clampNoteToolbarPosition(0, -50, { w: 0, h: 40 }, { centerW: 0, bodyH: 172 }).top).toBe(0);
-    expect(clampNoteToolbarPosition(0, 1000, { w: 0, h: 40 }, { centerW: 0, bodyH: 172 }).top).toBe(132);
-    expect(clampNoteToolbarPosition(0, 60, { w: 0, h: 40 }, { centerW: 0, bodyH: 172 }).top).toBe(60);
-  });
-
-  it('collapses to a single edge when the toolbar is bigger than the bound on that axis', () => {
-    // halfW = 900/2 + 8 = 458; centerW - halfW = 592 - 458 = 134 < 458, so the
-    // clamp always lands on 458 regardless of the raw x.
-    expect(clampNoteToolbarPosition(0, 0, { w: 900, h: 0 }, { centerW: 592, bodyH: 0 }).left).toBe(458);
-    expect(clampNoteToolbarPosition(5000, 0, { w: 900, h: 0 }, { centerW: 592, bodyH: 0 }).left).toBe(458);
-    // bodyH - h = 172 - 300 = -128 < 0, so top always lands on 0.
-    expect(clampNoteToolbarPosition(0, 0, { w: 0, h: 300 }, { centerW: 0, bodyH: 172 }).top).toBe(0);
-    expect(clampNoteToolbarPosition(0, 900, { w: 0, h: 300 }, { centerW: 0, bodyH: 172 }).top).toBe(0);
+    expect(bar.classList.contains('is-docked')).toBe(true);
+    expect(bar.getAttribute('style')).toBeNull();
   });
 });

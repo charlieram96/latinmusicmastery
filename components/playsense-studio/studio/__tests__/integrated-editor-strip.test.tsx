@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import React, { act } from 'react';
+import React, { act, useReducer } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { editorReducer, type EditorState } from '@/lib/playsense-studio/editor-state';
 
 const extractSpy = vi.hoisted(() => ({ calls: 0 }));
 vi.mock('@/lib/playsense-studio/score-to-vexflow', async (importOriginal) => {
@@ -82,5 +83,34 @@ describe('IntegratedEditor strip items', () => {
     expect(corner.querySelector('[aria-label="Piano-roll"]')).not.toBeNull();
     expect(corner.querySelector('[aria-label="Record MIDI"]')).not.toBeNull();
     expect(corner.querySelector('[aria-label="Add a measure at the end"]')).not.toBeNull();
+  });
+
+  // Review Focus 4: the docked toolbar's buttons keep focus where it was
+  // (onMouseDown preventDefault), so the zoom's window key handler still
+  // gets the digits after a click.
+  it('keeps the zoom keys working after a docked toolbar button is clicked', () => {
+    function Harness() {
+      const [state, dispatch] = useReducer(editorReducer, score, (s): EditorState => ({ score: s, past: [], future: [], isDirty: false }));
+      return (
+        <IntegratedEditor
+          score={state.score} dispatch={dispatch} measureTimings={timings(0)} pixelsPerSecond={100} scrollLeftPx={0}
+          viewportWidth={800} onRequestZoom={noop}
+        />
+      );
+    }
+    act(() => { root.render(<Harness />); });
+    const key = (k: string) => act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+    });
+    key('ArrowRight'); // select bar 0
+    key('Enter'); // open the zoom on it, its note selected
+    const dock = () => host.querySelector('.st-zoom-dock')!;
+    const quarter = dock().querySelector<HTMLButtonElement>('[aria-label="Quarter"]')!;
+    const down = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+    act(() => { quarter.dispatchEvent(down); quarter.click(); });
+    expect(down.defaultPrevented).toBe(true);
+    expect(dock().querySelector('[aria-label="Quarter"]')!.getAttribute('aria-pressed')).toBe('true');
+    key('6'); // KEY_VALUE: 6 is Half
+    expect(dock().querySelector('[aria-label="Half"]')!.getAttribute('aria-pressed')).toBe('true');
   });
 });

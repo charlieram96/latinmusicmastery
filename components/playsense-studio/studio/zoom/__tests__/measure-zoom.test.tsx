@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
-import React, { act, useReducer, useState, type Dispatch } from 'react';
+import React, { act, useReducer, useState, type Dispatch, type ReactNode } from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MusicalEvent, ScoreDocument, Track } from '@/components/playsense-studio/shared/score-model/types';
@@ -10,7 +12,7 @@ import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import { measureFill } from '@/lib/playsense-studio/measure-fill';
 import type { MeasureStripItem } from '../../editable-measure-strip';
 import { IntegratedEditor, type IntegratedEditorMeasureTiming } from '../../integrated-editor';
-import { MeasureZoom, type ZoomState } from '../measure-zoom';
+import { MeasureZoom, zoomStaffScale, type MeasureZoomProps, type ZoomState } from '../measure-zoom';
 import { useZoomEditing, type ZoomEditing } from '../use-zoom-editing';
 import type { ZoomLayout } from '../zoom-staff';
 
@@ -67,7 +69,7 @@ const zoomAt = (measureIndex: number): ZoomState => ({
   measureIndex, cursor: { measureIndex, voice: 0, index: 0, anchor: null }, value: 'q', dots: 0, pencil: false,
 });
 
-function mount(measureIndex: number) {
+function mount(measureIndex: number, extra: Partial<MeasureZoomProps> & { toolbar?: ReactNode } = {}) {
   const onNav = vi.fn();
   const onClose = vi.fn();
   const onVoice = vi.fn();
@@ -78,6 +80,7 @@ function mount(measureIndex: number) {
         items={items} zoom={zoomAt(measureIndex)} height={240} fill={items[measureIndex].fill} bpm={120}
         percussion={false} origin={null} onVoice={onVoice} onNav={onNav} onClose={onClose} onLayout={onLayout}
         editing={{} as ZoomEditing} dispatch={vi.fn()} onCursor={vi.fn()} clef="treble" keyFifths={0} percStrokes={null}
+        {...extra}
       />,
     );
   });
@@ -85,11 +88,90 @@ function mount(measureIndex: number) {
 }
 
 describe('MeasureZoom', () => {
-  it('shows the bar with its number and tempo', () => {
+  it('scales the staff to the available height, between 1 and 2', () => {
+    expect(zoomStaffScale(100)).toBe(1);
+    expect(zoomStaffScale(26 + 118 * 1.5)).toBeCloseTo(1.5, 6);
+    expect(zoomStaffScale(2000)).toBe(2);
+  });
+
+  it('titles the header "Measure n" with a meta line, and docks the toolbar in it', () => {
+    mount(1, { toolbar: <div data-testid="tb" />, meta: { startSeconds: 10.6, flag: null, repeatPass: null } });
+    const head = host.querySelector('.st-zoom-head')!;
+    expect(head.querySelector('.st-zoom-title b')!.textContent).toMatch(/^Measure \d+/);
+    expect(head.querySelector('.st-zoom-title b')!.textContent).toBe('Measure 2');
+    expect(head.querySelector('.st-zoom-title > span')!.textContent).toBe('4/4 · adds up · 0:10.6 · ≈120.0');
+    expect(head.querySelector('.st-zoom-dock [data-testid="tb"]')).not.toBeNull();
+    expect(head.querySelector('[aria-label="Done"]')).not.toBeNull();
+    expect(head.querySelector('[aria-label="Close"]')).toBeNull();
+  });
+
+  it('shows the repeat pass, a short bar in gold and the sync flag on the meta line', () => {
+    const short = { ...items[1], fill: { kind: 'short' as const, usedBeats: 3, totalBeats: 4, missingBeats: 1, overBeats: 0 } };
+    act(() => {
+      root.render(
+        <MeasureZoom
+          items={[items[0], short, items[2]]} zoom={zoomAt(1)} height={240} fill={short.fill} bpm={null}
+          percussion={false} origin={null} onVoice={vi.fn()} onNav={vi.fn()} onClose={vi.fn()} onLayout={vi.fn()}
+          editing={{} as ZoomEditing} dispatch={vi.fn()} onCursor={vi.fn()} clef="treble" keyFifths={0} percStrokes={null}
+          meta={{ startSeconds: 2, flag: 'drifts off the hits', repeatPass: { pass: 0, count: 2 } }}
+        />,
+      );
+    });
+    const title = host.querySelector('.st-zoom-title')!;
+    expect(title.querySelector('.st-zoom-pass')!.textContent).toBe(' · pass 1 of 2');
+    expect(title.querySelector('.st-zoom-fill.is-short')!.textContent).toBe('1 beat missing');
+    expect(title.querySelector('.st-zoom-flag')!.textContent).toBe('drifts off the hits');
+    expect(title.querySelector(':scope > span')!.textContent).toBe('4/4 · 1 beat missing · 0:02.0 · drifts off the hits');
+  });
+
+  it('Keys and Pencil sit in the header, pressed with their state, and call back', () => {
+    const onToggleKeys = vi.fn();
+    const onTogglePencil = vi.fn();
+    act(() => {
+      root.render(
+        <MeasureZoom
+          items={items} zoom={{ ...zoomAt(1), keysOpen: true, pencil: false }} height={240} fill={items[1].fill} bpm={120}
+          percussion={false} origin={null} onVoice={vi.fn()} onNav={vi.fn()} onClose={vi.fn()} onLayout={vi.fn()}
+          editing={{ midiStatus: 'idle' } as ZoomEditing} dispatch={vi.fn()} onCursor={vi.fn()} clef="treble" keyFifths={0} percStrokes={null}
+          onToggleKeys={onToggleKeys} onTogglePencil={onTogglePencil}
+        />,
+      );
+    });
+    const head = host.querySelector('.st-zoom-head')!;
+    const keys = head.querySelector<HTMLButtonElement>('[aria-label="Keys"]')!;
+    const pencil = head.querySelector<HTMLButtonElement>('[aria-label="Pencil"]')!;
+    expect(keys.getAttribute('aria-pressed')).toBe('true');
+    expect(keys.className).toContain('is-on');
+    expect(pencil.getAttribute('aria-pressed')).toBe('false');
+    expect(pencil.title).toBe('Click the staff to add notes (N)');
+    act(() => { keys.click(); });
+    act(() => { pencil.click(); });
+    expect(onToggleKeys).toHaveBeenCalledTimes(1);
+    expect(onTogglePencil).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides Keys and Pencil without their handlers', () => {
     mount(1);
-    const head = host.querySelector('.st-zoom-head')!.textContent!;
-    expect(head).toContain('m.2');
-    expect(head).toContain('≈120.0 BPM');
+    expect(host.querySelector('[aria-label="Keys"]')).toBeNull();
+    expect(host.querySelector('[aria-label="Pencil"]')).toBeNull();
+  });
+
+  // Review Focus 5: a narrow header (700 px at 1280 × 800) drops the toolbar
+  // onto a second line instead of overlapping V1/V2. jsdom doesn't lay out,
+  // so this checks the structure (the dock is the head's own flex item) and
+  // the stylesheet rule that makes the head wrap.
+  it('wraps the docked toolbar under the title when the header is narrow', () => {
+    host.style.width = '700px';
+    mount(1, { toolbar: <div data-testid="tb" /> });
+    const head = host.querySelector('.st-zoom-head')!;
+    const dock = head.querySelector('.st-zoom-dock')!;
+    expect(dock.parentElement).toBe(head);
+    expect(dock.querySelector('[data-testid="tb"]')).not.toBeNull();
+    const css = readFileSync(resolve(process.cwd(), 'app/globals.css'), 'utf8');
+    const rule = (sel: string) => css.match(new RegExp(`\\${sel}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+    expect(rule('.st-zoom-head')).toMatch(/flex-wrap:\s*wrap/);
+    expect(rule('.st-zoom-dock')).toMatch(/flex:\s*1 1 auto/);
+    expect(rule('.st-fbar.is-docked')).toMatch(/position:\s*static/);
   });
 
   it('draws both neighbours as labelled slivers, and a click on one navigates', () => {
@@ -138,10 +220,10 @@ describe('MeasureZoom', () => {
   });
 
   it('keeps focus where it was when a header button is pressed', () => {
-    mount(1);
+    mount(1, { onToggleKeys: vi.fn(), onTogglePencil: vi.fn() });
     const head = host.querySelector('.st-zoom-head')!;
     const labels = [...head.querySelectorAll('button')].map((b) => b.textContent || b.getAttribute('aria-label'));
-    expect(labels).toEqual(expect.arrayContaining(['V1', 'V2', 'Previous bar', 'Next bar', 'Close']));
+    expect(labels).toEqual(expect.arrayContaining(['V1', 'V2', 'Previous bar', 'Next bar', 'Done']));
     for (const btn of head.querySelectorAll('button')) {
       const ev = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
       act(() => { btn.dispatchEvent(ev); });
@@ -149,9 +231,9 @@ describe('MeasureZoom', () => {
     }
   });
 
-  it('closes from its close button (instantly without animation support)', () => {
+  it('closes from Done (instantly without animation support)', () => {
     const { onClose } = mount(1);
-    act(() => { host.querySelector<HTMLButtonElement>('button[title="Close (Esc)"]')!.click(); });
+    act(() => { host.querySelector<HTMLButtonElement>('button[aria-label="Done"]')!.click(); });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -207,7 +289,7 @@ describe('IntegratedEditor measure zoom', () => {
     key('ArrowRight'); // select m.1
     key('Enter');
     expect(zoomEl()).not.toBeNull();
-    expect(zoomEl()!.querySelector('.st-zoom-head')!.textContent).toContain('m.1');
+    expect(zoomEl()!.querySelector('.st-zoom-title b')!.textContent).toBe('Measure 1');
     // The waveform still zooms so the bar fills 56% of the viewport.
     expect(onRequestZoom).toHaveBeenCalledWith(Math.min(600, (800 * 0.56) / 2), expect.any(Number));
     // The measure bar and the strip footer hide while the zoom is open.
@@ -253,7 +335,7 @@ describe('IntegratedEditor measure zoom', () => {
         act(() => { bar1.dispatchEvent(down); });
       }
       expect(zoomEl()).not.toBeNull();
-      expect(zoomEl()!.querySelector('.st-zoom-head')!.textContent).toContain('m.2');
+      expect(zoomEl()!.querySelector('.st-zoom-title b')!.textContent).toBe('Measure 2');
       expect(onSelectionChange).toHaveBeenLastCalledWith({ ref: { measureIndex: 1, eventIndex: 0 }, trackIndex: 0 });
     } finally {
       Reflect.deleteProperty(HTMLElement.prototype, 'clientWidth'); // back to Element's
@@ -266,75 +348,57 @@ describe('IntegratedEditor measure zoom', () => {
     key('Enter');
     onRequestZoom.mockClear();
     act(() => { host.querySelector<HTMLButtonElement>('button[title="Next bar (⌘→)"]')!.click(); });
-    expect(zoomEl()!.querySelector('.st-zoom-head')!.textContent).toContain('m.2');
+    expect(zoomEl()!.querySelector('.st-zoom-title b')!.textContent).toBe('Measure 2');
     expect(onRequestZoom).toHaveBeenCalledTimes(1);
     key('Escape');
     expect(barInfo()).toContain('m.2');
   });
 
-  // Fix round 1: a percussion track's stroke row can be far wider (and
-  // wrap taller) than the note toolbar's 520px pre-measure fallback. jsdom
-  // never lays anything out, so offsetWidth/offsetHeight are stubbed to
-  // stand in for a real (measured) oversized toolbar.
-  it('measures the note toolbar and clamps it inside the zoom', () => {
-    const widthDesc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')!;
-    const heightDesc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight')!;
-    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
-      configurable: true,
-      get(this: HTMLElement) { return this.getAttribute('data-testid') === 'note-toolbar' ? 900 : 0; },
-    });
-    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
-      configurable: true,
-      get(this: HTMLElement) { return this.getAttribute('data-testid') === 'note-toolbar' ? 300 : 0; },
-    });
+  it('docks the note toolbar in the header, and the header buttons toggle Keys and Pencil', () => {
+    renderEditor();
+    key('ArrowRight');
+    key('Enter');
+    const head = zoomEl()!.querySelector('.st-zoom-head')!;
+    expect(head.querySelector('.st-zoom-dock [data-testid="note-toolbar"]')).not.toBeNull();
+    // No pencil in the toolbar any more: it's the header's.
+    expect(head.querySelector('.st-zoom-dock [aria-label="Pencil"]')).toBeNull();
+    const keys = () => head.querySelector<HTMLButtonElement>('[aria-label="Keys"]')!;
+    const pencil = () => head.querySelector<HTMLButtonElement>('[aria-label="Pencil"]')!;
+    act(() => { keys().click(); });
+    expect(keys().getAttribute('aria-pressed')).toBe('true');
+    expect(host.querySelector('.st-keys-dock')).not.toBeNull();
+    key('k'); // the K key flips the same state
+    expect(keys().getAttribute('aria-pressed')).toBe('false');
+    expect(host.querySelector('.st-keys-dock')).toBeNull();
+    act(() => { pencil().click(); });
+    expect(pencil().getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('opens More under the docked toolbar, read from its rect at the click', () => {
+    const rects: Record<string, Partial<DOMRect>> = {
+      'staff-wrap': { left: 100, top: 50, right: 1100, bottom: 400 },
+      'note-toolbar': { left: 300, top: 60, right: 800, bottom: 96 },
+    };
+    const orig = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function (this: Element) {
+      const r = rects[this.getAttribute('data-testid') ?? ''];
+      return (r ? { x: 0, y: 0, width: 0, height: 0, ...r, toJSON() {} } : orig.call(this)) as DOMRect;
+    };
     try {
       renderEditor();
       key('ArrowRight');
       key('Enter');
-      const bar = host.querySelector<HTMLElement>('[data-testid="note-toolbar"]');
-      expect(bar).not.toBeNull();
-      // The center column is the jsdom fallback panel (800px) minus its two
-      // 104px slivers = 592px. A 900px-wide bar can't fit either way, so its
-      // clamp bound collapses to its own half-width from the left edge.
-      expect(bar!.style.left).toBe('458px');
-      // The center row (well under 300px here) is shorter than the bar, so
-      // it clamps flush to the row's top instead of running past its bottom.
-      expect(bar!.style.top).toBe('0px');
-      // Kept inside the center column: capped at its width minus 16px.
-      expect(bar!.style.maxWidth).toBe('576px');
-      expect(bar!.style.flexWrap).toBe('wrap');
+      act(() => { host.querySelector<HTMLButtonElement>('.st-zoom-dock button[aria-label="More"]')!.click(); });
+      const popover = host.querySelector<HTMLElement>('[role="dialog"][aria-label="More"]')!;
+      expect(popover).not.toBeNull();
+      // Right-aligned to the toolbar (800 - 100 - 320) and 6 px under it (96 - 50 + 6).
+      expect(popover.style.left).toBe('380px');
+      expect(popover.style.top).toBe('52px');
+      // A sibling of the zoom, over it, not inside it.
+      expect(zoomEl()!.contains(popover)).toBe(false);
     } finally {
-      Object.defineProperty(HTMLElement.prototype, 'offsetWidth', widthDesc);
-      Object.defineProperty(HTMLElement.prototype, 'offsetHeight', heightDesc);
+      Element.prototype.getBoundingClientRect = orig;
     }
-  });
-
-  // Fix round 1 (Task 9, Bug 3): the More popover no longer keeps the anchor
-  // it was opened with — it's positioned under the toolbar's own (live,
-  // clamped) position every render, so it keeps following the cursor instead
-  // of going stale.
-  it('the More popover recomputes its position from the toolbar as the cursor moves', () => {
-    renderEditor();
-    key('ArrowRight'); // select m.1
-    key('Enter'); // open the zoom — cursor starts on m.1's first note
-    act(() => { host.querySelector<HTMLButtonElement>('button[aria-label="More"]')!.click(); });
-
-    const popover = () => host.querySelector<HTMLElement>('[role="dialog"][aria-label="More"]');
-    const toolbar = () => host.querySelector<HTMLElement>('[data-testid="note-toolbar"]')!;
-    expect(popover()).not.toBeNull();
-    // Directly under the toolbar: same left, top plus the toolbar's measured
-    // height (0 here — jsdom never lays anything out).
-    expect(popover()!.style.left).toBe(toolbar().style.left);
-    expect(popover()!.style.top).toBe(toolbar().style.top);
-    const beforeLeft = popover()!.style.left;
-
-    // Walk to the bar's second note — a different x under a real layout —
-    // without closing the popover.
-    key('ArrowRight');
-    expect(popover()).not.toBeNull();
-    expect(popover()!.style.left).not.toBe(beforeLeft);
-    expect(popover()!.style.left).toBe(toolbar().style.left);
-    expect(popover()!.style.top).toBe(toolbar().style.top);
   });
 });
 
@@ -355,6 +419,11 @@ const itemsOf = (s: ScoreDocument): MeasureStripItem[] =>
     keyFifths: b.keyFifths, previousKeyFifths: b.previousKeyFifths, keyChanged: b.keyChanged, clefChanged: b.clefChanged,
     fill: measureFill(b.measure.voices[0]?.events ?? [], b.measure.voices[1]?.events, b.timeSignature),
   }));
+
+// The staff scales to the body's height (zoomStaffScale); this height gives the
+// 1.5 scale the drag's px-per-step math below assumes: 46 head + (26 + 118 × 1.5)
+// body + 18 meter.
+const ZOOM_H_AT_1_5 = 46 + 26 + 118 * 1.5 + 18;
 
 interface PointerLatest { score: ScoreDocument; zoom: ZoomState; layout: ZoomLayout | null }
 
@@ -381,7 +450,7 @@ function mountEditing(score: ScoreDocument, opts: { measureIndex?: number; index
     if (!zoom) return null;
     return (
       <MeasureZoom
-        items={items} zoom={zoom} height={240} fill={items[zoom.measureIndex].fill} bpm={120}
+        items={items} zoom={zoom} height={ZOOM_H_AT_1_5} fill={items[zoom.measureIndex].fill} bpm={120}
         percussion={percussion} origin={null}
         onVoice={(voice) => setZoom({ ...zoom, cursor: { measureIndex: zoom.measureIndex, voice, index: 'end', anchor: null } })}
         onNav={() => {}} onClose={() => {}} onLayout={(l) => { latest.layout = l; }}

@@ -810,8 +810,22 @@ html:has([data-marketing]) {
    dimmed slivers. The root is .st-zoom-overlay because .st-zoom is already the
    timeline's zoom slider. */
 .st-zoom-overlay { position: absolute; inset: 0; z-index: 46; display: grid; grid-template-columns: minmax(56px, 13%) 1fr minmax(56px, 13%);
-  grid-template-rows: 30px 1fr 18px; background: hsl(var(--card)); border-radius: 10px; overflow: hidden; }
-.st-zoom-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 0 10px; font-size: 12px; }
+  grid-template-rows: auto 1fr 18px; background: hsl(22 14% 8%); border-radius: 10px; overflow: hidden; }
+/* Mockup .focus .fhead: ‹, the title, the docked note toolbar, V1/V2, Keys,
+   Pencil, Done, ›. */
+.st-zoom-head { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 46px; padding: 0 8px;
+  border-bottom: 1px solid hsl(var(--border)); font-size: 12px; }
+.st-zoom-title { display: flex; flex-direction: column; line-height: 1.2; white-space: nowrap; }
+.st-zoom-title b { font-size: 13px; }
+.st-zoom-title > span { font: 10.5px var(--font-mono, ui-monospace, monospace); color: hsl(var(--muted-foreground)); }
+.st-zoom-pass { color: hsl(180 55% 45%); font-weight: 600; font-size: 10.5px; } /* the repeat lane's teal (no --teal token) */
+.st-zoom-fill.is-ok { color: hsl(142 45% 52%); }
+.st-zoom-fill.is-short, .st-zoom-flag { color: hsl(var(--gold-highlight)); }
+.st-zoom-fill.is-over { color: hsl(var(--destructive)); }
+/* The note toolbar docks here; when the head is too narrow it wraps onto
+   its own line under the title instead of covering the notes. */
+.st-zoom-dock { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; padding: 4px 0; }
+.st-fbar.is-docked { position: static; transform: none; animation: none; box-shadow: none; }
 .st-zoom-sliver { position: relative; opacity: .35; cursor: pointer; transition: opacity .15s; }
 .st-zoom-sliver:hover { opacity: .7; }
 .st-zoom-sliver-label { position: absolute; top: 2px; left: 6px; font: 10px ui-monospace, monospace; color: hsl(var(--muted-foreground)); }
