@@ -50,6 +50,10 @@ export interface BackingLanesPanelProps {
   tracks: BackingTrack[];
   /** The exercise video's active time map, for recording musical positions. */
   timeMap: PlaysenseStudioPlayerTimeMap | null;
+  /** Graded owners (no time map): media seconds → quarter notes from bar 1,
+   *  through the score's tempo grid. When given it is what position_qn records,
+   *  and no time map id is stored. */
+  mediaToQN?: (mediaSeconds: number) => number;
   view: TimelineView;
 }
 
@@ -57,6 +61,7 @@ export function BackingLanesPanel({
   classItemId,
   tracks,
   timeMap,
+  mediaToQN,
   view,
 }: BackingLanesPanelProps) {
   // Clip state, seeded from the server rows and owned here from then on.
@@ -154,7 +159,12 @@ export function BackingLanesPanel({
       // Record what the position MEANT musically alongside where it sits, so a
       // later republish of the time map can keep the clip glued to the music
       // instead of silently sliding against it.
-      const positionQn = map ? map.toMusicalPosition(clip.timelineStartSeconds) : null;
+      // Graded owners measure it on the tempo grid from bar 1 instead.
+      const positionQn = mediaToQN
+        ? mediaToQN(clip.timelineStartSeconds)
+        : map
+          ? map.toMusicalPosition(clip.timelineStartSeconds)
+          : null;
 
       void queueStudioSave(`backing-track:${trackId}`, () =>
         updateBackingTrackPlacement({
@@ -164,11 +174,11 @@ export function BackingLanesPanel({
           trimOutSeconds: clip.trimOutSeconds,
           sourceDurationSeconds,
           positionQn,
-          timeMapId: map ? map.id : null,
+          timeMapId: !mediaToQN && map ? map.id : null,
         })
       );
     },
-    [tracks, durations, map]
+    [tracks, durations, map, mediaToQN]
   );
 
   const schedulePersist = useCallback(

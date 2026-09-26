@@ -37,7 +37,10 @@ import { StudioDraftsProvider } from '@/components/playsense-studio/studio/draft
 import { PublishControl } from '@/components/playsense-studio/studio/drafts/publish-control';
 import { HistoryPanel } from '@/components/playsense-studio/studio/drafts/history-panel';
 import { workspaceSeed } from '@/lib/playsense-studio/drafts/seed';
-import { EMPTY_TIMING, timingToTimeMap, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
+import { EMPTY_TIMING, timingToTimeMap, type StudioPlay, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
+import { buildExerciseGrid, scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise';
+import { generateExpectedTimestamps } from '@/lib/play-sense/exercise-utils';
+import { gridQNAtSeconds } from '@/lib/play-sense/grid';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
@@ -49,6 +52,10 @@ import { HoverRail } from '@/components/playsense-studio/studio/shell/hover-rail
 import { FloatingVideo } from '@/components/playsense-studio/studio/shell/floating-video';
 import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+
+/** A graded part with no placement yet: bar 1 at the trim-in, a 1-bar
+ *  count-in, pre-roll on (the migration 044 defaults). */
+const DEFAULT_PLAY: StudioPlay = { bar1Seconds: null, countInBars: 1, preroll: true };
 
 export type StudioOwner =
   | { kind: 'classItem'; classItemId: string }
@@ -192,15 +199,47 @@ function StudioWorkspaceBody({
     trimOutSeconds: exerciseMedia?.videoTrimOutSeconds ?? null,
   });
 
-  // Uploading/removing the play-along video invalidates any prior sync map —
-  // and any trim, which was measured against the old file's timeline. This
+  // --- Graded play-along (Studio rework P5) ---
+  // The exercise's play settings live in the draft's `timing.play`; bar 1
+  // falls back to the trim-in point until the admin places it. The graded
+  // onsets (one loop, seconds from bar 1, one per distinct onset — a chord is
+  // one onset) are what Auto-align and the "notes on a hit" readout measure.
+  // A draft saved before P5 has no `play` (publish reads that as "keep live"),
+  // so it shows the live settings rather than the defaults.
+  const exercisePlay: StudioPlay = draft.timing.play ?? exerciseMedia?.play ?? DEFAULT_PLAY;
+  const handlePlayChange = useCallback(
+    (patch: Partial<StudioPlay>) => draft.setTiming({ play: { ...exercisePlay, ...patch } }),
+    [draft, exercisePlay]
+  );
+  const gradedGrid = useMemo(
+    () => (isExercise && state.score.tracks[0] ? buildExerciseGrid(state.score, state.score.tracks[0]) : null),
+    [isExercise, state.score]
+  );
+  const gradedOnsets = useMemo(() => {
+    if (!isExercise) return [];
+    const exercise = scoreToExerciseDefinition(state.score);
+    const out: number[] = [];
+    for (const e of generateExpectedTimestamps({ ...exercise, loopCount: 1 })) {
+      if (!out.length || e.timestamp - out[out.length - 1] > 1e-6) out.push(e.timestamp);
+    }
+    return out;
+  }, [isExercise, state.score]);
+  const gradedBar1 = exercisePlay.bar1Seconds ?? exerciseTrim.trimInSeconds;
+  // Backing clips record position_qn on the tempo grid from bar 1.
+  const mediaToQN = useCallback(
+    (mediaSeconds: number) => (gradedGrid ? gridQNAtSeconds(gradedGrid, mediaSeconds - gradedBar1) : 0),
+    [gradedGrid, gradedBar1]
+  );
+
+  // Uploading/removing the play-along video invalidates any prior placement —
+  // bar 1 and any trim were measured against the old file's timeline. This
   // must reach the draft: setTiming (not replaceTiming) marks it dirty so the
-  // reset itself autosaves — otherwise a stale map could still be published
-  // for a video that no longer matches it (or, for a removal, is gone).
+  // reset itself autosaves — otherwise a stale placement could still be
+  // published for a video that no longer matches it (or, for a removal, is gone).
   const handleExerciseVideoChange = (url: string | null) => {
     setExerciseVideoUrl(url);
     setExerciseTrim({ trimInSeconds: 0, trimOutSeconds: null });
-    draft.setTiming({ ...EMPTY_TIMING, anchor: draft.timing.anchor });
+    draft.setTiming({ ...EMPTY_TIMING, anchor: draft.timing.anchor, play: { ...exercisePlay, bar1Seconds: null } });
     if (!url) setExerciseStage('score');
   };
 
@@ -418,7 +457,7 @@ function StudioWorkspaceBody({
                       classItemId={owner.classItemId}
                       scoreLengthSeconds={scoreLengthSeconds}
                       initialMedia={exerciseMedia}
-                      hasTimeMap={!!draftTimeMap}
+                      hasTimeMap={exercisePlay.bar1Seconds != null}
                       onVideoChange={handleExerciseVideoChange}
                     />
                   ),
@@ -436,26 +475,32 @@ function StudioWorkspaceBody({
           )}
 
           {showExerciseSync ? (
-            // Sync the play-along video to the graded score → exercise_time_map_id.
+            // Place the play-along video under the graded score: bar 1 on the
+            // tempo grid (timing.play), never a drag map. Legacy waypoints or an
+            // anchor on an old exercise draft are ignored here.
             <SyncPanel
               key={draft.timingEpoch}
               classItemId={mediaOwnerId}
-              mode="video"
+              mode="graded"
               publishTarget="exercise"
               videoUrl={exerciseVideoUrl}
               score={state.score}
               dispatch={dispatch}
-              activeTimeMap={draftTimeMap}
+              activeTimeMap={null}
               videoDurationSeconds={null}
               trim={exerciseTrim}
               onTrimDrag={handleExerciseTrimDrag}
-              initialMetronomeAnchorSeconds={draft.timing.anchor?.seconds ?? null}
+              initialMetronomeAnchorSeconds={null}
+              play={exercisePlay}
+              onPlayChange={handlePlayChange}
+              gradedOnsets={gradedOnsets}
               renderBackingLanes={(v) =>
                 owner.kind === 'classItem' && exerciseMedia ? (
                   <BackingLanesPanel
                     classItemId={owner.classItemId}
                     tracks={exerciseMedia.backingTracks}
-                    timeMap={draftTimeMap}
+                    timeMap={null}
+                    mediaToQN={mediaToQN}
                     view={v}
                   />
                 ) : null

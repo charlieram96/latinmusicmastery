@@ -13,11 +13,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 
 const stub = vi.hoisted(() => ({
-  syncPanelCalls: [] as Array<{ activeTimeMap: unknown; mode: string }>,
+  syncPanelCalls: [] as Array<{ activeTimeMap: unknown; mode: string; props: Record<string, unknown> }>,
 }));
 vi.mock('@/components/playsense-studio/studio/sync-panel', () => ({
   SyncPanel: (props: { activeTimeMap: unknown; mode: string }) => {
-    stub.syncPanelCalls.push({ activeTimeMap: props.activeTimeMap, mode: props.mode });
+    stub.syncPanelCalls.push({ activeTimeMap: props.activeTimeMap, mode: props.mode, props });
     return null;
   },
 }));
@@ -161,6 +161,49 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
       expect.objectContaining({
         owner: { kind: 'exercise', id: 'ci-1' },
         timing: { ...EMPTY_TIMING, play: exerciseMedia.play },
+      })
+    );
+  });
+
+  it('the Sync video stage is the graded SyncPanel, wired to the draft play settings (Studio rework P5)', async () => {
+    act(() => {
+      root.render(
+        <StudioDraftsProvider owners={[]}>
+          <StudioWorkspace
+            owner={{ kind: 'classItem', classItemId: 'ci-1' }}
+            mode="exercise"
+            title="Clave 101"
+            videoUrl={null}
+            scoreDocumentId="doc-1"
+            initialScore={SCORE}
+            activeTimeMap={null}
+            videoDurationSeconds={null}
+            exerciseMedia={{ ...exerciseMedia, play: { bar1Seconds: 2.5, countInBars: 2, preroll: false } }}
+          />
+        </StudioDraftsProvider>
+      );
+    });
+    const sync = Array.from(host.querySelectorAll('button')).find((b) => b.textContent?.includes('Sync video'))!;
+    act(() => {
+      sync.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    const last = stub.syncPanelCalls.at(-1)!;
+    expect(last.mode).toBe('graded');
+    // The legacy exercise map on the media is never a seed here.
+    expect(last.activeTimeMap).toBeNull();
+    expect(last.props.initialMetronomeAnchorSeconds).toBeNull();
+    expect(last.props.play).toEqual({ bar1Seconds: 2.5, countInBars: 2, preroll: false });
+    expect(last.props.gradedOnsets).toEqual([]);
+
+    act(() => {
+      (last.props.onPlayChange as (p: object) => void)({ bar1Seconds: 3 });
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(acts.saveStudioDraft).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timing: expect.objectContaining({ play: { bar1Seconds: 3, countInBars: 2, preroll: false } }),
       })
     );
   });

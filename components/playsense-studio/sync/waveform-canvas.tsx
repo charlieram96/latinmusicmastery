@@ -103,6 +103,14 @@ export interface WaveformCanvasProps {
   onFlexAdd?: (hitIndex: number) => void;
   onFlexDrag?: (index: number, dstTimeline: number, mods: { snap: boolean }) => void;
   onFlexRemove?: (index: number) => void;
+  /** The bar markers and tail still draw but can't be grabbed (a graded part's
+   *  bar lines come from the tempo grid). A press on one scrubs/drags as empty
+   *  space instead. */
+  markersLocked?: boolean;
+  /** When given, dragging empty waveform reports a shift (delta seconds from
+   *  the press; `mods.snap` false while ⌘ is held) instead of scrubbing. A
+   *  plain click still seeks. */
+  onBackgroundDrag?: (deltaSeconds: number, phase: 'move' | 'end', mods: { snap: boolean }) => void;
 }
 
 const DEFAULT_HEIGHT = 240;
@@ -208,6 +216,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     onFlexAdd,
     onFlexDrag,
     onFlexRemove,
+    markersLocked = false,
+    onBackgroundDrag,
   } = props;
 
   const onZoomByRef = useRef(onZoomBy);
@@ -250,6 +260,13 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   const onNoteDragRef = useRef(onNoteDrag);
   const onDragEndRef = useRef(onDragEnd);
   const onScrollByPxRef = useRef(onScrollByPx);
+  // Graded mode (locked markers, background shift): mirrored in an effect, like flex below.
+  const markersLockedRef = useRef(markersLocked);
+  const onBackgroundDragRef = useRef(onBackgroundDrag);
+  useEffect(() => {
+    markersLockedRef.current = markersLocked;
+    onBackgroundDragRef.current = onBackgroundDrag;
+  });
   onSeekRef.current = onSeek;
   onSelectRef.current = onSelect;
   onMarkerDragRef.current = onMarkerDrag;
@@ -784,6 +801,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       | 'dragging-marker'
       | 'pending-scrub'
       | 'scrubbing'
+      | 'shifting'
       | 'pending-trim'
       | 'dragging-trim'
       | 'pending-anchor'
@@ -839,6 +857,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         const d = Math.abs(videoTimeToX(selNote.videoTimeSeconds) - x);
         if (d <= HANDLE_HIT_PX) best = { target: { kind: 'note' }, dist: d };
       }
+      if (markersLockedRef.current) return best?.target ?? null;
       for (const hnd of handlesRef.current) {
         const hx = videoTimeToX(hnd.videoTimeSeconds);
         const d = Math.abs(hx - x);
@@ -948,7 +967,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       const moved = Math.abs(x - startX) >= DRAG_THRESHOLD_PX;
 
       if (mode === 'pending-marker' && moved) mode = 'dragging-marker';
-      if (mode === 'pending-scrub' && moved) mode = 'scrubbing';
+      if (mode === 'pending-scrub' && moved) mode = onBackgroundDragRef.current ? 'shifting' : 'scrubbing';
       if (mode === 'pending-trim' && moved) mode = 'dragging-trim';
       if (mode === 'pending-anchor' && moved) mode = 'dragging-anchor';
       if ((mode === 'pending-flex' || mode === 'pending-flex-remove') && moved) {
@@ -973,6 +992,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         }
       } else if (mode === 'scrubbing') {
         onSeekRef.current(xToVideoTime(x));
+      } else if (mode === 'shifting') {
+        onBackgroundDragRef.current?.((x - startX) / ppsRef.current, 'move', { snap: !e.metaKey });
       }
     };
 
@@ -991,6 +1012,8 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       } else if (mode === 'pending-scrub') {
         // A click on empty space = seek there.
         onSeekRef.current(xToVideoTime(localX(e)));
+      } else if (mode === 'shifting') {
+        onBackgroundDragRef.current?.((localX(e) - startX) / ppsRef.current, 'end', { snap: !e.metaKey });
       } else if (
         mode === 'dragging-marker' ||
         mode === 'dragging-trim' ||
