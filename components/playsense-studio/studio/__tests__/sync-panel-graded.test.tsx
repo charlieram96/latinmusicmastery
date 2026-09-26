@@ -75,6 +75,7 @@ const SCORE = {
 const ONSETS = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5];
 
 let host: HTMLDivElement;
+let inspectorHost: HTMLDivElement;
 let root: Root;
 const onPlayChange = vi.fn();
 const onTimingChange = vi.fn();
@@ -105,6 +106,7 @@ async function renderPanel(play = { bar1Seconds: 2 as number | null, countInBars
         play={play}
         onPlayChange={onPlayChange}
         gradedOnsets={ONSETS}
+        inspectorEl={inspectorHost}
       />
     );
   });
@@ -115,6 +117,11 @@ const downbeats = () => stub.canvas!.handles.filter((h) => h.isDownbeat).map((h)
 const lane = () => stub.lanes.at(-1)!;
 const button = (text: string) =>
   Array.from(host.querySelectorAll('button')).find((b) => b.textContent?.trim() === text);
+// Placement, anchor, re-analyze and the graded controls (Count-in, Pre-roll,
+// the on-hit readout) moved into the left panel's Sync status, which SyncPanel
+// renders through `inspectorEl` (Studio layout pass, Task 4).
+const inspectorButton = (text: string) =>
+  Array.from(inspectorHost.querySelectorAll('button')).find((b) => b.textContent?.trim() === text);
 
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -127,11 +134,14 @@ beforeEach(() => {
   onTimingChange.mockReset();
   host = document.createElement('div');
   document.body.appendChild(host);
+  inspectorHost = document.createElement('div');
+  document.body.appendChild(inspectorHost);
   root = createRoot(host);
 });
 afterEach(() => {
   act(() => root.unmount());
   host.remove();
+  inspectorHost.remove();
   vi.useRealTimers();
 });
 
@@ -152,25 +162,28 @@ describe('SyncPanel graded mode', () => {
 
   it('shows the graded controls and hides Flex, Auto-place and the drag mode', async () => {
     await renderPanel();
-    const text = host.textContent ?? '';
+    // Auto-align stays on the waveform's tool cluster (WaveTools), in the main tree.
     expect(button('Auto-align')).toBeTruthy();
-    expect(text).toContain('Count-in');
-    expect(button('1 bar')?.getAttribute('aria-checked')).toBe('true');
-    expect(button('2 bars')?.getAttribute('aria-checked')).toBe('false');
-    expect(button('Pre-roll video')?.getAttribute('aria-pressed')).toBe('true');
+    // Count-in, Pre-roll and the on-hit readout moved into Sync status (inspectorEl).
+    const inspectorText = inspectorHost.textContent ?? '';
+    expect(inspectorText).toContain('Count-in');
+    expect(inspectorButton('1 bar')?.getAttribute('aria-checked')).toBe('true');
+    expect(inspectorButton('2 bars')?.getAttribute('aria-checked')).toBe('false');
+    expect(inspectorButton('Pre-roll video')?.getAttribute('aria-pressed')).toBe('true');
     // Bar 1 at 2: the notes at 3.0 … 5.5 sit 10 ms from a hit; 2.0 and 2.5 don't.
-    expect(text).toContain('6/8 notes on a hit');
+    expect(inspectorText).toContain('6/8 notes on a hit');
     expect(button('Flex')).toBeUndefined();
     expect(button('Auto-place bars')).toBeUndefined();
     expect(button('Ripple')).toBeUndefined();
-    expect(text).not.toContain('Anchor at playhead');
+    expect(host.textContent).not.toContain('Anchor at playhead');
+    expect(inspectorText).not.toContain('Anchor at playhead');
   });
 
   it('writes count-in and pre-roll changes through onPlayChange', async () => {
     await renderPanel();
-    act(() => button('2 bars')!.click());
+    act(() => inspectorButton('2 bars')!.click());
     expect(onPlayChange).toHaveBeenLastCalledWith({ countInBars: 2 });
-    act(() => button('Pre-roll video')!.click());
+    act(() => inspectorButton('Pre-roll video')!.click());
     expect(onPlayChange).toHaveBeenLastCalledWith({ preroll: false });
   });
 
@@ -186,8 +199,8 @@ describe('SyncPanel graded mode', () => {
     await renderPanel();
     const align = button('Auto-align')!;
     expect(align.disabled).toBe(true);
-    expect(align.title).toBe('Re-analyze audio to find the hits');
-    expect(host.textContent).not.toContain('notes on a hit');
+    expect(align.title).toBe('Line the play-along up with the tempo grid');
+    expect(inspectorHost.textContent).not.toContain('notes on a hit');
   });
 
   it('dragging the Exercise block shifts bar 1, snapping the first onset onto a hit', async () => {

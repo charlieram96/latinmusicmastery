@@ -13,7 +13,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, ChevronsLeftRight, Crosshair, FilePlus2, Loader2, Move, Music2, Spline, Undo2, Wand2 } from 'lucide-react';
+import { AudioLines, FilePlus2, Loader2 } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -102,6 +102,8 @@ import {
 } from '@/components/playsense-studio/studio/integrated-editor';
 import type { SelectedEventRef } from '@/components/playsense-studio/studio/editable-measure-strip';
 import { PlaceScoreControl } from '@/components/playsense-studio/sync/place-score-control';
+import { WaveTools } from '@/components/playsense-studio/studio/wave-tools';
+import { SyncActions } from '@/components/playsense-studio/studio/sync-actions';
 import { SectionsLane, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { resolvePercStroke, isPercussion } from '@/lib/playsense-studio/perc-strokes';
 import { collectOnsets, onsetForSelection } from '@/lib/playsense-studio/note-onsets';
@@ -146,6 +148,10 @@ export interface SyncPanelProps {
   /** Graded mode: the graded onsets of one loop, in seconds from bar 1,
    *  ascending — what Auto-align and the "notes on a hit" readout measure. */
   gradedOnsets?: number[];
+  /** Graded mode: the waveform tool cluster's "Student preview" button, when
+   *  the host wants it there. `studio-workspace.tsx` already has its own app-bar
+   *  Student preview button, so it leaves this unset rather than duplicate it. */
+  onStudentPreview?: () => void;
   videoUrl: string | null;
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
@@ -304,6 +310,7 @@ export function SyncPanel({
   play,
   onPlayChange,
   gradedOnsets = EMPTY_ONSETS,
+  onStudentPreview,
 }: SyncPanelProps) {
   const track = score.tracks[0];
   const graded = mode === 'graded';
@@ -1779,163 +1786,6 @@ export function SyncPanel({
     <>
       {/* ============ CENTER: context bar + unified stage ============ */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-        {/* Context bar — placement · drag mode · loop/analyze (sync only) */}
-        {showSync && (
-          <div className="flex flex-shrink-0 flex-wrap items-center gap-2 text-sm">
-            <PlaceScoreControl
-              armed={placeArmed}
-              conflict={ghostConflict}
-              spanLabel={ghostRange ? `${formatTime(ghostRange.startSeconds)} – ${formatTime(ghostRange.endSeconds)}` : null}
-              onArm={() => setPlaceArmed(true)}
-              onConfirm={confirmPlacement}
-              onCancel={() => setPlaceArmed(false)}
-            />
-
-            {/* The anchor can't conflict with anything, so unlike placement it
-                needs no arm/confirm step — one click sets it at the playhead. */}
-            {anchorOwner && (
-              <button
-                type="button"
-                onClick={setAnchorAtPlayhead}
-                className="st-chip"
-                title="Mark this moment as a beat, so the student's click locks to the recording"
-              >
-                <AudioLines className="h-4 w-4" />
-                <span className="hidden lg:inline">Anchor at playhead</span>
-              </button>
-            )}
-
-            {graded ? (
-              <>
-                <button
-                  type="button"
-                  onClick={runAutoAlign}
-                  disabled={!hits.length}
-                  className="st-chip"
-                  title={
-                    hits.length
-                      ? 'Move bar 1 so the most notes land on a hit'
-                      : 'Re-analyze audio to find the hits'
-                  }
-                >
-                  <Crosshair className="h-4 w-4" />
-                  Auto-align
-                </button>
-                <span className="st-sec-label">Count-in</span>
-                <div className="st-seg" role="radiogroup" aria-label="Count-in">
-                  {([1, 2] as const).map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      role="radio"
-                      aria-checked={(play?.countInBars ?? 1) === n}
-                      className={(play?.countInBars ?? 1) === n ? 'is-on' : ''}
-                      onClick={() => onPlayChange?.({ countInBars: n })}
-                    >
-                      {n === 1 ? '1 bar' : '2 bars'}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onPlayChange?.({ preroll: !(play?.preroll ?? true) })}
-                  className={`st-chip${(play?.preroll ?? true) ? ' is-on' : ''}`}
-                  aria-pressed={play?.preroll ?? true}
-                  title="Play the video through the count-in, instead of waiting at bar 1"
-                >
-                  Pre-roll video
-                </button>
-                {onHit && hits.length > 0 && (
-                  <span className="text-xs tabular-nums text-muted-foreground" role="status">
-                    {onHit.k}/{onHit.n} notes on a hit
-                  </span>
-                )}
-                {alignNotice && (
-                  <span className="text-xs text-muted-foreground" role="status">
-                    {alignNotice}
-                  </span>
-                )}
-              </>
-            ) : (
-            <>
-            <button
-              type="button"
-              onClick={runAutoPlace}
-              disabled={!hits.length || tweenActive}
-              className="st-chip"
-              title={
-                hits.length
-                  ? 'Fit the bars to the recording — place the first bar near its note first'
-                  : 'Re-analyze audio to find the hits'
-              }
-            >
-              <Wand2 className="h-4 w-4" />
-              <span className="hidden lg:inline">Auto-place bars</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setFlexMode((v) => !v)}
-              className={`st-chip${flexMode ? ' is-on' : ''}`}
-              aria-pressed={flexMode}
-              title="Flex — click a hit to add a point, drag it onto the written note, double-click to remove (F)"
-            >
-              <Spline className="h-4 w-4" />
-              Flex
-            </button>
-            {autoPlaceUndo && (
-              <button type="button" onClick={undoAutoPlace} className="st-chip" title="Put the bars back where they were">
-                <Undo2 className="h-4 w-4" />
-                Undo auto-place
-              </button>
-            )}
-            {autoPlaceNotice && (
-              <span className="text-xs text-muted-foreground" role="status">
-                {autoPlaceNotice}
-              </span>
-            )}
-            </>
-            )}
-
-            <div className="ml-auto flex items-center gap-1.5">
-              {decodeState === 'loading' && (
-                <span className="text-xs text-muted-foreground">
-                  {progress >= 1 ? 'Processing audio…' : `Downloading audio… ${progress > 0 ? `${Math.round(progress * 100)}%` : ''}`}
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowNotes((v) => !v)}
-                className={`st-iconbtn${showNotes ? ' text-primary' : ''}`}
-                title={showNotes ? 'Hide note overlay on the waveform' : 'Show note overlay on the waveform'}
-                aria-pressed={showNotes}
-              >
-                <Music2 className="h-4 w-4" />
-              </button>
-              {decodeState !== 'loading' && (
-                <button
-                  type="button"
-                  onClick={reanalyze}
-                  className="st-chip"
-                  title={
-                    decodeState === 'idle'
-                      ? 'Analyze audio — decode this video so the waveform appears'
-                      : decodeState === 'error'
-                        ? 'Retry audio analysis'
-                        : 'Re-analyze audio'
-                  }
-                >
-                  <AudioLines className="h-4 w-4" />
-                  {decodeState === 'idle'
-                    ? 'Analyze audio'
-                    : decodeState === 'error'
-                      ? 'Retry analysis'
-                      : 'Re-analyze'}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* The unified stage — waveform lane + notation lane share one grid */}
         <div className="relative flex min-h-0 flex-1 flex-col">
           <div className={`st-stage flex-1${analyzing ? ' pointer-events-none select-none opacity-50' : ''}`} aria-busy={analyzing}>
@@ -2043,38 +1893,33 @@ export function SyncPanel({
                     />
                   )}
 
-                  {/* Zoom and the marker drag mode float over the waveform — they
-                      act on THIS lane (its number chips use dragAll). */}
-                  <div className="st-zoom-float">
-                    {!graded && (
-                    <div className="st-seg" role="radiogroup" aria-label="Drag mode">
-                      <button
-                        type="button"
-                        className={dragAll ? 'is-on' : ''}
-                        onClick={() => setDragAll(true)}
-                        title="Ripple — dragging a measure moves it and everything after it (hold Option to move just one)"
-                      >
-                        <ChevronsLeftRight className="h-3.5 w-3.5" />
-                        Ripple
-                      </button>
-                      <button
-                        type="button"
-                        className={!dragAll ? 'is-on' : ''}
-                        onClick={() => setDragAll(false)}
-                        title="Single — dragging moves only that measure or marker (hold Option to ripple)"
-                      >
-                        <Move className="h-3.5 w-3.5" />
-                        Single
-                      </button>
-                    </div>
-                    )}
-                    <ZoomSlider
-                      pps={pps}
-                      onZoomTo={zoomTo}
-                      onZoomBy={(f) => zoomBy(f, anchorPxFor(timelineNow, pps, scrollLeft, viewportWidth))}
-                      onFit={fitZoom}
-                    />
-                  </div>
+                  {/* The waveform's floating tool cluster — everything that acts
+                      on THIS lane (its number chips use dragAll). */}
+                  <WaveTools
+                    graded={graded}
+                    onAutoPlace={runAutoPlace}
+                    autoPlaceDisabled={!hits.length || tweenActive}
+                    autoPlaceTitle={
+                      hits.length
+                        ? 'Fit the bars to the recording — place the first bar near its note first'
+                        : 'Re-analyze audio to find the hits'
+                    }
+                    onAutoAlign={runAutoAlign}
+                    autoAlignDisabled={!hits.length}
+                    onStudentPreview={onStudentPreview}
+                    dragAll={dragAll}
+                    onDragAll={setDragAll}
+                    flexMode={flexMode}
+                    onFlex={() => setFlexMode((v) => !v)}
+                    showNotes={showNotes}
+                    onShowNotes={() => setShowNotes((v) => !v)}
+                    zoom={{
+                      pps,
+                      onZoomTo: zoomTo,
+                      onZoomBy: (f) => zoomBy(f, anchorPxFor(timelineNow, pps, scrollLeft, viewportWidth)),
+                      onFit: fitZoom,
+                    }}
+                  />
                 </div>
               )}
 
@@ -2185,6 +2030,36 @@ export function SyncPanel({
       {inspectorEl &&
         createPortal(
           <>
+            {showSync && (
+              <SyncActions
+                placeControl={
+                  <PlaceScoreControl
+                    armed={placeArmed}
+                    conflict={ghostConflict}
+                    spanLabel={ghostRange ? `${formatTime(ghostRange.startSeconds)} – ${formatTime(ghostRange.endSeconds)}` : null}
+                    onArm={() => setPlaceArmed(true)}
+                    onConfirm={confirmPlacement}
+                    onCancel={() => setPlaceArmed(false)}
+                  />
+                }
+                anchor={anchorOwner ? { onSet: setAnchorAtPlayhead } : undefined}
+                autoPlaceUndo={autoPlaceUndo ? undoAutoPlace : undefined}
+                graded={
+                  graded
+                    ? {
+                        countInBars: play?.countInBars ?? 1,
+                        onCountIn: (n) => onPlayChange?.({ countInBars: n }),
+                        preroll: play?.preroll ?? true,
+                        onPreroll: () => onPlayChange?.({ preroll: !(play?.preroll ?? true) }),
+                        onHit: onHit && hits.length > 0 ? onHit : null,
+                      }
+                    : undefined
+                }
+                reanalyze={{ onClick: reanalyze, state: decodeState, progress }}
+                notices={[autoPlaceNotice, alignNotice].filter((n): n is string => !!n)}
+              />
+            )}
+
             {showSync ? (
               !monitorEl && <ReferenceMonitor videoRef={videoRef} videoUrl={videoUrl} />
             ) : (

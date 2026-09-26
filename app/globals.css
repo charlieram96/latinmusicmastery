@@ -482,6 +482,7 @@ html:has([data-marketing]) {
   color: hsl(var(--primary));
 }
 .st-chip:disabled { opacity: 0.45; cursor: not-allowed; }
+.st-chip.block { width: 100%; justify-content: flex-start; height: 34px; }
 
 /* Publish control (app bar): the pulsing button that opens the "what's
    unpublished" popover, and the popover itself. */
@@ -857,32 +858,21 @@ html:has([data-marketing]) {
 .st-transport-scrub { flex: 1; min-width: 80px; }
 .st-transport-row .st-transport-scrub > div { height: 28px; }
 
-/* Zoom control floating over the waveform lane (below the measure-chip band). */
-.st-zoom-float {
-  position: absolute;
-  top: 28px;
-  right: 10px;
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-/* The Ripple/Single drag-mode toggle sits beside the zoom, matched to its height. */
-.st-zoom-float .st-seg {
-  height: 30px;
-  padding: 2px;
-  background: color-mix(in srgb, hsl(var(--card)) 82%, transparent);
-  backdrop-filter: blur(4px);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-}
-.st-zoom-float .st-seg button { height: 24px; }
-.st-zoom-float .st-zoom {
-  height: 30px;
-  padding: 0 6px;
-  background: color-mix(in srgb, hsl(var(--card)) 82%, transparent);
-  backdrop-filter: blur(4px);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-}
+/* The waveform's floating tool cluster (mockup .wtools). */
+.st-wtools { position: absolute; top: 28px; right: 10px; z-index: 6; display: flex; align-items: center; gap: 2px;
+  height: 32px; padding: 0 4px; border-radius: 10px; border: 1px solid hsl(var(--border));
+  background: color-mix(in srgb, hsl(var(--card)) 84%, transparent); backdrop-filter: blur(6px);
+  box-shadow: 0 2px 10px rgba(0,0,0,.35); opacity: .72; transition: opacity .15s; }
+.st-wtools:hover, .st-wtools:focus-within { opacity: 1; }
+.st-wtools .st-seg { padding: 2px; }
+.st-wtools .st-seg button { height: 22px; font-size: 11px; padding: 0 7px; }
+.st-wtools .st-divline { height: 16px; margin: 0 3px; }
+.st-wtools-auto { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 7px;
+  font-size: 11.5px; font-weight: 600; background: hsl(var(--primary) / .14); color: hsl(var(--primary)); }
+.st-wtools-auto:hover:not(:disabled) { background: hsl(var(--primary) / .24); }
+.st-wtools-auto:disabled { opacity: .4; cursor: not-allowed; }
+.st-wtools-auto.is-quiet { background: none; color: hsl(var(--foreground)); }
+.st-iconbtn.amber { color: hsl(var(--primary)); }
 
 /* ---- Scored-sections lane (under the waveform) ---- */
 .st-sections-lane {
