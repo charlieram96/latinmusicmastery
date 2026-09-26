@@ -24,6 +24,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeftRight, Columns2, Music2, PictureInPicture2, Rows2, type LucideIcon } from 'lucide-react';
 import { useTranslation } from '@/components/language-provider';
 import { cn } from '@/lib/utils';
@@ -52,6 +53,8 @@ const RESET_MS = 360;
 const DRAG_THRESHOLD = 4;
 /** Never start a PiP drag from the video's own controls. */
 const NO_DRAG = '[data-ws-nodrag], video[controls], input, select, textarea, a, [role="slider"]';
+/** A double-click on these (the tap-to-play overlay, any control) is not "go back to side". */
+const NO_DBLCLICK = `${NO_DRAG}, button, [role="button"]`;
 const TILT = { min: -3, max: 3 };
 
 const reducedMotion = () =>
@@ -72,6 +75,11 @@ export interface SplitWorkspaceProps {
   /** Full-width strip below the stage, clear of the floating video (e.g. the transport in PiP). */
   footer?: ReactNode;
   /**
+   * Content that sits under the video in side / stack and in the footer in PiP / music only (the
+   * watch transport). It is rendered once and its DOM node is moved, so it never remounts.
+   */
+  dock?: ReactNode;
+  /**
    * 'card' — bordered box, `initialHeight` tall (capped to the viewport in a lesson).
    * 'bleed' — edge to edge, fitted to the viewport above the lesson footer.
    * 'fill' — the parent sizes it.
@@ -88,6 +96,7 @@ export function SplitWorkspace({
   highway,
   overlay,
   footer,
+  dock,
   frame = 'card',
   initialHeight = 560,
   className,
@@ -107,6 +116,28 @@ export function SplitWorkspace({
   const pipFrom = useRef<DOMRect | null>(null);
   const stateRef = useRef<WorkspaceState>(state);
   useEffect(() => { stateRef.current = state; });
+  // The drag in progress, so unmounting mid-drag can drop its window listeners.
+  const endDrag = useRef<(() => void) | null>(null);
+  useEffect(() => () => { endDrag.current?.(); }, []);
+
+  // ---- Dock: one mounted subtree, its node moved between two slots ----
+  const [dockNode, setDockNode] = useState<HTMLDivElement | null>(null);
+  const hasDock = dock != null && dock !== false;
+  useLayoutEffect(() => {
+    if (!hasDock) return;
+    const node = document.createElement('div');
+    node.className = 'ws-dock';
+    node.dataset.wsNodrag = '';
+    setDockNode(node);
+    return () => { node.remove(); setDockNode(null); };
+  }, [hasDock]);
+  const dockInMedia = hasMedia && (layout === 'side' || layout === 'stack');
+  const mediaSlot = useRef<HTMLDivElement | null>(null);
+  const footerSlot = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => {
+    const slot = dockInMedia ? mediaSlot.current : footerSlot.current;
+    if (dockNode && slot && dockNode.parentNode !== slot) slot.appendChild(dockNode);
+  });
 
   // ---- Height: fit to the viewport above the lesson footer ----
   const [height, setHeight] = useState(initialHeight);
@@ -153,10 +184,16 @@ export function SplitWorkspace({
     return () => { beforeLayoutChangeRef.current = null; };
   }, [beforeLayoutChangeRef]);
 
+  // Runs after every commit so a measurement taken for a change that did not
+  // happen (the active layout picked again) never animates a later change.
+  const flipKey = `${layout}|${state.swap}|${state.corner}`;
+  const lastFlipKey = useRef(flipKey);
   useLayoutEffect(() => {
     const from = flipFrom.current;
     flipFrom.current = null;
-    if (!from) return;
+    const changed = lastFlipKey.current !== flipKey;
+    lastFlipKey.current = flipKey;
+    if (!from || !changed) return;
     [mediaRef.current, musicRef.current].forEach((el, i) => {
       if (!el || typeof el.animate !== 'function') return;
       const to = el.getBoundingClientRect();
@@ -171,7 +208,7 @@ export function SplitWorkspace({
         { transformOrigin: '0 0', transform: 'none' },
       ], { duration: FLIP_MS, easing: EASE_OUT });
     });
-  }, [layout, state.swap, state.corner]);
+  });
 
   // ---- PiP spring to its new corner ----
   const springPip = useCallback(() => {
@@ -220,15 +257,21 @@ export function SplitWorkspace({
       div.setAttribute('aria-valuenow', String(Math.round(value)));
       if (which === 'split' && pctRef.current) pctRef.current.textContent = `${Math.round(value)}%`;
     };
-    const up = () => {
+    const detach = () => {
+      endDrag.current = null;
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
+    };
+    const up = () => {
+      detach();
       delete ws.dataset.dragging;
       delete div.dataset.active;
       if (value == null) return;
       update(which === 'split' ? { split: leadingSplit(value, swap) } : { musicSplit: value });
     };
+    endDrag.current?.();
+    endDrag.current = detach;
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', up);
@@ -264,6 +307,8 @@ export function SplitWorkspace({
     let dragging = false;
     let width = pipWidth;
     let last = { dx: 0, dy: 0 };
+    // Holding the mouse still for the first few pixels must not start a text selection.
+    const noSelect = (ev: Event) => ev.preventDefault();
     const move = (ev: PointerEvent) => {
       const dx = ev.clientX - x0;
       const dy = ev.clientY - y0;
@@ -281,10 +326,15 @@ export function SplitWorkspace({
         el.style.transform = `translate(${dx}px, ${dy}px) rotate(${clamp(dx / 60, TILT)}deg)`;
       }
     };
-    const up = () => {
+    const detach = () => {
+      endDrag.current = null;
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
+      document.removeEventListener('selectstart', noSelect);
+    };
+    const up = () => {
+      detach();
       if (!dragging) return;
       delete el.dataset.grabbing;
       delete ws.dataset.dragging;
@@ -299,13 +349,16 @@ export function SplitWorkspace({
       if (next === corner) springPip();
       else update({ corner: next });
     };
+    endDrag.current?.();
+    endDrag.current = detach;
+    document.addEventListener('selectstart', noSelect);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', up);
   };
 
   const onMediaDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (layout !== 'pip' || (e.target as Element).closest(NO_DRAG)) return;
+    if (layout !== 'pip' || (e.target as Element).closest(NO_DBLCLICK)) return;
     setLayout('side');
   };
 
@@ -330,6 +383,7 @@ export function SplitWorkspace({
         {hasMedia && (
           <div ref={mediaRef} className="ws-pane ws-media" onPointerDown={onMediaPointerDown} onDoubleClick={onMediaDoubleClick}>
             {media}
+            {hasDock && dockInMedia && <div ref={mediaSlot} className="ws-dock-slot" data-ws-nodrag="" />}
             <span className="ws-pip-resize" aria-hidden="true" title={t('lessonWorkspace.resizePip')} />
           </div>
         )}
@@ -379,6 +433,8 @@ export function SplitWorkspace({
         {overlay}
       </div>
       {footer && <div className="ws-footer">{footer}</div>}
+      {hasDock && !dockInMedia && <div ref={footerSlot} className="ws-footer ws-dock-slot" />}
+      {dockNode && createPortal(dock, dockNode)}
     </div>
   );
 }
