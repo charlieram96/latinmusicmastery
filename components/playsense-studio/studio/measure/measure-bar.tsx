@@ -70,7 +70,15 @@ export function MeasureBar({ ref, ...props }: {
         <span>{props.label}</span>
         <span>{formatBarTime(props.startSeconds)}</span>
         {props.bpm !== null && <span title="Tempo these bars play at">≈{props.bpm.toFixed(1)}</span>}
-        {props.flag && <span className="st-status-pip warn" title={props.flag} style={{ width: 7, height: 7 }} />}
+        {props.flag && (
+          <span
+            className="st-status-pip warn"
+            role="img"
+            aria-label={`Timing: ${props.flag}`}
+            title={props.flag}
+            style={{ width: 7, height: 7 }}
+          />
+        )}
         {props.flexInfo && <span className="st-fbar-flex" title="This range has flex applied">{props.flexInfo}</span>}
       </span>
       <span className="st-fbar-sep" aria-hidden />

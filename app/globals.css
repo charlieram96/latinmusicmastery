@@ -702,15 +702,19 @@ html:has([data-marketing]) {
   background: repeating-linear-gradient(135deg, hsl(var(--gold-highlight) / .14) 0 6px, transparent 6px 12px);
 }
 /* Floats over the strip's bottom edge instead of taking a row below it (Task
-   7). right: 250px clears the floating reference video (.st-pip, 236px wide)
-   that always sits over the strip's bottom-right on the sync path, so the "?"
-   help button stays clickable. */
+   7). right: 272px clears the floating reference video (.st-pip, default
+   right: 26px + width 236px = 262px footprint, plus a small gap) that always
+   sits over the strip's bottom-right on the sync path, so the "?" help
+   button stays clickable. */
 .st-strip-foot {
-  position: absolute; left: 8px; right: 250px; bottom: 8px; z-index: 17; display: flex; align-items: center; gap: 8px;
+  position: absolute; left: 8px; right: 272px; bottom: 8px; z-index: 17; display: flex; align-items: center; gap: 8px;
   pointer-events: none; min-height: 0; padding: 0; font-size: 11px; color: hsl(var(--muted-foreground) / .85);
 }
 .st-strip-foot > * { pointer-events: auto; }
-.st-strip-foot > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The hint is display-only text over the strip — pointer-events: none here
+   (overriding the > * rule above, which stays for the issue chip and the "?"
+   button) so it doesn't steal clicks/drags meant for the bars underneath it. */
+.st-strip-foot > span { pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .st-strip-foot kbd {
   font: 10px var(--font-mono, ui-monospace, monospace); background: hsl(var(--muted)); border: 1px solid hsl(var(--border));
   border-radius: 4px; padding: 0 5px; color: hsl(var(--foreground) / .85);

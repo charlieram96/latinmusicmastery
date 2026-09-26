@@ -87,13 +87,15 @@ describe('MeasureBar', () => {
     expect(byName('Loop').title).toBe('Play the video to loop');
   });
 
-  it('shows the flag as a pip, with the reason in its title', () => {
+  it('shows the flag as a pip, with the reason in its title and an accessible label', () => {
     render({ flag: 'no hit near its first note' });
     const info = host.querySelector('.st-fbar-info')!;
-    // The reason lives in the title, not as visible text next to the dot.
+    // The reason lives in the title (and the a11y label), not as visible text next to the dot.
     const pip = info.querySelector('.st-status-pip')!;
     expect(pip).not.toBeNull();
     expect(pip.getAttribute('title')).toBe('no hit near its first note');
+    expect(pip.getAttribute('role')).toBe('img');
+    expect(pip.getAttribute('aria-label')).toBe('Timing: no hit near its first note');
     expect(info.textContent).not.toContain('no hit near its first note');
   });
 
