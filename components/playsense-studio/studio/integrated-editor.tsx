@@ -815,6 +815,17 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     return seconds > 0 ? (measureLengthInQN(b.timeSignature) / seconds) * 60 : null;
   })();
 
+  // Same in both views (staff and piano-roll) — hoisted so it's written once.
+  const stripCorner = (
+    <StripCorner
+      tab={editorTab}
+      onTab={(t) => { setEditorTab(t); if (t !== 'staff' && zoom) finishZoomClose(); }}
+      midi={activeTrack ? <MidiRecordButton compact score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} getCurrentSeconds={getCurrentSeconds} recordingSource={recordingSource} /> : null}
+      onAddEnd={() => insertMeasureAt(measureCount)}
+      addEndProblem={gapProblems[measureCount] ?? null}
+    />
+  );
+
   return (
     <div className="relative flex h-full min-h-0 flex-col gap-3">
       {/* Active view — the audio-aligned staff (or piano-roll). The staff /
@@ -850,13 +861,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               onScrollByPx={onScrollByPx}
               height={staffHeight}
             />
-            <StripCorner
-              tab={editorTab}
-              onTab={(t) => { setEditorTab(t); if (t !== 'staff' && zoom) finishZoomClose(); }}
-              midi={activeTrack ? <MidiRecordButton compact score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} getCurrentSeconds={getCurrentSeconds} recordingSource={recordingSource} /> : null}
-              onAddEnd={() => insertMeasureAt(measureCount)}
-              addEndProblem={gapProblems[measureCount] ?? null}
-            />
+            {stripCorner}
             {barPos && bounds && (
               <MeasureBar
                 ref={measureBarRef}
@@ -1070,13 +1075,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       )}
       {editorTab === 'piano-roll' && (
         <div className="relative min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-card p-3">
-          <StripCorner
-            tab={editorTab}
-            onTab={(t) => { setEditorTab(t); if (t !== 'staff' && zoom) finishZoomClose(); }}
-            midi={activeTrack ? <MidiRecordButton compact score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} getCurrentSeconds={getCurrentSeconds} recordingSource={recordingSource} /> : null}
-            onAddEnd={() => insertMeasureAt(measureCount)}
-            addEndProblem={gapProblems[measureCount] ?? null}
-          />
+          {stripCorner}
           <PianoRollView score={score} activeTrackIndex={activeTrackIndex} dispatch={dispatch} />
         </div>
       )}
