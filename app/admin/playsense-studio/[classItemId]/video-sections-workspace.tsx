@@ -427,6 +427,9 @@ function VideoSectionsBody({
               // last Published content. Students only ever get the live rows.
               initialScore={seed.score}
               initialTiming={seed.timing}
+              classItemTitle={title}
+              sectionIndex={Math.max(0, sections.findIndex((s) => s.sectionId === selected.sectionId))}
+              sectionCount={sections.length}
               videoUrl={videoUrl}
               videoDurationSeconds={videoDurationSeconds}
               trim={trim}

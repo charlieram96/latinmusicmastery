@@ -35,3 +35,27 @@ export function packLessonScoreRows(measureWidths: readonly number[], availableW
   if (interludes.trailing) rows.push({ startIndex: -1, widths: [availableWidth], interlude: 'trailing' })
   return rows
 }
+
+/** Width constants shared by the wrapped staff renderer and the PDF exporter. */
+export const MEASURE_WIDTH = {
+  QN_WIDTH: 54,
+  PER_NOTE_MIN_WIDTH: 22,
+  FIRST_MEASURE_EXTRA_WIDTH: 80,
+  MIN: 100,
+} as const;
+
+/**
+ * Model-space width each measure needs when several measures share a row.
+ * Clef/signature space belongs only to the first measure.
+ */
+export function requiredMeasureWidths(
+  blocks: ReadonlyArray<{ timeSignature: [number, number]; events: ReadonlyArray<unknown> }>,
+): number[] {
+  return blocks.map((block, index) => {
+    const quarterNotes = (block.timeSignature[0] * 4) / block.timeSignature[1];
+    return (
+      Math.max(MEASURE_WIDTH.MIN, quarterNotes * MEASURE_WIDTH.QN_WIDTH, block.events.length * MEASURE_WIDTH.PER_NOTE_MIN_WIDTH + 24) +
+      (index === 0 ? MEASURE_WIDTH.FIRST_MEASURE_EXTRA_WIDTH : 0)
+    );
+  });
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { packLessonScoreRows, packScoreRows } from '../notation-layout'
+import { packLessonScoreRows, packScoreRows, requiredMeasureWidths, MEASURE_WIDTH } from '../notation-layout'
 
 describe('responsive measure rows', () => {
   it('fits one, two, or three measures and caps wide rows at three', () => {
@@ -85,5 +85,24 @@ describe('row-start header space', () => {
   it('passes the extra through the lesson packer', () => {
     const rows = packLessonScoreRows([200, 200, 200, 200], 450, { leading: false, trailing: false }, [0, 0, 60, 60])
     expect(rows.map(row => row.widths.length)).toEqual([2, 1, 1])
+  })
+})
+
+describe('requiredMeasureWidths', () => {
+  const block = (events: number, ts: [number, number] = [4, 4]) => ({ timeSignature: ts, events: new Array(events).fill(0) })
+
+  it('gives the first measure room for the clef and time signature', () => {
+    const [first, second] = requiredMeasureWidths([block(4), block(4)])
+    expect(first - second).toBe(MEASURE_WIDTH.FIRST_MEASURE_EXTRA_WIDTH)
+  })
+  it('uses the larger of beat width and per-note width', () => {
+    const [sparse] = requiredMeasureWidths([block(1)])
+    const [dense] = requiredMeasureWidths([block(16)])
+    expect(sparse).toBe(4 * MEASURE_WIDTH.QN_WIDTH + MEASURE_WIDTH.FIRST_MEASURE_EXTRA_WIDTH)
+    expect(dense).toBe(16 * MEASURE_WIDTH.PER_NOTE_MIN_WIDTH + 24 + MEASURE_WIDTH.FIRST_MEASURE_EXTRA_WIDTH)
+  })
+  it('never goes below the minimum', () => {
+    const [, w] = requiredMeasureWidths([block(1), block(0, [1, 8])])
+    expect(w).toBe(MEASURE_WIDTH.MIN)
   })
 })

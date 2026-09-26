@@ -83,6 +83,9 @@ describe('ScoreSectionEditor — SyncPanel reseed after adopt', () => {
             scoreDocumentId="doc-1"
             initialScore={SCORE}
             initialTiming={SEED}
+            classItemTitle="Lesson"
+            sectionIndex={0}
+            sectionCount={1}
             videoUrl="https://example.com/lesson.mp4"
             videoDurationSeconds={120}
             onChanged={() => {}}

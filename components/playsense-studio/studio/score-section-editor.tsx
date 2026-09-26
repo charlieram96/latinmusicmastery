@@ -13,7 +13,7 @@
 // preview → the bottom drawer. SyncPanel itself portals its inspector + transport
 // into the right rail + bottom dock.
 
-import { FileUp, Redo2, Save, Undo2 } from 'lucide-react';
+import { Download, FileUp, Redo2, Save, Undo2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { replaceSectionScore } from '@/app/actions/playsense-studio';
@@ -27,6 +27,7 @@ import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-im
 import { HistoryPanel } from '@/components/playsense-studio/studio/drafts/history-panel';
 import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta-editor';
 import { HighwayPreview } from '@/components/playsense-studio/studio/highway-preview';
+import { ExportDialog } from '@/components/playsense-studio/export/export-dialog';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 export interface ScoreSectionEditorProps {
@@ -37,6 +38,9 @@ export interface ScoreSectionEditorProps {
   /** Seeds the editor's draft timing (and so SyncPanel's markers and click
    *  anchor): the draft's timing when one exists, else live. */
   initialTiming: StudioTiming;
+  classItemTitle: string;
+  sectionIndex: number;
+  sectionCount: number;
   videoUrl: string | null;
   videoDurationSeconds: number | null;
   /** Usable region of the lesson video, owned by the workspace above. */
@@ -67,6 +71,9 @@ export function ScoreSectionEditor({
   scoreDocumentId,
   initialScore,
   initialTiming,
+  classItemTitle,
+  sectionIndex,
+  sectionCount,
   videoUrl,
   videoDurationSeconds,
   trim,
@@ -185,6 +192,19 @@ export function ScoreSectionEditor({
               }
             />
             <HistoryPanel owner={{ kind: 'section', id: sectionId }} />
+            <ExportDialog
+              score={state.score}
+              classItemTitle={classItemTitle}
+              sectionIndex={sectionIndex}
+              sectionCount={sectionCount}
+              classItemId={classItemId}
+              trigger={
+                <button type="button" className="st-chip" title="Export this section as PDF, MusicXML or MIDI">
+                  <Download className="h-4 w-4" />
+                  <span className="hidden lg:inline">Export</span>
+                </button>
+              }
+            />
             <span className="mx-0.5 h-6 w-px bg-border" />
             <button
               onClick={undo}

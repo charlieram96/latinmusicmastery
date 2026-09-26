@@ -39,6 +39,7 @@ import { useWorkspaceLayout } from './use-workspace-layout';
 import { WorkspaceToolsPortal } from './workspace-tools-slot';
 import { SectionChips } from './section-chips';
 import { WATCH_WORKSPACE } from '@/lib/playsense-studio/workspace-layout';
+import { DownloadMenu } from '@/components/playsense-studio/export/download-menu';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
 import {
@@ -121,6 +122,8 @@ export interface PlayerSection {
 
 export interface PlaysenseStudioPlayerProps {
   classItemId: string;
+  /** Class item title used to name exported sheet-music files; falls back to the score title. */
+  classItemTitle?: string;
   videoUrl: string;
   posterUrl?: string;
   score: ScoreDocument;
@@ -171,6 +174,7 @@ export interface PlayerOverlayContext {
 
 export function PlaysenseStudioPlayer({
   classItemId,
+  classItemTitle,
   videoUrl,
   posterUrl,
   score: singleScore,
@@ -760,6 +764,16 @@ export function PlaysenseStudioPlayer({
                     <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} /></WorkspaceToolsPortal>
                     {staffNeedsRefollow(staffLayout, isFollowing) && <StaffRefollowButton onFollow={handleFollow} />}
                     <StaffLayoutSwitch value={notationLayout} onChange={setNotationLayout} />
+                    {hasNotation && (
+                      <DownloadMenu
+                        score={score}
+                        classItemTitle={classItemTitle ?? score.title}
+                        sectionIndex={Math.max(0, normalizedSections.indexOf(displaySection))}
+                        sectionCount={normalizedSections.length}
+                        classItemId={classItemId}
+                        readOnly={readOnly}
+                      />
+                    )}
                   </div>
                 </div>
                 {chipSections.length > 1 && (

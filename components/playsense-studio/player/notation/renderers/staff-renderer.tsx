@@ -48,7 +48,7 @@ import type {
   SeekTarget,
 } from '@/lib/playsense-studio/renderer';
 import { scoreCursorAt, scoreScrollOffset, scoreReadingStops, scoreReadingOffset, type ScoreReadingStop } from '@/lib/playsense-studio/notation-playback';
-import { packLessonScoreRows } from '@/lib/playsense-studio/notation-layout';
+import { packLessonScoreRows, MEASURE_WIDTH } from '@/lib/playsense-studio/notation-layout';
 import { createNotationInterlude } from './notation-interlude';
 import { barCounts, barsPerRow, glide, isAttack, noteLabel, noteStateAt, pageTurn, rowStates, stackedFollowTarget, type NoteNameStyle } from '@/lib/playsense-studio/notation/staff-n1';
 import { useTranslation } from '@/components/language-provider';
@@ -119,12 +119,13 @@ const CURSOR_OVERHANG = 10;
 const STAFF_LINE_WIDTH = 1;
 /** Base model width of a video interlude in horizontal notation. */
 const GAP_BOX_W = 112;
-const FIRST_MEASURE_EXTRA_WIDTH = 80; // room for clef + time signature
+// Shared with the PDF exporter (lib/playsense-studio/notation-layout.ts).
+const FIRST_MEASURE_EXTRA_WIDTH = MEASURE_WIDTH.FIRST_MEASURE_EXTRA_WIDTH; // room for clef + time signature
 /** Room for the clef every later wrapped row restates (the key signature adds 10 per accidental). */
 const ROW_START_CLEF_WIDTH = 40;
 /** Preserve note spacing when fitting several measures across a row. */
-const PER_NOTE_MIN_WIDTH = 22;
-const QN_WIDTH = 54;
+const PER_NOTE_MIN_WIDTH = MEASURE_WIDTH.PER_NOTE_MIN_WIDTH;
+const QN_WIDTH = MEASURE_WIDTH.QN_WIDTH;
 /** Space for measure labels and beat guides between wrapped staff rows. */
 const WRAP_ROW_GAP = 96;
 /** Fallback model width when the container hasn't been measured yet. */
@@ -497,7 +498,7 @@ class StaffRendererImpl implements ScoreRenderer {
     const systemPitch = paged ? 0 : Math.max(STAFF_LINE_SPAN + WRAP_ROW_GAP, this.staffFootprint + 10);
     const requiredWidths = measureBlocks.map((block, index) => {
       const quarterNotes = block.timeSignature[0] * 4 / block.timeSignature[1];
-      return Math.max(100, quarterNotes * QN_WIDTH, block.events.length * PER_NOTE_MIN_WIDTH + 24)
+      return Math.max(MEASURE_WIDTH.MIN, quarterNotes * QN_WIDTH, block.events.length * PER_NOTE_MIN_WIDTH + 24)
         + (index === 0 ? firstMeasureExtraWidth : 0);
     });
     const rowStartExtra = measureBlocks.map((block, index) =>
