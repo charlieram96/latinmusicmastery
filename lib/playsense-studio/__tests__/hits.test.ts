@@ -58,6 +58,27 @@ describe('hits helpers', () => {
     expect(flags.get(4)).toEqual({ kind: 'tempo', pct: 20 });
     expect(barFlags(s, []).size).toBe(0);
   });
+  it('measures tempo against the true median: the mean of the middle two for an even count', () => {
+    // Seconds per QN: 0.5, 0.5, 0.6, 0.55. Median 0.525, not the upper middle 0.55.
+    const s = state([0, 2, 4, 6.4], 8.6, [0, 4, 8, 12]);
+    const flags = barFlags(s, [0, 2, 4, 6.4]);
+    expect(flags.get(1)).toBeUndefined(); // 4.8% under 0.525 (it would be 9% under 0.55)
+    expect(flags.get(2)).toBeUndefined();
+    expect(flags.get(3)).toEqual({ kind: 'tempo', pct: 14 });
+    expect(flags.get(4)).toBeUndefined();
+  });
+  it('still flags the tempo of a bar with no onsets', () => {
+    const s = state([0, 2, 4, 6], 8.4, [0, 4, 8, null]);
+    const flags = barFlags(s, [0, 2, 4]);
+    expect(flags.get(4)).toEqual({ kind: 'tempo', pct: 20 });
+    expect([1, 2, 3].map((n) => flags.get(n))).toEqual([undefined, undefined, undefined]);
+  });
+  it('judges a nudged first note by its effective time', () => {
+    const s = state([0, 2, 4, 6], 8, [0, 4, 8, 12]);
+    (s.measures[1] as unknown as { nudges: unknown[] }).nudges = [{ qn: 4, deltaSeconds: 0.05 }];
+    expect(barFlags(s, [0, 2.05, 4, 6]).get(2)).toBeUndefined();
+    expect(barFlags(s, [0, 2.0, 4, 6]).get(2)).toEqual({ kind: 'off', ms: 50 });
+  });
   it('words each flag', () => {
     expect(flagText({ kind: 'no-hit' })).toBe('No hit near the first note');
     expect(flagText({ kind: 'off', ms: 42 })).toBe('First note 42 ms off the recording');

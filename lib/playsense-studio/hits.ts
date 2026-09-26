@@ -98,8 +98,7 @@ export function barFlags(state: MarkerState, hits: number[]): Map<number, BarFla
     const qn = (next ? next.downbeatQN : state.tailQN) - m.downbeatQN;
     return qn > 0 ? (end - start) / qn : NaN;
   });
-  const sorted = spq.filter(Number.isFinite).sort((a, b) => a - b);
-  const median = sorted.length ? sorted[sorted.length >> 1] : NaN;
+  const median = medianOf(spq.filter(Number.isFinite));
   const grid = anchorTimeMap(state);
   ms.forEach((m, i) => {
     const t = firstAttackOn(state, grid, i);
@@ -115,6 +114,14 @@ export function barFlags(state: MarkerState, hits: number[]): Map<number, BarFla
     }
   });
   return out;
+}
+
+/** The true median: the mean of the two middle values for an even count. */
+function medianOf(values: number[]): number {
+  if (!values.length) return NaN;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = sorted.length >> 1;
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
 export function flagText(flag: BarFlag): string {
