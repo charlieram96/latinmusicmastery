@@ -607,7 +607,8 @@ function ScoreExerciseSession({
       <SplitWorkspace
         controller={workspace}
         frame="fill"
-        media={exerciseVideo && (
+        // Only once the session is live: a paused video beside "Preparing…" reads as broken.
+        media={exerciseVideo && showCanvas && (
           // Muted, follows the engine clock (see the sync effect above).
           <video
             ref={videoRef}
