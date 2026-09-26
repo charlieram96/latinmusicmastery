@@ -2,6 +2,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { isTypingTarget } from '@/lib/playsense-studio/typing-target';
 import { zoomIntent } from '@/lib/playsense-studio/zoom-keys';
 import { StrokeMenu } from '../stroke-menu';
 
@@ -51,6 +52,99 @@ describe('StrokeMenu', () => {
     act(() => { document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })); });
     expect(document.querySelector('[role="listbox"]')).toBeNull();
     expect(onPick).not.toHaveBeenCalled();
+  });
+
+  // Fix round 1, finding 2: a real pick is a pointerdown followed by a click
+  // (not a bare, synthetic `.click()` as above) — the pointerdown lands on an
+  // option first, inside `listRef`, and must NOT be mistaken for the outside-
+  // pointerdown case above and close the list before the click can pick it.
+  // (jsdom in this project has no PointerEvent constructor — see the outside-
+  // pointerdown test above and integrated-editor-measure-bar.test.tsx:315 —
+  // so, as there, a MouseEvent typed 'pointerdown' stands in for it.)
+  it('fires onPick and closes on a real pointerdown-then-click on an option', () => {
+    const onPick = vi.fn();
+    act(() => root.render(<StrokeMenu strokes={strokes} current={61} onPick={onPick} />));
+    act(() => (host.querySelector('button') as HTMLButtonElement).click());
+    const opt = document.querySelectorAll('[role="option"]')[2] as HTMLButtonElement;
+    act(() => {
+      opt.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
+      opt.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+    expect(onPick).toHaveBeenCalledWith(62);
+    expect(document.querySelector('[role="listbox"]')).toBeNull();
+  });
+
+  // Fix round 1, finding 3: clamp the fixed position to the viewport instead
+  // of trusting the chip's raw rect, both horizontally (right edge) and
+  // vertically (cap max-height instead of overflowing the bottom edge).
+  it('clamps the open list inside the viewport', () => {
+    const originalInnerWidth = window.innerWidth;
+    const originalInnerHeight = window.innerHeight;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 300 });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 400 });
+    try {
+      act(() => root.render(<StrokeMenu strokes={strokes} current={61} onPick={() => {}} />));
+      const chip = host.querySelector('button') as HTMLButtonElement;
+      // Stubbed rect: hard against the right edge, and low enough that the
+      // full 320px-tall list wouldn't fit below it.
+      chip.getBoundingClientRect = () =>
+        ({ left: 290, right: 310, top: 300, bottom: 320, width: 20, height: 20, x: 290, y: 300, toJSON() {} }) as DOMRect;
+      act(() => { chip.click(); });
+      const list = document.querySelector('.st-stroke-list') as HTMLElement;
+      expect(list).not.toBeNull();
+      // left: min(290, innerWidth(300) - 220 - 8 = 72) = 72, not the raw 290.
+      expect(list.style.left).toBe('72px');
+      // maxHeight: innerHeight(400) - 8 - (bottom(320) + 6) = 66, not 320.
+      expect(list.style.maxHeight).toBe('66px');
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: originalInnerHeight });
+    }
+  });
+
+  // Fix round 1, finding 5: land keyboard focus in the list, not on nothing.
+  it('focuses the current stroke on open', () => {
+    act(() => root.render(<StrokeMenu strokes={strokes} current={61} onPick={() => {}} />));
+    act(() => (host.querySelector('button') as HTMLButtonElement).click());
+    expect(document.activeElement?.getAttribute('role')).toBe('option');
+    expect(document.activeElement?.textContent).toBe('Cáscara · high');
+  });
+
+  it('focuses the first stroke on open when none is current', () => {
+    act(() => root.render(<StrokeMenu strokes={strokes} current={null} onPick={() => {}} />));
+    act(() => (host.querySelector('button') as HTMLButtonElement).click());
+    expect(document.activeElement?.getAttribute('role')).toBe('option');
+    expect(document.activeElement?.textContent).toBe('High timbal');
+  });
+
+  // Fix round 1, finding 4: with focus inside the open list, the zoom's own
+  // shortcuts (ArrowUp/Down -> transpose, letters, etc.) must not fire. The
+  // zoom's real guard is `isTypingTarget(e.target)` before it even computes a
+  // `zoomIntent` (use-zoom-editing.ts); role="dialog" already makes
+  // MeasurePopover's contents typing targets (more-popover.tsx:67-72), and
+  // typing-target.ts now recognises an open role="listbox" the same way. This
+  // wires up that exact guard, with the real isTypingTarget and zoomIntent,
+  // to prove ArrowDown never reaches a transpose while an option has focus.
+  it("keeps ArrowDown from reaching the zoom's transpose while an option is focused", () => {
+    const zoomIntentSeen = vi.fn();
+    const zoomHandler = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return;
+      const intent = zoomIntent(e);
+      if (intent) zoomIntentSeen(intent);
+    };
+    window.addEventListener('keydown', zoomHandler);
+    try {
+      act(() => root.render(<StrokeMenu strokes={strokes} current={61} onPick={() => {}} />));
+      act(() => (host.querySelector('button') as HTMLButtonElement).click());
+      const focused = document.activeElement as HTMLElement;
+      expect(focused.getAttribute('role')).toBe('option');
+      act(() => {
+        focused.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+      });
+      expect(zoomIntentSeen).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener('keydown', zoomHandler);
+    }
   });
 
   // Task 9's second check: Escape must close only the list, not the zoom.
