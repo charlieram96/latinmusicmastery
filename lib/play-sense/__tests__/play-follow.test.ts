@@ -45,6 +45,25 @@ describe('expectedMediaTime after bar 1', () => {
     expect(expectedMediaTime(media(), 9)).toEqual({ media: 11, playing: true })
   })
 
+  it('holds paused at trim-in while bar 1 plus the engine time is still before it', () => {
+    // Bar 1 at 1 s, trim-in at 2.5 s: bars before the trim-in have no media.
+    const m = media({ bar1: 1, trimIn: 2.5 })
+    expect(expectedMediaTime(m, 0)).toEqual({ media: 2.5, playing: false })
+    expect(expectedMediaTime(m, 1.4)).toEqual({ media: 2.5, playing: false })
+    // Once the clock reaches the trim-in it plays from there.
+    expect(expectedMediaTime(m, 1.5)).toEqual({ media: 2.5, playing: true })
+    const later = expectedMediaTime(m, 3)
+    expect(later.playing).toBe(true)
+    expect(later.media).toBeCloseTo(4, 12)
+    // Each loop pass holds again until the trim-in.
+    expect(expectedMediaTime(m, 8.5)).toEqual({ media: 2.5, playing: false })
+  })
+
+  it('holds at trim-in during the count-in when bar 1 is before it', () => {
+    expect(expectedMediaTime(media({ bar1: 1, trimIn: 2.5 }), -1)).toEqual({ media: 2.5, playing: false })
+    expect(expectedMediaTime(media({ bar1: 1, trimIn: 2.5, preroll: false }), -1)).toEqual({ media: 2.5, playing: false })
+  })
+
   it('clamps to the trim-out point', () => {
     expect(expectedMediaTime(media({ trimOut: 15 }), 7).media).toBe(15)
   })

@@ -15,8 +15,9 @@ const MAX_TRIM = 1.03
 /** Media time the video should show at engine time e (e < 0 during the count-in). `playing: false` = hold paused on `media`. */
 export function expectedMediaTime(m: PlayMedia, e: number): { media: number; playing: boolean } {
   if (e < 0) {
-    // Without pre-roll the video waits on bar 1 until the count-in ends.
-    if (!m.preroll) return { media: m.bar1, playing: false }
+    // Without pre-roll the video waits on bar 1 until the count-in ends (on
+    // trim-in, when bar 1 sits before it).
+    if (!m.preroll) return { media: Math.max(m.bar1, m.trimIn), playing: false }
     // With pre-roll it runs from bar 1 − count-in, but never before trim-in:
     // when the clamp cuts some pre-roll off, it holds there and starts late,
     // once the clock reaches the clamped point. Before the count-in starts
@@ -26,8 +27,11 @@ export function expectedMediaTime(m: PlayMedia, e: number): { media: number; pla
     return at >= from ? { media: at, playing: true } : { media: from, playing: false }
   }
   const within = m.loopSeconds > 0 ? e % m.loopSeconds : e
-  let media = Math.max(m.bar1 + within, m.trimIn)
-  if (m.trimOut !== null) media = Math.min(media, m.trimOut)
+  const at = m.bar1 + within
+  // Bar 1 before the trim-in: the bars there have no media, so it holds paused
+  // on trim-in (each pass) until the clock reaches it, like a clamped pre-roll.
+  if (at < m.trimIn) return { media: m.trimIn, playing: false }
+  const media = m.trimOut !== null ? Math.min(at, m.trimOut) : at
   return { media, playing: true }
 }
 
