@@ -23,7 +23,10 @@ function stripSectionTags(m: Measure): Measure {
  * stripped, and the source's slurs/hairpins are carried over onto the fresh
  * ids. The target keeps its own title, track instrumentation and
  * `initialTempo`; the meter and key it's written in follow the source. Spans
- * that pointed at the target's now-replaced notes are pruned. Pure: returns a
+ * that pointed at the target's now-replaced notes are pruned. Copied tempo
+ * marks arrive unconfirmed (`tempoMarksConfirmed: false`): the Studio's
+ * tempo-marks notice asks the admin to confirm or clear them before graded
+ * play honours them. Pure: returns a
  * new ScoreDocument (or `target` unchanged if either side has no track).
  */
 export function copySectionScore(source: ScoreDocument, target: ScoreDocument): ScoreDocument {
@@ -39,6 +42,7 @@ export function copySectionScore(source: ScoreDocument, target: ScoreDocument): 
     initialKeyFifths: source.initialKeyFifths,
     tracks: target.tracks.map((t, i) => (i === 0 ? { ...t, measures } : t)),
     spans: [...(target.spans ?? []), ...copiedSpans],
+    ...(measures.some((m) => m.tempoChange !== undefined) ? { tempoMarksConfirmed: false } : {}),
   };
   next.spans = pruneSpans(next);
   return next;

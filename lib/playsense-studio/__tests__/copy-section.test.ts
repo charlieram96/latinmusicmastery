@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Measure, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { copySectionScore } from '../copy-section';
+import { unconfirmedTempoMarks } from '../tempo-marks';
 
 const bar = (n: number, ids: string[], extra: Partial<Measure> = {}): Measure => ({
   number: n,
@@ -110,6 +111,22 @@ describe('copySectionScore', () => {
     const result = copySectionScore(source, target);
 
     expect(result.spans).toEqual([]);
+  });
+
+  it('unconfirms the tempo marks when a copied bar carries one, so the admin confirms or clears them', () => {
+    const source = score([bar(1, ['a']), bar(2, ['b'], { tempoChange: 140 })]);
+    const target = score([bar(1, ['x'])], { tempoMarksConfirmed: true });
+
+    const result = copySectionScore(source, target);
+
+    expect(result.tempoMarksConfirmed).toBe(false);
+    expect(unconfirmedTempoMarks(result)).toEqual([{ measureIndex: 1, measureNumber: 2, bpm: 140 }]);
+  });
+
+  it("keeps the target's tempo-mark confirmation when no copied bar has a tempo mark", () => {
+    const source = score([bar(1, ['a'])]);
+    const target = score([bar(1, ['x'])], { tempoMarksConfirmed: true });
+    expect(copySectionScore(source, target).tempoMarksConfirmed).toBe(true);
   });
 
   it('leaves the target unchanged when either side has no track', () => {
