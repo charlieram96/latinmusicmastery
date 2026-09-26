@@ -89,7 +89,8 @@ export async function decodeVideoPeaks(
       : waveformBucketCount(decoded.duration));
 
   const peaks = computePeaks(mono, targetSampleRate, decoded.duration, targetBuckets);
-  if (opts.withHits !== false) peaks.hits = detectHits(mono, targetSampleRate);
+  // 0.1 ms is far below the detector's accuracy and keeps the cached JSON small.
+  if (opts.withHits !== false) peaks.hits = detectHits(mono, targetSampleRate).map((h) => Math.round(h * 1e4) / 1e4);
   return peaks;
 }
 

@@ -86,6 +86,18 @@ it('computes hits during decode unless asked not to', async () => {
   expect(lane.hits).toBeUndefined();
 });
 
+it('rounds hits to 0.1 ms', async () => {
+  const channel = burstChannel(2, [0.51237, 1.00481]);
+  class OfflineContext {
+    decodeAudioData = async () => ({ duration: 2, numberOfChannels: 1, getChannelData: () => channel });
+  }
+  vi.stubGlobal('window', { OfflineAudioContext: OfflineContext });
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, headers: new Headers(), arrayBuffer: async () => new ArrayBuffer(8) })));
+  const peaks = await decodeVideoPeaks('https://x/v.mp4');
+  expect(peaks.hits!.length).toBe(2);
+  for (const h of peaks.hits!) expect(Math.round(h * 1e4) / 1e4).toBe(h);
+});
+
 // --- The peaks cache (storage mocked; nothing real is touched) ---
 
 const CDN = 'https://cdn.test/';
