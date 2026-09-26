@@ -48,7 +48,7 @@ import {
   type SelectedRange,
   type StaffLayoutMode,
 } from './notation/renderers/staff-renderer';
-import { StaffLayoutSwitch, staffLayoutMode, useStaffLayoutPreference } from './notation/staff-layout-switch';
+import { StaffLayoutSwitch, StaffRefollowButton, staffLayoutMode, staffNeedsRefollow, useStaffLayoutPreference } from './notation/staff-layout-switch';
 import { StaffScrubBar } from './notation/staff-scrub-bar';
 import { ClipsPanel } from './clips/clips-panel';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
@@ -701,6 +701,7 @@ export function PlaysenseStudioPlayer({
                   <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                     {/* In a lesson the switcher lives in the action bar. */}
                     <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} /></WorkspaceToolsPortal>
+                    {staffNeedsRefollow(staffLayout, isFollowing) && <StaffRefollowButton onFollow={handleFollow} />}
                     <StaffLayoutSwitch value={notationLayout} onChange={setNotationLayout} />
                   </div>
                 </div>

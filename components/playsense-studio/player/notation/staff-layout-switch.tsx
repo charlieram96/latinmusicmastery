@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { GalleryHorizontal, Rows3 } from 'lucide-react';
+import { GalleryHorizontal, LocateFixed, Rows3 } from 'lucide-react';
 import { useTranslation } from '@/components/language-provider';
 import { parseStaffLayout, STAFF_LAYOUT_KEY, type StaffLayoutChoice } from '@/lib/playsense-studio/notation/staff-n1';
 import type { StaffLayoutMode } from './renderers/staff-renderer';
@@ -56,5 +56,24 @@ export function StaffLayoutSwitch({ value, onChange, className = '' }: {
         );
       })}
     </div>
+  );
+}
+
+/**
+ * Stacked and paged staves have no scrub bar, so once the view stops following playback
+ * (say, after scrubbing the single line) they need their own way back.
+ */
+export function staffNeedsRefollow(mode: StaffLayoutMode, following: boolean): boolean {
+  return mode !== 'scroll' && !following;
+}
+
+export function StaffRefollowButton({ onFollow, className = '' }: { onFollow: () => void; className?: string }) {
+  const { t } = useTranslation();
+  return (
+    <button type="button" onClick={onFollow} aria-label={t('staff.followAria')} title={t('staff.followOffTitle')}
+      className={`inline-flex h-[28px] flex-shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 text-[11px] font-semibold text-primary transition-colors duration-tap ease-smooth hover:bg-primary/[0.16] ${className}`}>
+      <LocateFixed className="h-3.5 w-3.5" aria-hidden="true" />
+      <span>{t('staff.follow')}</span>
+    </button>
   );
 }

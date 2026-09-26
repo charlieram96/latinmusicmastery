@@ -2,7 +2,7 @@
 import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { StaffLayoutSwitch, useStaffLayoutPreference } from '../staff-layout-switch'
+import { StaffLayoutSwitch, StaffRefollowButton, staffNeedsRefollow, useStaffLayoutPreference } from '../staff-layout-switch'
 
 let root: Root, host: HTMLDivElement
 beforeEach(() => {
@@ -32,5 +32,23 @@ describe('staff layout preference', () => {
     localStorage.setItem('lmm-staff-layout', 'horizontal')
     act(() => root.render(<Harness />))
     expect(host.querySelector('output')?.textContent).toBe('horizontal')
+  })
+})
+
+describe('re-follow for stacked and paged staves (watch player)', () => {
+  it('is needed only for row layouts that stopped following', () => {
+    expect(staffNeedsRefollow('paged', false)).toBe(true)
+    expect(staffNeedsRefollow('wrapped', false)).toBe(true)
+    expect(staffNeedsRefollow('paged', true)).toBe(false)
+    // The scroll line has its own Follow button on the scrub bar.
+    expect(staffNeedsRefollow('scroll', false)).toBe(false)
+  })
+  it('snaps the view back to playback', () => {
+    const onFollow = vi.fn()
+    act(() => root.render(<StaffRefollowButton onFollow={onFollow} />))
+    const button = host.querySelector('button')!
+    expect(button.textContent).toContain('staff.follow')
+    act(() => button.click())
+    expect(onFollow).toHaveBeenCalledTimes(1)
   })
 })
