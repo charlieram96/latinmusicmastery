@@ -2035,9 +2035,9 @@ export function SyncPanel({
             }}
             onImported={() => {}}
             trigger={
-              <button type="button" className="st-chip" title="Add measures from another file after the last measure">
+              <button type="button" className="st-mpop-item flex items-center gap-2" title="Add measures from another file after the last measure">
                 <FilePlus2 className="h-4 w-4" />
-                <span className="hidden lg:inline">Add score</span>
+                Add measures from a file
               </button>
             }
           />,

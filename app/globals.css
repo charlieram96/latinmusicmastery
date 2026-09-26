@@ -596,6 +596,10 @@ html:has([data-marketing]) {
   background: hsl(var(--gold-highlight));
   box-shadow: 0 0 7px hsl(var(--gold-highlight) / 0.8);
 }
+.st-status-pip.bad {
+  background: hsl(var(--destructive));
+  box-shadow: 0 0 7px hsl(var(--destructive) / 0.8);
+}
 
 /* ---- THE STAGE — unified waveform + notation surface --------------------
    Local var overrides keep it cinematic-dark regardless of the page theme. */
