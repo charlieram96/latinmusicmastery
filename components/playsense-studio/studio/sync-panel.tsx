@@ -13,7 +13,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, ChevronsLeftRight, FilePlus2, Loader2, Move, Music2, Repeat, Undo2, Wand2 } from 'lucide-react';
+import { AudioLines, ChevronsLeftRight, FilePlus2, Loader2, Move, Music2, Repeat, Spline, Undo2, Wand2 } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -44,7 +44,8 @@ import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
 import { SNAP_PX, barFlags, firstAttackTime, flagText, snapMarkerDrag, snapSectionShift } from '@/lib/playsense-studio/hits';
 import { autoPlaceBars, windowWithinCorridor } from '@/lib/playsense-studio/auto-place';
-import { FlexMap, type FlexPoint } from '@/lib/playsense-studio/flex';
+import { FlexMap, addFlexAtHit, moveFlexPoint, removeFlexPoint, type FlexPoint } from '@/lib/playsense-studio/flex';
+import { snapToNearest } from '@/lib/playsense-studio/clip-model';
 import { clickTimesInMedia } from '@/lib/playsense-studio/flex-player';
 import { useFlexPlayback } from '@/lib/playsense-studio/use-flex-playback';
 import { useMarkerTween } from './use-marker-tween';
@@ -309,9 +310,12 @@ export function SyncPanel({
   // from the host's draft/published map like the markers, and handed back to the
   // draft with them (saveTiming). With no points every conversion below is an
   // exact pass-through, so unflexed sections behave exactly as before.
-  // (The editors — Task 6's waveform points, Task 7's Quantize — destructure
-  // the setter; nothing in this panel changes flex yet.)
-  const [flex] = useState<FlexPoint[]>(() => activeTimeMap?.flex ?? []);
+  // Edited on the waveform in Flex mode (Task 6) and by Quantize (Task 7).
+  const [flex, setFlex] = useState<FlexPoint[]>(() => activeTimeMap?.flex ?? []);
+  // Flex mode (the context-bar chip, or F while the measure zoom is closed —
+  // the zoom uses F as a note letter, so IntegratedEditor reports its state).
+  const [flexMode, setFlexMode] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
   const flexMap = useMemo(() => new FlexMap(flex), [flex]);
   // Any flex change marks the timing dirty — the same path as a marker change —
   // so it reaches the draft on the next save. Watching the state (rather than
@@ -918,6 +922,46 @@ export function SyncPanel({
     return () => window.removeEventListener('keydown', onKey);
   }, [nudgeKeysActive, nudgeSelected]);
 
+  // F toggles Flex mode — never while the measure zoom is open (F is a note
+  // letter there), never while typing, and never with a modifier.
+  useEffect(() => {
+    if (!showSync || zoomOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
+      if (e.key !== 'f' && e.key !== 'F') return;
+      e.preventDefault();
+      setFlexMode((v) => !v);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showSync, zoomOpen]);
+
+  // --- Flex editing on the waveform (Task 6) ---
+  // Points live strictly inside the section's bar span (first downbeat … tail),
+  // whose edges are identity, so the same span serves both domains. Hits come
+  // in as indices into `hitsTimeline`, which maps `hits` (MEDIA) one to one.
+  const flexSpan = useMemo(
+    () => ({ start: markers.measures[0]?.beats[0]?.videoTimeSeconds ?? 0, end: markers.tailVideoTimeSeconds }),
+    [markers.measures, markers.tailVideoTimeSeconds]
+  );
+  const noteTimes = useMemo(() => ticks.map((t) => t.videoTimeSeconds), [ticks]);
+  const handleFlexAdd = useCallback(
+    (hitIndex: number) => {
+      const h = hits[hitIndex];
+      if (h === undefined) return;
+      setFlex((f) => addFlexAtHit(f, h, hits, flexSpan));
+    },
+    [hits, flexSpan]
+  );
+  const handleFlexDrag = useCallback(
+    (index: number, dstTimeline: number, mods: { snap: boolean }) => {
+      const dst = mods.snap ? snapToNearest(dstTimeline, noteTimes, SNAP_PX / ppsRef.current) : dstTimeline;
+      setFlex((f) => moveFlexPoint(f, index, dst, flexSpan));
+    },
+    [noteTimes, flexSpan]
+  );
+  const handleFlexRemove = useCallback((index: number) => setFlex((f) => removeFlexPoint(f, index)), []);
+
   // --- Marker interaction handlers ---
   // Both drags clamp against the sibling-section corridor so a section can
   // never be dragged into a neighbor's video range.
@@ -1435,6 +1479,16 @@ export function SyncPanel({
               <Wand2 className="h-4 w-4" />
               <span className="hidden lg:inline">Auto-place bars</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setFlexMode((v) => !v)}
+              className={`st-chip${flexMode ? ' is-on' : ''}`}
+              aria-pressed={flexMode}
+              title="Flex — click a hit to add a point, drag it onto the written note, double-click to remove (F)"
+            >
+              <Spline className="h-4 w-4" />
+              Flex
+            </button>
             {autoPlaceUndo && (
               <button type="button" onClick={undoAutoPlace} className="st-chip" title="Put the bars back where they were">
                 <Undo2 className="h-4 w-4" />
@@ -1525,6 +1579,13 @@ export function SyncPanel({
                     mediaDurationSeconds={videoDurationSeconds ?? clock.durationSeconds}
                     onTrimDrag={onTrimDrag ? handleTrimDrag : undefined}
                     warp={flexMap}
+                    flexMode={flexMode}
+                    flexPoints={flex}
+                    hitsTimeline={hitsTimeline}
+                    noteTimes={noteTimes}
+                    onFlexAdd={handleFlexAdd}
+                    onFlexDrag={handleFlexDrag}
+                    onFlexRemove={handleFlexRemove}
                     metronomeAnchorSeconds={anchorOwner ? anchorSeconds : undefined}
                     onAnchorDrag={anchorOwner ? handleAnchorDrag : undefined}
                     onSelect={handleSelect}
@@ -1633,6 +1694,7 @@ export function SyncPanel({
                   onLoopMeasures={showSync ? loopMeasures : undefined}
                   loopedRange={showSync ? loopedRange : null}
                   noteTiming={noteTiming}
+                  onZoomOpenChange={setZoomOpen}
                 />
               </div>
 

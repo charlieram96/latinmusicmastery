@@ -123,6 +123,9 @@ export interface IntegratedEditorProps {
    *  only) — the same object SyncPanel builds for its NoteDetails inspector,
    *  threaded down to the zoom's More ▾ → Timing tab. */
   noteTiming?: NoteTimingProps;
+  /** Reports whether the measure zoom is open (it uses letter keys, e.g. F,
+   *  that SyncPanel binds only while it is closed). Pass a stable callback. */
+  onZoomOpenChange?: (open: boolean) => void;
 }
 
 /** A repeat's closing bar (with dots) replaces any final bar on that measure. */
@@ -146,6 +149,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   onLoopMeasures,
   loopedRange = null,
   noteTiming,
+  onZoomOpenChange,
 }: IntegratedEditorProps) {
   // Single-track studio: the score model still holds Track[], but the editor
   // always authors track 0.
@@ -625,6 +629,14 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     keyFifthsAt: zoomKeyFifthsAt, clefAt: zoomClefAt, barQNAt: zoomBarQNAt,
     percussion, flash: showFlash, openBar, close: closeZoom,
   });
+
+  // Tell the parent when the zoom opens or closes (and that it's closed on unmount).
+  const zoomOpen = zoom !== null;
+  useEffect(() => {
+    if (!onZoomOpenChange) return;
+    onZoomOpenChange(zoomOpen);
+    return () => onZoomOpenChange(false);
+  }, [zoomOpen, onZoomOpenChange]);
 
   // A zoomed bar that no longer exists (undo, a delete elsewhere) closes the zoom.
   if (zoom && zoom.measureIndex >= measureCount) {
