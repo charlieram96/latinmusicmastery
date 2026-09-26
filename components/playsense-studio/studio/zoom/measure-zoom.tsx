@@ -383,7 +383,7 @@ export function MeasureZoom({
   return (
     <div
       ref={rootRef}
-      className="st-zoom-overlay"
+      className="playsense-studio-notation st-zoom-overlay"
       data-testid="measure-zoom"
       data-percussion={percussion || undefined}
       style={{ transformOrigin: '0 50%' }}

@@ -154,6 +154,12 @@ describe('MeasureZoom', () => {
     act(() => { host.querySelector<HTMLButtonElement>('button[title="Close (Esc)"]')!.click(); });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('draws its staff with the notation ink, not VexFlow black', () => {
+    mount(1);
+    const root = host.querySelector('[data-testid="measure-zoom"]')!;
+    expect(root.classList.contains('playsense-studio-notation')).toBe(true);
+  });
 });
 
 // ---- IntegratedEditor: ⏎ opens the zoom, Esc closes it -----------------------
