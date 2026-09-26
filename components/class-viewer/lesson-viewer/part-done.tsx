@@ -19,8 +19,8 @@ const BASE = 'dashboard.classViewer.lessonMode.part'
 export function PartDone({ stats, bars, previousBest, onAgain, onContinue, onWatchDemo, demo }: {
   stats: AttemptStats
   bars: BarResult[]
-  /** Best accuracy from earlier saved takes, or null for a first take. */
-  previousBest: number | null
+  /** Best accuracy from earlier takes, null for a first take, undefined while it loads. */
+  previousBest: number | null | undefined
   onAgain: () => void
   onContinue?: () => void
   onWatchDemo?: () => void
@@ -30,10 +30,13 @@ export function PartDone({ stats, bars, previousBest, onAgain, onContinue, onWat
   const graded = stats.perfectCount + stats.goodCount + stats.okCount + stats.missCount
   const accuracy = graded ? Math.max(0, Math.min(100, Math.round(stats.accuracy))) : 0
   const band = accuracy >= 90 ? 'great' : accuracy >= 75 ? 'good' : accuracy >= 50 ? 'ok' : 'low'
-  const prev = previousBest == null ? null : Math.round(previousBest)
-  const comparison = prev == null ? t(`${BASE}.first`)
-    : accuracy > prev ? t(`${BASE}.better`, { prev }) : accuracy === prev ? t(`${BASE}.same`, { prev }) : t(`${BASE}.below`, { prev })
   const take = summarizeTake(bars)
+  const prev = previousBest == null ? null : Math.round(previousBest)
+  // A take stopped early is not compared with full takes.
+  const comparison = take.unplayed > 0 ? t(`${BASE}.partial`, { played: take.played, total: take.played + take.unplayed })
+    : previousBest === undefined ? null
+      : prev == null ? t(`${BASE}.first`)
+        : accuracy > prev ? t(`${BASE}.better`, { prev }) : accuracy === prev ? t(`${BASE}.same`, { prev }) : t(`${BASE}.below`, { prev })
   const seconds = Math.max(0, Math.round(stats.durationSeconds))
   const time = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 
@@ -50,7 +53,7 @@ export function PartDone({ stats, bars, previousBest, onAgain, onContinue, onWat
       <div className="grid min-w-0 gap-1.5">
         <span className="lx-eyebrow">{t(`${BASE}.eyebrow`)}</span>
         <h2 className="lx-screen-h2 lx-pd-title">{t(`${BASE}.heading.${band}`)}</h2>
-        <p className="text-muted-foreground">{comparison}</p>
+        <p className="min-h-[1.5em] text-muted-foreground">{comparison}</p>
         {demo && <p className="text-xs font-semibold text-muted-foreground">{t(`${BASE}.demo`)}</p>}
         <div className="lx-stat3">
           <div data-stat style={{ '--c': 'var(--success)' } as CSSProperties}><span>{t(`${BASE}.cleanBars`)}</span><b className="tabular-nums"><Check aria-hidden className="h-5 w-5" strokeWidth={3} />{take.clean}/{take.played}</b></div>
@@ -70,7 +73,7 @@ export function PartDone({ stats, bars, previousBest, onAgain, onContinue, onWat
         </li>)}
       </ol>
       <div className="lx-legend">
-        {(['clean', 'close', 'miss'] as const).map(status => <span key={status}><i data-status={status} />{t(`${BASE}.legend.${status}`)}</span>)}
+        {(take.unplayed > 0 ? ['clean', 'close', 'miss', 'unplayed'] as const : ['clean', 'close', 'miss'] as const).map(status => <span key={status}><i data-status={status} />{t(`${BASE}.legend.${status}`)}</span>)}
         {take.missedBars.length > 0 && <span className="lx-legend-hint">
           {t(take.missedBars.length === 1 ? `${BASE}.practiceBar` : `${BASE}.practiceBars`, { bars: take.missedBars.join(', ') })}
         </span>}

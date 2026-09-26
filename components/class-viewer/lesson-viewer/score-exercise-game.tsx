@@ -21,8 +21,9 @@ import { NowPlayingBar } from '@/components/play-sense/now-playing-bar'
 import { CalibrationWizard } from '@/components/play-sense/calibration-wizard'
 import { AudioModePrompt } from '@/components/play-sense/audio-mode-prompt'
 import { PlaysenseTestPanel } from '@/components/play-sense/playsense-test-panel'
-import { getUserAttempts, saveAttempt } from '@/app/actions/play-sense'
-import { bestPreviousAccuracy, buildBarResults } from '@/lib/play-sense/bar-results'
+import { getBestAttemptAccuracy, saveAttempt } from '@/app/actions/play-sense'
+import { buildBarResults, reachedResults, takeBaseline } from '@/lib/play-sense/bar-results'
+import { computeStats } from '@/lib/play-sense/scoring'
 import { PartDone } from './part-done'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -252,24 +253,37 @@ function ScoreExerciseSession({
     }
   }, [preview, session.sessionState, session.attemptStats, session.exercise, session.eventResults])
 
-  // The student's best accuracy on this exercise, for Part done's comparison:
-  // saved takes, plus takes finished in this visit; frozen when a take starts.
-  const [bestAccuracy, setBestAccuracy] = useState<number | null>(null)
-  const [takeBaseline, setTakeBaseline] = useState<number | null>(null)
+  // Part done's comparison: the best saved take (fetched once; undefined while
+  // it loads) and the best take finished earlier in this visit, frozen when a
+  // take starts. The saved best stays live, so a late answer still lands.
+  const [savedBest, setSavedBest] = useState<number | null | undefined>(preview ? null : undefined)
+  const [visitBest, setVisitBest] = useState<number | null>(null)
+  const [visitBaseline, setVisitBaseline] = useState<number | null>(null)
   useEffect(() => {
     if (preview) return
     let live = true
-    getUserAttempts(exercise.id)
-      .then(rows => { if (live) setBestAccuracy(best => maxOrNull(best, bestPreviousAccuracy(rows as { accuracy: number | null }[]))) })
-      .catch(() => {})
+    getBestAttemptAccuracy(exercise.id)
+      .then(best => { if (live) setSavedBest(best) })
+      .catch(() => { if (live) setSavedBest(null) })
     return () => { live = false }
   }, [exercise.id, preview])
   useEffect(() => {
-    if (session.sessionState === 'countdown') setTakeBaseline(bestAccuracy)
-  }, [session.sessionState, bestAccuracy])
+    if (session.sessionState === 'countdown') setVisitBaseline(visitBest)
+  }, [session.sessionState, visitBest])
   useEffect(() => {
-    if (session.sessionState === 'results' && session.attemptStats) setBestAccuracy(best => maxOrNull(best, session.attemptStats!.accuracy))
+    if (session.sessionState === 'results' && session.attemptStats) setVisitBest(best => maxOrNull(best, session.attemptStats!.accuracy))
   }, [session.sessionState, session.attemptStats])
+
+  // Finish take mid-pass: remember how far the take got, so the notes it never
+  // reached are "not played" on Part done instead of missed.
+  const [stoppedAt, setStoppedAt] = useState<number | null>(null)
+  useEffect(() => {
+    if (session.sessionState === 'countdown') setStoppedAt(null)
+  }, [session.sessionState])
+  const finishTake = () => {
+    setStoppedAt(Math.min(1, Math.max(0, session.playheadProgress)))
+    session.stopExercise()
+  }
   const playAgain = () => {
     session.retry()
     void session.startExercise()
@@ -401,12 +415,16 @@ function ScoreExerciseSession({
 
   // Part done — the take's accuracy and a bar-by-bar strip
   if (session.sessionState === 'results' && session.attemptStats && session.exercise) {
+    const reached = stoppedAt != null && stoppedAt < 1 ? stoppedAt : null
+    // The ring shows what was played; the saved attempt keeps the engine's numbers.
+    const shown = reached == null ? session.attemptStats
+      : { ...computeStats(reachedResults(session.exercise, session.eventResults, reached), session.attemptStats.extraHits, session.attemptStats.durationSeconds) }
     return (
       <div className="ps-lesson-results">
         <PartDone
-          stats={session.attemptStats}
-          bars={buildBarResults(session.exercise, session.eventResults)}
-          previousBest={takeBaseline}
+          stats={shown}
+          bars={buildBarResults(session.exercise, session.eventResults, { reached })}
+          previousBest={takeBaseline(savedBest, visitBaseline)}
           onAgain={playAgain}
           onContinue={frame ? frame.advance : undefined}
           onWatchDemo={onWatchDemo}
@@ -643,7 +661,7 @@ function ScoreExerciseSession({
             onPause={session.pauseExercise}
             onResume={session.resumeExercise}
             onRestart={() => void session.restartExercise()}
-            onFinish={session.stopExercise}
+            onFinish={finishTake}
             onClickToggle={() => session.setAudioMetronome(!session.audioMetronome)}
             onWatchDemo={onWatchDemo}
           />
@@ -671,7 +689,7 @@ function ScoreExerciseSession({
           currentAccuracy={session.currentAccuracy}
           lastHitGrade={session.lastHitGrade}
           onStart={session.startExercise}
-          onStop={session.stopExercise}
+          onStop={finishTake}
           onPause={session.pauseExercise}
           onResume={session.resumeExercise}
           onRestart={() => void session.restartExercise()}

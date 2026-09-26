@@ -2531,7 +2531,8 @@
             "clean": "Clean",
             "close": "Early or late",
             "miss": "Missed notes",
-            "rest": "Rest"
+            "rest": "Rest",
+            "unplayed": "Not played"
           },
           "barLabel": "Bar {n}: {status}",
           "practiceBars": "Practice bars {bars} slowly, then take it again.",
@@ -2541,7 +2542,8 @@
           "demo": "Demo results · not saved",
           "again": "Again",
           "continue": "Continue",
-          "watch": "Watch the demo again"
+          "watch": "Watch the demo again",
+          "partial": "You stopped after {played} of {total} bars — the rest are not counted."
         },
         "finishLesson": "Finish lesson"
       }

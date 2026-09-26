@@ -74,6 +74,25 @@ export async function saveAttempt(data: {
   return attempt.id
 }
 
+/** The student's best saved accuracy on one exercise (null when none), for Part done's comparison. */
+export async function getBestAttemptAccuracy(exerciseId: string): Promise<number | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data, error } = await supabase
+    .from('play_sense_attempts')
+    .select('accuracy')
+    .eq('user_id', user.id)
+    .eq('exercise_id', exerciseId)
+    .not('accuracy', 'is', null)
+    .order('accuracy', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return typeof data?.accuracy === 'number' ? data.accuracy : null
+}
+
 export async function getUserAttempts(exerciseId?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

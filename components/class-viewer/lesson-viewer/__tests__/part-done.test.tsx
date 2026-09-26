@@ -26,7 +26,7 @@ beforeEach(() => {
 })
 afterEach(() => { act(() => root.unmount()); host.remove() })
 
-const render = (previousBest: number | null, extra: Partial<React.ComponentProps<typeof PartDone>> = {}) =>
+const render = (previousBest: number | null | undefined, extra: Partial<React.ComponentProps<typeof PartDone>> = {}) =>
   act(() => root.render(<PartDone stats={stats} bars={bars} previousBest={previousBest} onAgain={vi.fn()} onContinue={vi.fn()} demo={false} {...extra} />))
 
 describe('PartDone', () => {
@@ -65,5 +65,20 @@ describe('PartDone', () => {
     act(() => (host.querySelector('[data-part-continue]') as HTMLButtonElement).click())
     expect(onAgain).toHaveBeenCalledOnce()
     expect(onContinue).toHaveBeenCalledOnce()
+  })
+
+  it('a take stopped early shows the bars it never reached as not played and says it was partial (L2)', () => {
+    render(95, { bars: [bar(1, 'clean'), bar(2, 'miss'), { ...bar(3, 'rest'), status: 'unplayed', notes: 0 }, { ...bar(4, 'rest'), status: 'unplayed', notes: 0 }] })
+    const tiles = [...host.querySelectorAll('[data-bar-tile]')].map(t => t.getAttribute('data-status'))
+    expect(tiles).toEqual(['clean', 'miss', 'unplayed', 'unplayed'])
+    expect(host.textContent).toContain('part.partial(2,4)')
+    expect(host.textContent).not.toContain('part.below')
+    expect(host.querySelector('.lx-legend i[data-status=unplayed]')).not.toBeNull()
+    expect([...host.querySelectorAll('[data-stat]')][0].textContent).toContain('1/2')
+  })
+
+  it('hides the comparison while the previous best is still loading (L11)', () => {
+    render(undefined)
+    expect(host.textContent).not.toContain('part.first')
   })
 })

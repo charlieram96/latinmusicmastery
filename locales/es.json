@@ -2531,7 +2531,8 @@
             "clean": "Limpio",
             "close": "Adelantado o atrasado",
             "miss": "Notas perdidas",
-            "rest": "Silencio"
+            "rest": "Silencio",
+            "unplayed": "Sin tocar"
           },
           "barLabel": "Compás {n}: {status}",
           "practiceBars": "Practica los compases {bars} despacio y vuelve a tocar.",
@@ -2541,7 +2542,8 @@
           "demo": "Resultados de demostración · no se guardan",
           "again": "Otra vez",
           "continue": "Continuar",
-          "watch": "Ver la demostración otra vez"
+          "watch": "Ver la demostración otra vez",
+          "partial": "Te detuviste tras {played} de {total} compases; el resto no cuenta."
         },
         "finishLesson": "Terminar lección"
       }

@@ -14,7 +14,8 @@ let session: Record<string, unknown>
 vi.mock('@/hooks/use-exercise-session', () => ({ useExerciseSession: () => session }))
 vi.mock('@/hooks/use-stage-demo-session', () => ({ useStageDemoSession: () => ({ overrides: {}, attempt: 0, review: () => {} }) }))
 vi.mock('@/components/play-sense/stage-highway/StageHighway', () => ({ StageHighway: () => <div data-highway /> }))
-vi.mock('@/components/play-sense/now-playing-bar', () => ({ NowPlayingBar: () => null }))
+let nowPlaying: { onStop: () => void } | null = null
+vi.mock('@/components/play-sense/now-playing-bar', () => ({ NowPlayingBar: (p: { onStop: () => void }) => { nowPlaying = p; return null } }))
 vi.mock('@/components/play-sense/calibration-wizard', () => ({ CalibrationWizard: () => null }))
 vi.mock('@/components/play-sense/audio-mode-prompt', () => ({ AudioModePrompt: () => null }))
 vi.mock('@/components/play-sense/playsense-test-panel', () => ({ PlaysenseTestPanel: () => null }))
@@ -76,5 +77,42 @@ describe('ScoreExerciseGame workspace media (W4)', () => {
     session = { ...baseSession(), exercise, sessionState: 'playing' }
     render()
     expect(host.querySelector('video')).not.toBeNull()
+  })
+})
+
+const stats = (accuracy: number) => ({ score: accuracy, accuracy, perfectCount: 1, goodCount: 0, okCount: 0, missCount: 1, extraHits: 0,
+  maxCombo: 1, maxStreak: 1, avgOffsetMs: 0, tempoDriftMs: 0, durationSeconds: 3, pitchAccuracy: null })
+const hit = (eventIndex: number, grade: 'perfect' | 'miss') => ({ eventIndex, grade, offsetMs: grade === 'miss' ? null : 0, timing: grade === 'miss' ? null : 'on_time', onsetEnergy: null })
+
+describe('ScoreExerciseGame Part done', () => {
+  it('a take stopped with Finish take shows unreached bars as not played and the accuracy of what was played (L2)', () => {
+    session = { ...baseSession(), exercise, sessionState: 'playing', playheadProgress: 0.5 }
+    render({ preview: false })
+    act(() => nowPlaying!.onStop())
+    session = { ...session, sessionState: 'results', attemptStats: stats(50), eventResults: [hit(0, 'perfect'), hit(1, 'miss')] }
+    render({ preview: false })
+    const tiles = [...host.querySelectorAll('[data-bar-tile]')].map(t => t.getAttribute('data-status'))
+    expect(tiles).toEqual(['clean', 'unplayed'])
+    expect(host.querySelector('[data-accuracy-ring]')?.getAttribute('aria-label')).toContain('(100)')
+  })
+
+  it('a take that ran to the end counts every bar', () => {
+    session = { ...baseSession(), exercise, sessionState: 'results', attemptStats: stats(50), eventResults: [hit(0, 'perfect'), hit(1, 'miss')] }
+    render({ preview: false })
+    expect([...host.querySelectorAll('[data-bar-tile]')].map(t => t.getAttribute('data-status'))).toEqual(['clean', 'miss'])
+  })
+
+  it('a previous best that arrives after the count-in still gives the take its comparison (L11)', async () => {
+    let resolve!: (v: number | null) => void
+    actions.getBestAttemptAccuracy.mockImplementationOnce(() => new Promise(r => { resolve = r }))
+    session = { ...baseSession(), exercise, sessionState: 'countdown' }
+    render({ preview: false })
+    session = { ...session, sessionState: 'results', attemptStats: stats(90), eventResults: [hit(0, 'perfect'), hit(1, 'perfect')] }
+    render({ preview: false })
+    expect(host.textContent).not.toContain('part.first')
+    await act(async () => { resolve(80) })
+    expect(host.textContent).toContain('part.better(80)')
+    expect(actions.getBestAttemptAccuracy).toHaveBeenCalledWith('ex1')
+    expect(actions.getUserAttempts).not.toHaveBeenCalled()
   })
 })
