@@ -48,7 +48,7 @@ import {
   type SelectedRange,
   type StaffLayoutMode,
 } from './notation/renderers/staff-renderer';
-import { StaffLayoutSwitch, StaffRefollowButton, staffLayoutMode, staffNeedsRefollow, useStaffLayoutPreference } from './notation/staff-layout-switch';
+import { StaffLayoutSwitch, StaffRefollowButton, staffLayoutMode, staffNeedsRefollow, staffPaneClass, useStaffLayoutPreference } from './notation/staff-layout-switch';
 import { StaffScrubBar } from './notation/staff-scrub-bar';
 import { ClipsPanel } from './clips/clips-panel';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
@@ -712,16 +712,11 @@ export function PlaysenseStudioPlayer({
                     className="flex-shrink-0 border-b border-border px-3 py-2" />
                 )}
                 <div className="relative min-h-0 flex-1">
-                  {/* Stacked staves scroll inside the renderer's own viewport and a
-                      paged row centres in it, so the layer hands it every remaining
-                      pixel instead of nesting a second scroller; the single scrolling
-                      line keeps the padded page so the scrub bar clears the zoom control. */}
+                  {/* See staffPaneClass for how each staff layout uses the pane. */}
                   <NotationZoomLayer
                     zoom={zoom}
                     onZoom={setZoom}
-                    className={staffLayout !== 'scroll'
-                      ? 'flex h-full flex-col gap-2 overflow-hidden p-3'
-                      : 'h-full space-y-2 overflow-auto p-3 pb-16'}
+                    className={staffPaneClass(staffLayout)}
                   >
                     {tracksEl}
                     {staffEl}

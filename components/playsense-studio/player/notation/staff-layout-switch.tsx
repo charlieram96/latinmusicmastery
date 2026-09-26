@@ -60,11 +60,23 @@ export function StaffLayoutSwitch({ value, onChange, className = '' }: {
 }
 
 /**
- * Stacked and paged staves have no scrub bar, so once the view stops following playback
- * (say, after scrubbing the single line) they need their own way back.
+ * A paged staff turns to the browsed position and has no scrub bar, so once the view stops
+ * following playback (say, after scrubbing the single line) it needs its own way back. Stacked
+ * rows follow playback themselves, and the scroll line has the scrub bar's Follow.
  */
 export function staffNeedsRefollow(mode: StaffLayoutMode, following: boolean): boolean {
-  return mode !== 'scroll' && !following;
+  return mode === 'paged' && !following;
+}
+
+/**
+ * The watch player's notation pane. Stacked rows scroll inside the renderer, so the pane hands
+ * them every pixel without a second scroller; a paged row centres in a tall pane but scrolls in a
+ * short one; both non-stacked panes keep bottom room for the floating zoom control.
+ */
+export function staffPaneClass(mode: StaffLayoutMode): string {
+  if (mode === 'wrapped') return 'flex h-full flex-col gap-2 overflow-hidden p-3';
+  if (mode === 'paged') return 'flex h-full flex-col gap-2 overflow-y-auto p-3 pb-16';
+  return 'h-full space-y-2 overflow-auto p-3 pb-16';
 }
 
 export function StaffRefollowButton({ onFollow, className = '' }: { onFollow: () => void; className?: string }) {

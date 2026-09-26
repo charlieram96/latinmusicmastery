@@ -2,7 +2,7 @@
 import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { StaffLayoutSwitch, StaffRefollowButton, staffNeedsRefollow, useStaffLayoutPreference } from '../staff-layout-switch'
+import { StaffLayoutSwitch, StaffRefollowButton, staffNeedsRefollow, staffPaneClass, useStaffLayoutPreference } from '../staff-layout-switch'
 
 let root: Root, host: HTMLDivElement
 beforeEach(() => {
@@ -38,7 +38,8 @@ describe('staff layout preference', () => {
 describe('re-follow for stacked and paged staves (watch player)', () => {
   it('is needed only for row layouts that stopped following', () => {
     expect(staffNeedsRefollow('paged', false)).toBe(true)
-    expect(staffNeedsRefollow('wrapped', false)).toBe(true)
+    // Stacked follows playback itself (autoFollow), so a pill there would do nothing.
+    expect(staffNeedsRefollow('wrapped', false)).toBe(false)
     expect(staffNeedsRefollow('paged', true)).toBe(false)
     // The scroll line has its own Follow button on the scrub bar.
     expect(staffNeedsRefollow('scroll', false)).toBe(false)
@@ -50,5 +51,15 @@ describe('re-follow for stacked and paged staves (watch player)', () => {
     expect(button.textContent).toContain('staff.follow')
     act(() => button.click())
     expect(onFollow).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('watch player notation pane', () => {
+  it('lets a paged row scroll in a short pane and keeps room for the zoom control', () => {
+    expect(staffPaneClass('paged')).toMatch(/overflow-y-auto/)
+    expect(staffPaneClass('paged')).toMatch(/pb-16/)
+    expect(staffPaneClass('paged')).not.toMatch(/overflow-hidden/)
+    expect(staffPaneClass('wrapped')).toMatch(/overflow-hidden/)
+    expect(staffPaneClass('scroll')).toMatch(/overflow-auto/)
   })
 })
