@@ -22,6 +22,36 @@ type PitchPreservingVideo = HTMLVideoElement & {
   mozPreservesPitch?: boolean;
 };
 
+// Module-level (not a closure inside the hook) so `video` is an ordinary
+// parameter rather than a value captured from `useState` — the repo's React
+// Compiler lint rule (react-hooks/immutability) flags a captured state value
+// being mutated directly, even for a DOM element that's inherently mutated
+// imperatively; a plain parameter doesn't trip it.
+//
+// Fix round 1, issue #2: when the driver turns off (or the element binds
+// late while already off), undo anything a still-running instance may have
+// left on the element — a stale segment rate and/or preservesPitch — so a
+// caller whose own rate wiring takes back over (e.g. clock.playbackRate)
+// sees userSpeed, not whatever flexed segment was last playing. Without
+// this, the leftover rate also keeps re-triggering the element's own
+// `ratechange` event, so a listener like useVideoTransportClock's would keep
+// showing the stale value in the transport too.
+function resetToUserSpeed(
+  video: PitchPreservingVideo,
+  userSpeed: number,
+  pitchOnRef: { current: boolean }
+): void {
+  if (pitchOnRef.current) {
+    pitchOnRef.current = false;
+    video.preservesPitch = false;
+    if ('webkitPreservesPitch' in video) video.webkitPreservesPitch = false;
+    if ('mozPreservesPitch' in video) video.mozPreservesPitch = false;
+  }
+  if (Math.abs(video.playbackRate - userSpeed) > WRITE_EPS) {
+    video.playbackRate = userSpeed;
+  }
+}
+
 /**
  * Drives video.playbackRate from rAF while playing; sets preservesPitch.
  * No-op when map.isIdentity (then it sets rate = userSpeed once).
@@ -71,9 +101,13 @@ export function useFlexPlayback(
   });
 
   useEffect(() => {
-    if (!enabled) return;
     const video = videoEl as PitchPreservingVideo | null;
     if (!video) return;
+
+    if (!enabled) {
+      resetToUserSpeed(video, userSpeedRef.current, pitchOnRef);
+      return;
+    }
 
     const setPreservesPitch = (on: boolean) => {
       video.preservesPitch = on;

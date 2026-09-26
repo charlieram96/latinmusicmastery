@@ -276,6 +276,21 @@ export function PlaysenseStudioPlayer({
   // exactly what drives the element for unflexed lessons.
   useFlexPlayback(videoRef, flexMap, userSpeed, !flexMap.isIdentity);
 
+  // With flex, the transport shows/sets userSpeed — the student's chosen
+  // multiplier — never the element's own rate, which flickers segment to
+  // segment (Global Constraints, decision #2). With no flex, the rate still
+  // goes through clock.setPlaybackRate as before, but ALSO keeps userSpeed in
+  // step (fix round 1, issue #1): otherwise a speed chosen on an unflexed
+  // section is lost the moment playback crosses into a flexed one, since
+  // userSpeed would still be sitting at its unset initial value.
+  const displayedRate = flexMap.isIdentity ? clock.playbackRate : userSpeed;
+  const onDisplayedRateChange = flexMap.isIdentity
+    ? (rate: number) => {
+        clock.setPlaybackRate(rate);
+        setUserSpeed(rate);
+      }
+    : setUserSpeed;
+
   // --- Click track ---------------------------------------------------------
   // The beat grid comes from the ACTIVE sections, not the DISPLAYED one. That
   // distinction is load-bearing: displaySection deliberately persists through
@@ -522,11 +537,13 @@ export function PlaysenseStudioPlayer({
       void logPlaysenseStudioEvent({
         eventType: 'playsense_studio_play',
         classItemId,
-        metadata: { from_seconds: clock.currentSeconds, rate: clock.playbackRate },
+        // displayedRate (userSpeed when flexed), not the raw element rate,
+        // which flickers segment to segment and would be meaningless here.
+        metadata: { from_seconds: clock.currentSeconds, rate: displayedRate },
       });
     }
     wasPlayingRef.current = clock.isPlaying;
-  }, [clock.isPlaying, clock.currentSeconds, clock.playbackRate, classItemId, readOnly]);
+  }, [clock.isPlaying, clock.currentSeconds, displayedRate, classItemId, readOnly]);
 
   // Notation pane staff layout — stacked rows or horizontal pages, the student's
   // saved choice (only used when layout === 'split'). Pane geometry lives in SplitWorkspace.
@@ -573,13 +590,6 @@ export function PlaysenseStudioPlayer({
     start: marker.startSeconds,
     end: marker.endSeconds ?? all[i + 1]?.startSeconds ?? clock.durationSeconds,
   })).filter((section) => section.end > section.start);
-
-  // With flex, the transport shows/sets userSpeed — the student's chosen
-  // multiplier — never the element's own rate, which flickers segment to
-  // segment (Global Constraints, decision #2). With no flex, the pre-existing
-  // clock.playbackRate / clock.setPlaybackRate wiring is untouched.
-  const displayedRate = flexMap.isIdentity ? clock.playbackRate : userSpeed;
-  const onDisplayedRateChange = flexMap.isIdentity ? clock.setPlaybackRate : setUserSpeed;
 
   const transportEl = (
     <TransportBar

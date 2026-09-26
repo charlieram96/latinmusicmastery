@@ -1,13 +1,19 @@
-// PlaySense Studio — beat grids in MEDIA time (pure, no DOM).
+// PlaySense Studio — beat grids at a constant, unrounded tempo (pure, no DOM).
 //
-// A section's click track is defined by ONE anchor (a video second known to
-// land on a beat) plus the section score's tempo. That pair defines an infinite
-// beat grid; this module materialises the part of it you need.
+// A section's click track is defined by ONE anchor (a second known to land on
+// a beat) plus the section score's tempo. That pair defines an infinite beat
+// grid; this module materialises the part of it you need. The grid is
+// domain-agnostic: with no Flex Time it's built and played straight in MEDIA
+// seconds; with Flex Time (spec §7) the player instead treats the output as
+// TIMELINE seconds (the notation's own domain, since the notation can't
+// drift) and warps it into MEDIA through the section's FlexMap before
+// scheduling, so the click follows a stretched recording — see
+// lib/playsense-studio/flex-player.ts's `clickTimesInMedia`.
 //
 // Two rules carry the whole design:
 //
-//   1. Beat positions live in MEDIA time and are derived from the UNROUNDED
-//      score tempo. Playback rate belongs in the media -> AudioContext
+//   1. Beat positions are derived from the UNROUNDED score tempo, never a
+//      rounded one. Playback rate belongs in the eventual media -> AudioContext
 //      conversion and nowhere else -- the same discipline clip-schedule.ts
 //      states for clips. (chronometer-control computes a ROUNDED
 //      `baseBpm * playbackRate`, which is fine for a free-running click and
@@ -24,7 +30,8 @@ const EPS = 1e-9;
 const DEFAULT_MIN_GAP_SECONDS = 0.05;
 
 /**
- * Beat media-times in the inclusive window [fromSeconds, toSeconds].
+ * Beat times in the inclusive window [fromSeconds, toSeconds] — MEDIA or
+ * TIMELINE seconds, whichever domain the caller's anchor/from/to are in.
  *
  * The anchor may sit anywhere — before, inside, or after the window, and may be
  * negative. The grid extends infinitely in both directions, so `k` is signed
