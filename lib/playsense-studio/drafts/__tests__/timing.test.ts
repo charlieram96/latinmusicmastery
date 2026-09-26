@@ -34,4 +34,10 @@ describe('studio timing', () => {
     expect(studioTimingSchema.safeParse({ method: 'drag', params: {}, waypoints: [{ musicalPositionQN: 'a' }], anchor: null }).success).toBe(false);
     expect(studioTimingSchema.safeParse(EMPTY_TIMING).success).toBe(true);
   });
+  it('accepts an optional graded-owner play object, and rejects an out-of-range countInBars', () => {
+    const withPlay = { ...EMPTY_TIMING, play: { bar1Seconds: 1.2, countInBars: 2, preroll: false } };
+    expect(studioTimingSchema.safeParse(withPlay).success).toBe(true);
+    expect(studioTimingSchema.safeParse({ ...EMPTY_TIMING, play: { bar1Seconds: null, countInBars: 1, preroll: true } }).success).toBe(true);
+    expect(studioTimingSchema.safeParse({ ...EMPTY_TIMING, play: { bar1Seconds: 1, countInBars: 3, preroll: true } }).success).toBe(false);
+  });
 });

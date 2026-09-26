@@ -145,7 +145,11 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
 
     // (1) Removing the play-along video must reach the draft: it autosaves
     // the reset timing (setTiming, not replaceTiming, which would leave the
-    // change clean and never autosave it).
+    // change clean and never autosave it). setTiming merges its patch onto
+    // the existing draft timing, so the seeded play-along settings (Studio
+    // rework P5) survive the reset; the graded seed no longer carries an
+    // anchor (bar 1 replaces it), so the reset anchor is null, not the
+    // media's old metronomeAnchorSeconds.
     const btn = Array.from(host.querySelectorAll('button')).find((b) => b.textContent === 'remove video')!;
     act(() => {
       btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -156,7 +160,7 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
     expect(acts.saveStudioDraft).toHaveBeenCalledWith(
       expect.objectContaining({
         owner: { kind: 'exercise', id: 'ci-1' },
-        timing: { ...EMPTY_TIMING, anchor: { seconds: 1.5, qn: 0 } },
+        timing: { ...EMPTY_TIMING, play: exerciseMedia.play },
       })
     );
   });

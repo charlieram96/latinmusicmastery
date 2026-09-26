@@ -19,6 +19,8 @@ const timingCanon = (t: StudioTiming) =>
   });
 const anchorCanon = (a: StudioAnchor | null) =>
   a ? canon([round(a.seconds), a.qn == null ? null : round(a.qn)]) : 'null';
+const playCanon = (p: StudioTiming['play']) =>
+  p ? canon([p.bar1Seconds == null ? null : round(p.bar1Seconds), p.countInBars, p.preroll]) : 'null';
 
 /** publishTimeMap seeds/rebases the live anchor itself, and the Studio UI never
  *  clears one — it only sets one. So a null draft anchor means "never touched",
@@ -34,6 +36,10 @@ export function diffParts(live: StudioContent, draft: StudioContent) {
     // two), so a draft that thin is never "changed" timing.
     timing: draft.timing.waypoints.length >= 2 && timingCanon(live.timing) !== timingCanon(draft.timing),
     anchor: anchorChanged(live.timing.anchor, draft.timing.anchor),
+    // Graded owners (EXERCISE, JAM_SESSION) only: bar 1 + count-in/pre-roll.
+    // Both sides are undefined for every other owner, so this is never a
+    // phantom change there.
+    play: playCanon(live.timing.play) !== playCanon(draft.timing.play),
   };
 }
 
@@ -53,6 +59,7 @@ export function summarizeChanges(live: StudioContent, draft: StudioContent): str
   const parts = diffParts(live, draft);
   if (parts.timing) lines.push('Timing changed');
   if (parts.anchor) lines.push('Click anchor changed');
+  if (parts.play) lines.push('Play-along timing changed');
   if (!lines.length && parts.score) lines.push('Score details changed');
   return lines.length ? lines : ['No changes from the live version'];
 }

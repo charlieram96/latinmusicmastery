@@ -11,6 +11,7 @@ import {
   publishTimeMap,
   saveScoreDocument,
   setClassItemMetronomeAnchor,
+  setPlaySettings,
   setSectionMetronomeAnchor,
 } from '@/app/actions/playsense-studio';
 import { anchorChanged, diffParts, summarizeChanges } from '@/lib/playsense-studio/drafts/changes';
@@ -167,6 +168,10 @@ async function readUnpublished(supabase: Awaited<ReturnType<typeof createClient>
  *  Order: timing (its validation refuses before any write), score, anchor,
  *  then the published history row. Each part is written only if it changed.
  *
+ *  A graded owner (target 'graded': EXERCISE, JAM_SESSION — Studio rework P5)
+ *  never publishes a time map or an anchor; it writes play settings (bar 1,
+ *  count-in, pre-roll) through setPlaySettings instead.
+ *
  *  publishTimeMap can itself seed or rebase the live click anchor (e.g. seeding
  *  it from the first waypoint when it was null), so once timing has published,
  *  the anchor decision re-reads the owner instead of trusting the pre-publish
@@ -196,10 +201,13 @@ export async function publishStudioDraft(
   const anchorTouched = anchorChanged(liveContent.data!.timing.anchor, timing.anchor);
 
   let timingPublished = false;
-  if (r.target && parts.timing && timing.waypoints.length >= 2) {
+  // A graded owner (EXERCISE, JAM_SESSION) never publishes a time map — bar 1
+  // places the media instead (see the setPlaySettings call below).
+  const timingTarget = r.target && r.target !== 'graded' ? r.target : null;
+  if (timingTarget && parts.timing && timing.waypoints.length >= 2) {
     const res = await publishTimeMap({
       classItemId: r.classItemId!, scoreDocumentId: r.scoreDocumentId, sectionId: r.sectionId ?? undefined,
-      target: r.target, method: timing.method, params: timing.params, waypoints: timing.waypoints, makeActive: true,
+      target: timingTarget, method: timing.method, params: timing.params, waypoints: timing.waypoints, makeActive: true,
     });
     if (res.error) return { error: res.error };
     timingPublished = true;
@@ -207,6 +215,15 @@ export async function publishStudioDraft(
     const reResolved = await resolveOwner(supabase, owner);
     if (reResolved.error) return { error: reResolved.error };
     r = reResolved.data!;
+  }
+  if (r.target === 'graded' && parts.play && timing.play) {
+    const res = await setPlaySettings({
+      classItemId: r.classItemId!,
+      bar1Seconds: timing.play.bar1Seconds,
+      countInBars: timing.play.countInBars,
+      preroll: timing.play.preroll,
+    });
+    if (res.error) return { error: res.error };
   }
   if (parts.score) {
     const res = await saveScoreDocument({ scoreDocumentId: r.scoreDocumentId, scoreDocument: score });

@@ -3,7 +3,7 @@
 import type { createClient } from '@/lib/supabase/server';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { draftIdsToPrune, unpublishedDraft } from './policy';
-import { timingFromLive, type StudioAnchor, type StudioTiming } from './timing';
+import { timingFromLive, type StudioAnchor, type StudioPlay, type StudioTiming } from './timing';
 import type { StudioDraftOwner, VersionMeta } from './types';
 
 type Supa = Awaited<ReturnType<typeof createClient>>;
@@ -13,12 +13,18 @@ export interface ResolvedOwner {
   scoreDocumentId: string;
   classItemId: string | null;
   sectionId: string | null;
-  /** Which live map pointer timing publishes into; null = no timing (songs). */
-  target: 'section' | 'exercise' | 'classItem' | null;
+  /** Which live map pointer timing publishes into; null = no timing (songs).
+   *  'graded' = an EXERCISE or JAM_SESSION item: publish skips the time map
+   *  entirely and writes play settings instead (see publishStudioDraft). */
+  target: 'section' | 'exercise' | 'classItem' | 'graded' | null;
   liveTimeMapId: string | null;
-  /** Which anchor action the owner uses; null = no click anchor. */
+  /** Which anchor action the owner uses; null = no click anchor. Graded owners
+   *  never have one — the click comes from the grid, not a metronome anchor. */
   anchorKind: 'section' | 'classItem' | null;
   liveAnchor: StudioAnchor | null;
+  /** A graded owner's play-along settings (bar 1 + count-in/pre-roll), read
+   *  from class_items.play_*; null for every other owner. */
+  livePlay: StudioPlay | null;
 }
 
 const anchorOf = (seconds: number | null, qn: number | null): StudioAnchor | null =>
@@ -35,31 +41,41 @@ export async function resolveOwner(supabase: Supa, owner: StudioDraftOwner): Pro
     return { data: {
       owner, scoreDocumentId: data.score_document_id, classItemId: data.class_item_id, sectionId: data.id,
       target: 'section', liveTimeMapId: data.active_time_map_id, anchorKind: 'section',
-      liveAnchor: anchorOf(data.metronome_anchor_seconds, data.metronome_anchor_qn),
+      liveAnchor: anchorOf(data.metronome_anchor_seconds, data.metronome_anchor_qn), livePlay: null,
     } };
   }
   if (owner.kind === 'exercise') {
     const { data, error } = await supabase
       .from('class_items')
-      .select('id, item_type, score_document_id, active_time_map_id, exercise_time_map_id, metronome_anchor_seconds, metronome_anchor_qn')
+      .select(
+        'id, item_type, score_document_id, active_time_map_id, exercise_time_map_id, metronome_anchor_seconds, metronome_anchor_qn, play_bar1_seconds, play_count_in_bars, play_preroll'
+      )
       .eq('id', owner.id)
       .single();
     if (error || !data) return { error: error?.message ?? 'Lesson not found' };
     if (!data.score_document_id) return { error: 'No score document attached' };
-    const isExercise = data.item_type === 'EXERCISE';
+    // EXERCISE and JAM_SESSION are graded: bar 1 places the media, not a time
+    // map, and there's no metronome anchor — the click comes from the grid.
+    // Anything else is the legacy single-score class item.
+    const isGraded = data.item_type === 'EXERCISE' || data.item_type === 'JAM_SESSION';
     return { data: {
       owner, scoreDocumentId: data.score_document_id, classItemId: data.id, sectionId: null,
-      target: isExercise ? 'exercise' : 'classItem',
-      liveTimeMapId: isExercise ? data.exercise_time_map_id : data.active_time_map_id,
-      anchorKind: isExercise ? 'classItem' : null,
-      liveAnchor: isExercise ? anchorOf(data.metronome_anchor_seconds, data.metronome_anchor_qn) : null,
+      target: isGraded ? 'graded' : 'classItem',
+      liveTimeMapId: isGraded ? null : data.active_time_map_id,
+      anchorKind: null,
+      liveAnchor: null,
+      livePlay: isGraded ? {
+        bar1Seconds: data.play_bar1_seconds,
+        countInBars: (data.play_count_in_bars === 2 ? 2 : 1) as 1 | 2,
+        preroll: data.play_preroll ?? true,
+      } : null,
     } };
   }
   const { data, error } = await supabase.from('play_sense_songs').select('id, score_document_id').eq('id', owner.id).single();
   if (error || !data) return { error: error?.message ?? 'Song not found' };
   return { data: {
     owner, scoreDocumentId: data.score_document_id, classItemId: null, sectionId: null,
-    target: null, liveTimeMapId: null, anchorKind: null, liveAnchor: null,
+    target: null, liveTimeMapId: null, anchorKind: null, liveAnchor: null, livePlay: null,
   } };
 }
 
@@ -86,7 +102,8 @@ export async function loadLiveContent(supabase: Supa, r: ResolvedOwner): Promise
       })),
     };
   }
-  return { data: { score: doc.parsed_score as unknown as ScoreDocument, timing: timingFromLive(map, r.liveAnchor) } };
+  const timing: StudioTiming = { ...timingFromLive(map, r.liveAnchor), ...(r.livePlay ? { play: r.livePlay } : {}) };
+  return { data: { score: doc.parsed_score as unknown as ScoreDocument, timing } };
 }
 
 export async function listVersionMeta(supabase: Supa, owner: StudioDraftOwner): Promise<{ data?: VersionMeta[]; error?: string }> {

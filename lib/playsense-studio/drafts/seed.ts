@@ -4,7 +4,7 @@ import type { ClassItemScoreSection, ExerciseMedia } from '@/app/actions/playsen
 import type { StudioDraft } from '@/app/actions/studio-drafts';
 import type { StudioMode, StudioOwner } from '@/app/admin/playsense-studio/[classItemId]/studio-workspace';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
-import { EMPTY_TIMING, timingFromLive, timingToTimeMap } from './timing';
+import { EMPTY_TIMING, timingFromLive, timingToTimeMap, type StudioTiming } from './timing';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 /** What a section's editor opens on: its unpublished draft, else what students see. */
@@ -31,16 +31,14 @@ export function workspaceSeed(input: {
   studioDraft?: StudioDraft | null;
 }) {
   const isExercise = input.mode === 'exercise' && input.owner.kind === 'classItem';
-  const live =
+  // 'exercise' mode is the graded workspace (EXERCISE and JAM_SESSION items
+  // alike — see Studio rework P5): bar 1 places the media, so there's no time
+  // map or click anchor to seed, only the play-along settings.
+  const live: StudioTiming =
     input.owner.kind === 'song'
       ? EMPTY_TIMING
       : isExercise
-        ? timingFromLive(
-            input.exerciseMedia?.timeMap ?? null,
-            input.exerciseMedia?.metronomeAnchorSeconds == null
-              ? null
-              : { seconds: input.exerciseMedia.metronomeAnchorSeconds, qn: input.exerciseMedia.metronomeAnchorQn ?? null }
-          )
+        ? { ...EMPTY_TIMING, play: input.exerciseMedia?.play }
         : timingFromLive(input.activeTimeMap, null);
   const timing = input.studioDraft?.timing ?? live;
   return {

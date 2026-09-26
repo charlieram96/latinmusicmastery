@@ -8,16 +8,26 @@ const waypointSchema = z.object({
   beatInMeasure: z.number().nullable(),
 });
 
+/** Studio rework P5: bar 1 placement + count-in/pre-roll for a graded owner
+ *  (EXERCISE, JAM_SESSION). Optional — only graded owners ever set it. */
+const playSchema = z.object({
+  bar1Seconds: z.number().nullable(),
+  countInBars: z.union([z.literal(1), z.literal(2)]),
+  preroll: z.boolean(),
+});
+
 export const studioTimingSchema = z.object({
   method: z.enum(['tempo', 'tap', 'drag', 'midi']),
   params: z.record(z.string(), z.unknown()),
   waypoints: z.array(waypointSchema),
   anchor: z.object({ seconds: z.number(), qn: z.number().nullable() }).nullable(),
+  play: playSchema.optional(),
 });
 
 export type StudioTiming = z.infer<typeof studioTimingSchema>;
 export type StudioWaypoint = StudioTiming['waypoints'][number];
 export type StudioAnchor = NonNullable<StudioTiming['anchor']>;
+export type StudioPlay = NonNullable<StudioTiming['play']>;
 export type StudioNudge = { qn: number; deltaSeconds: number };
 
 /** A song, or an owner never synced: no waypoints, no anchor. */

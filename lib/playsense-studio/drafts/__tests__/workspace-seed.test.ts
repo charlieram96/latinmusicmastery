@@ -5,15 +5,26 @@ import { EMPTY_TIMING } from '@/lib/playsense-studio/drafts/timing';
 const wp = (qn: number, s: number) => ({ musicalPositionQN: qn, videoTimeSeconds: s, measureNumber: null, beatInMeasure: null });
 const score = { title: 'Live' } as never;
 const exMap = { id: 'ex', method: 'drag', params: {}, waypoints: [wp(0, 0.5), wp(4, 2.5)], nudges: [] };
-const media = { videoUrl: 'v', videoStartSeconds: 0, videoTrimOutSeconds: null, metronomeAnchorSeconds: 0.5, metronomeAnchorQn: 0, timeMap: exMap, backingTracks: [] };
+const play = { bar1Seconds: 1.2, countInBars: 2 as const, preroll: false };
+const media = { videoUrl: 'v', videoStartSeconds: 0, videoTrimOutSeconds: null, metronomeAnchorSeconds: 0.5, metronomeAnchorQn: 0, timeMap: exMap, backingTracks: [], play };
 
 describe('workspaceSeed', () => {
-  it('exercise timing comes from the play-along map and the class item anchor', () => {
+  // Studio rework P5: 'exercise' mode is the graded workspace (EXERCISE and
+  // JAM_SESSION items alike). Bar 1 places the media now, so there's no time
+  // map or click anchor to seed — only the play-along settings.
+  it('a graded (exercise/jam) owner has no waypoints or anchor to seed', () => {
     const s = workspaceSeed({ owner: { kind: 'classItem', classItemId: 'ci' }, mode: 'exercise', initialScore: score, activeTimeMap: null, exerciseMedia: media as never });
-    expect(s.timing.waypoints).toEqual(exMap.waypoints);
-    // qn is carried too, so an untouched seed anchor matches live exactly (no
-    // phantom "Click anchor changed", and publish leaves it alone).
-    expect(s.timing.anchor).toEqual({ seconds: 0.5, qn: 0 });
+    expect(s.timing.waypoints).toEqual([]);
+    expect(s.timing.anchor).toBeNull();
+    expect(s.timeMap).toBeNull();
+  });
+  it('a graded owner seeds timing.play from the exercise media', () => {
+    const s = workspaceSeed({ owner: { kind: 'classItem', classItemId: 'ci' }, mode: 'exercise', initialScore: score, activeTimeMap: null, exerciseMedia: media as never });
+    expect(s.timing.play).toEqual(play);
+  });
+  it('a graded owner with no media yet seeds no play settings', () => {
+    const s = workspaceSeed({ owner: { kind: 'classItem', classItemId: 'ci' }, mode: 'exercise', initialScore: score, activeTimeMap: null, exerciseMedia: null });
+    expect(s.timing.play).toBeUndefined();
   });
   it('a legacy single-score lesson uses its active map and no anchor', () => {
     const s = workspaceSeed({ owner: { kind: 'classItem', classItemId: 'ci' }, mode: 'video', initialScore: score, activeTimeMap: exMap as never });
