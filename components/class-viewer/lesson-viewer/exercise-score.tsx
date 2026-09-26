@@ -1,9 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { LocateFixed, Minus, Music2, PanelLeft, PanelRight, PanelTop, Plus } from 'lucide-react'
+import { LocateFixed, Minus, Music2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import { StaffRenderer } from '@/components/playsense-studio/player/notation/renderers/staff-renderer'
 import { StaffLayoutSwitch, staffLayoutMode, useStaffLayoutPreference } from '@/components/playsense-studio/player/notation/staff-layout-switch'
@@ -65,21 +64,6 @@ export function ExerciseScore({ score, currentMs, getCurrentMs, playing, pass, g
   return <section id={workspace?.scoreId} className="ps-lesson-notation ps-exercise-score" data-score-layout={vertical ? 'vertical' : 'horizontal'} data-staff-layout={layout} aria-label={t('staff.scoreAria')}>
     <header className="ps-score-toolbar">
       <div className="ps-score-identity"><Music2 size={15}/><strong>{t('staff.score')}</strong><span>{displayScore.tracks[0]?.displayName}</span></div>
-      {workspace && <Popover>
-        <PopoverTrigger asChild><Button size="sm" variant="ghost" className="ps-score-layout-trigger" aria-label="Score layout" title="Score layout"><PanelRight size={14}/><span>Layout</span></Button></PopoverTrigger>
-        <PopoverContent align="end" className="ps-score-layout-menu">
-          <strong>Make room for your music</strong>
-          <p>Choose where your score sits.</p>
-          <div className="ps-score-position-options" role="group" aria-label="Score position">
-            {([{value:'left',label:'Left',icon:PanelLeft},{value:'top',label:'Top',icon:PanelTop},{value:'right',label:'Right',icon:PanelRight}] as const).map(({value,label,icon:Icon})=>
-              <Button key={value} variant="ghost" aria-label={`Score on the ${value}`} aria-pressed={workspace.position === value} onClick={()=>workspace.setPosition(value)}><Icon size={22}/>{label}</Button>)}
-          </div>
-          {vertical && <div className="ps-score-panel-control">
-            <span>{workspace.stacked ? 'Drag the divider above the score to resize.' : 'Drag the divider beside the score to resize.'}</span><Button variant="ghost" size="sm" onClick={workspace.resetSize}>Reset</Button>
-          </div>}
-          {workspace.stacked && vertical && <p className="ps-score-layout-note">On smaller screens, the score sits below the stage.</p>}
-        </PopoverContent>
-      </Popover>}
       <div className="ps-score-location" aria-label={t('staff.barAria', { bar, total: passBars, beat: beat + 1 })}>
         <span>{t('staff.bar')} <strong>{String(bar).padStart(2, '0')}</strong><i>/ {String(passBars).padStart(2, '0')}</i></span>
         <div className="ps-score-beats" aria-hidden="true">{Array.from({length:Math.min(12,signature[0])},(_,i)=><i key={i} data-active={playing && i === beat}/>)}</div>

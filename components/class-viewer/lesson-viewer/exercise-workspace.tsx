@@ -1,10 +1,9 @@
 'use client'
 
-// The play view's layout now lives in the lesson workspace (SplitWorkspace).
-// ExerciseScore still reads its placement through useExerciseWorkspace (it
-// picks wrapped vs. single-line reading from it and offers a Left / Top /
-// Right menu), so this module bridges that old shape onto the workspace
-// controller until the score drops the menu.
+// The play view's layout lives in the lesson workspace (SplitWorkspace), and
+// the lesson action bar holds its layout switcher. ExerciseScore only reads its
+// placement here: a side panel (vertical toolbar, fills the height) or a strip
+// on top, plus the id the lesson links to.
 
 import { createContext, useContext, useId, useMemo, type ReactNode } from 'react'
 import type { WorkspaceController } from '@/components/playsense-studio/player/use-workspace-layout'
@@ -15,9 +14,6 @@ export type ScorePosition = 'left' | 'top' | 'right'
 
 interface WorkspaceSettings {
   position: ScorePosition
-  setPosition: (position: ScorePosition) => void
-  stacked: boolean
-  resetSize: () => void
   scoreId: string
 }
 const WorkspaceContext = createContext<WorkspaceSettings | null>(null)
@@ -29,25 +25,12 @@ export function scorePositionFor(state: WorkspaceState, layout: WorkspaceLayout)
   return layout === 'side' && state.swap ? 'left' : 'right'
 }
 
-export function layoutForScorePosition(position: ScorePosition): Partial<WorkspaceState> {
-  if (position === 'top') return { layout: 'stack', swap: false }
-  return { layout: 'side', swap: position === 'left' }
-}
-
 export function ExerciseScoreWorkspaceBridge({ controller, children }: { controller: WorkspaceController; children: ReactNode }) {
   const scoreId = useId()
-  const { state, layout, update, setLayout, defaults, beforeLayoutChangeRef } = controller
+  const { state, layout } = controller
   const value = useMemo<WorkspaceSettings>(() => ({
     position: scorePositionFor(state, layout),
-    setPosition: (position) => {
-      const next = layoutForScorePosition(position)
-      if (next.layout !== state.layout) setLayout(next.layout!)
-      else beforeLayoutChangeRef.current?.()
-      update({ swap: next.swap })
-    },
-    stacked: layout === 'stack',
-    resetSize: () => update({ split: defaults.split, musicSplit: defaults.musicSplit }),
     scoreId,
-  }), [state, layout, update, setLayout, defaults, beforeLayoutChangeRef, scoreId])
+  }), [state, layout, scoreId])
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>
 }

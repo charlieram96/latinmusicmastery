@@ -42,3 +42,15 @@ it('keeps its own preference without a parent', () => {
   act(() => root.render(<ExerciseScore {...base} />))
   expect(host.querySelector('[data-staff]')?.getAttribute('data-mode')).toBe('wrapped')
 })
+
+it('leaves layout to the lesson workspace switcher: no Left/Top/Right menu on the score', async () => {
+  const { ExerciseScoreWorkspaceBridge } = await import('../exercise-workspace')
+  const { PLAY_WORKSPACE } = await import('@/lib/playsense-studio/workspace-layout')
+  const controller = (layout: string) => ({ state: { ...PLAY_WORKSPACE, layout }, layout, update: vi.fn(), setLayout: vi.fn(),
+    defaults: PLAY_WORKSPACE, beforeLayoutChangeRef: { current: null } }) as never
+  act(() => root.render(<ExerciseScoreWorkspaceBridge controller={controller('side')}><ExerciseScore {...base} /></ExerciseScoreWorkspaceBridge>))
+  expect(host.querySelector('[aria-label="Score layout"]')).toBeNull()
+  expect(host.querySelector('.ps-exercise-score')?.getAttribute('data-score-layout')).toBe('vertical')
+  act(() => root.render(<ExerciseScoreWorkspaceBridge controller={controller('stack')}><ExerciseScore {...base} /></ExerciseScoreWorkspaceBridge>))
+  expect(host.querySelector('.ps-exercise-score')?.getAttribute('data-score-layout')).toBe('horizontal')
+})
