@@ -78,7 +78,7 @@
   .lx-parts { grid-column:1 / -1; grid-row:2; justify-content:center; }
   .lx-part { padding:6px 10px 10px; }
   .lx-part .lx-part-label { display:none; }
-  .lx-part[aria-selected=true] .lx-part-label { display:inline; }
+  .lx-part[aria-current=step] .lx-part-label { display:inline; }
   .lx-crumb { display:none; }
 }
 @media (prefers-reduced-motion:reduce) { .lx-part-track i, .lx-part, .lx-icon-btn { transition:none; } }
@@ -251,6 +251,9 @@
 .lx-bar[data-status=close] i, .lx-legend i[data-status=close] { background:hsl(var(--warning, var(--gold))); }
 .lx-bar[data-status=miss] i, .lx-legend i[data-status=miss] { background:hsl(var(--danger)); }
 .lx-bar[data-status=rest] { opacity:.55; }
+/* Never reached (the take was stopped early): neutral, dashed. */
+.lx-bar[data-status=unplayed] { opacity:.6; background:transparent; outline:1.5px dashed hsl(var(--border)); outline-offset:-1.5px; }
+.lx-legend i[data-status=unplayed] { background:transparent; outline:1.5px dashed hsl(var(--muted-foreground) / .6); outline-offset:-1.5px; }
 .lx-legend { display:flex; flex-wrap:wrap; align-items:center; gap:14px; font-size:12px; color:hsl(var(--muted-foreground)); }
 .lx-legend span { display:inline-flex; align-items:center; gap:6px; }
 .lx-legend i { display:inline-block; width:14px; height:6px; border-radius:3px; }

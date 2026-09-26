@@ -27,5 +27,6 @@ export function readyChecks(i: ReadyInput): ReadyChecks {
   const timing: CheckState = i.audioMode === 'midi' ? 'skipped'
     : i.calibrating ? 'running' : i.calibrated ? 'done' : 'todo'
   // Timing and the mic level are advice, as today: only the input choice is required.
-  return { sound, input, timing, canStart: sound === 'done' }
+  // A measurement in progress holds Start (the take would talk over the clicks).
+  return { sound, input, timing, canStart: sound === 'done' && !i.calibrating }
 }

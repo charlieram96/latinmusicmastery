@@ -30,7 +30,7 @@ beforeEach(() => {
 })
 afterEach(() => { act(() => root.unmount()); host.remove() })
 
-const tabs = () => [...host.querySelectorAll('[role=tab]')] as HTMLAnchorElement[]
+const tabs = () => [...host.querySelectorAll('nav.lx-parts a')] as HTMLAnchorElement[]
 
 describe('LessonTopBar', () => {
   it('shows the crumb and the lesson title', () => {
@@ -43,7 +43,9 @@ describe('LessonTopBar', () => {
   it('shows each part with its state and progress underline', () => {
     act(() => root.render(<LessonTopBar {...props} activeStatus="in-progress" onOpenDrawer={() => {}} />))
     expect(tabs().map(t => t.getAttribute('data-part-state'))).toEqual(['done', 'active', 'todo'])
-    expect(tabs()[1].getAttribute('aria-selected')).toBe('true')
+    // Parts are links in a nav, the current one marked as the current step (L4).
+    expect(host.querySelector('[role=tablist], [role=tab]')).toBeNull()
+    expect(tabs().map(t => t.getAttribute('aria-current'))).toEqual([null, 'step', null])
     expect(tabs()[0].getAttribute('href')).toBe('/dashboard/course/c/class/k?item=0')
     const widths = tabs().map(t => (t.querySelector('[data-part-progress] i') as HTMLElement).style.width)
     expect(widths).toEqual(['100%', '50%', '0%'])

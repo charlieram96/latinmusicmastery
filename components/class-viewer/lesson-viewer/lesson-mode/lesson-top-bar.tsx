@@ -45,13 +45,13 @@ export function LessonTopBar({ courseTitle, courseHref, moduleTitle, moduleHref,
       <h1 title={title}>{title}</h1>
     </div>
 
-    {parts.length > 0 && <nav aria-label={t('dashboard.classViewer.lessonMode.partsLabel')} className="lx-parts" role="tablist">
+    {parts.length > 0 && <nav aria-label={t('dashboard.classViewer.lessonMode.partsLabel')} className="lx-parts">
       {parts.map((part, i) => {
         const done = completedItemIds.includes(part.id)
         const state = done ? 'done' : i === activeIndex ? 'active' : 'todo'
         const Icon = done ? Check : ICON[partKind(part.item_type)]
         const pct = partProgress(state, i === activeIndex ? activeStatus : undefined)
-        return <Link key={part.id} role="tab" aria-selected={i === activeIndex} data-part-state={state} title={part.title}
+        return <Link key={part.id} aria-current={i === activeIndex ? 'step' : undefined} data-part-state={state} title={part.title}
           href={`/dashboard/course/${courseId}/class/${classId}?item=${i}`}
           className={cn('lx-part', i === activeIndex && 'lx-part-on')}>
           <Icon aria-hidden className="h-4 w-4 shrink-0" strokeWidth={done ? 3 : 2} />

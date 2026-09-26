@@ -17,10 +17,14 @@ describe('readyChecks', () => {
     expect(readyChecks({ ...base, audioMode: 'speaker-safe', micOpen: true }).input).toBe('running')
   })
 
-  it('timing runs while calibrating; skipping it still allows a start', () => {
+  it('timing runs while calibrating, and Start waits for it (L1)', () => {
     const r = readyChecks({ ...base, audioMode: 'headphones', calibrating: true })
     expect(r.timing).toBe('running')
-    expect(r.canStart).toBe(true)
+    expect(r.canStart).toBe(false)
+  })
+
+  it('skipping timing still allows a start', () => {
+    expect(readyChecks({ ...base, audioMode: 'headphones' }).canStart).toBe(true)
   })
 
   it('MIDI needs neither the mic nor a timing check', () => {

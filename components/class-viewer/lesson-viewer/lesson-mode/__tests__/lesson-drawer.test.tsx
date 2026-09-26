@@ -55,4 +55,11 @@ describe('LessonDrawer', () => {
     render(false)
     expect(document.body.querySelector('[data-lesson-drawer]')).toBeNull()
   })
+
+  it('a locked lesson has no Comments tab (L7)', () => {
+    act(() => root.render(<LessonDrawer open onOpenChange={() => {}} title="Locked" description={null} meta={{}}
+      comments={null} commentCount={0} lessons={<div />} />))
+    expect(tab('drawer.comments')).toBeUndefined()
+    expect(document.body.querySelector('[data-comments-panel]')).toBeNull()
+  })
 })

@@ -5,7 +5,7 @@
 // arrives as slots (body, comments). Parts reach the action bar through the
 // LessonFrame context (see lesson-frame.tsx).
 
-import { useCallback, useMemo, useState, type MouseEvent, type ReactNode } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import type { markClassItemComplete } from '@/app/actions/progress'
 import { useTranslation } from '@/components/language-provider'
@@ -32,8 +32,9 @@ export interface LessonModeShellProps {
   activeIndex: number
   /** Null for a paywalled lesson: no parts to complete. */
   progress: LessonProgressInput | null
-  /** Completion day keys (the dashboard's streak source) and today's key. */
-  practice: { dateKeys: string[]; today: string } | null
+  /** Completion day keys (the dashboard's streak source), today's key, and how many of today's keys
+      are this lesson's parts (so the celebration's "before" is the state before this lesson). */
+  practice: { dateKeys: string[]; today: string; lessonToday?: number } | null
   about: { description: string | null; meta: LessonMeta }
   comments: ReactNode
   commentCount: number
@@ -80,16 +81,23 @@ function LessonModeFrame({ course, module, lesson, rail, parts, activeIndex, pro
   const lessonFinished = !!progress && progress.totalItems > 0 && completedItemIds.filter(id => progress.itemIds.includes(id)).length + saving.length === progress.totalItems
   // Celebrate only a lesson finished in this visit, from its last part.
   const celebrate = !!practice && !!summary && !summary.hasNextPart && lessonFinished && finishedHere > 0
-  const stats = useMemo(() => practice ? celebrationStats(practice.dateKeys, practice.today, finishedHere) : null, [practice, finishedHere])
+  const stats = useMemo(() => practice ? celebrationStats(practice.dateKeys, practice.today, finishedHere, practice.lessonToday ?? 0) : null, [practice, finishedHere])
 
+  // advance() is stable (it reads the latest state from a ref) so the frame
+  // value, and every part reading it, does not change on each shell render.
+  const latest = useRef({ summary, celebrate, courseHref, router })
+  useLayoutEffect(() => { latest.current = { summary, celebrate, courseHref, router } })
   const advance = useCallback(() => {
+    const { summary, celebrate, courseHref, router } = latest.current
     if (!summary) { router.push(courseHref); return }
     if (celebrate) setCelebrating(true)
     else router.push(summary.nextHref)
-  }, [summary, celebrate, router, courseHref])
+  }, [])
 
   const onPrimary = (event: MouseEvent<HTMLAnchorElement>) => {
     if (!celebrate) return
+    // A new tab / window (ctrl, cmd, shift, middle click) opens the link as usual.
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
     event.preventDefault()
     setCelebrating(true)
   }

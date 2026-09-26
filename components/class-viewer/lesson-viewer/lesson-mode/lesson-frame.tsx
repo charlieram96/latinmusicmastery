@@ -75,7 +75,11 @@ export function LessonAction({ tone = 'neutral', className, children }: { tone?:
 }
 
 /** Badge, bold line and detail — the left side of the action bar. */
-export function ActionMessage({ icon, title, detail, live = false }: { icon: ReactNode; title: ReactNode; detail?: ReactNode; live?: boolean }) {
+export function ActionMessage({ icon, title, detail, live: wantsLive = false }: { icon: ReactNode; title: ReactNode; detail?: ReactNode; live?: boolean }) {
+  // In a lesson the action bar announces its message from one persistent live
+  // region; a region created together with its content is often not read.
+  const frame = useLessonFrame()
+  const live = wantsLive && (!frame || !!frame.noClaim)
   return <div className="lx-msg" role={live ? 'status' : undefined} aria-live={live ? 'polite' : undefined} aria-atomic={live || undefined}>
     {icon != null && <span className="lx-msg-badge" aria-hidden>{icon}</span>}
     <div className="min-w-0">

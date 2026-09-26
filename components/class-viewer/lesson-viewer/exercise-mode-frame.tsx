@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Eye, Maximize2, Minimize2, Music2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
-import { lessonExerciseHeight } from '@/lib/playsense-studio/lesson-viewport'
+import { lessonExerciseHeight, lessonStageHeight } from '@/lib/playsense-studio/lesson-viewport'
 import { useLessonFrame } from './lesson-mode/lesson-frame'
 import './exercise-mode.css'
 
@@ -33,13 +33,18 @@ export function ExerciseModeFrame({ title, hasScore, preview, onWatchDemo, child
     const scroller = el.closest<HTMLElement>('[data-dashboard-main]')
     const lesson = el.closest<HTMLElement>('[data-lesson-shell]')
     const footer = lesson?.querySelector<HTMLElement>('[data-lesson-footer] > div')
+    // The L2 stage: its content (.lx-fill) pads the bottom; the frame fills the rest exactly.
+    const fill = inLesson ? el.closest<HTMLElement>('.lx-fill') : null
     let pending = 0
     const measure = () => {
       pending = 0
       const visibleBottom = (window.visualViewport?.offsetTop ?? 0) + (window.visualViewport?.height ?? window.innerHeight)
       const bottom = Math.min(visibleBottom, scroller?.getBoundingClientRect().bottom ?? visibleBottom)
-      const height = lessonExerciseHeight(bottom, el.getBoundingClientRect().top,
-        scroller?.scrollTop ?? window.scrollY, footer?.getBoundingClientRect().height ?? 0)
+      const top = el.getBoundingClientRect().top
+      const scrollTop = scroller?.scrollTop ?? window.scrollY
+      const height = fill
+        ? lessonStageHeight(bottom, top, scrollTop, parseFloat(getComputedStyle(fill).paddingBottom) || 0)
+        : lessonExerciseHeight(bottom, top, scrollTop, footer?.getBoundingClientRect().height ?? 0)
       const value = `${height}px`
       if (el.style.getPropertyValue('--lesson-exercise-height') !== value) el.style.setProperty('--lesson-exercise-height', value)
     }
@@ -59,7 +64,7 @@ export function ExerciseModeFrame({ title, hasScore, preview, onWatchDemo, child
       window.removeEventListener('resize', schedule)
       window.visualViewport?.removeEventListener('resize', schedule)
     }
-  }, [immersive])
+  }, [immersive, inLesson])
 
   useEffect(() => {
     if (immersive) modeButton.current?.focus({ preventScroll: true })

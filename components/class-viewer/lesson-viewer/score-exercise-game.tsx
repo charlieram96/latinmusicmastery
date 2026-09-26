@@ -21,8 +21,10 @@ import { NowPlayingBar } from '@/components/play-sense/now-playing-bar'
 import { CalibrationWizard } from '@/components/play-sense/calibration-wizard'
 import { AudioModePrompt } from '@/components/play-sense/audio-mode-prompt'
 import { PlaysenseTestPanel } from '@/components/play-sense/playsense-test-panel'
-import { getUserAttempts, saveAttempt } from '@/app/actions/play-sense'
-import { bestPreviousAccuracy, buildBarResults } from '@/lib/play-sense/bar-results'
+import { getBestAttemptAccuracy, saveAttempt } from '@/app/actions/play-sense'
+import { buildBarResults, reachedResults, takeBaseline } from '@/lib/play-sense/bar-results'
+import { computeStats } from '@/lib/play-sense/scoring'
+import { audioErrorKey } from '@/lib/play-sense/audio-errors'
 import { PartDone } from './part-done'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -104,6 +106,18 @@ function ScoreExerciseSession({
   // Remembered per staff layout, like watch (lmm-workspace:play:stacked / :horizontal).
   const [staffLayout, setStaffLayout] = useStaffLayoutPreference()
   const workspace = useWorkspaceLayout(`play:${staffLayout}`, PLAY_WORKSPACE)
+  // Without a teacher video there is nothing to lay out: the music fills the
+  // workspace (staff over highway), and the score's shape must not follow a
+  // stored layout the student can neither see nor change here.
+  const hasVideo = !!exerciseVideo
+  const scoreWorkspace = useMemo(
+    // Read-only: nothing here may rewrite the layout saved for exercises that do have a video.
+    () => hasVideo ? workspace : {
+      ...workspace, layout: 'music' as const, state: { ...workspace.state, layout: 'music' as const, swap: false },
+      setLayout: () => {}, swap: () => {}, update: () => {}, beforeLayoutChangeRef: { current: null },
+    },
+    [hasVideo, workspace],
+  )
   // The student's mix over the backing tracks: every track plays, each at the
   // level the student set (on top of the authored level) or muted. Remembered
   // per viewer; hydrated after mount so the server and first client render agree.
@@ -252,28 +266,45 @@ function ScoreExerciseSession({
     }
   }, [preview, session.sessionState, session.attemptStats, session.exercise, session.eventResults])
 
-  // The student's best accuracy on this exercise, for Part done's comparison:
-  // saved takes, plus takes finished in this visit; frozen when a take starts.
-  const [bestAccuracy, setBestAccuracy] = useState<number | null>(null)
-  const [takeBaseline, setTakeBaseline] = useState<number | null>(null)
+  // Part done's comparison: the best saved take (fetched once; undefined while
+  // it loads) and the best take finished earlier in this visit, frozen when a
+  // take starts. The saved best stays live, so a late answer still lands.
+  const [savedBest, setSavedBest] = useState<number | null | undefined>(preview ? null : undefined)
+  const [visitBest, setVisitBest] = useState<number | null>(null)
+  const [visitBaseline, setVisitBaseline] = useState<number | null>(null)
   useEffect(() => {
     if (preview) return
     let live = true
-    getUserAttempts(exercise.id)
-      .then(rows => { if (live) setBestAccuracy(best => maxOrNull(best, bestPreviousAccuracy(rows as { accuracy: number | null }[]))) })
-      .catch(() => {})
+    getBestAttemptAccuracy(exercise.id)
+      .then(best => { if (live) setSavedBest(best) })
+      .catch(() => { if (live) setSavedBest(null) })
     return () => { live = false }
   }, [exercise.id, preview])
   useEffect(() => {
-    if (session.sessionState === 'countdown') setTakeBaseline(bestAccuracy)
-  }, [session.sessionState, bestAccuracy])
+    if (session.sessionState === 'countdown') setVisitBaseline(visitBest)
+  }, [session.sessionState, visitBest])
   useEffect(() => {
-    if (session.sessionState === 'results' && session.attemptStats) setBestAccuracy(best => maxOrNull(best, session.attemptStats!.accuracy))
+    if (session.sessionState === 'results' && session.attemptStats) setVisitBest(best => maxOrNull(best, session.attemptStats!.accuracy))
   }, [session.sessionState, session.attemptStats])
+
+  // Finish take mid-pass: remember how far the take got, so the notes it never
+  // reached are "not played" on Part done instead of missed.
+  const [stoppedAt, setStoppedAt] = useState<number | null>(null)
+  useEffect(() => {
+    if (session.sessionState === 'countdown') setStoppedAt(null)
+  }, [session.sessionState])
+  const finishTake = () => {
+    setStoppedAt(Math.min(1, Math.max(0, session.playheadProgress)))
+    session.stopExercise()
+  }
   const playAgain = () => {
     session.retry()
     void session.startExercise()
   }
+
+  // The input hooks report in English; show the ones we know in the student's language.
+  const errorKey = audioErrorKey(session.audioError)
+  const audioError = errorKey ? t(errorKey) : session.audioError
 
   const isActive =
     session.sessionState === 'selecting' ||
@@ -350,7 +381,7 @@ function ScoreExerciseSession({
           micOpen={session.isListening}
           micHeard={micHeard}
           deviceLabel={deviceLabel}
-          micError={session.isListening ? null : session.audioError}
+          micError={session.isListening ? null : audioError}
           onTestMic={() => { testedMode.current = session.audioMode; session.testMic() }}
           calibrating={session.isCalibrating}
           calibrationBeat={session.calibrationBeat}
@@ -401,12 +432,16 @@ function ScoreExerciseSession({
 
   // Part done — the take's accuracy and a bar-by-bar strip
   if (session.sessionState === 'results' && session.attemptStats && session.exercise) {
+    const reached = stoppedAt != null && stoppedAt < 1 ? stoppedAt : null
+    // The ring shows what was played; the saved attempt keeps the engine's numbers.
+    const shown = reached == null ? session.attemptStats
+      : { ...computeStats(reachedResults(session.exercise, session.eventResults, reached), session.attemptStats.extraHits, session.attemptStats.durationSeconds) }
     return (
       <div className="ps-lesson-results">
         <PartDone
-          stats={session.attemptStats}
-          bars={buildBarResults(session.exercise, session.eventResults)}
-          previousBest={takeBaseline}
+          stats={shown}
+          bars={buildBarResults(session.exercise, session.eventResults, { reached })}
+          previousBest={takeBaseline(savedBest, visitBaseline)}
           onAgain={playAgain}
           onContinue={frame ? frame.advance : undefined}
           onWatchDemo={onWatchDemo}
@@ -448,8 +483,8 @@ function ScoreExerciseSession({
                             type="button"
                             onClick={() => updateMix(track.id, { muted: !entry.muted })}
                             aria-pressed={!entry.muted}
-                            aria-label={`${entry.muted ? 'Unmute' : 'Mute'} ${track.label}`}
-                            title={entry.muted ? 'Unmute' : 'Mute'}
+                            aria-label={t(entry.muted ? 'dashboard.classViewer.exercise.unmuteTrack' : 'dashboard.classViewer.exercise.muteTrack', { track: track.label })}
+                            title={t(entry.muted ? 'dashboard.classViewer.exercise.unmute' : 'dashboard.classViewer.exercise.mute')}
                             className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
                               entry.muted ? 'text-muted-foreground hover:bg-muted hover:text-foreground' : 'bg-primary/15 text-primary hover:bg-primary/25'
                             }`}
@@ -472,7 +507,7 @@ function ScoreExerciseSession({
                               disabled={entry.muted}
                               onChange={(e) => updateMix(track.id, { level: Number(e.target.value) })}
                               className="mt-1 h-1.5 w-full cursor-pointer accent-primary disabled:cursor-default"
-                              aria-label={`${track.label} level`}
+                              aria-label={t('dashboard.classViewer.exercise.trackLevel', { track: track.label })}
                             />
                           </div>
                         </li>
@@ -603,11 +638,12 @@ function ScoreExerciseSession({
 
       {/* The lesson workspace: staff over the highway, the demo video
           floating in a corner (or beside them — the student's choice). */}
-      <ExerciseScoreWorkspaceBridge controller={workspace}>
+      <ExerciseScoreWorkspaceBridge controller={scoreWorkspace}>
       <SplitWorkspace
         controller={workspace}
         frame="fill"
-        media={exerciseVideo && (
+        // Only once the session is live: a paused video beside "Preparing…" reads as broken.
+        media={exerciseVideo && showCanvas && (
           // Muted, follows the engine clock (see the sync effect above).
           <video
             ref={videoRef}
@@ -616,7 +652,7 @@ function ScoreExerciseSession({
             playsInline
             preload="auto"
             className="h-full w-full bg-black object-contain"
-            aria-label="Instructor reference video"
+            aria-label={t('dashboard.classViewer.exercise.referenceVideo')}
           />
         )}
         music={hasStaff ? scoreEl : stageEl}
@@ -642,7 +678,7 @@ function ScoreExerciseSession({
             onPause={session.pauseExercise}
             onResume={session.resumeExercise}
             onRestart={() => void session.restartExercise()}
-            onFinish={session.stopExercise}
+            onFinish={finishTake}
             onClickToggle={() => session.setAudioMetronome(!session.audioMetronome)}
             onWatchDemo={onWatchDemo}
           />
@@ -670,7 +706,7 @@ function ScoreExerciseSession({
           currentAccuracy={session.currentAccuracy}
           lastHitGrade={session.lastHitGrade}
           onStart={session.startExercise}
-          onStop={session.stopExercise}
+          onStop={finishTake}
           onPause={session.pauseExercise}
           onResume={session.resumeExercise}
           onRestart={() => void session.restartExercise()}
@@ -683,9 +719,9 @@ function ScoreExerciseSession({
         </div>
       )}
 
-      {session.audioError && (
+      {audioError && (
         <div className="m-4 p-3 rounded-xl border border-red-500/30 bg-destructive/10">
-          <p className="text-sm text-muted-foreground">{session.audioError}</p>
+          <p className="text-sm text-muted-foreground">{audioError}</p>
         </div>
       )}
     </div>

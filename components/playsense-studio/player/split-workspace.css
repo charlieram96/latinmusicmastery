@@ -9,6 +9,10 @@
 
 .ws { --ws-lead:50; --ws-staff:54; --ws-pipw:24; position:relative; display:grid; flex:1 1 auto; width:100%; min-height:0; }
 .ws-footer { flex:none; min-width:0; border:1px solid hsl(var(--border)); border-radius:14px; overflow:hidden; background:hsl(var(--card)); }
+/* The dock (watch transport): under the video in side / stack, a footer strip in PiP / music. */
+.ws-media > .ws-dock-slot { flex:none; min-width:0; padding:8px 12px; border-top:1px solid hsl(var(--border)); background:hsl(var(--card)); }
+.ws-footer.ws-dock-slot { padding:8px 12px; }
+.ws-dock { min-width:0; }
 .ws-pane { position:relative; min-width:0; min-height:0; border-radius:16px; overflow:hidden; isolation:isolate; }
 .ws-media { display:flex; flex-direction:column; background:#000; box-shadow:0 12px 32px -14px hsl(0 0% 0% / .55); }
 .ws-music { display:flex; flex-direction:column; background:hsl(var(--card)); border:1px solid hsl(var(--border)); box-shadow:0 6px 24px hsl(0 0% 0% / .08); }

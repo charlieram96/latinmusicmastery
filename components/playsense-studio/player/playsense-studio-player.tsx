@@ -659,10 +659,6 @@ export function PlaysenseStudioPlayer({
       .filter(Boolean)
       .join('  ·  ');
 
-    // In pip and music-only the video is small or hidden, so the transport
-    // moves under the staff.
-    const transportWithVideo = workspace.layout === 'side' || workspace.layout === 'stack';
-
     return (
       <div className="space-y-4">
         {/* Break out of the lesson page's px-4/md:px-8 padding for an
@@ -672,16 +668,9 @@ export function PlaysenseStudioPlayer({
             controller={workspace}
             frame="bleed"
             media={
-              <>
-                <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
-                  {videoEl}
-                </div>
-                {transportWithVideo && (
-                  <div data-ws-nodrag="" className="flex-shrink-0 border-t border-border bg-card px-3 py-2">
-                    {transportEl}
-                  </div>
-                )}
-              </>
+              <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+                {videoEl}
+              </div>
             }
             music={
               <>
@@ -727,7 +716,9 @@ export function PlaysenseStudioPlayer({
               </>
             }
             overlay={overlayEl}
-            footer={!transportWithVideo && <div className="px-3 py-2">{transportEl}</div>}
+            // One transport instance: under the video in side / stack, below
+            // the stage in PiP and music only (moved, never remounted).
+            dock={transportEl}
           />
         </div>
 

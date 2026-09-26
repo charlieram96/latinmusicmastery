@@ -83,6 +83,18 @@ describe('SplitWorkspace frame', () => {
   })
 })
 
+describe('SplitWorkspace in the lesson stage', () => {
+  it('fits the stage exactly, leaving only the stage content’s bottom padding', () => {
+    Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true })
+    rect = { top: 300, left: 0, width: 1000, height: 680 }
+    act(() => { root.render(
+      <div data-lesson-shell><main data-dashboard-main><div className="lx-fill" style={{ paddingBottom: '24px' }}>
+        <Harness defaults={WATCH_WORKSPACE} frame="bleed" />
+      </div></main></div>) })
+    expect(q('[data-lesson-workspace]').style.height).toBe(`${980 - 300 - 24}px`)
+  })
+})
+
 describe('SplitWorkspace footer', () => {
   it('renders the footer below the stage, outside the PiP area', () => {
     const controller = { current: null as WorkspaceController | null }
@@ -287,5 +299,78 @@ describe('WorkspaceLayoutSwitcher', () => {
   it('renders nothing when there is no choice', () => {
     render({ layouts: ['music'], defaults: { ...WATCH_WORKSPACE, layout: 'music' } })
     expect(host.querySelector('[role="group"]')).toBeNull()
+  })
+})
+
+describe('SplitWorkspace polish minors', () => {
+  const pip = () => render({ defaults: PLAY_WORKSPACE })
+
+  it('W1: choosing the active layout leaves no stale measurement for a later corner move', () => {
+    pip()
+    pick('lessonWorkspace.pip')
+    animate.mockReset()
+    act(() => ctl.update({ corner: 'tl' }))
+    const flips = animate.mock.calls.filter(([frames]) => JSON.stringify(frames).includes('scale('))
+    expect(flips).toEqual([])
+  })
+
+  it('W2: double-clicking the tap-to-play button in PiP does not switch the layout', () => {
+    pip()
+    act(() => { q('[data-tap]').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })) })
+    expect(ctl.state.layout).toBe('pip')
+  })
+
+  it('W5: unmounting mid-drag removes the drag listeners', () => {
+    render()
+    const removed = vi.spyOn(window, 'removeEventListener')
+    pointer(q('.ws-div'), 'pointerdown', 440, 300)
+    act(() => { root.render(<div />) })
+    expect(removed.mock.calls.map(([type]) => type)).toEqual(expect.arrayContaining(['pointermove', 'pointerup', 'pointercancel']))
+  })
+
+  it('W5: unmounting mid PiP drag removes the drag listeners', () => {
+    pip()
+    const removed = vi.spyOn(window, 'removeEventListener')
+    pointer(q('[data-media]'), 'pointerdown', 900, 500)
+    act(() => { root.render(<div />) })
+    expect(removed.mock.calls.map(([type]) => type)).toEqual(expect.arrayContaining(['pointermove', 'pointerup', 'pointercancel']))
+  })
+
+  it('W6: a PiP press blocks text selection until release', () => {
+    pip()
+    const select = () => { const e = new Event('selectstart', { bubbles: true, cancelable: true }); document.body.dispatchEvent(e); return e.defaultPrevented }
+    pointer(q('[data-media]'), 'pointerdown', 900, 500)
+    expect(select()).toBe(true)
+    pointer(window, 'pointerup', 900, 500)
+    expect(select()).toBe(false)
+  })
+})
+
+describe('SplitWorkspace dock (W3)', () => {
+  let mounts = 0
+  function Stateful() {
+    const [n, setN] = React.useState(0)
+    useEffect(() => { mounts++ }, [])
+    return <button type="button" data-dock-btn onClick={() => setN(v => v + 1)}>{n}</button>
+  }
+  function WithDock() {
+    const c = useWorkspaceLayout('dock', WATCH_WORKSPACE)
+    useEffect(() => { ctl = c })
+    return <SplitWorkspace controller={c} frame="fill" media={<video />} music={<div />} dock={<Stateful />} />
+  }
+
+  it('keeps one mounted dock that moves between the video pane and the footer', () => {
+    mounts = 0
+    act(() => { root.render(<WithDock />) })
+    const btn = q('[data-dock-btn]')
+    expect(btn.closest('.ws-media')).not.toBeNull()
+    act(() => { btn.click() })
+    act(() => ctl.setLayout('pip'))
+    expect(q('[data-dock-btn]').closest('.ws-footer')).not.toBeNull()
+    act(() => ctl.setLayout('side'))
+    expect(q('[data-dock-btn]').closest('.ws-media')).not.toBeNull()
+    expect(q('[data-dock-btn]')).toBe(btn)
+    expect(btn.textContent).toBe('1')
+    expect(mounts).toBe(1)
   })
 })

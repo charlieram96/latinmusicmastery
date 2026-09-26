@@ -118,4 +118,42 @@ describe('LessonModeShell', () => {
     expect(push).toHaveBeenCalledWith('/dashboard/course/c/class/k2')
     expect(host.querySelector('[data-lesson-done]')).toBeNull()
   })
+
+  it('shows the streak growing when this lesson’s earlier part started today’s practice (L8)', async () => {
+    const p = { ...props(1, ['a']), practice: { dateKeys: ['2026-09-24', '2026-09-25'], today: '2026-09-25', lessonToday: 1 } }
+    act(() => root.render(<LessonModeShell {...p} />))
+    await act(async () => (host.querySelector('[data-finish]') as HTMLButtonElement).click())
+    act(() => (host.querySelector('[data-continue]') as HTMLButtonElement).click())
+    expect(host.querySelector('.lx-flip-old')?.textContent).toBe('1')
+    expect(host.querySelector('[data-streak-value]')?.textContent).toBe('2')
+  })
+
+  it('lets a modified click on Finish lesson open the link normally (L6)', async () => {
+    const quiet = { ...props(1, ['a']), body: <LessonActivityBoundary classItemId="b" required={['questions']}><FinishOnly /></LessonActivityBoundary> }
+    act(() => root.render(<LessonModeShell {...quiet} />))
+    await act(async () => (host.querySelector('[data-finish]') as HTMLButtonElement).click())
+    const next = host.querySelector('[data-lesson-next]') as HTMLAnchorElement
+    const ctrl = new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true })
+    act(() => { next.dispatchEvent(ctrl) })
+    expect(ctrl.defaultPrevented).toBe(false)
+    expect(host.querySelector('[data-lesson-done]')).toBeNull()
+    const plain = new MouseEvent('click', { bubbles: true, cancelable: true })
+    act(() => { next.dispatchEvent(plain) })
+    expect(plain.defaultPrevented).toBe(true)
+    expect(host.querySelector('[data-lesson-done]')).not.toBeNull()
+  })
+
+  it('keeps the frame value stable across shell re-renders (L9)', () => {
+    let renders = 0
+    function Probe() { useLessonFrame(); renders++; return null }
+    act(() => root.render(<LessonModeShell {...props(0)} body={<Probe />} />))
+    const before = renders
+    act(() => (host.querySelector('[data-open-drawer]') as HTMLButtonElement).click())
+    expect(renders).toBe(before)
+  })
 })
+
+function FinishOnly() {
+  const finish = useLessonActivity('questions')
+  return <button data-finish onClick={finish}>finish</button>
+}

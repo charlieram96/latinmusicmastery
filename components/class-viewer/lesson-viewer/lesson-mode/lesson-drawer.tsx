@@ -26,16 +26,18 @@ export function LessonDrawer({ open, onOpenChange, title, description, meta, com
   title: string
   description: string | null
   meta: LessonMeta
-  comments: ReactNode
+  /** Null when the lesson has no comments to show (a locked lesson): the tab is left out. */
+  comments: ReactNode | null
   commentCount: number
   lessons: ReactNode
   initialTab?: DrawerTab
 }) {
   const { t } = useTranslation()
   const [tab, setTab] = useState<DrawerTab>(initialTab)
+  const hasComments = comments !== null && comments !== undefined
   const tabs: { id: DrawerTab; label: string; className?: string }[] = [
     { id: 'about', label: t('dashboard.classViewer.lessonMode.drawer.about') },
-    { id: 'comments', label: commentCount > 0 ? t('dashboard.classViewer.lessonMode.drawer.commentsCount', { count: commentCount }) : t('dashboard.classViewer.lessonMode.drawer.comments') },
+    ...(hasComments ? [{ id: 'comments' as const, label: commentCount > 0 ? t('dashboard.classViewer.lessonMode.drawer.commentsCount', { count: commentCount }) : t('dashboard.classViewer.lessonMode.drawer.comments') }] : []),
     { id: 'lessons', label: t('dashboard.classViewer.lessonMode.drawer.lessons'), className: 'md:hidden' },
   ]
   const paragraphs = (description ?? '').split(/\n{2,}/).filter(p => p.trim().length > 0)
@@ -73,7 +75,7 @@ export function LessonDrawer({ open, onOpenChange, title, description, meta, com
             : <p className="text-sm text-muted-foreground">{t('dashboard.classViewer.lessonMode.drawer.noDescription')}</p>}
         </div>}
         {/* Kept mounted so a half-written comment survives a tab switch. */}
-        <div data-comments-panel hidden={tab !== 'comments'}>{comments}</div>
+        {hasComments && <div data-comments-panel hidden={tab !== 'comments'}>{comments}</div>}
         {tab === 'lessons' && lessons}
       </div>
     </SheetContent>

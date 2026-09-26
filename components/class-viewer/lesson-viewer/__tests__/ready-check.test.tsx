@@ -71,6 +71,8 @@ describe('ReadyCheck', () => {
     act(() => (host.querySelector('[data-ready-panel=timing] button') as HTMLButtonElement).click())
     expect(onCalibrate).toHaveBeenCalledOnce()
     act(() => root.render(<ReadyCheck {...base} audioMode="headphones" calibrating calibrationBeat={3} />))
+    expect(host.querySelector<HTMLButtonElement>('[data-ready-start]')!.disabled).toBe(true)
+    expect(host.querySelector('.lx-msg b')?.textContent).toContain('ready.measuringTitle')
     expect(states()[2]).toBe('running')
     expect(host.querySelector('[data-ready-panel=timing] [role=progressbar]')?.getAttribute('aria-valuenow')).toBe('3')
   })
