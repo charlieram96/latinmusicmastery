@@ -72,4 +72,15 @@ describe('IntegratedEditor strip items', () => {
     render(timings(1));
     expect(extractSpy.calls).toBe(afterMount);
   });
+
+  it('has no editor row: the tools sit in the strip corner', () => {
+    render(timings(0));
+    expect(host.querySelector('input[aria-label="Track name"]')).toBeNull();
+    const corner = host.querySelector('.st-strip-corner')!;
+    expect(corner).not.toBeNull();
+    expect(corner.querySelector('[aria-label="Staff"]')).not.toBeNull();
+    expect(corner.querySelector('[aria-label="Piano-roll"]')).not.toBeNull();
+    expect(corner.querySelector('[aria-label="Record MIDI"]')).not.toBeNull();
+    expect(corner.querySelector('[aria-label="Add a measure at the end"]')).not.toBeNull();
+  });
 });

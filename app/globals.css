@@ -743,6 +743,16 @@ html:has([data-marketing]) {
 /* A short-lived note under the editor bar ("Copied m.2–3 with its timing."). */
 .st-flash { font-size: 12px; color: hsl(var(--muted-foreground)); }
 
+/* The strip's corner tools (mockup .corner). */
+.st-strip-corner { position: absolute; right: 8px; top: 24px; z-index: 16; display: flex; gap: 2px; align-items: center;
+  padding: 2px; border-radius: 9px; background: hsl(var(--card) / .85); backdrop-filter: blur(4px); }
+.st-strip-corner .st-seg { padding: 2px; }
+.st-strip-corner .st-seg button { height: 22px; }
+/* Short-lived editor notices, over the stage (mockup .toast). */
+.st-toast { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 60; max-width: calc(100% - 32px);
+  padding: 9px 14px; border-radius: 10px; font-size: 12.5px; background: hsl(22 14% 12%);
+  border: 1px solid hsl(0 0% 100% / .14); box-shadow: 0 10px 30px rgba(0,0,0,.55); animation: st-pop .18s cubic-bezier(.2,.8,.2,1); }
+
 /* A bar just inserted by the gap menu (empty / copy / paste) grows in from the
    left so the new bar(s) read as new. */
 @keyframes st-grow { from { transform: scaleX(.6); opacity: .3; } to { transform: none; opacity: 1; } }

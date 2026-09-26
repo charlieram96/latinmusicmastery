@@ -20,7 +20,6 @@
 // here — note edits don't change `structuralSignature`, so the markers above stay
 // put while you edit pitches/durations.
 
-import { ChevronDown, Plus } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch } from 'react';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion, resolvePercStroke } from '@/lib/playsense-studio/perc-strokes';
@@ -32,7 +31,6 @@ import { writtenValue, type NoteValue } from '@/lib/playsense-studio/rhythm';
 import { cursorRange, type NoteCursor } from '@/lib/playsense-studio/note-cursor';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type {
-  Instrument,
   Measure,
   MusicalEvent,
   ScoreDocument,
@@ -61,23 +59,7 @@ import type { ZoomLayout } from './zoom/zoom-staff';
 import { clampNoteToolbarPosition, NoteToolbar, NOTE_TOOLBAR_WIDTH_FALLBACK, type NoteToolbarPercussion } from './zoom/note-toolbar';
 import { MorePopover, type MoreTab } from './zoom/more-popover';
 import type { NoteTimingProps } from './note-details';
-
-const INSTRUMENT_OPTIONS: Array<{ value: Instrument; label: string }> = [
-  { value: 'staff', label: 'Staff' },
-  { value: 'guitar', label: 'Guitar' },
-  { value: 'bass', label: 'Bass' },
-  { value: 'tres', label: 'Cuban Tres' },
-  { value: 'cuatro', label: 'Cuatro' },
-  { value: 'tiple', label: 'Tiple' },
-  { value: 'ukulele', label: 'Ukulele' },
-  { value: 'mandolin', label: 'Mandolin' },
-  { value: 'piano', label: 'Piano' },
-  { value: 'perc-kit', label: 'Drum Kit' },
-  { value: 'perc-conga', label: 'Conga' },
-  { value: 'perc-bongo', label: 'Bongo' },
-  { value: 'perc-timbal', label: 'Timbales' },
-  { value: 'perc-clave', label: 'Clave' },
-];
+import { StripCorner } from './strip-corner';
 
 type EditorTab = 'staff' | 'piano-roll';
 
@@ -834,95 +816,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   })();
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
-      {/* Editor bar — view tabs · instrument/name · add measure (single track) */}
-      <div className="flex flex-shrink-0 flex-wrap items-center gap-2.5">
-        <div className="st-seg">
-          {(
-            [
-              { id: 'staff' as const, label: 'Staff' },
-              { id: 'piano-roll' as const, label: 'Piano-roll' },
-            ] as const
-          ).map((t) => (
-            <button
-              key={t.id}
-              onClick={() => {
-                setEditorTab(t.id);
-                // The zoom lives over the staff strip; leaving it closes the zoom.
-                if (t.id !== 'staff' && zoom) finishZoomClose();
-              }}
-              className={editorTab === t.id ? 'is-on' : ''}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <span className="st-divline" />
-
-        {activeTrack && (
-          <>
-            <input
-              type="text"
-              value={activeTrack.displayName}
-              onChange={(e) =>
-                dispatch({ type: 'set-track-name', trackIndex: activeTrackIndex, name: e.target.value })
-              }
-              className="st-input w-36"
-              aria-label="Track name"
-            />
-            <div className="st-select" style={{ width: 150 }}>
-              <select
-                value={activeTrack.instrument}
-                onChange={(e) =>
-                  dispatch({
-                    type: 'set-track-instrument',
-                    trackIndex: activeTrackIndex,
-                    instrument: e.target.value as Instrument,
-                  })
-                }
-                aria-label="Instrument"
-              >
-                {INSTRUMENT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <span className="caret">
-                <ChevronDown className="h-3.5 w-3.5" />
-              </span>
-            </div>
-          </>
-        )}
-
-        {activeTrack && <MidiRecordButton score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} getCurrentSeconds={getCurrentSeconds} recordingSource={recordingSource} />}
-
-        <button
-          onClick={() => insertMeasureAt(rangeEnd !== null ? rangeEnd + 1 : measureCount)}
-          className="st-chip ml-auto"
-          disabled={!!gapProblems[rangeEnd !== null ? rangeEnd + 1 : measureCount]}
-          title={gapProblems[rangeEnd !== null ? rangeEnd + 1 : measureCount]
-            ?? (rangeEnd !== null ? `Add a measure after measure ${rangeEnd + 1}` : 'Add a measure at the end of the score')}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add measure
-        </button>
-        {notice && (
-          <span role="status" className="basis-full text-xs text-destructive sm:basis-auto">
-            {notice}
-          </span>
-        )}
-      </div>
-
-      {flash && (
-        <p role="status" className="st-flash -mt-1.5 flex-shrink-0">
-          {flash}
-        </p>
-      )}
-
-      {/* Active view — the audio-aligned staff (or piano-roll). The staff fills
-          the available height below the editor bar. */}
+    <div className="relative flex h-full min-h-0 flex-col gap-3">
+      {/* Active view — the audio-aligned staff (or piano-roll). The staff /
+          piano-roll switch, Record MIDI and "add at end" live in a StripCorner
+          over whichever view is active (Task 5: the row above the staff is gone;
+          track name/instrument moved to the Score panel, notice/flash to a toast). */}
       {editorTab === 'staff' && (
         <>
           <div ref={staffWrapRef} className="relative min-h-0 flex-1">
@@ -951,6 +849,13 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               }}
               onScrollByPx={onScrollByPx}
               height={staffHeight}
+            />
+            <StripCorner
+              tab={editorTab}
+              onTab={(t) => { setEditorTab(t); if (t !== 'staff' && zoom) finishZoomClose(); }}
+              midi={activeTrack ? <MidiRecordButton compact score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} getCurrentSeconds={getCurrentSeconds} recordingSource={recordingSource} /> : null}
+              onAddEnd={() => insertMeasureAt(measureCount)}
+              addEndProblem={gapProblems[measureCount] ?? null}
             />
             {barPos && bounds && (
               <MeasureBar
@@ -1164,10 +1069,18 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         </>
       )}
       {editorTab === 'piano-roll' && (
-        <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-card p-3">
+        <div className="relative min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-card p-3">
+          <StripCorner
+            tab={editorTab}
+            onTab={(t) => { setEditorTab(t); if (t !== 'staff' && zoom) finishZoomClose(); }}
+            midi={activeTrack ? <MidiRecordButton compact score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} getCurrentSeconds={getCurrentSeconds} recordingSource={recordingSource} /> : null}
+            onAddEnd={() => insertMeasureAt(measureCount)}
+            addEndProblem={gapProblems[measureCount] ?? null}
+          />
           <PianoRollView score={score} activeTrackIndex={activeTrackIndex} dispatch={dispatch} />
         </div>
       )}
+      {(notice || flash) && <p role="status" className="st-toast">{notice ?? flash}</p>}
     </div>
   );
 });

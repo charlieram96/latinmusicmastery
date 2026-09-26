@@ -205,7 +205,7 @@ describe('IntegratedEditor measure bar', () => {
   it('⏎ does nothing on the Piano-roll tab — note entry lives in the zoom, which only the staff tab shows', () => {
     const { dispatch } = render({ score: makeScore(3, 1) });
     key('ArrowRight');
-    const tab = Array.from(host.querySelectorAll('button')).find((b) => b.textContent === 'Piano-roll')!;
+    const tab = host.querySelector<HTMLButtonElement>('[aria-label="Piano-roll"]')!;
     act(() => { tab.click(); });
     key('Enter');
     expect(dispatched(dispatch, 'add-note')).toHaveLength(0);
@@ -246,15 +246,22 @@ describe('IntegratedEditor measure bar', () => {
     expect(dispatched(dispatch, 'add-note')).toEqual([]);
   });
 
-  it('⌫ while typing the track name never deletes bars', () => {
+  it('⌫ while typing in a field elsewhere on the page never deletes bars', () => {
+    // The track name field moved out of the strip into the Score panel (Task
+    // 5), a separate DOM subtree from IntegratedEditor — but the measure keys'
+    // listener is bound on `window`, so it must still ignore Backspace typed
+    // into it. A detached input stands in for that field here.
     const { dispatch } = render();
     key('ArrowRight');
-    const input = host.querySelector<HTMLInputElement>('input[aria-label="Track name"]')!;
+    const input = document.createElement('input');
+    input.setAttribute('aria-label', 'Track name');
+    document.body.appendChild(input);
     input.focus();
     key('Backspace', {}, input);
     expect(dispatched(dispatch, 'delete-measures')).toEqual([]);
     key('Backspace');
     expect(dispatched(dispatch, 'delete-measures')).toEqual([{ type: 'delete-measures', trackIndex: 0, start: 0, count: 1 }]);
+    input.remove();
   });
 
   it('closes an open bar menu when the selection moves', () => {
