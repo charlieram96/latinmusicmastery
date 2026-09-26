@@ -297,6 +297,26 @@ describe('MorePopover', () => {
       act(() => { byLabel('Flex the recording onto this note').click(); });
       expect(onFlex).toHaveBeenCalledTimes(1);
     });
+
+    it('disables "Flex the recording onto this note" with the problem as its title', () => {
+      const onFlex = vi.fn();
+      const timing = {
+        offsetMs: 0, gridSeconds: 1, actualSeconds: 1,
+        onNudge: vi.fn(), onSnap: vi.fn(), onReset: vi.fn(), onFlex,
+        flexProblem: 'No hit near this note',
+      };
+      render({ tab: 'timing', timing });
+      const button = byLabel('Flex the recording onto this note') as HTMLButtonElement;
+      expect(button.disabled).toBe(true);
+      expect(button.title).toBe('No hit near this note');
+      act(() => { button.click(); });
+      expect(onFlex).not.toHaveBeenCalled();
+
+      render({ tab: 'timing', timing: { ...timing, flexProblem: null } });
+      const enabled = byLabel('Flex the recording onto this note') as HTMLButtonElement;
+      expect(enabled.disabled).toBe(false);
+      expect(enabled.title).toBe('');
+    });
   });
 
   // Fix round 1: every action button (tabs, chips, Durations/Tuplets/Marks/

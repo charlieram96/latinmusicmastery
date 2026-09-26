@@ -31,6 +31,25 @@ export function trimDragToMedia(map: FlexMap, timelineSeconds: number): number {
   return map.toMedia(timelineSeconds);
 }
 
+/** How close (seconds, TIMELINE) a detected hit must be for "Flex the
+ *  recording onto this note". */
+export const FLEX_NOTE_HIT_WINDOW = 0.09;
+
+/** The index of the hit (TIMELINE seconds) closest to `t`, or -1 when none is
+ *  within `window` seconds. */
+export function nearestHitWithin(hitsTimeline: readonly number[], t: number, window: number): number {
+  let best = -1;
+  let bestDiff = Infinity;
+  for (let i = 0; i < hitsTimeline.length; i++) {
+    const diff = Math.abs(hitsTimeline[i] - t);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = i;
+    }
+  }
+  return best >= 0 && bestDiff <= window ? best : -1;
+}
+
 /** When the flex changes under a running loop, keep the loop on the same
  *  TIMELINE span (the same bars): read its MEDIA ends through the old map and
  *  write them back through the new one. */

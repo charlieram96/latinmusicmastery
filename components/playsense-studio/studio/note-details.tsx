@@ -26,6 +26,9 @@ export interface NoteTimingProps {
    *  point at the nearest hit and drags it onto this note's time. Omitted
    *  hides the zoom's Timing-tab button for it. */
   onFlex?: () => void;
+  /** Why onFlex can't run right now (e.g. `No hit near this note`): the button
+   *  shows disabled with this as its title. Null/absent = available. */
+  flexProblem?: string | null;
 }
 
 // Details for the selected note, shown in the left-rail inspector. Pitch and

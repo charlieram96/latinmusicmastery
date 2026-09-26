@@ -44,7 +44,7 @@ import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
 import { SNAP_PX, barFlags, firstAttackTime, flagText, snapMarkerDrag, snapSectionShift } from '@/lib/playsense-studio/hits';
 import { autoPlaceBars, windowWithinCorridor } from '@/lib/playsense-studio/auto-place';
-import { remapMediaLoop, seekMediaFor, trimDragToMedia, trimInTimeline as trimInTimelineOf } from '@/lib/playsense-studio/flex-sync';
+import { FLEX_NOTE_HIT_WINDOW, nearestHitWithin, remapMediaLoop, seekMediaFor, trimDragToMedia, trimInTimeline as trimInTimelineOf } from '@/lib/playsense-studio/flex-sync';
 import { FlexMap, addFlexAtHit, moveFlexPoint, quantizePlan, removeFlexPoint, resetFlexRange, type FlexPoint } from '@/lib/playsense-studio/flex';
 import { snapToNearest } from '@/lib/playsense-studio/clip-model';
 import { clickTimesInMedia } from '@/lib/playsense-studio/flex-player';
@@ -965,25 +965,28 @@ export function SyncPanel({
   // within 90 ms of the note's current (grid + nudge) time — pins a flex point
   // there (addFlexAtHit), then drags that point's dst onto the note's exact
   // time (moveFlexPoint). A no-op when nothing is close enough.
+  // The Timing tab disables the button (with this title) when it would no-op.
+  const flexHitIndex = useMemo(
+    () => (selectedNoteTime === null ? -1 : nearestHitWithin(hitsTimeline, selectedNoteTime, FLEX_NOTE_HIT_WINDOW)),
+    [hitsTimeline, selectedNoteTime]
+  );
+  const flexNoteProblem = flexHitIndex < 0 ? 'No hit near this note' : null;
   const flexNoteOntoHit = useCallback(() => {
-    if (selectedNoteTime === null) return;
-    let bestIndex = -1;
-    let bestDiff = Infinity;
-    for (let i = 0; i < hitsTimeline.length; i++) {
-      const diff = Math.abs(hitsTimeline[i] - selectedNoteTime);
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        bestIndex = i;
-      }
-    }
-    if (bestIndex < 0 || bestDiff > 0.09) return;
-    const hitMedia = hits[bestIndex];
+    if (selectedNoteTime === null || flexHitIndex < 0) return;
+    const hitMedia = hits[flexHitIndex];
     setFlex((f) => {
       const withHit = addFlexAtHit(f, hitMedia, hits, flexSpan);
+      // Exact equality assumes the point at this hit carries the hit's value
+      // verbatim. It does whenever the point came from this hit list: a new
+      // point, a pinned neighbour anchor and a Quantize move all copy
+      // `hits[i]` as their src. addFlexAtHit reuses any existing point within
+      // EPS, so a point that is merely close (say, hits re-detected since it
+      // was placed) misses here, and the button then only un-anchors it
+      // rather than moving it — a no-op the admin can redo on the waveform.
       const index = withHit.findIndex((pt) => pt.src === hitMedia);
       return index < 0 ? withHit : moveFlexPoint(withHit, index, selectedNoteTime, flexSpan);
     });
-  }, [selectedNoteTime, hitsTimeline, hits, flexSpan]);
+  }, [selectedNoteTime, flexHitIndex, hits, flexSpan]);
 
   // The selected note's timing (video-synced lessons only) — one object
   // shared by the inspector's NoteDetails and the zoom's More ▾ → Timing tab.
@@ -998,9 +1001,10 @@ export function SyncPanel({
             onSnap: snapSelectedToPlayhead,
             onReset: resetSelected,
             onFlex: flexNoteOntoHit,
+            flexProblem: flexNoteProblem,
           }
         : undefined,
-    [showSync, selectedOnset, selectedNoteDelta, markers, selectedNoteTime, nudgeSelected, snapSelectedToPlayhead, resetSelected, flexNoteOntoHit]
+    [showSync, selectedOnset, selectedNoteDelta, markers, selectedNoteTime, nudgeSelected, snapSelectedToPlayhead, resetSelected, flexNoteOntoHit, flexNoteProblem]
   );
 
   // --- Quantize (Task 7): the measure bar's Quantize popover ---

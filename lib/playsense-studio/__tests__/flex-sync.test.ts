@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FlexMap } from '../flex';
-import { remapMediaLoop, seekMediaFor, trimDragToMedia, trimInTimeline } from '../flex-sync';
+import { FLEX_NOTE_HIT_WINDOW, nearestHitWithin, remapMediaLoop, seekMediaFor, trimDragToMedia, trimInTimeline } from '../flex-sync';
 
 const p = (src: number, dst: number, anchor = false) => ({ src, dst, anchor });
 const identity = new FlexMap([]);
@@ -38,5 +38,11 @@ describe('SyncPanel flex conversions', () => {
     expect(back.a).toBeCloseTo(11);
     expect(back.b).toBeCloseTo(13);
     expect(remapMediaLoop(identity, identity, 3, 5)).toEqual({ a: 3, b: 5 });
+  });
+  it('finds the nearest hit within the window, or -1', () => {
+    expect(nearestHitWithin([1, 2, 3], 2.05, FLEX_NOTE_HIT_WINDOW)).toBe(1);
+    expect(nearestHitWithin([1, 2, 3], 2.5, FLEX_NOTE_HIT_WINDOW)).toBe(-1);
+    expect(nearestHitWithin([1, 2.08, 2.1], 2.0, FLEX_NOTE_HIT_WINDOW)).toBe(1);
+    expect(nearestHitWithin([], 2, FLEX_NOTE_HIT_WINDOW)).toBe(-1);
   });
 });
