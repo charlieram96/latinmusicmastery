@@ -19,6 +19,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
@@ -56,6 +57,8 @@ const NO_DRAG = '[data-ws-nodrag], video[controls], input, select, textarea, a, 
 /** A double-click on these (the tap-to-play overlay, any control) is not "go back to side". */
 const NO_DBLCLICK = `${NO_DRAG}, button, [role="button"]`;
 const TILT = { min: -3, max: 3 };
+
+const noopSubscribe = () => () => {};
 
 const reducedMotion = () =>
   typeof window !== 'undefined' &&
@@ -121,16 +124,17 @@ export function SplitWorkspace({
   useEffect(() => () => { endDrag.current?.(); }, []);
 
   // ---- Dock: one mounted subtree, its node moved between two slots ----
-  const [dockNode, setDockNode] = useState<HTMLDivElement | null>(null);
   const hasDock = dock != null && dock !== false;
-  useLayoutEffect(() => {
-    if (!hasDock) return;
+  const [dockNode] = useState(() => {
+    if (typeof document === 'undefined') return null;
     const node = document.createElement('div');
     node.className = 'ws-dock';
     node.dataset.wsNodrag = '';
-    setDockNode(node);
-    return () => { node.remove(); setDockNode(null); };
-  }, [hasDock]);
+    return node;
+  });
+  // Portal only after hydration (the server has no node to render into).
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  useEffect(() => () => { dockNode?.remove(); }, [dockNode]);
   const dockInMedia = hasMedia && (layout === 'side' || layout === 'stack');
   const mediaSlot = useRef<HTMLDivElement | null>(null);
   const footerSlot = useRef<HTMLDivElement | null>(null);
@@ -439,7 +443,7 @@ export function SplitWorkspace({
       </div>
       {footer && <div className="ws-footer">{footer}</div>}
       {hasDock && !dockInMedia && <div ref={footerSlot} className="ws-footer ws-dock-slot" />}
-      {dockNode && createPortal(dock, dockNode)}
+      {hasDock && hydrated && dockNode && createPortal(dock, dockNode)}
     </div>
   );
 }
