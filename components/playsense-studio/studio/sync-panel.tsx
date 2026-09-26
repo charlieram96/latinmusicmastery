@@ -116,6 +116,7 @@ import { ScrollBar } from '@/components/playsense-studio/sync/scroll-bar';
 import { ZoomSlider } from '@/components/playsense-studio/sync/zoom-slider';
 import { stableTimings } from '@/components/playsense-studio/studio/stable-timings';
 import { clamp, MAX_PPS, MIN_PPS } from '@/components/playsense-studio/sync/zoom-range';
+import { anchorPxFor, fitRangeView, followScroll } from '@/lib/playsense-studio/timeline-view';
 import { StageSplitter, clampWaveHeight, WAVE_DEFAULT } from '@/components/playsense-studio/studio/shell/stage-splitter';
 
 /** A note selection, mirrored out of the editor so the right rail can show it. */
@@ -705,15 +706,30 @@ export function SyncPanel({
     return () => { cancelled = true; };
   }, [classItemId, showSync, runAnalysis]);
 
-  // Fit zoom once the viewport width + a duration are known.
+  // The range "fit" should show: the section being synced, or the whole
+  // timeline when there's no section (songs/exercises without a sync target).
+  const fitTarget = (): [number, number] => {
+    if (showSync) {
+      const span = markerSpan(markers);
+      if (span.endSeconds > span.startSeconds) return [span.startSeconds, span.endSeconds];
+    }
+    return [0, timelineDuration];
+  };
+  const viewBounds = { minPps: MIN_PPS, maxPps: MAX_PPS, contentSeconds: timelineDuration };
+
+  // Fit zoom once the viewport width + a duration are known — to the SECTION,
+  // not the whole video, so a 17 s section in a 7:20 video doesn't open with
+  // bars too thin to render (spec: three live layout problems).
   const didFitRef = useRef(false);
   useEffect(() => {
     if (didFitRef.current) return;
     if (viewportWidth > 0 && timelineDuration > 0) {
       didFitRef.current = true;
-      setPps(clamp(viewportWidth / timelineDuration, MIN_PPS, MAX_PPS));
+      const [a, b] = fitTarget();
+      const v = fitRangeView(a, b, viewportWidth, viewBounds);
+      if (v) { setPps(v.pps); setScrollLeft(v.scrollLeft); }
     }
-  }, [viewportWidth, timelineDuration]);
+  }, [viewportWidth, timelineDuration, markers, showSync]);
 
   // Without the waveform (exercises + songs), the canvas isn't mounted to report
   // the viewport width — measure the editor area ourselves so fit-zoom + scrollbar work.
@@ -728,14 +744,14 @@ export function SyncPanel({
     return () => ro.disconnect();
   }, [showSync]);
 
-  // Auto-scroll so the playhead stays in view during playback.
+  // Keep the playhead in view while playing (a loop wrap or a page turn),
+  // the way a DAW pages its arrange view.
   useEffect(() => {
-    if (!clock.isPlaying || viewportWidth === 0) return;
-    const x = timelineNow * pps - scrollLeft;
-    if (x < viewportWidth * 0.1 || x > viewportWidth * 0.85) {
-      setScrollLeft(clampScroll(timelineNow * pps - viewportWidth * 0.15));
-    }
-  }, [timelineNow, clock.isPlaying, pps, scrollLeft, viewportWidth, clampScroll]);
+    if (!clock.isPlaying) return;
+    const next = followScroll(timelineNow, pps, scrollLeft, viewportWidth, viewBounds);
+    if (next !== null) setScrollLeft(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timelineNow, clock.isPlaying]);
 
   // --- Derived draw data ---
   // Bars whose first note or tempo looks off the recording (spec §7). Empty
@@ -773,8 +789,12 @@ export function SyncPanel({
       clock.seek(
         seekMediaFor(flexMap, seconds, trimmed ? effectiveTrim : null, videoDurationSeconds ?? clock.durationSeconds ?? null)
       );
+      // The seek's target may be off-screen (a section jump, a loop wrap) —
+      // bring it into view rather than leaving the view where it was.
+      const next = followScroll(seconds, pps, scrollLeft, viewportWidth, viewBounds);
+      if (next !== null) setScrollLeft(next);
     },
-    [clock, flexMap, trimmed, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock.durationSeconds]
+    [clock, flexMap, trimmed, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock.durationSeconds, pps, scrollLeft, viewportWidth, viewBounds]
   );
 
   // Trim is stored in MEDIA; the canvas draws and drags it in TIMELINE time.
@@ -1406,9 +1426,9 @@ export function SyncPanel({
   };
 
   const fitZoom = () => {
-    if (viewportWidth === 0 || timelineDuration === 0) return;
-    setPps(clamp(viewportWidth / timelineDuration, MIN_PPS, MAX_PPS));
-    setScrollLeft(0);
+    const [a, b] = fitTarget();
+    const v = fitRangeView(a, b, viewportWidth, viewBounds);
+    if (v) { setPps(v.pps); setScrollLeft(v.scrollLeft); }
   };
 
   // Set an absolute zoom (used by the drag slider), keeping the timeline centered.
@@ -2095,7 +2115,12 @@ export function SyncPanel({
                       </button>
                     </div>
                     )}
-                    <ZoomSlider pps={pps} onZoomTo={zoomTo} onZoomBy={zoomBy} onFit={fitZoom} />
+                    <ZoomSlider
+                      pps={pps}
+                      onZoomTo={zoomTo}
+                      onZoomBy={(f) => zoomBy(f, anchorPxFor(timelineNow, pps, scrollLeft, viewportWidth))}
+                      onFit={fitZoom}
+                    />
                   </div>
                 </div>
               )}
@@ -2146,7 +2171,14 @@ export function SyncPanel({
                     onScroll={(v) => setScrollLeft(clampScroll(v))}
                   />
                 </div>
-                {!showSync && <ZoomSlider pps={pps} onZoomTo={zoomTo} onZoomBy={zoomBy} onFit={fitZoom} />}
+                {!showSync && (
+                  <ZoomSlider
+                    pps={pps}
+                    onZoomTo={zoomTo}
+                    onZoomBy={(f) => zoomBy(f, anchorPxFor(timelineNow, pps, scrollLeft, viewportWidth))}
+                    onFit={fitZoom}
+                  />
+                )}
               </div>
             </div>
           </div>
