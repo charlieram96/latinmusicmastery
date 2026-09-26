@@ -14,6 +14,7 @@ export interface WaveToolsProps {
   /** Graded: Auto-align the media to the tempo grid. */
   onAutoAlign?: () => void;
   autoAlignDisabled?: boolean;
+  autoAlignTitle?: string;
   onStudentPreview?: () => void;
   dragAll: boolean;
   onDragAll: (ripple: boolean) => void;
@@ -35,7 +36,7 @@ export function WaveTools(p: WaveToolsProps) {
             </button>
           )}
           <button type="button" className="st-wtools-auto is-quiet" aria-label="Auto-align" disabled={p.autoAlignDisabled}
-            title="Line the play-along up with the tempo grid" onClick={p.onAutoAlign}>
+            title={p.autoAlignTitle ?? 'Line the play-along up with the tempo grid'} onClick={p.onAutoAlign}>
             <Wand2 className="h-3.5 w-3.5" />Auto-align
           </button>
         </>

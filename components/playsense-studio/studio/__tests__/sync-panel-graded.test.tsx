@@ -199,7 +199,7 @@ describe('SyncPanel graded mode', () => {
     await renderPanel();
     const align = button('Auto-align')!;
     expect(align.disabled).toBe(true);
-    expect(align.title).toBe('Line the play-along up with the tempo grid');
+    expect(align.title).toBe('Re-analyze audio to find the hits');
     expect(inspectorHost.textContent).not.toContain('notes on a hit');
   });
 

@@ -1906,6 +1906,11 @@ export function SyncPanel({
                     }
                     onAutoAlign={runAutoAlign}
                     autoAlignDisabled={!hits.length}
+                    autoAlignTitle={
+                      hits.length
+                        ? 'Move bar 1 so the most notes land on a hit'
+                        : 'Re-analyze audio to find the hits'
+                    }
                     onStudentPreview={onStudentPreview}
                     dragAll={dragAll}
                     onDragAll={setDragAll}
