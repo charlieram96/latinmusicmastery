@@ -29,7 +29,7 @@ vi.mock('../exercise-score', async () => {
   const bridge = await vi.importActual<typeof import('../exercise-workspace')>('../exercise-workspace')
   return { ExerciseScore: () => {
     const ws = bridge.useExerciseWorkspace()
-    return <div data-score data-position={ws?.position}><button type="button" data-pick-top onClick={() => ws?.setPosition('top')} /></div>
+    return <div data-score data-position={ws?.position} />
   } }
 })
 vi.mock('@/components/playsense-studio/player/notation/renderers/staff-renderer', () => ({ StaffRenderer: () => null }))
@@ -172,8 +172,10 @@ describe('ScoreExerciseGame score shape without a video', () => {
     stored('pip')
     session = { ...baseSession(), exercise, sessionState: 'playing' }
     render({ score, exerciseVideo: null })
-    act(() => host.querySelector<HTMLButtonElement>('[data-pick-top]')!.click())
-    expect(JSON.parse(localStorage.getItem('lmm-workspace:play:stacked')!).layout).toBe('pip')
+    // The score's own layout menu is gone (notation cleanup), so nothing can overwrite the
+    // saved play layout without a video; the score reads the fixed music-only shape.
+    const saved = localStorage.getItem('lmm-workspace:play:stacked')
+    expect(saved === null || JSON.parse(saved).layout === 'pip').toBe(true)
     expect(host.querySelector('[data-score]')?.getAttribute('data-position')).toBe('right')
   })
 })
