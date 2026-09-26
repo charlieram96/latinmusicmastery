@@ -8,7 +8,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
-import type { ExerciseDefinition, HitGrade } from '@/lib/play-sense/types'
+import type { ExerciseDefinition, ExerciseGrid, HitGrade } from '@/lib/play-sense/types'
+import { gridBeats, gridLoopSeconds } from '@/lib/play-sense/grid'
 import { APPROACH_SECONDS, FAR_Z, HIT_Z, RUNWAY_WIDTH, changedJudgments, createStageModel, firstVisibleNote, type StageFrame, type StageLane, type StageNote } from './model'
 import { STAGE_THEMES, type StageThemeId } from './themes'
 import { box, buildDrum, buildEnvironment, buildPad, disposeObject, glowTexture, labelSprite, lightMaterial, material } from './objects'
@@ -28,6 +29,33 @@ export interface StageRendererOptions {
   readFrame: () => StageFrame
   onError: (message: string) => void
   explore?: boolean
+}
+
+/**
+ * Every beat-line position (in engine seconds, downbeat flag) whose time
+ * falls within `[windowStart, windowEnd]`, following the grid across as many
+ * loop passes as the window spans. Pure so it can be tested without a GPU
+ * context; the renderer turns each entry into a line's z-position and
+ * brightness.
+ */
+export function beatLinePositions(
+  grid: ExerciseGrid,
+  windowStart: number,
+  windowEnd: number
+): { seconds: number; downbeat: boolean }[] {
+  const loopLen = gridLoopSeconds(grid)
+  const beats = gridBeats(grid)
+  if (loopLen <= 0 || beats.length === 0 || windowEnd < windowStart) return []
+  const out: { seconds: number; downbeat: boolean }[] = []
+  const firstLoop = Math.floor(windowStart / loopLen)
+  const lastLoop = Math.floor(windowEnd / loopLen)
+  for (let loop = firstLoop; loop <= lastLoop; loop++) {
+    for (const beat of beats) {
+      const seconds = loop * loopLen + beat.seconds
+      if (seconds >= windowStart && seconds <= windowEnd) out.push({ seconds, downbeat: beat.downbeat })
+    }
+  }
+  return out
 }
 
 /** Owns a single GPU context. Audio time is read directly; it never grades notes. */
@@ -569,12 +597,28 @@ export class StageRenderer {
     }
     this.tails.count = tailCount; this.tails.instanceMatrix.needsUpdate = true
     if (this.tails.instanceColor) this.tails.instanceColor.needsUpdate = true
+    // Also drives the afterhours ambience pulse below, so it stays uniform
+    // (bpm-based) even for a graded owner with a grid.
     const beatSec = 60 / this.exercise.bpm
-    const firstBeat = Math.floor(frame.elapsed / beatSec)
-    for (let i = 0; i < this.beatLines.length; i++) {
-      const delta = (firstBeat + i) * beatSec - frame.elapsed
-      this.beatLines[i].position.z = HIT_Z - delta * speed
-      this.beatLines[i].visible = delta >= 0 && delta <= APPROACH_SECONDS
+    if (this.exercise.grid) {
+      // Graded owners: beat lines follow the grid (bright on downbeats).
+      const positions = beatLinePositions(this.exercise.grid, frame.elapsed, frame.elapsed + APPROACH_SECONDS)
+      for (let i = 0; i < this.beatLines.length; i++) {
+        const mesh = this.beatLines[i]
+        const p = positions[i]
+        if (!p) { mesh.visible = false; continue }
+        const delta = p.seconds - frame.elapsed
+        mesh.position.z = HIT_Z - delta * speed
+        mesh.visible = true
+        ;(mesh.material as THREE.MeshBasicMaterial).opacity = p.downbeat ? 0.18 : 0.06
+      }
+    } else {
+      const firstBeat = Math.floor(frame.elapsed / beatSec)
+      for (let i = 0; i < this.beatLines.length; i++) {
+        const delta = (firstBeat + i) * beatSec - frame.elapsed
+        this.beatLines[i].position.z = HIT_Z - delta * speed
+        this.beatLines[i].visible = delta >= 0 && delta <= APPROACH_SECONDS
+      }
     }
     for (const receptor of this.receptors) {
       receptor.energy = Math.max(0, receptor.energy - dt * 2.7)

@@ -12,6 +12,7 @@ import { TOLERANCE_BY_DIFFICULTY, getInstrumentCategory } from '@/lib/play-sense
 import { gradeSingleOnset, gradeChordOnset, matchOnsetToExpected, computeStats, frequencyToMidi, orderSessionResults, currentComboForResults } from '@/lib/play-sense/scoring'
 import type { ExpectedEvent } from '@/lib/play-sense/scoring'
 import { generateExpectedTimestamps, getExerciseDuration, getCountInDuration, getLoopDuration } from '@/lib/play-sense/exercise-utils'
+import { gridCountIn } from '@/lib/play-sense/grid'
 import { useOnsetDetection } from './use-onset-detection'
 import { useMetronome } from './use-metronome'
 import { useCalibration } from './use-calibration'
@@ -28,6 +29,18 @@ const AUDIO_MODE_STORAGE_KEY = 'playSenseAudioMode'
 
 // Wait for the worklet's post-strum chroma (~80 ms) to arrive before grading a chord.
 const CHORD_GRADE_DELAY_MS = 95
+
+/**
+ * The count-in display's current number, counting DOWN from `countInBeats`
+ * to 1 as `elapsed` (seconds since the count-in started) advances one
+ * `beatSec` at a time. Clamped to 0 once the count-in has finished (callers
+ * stop reading it at that point, when the exercise itself starts).
+ */
+export function countdownFor(elapsed: number, countInBeats: number, beatSec: number): number {
+  if (beatSec <= 0 || countInBeats <= 0) return 0
+  const beatIndex = Math.floor(elapsed / beatSec)
+  return Math.max(0, countInBeats - beatIndex)
+}
 
 function loadStoredAudioMode(): AudioMode | null {
   if (typeof window === 'undefined') return null
@@ -126,6 +139,11 @@ export interface UseExerciseSessionOptions {
   backingTracks?: PlacedBackingTrack[]
   /** The student's own level/mute per backing track id; applied live. */
   backingMix?: BackingMix
+  /**
+   * Count-in length in bars for graded owners (a score with `exercise.grid`).
+   * Ignored without a grid, where the count-in is always one bar, as before.
+   */
+  countInBars?: 1 | 2
 }
 
 export function useExerciseSession(options: UseExerciseSessionOptions = {}): UseExerciseSessionResult {
@@ -200,10 +218,13 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const stopMidiListening = midiOnsets.stopListening
 
   const countInBeats = exercise?.timeSignature?.[0] || 4
+  const countInBars = options.countInBars ?? 1
   const metronome = useMetronome({
     bpm: exercise?.bpm || 100,
     timeSignature: exercise?.timeSignature || [4, 4],
     countInBeats,
+    grid: exercise?.grid,
+    countInBars,
     silent: !audioMetronome,
   })
 
@@ -749,7 +770,14 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     sessionStateRef.current = 'countdown'
     setSessionState('countdown')
     setCountdownBeat(0)
-    const countInDuration = getCountInDuration(exercise.bpm, beatsPerMeasure)
+    // With a grid (a graded owner), the count-in spans `countInBars` at bar 1's
+    // meter and beat length. Without one, it's always a single bar, as before.
+    const grid = exercise.grid
+    const totalCountInBeats = grid ? countInBars * beatsPerMeasure : beatsPerMeasure
+    const countInBeatSec = grid ? grid.beatQN[0] * grid.secPerQN[0] : 60 / exercise.bpm
+    const countInDuration = grid
+      ? Math.max(0, -gridCountIn(grid, countInBars, beatsPerMeasure)[0])
+      : getCountInDuration(exercise.bpm, beatsPerMeasure)
     const exerciseStartTime = metronome.startMetronome(audioCtx)
     exerciseStartTimeRef.current = exerciseStartTime
 
@@ -758,15 +786,15 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
       backingTrack.startPlayback(audioCtx, exerciseStartTime)
     }
 
-    // Track countdown beats — store interval in ref for cleanup
-    const beatDuration = 60 / exercise.bpm
+    // Track countdown beats — store interval in ref for cleanup. Counts DOWN:
+    // totalCountInBeats, totalCountInBeats - 1, ..., 1.
     let countBeat = 0
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
     countdownIntervalRef.current = setInterval(() => {
       if (!audioCtxRef.current) return
       const elapsed = audioCtxRef.current.currentTime - (exerciseStartTime - countInDuration)
-      const newBeat = Math.floor(elapsed / beatDuration) + 1
-      if (newBeat !== countBeat && newBeat <= beatsPerMeasure) {
+      const newBeat = countdownFor(elapsed, totalCountInBeats, countInBeatSec)
+      if (newBeat !== countBeat && newBeat > 0) {
         countBeat = newBeat
         setCountdownBeat(countBeat)
       }
@@ -781,7 +809,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
         rafRef.current = requestAnimationFrame(updatePlayhead)
       }
     }, 25)
-  }, [exercise, startListening, clearOnsets, metronome, updatePlayhead, backingTrack])
+  }, [exercise, startListening, clearOnsets, metronome, updatePlayhead, backingTrack, countInBars])
 
   const stopExercise = useCallback(() => {
     finishExercise()
