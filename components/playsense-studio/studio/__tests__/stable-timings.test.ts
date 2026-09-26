@@ -25,4 +25,12 @@ describe('stableTimings', () => {
     const next = [t(1, 0, 2)];
     expect(stableTimings(null, next)).toBe(next);
   });
+
+  it('treats a flag change as a change', () => {
+    const a: { measureNumber: number; startVideoTimeSeconds: number; endVideoTimeSeconds: number; flag: string | null }[] =
+      [{ measureNumber: 1, startVideoTimeSeconds: 0, endVideoTimeSeconds: 2, flag: null }];
+    const b: typeof a = [{ measureNumber: 1, startVideoTimeSeconds: 0, endVideoTimeSeconds: 2, flag: 'No hit near the first note' }];
+    expect(stableTimings(a, b)).toBe(b);
+    expect(stableTimings(b, [{ ...b[0] }])).toBe(b);
+  });
 });

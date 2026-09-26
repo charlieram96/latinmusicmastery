@@ -7,15 +7,21 @@ export interface BarTiming {
   measureNumber: number;
   startVideoTimeSeconds: number;
   endVideoTimeSeconds: number;
+  flag?: string | null;
 }
 
-/** `prev` by identity when every entry's number, start and end match `next`; otherwise `next`. */
+/** `prev` by identity when every entry's number, start, end and flag match `next`; otherwise `next`. */
 export function stableTimings<T extends BarTiming>(prev: T[] | null, next: T[]): T[] {
   if (!prev || prev.length !== next.length) return next;
   for (let i = 0; i < next.length; i++) {
     const a = prev[i];
     const b = next[i];
-    if (a.measureNumber !== b.measureNumber || a.startVideoTimeSeconds !== b.startVideoTimeSeconds || a.endVideoTimeSeconds !== b.endVideoTimeSeconds) return next;
+    if (
+      a.measureNumber !== b.measureNumber ||
+      a.startVideoTimeSeconds !== b.startVideoTimeSeconds ||
+      a.endVideoTimeSeconds !== b.endVideoTimeSeconds ||
+      (a.flag ?? null) !== (b.flag ?? null)
+    ) return next;
   }
   return prev;
 }

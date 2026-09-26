@@ -72,6 +72,20 @@ describe('MeasureBar', () => {
     expect(byName('Loop').title).toBe('Play the video to loop');
   });
 
+  it('shows a flag in the bar info', () => {
+    render({ flag: 'First note 42 ms off the recording' });
+    const info = host.querySelector('.st-fbar-info')!;
+    expect(info.textContent).toContain('First note 42 ms off the recording');
+    const flagEl = info.querySelector('.st-fbar-flag')!;
+    expect(flagEl).not.toBeNull();
+    expect(flagEl.textContent).toBe('First note 42 ms off the recording');
+  });
+
+  it('leaves the flag out when there is none', () => {
+    render({ flag: null });
+    expect(host.querySelector('.st-fbar-flag')).toBeNull();
+  });
+
   it('opens the menus just under the bar', () => {
     const cb = render();
     act(() => { byName('Repeat').click(); });

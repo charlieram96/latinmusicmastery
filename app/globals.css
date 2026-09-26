@@ -736,6 +736,7 @@ html:has([data-marketing]) {
 .st-fbar button:disabled { opacity: .4; cursor: not-allowed; }
 .st-fbar button[aria-pressed='true'] { color: hsl(var(--primary)); }
 .st-fbar .st-fbar-info { padding: 0 8px; font: 11px var(--font-mono, ui-monospace, monospace); color: hsl(var(--muted-foreground)); }
+.st-fbar-flag { color: hsl(var(--destructive)); font-weight: 600; }
 .st-fbar .st-fbar-sep { width: 1px; height: 18px; margin: 0 4px; background: hsl(var(--border)); }
 @media (prefers-reduced-motion: reduce) { .st-fbar { animation: none; } }
 /* A short-lived note under the editor bar ("Copied m.2–3 with its timing."). */
