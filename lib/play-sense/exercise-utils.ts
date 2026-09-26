@@ -134,7 +134,8 @@ export function getCountInDuration(bpm: number, countInBeats: number = 4): numbe
  */
 export function getSessionCountInSeconds(exercise: ExerciseDefinition, countInBars: 1 | 2): number {
   const beatsPerMeasure = exercise.timeSignature[0]
-  if (exercise.grid) return Math.max(0, -gridCountIn(exercise.grid, countInBars, beatsPerMeasure)[0])
+  // An empty grid has no count-in beats (0 s, never NaN).
+  if (exercise.grid) return Math.max(0, -(gridCountIn(exercise.grid, countInBars, beatsPerMeasure)[0] ?? 0))
   return getCountInDuration(exercise.bpm, beatsPerMeasure)
 }
 

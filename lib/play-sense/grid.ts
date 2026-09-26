@@ -32,12 +32,15 @@ function measureIndexFor(starts: number[], value: number): number {
  * end (or before its start), extrapolates linearly at the nearest measure's
  * `secPerQN`. */
 export function gridSecondsAtQN(g: ExerciseGrid, qn: number): number {
+  // A score with no measures has no rate to extrapolate at.
+  if (g.secPerQN.length === 0) return 0
   const i = measureIndexFor(g.measureStartQN, qn)
   return g.measureStartSec[i] + (qn - g.measureStartQN[i]) * g.secPerQN[i]
 }
 
 /** Seconds from bar 1 → quarter notes. Inverse of `gridSecondsAtQN`. */
 export function gridQNAtSeconds(g: ExerciseGrid, s: number): number {
+  if (g.secPerQN.length === 0) return 0
   const i = measureIndexFor(g.measureStartSec, s)
   return g.measureStartQN[i] + (s - g.measureStartSec[i]) / g.secPerQN[i]
 }
@@ -62,8 +65,10 @@ export function gridBeats(g: ExerciseGrid): Array<{ seconds: number; downbeat: b
  * Count-in beats before bar 1: `bars` × bar 1's numerator (`beatsPerBar`),
  * spaced at bar 1's beat length. Returned seconds are NEGATIVE (before bar 1,
  * i.e. before `gridSecondsAtQN(g, 0)`), oldest first, ending closest to 0.
+ * An empty grid (no measures, so no bar 1) has no count-in: [].
  */
 export function gridCountIn(g: ExerciseGrid, bars: 1 | 2, beatsPerBar: number): number[] {
+  if (g.secPerQN.length === 0) return []
   const beatSec = g.beatQN[0] * g.secPerQN[0]
   const total = bars * beatsPerBar
   const out: number[] = []

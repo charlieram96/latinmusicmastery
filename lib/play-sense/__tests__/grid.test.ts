@@ -76,3 +76,20 @@ describe('gridCountIn', () => {
     expect(gridCountIn(g, 1, 4)).toEqual([-2, -1.5, -1, -0.5])
   })
 })
+
+describe('an empty grid (a score with no measures)', () => {
+  const EMPTY: ExerciseGrid = { measureStartSec: [0], measureStartQN: [0], secPerQN: [], beatQN: [] }
+
+  it('maps quarter notes and seconds to 0, never NaN', () => {
+    expect(gridSecondsAtQN(EMPTY, 0)).toBe(0)
+    expect(gridSecondsAtQN(EMPTY, 3)).toBe(0)
+    expect(gridQNAtSeconds(EMPTY, 0)).toBe(0)
+    expect(gridQNAtSeconds(EMPTY, 2.5)).toBe(0)
+    expect(gridLoopSeconds(EMPTY)).toBe(0)
+  })
+
+  it('has no count-in beats', () => {
+    expect(gridCountIn(EMPTY, 1, 4)).toEqual([])
+    expect(gridCountIn(EMPTY, 2, 4)).toEqual([])
+  })
+})

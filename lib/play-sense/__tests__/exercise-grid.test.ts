@@ -137,4 +137,10 @@ describe('getSessionCountInSeconds (the count-in the session and the play-along 
     expect(getSessionCountInSeconds(ex, 2)).toBe(getCountInDuration(ex.bpm, ex.timeSignature[0]))
     expect(getSessionCountInSeconds(ex, 2)).toBe(2)
   })
+
+  it('is 0, not NaN, for an empty grid (a score with no measures)', () => {
+    const ex = { ...scoreToExerciseDefinition(changing), grid: { measureStartSec: [0], measureStartQN: [0], secPerQN: [], beatQN: [] } }
+    expect(getSessionCountInSeconds(ex, 1)).toBe(0)
+    expect(getSessionCountInSeconds(ex, 2)).toBe(0)
+  })
 })
