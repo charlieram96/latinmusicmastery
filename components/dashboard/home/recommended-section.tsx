@@ -47,6 +47,7 @@ export function RecommendedSection({ courses, ctx }: { courses: RecommendedCours
   return (
     <section aria-labelledby="home-recommended">
       <SectionHeader
+        id="home-recommended"
         title={t('dashboard.pages.home.recommended.title')}
         count={t('dashboard.pages.home.recommended.subtitle')}
         href="/dashboard/courses"
@@ -79,7 +80,7 @@ export function RecommendedSection({ courses, ctx }: { courses: RecommendedCours
       ) : (
         <div
           data-posters
-          className="-mx-6 flex snap-x snap-mandatory scroll-px-6 gap-3.5 overflow-x-auto px-6 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-[repeat(auto-fill,minmax(max(190px,calc((100%-42px)/4)),1fr))] md:overflow-visible md:px-0 md:pb-0"
+          className="-mx-6 flex snap-x snap-mandatory scroll-px-6 gap-3.5 overflow-x-auto px-6 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-[repeat(auto-fill,minmax(clamp(calc(25%-11px),calc((800px-100%)*999),calc(50%-7px)),1fr))] md:overflow-visible md:px-0 md:pb-0"
         >
           {visible.slice(0, 4).map((course, i) => (
             <PosterCard key={course.id} course={course} reason={reasonText(course.reason, t, locale)} priority={i === 0} />
@@ -107,11 +108,11 @@ function PosterCard({ course, reason, priority }: { course: RecommendedCourse; r
     <Link
       href={course.href}
       data-poster
-      className="group relative isolate flex aspect-[4/5] w-[62%] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-2xl text-white shadow-[0_4px_0_hsl(0_0%_0%/0.25)] outline-none transition-[transform,box-shadow] duration-pop ease-smooth hover:shadow-[0_8px_0_hsl(0_0%_0%/0.22)] focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:hover:-translate-y-1 md:w-auto"
+      className="group relative isolate flex aspect-[4/5] w-[62%] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-2xl md:max-h-[360px] text-white shadow-[0_4px_0_hsl(0_0%_0%/0.25)] outline-none transition-[transform,box-shadow] duration-pop ease-smooth hover:shadow-[0_8px_0_hsl(0_0%_0%/0.22)] focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:hover:-translate-y-1 md:w-full"
     >
       <span data-art aria-hidden className="absolute inset-0 -z-10 transition-transform duration-500 ease-smooth motion-safe:group-hover:scale-[1.06]">
         {course.thumbnailUrl ? (
-          <Image src={course.thumbnailUrl} alt="" fill priority={priority} sizes="(min-width: 768px) 25vw, 62vw" className="object-cover" />
+          <Image src={course.thumbnailUrl} alt="" fill priority={priority} sizes="(min-width: 1280px) 22vw, (min-width: 768px) 45vw, 62vw" className="object-cover" />
         ) : (
           <>
             <span className="absolute inset-0" style={{ background: coverStyle(course.styleName) }} />
@@ -140,8 +141,9 @@ function PosterCard({ course, reason, priority }: { course: RecommendedCourse; r
       </span>
 
       <span
+        data-play-disc
         aria-hidden
-        className="absolute left-1/2 top-[38%] grid h-[52px] w-[52px] -translate-x-1/2 -translate-y-1/2 scale-75 place-items-center rounded-full border border-white/50 bg-white/[0.22] opacity-0 backdrop-blur-md transition-[opacity,transform] duration-pop ease-spring group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100"
+        className="absolute left-1/2 top-[38%] grid h-[52px] w-[52px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/50 bg-white/[0.22] opacity-0 backdrop-blur-md transition-[opacity,transform] duration-pop ease-spring group-hover:opacity-100 group-focus-visible:opacity-100 motion-safe:scale-75 motion-safe:group-hover:scale-100 motion-safe:group-focus-visible:scale-100"
       >
         <Play className="ml-0.5 h-5 w-5 fill-current" />
       </span>

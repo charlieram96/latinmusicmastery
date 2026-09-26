@@ -5,6 +5,7 @@ import { Check, Flame } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
 import { greetingKey, type GreetingKey } from '@/lib/dashboard/greeting'
 import { cn } from '@/lib/utils'
+import { weeklyGoalText } from './weekly-goal'
 
 interface GreetingRowProps {
   firstName: string | null
@@ -41,7 +42,7 @@ export function GreetingRow({ firstName, streak, weekDone, weekGoal }: GreetingR
         </span>
         <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-secondary px-3 text-sm font-medium tabular-nums text-foreground">
           <Check className="h-3.5 w-3.5" aria-hidden />
-          {t('dashboard.pages.home.weeklyGoalChip', { done: weekDone, goal: weekGoal })}
+          {weeklyGoalText(t, weekDone, weekGoal)}
         </span>
       </div>
     </div>

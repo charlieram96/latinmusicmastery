@@ -89,4 +89,13 @@ describe('StreakCard', () => {
     render({ streak: 0 })
     expect(host.querySelector('[data-flame] svg')!.getAttribute('class')).not.toContain('flicker-module-class')
   })
+
+  it('D6: over the goal it caps the count and shows the extra lessons', () => {
+    render({ weekDone: 9, weekGoal: 6 })
+    expect(host.textContent).toContain('dashboard.pages.home.streak.goalExceeded(6,3)')
+    expect(host.textContent).not.toContain('goalProgress(9,6)')
+    expect(host.textContent).toContain('dashboard.pages.home.streak.reached')
+    render({ weekDone: 6, weekGoal: 6 })
+    expect(host.textContent).toContain('dashboard.pages.home.streak.goalProgress(6,6)')
+  })
 })

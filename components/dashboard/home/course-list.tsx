@@ -45,6 +45,7 @@ export function CourseList({ courses }: { courses: HomeCourseSummary[] }) {
   return (
     <section aria-labelledby="home-courses">
       <SectionHeader
+        id="home-courses"
         title={t('dashboard.pages.home.courses.title')}
         count={t('dashboard.pages.home.courses.inProgress', { count: inProgress })}
         href="/dashboard/my-courses"

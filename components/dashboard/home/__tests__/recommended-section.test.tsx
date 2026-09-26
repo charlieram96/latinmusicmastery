@@ -84,11 +84,15 @@ describe('RecommendedSection posters', () => {
     expect(p.querySelectorAll('a, button')).toHaveLength(0)
   })
 
-  it('is a snap carousel at 62% width below md and a minmax(190px) grid from md', () => {
+  it('is a snap carousel at 62% width below md and a 2-or-4 column grid from md (never 3+1)', () => {
     render()
     const list = host.querySelector('[data-posters]')!
-    expect(tokens(list)).toEqual(expect.arrayContaining(['flex', 'snap-x', 'snap-mandatory', 'overflow-x-auto', 'md:grid', 'md:grid-cols-[repeat(auto-fill,minmax(max(190px,calc((100%-42px)/4)),1fr))]']))
-    for (const p of posters()) expect(tokens(p)).toEqual(expect.arrayContaining(['w-[62%]', 'shrink-0', 'snap-start', 'md:w-auto']))
+    // Track min is 50%-7px (2 columns) below an 800px container and 25%-11px (4 columns) from it,
+    // so with the 14px gap a third column never fits.
+    expect(tokens(list)).toEqual(expect.arrayContaining(['flex', 'snap-x', 'snap-mandatory', 'overflow-x-auto', 'md:grid', 'gap-3.5', 'md:grid-cols-[repeat(auto-fill,minmax(clamp(calc(25%-11px),calc((800px-100%)*999),calc(50%-7px)),1fr))]']))
+    for (const p of posters()) expect(tokens(p)).toEqual(expect.arrayContaining(['w-[62%]', 'shrink-0', 'snap-start', 'md:w-full']))
+    // 2×2 posters in a ~700px column would be ~440px tall each: cap their height from md.
+    for (const p of posters()) expect(tokens(p)).toContain('md:max-h-[360px]')
   })
 
   it('keeps Preview visible on phones and reveals it on hover from md', () => {
@@ -109,5 +113,21 @@ describe('RecommendedSection posters', () => {
     const btns = [...host.querySelectorAll('button')]
     act(() => btns.find((b) => b.textContent?.includes('forInstrument'))!.click())
     expect(posters().map((p) => p.getAttribute('href'))).toEqual(['/dashboard/course/a'])
+  })
+
+  it('D4: the play disc only scales in under motion-safe', () => {
+    render()
+    const disc = posters()[0].querySelector('[data-play-disc]')!
+    const t = tokens(disc)
+    expect(t).toEqual(expect.arrayContaining(['motion-safe:scale-75', 'motion-safe:group-hover:scale-100', 'motion-safe:group-focus-visible:scale-100']))
+    for (const c of t) if (c.includes('scale-')) expect(c.startsWith('motion-safe:')).toBe(true)
+  })
+
+  it('D7: the section is labelled by its own heading', () => {
+    render()
+    const section = host.querySelector('section')!
+    const h2 = host.querySelector('h2')!
+    expect(section.getAttribute('aria-labelledby')).toBe('home-recommended')
+    expect(h2.id).toBe('home-recommended')
   })
 })

@@ -30,4 +30,15 @@ describe('MobileCourseBar', () => {
     act(() => root.render(<MobileCourseBar progressPercentage={0} title="Not started" action={null} />))
     expect(host.querySelectorAll('[data-bar-subtitle]')).toHaveLength(0)
   })
+
+  it('stacked puts the action on its own full-width row so the lesson line keeps its room', () => {
+    act(() => root.render(<MobileCourseBar progressPercentage={10} title="Lesson 2 of 14" action={<a href="/s">Subscribe to unlock</a>} stacked />))
+    const bar = host.querySelector('[data-mobile-bar]') as HTMLElement
+    expect(bar.dataset.stacked).toBe('true')
+    const action = bar.querySelector('[data-bar-action]') as HTMLElement
+    expect(action.className.split(/\s+/)).toEqual(expect.arrayContaining(['w-full']))
+    // the action is not a sibling squeezing the title row
+    expect(action.parentElement).toBe(bar)
+    expect(bar.querySelector('[data-bar-title]')?.textContent).toBe('Lesson 2 of 14')
+  })
 })

@@ -33,9 +33,15 @@ describe('yourPathFor', () => {
     expect(path.courseHref).toBe('/dashboard/course/son-timbal')
   })
 
-  it('shows exactly 5 nodes on phones: 1 before, current, 2 after, checkpoint, no gap', () => {
+  it('phones keep 5 slots and still hint skipped lessons: 1 before, current, 1 after, gap, checkpoint', () => {
     const path = yourPathFor(course, doneAll('a1', 'a2', 'a3', 'a4'), 'a5')!
-    expect(ids(path.phoneItems)).toEqual(['a4', 'a5', 'a6', 'a7', 'checkpoint-A'])
+    expect(ids(path.phoneItems)).toEqual(['a4', 'a5', 'a6', 'gap', 'checkpoint-A'])
+    expect(path.phoneItems.find((i) => i.kind === 'gap')).toMatchObject({ count: 4 })
+  })
+
+  it('phones show 2 after the current lesson when nothing is skipped', () => {
+    const path = yourPathFor(course, doneAll('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7'), 'a8')!
+    expect(ids(path.phoneItems)).toEqual(['a7', 'a8', 'a9', 'a10', 'checkpoint-A'])
   })
 
   it('names the module that holds the current lesson', () => {

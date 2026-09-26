@@ -1808,6 +1808,7 @@
         "continueCourse": "Continuar curso",
         "beginCourse": "Comenzar curso",
         "comingSoon": "Muy pronto",
+        "reviewCourse": "Repasar curso",
         "subscribeToUnlock": "Suscríbete para desbloquear",
         "instructor": "Instructor",
         "yourInstructor": "Tu instructor",
@@ -2059,7 +2060,6 @@
           "afternoon": "Buenas tardes, {name}",
           "evening": "Buenas noches, {name}"
         },
-        "weeklyGoalChip": "{done} de {goal} lecciones",
         "continue": {
           "lesson": "Lección",
           "eyebrow": "{course}, lección {n} de {total}",
@@ -2116,6 +2116,7 @@
         "path": {
           "title": "Tu camino",
           "module": "Módulo {n} · {title}",
+          "moduleOnly": "Módulo {n}",
           "courseMap": "Mapa del curso"
         },
         "streak": {
@@ -2126,6 +2127,7 @@
           "bestOne": "Mejor: {count} día.",
           "weeklyGoal": "Meta semanal",
           "goalProgress": "{done} de {goal} lecciones",
+          "goalExceeded": "{goal} de {goal} lecciones · +{extra} extra",
           "toGo": "faltan {count}",
           "reached": "Cumplida",
           "heatLabel": "Práctica de las últimas 5 semanas",

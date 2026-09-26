@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Check, ChevronLeft, ChevronRight, CircleHelp, FileText, Music, Play, Trophy, Video } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
 import { cn } from '@/lib/utils'
@@ -25,6 +26,10 @@ const COMPACT_NARROW = { ...COMPACT, step: 64, side: 34, label: 60 }
 const NARROW_BELOW = 480
 const DEFAULT = { wave: 18, below: 110, step: 118, side: 60, label: 110 }
 const CARD_W = 208
+// The arrow pair (2 × 36px buttons + an 8px gap) plus 4px of air: cards keep clear of it.
+const ARROWS_W = 84
+// Room a compact card needs above its node before it flips below (card ~110px + offset).
+const CARD_ROOM = 150
 
 interface PathStripProps {
   items: PathItem[]
@@ -58,7 +63,8 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
   const pinNext = useRef<number | null>(null)
   const goRef = useRef<HTMLAnchorElement>(null)
   // `key` ties the card to the items it was opened on; a new path closes it.
-  const [tip, setTip] = useState<{ key: string; index: number; left: number; top: number; pinned: boolean } | null>(null)
+  // `below` opens the card under the node (compact cards near the top of the viewport).
+  const [tip, setTip] = useState<{ key: string; index: number; left: number; top: number; pinned: boolean; below: boolean } | null>(null)
   const compact = size === 'compact'
   // Tap-to-pin cards on touch (course page). Compact strips sit in small cards
   // that could clip a pinned card, so they navigate on the first tap.
@@ -94,6 +100,30 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
     el.scrollLeft = Math.max(0, target)
   }, [currentIndex, STEP, SIDE, itemsKey])
 
+  // Any key press means the keyboard is in use again (Tab after a touch must show
+  // focus cards), and Escape dismisses any card, hover and focus ones included (WCAG 1.4.13).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      touch.current = false
+      if (e.key === 'Escape') setTip(null)
+    }
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [])
+
+  // Compact cards are fixed to the viewport (portaled), so any scroll or resize makes them stale.
+  const tipOpen = tip !== null
+  useEffect(() => {
+    if (!compact || !tipOpen) return
+    const close = () => setTip(null)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [compact, tipOpen])
+
   const pinned = tip?.pinned ?? false
   // A pinned card is a dialog: move focus to its Go link so screen readers announce it.
   useEffect(() => {
@@ -106,13 +136,8 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
       if (target?.closest?.('[data-path-node]') || cardRef.current?.contains(target)) return
       setTip(null)
     }
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setTip(null) }
     document.addEventListener('pointerdown', onDown)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onDown)
-      document.removeEventListener('keydown', onKey)
-    }
+    return () => document.removeEventListener('pointerdown', onDown)
   }, [pinned])
 
   const scroll = (dir: 1 | -1) => {
@@ -120,13 +145,24 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
     el?.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: 'smooth' })
   }
 
-  const showTip = (index: number, pin = false) => {
+  const showTip = (index: number, pin = false, node?: HTMLElement) => {
+    if (compact && node) {
+      // Compact strips sit inside dashboard cards: the card is portaled to <body>
+      // and fixed to the node's spot in the viewport, so no ancestor can clip it.
+      const r = node.getBoundingClientRect()
+      const vw = window.innerWidth
+      const left = vw > CARD_W + 16 ? Math.min(Math.max(r.left, CARD_W / 2 + 8), vw - CARD_W / 2 - 8) : r.left
+      const below = r.top < CARD_ROOM
+      setTip({ key: itemsKey, index, left, top: below ? r.top + 30 : r.top - 26, pinned: false, below })
+      return
+    }
     const scrollLeft = scroller.current?.scrollLeft ?? 0
     const outerWidth = outer.current?.clientWidth ?? 0
     const x = pos[index].x - scrollLeft
-    // Keep the card inside the strip horizontally.
-    const left = outerWidth > CARD_W ? Math.min(Math.max(x, CARD_W / 2), outerWidth - CARD_W / 2) : x
-    setTip({ key: itemsKey, index, left, top: pos[index].y - (compact ? 26 : 34), pinned: pin })
+    // Keep the card inside the strip horizontally, and clear of the arrow pair.
+    const maxLeft = outerWidth - CARD_W / 2 - (showArrows ? ARROWS_W : 0)
+    const left = maxLeft > CARD_W / 2 ? Math.min(Math.max(x, CARD_W / 2), maxLeft) : x
+    setTip({ key: itemsKey, index, left, top: pos[index].y - (compact ? 26 : 34), pinned: pin, below: false })
   }
   // Hover and focus cards close when the pointer or focus leaves; a pinned (tapped) card stays.
   const hideTip = () => setTip((cur) => (cur?.pinned ? cur : null))
@@ -143,6 +179,9 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
       flags.push({ key: `flag-${item.moduleIndex}`, x: pos[i].x, n: item.moduleIndex + 1, title: cp?.moduleTitle ?? '', href: cp?.href ?? null, later })
     })
   }
+
+  // Compact cards go to <body> (see showTip); the others stay beside the scroller.
+  const portal = (card: React.ReactNode) => (compact && typeof document !== 'undefined' ? createPortal(card, document.body) : card)
 
   const tipNode = tip && tip.key === itemsKey ? items[tip.index] : undefined
   const tipItem: PathLessonNode | null = tipNode?.kind === 'lesson' ? tipNode : null
@@ -220,9 +259,9 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
             const Icon = isLesson ? (done ? Check : current ? Play : TYPE_ICON[item.types[0] ?? 'other']) : Trophy
             const hover = isLesson
               ? {
-                  onMouseEnter: () => { if (!touch.current) showTip(i) },
+                  onMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => { if (!touch.current) showTip(i, false, e.currentTarget) },
                   onMouseLeave: hideTip,
-                  onFocus: () => { if (!touch.current) showTip(i) },
+                  onFocus: (e: React.FocusEvent<HTMLDivElement>) => { if (!touch.current) showTip(i, false, e.currentTarget) },
                   onBlur: hideTip,
                 }
               : {}
@@ -312,14 +351,16 @@ export function PathStrip({ items, size = 'default', showArrows = false, showMod
         </div>
       </div>
 
-      {tip && tipItem && (
+      {tip && tipItem && portal(
         <div
           ref={cardRef}
           id={tipId}
           role={tip.pinned ? 'dialog' : 'tooltip'}
           aria-label={tip.pinned ? `${t(`${T}.lessonN`, { n: tipItem.number })}: ${tipItem.title}` : undefined}
           className={cn(
-            'absolute z-20 w-52 -translate-x-1/2 -translate-y-full rounded-xl border border-border bg-popover p-3 text-left shadow-pop',
+            'w-52 -translate-x-1/2 rounded-xl border border-border bg-popover p-3 text-left shadow-pop',
+            compact ? 'fixed z-[60]' : 'absolute z-20',
+            !tip.below && '-translate-y-full',
             tip.pinned ? 'pointer-events-auto' : 'pointer-events-none'
           )}
           style={{ left: tip.left, top: tip.top }}

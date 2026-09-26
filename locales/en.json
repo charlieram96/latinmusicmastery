@@ -1808,6 +1808,7 @@
         "continueCourse": "Continue Course",
         "beginCourse": "Begin Course",
         "comingSoon": "Coming Soon",
+        "reviewCourse": "Review Course",
         "subscribeToUnlock": "Subscribe to Unlock",
         "instructor": "Instructor",
         "yourInstructor": "Your Instructor",
@@ -2059,7 +2060,6 @@
           "afternoon": "Good afternoon, {name}",
           "evening": "Good evening, {name}"
         },
-        "weeklyGoalChip": "{done} of {goal} lessons",
         "continue": {
           "lesson": "Lesson",
           "eyebrow": "{course}, lesson {n} of {total}",
@@ -2116,6 +2116,7 @@
         "path": {
           "title": "Your path",
           "module": "Module {n} · {title}",
+          "moduleOnly": "Module {n}",
           "courseMap": "Course map"
         },
         "streak": {
@@ -2126,6 +2127,7 @@
           "bestOne": "Best: {count} day.",
           "weeklyGoal": "Weekly goal",
           "goalProgress": "{done} of {goal} lessons",
+          "goalExceeded": "{goal} of {goal} lessons · +{extra} extra",
           "toGo": "{count} to go",
           "reached": "Reached",
           "heatLabel": "Practice over the last 5 weeks",
