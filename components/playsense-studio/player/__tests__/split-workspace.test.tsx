@@ -83,6 +83,18 @@ describe('SplitWorkspace frame', () => {
   })
 })
 
+describe('SplitWorkspace in the lesson stage', () => {
+  it('fits the stage exactly, leaving only the stage content’s bottom padding', () => {
+    Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true })
+    rect = { top: 300, left: 0, width: 1000, height: 680 }
+    act(() => { root.render(
+      <div data-lesson-shell><main data-dashboard-main><div className="lx-fill" style={{ paddingBottom: '24px' }}>
+        <Harness defaults={WATCH_WORKSPACE} frame="bleed" />
+      </div></main></div>) })
+    expect(q('[data-lesson-workspace]').style.height).toBe(`${980 - 300 - 24}px`)
+  })
+})
+
 describe('SplitWorkspace footer', () => {
   it('renders the footer below the stage, outside the PiP area', () => {
     const controller = { current: null as WorkspaceController | null }

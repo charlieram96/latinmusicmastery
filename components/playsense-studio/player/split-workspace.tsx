@@ -28,7 +28,7 @@ import { createPortal } from 'react-dom';
 import { ArrowLeftRight, Columns2, Music2, PictureInPicture2, Rows2, type LucideIcon } from 'lucide-react';
 import { useTranslation } from '@/components/language-provider';
 import { cn } from '@/lib/utils';
-import { lessonExerciseHeight } from '@/lib/playsense-studio/lesson-viewport';
+import { lessonExerciseHeight, lessonStageHeight } from '@/lib/playsense-studio/lesson-viewport';
 import {
   MUSIC_SPLIT_BOUNDS,
   SPLIT_BOUNDS,
@@ -149,13 +149,18 @@ export function SplitWorkspace({
     if (!bleed && !lesson) return;
     const scroller = el.closest<HTMLElement>('[data-dashboard-main]');
     const footer = lesson?.querySelector<HTMLElement>('[data-lesson-footer] > div');
+    // The L2 lesson stage: its content (.lx-fill) pads the bottom; fill the rest exactly.
+    const fill = el.closest<HTMLElement>('.lx-fill');
     let pending = 0;
     const fit = () => {
       pending = 0;
       const visibleBottom = (window.visualViewport?.offsetTop ?? 0) + (window.visualViewport?.height ?? window.innerHeight);
       const bottom = Math.min(visibleBottom, scroller?.getBoundingClientRect().bottom ?? visibleBottom);
-      const available = lessonExerciseHeight(bottom, el.getBoundingClientRect().top,
-        scroller?.scrollTop ?? window.scrollY, (footer?.getBoundingClientRect().height ?? 0) + 8);
+      const top = el.getBoundingClientRect().top;
+      const scrollTop = scroller?.scrollTop ?? window.scrollY;
+      const available = fill
+        ? lessonStageHeight(bottom, top, scrollTop, parseFloat(getComputedStyle(fill).paddingBottom) || 0)
+        : lessonExerciseHeight(bottom, top, scrollTop, (footer?.getBoundingClientRect().height ?? 0) + 8);
       setHeight(bleed ? available : Math.min(initialHeight, available));
     };
     const schedule = () => { if (!pending) pending = requestAnimationFrame(fit); };
