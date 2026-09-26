@@ -26,7 +26,7 @@ function Harness({ part, tone = 'neutral', second = false }: { part: boolean; to
   return <LessonProgressProvider itemIds={progress.itemIds} initialCompletedItemIds={[]}>
     <LessonFrameProvider value={{ actionHost: host, topClaim: claims.top, claim: claims.claim, advance: vi.fn(), teacherName: 'Livan' }}>
       {part && <LessonAction tone={tone}><ActionMessage icon={null} title="Check your answer" /><button data-check>Check</button></LessonAction>}
-      {second && <LessonAction tone="success"><button data-celebrate>Next lesson</button></LessonAction>}
+      {second && <LessonAction tone="success"><ActionMessage icon={null} title="Lesson complete" /><button data-celebrate data-primary="">Next lesson</button></LessonAction>}
     </LessonFrameProvider>
     <LessonActionBar progress={progress} claimed={claims.claimed} tone={claims.tone} onActionHost={setHost} onToolsHost={setTools} onPrimary={() => {}} />
   </LessonProgressProvider>
@@ -43,6 +43,40 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); host.remove() })
 
 const bar = () => host.querySelector('[data-lesson-action-bar]') as HTMLElement
+
+describe('LessonActionBar announcements and focus (L3)', () => {
+  const live = () => bar().querySelector('[data-action-live]') as HTMLElement
+
+  it('keeps one live region that announces whatever message the bar shows', async () => {
+    await act(async () => root.render(<Harness part={false} />))
+    const region = live()
+    expect(region.getAttribute('role')).toBe('status')
+    expect(region.textContent).toContain('Lesson in progress')
+    await act(async () => root.render(<Harness part />))
+    expect(live()).toBe(region)
+    expect(region.textContent).toContain('Check your answer')
+    expect(bar().querySelectorAll('[aria-live]')).toHaveLength(1)
+  })
+
+  it('moves focus to the new primary action when the focused control is swapped out', async () => {
+    await act(async () => root.render(<Harness part />))
+    const check = bar().querySelector<HTMLButtonElement>('[data-check]')!
+    check.focus()
+    expect(document.activeElement).toBe(check)
+    await act(async () => root.render(<Harness part second />))
+    expect(document.activeElement).toBe(bar().querySelector('[data-celebrate]'))
+  })
+
+  it('leaves focus alone when it was outside the bar', async () => {
+    const outside = document.createElement('button')
+    document.body.appendChild(outside)
+    await act(async () => root.render(<Harness part />))
+    outside.focus()
+    await act(async () => root.render(<Harness part second />))
+    expect(document.activeElement).toBe(outside)
+    outside.remove()
+  })
+})
 
 describe('LessonActionBar', () => {
   it('shows the lesson message and the next destination by default', () => {
