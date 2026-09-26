@@ -219,5 +219,16 @@ describe('CourseDetailView (C3)', () => {
         expect(moduleSection(id).contains(list)).toBe(true)
       }
     })
+  
+    it('C2: a module whose only lessons with items are done reads Completed, like its path checkpoint', () => {
+      const secs = [
+        { id: 's1', title: 'Welcome', description: null, classes: [cls('a', 2), cls('x', 0, 0), cls('y', 0, 0)] },
+        { id: 's2', title: 'Rhythm', description: null, classes: [cls('b', 0)] },
+      ]
+      render({ sections: secs, nextClassId: 'b', totalItems: 4, completedItems: 2 })
+      expect(moduleSection('s1').textContent).toContain(`${P}.syllabus.completed`)
+      const cp = host.querySelector('section[aria-labelledby="your-path"] a[href="/dashboard/course/son/module/s1"]')
+      expect(cp).not.toBeNull()
+    })
   })
 })

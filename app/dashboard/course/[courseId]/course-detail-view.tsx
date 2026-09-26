@@ -436,7 +436,8 @@ export function CourseDetailView({
           <div className={cn(!course.description && 'mt-6')}>
             {sections.map((section, si) => {
               const list = section.classes ?? []
-              const sDone = list.length > 0 && list.every(classDone)
+              // Same rule as the path checkpoint: lessons with no items yet never hold a module back.
+              const sDone = list.some((c) => c.totalItems > 0) && list.every((c) => c.totalItems === 0 || classDone(c))
               const sCurrent = list.some((c) => c.id === nextClassId)
               const status = sDone ? t(`${base}.syllabus.completed`) : sCurrent ? t(`${base}.syllabus.inProgress`) : t(`${base}.syllabus.notStarted`)
               const win = syllabusWindow(list.map((c) => c.id), nextClassId)
