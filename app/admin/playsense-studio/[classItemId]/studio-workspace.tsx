@@ -230,15 +230,17 @@ function StudioWorkspaceBody({
     () => (isExercise && state.score.tracks[0] ? buildExerciseGrid(state.score, state.score.tracks[0]) : null),
     [isExercise, state.score]
   );
+  // One exercise definition of the draft score, shared by the graded onsets
+  // and the Student preview.
+  const draftExercise = useMemo(() => scoreToExerciseDefinition(state.score), [state.score]);
   const gradedOnsets = useMemo(() => {
     if (!isExercise) return [];
-    const exercise = scoreToExerciseDefinition(state.score);
     const out: number[] = [];
-    for (const e of generateExpectedTimestamps({ ...exercise, loopCount: 1 })) {
+    for (const e of generateExpectedTimestamps({ ...draftExercise, loopCount: 1 })) {
       if (!out.length || e.timestamp - out[out.length - 1] > 1e-6) out.push(e.timestamp);
     }
     return out;
-  }, [isExercise, state.score]);
+  }, [isExercise, draftExercise]);
   const gradedBar1 = exercisePlay.bar1Seconds ?? exerciseTrim.trimInSeconds;
   // Backing clips record position_qn on the tempo grid from bar 1. Without a
   // grid, or when the result isn't finite, it returns undefined so the save
@@ -257,7 +259,6 @@ function StudioWorkspaceBody({
   // play settings, current (possibly unsaved) media and backing tracks — so
   // the preview can never drift from what students see.
   const [previewOpen, setPreviewOpen] = useState(false);
-  const previewExercise = useMemo(() => scoreToExerciseDefinition(state.score), [state.score]);
   const previewVideo = useMemo(
     () =>
       exerciseVideoUrl
@@ -567,7 +568,6 @@ function StudioWorkspaceBody({
                       classItemId={owner.classItemId}
                       scoreLengthSeconds={scoreLengthSeconds}
                       initialMedia={exerciseMedia}
-                      hasTimeMap={exercisePlay.bar1Seconds != null}
                       onVideoChange={handleExerciseVideoChange}
                       jam={jam}
                     />
@@ -692,7 +692,7 @@ function StudioWorkspaceBody({
 
       {isExercise && previewOpen && (
         <StudentPreviewDialog
-          exercise={previewExercise}
+          exercise={draftExercise}
           score={state.score}
           exerciseVideo={previewVideo}
           play={exercisePlay}

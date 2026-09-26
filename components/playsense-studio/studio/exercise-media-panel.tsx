@@ -28,8 +28,6 @@ export interface ExerciseMediaPanelProps {
   /** The graded score's length at its own tempo — the crop window's size. */
   scoreLengthSeconds: number;
   initialMedia: ExerciseMedia;
-  /** True when a sync time map is published for this video — crop is then ignored. */
-  hasTimeMap?: boolean;
   /** Notifies the workspace when the play-along video is added/removed, so the
    *  "Sync video" stage toggle and sync stage react without a remount. */
   onVideoChange?: (url: string | null) => void;
@@ -47,7 +45,6 @@ export function ExerciseMediaPanel({
   classItemId,
   scoreLengthSeconds,
   initialMedia,
-  hasTimeMap,
   onVideoChange,
   jam = false,
 }: ExerciseMediaPanelProps) {
