@@ -111,6 +111,8 @@ export interface WaveformCanvasProps {
    *  the press; `mods.snap` false while ⌘ is held) instead of scrubbing. A
    *  plain click still seeks. */
   onBackgroundDrag?: (deltaSeconds: number, phase: 'move' | 'end', mods: { snap: boolean }) => void;
+  /** The running A/B loop in TIMELINE seconds, drawn as a gold bracket. */
+  loop?: { a: number; b: number } | null;
 }
 
 const DEFAULT_HEIGHT = 240;
@@ -218,6 +220,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     onFlexRemove,
     markersLocked = false,
     onBackgroundDrag,
+    loop = null,
   } = props;
 
   const onZoomByRef = useRef(onZoomBy);
@@ -280,6 +283,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   // overlay's label) — written only by the pointer handlers.
   const flexModeRef = useRef(flexMode);
   const flexPointsRef = useRef(flexPoints);
+  const loopRef = useRef(loop);
   const hitsTimelineRef = useRef(hitsTimeline);
   const noteTimesRef = useRef(noteTimes);
   const onFlexAddRef = useRef(onFlexAdd);
@@ -290,6 +294,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   useEffect(() => {
     flexModeRef.current = flexMode;
     flexPointsRef.current = flexPoints;
+    loopRef.current = loop;
     hitsTimelineRef.current = hitsTimeline;
     noteTimesRef.current = noteTimes;
     onFlexAddRef.current = onFlexAdd;
@@ -365,6 +370,21 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       if (x1 < 0 || x0 > w) continue;
       ctx.fillStyle = dDst > dSrc ? TINT_SLOWER : TINT_FASTER;
       ctx.fillRect(x0, waveTop, x1 - x0, waveH);
+    }
+
+    // The A/B loop: a gold band at 12% with 2px edges, under the peaks.
+    const lp = loopRef.current;
+    if (lp && lp.b > lp.a) {
+      const x0 = videoTimeToX(lp.a);
+      const x1 = videoTimeToX(lp.b);
+      if (x1 >= 0 && x0 <= w) {
+        ctx.fillStyle = theme.selected;
+        ctx.globalAlpha = 0.12;
+        ctx.fillRect(x0, waveTop, x1 - x0, waveH);
+        ctx.globalAlpha = 1;
+        ctx.fillRect(x0, waveTop, 2, waveH);
+        ctx.fillRect(x1 - 2, waveTop, 2, waveH);
+      }
     }
 
     // Peaks
@@ -743,6 +763,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     flexPoints,
     hitsTimeline,
     noteTimes,
+    loop,
   ]);
 
   // ---- Playhead overlay RAF -----------------------------------------------

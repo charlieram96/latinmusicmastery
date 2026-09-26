@@ -27,6 +27,8 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
+  // @ts-expect-error test cleanup of a possibly-defined global
+  delete navigator.requestMIDIAccess;
 });
 
 const n = (midi: number, durationQN = 1): MusicalEvent => ({ kind: 'note', midi, durationQN, id: `n${midi}-${durationQN}` });
@@ -41,12 +43,13 @@ const doc = (bar1: MusicalEvent[], bar2: MusicalEvent[] = [], instrument: Track[
 
 interface Latest { score: ScoreDocument; zoom: ZoomState | null; dispatch: Dispatch<EditorAction>; editing: ZoomEditing }
 
-function mount(score: ScoreDocument, opts: { percussion?: boolean; cursor?: Partial<NoteCursor> } = {}) {
+function mount(score: ScoreDocument, opts: { percussion?: boolean; cursor?: Partial<NoteCursor>; keyFifths?: number } = {}) {
   const flash = vi.fn<(msg: string) => void>();
   const openBar = vi.fn<(index: number, dir: 1 | -1) => void>();
   const close = vi.fn<() => void>();
   const latest = {} as Latest;
   const percussion = !!opts.percussion;
+  const keyFifths = opts.keyFifths ?? 0;
   const initialZoom: ZoomState = {
     measureIndex: 0,
     cursor: { measureIndex: 0, voice: 0, index: 'end', anchor: null, ...opts.cursor },
@@ -57,7 +60,7 @@ function mount(score: ScoreDocument, opts: { percussion?: boolean; cursor?: Part
     const [zoom, setZoom] = useState<ZoomState | null>(initialZoom);
     const editing = useZoomEditing({
       score: state.score, dispatch, trackIndex: 0, zoom, setZoom,
-      keyFifthsAt: () => 0, clefAt: () => (percussion ? 'percussion' : 'treble'), barQNAt: () => 4,
+      keyFifthsAt: () => keyFifths, clefAt: () => (percussion ? 'percussion' : 'treble'), barQNAt: () => 4,
       percussion, flash, openBar, close,
     });
     Object.assign(latest, { score: state.score, zoom, dispatch, editing });
@@ -65,6 +68,27 @@ function mount(score: ScoreDocument, opts: { percussion?: boolean; cursor?: Part
   }
   act(() => root.render(<Harness />));
   return { latest, flash, openBar, close };
+}
+
+async function keyAsync(k: string, mods: { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean } = {}) {
+  await act(async () => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ...mods }));
+  });
+}
+
+// A fake Web MIDI input, as hooks/__tests__/use-midi-input.test.tsx mocks it.
+class FakeMidiInput extends EventTarget {
+  id = 'piano'; name = 'Test piano'; manufacturer = 'Test'; state = 'connected';
+  message(data: number[], stamp = 0) {
+    const e = new Event('midimessage');
+    Object.defineProperties(e, { data: { value: new Uint8Array(data) }, timeStamp: { value: stamp } });
+    this.dispatchEvent(e);
+  }
+}
+class FakeMidiAccess extends EventTarget { inputs = new Map<string, FakeMidiInput>(); }
+
+function stubMidiAccess(resolve: () => Promise<FakeMidiAccess>) {
+  Object.defineProperty(navigator, 'requestMIDIAccess', { configurable: true, value: vi.fn(resolve) });
 }
 
 function key(k: string, mods: { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean } = {}, target: EventTarget = window) {
@@ -351,6 +375,132 @@ describe('useZoomEditing keys', () => {
     key('ArrowRight');
     key('s');
     expect(flash).toHaveBeenCalledWith('There’s no next note to end on.');
+  });
+});
+
+// ---- The Keys panel: MIDI input and the on-screen keys (Task 5) ---------------
+
+describe('useZoomEditing Keys panel', () => {
+  it('K toggles the Keys panel', async () => {
+    // No requestMIDIAccess stub here: the panel still opens and closes (the
+    // hook falls back to 'unavailable' on its own), so await through keyAsync
+    // to let that settle cleanly within act before the test ends.
+    const { latest } = mount(doc([]));
+    expect(latest.zoom?.keysOpen).toBeFalsy();
+    await keyAsync('k');
+    expect(latest.zoom?.keysOpen).toBe(true);
+    await keyAsync('k');
+    expect(latest.zoom?.keysOpen).toBe(false);
+  });
+
+  it('a MIDI note-on enters a note spelled by the key in force (F major spells 70 as B♭)', async () => {
+    const midiInput = new FakeMidiInput();
+    const access = new FakeMidiAccess();
+    access.inputs.set(midiInput.id, midiInput);
+    stubMidiAccess(async () => access);
+    const { latest } = mount(doc([]), { keyFifths: -1 });
+    await keyAsync('k');
+    act(() => midiInput.message([0x90, 70, 100], 0));
+    const e = events(latest.score)[0] as Note;
+    expect(e).toMatchObject({ kind: 'note', midi: 70, spelling: { step: 'B', alter: -1 } });
+  });
+
+  it('groups two note-ons 20 ms apart into one chord, and 60 ms apart into two notes', async () => {
+    const midiInput = new FakeMidiInput();
+    const access = new FakeMidiAccess();
+    access.inputs.set(midiInput.id, midiInput);
+    stubMidiAccess(async () => access);
+    const { latest } = mount(doc([]));
+    await keyAsync('k');
+    // Each note-on gets its own render commit, as separate hardware messages
+    // would: the second's chord lookup must see the first's just-written note.
+    act(() => midiInput.message([0x90, 60, 100], 0));
+    act(() => midiInput.message([0x90, 64, 100], 20));
+    const chord = events(latest.score)[0] as Chord;
+    expect(chord.kind).toBe('chord');
+    expect(chord.notes.map((x) => x.midi)).toEqual([60, 64]);
+
+    act(() => midiInput.message([0x90, 67, 100], 80));
+    act(() => midiInput.message([0x90, 71, 100], 140));
+    expect(midis(latest.score)).toEqual(['chord', 67, 71]);
+  });
+
+  it('adds a chord note to the note that filled the bar, after the cursor has moved on', async () => {
+    const midiInput = new FakeMidiInput();
+    const access = new FakeMidiAccess();
+    access.inputs.set(midiInput.id, midiInput);
+    stubMidiAccess(async () => access);
+    const { latest } = mount(doc([n(60), n(62), n(64)], [n(72)]));
+    await keyAsync('k');
+    act(() => midiInput.message([0x90, 65, 100], 0));
+    act(() => midiInput.message([0x90, 69, 100], 20));
+    const chord = events(latest.score)[3] as Chord;
+    expect(chord.kind).toBe('chord');
+    expect(chord.notes.map((x) => x.midi)).toEqual([65, 69]);
+    expect(midis(latest.score, 1)).toEqual([72]);
+  });
+
+  it('makes a chord of note-ons that arrive before React re-renders', async () => {
+    const midiInput = new FakeMidiInput();
+    const access = new FakeMidiAccess();
+    access.inputs.set(midiInput.id, midiInput);
+    stubMidiAccess(async () => access);
+    const { latest } = mount(doc([n(55)]));
+    await keyAsync('k');
+    act(() => {
+      midiInput.message([0x90, 60, 100], 0);
+      midiInput.message([0x90, 64, 100], 5);
+      midiInput.message([0x90, 67, 100], 10);
+    });
+    expect(midis(latest.score)).toEqual([55, 'chord']);
+    expect((events(latest.score)[1] as Chord).notes.map((x) => x.midi)).toEqual([60, 64, 67]);
+  });
+
+  it('enters nothing, not a chord on an old note, when the bar is too full for the first note', async () => {
+    const midiInput = new FakeMidiInput();
+    const access = new FakeMidiAccess();
+    access.inputs.set(midiInput.id, midiInput);
+    stubMidiAccess(async () => access);
+    const { latest, flash } = mount(doc([n(60), n(62), n(64)]));
+    act(() => latest.editing.setValue('h'));
+    await keyAsync('k');
+    act(() => midiInput.message([0x90, 65, 100], 0));
+    act(() => midiInput.message([0x90, 69, 100], 20));
+    expect(flash).toHaveBeenCalled();
+    expect(midis(latest.score)).toEqual([60, 62, 64]);
+  });
+
+  it('maps a GM percussion note to a stroke on a percussion score', async () => {
+    const midiInput = new FakeMidiInput();
+    const access = new FakeMidiAccess();
+    access.inputs.set(midiInput.id, midiInput);
+    stubMidiAccess(async () => access);
+    const { latest } = mount(doc([], [], 'perc-conga'), { percussion: true });
+    await keyAsync('k');
+    // GM 63 (Open Hi Conga) maps to the conga's open-high stroke, midi 64.
+    act(() => midiInput.message([0x90, 63, 100], 0));
+    expect(midis(latest.score)).toEqual([64]);
+  });
+
+  it('enters a second stroke, not a chord, for percussion note-ons 20 ms apart', async () => {
+    const midiInput = new FakeMidiInput();
+    const access = new FakeMidiAccess();
+    access.inputs.set(midiInput.id, midiInput);
+    stubMidiAccess(async () => access);
+    const { latest } = mount(doc([], [], 'perc-conga'), { percussion: true });
+    await keyAsync('k');
+    act(() => midiInput.message([0x90, 63, 100], 0));
+    act(() => midiInput.message([0x90, 63, 100], 20));
+    expect(midis(latest.score)).toEqual([64, 64]);
+  });
+
+  it('shows the fallback text when MIDI access is refused, and an on-screen key click still enters a note (Review Focus 5)', async () => {
+    stubMidiAccess(async () => { throw new DOMException('Denied', 'NotAllowedError'); });
+    const { latest } = mount(doc([]));
+    await keyAsync('k');
+    expect(latest.editing.midiStatus).toBe('unavailable');
+    act(() => latest.editing.enterMidiPitch?.(72));
+    expect(midis(latest.score)).toEqual([72]);
   });
 });
 

@@ -202,7 +202,34 @@ Settled while building:
 - Loop the selection at 100%, 75% or 50% with `preservesPitch`.
 - Web MIDI entry with on-screen keys in the measure zoom; chords from notes within 45 ms.
 - the one-row transport: still two rows (TransportBar is shared with the student player, so it's redone with Plan 7's Hear/Loop controls)
-- MIDI-recorded notes get event ids only on the next open; assign them when recorded
+- MIDI-recorded notes get event ids only on the next open; assign them when recorded (done in 0a3df76)
+
+### Plan 7 — done 2026-09-26
+
+Plan `2026-09-26-studio-rework-p7-listen-loop-midi.md`. No migration.
+
+What shipped:
+- **Hear.** A `Hear` Recording / Score / Both control in the SyncPanel context bar, stored per viewer. Score mutes the video without touching the admin's own mute.
+- **The score synth.** It plays track 0's written notes (triangle for pitched notes, a noise burst for percussion), timed by `noteTime` through the flex map, the same way as the overlay and the click. Ties are merged, and a tie breaks where a voice is absent from a bar. Pressing play right on a note sounds it.
+- **Loop.** `L` loops the selected bars (it toggles, and does nothing while typing). A `Loop speed` 100/75/50% chip appears while a loop runs. Every Studio rate change keeps the pitch. The waveform draws the loop as a gold bracket.
+- **MIDI entry.** In the measure zoom, `K` opens the Keys panel: 2 on-screen octaves (C1..C7) and a Web MIDI keyboard. Notes are spelled by the key in force, and note-ons within 45 ms of the first form a chord on the note just written. Percussion goes through the GM map to strokes.
+
+Rulings:
+- **The transport** stays two rows. Hear and Loop speed live in the Studio's context bar.
+- **Hear is Studio-only.** Students don't get a Score mode.
+- **The loop hint** is a TransportBar prop: the Studio mentions L, students keep "Drag on the staff".
+- **Backing tracks.** When a section has backing tracks, use-backing-mixer still turns pitch preservation off on a rate change (video and backing stay in one key, like tape). With none, it leaves the Studio's setting alone.
+- **Chords.** A key click is always a new note: chords come from a MIDI keyboard, or ⇧ with a letter. Drum MIDI writes at the cursor (enterStroke); pitched MIDI appends (enterPitch).
+
+**Follow-ups from 7:**
+- The one-row transport restyle. Hear for students.
+- A Score volume slider (the synth runs at full level).
+- Share one media-scheduled engine hook between the click and the synth: the listener rules are duplicated.
+- While Hear is Score, the transport's mute icon still shows the admin's own mute.
+- The synth rebuilds its notes on every marker drag frame while Score or Both is on.
+- MIDI inputs that disconnect mid-session keep their (inert) listener.
+- `app/(dev)/flex-spike`: delete it once the device results are recorded in spec §7.
+- Browser and ear checks.
 
 ## Carried forward from Plan 1 reviews
 

@@ -2,8 +2,9 @@
 // key handler). Pure: the zoom's editing hook maps each intent to a handler.
 //
 //   A–G a note (⇧ adds it to the chord) · 1–7 a value · R / 0 a rest ·
-//   . dots · T triplet · + tie · S slur · N pencil · ←/→ walk (⇧ extends) ·
-//   ⌘←/→ bar · ↑/↓ step (⇧ semitone, ⌘ octave) · ⌫ / Delete · Esc.
+//   . dots · T triplet · + tie · S slur · N pencil · K keys panel ·
+//   ←/→ walk (⇧ extends) · ⌘←/→ bar · ↑/↓ step (⇧ semitone, ⌘ octave) ·
+//   ⌫ / Delete · Esc.
 //
 // ⌘ and Ctrl leave the letter and digit keys to the browser (⌘C, ⌘R, ⌘S…);
 // ⌥ with a letter or digit is never an intent.
@@ -13,7 +14,7 @@ import { KEY_VALUE, type NoteValue } from './rhythm';
 export type ZoomIntent =
   | { kind: 'letter'; letter: string; chord: boolean }
   | { kind: 'value'; value: NoteValue }
-  | { kind: 'rest' } | { kind: 'dots' } | { kind: 'triplet' } | { kind: 'tie' } | { kind: 'slur' } | { kind: 'pencil' }
+  | { kind: 'rest' } | { kind: 'dots' } | { kind: 'triplet' } | { kind: 'tie' } | { kind: 'slur' } | { kind: 'pencil' } | { kind: 'keys' }
   | { kind: 'walk'; dir: 1 | -1; extend: boolean } | { kind: 'bar'; dir: 1 | -1 }
   | { kind: 'transpose'; how: 'step' | 'semi' | 'oct'; dir: 1 | -1 }
   | { kind: 'delete'; back: boolean } | { kind: 'close' };
@@ -53,6 +54,7 @@ export function zoomIntent(e: ZoomKeyEvent): ZoomIntent | null {
     case '+': return { kind: 'tie' };
     case 's': case 'S': return { kind: 'slur' };
     case 'n': case 'N': return { kind: 'pencil' };
+    case 'k': case 'K': return { kind: 'keys' };
   }
   return null;
 }

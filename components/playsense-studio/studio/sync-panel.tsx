@@ -35,6 +35,10 @@ import {
   writeStoredClickVolume,
 } from '@/lib/playsense-studio/click-track';
 import { useVideoClickTrack } from '@/components/playsense-studio/player/state/use-video-click-track';
+import { useScoreSynth } from '@/components/playsense-studio/player/state/use-score-synth';
+import { scoreSynthNotes, toMediaNotes } from '@/lib/playsense-studio/score-synth';
+import { HEAR_OPTIONS, hearMute, readHear, writeHear, type Hear } from '@/lib/playsense-studio/hear';
+import { applyStudioRate, LOOP_SPEEDS } from '@/lib/playsense-studio/studio-rate';
 import { timingPatchFromMarkers } from '@/lib/playsense-studio/drafts/timing-patch';
 import type { StudioPlay, StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { autoAlign, onHitCount } from '@/lib/playsense-studio/auto-align';
@@ -404,9 +408,12 @@ export function SyncPanel({
   const [userSpeed, setUserSpeed] = useState(1);
   useFlexPlayback(videoRef, flexMap, userSpeed, !flexMap.isIdentity);
   const displayedRate = flexMap.isIdentity ? clock.playbackRate : userSpeed;
+  // Unflexed, the Studio sets the element's rate itself, keeping pitch (a
+  // slowed loop stays in key); flexed, useFlexPlayback does both.
   const onDisplayedRateChange = flexMap.isIdentity
     ? (rate: number) => {
-        clock.setPlaybackRate(rate);
+        const video = videoRef.current;
+        if (video) applyStudioRate(video, rate);
         setUserSpeed(rate);
       }
     : setUserSpeed;
@@ -1377,6 +1384,12 @@ export function SyncPanel({
     }
     return null;
   }, [markers, loopEnabled, loopA, loopB]);
+  // One object per loop change: the waveform redraws when this changes, and
+  // the panel re-renders every frame while playing.
+  const waveLoop = useMemo(
+    () => (loopEnabled && loopA !== null && loopB !== null ? { a: loopA, b: loopB } : null),
+    [loopEnabled, loopA, loopB]
+  );
   const loopSelectedMeasure = () => {
     if (!selected || selected === 'tail') return;
     const i = markers.measures.findIndex((m) => m.measureNumber === selected.measureNumber);
@@ -1637,14 +1650,24 @@ export function SyncPanel({
     if (volume > 0 && videoMuted) handleVideoMutedChange(false);
   }, [videoMuted, handleVideoMutedChange]);
 
+  // Hear: the recording, the written score, or both. Score mutes the element
+  // without touching the admin's own mute, so going back restores it.
+  const [hear, setHear] = useState<Hear>(readHear);
+  const handleHearChange = useCallback((next: Hear) => {
+    setHear(next);
+    writeHear(next);
+  }, []);
+
   // The element is portalled, so set the property rather than relying on a prop
-  // surviving the move.
+  // surviving the move. A new element mounts when the monitor moves between
+  // inline and the floating window (monitorEl), or the sync stage swaps in
+  // (showSync), so those re-apply it too.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    video.muted = videoMuted;
+    video.muted = hearMute(hear, videoMuted);
     video.volume = videoVolume;
-  }, [videoMuted, videoVolume, videoUrl]);
+  }, [hear, videoMuted, videoVolume, videoUrl, monitorEl, showSync]);
   const handleClickVolumeChange = useCallback((v: number) => {
     setClickVolume(v);
     writeStoredClickVolume(v);
@@ -1682,6 +1705,25 @@ export function SyncPanel({
     // Flexed: the rate driver changes the rate at each flex boundary, so the
     // click re-anchors there instead of restarting (which clips it).
     smoothRateChanges: !flexMap.isIdentity,
+  });
+
+  // The written notes of track 0 (the one the markers time), in MEDIA seconds
+  // like the click: noteTime (nudges included) through the flex map, so they
+  // land where the overlay draws them.
+  const synthLoop = useMemo(
+    () => (clock.loopEnabled && clock.loopA !== null && clock.loopB !== null ? { a: clock.loopA, b: clock.loopB } : null),
+    [clock.loopEnabled, clock.loopA, clock.loopB]
+  );
+  const synthNotes = useMemo(
+    () => (showSync && hear !== 'recording' ? toMediaNotes(scoreSynthNotes(score, 0, markers), flexMap) : []),
+    [showSync, hear, score, markers, flexMap]
+  );
+  useScoreSynth({
+    videoRef,
+    notes: synthNotes,
+    enabled: showSync && hear !== 'recording',
+    smoothRateChanges: !flexMap.isIdentity,
+    loop: synthLoop,
   });
 
   // A single anchor plus a constant tempo cannot follow a performance that
@@ -1840,6 +1882,21 @@ export function SyncPanel({
             )}
 
             <div className="ml-auto flex items-center gap-1.5">
+              <div className="st-seg" role="radiogroup" aria-label="Hear" title="Hear the recording, the written score, or both">
+                <span className="px-1 text-xs text-muted-foreground">Hear</span>
+                {HEAR_OPTIONS.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={hear === value}
+                    className={hear === value ? 'is-on' : ''}
+                    onClick={() => handleHearChange(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               {decodeState === 'loading' && (
                 <span className="text-xs text-muted-foreground">
                   {progress >= 1 ? 'Processing audio…' : `Downloading audio… ${progress > 0 ? `${Math.round(progress * 100)}%` : ''}`}
@@ -1863,6 +1920,24 @@ export function SyncPanel({
               >
                 <Repeat className="h-4 w-4" />
               </button>
+              {/* Also while slowed after the loop ends, so the speed never hides. */}
+              {(loopEnabled || Math.abs(displayedRate - 1) > 1e-3) && (
+                <div className="st-seg" role="radiogroup" aria-label="Loop speed" title="Loop speed — the recording keeps its pitch">
+                  <span className="px-1 text-xs text-muted-foreground">Loop speed</span>
+                  {LOOP_SPEEDS.map((speed) => (
+                    <button
+                      key={speed}
+                      type="button"
+                      role="radio"
+                      aria-checked={Math.abs(displayedRate - speed) < 1e-3}
+                      className={Math.abs(displayedRate - speed) < 1e-3 ? 'is-on' : ''}
+                      onClick={() => onDisplayedRateChange(speed)}
+                    >
+                      {Math.round(speed * 100)}%
+                    </button>
+                  ))}
+                </div>
+              )}
               {decodeState !== 'loading' && (
                 <button
                   type="button"
@@ -1896,6 +1971,7 @@ export function SyncPanel({
               {showSync && (
                 <div className="st-wave-lane relative flex-shrink-0">
                   <WaveformCanvas
+                    loop={waveLoop}
                     bare
                     height={waveH}
                     peaks={peaks}
@@ -2237,6 +2313,7 @@ export function SyncPanel({
         createPortal(
           <div className="st-transport">
             <TransportBar
+              loopHint="Loop the selected bars with L, or drag on the staff"
               currentSeconds={timelineNow}
               durationSeconds={clock.durationSeconds}
               isPlaying={clock.isPlaying}
