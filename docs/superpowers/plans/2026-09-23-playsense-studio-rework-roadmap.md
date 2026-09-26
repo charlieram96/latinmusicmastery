@@ -172,6 +172,30 @@ Settled while building:
 - **Metronome** is scheduled from the P1 grid (per-measure tempo/meter), not the uniform `bpm`/`timeSignature` alone.
 - Honour Measure.tempoChange only when score.tempoMarksConfirmed is true (P3a added the flag and the keep/clear prompt).
 
+
+### Plan 5 — done 2026-09-26
+
+Plan `2026-09-26-studio-rework-p5-graded.md`. Migration 044 (`play_bar1_seconds`, `play_count_in_bars`, `play_preroll`) was APPLIED. The 3 live exercises that had maps got bar 1 backfilled from each map's qn 0.
+
+What shipped:
+- **The grid.** It honours confirmed tempo marks. The metronome, count-in (1–2 bars, counting down) and highway beat lines follow it.
+- **The student play-along.** It follows the clock from bar 1 with a ±3% rate trim, pre-roll or wait, and holds the last frame at the end of the file.
+- **Graded owners (EXERCISE and JAM).** They draft and publish only the play settings, never a time map.
+- **The graded Studio.** Locked tempo bar lines; drag the Exercise block or waveform to move bar 1 (snapped); Auto-align; Count-in and Pre-roll controls; a k/n on-hit readout.
+- **Studio tools.** The Student preview (the real game in a dialog), and Copy notes from a Watch section (undoable).
+- **Jam sessions.** A Studio route, a course-editor link, and a graded student view with the jam track audible.
+
+Settled while building:
+- **Live backing tracks carry stale `position_qn`.** Students place backing tracks with a video at `timeline_start − bar1`, and never read `position_qn`.
+- **A missing draft play means "keep live".** For graded owners, diffs are normalized so legacy waypoints and anchors never show as changes.
+- **Behaviour changes.** The live maps had squeezed their final bar, so linear placement now reaches the end of the file up to about 1.7 s later there. Unmapped multi-loop videos fold back to bar 1 on each pass.
+
+**Follow-ups from 5:**
+- Auto-align could re-centre on the mean residual (it's biased by up to 30 ms with jittery hits).
+- Place at playhead sets bar 1 unsnapped.
+- QUIZ items also show the Studio link (pre-existing).
+- Browser and ear checks.
+
 ## Plan 7 — Listen, loop, MIDI (spec §10)
 
 - Hear Recording / Score / Both: a score synth through the same timeline map.
