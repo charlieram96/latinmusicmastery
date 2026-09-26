@@ -1,7 +1,12 @@
 // Pure helpers that tie detected hits (lib/playsense-studio/onset-detect.ts)
 // to the sync markers: snapping a dragged bar or section, and flagging bars
 // whose first note or tempo doesn't match the recording (spec §7).
-import { noteTime, type MarkerState } from '@/components/playsense-studio/sync/marker-model';
+import {
+  anchorTimeMap,
+  type MarkerState,
+  type MeasureMarker,
+} from '@/components/playsense-studio/sync/marker-model';
+import type { WaypointTimeMap } from '@/components/playsense-studio/shared/time-map/time-map';
 
 export const SNAP_PX = 8;
 const NO_HIT_S = 0.09;
@@ -38,10 +43,24 @@ export function nearestHit(hits: number[], t: number, tol: number): number | nul
   return best;
 }
 
+/** Effective time (grid + nudge, as noteTime) of a bar's first attacked note,
+ *  or null for a bar without onsets. */
 export function firstAttackTime(state: MarkerState, measureIndex: number): number | null {
+  return firstAttackOn(state, anchorTimeMap(state), measureIndex);
+}
+
+/** firstAttackTime on an already-built grid, so a pass over every bar builds
+ *  the anchor map once instead of once per bar. */
+function firstAttackOn(state: MarkerState, grid: WaypointTimeMap | null, measureIndex: number): number | null {
   const m = state.measures[measureIndex];
   if (!m || !m.onsetQNs.length) return null;
-  return noteTime(state, m.onsetQNs[0]);
+  const qn = m.onsetQNs[0];
+  return (grid ? grid.toVideoTime(qn) : state.tailVideoTimeSeconds) + nudgeIn(m, qn);
+}
+
+/** The nudge on one of this bar's onsets, 0 when none (nudgeDelta, without the bar lookup). */
+function nudgeIn(m: MeasureMarker, qn: number): number {
+  return m.nudges.find((n) => Math.abs(n.qn - qn) < 1e-6)?.deltaSeconds ?? 0;
 }
 
 export function snapBarTime(
@@ -81,8 +100,9 @@ export function barFlags(state: MarkerState, hits: number[]): Map<number, BarFla
   });
   const sorted = spq.filter(Number.isFinite).sort((a, b) => a - b);
   const median = sorted.length ? sorted[sorted.length >> 1] : NaN;
+  const grid = anchorTimeMap(state);
   ms.forEach((m, i) => {
-    const t = firstAttackTime(state, i);
+    const t = firstAttackOn(state, grid, i);
     if (t !== null) {
       const h = nearestHit(hits, t, NO_HIT_S);
       if (h === null) { out.set(m.measureNumber, { kind: 'no-hit' }); return; }
