@@ -100,7 +100,7 @@ describe('ScoreSectionEditor — SyncPanel reseed after adopt', () => {
       );
     });
     expect(stub.calls.at(-1)).toEqual({
-      activeTimeMap: { id: 'draft', method: 'drag', waypoints: [wp(0, 1), wp(4, 3)], nudges: [] },
+      activeTimeMap: { id: 'draft', method: 'drag', waypoints: [wp(0, 1), wp(4, 3)], nudges: [], flex: [] },
       anchor: 1,
     });
 
@@ -109,7 +109,7 @@ describe('ScoreSectionEditor — SyncPanel reseed after adopt', () => {
       ctx.notifyAdopt('section:sec-1', { score: SCORE, timing: restored });
     });
     expect(stub.calls.at(-1)).toEqual({
-      activeTimeMap: { id: 'draft', method: 'drag', waypoints: [wp(0, 5), wp(4, 9)], nudges: [] },
+      activeTimeMap: { id: 'draft', method: 'drag', waypoints: [wp(0, 5), wp(4, 9)], nudges: [], flex: [] },
       anchor: 5,
     });
   });

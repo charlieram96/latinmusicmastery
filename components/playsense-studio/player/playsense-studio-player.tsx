@@ -72,6 +72,7 @@ import { lessonSectionGaps } from '@/lib/playsense-studio/lesson-notation';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import type { SeekTarget } from '@/lib/playsense-studio/renderer';
 import { updateClassItemPosition } from '@/app/actions/progress';
+import type { FlexPoint } from '@/lib/playsense-studio/flex';
 
 export interface PlaysenseStudioPlayerScoreTrack {
   id: string;
@@ -95,6 +96,9 @@ export interface PlaysenseStudioPlayerTimeMap {
   /** Per-note timing nudges authored in the studio. The waypoints already
    *  carry their effect; the player never reads this. */
   nudges?: Array<{ qn: number; deltaSeconds: number }>;
+  /** Flex Time map (spec §7): Watch sections only, never the graded
+   *  play-along. Task 4 applies it to playback; unset/empty is identity. */
+  flex?: FlexPoint[];
 }
 
 /** One scored section of a video: a score + sync valid over a video time-range. */

@@ -1071,7 +1071,8 @@ export function SyncPanel({
   const saveTiming = useCallback((opts?: { silent?: boolean; snapshot?: MarkerState }) => {
     if (!timingAutosave) return;
     const snapshot = opts?.snapshot ?? markers;
-    const patch = timingPatchFromMarkers(snapshot, { pps, peaksCached: decodeState === 'ready' });
+    // TODO(Task 5): pass the panel's live flex state instead of [].
+    const patch = timingPatchFromMarkers(snapshot, { pps, peaksCached: decodeState === 'ready', flex: [] });
     if (!patch) {
       if (!opts?.silent) setError('Add a measure before saving its timing.');
       return;

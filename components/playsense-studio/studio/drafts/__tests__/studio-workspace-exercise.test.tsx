@@ -187,6 +187,7 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
       method: 'drag',
       waypoints: [wp(0, 0), wp(4, 2)],
       nudges: [],
+      flex: [],
     });
   });
 
@@ -220,6 +221,7 @@ describe('StudioWorkspace — exercise mode (fix round 1)', () => {
       method: 'drag',
       waypoints: [wp(0, 5), wp(4, 9)],
       nudges: [],
+      flex: [],
     });
   });
 });
