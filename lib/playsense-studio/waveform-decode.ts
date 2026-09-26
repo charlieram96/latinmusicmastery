@@ -18,6 +18,7 @@ import {
   waveformBucketCount,
   type WaveformPeaks,
 } from '@/lib/playsense-studio/waveform';
+import { detectHits } from '@/lib/playsense-studio/onset-detect';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 
@@ -40,6 +41,14 @@ export interface DecodeOptions {
   /** Called with progress 0..1 during the network download. */
   onProgress?: (fraction: number) => void;
   signal?: AbortSignal;
+  /** Detect hits from the mixdown after decode. Default true; lane peaks pass false. */
+  withHits?: boolean;
+}
+
+export interface LoadPeaksOptions extends DecodeOptions {
+  /** Skip the cache read and decode afresh (the result is still cached). Re-analyze
+   *  passes this when the current peaks predate hits, or it would just read them back. */
+  force?: boolean;
 }
 
 /**
@@ -79,7 +88,10 @@ export async function decodeVideoPeaks(
       ? bucketCountFor(decoded.duration, opts.bucketsPerSecond)
       : waveformBucketCount(decoded.duration));
 
-  return computePeaks(mono, targetSampleRate, decoded.duration, targetBuckets);
+  const peaks = computePeaks(mono, targetSampleRate, decoded.duration, targetBuckets);
+  // 0.1 ms is far below the detector's accuracy and keeps the cached JSON small.
+  if (opts.withHits !== false) peaks.hits = detectHits(mono, targetSampleRate).map((h) => Math.round(h * 1e4) / 1e4);
+  return peaks;
 }
 
 /**
@@ -94,12 +106,14 @@ export async function loadOrComputePeaks(
   classItemId: string,
   videoUrl: string,
   supabase: SupabaseClient<Database>,
-  opts: DecodeOptions = {}
+  opts: LoadPeaksOptions = {}
 ): Promise<WaveformPeaks> {
   const path = waveformPath(classItemId, videoUrl);
 
-  const cached = await tryLoadCache(supabase, path, opts.signal);
-  if (cached) return cached;
+  if (!opts.force) {
+    const cached = await tryLoadCache(supabase, path, opts.signal);
+    if (cached) return cached;
+  }
 
   const peaks = await decodeVideoPeaks(videoUrl, opts);
 
@@ -122,6 +136,8 @@ export async function loadOrComputePeaks(
  * Cache-ONLY lookup: return previously-cached peaks for this class item/video,
  * or null if none exist. Never decodes — cheap enough to run on page entry so a
  * once-analyzed video shows its waveform automatically without re-clicking.
+ * Tries the current path first, then the legacy v2 one (peaks without hits),
+ * so an old video still shows its waveform and asks for Re-analyze.
  */
 export async function loadCachedPeaks(
   classItemId: string,
@@ -129,16 +145,28 @@ export async function loadCachedPeaks(
   supabase: SupabaseClient<Database>,
   signal?: AbortSignal
 ): Promise<WaveformPeaks | null> {
-  return tryLoadCache(supabase, waveformPath(classItemId, videoUrl), signal);
+  return (
+    (await tryLoadCache(supabase, waveformPath(classItemId, videoUrl), signal)) ??
+    (await tryLoadCache(supabase, legacyWaveformPath(classItemId, videoUrl), signal))
+  );
 }
 
+/**
+ * Where peaks are written. v3 (Studio rework P4a) carries `hits`. A fresh
+ * object rather than an overwrite of v2, which the CDN may hold for a year.
+ */
 export function waveformPath(classItemId: string, videoUrl: string): string {
+  return `peaks/${classItemId}-${shortHash(videoUrl)}-hires-v3.json`;
+}
+
+/** The pre-P4a cache path: the same peaks, never any `hits`. Read-only now. */
+export function legacyWaveformPath(classItemId: string, videoUrl: string): string {
   return `peaks/${classItemId}-${shortHash(videoUrl)}-hires-v2.json`;
 }
 
 /**
  * Cache path for a backing-track lane. A distinct suffix from the main
- * waveform's `-hires-v2` keeps the two resolutions from ever colliding for the
+ * waveform's `-hires-v*` keeps the two resolutions from ever colliding for the
  * same owner+url pair.
  */
 export function laneWaveformPath(ownerId: string, audioUrl: string): string {
@@ -167,6 +195,7 @@ export async function loadOrComputeLanePeaks(
   const peaks = await decodeVideoPeaks(audioUrl, {
     ...opts,
     bucketsPerSecond: opts.bucketsPerSecond ?? LANE_BUCKETS_PER_SECOND,
+    withHits: false,
   });
 
   try {

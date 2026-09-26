@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Gamepad2, RotateCcw, X } from 'lucide-react'
+import { ArrowRight, Gamepad2, RotateCcw, Video, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   PlaysenseStudioPlayer,
   type PlayerOverlayContext,
@@ -11,8 +12,9 @@ import {
   type PlaysenseStudioPlayerTimeMap,
 } from '@/components/playsense-studio/player/playsense-studio-player'
 import { ScoreExerciseGame } from './score-exercise-game'
+import { ActionMessage, LessonAction } from './lesson-mode/lesson-frame'
 import { useTranslation } from '@/components/language-provider'
-import type { BackingTrack } from '@/app/actions/playsense-studio'
+import type { BackingTrack, ExerciseMedia } from '@/app/actions/playsense-studio'
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
 
@@ -31,14 +33,19 @@ interface ExerciseViewProps {
   playerLayout?: 'stack' | 'split'
   /** Instrument backing tracks for the play part (student selects before starting). */
   backingTracks?: BackingTrack[]
-  /** Optional exercise-part video. Cropped to the score's length, or synced to
-   *  the notation via `timeMap` when one is published. */
+  /** Optional exercise-part video, placed by `play` (bar 1 and the play
+   *  settings) within its trim. `timeMap` is the older exercise map, no longer
+   *  read by the game. */
   exerciseVideo?: {
     url: string
     startSeconds: number
     trimOutSeconds?: number | null
     timeMap: PlaysenseStudioPlayerTimeMap | null
   } | null
+  /** Published play settings (count-in, bar 1, pre-roll) for the graded game. */
+  play?: ExerciseMedia['play'] | null
+  /** Named in the Watch message ("Watch {teacher} play it once"). */
+  teacherName?: string | null
 }
 
 type Mode = 'watch' | 'play'
@@ -60,6 +67,8 @@ export function ExerciseView({
   playerLayout = 'stack',
   backingTracks,
   exerciseVideo,
+  play = null,
+  teacherName = null,
 }: ExerciseViewProps) {
   // Demo first: start in Watch when there's a video; otherwise go straight to play.
   const [mode, setMode] = useState<Mode>(videoUrl ? 'watch' : 'play')
@@ -91,6 +100,7 @@ export function ExerciseView({
         score={score}
         backingTracks={backingTracks}
         exerciseVideo={exerciseVideo}
+        play={play}
       />
     )
   }
@@ -185,15 +195,14 @@ export function ExerciseView({
           overlay={turnCta}
         />
 
-        <div className="flex justify-center">
-          <button
-            onClick={goToPlay}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
-          >
-            <Gamepad2 className="h-4 w-4" />
-            {t('dashboard.classViewer.exercise.yourTurn')}
-          </button>
-        </div>
+        <LessonAction>
+          <ActionMessage icon={<Video className="h-5 w-5" />}
+            title={teacherName ? t('dashboard.classViewer.lessonMode.watch.title', { teacher: teacherName }) : t('dashboard.classViewer.lessonMode.watch.titleNoTeacher')}
+            detail={t('dashboard.classViewer.lessonMode.watch.detail')} />
+          <Button type="button" variant="chunky" data-primary="" data-action="your-turn-bar" onClick={goToPlay}>
+            {t('dashboard.classViewer.lessonMode.watch.yourTurn')}<ArrowRight className="h-4 w-4" />
+          </Button>
+        </LessonAction>
       </div>
     )
   }
@@ -211,6 +220,7 @@ export function ExerciseView({
       onWatchDemo={goToWatch}
       backingTracks={backingTracks}
       exerciseVideo={exerciseVideo}
+      play={play}
     />
   )
 }

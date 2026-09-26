@@ -23,7 +23,7 @@
 .ps-exercise-mode .ps-lesson-game { flex:1; min-height:0; }
 .ps-exercise-mode .ps-lesson-stage { flex:1; height:auto; min-height:0; }
 .ps-exercise-mode :is(.ps-lesson-game-heading,.ps-lesson-preview-controls,.ps-lesson-transport) { flex-shrink:0; }
-.ps-exercise-mode .ps-lesson-game-heading[data-has-tracks=false] { display:none; }
+.ps-exercise-mode .ps-lesson-game-heading[data-has-tools=false] { display:none; }
 .ps-exercise-mode .ps-lesson-overlay { overflow-y:auto; align-items:safe center; }
 .ps-exercise-mode :is(.ps-lesson-results,.ps-lesson-calibration) { flex:1; min-height:0; overflow-y:auto; }
 .ps-exercise-toolbar { display:flex; align-items:center; justify-content:space-between; gap:24px; flex-shrink:0; min-height:66px; padding:10px 24px; background:hsl(var(--card)); border-bottom:1px solid hsl(var(--border)); }
@@ -43,7 +43,6 @@
 .ps-exercise-view-controls kbd { border:1px solid hsl(var(--border)); border-radius:4px; padding:1px 4px; font:inherit; font-size:9px; opacity:.5; }
 
 .ps-exercise-content>.ps-lesson-game { border:0; border-radius:0; }
-.ps-exercise-mode[data-video-visible=false] .ps-lesson-video,
 .ps-exercise-mode[data-score-visible=false] .ps-lesson-notation { display:none; }
 
 .ps-exercise-mode[data-exercise-immersive=true] { display:flex; flex-direction:column; height:100dvh; border:0; border-radius:0; }
@@ -52,10 +51,9 @@
 .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-notation { flex-shrink:0; height:auto; }
 .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-stage { flex:1; height:auto; min-height:0; }
 .ps-exercise-mode[data-exercise-immersive=true] .ps-theme-picker { display:none; }
-.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-video { top:20px; right:24px; width:clamp(200px,21vw,330px); border-radius:12px; }
 .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-game-heading { flex-shrink:0; padding:6px 20px; }
 .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-game-heading>div:first-child,
-.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-game-heading[data-has-tracks=false] { display:none; }
+.ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-game-heading[data-has-tools=false] { display:none; }
 .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-game-heading>div:last-child { margin-left:auto; }
 .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-preview-controls { flex-shrink:0; min-height:52px; padding:8px 24px; background:hsl(var(--card)); border-color:hsl(var(--border)); }
 .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-overlay { overflow-y:auto; align-items:safe center; }
@@ -81,7 +79,6 @@
   .ps-exercise-view-controls button { padding:0 9px; }
   .ps-exercise-view-controls button>span, .ps-exercise-view-controls kbd { display:none; }
   .ps-exercise-view-controls .ps-exercise-mode-toggle { margin-left:5px; }
-  .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-video { width:142px; right:14px; top:14px; }
   .ps-exercise-mode[data-exercise-immersive=true] .ps-game-scoreboard { top:14px; left:14px; }
   .ps-exercise-mode[data-exercise-immersive=true] .ps-scoreboard-compact { gap:10px; padding:9px 11px; }
   .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-stage-title { display:none; }
@@ -92,7 +89,6 @@
 @media(max-width:520px) {
   .ps-exercise-mode[data-exercise-immersive=true] .ps-highway { background:hsl(var(--background)); }
   .ps-exercise-mode[data-exercise-immersive=true] .ps-highway>.ps-highway-canvas { top:82px; height:calc(100% - 82px); }
-  .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-video { top:100px; width:128px; }
   .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-notation { height:auto; }
   .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-results,
   .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-calibration { padding:16px; }
@@ -100,6 +96,5 @@
 @media(max-height:600px) and (min-width:701px) {
   .ps-exercise-mode[data-exercise-immersive=true] .ps-exercise-toolbar { min-height:52px; padding-block:6px; }
   .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-notation { height:auto; }
-  .ps-exercise-mode[data-exercise-immersive=true] .ps-lesson-video { width:190px; }
 }
 @media(prefers-reduced-motion:reduce) { .ps-exercise-mode * { transition:none!important; } }

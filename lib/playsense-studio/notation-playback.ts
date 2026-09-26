@@ -1,5 +1,5 @@
 /** Geometry and clock helpers shared by notation playback and its regression tests. */
-export interface ScoreAnchor { ms: number; x: number; system: number }
+export interface ScoreAnchor { ms: number; x: number; system: number; bar?: number; barEndX?: number }
 
 export function scoreCursorAt(ms: number, anchors: readonly ScoreAnchor[], endMs: number, rowEnds: readonly number[]): { x: number; system: number } {
   if (!anchors.length) return { x: 0, system: 0 }
@@ -13,7 +13,10 @@ export function scoreCursorAt(ms: number, anchors: readonly ScoreAnchor[], endMs
   }
   const a = anchors[lo], b = anchors[lo + 1]
   const end = b?.ms ?? endMs
-  const endX = b && b.system === a.system ? b.x : (rowEnds[a.system] ?? a.x)
+  // A note whose successor opens the next bar runs its tail to its own barline. When
+  // blank bars lie between them, the sweep runs on through those bars instead.
+  const crossesBar = !!b && a.barEndX != null && a.bar != null && b.bar === a.bar + 1
+  const endX = b && b.system === a.system ? (crossesBar ? a.barEndX! : b.x) : (rowEnds[a.system] ?? a.x)
   const fraction = Math.max(0, Math.min(1, (time - a.ms) / Math.max(1, end - a.ms)))
   return { x: a.x + (endX - a.x) * fraction, system: a.system }
 }

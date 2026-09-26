@@ -2,6 +2,7 @@ import type { Instrument, Measure, MusicalEvent, ScoreDocument, Track } from '@/
 import { measureLengthInQN } from './time-mapping';
 import { gmToStrokeMidi } from './gm-percussion';
 import { isPercussion } from './perc-strokes';
+import { newEventId } from './event-ids';
 
 export const MAX_TAKE_MS = 180_000;
 export const MAX_TAKE_NOTES = 4096;
@@ -113,9 +114,9 @@ export function midiTakeToMeasures(take: MidiTake, gridQN: number, instrument: I
       const tied = (n: typeof active[number]) => n.end > next + 1e-7;
       const modifier = [3, 1.5, .75, .375].some(d => Math.abs(durationQN - d) < 1e-7) ? { dotted: true } : {};
       let event: MusicalEvent;
-      if (!active.length) event = { kind: 'rest', durationQN, ...modifier };
-      else if (active.length === 1) event = { kind: 'note', midi: active[0].midi, durationQN, ...modifier, ...(tied(active[0]) ? { tieToNext: true } : {}) };
-      else event = { kind: 'chord', durationQN, ...modifier, notes: active.map(n => ({ midi: n.midi, ...(tied(n) ? { tieToNext: true } : {}) })) };
+      if (!active.length) event = { kind: 'rest', durationQN, ...modifier, id: newEventId() };
+      else if (active.length === 1) event = { kind: 'note', midi: active[0].midi, durationQN, ...modifier, ...(tied(active[0]) ? { tieToNext: true } : {}), id: newEventId() };
+      else event = { kind: 'chord', durationQN, ...modifier, notes: active.map(n => ({ midi: n.midi, ...(tied(n) ? { tieToNext: true } : {}) })), id: newEventId() };
       while (measureIndex + 1 < bars.length && cursor >= bars[measureIndex].endQN - 1e-7) measureIndex++;
       measures[measureIndex].voices[0].events.push(event);
       cursor = next;

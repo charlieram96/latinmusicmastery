@@ -1,6 +1,4 @@
 import { notFound, redirect } from 'next/navigation'
-import { Clock, BarChart3 } from 'lucide-react'
-import styles from '@/components/class-viewer/lesson-viewer/lesson-viewer.module.css'
 import { createClient } from '@/lib/supabase/server'
 import { getServerTranslator } from '@/lib/i18n/server'
 import { localizeRow, localizeRows, CLASS_FIELDS, SECTION_FIELDS, COURSE_FIELDS, STYLE_FIELDS, ITEM_FIELDS } from '@/lib/i18n/localize'
@@ -8,10 +6,11 @@ import { getCourseStructureForStudent } from '@/app/actions/course-student'
 import { getComments } from '@/app/actions/comments'
 import { ClassItemRenderer } from '@/components/class-viewer/class-item-renderer'
 import { CommentsSection } from '@/components/comments/comments-section'
-import { LessonShell } from '@/components/class-viewer/lesson-viewer/lesson-shell'
-import { HeaderTitleOverride } from '@/components/dashboard/header-title-override'
+import { LessonModeShell, type LessonModeShellProps } from '@/components/class-viewer/lesson-viewer/lesson-mode/lesson-mode-shell'
 import { canAccessCourse } from '@/lib/subscriptions'
-import { moduleOverviewHref, toSidebarSections } from '@/lib/courses/structure'
+import { railLessons } from '@/lib/courses/lesson-rail'
+import { buildPathNodes } from '@/lib/courses/path-nodes'
+import { dateKeyFor, todayKey } from '@/lib/dashboard/time-zone'
 import { ClassViewerEmpty } from './class-viewer-empty'
 import { ClassViewerLocked } from './class-viewer-locked'
 
@@ -121,56 +120,82 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const structureResult = await getCourseStructureForStudent(course.id)
   const structure = structureResult.data
 
-  // Build sidebar sections (needed for both locked and unlocked views)
-  const sidebarSections = toSidebarSections(structure?.sections ?? [])
-
   const teacherName = (course.teacher as { name?: string } | null)?.name ?? null
   const teacherImageUrl =
     (course.teacher as { image_url?: string | null } | null)?.image_url ?? null
-  const courseImageUrl = (course.thumbnail_url as string | null) ?? null
   const moduleTitle = section.title as string
+
+  // The lesson rail: this module's lessons as path nodes; the next lesson for the celebration.
+  const structureSections = structure?.sections ?? []
+  const { lessons: rail, moduleIndex } = railLessons(courseId, structureSections, classId, isStudent)
+  const pathNodes = buildPathNodes(courseId, structureSections, classId)
+  const currentNode = pathNodes.findIndex((n) => n.kind === 'lesson' && n.id === classId)
+  const nextNode = currentNode === -1 ? undefined : pathNodes.slice(currentNode + 1).find((n) => n.kind === 'lesson')
+
+  // Streak and weekly goal: the dashboard's source (completed parts, local day keys).
+  const { data: completionRows } = await supabase
+    .from('class_item_progress')
+    .select('completed_at, class_item_id')
+    .eq('user_id', user.id)
+    .eq('completed', true)
+    .not('completed_at', 'is', null)
+  const today = todayKey()
+  const lessonItemIds = new Set(items.map((item: { id: string }) => item.id))
+  const dateKeys = (completionRows ?? []).map((r) => dateKeyFor(r.completed_at as string))
+  const practice = {
+    dateKeys,
+    today,
+    // This lesson's parts already saved today: the celebration's "before" leaves them out.
+    lessonToday: (completionRows ?? []).filter((r, i) => dateKeys[i] === today && lessonItemIds.has(r.class_item_id as string)).length,
+  }
+
+  const difficulty = course.difficulty ? String(course.difficulty).toLowerCase() : null
+  const levelLabel = !difficulty
+    ? null
+    : ['beginner', 'intermediate', 'advanced'].includes(difficulty)
+      ? t(`dashboard.pages.course.difficulty.${difficulty}`)
+      : difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
+  // Prefer the lesson's own description; fall back to the section's.
+  const lessonDescription =
+    (classData.description as string | null) ||
+    (section.description as string | null) ||
+    null
+
+  const shared: Omit<LessonModeShellProps, 'parts' | 'activeIndex' | 'progress' | 'body' | 'comments' | 'commentCount' | 'about'> = {
+    course: { id: courseId, title: course.title },
+    module: { id: section.id, title: moduleTitle, index: Math.max(0, moduleIndex) },
+    lesson: { id: classId, title: classData.title },
+    rail,
+    practice,
+    teacherName,
+    nextLesson: nextNode && nextNode.kind === 'lesson'
+      ? { title: nextNode.title, kind: nextNode.types.includes('play') ? 'play' : nextNode.types.includes('video') ? 'video' : nextNode.types[0] ?? 'other', minutes: nextNode.minutes, href: nextNode.href }
+      : null,
+  }
+  const teacherMeta = teacherName ? { name: teacherName, imageUrl: teacherImageUrl } : null
 
   // Subscription-gated: show a paywall instead of the lesson content.
   if (locked) {
     return (
-      <>
-        <HeaderTitleOverride title={course.title} />
-        <LessonShell
-        sidebar={{
-          courseId,
-          currentClassId: classId,
-          sections: sidebarSections,
-          courseTitle: course.title,
-          courseImageUrl,
-          teacherName,
-          teacherImageUrl,
-          hasAccess: isStudent,
-        }}
-        header={{
-          eyebrow: moduleTitle,
-          eyebrowHref: moduleOverviewHref(courseId, section.id),
-          title: classData.title,
-        }}
-        parts={null}
-        footer={null}
-        body={
-          <div className="px-4 py-6 md:px-8">
-            <ClassViewerLocked courseId={courseId} />
-          </div>
-        }
+      <LessonModeShell
+        {...shared}
+        parts={[]}
+        activeIndex={0}
+        progress={null}
+        about={{ description: lessonDescription, meta: { level: levelLabel, teacher: teacherMeta } }}
+        comments={null}
+        commentCount={0}
+        body={<ClassViewerLocked courseId={courseId} />}
       />
-      </>
     )
   }
 
   // Get progress for current class items
   const completedItemIds: string[] = []
-  if (structure) {
-    for (const s of structure.sections) {
-      for (const cls of s.classes) {
-        if (cls.id === classId) {
-          completedItemIds.push(...(cls.completedItemIds || []))
-        }
+  for (const s of structureSections) {
+    for (const cls of s.classes) {
+      if (cls.id === classId) {
+        completedItemIds.push(...(cls.completedItemIds || []))
       }
     }
   }
@@ -182,18 +207,16 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   // Find next class + its title
   let nextClassId: string | null = null
   let nextClassTitle: string | null = null
-  if (structure) {
-    let foundCurrent = false
-    outer: for (const s of structure.sections) {
-      for (const cls of s.classes) {
-        if (foundCurrent) {
-          nextClassId = cls.id
-          nextClassTitle = cls.title
-          break outer
-        }
-        if (cls.id === classId) {
-          foundCurrent = true
-        }
+  let foundCurrent = false
+  outer: for (const s of structureSections) {
+    for (const cls of s.classes) {
+      if (foundCurrent) {
+        nextClassId = cls.id
+        nextClassTitle = cls.title
+        break outer
+      }
+      if (cls.id === classId) {
+        foundCurrent = true
       }
     }
   }
@@ -203,148 +226,21 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const comments = commentsResult.data || []
 
   const durationLabel = formatDuration(activeItem?.video_duration_seconds ?? null)
-  const difficulty = course.difficulty ? String(course.difficulty).toLowerCase() : null
-  const levelLabel = !difficulty
-    ? null
-    : ['beginner', 'intermediate', 'advanced'].includes(difficulty)
-      ? t(`dashboard.pages.course.difficulty.${difficulty}`)
-      : difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
 
-  // Lesson description lives below the video (not in the sidebar / header).
-  // Prefer the lesson's own description; fall back to the section's.
-  const lessonDescription =
-    (classData.description as string | null) ||
-    (section.description as string | null) ||
-    null
-
-  const body = (
-    <>
-      {activeItem ? (
-        <div data-lesson-item className={`px-4 md:px-8 ${styles.rise}`} style={{ animationDelay: '80ms' }}>
-          <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" previewExercise={process.env.NODE_ENV === 'development' && preview === 'exercise'} previewLesson={process.env.NODE_ENV === 'development' && preview === 'lesson'} nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
-        </div>
-      ) : (
-        <div className="px-4 pt-4 md:px-8">
-          <ClassViewerEmpty />
-        </div>
-      )}
-
-      <div data-lesson-secondary className="px-4 pb-12 pt-6 md:px-8">
-        {/* Meta pills */}
-        {(durationLabel || levelLabel || teacherName) && (
-          <div
-            className={`mb-6 flex flex-wrap items-center gap-2 border-b border-border pb-5 ${styles.rise}`}
-            style={{ animationDelay: '120ms' }}
-          >
-            {durationLabel && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-raised px-3 py-1 text-xs font-medium text-foreground/80">
-                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                {durationLabel}
-              </span>
-            )}
-            {levelLabel && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-raised px-3 py-1 text-xs font-medium text-foreground/80">
-                <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
-                {levelLabel}
-              </span>
-            )}
-            {teacherName && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-raised py-1 pl-1 pr-3 text-xs font-medium text-foreground/80">
-                {teacherImageUrl ? (
-                  <img
-                    src={teacherImageUrl}
-                    alt={teacherName}
-                    className="h-5 w-5 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="grid h-5 w-5 place-items-center rounded-full bg-secondary text-[9px] font-bold font-heading">
-                    {teacherName
-                      .split(' ')
-                      .map((p) => p[0])
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .join('')
-                      .toUpperCase()}
-                  </span>
-                )}
-                {teacherName}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Lesson description — below the video, not in the sidebar/header */}
-        {lessonDescription && (
-          <div className="mb-10">
-            <div className="mb-3 font-heading text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground">
-              {t('dashboard.pages.modules.aboutLesson')}
-            </div>
-            <div className="space-y-3">
-              {lessonDescription
-                .split(/\n{2,}/)
-                .filter((p) => p.trim().length > 0)
-                .map((para, i) => (
-                  <p
-                    key={i}
-                    className={
-                      i === 0
-                        ? 'whitespace-pre-wrap text-[15.5px] leading-[1.7] text-foreground'
-                        : 'whitespace-pre-wrap text-[15.5px] leading-[1.7] text-foreground/75'
-                    }
-                  >
-                    {para}
-                  </p>
-                ))}
-            </div>
-          </div>
-        )}
-
-        <div>
-          <CommentsSection
-            classId={classId}
-            initialComments={comments}
-            userId={user.id}
-          />
-        </div>
-      </div>
-    </>
+  const body = activeItem ? (
+    <div data-lesson-item>
+      <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" teacherName={teacherName} previewExercise={process.env.NODE_ENV === 'development' && preview === 'exercise'} previewLesson={process.env.NODE_ENV === 'development' && preview === 'lesson'} nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
+    </div>
+  ) : (
+    <ClassViewerEmpty />
   )
 
   return (
-    <>
-      <HeaderTitleOverride title={course.title} />
-      <LessonShell
-      sidebar={{
-        courseId,
-        currentClassId: classId,
-        sections: sidebarSections,
-        courseTitle: course.title,
-        courseImageUrl,
-        teacherName,
-        teacherImageUrl,
-        hasAccess: isStudent,
-      }}
-      header={{
-        eyebrow: moduleTitle,
-        eyebrowHref: moduleOverviewHref(courseId, section.id),
-        title: classData.title,
-      }}
-      parts={
-        items.length > 1
-          ? {
-              items: items.map((it: any) => ({
-                id: it.id,
-                title: it.title,
-                item_type: it.item_type,
-              })),
-              activeIndex,
-              completedItemIds,
-              courseId,
-              classId,
-            }
-          : null
-      }
-      footer={{
+    <LessonModeShell
+      {...shared}
+      parts={items.map((it: { id: string; title: string; item_type: string }) => ({ id: it.id, title: it.title, item_type: it.item_type }))}
+      activeIndex={activeIndex}
+      progress={{
         courseId,
         classId,
         currentIndex: activeIndex,
@@ -357,8 +253,10 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
         isCompleted: isCurrentItemCompleted,
         nextLabel: activeIndex < items.length - 1 ? items[activeIndex + 1].title : nextClassTitle,
       }}
+      about={{ description: lessonDescription, meta: { duration: durationLabel, level: levelLabel, teacher: teacherMeta } }}
+      comments={<CommentsSection classId={classId} initialComments={comments} userId={user.id} />}
+      commentCount={comments.length}
       body={body}
     />
-    </>
   )
 }

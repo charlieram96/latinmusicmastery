@@ -1,4 +1,39 @@
 {
+  "staff": {
+    "countAnd": "y",
+    "layout": {
+      "label": "Disposición del pentagrama",
+      "stacked": "Apilado",
+      "horizontal": "Horizontal"
+    },
+    "score": "Partitura",
+    "scoreAria": "Partitura musical",
+    "bar": "Compás",
+    "barAria": "Compás {bar} de {total}, tiempo {beat}",
+    "pass": "Pasada {pass} / {total}",
+    "follow": "Seguir",
+    "followAria": "Seguir el compás actual",
+    "followOnTitle": "Siguiendo la reproducción. Desactívalo para explorar la partitura.",
+    "followOffTitle": "Vuelve a seguir el compás actual.",
+    "following": "Siguiendo tu música",
+    "browsing": "Explora a tu ritmo",
+    "scrollHint": "Desplázate para leer adelante",
+    "size": "Tamaño de la notación",
+    "smaller": "Notación más pequeña",
+    "larger": "Notación más grande"
+  },
+  "lessonWorkspace": {
+    "layout": "Diseño del espacio",
+    "side": "Lado a lado",
+    "stack": "Apilado",
+    "pip": "Imagen en imagen",
+    "music": "Solo música",
+    "swap": "Intercambiar lados",
+    "resize": "Cambiar tamaño de video y música",
+    "resizeMusic": "Cambiar tamaño de partitura y autopista",
+    "resizeHint": "Arrastra para cambiar el tamaño · flechas para ajustar · doble clic para restablecer",
+    "resizePip": "Arrastra para cambiar el tamaño del video"
+  },
   "lessonView": {"videoToggle": "Vídeo", "scoreToggle": "Partitura","label": "Vista de la lección", "both": "Vídeo + partitura", "video": "Solo vídeo", "score": "Solo partitura"},
   "playsenseExport": {"button": "Descargar partitura", "title": "Descargar esta sección", "pdf": "Partitura (PDF)", "pdfHint": "Para imprimir o leer en una tableta", "musicxml": "MusicXML", "musicxmlHint": "Ábrelo en MuseScore o Guitar Pro", "note": "Incluye todas las pistas, tamaño carta, título y tempo.", "error": "No se pudo crear el archivo. Inténtalo de nuevo.", "working": "Preparando…"},
   "common": {
@@ -1767,6 +1802,7 @@
         "continueCourse": "Continuar curso",
         "beginCourse": "Comenzar curso",
         "comingSoon": "Muy pronto",
+        "reviewCourse": "Repasar curso",
         "subscribeToUnlock": "Suscríbete para desbloquear",
         "instructor": "Instructor",
         "yourInstructor": "Tu instructor",
@@ -1873,7 +1909,38 @@
           "freePreview": "Vista previa gratis",
           "lessonOf": "Lección {n} de {total}",
           "left": "faltan {duration}",
-          "inYourPlan": "Incluido en tu plan"
+          "inYourPlan": "Incluido en tu plan",
+          "showAllOne": "Ver {count} lección",
+          "showAll": "Ver las {count} lecciones",
+          "showFewer": "Ver menos",
+          "go": "Ir"
+        },
+        "path": {
+          "continue": "Continuar",
+          "start": "Empezar",
+          "minutes": "{n} min",
+          "lessonN": "Lección {n}",
+          "checkpoint": "Punto de control del módulo {n}",
+          "moreOne": "{count} más",
+          "more": "{count} más",
+          "prev": "Lecciones anteriores",
+          "next": "Lecciones siguientes",
+          "state": {
+            "done": "Hecha",
+            "current": "Sigue",
+            "upcoming": "Próximamente"
+          },
+          "types": {
+            "video": "Video",
+            "play": "Tocar",
+            "quiz": "Cuestionario",
+            "other": "Lectura"
+          },
+          "heading": "Tu camino",
+          "doneOfOne": "{done} de {total} lección hecha",
+          "doneOf": "{done} de {total} lecciones hechas",
+          "module": "Módulo {n}",
+          "goToLesson": "Ir a la lección"
         }
       },
       "modules": {
@@ -1928,7 +1995,9 @@
             "teacher": "Más de {teacher}, quien enseña tu curso {course}.",
             "new": "Nuevo este mes.",
             "popular": "Popular entre nuevos estudiantes."
-          }
+          },
+          "previewCta": "Vista previa",
+          "lessonsOne": "{count} lección"
         },
         "newBadge": "Nuevo",
         "nextMilestones": "Próximos logros",
@@ -1985,7 +2054,6 @@
           "afternoon": "Buenas tardes, {name}",
           "evening": "Buenas noches, {name}"
         },
-        "weeklyGoalChip": "{done} de {goal} lecciones",
         "continue": {
           "lesson": "Lección",
           "eyebrow": "{course}, lección {n} de {total}",
@@ -2038,6 +2106,29 @@
           "tunerBody": "Afina antes de tocar",
           "playSense": "Play Sense",
           "playSenseBody": "Practica un patrón"
+        },
+        "path": {
+          "title": "Tu camino",
+          "module": "Módulo {n} · {title}",
+          "moduleOnly": "Módulo {n}",
+          "courseMap": "Mapa del curso"
+        },
+        "streak": {
+          "title": "Racha de práctica",
+          "days": "{count} días",
+          "daysOne": "{count} día",
+          "best": "Mejor: {count} días.",
+          "bestOne": "Mejor: {count} día.",
+          "weeklyGoal": "Meta semanal",
+          "goalProgress": "{done} de {goal} lecciones",
+          "goalExceeded": "{goal} de {goal} lecciones · +{extra} extra",
+          "toGo": "faltan {count}",
+          "reached": "Cumplida",
+          "heatLabel": "Práctica de las últimas 5 semanas",
+          "fiveWeeksAgo": "Hace 5 semanas",
+          "today": "Hoy",
+          "cell": "{date}: {count} lecciones",
+          "cellOne": "{date}: {count} lección"
         }
       }
     },
@@ -2299,7 +2390,190 @@
         "playAlongWith": "Tocar junto con",
         "tracksOn": "{on} de {total} activas",
         "tracksHint": "Silencia una pista o ajusta su nivel. Los cambios se aplican mientras tocas.",
-        "preparing": "Preparando la prueba…"
+        "preparing": "Preparando la prueba…",
+        "audioErrors": {
+          "webAudio": "Tu navegador no puede procesar audio aquí. Prueba con Chrome, Edge, Firefox o Safari actualizados.",
+          "micDenied": "El acceso al micrófono está bloqueado. Haz clic en el candado o en la información del sitio en la barra de direcciones, permite el micrófono y vuelve a pulsar Reproducir.",
+          "micMissing": "No se encontró ningún micrófono. Conecta uno e inténtalo de nuevo.",
+          "micBusy": "Otra aplicación está usando tu micrófono. Ciérrala e inténtalo de nuevo.",
+          "worklet": "No se cargó el procesador de audio. Recarga la página e inténtalo de nuevo.",
+          "micFailed": "No se pudo acceder al micrófono. Inténtalo de nuevo.",
+          "midiUnsupported": "MIDI no está disponible en este navegador. Usa un navegador con Web MIDI o elige el micrófono.",
+          "midiMissing": "No hay ningún instrumento MIDI conectado. Conecta tu teclado y pulsa Reproducir.",
+          "midiDenied": "El acceso MIDI está bloqueado. Permite MIDI en tu navegador e inténtalo de nuevo.",
+          "midiFailed": "No se pudo conectar con tu instrumento MIDI. Revisa la conexión e inténtalo de nuevo.",
+          "bleMissing": "No hay ningún dispositivo PlaySense conectado. Conéctalo e inténtalo de nuevo.",
+          "bleFailed": "No se pudo iniciar la entrada PlaySense. Revisa la conexión e inténtalo de nuevo.",
+          "bleUnsupported": "Este navegador no admite Bluetooth. Usa Chrome o Edge.",
+          "bleDisconnected": "Tu dispositivo PlaySense se desconectó y no pudo reconectarse."
+        },
+        "muteTrack": "Silenciar {track}",
+        "unmuteTrack": "Activar {track}",
+        "mute": "Silenciar",
+        "unmute": "Activar sonido",
+        "trackLevel": "Volumen de {track}",
+        "referenceVideo": "Video de referencia del instructor",
+        "enableSoundHint": "Toca para activar el sonido",
+        "enableSound": "Activar sonido"
+      },
+      "lessonMode": {
+        "crumbLabel": "Curso y módulo",
+        "partsLabel": "Partes de la lección",
+        "partDone": "Hecho",
+        "aboutAndComments": "Acerca de y comentarios",
+        "closeLesson": "Cerrar lección",
+        "backToCourse": "Volver al curso",
+        "rail": {
+          "label": "Lecciones de este módulo",
+          "moduleProgress": "{done} de {total} lecciones completadas en este módulo",
+          "moduleOf": "{course} · Módulo {n}",
+          "settings": "Ajustes de la lección",
+          "paywalled": "Incluida con una suscripción",
+          "kind": {
+            "video": "Video",
+            "play": "Toca junto",
+            "quiz": "Quiz",
+            "other": "Lección"
+          },
+          "minutes": "{count} min"
+        },
+        "drawer": {
+          "title": "Acerca de esta lección",
+          "about": "Acerca de",
+          "comments": "Comentarios",
+          "commentsCount": "Comentarios · {count}",
+          "lessons": "Lecciones",
+          "close": "Cerrar",
+          "noDescription": "Esta lección aún no tiene descripción."
+        },
+        "done": {
+          "eyebrow": "Lección completada",
+          "heading": "{title}, lista.",
+          "streakOne": "día de racha",
+          "streak": "días de racha",
+          "weekOne": "{count} de {goal} lecciones esta semana",
+          "week": "{count} de {goal} lecciones esta semana",
+          "toGoOne": "Una más para cumplir tu meta semanal.",
+          "toGo": "{count} más para cumplir tu meta semanal.",
+          "goalMet": "Meta semanal cumplida. ¡Qué sabor!",
+          "weekLabel": "Meta semanal",
+          "lessonsProgress": "{value}/{goal} lecciones",
+          "daysProgress": "{value}/{goal} días",
+          "unlocked": "¡Desbloqueado!",
+          "upNext": "Sigue",
+          "saved": "Guardado en tu progreso",
+          "savedDetail": "{title} · {count} partes",
+          "savedDetailOne": "{title} · 1 parte",
+          "courseDone": "Terminaste la última lección de este curso.",
+          "nextLesson": "Siguiente lección"
+        },
+        "sections": {
+          "label": "Secciones",
+          "section": "Sección {n}",
+          "loop": "Repetir {name}",
+          "stopLoop": "Dejar de repetir {name}"
+        },
+        "watch": {
+          "title": "Mira a {teacher} tocarlo una vez",
+          "titleNoTeacher": "Mira la demostración una vez",
+          "detail": "Toca una sección para repetirla. Arrastra el divisor o elige un diseño.",
+          "yourTurn": "Tu turno"
+        },
+        "ready": {
+          "eyebrow": "Antes de tocar",
+          "title": "Revisión",
+          "intro": "Tres revisiones en un paso. Se completan solas; cambia lo que no esté bien.",
+          "done": "Listo",
+          "sound": "Sonido",
+          "soundHint": "Con audífonos la pista no se mete en tu micrófono.",
+          "modes": {
+            "headphones": "Audífonos",
+            "speaker-safe": "Altavoces",
+            "midi": "MIDI",
+            "playsense": "PlaySense"
+          },
+          "microphone": "Micrófono",
+          "midi": "Instrumento MIDI",
+          "midiHint": "Notas exactas desde tu instrumento MIDI. Sin micrófono.",
+          "playsense": "PlaySense",
+          "playsenseConnected": "Tu PlaySense está conectado.",
+          "playsenseConnect": "Conectar PlaySense",
+          "playsenseConnecting": "Conectando…",
+          "playsenseFailed": "No se pudo conectar. Enciende el dispositivo e inténtalo de nuevo.",
+          "pickFirst": "Primero elige cómo vas a escuchar a la banda.",
+          "defaultMic": "Tu micrófono",
+          "heard": "{device} · te escucha bien",
+          "listening": "{device} · toca una nota o aplaude",
+          "waiting": "Esperando acceso al micrófono…",
+          "testMic": "Probar micrófono",
+          "timing": "Tiempo",
+          "timingHint": "Toca junto a los clics para medir tu retraso.",
+          "measure": "Medir",
+          "measureAgain": "Medir de nuevo",
+          "measuring": "Toca junto a los clics: {beat} de {total}",
+          "latency": "Latencia medida: {ms} ms",
+          "timingSkipped": "No hace falta con MIDI.",
+          "preview": "Lo que vas a tocar",
+          "allSet": "Todo suena bien",
+          "readyWhenYouAre": "Listo cuando quieras",
+          "pickMode": "Elige audífonos o altavoces para empezar",
+          "summary": "{parts}",
+          "start": "Empezar a tocar",
+          "meta": "{bars} compases · {bpm} BPM",
+          "measuringTitle": "Midiendo tu tiempo…"
+        },
+        "transport": {
+          "label": "Reproducción",
+          "pause": "Pausa",
+          "resume": "Continuar",
+          "restart": "Empezar de nuevo",
+          "bpm": "{bpm} BPM",
+          "click": "Clic",
+          "clickOn": "Apagar el clic",
+          "clickOff": "Encender el clic",
+          "watchDemo": "Ver la demostración",
+          "finish": "Terminar toma",
+          "countIn": "Cuenta {beat}",
+          "start": "Empezar a tocar"
+        },
+        "part": {
+          "eyebrow": "Práctica completada",
+          "heading": {
+            "great": "¡Qué sabor!",
+            "good": "Encontraste el groove.",
+            "ok": "El groove va tomando forma.",
+            "low": "Cada toma es un paso adelante."
+          },
+          "first": "Tu primera toma de este ejercicio.",
+          "better": "Tu toma más limpia hasta ahora, desde {prev}%.",
+          "same": "Justo en tu mejor marca de {prev}%.",
+          "below": "Tu mejor marca es {prev}%. Sigue así.",
+          "accuracy": "precisión",
+          "accuracyLabel": "Precisión {value}%",
+          "cleanBars": "Compases limpios",
+          "bestCombo": "Mejor combo",
+          "time": "Tiempo",
+          "barByBar": "Compás por compás",
+          "barHint": "Cada casilla es un compás del ejercicio",
+          "legend": {
+            "clean": "Limpio",
+            "close": "Adelantado o atrasado",
+            "miss": "Notas perdidas",
+            "rest": "Silencio",
+            "unplayed": "Sin tocar"
+          },
+          "barLabel": "Compás {n}: {status}",
+          "practiceBars": "Practica los compases {bars} despacio y vuelve a tocar.",
+          "practiceBar": "Practica el compás {bars} despacio y vuelve a tocar.",
+          "saved": "Guardado en tu progreso",
+          "savedDetail": "Repítelo cuando quieras desde la lista de lecciones.",
+          "demo": "Resultados de demostración · no se guardan",
+          "again": "Otra vez",
+          "continue": "Continuar",
+          "watch": "Ver la demostración otra vez",
+          "partial": "Te detuviste tras {played} de {total} compases; el resto no cuenta."
+        },
+        "finishLesson": "Terminar lección"
       }
     }
   }

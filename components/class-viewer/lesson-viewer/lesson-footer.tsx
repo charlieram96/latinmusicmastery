@@ -5,58 +5,27 @@ import { ChevronLeft, ChevronRight, Check, Circle, Loader2, RotateCcw } from 'lu
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/components/language-provider'
 import { useLessonProgress } from './lesson-progress-context'
+import { summarizeLessonProgress, type LessonProgressInput } from '@/lib/courses/lesson-progress-summary'
 import styles from './lesson-viewer.module.css'
 
-export interface LessonFooterProps {
-  courseId: string
-  classId: string
-  currentIndex: number
-  totalItems: number
-  itemIds: string[]
-  completedItemIds: string[]
-  nextClassId: string | null
-  activeItemId: string | null
-  activeItemType: string | null
-  isCompleted: boolean
-  nextLabel?: string | null
-}
-
-const COMPLETED_LABELS: Record<string, string> = {
-  VIDEO: 'videoComplete', QUIZ: 'quizComplete', EXERCISE: 'exerciseComplete', JAM_SESSION: 'jamComplete',
-}
+export type LessonFooterProps = LessonProgressInput
 
 /** Completion status replaces manual marking; the next destination becomes the CTA. */
-export function LessonFooter({ courseId, classId, currentIndex, totalItems, itemIds, completedItemIds,
-  nextClassId, activeItemId, activeItemType, isCompleted, nextLabel }: LessonFooterProps) {
+export function LessonFooter(props: LessonFooterProps) {
+  const { totalItems, activeItemId } = props
   const { t } = useTranslation()
   const progress = useLessonProgress()
-  const state = activeItemId ? progress?.items[activeItemId] : undefined
-  const completed = (progress?.completedItemIds ?? completedItemIds).filter(id => itemIds.includes(id))
-  const done = isCompleted || !!activeItemId && completed.includes(activeItemId)
-  const lessonDone = totalItems > 0 && completed.length === totalItems
-  const saving = !done && state?.status === 'saving'
-  const error = !done && state?.status === 'error'
-  const partial = !done && !saving && !error && state?.activities.length
-  const hasNext = currentIndex < totalItems - 1
-  const prevHref = currentIndex > 0 ? `/dashboard/course/${courseId}/class/${classId}?item=${currentIndex - 1}` : null
-  const nextHref = hasNext ? `/dashboard/course/${courseId}/class/${classId}?item=${currentIndex + 1}`
-    : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : `/dashboard/course/${courseId}`
-  const nextText = hasNext ? t('common.next') : nextClassId ? t('dashboard.classViewer.footer.nextLesson') : t('dashboard.classViewer.footer.backToCourse')
-  const label = lessonDone ? 'lessonComplete' : done ? COMPLETED_LABELS[activeItemType ?? ''] ?? 'partComplete'
-    : saving ? 'savingProgress' : error ? 'saveFailed'
-      : partial ? state.activities.includes('performance') ? 'practiceComplete' : 'questionsComplete'
-        : 'inProgress'
-  const detail = partial
-    ? t(`dashboard.classViewer.footer.${state.activities.includes('performance') ? 'finishQuestions' : 'finishPractice'}`)
-    : done && (hasNext || nextClassId)
-      ? nextLabel ? t('dashboard.classViewer.footer.upNext', { title: nextLabel }) : t('dashboard.classViewer.footer.readyToContinue')
-      : t('dashboard.classViewer.footer.partsCompleted', { count: completed.length, total: totalItems })
+  const s = summarizeLessonProgress(props, { completedItemIds: progress?.completedItemIds, item: activeItemId ? progress?.items[activeItemId] : undefined })
+  const { done, saving, error, prevHref, nextHref } = s
+  const nextText = s.next === 'part' ? t('common.next') : s.next === 'lesson' ? t('dashboard.classViewer.footer.nextLesson') : t('dashboard.classViewer.footer.backToCourse')
+  const label = s.label
+  const detail = t(`dashboard.classViewer.footer.${s.detail.key}`, s.detail.params)
 
   return <div data-lesson-completion-bar data-completed={done}
     className={cn(styles.footer, 'fixed bottom-0 right-0 z-40 flex h-[68px] items-center gap-3 border-t border-border bg-sunken/95 px-4 backdrop-blur-xl md:gap-5 md:px-8')}>
-    <div role="progressbar" aria-label={t('dashboard.classViewer.footer.lessonProgress')} aria-valuemin={0} aria-valuemax={totalItems || 1} aria-valuenow={completed.length}
+    <div role="progressbar" aria-label={t('dashboard.classViewer.footer.lessonProgress')} aria-valuemin={0} aria-valuemax={totalItems || 1} aria-valuenow={s.completedCount}
       className="absolute inset-x-0 top-0 h-[2px] overflow-hidden bg-primary/5">
-      <div className="h-full origin-left bg-primary transition-transform duration-500 motion-reduce:transition-none" style={{ transform: `scaleX(${totalItems ? completed.length / totalItems : 0})` }} />
+      <div className="h-full origin-left bg-primary transition-transform duration-500 motion-reduce:transition-none" style={{ transform: `scaleX(${totalItems ? s.completedCount / totalItems : 0})` }} />
     </div>
     {prevHref && <Link href={prevHref} aria-label={t('dashboard.pages.modules.previous')}
       className="inline-flex shrink-0 items-center gap-1.5 rounded-lg p-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">

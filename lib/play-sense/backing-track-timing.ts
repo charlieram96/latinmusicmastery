@@ -1,3 +1,5 @@
+import type { ExerciseGrid } from './types';
+
 // Backing-track placement: studio timeline seconds -> student engine seconds.
 //
 // An admin positions a backing track against the VISIBLE TIMELINE — the axis
@@ -13,12 +15,9 @@
 //   beats  = qn / beatLengthInQN      (beatLengthInQN = 4 / denominator)
 //   engine = beats * 60 / bpm
 //
-// KNOWN LIMITATION: the student engine is a strictly uniform grid — it takes a
-// single bpm and time signature from the score (scoreToExerciseDefinition) and
-// ignores per-measure tempo/meter changes, which the studio time map DOES
-// honour. For a score with a mid-piece tempo change the two timelines diverge,
-// and a backing track cannot line up in both at once. Uniform-tempo scores —
-// effectively all exercises today — are exact.
+// For a score with tempo or meter changes, the uniform formula above only
+// holds for measure 1. Pass `grid` (built by scoreToExerciseDefinition) and
+// this module switches to per-measure timing instead, matching beatToTimestamp.
 
 /**
  * The only thing we need from a time map. Structural so this module never
@@ -33,6 +32,8 @@ export interface TimelineToEngine {
 export interface EngineGrid {
   bpm: number;
   timeSignature: [number, number];
+  /** Per-measure timing, when the score has tempo or meter changes. Takes over from bpm/timeSignature when present. */
+  grid?: ExerciseGrid;
 }
 
 /**
@@ -66,6 +67,15 @@ export function timelineToEngineSeconds(
 
   const quarterNotes = map.toMusicalPosition(timelineSeconds);
   if (!Number.isFinite(quarterNotes)) return 0;
+
+  if (grid.grid) {
+    const g = grid.grid;
+    const last = g.secPerQN.length - 1;
+    if (quarterNotes < 0) return quarterNotes * g.secPerQN[0];
+    let i = 0;
+    while (i < last && quarterNotes >= g.measureStartQN[i + 1]) i++;
+    return g.measureStartSec[i] + (quarterNotes - g.measureStartQN[i]) * g.secPerQN[i];
+  }
 
   const beats = quarterNotes / beatLengthInQN;
   const seconds = (beats * 60) / grid.bpm;

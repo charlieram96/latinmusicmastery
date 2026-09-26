@@ -5,27 +5,42 @@
 // the SAME code: course class-items (optionally video-synced) and standalone
 // songs (no video, fixed-BPM only). The owner prop discriminates the two.
 //
-// This parent owns the SCORE (useEditor — the single source of truth), autosave,
-// undo/redo, and the app-shell chrome. The score's video clock lives inside
-// SyncPanel, which renders the stage in the center column and PORTALS its
-// inspector (right rail) and transport (bottom dock) into slots this shell
-// provides — that keeps the <video> + clock inside SyncPanel's React tree while
-// they appear in sibling regions. HighwayPreview (the student falling-notes view)
-// lives in a collapsible bottom drawer toggled from the app-bar.
+// This parent owns the SCORE (useEditor — the single source of truth) and
+// autosaves it (plus the timing) to a draft row via useStudioDraft, never
+// straight to the live rows students read — see components/playsense-studio/
+// studio/drafts/use-studio-draft.ts. undo/redo and the app-shell chrome are
+// owned here too. The score's video clock lives inside SyncPanel, which renders
+// the stage in the center column and PORTALS its inspector (right rail) and
+// transport (bottom dock) into slots this shell provides — that keeps the
+// <video> + clock inside SyncPanel's React tree while they appear in sibling
+// regions. HighwayPreview (the student falling-notes view) lives in a
+// collapsible bottom drawer toggled from the app-bar.
+//
+// Wrapped in its own StudioDraftsProvider (a no-op seed when a host, e.g.
+// ExerciseStudio, already has one higher up — see drafts-context.tsx) so it
+// can be mounted standalone from a page.tsx.
 
-import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
-import { ArrowLeft, FileUp, Film, Music, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
+import { ArrowLeft, Activity, Copy, Eye, FileUp, Film, MonitorPlay, Music, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
-  saveScoreDocument,
   updateExerciseVideoTrim,
   updateSongMeta,
   type ExerciseMedia,
   type SongDifficulty,
 } from '@/app/actions/playsense-studio';
+import type { StudioDraft } from '@/app/actions/studio-drafts';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
+import { useStudioDraft } from '@/components/playsense-studio/studio/drafts/use-studio-draft';
+import { StudioDraftsProvider } from '@/components/playsense-studio/studio/drafts/drafts-context';
+import { PublishControl } from '@/components/playsense-studio/studio/drafts/publish-control';
+import { HistoryPanel } from '@/components/playsense-studio/studio/drafts/history-panel';
+import { workspaceSeed } from '@/lib/playsense-studio/drafts/seed';
+import { EMPTY_TIMING, timingToTimeMap, type StudioPlay, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
+import { buildExerciseGrid, scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise';
+import { generateExpectedTimestamps } from '@/lib/play-sense/exercise-utils';
+import { gridQNAtSeconds } from '@/lib/play-sense/grid';
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
@@ -33,8 +48,16 @@ import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta
 import { HighwayPreview } from '@/components/playsense-studio/studio/highway-preview';
 import { ExerciseMediaPanel } from '@/components/playsense-studio/studio/exercise-media-panel';
 import { BackingLanesPanel } from '@/components/playsense-studio/studio/backing-lanes-panel';
+import { HoverRail } from '@/components/playsense-studio/studio/shell/hover-rail';
+import { FloatingVideo } from '@/components/playsense-studio/studio/shell/floating-video';
 import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { copySectionScore } from '@/lib/playsense-studio/copy-section';
+import { StudentPreviewDialog } from '@/components/playsense-studio/studio/student-preview-dialog';
+
+/** A graded part with no placement yet: bar 1 at the trim-in, a 1-bar
+ *  count-in, pre-roll on (the migration 044 defaults). */
+const DEFAULT_PLAY: StudioPlay = { bar1Seconds: null, countInBars: 1, preroll: true };
 
 export type StudioOwner =
   | { kind: 'classItem'; classItemId: string }
@@ -55,6 +78,10 @@ export interface StudioWorkspaceProps {
   backHref?: string;
   /** Class-item authoring mode. Songs (no video) ignore this — defaults to 'video'. */
   mode?: StudioMode;
+  /** Class-item authoring, graded workspace only (Studio rework P5, Task 8):
+   *  which item_type this is, so the media rail can tell a jam's own track
+   *  (authored in the course editor) from an exercise's play-along video. */
+  itemType?: 'EXERCISE' | 'JAM_SESSION';
   title: string;
   videoUrl: string | null;
   scoreDocumentId: string;
@@ -65,14 +92,43 @@ export interface StudioWorkspaceProps {
   appBarExtra?: React.ReactNode;
   /** EXERCISE class items: the play-part media (optional cropped video + backing tracks). */
   exerciseMedia?: ExerciseMedia | null;
+  /** This owner's unpublished draft (score + timing), or null when there is none. */
+  studioDraft?: StudioDraft | null;
+  /** The latest content actually sent to (or pending for, at unmount) this
+   *  owner's draft — lets a host (e.g. ExerciseStudio) cache it locally so
+   *  switching back to this part later reseeds from it without a refetch. */
+  onDraftContent?: (c: { score: ScoreDocument; timing: StudioTiming }) => void;
+  /** EXERCISE items only (Studio rework P5): the Watch sections' scores,
+   *  offered by "Copy notes from a Watch section" in the exercise score stage. */
+  copySources?: Array<{ id: string; title: string; score: ScoreDocument }>;
 }
 
-const AUTOSAVE_INTERVAL_MS = 1000;
+/** The draft owner a StudioWorkspace saves under: a class item's own score
+ *  (EXERCISE items and legacy single-score items alike) or a song. */
+function draftOwnerOf(owner: StudioOwner): { kind: 'exercise' | 'song'; id: string } {
+  return owner.kind === 'song' ? { kind: 'song', id: owner.songId } : { kind: 'exercise', id: owner.classItemId };
+}
 
-export function StudioWorkspace({
+export function StudioWorkspace(props: StudioWorkspaceProps) {
+  const { owner, mode = 'video', title, studioDraft } = props;
+  const draftOwner = draftOwnerOf(owner);
+  // The exercise score's draft label is always "Exercise" (there's only one
+  // per class item); other owners (legacy single-score lessons, songs) use
+  // their own title.
+  const isExercise = mode === 'exercise' && owner.kind === 'classItem';
+  const label = isExercise ? 'Exercise' : title;
+  return (
+    <StudioDraftsProvider owners={[{ owner: draftOwner, label, unpublished: !!studioDraft }]}>
+      <StudioWorkspaceBody {...props} />
+    </StudioDraftsProvider>
+  );
+}
+
+function StudioWorkspaceBody({
   owner,
   backHref: classItemBackHref = '/admin/courses',
   mode = 'video',
+  itemType,
   title,
   videoUrl,
   scoreDocumentId,
@@ -81,12 +137,40 @@ export function StudioWorkspace({
   videoDurationSeconds,
   appBarExtra,
   exerciseMedia,
+  studioDraft,
+  onDraftContent,
+  copySources = [],
 }: StudioWorkspaceProps) {
-  const { state, dispatch, undo, redo, canUndo, canRedo, markClean } = useEditor(initialScore);
+  const draftOwner = draftOwnerOf(owner);
 
   // The exercise studio shows the highway inline (under the notation) and the
   // play-part media panel in the rail; other modes keep the preview drawer.
   const isExercise = mode === 'exercise' && owner.kind === 'classItem';
+  // A jam session's graded workspace (Studio rework P5, Task 8): same shell as
+  // an exercise's play part, but its media is class_items.audio_url, authored
+  // in the course editor rather than uploaded here.
+  const jam = itemType === 'JAM_SESSION';
+
+  // What this workspace opens on: the owner's unpublished draft, else live.
+  // Mount-only — a later prop change (e.g. a parent refetch) doesn't reseed an
+  // already-mounted editor; hosts remount this component (by key) instead.
+  const seed = useMemo(
+    () => workspaceSeed({ owner, mode, initialScore, activeTimeMap, exerciseMedia, studioDraft }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const { state, dispatch, undo, redo, canUndo, canRedo, markClean, replaceScore } = useEditor(seed.score);
+  const draft = useStudioDraft({
+    owner: draftOwner,
+    label: isExercise ? 'Exercise' : title,
+    score: state.score,
+    isDirty: state.isDirty,
+    markClean,
+    replaceScore,
+    initialTiming: seed.timing,
+    onDraftContent,
+  });
 
   // How long the graded score runs at its own tempo — the exercise video's crop
   // window size. Tracks live edits (add/remove measures, tempo changes).
@@ -95,31 +179,32 @@ export function StudioWorkspace({
     return wps.length ? wps[wps.length - 1].videoTimeSeconds : 0;
   }, [state.score]);
 
-  const [savingState, setSavingState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
   // Portal targets the SyncPanel renders its inspector + transport into. State
   // (not refs) so the portal re-renders once the slot nodes mount.
   const [inspectorEl, setInspectorEl] = useState<HTMLElement | null>(null);
   const [transportEl, setTransportEl] = useState<HTMLElement | null>(null);
   // App-bar slot SyncPanel portals its "Add score" chip into.
   const [scoreActionsEl, setScoreActionsEl] = useState<HTMLElement | null>(null);
+  // Portal slot the floating PiP's body renders into; SyncPanel portals the
+  // reference monitor there instead of the inspector.
+  const [monitorEl, setMonitorEl] = useState<HTMLDivElement | null>(null);
 
   // Student "highway" preview, as a collapsible bottom drawer.
   const [highwayOpen, setHighwayOpen] = useState(false);
 
   // Exercise center-stage sub-view: edit the score, or sync the optional
-  // play-along video to it. The video URL + its time map are lifted here (seeded
-  // from props, updated by ExerciseMediaPanel) so the toggle + sync stage react
+  // play-along video to it. The video URL is lifted here (seeded from props,
+  // updated by ExerciseMediaPanel) so the toggle + sync stage react
   // immediately to an upload/removal without a remount.
   const [exerciseStage, setExerciseStage] = useState<'score' | 'syncVideo'>('score');
   const [exerciseVideoUrl, setExerciseVideoUrl] = useState<string | null>(
     exerciseMedia?.videoUrl ?? null
   );
-  const [exerciseTimeMap, setExerciseTimeMap] = useState<PlaysenseStudioPlayerTimeMap | null>(
-    exerciseMedia?.timeMap ?? null
-  );
+  // SyncPanel seeds follow the draft, not the mount-time `seed`, so restoring
+  // or discarding (which replaces draft.timing wholesale and bumps
+  // draft.timingEpoch) remounts SyncPanel on the adopted timing. SyncPanel
+  // reads these only on mount, so drags in between don't reseed it.
+  const draftTimeMap = useMemo(() => timingToTimeMap(draft.timing), [draft.timing]);
   const showExerciseSync = isExercise && exerciseStage === 'syncVideo' && !!exerciseVideoUrl;
 
   // Usable region of the play-along video. Owned here, next to the video URL,
@@ -129,12 +214,86 @@ export function StudioWorkspace({
     trimOutSeconds: exerciseMedia?.videoTrimOutSeconds ?? null,
   });
 
-  // Uploading/removing the play-along video invalidates any prior sync map —
-  // and any trim, which was measured against the old file's timeline.
+  // --- Graded play-along (Studio rework P5) ---
+  // The exercise's play settings live in the draft's `timing.play`; bar 1
+  // falls back to the trim-in point until the admin places it. The graded
+  // onsets (one loop, seconds from bar 1, one per distinct onset — a chord is
+  // one onset) are what Auto-align and the "notes on a hit" readout measure.
+  // A draft saved before P5 has no `play` (publish reads that as "keep live"),
+  // so it shows the live settings rather than the defaults.
+  const exercisePlay: StudioPlay = draft.timing.play ?? exerciseMedia?.play ?? DEFAULT_PLAY;
+  const handlePlayChange = useCallback(
+    (patch: Partial<StudioPlay>) => draft.setTiming({ play: { ...exercisePlay, ...patch } }),
+    [draft, exercisePlay]
+  );
+  const gradedGrid = useMemo(
+    () => (isExercise && state.score.tracks[0] ? buildExerciseGrid(state.score, state.score.tracks[0]) : null),
+    [isExercise, state.score]
+  );
+  // One exercise definition of the draft score, shared by the graded onsets
+  // and the Student preview.
+  const draftExercise = useMemo(() => scoreToExerciseDefinition(state.score), [state.score]);
+  const gradedOnsets = useMemo(() => {
+    if (!isExercise) return [];
+    const out: number[] = [];
+    for (const e of generateExpectedTimestamps({ ...draftExercise, loopCount: 1 })) {
+      if (!out.length || e.timestamp - out[out.length - 1] > 1e-6) out.push(e.timestamp);
+    }
+    return out;
+  }, [isExercise, draftExercise]);
+  const gradedBar1 = exercisePlay.bar1Seconds ?? exerciseTrim.trimInSeconds;
+  // Backing clips record position_qn on the tempo grid from bar 1. Without a
+  // grid, or when the result isn't finite, it returns undefined so the save
+  // skips the position_qn write (never a NaN in the column).
+  const mediaToQN = useCallback(
+    (mediaSeconds: number): number | undefined => {
+      if (!gradedGrid) return undefined;
+      const qn = gridQNAtSeconds(gradedGrid, mediaSeconds - gradedBar1);
+      return Number.isFinite(qn) ? qn : undefined;
+    },
+    [gradedGrid, gradedBar1]
+  );
+
+  // --- Student preview (Studio rework P5, Task 7) ---
+  // The real ScoreExerciseGame, in preview mode, over the draft's own score,
+  // play settings, current (possibly unsaved) media and backing tracks — so
+  // the preview can never drift from what students see.
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const previewVideo = useMemo(
+    () =>
+      exerciseVideoUrl
+        ? {
+            url: exerciseVideoUrl,
+            startSeconds: exerciseTrim.trimInSeconds,
+            trimOutSeconds: exerciseTrim.trimOutSeconds,
+            timeMap: null,
+          }
+        : null,
+    [exerciseVideoUrl, exerciseTrim]
+  );
+
+  // --- Copy notes from a Watch section (Studio rework P5, Task 7) ---
+  const [copyMenuOpen, setCopyMenuOpen] = useState(false);
+  const applyCopiedSection = useCallback(
+    (source: ScoreDocument, sectionTitle: string) => {
+      // The menu closes either way: a declined confirm is a finished choice.
+      setCopyMenuOpen(false);
+      if (!window.confirm(`Replace the exercise notes with "${sectionTitle}"? You can undo this.`)) return;
+      const current = state.score;
+      dispatch({ type: 'apply-structural-score', score: copySectionScore(source, current), expectedScore: current });
+    },
+    [dispatch, state.score]
+  );
+
+  // Uploading/removing the play-along video invalidates any prior placement —
+  // bar 1 and any trim were measured against the old file's timeline. This
+  // must reach the draft: setTiming (not replaceTiming) marks it dirty so the
+  // reset itself autosaves — otherwise a stale placement could still be
+  // published for a video that no longer matches it (or, for a removal, is gone).
   const handleExerciseVideoChange = (url: string | null) => {
     setExerciseVideoUrl(url);
-    setExerciseTimeMap(null);
     setExerciseTrim({ trimInSeconds: 0, trimOutSeconds: null });
+    draft.setTiming({ ...EMPTY_TIMING, anchor: draft.timing.anchor, play: { ...exercisePlay, bar1Seconds: null } });
     if (!url) setExerciseStage('score');
   };
 
@@ -184,51 +343,6 @@ export function StudioWorkspace({
   const mediaOwnerId = owner.kind === 'classItem' ? owner.classItemId : owner.songId;
   const backHref = owner.kind === 'classItem' ? classItemBackHref : '/admin/play-sense';
 
-  // Latest editor state mirrored into refs so timers/handlers/unmount always
-  // read the newest score (never a stale closure). savingRef blocks overlap.
-  const stateRef = useRef(state);
-  useEffect(() => {
-    stateRef.current = state;
-  });
-  const savingRef = useRef(false);
-
-  const persist = useCallback(() => {
-    const snap = stateRef.current;
-    if (!snap.isDirty || savingRef.current) return;
-    savingRef.current = true;
-    setSavingState('saving');
-    setErrorMessage(null);
-    startTransition(async () => {
-      const result = await queueStudioSave(scoreDocumentId, () => saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score })).catch(() => ({ error: 'Could not save. Check your connection and retry.' }));
-      savingRef.current = false;
-      if (result.error) {
-        setSavingState('error');
-        setErrorMessage(result.error);
-        return;
-      }
-      setSavingState('saved');
-      // Only clean if no edit landed during the save (reducer clones per edit).
-      if (stateRef.current.score === snap.score) markClean();
-    });
-  }, [scoreDocumentId, markClean]);
-
-  // Save after editing pauses, including edits made during the previous save.
-  useEffect(() => {
-    if (!state.isDirty || isPending || savingState === 'error') return;
-    const id = setTimeout(persist, AUTOSAVE_INTERVAL_MS);
-    return () => clearTimeout(id);
-  }, [persist, state.score, state.isDirty, isPending, savingState]);
-
-  // Flush a pending edit on unmount so nothing in the autosave window is lost.
-  useEffect(() => {
-    return () => {
-      const snap = stateRef.current;
-      if (snap.isDirty) {
-        void queueStudioSave(scoreDocumentId, () => saveScoreDocument({ scoreDocumentId, scoreDocument: snap.score })).catch(() => undefined);
-      }
-    };
-  }, [scoreDocumentId]);
-
   // Cmd/Ctrl+Z = undo, +Shift = redo (or Ctrl+Y), Cmd/Ctrl+S = save now.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -245,12 +359,12 @@ export function StudioWorkspace({
         redo();
       } else if (e.key === 's' || e.key === 'S') {
         e.preventDefault();
-        persist();
+        void draft.flush();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [undo, redo, persist]);
+  }, [undo, redo, draft]);
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background text-foreground md:h-[100dvh]">
@@ -301,6 +415,49 @@ export function StudioWorkspace({
             </button>
           </div>
         )}
+
+        {/* Exercise score stage only: replace the graded notes wholesale with
+            a Watch section's (Studio rework P5, Task 7). */}
+        {isExercise && exerciseStage === 'score' && (
+          <div className="relative">
+            <button
+              type="button"
+              className="st-chip"
+              onClick={() => setCopyMenuOpen((v) => !v)}
+              disabled={copySources.length === 0}
+              aria-haspopup="true"
+              aria-expanded={copyMenuOpen}
+              title={
+                copySources.length === 0
+                  ? 'No Watch sections to copy notes from yet'
+                  : "Replace the exercise notes with a Watch section's"
+              }
+            >
+              <Copy className="h-4 w-4" />
+              <span className="hidden lg:inline">Copy notes from a Watch section</span>
+            </button>
+            {copyMenuOpen && copySources.length > 0 && (
+              <>
+                <div className="st-pop-scrim" onClick={() => setCopyMenuOpen(false)} />
+                <div className="st-pop">
+                  <span className="st-pop-label">Copy notes from a Watch section</span>
+                  {copySources.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="st-pop-item"
+                      onClick={() => applyCopiedSection(s.score, s.title)}
+                    >
+                      <span className="tx">
+                        <span className="t">{s.title}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
         {owner.kind === 'song' && <SongMetaControls owner={owner} />}
 
         <div className="ml-auto flex items-center gap-2">
@@ -315,6 +472,20 @@ export function StudioWorkspace({
             >
               <PanelBottom className="h-4 w-4" />
               <span className="hidden sm:inline">Preview</span>
+            </button>
+          )}
+
+          {/* Runs the real student game in preview mode (exercises and jam
+              sessions alike — Studio rework P5, Task 7). */}
+          {isExercise && (
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(true)}
+              className="st-chip"
+              title="Preview the exercise the way a student plays it"
+            >
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline">Student preview</span>
             </button>
           )}
 
@@ -335,6 +506,10 @@ export function StudioWorkspace({
               }
             />
           )}
+
+          <PublishControl />
+
+          <HistoryPanel owner={draftOwner} />
 
           <span className="mx-0.5 h-6 w-px bg-border" />
 
@@ -358,107 +533,119 @@ export function StudioWorkspace({
           </button>
 
           <span role="status" className="text-right text-xs tabular-nums text-muted-foreground">
-            {savingState === 'saving' || isPending
-              ? 'Saving…'
-              : state.isDirty
-                ? (savingState === 'error' ? 'Save failed' : 'Saving soon…')
-                : savingState === 'saved'
-                  ? 'All changes saved'
-                  : 'Autosave on'}
+            {draft.saveState === 'saving'
+              ? 'Saving draft…'
+              : draft.saveState === 'error'
+                ? 'Save failed'
+                : draft.pending
+                  ? 'Saving soon…'
+                  : draft.saveState === 'saved'
+                    ? 'Draft saved'
+                    : 'Autosave on'}
           </span>
 
           <button
-            onClick={persist}
-            disabled={!state.isDirty || isPending}
+            onClick={() => void draft.flush()}
+            disabled={!draft.pending}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save className="h-4 w-4" />
-            <span className="hidden sm:inline">{savingState === 'error' ? 'Retry save' : 'Save now'}</span>
+            <span className="hidden sm:inline">{draft.saveState === 'error' ? 'Retry save' : 'Save now'}</span>
           </button>
         </div>
       </header>
 
-      {/* ---- Body: left rail (meta + inspector) · center stage ---- */}
-      <div className="flex min-h-0 flex-1">
-        <aside className="st-rail st-rail-left hidden w-64 shrink-0 flex-col lg:flex">
-          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-            <div>
-              <span className="st-sec-label">Score</span>
-              <div className="mt-3">
-                <ScoreMetaEditor score={state.score} dispatch={dispatch} />
-              </div>
-            </div>
-            {/* Exercise play-part media: optional cropped video + backing tracks. */}
-            {isExercise && exerciseMedia && owner.kind === 'classItem' && (
-              <div className="border-t border-border pt-4">
-                <ExerciseMediaPanel
-                  classItemId={owner.classItemId}
-                  scoreLengthSeconds={scoreLengthSeconds}
-                  initialMedia={exerciseMedia}
-                  hasTimeMap={!!exerciseTimeMap}
-                  onVideoChange={handleExerciseVideoChange}
-                />
-              </div>
-            )}
-            {/* Inspector: monitor/demo + selected note + sync status (SyncPanel portals here). */}
-            <div
-              ref={setInspectorEl}
-              className="flex flex-col gap-3 border-t border-border pt-4 empty:hidden"
-            />
-          </div>
-        </aside>
+      {/* ---- Body: hover rail (meta + inspector) · center stage ---- */}
+      <div className="st-work">
+        <HoverRail
+          sections={[
+            { id: 'score', label: 'Score', icon: Music, content: <ScoreMetaEditor score={state.score} dispatch={dispatch} /> },
+            ...(isExercise && exerciseMedia && owner.kind === 'classItem'
+              ? [{
+                  id: 'media', label: 'Play-along media', icon: MonitorPlay,
+                  content: (
+                    <ExerciseMediaPanel
+                      classItemId={owner.classItemId}
+                      scoreLengthSeconds={scoreLengthSeconds}
+                      initialMedia={exerciseMedia}
+                      onVideoChange={handleExerciseVideoChange}
+                      jam={jam}
+                    />
+                  ),
+                }]
+              : []),
+            { id: 'sync', label: 'Sync status', icon: Activity, content: <div ref={setInspectorEl} className="flex flex-col gap-3" /> },
+          ]}
+        />
 
         <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 md:p-4">
-          {errorMessage && (
+          {draft.error && (
             <p className="mb-3 shrink-0 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {errorMessage}
+              {draft.error}
             </p>
           )}
 
           {showExerciseSync ? (
-            // Sync the play-along video to the graded score → exercise_time_map_id.
+            // Place the play-along video under the graded score: bar 1 on the
+            // tempo grid (timing.play), never a drag map. Legacy waypoints or an
+            // anchor on an old exercise draft are ignored here.
             <SyncPanel
+              key={draft.timingEpoch}
               classItemId={mediaOwnerId}
-              scoreDocumentId={scoreDocumentId}
-              mode="video"
+              mode="graded"
               publishTarget="exercise"
               videoUrl={exerciseVideoUrl}
               score={state.score}
               dispatch={dispatch}
-              activeTimeMap={exerciseTimeMap}
+              activeTimeMap={null}
               videoDurationSeconds={null}
               trim={exerciseTrim}
               onTrimDrag={handleExerciseTrimDrag}
-              initialMetronomeAnchorSeconds={exerciseMedia?.metronomeAnchorSeconds ?? null}
+              initialMetronomeAnchorSeconds={null}
+              play={exercisePlay}
+              onPlayChange={handlePlayChange}
+              gradedOnsets={gradedOnsets}
               renderBackingLanes={(v) =>
                 owner.kind === 'classItem' && exerciseMedia ? (
                   <BackingLanesPanel
                     classItemId={owner.classItemId}
                     tracks={exerciseMedia.backingTracks}
-                    timeMap={exerciseTimeMap}
+                    timeMap={null}
+                    mediaToQN={mediaToQN}
                     view={v}
                   />
                 ) : null
               }
               inspectorEl={inspectorEl}
               transportEl={transportEl}
+              monitorEl={monitorEl}
               scoreActionsEl={scoreActionsEl}
-              onPublished={() => setExerciseStage('syncVideo')}
+              onTimingChange={draft.setTiming}
+              onTimingSaved={() => setExerciseStage('syncVideo')}
+              registerTimingFlush={draft.registerPreFlush}
             />
           ) : (
             <>
               <SyncPanel
+                key={draft.timingEpoch}
                 classItemId={mediaOwnerId}
-                scoreDocumentId={scoreDocumentId}
                 mode={mode}
                 videoUrl={videoUrl}
                 score={state.score}
                 dispatch={dispatch}
-                activeTimeMap={activeTimeMap}
+                // Exercise mode's score stage has no video of its own — it
+                // must not seed its markers from the play-along map that the
+                // draft timing holds for this owner+mode. Only non-exercise
+                // modes (video lessons, songs) open on the draft's timing.
+                activeTimeMap={isExercise ? activeTimeMap : draftTimeMap}
+                initialMetronomeAnchorSeconds={isExercise ? null : (draft.timing.anchor?.seconds ?? null)}
                 videoDurationSeconds={videoDurationSeconds}
                 inspectorEl={inspectorEl}
                 transportEl={transportEl}
+                monitorEl={monitorEl}
                 scoreActionsEl={scoreActionsEl}
+                onTimingChange={draft.setTiming}
+                registerTimingFlush={draft.registerPreFlush}
               />
 
               {/* Exercise mode: the student's falling-notes view lives right under
@@ -476,6 +663,14 @@ export function StudioWorkspace({
             </>
           )}
         </main>
+
+        {/* Only render the PiP when the mounted SyncPanel will actually
+            portal a monitor into it (mirrors its own showSync gate) — never
+            in the exercise score stage, whose SyncPanel has mode="exercise"
+            and shows no monitor at all. */}
+        {(showExerciseSync ? !!exerciseVideoUrl : mode === 'video' && !!videoUrl) && (
+          <FloatingVideo label={isExercise ? 'Play-along' : 'Reference'} onBodyEl={setMonitorEl} />
+        )}
       </div>
 
       {/* ---- Bottom: transport dock + highway drawer ---- */}
@@ -494,11 +689,23 @@ export function StudioWorkspace({
           </div>
         </div>
       )}
+
+      {isExercise && previewOpen && (
+        <StudentPreviewDialog
+          exercise={draftExercise}
+          score={state.score}
+          exerciseVideo={previewVideo}
+          play={exercisePlay}
+          backingTracks={exerciseMedia?.backingTracks}
+          mediaAudible={jam}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </div>
   );
 }
 
-// Song-only metadata strip: difficulty (drives grading tolerance) + publish.
+// Song-only metadata strip: difficulty (drives grading tolerance) + visibility.
 // Writes to play_sense_songs; not part of the clock-agnostic ScoreDocument.
 function SongMetaControls({
   owner,
@@ -544,9 +751,9 @@ function SongMetaControls({
             ? 'border-green-500/30 bg-green-500/10 text-green-600'
             : 'border-border hover:bg-muted'
         }`}
-        title={isPublished ? 'Published — students can see this song' : 'Draft — click to publish'}
+        title={isPublished ? 'Visible — students can find this song' : "Hidden — students can't find this song"}
       >
-        {isPublished ? 'Published' : 'Draft'}
+        {isPublished ? 'Visible' : 'Hidden'}
       </button>
     </div>
   );

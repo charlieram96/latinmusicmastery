@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { cropWindow, resolveLegacyAudioUrl } from '../exercise-media'
+import { cropWindow, jamRendersGradedGame, resolveLegacyAudioUrl, toExerciseVideo } from '../exercise-media'
+import type { ExerciseMedia } from '@/app/actions/playsense-studio'
 
 describe('cropWindow', () => {
   it('clamps start into [0, videoDuration - scoreLength]', () => {
@@ -38,5 +39,48 @@ describe('resolveLegacyAudioUrl', () => {
     expect(
       resolveLegacyAudioUrl({ legacyMediaUrl: null, hasBackingTracks: false, hasExerciseVideo: false })
     ).toBeUndefined()
+  })
+})
+
+const MEDIA: ExerciseMedia = {
+  videoUrl: 'https://example.com/jam.mp3',
+  videoStartSeconds: 1.5,
+  videoTrimOutSeconds: 30,
+  metronomeAnchorSeconds: null,
+  metronomeAnchorQn: null,
+  timeMap: null,
+  backingTracks: [],
+  play: { bar1Seconds: 2, countInBars: 1, preroll: true },
+}
+
+describe('toExerciseVideo (Studio rework P5, Task 8)', () => {
+  it('projects the media into the ScoreExerciseGame video shape', () => {
+    expect(toExerciseVideo(MEDIA)).toEqual({
+      url: 'https://example.com/jam.mp3',
+      startSeconds: 1.5,
+      trimOutSeconds: 30,
+      timeMap: null,
+    })
+  })
+
+  it('is null when there is no media, or no videoUrl (a jam with no audio_url yet)', () => {
+    expect(toExerciseVideo(null)).toBeNull()
+    expect(toExerciseVideo({ ...MEDIA, videoUrl: null })).toBeNull()
+  })
+})
+
+describe('jamRendersGradedGame (Studio rework P5, Task 8)', () => {
+  it('is true only for a JAM_SESSION once its score data has loaded', () => {
+    expect(jamRendersGradedGame('JAM_SESSION', true)).toBe(true)
+  })
+
+  it('is false for a JAM_SESSION with no score yet', () => {
+    expect(jamRendersGradedGame('JAM_SESSION', false)).toBe(false)
+  })
+
+  it('is false for any other item type, even with score data', () => {
+    expect(jamRendersGradedGame('EXERCISE', true)).toBe(false)
+    expect(jamRendersGradedGame('VIDEO', true)).toBe(false)
+    expect(jamRendersGradedGame('QUIZ', true)).toBe(false)
   })
 })

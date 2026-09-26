@@ -53,6 +53,13 @@ export function useBackingMixer(options: {
     mixerRef.current = new BackingMixer();
   }
 
+  // Read by the ratechange listener, which only takes pitch preservation off
+  // when there is backing to keep in key with the video.
+  const hasClipsRef = useRef(clips.length > 0);
+  useEffect(() => {
+    hasClipsRef.current = clips.length > 0;
+  }, [clips.length]);
+
   const [readyIds, setReadyIds] = useState<ReadonlySet<string>>(() => new Set());
   const buffersRef = useRef(new Map<string, AudioBuffer>());
 
@@ -183,7 +190,9 @@ export function useBackingMixer(options: {
       // element time-stretches by default. Turning preservesPitch off keeps the
       // video and the backing tracks in the same key - everything slows like
       // tape together, which is coherent; the alternative is a fifth apart.
-      video.preservesPitch = false;
+      // With no backing there is nothing to keep in key, so the video keeps
+      // whatever pitch setting its owner chose (the Studio's Loop speed).
+      if (hasClipsRef.current) video.preservesPitch = false;
       if (!video.paused) restart();
     };
 

@@ -79,16 +79,26 @@ describe('prepareStructuralEdit', () => {
     for (const i of [2, 4, 6]) expect(nudgeDelta(r.markers, r.markers.measures[i].downbeatQN + 1)).toBeCloseTo(0.05, 9);
   });
 
-  it('paste-measures reuses the clip\'s spans', () => {
+  it('paste-measures reuses the clip\'s timing', () => {
     const { score: s, markers } = synced();
     const clip = clipFromMeasures(markers, s, 0, 1, 2);
-    expect(clip.spans).toHaveLength(2);
+    expect(clip.timing).toHaveLength(2);
     expect(clip.context).toEqual({ bpm: 120, timeSignature: [4, 4], keyFifths: 0 });
     const r = ok(prepareStructuralEdit(markers, s, { type: 'paste-measures', trackIndex: 0, index: 4, clip }));
     agree(r);
     expect(starts(r.markers)).toEqual([0, 2, 4, 6, 8, 10].map((t) => expect.closeTo(t, 9)));
     expect(r.markers.measures[4].beats[1].videoTimeSeconds).toBeCloseTo(8.7, 9);
     expect(nudgeDelta(r.markers, r.markers.measures[5].downbeatQN + 1)).toBeCloseTo(0.05, 9);
+  });
+
+  it('clipFromMeasures carries only the slurs whose two ends are in the copied bars', () => {
+    const { score: s, markers } = synced();
+    s.tracks[0].measures.forEach((m, i) => m.voices[0].events.forEach((e, j) => { e.id = `m${i}n${j}`; }));
+    s.spans = [
+      { id: 'in', type: 'slur', from: 'm1n0', to: 'm2n3' },
+      { id: 'out', type: 'slur', from: 'm0n3', to: 'm1n0' },
+    ];
+    expect(clipFromMeasures(markers, s, 0, 1, 2).notationSpans).toEqual([s.spans[0]]);
   });
 
   it('append-score paces the new bars like the last existing bar, honouring their meter', () => {
@@ -106,5 +116,15 @@ describe('prepareStructuralEdit', () => {
     const r = prepareStructuralEdit(markers, s, { type: 'delete-measures', trackIndex: 0, start: 0, count: 4 });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.problem).toMatch(/at least one/);
+  });
+
+  it('set-repeat-count: new passes take pass 1’s timing and later bars move to make room', () => {
+    const s = score(3);
+    const markers = seedMarkerState(s.tracks[0], s, buildWaypoints(s, 120, 0));
+    const rep = ok(prepareStructuralEdit(markers, s, { type: 'repeat-measures', trackIndex: 0, start: 0, end: 0, count: 2, id: 'g' }));
+    const r = ok(prepareStructuralEdit(rep.markers, rep.score, { type: 'set-repeat-count', trackIndex: 0, id: 'g', count: 3 }));
+    agree(r);
+    expect(starts(r.markers)).toEqual([0, 2, 4, 6, 8].map((t) => expect.closeTo(t, 9)));
+    expect(r.markers.tailVideoTimeSeconds).toBeCloseTo(10, 9);
   });
 });

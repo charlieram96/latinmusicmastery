@@ -1,12 +1,17 @@
 import type { ScoreDocument, Track } from '@/components/playsense-studio/shared/score-model/types';
 import { measureLengthInQN, qnToMs, walkMeasures } from './time-mapping';
+import { passEventId } from './event-ids';
 
 /** Only collapse complete, contiguous groups with identical notation per pass. */
 export function repeatGroups(track: Track) {
   const groups: Array<{ id: string; start: number; length: number; count: number }> = [];
+  // Passes carry per-pass ids (`a`, `a~1`, …), so compare with ids normalised to pass 0.
   const content = (i: number) => {
     const { number: _number, repeat: _repeat, ...notation } = track.measures[i];
-    return JSON.stringify(notation);
+    return JSON.stringify(notation, (key, value) => {
+      if (key === 'id' && typeof value === 'string') return passEventId(value, 0);
+      return value;
+    });
   };
   track.measures.forEach((m, start) => {
     const r = m.repeat;

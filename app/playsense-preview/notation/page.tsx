@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { NotationPreview } from './notation-preview';
-import { CONGA_TUMBAO_FIXTURE } from '@/lib/playsense-studio/score-fixtures';
+import { CONGA_TUMBAO_FIXTURE, REFERENCE_EXCERPT_FIXTURE } from '@/lib/playsense-studio/score-fixtures';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 /** Shared engraving in both lesson layouts, with no student data or playback writes. */
@@ -14,5 +14,13 @@ export default function NotationPreviewPage() {
       })),
     })),
   };
-  return <NotationPreview score={score} />;
+  return (
+    <>
+      <NotationPreview score={score} />
+      <section className="mt-16 px-6 py-8 md:px-10">
+        <h2 className="mb-6 text-xl font-semibold">Reference excerpt (every mark P2 draws)</h2>
+        <NotationPreview score={REFERENCE_EXCERPT_FIXTURE} />
+      </section>
+    </>
+  );
 }

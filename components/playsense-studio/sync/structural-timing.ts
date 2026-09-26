@@ -17,6 +17,7 @@ import {
   type Splice,
   type StructuralAction,
 } from '@/lib/playsense-studio/measure-edits';
+import { repeatGroups } from '@/lib/playsense-studio/repeats';
 import { measureLengthInQN, walkMeasures } from '@/lib/playsense-studio/time-mapping';
 import {
   copyMeasureSpans,
@@ -42,7 +43,7 @@ function paceAt(markers: MarkerState, index: number): number {
   return span.lengthQN > 0 ? span.durationSeconds / span.lengthQN : 0.5;
 }
 
-/** The bars copied out of a synced score, with their spans and context. */
+/** The bars copied out of a synced score, with their timing, context and the slurs inside them. */
 export function clipFromMeasures(
   markers: MarkerState,
   score: ScoreDocument,
@@ -51,11 +52,15 @@ export function clipFromMeasures(
   count: number
 ): MeasureClip {
   const track = score.tracks[trackIndex];
+  const measures = track.measures.slice(start, start + count);
+  const ids = new Set<string>();
+  for (const m of measures) for (const v of m.voices) for (const e of v.events) if (e.id) ids.add(e.id);
   return {
-    measures: track.measures.slice(start, start + count),
+    measures,
     context: contextAt(score, track, start),
     instrument: track.instrument,
-    spans: copyMeasureSpans(markers, start, count),
+    timing: copyMeasureSpans(markers, start, count),
+    notationSpans: (score.spans ?? []).filter((s) => ids.has(s.from) && ids.has(s.to)),
   };
 }
 
@@ -91,7 +96,7 @@ export function prepareStructuralEdit(
     }
     case 'paste-measures': {
       const pace = paceAt(markers, splice.index);
-      const fromClip = action.clip.spans;
+      const fromClip = action.clip.timing;
       insert = Array.from({ length: splice.insertCount }, (_, k) => {
         const ts = signatureAt(splice.index + k);
         const candidate = fromClip?.[k];
@@ -104,6 +109,14 @@ export function prepareStructuralEdit(
     case 'append-score': {
       const pace = paceAt(markers, splice.index);
       insert = Array.from({ length: splice.insertCount }, (_, k) => paceSpan(pace, signatureAt(splice.index + k)));
+      break;
+    }
+    case 'set-repeat-count': {
+      if (splice.insertCount > 0) {
+        const g = repeatGroups(score.tracks[action.trackIndex]).find((x) => x.id === action.id)!;
+        const source = copyMeasureSpans(markers, g.start, g.length);
+        insert = Array.from({ length: splice.insertCount / g.length }, () => source.map((s) => ({ ...s }))).flat();
+      }
       break;
     }
   }

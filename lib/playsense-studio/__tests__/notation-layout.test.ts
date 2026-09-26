@@ -67,6 +67,27 @@ describe('responsive measure rows', () => {
   })
 })
 
+describe('row-start header space', () => {
+  it('reserves extra width for the bar that starts each row, and packs with it', () => {
+    // Without the extra, 450 fits two 200-wide bars per row.
+    expect(packScoreRows([200, 200, 200, 200], 450).map(row => row.widths.length)).toEqual([2, 2])
+    // Bars 2 and 3 need 60 more when they start a row (clef + key signature).
+    const rows = packScoreRows([200, 200, 200, 200], 450, [0, 0, 60, 60])
+    expect(rows.map(row => [row.startIndex, row.widths.length])).toEqual([[0, 2], [2, 1], [3, 1]])
+    expect(rows[1].widths[0]).toBeCloseTo(450)
+  })
+  it('adds the extra only to the row-starting bar', () => {
+    const [row, second] = packScoreRows([200, 200, 200, 200], 700, [0, 50, 50, 50])
+    expect(row.widths.length).toBe(3)
+    expect(row.widths[1]).toBeCloseTo(row.widths[2]) // bar 1 sits mid-row: no extra
+    expect(second.widths[0]).toBeCloseTo(700)
+  })
+  it('passes the extra through the lesson packer', () => {
+    const rows = packLessonScoreRows([200, 200, 200, 200], 450, { leading: false, trailing: false }, [0, 0, 60, 60])
+    expect(rows.map(row => row.widths.length)).toEqual([2, 1, 1])
+  })
+})
+
 describe('requiredMeasureWidths', () => {
   const block = (events: number, ts: [number, number] = [4, 4]) => ({ timeSignature: ts, events: new Array(events).fill(0) })
 

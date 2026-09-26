@@ -28,11 +28,14 @@ export interface ExerciseMediaPanelProps {
   /** The graded score's length at its own tempo — the crop window's size. */
   scoreLengthSeconds: number;
   initialMedia: ExerciseMedia;
-  /** True when a sync time map is published for this video — crop is then ignored. */
-  hasTimeMap?: boolean;
   /** Notifies the workspace when the play-along video is added/removed, so the
    *  "Sync video" stage toggle and sync stage react without a remount. */
   onVideoChange?: (url: string | null) => void;
+  /** JAM_SESSION (Studio rework P5, Task 8): the graded media is the class
+   *  item's own audio_url, set on the course editor's Jam session form, not
+   *  uploaded here — the video card shows that instead of an upload control.
+   *  Backing tracks are unaffected. */
+  jam?: boolean;
 }
 
 const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
@@ -42,8 +45,8 @@ export function ExerciseMediaPanel({
   classItemId,
   scoreLengthSeconds,
   initialMedia,
-  hasTimeMap,
   onVideoChange,
+  jam = false,
 }: ExerciseMediaPanelProps) {
   const [videoUrl, setVideoUrl] = useState(initialMedia.videoUrl);
   const [startSeconds, setStartSeconds] = useState(initialMedia.videoStartSeconds);
@@ -184,10 +187,15 @@ export function ExerciseMediaPanel({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* ---- Exercise video ---- */}
+      {/* ---- Exercise video (a jam session's own audio_url instead — Studio
+            rework P5, Task 8) ---- */}
       <div className="st-icard">
-        <span className="st-sec-label">Exercise video</span>
-        {videoUrl ? (
+        <span className="st-sec-label">{jam ? 'Jam track' : 'Exercise video'}</span>
+        {jam ? (
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            Jam track: set in the course editor
+          </p>
+        ) : videoUrl ? (
           <>
             <video
               ref={previewRef}
@@ -238,13 +246,15 @@ export function ExerciseMediaPanel({
             </p>
           </>
         )}
-        <input
-          ref={videoInputRef}
-          type="file"
-          accept={VIDEO_TYPES.join(',')}
-          onChange={(e) => void onVideoFile(e)}
-          className="hidden"
-        />
+        {!jam && (
+          <input
+            ref={videoInputRef}
+            type="file"
+            accept={VIDEO_TYPES.join(',')}
+            onChange={(e) => void onVideoFile(e)}
+            className="hidden"
+          />
+        )}
       </div>
 
       {/* ---- Backing tracks ---- */}

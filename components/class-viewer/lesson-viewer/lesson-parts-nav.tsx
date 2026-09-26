@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { ChevronRight, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/components/language-provider'
+import { partLabels } from '@/lib/courses/lesson-parts'
 import styles from './lesson-viewer.module.css'
 
 export interface LessonPart {
@@ -25,27 +26,7 @@ interface LessonPartsNavProps {
   classId: string
 }
 
-const TYPE_LABEL_KEY: Record<string, string> = {
-  VIDEO: 'dashboard.classViewer.itemTypes.lesson',
-  QUIZ: 'dashboard.pages.modules.quiz',
-  EXERCISE: 'dashboard.pages.modules.exercise',
-  JAM_SESSION: 'dashboard.classViewer.itemTypes.jamSession',
-}
-
-// Build friendly labels, numbering repeated types (Exercise 1, Exercise 2…).
-function buildLabels(items: LessonPart[], t: (key: string) => string) {
-  const counts: Record<string, number> = {}
-  const totals: Record<string, number> = {}
-  for (const it of items) totals[it.item_type] = (totals[it.item_type] ?? 0) + 1
-  return items.map((it) => {
-    const key = TYPE_LABEL_KEY[it.item_type]
-    const base = key ? t(key) : it.item_type
-    counts[it.item_type] = (counts[it.item_type] ?? 0) + 1
-    const label =
-      totals[it.item_type] > 1 ? `${base} ${counts[it.item_type]}` : base
-    return label
-  })
-}
+const buildLabels = partLabels
 
 export function LessonPartsNav({
   items,

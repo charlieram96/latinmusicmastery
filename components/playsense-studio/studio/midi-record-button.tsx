@@ -5,14 +5,16 @@ import { Circle, Loader2, Plug, Square } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useStudioMidiRecorder } from '@/hooks/use-studio-midi-recorder';
 import { recordingContext } from '@/lib/playsense-studio/midi-recording';
-import { planMidiRecording, prepareMidiRecording, type MidiRecordingDestination, type MidiRecordingInsert } from '@/lib/playsense-studio/midi-recording-placement';
+import { planMidiRecording, prepareMidiRecording, type MidiRecordingDestination, type MidiRecordingInsert, type MidiRecordingWarp } from '@/lib/playsense-studio/midi-recording-placement';
 import type { Waypoint } from '@/components/playsense-studio/shared/time-map/time-map';
 import { isPercussion } from '@/lib/playsense-studio/perc-strokes';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { StaffRenderer } from '../player/notation/renderers/staff-renderer';
 
-export type MidiRecordingSource = { videoUrl: string | null; videoRef: RefObject<HTMLVideoElement | null>; waypoints: Waypoint[]; onInsert: MidiRecordingInsert; onPosition: (seconds: number) => void };
+/** `waypoints` are TIMELINE time; `videoRef`/`onPosition` are the video's MEDIA
+ *  time. Under Flex Time `flex` maps between the two (omitted = the same). */
+export type MidiRecordingSource = { videoUrl: string | null; videoRef: RefObject<HTMLVideoElement | null>; waypoints: Waypoint[]; onInsert: MidiRecordingInsert; onPosition: (seconds: number) => void; flex?: MidiRecordingWarp };
 type Props = { score: ScoreDocument; trackIndex: number; targetMeasure: number; dispatch: Dispatch<EditorAction>; getCurrentSeconds?: () => number; recordingSource?: MidiRecordingSource };
 export function MidiRecordButton(props: Props) {
   const [open, setOpen] = useState(false);
@@ -32,22 +34,27 @@ function MidiRecorderPanel({ score, trackIndex, targetMeasure, dispatch, getCurr
   const [originalTrack] = useState(() => score.tracks[trackIndex]);
   const [originalScore] = useState(score);
   const [originalWaypoints] = useState(() => recordingSource?.waypoints);
-  const [playheadSeconds] = useState(() => recordingSource?.videoRef.current?.currentTime ?? getCurrentSeconds?.());
+  const [warp] = useState(() => recordingSource?.flex);
+  // The playhead in TIMELINE time (where the waypoints live).
+  const [playheadSeconds] = useState(() => {
+    const media = recordingSource?.videoRef.current?.currentTime;
+    return media !== undefined ? (warp ? warp.toTimeline(media) : media) : getCurrentSeconds?.();
+  });
   const [playbackRate] = useState(() => recordingSource?.videoRef.current?.playbackRate ?? 1);
   const [destination, setDestination] = useState<MidiRecordingDestination>('playhead');
   const [startMeasure, setStartMeasure] = useState(targetMeasure + 1);
   const placement = useMemo(() => {
-    try { return { plan: planMidiRecording(originalScore, trackIndex, { destination, startMeasure: startMeasure - 1, playheadSeconds, waypoints: originalWaypoints }), error: null }; }
+    try { return { plan: planMidiRecording(originalScore, trackIndex, { destination, startMeasure: startMeasure - 1, playheadSeconds, waypoints: originalWaypoints, warp }), error: null }; }
     catch (err) { return { plan: null, error: err instanceof Error ? err.message : 'Choose a recording position.' }; }
-  }, [originalScore, trackIndex, destination, startMeasure, playheadSeconds, originalWaypoints]);
+  }, [originalScore, trackIndex, destination, startMeasure, playheadSeconds, originalWaypoints, warp]);
   const plan = placement.plan;
   const context = plan?.context ?? recordingContext(originalScore, originalTrack, 0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   useEffect(() => { recordingSource?.videoRef.current?.pause(); }, [recordingSource?.videoRef]);
   const positionVideo = () => {
-    if (videoRef.current && plan) { videoRef.current.currentTime = plan.videoStartSeconds; videoRef.current.playbackRate = playbackRate; }
+    if (videoRef.current && plan) { videoRef.current.currentTime = plan.videoStartMedia; videoRef.current.playbackRate = playbackRate; }
   };
-  useEffect(() => { if (videoRef.current?.readyState && plan) { videoRef.current.currentTime = plan.videoStartSeconds; videoRef.current.playbackRate = playbackRate; } }, [plan, playbackRate]);
+  useEffect(() => { if (videoRef.current?.readyState && plan) { videoRef.current.currentTime = plan.videoStartMedia; videoRef.current.playbackRate = playbackRate; } }, [plan, playbackRate]);
   const [countIn, setCountIn] = useState(true);
   const [click, setClick] = useState(!recordingSource?.videoUrl);
   const [sustain, setSustain] = useState(!isPercussion(originalTrack.instrument));
@@ -80,17 +87,17 @@ function MidiRecorderPanel({ score, trackIndex, targetMeasure, dispatch, getCurr
     if (!plan) return;
     setLocalError(null);
     void recorder.start({ ...context, countIn, click, sustain, ...(recordingSource?.videoUrl && videoRef.current ? { video: {
-      element: videoRef.current, startSeconds: plan.videoStartSeconds, onStop: recordingSource.onPosition,
-      beatAtSeconds: (seconds: number) => plan.map.toMusicalPosition(seconds) * context.timeSignature[1] / 4,
+      element: videoRef.current, startSeconds: plan.videoStartMedia, onStop: recordingSource.onPosition,
+      beatAtSeconds: (seconds: number) => plan.map.toMusicalPosition(plan.toTimeline(seconds)) * context.timeSignature[1] / 4,
     } } : {}) });
   };
-  const clockSeconds = (recordingSource?.videoUrl ? plan?.videoStartSeconds ?? 0 : 0) + recorder.meter.elapsedMs / 1000;
+  const clockSeconds = (recordingSource?.videoUrl ? plan?.videoStartMedia ?? 0 : 0) + recorder.meter.elapsedMs / 1000;
   const clock = formatRecordingTime(clockSeconds);
   return <div className={recordingSource?.videoUrl ? 'grid min-w-0 gap-5 md:grid-cols-[1fr_1fr]' : 'min-w-0'}>
     {recordingSource?.videoUrl && <div className="min-w-0 space-y-2 md:sticky md:top-0 md:self-start">
       <div className="overflow-hidden rounded-xl border border-border bg-black"><video ref={videoRef} src={recordingSource.videoUrl} onLoadedMetadata={positionVideo} playsInline preload="auto" className="aspect-video w-full" aria-label="MIDI recording reference video" /></div>
       <div className="flex justify-between text-xs text-muted-foreground"><span>Reference video</span><span>{playbackRate}× speed · Video timing</span></div>
-      <p className="text-xs text-muted-foreground">The video starts at {formatRecordingTime(plan?.videoStartSeconds ?? 0)} after the count-in. Notes stay aligned when you slow the video down.</p>
+      <p className="text-xs text-muted-foreground">The video starts at {formatRecordingTime(plan?.videoStartMedia ?? 0)} after the count-in. Notes stay aligned when you slow the video down.</p>
     </div>}
     <div className="min-w-0 space-y-4">
     <div className="flex items-end gap-2">
@@ -147,7 +154,7 @@ function MidiRecorderPanel({ score, trackIndex, targetMeasure, dispatch, getCurr
       </div>
       <p className="text-xs text-muted-foreground">{grid ? 'Notes and rests are snapped to this grid. Change it to compare with your original timing.' : 'Exact performance timing is preserved. Printed note values are approximate for unquantized rhythms.'}</p>
       {isPercussion(originalTrack.instrument) && <label className="flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" checked={gmPercussion} onChange={e => setGmPercussion(e.target.checked)} className="accent-primary" />Map General MIDI drum notes to this instrument’s strokes</label>}
-      {!!conversion.measures.length && <div className="h-56 min-w-0 overflow-hidden rounded-xl border border-border"><StaffRenderer score={preview} trackIndex={0} currentMs={0} showCursor={false} autoFollow={false} layoutMode="wrapped" zoom={.7} className="h-full" /></div>}
+      {!!conversion.measures.length && <div className="h-56 min-w-0 overflow-hidden rounded-xl border border-border"><StaffRenderer score={preview} trackIndex={0} currentMs={0} showCursor={false} autoFollow={false} layoutMode="wrapped" helpers={false} zoom={.7} className="h-full" /></div>}
       <p className="text-xs text-muted-foreground">{destination === 'append' ? 'Adds new measures at the end.' : `Replaces ${replaceCount} measure${replaceCount === 1 ? "" : "s"} from measure ${(plan?.start ?? 0) + 1}${conversion.measures.length > replaceCount ? ` and adds ${conversion.measures.length - replaceCount} new measures` : ""}.`} Notes before the playhead are kept. The last recorded measure is replaced through its end. Undo restores the previous score and video sync.</p>
       <div className="flex justify-end"><button type="button" onClick={insert} disabled={!conversion.measures.length || scoreChanged || !!conversion.error} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40">Add take to score</button></div>
     </>}

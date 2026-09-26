@@ -25,7 +25,6 @@
 // usable as soon as a score document is attached, with sync polish coming
 // from M7's authoring tools.
 
-import { useTranslation } from '@/components/language-provider';
 import {
   useCallback,
   useEffect,
@@ -34,8 +33,12 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Rows3, MoveHorizontal, Minus, Plus } from 'lucide-react';
-import { SplitWorkspace, OrientationToggle } from './split-workspace';
+import { Minus, Plus } from 'lucide-react';
+import { SplitWorkspace, WorkspaceLayoutSwitcher } from './split-workspace';
+import { useWorkspaceLayout } from './use-workspace-layout';
+import { WorkspaceToolsPortal } from './workspace-tools-slot';
+import { SectionChips } from './section-chips';
+import { WATCH_WORKSPACE } from '@/lib/playsense-studio/workspace-layout';
 import { DownloadMenu } from '@/components/playsense-studio/export/download-menu';
 import { TransportBar } from './transport/transport-bar';
 import { VideoStage } from './video/video-stage';
@@ -44,7 +47,9 @@ import {
   ZOOM_MIN,
   ZOOM_MAX,
   type SelectedRange,
+  type StaffLayoutMode,
 } from './notation/renderers/staff-renderer';
+import { StaffLayoutSwitch, StaffRefollowButton, staffLayoutMode, staffNeedsRefollow, staffPaneClass, useStaffLayoutPreference } from './notation/staff-layout-switch';
 import { StaffScrubBar } from './notation/staff-scrub-bar';
 import { ClipsPanel } from './clips/clips-panel';
 import { useVideoTransportClock } from './state/use-video-transport-clock';
@@ -68,6 +73,9 @@ import { lessonSectionGaps } from '@/lib/playsense-studio/lesson-notation';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import type { SeekTarget } from '@/lib/playsense-studio/renderer';
 import { updateClassItemPosition } from '@/app/actions/progress';
+import { FlexMap, type FlexPoint } from '@/lib/playsense-studio/flex';
+import { useFlexPlayback } from '@/lib/playsense-studio/use-flex-playback';
+import { clickTimesInMedia, mediaSeekFor, timelineOf } from '@/lib/playsense-studio/flex-player';
 
 export interface PlaysenseStudioPlayerScoreTrack {
   id: string;
@@ -91,6 +99,10 @@ export interface PlaysenseStudioPlayerTimeMap {
   /** Per-note timing nudges authored in the studio. The waypoints already
    *  carry their effect; the player never reads this. */
   nudges?: Array<{ qn: number; deltaSeconds: number }>;
+  /** Flex Time map (spec §7): Watch sections only, never the graded
+   *  play-along. The player's rate driver (useFlexPlayback), cursor, seeks,
+   *  loops and click all go through it; unset/empty is identity. */
+  flex?: FlexPoint[];
 }
 
 /** One scored section of a video: a score + sync valid over a video time-range. */
@@ -250,6 +262,40 @@ export function PlaysenseStudioPlayer({
   const tracks = displaySection.tracks;
   const activeTimeMap = displaySection.activeTimeMap;
 
+  // Flex Time (spec §7): warps MEDIA (the video element's real time) to
+  // TIMELINE (where the notation's waypoints live), for the displayed
+  // section. Empty/no flex on the section is the identity map, so every
+  // computation below is a pass-through and unflexed lessons are unaffected.
+  const flexMap = useMemo(() => new FlexMap(activeTimeMap?.flex ?? []), [activeTimeMap]);
+
+  // The student's speed-menu choice. With flex present this is what the
+  // transport displays and what useFlexPlayback multiplies by the current
+  // segment's rate; the element's own (flickering) rate is never shown.
+  const [userSpeed, setUserSpeed] = useState(1);
+
+  // Drives video.playbackRate frame-by-frame while a flexed section plays.
+  // Called unconditionally (rules of hooks: normalizedSections can swap in a
+  // section with a different flex status without remounting the player), but
+  // `enabled` keeps it a true no-op whenever there's no flex, so the existing
+  // clock.playbackRate / clock.setPlaybackRate wiring further below is
+  // exactly what drives the element for unflexed lessons.
+  useFlexPlayback(videoRef, flexMap, userSpeed, !flexMap.isIdentity);
+
+  // With flex, the transport shows/sets userSpeed — the student's chosen
+  // multiplier — never the element's own rate, which flickers segment to
+  // segment (Global Constraints, decision #2). With no flex, the rate still
+  // goes through clock.setPlaybackRate as before, but ALSO keeps userSpeed in
+  // step (fix round 1, issue #1): otherwise a speed chosen on an unflexed
+  // section is lost the moment playback crosses into a flexed one, since
+  // userSpeed would still be sitting at its unset initial value.
+  const displayedRate = flexMap.isIdentity ? clock.playbackRate : userSpeed;
+  const onDisplayedRateChange = flexMap.isIdentity
+    ? (rate: number) => {
+        clock.setPlaybackRate(rate);
+        setUserSpeed(rate);
+      }
+    : setUserSpeed;
+
   // --- Click track ---------------------------------------------------------
   // The beat grid comes from the ACTIVE sections, not the DISPLAYED one. That
   // distinction is load-bearing: displaySection deliberately persists through
@@ -282,9 +328,15 @@ export function PlaysenseStudioPlayer({
           // STABLE across seeks, and the toggle stays audible on lessons whose
           // notation was never placed. clickAligned tells the student which it is.
           const anchor = section.metronomeAnchorSeconds ?? from;
-          // Unrounded notated tempo, in media time. Playback rate belongs in
-          // the media -> AudioContext conversion, never in the grid.
-          return beatGridFromAnchor(anchor, section.score.initialTempo, from, to);
+          // Unrounded notated tempo, on the TIMELINE (spec §7): the notation
+          // can't drift, so the grid is built at the constant notated tempo
+          // and then warped through this section's own flex map into MEDIA
+          // seconds, so the click follows the (possibly stretched) recording.
+          // Playback rate itself belongs in the media -> AudioContext
+          // conversion, never in the grid.
+          const beatTimesTimeline = beatGridFromAnchor(anchor, section.score.initialTempo, from, to);
+          const sectionFlexMap = new FlexMap(section.activeTimeMap?.flex ?? []);
+          return clickTimesInMedia(sectionFlexMap, beatTimesTimeline);
         })
       ),
     [normalizedSections, clock.durationSeconds]
@@ -293,7 +345,16 @@ export function PlaysenseStudioPlayer({
   // so there is nothing to align a click to here.
   const clickAligned = activeSection?.metronomeAnchorSeconds != null;
 
-  useVideoClickTrack({ videoRef, grid: clickGrid, enabled: clickOn, volume: clickVolume });
+  // With flex anywhere in the lesson the rate driver changes playbackRate at
+  // every flex boundary, so the click re-anchors on a ratechange instead of
+  // restarting (which clips it). Lesson-wide rather than per displayed
+  // section, so the switch can't flip in the same moment the driver hands a
+  // boundary's rate back. Unflexed lessons keep the restart path.
+  const lessonFlexed = useMemo(
+    () => normalizedSections.some((section) => !new FlexMap(section.activeTimeMap?.flex ?? []).isIdentity),
+    [normalizedSections]
+  );
+  useVideoClickTrack({ videoRef, grid: clickGrid, enabled: clickOn, volume: clickVolume, smoothRateChanges: lessonFlexed });
 
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
@@ -338,20 +399,25 @@ export function PlaysenseStudioPlayer({
 
   // Convert video seconds → score-internal ms. Video interludes advance at
   // video rate, independently of the score's tempo and synchronization map.
+  // clock.currentSeconds is MEDIA (the element's real time); timelineOf warps
+  // it onto the TIMELINE the notation and the gap boundaries live on (a
+  // pass-through outside a flexed section, so this is unaffected there).
   const cursorMs = useMemo(() => {
-    if (inLeadingGap && interludes.leading) return (clock.currentSeconds - interludes.leading.endSeconds) * 1000;
+    const timelineSeconds = timelineOf(flexMap, clock.currentSeconds);
+    if (inLeadingGap && interludes.leading) return (timelineSeconds - interludes.leading.endSeconds) * 1000;
     if (!timeMap) return 0;
     if (inTrailingGap && displaySection.videoEndSeconds != null) {
       const gapElapsedMs = Math.max(
         0,
-        (clock.currentSeconds - (displaySection.videoEndSeconds as number)) * 1000
+        (timelineSeconds - (displaySection.videoEndSeconds as number)) * 1000
       );
       return sectionTotalMs + gapElapsedMs;
     }
-    const qn = timeMap.toMusicalPosition(clock.currentSeconds);
+    const qn = timeMap.toMusicalPosition(timelineSeconds);
     return qnToTrackMs(activeTrack, score, qn);
   }, [
     clock.currentSeconds,
+    flexMap,
     timeMap,
     activeTrack,
     score,
@@ -367,14 +433,14 @@ export function PlaysenseStudioPlayer({
   // path the playhead takes.
   const loopAMs = useMemo(() => {
     if (!timeMap || clock.loopA === null) return null;
-    const qn = timeMap.toMusicalPosition(clock.loopA);
+    const qn = timeMap.toMusicalPosition(timelineOf(flexMap, clock.loopA));
     return qnToTrackMs(activeTrack, score, qn);
-  }, [timeMap, clock.loopA, activeTrack, score]);
+  }, [timeMap, clock.loopA, flexMap, activeTrack, score]);
   const loopBMs = useMemo(() => {
     if (!timeMap || clock.loopB === null) return null;
-    const qn = timeMap.toMusicalPosition(clock.loopB);
+    const qn = timeMap.toMusicalPosition(timelineOf(flexMap, clock.loopB));
     return qnToTrackMs(activeTrack, score, qn);
-  }, [timeMap, clock.loopB, activeTrack, score]);
+  }, [timeMap, clock.loopB, flexMap, activeTrack, score]);
 
   // Independent staff view position. When isFollowing is true, the view
   // tracks playback (cursorMs); when false, viewMs is held wherever the
@@ -410,7 +476,7 @@ export function PlaysenseStudioPlayer({
   // anchor. If they want follow back, they hit the Follow button.
   const handleSeek = (target: SeekTarget) => {
     if (!timeMap) return;
-    const seconds = timeMap.toVideoTime(target.qn);
+    const seconds = mediaSeekFor(flexMap, timeMap, target.qn);
     clock.seek(seconds);
     if (!readOnly) {
       void logPlaysenseStudioEvent({
@@ -424,8 +490,8 @@ export function PlaysenseStudioPlayer({
   // Drag-on-staff → set A/B and arm the loop.
   const handleSelectRange = (range: SelectedRange) => {
     if (!timeMap) return;
-    const startSec = timeMap.toVideoTime(range.startQn);
-    const endSec = timeMap.toVideoTime(range.endQn);
+    const startSec = mediaSeekFor(flexMap, timeMap, range.startQn);
+    const endSec = mediaSeekFor(flexMap, timeMap, range.endQn);
     if (endSec <= startSec) return;
     clock.setLoopA(startSec);
     clock.setLoopB(endSec);
@@ -485,28 +551,21 @@ export function PlaysenseStudioPlayer({
       void logPlaysenseStudioEvent({
         eventType: 'playsense_studio_play',
         classItemId,
-        metadata: { from_seconds: clock.currentSeconds, rate: clock.playbackRate },
+        // displayedRate (userSpeed when flexed), not the raw element rate,
+        // which flickers segment to segment and would be meaningless here.
+        metadata: { from_seconds: clock.currentSeconds, rate: displayedRate },
       });
     }
     wasPlayingRef.current = clock.isPlaying;
-  }, [clock.isPlaying, clock.currentSeconds, clock.playbackRate, classItemId, readOnly]);
+  }, [clock.isPlaying, clock.currentSeconds, displayedRate, classItemId, readOnly]);
 
-  const { t } = useTranslation();
-  const [lessonView, setLessonView] = useState<'both' | 'video' | 'score'>('both');
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('lmm-lesson-view');
-      if (saved === 'both' || saved === 'video' || saved === 'score') setLessonView(saved);
-    } catch { /* Storage may be unavailable. */ }
-  }, []);
-  const changeLessonView = (view: 'both' | 'video' | 'score') => {
-    setLessonView(view);
-    try { localStorage.setItem('lmm-lesson-view', view); } catch { /* Session choice still works. */ }
-  };
+  // Notation pane staff layout — stacked rows or horizontal pages, the student's
+  // saved choice (only used when layout === 'split'). Pane geometry lives in SplitWorkspace.
+  const [notationLayout, setNotationLayout] = useStaffLayoutPreference();
 
-  // Notation pane staff layout — stacked staves vs. single horizontal scroll
-  // (only used when layout === 'split'). Pane geometry lives in SplitWorkspace.
-  const [notationLayout, setNotationLayout] = useState<'wrapped' | 'scroll'>('wrapped');
+  // The lesson workspace (video | staff): layout, split and PiP are remembered
+  // per staff layout. Watch opens side by side with the video at 44 %.
+  const workspace = useWorkspaceLayout(`watch:${notationLayout}`, WATCH_WORKSPACE);
 
   // Notation zoom (split layout) — pinch or slider scales the staff. 1 = default.
   const [zoom, setZoom] = useState(1);
@@ -539,16 +598,23 @@ export function PlaysenseStudioPlayer({
           }))
       : undefined;
 
+  // Section chips in the staff header: tap one to loop that part of the demo.
+  const chipSections = (sectionMarkers ?? []).map((marker, i, all) => ({
+    label: marker.label ?? null,
+    start: marker.startSeconds,
+    end: marker.endSeconds ?? all[i + 1]?.startSeconds ?? clock.durationSeconds,
+  })).filter((section) => section.end > section.start);
+
   const transportEl = (
     <TransportBar
       currentSeconds={clock.currentSeconds}
       durationSeconds={clock.durationSeconds}
       isPlaying={clock.isPlaying}
-      playbackRate={clock.playbackRate}
+      playbackRate={displayedRate}
       onToggle={clock.toggle}
       onRestart={() => clock.seek(trimStart)}
       onSeek={clampSeek}
-      onRateChange={clock.setPlaybackRate}
+      onRateChange={onDisplayedRateChange}
       loopA={clock.loopA}
       loopB={clock.loopB}
       loopEnabled={clock.loopEnabled}
@@ -594,8 +660,8 @@ export function PlaysenseStudioPlayer({
 
   // Wrapped (stacked staves) only in the split workspace; the legacy stack
   // layout keeps the single horizontal scrolling line.
-  const staffLayout: 'wrapped' | 'scroll' =
-    layout === 'split' ? notationLayout : 'scroll';
+  const staffLayout: StaffLayoutMode =
+    layout === 'split' ? staffLayoutMode(notationLayout) : 'scroll';
 
   const staffEl = (
     <StaffRenderer
@@ -606,7 +672,7 @@ export function PlaysenseStudioPlayer({
       loopAMs={loopAMs}
       loopBMs={loopBMs}
       layoutMode={staffLayout}
-      className={staffLayout === 'wrapped' ? 'min-h-0 flex-1' : undefined}
+      className={staffLayout !== 'scroll' ? 'min-h-0 flex-1' : undefined}
       zoom={layout === 'split' ? zoom : 1}
       showCursor={hasNotation || inTrailingGap || inLeadingGap}
       leadingGapMs={leadingGapMs}
@@ -640,11 +706,16 @@ export function PlaysenseStudioPlayer({
         classItemId={classItemId}
         loopA={clock.loopA}
         loopB={clock.loopB}
-        playbackRate={clock.playbackRate}
+        playbackRate={displayedRate}
         onLoadClip={(clip: PlaysenseStudioClip) => {
           clock.loadLoop(clip.startSeconds, clip.endSeconds, {
             rate: clip.playbackRate,
           });
+          // The clip-restored rate must keep working with flex: feed it into
+          // userSpeed too, so useFlexPlayback picks it up (and the identity
+          // branch keeps clock.playbackRate/setPlaybackRate as the source of
+          // truth when there's no flex — this write is simply unread then).
+          setUserSpeed(clip.playbackRate);
         }}
       />
     ) : null;
@@ -666,86 +737,71 @@ export function PlaysenseStudioPlayer({
             edge-to-edge, viewport-filling workspace. */}
         <div className="relative -mx-4 md:-mx-8">
           <SplitWorkspace
+            controller={workspace}
             frame="bleed"
-            visiblePane={lessonView === 'both' ? 'both' : lessonView === 'video' ? 'primary' : 'secondary'}
-            primary={
-            <>
+            media={
               <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
                 {videoEl}
               </div>
-              <div className="flex-shrink-0 border-t border-border bg-card px-3 py-2">
-                {transportEl}
-              </div>
-            </>
-          }
-          secondaryHeader={({ orient, setOrient, isRow }) => (
-            <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-border bg-secondary px-3 py-2">
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(30_85%_55%/0.7)]" />
-                  PlaySense Studio
-                </div>
-                <div className="mt-1 truncate font-heading text-[13.5px] font-bold tracking-tight">
-                  {score.title || 'Notation'}
-                </div>
-                <div className="mt-0.5 truncate text-[10.5px] font-medium tracking-[0.02em] text-muted-foreground">
-                  {meta}
-                </div>
-              </div>
-              <div className={`flex shrink-0 ${isRow ? 'flex-col items-end gap-1' : 'flex-row-reverse items-center gap-2'}`}>
-                <div className="flex items-center gap-0.5 rounded-full border border-border p-0.5" role="group" aria-label={t('lessonView.label')}>
-                  {(['video', 'score'] as const).map(view => {
-                    const enabled = lessonView === 'both' || lessonView === view;
-                    const onlyEnabled = lessonView === view;
-                    return <button key={view} type="button" aria-pressed={enabled} disabled={onlyEnabled}
-                      onClick={() => changeLessonView(enabled ? (view === 'video' ? 'score' : 'video') : 'both')}
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${enabled ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'} disabled:cursor-default`}>
-                      {t(`lessonView.${view}Toggle`)}
-                    </button>;
-                  })}
-                </div>
-                {lessonView !== 'video' && <div className="flex items-center gap-1">
-                  <NotationLayoutToggle value={notationLayout} onChange={setNotationLayout} />
-                  {lessonView === 'both' && <OrientationToggle value={orient} onChange={setOrient} />}
-                  {hasNotation && (
-                    <DownloadMenu
-                      score={score}
-                      classItemTitle={classItemTitle ?? score.title}
-                      sectionIndex={Math.max(0, normalizedSections.indexOf(displaySection))}
-                      sectionCount={normalizedSections.length}
-                      classItemId={classItemId}
-                      readOnly={readOnly}
-                    />
-                  )}
-                </div>}
-              </div>
-            </div>
-          )}
-            secondary={
+            }
+            music={
               <>
-              <div className="relative min-h-0 flex-1">
-                {/* Wrapped staves scroll inside the renderer's own viewport, so the
-                    layer hands it every remaining pixel instead of nesting a
-                    second scroller; the single scrolling line keeps the padded
-                    page so the scrub bar clears the zoom control. */}
-                <NotationZoomLayer
-                  zoom={zoom}
-                  onZoom={setZoom}
-                  className={staffLayout === 'wrapped'
-                    ? 'flex h-full flex-col gap-2 overflow-hidden p-3'
-                    : 'h-full space-y-2 overflow-auto p-3 pb-16'}
-                >
-                  {tracksEl}
-                  {staffEl}
-                  {scrubEl}
-                </NotationZoomLayer>
-                <NotationZoomControl zoom={zoom} onZoom={setZoom} />
-              </div>
-              {lessonView === 'score' && <div className="flex-shrink-0 border-t border-border bg-card px-3 py-2">{transportEl}</div>}
+                <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-border bg-secondary px-3 py-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase leading-none tracking-[0.14em] text-primary">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(30_85%_55%/0.7)]" />
+                      PlaySense Studio
+                    </div>
+                    <div className="mt-1 truncate font-heading text-[13.5px] font-bold tracking-tight">
+                      {score.title || 'Notation'}
+                    </div>
+                    <div className="mt-0.5 truncate text-[10.5px] font-medium tracking-[0.02em] text-muted-foreground">
+                      {meta}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                    {/* In a lesson the switcher lives in the action bar. */}
+                    <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} /></WorkspaceToolsPortal>
+                    {staffNeedsRefollow(staffLayout, isFollowing) && <StaffRefollowButton onFollow={handleFollow} />}
+                    <StaffLayoutSwitch value={notationLayout} onChange={setNotationLayout} />
+                    {hasNotation && (
+                      <DownloadMenu
+                        score={score}
+                        classItemTitle={classItemTitle ?? score.title}
+                        sectionIndex={Math.max(0, normalizedSections.indexOf(displaySection))}
+                        sectionCount={normalizedSections.length}
+                        classItemId={classItemId}
+                        readOnly={readOnly}
+                      />
+                    )}
+                  </div>
+                </div>
+                {chipSections.length > 1 && (
+                  <SectionChips sections={chipSections} currentSeconds={clock.currentSeconds}
+                    loop={{ a: clock.loopA, b: clock.loopB, enabled: clock.loopEnabled }}
+                    onLoop={(a, b) => clock.loadLoop(a, b)} onClear={clock.clearLoop}
+                    className="flex-shrink-0 border-b border-border px-3 py-2" />
+                )}
+                <div className="relative min-h-0 flex-1">
+                  {/* See staffPaneClass for how each staff layout uses the pane. */}
+                  <NotationZoomLayer
+                    zoom={zoom}
+                    onZoom={setZoom}
+                    className={staffPaneClass(staffLayout)}
+                  >
+                    {tracksEl}
+                    {staffEl}
+                    {scrubEl}
+                  </NotationZoomLayer>
+                  <NotationZoomControl zoom={zoom} onZoom={setZoom} />
+                </div>
               </>
             }
+            overlay={overlayEl}
+            // One transport instance: under the video in side / stack, below
+            // the stage in PiP and music only (moved, never remounted).
+            dock={transportEl}
           />
-          {overlayEl}
         </div>
 
         {clipsEl}
@@ -906,50 +962,6 @@ function NotationZoomControl({
         className="min-w-[34px] rounded-full px-1 text-center text-[10px] font-semibold tabular-nums text-muted-foreground transition-colors hover:text-foreground"
       >
         {Math.round(zoom * 100)}%
-      </button>
-    </div>
-  );
-}
-
-// Icon-only notation toggle: stacked staves ↔ single horizontal scroll.
-function NotationLayoutToggle({
-  value,
-  onChange,
-}: {
-  value: 'wrapped' | 'scroll';
-  onChange: (v: 'wrapped' | 'scroll') => void;
-}) {
-  return (
-    <div
-      role="group"
-      aria-label="Notation layout"
-      className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full border border-border bg-secondary p-0.5"
-    >
-      <button
-        type="button"
-        onClick={() => onChange('wrapped')}
-        title="Stacked staves"
-        aria-label="Stacked staves"
-        className={`grid h-[26px] w-7 place-items-center rounded-full transition-colors ${
-          value === 'wrapped'
-            ? 'bg-primary/[0.16] text-primary'
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-      >
-        <Rows3 className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('scroll')}
-        title="Horizontal scroll"
-        aria-label="Horizontal scroll"
-        className={`grid h-[26px] w-7 place-items-center rounded-full transition-colors ${
-          value === 'scroll'
-            ? 'bg-primary/[0.16] text-primary'
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-      >
-        <MoveHorizontal className="h-4 w-4" />
       </button>
     </div>
   );

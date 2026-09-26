@@ -7,6 +7,16 @@ import { cn } from '@/lib/utils'
 import { outcomeOf } from '@/lib/quiz/engine'
 import { Burst } from './burst'
 
+/** The feedback headline for a score in [0, 1]; the lesson action bar shows it too. */
+export function feedbackTitle(t: (key: string, params?: Record<string, string | number>) => string, score: number): string {
+  const tone = outcomeOf(score)
+  return tone === 'ok'
+    ? t('dashboard.classViewer.quiz.feedback.correct')
+    : tone === 'part'
+      ? t('dashboard.classViewer.quiz.feedback.partly', { pct: Math.round(score * 100) })
+      : t('dashboard.classViewer.quiz.feedback.incorrect')
+}
+
 /** Graded feedback for a score in [0, 1]. Announced to screen readers via role="status". */
 export function FeedbackBanner({
   score,
@@ -20,12 +30,7 @@ export function FeedbackBanner({
 }) {
   const { t } = useTranslation()
   const tone = outcomeOf(score)
-  const title =
-    tone === 'ok'
-      ? t('dashboard.classViewer.quiz.feedback.correct')
-      : tone === 'part'
-        ? t('dashboard.classViewer.quiz.feedback.partly', { pct: Math.round(score * 100) })
-        : t('dashboard.classViewer.quiz.feedback.incorrect')
+  const title = feedbackTitle(t, score)
   const Icon = tone === 'ok' ? Check : tone === 'part' ? Minus : X
   return (
     <motion.div

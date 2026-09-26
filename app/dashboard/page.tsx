@@ -12,11 +12,14 @@ import { ContinueCard } from '@/components/dashboard/home/continue-card'
 import { CourseList } from '@/components/dashboard/home/course-list'
 import { RecommendedSection } from '@/components/dashboard/home/recommended-section'
 import { FeedbackCard } from '@/components/dashboard/home/feedback-card'
-import { PracticeCalendar } from '@/components/dashboard/home/practice-calendar'
+import { StreakCard } from '@/components/dashboard/home/streak-card'
+import { YourPathCard } from '@/components/dashboard/home/your-path-card'
+import { yourPathFor, type YourPath } from '@/lib/dashboard/your-path'
 import { MasterClassCard } from '@/components/dashboard/home/master-class-card'
 import { ToolTiles } from '@/components/dashboard/home/tool-tiles'
 import { MilestonesCard } from '@/components/dashboard/home/milestones-card'
 import { UpgradeCard } from '@/components/dashboard/home/upgrade-card'
+import { PageBackground } from '@/components/dashboard/page-background'
 import type {
   ContinueCard as ContinueCardData,
   FeedbackSummary,
@@ -34,6 +37,7 @@ import { classIsDone, courseHref, currentClassIndexFor, orderedClasses, progress
 interface ItemRow {
   id: string
   order_index: number | null
+  item_type?: string | null
   video_duration_seconds: number | null
 }
 interface ClassRow {
@@ -44,6 +48,7 @@ interface ClassRow {
 }
 interface SectionRow {
   id: string
+  title?: string | null
   order_index: number | null
   classes: ClassRow[] | null
 }
@@ -118,8 +123,8 @@ export default async function DashboardPage() {
           teacher:teachers(id, name, image_url),
           musical_style:musical_styles(name, name_es),
           course_sections(
-            id, order_index,
-            classes(id, title, title_es, order_index, items:class_items(id, order_index, video_duration_seconds))
+            id, title, title_es, order_index,
+            classes(id, title, title_es, order_index, items:class_items(id, order_index, item_type, video_duration_seconds))
           )
         )
       `
@@ -159,6 +164,7 @@ export default async function DashboardPage() {
     if (!e.course) continue
     localizeRow(e.course as unknown as Record<string, unknown>, locale, COURSE_FIELDS)
     if (e.course.musical_style) localizeRow(e.course.musical_style as unknown as Record<string, unknown>, locale, ['name'])
+    localizeRows((e.course.course_sections ?? []) as unknown as Record<string, unknown>[], locale, ['title'])
     for (const s of e.course.course_sections ?? []) {
       if (s.classes) localizeRows(s.classes as unknown as Record<string, unknown>[], locale, ['title'])
     }
@@ -213,6 +219,7 @@ export default async function DashboardPage() {
 
   // ── Continue card ────────────────────────────────────────────────
   let continueCard: ContinueCardData | null = null
+  let yourPath: YourPath | null = null
   {
     const latest = [...progress].sort((a, b) => progressTime(b) - progressTime(a))[0]
     const hit = latest ? itemToClass.get(latest.class_item_id) : undefined
@@ -244,6 +251,9 @@ export default async function DashboardPage() {
           segments,
         }
       }
+      // The path shows even when the course is finished (index -1): it then
+      // ends on the last lesson and its checkpoint, with nothing current.
+      yourPath = yourPathFor(course, completed, index >= 0 ? classes[index]?.id ?? null : null)
     }
   }
 
@@ -396,18 +406,24 @@ export default async function DashboardPage() {
 
   // ── Render ───────────────────────────────────────────────────────
   return (
-    <div className="w-full space-y-6 lg:space-y-8">
+    <>
+    <PageBackground />
+    {/* z-[1] lifts the content over the fixed z-0 background. It makes a stacking
+        context, which is fine: the header, rail and mobile nav are z-40/50 outside
+        it, and every overlay on this page is portaled or stays inside its card. */}
+    <div className="relative z-[1] w-full space-y-6 lg:space-y-8">
       <GreetingRow firstName={data.firstName} streak={data.streak} weekDone={data.weekDone} weekGoal={data.weekGoal} />
       <ContinueCard card={data.continueCard} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
         <div className="min-w-0 space-y-8">
+          <YourPathCard path={yourPath} />
           <CourseList courses={data.courses} />
           <RecommendedSection courses={data.recommended} ctx={data.recContext} />
           <FeedbackCard feedback={data.feedback} />
         </div>
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-          <PracticeCalendar
+          <StreakCard
             cells={data.calendar}
             weekDone={data.weekDone}
             weekGoal={data.weekGoal}
@@ -421,5 +437,6 @@ export default async function DashboardPage() {
         </aside>
       </div>
     </div>
+    </>
   )
 }

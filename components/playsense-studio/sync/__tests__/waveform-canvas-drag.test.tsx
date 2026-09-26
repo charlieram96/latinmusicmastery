@@ -11,7 +11,7 @@ import { useCallback, useState } from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { WaveformCanvas } from '../waveform-canvas';
+import { WaveformCanvas, type DragMode } from '../waveform-canvas';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -20,8 +20,20 @@ declare global {
 
 const PPS = 10;
 
-function pointer(type: string, x: number, y: number) {
-  const e = new MouseEvent(type, { clientX: x, clientY: y, bubbles: true, cancelable: true });
+function pointer(
+  type: string,
+  x: number,
+  y: number,
+  mods: { altKey?: boolean; metaKey?: boolean } = {}
+) {
+  const e = new MouseEvent(type, {
+    clientX: x,
+    clientY: y,
+    bubbles: true,
+    cancelable: true,
+    altKey: mods.altKey ?? false,
+    metaKey: mods.metaKey ?? false,
+  });
   Object.defineProperty(e, 'pointerId', { value: 1 });
   return e;
 }
@@ -38,13 +50,15 @@ function Harness({
   onNoteDrag,
   noteAt,
   markerStart = 5,
+  dragAll = false,
 }: {
   onTrimDrag?: (edge: 'in' | 'out', t: number) => void;
-  onMarkerDrag?: (t: number) => void;
+  onMarkerDrag?: (t: number, mode?: DragMode, mods?: { snap: boolean }) => void;
   onNoteDrag?: (t: number) => void;
   /** When set, the selected note's handle sits here (seconds). */
   noteAt?: number;
   markerStart?: number;
+  dragAll?: boolean;
 }) {
   const [trimIn, setTrimIn] = useState(5);
   const [markerAt, setMarkerAt] = useState(markerStart);
@@ -60,8 +74,8 @@ function Harness({
   );
 
   const handleMarkerDrag = useCallback(
-    (_ref: unknown, t: number) => {
-      onMarkerDrag?.(t);
+    (_ref: unknown, t: number, mode?: DragMode, mods?: { snap: boolean }) => {
+      onMarkerDrag?.(t, mode, mods);
       setMarkerAt(t);
     },
     [onMarkerDrag]
@@ -89,7 +103,7 @@ function Harness({
       tailVideoTimeSeconds={60}
       pixelsPerSecond={PPS}
       scrollLeftPx={0}
-      dragAll={false}
+      dragAll={dragAll}
       selected={null}
       getCurrentSeconds={() => 0}
       onSeek={() => {}}
@@ -225,5 +239,122 @@ describe('WaveformCanvas trim drag', () => {
 
     expect(calls).toEqual([10]);
     expect(markerCalls).toEqual([]);
+  });
+
+  it('swaps ripple and single while Option is held, and reports ⌘ as no-snap', () => {
+    const calls: Array<[number, DragMode | undefined, { snap: boolean } | undefined]> = [];
+    act(() => {
+      root.render(
+        <Harness dragAll onMarkerDrag={(t, mode, mods) => calls.push([t, mode, mods])} />
+      );
+    });
+
+    const overlay = container.querySelectorAll('canvas')[1];
+
+    // Marker starts at 5s * 10px/s = x50, below the label band. dragAll is
+    // true, so holding Option for this move should swap the ripple default
+    // to a single-marker drag, and no metaKey means snapping stays on.
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerdown', 50, 100));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointermove', 100, 100, { altKey: true }));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerup', 100, 100));
+    });
+    expect(calls).toEqual([[10, 'single', { snap: true }]]);
+
+    calls.length = 0;
+    // The marker is now at 10s (x100 at 10px/s). This time hold ⌘ with no
+    // Option: ripple stays the dragAll default ('all-after'), and snap flips off.
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerdown', 100, 100));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointermove', 150, 100, { metaKey: true }));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerup', 150, 100));
+    });
+    expect(calls).toEqual([[15, 'all-after', { snap: false }]]);
+  });
+});
+
+describe('WaveformCanvas locked markers + background drag (graded mode)', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    global.IS_REACT_ACT_ENVIRONMENT = true;
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('a press on a locked marker drags the background shift instead, and ⌘ turns the snap off', () => {
+    const shifts: Array<[number, string, boolean]> = [];
+    const markerCalls: number[] = [];
+    const seeks: number[] = [];
+    act(() => {
+      root.render(
+        <WaveformCanvas
+          peaks={null}
+          durationSeconds={60}
+          handles={[{ measureNumber: 1, beatInMeasure: 1, isDownbeat: true, videoTimeSeconds: 5 }]}
+          noteTicks={[]}
+          showNotes={false}
+          tailVideoTimeSeconds={60}
+          pixelsPerSecond={PPS}
+          scrollLeftPx={0}
+          dragAll
+          selected={null}
+          getCurrentSeconds={() => 0}
+          onSeek={(t) => seeks.push(t)}
+          onSelect={() => {}}
+          onMarkerDrag={(_r, t) => markerCalls.push(t)}
+          onTailDrag={() => {}}
+          onDragEnd={() => {}}
+          onScrollByPx={() => {}}
+          onViewportWidth={() => {}}
+          markersLocked
+          onBackgroundDrag={(d, phase, mods) => shifts.push([d, phase, mods.snap])}
+        />
+      );
+    });
+    const overlay = container.querySelectorAll('canvas')[1];
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerdown', 50, 100));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointermove', 80, 100));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointermove', 100, 100, { metaKey: true }));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerup', 100, 100, { metaKey: true }));
+    });
+    expect(markerCalls).toEqual([]);
+    expect(seeks).toEqual([]);
+    expect(shifts).toEqual([
+      [3, 'move', true],
+      [5, 'move', false],
+      [5, 'end', false],
+    ]);
+
+    // A plain click still seeks.
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerdown', 200, 100));
+    });
+    act(() => {
+      overlay.dispatchEvent(pointer('pointerup', 200, 100));
+    });
+    expect(seeks).toEqual([20]);
   });
 });

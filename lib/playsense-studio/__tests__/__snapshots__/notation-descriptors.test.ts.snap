@@ -1,0 +1,38 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`richer descriptors > leaves an old 4/4 score unchanged apart from the new fields 1`] = `
+[
+  [
+    [
+      "c/4",
+    ],
+    "q",
+    false,
+    false,
+  ],
+  [
+    [
+      "d/4",
+    ],
+    "q",
+    false,
+    false,
+  ],
+  [
+    [
+      "e/4",
+    ],
+    "q",
+    false,
+    false,
+  ],
+  [
+    [
+      "f/4",
+    ],
+    "q",
+    false,
+    false,
+  ],
+]
+`;

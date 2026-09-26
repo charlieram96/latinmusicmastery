@@ -31,6 +31,27 @@ export type Instrument =
 
 export type DefaultView = 'staff' | 'tab' | 'fretboard' | 'rhythm-grid' | 'pdf';
 
+export type Articulation = 'staccato' | 'staccatissimo' | 'tenuto' | 'accent' | 'marcato' | 'fermata';
+export type Ornament = 'trill' | 'mordent' | 'turn';
+export type Dynamic = 'ppp' | 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff' | 'fff' | 'fp' | 'sfz';
+export type Clef = 'treble' | 'bass' | 'alto' | 'tenor' | 'percussion';
+
+/** Written pitch spelling. `showAccidental: 'always'` forces a courtesy accidental. */
+export interface Spelling {
+  step: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+  alter: -2 | -1 | 0 | 1 | 2;
+  showAccidental?: 'auto' | 'always';
+}
+
+/** n notes in the time of m (a triplet is 3:2). Events of one group share `id`. */
+export interface Tuplet { id: string; n: number; m: number }
+
+/** A grace note; on a drum stroke, `percussion` makes it the same stroke (a flam). */
+export interface GraceNote { midi: number; spelling?: Spelling; slash: boolean; percussion?: PercussionNotation }
+
+/** A line between two events, referenced by event id. */
+export interface Span { id: string; type: 'slur' | 'cresc' | 'dim'; from: string; to: string }
+
 export interface ScoreDocument {
   schemaVersion: SchemaVersion;
   title: string;
@@ -43,6 +64,14 @@ export interface ScoreDocument {
   /** Concert key signature, expressed as MusicXML "fifths" (-7..+7; negative = flats, positive = sharps). */
   initialKeyFifths: number;
   tracks: Track[];
+  spans?: Span[];
+  /**
+   * True once the admin has reviewed per-bar tempo marks (measures[].tempoChange)
+   * that an import left disagreeing with `initialTempo` and chosen to keep them
+   * (see lib/playsense-studio/tempo-marks.ts, spec §8). Unset/false: graded play
+   * ignores every tempoChange.
+   */
+  tempoMarksConfirmed?: boolean;
 }
 
 export interface Track {
@@ -76,7 +105,12 @@ export interface Measure {
    * 'single' removes the final bar from the last measure; 'final' adds one to an
    * inner measure. A repeat's closing bar always wins over this.
    */
-  endBarline?: 'single' | 'final';
+  endBarline?: 'single' | 'final' | 'double';
+  clef?: Clef;
+  /** Notated repeat signs (display only; written-out passes live in `repeat`). */
+  repeatStart?: boolean;
+  repeatEnd?: boolean;
+  volta?: '1.' | '2.';
   /** Voices within this measure. Editor permits max 2 in v1. */
   voices: Voice[];
 }
@@ -101,6 +135,18 @@ export interface NoteBase {
   /** Slurred to next event. */
   slurToNext?: boolean;
   articulation?: 'staccato' | 'accent' | 'tenuto';
+  /** Stable id for spans, nudges and flex. Assigned by ensureEventIds. */
+  id?: string;
+  /** Supersedes `dotted`: read with eventDots(). */
+  dots?: 1 | 2;
+  /** Supersedes `triplet`: read with eventTuplet(). */
+  tuplet?: Tuplet;
+  /** Supersedes `articulation`: read with eventArticulations(). */
+  articulations?: Articulation[];
+  ornament?: Ornament;
+  dynamic?: Dynamic;
+  text?: string;
+  grace?: GraceNote[];
 }
 
 export type PercussionNotehead = 'normal' | 'x' | 'ornate-x' | 'plus' | 'circled' | 'slash' | 'slashed' | 'diamond' | 'triangle-up' | 'triangle-down' | 'square';
@@ -121,6 +167,7 @@ export interface Note extends NoteBase {
   midi: number;
   /** Optional enharmonic spelling hint (e.g. "Bb" vs "A#"). */
   spellingHint?: string;
+  spelling?: Spelling;
   percussion?: PercussionNotation;
   /** Optional fret position (string is 1-based, low to high). For tab/fretboard tracks. */
   fingering?: { string: number; fret: number; finger?: number };
@@ -136,6 +183,7 @@ export interface Chord extends NoteBase {
   notes: Array<{
     midi: number;
     spellingHint?: string;
+    spelling?: Spelling;
     percussion?: PercussionNotation;
     fingering?: { string: number; fret: number; finger?: number };
     tieToNext?: boolean;

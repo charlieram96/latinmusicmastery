@@ -1,4 +1,39 @@
 {
+  "staff": {
+    "countAnd": "&",
+    "layout": {
+      "label": "Staff layout",
+      "stacked": "Stacked",
+      "horizontal": "Horizontal"
+    },
+    "score": "Score",
+    "scoreAria": "Musical score",
+    "bar": "Bar",
+    "barAria": "Bar {bar} of {total}, beat {beat}",
+    "pass": "Pass {pass} / {total}",
+    "follow": "Follow",
+    "followAria": "Follow the current bar",
+    "followOnTitle": "Following playback. Turn off to browse the score.",
+    "followOffTitle": "Resume following the current bar.",
+    "following": "Following your music",
+    "browsing": "Browse at your own pace",
+    "scrollHint": "Scroll to read ahead",
+    "size": "Notation size",
+    "smaller": "Smaller notation",
+    "larger": "Larger notation"
+  },
+  "lessonWorkspace": {
+    "layout": "Workspace layout",
+    "side": "Side by side",
+    "stack": "Stacked",
+    "pip": "Picture in picture",
+    "music": "Music only",
+    "swap": "Swap sides",
+    "resize": "Resize video and music",
+    "resizeMusic": "Resize staff and highway",
+    "resizeHint": "Drag to resize · arrow keys to adjust · double-click to reset",
+    "resizePip": "Drag to resize the video"
+  },
   "lessonView": {"videoToggle": "Video", "scoreToggle": "Score","label": "Lesson view", "both": "Video + score", "video": "Video only", "score": "Score only"},
   "playsenseExport": {"button": "Download sheet music", "title": "Download this section", "pdf": "Sheet music (PDF)", "pdfHint": "Print or read on a tablet", "musicxml": "MusicXML", "musicxmlHint": "Open in MuseScore or Guitar Pro", "note": "Includes all tracks, Letter size, title and tempo.", "error": "Could not create the file. Try again.", "working": "Preparing…"},
   "common": {
@@ -1767,6 +1802,7 @@
         "continueCourse": "Continue Course",
         "beginCourse": "Begin Course",
         "comingSoon": "Coming Soon",
+        "reviewCourse": "Review Course",
         "subscribeToUnlock": "Subscribe to Unlock",
         "instructor": "Instructor",
         "yourInstructor": "Your Instructor",
@@ -1873,7 +1909,38 @@
           "freePreview": "Free preview",
           "lessonOf": "Lesson {n} of {total}",
           "left": "{duration} left",
-          "inYourPlan": "Included in your plan"
+          "inYourPlan": "Included in your plan",
+          "showAllOne": "Show {count} lesson",
+          "showAll": "Show all {count} lessons",
+          "showFewer": "Show fewer",
+          "go": "Go"
+        },
+        "path": {
+          "continue": "Continue",
+          "start": "Start",
+          "minutes": "{n} min",
+          "lessonN": "Lesson {n}",
+          "checkpoint": "Module {n} checkpoint",
+          "moreOne": "{count} more",
+          "more": "{count} more",
+          "prev": "Earlier lessons",
+          "next": "Later lessons",
+          "state": {
+            "done": "Done",
+            "current": "Up next",
+            "upcoming": "Coming up"
+          },
+          "types": {
+            "video": "Video",
+            "play": "Play along",
+            "quiz": "Quiz",
+            "other": "Reading"
+          },
+          "heading": "Your path",
+          "doneOfOne": "{done} of {total} lesson done",
+          "doneOf": "{done} of {total} lessons done",
+          "module": "Module {n}",
+          "goToLesson": "Go to lesson"
         }
       },
       "modules": {
@@ -1928,7 +1995,9 @@
             "teacher": "More from {teacher}, who teaches your {course}.",
             "new": "New this month.",
             "popular": "Popular with new learners."
-          }
+          },
+          "previewCta": "Preview",
+          "lessonsOne": "{count} lesson"
         },
         "newBadge": "New",
         "nextMilestones": "Next Milestones",
@@ -1985,7 +2054,6 @@
           "afternoon": "Good afternoon, {name}",
           "evening": "Good evening, {name}"
         },
-        "weeklyGoalChip": "{done} of {goal} lessons",
         "continue": {
           "lesson": "Lesson",
           "eyebrow": "{course}, lesson {n} of {total}",
@@ -2038,6 +2106,29 @@
           "tunerBody": "Tune before you play",
           "playSense": "Play Sense",
           "playSenseBody": "Practice a pattern"
+        },
+        "path": {
+          "title": "Your path",
+          "module": "Module {n} · {title}",
+          "moduleOnly": "Module {n}",
+          "courseMap": "Course map"
+        },
+        "streak": {
+          "title": "Practice streak",
+          "days": "{count} days",
+          "daysOne": "{count} day",
+          "best": "Best: {count} days.",
+          "bestOne": "Best: {count} day.",
+          "weeklyGoal": "Weekly goal",
+          "goalProgress": "{done} of {goal} lessons",
+          "goalExceeded": "{goal} of {goal} lessons · +{extra} extra",
+          "toGo": "{count} to go",
+          "reached": "Reached",
+          "heatLabel": "Practice over the last 5 weeks",
+          "fiveWeeksAgo": "5 weeks ago",
+          "today": "Today",
+          "cell": "{date}: {count} lessons",
+          "cellOne": "{date}: {count} lesson"
         }
       }
     },
@@ -2299,7 +2390,190 @@
         "playAlongWith": "Play along with",
         "tracksOn": "{on} of {total} on",
         "tracksHint": "Mute a track or set its level. Changes apply while you play.",
-        "preparing": "Preparing the test…"
+        "preparing": "Preparing the test…",
+        "audioErrors": {
+          "webAudio": "Your browser can't process audio here. Try an up-to-date Chrome, Edge, Firefox or Safari.",
+          "micDenied": "Microphone access was blocked. Click the lock or site-info icon in the address bar, allow the microphone, then press Play again.",
+          "micMissing": "No microphone found. Connect a microphone and try again.",
+          "micBusy": "Another app is using your microphone. Close it and try again.",
+          "worklet": "The audio processor didn't load. Refresh the page and try again.",
+          "micFailed": "Couldn't access the microphone. Please try again.",
+          "midiUnsupported": "MIDI isn't available in this browser. Use a browser with Web MIDI, or choose microphone input.",
+          "midiMissing": "No MIDI instrument is connected. Connect your keyboard, then press Play.",
+          "midiDenied": "MIDI access was blocked. Allow MIDI in your browser and try again.",
+          "midiFailed": "Couldn't connect to your MIDI instrument. Check the connection and try again.",
+          "bleMissing": "No PlaySense device is connected. Connect your device and try again.",
+          "bleFailed": "Couldn't start the PlaySense input. Check your connection and try again.",
+          "bleUnsupported": "This browser doesn't support Bluetooth. Please use Chrome or Edge.",
+          "bleDisconnected": "Your PlaySense device disconnected and couldn't reconnect."
+        },
+        "muteTrack": "Mute {track}",
+        "unmuteTrack": "Unmute {track}",
+        "mute": "Mute",
+        "unmute": "Unmute",
+        "trackLevel": "{track} level",
+        "referenceVideo": "Instructor reference video",
+        "enableSoundHint": "Tap to enable sound",
+        "enableSound": "Enable sound"
+      },
+      "lessonMode": {
+        "crumbLabel": "Course and module",
+        "partsLabel": "Lesson parts",
+        "partDone": "Done",
+        "aboutAndComments": "About & comments",
+        "closeLesson": "Close lesson",
+        "backToCourse": "Back to course",
+        "rail": {
+          "label": "Lessons in this module",
+          "moduleProgress": "{done} of {total} lessons done in this module",
+          "moduleOf": "{course} · Module {n}",
+          "settings": "Lesson settings",
+          "paywalled": "Included with a subscription",
+          "kind": {
+            "video": "Video",
+            "play": "Play along",
+            "quiz": "Quiz",
+            "other": "Lesson"
+          },
+          "minutes": "{count} min"
+        },
+        "drawer": {
+          "title": "About this lesson",
+          "about": "About",
+          "comments": "Comments",
+          "commentsCount": "Comments · {count}",
+          "lessons": "Lessons",
+          "close": "Close",
+          "noDescription": "No description for this lesson yet."
+        },
+        "done": {
+          "eyebrow": "Lesson complete",
+          "heading": "{title}, done.",
+          "streakOne": "day streak",
+          "streak": "day streak",
+          "weekOne": "{count} of {goal} lessons this week",
+          "week": "{count} of {goal} lessons this week",
+          "toGoOne": "One more to hit your weekly goal.",
+          "toGo": "{count} more to hit your weekly goal.",
+          "goalMet": "Weekly goal reached. ¡Qué sabor!",
+          "weekLabel": "Weekly goal",
+          "lessonsProgress": "{value}/{goal} lessons",
+          "daysProgress": "{value}/{goal} days",
+          "unlocked": "Unlocked!",
+          "upNext": "Up next",
+          "saved": "Saved to your progress",
+          "savedDetail": "{title} · {count} parts",
+          "savedDetailOne": "{title} · 1 part",
+          "courseDone": "You finished the last lesson of this course.",
+          "nextLesson": "Next lesson"
+        },
+        "sections": {
+          "label": "Sections",
+          "section": "Section {n}",
+          "loop": "Loop {name}",
+          "stopLoop": "Stop looping {name}"
+        },
+        "watch": {
+          "title": "Watch {teacher} play it once",
+          "titleNoTeacher": "Watch the demo once",
+          "detail": "Tap a section to loop it. Drag the divider to resize, or pick a layout.",
+          "yourTurn": "Your turn"
+        },
+        "ready": {
+          "eyebrow": "Before you play",
+          "title": "Ready check",
+          "intro": "Three checks in one step. They fill in by themselves; change anything that’s wrong.",
+          "done": "Done",
+          "sound": "Sound",
+          "soundHint": "Headphones keep the backing track out of your mic.",
+          "modes": {
+            "headphones": "Headphones",
+            "speaker-safe": "Speakers",
+            "midi": "MIDI",
+            "playsense": "PlaySense"
+          },
+          "microphone": "Microphone",
+          "midi": "MIDI instrument",
+          "midiHint": "Exact notes from your MIDI instrument. No microphone needed.",
+          "playsense": "PlaySense",
+          "playsenseConnected": "Your PlaySense is connected.",
+          "playsenseConnect": "Connect PlaySense",
+          "playsenseConnecting": "Connecting…",
+          "playsenseFailed": "Could not connect. Turn the device on and try again.",
+          "pickFirst": "Choose how you’ll hear the band first.",
+          "defaultMic": "Your microphone",
+          "heard": "{device} · hearing you clearly",
+          "listening": "{device} · play a note or clap",
+          "waiting": "Waiting for microphone access…",
+          "testMic": "Test microphone",
+          "timing": "Timing",
+          "timingHint": "Play along to the clicks so we can measure your delay.",
+          "measure": "Measure",
+          "measureAgain": "Measure again",
+          "measuring": "Play along with the clicks: {beat} of {total}",
+          "latency": "Latency measured: {ms} ms",
+          "timingSkipped": "Not needed with MIDI.",
+          "preview": "What you’ll play",
+          "allSet": "Everything sounds right",
+          "readyWhenYouAre": "Ready when you are",
+          "pickMode": "Choose headphones or speakers to start",
+          "summary": "{parts}",
+          "start": "Start playing",
+          "meta": "{bars} bars · {bpm} BPM",
+          "measuringTitle": "Measuring your timing…"
+        },
+        "transport": {
+          "label": "Playback",
+          "pause": "Pause",
+          "resume": "Resume",
+          "restart": "Start over",
+          "bpm": "{bpm} BPM",
+          "click": "Click",
+          "clickOn": "Turn the click off",
+          "clickOff": "Turn the click on",
+          "watchDemo": "Watch the demo",
+          "finish": "Finish take",
+          "countIn": "Count-in {beat}",
+          "start": "Start playing"
+        },
+        "part": {
+          "eyebrow": "Practice complete",
+          "heading": {
+            "great": "¡Qué sabor!",
+            "good": "You found the groove.",
+            "ok": "The groove is taking shape.",
+            "low": "Every take is a step forward."
+          },
+          "first": "Your first take of this exercise.",
+          "better": "Your cleanest take so far, up from {prev}%.",
+          "same": "Right at your best of {prev}%.",
+          "below": "Your best so far is {prev}%. Keep at it.",
+          "accuracy": "accuracy",
+          "accuracyLabel": "Accuracy {value}%",
+          "cleanBars": "Clean bars",
+          "bestCombo": "Best combo",
+          "time": "Time",
+          "barByBar": "Bar by bar",
+          "barHint": "Each tile is one bar of the exercise",
+          "legend": {
+            "clean": "Clean",
+            "close": "Early or late",
+            "miss": "Missed notes",
+            "rest": "Rest",
+            "unplayed": "Not played"
+          },
+          "barLabel": "Bar {n}: {status}",
+          "practiceBars": "Practice bars {bars} slowly, then take it again.",
+          "practiceBar": "Practice bar {bars} slowly, then take it again.",
+          "saved": "Saved to your progress",
+          "savedDetail": "Replay any time from the lesson list.",
+          "demo": "Demo results · not saved",
+          "again": "Again",
+          "continue": "Continue",
+          "watch": "Watch the demo again",
+          "partial": "You stopped after {played} of {total} bars — the rest are not counted."
+        },
+        "finishLesson": "Finish lesson"
       }
     }
   }

@@ -1,12 +1,22 @@
 'use client'
 
 import { useRef, useCallback, useState } from 'react'
+import type { ExerciseGrid } from '@/lib/play-sense/types'
+import { gridBeats, gridCountIn, gridLoopSeconds } from '@/lib/play-sense/grid'
 
 interface UseMetronomeOptions {
   bpm: number
   timeSignature: [number, number]
   countInBeats?: number
   silent?: boolean
+  /**
+   * A graded owner's per-bar grid (tempo/meter changes honoured). When given,
+   * the count-in and the exercise clicks follow it instead of the uniform
+   * `bpm`/`timeSignature`. Without it, behaviour is unchanged.
+   */
+  grid?: ExerciseGrid
+  /** Count-in length in bars. Only meaningful with `grid`; defaults to 1. */
+  countInBars?: 1 | 2
 }
 
 interface UseMetronomeResult {
@@ -24,7 +34,7 @@ interface UseMetronomeResult {
  * to be spectrally distinct from percussion (120-2000Hz band-pass).
  */
 export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
-  const { bpm, timeSignature, countInBeats = 4, silent: silentProp = true } = options
+  const { bpm, timeSignature, countInBeats = 4, silent: silentProp = true, grid, countInBars = 1 } = options
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentBeat, setCurrentBeat] = useState(0)
@@ -38,9 +48,11 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   const beatCounterRef = useRef(0) // total beats elapsed (for visual tracking)
 
   const scheduleClick = useCallback(
-    (audioContext: AudioContext, time: number, isDownbeat: boolean) => {
-      // Skip audio output when silent
-      if (silentRef.current) return
+    (audioContext: AudioContext, time: number, isDownbeat: boolean, force = false) => {
+      // Skip audio output when silent. The count-in forces its clicks: it plays
+      // before the student starts, so it can't mask their onsets, and without it
+      // they have nothing but a visual countdown to come in on.
+      if (silentRef.current && !force) return
 
       const osc = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
@@ -89,27 +101,104 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
       setIsPlaying(true)
       beatCounterRef.current = 0
 
-      const beatDuration = 60 / bpm
       const beatsPerMeasure = timeSignature[0]
 
       // Count-in starts immediately
       const countInStart = audioContext.currentTime + 0.05 // tiny buffer
       countInStartRef.current = countInStart
+
+      const lookahead = 0.1 // 100ms
+      const scheduleInterval = 25 // 25ms
+
+      if (grid) {
+        // Graded owners: the count-in and the exercise clicks follow the
+        // per-bar grid instead of a uniform bpm.
+        const beats = gridBeats(grid)
+        const loopLen = gridLoopSeconds(grid)
+        const beatSec0 = grid.beatQN[0] * grid.secPerQN[0]
+        // 1-indexed position within each beat's own measure, for the visual counter.
+        let posInMeasure = 0
+        const beatPositions = beats.map(b => {
+          posInMeasure = b.downbeat ? 1 : posInMeasure + 1
+          return posInMeasure
+        })
+
+        const countInOffsets = gridCountIn(grid, countInBars, beatsPerMeasure)
+        const countInSeconds = countInOffsets.length > 0 ? -countInOffsets[0] : 0
+        const exerciseStart = countInStart + countInSeconds
+
+        // Count-in clicks: bar 1's meter and beat length, always audible.
+        countInOffsets.forEach((offset, i) => {
+          const time = exerciseStart + offset
+          scheduleClick(audioContext, time, i % beatsPerMeasure === 0, true)
+        })
+
+        // Exercise clicks: every beat of the grid, looping every `loopLen` seconds.
+        scheduledBeatsRef.current = 0
+        nextBeatTimeRef.current = beats.length > 0 ? exerciseStart + beats[0].seconds : exerciseStart
+
+        intervalRef.current = setInterval(() => {
+          if (!audioCtxRef.current || beats.length === 0) return
+
+          while (nextBeatTimeRef.current < audioCtxRef.current.currentTime + lookahead) {
+            const idx = scheduledBeatsRef.current % beats.length
+            scheduleClick(audioCtxRef.current, nextBeatTimeRef.current, beats[idx].downbeat)
+
+            scheduledBeatsRef.current++
+            const nextIdx = scheduledBeatsRef.current % beats.length
+            const nextLoop = Math.floor(scheduledBeatsRef.current / beats.length)
+            nextBeatTimeRef.current = exerciseStart + nextLoop * loopLen + beats[nextIdx].seconds
+          }
+
+          // Update visual beat tracking (including count-in), following the grid.
+          const now = audioCtxRef.current.currentTime
+          const elapsedSinceCountIn = now - countInStartRef.current
+          if (elapsedSinceCountIn < 0) return
+          const sinceExerciseStart = now - exerciseStart
+          if (sinceExerciseStart < 0) {
+            const idx = Math.floor(elapsedSinceCountIn / beatSec0)
+            if (idx !== beatCounterRef.current) {
+              beatCounterRef.current = idx
+              const beatInMeasure = (idx % beatsPerMeasure) + 1
+              setCurrentBeat(beatInMeasure)
+              setIsDownbeat(beatInMeasure === 1)
+            }
+          } else if (beats.length > 0) {
+            const wrapped = ((sinceExerciseStart % loopLen) + loopLen) % loopLen
+            let idx = 0
+            for (let i = 0; i < beats.length; i++) {
+              if (beats[i].seconds <= wrapped + 1e-9) idx = i
+              else break
+            }
+            const totalBeatIndex = Math.floor(sinceExerciseStart / loopLen) * beats.length + idx
+            if (totalBeatIndex !== beatCounterRef.current) {
+              beatCounterRef.current = totalBeatIndex
+              setCurrentBeat(beatPositions[idx])
+              setIsDownbeat(beats[idx].downbeat)
+            }
+          }
+        }, scheduleInterval)
+
+        setCurrentBeat(1)
+        setIsDownbeat(true)
+
+        return exerciseStart
+      }
+
+      // Uniform path (no grid): unchanged.
+      const beatDuration = 60 / bpm
       const exerciseStart = countInStart + countInBeats * beatDuration
 
       // Schedule count-in clicks
       for (let i = 0; i < countInBeats; i++) {
         const time = countInStart + i * beatDuration
         const isDownbeat = i % beatsPerMeasure === 0
-        scheduleClick(audioContext, time, isDownbeat)
+        scheduleClick(audioContext, time, isDownbeat, true)
       }
 
       // Start scheduling exercise metronome
       scheduledBeatsRef.current = 0
       nextBeatTimeRef.current = exerciseStart
-
-      const lookahead = 0.1 // 100ms
-      const scheduleInterval = 25 // 25ms
 
       intervalRef.current = setInterval(() => {
         if (!audioCtxRef.current) return
@@ -145,7 +234,7 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
 
       return exerciseStart
     },
-    [bpm, timeSignature, countInBeats, scheduleClick]
+    [bpm, timeSignature, countInBeats, grid, countInBars, scheduleClick]
   )
 
   const stopMetronome = useCallback(() => {

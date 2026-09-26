@@ -12,6 +12,7 @@ import { Minus, Plus } from 'lucide-react';
 import { useRef, useState, type Dispatch, type KeyboardEvent } from 'react';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { TempoMarksNotice } from './tempo-marks-notice';
 
 interface ScoreMetaEditorProps {
   score: ScoreDocument;
@@ -132,6 +133,8 @@ export function ScoreMetaEditor({ score, dispatch }: ScoreMetaEditorProps) {
           })}
         </div>
       </div>
+
+      <TempoMarksNotice score={score} dispatch={dispatch} />
     </div>
   );
 }

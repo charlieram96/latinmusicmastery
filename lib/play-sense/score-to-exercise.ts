@@ -15,9 +15,11 @@ import type {
 import { beatLengthInQN, measureLengthInQN } from '@/lib/playsense-studio/time-mapping'
 import { resolvePercStroke, percussionNotation, isPercussion } from '@/lib/playsense-studio/perc-strokes'
 import { midiToKeyString } from '@/lib/playsense-studio/score-to-vexflow'
+import { eventArticulations } from '@/components/playsense-studio/shared/score-model/accessors'
 import type {
   ExerciseDefinition,
   ExerciseEvent,
+  ExerciseGrid,
   Instrument,
   Technique,
   Difficulty,
@@ -104,6 +106,46 @@ function midiToNoteName(midi: number, keyFifths: number): string {
 }
 
 /**
+ * The studio stores tempo as quarter notes per minute; the engine counts beats
+ * in the meter's denominator unit (beatToTimestamp: beat * 60 / bpm). Convert,
+ * so 6/8 and 2/2 exercises run at the same speed the studio shows.
+ */
+function engineBpm(quarterNoteBpm: number, timeSignature: [number, number]): number {
+  return quarterNoteBpm / beatLengthInQN(timeSignature)
+}
+
+/**
+ * Build the per-measure timing grid for a track: where each measure starts (in
+ * seconds and quarter notes), and the meter in force during it. Honours
+ * mid-score time-signature changes; the engine's uniform `bpm` + `timeSignature`
+ * only ever reflect measure 1.
+ *
+ * Honours `m.tempoChange` (quarter-note BPM, in force from that measure to the
+ * next one that sets it) only when `score.tempoMarksConfirmed === true` — the
+ * admin has reviewed the per-bar marks and confirmed they're intentional.
+ * Until then every measure runs at `score.initialTempo`: live scores can carry
+ * stale per-measure tempo values left over from MusicXML import that disagree
+ * with the admin-set `initialTempo` (the Studio's only tempo control before
+ * marks are confirmed), so honouring them un-reviewed would re-time live
+ * grading against a value the admin never set.
+ */
+export function buildExerciseGrid(score: ScoreDocument, track: Track): ExerciseGrid {
+  const measureStartSec = [0], measureStartQN = [0], secPerQN: number[] = [], beatQN: number[] = []
+  let ts = score.initialTimeSignature
+  let spq = 60 / score.initialTempo
+  for (const m of track.measures) {
+    if (m.timeSignature) ts = m.timeSignature
+    if (score.tempoMarksConfirmed && m.tempoChange !== undefined) spq = 60 / m.tempoChange
+    const bar = measureLengthInQN(ts)
+    secPerQN.push(spq)
+    beatQN.push(beatLengthInQN(ts))
+    measureStartSec.push(measureStartSec[measureStartSec.length - 1] + bar * spq)
+    measureStartQN.push(measureStartQN[measureStartQN.length - 1] + bar)
+  }
+  return { measureStartSec, measureStartQN, secPerQN, beatQN }
+}
+
+/**
  * Build an ExerciseDefinition from one track of a score.
  * Rests advance the cursor but emit no event. Chords emit one event per note.
  */
@@ -120,7 +162,7 @@ export function scoreToExerciseDefinition(
       title: options.title ?? score.title,
       description: options.description ?? '',
       instrument: 'conga',
-      bpm: score.initialTempo,
+      bpm: engineBpm(score.initialTempo, score.initialTimeSignature),
       timeSignature: score.initialTimeSignature,
       swing: 0,
       difficulty: options.difficulty ?? 'intermediate',
@@ -162,7 +204,7 @@ export function scoreToExerciseDefinition(
 
       const beat = qnIntoMeasure / beatQN + 1
       const durationBeats = durationQN / beatQN
-      const accent = ev.articulation === 'accent'
+      const accent = eventArticulations(ev).includes('accent')
 
       const pitches = ev.kind === 'chord' ? (ev as Chord).notes : [ev as Note]
       const midis = pitches.map(n => n.midi)
@@ -227,18 +269,24 @@ export function scoreToExerciseDefinition(
     if (Math.abs(qnIntoMeasure - measureLengthInQN(currentTimeSig)) > 1e-6) continuations.clear()
   }
 
+  // The count-in and metronome use `bpm`/`timeSignature` alone (no grid), so
+  // they must match bar 1's EFFECTIVE meter — which a measure-1 timeSignature
+  // change can override — not just the score's initial one.
+  const bar1TimeSignature = track.measures[0]?.timeSignature ?? score.initialTimeSignature
+
   return {
     id: options.id ?? 'score-exercise',
     title: options.title ?? score.title,
     description: options.description ?? '',
     instrument,
-    bpm: score.initialTempo,
-    timeSignature: score.initialTimeSignature,
+    bpm: engineBpm(score.initialTempo, bar1TimeSignature),
+    timeSignature: bar1TimeSignature,
     swing: 0,
     difficulty: options.difficulty ?? 'intermediate',
     measures: track.measures.length,
     loopCount: 1,
     events,
     audioUrl: options.audioUrl,
+    grid: buildExerciseGrid(score, track),
   }
 }

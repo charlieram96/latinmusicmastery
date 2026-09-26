@@ -84,3 +84,29 @@ it('offers to watch the teacher again, which restarts the video and closes', () 
   expect(restartVideo).toHaveBeenCalledOnce()
   expect(cta()).toBeNull()
 })
+
+it('in a lesson, puts the Watch message and Your turn in the action bar', async () => {
+  const { LessonFrameProvider, useActionClaims } = await import('../lesson-mode/lesson-frame')
+  function Lesson() {
+    const claims = useActionClaims()
+    const [bar, setBar] = React.useState<HTMLElement | null>(null)
+    return <LessonFrameProvider value={{ actionHost: bar, topClaim: claims.top, claim: claims.claim, advance: () => {}, teacherName: 'Livan' }}>
+      <ExerciseView classItemId="c" videoUrl="v.mp4" score={score} tracks={[]} activeTimeMap={null} exercise={exercise} playerLayout="split" teacherName="Livan" />
+      <footer data-bar ref={setBar} />
+    </LessonFrameProvider>
+  }
+  act(() => { root.render(<Lesson />) })
+  const bar = host.querySelector('[data-bar]')!
+  expect(bar.textContent).toContain('dashboard.classViewer.lessonMode.watch.title')
+  expect(host.querySelector('.lx-action-inline')).toBeNull()
+  act(() => { bar.querySelector<HTMLButtonElement>('[data-action="your-turn-bar"]')!.click() })
+  expect(host.querySelector('[data-testid="game"]')).not.toBeNull()
+})
+
+it('outside a lesson, shows the Watch message and Your turn under the player', () => {
+  mount()
+  const inline = host.querySelector('.lx-action-inline')!
+  expect(inline.textContent).toContain('dashboard.classViewer.lessonMode.watch.titleNoTeacher')
+  act(() => { inline.querySelector<HTMLButtonElement>('[data-action="your-turn-bar"]')!.click() })
+  expect(host.querySelector('[data-testid="game"]')).not.toBeNull()
+})

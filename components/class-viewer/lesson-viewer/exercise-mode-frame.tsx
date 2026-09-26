@@ -2,24 +2,26 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import Image from 'next/image'
-import { Eye, Maximize2, Minimize2, Music2, Video } from 'lucide-react'
+import { Eye, Maximize2, Minimize2, Music2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
-import { lessonExerciseHeight } from '@/lib/playsense-studio/lesson-viewport'
+import { lessonExerciseHeight, lessonStageHeight } from '@/lib/playsense-studio/lesson-viewport'
+import { useLessonFrame } from './lesson-mode/lesson-frame'
 import './exercise-mode.css'
 
-/** Resize the existing lesson in place: no portal, second player, or session restart. */
-export function ExerciseModeFrame({ title, hasVideo, hasScore, preview, onWatchDemo, children }: {
+/** Resize the existing lesson in place: no portal, second player, or session restart.
+ *  Showing or hiding the teacher video is the workspace's "music only" layout. */
+export function ExerciseModeFrame({ title, hasScore, preview, onWatchDemo, children }: {
   title: string
-  hasVideo: boolean
   hasScore: boolean
   preview: boolean
   onWatchDemo?: () => void
   children: ReactNode
 }) {
   const { t } = useTranslation()
-  const [immersive, setImmersive] = useState(true)
-  const [showVideo, setShowVideo] = useState(true)
+  // The lesson shell is already immersive: there the frame only fits the stage.
+  const inLesson = !!useLessonFrame()
+  const [immersive, setImmersive] = useState(!inLesson)
   const [showScore, setShowScore] = useState(true)
   const frame = useRef<HTMLDivElement>(null)
   const modeButton = useRef<HTMLButtonElement>(null)
@@ -31,13 +33,18 @@ export function ExerciseModeFrame({ title, hasVideo, hasScore, preview, onWatchD
     const scroller = el.closest<HTMLElement>('[data-dashboard-main]')
     const lesson = el.closest<HTMLElement>('[data-lesson-shell]')
     const footer = lesson?.querySelector<HTMLElement>('[data-lesson-footer] > div')
+    // The L2 stage: its content (.lx-fill) pads the bottom; the frame fills the rest exactly.
+    const fill = inLesson ? el.closest<HTMLElement>('.lx-fill') : null
     let pending = 0
     const measure = () => {
       pending = 0
       const visibleBottom = (window.visualViewport?.offsetTop ?? 0) + (window.visualViewport?.height ?? window.innerHeight)
       const bottom = Math.min(visibleBottom, scroller?.getBoundingClientRect().bottom ?? visibleBottom)
-      const height = lessonExerciseHeight(bottom, el.getBoundingClientRect().top,
-        scroller?.scrollTop ?? window.scrollY, footer?.getBoundingClientRect().height ?? 0)
+      const top = el.getBoundingClientRect().top
+      const scrollTop = scroller?.scrollTop ?? window.scrollY
+      const height = fill
+        ? lessonStageHeight(bottom, top, scrollTop, parseFloat(getComputedStyle(fill).paddingBottom) || 0)
+        : lessonExerciseHeight(bottom, top, scrollTop, footer?.getBoundingClientRect().height ?? 0)
       const value = `${height}px`
       if (el.style.getPropertyValue('--lesson-exercise-height') !== value) el.style.setProperty('--lesson-exercise-height', value)
     }
@@ -57,7 +64,7 @@ export function ExerciseModeFrame({ title, hasVideo, hasScore, preview, onWatchD
       window.removeEventListener('resize', schedule)
       window.visualViewport?.removeEventListener('resize', schedule)
     }
-  }, [immersive])
+  }, [immersive, inLesson])
 
   useEffect(() => {
     if (immersive) modeButton.current?.focus({ preventScroll: true })
@@ -85,18 +92,17 @@ export function ExerciseModeFrame({ title, hasVideo, hasScore, preview, onWatchD
     setImmersive(value => !value)
   }
 
-  return <div ref={frame} className="ps-exercise-mode" data-exercise-immersive={immersive} data-video-visible={showVideo} data-score-visible={showScore}>
-    <header className="ps-exercise-toolbar">
+  return <div ref={frame} className="ps-exercise-mode" data-exercise-immersive={immersive} data-score-visible={showScore} data-lesson-mode={inLesson || undefined}>
+    {!inLesson && <header className="ps-exercise-toolbar">
       <div className="ps-exercise-identity"><Image src="/logo-solo-color.svg" alt="Latin Music Mastery" width={32} height={24} /><div><span>PlaySense <i>/</i> {preview ? 'Lesson preview' : 'Exercise'}</span><h2 title={title}>{title}</h2></div></div>
       <div className="ps-exercise-view-controls" role="group" aria-label="Exercise view">
-        {hasVideo && <Button type="button" variant="ghost" size="sm" onClick={() => setShowVideo(value => !value)} aria-pressed={showVideo} aria-label="Show instructor video"><Video size={16} /><span>Video</span></Button>}
         {hasScore && <Button type="button" variant="ghost" size="sm" onClick={() => setShowScore(value => !value)} aria-pressed={showScore} aria-label="Show musical score"><Music2 size={16} /><span>Score</span></Button>}
         {onWatchDemo && <Button type="button" variant="ghost" size="sm" className="ps-exercise-watch" onClick={onWatchDemo} aria-label={t('dashboard.classViewer.exercise.watchTeacher')}><Eye size={16} /><span>{t('dashboard.classViewer.exercise.watchTeacher')}</span></Button>}
         <Button ref={modeButton} type="button" variant="outline" size="sm" className="ps-exercise-mode-toggle" onClick={toggleMode} aria-label={immersive ? 'Exit exercise mode' : 'Enter exercise mode'} title={immersive ? 'Return to lesson view (Esc)' : 'Enter immersive exercise mode'}>
           {immersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<span>{immersive ? 'Lesson view' : 'Exercise mode'}</span>{immersive && <kbd>esc</kbd>}
         </Button>
       </div>
-    </header>
+    </header>}
     <div className="ps-exercise-content">{children}</div>
   </div>
 }

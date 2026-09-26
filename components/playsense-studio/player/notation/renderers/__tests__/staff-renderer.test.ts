@@ -1,8 +1,15 @@
-import { describe, expect, it } from 'vitest';
+// @vitest-environment jsdom
+import { beforeAll, describe, expect, it } from 'vitest';
 import type { Track } from '@/components/playsense-studio/shared/score-model/types';
-import { GUITAR_LICK_FIXTURE } from '@/lib/playsense-studio/score-fixtures';
+import { GUITAR_LICK_FIXTURE, REFERENCE_EXCERPT_FIXTURE } from '@/lib/playsense-studio/score-fixtures';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import { formatMeasureVoice } from '../staff-renderer';
+
+beforeAll(() => {
+  // VexFlow measures annotation text through a canvas; jsdom has none.
+  const ctx = { measureText: (s: string) => ({ width: String(s).length * 7, actualBoundingBoxAscent: 8, actualBoundingBoxDescent: 2, fontBoundingBoxAscent: 8, fontBoundingBoxDescent: 2 }), font: '' };
+  HTMLCanvasElement.prototype.getContext = (() => ctx) as never;
+});
 
 const TS: [number, number] = [4, 4];
 
@@ -48,5 +55,21 @@ describe('formatMeasureVoice', () => {
     expect(laid[0]).not.toBeNull();
     expect(laid[1]).toBeNull();
     expect(laid[2]).not.toBeNull();
+  });
+});
+
+describe('formatMeasureVoice with the shared builder', () => {
+  it('draws the triplet as eighths under a 3:2 tuplet and keeps one StaveNote per voice-1 event', () => {
+    const [b1] = extractTrackEvents(REFERENCE_EXCERPT_FIXTURE.tracks[0], [3, 4], 0);
+    const laid = formatMeasureVoice(b1.events, b1.timeSignature, 300, b1.clef)!;
+    expect(laid.vexNotes).toHaveLength(b1.events.length);
+    expect(laid.vexNotes[1].getDuration()).toBe('8');
+    expect(laid.beams).toHaveLength(2);
+  });
+  it('returns the tuplets it built so callers can draw them', () => {
+    const [b1] = extractTrackEvents(REFERENCE_EXCERPT_FIXTURE.tracks[0], [3, 4], 0);
+    const laid = formatMeasureVoice(b1.events, b1.timeSignature, 300, b1.clef)!;
+    expect(laid.tuplets).toHaveLength(1);
+    expect(laid.tuplets[0].getNotes()).toEqual(laid.vexNotes.slice(1, 4));
   });
 });

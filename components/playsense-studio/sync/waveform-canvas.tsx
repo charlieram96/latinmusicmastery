@@ -15,6 +15,8 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { bucketMinMax, type WaveformPeaks } from '@/lib/playsense-studio/waveform';
+import type { FlexMap, FlexPoint } from '@/lib/playsense-studio/flex';
+import { mediaForColumn } from '@/lib/playsense-studio/warp-draw';
 import type { MarkerRef } from './marker-model';
 
 export interface MarkerHandle {
@@ -22,6 +24,8 @@ export interface MarkerHandle {
   beatInMeasure: number;
   isDownbeat: boolean;
   videoTimeSeconds: number;
+  /** This bar's first note or tempo looks off the recording (Task 5). */
+  flagged?: boolean;
 }
 
 export type DragMode = 'single' | 'all-after';
@@ -63,7 +67,7 @@ export interface WaveformCanvasProps {
   getCurrentSeconds: () => number;
   onSeek: (seconds: number) => void;
   onSelect: (target: DragTarget) => void;
-  onMarkerDrag: (ref: MarkerRef, videoTimeSeconds: number, mode: DragMode) => void;
+  onMarkerDrag: (ref: MarkerRef, videoTimeSeconds: number, mode: DragMode, mods: { snap: boolean }) => void;
   onTailDrag: (videoTimeSeconds: number) => void;
   onDragEnd: () => void;
   onScrollByPx: (dx: number) => void;
@@ -83,6 +87,32 @@ export interface WaveformCanvasProps {
    *  byte-for-byte the old behaviour. */
   metronomeAnchorSeconds?: number | null;
   onAnchorDrag?: (videoTimeSeconds: number) => void;
+  /** Flex Time: the canvas lays out TIMELINE time; the peaks are MEDIA time,
+   *  so each column reads the media its timeline span maps to. Omitted or
+   *  identity draws exactly as before. Every other draw is already timeline. */
+  warp?: FlexMap;
+  /** Flex editing (Task 6). On: hits draw as grips (click one to add a point),
+   *  points drag and double-click to remove. Off: only the stretch tints draw. */
+  flexMode?: boolean;
+  /** The section's flex points (src MEDIA, dst TIMELINE). */
+  flexPoints?: FlexPoint[];
+  /** Detected hits in TIMELINE time, for the grips. */
+  hitsTimeline?: readonly number[];
+  /** Written note onsets (TIMELINE) — the snap targets, marked in Flex mode. */
+  noteTimes?: readonly number[];
+  onFlexAdd?: (hitIndex: number) => void;
+  onFlexDrag?: (index: number, dstTimeline: number, mods: { snap: boolean }) => void;
+  onFlexRemove?: (index: number) => void;
+  /** The bar markers and tail still draw but can't be grabbed (a graded part's
+   *  bar lines come from the tempo grid). A press on one scrubs/drags as empty
+   *  space instead. */
+  markersLocked?: boolean;
+  /** When given, dragging empty waveform reports a shift (delta seconds from
+   *  the press; `mods.snap` false while ⌘ is held) instead of scrubbing. A
+   *  plain click still seeks. */
+  onBackgroundDrag?: (deltaSeconds: number, phase: 'move' | 'end', mods: { snap: boolean }) => void;
+  /** The running A/B loop in TIMELINE seconds, drawn as a gold bracket. */
+  loop?: { a: number; b: number } | null;
 }
 
 const DEFAULT_HEIGHT = 240;
@@ -92,6 +122,29 @@ const ANCHOR_BAND = 18; // bottom strip reserved for the metronome-anchor grip
  *  backing-track lanes feel identical and the two can never drift apart. */
 export const HANDLE_HIT_PX = 9;
 export const DRAG_THRESHOLD_PX = 4;
+/** Hit grips: ticks along the top of the wave area (just under LABEL_BAND). */
+const GRIP_H = 6;
+/** The grip band's hit height — a little taller than the tick, for the pointer. */
+const GRIP_HIT_H = 12;
+/** Two clicks on one flex point within this many ms remove it (on the second
+ *  release, and only if that press didn't become a drag). */
+const DOUBLE_CLICK_MS = 400;
+const FLEX_AMBER = 'hsl(38 92% 50%)';
+const TINT_SLOWER = 'hsl(210 90% 55% / .14)';
+const TINT_FASTER = 'hsl(28 95% 55% / .14)';
+
+/** `+12 ms · 104%`: signed ms of dst − src, then the playback speed of the
+ *  segment to the point's left as a % (Δsrc/Δdst: slower is under 100;
+ *  identity, so 100%, for the first point), clamped for display to the rate
+ *  driver's [50, 200]. */
+export function flexDragLabel(points: readonly FlexPoint[], index: number): string {
+  const p = points[index];
+  const ms = Math.round((p.dst - p.src) * 1000);
+  const prev = points[index - 1];
+  const rate = prev && p.dst - prev.dst > 0 ? (p.src - prev.src) / (p.dst - prev.dst) : 1;
+  const pct = Math.min(200, Math.max(50, Math.round(100 * rate)));
+  return `${ms >= 0 ? '+' : ''}${ms} ms · ${pct}%`;
+}
 
 interface ThemeColors {
   bg: string;
@@ -103,6 +156,7 @@ interface ThemeColors {
   selected: string;
   playhead: string;
   tail: string;
+  flag: string;
 }
 
 function readTheme(el: HTMLElement): ThemeColors {
@@ -121,6 +175,7 @@ function readTheme(el: HTMLElement): ThemeColors {
     selected: v('--gold-highlight', '#d4a017'),
     playhead: v('--primary', 'hsl(30 85% 55%)'),
     tail: v('--muted-foreground', '#9ca3af'),
+    flag: v('--destructive', '#dc2626'),
   };
 }
 
@@ -155,6 +210,17 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     onTrimDrag,
     metronomeAnchorSeconds,
     onAnchorDrag,
+    warp,
+    flexMode = false,
+    flexPoints = EMPTY_POINTS,
+    hitsTimeline = EMPTY_TIMES,
+    noteTimes = EMPTY_TIMES,
+    onFlexAdd,
+    onFlexDrag,
+    onFlexRemove,
+    markersLocked = false,
+    onBackgroundDrag,
+    loop = null,
   } = props;
 
   const onZoomByRef = useRef(onZoomBy);
@@ -197,6 +263,13 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   const onNoteDragRef = useRef(onNoteDrag);
   const onDragEndRef = useRef(onDragEnd);
   const onScrollByPxRef = useRef(onScrollByPx);
+  // Graded mode (locked markers, background shift): mirrored in an effect, like flex below.
+  const markersLockedRef = useRef(markersLocked);
+  const onBackgroundDragRef = useRef(onBackgroundDrag);
+  useEffect(() => {
+    markersLockedRef.current = markersLocked;
+    onBackgroundDragRef.current = onBackgroundDrag;
+  });
   onSeekRef.current = onSeek;
   onSelectRef.current = onSelect;
   onMarkerDragRef.current = onMarkerDrag;
@@ -204,6 +277,31 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   onNoteDragRef.current = onNoteDrag;
   onDragEndRef.current = onDragEnd;
   onScrollByPxRef.current = onScrollByPx;
+
+  // Flex editing, read by the draw and pointer handlers through refs for the
+  // same reasons as above. `flexDragRef` is the point being dragged (for the
+  // overlay's label) — written only by the pointer handlers.
+  const flexModeRef = useRef(flexMode);
+  const flexPointsRef = useRef(flexPoints);
+  const loopRef = useRef(loop);
+  const hitsTimelineRef = useRef(hitsTimeline);
+  const noteTimesRef = useRef(noteTimes);
+  const onFlexAddRef = useRef(onFlexAdd);
+  const onFlexDragRef = useRef(onFlexDrag);
+  const onFlexRemoveRef = useRef(onFlexRemove);
+  // Mirrored in an effect (not during render). It is declared before the
+  // draw effects below, so they always read this commit's values.
+  useEffect(() => {
+    flexModeRef.current = flexMode;
+    flexPointsRef.current = flexPoints;
+    loopRef.current = loop;
+    hitsTimelineRef.current = hitsTimeline;
+    noteTimesRef.current = noteTimes;
+    onFlexAddRef.current = onFlexAdd;
+    onFlexDragRef.current = onFlexDrag;
+    onFlexRemoveRef.current = onFlexRemove;
+  });
+  const flexDragRef = useRef<number | null>(null);
 
   // Trim is optional; `trimEnabled` gates both the grips and the hit test so
   // callers that don't trim get byte-for-byte the old behaviour.
@@ -258,8 +356,65 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     const waveH = h - LABEL_BAND;
     const mid = waveTop + waveH / 2;
 
+    // Flex stretch tints, under everything: drawn whenever points exist (Flex
+    // mode or not) so a flexed section reads as flexed.
+    const fps = flexPointsRef.current;
+    for (let i = 0; i + 1 < fps.length; i++) {
+      const a = fps[i];
+      const b = fps[i + 1];
+      const dDst = b.dst - a.dst;
+      const dSrc = b.src - a.src;
+      if (Math.abs(dDst - dSrc) < 1e-6) continue;
+      const x0 = videoTimeToX(a.dst);
+      const x1 = videoTimeToX(b.dst);
+      if (x1 < 0 || x0 > w) continue;
+      ctx.fillStyle = dDst > dSrc ? TINT_SLOWER : TINT_FASTER;
+      ctx.fillRect(x0, waveTop, x1 - x0, waveH);
+    }
+
+    // The A/B loop: a gold band at 12% with 2px edges, under the peaks.
+    const lp = loopRef.current;
+    if (lp && lp.b > lp.a) {
+      const x0 = videoTimeToX(lp.a);
+      const x1 = videoTimeToX(lp.b);
+      if (x1 >= 0 && x0 <= w) {
+        ctx.fillStyle = theme.selected;
+        ctx.globalAlpha = 0.12;
+        ctx.fillRect(x0, waveTop, x1 - x0, waveH);
+        ctx.globalAlpha = 1;
+        ctx.fillRect(x0, waveTop, 2, waveH);
+        ctx.fillRect(x1 - 2, waveTop, 2, waveH);
+      }
+    }
+
     // Peaks
-    if (peaks && peaks.bucketCount > 0 && durationSeconds > 0) {
+    if (peaks && peaks.bucketCount > 0 && durationSeconds > 0 && warp && !warp.isIdentity) {
+      // Warped: walk the screen columns in timeline time and aggregate the
+      // buckets over the media span each column maps to.
+      const secPerBucket = peaks.durationSeconds / peaks.bucketCount;
+      ctx.strokeStyle = theme.wave;
+      ctx.globalAlpha = 0.55;
+      ctx.beginPath();
+      for (let x = 0; x < w; x++) {
+        const [m0, m1] = mediaForColumn(warp, xToVideoTime(x), xToVideoTime(x + 1));
+        const first = Math.max(0, Math.floor(m0 / secPerBucket));
+        const last = Math.min(peaks.bucketCount - 1, Math.max(first, Math.ceil(m1 / secPerBucket) - 1));
+        if (last < first) continue;
+        let min = Infinity;
+        let max = -Infinity;
+        for (let i = first; i <= last; i++) {
+          const peak = bucketMinMax(peaks, i);
+          min = Math.min(min, peak.min);
+          max = Math.max(max, peak.max);
+        }
+        const yTop = mid - max * (waveH / 2);
+        const yBot = mid - min * (waveH / 2);
+        ctx.moveTo(x + 0.5, yTop);
+        ctx.lineTo(x + 0.5, Math.max(yBot, yTop + 0.5));
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else if (peaks && peaks.bucketCount > 0 && durationSeconds > 0) {
       const secPerBucket = peaks.durationSeconds / peaks.bucketCount;
       const firstT = xToVideoTime(0);
       const lastT = xToVideoTime(w);
@@ -416,6 +571,13 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       ctx.fillStyle = theme.measureText;
       ctx.textBaseline = 'middle';
       ctx.fillText(label, x + 5, 2 + (LABEL_BAND - 6) / 2 + 0.5);
+
+      if (hnd.flagged) {
+        ctx.fillStyle = theme.flag;
+        ctx.beginPath();
+        ctx.arc(x + chipW - 1, 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     // Tail boundary.
@@ -429,6 +591,51 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       ctx.lineTo(tx + 0.5, h);
       ctx.stroke();
       ctx.setLineDash([]);
+    }
+
+    // Flex editing: note targets, hit grips, then the points (anchors dashed
+    // and dimmer). Points show only in Flex mode; the tints above always do.
+    if (flexModeRef.current) {
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = FLEX_AMBER;
+      ctx.globalAlpha = 0.35;
+      ctx.beginPath();
+      for (const t of noteTimesRef.current) {
+        const x = videoTimeToX(t);
+        if (x < -2 || x > w + 2) continue;
+        ctx.moveTo(x + 0.5, h - 6);
+        ctx.lineTo(x + 0.5, h);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = theme.wave;
+      ctx.globalAlpha = 0.9;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (const t of hitsTimelineRef.current) {
+        const x = videoTimeToX(t);
+        if (x < -2 || x > w + 2) continue;
+        ctx.moveTo(x, waveTop);
+        ctx.lineTo(x, waveTop + GRIP_H);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      ctx.strokeStyle = FLEX_AMBER;
+      for (const p of fps) {
+        const x = videoTimeToX(p.dst);
+        if (x < -2 || x > w + 2) continue;
+        ctx.globalAlpha = p.anchor ? 0.5 : 1;
+        ctx.lineWidth = p.anchor ? 1.5 : 2;
+        ctx.setLineDash(p.anchor ? [4, 3] : []);
+        ctx.beginPath();
+        ctx.moveTo(x, waveTop);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = 1;
     }
 
     // Trim: scrim everything outside the usable region, then draw the grips.
@@ -498,6 +705,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     showNotes,
     videoTimeToX,
     xToVideoTime,
+    warp,
   ]);
 
   // ---- Sizing + DPR --------------------------------------------------------
@@ -551,6 +759,11 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     resolvedTrimOut,
     anchorEnabled,
     metronomeAnchorSeconds,
+    flexMode,
+    flexPoints,
+    hitsTimeline,
+    noteTimes,
+    loop,
   ]);
 
   // ---- Playhead overlay RAF -----------------------------------------------
@@ -573,6 +786,23 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
             ctx.lineTo(x + 0.5, height);
             ctx.stroke();
           }
+          // The dragged flex point's offset and its left segment's speed.
+          const di = flexDragRef.current;
+          const fp = di !== null ? flexPointsRef.current[di] : undefined;
+          if (di !== null && fp) {
+            const label = flexDragLabel(flexPointsRef.current, di);
+            ctx.font = '600 11px Inter, system-ui, sans-serif';
+            const tw = ctx.measureText(label).width;
+            const px = videoTimeToX(fp.dst);
+            const lx = Math.min(Math.max(px + 6, 2), Math.max(2, w - tw - 12));
+            const ly = LABEL_BAND + GRIP_HIT_H + 2;
+            ctx.fillStyle = FLEX_AMBER;
+            roundRect(ctx, lx, ly, tw + 10, 16, 4);
+            ctx.fill();
+            ctx.fillStyle = '#1a1206';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, lx + 5, ly + 8.5);
+          }
         }
       }
       raf = requestAnimationFrame(draw);
@@ -592,13 +822,22 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       | 'dragging-marker'
       | 'pending-scrub'
       | 'scrubbing'
+      | 'shifting'
       | 'pending-trim'
       | 'dragging-trim'
       | 'pending-anchor'
-      | 'dragging-anchor' = 'idle';
+      | 'dragging-anchor'
+      | 'pending-flex-add'
+      | 'pending-flex'
+      | 'pending-flex-remove'
+      | 'dragging-flex' = 'idle';
     let target: DragTarget | null = null;
     let startX = 0;
     let pointerId: number | null = null;
+    // Flex: the hit or point under the press, and the last plain click on a
+    // point (for the double-click remove; a drag never counts as a click).
+    let flexIndex = -1;
+    let lastFlexClick: { index: number; at: number } | null = null;
 
     const localX = (e: { clientX: number }) => {
       const rect = overlay.getBoundingClientRect();
@@ -639,6 +878,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         const d = Math.abs(videoTimeToX(selNote.videoTimeSeconds) - x);
         if (d <= HANDLE_HIT_PX) best = { target: { kind: 'note' }, dist: d };
       }
+      if (markersLockedRef.current) return best?.target ?? null;
       for (const hnd of handlesRef.current) {
         const hx = videoTimeToX(hnd.videoTimeSeconds);
         const d = Math.abs(hx - x);
@@ -653,12 +893,66 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       return best?.target ?? null;
     };
 
+    /** Flex mode, below the chip band and above the anchor band: the nearest
+     *  point (the metronome-anchor grip and tail stay reachable below). */
+    const flexPointHitTest = (x: number): number => {
+      let best = -1;
+      let bestD = Infinity;
+      flexPointsRef.current.forEach((p, i) => {
+        const d = Math.abs(videoTimeToX(p.dst) - x);
+        if (d <= HANDLE_HIT_PX && d < bestD) {
+          best = i;
+          bestD = d;
+        }
+      });
+      return best;
+    };
+    /** Flex mode: the nearest hit grip (the caller checks the grip band). */
+    const gripHitTest = (x: number): number => {
+      let best = -1;
+      let bestD = Infinity;
+      hitsTimelineRef.current.forEach((t, i) => {
+        const d = Math.abs(videoTimeToX(t) - x);
+        if (d <= HANDLE_HIT_PX && d < bestD) {
+          best = i;
+          bestD = d;
+        }
+      });
+      return best;
+    };
+
     const onDown = (e: PointerEvent) => {
       e.preventDefault();
       const x = localX(e);
       startX = x;
       pointerId = e.pointerId;
       try { overlay.setPointerCapture(e.pointerId); } catch { /* noop */ }
+
+      // Flex mode wins over the bar markers only for its own points and grips,
+      // and never in the chip band, so bar chips and trim keep working.
+      const y = localY(e);
+      if (flexModeRef.current && y >= LABEL_BAND) {
+        const aboveAnchorBand = y <= overlay.clientHeight - ANCHOR_BAND;
+        const pi = onFlexDragRef.current && aboveAnchorBand ? flexPointHitTest(x) : -1;
+        if (pi >= 0) {
+          const now = performance.now();
+          const second = !!lastFlexClick && lastFlexClick.index === pi && now - lastFlexClick.at <= DOUBLE_CLICK_MS;
+          lastFlexClick = null;
+          flexIndex = pi;
+          // The second press only arms the removal: it happens on release if
+          // the pointer stayed put, and becomes a plain drag if it moved.
+          mode = second ? 'pending-flex-remove' : 'pending-flex';
+          return;
+        }
+        if (y < LABEL_BAND + GRIP_HIT_H) {
+          const gi = onFlexAddRef.current ? gripHitTest(x) : -1;
+          if (gi >= 0) {
+            flexIndex = gi;
+            mode = 'pending-flex-add';
+            return;
+          }
+        }
+      }
       if (localY(e) > overlay.clientHeight - ANCHOR_BAND && anchorHitTest(x)) {
         target = { kind: 'anchor' };
         mode = 'pending-anchor';
@@ -694,11 +988,17 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       const moved = Math.abs(x - startX) >= DRAG_THRESHOLD_PX;
 
       if (mode === 'pending-marker' && moved) mode = 'dragging-marker';
-      if (mode === 'pending-scrub' && moved) mode = 'scrubbing';
+      if (mode === 'pending-scrub' && moved) mode = onBackgroundDragRef.current ? 'shifting' : 'scrubbing';
       if (mode === 'pending-trim' && moved) mode = 'dragging-trim';
       if (mode === 'pending-anchor' && moved) mode = 'dragging-anchor';
+      if ((mode === 'pending-flex' || mode === 'pending-flex-remove') && moved) {
+        mode = 'dragging-flex';
+        flexDragRef.current = flexIndex;
+      }
 
-      if (mode === 'dragging-anchor') {
+      if (mode === 'dragging-flex') {
+        onFlexDragRef.current?.(flexIndex, xToVideoTime(x), { snap: !e.metaKey });
+      } else if (mode === 'dragging-anchor') {
         onAnchorDragRef.current?.(xToVideoTime(x));
       } else if (mode === 'dragging-trim' && target?.kind === 'trim') {
         onTrimDragRef.current?.(target.edge, xToVideoTime(x));
@@ -706,21 +1006,35 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         const t = xToVideoTime(x);
         if (target.kind === 'tail') onTailDragRef.current(t);
         else if (target.kind === 'marker') {
-          onMarkerDragRef.current(target.ref, t, dragAllRef.current ? 'all-after' : 'single');
+          const ripple = dragAllRef.current !== e.altKey;
+          onMarkerDragRef.current(target.ref, t, ripple ? 'all-after' : 'single', { snap: !e.metaKey });
         } else if (target.kind === 'note') {
           onNoteDragRef.current?.(t);
         }
       } else if (mode === 'scrubbing') {
         onSeekRef.current(xToVideoTime(x));
+      } else if (mode === 'shifting') {
+        onBackgroundDragRef.current?.((x - startX) / ppsRef.current, 'move', { snap: !e.metaKey });
       }
     };
 
     const onUp = (e: PointerEvent) => {
       if (pointerId !== e.pointerId) return;
       try { overlay.releasePointerCapture(e.pointerId); } catch { /* noop */ }
-      if (mode === 'pending-scrub') {
+      lastFlexClick = null;
+      if (mode === 'pending-flex-add' && Math.abs(localX(e) - startX) < DRAG_THRESHOLD_PX) {
+        onFlexAddRef.current?.(flexIndex);
+      } else if (mode === 'pending-flex-remove') {
+        if (Math.abs(localX(e) - startX) < DRAG_THRESHOLD_PX) onFlexRemoveRef.current?.(flexIndex);
+      } else if (mode === 'pending-flex') {
+        lastFlexClick = { index: flexIndex, at: performance.now() };
+      } else if (mode === 'dragging-flex') {
+        flexDragRef.current = null;
+      } else if (mode === 'pending-scrub') {
         // A click on empty space = seek there.
         onSeekRef.current(xToVideoTime(localX(e)));
+      } else if (mode === 'shifting') {
+        onBackgroundDragRef.current?.((localX(e) - startX) / ppsRef.current, 'end', { snap: !e.metaKey });
       } else if (
         mode === 'dragging-marker' ||
         mode === 'dragging-trim' ||
@@ -731,6 +1045,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       mode = 'idle';
       target = null;
       pointerId = null;
+      flexIndex = -1;
     };
 
     const onWheel = (e: WheelEvent) => {
@@ -794,6 +1109,9 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     </div>
   );
 }
+
+const EMPTY_POINTS: FlexPoint[] = [];
+const EMPTY_TIMES: number[] = [];
 
 function roundRect(
   ctx: CanvasRenderingContext2D,

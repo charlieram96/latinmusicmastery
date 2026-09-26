@@ -1,4 +1,22 @@
-import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
+import type { ScoreDocument, Track } from '@/components/playsense-studio/shared/score-model/types'
+import { repeatGroups } from './repeats'
+
+/**
+ * Bar numbers as the student reads one pass: the staff collapses a written-out
+ * repeat to its first pass, so later passes reuse those numbers and the bars
+ * after it continue from there. Matches the HUD's count within a pass.
+ */
+function readingBarNumbers(track: Track): number[] {
+  const groups = repeatGroups(track)
+  const source = track.measures.map((_, i) => {
+    const group = groups.find(g => i >= g.start && i < g.start + g.length * g.count)
+    return group ? group.start + (i - group.start) % group.length : i
+  })
+  const numbers: number[] = []
+  let shown = 0
+  source.forEach((from, i) => { numbers.push(from === i ? ++shown : numbers[from]) })
+  return numbers
+}
 
 /** A continuous reading copy; authored notation and performance data stay unchanged. */
 export function exerciseReadingScore(score: ScoreDocument, passCount: number): ScoreDocument {
@@ -13,6 +31,7 @@ export function exerciseReadingScore(score: ScoreDocument, passCount: number): S
       timeSignature: first.timeSignature ?? score.initialTimeSignature,
       keyFifths: first.keyFifths ?? score.initialKeyFifths,
     } : {}
+    const numbers = readingBarNumbers(track)
     const opensScore = (measure: typeof first) =>
       !!first?.repeat && measure.repeat?.id === first.repeat.id && measure.repeat.offset === 0
     return { ...track,
@@ -23,7 +42,8 @@ export function exerciseReadingScore(score: ScoreDocument, passCount: number): S
         // at the sign, as printed music does). Each reading pass gets its own
         // group id so passes can never be mistaken for one another.
         repeat: measure.repeat ? { ...measure.repeat, id: `${measure.repeat.id}#${pass}` } : undefined,
-        number: pass * track.measures.length + index + 1,
+        // Every pass restarts its bar numbers, as the HUD counts them.
+        number: numbers[index],
         ...(index === 0 || opensScore(measure) ? header : {}),
       }))).flat(),
     }

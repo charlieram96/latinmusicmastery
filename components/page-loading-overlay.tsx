@@ -80,6 +80,11 @@ export function PageLoadingProvider({ children }: { children: React.ReactNode })
       const href = anchor.getAttribute('href')
       if (!href) return
 
+      // The link handles this click itself without navigating (e.g. a first tap
+      // on a lesson path node only opens its card). This listener runs in the
+      // capture phase, before the link can preventDefault, so it has to be told.
+      if (anchor.hasAttribute('data-no-page-loader')) return
+
       // Skip external links, hash links, and same-page links
       if (
         href.startsWith('http') ||

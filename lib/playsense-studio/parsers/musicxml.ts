@@ -7,31 +7,44 @@
 // What we extract:
 //   - score-partwise structure (the only layout we support; if we get
 //     score-timewise, we throw)
-//   - parts → tracks. Each part becomes one Track in our model.
-//   - measures → Measures with a single Voice each. Multi-voice support
-//     would land in M8 alongside the visual editor.
+//   - parts → tracks. Each part becomes one Track in our model. Only staff 1
+//     of each part is kept, with up to two voices per measure (<backup>
+//     starts the second voice; <forward> becomes a rest in its voice).
 //   - notes: pitch (step + octave + alter), rest, type (whole/half/etc.),
-//     dot, chord (siblings of <chord/> are merged into the prior note).
+//     dots (single and double), tuplets (bracketed or counted from
+//     time-modification), ties (<tie type="start">), written spelling and
+//     courtesy accidentals, chord (siblings of <chord/> are merged into the
+//     prior note).
 //   - attributes: time signature, key signature (fifths), divisions.
 //   - direction/sound tempo as initialTempo.
+//   - marks: articulations, fermatas, ornaments (trill/mordent/turn), grace
+//     notes (attached to the following note, taking no time), dynamics and
+//     words (attach to the next note of their voice), hairpins and slurs
+//     (turned into score.spans, referencing event ids, and may cross
+//     barlines).
 //
-// Out of scope for v1: tuplets beyond triplets, ties (we emit them in the
-// model but don't yet preserve <tied/> across imports), articulations,
-// ornaments, lyrics, voltas. If a MusicXML file uses those, we still
-// import what we understand and ignore the rest — the renderer doesn't
-// support those features yet anyway.
+// Out of scope for v1: lyrics, voltas. If a MusicXML file uses those, we
+// still import what we understand and ignore the rest — the renderer
+// doesn't support those features yet anyway.
 
 import JSZip from 'jszip';
 import type {
+  Articulation,
   Chord,
+  Dynamic,
+  GraceNote,
   Instrument,
   Measure,
   MusicalEvent,
+  Ornament,
   PercussionNotation,
   Note,
   Rest,
   ScoreDocument,
+  Span,
+  Spelling,
   Track,
+  Tuplet,
   Voice,
 } from '@/components/playsense-studio/shared/score-model/types';
 import { gmToStrokeMidi, inferPercInstrument } from '../gm-percussion';
@@ -49,6 +62,18 @@ const TYPE_TO_QN: Record<string, number> = {
   breve: 8,
   long: 16,
 };
+
+const ARTIC: Record<string, Articulation> = { staccato: 'staccato', staccatissimo: 'staccatissimo', tenuto: 'tenuto', accent: 'accent', 'strong-accent': 'marcato' };
+const ORN: Record<string, Ornament> = { 'trill-mark': 'trill', mordent: 'mordent', 'inverted-mordent': 'mordent', turn: 'turn', 'inverted-turn': 'turn' };
+const DYN = new Set<Dynamic>(['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'fp', 'sfz']);
+
+function readMarks(noteEl: Element): { articulations?: Articulation[]; ornament?: Ornament } {
+  const arts = Array.from(noteEl.querySelectorAll(':scope > notations > articulations > *')).map(a => ARTIC[a.tagName]).filter(Boolean);
+  if (noteEl.querySelector(':scope > notations > fermata')) arts.push('fermata');
+  const uniqueArts = [...new Set(arts)];
+  const orn = Array.from(noteEl.querySelectorAll(':scope > notations > ornaments > *')).map(o => ORN[o.tagName]).find(Boolean);
+  return { ...(uniqueArts.length ? { articulations: uniqueArts } : {}), ...(orn ? { ornament: orn } : {}) };
+}
 
 export interface ParseMusicXmlOptions {
   title?: string;
@@ -135,13 +160,21 @@ export function parseMusicXmlString(
   }
 
   const tracks: Track[] = [];
+  const allSpans: Span[] = [];
+  // Prefix with a per-import random token so ids from two imports of the same
+  // document never collide (the schema requires ids unique within a score,
+  // and downstream code assumes importer output never needs de-duping).
+  const run = (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)).slice(0, 8);
+  let seq = 0;
+  const ids = { token: `x${run}`, next: () => `x${run}-${++seq}` };
   const partEls = Array.from(doc.querySelectorAll('part')) as Element[];
   partEls.forEach((part, idx) => {
     const id = part.getAttribute('id') ?? '';
     const info =
       partInfo.get(id) ??
       { name: `Part ${idx + 1}`, instrument: 'staff' as const, instrumentGm: new Map<string, number>() };
-    const measures = parsePartMeasures(part, initialTimeSignature, info.instrument, info.instrumentGm);
+    const { measures, spans } = parsePartMeasures(part, initialTimeSignature, info.instrument, info.instrumentGm, ids);
+    allSpans.push(...spans);
     tracks.push({
       index: idx,
       instrument: info.instrument,
@@ -165,6 +198,7 @@ export function parseMusicXmlString(
     initialTempo,
     initialTimeSignature,
     initialKeyFifths,
+    ...(allSpans.length ? { spans: allSpans } : {}),
     tracks: tracks.length > 0 ? tracks : [{
       index: 0,
       instrument: 'staff',
@@ -209,13 +243,20 @@ function parsePartMeasures(
   part: Element,
   initialTimeSignature: [number, number],
   instrument: Instrument,
-  instrumentGm: Map<string, number>
-): Measure[] {
+  instrumentGm: Map<string, number>,
+  ids: { token: string; next(): string }
+): { measures: Measure[]; spans: Span[] } {
   const midiCtx: NoteMidiContext = { instrument, instrumentGm };
   let timeSignature: [number, number] = initialTimeSignature;
   let divisions = 1; // ticks per quarter, set by <attributes><divisions>
   const measureEls = Array.from(part.querySelectorAll(':scope > measure')) as Element[];
   const out: Measure[] = [];
+  const spans: Span[] = [];
+  const openSlurs = new Map<string, string>();
+  let openWedge: { type: 'cresc' | 'dim'; from?: string } | null = null;
+  let lastEventId: string | undefined;
+  const pendingGrace = new Map<string, GraceNote[]>();
+  const pendingDir = new Map<string, { dynamic?: Dynamic; text?: string }>();
 
   measureEls.forEach((m, idx) => {
     // attribute updates apply for THIS measure forward.
@@ -232,78 +273,183 @@ function parsePartMeasures(
     const tempoChange = readTempoChange(m);
     const keyFifths = readKeyFifths(m);
 
-    const events: MusicalEvent[] = [];
-    const noteEls = Array.from(m.querySelectorAll(':scope > note')) as Element[];
+    // Events are bucketed by MusicXML <voice>, so <backup> needs no handling.
+    // Only staff 1 is kept (one instrument, one staff), and at most two voices.
+    const byVoice = new Map<string, MusicalEvent[]>();
+    const eventsFor = (id: string) => {
+      let list = byVoice.get(id);
+      if (!list) { list = []; byVoice.set(id, list); }
+      return list;
+    };
+    const openTuplet = new Map<string, { id: string; left: number; bracketed: boolean }>();
+    let lastVoice = '1';
 
-    for (const noteEl of noteEls) {
+    for (const el of Array.from(m.children) as Element[]) {
+      if (el.tagName === 'direction') {
+        const dirStaff = el.querySelector(':scope > staff')?.textContent?.trim();
+        if (dirStaff && dirStaff !== '1') continue;
+        const voiceId = el.querySelector(':scope > voice')?.textContent?.trim() ?? '1';
+        const p = pendingDir.get(voiceId) ?? {};
+        const dyn = el.querySelector('direction-type > dynamics > *')?.tagName as Dynamic | undefined;
+        if (dyn && DYN.has(dyn)) p.dynamic = dyn;
+        const words = el.querySelector('direction-type > words')?.textContent?.trim();
+        if (words) p.text = words.slice(0, 60);
+        pendingDir.set(voiceId, p);
+        const wedge = el.querySelector('direction-type > wedge')?.getAttribute('type');
+        if (wedge === 'crescendo' || wedge === 'diminuendo') openWedge = { type: wedge === 'crescendo' ? 'cresc' : 'dim' };
+        if (wedge === 'stop') {
+          if (openWedge?.from && lastEventId && lastEventId !== openWedge.from) {
+            spans.push({ id: ids.next(), type: openWedge.type, from: openWedge.from, to: lastEventId });
+          }
+          openWedge = null;
+        }
+        continue;
+      }
+      if (el.tagName === 'forward') {
+        const fwdStaff = el.querySelector(':scope > staff')?.textContent?.trim();
+        if (fwdStaff && fwdStaff !== '1') continue;
+        const voiceId = el.querySelector(':scope > voice')?.textContent?.trim() ?? lastVoice;
+        const qn = Number(el.querySelector(':scope > duration')?.textContent ?? '0') / divisions;
+        if (qn > 0) eventsFor(voiceId).push({ kind: 'rest', id: ids.next(), durationQN: qn } satisfies Rest);
+        continue;
+      }
+      if (el.tagName !== 'note') continue;
+      const noteEl = el;
+      const staff = noteEl.querySelector(':scope > staff')?.textContent?.trim();
+      if (staff && staff !== '1') continue;
+      const voiceId = noteEl.querySelector(':scope > voice')?.textContent?.trim() ?? '1';
+      lastVoice = voiceId;
+      if (noteEl.querySelector(':scope > grace')) {
+        const midi = pitchToMidi(noteEl);
+        if (midi !== null) {
+          const list = pendingGrace.get(voiceId) ?? [];
+          // The schema caps a grace group at 4 (max(4)); further grace notes
+          // before the same main note are dropped rather than producing an
+          // import that fails validation.
+          if (list.length < 4) {
+            const spelling = readSpelling(noteEl);
+            list.push({ midi, ...(spelling ? { spelling } : {}), slash: noteEl.querySelector(':scope > grace')!.getAttribute('slash') === 'yes' });
+            pendingGrace.set(voiceId, list);
+          }
+        }
+        continue;
+      }
+      const events = eventsFor(voiceId);
+
       const isChordContinuation = noteEl.querySelector(':scope > chord') !== null;
       const isRest = noteEl.querySelector(':scope > rest') !== null;
-      const durationTicks = Number(
-        noteEl.querySelector(':scope > duration')?.textContent ?? '0'
-      );
-      const durationQN = durationTicks / divisions;
+      const durationQN = Number(noteEl.querySelector(':scope > duration')?.textContent ?? '0') / divisions;
       const typeEl = noteEl.querySelector(':scope > type')?.textContent?.trim();
-      const dotted = noteEl.querySelectorAll(':scope > dot').length > 0;
-
-      // Resolve duration: prefer <type> when available (more reliable across
-      // engravings) and fall back to derived QN when missing.
-      const baseQN = typeEl && TYPE_TO_QN[typeEl] !== undefined ? TYPE_TO_QN[typeEl] : durationQN;
-      const finalDurationQN = dotted ? baseQN * 1.5 : baseQN;
+      const dots = Math.min(2, noteEl.querySelectorAll(':scope > dot').length) as 0 | 1 | 2;
+      const tmEl = noteEl.querySelector(':scope > time-modification');
+      const actual = Number(tmEl?.querySelector('actual-notes')?.textContent ?? 0);
+      const normal = Number(tmEl?.querySelector('normal-notes')?.textContent ?? 0);
+      const inTuplet = actual > 1 && normal > 0;
+      const dotFactor = dots === 2 ? 1.75 : dots === 1 ? 1.5 : 1;
+      // Prefer <type> (reliable across engravings); fall back to the tick length,
+      // which already includes dots and tuplet scaling.
+      const finalDurationQN = typeEl && TYPE_TO_QN[typeEl] !== undefined
+        ? TYPE_TO_QN[typeEl] * dotFactor * (inTuplet ? normal / actual : 1)
+        : durationQN;
+      const tieStart = noteEl.querySelector(':scope > tie[type="start"]') !== null;
 
       if (isChordContinuation) {
-        // Merge into the previous event as a chord pitch.
         const prev = events[events.length - 1];
         if (prev && (prev.kind === 'note' || prev.kind === 'chord')) {
           const pitch = isRest ? null : noteToPitch(noteEl, midiCtx);
           if (pitch !== null) {
+            const spelling = readSpelling(noteEl);
+            const member = { ...pitch, ...(spelling ? { spelling } : {}), ...(tieStart ? { tieToNext: true } : {}) };
             if (prev.kind === 'note') {
+              // fingering lives per chord member (Chord has no top-level fingering),
+              // so pull it off `prev` and keep it with the first note instead of
+              // letting it leak onto the Chord object via `...rest`.
+              const { kind: _k, midi, spellingHint, percussion, spelling: prevSpelling, tieToNext, fingering, ...rest } = prev;
               const chord: Chord = {
-                kind: 'chord',
-                durationQN: prev.durationQN,
-                dotted: prev.dotted,
-                notes: [
-                  { midi: prev.midi, spellingHint: prev.spellingHint, percussion: prev.percussion },
-                  pitch,
-                ],
+                ...rest, kind: 'chord',
+                notes: [{ midi, spellingHint, percussion, ...(prevSpelling ? { spelling: prevSpelling } : {}), ...(tieToNext ? { tieToNext } : {}), ...(fingering ? { fingering } : {}) }, member],
               };
               events[events.length - 1] = chord;
             } else {
-              prev.notes.push(pitch);
+              prev.notes.push(member);
             }
           }
         }
         continue;
       }
 
+      // Tuplet grouping: explicit <tuplet type="start"> brackets win; otherwise count n notes.
+      let tuplet: Tuplet | undefined;
+      if (inTuplet) {
+        const bracketStart = noteEl.querySelector(':scope > notations > tuplet[type="start"]') !== null;
+        let open = openTuplet.get(voiceId);
+        if (!open || bracketStart || (!open.bracketed && open.left <= 0)) {
+          open = { id: `${ids.token}-t${idx + 1}-${voiceId}-${events.length}`, left: actual, bracketed: bracketStart };
+          openTuplet.set(voiceId, open);
+        }
+        open.left--;
+        // The schema only allows n 2..15 / m 1..16. Outside that range we
+        // still grouped/counted the notes above (so brackets keep working),
+        // but we omit the tuplet metadata on the event itself — the real,
+        // already-scaled durationQN (computed from normal/actual above) is
+        // kept regardless.
+        if (actual <= 15 && normal <= 16) {
+          tuplet = { id: open.id, n: actual, m: normal };
+        }
+        if (noteEl.querySelector(':scope > notations > tuplet[type="stop"]')) openTuplet.delete(voiceId);
+      } else {
+        openTuplet.delete(voiceId);
+      }
+
+      const rhythm = {
+        durationQN: finalDurationQN,
+        dotted: dots === 1,
+        ...(dots === 2 ? { dots: 2 as const } : {}),
+        ...(tuplet ? { tuplet } : {}),
+        ...(tuplet && tuplet.n === 3 && tuplet.m === 2 ? { triplet: true } : {}),
+      };
+
+      const id = ids.next();
       if (isRest) {
-        events.push({
-          kind: 'rest',
-          durationQN: finalDurationQN,
-          dotted,
-        } satisfies Rest);
+        events.push({ kind: 'rest', id, ...rhythm } satisfies Rest);
       } else {
         const pitch = noteToPitch(noteEl, midiCtx);
         if (pitch === null) continue;
+        const spelling = readSpelling(noteEl);
+        const dirs = pendingDir.get(voiceId); pendingDir.delete(voiceId);
+        const grace = pendingGrace.get(voiceId); pendingGrace.delete(voiceId);
         events.push({
-          kind: 'note',
-          ...pitch,
-          durationQN: finalDurationQN,
-          dotted,
+          kind: 'note', id, ...pitch, ...rhythm, ...readMarks(noteEl),
+          ...(spelling ? { spelling } : {}),
+          ...(tieStart ? { tieToNext: true } : {}),
+          ...(dirs?.dynamic ? { dynamic: dirs.dynamic } : {}),
+          ...(dirs?.text ? { text: dirs.text } : {}),
+          ...(grace?.length ? { grace } : {}),
         } satisfies Note);
+        for (const s of Array.from(noteEl.querySelectorAll(':scope > notations > slur'))) {
+          const num = s.getAttribute('number') ?? '1';
+          if (s.getAttribute('type') === 'start') openSlurs.set(num, id);
+          else if (s.getAttribute('type') === 'stop' && openSlurs.has(num)) { spans.push({ id: ids.next(), type: 'slur', from: openSlurs.get(num)!, to: id }); openSlurs.delete(num); }
+        }
+        if (openWedge && !openWedge.from) openWedge.from = id;
       }
+      lastEventId = id;
     }
 
-    const voice: Voice = { number: 1, events };
+    const voiceIds = Array.from(byVoice.keys()).slice(0, 2);
+    const voices: Voice[] = voiceIds.length
+      ? voiceIds.map((id, i) => ({ number: i + 1, events: byVoice.get(id)! }))
+      : [{ number: 1, events: [] }];
     out.push({
       number: idx + 1,
       timeSignature: m === measureEls[0] ? undefined : readTimeSignature(m) ?? undefined,
       tempoChange: tempoChange ?? undefined,
       keyFifths: keyFifths ?? undefined,
-      voices: [voice],
+      voices,
     });
   });
 
-  return out;
+  return { measures: out, spans };
 }
 
 function readTimeSignature(measure: Element | null): [number, number] | null {
@@ -399,6 +545,16 @@ function pitchToMidi(noteEl: Element): number | null {
   const alter = alterRaw ? Number(alterRaw) : 0;
   if (!Number.isFinite(octave) || !Number.isFinite(alter)) return null;
   return (octave + 1) * 12 + step + alter;
+}
+
+function readSpelling(noteEl: Element): Spelling | undefined {
+  const pitch = noteEl.querySelector(':scope > pitch');
+  const step = pitch?.querySelector('step')?.textContent?.trim();
+  if (!step || !/^[A-G]$/.test(step)) return undefined;
+  const alter = Math.max(-2, Math.min(2, Math.round(Number(pitch?.querySelector('alter')?.textContent ?? 0)))) as Spelling['alter'];
+  const acc = noteEl.querySelector(':scope > accidental');
+  const courtesy = acc && (acc.getAttribute('cautionary') === 'yes' || acc.getAttribute('parentheses') === 'yes');
+  return { step: step as Spelling['step'], alter, ...(courtesy ? { showAccidental: 'always' as const } : {}) };
 }
 
 function guessInstrument(

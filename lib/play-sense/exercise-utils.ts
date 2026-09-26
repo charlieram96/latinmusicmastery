@@ -1,10 +1,23 @@
-import type { ExerciseDefinition, ExerciseEvent } from './types'
+import type { ExerciseDefinition, ExerciseEvent, ExerciseGrid } from './types'
 import type { ExpectedEvent } from './scoring'
+import { gridCountIn } from './grid'
+
+/**
+ * A 1-based measure number clamped to a valid index into a grid's per-measure
+ * arrays. Shared by every grid lookup so an out-of-range measure (there
+ * shouldn't be one, but nothing guarantees it) resolves the same way
+ * everywhere instead of drifting between callers.
+ */
+function gridIndex(grid: ExerciseGrid, measure: number): number {
+  return Math.min(Math.max(measure - 1, 0), grid.secPerQN.length - 1)
+}
 
 /**
  * Convert a beat position to a timestamp in seconds relative to exercise start.
  * beat is 1-based, measure is 1-based.
  * swing (0-100) pushes upbeats (off-eighth-notes) later: 0 = straight, 67 = triplet swing.
+ * When `grid` is given (scores with tempo/meter changes), it takes over entirely —
+ * `bpm`/`timeSignature`/`totalMeasures` are then only the uniform fallback.
  */
 export function beatToTimestamp(
   event: ExerciseEvent,
@@ -12,8 +25,18 @@ export function beatToTimestamp(
   timeSignature: [number, number],
   loopIndex: number = 0,
   totalMeasures: number = 0,
-  swing: number = 0
+  swing: number = 0,
+  grid?: ExerciseGrid
 ): number {
+  if (grid) {
+    const i = gridIndex(grid, event.measure)
+    const beatSec = grid.beatQN[i] * grid.secPerQN[i]
+    const loopLen = grid.measureStartSec[grid.measureStartSec.length - 1]
+    let t = loopIndex * loopLen + grid.measureStartSec[i] + (event.beat - 1) * beatSec
+    if (swing > 0 && Math.abs(((event.beat - 1) % 1) - 0.5) < 0.01) t += (swing / 100) * beatSec * 0.5
+    return t
+  }
+
   const beatsPerMeasure = timeSignature[0]
   const beatDuration = 60 / bpm
 
@@ -58,14 +81,17 @@ export function generateExpectedTimestamps(
         exercise.timeSignature,
         loop,
         exercise.measures,
-        exercise.swing
+        exercise.swing,
+        exercise.grid
       )
+      const grid = exercise.grid
+      const gi = grid ? gridIndex(grid, event.measure) : -1
       results.push({
         eventIndex: results.length,
         timestamp,
         expectedPitch: event.expectedPitch,
         expectedTechnique: event.technique,
-        expectedDurationSec: event.duration * beatDuration,
+        expectedDurationSec: event.duration * (grid ? grid.beatQN[gi] * grid.secPerQN[gi] : beatDuration),
         expectedSurface: event.surface,
         // Make the chord group id loop-unique so notes from different loop
         // iterations aren't grouped together.
@@ -78,12 +104,18 @@ export function generateExpectedTimestamps(
 }
 
 /**
+ * One pass of the exercise, in seconds.
+ */
+export function getLoopDuration(exercise: ExerciseDefinition): number {
+  if (exercise.grid) return exercise.grid.measureStartSec[exercise.grid.measureStartSec.length - 1]
+  return (exercise.measures * exercise.timeSignature[0] * 60) / exercise.bpm
+}
+
+/**
  * Compute total exercise duration in seconds (including all loops).
  */
 export function getExerciseDuration(exercise: ExerciseDefinition): number {
-  const beatsPerMeasure = exercise.timeSignature[0]
-  const totalBeats = exercise.measures * beatsPerMeasure * exercise.loopCount
-  return (totalBeats * 60) / exercise.bpm
+  return getLoopDuration(exercise) * exercise.loopCount
 }
 
 /**
@@ -91,6 +123,20 @@ export function getExerciseDuration(exercise: ExerciseDefinition): number {
  */
 export function getCountInDuration(bpm: number, countInBeats: number = 4): number {
   return (countInBeats * 60) / bpm
+}
+
+/**
+ * The count-in the exercise session actually plays, in seconds before bar 1.
+ * With a grid (a graded owner) it is `countInBars` × bar 1's numerator at bar
+ * 1's beat length; without one it is always a single bar at `exercise.bpm`, as
+ * before. The session and the play-along video both read it, so the video's
+ * pre-roll lines up with the clicks.
+ */
+export function getSessionCountInSeconds(exercise: ExerciseDefinition, countInBars: 1 | 2): number {
+  const beatsPerMeasure = exercise.timeSignature[0]
+  // An empty grid has no count-in beats (0 s, never NaN).
+  if (exercise.grid) return Math.max(0, -(gridCountIn(exercise.grid, countInBars, beatsPerMeasure)[0] ?? 0))
+  return getCountInDuration(exercise.bpm, beatsPerMeasure)
 }
 
 /**

@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, Check, ChevronDown, Minus, RotateCcw, X } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, Minus, RotateCcw, Trophy, X } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,7 @@ import { countCorrectPieces } from '@/lib/quiz/labels'
 import { playCue } from '@/lib/quiz/sounds'
 import type { QuizQuestion } from '@/types/modules'
 import { Confetti } from './confetti'
+import { ActionMessage, LessonAction, useLessonFrame } from '../lesson-mode/lesson-frame'
 import { ScoreRing } from './score-ring'
 import { TypeChip } from './type-chip'
 import { useAnswerLabels } from './use-answer-labels'
@@ -190,9 +191,21 @@ export function ResultsScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const actions = (column: boolean) => (
+  const frame = useLessonFrame()
+  const claiming = !!frame && !frame.noClaim
+  const actions = (column: boolean) => claiming ? (
+    !wide && missed > 0 ? (
+      <Button variant="ghost" size="lg" className="rounded-xl" onClick={() => setFilter('missed')}>
+        {t('dashboard.classViewer.quiz.results.reviewMissed', { count: missed })}
+      </Button>
+    ) : null
+  ) : (
     <div className={cn('flex flex-wrap justify-center gap-2.5', column && 'w-full flex-col')}>
-      {nextHref && (
+      {frame ? (
+        <Button size="lg" className={cn('rounded-xl', column && 'w-full')} onClick={frame.advance}>
+          {t('dashboard.classViewer.quiz.results.continueNext')} <ArrowRight className="h-4 w-4" />
+        </Button>
+      ) : nextHref && (
         <Button asChild size="lg" className={cn('rounded-xl', column && 'w-full')}>
           <Link href={nextHref}>
             {t('dashboard.classViewer.quiz.results.continueNext')} <ArrowRight className="h-4 w-4" />
@@ -227,6 +240,14 @@ export function ResultsScreen({
 
   return (
     <div ref={ref}>
+      {claiming && frame && (
+        <LessonAction tone={pct >= 70 ? 'success' : 'neutral'}>
+          <ActionMessage live icon={<Trophy className="h-5 w-5" />} title={headline}
+            detail={`${scoreLabel} / ${questions.length} ${t('dashboard.classViewer.quiz.results.correct')}`} />
+          <Button variant="chunky-ghost" onClick={onRestart}><RotateCcw className="h-4 w-4" /> {t('dashboard.classViewer.quiz.results.tryAgain')}</Button>
+          <Button variant="chunky" data-primary="" onClick={frame.advance}>{t('dashboard.classViewer.quiz.results.continueNext')} <ArrowRight className="h-4 w-4" /></Button>
+        </LessonAction>
+      )}
       {wide ? (
         <div className="grid grid-cols-[340px_minmax(0,1fr)] items-start gap-[18px]">
           <div className="sticky top-5 grid gap-3.5">

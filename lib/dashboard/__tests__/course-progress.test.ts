@@ -66,10 +66,15 @@ describe('currentClassIndexFor', () => {
       completed: true,
       updated_at: `2026-09-0${n + 1}T10:00:00Z`,
     }))
-    // c4 has no items, so it can never be "done"; it is still the open class.
-    expect(currentClassIndexFor(classes, progress, completedItemIds(progress))).toBe(3)
+    // c4 has no items yet: it never blocks (the course page's nextClassId skips it too).
+    expect(currentClassIndexFor(classes, progress, completedItemIds(progress))).toBeNull()
     const withoutEmpty = classes.slice(0, 3)
     expect(currentClassIndexFor(withoutEmpty, progress, completedItemIds(progress))).toBeNull()
+  })
+  it('skips a lesson with no items when moving on from a finished one', () => {
+    const cs = [cls('a', 0, ['a1']), cls('e', 1, []), cls('b', 2, ['b1'])]
+    const progress = [{ class_item_id: 'a1', completed: true, updated_at: '2026-09-01T10:00:00Z' }]
+    expect(currentClassIndexFor(cs, progress, completedItemIds(progress))).toBe(2)
   })
 })
 

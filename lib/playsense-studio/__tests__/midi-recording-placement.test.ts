@@ -6,6 +6,7 @@ import { extractTrackEvents } from '../score-to-vexflow';
 import { editorReducer } from '../editor-state';
 import { SCORE_DOCUMENT_SCHEMA } from '@/components/playsense-studio/shared/score-model/serialization';
 import type { MidiTake } from '../midi-recording';
+import { FlexMap } from '../flex';
 const wp = (qn: number, sec: number): Waypoint => ({ musicalPositionQN: qn, videoTimeSeconds: sec, measureNumber: null, beatInMeasure: null });
 const take = (startMs = 137.25, endMs = 681.125, durationMs = 1000): MidiTake => ({ bpm: 120, timeSignature: [4, 4], durationMs, notes: [{ id: 0, midi: 72, channel: 0, velocity: 100, startMs, endMs }] });
 function score() {
@@ -76,5 +77,29 @@ describe('record at the video playhead', () => {
     const undone = editorReducer(applied, { type: 'undo' }); expect(undone.score).toBe(original);
     expect(editorReducer(undone, { type: 'redo' }).score).toBe(edit.nextScore);
     expect(editorReducer({ ...initial, score: score() }, action).score).not.toBe(edit.nextScore);
+  });
+});
+
+describe('record under flex', () => {
+  // Media 1.5 s plays at timeline 1.7 s; identity outside 1..3 s.
+  const warp = new FlexMap([{ src: 1, dst: 1, anchor: true }, { src: 1.5, dst: 1.7, anchor: false }, { src: 3, dst: 3, anchor: true }]);
+  it('places notes at the TIMELINE position of their media time, and starts the video at the media playhead', () => {
+    const original = score();
+    // The playhead is in timeline time (1.7 s); the recording video starts at its media second (1.5 s).
+    const plan = planMidiRecording(original, 0, { destination: 'playhead', playheadSeconds: 1.7, startMeasure: 0, warp });
+    expect(plan.videoStartSeconds).toBe(1.7);
+    expect(plan.videoStartMedia).toBeCloseTo(1.5, 9);
+    // 250 ms of video after media 1.5 is media 1.75, which the flex puts at timeline
+    // 1.7 + 0.25 * (3 - 1.7) / (3 - 1.5).
+    const edit = prepareMidiRecording(original, 0, plan, take(250, 400), 0, false);
+    const expected = 1.7 + 0.25 * (1.3 / 1.5);
+    expect(recordedTimes(edit.nextScore, edit.waypoints)[0]).toBeCloseTo(expected, 5);
+  });
+  it('is unchanged without a warp', () => {
+    const original = score();
+    const plan = planMidiRecording(original, 0, { destination: 'playhead', playheadSeconds: 1.5, startMeasure: 0 });
+    expect(plan.videoStartMedia).toBe(1.5);
+    const edit = prepareMidiRecording(original, 0, plan, take(250, 400), 0, false);
+    expect(recordedTimes(edit.nextScore, edit.waypoints)[0]).toBeCloseTo(1.75, 5);
   });
 });

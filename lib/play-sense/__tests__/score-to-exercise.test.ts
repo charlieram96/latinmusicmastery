@@ -98,3 +98,71 @@ describe('scoreToExerciseDefinition — track selection', () => {
     }
   })
 })
+
+describe('scoreToExerciseDefinition — tempo units for non-quarter meters', () => {
+  // The studio stores tempo as quarter notes per minute (qnToMs). The engine
+  // counts beats in the meter's denominator unit, so its bpm must be converted,
+  // or a 6/8 exercise plays at half speed and a 2/2 exercise at double speed.
+  const withMeter = (ts: [number, number]) => ({
+    ...GUITAR_LICK_FIXTURE,
+    initialTempo: 96,
+    initialTimeSignature: ts,
+    tracks: GUITAR_LICK_FIXTURE.tracks.map((t) => ({
+      ...t,
+      measures: t.measures.map((m) => ({ ...m, timeSignature: undefined })),
+    })),
+  })
+  const secondsPerMeasure = (ts: [number, number]) => {
+    const ex = scoreToExerciseDefinition(withMeter(ts))
+    return (ex.timeSignature[0] * 60) / ex.bpm
+  }
+
+  it('keeps 4/4 unchanged', () => {
+    expect(scoreToExerciseDefinition(withMeter([4, 4])).bpm).toBe(96)
+  })
+
+  it('6/8 at ♩=96 lasts 1.875 s per bar (3 quarter notes), same as the studio', () => {
+    expect(scoreToExerciseDefinition(withMeter([6, 8])).bpm).toBe(192)
+    expect(secondsPerMeasure([6, 8])).toBeCloseTo((3 * 60) / 96, 9)
+  })
+
+  it('2/2 at ♩=96 lasts 2.5 s per bar (4 quarter notes), same as the studio', () => {
+    expect(scoreToExerciseDefinition(withMeter([2, 2])).bpm).toBe(48)
+    expect(secondsPerMeasure([2, 2])).toBeCloseTo((4 * 60) / 96, 9)
+  })
+})
+
+describe('scoreToExerciseDefinition — accent grading reads the new articulations field', () => {
+  it('grades an accent carried in `articulations` the same as the legacy `articulation` field', () => {
+    const legacy = scoreToExerciseDefinition({
+      ...GUITAR_LICK_FIXTURE,
+      tracks: GUITAR_LICK_FIXTURE.tracks.map((t, ti) => ti !== 0 ? t : {
+        ...t,
+        measures: t.measures.map((m, mi) => mi !== 0 ? m : {
+          ...m,
+          voices: m.voices.map((v) => ({
+            ...v,
+            events: v.events.map((e, i) => (i !== 0 ? e : { ...e, articulation: 'accent' as const })),
+          })),
+        }),
+      }),
+    })
+    expect(legacy.events[0].accent).toBe(true)
+
+    const modern = scoreToExerciseDefinition({
+      ...GUITAR_LICK_FIXTURE,
+      tracks: GUITAR_LICK_FIXTURE.tracks.map((t, ti) => ti !== 0 ? t : {
+        ...t,
+        measures: t.measures.map((m, mi) => mi !== 0 ? m : {
+          ...m,
+          voices: m.voices.map((v) => ({
+            ...v,
+            events: v.events.map((e, i) => (i !== 0 ? e : { ...e, articulations: ['accent' as const] })),
+          })),
+        }),
+      }),
+    })
+    expect(modern.events[0].accent).toBe(true)
+    expect(modern.events[1].accent).toBe(false)
+  })
+})

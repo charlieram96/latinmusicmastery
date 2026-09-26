@@ -10,11 +10,11 @@
 // at the bottom. ScoreSectionEditor (keyed, one at a time) owns the score state
 // and portals its chrome into these shell slots.
 
-import { ArrowLeft, FileUp, Loader2, PanelBottom, Plus, Rows3, Trash2 } from 'lucide-react';
+import { Activity, ArrowLeft, FileUp, Loader2, Music, PanelBottom, Plus, Rows3, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import {
-  getScoreSectionsForClassItem,
+  getStudioScoreSectionsForClassItem,
   createBlankSection,
   createSectionFromImport,
   deleteSection,
@@ -23,6 +23,12 @@ import {
 import { ScoreSectionEditor } from '@/components/playsense-studio/studio/score-section-editor';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import { sectionColor, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
+import { HoverRail } from '@/components/playsense-studio/studio/shell/hover-rail';
+import { FloatingVideo } from '@/components/playsense-studio/studio/shell/floating-video';
+import { StudioDraftsProvider, useStudioDrafts } from '@/components/playsense-studio/studio/drafts/drafts-context';
+import { UnpublishedDot } from '@/components/playsense-studio/studio/drafts/unpublished-dot';
+import { PublishControl } from '@/components/playsense-studio/studio/drafts/publish-control';
+import { sectionSeed } from '@/lib/playsense-studio/drafts/seed';
 import { cn } from '@/lib/utils';
 import { setTrimIn, setTrimOut, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import { updateClassItemVideoTrim } from '@/app/actions/playsense-studio';
@@ -48,7 +54,22 @@ function fmt(s: number | null): string {
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-export function VideoSectionsWorkspace({
+export function VideoSectionsWorkspace(props: VideoSectionsWorkspaceProps) {
+  const { initialSections } = props;
+  return (
+    <StudioDraftsProvider
+      owners={initialSections.map((s) => ({
+        owner: { kind: 'section', id: s.sectionId },
+        label: s.studioDraft?.score.title ?? s.scoreDocument.title,
+        unpublished: s.studioDraft != null,
+      }))}
+    >
+      <VideoSectionsBody {...props} />
+    </StudioDraftsProvider>
+  );
+}
+
+function VideoSectionsBody({
   classItemId,
   backHref = '/admin/courses',
   title,
@@ -58,6 +79,7 @@ export function VideoSectionsWorkspace({
   initialSections,
   appBarExtra,
 }: VideoSectionsWorkspaceProps) {
+  const { statuses, register } = useStudioDrafts();
   const [sections, setSections] = useState(initialSections);
   const [selectedId, setSelectedId] = useState<string | null>(initialSections[0]?.sectionId ?? null);
   const [error, setError] = useState<string | null>(null);
@@ -117,19 +139,32 @@ export function VideoSectionsWorkspace({
   // "New section" popover (Build measures / Import score at playhead).
   const [newSecOpen, setNewSecOpen] = useState(false);
 
-  const refetch = async (selectId?: string) => {
-    const res = await getScoreSectionsForClassItem(classItemId);
+  const refetch = useCallback(async (selectId?: string) => {
+    const res = await getStudioScoreSectionsForClassItem(classItemId);
     if (res.error || !res.data) {
       setError(res.error ?? 'Failed to load sections');
       return;
     }
-    setSections(res.data);
+    const data = res.data;
+    setSections(data);
     if (selectId !== undefined) {
       setSelectedId(selectId);
-    } else if (!res.data.some((s) => s.sectionId === selectedId)) {
-      setSelectedId(res.data[0]?.sectionId ?? null);
+    } else {
+      setSelectedId((cur) => (data.some((s) => s.sectionId === cur) ? cur : (data[0]?.sectionId ?? null)));
     }
-  };
+  }, [classItemId]);
+
+  // Refetch (reseeding sections not currently mounted) whenever another part of
+  // the Studio publishes or discards that section's draft. refetch() with no
+  // argument already keeps whatever is currently selected (falling back to the
+  // first section only if that one's gone) — re-registers only when the set of
+  // section ids changes, not on every render.
+  const sectionIdsKey = sections.map((s) => s.sectionId).join('|');
+  useEffect(() => {
+    const unregisters = sections.map((s) => register(`section:${s.sectionId}`, { changed: () => void refetch() }));
+    return () => unregisters.forEach((u) => u());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sectionIdsKey, register, refetch]);
 
   const addBlank = () => {
     setError(null);
@@ -157,14 +192,23 @@ export function VideoSectionsWorkspace({
   };
 
   const selected = sections.find((s) => s.sectionId === selectedId) ?? null;
+  // What the editor opens on: the section's unpublished draft, else the live
+  // content students see.
+  const seed = selected ? sectionSeed(selected) : null;
+
+  // The section's display name: the live title while its editor is (or has
+  // been) open — useStudioDraft's own effect keeps statuses[key].label in
+  // step with it on every render — else the cached draft title, else the
+  // last-fetched live title. `s.label` (a stale creation-time snapshot) is
+  // intentionally never used.
+  const sectionLabel = (s: ClassItemScoreSection) =>
+    statuses[`section:${s.sectionId}`]?.label || s.studioDraft?.score.title || s.scoreDocument.title;
 
   // Timeline-lane view of the sections (the active one renders live from its
   // markers inside SyncPanel; siblings use their published video ranges).
   const laneSections: LaneSection[] = sections.map((s) => ({
     sectionId: s.sectionId,
-    // The section name is the score title (the only name field); `label` is a
-    // stale creation-time snapshot and is intentionally ignored.
-    label: s.scoreDocument.title,
+    label: sectionLabel(s),
     startSeconds: s.videoStartSeconds,
     endSeconds: s.videoEndSeconds,
   }));
@@ -202,203 +246,201 @@ export function VideoSectionsWorkspace({
             <PanelBottom className="h-4 w-4" />
             <span className="hidden sm:inline">Preview</span>
           </button>
+          <PublishControl />
+
           {/* The active section editor portals its Save/undo/redo/replace here. */}
           <div ref={setAppBarEl} className="flex items-center gap-2" />
         </div>
       </header>
 
-      {/* ---- Body: sections + meta rail · center editor · inspector rail ---- */}
-      <div className="flex min-h-0 flex-1">
-        <aside className="st-rail st-rail-left hidden w-72 shrink-0 flex-col lg:flex">
-          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-            {/* Reference video monitor (SyncPanel portals it into this slot). */}
-            <div ref={setMonitorEl} className="shrink-0 empty:hidden" />
-
-            {/* Scored sections */}
-            <div className="flex flex-col gap-2.5">
-              <div className="flex items-center justify-between">
-                <span className="st-sec-label">Scored sections</span>
-                <span className="font-mono text-xs text-muted-foreground">{sections.length}</span>
-              </div>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setNewSecOpen((v) => !v)}
-                  disabled={isPending}
-                  className="st-btn-primary st-newsec-btn"
-                  aria-expanded={newSecOpen}
-                >
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  New section
-                </button>
-                {newSecOpen && (
-                  <>
-                    <div className="st-pop-scrim" onClick={() => setNewSecOpen(false)} />
-                    <div className="st-pop">
-                      <span className="st-pop-label">Create a section by…</span>
-                      <button
-                        type="button"
-                        className="st-pop-item"
-                        onClick={() => {
-                          setNewSecOpen(false);
-                          addBlank();
-                        }}
-                      >
-                        <span className="ic">
-                          <Rows3 className="h-[17px] w-[17px]" />
-                        </span>
-                        <span className="tx">
-                          <span className="t">Build measures</span>
-                          <span className="d">Start empty and add bars by hand</span>
-                        </span>
-                      </button>
-                      <ScoreImportDialog
-                        classItemId={classItemId}
-                        mode="section"
-                        onConfirm={async (score, filename) => {
-                          const res = await createSectionFromImport({
-                            classItemId,
-                            scoreDocument: score,
-                            sourceFilename: filename,
-                          });
-                          if (res.sectionId) pendingSelectRef.current = res.sectionId;
-                          return res;
-                        }}
-                        onImported={() => {
-                          const id = pendingSelectRef.current;
-                          pendingSelectRef.current = undefined;
-                          setNewSecOpen(false);
-                          void refetch(id);
-                        }}
-                        trigger={
-                          <button type="button" className="st-pop-item">
+      {/* ---- Body: hover rail (video · sections · meta · inspector) · center editor ---- */}
+      <div className="st-work">
+        <HoverRail
+          sections={[
+            {
+              id: 'sections',
+              label: 'Scored sections',
+              icon: Rows3,
+              content: (
+                <div className="flex flex-col gap-2.5">
+                  <span className="font-mono text-xs text-muted-foreground">{sections.length}</span>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setNewSecOpen((v) => !v)}
+                      disabled={isPending}
+                      className="st-btn-primary st-newsec-btn"
+                      aria-expanded={newSecOpen}
+                    >
+                      {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                      New section
+                    </button>
+                    {newSecOpen && (
+                      <>
+                        <div className="st-pop-scrim" onClick={() => setNewSecOpen(false)} />
+                        <div className="st-pop">
+                          <span className="st-pop-label">Create a section by…</span>
+                          <button
+                            type="button"
+                            className="st-pop-item"
+                            onClick={() => {
+                              setNewSecOpen(false);
+                              addBlank();
+                            }}
+                          >
                             <span className="ic">
-                              <FileUp className="h-[17px] w-[17px]" />
+                              <Rows3 className="h-[17px] w-[17px]" />
                             </span>
                             <span className="tx">
-                              <span className="t">Import a score</span>
-                              <span className="d">Drop a MusicXML / MIDI file, then place it on the timeline</span>
+                              <span className="t">Build measures</span>
+                              <span className="d">Start empty and add bars by hand</span>
                             </span>
                           </button>
-                        }
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {error && (
-                <p className="rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
-                  {error}
-                </p>
-              )}
-
-              {sections.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
-                  No scored sections yet. Add a blank section or import a score.
-                </p>
-              ) : (
-                <ul className="flex flex-col gap-1">
-                  {sections.map((s, i) => {
-                    const isSel = s.sectionId === selectedId;
-                    const instrument = s.tracks[0]?.instrument ?? '—';
-                    const name = s.scoreDocument.title;
-                    return (
-                      <li key={s.sectionId}>
-                        <div
-                          className={cn(
-                            'group flex items-center gap-2.5 rounded-lg border px-2.5 py-2 transition',
-                            isSel
-                              ? 'border-primary/40 bg-primary/10'
-                              : 'border-transparent hover:bg-muted/50'
-                          )}
-                        >
-                          <button
-                            onClick={() => setSelectedId(s.sectionId)}
-                            className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
-                          >
-                            <span
-                              className="h-2.5 w-2.5 shrink-0 rounded-full"
-                              style={{ background: sectionColor(i) }}
-                              aria-hidden
-                            />
-                            <span className="min-w-0 flex-1">
-                              <span
-                                className={cn(
-                                  'block truncate text-[13px] font-medium',
-                                  isSel ? 'text-primary' : 'text-foreground'
-                                )}
-                              >
-                                {name}
-                              </span>
-                              <span className="block truncate font-mono text-[10px] text-muted-foreground">
-                                {instrument} ·{' '}
-                                {s.videoStartSeconds == null ? (
-                                  <span className="rounded bg-muted px-1 py-px text-[9px] font-semibold uppercase tracking-wide">
-                                    Not placed
-                                  </span>
-                                ) : (
-                                  <>{fmt(s.videoStartSeconds)}–{fmt(s.videoEndSeconds)}</>
-                                )}
-                              </span>
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => remove(s.sectionId)}
-                            className="rounded-md p-1.5 text-muted-foreground opacity-0 transition hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-                            aria-label="Delete section"
-                            title="Delete section"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          <ScoreImportDialog
+                            classItemId={classItemId}
+                            mode="section"
+                            onConfirm={async (score, filename) => {
+                              const res = await createSectionFromImport({
+                                classItemId,
+                                scoreDocument: score,
+                                sourceFilename: filename,
+                              });
+                              if (res.sectionId) pendingSelectRef.current = res.sectionId;
+                              return res;
+                            }}
+                            onImported={() => {
+                              const id = pendingSelectRef.current;
+                              pendingSelectRef.current = undefined;
+                              setNewSecOpen(false);
+                              void refetch(id);
+                            }}
+                            trigger={
+                              <button type="button" className="st-pop-item">
+                                <span className="ic">
+                                  <FileUp className="h-[17px] w-[17px]" />
+                                </span>
+                                <span className="tx">
+                                  <span className="t">Import a score</span>
+                                  <span className="d">Drop a MusicXML / MIDI file, then place it on the timeline</span>
+                                </span>
+                              </button>
+                            }
+                          />
                         </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+                      </>
+                    )}
+                  </div>
 
-            {/* Score meta (the active section editor portals its form here). */}
-            {selected && (
-              <div className="border-t border-border pt-4">
-                <span className="st-sec-label">Score</span>
-                <div ref={setMetaEl} className="mt-3" />
-              </div>
-            )}
+                  {error && (
+                    <p className="rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
+                      {error}
+                    </p>
+                  )}
 
-            {/* Inspector: selected note + sync status (SyncPanel portals here). */}
-            {selected && (
-              <div
-                ref={setInspectorEl}
-                className="flex flex-col gap-3 border-t border-border pt-4 empty:hidden"
-              />
-            )}
-          </div>
-        </aside>
+                  {sections.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
+                      No scored sections yet. Add a blank section or import a score.
+                    </p>
+                  ) : (
+                    <ul className="flex flex-col gap-1">
+                      {sections.map((s, i) => {
+                        const isSel = s.sectionId === selectedId;
+                        const instrument = s.tracks[0]?.instrument ?? '—';
+                        const name = sectionLabel(s);
+                        const unpublished = statuses[`section:${s.sectionId}`]?.unpublished;
+                        return (
+                          <li key={s.sectionId}>
+                            <div
+                              className={cn(
+                                'group flex items-center gap-2.5 rounded-lg border px-2.5 py-2 transition',
+                                isSel
+                                  ? 'border-primary/40 bg-primary/10'
+                                  : 'border-transparent hover:bg-muted/50'
+                              )}
+                            >
+                              <button
+                                onClick={() => setSelectedId(s.sectionId)}
+                                className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                              >
+                                <span
+                                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                  style={{ background: sectionColor(i) }}
+                                  aria-hidden
+                                />
+                                <span className="min-w-0 flex-1">
+                                  <span className="flex items-center gap-1.5">
+                                    <span
+                                      className={cn(
+                                        'truncate text-[13px] font-medium',
+                                        isSel ? 'text-primary' : 'text-foreground'
+                                      )}
+                                    >
+                                      {name}
+                                    </span>
+                                    {unpublished && <UnpublishedDot />}
+                                  </span>
+                                  <span className="block truncate font-mono text-[10px] text-muted-foreground">
+                                    {instrument} ·{' '}
+                                    {s.videoStartSeconds == null ? (
+                                      <span className="rounded bg-muted px-1 py-px text-[9px] font-semibold uppercase tracking-wide">
+                                        Not placed
+                                      </span>
+                                    ) : (
+                                      <>{fmt(s.videoStartSeconds)}–{fmt(s.videoEndSeconds)}</>
+                                    )}
+                                  </span>
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => remove(s.sectionId)}
+                                className="rounded-md p-1.5 text-muted-foreground opacity-0 transition hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                                aria-label="Delete section"
+                                title="Delete section"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              ),
+            },
+            ...(selected ? [{ id: 'score', label: 'Score', icon: Music, content: <div ref={setMetaEl} /> }] : []),
+            ...(selected
+              ? [{ id: 'sync', label: 'Sync status', icon: Activity, content: <div ref={setInspectorEl} className="flex flex-col gap-3" /> }]
+              : []),
+          ]}
+        />
 
         {/* Center: the active section editor (or an empty state). */}
         <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 md:p-4">
-          {selected ? (
+          {selected && seed ? (
             <ScoreSectionEditor
               key={`${selected.sectionId}:${selected.scoreDocument.id}`}
               classItemId={classItemId}
               sectionId={selected.sectionId}
               scoreDocumentId={selected.scoreDocument.id}
-              initialScore={selected.scoreDocument.parsedScore}
+              // Seeded from the admin's unpublished draft when present, else the
+              // last Published content. Students only ever get the live rows.
+              initialScore={seed.score}
+              initialTiming={seed.timing}
               classItemTitle={title}
               sectionIndex={Math.max(0, sections.findIndex((s) => s.sectionId === selected.sectionId))}
               sectionCount={sections.length}
-              // Seed the sync markers from the admin's autosaved draft when present,
-              // else the last Published map. Students only ever get activeTimeMap.
-              activeTimeMap={selected.draftTimeMap ?? selected.activeTimeMap}
-              hasDraft={selected.draftTimeMap != null}
               videoUrl={videoUrl}
               videoDurationSeconds={videoDurationSeconds}
-              initialMetronomeAnchorSeconds={selected.metronomeAnchorSeconds}
               trim={trim}
               onTrimDrag={handleTrimDrag}
               onChanged={() => void refetch(selected.sectionId)}
+              onDraftContent={(c) => {
+                const id = selected.sectionId;
+                setSections((prev) =>
+                  prev.map((s) => (s.sectionId === id ? { ...s, studioDraft: { ...c, updatedAt: new Date().toISOString() } } : s))
+                );
+              }}
               sections={laneSections}
               onSelectSection={setSelectedId}
               appBarEl={appBarEl}
@@ -428,6 +470,10 @@ export function VideoSectionsWorkspace({
           )}
         </main>
 
+        {/* Only when a section is selected does SyncPanel actually portal a
+            monitor into monitorEl — the no-sections empty state shows its own
+            full-size inline video instead. */}
+        {selected && videoUrl && <FloatingVideo label="Reference" onBodyEl={setMonitorEl} />}
       </div>
 
       {/* ---- Bottom: transport dock + highway drawer ---- */}

@@ -11,7 +11,8 @@ describe('continuous exercise reading passes', () => {
     const reading = exerciseReadingScore(original, 3)
     const count = original.tracks[0].measures.length
     expect(reading.tracks[0].measures).toHaveLength(count * 3)
-    expect(reading.tracks[0].measures.map(m => m.number)).toEqual(Array.from({length:count * 3}, (_, i) => i + 1))
+    // Bar numbers restart every pass, as the HUD counts them.
+    expect(reading.tracks[0].measures.map(m => m.number)).toEqual(Array.from({length:count * 3}, (_, i) => i % count + 1))
     expect(reading.tracks[0].measures[count].voices).toEqual(original.tracks[0].measures[0].voices)
     expect(JSON.stringify(original)).toBe(snapshot)
   })
@@ -45,6 +46,20 @@ describe('continuous exercise reading passes', () => {
     expect(projection!.score.tracks[0].measures.map(m => m.repeat?.count)).toEqual([4, 4])
     // The reading clock still covers every written-out bar.
     expect(projection!.originalDuration).toBeCloseTo(trackDurationMs(reading.tracks[0], reading))
+  })
+  it('numbers the bars as the student reads them: a collapsed written-out repeat is numbered once', () => {
+    const original = structuredClone(CONGA_TUMBAO_FIXTURE)
+    const [a, b] = original.tracks[0].measures
+    original.tracks[0].measures = [
+      {...a,number:1,repeat:{id:'r',pass:0,count:2,offset:0,length:1}},
+      {...a,number:2,repeat:{id:'r',pass:1,count:2,offset:0,length:1}},
+      {...b,number:3},
+      {...a,number:4},
+    ]
+    const reading = exerciseReadingScore(original, 2)
+    expect(reading.tracks[0].measures.map(m => m.number)).toEqual([1, 1, 2, 3, 1, 1, 2, 3])
+    // What the staff engraves (the projected bars) counts 1..n in every pass, like the HUD.
+    expect(repeatProjection(reading, 0)!.score.tracks[0].measures.map(m => m.number)).toEqual([1, 2, 3, 1, 2, 3])
   })
   it('crosses pass boundaries continuously and clamps the count-in and final hold', () => {
     expect(exerciseReadingTime(7999, 1, 2, 8000)).toBe(7999)
