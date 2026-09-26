@@ -225,6 +225,9 @@ const TIMING_DEBOUNCE_MS = 1500;
  *  fresh `[]` every render when there are no detected hits yet. */
 const EMPTY_HITS: number[] = [];
 const IDENTITY_FLEX = new FlexMap([]);
+/** The flex a wholesale bar move leaves behind: one stable object, so the
+ *  Auto-place undo can tell a later flex edit from its own clear. */
+const NO_FLEX: FlexPoint[] = [];
 
 function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
   const m = state.measures.find((mm) => mm.measureNumber === ref.measureNumber);
@@ -365,7 +368,7 @@ export function SyncPanel({
   // flex points behind on the old bars, so they clear it. Callers only call
   // this when there is flex to clear.
   const clearFlexForBarMove = useCallback(() => {
-    setFlex([]);
+    setFlex(NO_FLEX);
     setEditNotice('Flex was cleared because the bars moved');
   }, []);
   useEffect(() => {
@@ -730,6 +733,7 @@ export function SyncPanel({
   // The undo snapshot holds the flex too: a successful placement clears it.
   const [autoPlaceUndo, setAutoPlaceUndo] = useState<{ markers: MarkerState; flex: FlexPoint[] } | null>(null);
   const placedRef = useRef<MarkerState | null>(null);
+  const placedFlexRef = useRef<FlexPoint[] | null>(null);
   const [autoPlaceNotice, setAutoPlaceNotice] = useState<string | null>(null);
   // The tween writes plain values and yields to any other marker write (see
   // useMarkerTween). Called before the undo-retiring effect below, so a
@@ -742,12 +746,14 @@ export function SyncPanel({
 
   // The undo chip is a one-step affordance: it retires as soon as the markers
   // change by anything OTHER than the placement landing (which sets markers to
-  // the very object autoPlaceBars produced), and it must NOT retire mid-tween,
+  // the very object autoPlaceBars produced) or the flex changes, and it must NOT retire mid-tween,
   // since every tween frame calls setMarkers with a freshly-lerped object.
   useEffect(() => {
     if (tweenRunning.current) return;
-    if (autoPlaceUndo && markers !== placedRef.current) setAutoPlaceUndo(null);
-  }, [markers, autoPlaceUndo, tweenRunning]);
+    // A flex edit after the placement retires it too: Undo would otherwise
+    // put back the pre-placement flex over the admin's newer flex work.
+    if (autoPlaceUndo && (markers !== placedRef.current || flex !== placedFlexRef.current)) setAutoPlaceUndo(null);
+  }, [markers, flex, autoPlaceUndo, tweenRunning]);
 
   // The failure notice is transient: gone after 6 s, or sooner if anything else
   // moves the markers.
@@ -802,6 +808,7 @@ export function SyncPanel({
     const from = markersRef.current;
     setAutoPlaceUndo({ markers: from, flex });
     placedRef.current = res.state;
+    placedFlexRef.current = clearsFlex ? NO_FLEX : flex;
     if (clearsFlex) clearFlexForBarMove();
 
     // Ends by writing res.state and setDirty(true) (onDone); reduced motion
