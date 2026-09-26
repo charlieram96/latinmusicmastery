@@ -36,17 +36,27 @@ class FakeVideo extends EventTarget {
 let root: Root;
 let host: HTMLDivElement;
 
-function Harness({ video, map, userSpeed }: { video: FakeVideo; map: FlexMap; userSpeed: number }) {
+function Harness({
+  video,
+  map,
+  userSpeed,
+  enabled,
+}: {
+  video: FakeVideo;
+  map: FlexMap;
+  userSpeed: number;
+  enabled?: boolean;
+}) {
   const videoRef = useRef<HTMLVideoElement | null>(video as unknown as HTMLVideoElement);
-  useFlexPlayback(videoRef, map, userSpeed);
+  useFlexPlayback(videoRef, map, userSpeed, enabled);
   return null;
 }
 
-function mount(video: FakeVideo, map: FlexMap, userSpeed: number) {
-  act(() => root.render(<Harness video={video} map={map} userSpeed={userSpeed} />));
+function mount(video: FakeVideo, map: FlexMap, userSpeed: number, enabled?: boolean) {
+  act(() => root.render(<Harness video={video} map={map} userSpeed={userSpeed} enabled={enabled} />));
 }
-function update(video: FakeVideo, map: FlexMap, userSpeed: number) {
-  act(() => root.render(<Harness video={video} map={map} userSpeed={userSpeed} />));
+function update(video: FakeVideo, map: FlexMap, userSpeed: number, enabled?: boolean) {
+  act(() => root.render(<Harness video={video} map={map} userSpeed={userSpeed} enabled={enabled} />));
 }
 
 beforeEach(() => {
@@ -154,6 +164,27 @@ describe('useFlexPlayback', () => {
     update(video, IDENTITY, 0.5);
     expect(video.playbackRate).toBeCloseTo(0.5);
     expect(queue.size).toBe(0);
+  });
+
+  it('enabled=false is a true no-op even with a non-identity map: no writes, no loop, ever (Task 4)', () => {
+    const video = new FakeVideo();
+    video.paused = false;
+    video.currentTime = 11;
+    mount(video, THREE_POINT, 1, false);
+    expect(video.rateWrites).toBe(0);
+    expect(video.preservesPitch).toBe(false);
+    expect(queue.size).toBe(0);
+
+    // A play event is exactly the case a caller's own pre-existing rate
+    // wiring (e.g. clock.setPlaybackRate) must not get fought on: the
+    // identity branch would otherwise reset the rate to userSpeed here.
+    act(() => video.dispatchEvent(new Event('play')));
+    frame();
+    expect(video.rateWrites).toBe(0);
+    expect(queue.size).toBe(0);
+
+    update(video, THREE_POINT, 2, false);
+    expect(video.rateWrites).toBe(0);
   });
 
   it('cancels the rAF on unmount', () => {

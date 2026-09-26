@@ -25,11 +25,19 @@ type PitchPreservingVideo = HTMLVideoElement & {
 /**
  * Drives video.playbackRate from rAF while playing; sets preservesPitch.
  * No-op when map.isIdentity (then it sets rate = userSpeed once).
+ *
+ * `enabled` (default true) lets a caller with no Flex Time at all keep this
+ * hook mounted (rules of hooks: it must be called unconditionally) while
+ * guaranteeing it never touches the video element — not even the identity
+ * branch's one-time `rate = userSpeed` write. That write would otherwise
+ * fight a caller's own, pre-existing `clock.playbackRate` wiring the next
+ * time the video plays.
  */
 export function useFlexPlayback(
   videoRef: RefObject<HTMLVideoElement | null>,
   map: FlexMap,
-  userSpeed: number
+  userSpeed: number,
+  enabled = true
 ): void {
   const mapRef = useRef(map);
   const userSpeedRef = useRef(userSpeed);
@@ -47,6 +55,7 @@ export function useFlexPlayback(
   }, [map, userSpeed]);
 
   useEffect(() => {
+    if (!enabled) return;
     const video = videoRef.current as PitchPreservingVideo | null;
     if (!video) return;
 
@@ -106,5 +115,5 @@ export function useFlexPlayback(
       stopLoop();
       syncRef.current = () => {};
     };
-  }, [videoRef]);
+  }, [videoRef, enabled]);
 }
