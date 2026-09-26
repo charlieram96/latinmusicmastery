@@ -33,13 +33,14 @@ const CHORD_GRADE_DELAY_MS = 95
 /**
  * The count-in display's current number, counting DOWN from `countInBeats`
  * to 1 as `elapsed` (seconds since the count-in started) advances one
- * `beatSec` at a time. Clamped to 0 once the count-in has finished (callers
- * stop reading it at that point, when the exercise itself starts).
+ * `beatSec` at a time. Clamped to `[0, countInBeats]`: 0 before the count-in
+ * has started (a scheduling tick can land a hair before `elapsed` reaches 0)
+ * and 0 once it has finished — callers only display a positive value.
  */
 export function countdownFor(elapsed: number, countInBeats: number, beatSec: number): number {
-  if (beatSec <= 0 || countInBeats <= 0) return 0
+  if (beatSec <= 0 || countInBeats <= 0 || elapsed < 0) return 0
   const beatIndex = Math.floor(elapsed / beatSec)
-  return Math.max(0, countInBeats - beatIndex)
+  return Math.max(0, Math.min(countInBeats, countInBeats - beatIndex))
 }
 
 function loadStoredAudioMode(): AudioMode | null {

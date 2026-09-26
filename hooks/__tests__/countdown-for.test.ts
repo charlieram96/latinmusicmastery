@@ -21,4 +21,12 @@ describe('countdownFor', () => {
     expect(countdownFor(0.24, 4, 0.5)).toBe(4)
     expect(countdownFor(0.49, 4, 0.5)).toBe(4)
   })
+
+  it('is 0 before the count-in has started (a tick that lands just before t=0)', () => {
+    // The first scheduling tick can land microseconds before the audio clock
+    // reaches countInStart, giving a negative elapsed. It must not flash
+    // countInBeats + 1 (the old `countInBeats - floor(elapsed/beatSec)` bug).
+    expect(countdownFor(-0.025, 4, 0.5)).toBe(0)
+    expect(countdownFor(-1, 4, 0.5)).toBe(0)
+  })
 })
