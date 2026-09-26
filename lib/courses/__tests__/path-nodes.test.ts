@@ -40,9 +40,37 @@ describe('buildPathNodes', () => {
     expect(nodes.find((n) => n.state === 'current')).toMatchObject({ id: 'b' })
   })
 
-  it('0-item lessons are not done', () => {
-    const nodes = buildPathNodes('son', [{ id: 's', title: 'S', classes: [cls('x', 0, 0), cls('y', 1, 1)] }], null)
-    expect(nodes.filter((n) => n.kind === 'lesson').map((n) => n.state)).toEqual(['current', 'done'])
+  describe('empty (0-item) lessons', () => {
+    it('are never done and never the fallback current lesson (same rule as the server nextClassId)', () => {
+      const nodes = buildPathNodes('son', [{ id: 's', title: 'S', classes: [cls('x', 1, 1), cls('e', 0, 0), cls('y', 0, 2)] }], null)
+      expect(nodes.filter((n) => n.kind === 'lesson').map((n) => n.state)).toEqual(['done', 'upcoming', 'current'])
+    })
+
+    it('do not keep a course from being finished, nor a checkpoint from being done', () => {
+      const nodes = buildPathNodes('son', [{ id: 's', title: 'S', classes: [cls('x', 0, 0), cls('y', 1, 1)] }], null)
+      expect(nodes.filter((n) => n.kind === 'lesson').map((n) => n.state)).toEqual(['upcoming', 'done'])
+      expect(nodes.at(-1)).toMatchObject({ kind: 'checkpoint', state: 'done' })
+    })
+
+    it('a module of only empty lessons keeps its checkpoint upcoming', () => {
+      const nodes = buildPathNodes('son', [
+        { id: 's1', title: 'A', classes: [cls('x', 1, 1)] },
+        { id: 's2', title: 'B', classes: [cls('e1', 0, 0), cls('e2', 0, 0)] },
+      ], null)
+      expect(nodes.filter((n) => n.kind === 'checkpoint').map((n) => n.state)).toEqual(['done', 'upcoming'])
+      expect(nodes.some((n) => n.state === 'current')).toBe(false)
+    })
+
+    it('the caller current id (nextClassId) is used as is, so the path matches the syllabus', () => {
+      const nodes = buildPathNodes('son', [{ id: 's', title: 'S', classes: [cls('e', 0, 0), cls('y', 0, 2), cls('z', 0, 1)] }], 'y')
+      expect(nodes.find((n) => n.state === 'current')).toMatchObject({ id: 'y' })
+    })
+  })
+
+  it('a class href from the caller wins (non-students go to subscribe, like syllabus rows)', () => {
+    const nodes = buildPathNodes('son', [{ id: 's', title: 'S', classes: [{ ...cls('x', 0, 1), href: '/dashboard/subscribe?course=c' }, cls('y', 0, 1)] }], null)
+    const lessons = nodes.filter((n) => n.kind === 'lesson')
+    expect(lessons.map((n) => n.href)).toEqual(['/dashboard/subscribe?course=c', '/dashboard/course/son/class/y'])
   })
 
   it('finished course has no current and every checkpoint is done', () => {

@@ -48,6 +48,8 @@ export interface PathSectionInput {
     totalItems: number
     completedItems: number
     items?: { item_type: string; video_duration_seconds: number | null }[]
+    /** Where the node links; defaults to the class page (the course page sends non-students to subscribe). */
+    href?: string
   }[]
 }
 
@@ -60,6 +62,14 @@ const TYPE_OF: Record<string, PathLessonType> = {
 
 const isDone = (c: { totalItems: number; completedItems: number }) =>
   c.totalItems > 0 && c.completedItems >= c.totalItems
+/**
+ * A lesson with no items yet (content not uploaded) has nothing to finish: it is
+ * never done, but it never blocks either, so it is never the fallback current
+ * lesson and it does not keep a module or course from counting as finished.
+ * This is the server's rule too (nextClassId = first class with completed < total).
+ */
+const isEmpty = (c: { totalItems: number }) => c.totalItems === 0
+const isOpen = (c: { totalItems: number; completedItems: number }) => !isEmpty(c) && !isDone(c)
 
 /** One node per lesson plus a checkpoint closing each non-empty module. */
 export function buildPathNodes(
@@ -70,8 +80,8 @@ export function buildPathNodes(
   const all = sections.flatMap((s) => s.classes)
   const known = currentClassId !== null && all.some((c) => c.id === currentClassId)
   // A finished course has no "current" lesson, even if the caller passes the last one viewed.
-  const finished = all.length > 0 && all.every(isDone)
-  const currentId = finished ? null : known ? currentClassId : all.find((c) => !isDone(c))?.id ?? null
+  const finished = all.some((c) => !isEmpty(c)) && !all.some(isOpen)
+  const currentId = finished ? null : known ? currentClassId : all.find(isOpen)?.id ?? null
 
   const nodes: PathNode[] = []
   let number = 0
@@ -94,7 +104,7 @@ export function buildPathNodes(
         state: c.id === currentId ? 'current' : isDone(c) ? 'done' : 'upcoming',
         types,
         minutes: seconds > 0 ? Math.round(seconds / 60) : null,
-        href: classHref(courseId, c.id),
+        href: c.href ?? classHref(courseId, c.id),
       })
     }
     nodes.push({
@@ -102,7 +112,7 @@ export function buildPathNodes(
       id: `checkpoint-${section.id}`,
       moduleIndex,
       moduleTitle: section.title,
-      state: section.classes.every(isDone) ? 'done' : 'upcoming',
+      state: section.classes.some((c) => !isEmpty(c)) && !section.classes.some(isOpen) ? 'done' : 'upcoming',
       href: moduleOverviewHref(courseId, section.id),
     })
   })
