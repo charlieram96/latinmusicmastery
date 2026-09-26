@@ -783,9 +783,9 @@ function ScoreExerciseSession({
 
       {mediaAudible && soundBlocked && isActive && (
         <div className="ps-lesson-sound-blocked flex items-center justify-between gap-3 border-t border-border bg-primary/5 px-4 py-2" role="status">
-          <span className="text-xs text-muted-foreground">Tap to enable sound</span>
+          <span className="text-xs text-muted-foreground">{t('dashboard.classViewer.exercise.enableSoundHint')}</span>
           <Button size="sm" variant="outline" onClick={primeMedia}>
-            <Volume2 className="h-3.5 w-3.5" /> Enable sound
+            <Volume2 className="h-3.5 w-3.5" /> {t('dashboard.classViewer.exercise.enableSound')}
           </Button>
         </div>
       )}

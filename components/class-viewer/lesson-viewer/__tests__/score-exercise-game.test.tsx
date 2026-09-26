@@ -377,7 +377,7 @@ describe('ScoreExerciseGame play settings (Studio rework P5)', () => {
       render({ preview: false, play, mediaAudible: true })
       tick()
       await act(async () => {})
-      expect(host.textContent).toContain('Tap to enable sound')
+      expect(host.textContent).toContain('dashboard.classViewer.exercise.enableSoundHint')
     })
 
     it('seeks exactly once per loop wrap, and cancels its frame on unmount', () => {
@@ -464,9 +464,9 @@ describe('ScoreExerciseGame audible jam track on Safari/iOS (final fix 1)', () =
     await act(async () => {})
     session = { ...session, sessionState: 'countdown' }
     render({ preview: false, mediaAudible: true })
-    expect(host.textContent).toContain('Tap to enable sound')
+    expect(host.textContent).toContain('dashboard.classViewer.exercise.enableSoundHint')
     calls = []
-    const enable = [...host.querySelectorAll('button')].find(b => b.textContent?.includes('Enable sound'))!
+    const enable = [...host.querySelectorAll('button')].find(b => b.textContent?.includes('dashboard.classViewer.exercise.enableSound'))!
     click(enable)
     await act(async () => {})
     expect(calls).toEqual(['play', 'pause'])
