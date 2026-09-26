@@ -22,6 +22,11 @@ const MAX_RMS_S = 0.04;
  *  deviations above n·p (binomial). A fixed ratio alone let noise place
  *  short sections: 70% of 8 onsets is 6 lucky hits. p >= 1 always refuses. */
 const MIN_TIGHT_MATCHES = 12;
+/** The hit density for that chance is measured LOCALLY: over the section's
+ *  current span (first downbeat to tail) widened by this on each side, within
+ *  the window. A busy recording elsewhere (other sections, a solo) says
+ *  nothing about how lucky a match is here. */
+const DENSITY_MARGIN_S = 2;
 const MIN_TIGHT_RATIO = 0.7;
 const MIN_CHANCE_Z = 5;
 
@@ -313,13 +318,25 @@ export function autoPlaceBars(
   const matched = best.count;
 
   // Final acceptance gate. The matched pairs sit tight on the line (RMS), and
-  // the tight matches clear the absolute floor, the ratio, and chance at this
-  // recording's hit density (see MIN_CHANCE_Z).
+  // the tight matches clear the absolute floor, the ratio, and chance at the
+  // hit density around this section (see MIN_CHANCE_Z, DENSITY_MARGIN_S). An
+  // unbounded window side is measured to the outermost hit instead, so an
+  // infinite window can't dilute the density to zero and wave noise through.
   const n = onsetQNs.length;
   const m = best.tight;
-  const windowS = window.end - window.start;
-  if (!(windowS > 0) || best.rms > MAX_RMS_S) return null;
-  const p = Math.min(1, (hits.length / windowS) * CHANCE_WINDOW_S);
+  const densityLo = Math.max(
+    Number.isFinite(window.start) ? window.start : hits[0],
+    first.beats[0].videoTimeSeconds - DENSITY_MARGIN_S
+  );
+  const densityHi = Math.min(
+    Number.isFinite(window.end) ? window.end : hits[hits.length - 1],
+    state.tailVideoTimeSeconds + DENSITY_MARGIN_S
+  );
+  const densityS = densityHi - densityLo;
+  if (!(densityS > 0) || best.rms > MAX_RMS_S) return null;
+  let localHits = 0;
+  for (let i = lowerBound(hits, densityLo); i < hits.length && hits[i] <= densityHi; i++) localHits++;
+  const p = Math.min(1, (localHits / densityS) * CHANCE_WINDOW_S);
   if (p >= 1 || m < MIN_TIGHT_MATCHES || m < MIN_TIGHT_RATIO * n) return null;
   if ((m - n * p) / Math.sqrt(n * p * (1 - p)) < MIN_CHANCE_Z) return null;
 

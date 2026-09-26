@@ -398,6 +398,38 @@ describe('autoPlaceBars: note-spacing locality and a chance-aware gate', () => {
   });
 });
 
+describe('autoPlaceBars: the chance gate measures hit density locally and finitely', () => {
+  it('refuses pure noise with an unbounded window end', () => {
+    for (const count of [150, 250, 300]) {
+      for (let seed = 1; seed <= 20; seed++) {
+        const hits = scatter(seededRandom(seed * 104729), count);
+        for (const start of [5.0, 5.2]) {
+          expect(autoPlaceBars(laid(16, start, 0.5), hits, { start: 0, end: Infinity }), `count ${count} seed ${seed} start ${start}`).toBeNull();
+          expect(autoPlaceBars(patterned(4, start, 0.5, QUARTERS), hits, { start: 0, end: Infinity }), `4 bars, count ${count} seed ${seed} start ${start}`).toBeNull();
+        }
+      }
+    }
+  });
+  it('places a short clean section inside a recording that is busy (7 hits/s) everywhere but near it', () => {
+    for (const seed of R4_SEEDS) {
+      const rnd = seededRandom(seed);
+      // Quarters, 4 bars, from 100 s at 120 bpm: the span is 100..108 s.
+      const played = playedPattern(rnd, 0.5, QUARTERS, 0, 4).map((t) => t + 95);
+      const noise: number[] = [];
+      for (let k = 0; k < 7 * 300; k++) {
+        const t = rnd() * 300;
+        if (t < 97 || t > 111) noise.push(t); // nothing within 3 s of the section
+      }
+      const hits = [...noise, ...played].sort((x, y) => x - y);
+      for (const frac of [-0.2, 0, 0.2]) {
+        const res = autoPlaceBars(patterned(4, 100 + frac * 0.5, 0.5, QUARTERS), hits, { start: 0, end: 300 });
+        expect(res, `seed ${seed}, ${frac} beat`).not.toBeNull();
+        downbeats(res!.state).forEach((t, i) => expect(Math.abs(t - (100 + 2 * i)), `seed ${seed}, bar ${i + 1}`).toBeLessThanOrEqual(0.015));
+      }
+    }
+  });
+});
+
 describe('windowWithinCorridor', () => {
   const span = { startSeconds: 10, endSeconds: 20 };
   it('leaves the window alone with no siblings', () => {
