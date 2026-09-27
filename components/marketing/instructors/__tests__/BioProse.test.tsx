@@ -46,3 +46,16 @@ describe('BioProse', () => {
     expect(html({ type: 'doc', content: [{ type: 'paragraph', content: [text('a')] }, { type: 'paragraph' }] })).toBe('<p>a</p>')
   })
 })
+
+describe('reflowParagraphs', () => {
+  const para = (t: string) => ({ type: 'paragraph', content: [text(t)] })
+  const long = 'Patricio was born in Camagüey City, a province of Cuba, on May the 27th, 1974. He started his'
+  it('rejoins line-length paragraphs that stop mid-sentence', () => {
+    const out = html({ type: 'doc', content: [para(long), para('elementary studies of music.'), para('Next paragraph.')] })
+    expect(out).toBe(`<p>${long} elementary studies of music.</p><p>Next paragraph.</p>`)
+  })
+  it('leaves short lines, finished sentences and headings alone', () => {
+    const out = html({ type: 'doc', content: [para('PATRICIO DÍAZ NÁPOLES'), para(long + ' studies.'), para('Another one.'), { type: 'heading', attrs: { level: 2 }, content: [text('H')] }] })
+    expect(out).toBe(`<p>PATRICIO DÍAZ NÁPOLES</p><p>${long} studies.</p><p>Another one.</p><h3>H</h3>`)
+  })
+})

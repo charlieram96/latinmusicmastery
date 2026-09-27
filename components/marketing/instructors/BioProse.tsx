@@ -58,7 +58,39 @@ function renderNode(raw: unknown): ReactNode {
   }
 }
 
+function plain(n: Node): string {
+  if (typeof n.text === 'string') return n.text
+  return Array.isArray(n.content) ? n.content.map(c => (c && typeof c === 'object' ? plain(c as Node) : '')).join('') : ''
+}
+
+const WRAPPED_LINE_MIN = 60
+const ENDS_SENTENCE = /[.!?:;”"’')\]]\s*$/
+
+/**
+ * Some bios were pasted from PDFs, one paragraph per printed line. Rejoin a
+ * top-level paragraph with the next one when it is line-length and stops
+ * mid-sentence, so the text reads as prose. Short lines (titles, names) and
+ * finished sentences are left alone.
+ */
+export function reflowParagraphs(doc: unknown): unknown {
+  if (!doc || typeof doc !== 'object') return doc
+  const d = doc as Node
+  if (!Array.isArray(d.content)) return doc
+  const out: unknown[] = []
+  for (const raw of d.content) {
+    const n = raw as Node
+    const prev = out[out.length - 1] as Node | undefined
+    const prevText = prev?.type === 'paragraph' ? plain(prev).trim() : ''
+    if (n?.type === 'paragraph' && hasText(n) && prev && prevText.length >= WRAPPED_LINE_MIN && !ENDS_SENTENCE.test(prevText)) {
+      out[out.length - 1] = { ...prev, content: [...(prev.content ?? []), { type: 'text', text: ' ' }, ...(n.content ?? [])] }
+    } else {
+      out.push(raw)
+    }
+  }
+  return { ...d, content: out }
+}
+
 export function BioProse({ doc }: { doc: unknown }) {
   if (!doc || typeof doc !== 'object' || !hasText(doc as Node)) return null
-  return <>{renderNode(doc)}</>
+  return <>{renderNode(reflowParagraphs(doc))}</>
 }
