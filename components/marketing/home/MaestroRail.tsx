@@ -40,6 +40,7 @@ export function MaestroRail({ id, teachers, label }: { id: string; teachers: Cat
     const down = (e: PointerEvent) => { if (e.pointerType === 'mouse' && e.button === 0) { drag = { x: e.clientX, sl: rail.scrollLeft, moved: false }; e.preventDefault() } }
     const move = (e: PointerEvent) => {
       if (!drag) return
+      if (e.buttons === 0) { up(); return }
       const dx = e.clientX - drag.x
       if (Math.abs(dx) > 4) { drag.moved = true; rail.classList.add('drag') }
       if (drag.moved) rail.scrollLeft = drag.sl - dx
@@ -55,11 +56,13 @@ export function MaestroRail({ id, teachers, label }: { id: string; teachers: Cat
     rail.addEventListener('pointerdown', down)
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
     rail.addEventListener('click', click, true)
     return () => {
       rail.removeEventListener('pointerdown', down)
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
       rail.removeEventListener('click', click, true)
     }
   }, [])

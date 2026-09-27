@@ -116,6 +116,8 @@ export function createGroove(host: GrooveHost, initialBpm: number): Groove {
 
   const schedule = () => {
     const c = ensureAudio(), p = host.pattern()
+    // After the tab was hidden (timers throttled), skip the missed steps instead of firing them all at once.
+    if (nextTime < c.ac.currentTime - stepDur()) nextTime = c.ac.currentTime + 0.05
     while (nextTime < c.ac.currentTime + 0.12) {
       const s = next, t = nextTime
       for (const id of INST_IDS) { const v = vel(p, id, s); if (v && !host.isMuted(id)) SOUND[id](c, t, v, s, p, stepDur()) }
@@ -143,7 +145,9 @@ export function createGroove(host: GrooveHost, initialBpm: number): Groove {
       playing = false; queue = []
       if (timer) clearInterval(timer); timer = null
       cancelAnimationFrame(raf)
-      if (ctx) void ctx.ac.suspend()
+      // The context is shared with the hero keys, so it is left running (a
+      // suspend would freeze a ringing key note); already-queued notes end
+      // within the 120ms lookahead.
       host.onStep(-1)
     },
     setBpm(n) { bpm = n },

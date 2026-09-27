@@ -70,9 +70,9 @@ export function GrooveSeq() {
             ))}
           </div>
           <div className="tempo" role="group" aria-label={k('tempo')}>
-            <button type="button" aria-label={k('slower')} disabled={bpm <= BPM.min} onClick={() => setBpm(b => Math.max(BPM.min, b - BPM.step))}>−</button>
+            <button type="button" aria-label={k('slower')} aria-disabled={bpm <= BPM.min} onClick={() => setBpm(b => Math.max(BPM.min, b - BPM.step))}>−</button>
             <output className="tnum" aria-live="polite"><b>{bpm}</b> BPM</output>
-            <button type="button" aria-label={k('faster')} disabled={bpm >= BPM.max} onClick={() => setBpm(b => Math.min(BPM.max, b + BPM.step))}>+</button>
+            <button type="button" aria-label={k('faster')} aria-disabled={bpm >= BPM.max} onClick={() => setBpm(b => Math.min(BPM.max, b + BPM.step))}>+</button>
           </div>
         </div>
       </div>

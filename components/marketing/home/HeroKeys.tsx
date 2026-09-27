@@ -45,6 +45,8 @@ export function HeroKeys({ chip }: { chip: HeroChip | null }) {
     ro.observe(keys); lay()
 
     const lead = vids[0]
+    // Only the lead video buffers ahead; followers seek to it. Nothing buffers under reduced motion.
+    if (!reduce) lead.preload = 'auto'
     const sync = () => { for (const v of vids.slice(1)) if (Math.abs(v.currentTime - lead.currentTime) > 0.08) v.currentTime = lead.currentTime }
     lead.addEventListener('timeupdate', sync)
     const hide = (e: Event) => { (e.currentTarget as HTMLVideoElement).style.display = 'none' }
@@ -56,12 +58,12 @@ export function HeroKeys({ chip }: { chip: HeroChip | null }) {
       io.observe(keys)
     }
 
+    const leave = () => { keys.style.removeProperty('--ry'); keys.style.removeProperty('--rx') }
     const move = (e: PointerEvent) => {
-      if (reduce || innerWidth < 1100) return
+      if (reduce || innerWidth < 1100) { leave(); return }
       const r = vis.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5
       keys.style.setProperty('--ry', `${(-8 + x * 10).toFixed(2)}deg`); keys.style.setProperty('--rx', `${(4 - y * 8).toFixed(2)}deg`)
     }
-    const leave = () => { keys.style.removeProperty('--ry'); keys.style.removeProperty('--rx') }
     vis.addEventListener('pointermove', move)
     vis.addEventListener('pointerleave', leave)
 
@@ -86,7 +88,7 @@ export function HeroKeys({ chip }: { chip: HeroChip | null }) {
         <div className="keys-shadow" aria-hidden="true" />
         {KEYS.map(k => (
           <button key={k.midi} type="button" className={k.cls} aria-label={t(`marketing.site.home.hero.key.${k.label}`)} onClick={e => press(e, k.midi)}>
-            {k.white && <span className="kv"><video src={SRC} muted loop playsInline preload="auto" aria-hidden="true" /></span>}
+            {k.white && <span className="kv"><video src={SRC} muted loop playsInline preload="metadata" aria-hidden="true" /></span>}
           </button>
         ))}
       </div>

@@ -49,7 +49,7 @@ export function StagePlot({ seats, defaultKey }: { seats: Record<string, PlotSea
             const info = seats[s.key]
             return (
               <g key={s.key} className={`seat${info?.soon ? ' soon' : ''}${s.key === sel ? ' sel' : ''}`} transform={`translate(${s.x} ${s.y})`}
-                tabIndex={0} role="button" aria-pressed={s.key === sel} aria-label={info?.label ?? s.name[lang]}
+                tabIndex={0} role="button" aria-pressed={s.key === sel}
                 onClick={() => setSel(s.key)} onKeyDown={e => onKey(e, s.key)}>
                 <rect className="pad" x={-PAD.w / 2} y={-PAD.h / 2} width={PAD.w} height={PAD.h} rx="18" />
                 <g dangerouslySetInnerHTML={{ __html: SEAT_GLYPHS[s.glyph] }} />
@@ -62,7 +62,8 @@ export function StagePlot({ seats, defaultKey }: { seats: Record<string, PlotSea
         <div className="plot-meta" aria-hidden="true"><b>{k('metaTitle')}</b><br />{k('metaLine', { n: SEATS.length })}<br />Rev 26.09.26</div>
       </div>
       {seat && (
-        <aside className="seat-panel" aria-live="polite">
+        <aside className="seat-panel">
+          <p className="sr-only" aria-live="polite">{seat.soon ? `${seat.label}: ${k('inProduction')}` : `${seat.label}: ${seat.total} ${seat.total === 1 ? k('courseOne') : k('courses')}`}</p>
           <div className="sp-top">
             <div><div className="sp-name">{seat.label}</div>{def && <p className="sp-note">{def.note[lang]}</p>}</div>
             <div className="sp-count"><b className="tnum">{seat.soon ? '—' : seat.total}</b><span>{seat.soon ? k('comingSoon') : seat.total === 1 ? k('courseOne') : k('courses')}</span></div>
