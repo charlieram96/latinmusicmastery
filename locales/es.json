@@ -222,6 +222,26 @@
         "_": "keys above this line"
       },
       "pricing": {
+        "calc": {
+          "instrument": "Instrumento",
+          "available": "{n} cursos de estilo disponibles",
+          "styles": "Cursos de estilo",
+          "stylesHint": "El primero va incluido. Cada extra: {addon}/mes.",
+          "fewer": "Menos estilos",
+          "more": "Más estilos",
+          "styleOne": "1 estilo",
+          "styleMany": "{n} estilos",
+          "billing": "Facturación",
+          "monthly": "Mensual",
+          "yearly": "Anual −{pct}%",
+          "perMonth": "/mes",
+          "perYear": "/año",
+          "base": "Base {price}",
+          "extras": "+ {n} × {price}",
+          "save": "Ahorras {price} vs mensual",
+          "extrasYearly": "+ {price}/mes por estilos extra",
+          "cta": "Asegura el precio fundador"
+        },
         "_": "keys above this line"
       },
       "about": {

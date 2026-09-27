@@ -222,6 +222,26 @@
         "_": "keys above this line"
       },
       "pricing": {
+        "calc": {
+          "instrument": "Instrument",
+          "available": "{n} style courses available",
+          "styles": "Style courses",
+          "stylesHint": "The first is included. Each extra: {addon}/mo.",
+          "fewer": "Fewer styles",
+          "more": "More styles",
+          "styleOne": "1 style",
+          "styleMany": "{n} styles",
+          "billing": "Billing",
+          "monthly": "Monthly",
+          "yearly": "Yearly −{pct}%",
+          "perMonth": "/mo",
+          "perYear": "/yr",
+          "base": "Base {price}",
+          "extras": "+ {n} × {price}",
+          "save": "Save {price} vs monthly",
+          "extrasYearly": "+ {price}/mo for extra styles",
+          "cta": "Lock in founding pricing"
+        },
         "_": "keys above this line"
       },
       "about": {
