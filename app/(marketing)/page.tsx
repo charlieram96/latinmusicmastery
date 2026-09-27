@@ -5,6 +5,7 @@ import { instrumentLabel } from '@/lib/i18n/instruments'
 import { getPricing, formatCents } from '@/lib/payments/pricing-source'
 import { getMarketingCatalog } from '@/lib/marketing/data'
 import { SEATS, defaultSeatKey } from '@/lib/marketing/stage-plot'
+import { COUNTRY_META } from '@/lib/marketing/catalog'
 import { Finale } from '@/components/marketing/site/Finale'
 import { Marquee } from '@/components/marketing/home/Marquee'
 import { Numbers } from '@/components/marketing/home/Numbers'
@@ -56,6 +57,12 @@ export default async function MarketingHomePage() {
   const patricio = catalog.teachers.find(tc => tc.name.includes('Patricio'))
   const chip = patricio?.imageUrl ? { name: patricio.name, imageUrl: patricio.imageUrl } : null
 
+  // Live countries first, then the prototype's order (CU, PR, DO, CO).
+  const metaOrder = Object.keys(COUNTRY_META)
+  const liveStyles = (c: (typeof catalog.countries)[number]) => c.styles.filter(s => s.live).length
+  const countries = [...catalog.countries].sort((a, b) =>
+    liveStyles(b) - liveStyles(a) || (metaOrder.indexOf(a.slug) >>> 0) - (metaOrder.indexOf(b.slug) >>> 0))
+
   const calcInstruments = catalog.instruments
     .filter(i => i.courses.length > 0)
     .map(i => ({ key: i.key, label: instrumentLabel(i.key, locale), styleCourses: i.courses.length }))
@@ -64,10 +71,10 @@ export default async function MarketingHomePage() {
   return (
     <>
       <HeroSection t={t} counts={catalog.counts} price={formatCents(prices.base_monthly)} chip={chip} />
-      <Marquee countries={catalog.countries} label={t('marketing.site.home.marquee.label')} />
+      <Marquee countries={countries} label={t('marketing.site.home.marquee.label')} />
       <Numbers counts={catalog.counts} />
       <StageSection t={t} seats={seats} defaultKey={defaultKey} />
-      <AtlasSection t={t} countries={catalog.countries} />
+      <AtlasSection t={t} countries={countries} />
       <GrooveSection t={t} />
       <PlaySenseSection t={t} />
       <MaestrosSection t={t} teachers={catalog.teachers.filter(tc => tc.imageUrl)} />
