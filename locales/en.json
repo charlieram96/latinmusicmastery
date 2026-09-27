@@ -349,12 +349,120 @@
         "_": "keys above this line"
       },
       "explore": {
+        "meta": {
+          "title": "Explore courses",
+          "description": "Browse every Latin music course by instrument, country and style, taught by the maestros who play it."
+        },
+        "crumb": "Explore",
+        "title": "Explore",
+        "titleAccent": "the catalog.",
+        "lede": "{courses} courses across {instruments} instruments. Pick an instrument, then add the styles you want to play.",
+        "searchLabel": "Search courses",
+        "searchPlaceholder": "Search a style or instrument",
+        "instrumentsLabel": "Filter by instrument",
+        "countriesLabel": "Filter by country",
+        "allInstruments": "All instruments",
+        "allCountries": "All countries",
+        "soon": "soon",
+        "empty": "No courses match that search yet.",
+        "fundamentals": "Fundamentals",
+        "fundamentalsOf": "{instrument} Fundamentals",
+        "start": "Start",
+        "courseName": "{style} {instrument}",
+        "atlasEyebrow": "Browse by country",
+        "atlasTitle": "Where the",
+        "atlasAccent": "music comes from.",
+        "atlasInProduction": "Styles from {countries} are in production now.",
+        "stylesLive": "{live} of {total} styles live",
+        "country": {
+          "meta": {
+            "title": "{country} courses",
+            "description": "Latin music courses from {country}, taught by the maestros who play it."
+          },
+          "title": "Styles of",
+          "lede": "{courses} courses across {live} live styles. Pick a style to see its story and its maestros.",
+          "ledeNone": "Courses from {country} are in production. Join the waitlist to hear when they open.",
+          "styleCount": "{n} courses",
+          "styleCountOne": "{n} course",
+          "coursesEyebrow": "All courses",
+          "coursesTitle": "Pick a style,",
+          "coursesAccent": "pick a seat.",
+          "empty": "Courses from {country} are in production."
+        },
         "_": "keys above this line"
       },
       "style": {
+        "meta": {
+          "title": "{style} courses · {country}",
+          "description": "Learn {style} from {country} on your instrument, with the maestros who play it."
+        },
+        "claveSon": "Clave de son",
+        "claveRumba": "Rumba clave",
+        "courseCount": "{n} courses",
+        "courseCountOne": "{n} course",
+        "storyEyebrow": "The story",
+        "storyFallback": "We're still writing the story of {style} for this page. Until then, the maestros tell it best in the courses below.",
+        "story": {
+          "son-cubano": {
+            "p1": "**Son** took shape in Oriente, the eastern end of Cuba, in the late 1800s. It joined Spanish song forms and the guitar family with rhythms carried by enslaved Africans and their descendants, above all the Bantu-derived drumming of the region.",
+            "p2": "By the 1920s it had reached Havana, where groups like the **Sexteto Habanero** and Ignacio Piñeiro's **Septeto Nacional** made it the sound of the city: tres, guitar, bongó, bass, maracas, claves and voices, later a trumpet.",
+            "p3": "In the 1940s **Arsenio Rodríguez** expanded the band into the conjunto, adding the conga, piano and more trumpets, and stretched the montuno into the long vamp that salsa was later built on."
+          }
+        },
+        "clave": {
+          "son32": "The son clave, 3-2",
+          "rumba32": "The rumba clave, 3-2",
+          "gridLabel": "Two bars of eighth notes: {rows}",
+          "clave": "Clave",
+          "bongo": "Bongó",
+          "bass": "Bass",
+          "noteSon": "Three strokes in the first bar, two in the second. The bass never plays on one: it anticipates the next chord on the & of 2 and on 4.",
+          "noteRumba": "Like the son clave, but the third stroke is pushed back to the & of 4.",
+          "hear": "Hear it on the home page"
+        },
+        "coursesTitle": "Play {style} on",
+        "coursesAccent": "any seat.",
+        "coursesLede": "Each course teaches one instrument's part in {style}.",
+        "coursesEmpty": "{style} courses are in production. Join the waitlist to hear when they open.",
+        "maestrosEyebrow": "Maestros",
+        "maestrosTitle": "Who plays {style}",
+        "maestrosAccent": "here.",
+        "finaleTitle": "Start with",
+        "finaleAccent": "the clave.",
+        "finaleLede": "Pick an instrument, add {style} as your style, and play it with the band.",
         "_": "keys above this line"
       },
       "course": {
+        "meta": {
+          "title": "{title} · Course preview",
+          "fallbackTitle": "Course preview",
+          "fallbackDescription": "Preview a Latin music course: its curriculum, its maestro and how you practice it in PlaySense."
+        },
+        "sections": "{n} sections",
+        "sectionsOne": "{n} section",
+        "lessons": "{n} lessons",
+        "lessonsOne": "{n} lesson",
+        "notation": "PlaySense notation",
+        "maestro": "Your maestro",
+        "curriculum": "Curriculum",
+        "inProductionCount": "{n} sections in production",
+        "inProductionCountOne": "{n} section in production",
+        "inProduction": "In production",
+        "inProductionBody": "This section is being recorded. It unlocks for everyone on the plan when it ships.",
+        "freePreview": "Free preview",
+        "plan": "Plan",
+        "practice": "Practice every lesson in PlaySense",
+        "enroll": {
+          "label": "Included with the {instrument} plan",
+          "perMonth": "/mo",
+          "style": "{style} as your style course",
+          "playsense": "PlaySense notation and feedback",
+          "cancel": "Cancel anytime",
+          "cta": "Lock in founding pricing",
+          "compare": "Compare plans",
+          "yearly": "Or {price}/yr, {pct}% less than monthly."
+        },
+        "planSr": "(included with the plan)",
         "_": "keys above this line"
       },
       "instructors": {
