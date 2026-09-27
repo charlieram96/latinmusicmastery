@@ -201,6 +201,151 @@
         "perfect": "Perfect"
       },
       "home": {
+        "hero": {
+          "open": "Waitlist open",
+          "maestros": "{n} maestros",
+          "instruments": "{n} instruments",
+          "h1Label": "Learn from the masters of Latin music",
+          "line1": "Learn from",
+          "line2": "the masters",
+          "line3": "of la música latina.",
+          "subA": "Son, mambo, timba, bolero, bomba, plena and more, taught by the musicians who play them every night.",
+          "subEm": "PlaySense listens while you practice",
+          "subB": "and tells you, note by note, whether you're in clave.",
+          "notePrefix": "Founding-member pricing from",
+          "notePer": "/mo",
+          "noteSuffix": "· one instrument + one style",
+          "keysLabel": "Piano keys showing a live band session. Click a key to play its note.",
+          "key": {
+            "c4": "Play Do, C4",
+            "cs4": "Play Do sharp, C sharp 4",
+            "d4": "Play Re, D4",
+            "ds4": "Play Re sharp, D sharp 4",
+            "e4": "Play Mi, E4"
+          },
+          "chipCaption": "Timbal · studied under Changuito"
+        },
+        "marquee": {
+          "label": "Styles taught"
+        },
+        "numbers": {
+          "courses": "Courses",
+          "maestros": "Maestros",
+          "instruments": "Instruments",
+          "styles": "Styles",
+          "countries": "Countries"
+        },
+        "stage": {
+          "eyebrow": "Pick your instrument",
+          "title": "Take your seat",
+          "accent": "in the orquesta.",
+          "lede": "This is the stage plot of a salsa orchestra. Every position is an instrument we teach. Pick a position to see its courses and who teaches it.",
+          "plotLabel": "Stage plot. Pick a position to see its courses.",
+          "riser": "RISER 8′×24′ · +16″",
+          "audience": "▼ AUDIENCE ▼",
+          "soonTag": "SOON",
+          "metaTitle": "Stage plot",
+          "metaLine": "Orquesta · {n} pos.",
+          "comingSoon": "coming soon",
+          "courses": "courses",
+          "courseOne": "course",
+          "coursesLabel": "Courses",
+          "inProduction": "Courses in production",
+          "fundamentals": "Fundamentals",
+          "taughtBy": "Taught by",
+          "tba": "Instructor to be announced.",
+          "notify": "Get notified",
+          "browse": "Browse {instrument} courses",
+          "fundamentalsIncluded": "Fundamentals included"
+        },
+        "atlas": {
+          "eyebrow": "Add a style",
+          "title": "Four countries.",
+          "accent": "Una clave.",
+          "lede": "Every style is taught per instrument, from the root up: where it comes from, how it sits in the band, and what each player does in it.",
+          "live": "Live",
+          "soon": "Coming soon",
+          "stylesLive": "{live}/{total} styles live"
+        },
+        "groove": {
+          "eyebrow": "The clave",
+          "title": "Everything starts",
+          "accent": "with the clave.",
+          "lede": "Five parts of a son montuno, each on its own lane. Press play, mute an instrument, or tap a cell to change the pattern. This is what playing inside the band feels like.",
+          "play": "Hear the groove",
+          "stop": "Stop",
+          "claveLabel": "Clave pattern",
+          "clave": {
+            "son32": "Son 3-2",
+            "son23": "2-3",
+            "rumba32": "Rumba"
+          },
+          "tempo": "Tempo",
+          "slower": "Slower",
+          "faster": "Faster",
+          "mute": "Mute {name}",
+          "cell": "{name}, step {n}",
+          "foot": "Tap a name to mute it. Clave, campana, conga, bass and piano, synthesized in your browser.",
+          "inst": {
+            "clave": {
+              "name": "Clave",
+              "part": "Son clave"
+            },
+            "campana": {
+              "name": "Campana",
+              "part": "Bongó bell"
+            },
+            "conga": {
+              "name": "Conga",
+              "part": "Tumbao"
+            },
+            "bajo": {
+              "name": "Bass",
+              "part": "Tumbao"
+            },
+            "piano": {
+              "name": "Piano",
+              "part": "Montuno"
+            }
+          }
+        },
+        "playsense": {
+          "title": "Step into the session.",
+          "accent": "Miami, at dusk.",
+          "lede": "The sun just set over Biscayne Bay and the band is ready. Notes travel down the pier to your instrument, and PlaySense listens to every hit you play.",
+          "f1Title": "Real-time feedback",
+          "f1Body": "Your microphone hears each hit and scores it: perfect, early or late.",
+          "f2Title": "Play with the band",
+          "f2Body": "Bass, keys and timbales play around you. Mute your part and fill the hole.",
+          "f3Title": "The chart when you want it",
+          "f3Body": "Switch to notation synced to the lesson video, bar by bar.",
+          "f4Title": "Loop and slow down",
+          "f4Body": "Repeat any measure at whatever tempo you need.",
+          "cta": "See how PlaySense works"
+        },
+        "maestros": {
+          "eyebrow": "The maestros",
+          "title": "Learn it from the ones",
+          "accent": "who play it.",
+          "lede": "Percussionists, pianists, bassists, horns and voice. Each one teaches the instrument they make their living on.",
+          "prev": "Previous maestros",
+          "next": "Next maestros",
+          "railLabel": "Maestros"
+        },
+        "pricing": {
+          "eyebrow": "Pricing",
+          "title": "One instrument.",
+          "accent": "Everything it needs.",
+          "lede": "Each subscription includes your instrument's fundamentals course and one style course. Add more styles whenever you want.",
+          "includes": "Every plan includes",
+          "inc1": "Your instrument's fundamentals course",
+          "inc2": "One style course of your choice",
+          "inc3": "PlaySense notation and real-time feedback",
+          "inc4": "Streaks, weekly goal and practice calendar",
+          "inc5": "New content monthly · cancel anytime",
+          "allAccess": "All-access",
+          "allAccessBody": "Every instrument and every style."
+        },
         "_": "keys above this line"
       },
       "explore": {
