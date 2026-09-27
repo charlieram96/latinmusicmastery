@@ -2,7 +2,7 @@
 
 This collection is authored from original meshes and generated image textures in Blender 5.2.1 LTS. The editable file is `art/playsense/afterhours-instruments.blend`; its packed textures also have editable PNG sources in `art/playsense/textures`. The rendered review image sits beside the Blender file.
 
-The web renderer loads `public/playsense/models/afterhours-instruments.glb` for the foreground congas and timbales. The five masters are named `quinto`, `conga`, `tumba`, `timbale_macho`, and `timbale_hembra`. Their playing surface is at local Z=0 in Blender / Y=0 in Three.js. Review-scene arrangement, lights and plinths are excluded from the web export. Other instruments and the band environment retain their existing authored Three.js geometry.
+The web renderer loads `public/playsense/models/afterhours-instruments.glb` for the foreground congas and timbales. The shipped file is produced by `export_afterhours_lod.py`, which decimates the conga hardware (nickel hooks, enamel rings, champagne fittings) to roughly a quarter of its triangles at export time without saving over the `.blend` (collection: ~621k → ~282k triangles, 2.06 MB). Use it instead of `export_afterhours.py` for web exports. The five masters are named `quinto`, `conga`, `tumba`, `timbale_macho`, and `timbale_hembra`. Their playing surface is at local Z=0 in Blender / Y=0 in Three.js. Review-scene arrangement, lights and plinths are excluded from the web export. Other instruments and the band environment retain their existing authored Three.js geometry.
 
 ## Local Blender MCP connection
 
@@ -33,21 +33,6 @@ The stage renders procedural instruments immediately, then replaces them after t
 
 A Blender render uses Cycles and studio review lights. The in-game result uses the courtyard's real-time lights and camera, so the two images intentionally differ in lighting.
 
-## Authored notes, board, entrance and lounge
+## Retired: Afterhours playfield
 
-`art/playsense/afterhours-playfield.blend` contains the **Afterhours Playfield** scene. The six export masters are `board`, `entrance`, `lounge`, `note_body`, `note_face`, and `note_inlay`. The scene includes a camera and tinted example notes for review; review objects and unrelated scenes are excluded from export. Both export scripts explicitly use the active scene to prevent selected objects in another open scene from entering an asset.
-
-The board includes a recessed olive fabric bed with stitching, oiled walnut chassis and cheeks, machined brass corners, inlaid rail lighting, vents and trestle legs. The source is a deep celadon casement window with walnut reveals, brass fittings and gathered linen curtains. Beyond the frame, original modeled tiled rooftops, warm windows, balconies and palms sit at different depths against an embedded dusk-sky texture. The lounge includes boucle seating, linen/olive pillows, a side table, coffee cup, music book and woven pendant lamps. Packed PBR texture sources are also available in `art/playsense/playfield-textures`.
-
-The web scene adds a gentle breeze to the existing Blender linen and palm-frond surfaces, plus drifting cloud wisps in the sky material. `window-motion.ts` uses the baked entrance coordinates and the `Window linen`, `Evening foliage`, and `Window dusk sky` material names; preserve these when re-exporting. The curtain tops and palm crowns stay anchored. One shared time uniform drives the effects, with no per-frame geometry uploads or additional downloads. Moving surfaces are excluded from the static room shadow bake. Reduced motion keeps the original still window, and hidden/offscreen stages suspend updates. Blender review renders show the resting geometry.
-
-The note masters are separate single-mesh components with centered pivots. At runtime, their geometry and materials replace the procedural note instances; they keep the same event identities, positions, lane colors and audio clock. Total detail is **2,928 triangles per note**. Note faces use instance-colored emissive shading. Do not combine the three note masters or move their pivots when editing them.
-
-The independent playfield download is **1.04 MB**, using Draco and embedded WebP, under a 2 MB budget. Loading validates the six roots before installing replacements, preserves the immediate procedural fallback, handles scene cancellation and shares material resources under one scene owner. Compatibility mode retains the simpler board and notes. This collection is applied to the PlaySense studio for every instrument, including piano; the other stage themes retain procedural notes. Internal Afterhours filenames remain stable.
-
-Run these through the same MCP client, with the current user request as `--prompt`:
-
-- `execute_blender_code --script scripts/blender/build_playfield.py` rebuilds the generated scene and exports it.
-- `execute_blender_code --script scripts/blender/export_playfield.py` exports manual edits without rebuilding.
-- `execute_blender_code --script scripts/blender/render_playfield.py` renders the scene asynchronously to `art/playsense/afterhours-playfield.png`. Status is written to `/tmp/playsense-playfield-render-status.txt`.
-- `node scripts/blender/validate_playfield.mjs` checks the runtime contract, root selection, note pivots/bounds, triangle budget, textures and download budget.
+The courtyard room (`afterhours-playfield`: board, entrance window, lounge and note masters) was replaced in September 2026 by the procedural Miami bayfront stage in `components/play-sense/stage-highway/miami/`. Its runtime GLB was removed; `art/playsense/afterhours-playfield.blend` and the `*_playfield` scripts remain only as art history.
