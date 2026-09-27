@@ -2,13 +2,13 @@ import * as THREE from 'three'
 import { bakeSkyEnvironment, createSea, createSkyDome, skyUniforms, SUN_DIRECTION } from './sky'
 import { createSkyline } from './skyline'
 import { createPalms } from './palms'
-import { ARCH_Z, createSet, DECK_TOP, TERRACE_Y, type BeatUniforms } from './set'
+import { GATE_Z, createSet, DECK_TOP, TERRACE_Y, type BeatUniforms } from './set'
 import { createFireworks } from './fireworks'
 
 export { laneLightTexture, NOTE_LAYOUT, noteCore, noteHead, notePool, tunnelTexture } from './notes'
 export { createComposer } from './post'
 export { createHitFx } from './fx'
-export { ARCH_Z, DECK_TOP, TERRACE_Y }
+export { GATE_Z, DECK_TOP, TERRACE_Y }
 
 export interface StageAmbience { elapsed: number; beatSeconds: number; speed: number; hitZ: number; playing: boolean; energy: number; dt: number }
 
@@ -47,8 +47,8 @@ export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, op
     wash.shadow.camera.updateProjectionMatrix()
     wash.shadow.bias = -.0003; wash.shadow.normalBias = .04
   }
-  const archLight = new THREE.PointLight(0xff7fb0, 60, 26, 1.8)
-  archLight.position.set(0, 3.5, ARCH_Z + 2.5); scene.add(archLight)
+  const gateLight = new THREE.PointLight(0xff7fb0, 26, 20, 1.8)
+  gateLight.position.set(0, 1.6, GATE_Z + 2.5); scene.add(gateLight)
 
   const beat: BeatUniforms = {
     psElapsed: { value: 0 }, psBeat: { value: .6 }, psSpeed: { value: 8 }, psHitZ: { value: 3.6 },
@@ -93,7 +93,7 @@ export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, op
       const phase = Math.max(0, frame.elapsed) / frame.beatSeconds
       pulse = motion && frame.playing && frame.elapsed >= 0 ? Math.pow(1 - phase % 1, 3) : 0
       set.update(pulse, frame.energy)
-      archLight.intensity = 55 + pulse * 18 + frame.energy * 40
+      gateLight.intensity = 22 + pulse * 10 + frame.energy * 22
       for (const light of lampLights) light.intensity = 16 + frame.energy * 6
       skyline.update(frame.dt)
       palms.update(frame.dt)

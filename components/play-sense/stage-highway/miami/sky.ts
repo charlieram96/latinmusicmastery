@@ -89,6 +89,9 @@ export function createSea(uniforms: SkyUniforms) {
           + swell(p, normalize(vec2(-.2, -1.)), 1.7, .011, 3.1);
         vec2 ripple = vec2(psNoise(p * 1.9 + psTime * .35 * psCloudMotion), psNoise(p.yx * 2.3 - psTime * .3 * psCloudMotion)) - .5;
         slope += ripple * .07;
+        // Cat's paws: broad patches of ruffled water between glassy calm stretches.
+        float gust = smoothstep(.3, .78, psNoise(p * .016 + vec2(psTime * .012, psTime * .004) * psCloudMotion));
+        slope *= mix(.35, 1.1, gust);
         // Distant water flattens into a mirror; close water keeps its chop.
         slope *= 1. / (1. + dist * .018);
         vec3 normal = normalize(vec3(-slope.x, 1., -slope.y));
@@ -100,6 +103,7 @@ export function createSea(uniforms: SkyUniforms) {
         vec3 color = mix(deep, psSky(reflected), fresnel);
         float glint = pow(max(dot(reflected, psSunDir), 0.), 420.);
         color += vec3(3., 1.3, .5) * glint * (.4 + .6 * psNoise(p * 6. + psTime * psCloudMotion));
+        color *= mix(.7, 1., smoothstep(10., 70., dist));
         // Dissolve the far edge into the horizon haze.
         vec3 horizonDir = normalize(vec3(view.x, .002, view.z));
         color = mix(color, psSkyClear(horizonDir), smoothstep(160., 900., dist));

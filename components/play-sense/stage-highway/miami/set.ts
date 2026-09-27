@@ -7,7 +7,7 @@ import { billboards } from './glow'
 
 export const TERRACE_Y = -3.2
 export const DECK_TOP = -0.17
-export const ARCH_Z = -26.9
+export const GATE_Z = -26.1
 const SEAWALL_Z = -1.7
 
 const rand = (seed: number) => { const x = Math.sin(seed * 78.233 + 12.9898) * 43758.5453; return x - Math.floor(x) }
@@ -151,29 +151,6 @@ export function merge(parts: THREE.BufferGeometry[]) {
   return merged
 }
 
-/** A deco archway frame as one U-shaped outline: outer edge up and over, inner edge back down. */
-function archFrame(outer: number, inner: number, bottom: number, spring: number, depth: number) {
-  const shape = new THREE.Shape()
-  shape.moveTo(-outer, bottom)
-  shape.lineTo(-outer, spring)
-  shape.absarc(0, spring, outer, Math.PI, 0, true)
-  shape.lineTo(outer, bottom)
-  shape.lineTo(inner, bottom)
-  shape.lineTo(inner, spring)
-  shape.absarc(0, spring, inner, 0, Math.PI, false)
-  shape.lineTo(-inner, bottom)
-  shape.closePath()
-  return new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: .08, bevelSize: .06, bevelSegments: 2, curveSegments: 48 })
-}
-
-function archLine(radius: number, spring: number, legBottom: number, z: number) {
-  const points: THREE.Vector3[] = []
-  for (let i = 0; i <= 6; i++) points.push(new THREE.Vector3(-radius, THREE.MathUtils.lerp(legBottom, spring, i / 6), z))
-  for (let i = 1; i < 64; i++) { const a = Math.PI - i / 64 * Math.PI; points.push(new THREE.Vector3(Math.cos(a) * radius, spring + Math.sin(a) * radius, z)) }
-  for (let i = 0; i <= 6; i++) points.push(new THREE.Vector3(radius, THREE.MathUtils.lerp(spring, legBottom, i / 6), z))
-  return new THREE.CatmullRomCurve3(points, false, 'centripetal')
-}
-
 export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standard' | 'low') {
   const group = new THREE.Group()
   const anisotropy = quality === 'low' ? 1 : 8
@@ -247,7 +224,7 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   for (const x of [-8.6, 8.6, -21, 21, -33, 33]) {
     const y = TERRACE_Y + .95
     lampParts.push(new THREE.CylinderGeometry(.2, .28, .5, 10).translate(x, y + .25, SEAWALL_Z))
-    lampParts.push(new THREE.CylinderGeometry(.075, .11, 5.4, 10).translate(x, y + 3.1, SEAWALL_Z))
+    lampParts.push(new THREE.CylinderGeometry(.06, .09, 5.4, 10).translate(x, y + 3.1, SEAWALL_Z))
     lampParts.push(new THREE.TorusGeometry(.3, .035, 6, 16, Math.PI).rotateY(Math.PI / 2).translate(x, y + 5.9, SEAWALL_Z))
     lampParts.push(new THREE.CylinderGeometry(.18, .12, .22, 10).translate(x, y + 5.85, SEAWALL_Z))
     lampGlobes.push(new THREE.Vector3(x, y + 6.25, SEAWALL_Z))
@@ -285,51 +262,62 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   group.add(mastMesh);
   group.add(bulbs(festoon, uniforms, false, .11, new THREE.Color(1.25, .72, .38)))
 
-  // The archway: Miami Beach deco in flamingo and seafoam stucco, brass reveal, pink and aqua neon.
-  const arch = new THREE.Group()
-  arch.position.set(0, 0, ARCH_Z)
-  const archStone = new THREE.MeshStandardMaterial({ map: stoneTexture('#f6d6d2'), roughness: .7, color: 0xf0a8ae })
-  // Faked occlusion: the stone darkens toward the water and in the reveal, like weathered stucco.
-  archStone.onBeforeCompile = shader => {
-    shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying float psHeight;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\npsHeight = (modelMatrix * vec4(transformed, 1.)).y;')
-    shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying float psHeight;').replace('#include <map_fragment>', '#include <map_fragment>\ndiffuseColor.rgb *= mix(vec3(.42, .3, .34), vec3(1.), smoothstep(-5., 6., psHeight));')
-  }
-  archStone.customProgramCacheKey = () => 'playsense-arch-stone-v1'
-  const archShadow = new THREE.MeshStandardMaterial({ color: 0x3f9e95, roughness: .6 })
-  const bottom = SEA_Y, spring = 5.6
-  const outerFrame = new THREE.Mesh(archFrame(8.6, 7.1, bottom, spring, 1.5), archStone)
-  outerFrame.position.z = -.75; arch.add(outerFrame)
-  const innerFrame = new THREE.Mesh(archFrame(7.15, 6.55, bottom, spring, 2.1), archShadow)
-  innerFrame.position.z = -1.05; arch.add(innerFrame)
-  const reveal = new THREE.Mesh(archFrame(6.6, 6.42, bottom, spring, 2.3), brass)
-  reveal.position.z = -1.15; arch.add(reveal)
-  // Deco sunburst in the spandrels and a stepped crown.
-  const crownParts: THREE.BufferGeometry[] = []
-  for (let i = 0; i < 3; i++) crownParts.push(new RoundedBoxGeometry(6 - i * 1.7, .9, 1.7 - i * .1, 2, .08).translate(0, spring + 8.6 + i * .85, .05))
-  for (let i = 0; i < 11; i++) {
-    const a = Math.PI * (.12 + i * .076)
-    crownParts.push(new THREE.BoxGeometry(.16, 1.7, .2).translate(0, 7.95, 0).rotateZ(a - Math.PI / 2).translate(0, spring, .85))
-  }
+  // The light gate. Nothing stands between the player and the skyline: notes condense out
+  // of a shimmering veil above a glowing threshold, marked by two slim deco pylons.
+  const gateZ = back + .2
+  const gateGlow = { value: 0 }
+  const threshold = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 1.1, 1.8) })
+  const line = new THREE.Mesh(new THREE.BoxGeometry(RUNWAY_WIDTH + .5, .045, .07), threshold)
+  line.position.set(0, DECK_TOP + .03, gateZ); group.add(line)
+  const veil = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + 1.6, 3.4).translate(0, 1.7, 0), new THREE.ShaderMaterial({
+    uniforms: { psClock: uniforms.psClock, psGlow: gateGlow },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: /* glsl */ `
+      uniform float psClock; uniform float psGlow; varying vec2 vUv;
+      float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float noise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+        return mix(mix(hash(i), hash(i + vec2(1., 0.)), f.x), mix(hash(i + vec2(0., 1.)), hash(i + vec2(1., 1.)), f.x), f.y); }
+      void main() {
+        float rise = pow(max(0., 1. - vUv.y), 2.2);
+        float edges = smoothstep(0., .14, vUv.x) * smoothstep(0., .14, 1. - vUv.x);
+        // Slow vertical light curtains drifting sideways, like heat shimmer over the water.
+        float curtain = noise(vec2(vUv.x * 7. + psClock * .12, vUv.y * 1.6 - psClock * .35));
+        curtain = .35 + .65 * curtain * curtain + .25 * noise(vec2(vUv.x * 23. - psClock * .3, vUv.y * 4.));
+        vec3 color = mix(vec3(1.25, .3, .85), vec3(.3, .95, 1.15), smoothstep(.15, .7, vUv.y) * .8 + .2 * sin(vUv.x * 6.28 + psClock * .3));
+        // Warm shafts rising from the threshold mark the destination.
+        float shafts = 0.;
+        for (int i = 0; i < 5; i++) {
+          float fi = float(i);
+          float cx = .14 + fi * .18 + .012 * sin(psClock * (.6 + fi * .13) + fi * 2.);
+          float dx = (vUv.x - cx) / .012;
+          shafts += exp(-dx * dx) * (.6 + .4 * sin(psClock * (1.1 + fi * .3) + fi));
+        }
+        vec3 warm = vec3(1.25, 1., .65) * shafts * pow(max(0., 1. - vUv.y), 1.4) * .22;
+        gl_FragColor = vec4(color * rise * edges * curtain * (.3 + psGlow * .35) + warm * edges, 1.);
+      }`,
+  }))
+  veil.position.set(0, DECK_TOP, gateZ - .05); veil.renderOrder = 2
+  group.add(veil)
+  const pylonParts: THREE.BufferGeometry[] = [], capParts: THREE.BufferGeometry[] = [], stripParts: THREE.BufferGeometry[] = []
+  const pylonX = RUNWAY_WIDTH / 2 + .78
   for (const side of [-1, 1]) {
-    crownParts.push(new RoundedBoxGeometry(1.1, spring - bottom + 9.2, 1.9, 2, .08).translate(side * 9.1, (spring + bottom + 9.2) / 2, 0))
-    for (let i = 0; i < 4; i++) crownParts.push(new THREE.BoxGeometry(1.35, .18, 2.05).translate(side * 9.1, spring + 1.5 + i * 2, 0))
+    const x = side * pylonX
+    pylonParts.push(new RoundedBoxGeometry(.42, 3.4, .42, 2, .06).translate(x, DECK_TOP + 1.7, gateZ))
+    pylonParts.push(new RoundedBoxGeometry(.62, .22, .62, 2, .05).translate(x, DECK_TOP + .11, gateZ))
+    for (let i = 0; i < 3; i++) capParts.push(new THREE.BoxGeometry(.5 - i * .1, .05, .5 - i * .1).translate(x, DECK_TOP + 3.48 + i * .13, gateZ))
+    stripParts.push(new THREE.BoxGeometry(.035, 2.9, .035).translate(x - side * .215, DECK_TOP + 1.75, gateZ + .215))
   }
-  const crown = new THREE.Mesh(merge(crownParts), archStone)
-  arch.add(crown);
-  const neonMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(3, .55, 1.7) })
-  arch.add(new THREE.Mesh(new THREE.TubeGeometry(archLine(6.3, spring, DECK_TOP + .2, .35), 260, .07, 6, false), neonMaterial))
-  const neonOuter = new THREE.Mesh(new THREE.TubeGeometry(archLine(7.85, spring, DECK_TOP + 1.2, .92), 260, .045, 6, false), new THREE.MeshBasicMaterial({ color: new THREE.Color(.35, 1.9, 2.1) }))
-  arch.add(neonOuter)
-  arch.traverse(o => { if (o instanceof THREE.Mesh && o.material instanceof THREE.MeshStandardMaterial) { o.castShadow = true; o.receiveShadow = true } })
-  group.add(arch)
+  const pylons = new THREE.Mesh(merge(pylonParts), stone); pylons.castShadow = true; group.add(pylons)
+  const neonMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, .45, 1.4) })
+  group.add(new THREE.Mesh(merge(capParts), neonMaterial))
+  group.add(new THREE.Mesh(merge(stripParts), new THREE.MeshBasicMaterial({ color: new THREE.Color(.3, 1.6, 1.8) })))
 
   // Everything that glows over the water leaves a shimmering streak on it.
   const water = SEA_Y + .03
   const reflect = (points: THREE.Vector3[]) => points.map(p => new THREE.Vector3(p.x, water, p.z))
   group.add(billboards(reflect(festoon.filter((_, i) => i % 2 === 0)), new THREE.Color(.9, .5, .24), .22, 6, uniforms.psClock, 'reflection'))
-  const neonFeet = [-6.3, 6.3].map(x => new THREE.Vector3(x, water, ARCH_Z + .4))
-  group.add(billboards(neonFeet, new THREE.Color(1.8, .35, 1.05), .7, 11, uniforms.psClock, 'reflection'))
-  group.add(billboards([-7.85, 7.85].map(x => new THREE.Vector3(x, water, ARCH_Z + .9)), new THREE.Color(.3, 1.1, 1), .5, 9, uniforms.psClock, 'reflection'))
+  group.add(billboards([-pylonX, pylonX].map(x => new THREE.Vector3(x, water, gateZ + .6)), new THREE.Color(1.5, .35, 1), .5, 9, uniforms.psClock, 'reflection'))
 
   const neonBase = neonMaterial.color.clone()
   return {
@@ -337,6 +325,8 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
     lampGlobes,
     update(pulse: number, energy: number) {
       neonMaterial.color.copy(neonBase).multiplyScalar(.8 + pulse * .45 + energy * .6)
+      threshold.color.setRGB(2.2, 1.1, 1.8).multiplyScalar(.75 + pulse * .5 + energy * .4)
+      gateGlow.value = pulse * .6 + energy
     },
   }
 }

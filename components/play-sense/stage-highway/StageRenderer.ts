@@ -17,7 +17,48 @@ import { buildMiami, createComposer, createHitFx, laneLightTexture, NOTE_LAYOUT,
 import { colorNoteEmission, entranceGlow, noteChevronGeometry, noteGemGeometry, noteTrailTexture, strikeAura } from './note-geometry'
 import { observeFrameResize } from './frame-resize'
 
-interface Receptor { object: THREE.Object3D; glow: THREE.Sprite; energy: number; homeY: number; aura: ReturnType<typeof strikeAura> }
+interface SkinRipple { hit: { value: number }; color: { value: THREE.Color }; power: { value: number } }
+interface Receptor { object: THREE.Object3D; glow: THREE.Sprite; energy: number; homeY: number; aura: ReturnType<typeof strikeAura>; skin?: SkinRipple }
+
+/** Rings of light travel across a struck drum skin; the shader reads its own object-space radius. */
+function addSkinRipple(material: THREE.MeshStandardMaterial, clock: { value: number }, radius: number): SkinRipple {
+  const ripple: SkinRipple = { hit: { value: -10 }, color: { value: new THREE.Color() }, power: { value: 0 } }
+  material.onBeforeCompile = shader => {
+    Object.assign(shader.uniforms, { psClock: clock, psHitTime: ripple.hit, psHitColor: ripple.color, psHitPower: ripple.power, psRadius: { value: radius } })
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 psSkin; varying vec3 psRadial;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\npsSkin = position;\npsRadial = normalize(normalMatrix * normalize(vec3(position.x, 0., position.z) + 1e-5));')
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>
+        varying vec3 psSkin; varying vec3 psRadial;
+        uniform float psClock; uniform float psHitTime; uniform vec3 psHitColor; uniform float psHitPower; uniform float psRadius;
+        // Travelling membrane wave: returns (height, slope) of two decaying rings.
+        vec2 psWave(float r, float age) {
+          float a = (r - age * 1.6) / .085, b = (r - (age - .12) * 1.3) / .06;
+          float fade = max(0., 1. - age / .9); fade *= fade;
+          float h = exp(-a * a) + exp(-b * b) * .5 * step(.12, age);
+          float slope = (-2. * a * exp(-a * a) / .085 - step(.12, age) * b * exp(-b * b) / .06) * fade;
+          return vec2(h * fade, slope);
+        }`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        float psAgeN = psClock - psHitTime;
+        if (psAgeN >= 0. && psAgeN < .9) {
+          // Bend the lit normal along the wave so the skin visibly flexes under the light.
+          vec2 psW = psWave(length(psSkin.xz) / psRadius, psAgeN);
+          normal = normalize(normal - psRadial * psW.y * .012 * psHitPower);
+        }`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        float psAge = psClock - psHitTime;
+        if (psAge >= 0. && psAge < .9) {
+          float psR = length(psSkin.xz) / psRadius;
+          float psCore = exp(-psR * psR * 10.) * exp(-psAge * 9.);
+          totalEmissiveRadiance += psHitColor * (psWave(psR, psAge).x * (1. - smoothstep(.9, 1.02, psR)) * .75 + psCore * .7) * psHitPower;
+        }`)
+  }
+  material.customProgramCacheKey = () => 'playsense-skin-ripple-v2'
+  material.needsUpdate = true
+  return ripple
+}
 interface Burst { mesh: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>; age: number; active: boolean; size: number; upright: boolean }
 interface Spark { x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; lane: number }
 export interface StageRendererOptions {
@@ -126,6 +167,8 @@ export class StageRenderer {
   private miami: ReturnType<typeof buildMiami> | null = null
   private grade: ReturnType<typeof createComposer>['grade'] | null = null
   private fx: ReturnType<typeof createHitFx> | null = null
+  private skinClock = { value: 0 }
+  private absorbing = new Map<number, number>()
   private lastCombo = 0
   private stageEnergy = 0
   private boardFallback = new THREE.Group()
@@ -141,6 +184,9 @@ export class StageRenderer {
   private beatLines: THREE.Mesh[] = []
   private points: THREE.Points
   private slowFrames = 0
+  private fastFrames = 0
+  private maxPixelRatio = 1
+  private pixelRatio = 1
   private glowMap: THREE.CanvasTexture
   private environmentMap: THREE.WebGLRenderTarget | null = null
   private controls: OrbitControls | null = null
@@ -158,7 +204,8 @@ export class StageRenderer {
     const studio = theme.id === 'studio'
     this.farZ = studio ? -25 : FAR_Z
     // With MSAA in the post chain, 1.35x is indistinguishable from 1.5x on retina screens and ~20% cheaper.
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, options.quality === 'low' ? 1 : studio ? 1.35 : 1.5))
+    this.maxPixelRatio = this.pixelRatio = Math.min(window.devicePixelRatio || 1, options.quality === 'low' ? 1 : studio ? 1.35 : 1.5)
+    this.renderer.setPixelRatio(this.pixelRatio)
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
     this.renderer.toneMappingExposure = studio ? .9 : 1.25
@@ -207,7 +254,7 @@ export class StageRenderer {
         box(this.scene, .035, .01, runwayLength + .4, inlay, (this.lanes[i - 1].x + this.lanes[i].x) / 2, DECK_TOP + .004, runwayCenter)
       }
       // Readability tunnel: the far lane darkens so incoming notes never sit on the sun's glare.
-      const tunnel = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .3, runwayLength).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x0c0610, alphaMap: tunnelTexture(), transparent: true, opacity: .75, depthWrite: false }))
+      const tunnel = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .3, runwayLength).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x0c0610, alphaMap: tunnelTexture(), transparent: true, opacity: .85, depthWrite: false }))
       tunnel.position.set(0, DECK_TOP + .002, runwayCenter); tunnel.renderOrder = -1
       this.scene.add(tunnel)
       const laneLight = laneLightTexture()
@@ -424,6 +471,13 @@ export class StageRenderer {
             for (const value of Object.values(mat)) if (value instanceof THREE.Texture) {
               value.anisotropy = Math.min(4, this.renderer.capabilities.getMaxAnisotropy())
             }
+            if (this.miami && mat instanceof THREE.MeshStandardMaterial && (mat.name.startsWith('Natural rawhide') || mat.name.startsWith('Coated timbale head'))) {
+              const skin = mat.clone()
+              object.geometry.computeBoundingBox()
+              const box = object.geometry.boundingBox!
+              receptor.skin = addSkinRipple(skin, this.skinClock, Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2)
+              object.material = skin
+            }
             // Polished shells mirror the dusk sky instead of reading as flat grey.
             if (this.miami && mat instanceof THREE.MeshStandardMaterial && mat.name.startsWith('Brushed nickel')) {
               mat.roughness = .14; mat.envMapIntensity = 1.35
@@ -492,6 +546,12 @@ export class StageRenderer {
     if (this.options.reducedMotion) return
     if (this.fx) {
       const lane = this.lanes[note.lane]
+      if (receptor.skin) {
+        receptor.skin.hit.value = this.skinClock.value
+        receptor.skin.color.value.copy(grade === 'miss' ? this.tint.setRGB(.5, .18, .25) : this.colors[note.lane])
+        receptor.skin.power.value = grade === 'perfect' ? 1.25 : grade === 'good' ? .9 : grade === 'ok' ? .6 : .35
+      }
+      if (grade !== 'miss') this.absorbing.set(index, this.skinClock.value)
       if (grade !== 'miss') this.stageEnergy = Math.min(1, this.stageEnergy + (grade === 'perfect' ? .65 : .3))
       // Burst from the struck surface itself so the drum head visibly rings.
       const surface = receptor.object.position
@@ -530,12 +590,18 @@ export class StageRenderer {
     const resized = this.viewport.flush()
     const resizing = resized || this.resizedLastFrame
     this.resizedLastFrame = resized
-    // Sustained GPU pressure drops costly bloom and pixel density, never input timing.
-    // A layout drag is temporary work and must not trigger a permanent quality change.
-    if (!resizing && rawDt > 0.035 && rawDt < 0.2) this.slowFrames++
-    else this.slowFrames = Math.max(0, this.slowFrames - 1)
-    if (this.slowFrames > 100 && this.composer) {
-      this.disposeComposer(); this.renderer.setPixelRatio(1)
+    // Sustained GPU pressure lowers the render scale in small steps, and only drops
+    // bloom once the scale bottoms out; spare headroom slowly earns resolution back.
+    // Input timing is never affected, and a layout drag never counts as pressure.
+    if (!resizing && rawDt > 0.028 && rawDt < 0.2) { this.slowFrames++; this.fastFrames = 0 }
+    else { this.slowFrames = Math.max(0, this.slowFrames - 1); if (!resizing && rawDt < 0.0185) this.fastFrames++ }
+    if (this.slowFrames > 75) {
+      this.slowFrames = 0
+      if (this.pixelRatio > .75) this.setPixelScale(this.pixelRatio - .15)
+      else if (this.composer) this.disposeComposer()
+    } else if (this.fastFrames > 900 && this.pixelRatio < this.maxPixelRatio && this.composer) {
+      this.fastFrames = 0
+      this.setPixelScale(Math.min(this.maxPixelRatio, this.pixelRatio + .1))
     }
     const frame = this.options.readFrame()
     if (frame.attempt !== this.attempt) {
@@ -543,7 +609,7 @@ export class StageRenderer {
       for (const burst of this.bursts) { burst.active = false; burst.mesh.visible = false }
       for (const receptor of this.receptors) receptor.energy = 0
       for (const spark of this.sparks) spark.life = 0
-      this.miami?.fireworks.reset(); this.fx?.reset(); this.lastCombo = 0
+      this.miami?.fireworks.reset(); this.fx?.reset(); this.absorbing.clear(); this.lastCombo = 0
     }
     if (frame.results !== this.lastResults) {
       for (const result of changedJudgments(frame.results, this.judgments)) this.impact(result.eventIndex, result.grade)
@@ -558,9 +624,12 @@ export class StageRenderer {
         if (delta > APPROACH_SECONDS) break
         // A note can pass the strike line while its timing window is still open.
         // Only the scorer's result can turn it into a miss.
-        if (this.judgments.has(note.index)) continue
+        // A struck note is drawn into the drum for a beat: it flattens, widens and fades.
+        const absorbedAt = this.absorbing.get(note.index)
+        const absorb = absorbedAt == null ? -1 : (this.skinClock.value - absorbedAt) / .15
+        if (this.judgments.has(note.index) && !(absorb >= 0 && absorb < 1)) continue
         const lane = this.lanes[note.lane]
-        const z = HIT_Z - delta * speed
+        const z = absorb >= 0 ? HIT_Z + absorb * .5 : HIT_Z - delta * speed
         if (z > HIT_Z + 1.25) continue
         const width = Math.min(lane.width * .82, 2.65)
         const piano = this.exercise.instrument === 'piano'
@@ -571,15 +640,16 @@ export class StageRenderer {
         if (this.miami) {
           // Notes rise out of the archway's light, then ride the lacquer on a pool of their own glow.
           const rise = (1 - reveal) * .9
+          const squash = absorb >= 0 ? 1 - absorb : 1, spread = absorb >= 0 ? 1 + absorb * .7 : 1
           this.dummy.position.set(lane.x, NOTE_LAYOUT.head - rise, z)
-          this.dummy.scale.set(width * entryScale, accent, entryScale * (note.accent ? 1.15 : 1))
+          this.dummy.scale.set(width * entryScale * spread, accent * squash, entryScale * (note.accent ? 1.15 : 1) * squash)
           this.dummy.updateMatrix(); this.heads.setMatrixAt(count, this.dummy.matrix)
           this.heads.setColorAt(count, this.tint.copy(this.colors[note.lane]).multiplyScalar(.12).addScalar(.05))
-          this.dummy.position.y = NOTE_LAYOUT.head - rise + (NOTE_LAYOUT.core - NOTE_LAYOUT.head) * accent
+          this.dummy.position.y = NOTE_LAYOUT.head - rise + (NOTE_LAYOUT.core - NOTE_LAYOUT.head) * accent * squash
           this.dummy.updateMatrix(); this.cores.setMatrixAt(count, this.dummy.matrix)
-          this.cores.setColorAt(count, this.tint.copy(this.colors[note.lane]).multiplyScalar(note.accent ? 1.35 : 1))
+          this.cores.setColorAt(count, this.tint.copy(this.colors[note.lane]).multiplyScalar((note.accent ? 1.35 : 1) * (absorb >= 0 ? 1 + absorb * 1.5 : 1)))
           this.dummy.position.set(lane.x, NOTE_LAYOUT.pool, z)
-          this.dummy.scale.set(width * 1.9 * reveal, 1, 1.9 * reveal)
+          this.dummy.scale.set(width * 1.9 * reveal * spread, 1, 1.9 * reveal * squash)
           this.dummy.updateMatrix(); this.trims.setMatrixAt(count, this.dummy.matrix)
           this.trims.setColorAt(count, this.colors[note.lane])
         } else {
@@ -596,11 +666,14 @@ export class StageRenderer {
           this.dummy.updateMatrix(); this.trims.setMatrixAt(count, this.dummy.matrix)
           this.trims.setColorAt(count, this.tint.set(note.accent ? 0xffe8ab : 0xf3fffc))
         }
-        const tailLength = Math.min(this.exercise.instrument === 'piano' ? note.duration * speed : 1.65, 18)
-        this.dummy.position.set(lane.x, this.miami ? DECK_TOP + .01 : -0.025, z - tailLength / 2)
-        this.dummy.scale.set(width * .72, 1, Math.max(.15, tailLength))
-        this.dummy.updateMatrix(); this.tails.setMatrixAt(tailCount, this.dummy.matrix)
-        this.tails.setColorAt(tailCount++, this.colors[note.lane]); count++
+        if (absorb < 0) {
+          const tailLength = Math.min(this.exercise.instrument === 'piano' ? note.duration * speed : 1.65, 18)
+          this.dummy.position.set(lane.x, this.miami ? DECK_TOP + .01 : -0.025, z - tailLength / 2)
+          this.dummy.scale.set(width * .72, 1, Math.max(.15, tailLength))
+          this.dummy.updateMatrix(); this.tails.setMatrixAt(tailCount, this.dummy.matrix)
+          this.tails.setColorAt(tailCount++, this.colors[note.lane])
+        }
+        count++
       }
     }
     for (const mesh of [this.heads, this.cores, this.trims]) {
@@ -635,13 +708,17 @@ export class StageRenderer {
     }
     for (const receptor of this.receptors) {
       receptor.energy = Math.max(0, receptor.energy - dt * 2.7)
-      receptor.glow.material.opacity = receptor.energy * 1.15
+      receptor.glow.material.opacity = receptor.energy * (this.fx ? .3 : 1.15)
       receptor.aura.visible = !this.fx && !this.options.reducedMotion && receptor.energy > .01
       receptor.aura.material.uniforms.energy.value = receptor.energy
       receptor.aura.scale.y = 1.5 + (1 - receptor.energy) * 3
       receptor.aura.material.uniforms.tint.value.copy(receptor.glow.material.color)
       if (this.exercise.instrument !== 'piano') receptor.object.rotation.x = this.options.reducedMotion ? 0 : Math.sin((1 - receptor.energy) * Math.PI * 3) * receptor.energy * .038
       else receptor.object.position.y = receptor.homeY - (this.options.reducedMotion ? 0 : receptor.energy * .075)
+      if (this.fx && receptor.object instanceof THREE.Mesh && receptor.object.material instanceof THREE.MeshStandardMaterial && this.exercise.instrument === 'piano') {
+        // Pressed keys glow in their lane colour and cool back to ivory.
+        receptor.object.material.emissive.copy(receptor.glow.material.color).multiplyScalar(receptor.energy * .55)
+      }
     }
     for (const burst of this.bursts) {
       if (!burst.active) continue
@@ -680,10 +757,20 @@ export class StageRenderer {
       this.miami.update({ elapsed: frame.elapsed, beatSeconds: beatSec, speed, hitZ: HIT_Z, playing: frame.playing, energy: Math.min(1, this.stageEnergy * .6 + comboGlow * .5), dt }, this.camera)
       if (this.grade) this.grade.uniforms.psTime.value = now / 1000
       this.fx?.update(dt)
+      this.skinClock.value += dt
+      if (this.absorbing.size > 48) for (const [index, at] of this.absorbing) if (this.skinClock.value - at > .5) this.absorbing.delete(index)
     }
     if (!this.options.reducedMotion) this.points.position.y = Math.sin(now * 0.0001) * 0.25
     if (this.composer) this.composer.render()
     else this.renderer.render(this.scene, this.camera)
+  }
+
+  private setPixelScale(ratio: number) {
+    this.pixelRatio = ratio
+    this.renderer.setPixelRatio(ratio)
+    this.composer?.setPixelRatio(ratio)
+    const { clientWidth, clientHeight } = this.container
+    if (clientWidth && clientHeight) this.resize(clientWidth, clientHeight)
   }
 
   private disposeComposer() {

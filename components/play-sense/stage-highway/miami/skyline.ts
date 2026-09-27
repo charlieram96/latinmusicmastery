@@ -73,7 +73,7 @@ function towerMaterial(uniforms: SkyUniforms, round: boolean, mirror = false) {
         vec2 id = floor(cell), f = fract(cell);
         // Scattered offices and apartments: lit in loose clusters, warm and cool.
         float cluster = psNoise(vec2(u * .08, h * .12) + vStyle.x * 40.);
-        float lit = step(1. - vStyle.y * .6 * smoothstep(.35, .75, cluster), psHash(id + vStyle.x * 17.)) * (1. - side);
+        float lit = step(1. - vStyle.y * .38 * smoothstep(.35, .75, cluster), psHash(id + vStyle.x * 17.)) * (1. - side);
         vec3 lamp = mix(vec3(1.3, .85, .5), vec3(.85, .95, 1.25), step(.55, psHash(id * .37 + vStyle.x))) * (.35 + .65 * psHash(id + 3.));
         color = mix(color, lamp, lit * step(.12, f.x) * step(f.y, .78));
         color *= 1. - (1. - side) * (.25 * step(.92, f.y));

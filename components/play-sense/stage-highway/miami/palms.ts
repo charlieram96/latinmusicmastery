@@ -121,7 +121,7 @@ function trunk(curve: THREE.CatmullRomCurve3, radiusAt: (t: number) => number, c
 export function createPalms(specs: PalmSpec[], motion: boolean) {
   const time = { value: 0 }
   const trunks: THREE.BufferGeometry[] = [], leaves: Buffers = buffers(), extras: THREE.BufferGeometry[] = []
-  const green = [new THREE.Color(0x2c4a25), new THREE.Color(0x375a2b), new THREE.Color(0x425f2c)]
+  const green = [new THREE.Color(0x213b1f), new THREE.Color(0x2b4823), new THREE.Color(0x344d25)]
   const aging = new THREE.Color(0x6d6a34)
   for (const spec of specs) {
     const royal = spec.kind === 'royal'
@@ -191,7 +191,7 @@ export function createPalms(specs: PalmSpec[], motion: boolean) {
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         vec3 psView = normalize(psWorld - cameraPosition);
         float psBack = pow(max(dot(psView, normalize(psSun + vec3(0., .1, 0.))), 0.), 4.);
-        totalEmissiveRadiance += diffuseColor.rgb * vec3(1.1, .75, .5) * (psBack * .45 + .03);`)
+        totalEmissiveRadiance += diffuseColor.rgb * vec3(1., .7, .5) * (psBack * .28 + .02);`)
   }
   leafMaterial.customProgramCacheKey = () => 'playsense-palm-leaf-v2'
   const leafMesh = new THREE.Mesh(toGeometry(leaves), leafMaterial)

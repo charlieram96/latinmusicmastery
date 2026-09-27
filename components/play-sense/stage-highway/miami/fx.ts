@@ -21,8 +21,7 @@ function instanced(count: number, attributes: Record<string, number>) {
 /**
  * Hit effects animated entirely on the GPU from each instance's birth time:
  * velocity-stretched sparks with drag and gravity (white-hot, cooling to the
- * lane colour), rising embers, a flat shockwave on the deck, an impact flash and
- * a light beam over the drum. Spawning writes a few attributes; nothing runs per
+ * lane colour), shockwave rings, flashes, beams and anamorphic glints. Spawning writes a few attributes; nothing runs per
  * particle on the CPU.
  */
 export function createHitFx(sparkCapacity = 1400, flareCapacity = 96, physics: { drag: number; gravity: number; trail: number; hot?: number } = { drag: 3.2, gravity: 9.5, trail: .075 }) {
@@ -71,7 +70,7 @@ export function createHitFx(sparkCapacity = 1400, flareCapacity = 96, physics: {
   const sparkMesh = new THREE.Mesh(sparks.geometry, sparkMaterial)
   sparkMesh.frustumCulled = false; sparkMesh.renderOrder = 5
 
-  // Flares: 0 = shockwave on the deck, 1 = impact flash, 2 = beam of light.
+  // Flares: 0 = shockwave ring, 1 = impact flash, 2 = beam of light, 3 = anamorphic glint.
   const flares = instanced(flareCapacity, { psOrigin: 3, psColor: 3, psBirth: 1, psLife: 1, psSize: 1, psKind: 1 })
   flares.geometry.setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0], 3))
   const flareMaterial = new THREE.ShaderMaterial({
@@ -88,9 +87,9 @@ export function createHitFx(sparkCapacity = 1400, flareCapacity = 96, physics: {
         if (psKind < .5) {
           // Shockwave: a flat quad on the deck that grows with an ease-out.
           float grow = 1. - pow(max(0., 1. - vLife), 3.);
-          vec3 world = psOrigin + vec3(position.x, 0., position.y) * psSize * (.25 + grow);
+          vec3 world = psOrigin + vec3(position.x, 0., position.y) * psSize * (.9 + grow * .75);
           gl_Position = projectionMatrix * viewMatrix * vec4(world, 1.);
-        } else if (psKind < 1.5) {
+        } else if (psKind < 1.5 || psKind > 2.5) {
           vec4 center = viewMatrix * vec4(psOrigin, 1.);
           center.xy += position.xy * psSize * (.6 + vLife * .8);
           gl_Position = projectionMatrix * center;
@@ -110,9 +109,13 @@ export function createHitFx(sparkCapacity = 1400, flareCapacity = 96, physics: {
         if (vKind < .5) {
           float r = length(vUv);
           float front = .82;
-          float thin = (r - front) / .07, wide = (r - front) / .22;
-          a = exp(-thin * thin) * 1.2 + exp(-wide * wide) * .35 + (1. - smoothstep(0., front, r)) * .12;
+          float thin = (r - front) / .025, wide = (r - front) / .11;
+          a = exp(-thin * thin) * .9 + exp(-wide * wide) * .18;
           a *= fade * fade * step(r, 1.);
+        } else if (vKind > 2.5) {
+          // Four-point glint, long horizontally like an anamorphic lens.
+          vec2 q = abs(vUv);
+          a = (exp(-q.y * 60.) * exp(-q.x * 3.2) + exp(-q.x * 70.) * exp(-q.y * 5.5) * .6 + exp(-dot(q, q) * 40.)) * pow(max(0., fade), 1.6);
         } else if (vKind < 1.5) {
           float r = length(vUv);
           a = (exp(-r * r * 10.) * .9 + exp(-r * 3.5) * .15) * pow(max(0., fade), 2.5);
@@ -142,35 +145,39 @@ export function createHitFx(sparkCapacity = 1400, flareCapacity = 96, physics: {
     a.psOrigin.set([x, y, z], i * 3); a.psColor.set([color.r, color.g, color.b], i * 3)
     a.psBirth[i] = time.value; a.psLife[i] = life; a.psSize[i] = size; a.psKind[i] = kind
   }
-  const tint = new THREE.Color(), ember = new THREE.Color()
+  const tint = new THREE.Color(), ember = new THREE.Color(), white = new THREE.Color(1, 1, 1)
 
   return {
     meshes: [flareMesh, sparkMesh],
     /** Raw emitters for composed effects such as fireworks; call `commit` after a batch. */
     spark, flare, time,
     commit() { flag(sparks.geometry, sparkAttributes); flag(flares.geometry, flareAttributes) },
+    /**
+     * A restrained, instrument-first hit: a thin ring leaves the rim, a glint flares
+     * at the point of contact, a few motes drift up. The drum skin's own ripple
+     * (in the instrument material) carries most of the feedback.
+     */
     burst(x: number, y: number, z: number, color: THREE.Color, strength: HitGrade, scale = 1) {
       if (strength === 'miss') {
-        tint.setRGB(.9, .22, .3)
-        flare(0, x, y + .01, z, tint, 1.3 * scale, .45)
+        tint.setRGB(.55, .22, .3)
+        flare(0, x, y, z, tint, 1.05 * scale, .4)
         flag(flares.geometry, flareAttributes)
         return
       }
-      const power = strength === 'perfect' ? 1 : strength === 'good' ? .7 : .45
-      tint.copy(color).multiplyScalar(1.25)
-      flare(0, x, y + .01, z, tint, 2.3 * scale * (.75 + power * .45), .6)
-      if (strength === 'perfect') flare(0, x, y + .015, z, ember.copy(color).lerp(new THREE.Color(1, 1, 1), .5), 1.6 * scale, .35)
-      flare(1, x, y + .4, z + .15, tint, 1.25 * scale * (.6 + power * .5), .2)
-      flare(2, x, y, z, tint, .7 * scale * (.6 + power * .5), .42 + power * .18)
-      const count = Math.round(16 + power * 30)
-      for (let i = 0; i < count; i++) {
-        const a = random() * Math.PI * 2, up = .35 + random() * .65
-        const speed = (3.5 + random() * 5) * (.7 + power * .4) * Math.max(.55, scale)
-        spark(x, y + .12, z, Math.cos(a) * speed * (1 - up * .5) * .8, up * speed * 1.2, Math.sin(a) * speed * .5, color, .35 + random() * .35, (.04 + random() * .035) * Math.max(.6, scale), 1.3)
+      const power = strength === 'perfect' ? 1 : strength === 'good' ? .65 : .4
+      tint.copy(color).multiplyScalar(.9 + power * .5)
+      flare(0, x, y, z, tint, 1.05 * scale, .38 + power * .1)
+      ember.copy(color).lerp(white, .55)
+      flare(3, x, y + .28, z + .25, ember, (.7 + power * .7) * Math.max(.6, scale), .16 + power * .08)
+      const motes = Math.round(2 + power * 6)
+      for (let i = 0; i < motes; i++) {
+        const a = random() * Math.PI * 2, r = random() * .45 * scale
+        ember.copy(color).lerp(white, .3 + random() * .3)
+        spark(x + Math.cos(a) * r, y + .08, z + Math.sin(a) * r * .6, Math.cos(a) * .2, .8 + random() * .8, Math.sin(a) * .12, ember, .3 + random() * .25, .02 + random() * .012, -.06)
       }
-      if (strength === 'perfect') for (let i = 0; i < 16; i++) {
-        ember.copy(color).lerp(new THREE.Color(1, .85, .6), .35)
-        spark(x + (random() - .5) * 1.2 * scale, y + .2, z + (random() - .5) * .6, (random() - .5) * .6, 1.2 + random() * 1.6, (random() - .5) * .3, ember, 1.2 + random() * .8, .055, -.04)
+      if (strength === 'perfect') for (let i = 0; i < 7; i++) {
+        const a = random() * Math.PI * 2
+        spark(x, y + .1, z, Math.cos(a) * (2.5 + random() * 2) * scale, 2 + random() * 2.5, Math.sin(a) * 1.2 * scale, color, .22 + random() * .12, .022, 1)
       }
       flag(sparks.geometry, sparkAttributes); flag(flares.geometry, flareAttributes)
     },
