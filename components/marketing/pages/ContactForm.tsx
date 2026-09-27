@@ -96,7 +96,7 @@ export function ContactForm() {
           {err('message')}
         </div>
         <div aria-live="polite">
-          {status === 'failed' && <p className="cf-fail" role="alert">{t(`${C}.errSend`, { email: SUPPORT_EMAIL })}</p>}
+          {status === 'failed' && <p className="cf-fail">{t(`${C}.errSend`, { email: SUPPORT_EMAIL })}</p>}
         </div>
         <button className="btn btn-hot" type="submit" style={{ justifySelf: 'start' }} disabled={status === 'sending'} aria-busy={status === 'sending'}>
           <span>{status === 'sending' ? t(`${C}.sending`) : t(`${C}.send`)}</span>

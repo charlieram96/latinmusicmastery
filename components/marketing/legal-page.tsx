@@ -33,7 +33,7 @@ export async function LegalPage({ title, effectiveDate, lastUpdated, children }:
     <article className="legal-page">
       <PageHead
         crumbs={[{ label: t('marketing.site.common.home'), href: '/' }, { label: title }]}
-        title={<span className="legal-title">{head && `${head} `}<Accent>{last}</Accent></span>}
+        title={<span className="legal-title" lang="en">{head && `${head} `}<Accent>{last}</Accent></span>}
       >
         <p className="post-meta">
           {effectiveDate && <span>{t('marketing.site.legal.effective', { date: localDate(effectiveDate, locale) })}</span>}

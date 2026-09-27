@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '@/components/language-provider'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -15,6 +15,8 @@ export function NewsletterSignup() {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
+  const okRef = useRef<HTMLDivElement>(null)
+  useEffect(() => { if (done) okRef.current?.focus() }, [done])
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,7 +39,7 @@ export function NewsletterSignup() {
               onChange={e => setEmail(e.target.value)} aria-invalid={!!error} aria-describedby="news-email-err" />
           </div>
           <button className="btn btn-ghost" type="submit">{t(`${B}.newsCta`)}</button>
-          <div className="signup-ok" role="status">
+          <div className="signup-ok" role="status" tabIndex={-1} ref={okRef}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             <span>{t(`${B}.newsDone`)}</span>
           </div>

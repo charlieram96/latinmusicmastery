@@ -1,4 +1,4 @@
-// Server-only: reads blog_posts through the Supabase server client.
+import 'server-only'
 import { createClient } from '@/lib/supabase/server'
 import type { Locale } from '@/lib/i18n'
 import { readingMinutes, type PostCard } from '@/lib/marketing/pages/blog'
@@ -44,6 +44,10 @@ export async function getPublishedPosts() {
     .select(CARD_COLUMNS)
     .eq('is_published', true)
     .order('published_at', { ascending: false })
-  if (error) throw error
+  if (error) {
+    // Keep the page up: an unreadable table renders the empty state rather than an error page.
+    console.error('blog_posts query failed', error)
+    return []
+  }
   return data ?? []
 }

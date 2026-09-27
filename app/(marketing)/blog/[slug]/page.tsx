@@ -14,6 +14,7 @@ import '../../styles/pages.css'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
+  const { t } = await getServerTranslator()
   const supabase = await createClient()
   const { data: post } = await supabase
     .from('blog_posts')
@@ -22,8 +23,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .eq('is_published', true)
     .single()
   return {
-    title: post ? `${post.title} - Latin Music Mastery` : 'Blog Post - Latin Music Mastery',
-    description: post?.excerpt ?? 'Read this article on Latin Music Mastery blog.',
+    title: post ? t('marketing.site.blog.postMetaTitle', { title: post.title }) : t('marketing.site.blog.postMetaFallback'),
+    description: post?.excerpt ?? t('marketing.site.blog.postMetaDescription'),
   }
 }
 
@@ -100,7 +101,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {related.map(p => (
               <Link key={p.id} href={`/blog/${p.slug}`} className="post">
                 <PostCover post={p} sizes="(max-width: 640px) 100vw, (max-width: 900px) 50vw, 33vw" minLabel={t(`${B}.minShort`, { n: p.minutes })} />
-                <span className="pcat">{p.categoryLabel}{p.date ? ` · ${p.date}` : ''}</span>
+                <span className="pcat">{[p.categoryLabel, p.date].filter(Boolean).join(' · ')}</span>
                 <h3>{p.title}</h3>
                 {p.excerpt && <p>{p.excerpt}</p>}
               </Link>

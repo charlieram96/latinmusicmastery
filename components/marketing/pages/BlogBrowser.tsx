@@ -33,7 +33,7 @@ export function BlogBrowser({ posts, categories }: { posts: PostCard[]; categori
               <PostCover post={feature} sizes="(max-width: 900px) 100vw, 55vw" priority minLabel={short(feature)} className="pcover-feature" />
             </Link>
             <div>
-              <span className="pcat">{feature.categoryLabel} · {t(`${B}.minRead`, { n: feature.minutes })}</span>
+              <span className="pcat">{[feature.categoryLabel, t(`${B}.minRead`, { n: feature.minutes })].filter(Boolean).join(' · ')}</span>
               <h2>{feature.title}</h2>
               {feature.excerpt && <p>{feature.excerpt}</p>}
               <Link className="btn btn-ghost" href={`/blog/${feature.slug}`} style={{ marginTop: 22 }}>{t(`${B}.read`)}</Link>
@@ -45,7 +45,7 @@ export function BlogBrowser({ posts, categories }: { posts: PostCard[]; categori
             {grid.map((p, i) => (
               <Link key={`${cat}-${p.id}`} href={`/blog/${p.slug}`} className="post" style={{ animation: `chipIn .6s ${i * 60}ms var(--ease-out) both` }}>
                 <PostCover post={p} sizes="(max-width: 640px) 100vw, (max-width: 900px) 50vw, 33vw" minLabel={short(p)} />
-                <span className="pcat">{p.categoryLabel}{p.date ? ` · ${p.date}` : ''}</span>
+                <span className="pcat">{[p.categoryLabel, p.date].filter(Boolean).join(' · ')}</span>
                 <h3>{p.title}</h3>
                 {p.excerpt && <p>{p.excerpt}</p>}
               </Link>

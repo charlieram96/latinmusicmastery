@@ -38,7 +38,7 @@
 /* ── blog post ── */
 .mkt .post-title{display:block;font-size:clamp(40px,5.4vw,88px);line-height:.9;overflow-wrap:anywhere}
 .mkt .post-meta{display:flex;flex-wrap:wrap;gap:6px 10px;font:500 12px/1.4 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--humo)}
-.mkt .post-meta span{white-space:nowrap}
+.mkt .post-meta span{overflow-wrap:anywhere;min-width:0}
 .mkt .post-meta span:not(:last-child)::after{content:"·";margin-left:10px;color:var(--humo-2)}
 .mkt .post-meta span:first-child{color:var(--ambar)}
 .mkt .post-article{padding-block:clamp(40px,5vw,72px) clamp(56px,6vw,96px);display:grid;justify-items:start}

@@ -396,6 +396,9 @@
         "newsDone": "¡Gracias por suscribirte! Revisa tu correo.",
         "finaleTitle": "Apréndelo",
         "finaleAccent": "de la fuente.",
+        "postMetaTitle": "{title} · Latin Music Mastery",
+        "postMetaFallback": "Blog · Latin Music Mastery",
+        "postMetaDescription": "Lee este artículo en el blog de Latin Music Mastery.",
         "_": "keys above this line"
       },
       "legal": {
