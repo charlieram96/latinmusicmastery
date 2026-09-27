@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import type { CatalogTeacher } from '@/lib/marketing/catalog'
+import { displayTeacherName } from '@/lib/marketing/teacher-name'
 
 const reduce = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -23,7 +24,7 @@ export function MaestroCard({ teacher, href, sizes = '300px' }: { teacher: Catal
       {teacher.imageUrl && <Image src={teacher.imageUrl} alt="" fill sizes={sizes} draggable={false} />}
       <div className="mc-body">
         <p className="mc-inst">{teacher.instrument}</p>
-        <h3 className="mc-name">{teacher.name}</h3>
+        <h3 className="mc-name">{displayTeacherName(teacher.name)}</h3>
         {teacher.specialties.length > 0 && <div className="mc-tags">{teacher.specialties.map(s => <span key={s}>{s}</span>)}</div>}
       </div>
     </>

@@ -43,7 +43,7 @@ export function ExploreBrowser({ courses, englishStyles, instruments, countries,
 
   return (
     <>
-      <PageHead
+      <PageHead crumbsLabel={t('marketing.common.breadcrumb')}
         crumbs={crumbs}
         title={<>{k('title')} <Accent>{k('titleAccent')}</Accent></>}
         lede={k('lede', { courses: courses.length, instruments: instruments.length })}

@@ -23,7 +23,7 @@ export default async function BlogPage() {
 
   return (
     <>
-      <PageHead
+      <PageHead crumbsLabel={t('marketing.common.breadcrumb')}
         crumbs={[{ label: t('marketing.site.common.home'), href: '/' }, { label: t(`${B}.crumb`) }]}
         title={<>{t(`${B}.title`)} <Accent>{t(`${B}.titleAccent`)}</Accent></>}
         lede={t(`${B}.lede`)}

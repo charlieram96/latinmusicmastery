@@ -31,7 +31,7 @@ export async function LegalPage({ title, effectiveDate, lastUpdated, children }:
 
   return (
     <article className="legal-page">
-      <PageHead
+      <PageHead crumbsLabel={t('marketing.common.breadcrumb')}
         crumbs={[{ label: t('marketing.site.common.home'), href: '/' }, { label: title }]}
         title={<span className="legal-title" lang="en">{head && `${head} `}<Accent>{last}</Accent></span>}
       >

@@ -17,7 +17,7 @@ export default async function ContactPage() {
   const { t } = await getServerTranslator()
   return (
     <>
-      <PageHead
+      <PageHead crumbsLabel={t('marketing.common.breadcrumb')}
         crumbs={[{ label: t('marketing.site.common.home'), href: '/' }, { label: t(`${C}.crumb`) }]}
         title={<>{t(`${C}.title`)} <Accent>{t(`${C}.titleAccent`)}</Accent></>}
         lede={t(`${C}.lede`)}

@@ -22,7 +22,7 @@ export default async function InstructorsPage() {
 
   return (
     <>
-      <PageHead
+      <PageHead crumbsLabel={t('marketing.common.breadcrumb')}
         crumbs={[{ label: t('marketing.site.common.home'), href: '/' }, { label: k('crumb') }]}
         title={<>{k('title')} <Accent>{k('titleAccent')}</Accent></>}
         lede={t('marketing.site.instructors.lede', { count: catalog.counts.maestros })}

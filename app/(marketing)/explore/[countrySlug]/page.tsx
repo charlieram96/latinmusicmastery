@@ -38,7 +38,7 @@ export default async function CountryPage({ params }: { params: Params }) {
 
   return (
     <>
-      <PageHead
+      <PageHead crumbsLabel={t('marketing.common.breadcrumb')}
         crumbs={[
           { label: t('marketing.site.common.home'), href: '/' },
           { label: t('marketing.site.explore.crumb'), href: '/explore' },

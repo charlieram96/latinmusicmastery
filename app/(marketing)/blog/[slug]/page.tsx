@@ -67,7 +67,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <>
-      <PageHead
+      <PageHead crumbsLabel={t('marketing.common.breadcrumb')}
         crumbs={[
           { label: t('marketing.site.common.home'), href: '/' },
           { label: t(`${B}.crumb`), href: '/blog' },

@@ -31,7 +31,7 @@ export default async function FaqPage() {
 
   return (
     <>
-      <PageHead
+      <PageHead crumbsLabel={t('marketing.common.breadcrumb')}
         crumbs={[{ label: t('marketing.site.common.home'), href: '/' }, { label: t(`${F}.crumb`) }]}
         title={<>{t(`${F}.title`)} <Accent>{t(`${F}.titleAccent`)}</Accent></>}
         lede={<>{t(`${F}.lede`)} <Link href="/contact" style={{ color: 'var(--ambar)' }}>{t(`${F}.ledeLink`)}</Link></>}

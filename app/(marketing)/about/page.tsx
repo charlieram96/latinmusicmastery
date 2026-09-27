@@ -33,7 +33,7 @@ export default async function AboutPage() {
 
   return (
     <>
-      <PageHead
+      <PageHead crumbsLabel={t('marketing.common.breadcrumb')}
         crumbs={[{ label: t('marketing.site.common.home'), href: '/' }, { label: t(`${A}.crumb`) }]}
         title={<>{t(`${A}.title`)} <Accent>{t(`${A}.titleAccent`)}</Accent></>}
         lede={t(`${A}.lede`)}

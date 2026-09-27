@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { splitNickname } from '../teacher-name'
+import { displayTeacherName, splitNickname } from '../teacher-name'
 
 describe('splitNickname', () => {
   it('pulls a straight-quoted nickname out and title-cases it', () => {
@@ -13,5 +13,17 @@ describe('splitNickname', () => {
   })
   it('ignores an unmatched quote', () => {
     expect(splitNickname('O"Brien Smith')).toEqual({ before: 'O"Brien Smith', nickname: null, after: '' })
+  })
+})
+
+describe('displayTeacherName', () => {
+  it('normalizes a quoted nickname to curly quotes and title case', () => {
+    expect(displayTeacherName('Patricio "el chino" Diaz')).toBe('Patricio “El Chino” Diaz')
+  })
+  it('is idempotent', () => {
+    expect(displayTeacherName('Patricio “El Chino” Diaz')).toBe('Patricio “El Chino” Diaz')
+  })
+  it('leaves plain names alone', () => {
+    expect(displayTeacherName('Frank La Rosa')).toBe('Frank La Rosa')
   })
 })
