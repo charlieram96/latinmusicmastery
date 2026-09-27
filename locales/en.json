@@ -219,6 +219,79 @@
         "_": "keys above this line"
       },
       "playsense": {
+        "metaTitle": "PlaySense - Latin Music Mastery",
+        "metaDescription": "PlaySense puts you on a live stage on the Miami bayfront with the band behind you. It listens to every note, scores your timing and keeps the sheet music in sync with the lesson.",
+        "crumb": "PlaySense",
+        "title": "Play",
+        "titleAccent": "Sense.",
+        "lede": "The sun just set over Biscayne Bay. The band is ready. Find your place in the groove.",
+        "stage": {
+          "label": "Live PlaySense stage on the Miami bayfront at dusk: notes travel down the pier toward your instrument",
+          "instrument": "Instrument",
+          "conga": "Congas",
+          "timbale": "Timbales",
+          "piano": "Piano",
+          "caption": "Live PlaySense stage · {exercise} on {instrument}",
+          "hint": "Notes travel down the pier. Hit them as they reach your instrument.",
+          "meta": "Latin foundations · {bpm} BPM · 4/4",
+          "band": "Bass · Keys · {percussion}",
+          "getReady": "Get ready",
+          "loading": "Loading the stage"
+        },
+        "how": {
+          "eyebrow": "How it works",
+          "title": "Three steps,",
+          "titleAccent": "every session.",
+          "s1Title": "Open a lesson",
+          "s1Body": "Pick any course and start a lesson. The exercise is ready on the stage with the band behind you.",
+          "s2Title": "Play along",
+          "s2Body": "Use your microphone or a PlaySense device. Notes travel down the pier and PlaySense listens to every hit.",
+          "s3Title": "Improve faster",
+          "s3Body": "See which notes were early, late or missed, loop those measures, and play them again."
+        },
+        "chart": {
+          "eyebrow": "Prefer the chart?",
+          "title": "Notation,",
+          "titleAccent": "synced to the maestro.",
+          "lede": "Every lesson also has the sheet music under the video, bar by bar. Arrange it side by side, stacked, or music only.",
+          "layout": "Layout",
+          "side": "Side by side",
+          "stack": "Stacked",
+          "music": "Music only"
+        },
+        "ws": {
+          "course": "Son Cubano Bass",
+          "lesson": "The tumbao · demo",
+          "mic": "MIC",
+          "videoCaption": "Lesson video · demo",
+          "staffLabel": "Bass staff: a two-bar son tumbao in 4/4 over C, F, G and F, with a playhead that follows the music",
+          "onTime": "On time",
+          "late": "Late",
+          "loop": "Loop",
+          "simulated": "Demo: student input simulated",
+          "perfect": "Perfect",
+          "lateMs": "Late +{ms}ms",
+          "loadError": "The notation could not load."
+        },
+        "features": {
+          "f1Title": "Real-time feedback",
+          "f1Body": "Listens through your microphone or PlaySense device and responds as you play.",
+          "f2Title": "Pitch and rhythm accuracy",
+          "f2Body": "See where your timing and pitch drift, so you fix mistakes before they become habits.",
+          "f3Title": "Play with the band",
+          "f3Body": "A backing band plays around you. Mute your own part and fill the hole.",
+          "f4Title": "Practice your way",
+          "f4Body": "Slow passages down, loop difficult measures and repeat until it feels easy.",
+          "f5Title": "Synchronized notation",
+          "f5Body": "Sheet music and tablature follow each video lesson.",
+          "f6Title": "Take the chart home",
+          "f6Body": "Export any section as PDF, MusicXML or MIDI."
+        },
+        "finale": {
+          "title": "Your place in the band",
+          "titleAccent": "is waiting.",
+          "lede": "PlaySense is included in every plan."
+        },
         "_": "keys above this line"
       },
       "pricing": {
@@ -242,6 +315,61 @@
           "extrasYearly": "+ {price}/mo for extra styles",
           "cta": "Lock in founding pricing"
         },
+        "metaTitle": "Pricing - Latin Music Mastery",
+        "metaDescription": "Pay per instrument: the fundamentals course plus a style of your choice. Add more styles whenever you like, or save with yearly billing.",
+        "crumb": "Pricing",
+        "title": "Simple,",
+        "titleAccent": "per instrument.",
+        "lede": "Start with one instrument: its fundamentals course plus a style you choose. Add more styles whenever you are ready.",
+        "noticeTitle": "Founding-member pricing",
+        "noticeBody": "These rates are for a limited time. Join the waitlist to lock them in.",
+        "includes": {
+          "title": "Every plan includes",
+          "i1": "Your instrument's fundamentals course",
+          "i2": "One style course of your choice",
+          "i3": "PlaySense notation and real-time feedback",
+          "i4": "Streaks, weekly goal and practice calendar",
+          "i5": "New content monthly · cancel anytime"
+        },
+        "allAccess": {
+          "title": "All-access",
+          "body": "Every instrument and every style."
+        },
+        "how": {
+          "eyebrow": "How pricing works",
+          "title": "Build your",
+          "titleAccent": "own plan.",
+          "s1Title": "Pick an instrument",
+          "s1Body": "{base}/mo includes that instrument's fundamentals course plus one style course.",
+          "s2Title": "Add styles",
+          "s2Body": "Want more styles on the same instrument? Add any style course for {addon}/mo each.",
+          "s3Title": "Go yearly",
+          "s3Body": "Pay {annual}/yr for the instrument base and save {pct}%. Extra styles stay monthly."
+        },
+        "compare": {
+          "title": "Compare plans",
+          "feature": "Feature",
+          "perInstrument": "Per instrument",
+          "allAccess": "All-access",
+          "soon": "Soon",
+          "included": "Included",
+          "instruments": "Instruments",
+          "instrumentsOne": "1",
+          "instrumentsAll": "All {n}",
+          "fundamentals": "Fundamentals course",
+          "styles": "Style courses",
+          "stylesPer": "1 included, +{addon}/mo each",
+          "stylesAll": "Every style",
+          "playsense": "PlaySense notation and feedback",
+          "export": "Sheet music export",
+          "progress": "Progress, streaks and calendar",
+          "content": "New content monthly",
+          "price": "Price",
+          "pricePer": "{monthly}/mo or {annual}/yr",
+          "priceAll": "To be announced"
+        },
+        "faqPrompt": "Questions about billing?",
+        "faqLink": "Read the FAQ",
         "_": "keys above this line"
       },
       "about": {

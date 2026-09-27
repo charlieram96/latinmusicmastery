@@ -1,0 +1,38 @@
+/* /playsense additions. Prototype workspace rules (style.css) that marketing.css
+   does not carry, plus the live stage's poster and instrument switch. */
+
+/* ── staff workspace (from style.css .app-bar / .staff-host / .ph-line / .judge) ── */
+.mkt .app-bar{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(246,235,221,.02)}
+.mkt .app-title{font:500 12px/1 var(--f-mono);color:var(--humo);letter-spacing:.04em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.mkt .app-title b{color:var(--hueso);font-weight:500}
+.mkt .app-bar .sp{flex:1}
+.mkt .staff-host{color:#F6EBDD}
+.mkt .staff-host svg{display:block;width:100%;height:auto;overflow:visible}
+.mkt .staff-host svg text{fill:currentColor}
+.mkt .staff-host svg path{stroke:currentColor}
+.mkt .staff-host svg path:not([fill="none"]){fill:currentColor}
+.mkt .staff-host svg rect{fill:currentColor}
+.mkt .staff-host .vf-stave path{stroke:rgba(246,235,221,.3)}
+.mkt .staff-host text{stroke:none!important}
+.mkt .staff-host .vf-stavenote text{transition:fill .15s}
+.mkt .staff-host .vf-stavenote.lit-ok text{fill:var(--ok)!important}
+.mkt .staff-host .vf-stavenote.lit-ok path{stroke:var(--ok)!important}
+.mkt .staff-host .vf-stavenote.lit-late text{fill:var(--late)!important}
+.mkt .staff-host .vf-stavenote.lit-late path{stroke:var(--late)!important}
+.mkt .staff-fallback{color:var(--humo-2);font-size:14px;padding:30px 0}
+.mkt .ph-line{position:absolute;top:18px;bottom:6px;width:2px;left:0;background:linear-gradient(var(--ambar),var(--carmin));border-radius:2px;box-shadow:0 0 16px rgba(255,120,50,.8);pointer-events:none;will-change:transform}
+.mkt .staff2 .ph-line{top:40px;bottom:auto}
+.mkt .ph-line::before{content:"";position:absolute;top:-5px;left:-4px;width:10px;height:10px;transform:rotate(45deg);background:var(--ambar);border-radius:2px}
+.mkt .staff2 .judges{position:absolute;inset:0;pointer-events:none}
+.mkt .judge{position:absolute;top:0;font:600 11px/1 var(--f-mono);padding:4px 7px;border-radius:6px;pointer-events:none;animation:judge 1s var(--ease-out) forwards;white-space:nowrap}
+.mkt .judge.ok{background:rgba(47,209,181,.15);color:var(--ok)}
+.mkt .judge.late{background:rgba(255,201,77,.15);color:var(--late)}
+@media (max-width:640px){.mkt .app-bar .pill.tnum{display:none}}
+@media (prefers-reduced-motion:reduce){.mkt .judge{animation:none;opacity:0}}
+
+/* ── live stage ── */
+.mkt .live-stage .ps-highway{background:#1b0f26}
+.mkt .live-poster{position:absolute;inset:0;z-index:2;background:#1b0f26 url("/marketing/stage-miami-poster.jpg") center/cover;transition:opacity .6s var(--ease-out) .3s;pointer-events:none;display:grid;place-items:end center}
+.mkt .live-stage.is-ready .live-poster{opacity:0}
+.mkt .live-loading{margin-bottom:14%;font:500 11px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.7);padding:8px 12px;border-radius:999px;background:rgba(20,12,24,.55);backdrop-filter:blur(8px)}
+.mkt .live-tools{display:flex;justify-content:center;margin-top:16px}
