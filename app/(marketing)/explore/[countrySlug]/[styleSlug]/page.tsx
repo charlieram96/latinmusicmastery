@@ -93,7 +93,7 @@ export default async function StylePage({ params }: { params: Params }) {
         title={<>{title.lead}{title.lead && ' '}<Accent>{title.accent.toLowerCase()}.</Accent></>}
       >
         <div className="course-meta" style={{ marginTop: 0 }}>
-          <span className="pill">{country.name}{country.geo ? ` · ${country.geo.split(' · ')[0]}` : ''}</span>
+          <span className="pill">{country.name}</span>
           {clave && <span className="pill">{k(clave.key === 'son32' ? 'claveSon' : 'claveRumba')}</span>}
           <span className="pill">{count}</span>
         </div>

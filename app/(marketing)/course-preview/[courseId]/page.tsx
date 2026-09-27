@@ -124,7 +124,7 @@ export default async function CoursePreviewPage({ params }: { params: Params }) 
         <div className="lights" aria-hidden="true"><div className="beam b1" /><div className="beam b2" /></div>
         <div className="wrap course-hero" style={{ paddingBlock: 'clamp(40px,6vw,90px) clamp(40px,5vw,72px)' }}>
           <div>
-            <nav className="crumbs" aria-label="Breadcrumb">
+            <nav className="crumbs" aria-label={t('marketing.common.breadcrumb')}>
               {crumbs.map((c, i) => (
                 <span key={i} style={{ display: 'contents' }}>
                   {i > 0 && <span aria-hidden="true">/</span>}
@@ -154,7 +154,7 @@ export default async function CoursePreviewPage({ params }: { params: Params }) 
               </Link>
             )}
           </div>
-          <div className="course-sleeve">
+          <div className="course-sleeve" aria-hidden="true">
             <Sleeve
               title={sleeveTitle}
               topLeft={inst ?? undefined}
@@ -186,6 +186,7 @@ export default async function CoursePreviewPage({ params }: { params: Params }) 
                     inProductionBody: k('inProductionBody'),
                     freePreview: k('freePreview'),
                     plan: k('plan'),
+                    planSr: k('planSr'),
                   }}
                 />
               </div>

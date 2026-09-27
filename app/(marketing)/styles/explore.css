@@ -41,4 +41,5 @@
 @media (max-width:640px){
   .mkt .inst-card .ic-img, .mkt .inst-card .ph{width:90px;height:110px}
   .mkt .course-sleeve{max-width:100%}
+  .mkt .clave-card .cells .cell{border-radius:3px}
 }

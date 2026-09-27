@@ -21,12 +21,14 @@ export function Poster({ course, t, locale, englishStyle, index = 0 }: { course:
     : style ? t('marketing.site.explore.courseName', { style, instrument: inst }) : course.title
   return (
     <Link className="poster" href={`/course-preview/${course.id}`} style={{ animationDelay: `${Math.min(index, 16) * 30}ms` }}>
+      <div aria-hidden="true">
       <Sleeve
         title={sleeveTitle}
         topLeft={inst}
         topRight={course.fundamentals ? t('marketing.site.explore.start') : course.countryCode ?? undefined}
         seed={sleeveSeed(englishStyle, course.instrument)}
       />
+      </div>
       <div className="pmeta"><b>{caption}</b><span aria-hidden="true">{t('marketing.site.common.previewArrow')}</span></div>
     </Link>
   )

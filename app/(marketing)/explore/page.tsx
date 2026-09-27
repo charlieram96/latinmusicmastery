@@ -46,6 +46,7 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
   return (
     <>
       <ExploreBrowser
+        key={one(sp.instrument) ?? 'all'}
         courses={courses}
         englishStyles={englishStyles}
         instruments={catalog.instruments.map(i => ({ key: i.key, count: i.total }))}

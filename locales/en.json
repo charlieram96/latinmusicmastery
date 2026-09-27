@@ -317,6 +317,7 @@
           "compare": "Compare plans",
           "yearly": "Or {price}/yr, {pct}% less than monthly."
         },
+        "planSr": "(included with the plan)",
         "_": "keys above this line"
       },
       "instructors": {
