@@ -1,0 +1,3 @@
+/* /pricing additions. Everything else comes from marketing.css. */
+.mkt .compare tbody th{font:inherit;font-size:15.5px;letter-spacing:0;text-transform:none;color:var(--hueso)}
+.mkt .compare td svg{display:inline-block;vertical-align:middle}

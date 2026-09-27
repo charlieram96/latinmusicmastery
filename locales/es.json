@@ -511,6 +511,81 @@
         "_": "keys above this line"
       },
       "playsense": {
+        "metaTitle": "PlaySense - Latin Music Mastery",
+        "metaDescription": "PlaySense te pone en un escenario en vivo frente a la bahía de Miami, con la banda detrás. Escucha cada nota, califica tu tiempo y mantiene la partitura sincronizada con la lección.",
+        "crumb": "PlaySense",
+        "title": "Play",
+        "titleAccent": "Sense.",
+        "lede": "El sol acaba de ponerse sobre la bahía de Biscayne. La banda está lista. Encuentra tu lugar en el groove.",
+        "stage": {
+          "label": "Escenario de PlaySense en vivo frente a la bahía de Miami al atardecer: las notas bajan por el muelle hacia tu instrumento",
+          "instrument": "Instrumento",
+          "conga": "Congas",
+          "timbale": "Timbales",
+          "piano": "Piano",
+          "caption": "Escenario de PlaySense en vivo · {exercise} en {instrument}",
+          "hint": "Las notas bajan por el muelle. Tócalas cuando lleguen a tu instrumento.",
+          "meta": "Fundamentos latinos · {bpm} BPM · 4/4",
+          "band": "Bajo · Teclado · {percussion}",
+          "getReady": "Prepárate",
+          "loading": "Cargando el escenario"
+        },
+        "how": {
+          "eyebrow": "Cómo funciona",
+          "title": "Tres pasos,",
+          "titleAccent": "en cada sesión.",
+          "s1Title": "Abre una lección",
+          "s1Body": "Elige cualquier curso y empieza una lección. El ejercicio te espera en el escenario, con la banda detrás.",
+          "s2Title": "Toca con la banda",
+          "s2Body": "Usa tu micrófono o un dispositivo PlaySense. Las notas bajan por el muelle y PlaySense escucha cada golpe.",
+          "s3Title": "Mejora más rápido",
+          "s3Body": "Mira qué notas salieron adelantadas, tarde o no sonaron, repite esos compases y vuelve a tocarlos."
+        },
+        "chart": {
+          "eyebrow": "¿Prefieres la partitura?",
+          "title": "La partitura,",
+          "titleAccent": "al ritmo del maestro.",
+          "lede": "Cada lección también trae la partitura debajo del video, compás por compás. Ponla al lado, debajo o sola.",
+          "layout": "Diseño",
+          "side": "Lado a lado",
+          "stack": "Apilado",
+          "music": "Solo partitura"
+        },
+        "ws": {
+          "course": "Son Cubano Bajo",
+          "lesson": "El tumbao · demo",
+          "mic": "MIC",
+          "videoCaption": "Video de la lección · demo",
+          "staffLabel": "Pentagrama de bajo: un tumbao de son de dos compases en 4/4 sobre Do, Fa, Sol y Fa, con un cursor que sigue la música",
+          "onTime": "A tiempo",
+          "late": "Tarde",
+          "loop": "Vuelta",
+          "simulated": "Demo: entrada simulada",
+          "perfect": "Perfecto",
+          "lateMs": "Tarde +{ms}ms",
+          "loadError": "No se pudo cargar la partitura."
+        },
+        "features": {
+          "f1Title": "Retroalimentación en tiempo real",
+          "f1Body": "Escucha por tu micrófono o tu dispositivo PlaySense y responde mientras tocas.",
+          "f2Title": "Precisión de afinación y ritmo",
+          "f2Body": "Ve dónde se te va el tiempo o la afinación y corrige antes de que se vuelva costumbre.",
+          "f3Title": "Toca con la banda",
+          "f3Body": "Una banda te acompaña. Silencia tu parte y llena el hueco.",
+          "f4Title": "Practica a tu manera",
+          "f4Body": "Baja la velocidad, repite los compases difíciles y sigue hasta que te salga fácil.",
+          "f5Title": "Partitura sincronizada",
+          "f5Body": "La partitura y la tablatura siguen cada video de la lección.",
+          "f6Title": "Llévate la partitura",
+          "f6Body": "Exporta cualquier sección en PDF, MusicXML o MIDI."
+        },
+        "finale": {
+          "title": "Tu lugar en la banda",
+          "titleAccent": "te está esperando.",
+          "lede": "PlaySense viene incluido en todos los planes."
+        },
+        "pause": "Pausar",
+        "play": "Reproducir",
         "_": "keys above this line"
       },
       "pricing": {
@@ -534,6 +609,61 @@
           "extrasYearly": "+ {price}/mes por estilos extra",
           "cta": "Asegura el precio fundador"
         },
+        "metaTitle": "Precios - Latin Music Mastery",
+        "metaDescription": "Pagas por instrumento: el curso de fundamentos más un estilo a tu elección. Agrega más estilos cuando quieras o ahorra con el pago anual.",
+        "crumb": "Precios",
+        "title": "Simple,",
+        "titleAccent": "por instrumento.",
+        "lede": "Empieza con un instrumento: su curso de fundamentos más un estilo que tú eliges. Agrega más estilos cuando estés listo.",
+        "noticeTitle": "Precio de miembro fundador",
+        "noticeBody": "Estas tarifas son por tiempo limitado. Únete a la lista de espera para asegurarlas.",
+        "includes": {
+          "title": "Cada plan incluye",
+          "i1": "Curso de fundamentos de tu instrumento",
+          "i2": "Un curso de estilo a tu elección",
+          "i3": "PlaySense: partitura sincronizada y retroalimentación",
+          "i4": "Racha, meta semanal y calendario de práctica",
+          "i5": "Contenido nuevo cada mes · cancela cuando quieras"
+        },
+        "allAccess": {
+          "title": "Acceso total",
+          "body": "Todos los instrumentos y todos los estilos."
+        },
+        "how": {
+          "eyebrow": "Cómo funcionan los precios",
+          "title": "Arma tu",
+          "titleAccent": "propio plan.",
+          "s1Title": "Elige un instrumento",
+          "s1Body": "{base}/mes incluye el curso de fundamentos de ese instrumento más un curso de estilo.",
+          "s2Title": "Agrega estilos",
+          "s2Body": "¿Quieres más estilos en el mismo instrumento? Agrega cualquier curso de estilo por {addon}/mes cada uno.",
+          "s3Title": "Pasa al plan anual",
+          "s3Body": "Paga {annual}/año por la base del instrumento y ahorra {pct}%. Los estilos extra siguen siendo mensuales."
+        },
+        "compare": {
+          "title": "Compara los planes",
+          "feature": "Función",
+          "perInstrument": "Por instrumento",
+          "allAccess": "Acceso total",
+          "soon": "Pronto",
+          "included": "Incluido",
+          "instruments": "Instrumentos",
+          "instrumentsOne": "1",
+          "instrumentsAll": "Los {n}",
+          "fundamentals": "Curso de fundamentos",
+          "styles": "Cursos de estilo",
+          "stylesPer": "1 incluido, +{addon}/mes cada uno",
+          "stylesAll": "Todos los estilos",
+          "playsense": "Partitura y retroalimentación de PlaySense",
+          "export": "Exportar partituras",
+          "progress": "Progreso, rachas y calendario",
+          "content": "Contenido nuevo cada mes",
+          "price": "Precio",
+          "pricePer": "{monthly}/mes o {annual}/año",
+          "priceAll": "Por anunciar"
+        },
+        "faqPrompt": "¿Preguntas sobre la facturación?",
+        "faqLink": "Lee las preguntas frecuentes",
         "_": "keys above this line"
       },
       "about": {
