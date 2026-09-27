@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseInline, parsePostBody, postCategories, readingMinutes } from '../blog'
+import { coverIsOptimizable, parseInline, parsePostBody, postCategories, readingMinutes, sleeveTitle } from '../blog'
 
 describe('parseInline', () => {
   it('splits **bold** runs', () => {
@@ -35,5 +35,20 @@ describe('readingMinutes', () => {
 describe('postCategories', () => {
   it('lists distinct categories in first-seen order', () => {
     expect(postCategories([{ category: 'News' }, { category: 'History' }, { category: 'News' }, { category: '' }])).toEqual(['News', 'History'])
+  })
+})
+
+describe('coverIsOptimizable', () => {
+  it('accepts the configured https hosts only', () => {
+    expect(coverIsOptimizable('https://uaupfsnfgenyqmlfljpi.supabase.co/storage/v1/object/public/a.jpg')).toBe(true)
+    expect(coverIsOptimizable('https://images.unsplash.com/photo-1')).toBe(true)
+    expect(coverIsOptimizable('https://example.com/a.jpg')).toBe(false)
+    expect(coverIsOptimizable('not a url')).toBe(false)
+  })
+})
+
+describe('sleeveTitle', () => {
+  it('keeps the first two words', () => {
+    expect(sleeveTitle('  Understanding  Cuban Son ')).toBe('Understanding Cuban')
   })
 })

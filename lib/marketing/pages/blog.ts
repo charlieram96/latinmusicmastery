@@ -65,3 +65,33 @@ export function postCategories(posts: readonly { category: string | null }[]): s
   for (const p of posts) if (p.category && !seen.includes(p.category)) seen.push(p.category)
   return seen
 }
+
+/** Hosts `next.config` lets next/image optimize; any other cover is served unoptimized rather than throwing. */
+const IMAGE_HOSTS = ['uaupfsnfgenyqmlfljpi.supabase.co', 'images.unsplash.com']
+
+export function coverIsOptimizable(url: string): boolean {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'https:' && IMAGE_HOSTS.includes(u.hostname)
+  } catch {
+    return false
+  }
+}
+
+/** Short sleeve title from a post title: its first two words. */
+export function sleeveTitle(title: string): string {
+  return title.trim().split(/\s+/).slice(0, 2).join(' ')
+}
+
+/** What a blog card needs, with every label already localized. */
+export interface PostCard {
+  id: string
+  slug: string
+  title: string
+  excerpt: string | null
+  category: string
+  categoryLabel: string
+  coverUrl: string | null
+  minutes: number
+  date: string | null
+}
