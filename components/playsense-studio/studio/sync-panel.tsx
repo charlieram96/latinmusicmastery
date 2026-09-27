@@ -13,7 +13,7 @@
 // dragged positions survive edits. Owns the single <video> + clock — the edit
 // panel below has no preview player, so playback never re-renders the parent.
 
-import { AudioLines, ChevronsLeftRight, Crosshair, FilePlus2, Loader2, Move, Music2, Repeat, Spline, Undo2, Wand2 } from 'lucide-react';
+import { AudioLines, FilePlus2, Loader2 } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -37,8 +37,8 @@ import {
 import { useVideoClickTrack } from '@/components/playsense-studio/player/state/use-video-click-track';
 import { useScoreSynth } from '@/components/playsense-studio/player/state/use-score-synth';
 import { scoreSynthNotes, toMediaNotes } from '@/lib/playsense-studio/score-synth';
-import { HEAR_OPTIONS, hearMute, readHear, writeHear, type Hear } from '@/lib/playsense-studio/hear';
-import { applyStudioRate, LOOP_SPEEDS } from '@/lib/playsense-studio/studio-rate';
+import { hearMute, readHear, writeHear, type Hear } from '@/lib/playsense-studio/hear';
+import { applyStudioRate } from '@/lib/playsense-studio/studio-rate';
 import { timingPatchFromMarkers } from '@/lib/playsense-studio/drafts/timing-patch';
 import type { StudioPlay, StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { autoAlign, onHitCount } from '@/lib/playsense-studio/auto-align';
@@ -49,6 +49,7 @@ import type { Waypoint } from '@/components/playsense-studio/shared/time-map/tim
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player';
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock';
 import { TransportBar } from '@/components/playsense-studio/player/transport/transport-bar';
+import { HearControl, LoopSpeedControl } from '@/components/playsense-studio/studio/hear-control';
 import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { clampSectionShift } from '@/lib/playsense-studio/section-drag';
 import { SNAP_PX, barFlags, firstAttackTime, flagText, snapMarkerDrag, snapSectionShift } from '@/lib/playsense-studio/hits';
@@ -101,13 +102,15 @@ import {
 } from '@/components/playsense-studio/studio/integrated-editor';
 import type { SelectedEventRef } from '@/components/playsense-studio/studio/editable-measure-strip';
 import { PlaceScoreControl } from '@/components/playsense-studio/sync/place-score-control';
+import { WaveTools } from '@/components/playsense-studio/studio/wave-tools';
+import { SyncActions } from '@/components/playsense-studio/studio/sync-actions';
 import { SectionsLane, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { resolvePercStroke, isPercussion } from '@/lib/playsense-studio/perc-strokes';
 import { collectOnsets, onsetForSelection } from '@/lib/playsense-studio/note-onsets';
 import { isStructuralAction } from '@/lib/playsense-studio/measure-edits';
 import { stripCopyTags, writeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
 import { clipFromMeasures, prepareStructuralEdit } from '@/components/playsense-studio/sync/structural-timing';
-import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
+import { ScoreImportDialog, type ScoreImportDialogProps } from '@/components/playsense-studio/studio/score-import-dialog';
 import type { ScoreDocument, Track } from '@/components/playsense-studio/shared/score-model/types';
 import type { MidiRecordingSource } from './midi-record-button';
 import { ReferenceMonitor } from '@/components/playsense-studio/sync/reference-monitor';
@@ -116,6 +119,7 @@ import { ScrollBar } from '@/components/playsense-studio/sync/scroll-bar';
 import { ZoomSlider } from '@/components/playsense-studio/sync/zoom-slider';
 import { stableTimings } from '@/components/playsense-studio/studio/stable-timings';
 import { clamp, MAX_PPS, MIN_PPS } from '@/components/playsense-studio/sync/zoom-range';
+import { anchorPxFor, fitRangeView, followScroll } from '@/lib/playsense-studio/timeline-view';
 import { StageSplitter, clampWaveHeight, WAVE_DEFAULT } from '@/components/playsense-studio/studio/shell/stage-splitter';
 
 /** A note selection, mirrored out of the editor so the right rail can show it. */
@@ -144,6 +148,10 @@ export interface SyncPanelProps {
   /** Graded mode: the graded onsets of one loop, in seconds from bar 1,
    *  ascending — what Auto-align and the "notes on a hit" readout measure. */
   gradedOnsets?: number[];
+  /** Graded mode: the waveform tool cluster's "Student preview" button, when
+   *  the host wants it there. `studio-workspace.tsx` already has its own app-bar
+   *  Student preview button, so it leaves this unset rather than duplicate it. */
+  onStudentPreview?: () => void;
   videoUrl: string | null;
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
@@ -169,6 +177,12 @@ export interface SyncPanelProps {
   /** App-bar slot for score-level actions this panel owns ("Add score"), so the
    *  appended measures get their timing through the panel's structural path. */
   scoreActionsEl?: HTMLElement | null;
+  /** Forwarded to the "Add score" dialog's `onCloseAutoFocus` — lets the host
+   *  (whose ScoreMenu this chip lives inside) return focus to its own Score ▾
+   *  chip on close, since this dialog's trigger is a React SIBLING of that
+   *  menu (portalled into `scoreActionsEl`, one of the menu's own children)
+   *  and can't reach the chip's ref any other way. */
+  scoreActionsCloseAutoFocus?: ScoreImportDialogProps['onCloseAutoFocus'];
   /** Sibling scored sections — drives the sections lane + overlap prevention. */
   sectionsContext?: {
     sections: LaneSection[];
@@ -294,6 +308,7 @@ export function SyncPanel({
   transportEl,
   monitorEl,
   scoreActionsEl,
+  scoreActionsCloseAutoFocus,
   sectionsContext,
   renderBackingLanes,
   initialMetronomeAnchorSeconds,
@@ -302,6 +317,7 @@ export function SyncPanel({
   play,
   onPlayChange,
   gradedOnsets = EMPTY_ONSETS,
+  onStudentPreview,
 }: SyncPanelProps) {
   const track = score.tracks[0];
   const graded = mode === 'graded';
@@ -435,12 +451,22 @@ export function SyncPanel({
     const id = setTimeout(() => setEditNotice(null), 4500);
     return () => clearTimeout(id);
   }, [editNotice]);
+  // "Flex was cleared because the bars moved" is informational, not a refused
+  // edit — it shares editNotice's 4500 ms lifetime but never turns the toast
+  // red. Auto-place folds it into its own "Bars auto-placed." toast instead
+  // (see placedToast below); every other bar move shows it on its own.
+  const [flexClearedInfo, setFlexClearedInfo] = useState<string | null>(null);
+  useEffect(() => {
+    if (!flexClearedInfo) return;
+    const id = setTimeout(() => setFlexClearedInfo(null), 4500);
+    return () => clearTimeout(id);
+  }, [flexClearedInfo]);
   // Wholesale marker moves (a section drag, Auto-place, a placement) leave the
   // flex points behind on the old bars, so they clear it. Callers only call
   // this when there is flex to clear.
   const clearFlexForBarMove = useCallback(() => {
     setFlex(NO_FLEX);
-    setEditNotice('Flex was cleared because the bars moved');
+    setFlexClearedInfo('Flex was cleared because the bars moved');
   }, []);
   useEffect(() => {
     if (previousScore.current === score) return;
@@ -705,15 +731,30 @@ export function SyncPanel({
     return () => { cancelled = true; };
   }, [classItemId, showSync, runAnalysis]);
 
-  // Fit zoom once the viewport width + a duration are known.
+  // The range "fit" should show: the section being synced, or the whole
+  // timeline when there's no section (songs/exercises without a sync target).
+  const fitTarget = (): [number, number] => {
+    if (showSync) {
+      const span = markerSpan(markers);
+      if (span.endSeconds > span.startSeconds) return [span.startSeconds, span.endSeconds];
+    }
+    return [0, timelineDuration];
+  };
+  const viewBounds = { minPps: MIN_PPS, maxPps: MAX_PPS, contentSeconds: timelineDuration };
+
+  // Fit zoom once the viewport width + a duration are known — to the SECTION,
+  // not the whole video, so a 17 s section in a 7:20 video doesn't open with
+  // bars too thin to render (spec: three live layout problems).
   const didFitRef = useRef(false);
   useEffect(() => {
     if (didFitRef.current) return;
     if (viewportWidth > 0 && timelineDuration > 0) {
       didFitRef.current = true;
-      setPps(clamp(viewportWidth / timelineDuration, MIN_PPS, MAX_PPS));
+      const [a, b] = fitTarget();
+      const v = fitRangeView(a, b, viewportWidth, viewBounds);
+      if (v) { setPps(v.pps); setScrollLeft(v.scrollLeft); }
     }
-  }, [viewportWidth, timelineDuration]);
+  }, [viewportWidth, timelineDuration, markers, showSync]);
 
   // Without the waveform (exercises + songs), the canvas isn't mounted to report
   // the viewport width — measure the editor area ourselves so fit-zoom + scrollbar work.
@@ -728,14 +769,14 @@ export function SyncPanel({
     return () => ro.disconnect();
   }, [showSync]);
 
-  // Auto-scroll so the playhead stays in view during playback.
+  // Keep the playhead in view while playing (a loop wrap or a page turn),
+  // the way a DAW pages its arrange view.
   useEffect(() => {
-    if (!clock.isPlaying || viewportWidth === 0) return;
-    const x = timelineNow * pps - scrollLeft;
-    if (x < viewportWidth * 0.1 || x > viewportWidth * 0.85) {
-      setScrollLeft(clampScroll(timelineNow * pps - viewportWidth * 0.15));
-    }
-  }, [timelineNow, clock.isPlaying, pps, scrollLeft, viewportWidth, clampScroll]);
+    if (!clock.isPlaying) return;
+    const next = followScroll(timelineNow, pps, scrollLeft, viewportWidth, viewBounds);
+    if (next !== null) setScrollLeft(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timelineNow, clock.isPlaying]);
 
   // --- Derived draw data ---
   // Bars whose first note or tempo looks off the recording (spec §7). Empty
@@ -773,8 +814,15 @@ export function SyncPanel({
       clock.seek(
         seekMediaFor(flexMap, seconds, trimmed ? effectiveTrim : null, videoDurationSeconds ?? clock.durationSeconds ?? null)
       );
+      // The seek's target may be off-screen (a section jump, a loop wrap) —
+      // bring it into view rather than leaving the view where it was. Unlike
+      // the play-along auto-page above, only page when the target is truly
+      // off-screen (edge: 0): a waveform-scrub seek near an edge shouldn't
+      // re-page a target that's already visible, which would fight the drag.
+      const next = followScroll(seconds, pps, scrollLeft, viewportWidth, viewBounds, { edge: 0 });
+      if (next !== null) setScrollLeft(next);
     },
-    [clock, flexMap, trimmed, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock.durationSeconds]
+    [clock, flexMap, trimmed, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock.durationSeconds, pps, scrollLeft, viewportWidth, viewBounds]
   );
 
   // Trim is stored in MEDIA; the canvas draws and drags it in TIMELINE time.
@@ -809,6 +857,25 @@ export function SyncPanel({
   const placedRef = useRef<MarkerState | null>(null);
   const placedFlexRef = useRef<FlexPoint[] | null>(null);
   const [autoPlaceNotice, setAutoPlaceNotice] = useState<string | null>(null);
+  // The stage toast's "Bars auto-placed." (with Undo): true right after a
+  // successful placement, so the toast shows even when nothing needed
+  // clearing (the common case — Important 1). Retires with `autoPlaceUndo`
+  // (below), on its own 6 s timer, or explicitly on Undo.
+  const [placedToast, setPlacedToast] = useState(false);
+  // Whether THIS placement cleared flex — folds "Flex was cleared…" into the
+  // placed toast's own text instead of racing it as a second, separate
+  // message (Important 3).
+  const [autoPlaceFlexCleared, setAutoPlaceFlexCleared] = useState(false);
+  useEffect(() => {
+    if (!placedToast) return;
+    const id = setTimeout(() => setPlacedToast(false), 6000);
+    return () => clearTimeout(id);
+  }, [placedToast]);
+  // Whatever retires the undo (the effect below, or undoAutoPlace itself)
+  // takes the toast down with it.
+  useEffect(() => {
+    if (!autoPlaceUndo) setPlacedToast(false);
+  }, [autoPlaceUndo]);
   // The tween writes plain values and yields to any other marker write (see
   // useMarkerTween). Called before the undo-retiring effect below, so a
   // foreign write has already stopped the tween when that effect looks.
@@ -881,6 +948,8 @@ export function SyncPanel({
     }
     const from = markersRef.current;
     setAutoPlaceUndo({ markers: from, flex });
+    setPlacedToast(true);
+    setAutoPlaceFlexCleared(clearsFlex);
     placedRef.current = res.state;
     placedFlexRef.current = clearsFlex ? NO_FLEX : flex;
     if (clearsFlex) clearFlexForBarMove();
@@ -897,6 +966,7 @@ export function SyncPanel({
     setFlex(autoPlaceUndo.flex);
     setDirty(true);
     setAutoPlaceUndo(null);
+    setPlacedToast(false);
   }, [autoPlaceUndo, cancelTween]);
 
   // Timing-only per-measure slots — the editor zips these with extractTrackEvents
@@ -1390,12 +1460,17 @@ export function SyncPanel({
     () => (loopEnabled && loopA !== null && loopB !== null ? { a: loopA, b: loopB } : null),
     [loopEnabled, loopA, loopB]
   );
-  const loopSelectedMeasure = () => {
-    if (!selected || selected === 'tail') return;
-    const i = markers.measures.findIndex((m) => m.measureNumber === selected.measureNumber);
-    if (i !== -1) loopMeasures(i, i);
-  };
-
+  // The selected bar range, mirrored out of IntegratedEditor, converted to
+  // timeline seconds so the waveform can tint the same span (Task 6). One
+  // object per range change, like waveLoop above, so the waveform doesn't
+  // redraw every frame.
+  const [barRange, setBarRange] = useState<[number, number] | null>(null);
+  const waveSelection = useMemo(() => {
+    if (!barRange) return null;
+    const a = markers.measures[barRange[0]]?.beats[0]?.videoTimeSeconds;
+    const b = markers.measures[barRange[1] + 1]?.beats[0]?.videoTimeSeconds ?? markers.tailVideoTimeSeconds;
+    return a !== undefined && b > a ? { a, b } : null;
+  }, [barRange, markers]);
   const zoomBy = (factor: number, anchorPx = viewportWidth / 2) => {
     setPps((p) => {
       const nextPps = clamp(p * factor, MIN_PPS, MAX_PPS);
@@ -1406,9 +1481,9 @@ export function SyncPanel({
   };
 
   const fitZoom = () => {
-    if (viewportWidth === 0 || timelineDuration === 0) return;
-    setPps(clamp(viewportWidth / timelineDuration, MIN_PPS, MAX_PPS));
-    setScrollLeft(0);
+    const [a, b] = fitTarget();
+    const v = fitRangeView(a, b, viewportWidth, viewBounds);
+    if (v) { setPps(v.pps); setScrollLeft(v.scrollLeft); }
   };
 
   // Set an absolute zoom (used by the drag slider), keeping the timeline centered.
@@ -1758,211 +1833,21 @@ export function SyncPanel({
       ? selTrack.measures[selection.ref.measureIndex]?.voices[0]?.events[selection.ref.eventIndex] ?? null
       : null;
 
-
+  // The stage toast's neutral slot (IntegratedEditor's `info`, never red):
+  // a live placement still offers its Undo — folding in "Flex was cleared…"
+  // when this placement cleared it — else any other bar move's own flex
+  // notice, else nothing. `notice` (checked first by IntegratedEditor) always
+  // wins, so a failed Auto-place/Auto-align never shows this alongside a
+  // stale Undo (Important 3).
+  const stageInfo = placedToast && autoPlaceUndo
+    ? (autoPlaceFlexCleared ? 'Bars auto-placed. Flex was cleared because the bars moved.' : 'Bars auto-placed.')
+    : flexClearedInfo;
+  const stageNoticeAction = placedToast && autoPlaceUndo ? { label: 'Undo', onClick: undoAutoPlace } : undefined;
 
   return (
     <>
       {/* ============ CENTER: context bar + unified stage ============ */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-        {/* Context bar — placement · drag mode · loop/analyze (sync only) */}
-        {showSync && (
-          <div className="flex flex-shrink-0 flex-wrap items-center gap-2 text-sm">
-            <PlaceScoreControl
-              armed={placeArmed}
-              conflict={ghostConflict}
-              spanLabel={ghostRange ? `${formatTime(ghostRange.startSeconds)} – ${formatTime(ghostRange.endSeconds)}` : null}
-              onArm={() => setPlaceArmed(true)}
-              onConfirm={confirmPlacement}
-              onCancel={() => setPlaceArmed(false)}
-            />
-
-            {/* The anchor can't conflict with anything, so unlike placement it
-                needs no arm/confirm step — one click sets it at the playhead. */}
-            {anchorOwner && (
-              <button
-                type="button"
-                onClick={setAnchorAtPlayhead}
-                className="st-chip"
-                title="Mark this moment as a beat, so the student's click locks to the recording"
-              >
-                <AudioLines className="h-4 w-4" />
-                <span className="hidden lg:inline">Anchor at playhead</span>
-              </button>
-            )}
-
-            {graded ? (
-              <>
-                <button
-                  type="button"
-                  onClick={runAutoAlign}
-                  disabled={!hits.length}
-                  className="st-chip"
-                  title={
-                    hits.length
-                      ? 'Move bar 1 so the most notes land on a hit'
-                      : 'Re-analyze audio to find the hits'
-                  }
-                >
-                  <Crosshair className="h-4 w-4" />
-                  Auto-align
-                </button>
-                <span className="st-sec-label">Count-in</span>
-                <div className="st-seg" role="radiogroup" aria-label="Count-in">
-                  {([1, 2] as const).map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      role="radio"
-                      aria-checked={(play?.countInBars ?? 1) === n}
-                      className={(play?.countInBars ?? 1) === n ? 'is-on' : ''}
-                      onClick={() => onPlayChange?.({ countInBars: n })}
-                    >
-                      {n === 1 ? '1 bar' : '2 bars'}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onPlayChange?.({ preroll: !(play?.preroll ?? true) })}
-                  className={`st-chip${(play?.preroll ?? true) ? ' is-on' : ''}`}
-                  aria-pressed={play?.preroll ?? true}
-                  title="Play the video through the count-in, instead of waiting at bar 1"
-                >
-                  Pre-roll video
-                </button>
-                {onHit && hits.length > 0 && (
-                  <span className="text-xs tabular-nums text-muted-foreground" role="status">
-                    {onHit.k}/{onHit.n} notes on a hit
-                  </span>
-                )}
-                {alignNotice && (
-                  <span className="text-xs text-muted-foreground" role="status">
-                    {alignNotice}
-                  </span>
-                )}
-              </>
-            ) : (
-            <>
-            <button
-              type="button"
-              onClick={runAutoPlace}
-              disabled={!hits.length || tweenActive}
-              className="st-chip"
-              title={
-                hits.length
-                  ? 'Fit the bars to the recording — place the first bar near its note first'
-                  : 'Re-analyze audio to find the hits'
-              }
-            >
-              <Wand2 className="h-4 w-4" />
-              <span className="hidden lg:inline">Auto-place bars</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setFlexMode((v) => !v)}
-              className={`st-chip${flexMode ? ' is-on' : ''}`}
-              aria-pressed={flexMode}
-              title="Flex — click a hit to add a point, drag it onto the written note, double-click to remove (F)"
-            >
-              <Spline className="h-4 w-4" />
-              Flex
-            </button>
-            {autoPlaceUndo && (
-              <button type="button" onClick={undoAutoPlace} className="st-chip" title="Put the bars back where they were">
-                <Undo2 className="h-4 w-4" />
-                Undo auto-place
-              </button>
-            )}
-            {autoPlaceNotice && (
-              <span className="text-xs text-muted-foreground" role="status">
-                {autoPlaceNotice}
-              </span>
-            )}
-            </>
-            )}
-
-            <div className="ml-auto flex items-center gap-1.5">
-              <div className="st-seg" role="radiogroup" aria-label="Hear" title="Hear the recording, the written score, or both">
-                <span className="px-1 text-xs text-muted-foreground">Hear</span>
-                {HEAR_OPTIONS.map(({ value, label }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    role="radio"
-                    aria-checked={hear === value}
-                    className={hear === value ? 'is-on' : ''}
-                    onClick={() => handleHearChange(value)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {decodeState === 'loading' && (
-                <span className="text-xs text-muted-foreground">
-                  {progress >= 1 ? 'Processing audio…' : `Downloading audio… ${progress > 0 ? `${Math.round(progress * 100)}%` : ''}`}
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowNotes((v) => !v)}
-                className={`st-iconbtn${showNotes ? ' text-primary' : ''}`}
-                title={showNotes ? 'Hide note overlay on the waveform' : 'Show note overlay on the waveform'}
-                aria-pressed={showNotes}
-              >
-                <Music2 className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={loopSelectedMeasure}
-                disabled={!selected || selected === 'tail'}
-                className="st-iconbtn"
-                title="Loop the selected measure"
-              >
-                <Repeat className="h-4 w-4" />
-              </button>
-              {/* Also while slowed after the loop ends, so the speed never hides. */}
-              {(loopEnabled || Math.abs(displayedRate - 1) > 1e-3) && (
-                <div className="st-seg" role="radiogroup" aria-label="Loop speed" title="Loop speed — the recording keeps its pitch">
-                  <span className="px-1 text-xs text-muted-foreground">Loop speed</span>
-                  {LOOP_SPEEDS.map((speed) => (
-                    <button
-                      key={speed}
-                      type="button"
-                      role="radio"
-                      aria-checked={Math.abs(displayedRate - speed) < 1e-3}
-                      className={Math.abs(displayedRate - speed) < 1e-3 ? 'is-on' : ''}
-                      onClick={() => onDisplayedRateChange(speed)}
-                    >
-                      {Math.round(speed * 100)}%
-                    </button>
-                  ))}
-                </div>
-              )}
-              {decodeState !== 'loading' && (
-                <button
-                  type="button"
-                  onClick={reanalyze}
-                  className="st-chip"
-                  title={
-                    decodeState === 'idle'
-                      ? 'Analyze audio — decode this video so the waveform appears'
-                      : decodeState === 'error'
-                        ? 'Retry audio analysis'
-                        : 'Re-analyze audio'
-                  }
-                >
-                  <AudioLines className="h-4 w-4" />
-                  {decodeState === 'idle'
-                    ? 'Analyze audio'
-                    : decodeState === 'error'
-                      ? 'Retry analysis'
-                      : 'Re-analyze'}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* The unified stage — waveform lane + notation lane share one grid */}
         <div className="relative flex min-h-0 flex-1 flex-col">
           <div className={`st-stage flex-1${analyzing ? ' pointer-events-none select-none opacity-50' : ''}`} aria-busy={analyzing}>
@@ -1972,6 +1857,7 @@ export function SyncPanel({
                 <div className="st-wave-lane relative flex-shrink-0">
                   <WaveformCanvas
                     loop={waveLoop}
+                    selection={waveSelection}
                     bare
                     height={waveH}
                     peaks={peaks}
@@ -2070,33 +1956,38 @@ export function SyncPanel({
                     />
                   )}
 
-                  {/* Zoom and the marker drag mode float over the waveform — they
-                      act on THIS lane (its number chips use dragAll). */}
-                  <div className="st-zoom-float">
-                    {!graded && (
-                    <div className="st-seg" role="radiogroup" aria-label="Drag mode">
-                      <button
-                        type="button"
-                        className={dragAll ? 'is-on' : ''}
-                        onClick={() => setDragAll(true)}
-                        title="Ripple — dragging a measure moves it and everything after it (hold Option to move just one)"
-                      >
-                        <ChevronsLeftRight className="h-3.5 w-3.5" />
-                        Ripple
-                      </button>
-                      <button
-                        type="button"
-                        className={!dragAll ? 'is-on' : ''}
-                        onClick={() => setDragAll(false)}
-                        title="Single — dragging moves only that measure or marker (hold Option to ripple)"
-                      >
-                        <Move className="h-3.5 w-3.5" />
-                        Single
-                      </button>
-                    </div>
-                    )}
-                    <ZoomSlider pps={pps} onZoomTo={zoomTo} onZoomBy={zoomBy} onFit={fitZoom} />
-                  </div>
+                  {/* The waveform's floating tool cluster — everything that acts
+                      on THIS lane (its number chips use dragAll). */}
+                  <WaveTools
+                    graded={graded}
+                    onAutoPlace={runAutoPlace}
+                    autoPlaceDisabled={!hits.length || tweenActive}
+                    autoPlaceTitle={
+                      hits.length
+                        ? 'Fit the bars to the recording — place the first bar near its note first'
+                        : 'Re-analyze audio to find the hits'
+                    }
+                    onAutoAlign={runAutoAlign}
+                    autoAlignDisabled={!hits.length}
+                    autoAlignTitle={
+                      hits.length
+                        ? 'Move bar 1 so the most notes land on a hit'
+                        : 'Re-analyze audio to find the hits'
+                    }
+                    onStudentPreview={onStudentPreview}
+                    dragAll={dragAll}
+                    onDragAll={setDragAll}
+                    flexMode={flexMode}
+                    onFlex={() => setFlexMode((v) => !v)}
+                    showNotes={showNotes}
+                    onShowNotes={() => setShowNotes((v) => !v)}
+                    zoom={{
+                      pps,
+                      onZoomTo: zoomTo,
+                      onZoomBy: (f) => zoomBy(f, anchorPxFor(timelineNow, pps, scrollLeft, viewportWidth)),
+                      onFit: fitZoom,
+                    }}
+                  />
                 </div>
               )}
 
@@ -2108,7 +1999,9 @@ export function SyncPanel({
                 <IntegratedEditor
                   score={score}
                   dispatch={studioDispatch}
-                  notice={editNotice}
+                  notice={editNotice ?? autoPlaceNotice ?? alignNotice}
+                  info={stageInfo}
+                  noticeAction={stageNoticeAction}
                   measureTimings={measureTimings}
                   getCurrentSeconds={getTimelineSeconds}
                   recordingSource={recordingSource}
@@ -2131,6 +2024,7 @@ export function SyncPanel({
                   flexInfo={showSync && !graded ? flexInfoForBounds : undefined}
                   quantizeProblem={hits.length ? null : 'Needs the audio analysed first'}
                   onZoomOpenChange={setZoomOpen}
+                  onMeasureRangeChange={setBarRange}
                 />
               </div>
 
@@ -2146,7 +2040,14 @@ export function SyncPanel({
                     onScroll={(v) => setScrollLeft(clampScroll(v))}
                   />
                 </div>
-                {!showSync && <ZoomSlider pps={pps} onZoomTo={zoomTo} onZoomBy={zoomBy} onFit={fitZoom} />}
+                {!showSync && (
+                  <ZoomSlider
+                    pps={pps}
+                    onZoomTo={zoomTo}
+                    onZoomBy={(f) => zoomBy(f, anchorPxFor(timelineNow, pps, scrollLeft, viewportWidth))}
+                    onFit={fitZoom}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -2186,10 +2087,11 @@ export function SyncPanel({
               return {};
             }}
             onImported={() => {}}
+            onCloseAutoFocus={scoreActionsCloseAutoFocus}
             trigger={
-              <button type="button" className="st-chip" title="Add measures from another file after the last measure">
+              <button type="button" className="st-mpop-item has-icon" title="Add measures from another file after the last measure">
                 <FilePlus2 className="h-4 w-4" />
-                <span className="hidden lg:inline">Add score</span>
+                Add measures from a file
               </button>
             }
           />,
@@ -2200,6 +2102,36 @@ export function SyncPanel({
       {inspectorEl &&
         createPortal(
           <>
+            {showSync && (
+              <SyncActions
+                placeControl={
+                  <PlaceScoreControl
+                    armed={placeArmed}
+                    conflict={ghostConflict}
+                    spanLabel={ghostRange ? `${formatTime(ghostRange.startSeconds)} – ${formatTime(ghostRange.endSeconds)}` : null}
+                    onArm={() => setPlaceArmed(true)}
+                    onConfirm={confirmPlacement}
+                    onCancel={() => setPlaceArmed(false)}
+                  />
+                }
+                anchor={anchorOwner ? { onSet: setAnchorAtPlayhead } : undefined}
+                autoPlaceUndo={autoPlaceUndo ? undoAutoPlace : undefined}
+                graded={
+                  graded
+                    ? {
+                        countInBars: play?.countInBars ?? 1,
+                        onCountIn: (n) => onPlayChange?.({ countInBars: n }),
+                        preroll: play?.preroll ?? true,
+                        onPreroll: () => onPlayChange?.({ preroll: !(play?.preroll ?? true) }),
+                        onHit: onHit && hits.length > 0 ? onHit : null,
+                      }
+                    : undefined
+                }
+                reanalyze={{ onClick: reanalyze, state: decodeState, progress }}
+                notices={[autoPlaceNotice, alignNotice].filter((n): n is string => !!n)}
+              />
+            )}
+
             {showSync ? (
               !monitorEl && <ReferenceMonitor videoRef={videoRef} videoUrl={videoUrl} />
             ) : (
@@ -2313,6 +2245,8 @@ export function SyncPanel({
         createPortal(
           <div className="st-transport">
             <TransportBar
+              layout="row"
+              extra={<>{(loopEnabled || Math.abs(displayedRate - 1) > 1e-3) && <LoopSpeedControl rate={displayedRate} onRate={onDisplayedRateChange} />}{showSync && <HearControl hear={hear} onHear={handleHearChange} />}</>}
               loopHint="Loop the selected bars with L, or drag on the staff"
               currentSeconds={timelineNow}
               durationSeconds={clock.durationSeconds}

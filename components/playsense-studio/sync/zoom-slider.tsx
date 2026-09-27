@@ -17,11 +17,15 @@ export function ZoomSlider({
   onZoomTo,
   onZoomBy,
   onFit,
+  fitLabel = 'Fit to width',
 }: {
   pps: number;
   onZoomTo: (pps: number) => void;
   onZoomBy: (factor: number) => void;
   onFit: () => void;
+  /** Accessible name (and tooltip) for the fit button — callers with a more
+   *  specific fit target (e.g. "Fit the section") override the default. */
+  fitLabel?: string;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
@@ -71,7 +75,7 @@ export function ZoomSlider({
       <button type="button" className="st-zoom-btn" onClick={() => onZoomBy(1.5)} aria-label="Zoom in">
         <ZoomIn className="h-[15px] w-[15px]" />
       </button>
-      <button type="button" className="st-iconbtn" onClick={onFit} title="Fit to width" style={{ marginLeft: 2 }}>
+      <button type="button" className="st-iconbtn" onClick={onFit} title={fitLabel} aria-label={fitLabel} style={{ marginLeft: 2 }}>
         <Maximize className="h-[15px] w-[15px]" />
       </button>
     </div>

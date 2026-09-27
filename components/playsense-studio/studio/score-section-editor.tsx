@@ -13,8 +13,8 @@
 // preview → the bottom drawer. SyncPanel itself portals its inspector + transport
 // into the right rail + bottom dock.
 
-import { Download, FileUp, Redo2, Save, Undo2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Redo2, Undo2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { replaceSectionScore } from '@/app/actions/playsense-studio';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
@@ -25,6 +25,8 @@ import { SyncPanel } from '@/components/playsense-studio/studio/sync-panel';
 import type { LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { ScoreImportDialog } from '@/components/playsense-studio/studio/score-import-dialog';
 import { HistoryPanel } from '@/components/playsense-studio/studio/drafts/history-panel';
+import { SaveStatus } from '@/components/playsense-studio/studio/drafts/save-status';
+import { ScoreMenu } from '@/components/playsense-studio/studio/score-menu';
 import { ScoreMetaEditor } from '@/components/playsense-studio/studio/score-meta-editor';
 import { HighwayPreview } from '@/components/playsense-studio/studio/highway-preview';
 import { ExportDialog } from '@/components/playsense-studio/export/export-dialog';
@@ -112,6 +114,17 @@ export function ScoreSectionEditor({
   // so the portal renders once the node mounts).
   const [scoreActionsEl, setScoreActionsEl] = useState<HTMLElement | null>(null);
 
+  // The Score ▾ menu's own chip: every dialog opened from inside it (Replace,
+  // Export, and SyncPanel's portalled "Add score") returns focus here on
+  // close, since Radix's default target — the item itself — sits inside the
+  // menu's now-hidden panel by the time the dialog closes and can't be
+  // focused. Fix round 1 (Task 10 review).
+  const scoreMenuChipRef = useRef<HTMLButtonElement>(null);
+  const returnFocusToScoreMenu = (e: Event) => {
+    e.preventDefault();
+    scoreMenuChipRef.current?.focus();
+  };
+
   // The sidebar row / lane label reads the live title straight from the
   // Studio-drafts status (useStudioDraft's own effect keeps `statuses[key].label`
   // in step with `state.score.title` on every render) — no refetch needed just
@@ -168,48 +181,47 @@ export function ScoreSectionEditor({
         transportEl={transportEl}
         monitorEl={monitorEl}
         scoreActionsEl={scoreActionsEl}
+        scoreActionsCloseAutoFocus={returnFocusToScoreMenu}
         sectionsContext={{ sections, activeSectionId: sectionId, onSelectSection }}
       />
 
-      {/* App-bar: score action cluster. */}
+      {/* App-bar: Score menu, History, undo/redo and the quiet save status. */}
       {appBarEl &&
         createPortal(
           <>
-            {/* SyncPanel portals its "Add score" chip here. */}
-            <span ref={setScoreActionsEl} className="contents" />
-            <ScoreImportDialog
-              classItemId={classItemId}
-              mode="replace"
-              onConfirm={(score, filename) =>
-                replaceSectionScore({ sectionId, scoreDocument: score, sourceFilename: filename })
-              }
-              onImported={onChanged}
-              trigger={
-                <button type="button" className="st-chip" title="Replace this section's score with a new import">
-                  <FileUp className="h-4 w-4" />
-                  <span className="hidden lg:inline">Replace score</span>
-                </button>
-              }
-            />
-            <HistoryPanel owner={{ kind: 'section', id: sectionId }} />
-            <ExportDialog
-              score={state.score}
-              classItemTitle={classItemTitle}
-              sectionIndex={sectionIndex}
-              sectionCount={sectionCount}
-              classItemId={classItemId}
-              trigger={
-                <button type="button" className="st-chip" title="Export this section as PDF, MusicXML or MIDI">
-                  <Download className="h-4 w-4" />
-                  <span className="hidden lg:inline">Export</span>
-                </button>
-              }
-            />
-            <span className="mx-0.5 h-6 w-px bg-border" />
+            <ScoreMenu chipRef={scoreMenuChipRef}>
+              {/* SyncPanel portals its "Add score" item here. */}
+              <span ref={setScoreActionsEl} className="contents" />
+              <ScoreImportDialog
+                classItemId={classItemId}
+                mode="replace"
+                onConfirm={(score, filename) =>
+                  replaceSectionScore({ sectionId, scoreDocument: score, sourceFilename: filename })
+                }
+                onImported={onChanged}
+                onCloseAutoFocus={returnFocusToScoreMenu}
+                trigger={
+                  <button type="button" className="st-mpop-item">Replace this section&apos;s score…</button>
+                }
+              />
+              <ExportDialog
+                score={state.score}
+                classItemTitle={classItemTitle}
+                sectionIndex={sectionIndex}
+                sectionCount={sectionCount}
+                classItemId={classItemId}
+                onCloseAutoFocus={returnFocusToScoreMenu}
+                trigger={
+                  <button type="button" className="st-mpop-item">Export PDF, MusicXML or MIDI…</button>
+                }
+              />
+            </ScoreMenu>
+            <HistoryPanel owner={{ kind: 'section', id: sectionId }} iconOnly />
+            <span className="st-divline" />
             <button
               onClick={undo}
               disabled={!canUndo}
-              className="rounded-md border border-transparent p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+              className="st-iconbtn"
               title="Undo (Cmd/Ctrl+Z)"
               aria-label="Undo"
             >
@@ -218,31 +230,13 @@ export function ScoreSectionEditor({
             <button
               onClick={redo}
               disabled={!canRedo}
-              className="rounded-md border border-transparent p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+              className="st-iconbtn"
               title="Redo (Cmd/Ctrl+Shift+Z)"
               aria-label="Redo"
             >
               <Redo2 className="h-4 w-4" />
             </button>
-            <span role="status" className="text-right text-xs tabular-nums text-muted-foreground">
-              {draft.saveState === 'saving'
-                ? 'Saving draft…'
-                : draft.saveState === 'error'
-                  ? 'Save failed'
-                  : draft.pending
-                    ? 'Saving soon…'
-                    : draft.saveState === 'saved'
-                      ? 'Draft saved'
-                      : 'Autosave on'}
-            </span>
-            <button
-              onClick={() => void draft.flush()}
-              disabled={!draft.pending}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Save className="h-4 w-4" />
-              <span className="hidden sm:inline">{draft.saveState === 'error' ? 'Retry save' : 'Save now'}</span>
-            </button>
+            <SaveStatus saveState={draft.saveState} pending={draft.pending} flush={draft.flush} />
           </>,
           appBarEl,
         )}

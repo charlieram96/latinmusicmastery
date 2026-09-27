@@ -60,7 +60,7 @@ afterEach(() => {
 
 const noop = () => {};
 
-function draw(loop: { a: number; b: number } | null) {
+function draw(loop: { a: number; b: number } | null, selection: { a: number; b: number } | null = null) {
   rects = [];
   act(() => {
     root.render(
@@ -84,6 +84,7 @@ function draw(loop: { a: number; b: number } | null) {
         onScrollByPx={noop}
         onViewportWidth={noop}
         loop={loop}
+        selection={selection}
       />
     );
   });
@@ -102,5 +103,10 @@ describe('WaveformCanvas loop bracket', () => {
     const r = draw(null);
     expect(r.some((x) => x.alpha === 0.12)).toBe(false);
     expect(r.some((x) => x.w === 2)).toBe(false);
+  });
+
+  it('tints the selected bars at 7% with no edges', () => {
+    const r = draw(null, { a: 4, b: 9 });
+    expect(r).toContainEqual({ x: 40, w: 50, alpha: 0.07 });
   });
 });

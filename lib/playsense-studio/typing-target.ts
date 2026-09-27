@@ -1,5 +1,6 @@
 // True when a key event comes from somewhere the admin is typing — a field, a
-// contenteditable, or anything inside an open menu (role="dialog") — so the
+// contenteditable, or anything inside an open menu (role="dialog") or an open
+// listbox (role="listbox", e.g. the drum track's StrokeMenu) — so the
 // studio's keyboard shortcuts leave it alone.
 
 export function isTypingTarget(target: EventTarget | null): boolean {
@@ -7,6 +8,7 @@ export function isTypingTarget(target: EventTarget | null): boolean {
     target instanceof HTMLInputElement ||
     target instanceof HTMLTextAreaElement ||
     target instanceof HTMLSelectElement ||
-    (target instanceof HTMLElement && (target.isContentEditable || !!target.closest('[role="dialog"]')))
+    (target instanceof HTMLElement &&
+      (target.isContentEditable || !!target.closest('[role="dialog"], [role="listbox"]')))
   );
 }

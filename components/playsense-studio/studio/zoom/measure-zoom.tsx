@@ -10,7 +10,7 @@
 // skipped where it or matchMedia is missing (jsdom) or reduced motion is on:
 //   • enter: from the bar's rect in the strip (`origin`), 340 ms;
 //   • another bar: the center slides 40 px in from the side it came from, 220 ms;
-//   • close (the close button, or `closing` turning true): the reverse of the
+//   • close (Done, or `closing` turning true): the reverse of the
 //     enter, 240 ms, then onClose.
 //
 // Pointer editing in the center (v6's focusPointerDown / focusPointerMove):
@@ -22,13 +22,13 @@
 //   • pencil mode: a gold ghost notehead follows the pointer over empty
 //     staff, and a click appends a note of the current value at that line.
 
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Minimize2, Pencil, Piano } from 'lucide-react';
 import {
   useCallback, useEffect, useLayoutEffect, useRef, useState,
   type Dispatch, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode,
 } from 'react';
 import type { EditorAction, EventRef } from '@/lib/playsense-studio/editor-state';
-import type { MeasureFill } from '@/lib/playsense-studio/measure-fill';
+import { beatsText, type MeasureFill } from '@/lib/playsense-studio/measure-fill';
 import type { NoteCursor } from '@/lib/playsense-studio/note-cursor';
 import { strokeNotation, type PercStroke } from '@/lib/playsense-studio/perc-strokes';
 import { keyPitchAt, pitchName } from '@/lib/playsense-studio/pitch';
@@ -38,6 +38,7 @@ import { measureLengthInQN } from '@/lib/playsense-studio/time-mapping';
 import { dragSteps, indexForLine, snapStroke, stepPitches, type SpelledPitch } from '@/lib/playsense-studio/zoom-pointer';
 import type { Span } from '@/components/playsense-studio/shared/score-model/types';
 import type { MeasureStripItem } from '../editable-measure-strip';
+import { formatBarTime } from '../measure/measure-bar';
 import { DEFAULT_OCTAVE, KeysPanel } from './keys-panel';
 import type { ZoomEditing } from './use-zoom-editing';
 import { ZoomStaff, type ZoomHit, type ZoomLayout } from './zoom-staff';
@@ -75,22 +76,30 @@ export interface MeasureZoomProps {
   keyFifths: number;
   /** The percussion track's strokes (a drag snaps to their lines), else null. */
   percStrokes: PercStroke[] | null;
-  /**
-   * Toolbar and popovers (Tasks 8–10). A function is called with the center
-   * column's width and height (for clamping a floating bar inside it, the
-   * measure bar's pattern) and its current layout, and is re-invoked whenever
-   * any of them changes. Rendered with `gridColumn: 2; gridRow: 2`, the same
-   * grid area as the staff, so an absolutely-positioned child's `left`/`top`
-   * share the hits' coordinate space (0,0 at the center column's top-left).
-   */
-  children?: ReactNode | ((ctx: { centerW: number; bodyH: number; layout: ZoomLayout | null }) => ReactNode);
+  /** The note toolbar, docked in the header (it never floats over the notes;
+   *  a narrow header wraps it onto its own line under the title). */
+  toolbar?: ReactNode;
+  /** The header's Keys button (as K does); hidden without it. */
+  onToggleKeys?: () => void;
+  /** The header's Pencil button (as N does); hidden without it. */
+  onTogglePencil?: () => void;
+  /** The header's meta line: the bar's start in the recording, its sync flag
+   *  and, on a written-out repeat, which pass it is (0-based). */
+  meta?: { startSeconds: number; flag: string | null; repeatPass: { pass: number; count: number } | null };
 }
 
-const HEAD_H = 30;
+/** The header's height before it's measured (and in jsdom); it grows when the
+ *  docked toolbar wraps onto a second line. */
+const HEAD_H_FALLBACK = 46;
 const METER_ROW_H = 18;
 /** Until the overlay is measured (and in jsdom, where it never is). */
 const FALLBACK_WIDTH = 800;
-const CENTER_SCALE = 1.5;
+
+/** The center staff's scale: it fills the body's height, between 1 and 2
+ *  (v6's drawFocusMeasure: (Hc - 26) / 118). */
+export function zoomStaffScale(bodyH: number): number {
+  return Math.max(1, Math.min(2, (bodyH - 26) / 118));
+}
 const SLIVER_SCALE = 0.7;
 /** Half a stave space, unscaled: one diatonic step. */
 const STEP_PX = 5;
@@ -132,12 +141,39 @@ const noop = () => {};
 /** Header buttons keep focus where it was, so the zoom's keys keep working after a click. */
 const keepFocus = (e: ReactMouseEvent) => e.preventDefault();
 
+/** The meta line's fill word: v6's capTxt. */
+function FillWord({ fill }: { fill: MeasureFill }) {
+  const beats = (b: number) => `${beatsText(b)} beat${Math.abs(b - 1) < 1e-6 || b < 1 ? '' : 's'}`;
+  switch (fill.kind) {
+    case 'empty': return <>empty</>;
+    case 'short': return <span className="st-zoom-fill is-short">{beats(fill.missingBeats)} missing</span>;
+    case 'over': return <span className="st-zoom-fill is-over">{beats(fill.overBeats)} too many</span>;
+    default: return <span className="st-zoom-fill is-ok">adds up</span>;
+  }
+}
+
 export function MeasureZoom({
   items, zoom, height, spans, fill, bpm, percussion, origin, closing = false,
-  onVoice, onNav, onClose, onLayout, editing, dispatch, onCursor, clef, keyFifths, percStrokes, children,
+  onVoice, onNav, onClose, onLayout, editing, dispatch, onCursor, clef, keyFifths, percStrokes,
+  toolbar, onToggleKeys, onTogglePencil, meta,
 }: MeasureZoomProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const centerRef = useRef<HTMLDivElement | null>(null);
+  const headRef = useRef<HTMLDivElement | null>(null);
+
+  // The header's height: one row, or two when the docked toolbar wraps.
+  const [headH, setHeadH] = useState(HEAD_H_FALLBACK);
+  useEffect(() => {
+    const el = headRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const update = () => {
+      const h = Math.round(el.offsetHeight);
+      if (h > 0) setHeadH(h);
+    };
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // The overlay's width, for the grid's column sizes.
   const [measured, setMeasured] = useState(0);
@@ -155,7 +191,8 @@ export function MeasureZoom({
   // grid-template-columns: minmax(56px, 13%) 1fr minmax(56px, 13%).
   const sliverW = Math.max(56, panelW * 0.13);
   const centerW = Math.max(0, panelW - 2 * sliverW);
-  const bodyH = Math.max(0, height - HEAD_H - METER_ROW_H);
+  const bodyH = Math.max(0, height - headH - METER_ROW_H);
+  const centerScale = zoomStaffScale(bodyH);
 
   const i = zoom.measureIndex;
   const item = items[i];
@@ -261,7 +298,7 @@ export function MeasureZoom({
   const pencilLine = (l: ZoomLayout, y: number) =>
     Math.max(GHOST_LINES[0], Math.min(GHOST_LINES[1], Math.round(l.lineForY(y) * 2) / 2));
 
-  const pxPerStep = STEP_PX * CENTER_SCALE;
+  const pxPerStep = STEP_PX * centerScale;
 
   /** The drag's result: new pitches (or a stroke), and their names for the tooltip. */
   const dragResult = (d: PitchDrag, steps: number) => {
@@ -383,31 +420,56 @@ export function MeasureZoom({
   return (
     <div
       ref={rootRef}
-      className="st-zoom-overlay"
+      className="playsense-studio-notation st-zoom-overlay"
       data-testid="measure-zoom"
       data-percussion={percussion || undefined}
       style={{ transformOrigin: '0 50%' }}
     >
-      <div className="st-zoom-head">
-        <span className="font-semibold">m.{item.measureNumber}</span>
-        {bpm !== null && <span className="text-muted-foreground">≈{bpm.toFixed(1)} BPM</span>}
+      <div className="st-zoom-head" ref={headRef}>
+        <button type="button" className="st-iconbtn" aria-label="Previous bar" title="Previous bar (⌘←)" disabled={!prev} onMouseDown={keepFocus} onClick={() => onNav(-1)}>
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <div className="st-zoom-title">
+          <b>
+            Measure {item.measureNumber}
+            {meta?.repeatPass && <span className="st-zoom-pass"> · pass {meta.repeatPass.pass + 1} of {meta.repeatPass.count}</span>}
+          </b>
+          <span>
+            {item.timeSignature.join('/')} · <FillWord fill={fill} />
+            {meta && <> · {formatBarTime(meta.startSeconds)}</>}
+            {bpm !== null && <> · ≈{bpm.toFixed(1)}</>}
+            {meta?.flag && <> · <span className="st-zoom-flag">{meta.flag}</span></>}
+          </span>
+        </div>
+        <div className="st-zoom-dock">{toolbar}</div>
         {showVoices && (
           <div className="st-seg" role="group" aria-label="Voice">
             <button type="button" className={voice === 0 ? 'is-on' : ''} aria-pressed={voice === 0} onMouseDown={keepFocus} onClick={() => onVoice(0)}>V1</button>
             <button type="button" className={voice === 1 ? 'is-on' : ''} aria-pressed={voice === 1} onMouseDown={keepFocus} onClick={() => onVoice(1)}>V2</button>
           </div>
         )}
-        <span className="ml-auto flex items-center gap-1">
-          <button type="button" className="st-iconbtn" title="Previous bar (⌘←)" aria-label="Previous bar" disabled={!prev} onMouseDown={keepFocus} onClick={() => onNav(-1)}>
-            <ChevronLeft className="h-4 w-4" />
+        {onToggleKeys && (
+          <button
+            type="button" className={`st-iconbtn${zoom.keysOpen ? ' is-on amber' : ''}`} aria-label="Keys" aria-pressed={!!zoom.keysOpen}
+            title="Enter notes from a MIDI keyboard or the on-screen keys (K)" onMouseDown={keepFocus} onClick={onToggleKeys}
+          >
+            <Piano className="h-4 w-4" />
           </button>
-          <button type="button" className="st-iconbtn" title="Next bar (⌘→)" aria-label="Next bar" disabled={!next} onMouseDown={keepFocus} onClick={() => onNav(1)}>
-            <ChevronRight className="h-4 w-4" />
+        )}
+        {onTogglePencil && (
+          <button
+            type="button" className={`st-iconbtn${zoom.pencil ? ' is-on amber' : ''}`} aria-label="Pencil" aria-pressed={zoom.pencil}
+            title="Click the staff to add notes (N)" onMouseDown={keepFocus} onClick={onTogglePencil}
+          >
+            <Pencil className="h-4 w-4" />
           </button>
-          <button type="button" className="st-iconbtn" title="Close (Esc)" aria-label="Close" onMouseDown={keepFocus} onClick={exit}>
-            <X className="h-4 w-4" />
-          </button>
-        </span>
+        )}
+        <button type="button" className="st-chip" aria-label="Done" title="Back to all bars (Esc)" onMouseDown={keepFocus} onClick={exit}>
+          <Minimize2 className="h-4 w-4" />Done
+        </button>
+        <button type="button" className="st-iconbtn" aria-label="Next bar" title="Next bar (⌘→)" disabled={!next} onMouseDown={keepFocus} onClick={() => onNav(1)}>
+          <ChevronRight className="h-4 w-4" />
+        </button>
       </div>
 
       {sliver('prev', prev)}
@@ -434,7 +496,7 @@ export function MeasureZoom({
           </div>
         ))}
         <ZoomStaff
-          item={item} width={centerW} height={bodyH} scale={CENTER_SCALE} spans={spans}
+          item={item} width={centerW} height={bodyH} scale={centerScale} spans={spans}
           dimVoice={voice === 0 ? 1 : 0} onLayout={handleLayout}
         />
         {zoom.pencil && ghost && (
@@ -468,8 +530,6 @@ export function MeasureZoom({
           <i key={k} className={d.isRest ? 'is-rest' : undefined} style={{ width: `${(d.durationQN / barQN) * 100}%` }} />
         ))}
       </div>
-
-      {typeof children === 'function' ? children({ centerW, bodyH, layout }) : children}
     </div>
   );
 }

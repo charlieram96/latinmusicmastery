@@ -44,10 +44,25 @@ describe('MeasureBar', () => {
     const info = bar.querySelector('.st-fbar-info')!.textContent!;
     expect(info).toContain('m.2–3');
     expect(info).toContain('0:12.3');
-    expect(info).toContain('≈96.4 BPM');
+    expect(info).toContain('≈96.4');
     expect(buttons().map((b) => b.getAttribute('aria-label'))).toEqual([
-      'Edit', 'Loop', 'Repeat', 'Duplicate', 'Copy', 'Paste', 'Bar properties', 'Quantize', 'Clear', 'Delete',
+      'Edit', 'Loop', 'Quantize', 'Repeat', 'Duplicate', 'Copy', 'Paste', 'Bar properties', 'Clear', 'Delete',
     ]);
+  });
+
+  it('labels Edit, Loop and Repeat with text, and shows ×n inside a repeat', () => {
+    render({ repeatCount: 2 });
+    const text = host.querySelector('[role="toolbar"]')!.textContent!;
+    expect(text).toContain('Edit');
+    expect(text).toContain('Loop');
+    expect(text).toContain('×2');
+    expect(text).not.toContain('BPM');
+  });
+
+  it('shows plain "Repeat" when the bars are not in a repeat', () => {
+    render({ repeatCount: null });
+    expect(byName('Repeat').textContent).toContain('Repeat');
+    expect(byName('Repeat').textContent).not.toContain('×');
   });
 
   it('leaves the tempo out when there is none', () => {
@@ -72,18 +87,21 @@ describe('MeasureBar', () => {
     expect(byName('Loop').title).toBe('Play the video to loop');
   });
 
-  it('shows a flag in the bar info', () => {
-    render({ flag: 'First note 42 ms off the recording' });
+  it('shows the flag as a pip, with the reason in its title and an accessible label', () => {
+    render({ flag: 'no hit near its first note' });
     const info = host.querySelector('.st-fbar-info')!;
-    expect(info.textContent).toContain('First note 42 ms off the recording');
-    const flagEl = info.querySelector('.st-fbar-flag')!;
-    expect(flagEl).not.toBeNull();
-    expect(flagEl.textContent).toBe('First note 42 ms off the recording');
+    // The reason lives in the title (and the a11y label), not as visible text next to the dot.
+    const pip = info.querySelector('.st-status-pip')!;
+    expect(pip).not.toBeNull();
+    expect(pip.getAttribute('title')).toBe('no hit near its first note');
+    expect(pip.getAttribute('role')).toBe('img');
+    expect(pip.getAttribute('aria-label')).toBe('Timing: no hit near its first note');
+    expect(info.textContent).not.toContain('no hit near its first note');
   });
 
   it('leaves the flag out when there is none', () => {
     render({ flag: null });
-    expect(host.querySelector('.st-fbar-flag')).toBeNull();
+    expect(host.querySelector('.st-fbar-info .st-status-pip')).toBeNull();
   });
 
   it('shows the flexed info in the bar info', () => {

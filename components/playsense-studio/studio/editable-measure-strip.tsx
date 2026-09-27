@@ -67,6 +67,8 @@ export interface MeasureStripItem {
   clefChanged: boolean;
   /** How full this bar is, keyed on the track's own events (voice 1 only counted for grading). */
   fill: MeasureFill;
+  /** Timing flag for this bar (Sync status), shown as a dot in its header. */
+  flag?: string | null;
 }
 
 export interface SelectedEventRef {
@@ -486,7 +488,7 @@ export function EditableMeasureStrip({
               data-measure-index={item.measureIndex}
               onClick={(e) => onSelectMeasure?.(item.measureIndex, e.shiftKey)}
               onDoubleClick={() => onOpenMeasure(item.measureIndex)}
-              className={`absolute flex items-center justify-center rounded border border-dashed border-border bg-muted/40 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground${inRange(item.measureIndex) ? ' ring-2 ring-inset ring-primary' : ''}`}
+              className={`st-mbox is-narrow absolute flex items-center justify-center rounded border border-dashed border-border bg-muted/40 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground${inRange(item.measureIndex) ? ' is-sel' : ''}`}
               style={{ left: startX, top: REP_H, width: Math.max(8, width), height: height - REP_H }}
               title={`Measure ${item.measureNumber} — double-click to open`}
             >
@@ -501,7 +503,7 @@ export function EditableMeasureStrip({
           <div
             key={item.measureIndex}
             data-measure-index={item.measureIndex}
-            className={`absolute ${inRange(item.measureIndex) ? 'ring-2 ring-inset ring-primary bg-primary/5' : ''}${isFocus(item.measureIndex) ? ' st-measure-focus' : ''}${newBars?.has(item.measureIndex) ? ' is-new' : ''}`}
+            className={`st-mbox absolute${inRange(item.measureIndex) ? ' is-sel' : ''}${isFocus(item.measureIndex) ? ' st-measure-focus' : ''}${newBars?.has(item.measureIndex) ? ' is-new' : ''}${item.fill.kind === 'over' ? ' is-over' : ''}`}
             style={{ left: startX, top: REP_H, width, height: height - REP_H, cursor, touchAction: 'none' }}
             onPointerDown={(e) => handlePointerDown(e, item)}
             onPointerMove={(e) => handlePointerMove(e, item)}
@@ -509,17 +511,12 @@ export function EditableMeasureStrip({
               if (hovered?.measureIndex === item.measureIndex) setHover(null);
             }}
           >
-            {/* Header band: measure number, repeat pass and beat count. A press
-                here selects the bar (handled by the measure's pointerdown). */}
-            <div
-              className="absolute inset-x-0 top-0 z-10 flex items-center gap-1.5 rounded-t-sm bg-muted/70 px-2 text-[11px] text-muted-foreground"
-              style={{ height: HANDLE_BAND_PX }}
-            >
+            {/* Header band: measure number, flag dot and beat count. A press
+                here selects the bar (handled by the measure's pointerdown).
+                No repeat-pass text: the repeat lane already says it. */}
+            <div className="st-hb" style={{ height: HANDLE_BAND_PX }}>
               <span className="tabular-nums leading-none">{item.measureNumber}</span>
-              {item.repeatPass && width >= 100 && <span className="truncate opacity-70">
-                {item.repeatPass.pass === 0 && item.repeatPass.offset === 0 && <>· ↻ ×{item.repeatPass.count} </>}
-                · pass {item.repeatPass.pass + 1}/{item.repeatPass.count}
-              </span>}
+              {item.flag && <span className="st-flagdot" title={`Timing: ${item.flag}`} />}
               {width >= 60 && (
                 <span className={`st-cap is-${item.fill.kind} ml-auto shrink-0 tabular-nums leading-none`} title={fillTitle(item.measureNumber, item.fill)}>
                   {item.fill.kind === 'empty' ? `0/${beatsText(item.fill.totalBeats)}` : `${beatsText(item.fill.usedBeats)}/${beatsText(item.fill.totalBeats)}`}

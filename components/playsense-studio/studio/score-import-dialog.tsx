@@ -16,7 +16,7 @@
 import { FileMusic, Loader2, ScanLine, Upload } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState, useTransition, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition, type ComponentProps, type ReactNode } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -48,13 +48,19 @@ export interface ScoreImportDialogProps {
   onConfirm?: (score: ScoreDocument, filename: string) => Promise<{ error?: string }>;
   /** Called after a successful import (defaults to router.refresh()). */
   onImported?: () => void;
+  /** Forwarded to the dialog's `DialogContent` — e.g. so a host that embeds
+   *  this dialog's trigger inside a menu that hides on click (ScoreMenu) can
+   *  return focus to the menu's own chip instead of Radix's default (this
+   *  trigger, which by the time the dialog closes sits inside that menu's
+   *  now-hidden, unfocusable panel). */
+  onCloseAutoFocus?: ComponentProps<typeof DialogContent>['onCloseAutoFocus'];
 }
 
 type Step = 'choose' | 'pdf' | 'review';
 
 const ACCEPT = '.pdf,.mid,.midi,.musicxml,.xml,.mxl';
 
-export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImported }: ScoreImportDialogProps) {
+export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImported, onCloseAutoFocus }: ScoreImportDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>('choose');
@@ -241,7 +247,7 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className={`${pdfFile ? 'sm:max-w-2xl' : 'sm:max-w-md'} max-h-[90dvh] grid-cols-[minmax(0,1fr)] overflow-x-hidden overflow-y-auto [&>*]:min-w-0`} showCloseButton={!isPending}>
+      <DialogContent className={`${pdfFile ? 'sm:max-w-2xl' : 'sm:max-w-md'} max-h-[90dvh] grid-cols-[minmax(0,1fr)] overflow-x-hidden overflow-y-auto [&>*]:min-w-0`} showCloseButton={!isPending} onCloseAutoFocus={onCloseAutoFocus}>
         <DialogHeader>
           <DialogTitle>
             {mode === 'replace' ? 'Replace score' : mode === 'section' ? 'Import as new section' : mode === 'append' ? 'Add score' : 'Import a score'}

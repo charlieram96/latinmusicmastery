@@ -231,6 +231,59 @@ Rulings:
 - `app/(dev)/flex-spike`: delete it once the device results are recorded in spec §7.
 - Browser and ear checks.
 
+### Studio layout pass — done 2026-09-26
+
+Plan `2026-09-26-studio-layout-pass.md`, worktree `.worktrees/studio-layout`, branch `feat/studio-layout-pass` (11 tasks, commits `73a8c02..bef75c4`). Layout and restyling to match mockup v6 — no data-model or migration changes. Full suite: 2472 passing; tsc clean.
+
+What moved where:
+- **Open, fit, follow.** The Studio opens fitted to the section instead of zoomed out to the whole video; zoom +/- anchors on the playhead; the view pages along while playing (`lib/playsense-studio/timeline-view.ts`).
+- **The transport.** One `.st-transport-row`; Hear and Loop speed move into it from the context bar. Students are unaffected — `layout` defaults to the old stacked markup.
+- **The context bar is gone.** Auto-place/Auto-align, Ripple/Single, Flex, the notes toggle and the zoom slider become one floating `.st-wtools` cluster over the waveform; placement, anchor, re-analyze, undo-auto-place, count-in/pre-roll and the on-hit readout move into the left panel's Sync status group (`sync-actions.tsx`).
+- **The editor row is gone.** Staff/Piano-roll, Record MIDI and Add-measure-at-end become a compact `.st-strip-corner`; track name and instrument move into the Score panel (`score-meta-editor.tsx`); notices/flash become a `.st-toast` over the stage bottom.
+- **Bar headers and selection.** The header shows number, flag dot and beat count instead of repeat-pass text (the repeat lane already carries that); a selected bar gets an outline, a tinted header and a tinted waveform span.
+- **The measure bar and footer.** Labelled Edit/Loop/Quantize/Repeat buttons plus icon-only duplicate/copy/paste/properties/clear/delete, on the mockup's darker glass. The strip footer (issue chip, hint, "?") floats over the strip's bottom edge instead of sitting in its own row.
+- **The zoom.** A docked header (title · meta · toolbar · V1/V2 · Keys · Pencil · Done); the staff draws in the stage's ink (white in dark mode, Task 1) and scales to fill the body height; drum strokes collapse from a button grid into one Stroke chip with a portalled list.
+- **The app bar.** Add/Replace/History/Export/Autosave/Save-now collapse into a `Score ▾` menu plus a quiet Saved/Saving/Save-failed pip; the Exercise/Song app bar (`studio-workspace.tsx`) gets the same menu and pip.
+
+Rulings, the plan's plus the ones made while building:
+- no magnet toggle — live snapping already happens within 8 px, with ⌘ to skip
+- Add at end only in the corner; "add after the selection" stays reachable through the gap "+" and the measure bar's Repeat
+- History stays an icon button — it's used often
+- Save now is removed; autosave plus ⌘S cover it
+- the transport wrapper (`.st-transport`) keeps the transport chrome; `.st-transport-row` carries only the layout, avoiding a doubled border
+- the footer clears the floating video: `right: 272px` (the plan's 250px, then 262px, didn't clear it)
+- the toast is at `bottom: 46px`, clear of the strip footer
+- the corner is compact: 24px icon buttons, a 22px segmented control
+- Auto-align keeps its hits-aware title ("Re-analyze audio to find the hits") — the plan's static string came from a mockup with no hits state
+- `.st-status-pip` names the save-status dot, never `.st-pip` (that class is the floating video's)
+- the flag pip gets `role="img"` and an `aria-label`, so the timing flag isn't title-only
+- the stroke list is portalled to `document.body` with `position: fixed`, given real ink (it was illegible on a light page) and a viewport clamp
+- `isTypingTarget` now also treats an open `role="listbox"` (the Stroke list) as typing, so arrow keys stop leaking into the zoom's shortcuts
+- the Exercise/Song app bar gets the same Score menu and quiet status as Watch — one design for all lesson types
+- the selection focus ring combines with the mockup's tint (`.st-mbox.is-sel.st-measure-focus`), so shift-extend keeps its keyboard cue
+
+**Follow-ups from the layout pass:**
+- `viewBounds`/`fitTarget` aren't memoised: `seekClamped` identity churns, plus one new eslint warning; the follow effect can page back over a manual pan while playing (pre-existing design); a graded one-shot fit could lock early if play/trim arrive async (no such caller today)
+- the transport-row scrubber comment was dropped; `.st-transport-scrub > div` relies on the scrubber's DOM shape
+- `sync-actions.tsx` notices use index keys; the Student-preview and Auto-align titles are shorter than the mockup's (no jam variant)
+- the far-right bar's beat chip can still hide under the corner at the end of the view (mockup-mandated position; scrolling reveals it)
+- the mockup's `.mbox.out/.rep/.copy` states aren't ported (the live strip never applied them; not in the plan); the narrow bar placeholder has no focus-marker class (pre-existing)
+- `--teal`/`--ok` stage tokens aren't defined (literals repeated); the More popover's anchor assumes 320px and doesn't follow the toolbar, and it lingers during a keyboard zoom exit; its head `ResizeObserver` runs once (`[]` deps); `repeatPass!` is repeated
+- the stroke list's position is computed once at open, not repositioned on scroll/resize (same as the More popover)
+- the Score menu's `role="menu"` ARIA pattern is incomplete
+- browser check owed: no tall staff should render under the strip footer
+
+**Browser checklist (not yet run):**
+1. Open a 7-minute video lesson's section. It opens fitted to the section, with notes drawn.
+2. Play. The view pages along. Seek from the bottom bar, and the view jumps there.
+3. There's no row between the waveform and the staff. The tools float at the waveform's top right. Placement is in Sync status.
+4. Select a bar. It's outlined, its header is tinted, its waveform span is tinted, and the labelled measure bar shows. The footer hint changes.
+5. Open the zoom on a drum part. The staff is white and fills the height. The toolbar sits in the header. Strokes are one chip.
+6. Check it at 1280 × 800. Nothing wraps in the app bar, and the zoom header wraps its toolbar under the title.
+7. The student lesson player's transport is unchanged.
+8. Zoom header icons (‹ › Keys Pencil Done, trash, stroke ▾) render as outlines, not solid shapes.
+9. Scrub the waveform to its right edge: the view doesn't run away.
+
 ## Carried forward from Plan 1 reviews
 
 - **P2:**
