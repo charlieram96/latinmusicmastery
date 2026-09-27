@@ -36,6 +36,8 @@ export interface StageHighwayProps {
   explore?: boolean
   /** Reset judgments between preview takes without rebuilding the GPU scene. */
   attemptId?: number
+  /** Told when the 3D scene is up or has failed, e.g. so an embed can swap a poster or fall back. */
+  onStatus?: (status: 'ready' | 'error') => void
 }
 
 export function StageHighway(props: StageHighwayProps) {
@@ -70,7 +72,7 @@ export function StageHighway(props: StageHighwayProps) {
         explore: props.explore,
         quality: lowQuality ? 'low' : props.quality ?? 'standard',
         reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-        onError: message => { if (!disposed) setError(message) },
+        onError: message => { if (!disposed) { setError(message); latest.current.onStatus?.('error') } },
         readFrame: (): StageFrame => {
           const p = latest.current
           const running = p.sessionState === 'playing' || p.sessionState === 'countdown' || p.sessionState === 'paused'
@@ -82,9 +84,9 @@ export function StageHighway(props: StageHighwayProps) {
           }
         },
       })
-      if (!disposed) setReady(true)
+      if (!disposed) { setReady(true); latest.current.onStatus?.('ready') }
     }).catch(() => {
-      if (!disposed) setError('This browser could not open the 3D stage. Try compatibility mode or a browser with hardware acceleration enabled.')
+      if (!disposed) { setError('This browser could not open the 3D stage. Try compatibility mode or a browser with hardware acceleration enabled.'); latest.current.onStatus?.('error') }
     })
     return () => { disposed = true; renderer?.destroy() }
   }, [exercise, theme, retry, lowQuality, props.quality, props.explore])
