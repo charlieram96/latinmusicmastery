@@ -18,7 +18,7 @@ import { PerformanceResultsDialog } from '@/components/play-sense/performance-re
 import './preview.css'
 
 const THEME_COPY = {
-  studio: { eyebrow: 'MALECÓN SESSIONS', description: 'The sun is going down over the bay. The band is ready. Find your place in the groove.', icon: Headphones },
+  studio: { eyebrow: 'MIAMI SESSIONS', description: 'The sun just set over Biscayne Bay. The band is ready. Find your place in the groove.', icon: Headphones },
 }
 const KEYS = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k']
 
@@ -147,7 +147,7 @@ export default function PlaySensePreview() {
   return <main className="ps-preview" data-theme={theme}>
     <header className="ps-preview-header">
       <Link href="/dashboard/play-sense" className="ps-preview-brand"><span className="ps-brand-symbol"><Image src="/logo-solo-color.svg" alt="" width={32} height={26} priority/></span><strong>PlaySense<span>BY LATIN MUSIC MASTERY</span></strong></Link>
-      <span className="ps-preview-badge"><span/> Malecón sessions <b>PLAYSENSE</b></span>
+      <span className="ps-preview-badge"><span/> Miami sessions <b>PLAYSENSE</b></span>
       <Link href="/dashboard/play-sense" className="ps-preview-back">Back to practice <ArrowUpRight size={15}/></Link>
     </header>
     <div className="ps-direction-bar">

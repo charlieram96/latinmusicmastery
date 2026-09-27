@@ -35,4 +35,4 @@ A Blender render uses Cycles and studio review lights. The in-game result uses t
 
 ## Retired: Afterhours playfield
 
-The courtyard room (`afterhours-playfield`: board, entrance window, lounge and note masters) was replaced in September 2026 by the procedural Malecón stage in `components/play-sense/stage-highway/malecon/`. Its runtime GLB was removed; `art/playsense/afterhours-playfield.blend` and the `*_playfield` scripts remain only as art history.
+The courtyard room (`afterhours-playfield`: board, entrance window, lounge and note masters) was replaced in September 2026 by the procedural Miami bayfront stage in `components/play-sense/stage-highway/miami/`. Its runtime GLB was removed; `art/playsense/afterhours-playfield.blend` and the `*_playfield` scripts remain only as art history.

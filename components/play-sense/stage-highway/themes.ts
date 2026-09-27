@@ -25,14 +25,14 @@ export const STAGE_THEMES: Record<StageThemeId, StageTheme> = {
     colors: [0xdeff65, 0xfe80b5, 0x70dfff, 0xffb660, 0xc0a0ff, 0x80ffc5], bloom: 0.5,
   },
   studio: {
-    id: 'studio', name: 'PlaySense', subtitle: 'Malecón at dusk', accent: '#ffc46b', secondary: '#6fe3d6',
+    id: 'studio', name: 'PlaySense', subtitle: 'Miami bayfront at dusk', accent: '#ffc46b', secondary: '#6fe3d6',
     background: 0x120d22, deck: 0x231913, metal: 0xc9a066,
     colors: [0xffb04a, 0x3fe3cf, 0xff6f91, 0xa98bff, 0x96e66e, 0xffe27a], bloom: 0.5,
   },
 
 }
 
-/** The Malecón stage is the only selectable appearance (its id stays `studio` for saved preferences). */
+/** The Miami bayfront stage is the only selectable appearance (its id stays `studio` for saved preferences). */
 export const STAGE_THEME_IDS: StageThemeId[] = ['studio']
 export const STAGE_THEME_STORAGE_KEY = 'playsense-stage-theme'
 export function isStageTheme(value: string | null): value is StageThemeId {

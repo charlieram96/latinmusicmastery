@@ -13,7 +13,7 @@ import { APPROACH_SECONDS, FAR_Z, HIT_Z, RUNWAY_WIDTH, changedJudgments, createS
 import { STAGE_THEMES, type StageThemeId } from './themes'
 import { box, buildDrum, buildEnvironment, buildPad, disposeObject, glowTexture, labelSprite, lightMaterial, material } from './objects'
 import { block, contactShadow, cylinder, metal, rod, textured } from './craft'
-import { buildMalecon, createComposer, laneLightTexture, NOTE_LAYOUT, noteCore, noteHead, notePool, tunnelTexture, DECK_TOP } from './malecon'
+import { buildMiami, createComposer, createHitFx, laneLightTexture, NOTE_LAYOUT, noteCore, noteHead, notePool, tunnelTexture, DECK_TOP } from './miami'
 import { colorNoteEmission, entranceGlow, noteChevronGeometry, noteGemGeometry, noteTrailTexture, strikeAura } from './note-geometry'
 import { observeFrameResize } from './frame-resize'
 
@@ -123,8 +123,9 @@ export class StageRenderer {
   private dummy = new THREE.Object3D()
   private colors: THREE.Color[]
   private tint = new THREE.Color()
-  private malecon: ReturnType<typeof buildMalecon> | null = null
+  private miami: ReturnType<typeof buildMiami> | null = null
   private grade: ReturnType<typeof createComposer>['grade'] | null = null
+  private fx: ReturnType<typeof createHitFx> | null = null
   private lastCombo = 0
   private stageEnergy = 0
   private boardFallback = new THREE.Group()
@@ -156,7 +157,8 @@ export class StageRenderer {
     const theme = STAGE_THEMES[options.theme]
     const studio = theme.id === 'studio'
     this.farZ = studio ? -25 : FAR_Z
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, options.quality === 'low' ? 1 : 1.5))
+    // With MSAA in the post chain, 1.35x is indistinguishable from 1.5x on retina screens and ~20% cheaper.
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, options.quality === 'low' ? 1 : studio ? 1.35 : 1.5))
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
     this.renderer.toneMappingExposure = studio ? .9 : 1.25
@@ -179,8 +181,10 @@ export class StageRenderer {
 
     if (studio) {
       this.camera.near = .3; this.camera.far = 1600
-      this.malecon = buildMalecon(this.renderer, this.scene, { farZ: this.farZ, quality: options.quality, reducedMotion: options.reducedMotion })
-      this.environmentMap = this.malecon.environment
+      this.miami = buildMiami(this.renderer, this.scene, { farZ: this.farZ, quality: options.quality, reducedMotion: options.reducedMotion })
+      this.environmentMap = this.miami.environment
+      this.fx = createHitFx()
+      for (const mesh of this.fx.meshes) this.scene.add(mesh)
       this.sourceGlow = entranceGlow()
       this.sourceGlow.material.uniforms.motion.value = options.reducedMotion ? 0 : 1
       this.sourceGlow.visible = true
@@ -421,7 +425,7 @@ export class StageRenderer {
               value.anisotropy = Math.min(4, this.renderer.capabilities.getMaxAnisotropy())
             }
             // Polished shells mirror the dusk sky instead of reading as flat grey.
-            if (this.malecon && mat instanceof THREE.MeshStandardMaterial && mat.name.startsWith('Brushed nickel')) {
+            if (this.miami && mat instanceof THREE.MeshStandardMaterial && mat.name.startsWith('Brushed nickel')) {
               mat.roughness = .14; mat.envMapIntensity = 1.35
             }
           }
@@ -451,7 +455,7 @@ export class StageRenderer {
     const distance = studio ? Math.max(16, (piano ? 14.6 : 13) / this.camera.aspect) : Math.max(18, (piano ? 15.6 : 14) / this.camera.aspect)
     this.camera.fov = studio ? 52 : 47
     if (!this.controls) {
-      // The Malecón camera sits lower so the horizon, sun and archway stay in frame.
+      // The bayfront camera sits lower so the skyline, sky and archway stay in frame.
       if (studio) {
         this.camera.position.set(0, Math.max(5.8, distance * .36), distance)
         this.camera.lookAt(0, 2.2, -8)
@@ -486,6 +490,14 @@ export class StageRenderer {
     receptor.energy = grade === 'miss' ? 0.25 : 1
     receptor.glow.material.color.set(grade === 'miss' ? 0xf07888 : this.colors[note.lane])
     if (this.options.reducedMotion) return
+    if (this.fx) {
+      const lane = this.lanes[note.lane]
+      if (grade !== 'miss') this.stageEnergy = Math.min(1, this.stageEnergy + (grade === 'perfect' ? .65 : .3))
+      // Burst from the struck surface itself so the drum head visibly rings.
+      const surface = receptor.object.position
+      this.fx.burst(lane.x, receptor.homeY + (this.exercise.instrument === 'piano' ? .15 : .06), surface.z - (this.exercise.instrument === 'piano' ? .3 : 0), this.colors[note.lane], grade, THREE.MathUtils.clamp(lane.width / 2.3, .3, 1))
+      return
+    }
     if (grade === 'miss') return
     this.stageEnergy = Math.min(1, this.stageEnergy + (grade === 'perfect' ? .65 : .3))
     const size = Math.min(this.lanes[note.lane].width * .4, 1.05)
@@ -531,7 +543,7 @@ export class StageRenderer {
       for (const burst of this.bursts) { burst.active = false; burst.mesh.visible = false }
       for (const receptor of this.receptors) receptor.energy = 0
       for (const spark of this.sparks) spark.life = 0
-      this.malecon?.fireworks.reset(); this.lastCombo = 0
+      this.miami?.fireworks.reset(); this.fx?.reset(); this.lastCombo = 0
     }
     if (frame.results !== this.lastResults) {
       for (const result of changedJudgments(frame.results, this.judgments)) this.impact(result.eventIndex, result.grade)
@@ -553,10 +565,10 @@ export class StageRenderer {
         const width = Math.min(lane.width * .82, 2.65)
         const piano = this.exercise.instrument === 'piano'
         const accent = note.accent ? 1.2 : 1
-        const reveal = this.malecon && !this.options.reducedMotion ? Math.min(1, Math.max(0, (APPROACH_SECONDS - delta) / .35)) : 1
+        const reveal = this.miami && !this.options.reducedMotion ? Math.min(1, Math.max(0, (APPROACH_SECONDS - delta) / .35)) : 1
         const entryScale = .6 + reveal * .4
         this.dummy.rotation.set(0, 0, 0)
-        if (this.malecon) {
+        if (this.miami) {
           // Notes rise out of the archway's light, then ride the lacquer on a pool of their own glow.
           const rise = (1 - reveal) * .9
           this.dummy.position.set(lane.x, NOTE_LAYOUT.head - rise, z)
@@ -585,7 +597,7 @@ export class StageRenderer {
           this.trims.setColorAt(count, this.tint.set(note.accent ? 0xffe8ab : 0xf3fffc))
         }
         const tailLength = Math.min(this.exercise.instrument === 'piano' ? note.duration * speed : 1.65, 18)
-        this.dummy.position.set(lane.x, this.malecon ? DECK_TOP + .01 : -0.025, z - tailLength / 2)
+        this.dummy.position.set(lane.x, this.miami ? DECK_TOP + .01 : -0.025, z - tailLength / 2)
         this.dummy.scale.set(width * .72, 1, Math.max(.15, tailLength))
         this.dummy.updateMatrix(); this.tails.setMatrixAt(tailCount, this.dummy.matrix)
         this.tails.setColorAt(tailCount++, this.colors[note.lane]); count++
@@ -610,7 +622,7 @@ export class StageRenderer {
         const delta = p.seconds - frame.elapsed
         mesh.position.z = HIT_Z - delta * speed
         mesh.visible = true
-        ;(mesh.material as THREE.MeshBasicMaterial).opacity = this.malecon ? (p.downbeat ? .16 : .06) : p.downbeat ? 0.18 : 0.06
+        ;(mesh.material as THREE.MeshBasicMaterial).opacity = this.miami ? (p.downbeat ? .16 : .06) : p.downbeat ? 0.18 : 0.06
       }
     } else {
       const firstBeat = Math.floor(frame.elapsed / beatSec)
@@ -618,13 +630,13 @@ export class StageRenderer {
         const delta = (firstBeat + i) * beatSec - frame.elapsed
         this.beatLines[i].position.z = HIT_Z - delta * speed
         this.beatLines[i].visible = delta >= 0 && delta <= APPROACH_SECONDS
-        if (this.malecon) (this.beatLines[i].material as THREE.MeshBasicMaterial).opacity = (firstBeat + i) % 4 === 0 ? .16 : .06
+        if (this.miami) (this.beatLines[i].material as THREE.MeshBasicMaterial).opacity = (firstBeat + i) % 4 === 0 ? .16 : .06
       }
     }
     for (const receptor of this.receptors) {
       receptor.energy = Math.max(0, receptor.energy - dt * 2.7)
       receptor.glow.material.opacity = receptor.energy * 1.15
-      receptor.aura.visible = !this.options.reducedMotion && receptor.energy > .01
+      receptor.aura.visible = !this.fx && !this.options.reducedMotion && receptor.energy > .01
       receptor.aura.material.uniforms.energy.value = receptor.energy
       receptor.aura.scale.y = 1.5 + (1 - receptor.energy) * 3
       receptor.aura.material.uniforms.tint.value.copy(receptor.glow.material.color)
@@ -655,18 +667,19 @@ export class StageRenderer {
     if (this.sparkMesh.instanceColor) this.sparkMesh.instanceColor.needsUpdate = true
     this.dummy.rotation.set(0, 0, 0)
     this.stageEnergy = Math.max(0, this.stageEnergy - dt * 1.8)
-    if (this.malecon) {
+    if (this.miami) {
       const beat = Math.max(0, frame.elapsed) / beatSec
       if (this.sourceGlow) this.sourceGlow.material.uniforms.phase.value = beat * Math.PI
       // A long combo slowly warms the whole stage; milestones light up the bay.
       const comboGlow = Math.min(1, frame.combo / 40)
       if (frame.combo < this.lastCombo) this.lastCombo = 0
       if (frame.playing && Math.floor(frame.combo / 16) > Math.floor(this.lastCombo / 16)) {
-        this.malecon.fireworks.launch(frame.combo >= 48 ? 3 : frame.combo >= 32 ? 2 : 1)
+        this.miami.fireworks.launch(frame.combo >= 48 ? 3 : frame.combo >= 32 ? 2 : 1)
       }
       this.lastCombo = frame.combo
-      this.malecon.update({ elapsed: frame.elapsed, beatSeconds: beatSec, speed, hitZ: HIT_Z, playing: frame.playing, energy: Math.min(1, this.stageEnergy * .6 + comboGlow * .5), dt }, this.camera)
+      this.miami.update({ elapsed: frame.elapsed, beatSeconds: beatSec, speed, hitZ: HIT_Z, playing: frame.playing, energy: Math.min(1, this.stageEnergy * .6 + comboGlow * .5), dt }, this.camera)
       if (this.grade) this.grade.uniforms.psTime.value = now / 1000
+      this.fx?.update(dt)
     }
     if (!this.options.reducedMotion) this.points.position.y = Math.sin(now * 0.0001) * 0.25
     if (this.composer) this.composer.render()

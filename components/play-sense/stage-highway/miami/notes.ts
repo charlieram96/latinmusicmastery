@@ -5,11 +5,11 @@ import { DECK_TOP } from './set'
 /** Heights of each note layer above the runway, so the render loop places them consistently. */
 export const NOTE_LAYOUT = { head: DECK_TOP + .13, core: DECK_TOP + .245, pool: DECK_TOP + .006 }
 
-/** Black glass capsule: reflects the dusk sky, carries a lane-coloured light on top. */
+/** Smoked glass capsule under a clearcoat with a faint pearlescent sheen; carries a lane-coloured light on top. */
 export function noteHead() {
   return {
     geometry: new RoundedBoxGeometry(1, .22, .58, 4, .1),
-    material: new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: .2, roughness: .42, envMapIntensity: .3 }),
+    material: new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: .15, roughness: .32, envMapIntensity: .45, clearcoat: 1, clearcoatRoughness: .08, iridescence: .55, iridescenceIOR: 1.6, iridescenceThicknessRange: [180, 420] }),
   }
 }
 
@@ -25,10 +25,12 @@ export function noteCore() {
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         #ifdef USE_COLOR
           float psSpine = pow(max(0., 1. - abs(psLocal.z) / .24), 3.) * pow(max(0., 1. - abs(psLocal.x) / .45), .5);
-          totalEmissiveRadiance = vColor.rgb * 1.05 + mix(vColor.rgb, vec3(1., .97, .9), .4) * psSpine * 1.35;
+          // Bevelled rim: the insert's outline burns brighter, like cut glass catching light.
+          float psEdge = max(smoothstep(.36, .45, abs(psLocal.x)), smoothstep(.17, .24, abs(psLocal.z)));
+          totalEmissiveRadiance = vColor.rgb * (.95 + psEdge * .9) + mix(vColor.rgb, vec3(1., .97, .9), .45) * psSpine * 1.9;
         #endif`)
   }
-  material.customProgramCacheKey = () => 'playsense-malecon-core-v1'
+  material.customProgramCacheKey = () => 'playsense-miami-core-v2'
   return { geometry: new RoundedBoxGeometry(.9, .07, .48, 3, .03), material }
 }
 

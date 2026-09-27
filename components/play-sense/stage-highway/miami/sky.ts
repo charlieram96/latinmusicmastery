@@ -2,8 +2,8 @@ import * as THREE from 'three'
 import { NOISE, SKY } from './glsl'
 
 export const SEA_Y = -5.2
-/** Low evening sun straight down the runway, so it sets inside the far archway. */
-export const SUN_DIRECTION = new THREE.Vector3(0, Math.sin(THREE.MathUtils.degToRad(.55)), -1).normalize()
+/** The sun has just gone down behind the skyline, straight down the runway. */
+export const SUN_DIRECTION = new THREE.Vector3(.08, Math.sin(THREE.MathUtils.degToRad(-1.6)), -1).normalize()
 
 export interface SkyUniforms {
   psSunDir: { value: THREE.Vector3 }
@@ -102,7 +102,7 @@ export function createSea(uniforms: SkyUniforms) {
         color += vec3(3., 1.3, .5) * glint * (.4 + .6 * psNoise(p * 6. + psTime * psCloudMotion));
         // Dissolve the far edge into the horizon haze.
         vec3 horizonDir = normalize(vec3(view.x, .002, view.z));
-        color = mix(color, psSky(horizonDir), smoothstep(160., 900., dist));
+        color = mix(color, psSkyClear(horizonDir), smoothstep(160., 900., dist));
         gl_FragColor = vec4(color, 1.);
         ${OUTPUT}
       }`,
@@ -113,33 +113,6 @@ export function createSea(uniforms: SkyUniforms) {
   // Nothing below the waterline is drawn, so the sea skips depth and lets reflections lie on it.
   material.depthWrite = false
   return sea
-}
-
-/** A thin anamorphic streak through the sun, the way a cinema lens renders a low sun. */
-export function createSunStreak() {
-  const material = new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
-    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv * 2. - 1.; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
-    fragmentShader: /* glsl */ `varying vec2 vUv;
-      void main() {
-        float across = exp(-abs(vUv.y) * 9.) * .7 + exp(-abs(vUv.y) * 42.);
-        float along = pow(max(0., 1. - abs(vUv.x)), 2.6);
-        gl_FragColor = vec4(vec3(1.3, .5, .2) * across * along * .32, 1.);
-      }`,
-  })
-  const streak = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material)
-  streak.frustumCulled = false
-  streak.renderOrder = -4
-  const offset = new THREE.Vector3()
-  return {
-    mesh: streak,
-    update(camera: THREE.Camera) {
-      offset.copy(SUN_DIRECTION).multiplyScalar(900)
-      streak.position.copy(camera.position).add(offset)
-      streak.quaternion.copy(camera.quaternion)
-      streak.scale.set(1500, 26, 1)
-    },
-  }
 }
 
 export { NOISE }

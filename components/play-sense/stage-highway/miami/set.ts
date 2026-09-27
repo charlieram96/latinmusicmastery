@@ -44,34 +44,31 @@ function deckTexture() {
   })
 }
 
-/** Cuban cement tile: a four-petal rosette in terracotta, teal and cream. */
-function tileTexture() {
-  return canvasTexture(512, 512, ctx => {
-    const s = 256
-    for (let ty = 0; ty < 2; ty++) for (let tx = 0; tx < 2; tx++) {
-      ctx.save(); ctx.translate(tx * s, ty * s)
-      ctx.fillStyle = '#b6a585'; ctx.fillRect(0, 0, s, s)
-      ctx.fillStyle = '#2d4b48'
-      for (const [cx, cy] of [[0, 0], [s, 0], [0, s], [s, s]]) { ctx.beginPath(); ctx.arc(cx, cy, s * .3, 0, Math.PI * 2); ctx.fill() }
-      ctx.fillStyle = '#b6a585'
-      for (const [cx, cy] of [[0, 0], [s, 0], [0, s], [s, s]]) { ctx.beginPath(); ctx.arc(cx, cy, s * .2, 0, Math.PI * 2); ctx.fill() }
-      ctx.fillStyle = '#80473a'
-      for (let i = 0; i < 4; i++) {
-        ctx.save(); ctx.translate(s / 2, s / 2); ctx.rotate(i * Math.PI / 2)
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.bezierCurveTo(s * .16, -s * .08, s * .2, -s * .3, 0, -s * .38)
-        ctx.bezierCurveTo(-s * .2, -s * .3, -s * .16, -s * .08, 0, 0); ctx.fill(); ctx.restore()
+/** Polished Miami Beach terrazzo: marble chips in a warm cement with brass divider strips. */
+function terrazzoTexture() {
+  return canvasTexture(1024, 1024, ctx => {
+    ctx.fillStyle = '#ddd5c8'; ctx.fillRect(0, 0, 1024, 1024)
+    const chips = ['#f3eee6', '#e9a3ab', '#86c8bc', '#9d958c', '#3d3833', '#d4b36d', '#c7c0b5', '#f2c7c2']
+    for (let i = 0; i < 9000; i++) {
+      const x = rand(i * 1.3) * 1024, y = rand(i * 2.7 + 5) * 1024
+      const r = 1.2 + Math.pow(rand(i * 3.1 + 9), 3) * 7
+      ctx.fillStyle = chips[Math.floor(rand(i * 4.9 + 1) * chips.length)]
+      ctx.beginPath()
+      const sides = 5 + Math.floor(rand(i + 77) * 3)
+      for (let k = 0; k < sides; k++) {
+        const a = k / sides * Math.PI * 2 + rand(i + k)
+        const rr = r * (.6 + rand(i * 7 + k) * .5)
+        if (k) ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr)
+        else ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr)
       }
-      ctx.fillStyle = '#e8d9b8'; ctx.beginPath(); ctx.arc(s / 2, s / 2, s * .06, 0, Math.PI * 2); ctx.fill()
-      ctx.strokeStyle = '#2d4b48'; ctx.lineWidth = 5; ctx.strokeRect(s * .06, s * .06, s * .88, s * .88)
-      ctx.strokeStyle = 'rgba(40,30,20,.55)'; ctx.lineWidth = 3; ctx.strokeRect(0, 0, s, s)
-      ctx.restore()
+      ctx.fill()
     }
-    const grime = ctx.getImageData(0, 0, 512, 512)
-    for (let i = 0; i < grime.data.length; i += 4) {
-      const n = (rand(i * .37) - .5) * 26
-      grime.data[i] += n; grime.data[i + 1] += n; grime.data[i + 2] += n
+    // Brass divider strips: a square field with a quarter-circle deco sweep in each corner.
+    ctx.strokeStyle = '#b58a3e'; ctx.lineWidth = 4
+    ctx.strokeRect(2, 2, 1020, 1020)
+    for (const [cx, cy] of [[0, 0], [1024, 0], [0, 1024], [1024, 1024]]) for (const r of [300, 330]) {
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke()
     }
-    ctx.putImageData(grime, 0, 0)
   })
 }
 
@@ -185,7 +182,9 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   const chassisWood = new THREE.MeshStandardMaterial({ color: 0x3a2417, roughness: .45, metalness: 0 })
   const brass = new THREE.MeshStandardMaterial({ color: 0xd8a55a, metalness: 1, roughness: .26 })
   const darkIron = new THREE.MeshStandardMaterial({ color: 0x15171a, metalness: .6, roughness: .45 })
-  const stone = new THREE.MeshStandardMaterial({ map: stoneTexture('#d7c6a6'), roughness: .8, color: 0xbfae92 })
+  const stone = new THREE.MeshStandardMaterial({ map: stoneTexture('#efe8dd'), roughness: .75, color: 0xd6cfc5 })
+  const aqua = new THREE.MeshStandardMaterial({ color: 0x4fb8ad, roughness: .5 })
+  const chrome = new THREE.MeshStandardMaterial({ color: 0xe6e8ea, metalness: 1, roughness: .12 })
 
   // Deck: lacquered playing surface on a chassis, brass inlays at every lane boundary.
   const front = HIT_Z + 1.25, back = farZ - 1.3
@@ -222,21 +221,25 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   railBulbs.forEach((p, i) => { dummy.position.set(p.x, p.y - .1, p.z); dummy.updateMatrix(); cups.setMatrixAt(i, dummy.matrix) })
   group.add(cups)
 
-  // The Malecón: tiled terrace, coral-stone seawall and iron streetlamps.
-  const tiles = tileTexture()
-  tiles.repeat.set(40, 16)
+  // The bayfront: polished terrazzo, a white stucco seawall with a chrome rail, streetlamps.
+  const tiles = terrazzoTexture()
+  tiles.repeat.set(20, 8)
   tiles.anisotropy = anisotropy
-  const terrace = new THREE.Mesh(new THREE.PlaneGeometry(120, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: tiles, roughness: .3, color: 0x7d746a, envMapIntensity: .7 }))
+  const terrace = new THREE.Mesh(new THREE.PlaneGeometry(120, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: tiles, roughness: .2, color: 0x8b847c, envMapIntensity: .8 }))
   terrace.position.set(0, TERRACE_Y, SEAWALL_Z + 24); terrace.receiveShadow = true; group.add(terrace)
-  const wallParts: THREE.BufferGeometry[] = []
+  const wallParts: THREE.BufferGeometry[] = [], bandParts: THREE.BufferGeometry[] = [], railParts: THREE.BufferGeometry[] = []
   for (const side of [-1, 1]) {
     const inner = RUNWAY_WIDTH / 2 + 1.2
-    const width = 60 - inner
-    wallParts.push(new RoundedBoxGeometry(width, .85, 1.1, 2, .1).translate(side * (inner + width / 2), TERRACE_Y + .42, SEAWALL_Z))
-    wallParts.push(new RoundedBoxGeometry(width + .1, .2, 1.42, 3, .09).translate(side * (inner + width / 2), TERRACE_Y + .9, SEAWALL_Z))
+    const width = 60 - inner, x = side * (inner + width / 2)
+    wallParts.push(new RoundedBoxGeometry(width, .8, 1, 2, .08).translate(x, TERRACE_Y + .4, SEAWALL_Z))
+    bandParts.push(new THREE.BoxGeometry(width, .12, 1.03).translate(x, TERRACE_Y + .6, SEAWALL_Z))
+    railParts.push(new THREE.CylinderGeometry(.06, .06, width, 10).rotateZ(Math.PI / 2).translate(x, TERRACE_Y + 1.75, SEAWALL_Z))
+    for (let p = 0; p <= width; p += 2.4) railParts.push(new THREE.CylinderGeometry(.035, .035, .95, 8).translate(side * (inner + p), TERRACE_Y + 1.28, SEAWALL_Z))
   }
   wallParts.push(new THREE.BoxGeometry(120, TERRACE_Y - SEA_Y, .8).translate(0, (TERRACE_Y + SEA_Y) / 2, SEAWALL_Z - .4))
   const seawall = new THREE.Mesh(merge(wallParts), stone)
+  group.add(new THREE.Mesh(merge(bandParts), aqua))
+  const rail = new THREE.Mesh(merge(railParts), chrome); rail.castShadow = true; group.add(rail)
   seawall.receiveShadow = true; seawall.castShadow = true; group.add(seawall)
 
   const lampGlobes: THREE.Vector3[] = []
@@ -251,7 +254,7 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   }
   const lampPosts = new THREE.Mesh(merge(lampParts), darkIron)
   lampPosts.castShadow = true; group.add(lampPosts);
-  group.add(bulbs(lampGlobes, uniforms, false, .34, new THREE.Color(1.3, .82, .45)))
+  group.add(bulbs(lampGlobes, uniforms, false, .34, new THREE.Color(.95, .62, .36)))
 
   // Festoon strings sweep along both sides of the pier between slim brass masts.
   const masts: THREE.BufferGeometry[] = []
@@ -282,17 +285,17 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   group.add(mastMesh);
   group.add(bulbs(festoon, uniforms, false, .11, new THREE.Color(1.25, .72, .38)))
 
-  // The archway. Two stepped stone frames, a brass reveal, neon on the inner edge.
+  // The archway: Miami Beach deco in flamingo and seafoam stucco, brass reveal, pink and aqua neon.
   const arch = new THREE.Group()
   arch.position.set(0, 0, ARCH_Z)
-  const archStone = new THREE.MeshStandardMaterial({ map: stoneTexture('#e3c9a6'), roughness: .72, color: 0xd9a77c })
+  const archStone = new THREE.MeshStandardMaterial({ map: stoneTexture('#f6d6d2'), roughness: .7, color: 0xf0a8ae })
   // Faked occlusion: the stone darkens toward the water and in the reveal, like weathered stucco.
   archStone.onBeforeCompile = shader => {
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying float psHeight;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\npsHeight = (modelMatrix * vec4(transformed, 1.)).y;')
     shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying float psHeight;').replace('#include <map_fragment>', '#include <map_fragment>\ndiffuseColor.rgb *= mix(vec3(.42, .3, .34), vec3(1.), smoothstep(-5., 6., psHeight));')
   }
   archStone.customProgramCacheKey = () => 'playsense-arch-stone-v1'
-  const archShadow = new THREE.MeshStandardMaterial({ color: 0x2c4e4b, roughness: .7 })
+  const archShadow = new THREE.MeshStandardMaterial({ color: 0x3f9e95, roughness: .6 })
   const bottom = SEA_Y, spring = 5.6
   const outerFrame = new THREE.Mesh(archFrame(8.6, 7.1, bottom, spring, 1.5), archStone)
   outerFrame.position.z = -.75; arch.add(outerFrame)
@@ -313,9 +316,9 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   }
   const crown = new THREE.Mesh(merge(crownParts), archStone)
   arch.add(crown);
-  const neonMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(3.2, 1.25, .75) })
+  const neonMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(3, .55, 1.7) })
   arch.add(new THREE.Mesh(new THREE.TubeGeometry(archLine(6.3, spring, DECK_TOP + .2, .35), 260, .07, 6, false), neonMaterial))
-  const neonOuter = new THREE.Mesh(new THREE.TubeGeometry(archLine(7.85, spring, DECK_TOP + 1.2, .92), 260, .045, 6, false), new THREE.MeshBasicMaterial({ color: new THREE.Color(.5, 1.9, 1.7) }))
+  const neonOuter = new THREE.Mesh(new THREE.TubeGeometry(archLine(7.85, spring, DECK_TOP + 1.2, .92), 260, .045, 6, false), new THREE.MeshBasicMaterial({ color: new THREE.Color(.35, 1.9, 2.1) }))
   arch.add(neonOuter)
   arch.traverse(o => { if (o instanceof THREE.Mesh && o.material instanceof THREE.MeshStandardMaterial) { o.castShadow = true; o.receiveShadow = true } })
   group.add(arch)
@@ -323,10 +326,10 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   // Everything that glows over the water leaves a shimmering streak on it.
   const water = SEA_Y + .03
   const reflect = (points: THREE.Vector3[]) => points.map(p => new THREE.Vector3(p.x, water, p.z))
-  group.add(billboards(reflect(festoon.filter((_, i) => i % 2 === 0)), new THREE.Color(.9, .5, .24), .22, 6, uniforms.psClock, true))
+  group.add(billboards(reflect(festoon.filter((_, i) => i % 2 === 0)), new THREE.Color(.9, .5, .24), .22, 6, uniforms.psClock, 'reflection'))
   const neonFeet = [-6.3, 6.3].map(x => new THREE.Vector3(x, water, ARCH_Z + .4))
-  group.add(billboards(neonFeet, new THREE.Color(1.8, .7, .42), .7, 11, uniforms.psClock, true))
-  group.add(billboards([-7.85, 7.85].map(x => new THREE.Vector3(x, water, ARCH_Z + .9)), new THREE.Color(.3, 1.1, 1), .5, 9, uniforms.psClock, true))
+  group.add(billboards(neonFeet, new THREE.Color(1.8, .35, 1.05), .7, 11, uniforms.psClock, 'reflection'))
+  group.add(billboards([-7.85, 7.85].map(x => new THREE.Vector3(x, water, ARCH_Z + .9)), new THREE.Color(.3, 1.1, 1), .5, 9, uniforms.psClock, 'reflection'))
 
   const neonBase = neonMaterial.color.clone()
   return {
