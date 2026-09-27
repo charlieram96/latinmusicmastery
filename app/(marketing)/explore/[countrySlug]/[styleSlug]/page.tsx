@@ -5,6 +5,8 @@ import { getServerTranslator } from '@/lib/i18n/server'
 import { pick } from '@/lib/i18n/localize'
 import type { Locale } from '@/lib/i18n'
 import { getMarketingCatalog } from '@/lib/marketing/data'
+import { INSTRUMENT_ORDER } from '@/lib/marketing/catalog'
+import { sortCourses } from '@/lib/marketing/explore-filter'
 import { teachersForStyle } from '@/lib/marketing/style-teachers'
 import { claveForStyle } from '@/lib/marketing/style-clave'
 import { splitTitleAccent } from '@/lib/marketing/title-accent'
@@ -62,7 +64,7 @@ export default async function StylePage({ params }: { params: Params }) {
     .maybeSingle()
 
   const k = (key: string, p?: Record<string, string | number>) => t(`marketing.site.style.${key}`, p)
-  const courses = catalog.courses.filter(c => c.styleSlug === style.slug)
+  const courses = sortCourses(catalog.courses.filter(c => c.styleSlug === style.slug), [], INSTRUMENT_ORDER)
   const clave = claveForStyle(style.slug)
 
   // Specialties are free text in either language, so match the English and Spanish names.

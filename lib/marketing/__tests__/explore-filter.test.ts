@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CatalogCourse } from '../catalog'
-import { filterCourses, initialInstrument } from '../explore-filter'
+import { filterCourses, initialInstrument, sortCourses } from '../explore-filter'
 
 const course = (over: Partial<CatalogCourse>): CatalogCourse => ({
   id: 'x', title: 'T', instrument: 'Conga', styleSlug: null, styleName: null,
@@ -49,5 +49,18 @@ describe('initialInstrument', () => {
     expect(initialInstrument('Kazoo', keys)).toBe('all')
     expect(initialInstrument(undefined, keys)).toBe('all')
     expect(initialInstrument('', keys)).toBe('all')
+  })
+})
+
+describe('sortCourses', () => {
+  it('orders by style order, then instrument order, unknowns last', () => {
+    const out = sortCourses([
+      course({ id: '1', styleSlug: 'timba', instrument: 'Piano' }),
+      course({ id: '2', styleSlug: 'son', instrument: 'Piano' }),
+      course({ id: '3', styleSlug: 'son', instrument: 'Timbal' }),
+      course({ id: '4', styleSlug: 'other', instrument: 'Timbal' }),
+      course({ id: '5', styleSlug: 'son', instrument: 'Kazoo' }),
+    ], ['son', 'timba'], ['Timbal', 'Piano'])
+    expect(out.map(c => c.id)).toEqual(['3', '2', '5', '1', '4'])
   })
 })

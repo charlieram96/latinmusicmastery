@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getServerTranslator } from '@/lib/i18n/server'
 import { getMarketingCatalog } from '@/lib/marketing/data'
+import { INSTRUMENT_ORDER } from '@/lib/marketing/catalog'
+import { sortCourses } from '@/lib/marketing/explore-filter'
 import { PageHead, Accent } from '@/components/marketing/site/PageHead'
 import { Reveal } from '@/components/marketing/site/Reveal'
 import { Finale } from '@/components/marketing/site/Finale'
@@ -30,7 +32,7 @@ export default async function CountryPage({ params }: { params: Params }) {
   if (!country) notFound()
 
   const k = (key: string, p?: Record<string, string | number>) => t(`marketing.site.explore.country.${key}`, p)
-  const courses = catalog.courses.filter(c => c.countrySlug === country.slug)
+  const courses = sortCourses(catalog.courses.filter(c => c.countrySlug === country.slug), country.styles.map(s => s.slug), INSTRUMENT_ORDER)
   const live = country.styles.filter(s => s.live).length
 
   return (

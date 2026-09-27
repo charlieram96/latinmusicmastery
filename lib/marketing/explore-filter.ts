@@ -26,3 +26,12 @@ export function initialInstrument(param: string | undefined, keys: string[]): st
   const lower = param.trim().toLowerCase()
   return keys.find(k => k.toLowerCase() === lower) ?? 'all'
 }
+
+/** Order courses by style (in the given slug order, unknown styles last), then by stage-plot instrument order. */
+export function sortCourses(courses: CatalogCourse[], styleOrder: string[], instrumentOrder: string[]): CatalogCourse[] {
+  const rank = (list: string[], v: string | null) => { const i = v === null ? -1 : list.indexOf(v); return i < 0 ? list.length : i }
+  return [...courses].sort((a, b) =>
+    rank(styleOrder, a.styleSlug) - rank(styleOrder, b.styleSlug) ||
+    rank(instrumentOrder, a.instrument) - rank(instrumentOrder, b.instrument) ||
+    a.instrument.localeCompare(b.instrument))
+}
