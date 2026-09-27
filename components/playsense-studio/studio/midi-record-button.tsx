@@ -15,11 +15,13 @@ import { StaffRenderer } from '../player/notation/renderers/staff-renderer';
 /** `waypoints` are TIMELINE time; `videoRef`/`onPosition` are the video's MEDIA
  *  time. Under Flex Time `flex` maps between the two (omitted = the same). */
 export type MidiRecordingSource = { videoUrl: string | null; videoRef: RefObject<HTMLVideoElement | null>; waypoints: Waypoint[]; onInsert: MidiRecordingInsert; onPosition: (seconds: number) => void; flex?: MidiRecordingWarp };
-type Props = { score: ScoreDocument; trackIndex: number; targetMeasure: number; dispatch: Dispatch<EditorAction>; getCurrentSeconds?: () => number; recordingSource?: MidiRecordingSource };
+type Props = { score: ScoreDocument; trackIndex: number; targetMeasure: number; dispatch: Dispatch<EditorAction>; getCurrentSeconds?: () => number; recordingSource?: MidiRecordingSource; compact?: boolean };
 export function MidiRecordButton(props: Props) {
   const [open, setOpen] = useState(false);
   return <Dialog open={open} onOpenChange={setOpen}>
-    <DialogTrigger asChild><button type="button" className="st-chip" title="Record MIDI notes with your performance timing"><Circle className="h-3.5 w-3.5 text-primary" />Record MIDI</button></DialogTrigger>
+    <DialogTrigger asChild>{props.compact
+      ? <button type="button" className="st-iconbtn" aria-label="Record MIDI" title="Record MIDI notes with your performance timing"><Circle className="h-4 w-4 text-primary" /></button>
+      : <button type="button" className="st-chip" title="Record MIDI notes with your performance timing"><Circle className="h-3.5 w-3.5 text-primary" />Record MIDI</button>}</DialogTrigger>
     <DialogContent className={`max-h-[90dvh] grid-cols-[minmax(0,1fr)] overflow-y-auto ${props.recordingSource?.videoUrl ? 'sm:max-w-5xl' : 'sm:max-w-2xl'} [&>*]:min-w-0`}
       onInteractOutside={event => event.preventDefault()}>
       <DialogHeader><DialogTitle>Record your performance</DialogTitle>

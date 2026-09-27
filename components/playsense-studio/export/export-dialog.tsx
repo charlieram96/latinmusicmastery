@@ -2,7 +2,7 @@
 // components/playsense-studio/export/export-dialog.tsx
 // Admin export dialog: format, tracks, page, include options, a first-row
 // preview, and the export button. Everything runs in the browser.
-import { useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { Download, FileText, FileCode2, Music2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -23,6 +23,12 @@ export interface ExportDialogProps {
   sectionCount: number;
   classItemId: string;
   trigger: ReactNode;
+  /** Forwarded to the dialog's `DialogContent` — e.g. so a host that embeds
+   *  this dialog's trigger inside a menu that hides on click (ScoreMenu) can
+   *  return focus to the menu's own chip instead of Radix's default (this
+   *  trigger, which by the time the dialog closes sits inside that menu's
+   *  now-hidden, unfocusable panel). */
+  onCloseAutoFocus?: ComponentProps<typeof DialogContent>['onCloseAutoFocus'];
 }
 
 const FORMATS: Array<{ id: ExportFormat; label: string; hint: string; icon: typeof FileText }> = [
@@ -44,7 +50,7 @@ function readStoredPageSize(): PageSize {
 
 const viewLabel = (instrument: string) => (instrument.startsWith('perc-') ? 'percussion' : 'staff');
 
-export function ExportDialog({ score, classItemTitle, sectionIndex, sectionCount, classItemId, trigger }: ExportDialogProps) {
+export function ExportDialog({ score, classItemTitle, sectionIndex, sectionCount, classItemId, trigger, onCloseAutoFocus }: ExportDialogProps) {
   const [open, setOpen] = useState(false);
   const [state, dispatch] = useReducer(exportOptionsReducer, undefined, () => initialExportOptions(score.tracks.length, readStoredPageSize()));
   const [busy, setBusy] = useState(false);
@@ -106,7 +112,7 @@ export function ExportDialog({ score, classItemTitle, sectionIndex, sectionCount
   return (
     <Dialog open={open} onOpenChange={next => { setOpen(next); setError(null); }}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto" onCloseAutoFocus={onCloseAutoFocus}>
         <DialogHeader>
           <DialogTitle>Export sheet music</DialogTitle>
           <DialogDescription>{subtitle}</DialogDescription>

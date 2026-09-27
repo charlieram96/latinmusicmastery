@@ -79,7 +79,20 @@ describe('IntegratedEditor measure bar', () => {
     const info = toolbar()!.querySelector('.st-fbar-info')!.textContent!;
     expect(info).toContain('m.1–2');
     expect(info).toContain('0:00.0');
-    expect(info).toContain('≈120.0 BPM');
+    expect(info).toContain('≈120.0');
+    expect(info).not.toContain('BPM');
+  });
+
+  it('shows ×n on Repeat when the selected bars are in a repeat group', () => {
+    const repMeasures = [0, 1, 2, 3].map((i) => ({
+      number: i + 1,
+      voices: [{ number: 1, events: [{ kind: 'note' as const, midi: 60, durationQN: 4 }] }],
+      repeat: { id: 'r1', pass: Math.floor(i / 2), offset: i % 2, length: 2, count: 2 },
+    }));
+    const repScore: ScoreDocument = { ...score, tracks: [{ ...score.tracks[0], measures: repMeasures }] };
+    render({ score: repScore, measureTimings: timingsFor(4) });
+    key('ArrowRight'); // selects bar 1 (index 0), inside the repeat group's first pass
+    expect(barButton('Repeat').textContent).toContain('×2');
   });
 
   it('can’t loop without a video, and loops the selected bars with one', () => {
@@ -205,10 +218,23 @@ describe('IntegratedEditor measure bar', () => {
   it('⏎ does nothing on the Piano-roll tab — note entry lives in the zoom, which only the staff tab shows', () => {
     const { dispatch } = render({ score: makeScore(3, 1) });
     key('ArrowRight');
-    const tab = Array.from(host.querySelectorAll('button')).find((b) => b.textContent === 'Piano-roll')!;
+    const tab = host.querySelector<HTMLButtonElement>('[aria-label="Piano-roll"]')!;
     act(() => { tab.click(); });
     key('Enter');
     expect(dispatched(dispatch, 'add-note')).toHaveLength(0);
+  });
+
+  // Final review Minor 4: the corner (position: absolute) used to sit INSIDE
+  // the piano-roll's own overflow-y-auto scroller, so it scrolled away. It
+  // must be a sibling of the scroller, pinned against a non-scrolling wrapper.
+  it('keeps the corner outside the piano-roll scroller so it stays pinned', () => {
+    render();
+    const tab = host.querySelector<HTMLButtonElement>('[aria-label="Piano-roll"]')!;
+    act(() => { tab.click(); });
+    const corner = host.querySelector('.st-strip-corner')!;
+    const scroller = host.querySelector('.overflow-y-auto')!;
+    expect(scroller.contains(corner)).toBe(false);
+    expect(corner.parentElement).toBe(scroller.parentElement);
   });
 
   it('Clear empties the bars and says the timing stayed', () => {
@@ -219,6 +245,74 @@ describe('IntegratedEditor measure bar', () => {
     expect(host.textContent).toContain('Cleared. Timing kept.');
     act(() => { vi.advanceTimersByTime(2600); });
     expect(host.textContent).not.toContain('Cleared. Timing kept.');
+  });
+
+  // Final review Important 3 / Minor 2: `notice` (a SyncPanel-level failure,
+  // e.g. a refused edit or a failed Auto-place/Auto-align) turns the toast
+  // red and never shows a `noticeAction` button — that's reserved for the
+  // neutral `info` slot (see below). The local `flash` confirmation stays
+  // neutral and never gets a button either.
+  it('the flash toast (a neutral confirmation) is not styled as an error', () => {
+    render();
+    key('ArrowRight');
+    act(() => { barButton('Clear').click(); });
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.textContent).toBe('Cleared. Timing kept.');
+    expect(toast.classList.contains('is-bad')).toBe(false);
+    expect(toast.querySelector('button')).toBeNull();
+  });
+
+  it('shows a passed-in notice as a red toast, with no action button even when one is given', () => {
+    // A failed Auto-place/Auto-align (`notice`) must never pair with an Undo
+    // for some earlier, unrelated success (Important 3): the action only ever
+    // shows alongside `info`.
+    const onUndo = vi.fn();
+    render({ notice: 'Not enough clear hits to place the bars.', noticeAction: { label: 'Undo', onClick: onUndo } });
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.classList.contains('is-bad')).toBe(true);
+    expect(toast.textContent).toBe('Not enough clear hits to place the bars.');
+    expect(toast.querySelector('button')).toBeNull();
+  });
+
+  it('notice wins over flash and shows no button without a noticeAction', () => {
+    render({ notice: 'Not enough clear hits to align the exercise.' });
+    key('ArrowRight');
+    act(() => { barButton('Clear').click(); }); // would also set the flash
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.textContent).toBe('Not enough clear hits to align the exercise.');
+    expect(toast.querySelector('button')).toBeNull();
+  });
+
+  // Final review (Studio layout pass): a neutral `info` slot, distinct from
+  // the red `notice` — Auto-place's "Bars auto-placed." toast needs a visible
+  // Undo without reading as an error.
+  it('shows a passed-in info as a neutral toast, with an action button when given', () => {
+    const onUndo = vi.fn();
+    render({ info: 'Bars auto-placed.', noticeAction: { label: 'Undo', onClick: onUndo } });
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.classList.contains('is-bad')).toBe(false);
+    expect(toast.textContent).toBe('Bars auto-placed.Undo');
+    const btn = toast.querySelector('button')!;
+    expect(btn.textContent).toBe('Undo');
+    act(() => { btn.click(); });
+    expect(onUndo).toHaveBeenCalledTimes(1);
+  });
+
+  it('info without a noticeAction shows no button', () => {
+    render({ info: 'Flex was cleared because the bars moved' });
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.classList.contains('is-bad')).toBe(false);
+    expect(toast.textContent).toBe('Flex was cleared because the bars moved');
+    expect(toast.querySelector('button')).toBeNull();
+  });
+
+  it('notice wins over info and flash, and never shows an action button', () => {
+    const onUndo = vi.fn();
+    render({ notice: 'Not enough clear hits to place the bars.', info: 'Bars auto-placed.', noticeAction: { label: 'Undo', onClick: onUndo } });
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.classList.contains('is-bad')).toBe(true);
+    expect(toast.textContent).toBe('Not enough clear hits to place the bars.');
+    expect(toast.querySelector('button')).toBeNull();
   });
 
   it('Copy says what it copied', () => {
@@ -246,15 +340,22 @@ describe('IntegratedEditor measure bar', () => {
     expect(dispatched(dispatch, 'add-note')).toEqual([]);
   });
 
-  it('⌫ while typing the track name never deletes bars', () => {
+  it('⌫ while typing in a field elsewhere on the page never deletes bars', () => {
+    // The track name field moved out of the strip into the Score panel (Task
+    // 5), a separate DOM subtree from IntegratedEditor — but the measure keys'
+    // listener is bound on `window`, so it must still ignore Backspace typed
+    // into it. A detached input stands in for that field here.
     const { dispatch } = render();
     key('ArrowRight');
-    const input = host.querySelector<HTMLInputElement>('input[aria-label="Track name"]')!;
+    const input = document.createElement('input');
+    input.setAttribute('aria-label', 'Track name');
+    document.body.appendChild(input);
     input.focus();
     key('Backspace', {}, input);
     expect(dispatched(dispatch, 'delete-measures')).toEqual([]);
     key('Backspace');
     expect(dispatched(dispatch, 'delete-measures')).toEqual([{ type: 'delete-measures', trackIndex: 0, start: 0, count: 1 }]);
+    input.remove();
   });
 
   it('closes an open bar menu when the selection moves', () => {
@@ -271,6 +372,16 @@ describe('IntegratedEditor measure bar', () => {
     expect(toolbar()).not.toBeNull();
     key('Escape');
     expect(toolbar()).toBeNull();
+  });
+
+  it('floats the footer inside the staff wrapper, and changes the hint when bars are selected', () => {
+    render();
+    const wrap = host.querySelector('[data-testid="staff-wrap"]')!;
+    const foot = host.querySelector('.st-strip-foot')!;
+    expect(wrap.contains(foot)).toBe(true);
+    expect(foot.textContent).toContain('Drag across bars to select');
+    key('ArrowRight');
+    expect(host.querySelector('.st-strip-foot')!.textContent).toContain('edit notes');
   });
 
   it('the footer “?” lists the strip shortcuts', () => {

@@ -13,7 +13,7 @@ import { queueStudioSave } from '@/lib/playsense-studio/save-queue';
 import { ownerKey, type StudioDraftOwner } from '@/lib/playsense-studio/drafts/types';
 import { useStudioDrafts } from './drafts-context';
 
-export function HistoryPanel({ owner }: { owner: StudioDraftOwner }) {
+export function HistoryPanel({ owner, iconOnly }: { owner: StudioDraftOwner; iconOnly?: boolean }) {
   const { notifyAdopt, setStatus } = useStudioDrafts();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<StudioVersionListItem[] | null>(null);
@@ -61,9 +61,17 @@ export function HistoryPanel({ owner }: { owner: StudioDraftOwner }) {
 
   return (
     <div ref={boxRef} className="relative">
-      <button type="button" className="st-chip" title="History" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <button
+        type="button"
+        className={iconOnly ? 'st-iconbtn' : 'st-chip'}
+        title="History"
+        aria-label={iconOnly ? 'History' : undefined}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
         <History className="h-4 w-4" />
-        <span className="hidden lg:inline">History</span>
+        {!iconOnly && <span className="hidden lg:inline">History</span>}
       </button>
       {open && (
         <div role="dialog" aria-label="History" className="st-publish-pop">

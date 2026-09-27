@@ -8,15 +8,19 @@
 // This is the ONLY tempo input in the studio — placing a score on the timeline
 // spaces its measures at this tempo.
 
-import { Minus, Plus } from 'lucide-react';
+import { ChevronDown, Minus, Plus } from 'lucide-react';
 import { useRef, useState, type Dispatch, type KeyboardEvent } from 'react';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
-import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import type { Instrument, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { INSTRUMENT_OPTIONS } from '@/lib/playsense-studio/instrument-options';
 import { TempoMarksNotice } from './tempo-marks-notice';
 
 interface ScoreMetaEditorProps {
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
+  /** Single-track studio: the score model still holds Track[], but the
+   *  editor always authors this one track. Defaults to 0. */
+  trackIndex?: number;
 }
 
 const TIME_SIGNATURES: Array<[number, number]> = [
@@ -28,8 +32,9 @@ const TIME_SIGNATURES: Array<[number, number]> = [
   [12, 8],
 ];
 
-export function ScoreMetaEditor({ score, dispatch }: ScoreMetaEditorProps) {
+export function ScoreMetaEditor({ score, dispatch, trackIndex = 0 }: ScoreMetaEditorProps) {
   const [num, den] = score.initialTimeSignature;
+  const track = score.tracks[trackIndex];
 
   // The field holds a draft while it is being typed in, so clearing it to
   // retype does not snap to the clamp floor, and one commit is one undo step.
@@ -83,6 +88,47 @@ export function ScoreMetaEditor({ score, dispatch }: ScoreMetaEditorProps) {
           className="st-input"
         />
       </label>
+
+      {track && (
+        <>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+              Track name
+            </span>
+            <input
+              type="text"
+              value={track.displayName}
+              onChange={(e) => dispatch({ type: 'set-track-name', trackIndex, name: e.target.value })}
+              className="st-input"
+              aria-label="Track name"
+            />
+          </label>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+              Instrument
+            </span>
+            <div className="st-select">
+              <select
+                value={track.instrument}
+                onChange={(e) =>
+                  dispatch({ type: 'set-track-instrument', trackIndex, instrument: e.target.value as Instrument })
+                }
+                aria-label="Instrument"
+              >
+                {INSTRUMENT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <span className="caret">
+                <ChevronDown className="h-3.5 w-3.5" />
+              </span>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">

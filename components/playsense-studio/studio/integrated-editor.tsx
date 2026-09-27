@@ -20,8 +20,8 @@
 // here — note edits don't change `structuralSignature`, so the markers above stay
 // put while you edit pitches/durations.
 
-import { ChevronDown, Plus } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion, resolvePercStroke } from '@/lib/playsense-studio/perc-strokes';
 import { pitchName } from '@/lib/playsense-studio/pitch';
@@ -32,7 +32,6 @@ import { writtenValue, type NoteValue } from '@/lib/playsense-studio/rhythm';
 import { cursorRange, type NoteCursor } from '@/lib/playsense-studio/note-cursor';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type {
-  Instrument,
   Measure,
   MusicalEvent,
   ScoreDocument,
@@ -58,26 +57,10 @@ import { MidiRecordButton, type MidiRecordingSource } from './midi-record-button
 import { MeasureZoom, type ZoomState } from './zoom/measure-zoom';
 import { useZoomEditing } from './zoom/use-zoom-editing';
 import type { ZoomLayout } from './zoom/zoom-staff';
-import { clampNoteToolbarPosition, NoteToolbar, NOTE_TOOLBAR_WIDTH_FALLBACK, type NoteToolbarPercussion } from './zoom/note-toolbar';
+import { NoteToolbar, type NoteToolbarPercussion } from './zoom/note-toolbar';
 import { MorePopover, type MoreTab } from './zoom/more-popover';
 import type { NoteTimingProps } from './note-details';
-
-const INSTRUMENT_OPTIONS: Array<{ value: Instrument; label: string }> = [
-  { value: 'staff', label: 'Staff' },
-  { value: 'guitar', label: 'Guitar' },
-  { value: 'bass', label: 'Bass' },
-  { value: 'tres', label: 'Cuban Tres' },
-  { value: 'cuatro', label: 'Cuatro' },
-  { value: 'tiple', label: 'Tiple' },
-  { value: 'ukulele', label: 'Ukulele' },
-  { value: 'mandolin', label: 'Mandolin' },
-  { value: 'piano', label: 'Piano' },
-  { value: 'perc-kit', label: 'Drum Kit' },
-  { value: 'perc-conga', label: 'Conga' },
-  { value: 'perc-bongo', label: 'Bongo' },
-  { value: 'perc-timbal', label: 'Timbales' },
-  { value: 'perc-clave', label: 'Clave' },
-];
+import { StripCorner } from './strip-corner';
 
 type EditorTab = 'staff' | 'piano-roll';
 
@@ -98,8 +81,17 @@ export interface IntegratedEditorMeasureTiming {
 export interface IntegratedEditorProps {
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
-  /** A refused structural edit, shown inline in the editor bar. */
+  /** A refused structural edit, or another sync-panel notice (Auto-place /
+   *  Auto-align failing), shown in the stage toast in red. Wins over `info`
+   *  and the editor's own local `flash` (a neutral confirmation). */
   notice?: string | null;
+  /** A neutral (non-error) sync-panel message — e.g. "Bars auto-placed." or
+   *  "Flex was cleared because the bars moved." — shown in the toast without
+   *  the red styling. Falls back to `flash` when unset; loses to `notice`. */
+  info?: string | null;
+  /** Shown as a button at the end of the toast while `info` (never `notice`)
+   *  is displaying (e.g. "Undo" for an Auto-place that's still undoable). */
+  noticeAction?: { label: string; onClick: () => void } | null;
   /** Per-measure audio span from the markers (track 0). */
   measureTimings: IntegratedEditorMeasureTiming[];
   /** Live playback position (video seconds) for the staff-lane playhead. */
@@ -140,6 +132,10 @@ export interface IntegratedEditorProps {
   /** Reports whether the measure zoom is open (it uses letter keys, e.g. F,
    *  that SyncPanel binds only while it is closed). Pass a stable callback. */
   onZoomOpenChange?: (open: boolean) => void;
+  /** The selected bar range (inclusive indices), or null when nothing (or a
+   *  single note) is selected. Lets SyncPanel tint the waveform over the
+   *  selected bars' time span. */
+  onMeasureRangeChange?: (range: [number, number] | null) => void;
 }
 
 /** A repeat's closing bar (with dots) replaces any final bar on that measure. */
@@ -151,6 +147,8 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   score,
   dispatch,
   notice,
+  info,
+  noticeAction,
   measureTimings,
   getCurrentSeconds,
   recordingSource,
@@ -169,6 +167,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   flexInfo,
   quantizeProblem,
   onZoomOpenChange,
+  onMeasureRangeChange,
 }: IntegratedEditorProps) {
   // Single-track studio: the score model still holds Track[], but the editor
   // always authors track 0.
@@ -188,11 +187,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [gapPop, setGapPop] = useState<{ gap: number; anchor: PopoverAnchor } | null>(null);
   const [barPop, setBarPop] = useState<{ anchor: PopoverAnchor } | null>(null);
   const [quantizePop, setQuantizePop] = useState<{ anchor: PopoverAnchor } | null>(null);
-  // The note toolbar's "More ▾" popover — just an open flag (fix round 1:
-  // its position is recomputed every render from the toolbar's current,
-  // measured position below, not stored) — and the last tab picked
-  // (remembered across opens/closes, reset only on unmount).
-  const [morePop, setMorePop] = useState(false);
+  // The note toolbar's "More ▾" popover — its anchor under the docked toolbar
+  // (read from the toolbar's rect when More is clicked), or null when closed —
+  // and the last tab picked (remembered across opens/closes, reset only on unmount).
+  const [morePop, setMorePop] = useState<PopoverAnchor | null>(null);
   const [moreTab, setMoreTab] = useState<MoreTab>('durations');
   // The measure zoom (one bar drawn large over the strip), or null when closed.
   // `zoomOrigin` is the bar's rect in the strip for the enter/exit animation;
@@ -201,8 +199,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const [zoomOrigin, setZoomOrigin] = useState<{ left: number; width: number } | null>(null);
   const [zoomClosing, setZoomClosing] = useState(false);
   // The zoomed bar's note layout (hits, beat span, line math) — a stash for
-  // other zoom work; the note toolbar below reads MeasureZoom's own (reactive)
-  // layout instead, since a ref write here doesn't request a re-render.
+  // other zoom work (a ref write here doesn't request a re-render).
   const zoomLayout = useRef<ZoomLayout | null>(null);
   // A menu belongs to the bars it opened on: every key or click that changes
   // the bar selection closes whichever menu is open.
@@ -370,6 +367,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         keyChanged: tracked[i].keyChanged,
         clefChanged: tracked[i].clefChanged,
         fill: measureFills[i],
+        flag: measureTimings[i]?.flag ?? null,
       });
     }
     return out;
@@ -614,7 +612,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     setZoom(null);
     setZoomClosing(false);
     zoomLayout.current = null;
-    setMorePop(false);
+    setMorePop(null);
     if (m !== undefined) selectBars({ anchor: m, focus: m });
   }, [zoom, selectBars]);
 
@@ -665,7 +663,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     setZoomClosing(false);
   }
 
-  // ---- The floating note toolbar (Task 8) ------------------------------------
+  // ---- The docked note toolbar (Task 8) --------------------------------------
 
   // The event at the zoom cursor — null at 'end', or when the cursor sits on a
   // voice with nothing there. Drives the toolbar's info chip and its on/off
@@ -719,38 +717,16 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     return pitchName(zoomCurrentEvent.midi, zoomCurrentEvent.spelling, key);
   })();
 
-  // Anchored under the cursor's note box (or just after the last note at
-  // 'end'); clamped into the center column/row against the toolbar's own
-  // measured size below (fix round 1 — a percussion track's stroke row can
-  // run wide, or wrap tall, well past the 520 fallback).
-  const noteToolbarAnchor = useCallback((layout: ZoomLayout | null) => {
-    if (!zoom || !layout) return null;
-    const c = zoom.cursor;
-    let x: number;
-    let hitBottom: number;
-    if (c.index !== 'end') {
-      const hit = layout.hits.find((h) => h.voice === c.voice && h.eventIndex === c.index);
-      if (!hit) return null;
-      x = hit.x + hit.w / 2;
-      hitBottom = hit.y + hit.h;
-    } else {
-      x = layout.noteEndX;
-      const voiceHits = layout.hits.filter((h) => h.voice === c.voice);
-      const last = voiceHits[voiceHits.length - 1];
-      hitBottom = last ? last.y + last.h : layout.yForLine(2);
-    }
-    return { x, top: hitBottom + 14 };
-  }, [zoom]);
-
-  // The toolbar's real rendered size, so it can be clamped against its own
-  // footprint instead of a guess — the measure bar's `measureBarRef`/
-  // `barWidth` pattern, on both axes. `w` starts at the pre-paint fallback;
-  // `h` starts at 0 (unclamped) since there's no equivalent guess for height.
-  const [noteToolbarSize, setNoteToolbarSize] = useState({ w: NOTE_TOOLBAR_WIDTH_FALLBACK, h: 0 });
-  const noteToolbarRef = (el: HTMLDivElement | null) => {
-    const w = el?.offsetWidth ?? 0;
-    const h = el?.offsetHeight ?? 0;
-    if (w > 0 && (w !== noteToolbarSize.w || h !== noteToolbarSize.h)) setNoteToolbarSize({ w, h });
+  // More ▾ opens under the docked toolbar's right end, in staffWrapRef's
+  // coordinates (the popover is its child). Read at the click, not in render.
+  const noteToolbarRef = useRef<HTMLDivElement | null>(null);
+  const openMore = () => {
+    const tb = noteToolbarRef.current?.getBoundingClientRect();
+    const wrap = staffWrapRef.current?.getBoundingClientRect();
+    setMorePop({
+      left: tb && wrap ? Math.max(8, tb.right - wrap.left - 320) : 8,
+      top: tb && wrap ? tb.bottom - wrap.top + 6 : 52,
+    });
   };
 
   // Bars that don't add up — drives the strip footer's issue chip and its
@@ -791,6 +767,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // Centred over the selected bars (clamped so the bar stays on screen), in
   // container space: the staff below the repeat lane starts at REP_H.
   const bounds = selectionBounds(measureRange);
+  // Reported out to SyncPanel so it can tint the waveform over these bars.
+  const boundsKey = bounds ? `${bounds[0]}:${bounds[1]}` : '';
+  useEffect(() => { onMeasureRangeChange?.(bounds ? [bounds[0], bounds[1]] : null); }, [boundsKey]); // eslint-disable-line react-hooks/exhaustive-deps
   // The bar's rendered width (it varies with the label); 600 until measured.
   const [barWidth, setBarWidth] = useState(600);
   const measureBarRef = (el: HTMLDivElement | null) => {
@@ -833,99 +812,26 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     return seconds > 0 ? (measureLengthInQN(b.timeSignature) / seconds) * 60 : null;
   })();
 
+  // Same in both views (staff and piano-roll) — hoisted so it's written once.
+  const stripCorner = (
+    <StripCorner
+      tab={editorTab}
+      onTab={(t) => { setEditorTab(t); if (t !== 'staff' && zoom) finishZoomClose(); }}
+      midi={activeTrack ? <MidiRecordButton compact score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} getCurrentSeconds={getCurrentSeconds} recordingSource={recordingSource} /> : null}
+      onAddEnd={() => insertMeasureAt(measureCount)}
+      addEndProblem={gapProblems[measureCount] ?? null}
+    />
+  );
+
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
-      {/* Editor bar — view tabs · instrument/name · add measure (single track) */}
-      <div className="flex flex-shrink-0 flex-wrap items-center gap-2.5">
-        <div className="st-seg">
-          {(
-            [
-              { id: 'staff' as const, label: 'Staff' },
-              { id: 'piano-roll' as const, label: 'Piano-roll' },
-            ] as const
-          ).map((t) => (
-            <button
-              key={t.id}
-              onClick={() => {
-                setEditorTab(t.id);
-                // The zoom lives over the staff strip; leaving it closes the zoom.
-                if (t.id !== 'staff' && zoom) finishZoomClose();
-              }}
-              className={editorTab === t.id ? 'is-on' : ''}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <span className="st-divline" />
-
-        {activeTrack && (
-          <>
-            <input
-              type="text"
-              value={activeTrack.displayName}
-              onChange={(e) =>
-                dispatch({ type: 'set-track-name', trackIndex: activeTrackIndex, name: e.target.value })
-              }
-              className="st-input w-36"
-              aria-label="Track name"
-            />
-            <div className="st-select" style={{ width: 150 }}>
-              <select
-                value={activeTrack.instrument}
-                onChange={(e) =>
-                  dispatch({
-                    type: 'set-track-instrument',
-                    trackIndex: activeTrackIndex,
-                    instrument: e.target.value as Instrument,
-                  })
-                }
-                aria-label="Instrument"
-              >
-                {INSTRUMENT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <span className="caret">
-                <ChevronDown className="h-3.5 w-3.5" />
-              </span>
-            </div>
-          </>
-        )}
-
-        {activeTrack && <MidiRecordButton score={score} trackIndex={activeTrackIndex} targetMeasure={targetMeasureIndex} dispatch={dispatch} getCurrentSeconds={getCurrentSeconds} recordingSource={recordingSource} />}
-
-        <button
-          onClick={() => insertMeasureAt(rangeEnd !== null ? rangeEnd + 1 : measureCount)}
-          className="st-chip ml-auto"
-          disabled={!!gapProblems[rangeEnd !== null ? rangeEnd + 1 : measureCount]}
-          title={gapProblems[rangeEnd !== null ? rangeEnd + 1 : measureCount]
-            ?? (rangeEnd !== null ? `Add a measure after measure ${rangeEnd + 1}` : 'Add a measure at the end of the score')}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add measure
-        </button>
-        {notice && (
-          <span role="status" className="basis-full text-xs text-destructive sm:basis-auto">
-            {notice}
-          </span>
-        )}
-      </div>
-
-      {flash && (
-        <p role="status" className="st-flash -mt-1.5 flex-shrink-0">
-          {flash}
-        </p>
-      )}
-
-      {/* Active view — the audio-aligned staff (or piano-roll). The staff fills
-          the available height below the editor bar. */}
+    <div className="relative flex h-full min-h-0 flex-col gap-3">
+      {/* Active view — the audio-aligned staff (or piano-roll). The staff /
+          piano-roll switch, Record MIDI and "add at end" live in a StripCorner
+          over whichever view is active (Task 5: the row above the staff is gone;
+          track name/instrument moved to the Score panel, notice/flash to a toast). */}
       {editorTab === 'staff' && (
         <>
-          <div ref={staffWrapRef} className="relative min-h-0 flex-1">
+          <div ref={staffWrapRef} className="relative min-h-0 flex-1" data-testid="staff-wrap">
             <EditableMeasureStrip
               measures={stripItems}
               spans={score.spans}
@@ -952,6 +858,33 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               onScrollByPx={onScrollByPx}
               height={staffHeight}
             />
+            {!zoom && <div className="st-strip-foot">
+              {issues.length > 0 && (
+                <button type="button" className={`st-issue-chip${anyOver ? ' is-bad' : ''}`} onClick={nextIssue} title="Jump to the next bar that doesn’t add up">
+                  {issues.length === 1 ? '1 bar doesn’t add up' : `${issues.length} bars don’t add up`} · {issues.slice(0, 3).map((i) => `m.${stripItems[i].measureNumber}`).join(', ')}{issues.length > 3 ? '…' : ''} <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <span className="truncate">
+                {measureRange
+                  ? <><kbd>⏎</kbd> edit notes · <kbd>⌘D</kbd> duplicate · <kbd>⌫</kbd> delete · <kbd>esc</kbd> deselect</>
+                  : 'Drag across bars to select · double-click a bar to edit its notes · scroll to zoom'}
+              </span>
+              <button
+                type="button"
+                className="st-help-btn"
+                aria-label="Keyboard shortcuts"
+                title="Keyboard shortcuts"
+                aria-expanded={shortcutsOpen}
+                onPointerDown={() => { shortcutsWasOpen.current = shortcutsOpen; }}
+                onClick={() => {
+                  setShortcutsOpen(!shortcutsWasOpen.current);
+                  shortcutsWasOpen.current = false;
+                }}
+              >
+                ?
+              </button>
+            </div>}
+            {stripCorner}
             {barPos && bounds && (
               <MeasureBar
                 ref={measureBarRef}
@@ -962,6 +895,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 bpm={barBpm}
                 flag={measureTimings.slice(bounds[0], bounds[1] + 1).find((t) => t.flag)?.flag ?? null}
                 flexInfo={flexInfo?.(bounds[0], bounds[1]) ?? null}
+                repeatCount={repeatGroupAtRange?.count ?? null}
                 looping={barLooping}
                 canLoop={!!onLoopMeasures}
                 problems={{ dup: dupProblem, paste: pasteProblem, clear: null, del: deleteProblem }}
@@ -999,50 +933,45 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 clef={zoomClefAt(zoom.measureIndex)}
                 keyFifths={zoomKeyFifthsAt(zoom.measureIndex)}
                 percStrokes={percStrokes}
-              >
-                {({ centerW, bodyH, layout }) => {
-                  const anchor = noteToolbarAnchor(layout);
-                  if (!anchor) return null;
-                  const pos = clampNoteToolbarPosition(anchor.x, anchor.top, noteToolbarSize, { centerW, bodyH });
-                  const maxWidth = centerW > 0 ? Math.max(0, centerW - 16) : undefined;
-                  return (
-                    <>
-                      <NoteToolbar
-                        ref={noteToolbarRef}
-                        left={pos.left}
-                        top={pos.top}
-                        maxWidth={maxWidth}
-                        info={zoomInfo}
-                        value={zoomValue}
-                        dots={zoomDots}
-                        isRest={zoomCurrentEvent?.kind === 'rest'}
-                        tie={!!zoomCurrentEvent && zoomCurrentEvent.kind !== 'rest' && !!zoomCurrentEvent.tieToNext}
-                        tripletOn={!!zoomTupletHere && zoomTupletHere.n === 3 && zoomTupletHere.m === 2}
-                        hasSelection={zoomHasSelection}
-                        percussion={zoomToolbarPercussion}
-                        editing={zoomEditing}
-                        onMore={() => setMorePop(true)}
-                        pencil={zoom.pencil}
-                        onPencil={() => setZoom({ ...zoom, pencil: !zoom.pencil })}
-                      />
-                      {morePop && (
-                        <MorePopover
-                          anchor={{ left: pos.left, top: pos.top + noteToolbarSize.h }}
-                          tab={moreTab}
-                          onTab={setMoreTab}
-                          onClose={() => setMorePop(false)}
-                          event={zoomCurrentEvent}
-                          editing={zoomEditing}
-                          timing={noteTiming}
-                          watchLike={!!noteTiming}
-                          eventKey={zoomEventKey}
-                          voice={zoom.cursor.voice}
-                        />
-                      )}
-                    </>
-                  );
+                toolbar={(
+                  <NoteToolbar
+                    ref={noteToolbarRef}
+                    info={zoomInfo}
+                    value={zoomValue}
+                    dots={zoomDots}
+                    isRest={zoomCurrentEvent?.kind === 'rest'}
+                    tie={!!zoomCurrentEvent && zoomCurrentEvent.kind !== 'rest' && !!zoomCurrentEvent.tieToNext}
+                    tripletOn={!!zoomTupletHere && zoomTupletHere.n === 3 && zoomTupletHere.m === 2}
+                    hasSelection={zoomHasSelection}
+                    percussion={zoomToolbarPercussion}
+                    editing={zoomEditing}
+                    onMore={openMore}
+                  />
+                )}
+                onToggleKeys={() => setZoom({ ...zoom, keysOpen: !zoom.keysOpen })}
+                onTogglePencil={() => setZoom({ ...zoom, pencil: !zoom.pencil })}
+                meta={{
+                  startSeconds: measureTimings[zoom.measureIndex]?.startVideoTimeSeconds ?? 0,
+                  flag: measureTimings[zoom.measureIndex]?.flag ?? null,
+                  repeatPass: stripItems[zoom.measureIndex].repeatPass
+                    ? { pass: stripItems[zoom.measureIndex].repeatPass!.pass, count: stripItems[zoom.measureIndex].repeatPass!.count }
+                    : null,
                 }}
-              </MeasureZoom>
+              />
+            )}
+            {zoom && morePop && (
+              <MorePopover
+                anchor={morePop}
+                tab={moreTab}
+                onTab={setMoreTab}
+                onClose={() => setMorePop(null)}
+                event={zoomCurrentEvent}
+                editing={zoomEditing}
+                timing={noteTiming}
+                watchLike={!!noteTiming}
+                eventKey={zoomEventKey}
+                voice={zoom.cursor.voice}
+              />
             )}
             {shortcutsOpen && !zoom && (
               <ShortcutsPopover
@@ -1135,38 +1064,26 @@ export const IntegratedEditor = memo(function IntegratedEditor({
               />
             )}
           </div>
-          {!zoom && <div className="st-strip-foot">
-            {issues.length > 0 && (
-              <button type="button" className={`st-issue-chip${anyOver ? ' is-bad' : ''}`} onClick={nextIssue} title="Jump to the next bar that doesn’t add up">
-                {issues.length === 1 ? '1 bar doesn’t add up' : `${issues.length} bars don’t add up`} · {issues.slice(0, 3).map((i) => `m.${stripItems[i].measureNumber}`).join(', ')}{issues.length > 3 ? '…' : ''} ▾
-              </button>
-            )}
-            <span className="truncate">
-              {measureRange
-                ? '⏎ edit notes · ⌘D duplicate · ⌫ delete · esc deselect'
-                : 'Drag across bars to select · double-click a bar to edit its notes · scroll to zoom'}
-            </span>
-            <button
-              type="button"
-              className="ml-auto grid h-6 w-6 place-items-center rounded-full border border-border text-[11px]"
-              aria-label="Keyboard shortcuts"
-              title="Keyboard shortcuts"
-              aria-expanded={shortcutsOpen}
-              onPointerDown={() => { shortcutsWasOpen.current = shortcutsOpen; }}
-              onClick={() => {
-                setShortcutsOpen(!shortcutsWasOpen.current);
-                shortcutsWasOpen.current = false;
-              }}
-            >
-              ?
-            </button>
-          </div>}
         </>
       )}
       {editorTab === 'piano-roll' && (
-        <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-card p-3">
-          <PianoRollView score={score} activeTrackIndex={activeTrackIndex} dispatch={dispatch} />
+        // The corner is `position: absolute` against the nearest positioned
+        // ancestor — it must be that ancestor's non-scrolling wrapper, not a
+        // sibling INSIDE the scroller, or it scrolls away with the roll.
+        <div className="relative min-h-0 flex-1">
+          <div className="h-full overflow-y-auto rounded-md border border-border bg-card p-3">
+            <PianoRollView score={score} activeTrackIndex={activeTrackIndex} dispatch={dispatch} />
+          </div>
+          {stripCorner}
         </div>
+      )}
+      {(notice || info || flash) && (
+        <p role="status" className={`st-toast${notice ? ' is-bad' : ''}`}>
+          {notice ?? info ?? flash}
+          {!notice && info && noticeAction && (
+            <button type="button" onClick={noticeAction.onClick}>{noticeAction.label}</button>
+          )}
+        </p>
       )}
     </div>
   );

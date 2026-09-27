@@ -3,11 +3,16 @@ import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ScoreMetaEditor } from '../score-meta-editor'
-import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types'
+import type { ScoreDocument, Track } from '@/components/playsense-studio/shared/score-model/types'
 
 const score = (initialTempo: number): ScoreDocument => ({
   schemaVersion: 1, title: 'T', sourceFormat: 'native', initialTempo,
   initialTimeSignature: [4, 4], initialKeyFifths: 0, tracks: [],
+})
+
+const track = (): Track => ({
+  index: 0, instrument: 'guitar', displayName: 'Track 1', tuning: null,
+  stringMultiplicity: 1, channel: null, defaultView: 'staff', measures: [],
 })
 
 let root: Root
@@ -29,6 +34,12 @@ afterEach(async () => {
 function render(tempo: number) {
   act(() => { root.render(<ScoreMetaEditor score={score(tempo)} dispatch={dispatch} />) })
   return host.querySelector<HTMLInputElement>('input[aria-label="Tempo (BPM)"]')!
+}
+
+function renderWithTrack() {
+  act(() => {
+    root.render(<ScoreMetaEditor score={{ ...score(120), tracks: [track()] }} dispatch={dispatch} />)
+  })
 }
 
 const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
@@ -100,5 +111,34 @@ describe('tempo field', () => {
     const input = render(120)
     act(() => { root.render(<ScoreMetaEditor score={score(96)} dispatch={dispatch} />) })
     expect(input.value).toBe('96')
+  })
+})
+
+describe('track fields (moved from the editor row)', () => {
+  it('edits the track name and instrument (moved from the editor row)', () => {
+    renderWithTrack()
+    const name = host.querySelector('input[aria-label="Track name"]') as HTMLInputElement
+    const inst = host.querySelector('select[aria-label="Instrument"]') as HTMLSelectElement
+    expect(name).not.toBeNull()
+    expect(inst).not.toBeNull()
+    act(() => { inst.value = 'perc-conga'; inst.dispatchEvent(new Event('change', { bubbles: true })) })
+    expect(dispatch).toHaveBeenCalledWith({ type: 'set-track-instrument', trackIndex: 0, instrument: 'perc-conga' })
+  })
+
+  it('edits the track name', () => {
+    renderWithTrack()
+    const name = host.querySelector('input[aria-label="Track name"]') as HTMLInputElement
+    act(() => {
+      setter.call(name, 'New name')
+      name.dispatchEvent(new Event('input', { bubbles: true }))
+      name.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    expect(dispatch).toHaveBeenCalledWith({ type: 'set-track-name', trackIndex: 0, name: 'New name' })
+  })
+
+  it('renders neither field when the track is missing', () => {
+    act(() => { root.render(<ScoreMetaEditor score={score(120)} dispatch={dispatch} />) })
+    expect(host.querySelector('input[aria-label="Track name"]')).toBeNull()
+    expect(host.querySelector('select[aria-label="Instrument"]')).toBeNull()
   })
 })

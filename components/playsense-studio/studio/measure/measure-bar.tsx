@@ -26,6 +26,9 @@ export function MeasureBar({ ref, ...props }: {
   flag?: string | null;
   /** "flexed ±<m> ms" when the selection carries flex, else null (Task 7). */
   flexInfo?: string | null;
+  /** The repeat pass count when the selected bars are already in a repeat
+   *  group; the Repeat button shows "×n" instead of "Repeat" (Task 7). */
+  repeatCount?: number | null;
   canLoop: boolean; problems: { dup: string | null; paste: string | null; clear: string | null; del: string | null };
   onEdit: () => void; onLoop: () => void; onRepeat: (a: PopoverAnchor) => void; onDup: () => void;
   onCopy: () => void; onPaste: () => void; onBar: (a: PopoverAnchor) => void; onClear: () => void; onDelete: () => void;
@@ -44,7 +47,7 @@ export function MeasureBar({ ref, ...props }: {
     title: string,
     icon: ReactNode,
     onClick: () => void,
-    opts: { problem?: string | null; text?: string; pressed?: boolean } = {},
+    opts: { problem?: string | null; text?: string; pressed?: boolean; kbd?: string; danger?: boolean } = {},
   ) => (
     <button
       type="button"
@@ -52,52 +55,53 @@ export function MeasureBar({ ref, ...props }: {
       title={opts.problem ?? title}
       disabled={!!opts.problem}
       aria-pressed={opts.pressed}
+      className={opts.danger ? 'is-danger' : undefined}
       onClick={onClick}
     >
       {icon}
       {opts.text}
+      {opts.kbd && <span className="st-fbar-kbd">{opts.kbd}</span>}
     </button>
   );
   const icon = 'h-3.5 w-3.5';
   return (
     <div ref={ref} className="st-fbar" role="toolbar" aria-label="Selected bars" style={{ left, top }}>
       <span className="st-fbar-info">
-        {props.label} · {formatBarTime(props.startSeconds)}
-        {props.bpm !== null && (
-          <>
-            {' · '}
-            <span title="Tempo these bars play at">≈{props.bpm.toFixed(1)} BPM</span>
-          </>
-        )}
+        <span>{props.label}</span>
+        <span>{formatBarTime(props.startSeconds)}</span>
+        {props.bpm !== null && <span title="Tempo these bars play at">≈{props.bpm.toFixed(1)}</span>}
         {props.flag && (
-          <>
-            {' · '}
-            <span className="st-fbar-flag" title={props.flag}>{props.flag}</span>
-          </>
+          <span
+            className="st-status-pip warn"
+            role="img"
+            aria-label={`Timing: ${props.flag}`}
+            title={props.flag}
+            style={{ width: 7, height: 7 }}
+          />
         )}
-        {props.flexInfo && (
-          <>
-            {' · '}
-            <span className="st-fbar-flex" title="This range has flex applied">{props.flexInfo}</span>
-          </>
-        )}
+        {props.flexInfo && <span className="st-fbar-flex" title="This range has flex applied">{props.flexInfo}</span>}
       </span>
-      {btn('Edit', 'Zoom in (⏎)', <Maximize2 className={icon} />, props.onEdit)}
-      {btn('Loop', 'Loop these bars', <Repeat1 className={icon} />, props.onLoop, {
+      <span className="st-fbar-sep" aria-hidden />
+      {btn('Edit', 'Zoom in to edit notes (⏎)', <Maximize2 className={icon} />, props.onEdit, { text: 'Edit', kbd: '⏎' })}
+      {btn('Loop', 'Loop these bars while you work (L)', <Repeat1 className={icon} />, props.onLoop, {
+        text: 'Loop',
         problem: props.canLoop ? null : 'Play the video to loop',
         pressed: props.looping,
       })}
-      {btn('Repeat', 'Repeat these bars', <Repeat className={icon} />, () => props.onRepeat(menuAnchor), { text: 'Repeat ▾' })}
+      {props.onQuantize && btn('Quantize', 'Pull the recording onto the written notes (Flex Time)', <Magnet className={icon} />, () => props.onQuantize!(menuAnchor), {
+        text: 'Quantize',
+        problem: props.quantizeProblem,
+      })}
+      {btn('Repeat', 'Play these bars more than once', <Repeat className={icon} />, () => props.onRepeat(menuAnchor), {
+        text: props.repeatCount ? `×${props.repeatCount}` : 'Repeat',
+      })}
       {btn('Duplicate', 'Duplicate (⌘D)', <CopyPlus className={icon} />, props.onDup, { problem: problems.dup })}
       {btn('Copy', 'Copy (⌘C)', <Copy className={icon} />, props.onCopy)}
       {btn('Paste', 'Paste after (⌘V)', <ClipboardPaste className={icon} />, props.onPaste, { problem: problems.paste })}
-      {btn('Bar properties', 'Time, key, clef, tempo, barlines', <SlidersHorizontal className={icon} />, () => props.onBar(menuAnchor), { text: 'Bar ▾' })}
-      {props.onQuantize && btn('Quantize', 'Quantize to the score', <Magnet className={icon} />, () => props.onQuantize!(menuAnchor), {
-        problem: props.quantizeProblem,
-      })}
+      {btn('Bar properties', 'Time, key, clef, tempo, barlines', <SlidersHorizontal className={icon} />, () => props.onBar(menuAnchor))}
       <span className="st-fbar-sep" aria-hidden />
       {btn('Clear', 'Empty these bars, keep their timing', <Eraser className={icon} />, props.onClear, { problem: problems.clear })}
-      {btn('Delete', 'Delete (⌫)', <Trash2 className={icon} />, props.onDelete, { problem: problems.del })}
+      {btn('Delete', 'Delete (⌫)', <Trash2 className={icon} />, props.onDelete, { problem: problems.del, danger: true })}
     </div>
   );
 }

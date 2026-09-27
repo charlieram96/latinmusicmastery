@@ -554,7 +554,7 @@ describe('IntegratedEditor zoom editing', () => {
     key('ArrowRight');
     key('ArrowRight');
     key('Enter');
-    expect(zoomEl()!.querySelector('.st-zoom-head')!.textContent).toContain('m.2');
+    expect(zoomEl()!.querySelector('.st-zoom-title b')!.textContent).toBe('Measure 2');
     const one = doc([n(60)]);
     one.tracks[0].measures.pop();
     render(one);

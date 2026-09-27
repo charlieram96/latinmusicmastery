@@ -20,7 +20,7 @@
 // ExerciseStudio, already has one higher up — see drafts-context.tsx) so it
 // can be mounted standalone from a page.tsx.
 
-import { ArrowLeft, Activity, Copy, Eye, FileUp, Film, MonitorPlay, Music, PanelBottom, Redo2, Save, Undo2 } from 'lucide-react';
+import { ArrowLeft, Activity, Copy, Eye, Film, MonitorPlay, Music, PanelBottom, Redo2, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
@@ -36,6 +36,8 @@ import { useStudioDraft } from '@/components/playsense-studio/studio/drafts/use-
 import { StudioDraftsProvider } from '@/components/playsense-studio/studio/drafts/drafts-context';
 import { PublishControl } from '@/components/playsense-studio/studio/drafts/publish-control';
 import { HistoryPanel } from '@/components/playsense-studio/studio/drafts/history-panel';
+import { SaveStatus } from '@/components/playsense-studio/studio/drafts/save-status';
+import { ScoreMenu } from '@/components/playsense-studio/studio/score-menu';
 import { workspaceSeed } from '@/lib/playsense-studio/drafts/seed';
 import { EMPTY_TIMING, timingToTimeMap, type StudioPlay, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { buildExerciseGrid, scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise';
@@ -188,6 +190,17 @@ function StudioWorkspaceBody({
   // Portal slot the floating PiP's body renders into; SyncPanel portals the
   // reference monitor there instead of the inspector.
   const [monitorEl, setMonitorEl] = useState<HTMLDivElement | null>(null);
+
+  // The Score ▾ menu's own chip: every dialog opened from inside it (Replace,
+  // and SyncPanel's portalled "Add score") returns focus here on close, since
+  // Radix's default target — the item itself — sits inside the menu's
+  // now-hidden panel by the time the dialog closes and can't be focused.
+  // Fix round 1 (Task 10 review).
+  const scoreMenuChipRef = useRef<HTMLButtonElement>(null);
+  const returnFocusToScoreMenu = (e: Event) => {
+    e.preventDefault();
+    scoreMenuChipRef.current?.focus();
+  };
 
   // Student "highway" preview, as a collapsible bottom drawer.
   const [highwayOpen, setHighwayOpen] = useState(false);
@@ -489,34 +502,30 @@ function StudioWorkspaceBody({
             </button>
           )}
 
-          {owner.kind === 'classItem' && <span ref={setScoreActionsEl} className="contents" />}
           {owner.kind === 'classItem' && (
-            <ScoreImportDialog
-              classItemId={owner.classItemId}
-              mode="replace"
-              trigger={
-                <button
-                  type="button"
-                  className="st-chip"
-                  title="Replace this lesson's score with a new import"
-                >
-                  <FileUp className="h-4 w-4" />
-                  <span className="hidden lg:inline">Replace score</span>
-                </button>
-              }
-            />
+            <ScoreMenu chipRef={scoreMenuChipRef}>
+              <span ref={setScoreActionsEl} className="contents" />
+              <ScoreImportDialog
+                classItemId={owner.classItemId}
+                mode="replace"
+                onCloseAutoFocus={returnFocusToScoreMenu}
+                trigger={
+                  <button type="button" className="st-mpop-item">Replace this lesson&apos;s score…</button>
+                }
+              />
+            </ScoreMenu>
           )}
 
           <PublishControl />
 
-          <HistoryPanel owner={draftOwner} />
+          <HistoryPanel owner={draftOwner} iconOnly />
 
-          <span className="mx-0.5 h-6 w-px bg-border" />
+          <span className="st-divline" />
 
           <button
             onClick={undo}
             disabled={!canUndo}
-            className="rounded-md border border-transparent p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+            className="st-iconbtn"
             title="Undo (Cmd/Ctrl+Z)"
             aria-label="Undo"
           >
@@ -525,33 +534,14 @@ function StudioWorkspaceBody({
           <button
             onClick={redo}
             disabled={!canRedo}
-            className="rounded-md border border-transparent p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+            className="st-iconbtn"
             title="Redo (Cmd/Ctrl+Shift+Z)"
             aria-label="Redo"
           >
             <Redo2 className="h-4 w-4" />
           </button>
 
-          <span role="status" className="text-right text-xs tabular-nums text-muted-foreground">
-            {draft.saveState === 'saving'
-              ? 'Saving draft…'
-              : draft.saveState === 'error'
-                ? 'Save failed'
-                : draft.pending
-                  ? 'Saving soon…'
-                  : draft.saveState === 'saved'
-                    ? 'Draft saved'
-                    : 'Autosave on'}
-          </span>
-
-          <button
-            onClick={() => void draft.flush()}
-            disabled={!draft.pending}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Save className="h-4 w-4" />
-            <span className="hidden sm:inline">{draft.saveState === 'error' ? 'Retry save' : 'Save now'}</span>
-          </button>
+          <SaveStatus saveState={draft.saveState} pending={draft.pending} flush={draft.flush} />
         </div>
       </header>
 
@@ -620,6 +610,7 @@ function StudioWorkspaceBody({
               transportEl={transportEl}
               monitorEl={monitorEl}
               scoreActionsEl={scoreActionsEl}
+              scoreActionsCloseAutoFocus={returnFocusToScoreMenu}
               onTimingChange={draft.setTiming}
               onTimingSaved={() => setExerciseStage('syncVideo')}
               registerTimingFlush={draft.registerPreFlush}
@@ -644,6 +635,7 @@ function StudioWorkspaceBody({
                 transportEl={transportEl}
                 monitorEl={monitorEl}
                 scoreActionsEl={scoreActionsEl}
+                scoreActionsCloseAutoFocus={returnFocusToScoreMenu}
                 onTimingChange={draft.setTiming}
                 registerTimingFlush={draft.registerPreFlush}
               />
