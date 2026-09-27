@@ -131,6 +131,115 @@
     }
   },
   "marketing": {
+    "site": {
+      "common": {
+        "joinWaitlist": "Join the waitlist",
+        "saveSeat": "Save my seat",
+        "emailLabel": "Email",
+        "emailPlaceholder": "you@email.com",
+        "invalidEmail": "Enter an email like name@example.com.",
+        "onList": "You're on the list. We'll email you before launch.",
+        "home": "Home",
+        "seePricing": "See pricing",
+        "menu": "Menu",
+        "close": "Close",
+        "comingSoon": "Coming soon",
+        "live": "Live",
+        "courses": "courses",
+        "coursesOne": "course",
+        "previewArrow": "Preview →",
+        "included": "Included"
+      },
+      "nav": {
+        "explore": "Explore",
+        "instructors": "Instructors",
+        "playsense": "PlaySense",
+        "pricing": "Pricing",
+        "about": "About",
+        "main": "Main",
+        "language": "Language"
+      },
+      "footer": {
+        "tagline": "Learn the rhythms, melodies and soul of Latin music from maestros across the Americas.",
+        "platform": "Platform",
+        "company": "Company",
+        "follow": "Follow",
+        "legal": "Legal",
+        "explore": "Explore",
+        "playsense": "PlaySense",
+        "pricing": "Pricing",
+        "instructors": "Instructors",
+        "about": "About",
+        "blog": "Blog",
+        "faq": "FAQ",
+        "contact": "Contact",
+        "privacy": "Privacy",
+        "terms": "Terms",
+        "accessibility": "Accessibility",
+        "rights": "© {year} Latin Music Mastery",
+        "madeIn": "Made in clave 3-2"
+      },
+      "finale": {
+        "knock": "Tu turno",
+        "title": "The band is ready.",
+        "titleAccent": "Your part is missing.",
+        "lede": "Join the waitlist for early access and founding-member pricing."
+      },
+      "stageClip": {
+        "label": "PlaySense stage: notes travel down a pier on Biscayne Bay toward three congas, with the Miami skyline at dusk",
+        "demoPerformance": "Demo performance",
+        "exercise": "Tumbao Esencial",
+        "exerciseMeta": "Latin foundations · 100 BPM · 4/4",
+        "score": "Score",
+        "combo": "Combo",
+        "inARow": "in a row",
+        "accuracy": "Accuracy",
+        "withBand": "With the band",
+        "band": "Bass · Keys · Timbales",
+        "simulated": "Demo · hits are simulated",
+        "measure": "Measure {n} of {total}",
+        "perfect": "Perfect"
+      },
+      "home": {
+        "_": "keys above this line"
+      },
+      "explore": {
+        "_": "keys above this line"
+      },
+      "style": {
+        "_": "keys above this line"
+      },
+      "course": {
+        "_": "keys above this line"
+      },
+      "instructors": {
+        "_": "keys above this line"
+      },
+      "profile": {
+        "_": "keys above this line"
+      },
+      "playsense": {
+        "_": "keys above this line"
+      },
+      "pricing": {
+        "_": "keys above this line"
+      },
+      "about": {
+        "_": "keys above this line"
+      },
+      "faq": {
+        "_": "keys above this line"
+      },
+      "contact": {
+        "_": "keys above this line"
+      },
+      "blog": {
+        "_": "keys above this line"
+      },
+      "legal": {
+        "_": "keys above this line"
+      }
+    },
     "home": {
       "waitlistTitle": "Ready to Start Your Musical Journey?",
       "waitlistSubtitle": "Be the first to know when we launch. Join the waiting list for early access and founding member pricing.",

@@ -131,6 +131,115 @@
     }
   },
   "marketing": {
+    "site": {
+      "common": {
+        "joinWaitlist": "Únete a la lista",
+        "saveSeat": "Reserva tu lugar",
+        "emailLabel": "Correo",
+        "emailPlaceholder": "tu@correo.com",
+        "invalidEmail": "Escribe un correo como nombre@ejemplo.com.",
+        "onList": "¡Estás en la lista! Te escribimos antes del lanzamiento.",
+        "home": "Inicio",
+        "seePricing": "Ver precios",
+        "menu": "Menú",
+        "close": "Cerrar",
+        "comingSoon": "Próximamente",
+        "live": "Disponible",
+        "courses": "cursos",
+        "coursesOne": "curso",
+        "previewArrow": "Ver →",
+        "included": "Incluido"
+      },
+      "nav": {
+        "explore": "Explorar",
+        "instructors": "Maestros",
+        "playsense": "PlaySense",
+        "pricing": "Precios",
+        "about": "Nosotros",
+        "main": "Principal",
+        "language": "Idioma"
+      },
+      "footer": {
+        "tagline": "Aprende los ritmos, melodías y el alma de la música latina con maestros de las Américas.",
+        "platform": "Plataforma",
+        "company": "Compañía",
+        "follow": "Síguenos",
+        "legal": "Legal",
+        "explore": "Explorar",
+        "playsense": "PlaySense",
+        "pricing": "Precios",
+        "instructors": "Maestros",
+        "about": "Nosotros",
+        "blog": "Blog",
+        "faq": "Preguntas",
+        "contact": "Contacto",
+        "privacy": "Privacidad",
+        "terms": "Términos",
+        "accessibility": "Accesibilidad",
+        "rights": "© {year} Latin Music Mastery",
+        "madeIn": "Hecho en clave 3-2"
+      },
+      "finale": {
+        "knock": "¡Dale!",
+        "title": "La banda está lista.",
+        "titleAccent": "Falta tu parte.",
+        "lede": "Únete a la lista de espera para acceso anticipado y precio de miembro fundador."
+      },
+      "stageClip": {
+        "label": "Escenario de PlaySense: las notas bajan por un muelle en la bahía de Biscayne hacia tres congas, con el skyline de Miami al atardecer",
+        "demoPerformance": "Demostración",
+        "exercise": "Tumbao Esencial",
+        "exerciseMeta": "Fundamentos latinos · 100 BPM · 4/4",
+        "score": "Puntos",
+        "combo": "Combo",
+        "inARow": "seguidas",
+        "accuracy": "Precisión",
+        "withBand": "Con la banda",
+        "band": "Bajo · Teclado · Timbales",
+        "simulated": "Demo · golpes simulados",
+        "measure": "Compás {n} de {total}",
+        "perfect": "Perfecto"
+      },
+      "home": {
+        "_": "keys above this line"
+      },
+      "explore": {
+        "_": "keys above this line"
+      },
+      "style": {
+        "_": "keys above this line"
+      },
+      "course": {
+        "_": "keys above this line"
+      },
+      "instructors": {
+        "_": "keys above this line"
+      },
+      "profile": {
+        "_": "keys above this line"
+      },
+      "playsense": {
+        "_": "keys above this line"
+      },
+      "pricing": {
+        "_": "keys above this line"
+      },
+      "about": {
+        "_": "keys above this line"
+      },
+      "faq": {
+        "_": "keys above this line"
+      },
+      "contact": {
+        "_": "keys above this line"
+      },
+      "blog": {
+        "_": "keys above this line"
+      },
+      "legal": {
+        "_": "keys above this line"
+      }
+    },
     "home": {
       "waitlistTitle": "¿Listo para comenzar tu viaje musical?",
       "waitlistSubtitle": "Sé de los primeros en enterarte cuando lancemos. Únete a la lista de espera para obtener acceso anticipado y precios de miembro fundador.",
