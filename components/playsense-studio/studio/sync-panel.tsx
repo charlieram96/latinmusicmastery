@@ -451,12 +451,22 @@ export function SyncPanel({
     const id = setTimeout(() => setEditNotice(null), 4500);
     return () => clearTimeout(id);
   }, [editNotice]);
+  // "Flex was cleared because the bars moved" is informational, not a refused
+  // edit — it shares editNotice's 4500 ms lifetime but never turns the toast
+  // red. Auto-place folds it into its own "Bars auto-placed." toast instead
+  // (see placedToast below); every other bar move shows it on its own.
+  const [flexClearedInfo, setFlexClearedInfo] = useState<string | null>(null);
+  useEffect(() => {
+    if (!flexClearedInfo) return;
+    const id = setTimeout(() => setFlexClearedInfo(null), 4500);
+    return () => clearTimeout(id);
+  }, [flexClearedInfo]);
   // Wholesale marker moves (a section drag, Auto-place, a placement) leave the
   // flex points behind on the old bars, so they clear it. Callers only call
   // this when there is flex to clear.
   const clearFlexForBarMove = useCallback(() => {
     setFlex(NO_FLEX);
-    setEditNotice('Flex was cleared because the bars moved');
+    setFlexClearedInfo('Flex was cleared because the bars moved');
   }, []);
   useEffect(() => {
     if (previousScore.current === score) return;
@@ -847,6 +857,25 @@ export function SyncPanel({
   const placedRef = useRef<MarkerState | null>(null);
   const placedFlexRef = useRef<FlexPoint[] | null>(null);
   const [autoPlaceNotice, setAutoPlaceNotice] = useState<string | null>(null);
+  // The stage toast's "Bars auto-placed." (with Undo): true right after a
+  // successful placement, so the toast shows even when nothing needed
+  // clearing (the common case — Important 1). Retires with `autoPlaceUndo`
+  // (below), on its own 6 s timer, or explicitly on Undo.
+  const [placedToast, setPlacedToast] = useState(false);
+  // Whether THIS placement cleared flex — folds "Flex was cleared…" into the
+  // placed toast's own text instead of racing it as a second, separate
+  // message (Important 3).
+  const [autoPlaceFlexCleared, setAutoPlaceFlexCleared] = useState(false);
+  useEffect(() => {
+    if (!placedToast) return;
+    const id = setTimeout(() => setPlacedToast(false), 6000);
+    return () => clearTimeout(id);
+  }, [placedToast]);
+  // Whatever retires the undo (the effect below, or undoAutoPlace itself)
+  // takes the toast down with it.
+  useEffect(() => {
+    if (!autoPlaceUndo) setPlacedToast(false);
+  }, [autoPlaceUndo]);
   // The tween writes plain values and yields to any other marker write (see
   // useMarkerTween). Called before the undo-retiring effect below, so a
   // foreign write has already stopped the tween when that effect looks.
@@ -919,6 +948,8 @@ export function SyncPanel({
     }
     const from = markersRef.current;
     setAutoPlaceUndo({ markers: from, flex });
+    setPlacedToast(true);
+    setAutoPlaceFlexCleared(clearsFlex);
     placedRef.current = res.state;
     placedFlexRef.current = clearsFlex ? NO_FLEX : flex;
     if (clearsFlex) clearFlexForBarMove();
@@ -935,6 +966,7 @@ export function SyncPanel({
     setFlex(autoPlaceUndo.flex);
     setDirty(true);
     setAutoPlaceUndo(null);
+    setPlacedToast(false);
   }, [autoPlaceUndo, cancelTween]);
 
   // Timing-only per-measure slots — the editor zips these with extractTrackEvents
@@ -1801,7 +1833,16 @@ export function SyncPanel({
       ? selTrack.measures[selection.ref.measureIndex]?.voices[0]?.events[selection.ref.eventIndex] ?? null
       : null;
 
-
+  // The stage toast's neutral slot (IntegratedEditor's `info`, never red):
+  // a live placement still offers its Undo — folding in "Flex was cleared…"
+  // when this placement cleared it — else any other bar move's own flex
+  // notice, else nothing. `notice` (checked first by IntegratedEditor) always
+  // wins, so a failed Auto-place/Auto-align never shows this alongside a
+  // stale Undo (Important 3).
+  const stageInfo = placedToast && autoPlaceUndo
+    ? (autoPlaceFlexCleared ? 'Bars auto-placed. Flex was cleared because the bars moved.' : 'Bars auto-placed.')
+    : flexClearedInfo;
+  const stageNoticeAction = placedToast && autoPlaceUndo ? { label: 'Undo', onClick: undoAutoPlace } : undefined;
 
   return (
     <>
@@ -1959,7 +2000,8 @@ export function SyncPanel({
                   score={score}
                   dispatch={studioDispatch}
                   notice={editNotice ?? autoPlaceNotice ?? alignNotice}
-                  noticeAction={autoPlaceUndo ? { label: 'Undo', onClick: undoAutoPlace } : undefined}
+                  info={stageInfo}
+                  noticeAction={stageNoticeAction}
                   measureTimings={measureTimings}
                   getCurrentSeconds={getTimelineSeconds}
                   recordingSource={recordingSource}

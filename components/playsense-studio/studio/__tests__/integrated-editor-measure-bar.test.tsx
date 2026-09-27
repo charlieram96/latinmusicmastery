@@ -249,8 +249,9 @@ describe('IntegratedEditor measure bar', () => {
 
   // Final review Important 3 / Minor 2: `notice` (a SyncPanel-level failure,
   // e.g. a refused edit or a failed Auto-place/Auto-align) turns the toast
-  // red and, given `noticeAction`, adds a button to it. The local `flash`
-  // confirmation stays neutral and never gets a button.
+  // red and never shows a `noticeAction` button — that's reserved for the
+  // neutral `info` slot (see below). The local `flash` confirmation stays
+  // neutral and never gets a button either.
   it('the flash toast (a neutral confirmation) is not styled as an error', () => {
     render();
     key('ArrowRight');
@@ -261,16 +262,16 @@ describe('IntegratedEditor measure bar', () => {
     expect(toast.querySelector('button')).toBeNull();
   });
 
-  it('shows a passed-in notice as a red toast, with an action button when given', () => {
+  it('shows a passed-in notice as a red toast, with no action button even when one is given', () => {
+    // A failed Auto-place/Auto-align (`notice`) must never pair with an Undo
+    // for some earlier, unrelated success (Important 3): the action only ever
+    // shows alongside `info`.
     const onUndo = vi.fn();
     render({ notice: 'Not enough clear hits to place the bars.', noticeAction: { label: 'Undo', onClick: onUndo } });
     const toast = host.querySelector('.st-toast')!;
     expect(toast.classList.contains('is-bad')).toBe(true);
-    expect(toast.textContent).toBe('Not enough clear hits to place the bars.Undo');
-    const btn = toast.querySelector('button')!;
-    expect(btn.textContent).toBe('Undo');
-    act(() => { btn.click(); });
-    expect(onUndo).toHaveBeenCalledTimes(1);
+    expect(toast.textContent).toBe('Not enough clear hits to place the bars.');
+    expect(toast.querySelector('button')).toBeNull();
   });
 
   it('notice wins over flash and shows no button without a noticeAction', () => {
@@ -279,6 +280,38 @@ describe('IntegratedEditor measure bar', () => {
     act(() => { barButton('Clear').click(); }); // would also set the flash
     const toast = host.querySelector('.st-toast')!;
     expect(toast.textContent).toBe('Not enough clear hits to align the exercise.');
+    expect(toast.querySelector('button')).toBeNull();
+  });
+
+  // Final review (Studio layout pass): a neutral `info` slot, distinct from
+  // the red `notice` — Auto-place's "Bars auto-placed." toast needs a visible
+  // Undo without reading as an error.
+  it('shows a passed-in info as a neutral toast, with an action button when given', () => {
+    const onUndo = vi.fn();
+    render({ info: 'Bars auto-placed.', noticeAction: { label: 'Undo', onClick: onUndo } });
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.classList.contains('is-bad')).toBe(false);
+    expect(toast.textContent).toBe('Bars auto-placed.Undo');
+    const btn = toast.querySelector('button')!;
+    expect(btn.textContent).toBe('Undo');
+    act(() => { btn.click(); });
+    expect(onUndo).toHaveBeenCalledTimes(1);
+  });
+
+  it('info without a noticeAction shows no button', () => {
+    render({ info: 'Flex was cleared because the bars moved' });
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.classList.contains('is-bad')).toBe(false);
+    expect(toast.textContent).toBe('Flex was cleared because the bars moved');
+    expect(toast.querySelector('button')).toBeNull();
+  });
+
+  it('notice wins over info and flash, and never shows an action button', () => {
+    const onUndo = vi.fn();
+    render({ notice: 'Not enough clear hits to place the bars.', info: 'Bars auto-placed.', noticeAction: { label: 'Undo', onClick: onUndo } });
+    const toast = host.querySelector('.st-toast')!;
+    expect(toast.classList.contains('is-bad')).toBe(true);
+    expect(toast.textContent).toBe('Not enough clear hits to place the bars.');
     expect(toast.querySelector('button')).toBeNull();
   });
 

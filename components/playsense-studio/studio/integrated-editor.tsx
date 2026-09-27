@@ -82,13 +82,15 @@ export interface IntegratedEditorProps {
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
   /** A refused structural edit, or another sync-panel notice (Auto-place /
-   *  Auto-align failing), shown in the stage toast in red. Distinct from the
-   *  editor's own local `flash` (a neutral confirmation), which the toast
-   *  falls back to when this is unset. */
+   *  Auto-align failing), shown in the stage toast in red. Wins over `info`
+   *  and the editor's own local `flash` (a neutral confirmation). */
   notice?: string | null;
-  /** Shown as a button at the end of the toast while `notice` is displaying
-   *  (e.g. "Undo" for an Auto-place that's still undoable). Ignored while the
-   *  toast is showing `flash` instead. */
+  /** A neutral (non-error) sync-panel message — e.g. "Bars auto-placed." or
+   *  "Flex was cleared because the bars moved." — shown in the toast without
+   *  the red styling. Falls back to `flash` when unset; loses to `notice`. */
+  info?: string | null;
+  /** Shown as a button at the end of the toast while `info` (never `notice`)
+   *  is displaying (e.g. "Undo" for an Auto-place that's still undoable). */
   noticeAction?: { label: string; onClick: () => void } | null;
   /** Per-measure audio span from the markers (track 0). */
   measureTimings: IntegratedEditorMeasureTiming[];
@@ -145,6 +147,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   score,
   dispatch,
   notice,
+  info,
   noticeAction,
   measureTimings,
   getCurrentSeconds,
@@ -1074,10 +1077,10 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           {stripCorner}
         </div>
       )}
-      {(notice || flash) && (
+      {(notice || info || flash) && (
         <p role="status" className={`st-toast${notice ? ' is-bad' : ''}`}>
-          {notice ?? flash}
-          {notice && noticeAction && (
+          {notice ?? info ?? flash}
+          {!notice && info && noticeAction && (
             <button type="button" onClick={noticeAction.onClick}>{noticeAction.label}</button>
           )}
         </p>
