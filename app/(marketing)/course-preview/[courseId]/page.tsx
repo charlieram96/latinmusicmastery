@@ -67,7 +67,6 @@ export default async function CoursePreviewPage({ params }: { params: Params }) 
   const styleRow = raw.musical_styles && !Array.isArray(raw.musical_styles) ? raw.musical_styles : null
   const countryRow = styleRow?.countries && !Array.isArray(styleRow.countries) ? styleRow.countries : null
   const styleName = styleRow ? pick(locale, styleRow.name, styleRow.name_es ?? '') || styleRow.name : null
-  const countryName = countryRow ? pick(locale, countryRow.name, countryRow.name_es ?? '') || countryRow.name : null
   const inst = course.instrument ? instrumentLabel(course.instrument, locale) : null
 
   const [{ data: sectionRows }, catalog, pricing] = await Promise.all([

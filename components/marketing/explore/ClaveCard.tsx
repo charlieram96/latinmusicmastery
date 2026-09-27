@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { BASS_HITS, BONGO_HITS, type ClaveKey } from '@/lib/marketing/style-clave'
 
 type T = (key: string, params?: Record<string, string | number>) => string
@@ -30,7 +31,7 @@ export function ClaveCard({ clave, hits, t }: { clave: ClaveKey; hits: number[];
         <div>{STEPS.map(s => (s % 2 ? <span key={s}>&amp;</span> : <b key={s}>{(s % 8) / 2 + 1}</b>))}</div>
       </div>
       <p style={{ color: 'var(--humo)', fontSize: 14.5, marginTop: 16 }}>{k(clave === 'son32' ? 'noteSon' : 'noteRumba')}</p>
-      <a className="btn btn-ghost btn-sm" href="/#groove" style={{ marginTop: 16 }}>{k('hear')}</a>
+      <Link className="btn btn-ghost btn-sm" href="/#groove" style={{ marginTop: 16 }}>{k('hear')}</Link>
     </div>
   )
 }
