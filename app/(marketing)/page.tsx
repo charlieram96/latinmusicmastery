@@ -1,9 +1,15 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
-import { getServerTranslator, getServerLocale } from '@/lib/i18n/server'
-import { localizeRows, localizeRow, localizeTeachers, COUNTRY_FIELDS, STYLE_FIELDS, INSTRUMENT_FIELDS } from '@/lib/i18n/localize'
-import { getPricing } from '@/lib/payments/pricing-source'
+import './styles/home.css'
+import { getServerTranslator } from '@/lib/i18n/server'
+import { instrumentLabel } from '@/lib/i18n/instruments'
+import { getPricing, formatCents } from '@/lib/payments/pricing-source'
+import { getMarketingCatalog } from '@/lib/marketing/data'
+import { SEATS, defaultSeatKey } from '@/lib/marketing/stage-plot'
+import { Finale } from '@/components/marketing/site/Finale'
+import { Marquee } from '@/components/marketing/home/Marquee'
+import { Numbers } from '@/components/marketing/home/Numbers'
+import type { PlotSeat } from '@/components/marketing/home/StagePlot'
+import { AtlasSection, GrooveSection, HeroSection, MaestrosSection, PlaySenseSection, PricingSection, StageSection } from '@/components/marketing/home/sections'
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getServerTranslator()
@@ -17,103 +23,56 @@ export async function generateMetadata(): Promise<Metadata> {
     },
   }
 }
-import VideoHero from '@/components/marketing/VideoHero'
-import StatsBar from '@/components/marketing/StatsBar'
-import { HomeCourseShowcase } from './sections/HomeCourseShowcase'
-import { HomeFeaturesSection } from './sections/HomeFeaturesSection'
-import { HomeInstructorsSection } from './sections/HomeInstructorsSection'
-import { HomeTestimonialsSection } from './sections/HomeTestimonialsSection'
-import { HomePricingPreview } from './sections/HomePricingPreview'
-import { HomeSocialSection } from './sections/HomeSocialSection'
-import { WaitlistForm } from '@/components/marketing/WaitlistForm'
 
 export default async function MarketingHomePage() {
-  const supabase = await createClient()
-  const { t } = await getServerTranslator()
-
-  const [{ data: countries }, { data: teachers }, { data: instruments }, { data: musicalStyles }] = await Promise.all([
-    supabase
-      .from('countries')
-      .select(`
-        id,
-        name,
-        name_es,
-        slug,
-        description,
-        description_es,
-        image_url,
-        musical_styles (
-          id,
-          name,
-          name_es,
-          slug,
-          description,
-          description_es
-        )
-      `)
-      .order('name'),
-    supabase
-      .from('teachers')
-      .select('id, name, instrument, instrument_es, bio, bio_es, image_url, specialties')
-      .order('name'),
-    supabase
-      .from('instruments')
-      .select('id, name, name_es, slug, image_url')
-      .order('name'),
-    supabase
-      .from('musical_styles')
-      .select('id, name, name_es')
-      .order('name'),
-  ])
-
-  const locale = await getServerLocale()
-  for (const country of countries ?? []) {
-    localizeRow(country as Record<string, unknown>, locale, COUNTRY_FIELDS)
-    localizeRows((country as any).musical_styles as Record<string, unknown>[] | null, locale, STYLE_FIELDS)
+  const { t, locale } = await getServerTranslator()
+  const [catalog, pricing] = await Promise.all([getMarketingCatalog(locale), getPricing()])
+  const prices = {
+    base_monthly: pricing.base_monthly.amount_cents,
+    base_annual: pricing.base_annual.amount_cents,
+    addon_monthly: pricing.addon_monthly.amount_cents,
   }
-  localizeRows(musicalStyles as Record<string, unknown>[] | null, locale, STYLE_FIELDS)
-  localizeTeachers(teachers as Record<string, unknown>[] | null, locale)
-  localizeRows(instruments as Record<string, unknown>[] | null, locale, INSTRUMENT_FIELDS)
 
-  const waitlistInstruments = (instruments ?? []).map(({ id, name }) => ({ id, name }))
-  const waitlistStyles = musicalStyles ?? []
-  const prices = await getPricing()
+  const teacherById = new Map(catalog.teachers.map(tc => [tc.id, tc]))
+  const seats: Record<string, PlotSeat> = {}
+  for (const seat of SEATS) {
+    const inst = catalog.instruments.find(i => i.key === seat.key)
+    const teacherIds = inst?.teacherIds ?? catalog.teachers.filter(tc => tc.seatKeys.includes(seat.key)).map(tc => tc.id)
+    seats[seat.key] = {
+      key: seat.key,
+      label: instrumentLabel(seat.key, locale),
+      soon: !inst || inst.total === 0,
+      hasFundamentals: !!inst?.fundamentals,
+      total: inst?.total ?? 0,
+      styles: (inst?.courses ?? []).map(c => ({ id: c.id, name: c.styleName ?? c.title })),
+      teachers: teacherIds.flatMap(id => {
+        const tc = teacherById.get(id)
+        return tc ? [{ id: tc.id, name: tc.name, instrument: tc.instrument, imageUrl: tc.imageUrl }] : []
+      }),
+    }
+  }
+  const defaultKey = defaultSeatKey(catalog.instruments)
+
+  const patricio = catalog.teachers.find(tc => tc.name.includes('Patricio'))
+  const chip = patricio?.imageUrl ? { name: patricio.name, imageUrl: patricio.imageUrl } : null
+
+  const calcInstruments = catalog.instruments
+    .filter(i => i.courses.length > 0)
+    .map(i => ({ key: i.key, label: instrumentLabel(i.key, locale), styleCourses: i.courses.length }))
+  const calcDefault = calcInstruments.some(i => i.key === defaultKey) ? defaultKey : calcInstruments[0]?.key ?? ''
 
   return (
-    <div data-marketing>
-      <div className="flex min-h-screen flex-col">
-        <VideoHero instruments={waitlistInstruments} styles={waitlistStyles} />
-        <StatsBar />
-      </div>
-      {countries && countries.length > 0 && (
-        <HomeCourseShowcase countries={countries} />
-      )}
-      <HomeFeaturesSection />
-      {teachers && teachers.length > 0 && (
-        <HomeInstructorsSection instructors={teachers} />
-      )}
-      <HomeTestimonialsSection />
-      <HomePricingPreview instruments={instruments ?? []} prices={prices} />
-      <HomeSocialSection />
-      <section id="waitlist" className="relative overflow-hidden py-20 sm:py-28">
-        <Image
-          src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&auto=format&fit=crop&q=80"
-          alt={t('marketing.home.waitlistImageAlt')}
-          fill
-          className="object-cover"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-black/65" />
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <WaitlistForm
-            title={t('marketing.home.waitlistTitle')}
-            subtitle={t('marketing.home.waitlistSubtitle')}
-            variant="immersive"
-            instruments={waitlistInstruments}
-            styles={waitlistStyles}
-          />
-        </div>
-      </section>
-    </div>
+    <>
+      <HeroSection t={t} counts={catalog.counts} price={formatCents(prices.base_monthly)} chip={chip} />
+      <Marquee countries={catalog.countries} label={t('marketing.site.home.marquee.label')} />
+      <Numbers counts={catalog.counts} />
+      <StageSection t={t} seats={seats} defaultKey={defaultKey} />
+      <AtlasSection t={t} countries={catalog.countries} />
+      <GrooveSection t={t} />
+      <PlaySenseSection t={t} />
+      <MaestrosSection t={t} teachers={catalog.teachers.filter(tc => tc.imageUrl)} />
+      <PricingSection t={t} instruments={calcInstruments} prices={prices} defaultKey={calcDefault} />
+      <Finale />
+    </>
   )
 }

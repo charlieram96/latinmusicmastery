@@ -201,6 +201,151 @@
         "perfect": "Perfecto"
       },
       "home": {
+        "hero": {
+          "open": "Lista de espera abierta",
+          "maestros": "{n} maestros",
+          "instruments": "{n} instrumentos",
+          "h1Label": "Aprende con los maestros de la música latina",
+          "line1": "Aprende con",
+          "line2": "los maestros",
+          "line3": "de la música latina.",
+          "subA": "Son, mambo, timba, bolero, bomba, plena y más, enseñados por los músicos que los tocan cada noche.",
+          "subEm": "PlaySense escucha mientras tocas",
+          "subB": "y te dice, nota por nota, si estás en clave.",
+          "notePrefix": "Precio fundador desde",
+          "notePer": "/mes",
+          "noteSuffix": "· un instrumento + un estilo",
+          "keysLabel": "Teclas de piano que muestran una sesión en vivo de la banda. Toca una tecla para oír su nota.",
+          "key": {
+            "c4": "Tocar Do, C4",
+            "cs4": "Tocar Do sostenido, C sostenido 4",
+            "d4": "Tocar Re, D4",
+            "ds4": "Tocar Re sostenido, D sostenido 4",
+            "e4": "Tocar Mi, E4"
+          },
+          "chipCaption": "Timbal · alumno de Changuito"
+        },
+        "marquee": {
+          "label": "Estilos que enseñamos"
+        },
+        "numbers": {
+          "courses": "Cursos",
+          "maestros": "Maestros",
+          "instruments": "Instrumentos",
+          "styles": "Estilos",
+          "countries": "Países"
+        },
+        "stage": {
+          "eyebrow": "Elige tu instrumento",
+          "title": "Toma tu lugar",
+          "accent": "en la orquesta.",
+          "lede": "Este es el plano de escenario de una orquesta de salsa. Cada puesto es un instrumento que enseñamos. Elige un puesto para ver sus cursos y quién lo enseña.",
+          "plotLabel": "Plano de escenario. Elige un puesto para ver sus cursos.",
+          "riser": "TARIMA 8′×24′ · +16″",
+          "audience": "▼ PÚBLICO ▼",
+          "soonTag": "PRONTO",
+          "metaTitle": "Plano de escenario",
+          "metaLine": "Orquesta · {n} puestos",
+          "comingSoon": "próximamente",
+          "courses": "cursos",
+          "courseOne": "curso",
+          "coursesLabel": "Cursos",
+          "inProduction": "Cursos en producción",
+          "fundamentals": "Fundamentos",
+          "taughtBy": "Con",
+          "tba": "Instructor por anunciar.",
+          "notify": "Avísame",
+          "browse": "Ver cursos de {instrument}",
+          "fundamentalsIncluded": "Fundamentos incluidos"
+        },
+        "atlas": {
+          "eyebrow": "Elige un estilo",
+          "title": "Cuatro países.",
+          "accent": "Una clave.",
+          "lede": "Cada estilo se enseña por instrumento, desde la raíz: de dónde viene, cómo se toca en la banda y qué hace cada músico.",
+          "live": "Disponible",
+          "soon": "Próximamente",
+          "stylesLive": "{live}/{total} estilos disponibles"
+        },
+        "groove": {
+          "eyebrow": "La clave",
+          "title": "Todo empieza",
+          "accent": "con la clave.",
+          "lede": "Cinco partes de un son montuno, cada una en su carril. Dale play, silencia un instrumento o toca una celda para cambiar el patrón. Así se siente tocar dentro de la banda.",
+          "play": "Escuchar el groove",
+          "stop": "Parar",
+          "claveLabel": "Patrón de clave",
+          "clave": {
+            "son32": "Son 3-2",
+            "son23": "2-3",
+            "rumba32": "Rumba"
+          },
+          "tempo": "Tempo",
+          "slower": "Más lento",
+          "faster": "Más rápido",
+          "mute": "Silenciar {name}",
+          "cell": "{name}, paso {n}",
+          "foot": "Toca el nombre para silenciar. Clave, campana, conga, bajo y piano sintetizados en el navegador.",
+          "inst": {
+            "clave": {
+              "name": "Clave",
+              "part": "Clave de son"
+            },
+            "campana": {
+              "name": "Campana",
+              "part": "Campana"
+            },
+            "conga": {
+              "name": "Conga",
+              "part": "Tumbao"
+            },
+            "bajo": {
+              "name": "Bajo",
+              "part": "Tumbao"
+            },
+            "piano": {
+              "name": "Piano",
+              "part": "Montuno"
+            }
+          }
+        },
+        "playsense": {
+          "title": "Entra a la sesión.",
+          "accent": "Miami, al atardecer.",
+          "lede": "El sol acaba de ponerse sobre la bahía de Biscayne y la banda está lista. Las notas bajan por el muelle hasta tu instrumento y PlaySense escucha cada golpe.",
+          "f1Title": "Retroalimentación en tiempo real",
+          "f1Body": "Tu micrófono escucha cada golpe y lo califica: perfecto, adelantado o tarde.",
+          "f2Title": "Toca con la banda",
+          "f2Body": "Bajo, teclado y timbales tocan contigo. Silencia tu parte y llena el hueco.",
+          "f3Title": "La partitura cuando la quieras",
+          "f3Body": "Cambia a la partitura sincronizada con el video, compás por compás.",
+          "f4Title": "Loop y velocidad",
+          "f4Body": "Repite cualquier compás a la velocidad que necesites.",
+          "cta": "Ver PlaySense"
+        },
+        "maestros": {
+          "eyebrow": "Los maestros",
+          "title": "Aprende de quien",
+          "accent": "lo toca de verdad.",
+          "lede": "Percusionistas, pianistas, bajistas, vientos y voces. Cada uno enseña el instrumento con el que se gana la vida.",
+          "prev": "Maestros anteriores",
+          "next": "Más maestros",
+          "railLabel": "Maestros"
+        },
+        "pricing": {
+          "eyebrow": "Precios",
+          "title": "Un instrumento.",
+          "accent": "Todo lo que necesita.",
+          "lede": "Cada suscripción incluye los fundamentos de tu instrumento y un curso de estilo. Agrega más estilos cuando quieras.",
+          "includes": "Cada plan incluye",
+          "inc1": "Curso de fundamentos de tu instrumento",
+          "inc2": "Un curso de estilo a tu elección",
+          "inc3": "PlaySense: partitura sincronizada y retroalimentación",
+          "inc4": "Racha, meta semanal y calendario de práctica",
+          "inc5": "Contenido nuevo cada mes · cancela cuando quieras",
+          "allAccess": "Acceso total",
+          "allAccessBody": "Todos los instrumentos y todos los estilos."
+        },
         "_": "keys above this line"
       },
       "explore": {
