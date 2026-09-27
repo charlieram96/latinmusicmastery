@@ -20,6 +20,7 @@ import { Sleeve } from '@/components/marketing/site/Sleeve'
 import { StageClip } from '@/components/marketing/site/StageClip'
 import { Finale } from '@/components/marketing/site/Finale'
 import { Curriculum, type CurriculumSection } from '@/components/marketing/explore/Curriculum'
+import { sleeveSeed } from '@/components/marketing/explore/Poster'
 import '../../styles/explore.css'
 
 type Params = Promise<{ courseId: string }>
@@ -158,7 +159,7 @@ export default async function CoursePreviewPage({ params }: { params: Params }) 
               title={sleeveTitle}
               topLeft={inst ?? undefined}
               topRight={course.is_fundamentals ? t('marketing.site.explore.start') : countryCode}
-              seed={(styleRow?.name ?? 'Fundamentals') + (course.instrument ?? '')}
+              seed={sleeveSeed(styleRow?.name, course.instrument)}
             />
           </div>
         </div>

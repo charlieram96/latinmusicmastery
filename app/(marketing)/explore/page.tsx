@@ -4,6 +4,7 @@ import { getServerTranslator } from '@/lib/i18n/server'
 import { getMarketingCatalog } from '@/lib/marketing/data'
 import { COUNTRY_META } from '@/lib/marketing/catalog'
 import { initialInstrument } from '@/lib/marketing/explore-filter'
+import { getEnglishStyleNames } from '@/lib/marketing/style-names'
 import { Accent } from '@/components/marketing/site/PageHead'
 import { StyleAtlas } from '@/components/marketing/site/StyleAtlas'
 import { Reveal } from '@/components/marketing/site/Reveal'
@@ -23,7 +24,7 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
   const sp = await searchParams
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
   const { t, locale } = await getServerTranslator()
-  const catalog = await getMarketingCatalog(locale)
+  const [catalog, englishStyles] = await Promise.all([getMarketingCatalog(locale), getEnglishStyleNames()])
 
   // Old contract: /explore?style=<slug> now lives at the style page.
   const styleSlug = one(sp.style)
@@ -46,6 +47,7 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
     <>
       <ExploreBrowser
         courses={courses}
+        englishStyles={englishStyles}
         instruments={catalog.instruments.map(i => ({ key: i.key, count: i.total }))}
         countries={countries.map(c => ({ slug: c.slug, name: c.name, live: c.styles.some(s => s.live) }))}
         initialInstrument={initialInstrument(one(sp.instrument), catalog.instruments.map(i => i.key))}

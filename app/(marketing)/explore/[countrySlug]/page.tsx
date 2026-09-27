@@ -5,6 +5,7 @@ import { getServerTranslator } from '@/lib/i18n/server'
 import { getMarketingCatalog } from '@/lib/marketing/data'
 import { INSTRUMENT_ORDER } from '@/lib/marketing/catalog'
 import { sortCourses } from '@/lib/marketing/explore-filter'
+import { getEnglishStyleNames } from '@/lib/marketing/style-names'
 import { PageHead, Accent } from '@/components/marketing/site/PageHead'
 import { Reveal } from '@/components/marketing/site/Reveal'
 import { Finale } from '@/components/marketing/site/Finale'
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 export default async function CountryPage({ params }: { params: Params }) {
   const { countrySlug } = await params
   const { t, locale } = await getServerTranslator()
-  const catalog = await getMarketingCatalog(locale)
+  const [catalog, englishStyles] = await Promise.all([getMarketingCatalog(locale), getEnglishStyleNames()])
   const country = catalog.countries.find(c => c.slug === countrySlug)
   if (!country) notFound()
 
@@ -72,7 +73,7 @@ export default async function CountryPage({ params }: { params: Params }) {
             </div>
           </Reveal>
           {courses.length
-            ? <div className="posters" style={{ paddingTop: 0 }}>{courses.map((c, i) => <Poster key={c.id} course={c} t={t} locale={locale} index={i} />)}</div>
+            ? <div className="posters" style={{ paddingTop: 0 }}>{courses.map((c, i) => <Poster key={c.id} course={c} t={t} locale={locale} englishStyle={c.styleSlug ? englishStyles[c.styleSlug] ?? null : null} index={i} />)}</div>
             : <p className="empty">{k('empty', { country: country.name })}</p>}
         </div>
       </section>

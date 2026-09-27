@@ -7,6 +7,7 @@ import type { Locale } from '@/lib/i18n'
 import { getMarketingCatalog } from '@/lib/marketing/data'
 import { INSTRUMENT_ORDER } from '@/lib/marketing/catalog'
 import { sortCourses } from '@/lib/marketing/explore-filter'
+import { getEnglishStyleNames } from '@/lib/marketing/style-names'
 import { teachersForStyle } from '@/lib/marketing/style-teachers'
 import { claveForStyle } from '@/lib/marketing/style-clave'
 import { splitTitleAccent } from '@/lib/marketing/title-accent'
@@ -54,6 +55,7 @@ export default async function StylePage({ params }: { params: Params }) {
   const found = await load(countrySlug, styleSlug, locale)
   if (!found) notFound()
   const { catalog, country, style } = found
+  const englishStyles = await getEnglishStyleNames()
 
   const supabase = await createClient()
   const { data: row } = await supabase
@@ -119,7 +121,7 @@ export default async function StylePage({ params }: { params: Params }) {
             {courses.length > 0 && <p className="lede">{k('coursesLede', { style: style.name })}</p>}
           </Reveal>
           {courses.length
-            ? <div className="posters" style={{ paddingTop: 0 }}>{courses.map((c, i) => <Poster key={c.id} course={c} t={t} locale={locale} index={i} />)}</div>
+            ? <div className="posters" style={{ paddingTop: 0 }}>{courses.map((c, i) => <Poster key={c.id} course={c} t={t} locale={locale} englishStyle={c.styleSlug ? englishStyles[c.styleSlug] ?? null : null} index={i} />)}</div>
             : <p className="empty">{k('coursesEmpty', { style: style.name })}</p>}
         </div>
       </section>

@@ -7,7 +7,10 @@ import type { Locale } from '@/lib/i18n'
 type T = (key: string, params?: Record<string, string | number>) => string
 
 /** A course as a record sleeve plus its caption, linking to the course preview. */
-export function Poster({ course, t, locale, index = 0 }: { course: CatalogCourse; t: T; locale: Locale; index?: number }) {
+/** Sleeve seed shared by every page: the ENGLISH style name (or 'Fundamentals') + the raw instrument value. */
+export const sleeveSeed = (englishStyle: string | null | undefined, instrument: string | null | undefined) => `${englishStyle ?? 'Fundamentals'}${instrument ?? ''}`
+
+export function Poster({ course, t, locale, englishStyle, index = 0 }: { course: CatalogCourse; t: T; locale: Locale; englishStyle: string | null; index?: number }) {
   const inst = instrumentLabel(course.instrument, locale)
   const style = course.styleName
   const sleeveTitle = course.fundamentals
@@ -22,7 +25,7 @@ export function Poster({ course, t, locale, index = 0 }: { course: CatalogCourse
         title={sleeveTitle}
         topLeft={inst}
         topRight={course.fundamentals ? t('marketing.site.explore.start') : course.countryCode ?? undefined}
-        seed={(style ?? 'Fundamentals') + course.instrument}
+        seed={sleeveSeed(englishStyle, course.instrument)}
       />
       <div className="pmeta"><b>{caption}</b><span aria-hidden="true">{t('marketing.site.common.previewArrow')}</span></div>
     </Link>

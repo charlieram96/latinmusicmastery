@@ -16,8 +16,10 @@ export type ExploreCountry = { slug: string; name: string; live: boolean }
  * the poster grid, all filtering the catalog in the browser. The instrument
  * chip is mirrored to `?instrument=` so the view can be shared.
  */
-export function ExploreBrowser({ courses, instruments, countries, initialInstrument, crumbs }: {
+export function ExploreBrowser({ courses, englishStyles, instruments, countries, initialInstrument, crumbs }: {
   courses: CatalogCourse[]
+  /** slug → English style name, for sleeve seeds. */
+  englishStyles: Record<string, string>
   instruments: ExploreInstrument[]
   countries: ExploreCountry[]
   initialInstrument: string
@@ -81,7 +83,7 @@ export function ExploreBrowser({ courses, instruments, countries, initialInstrum
           <b>{list.length}</b> {t(list.length === 1 ? 'marketing.site.common.coursesOne' : 'marketing.site.common.courses')}
         </p>
         {list.length
-          ? <div className="posters">{list.map((c, i) => <Poster key={c.id} course={c} t={t} locale={locale} index={i} />)}</div>
+          ? <div className="posters">{list.map((c, i) => <Poster key={c.id} course={c} t={t} locale={locale} englishStyle={c.styleSlug ? englishStyles[c.styleSlug] ?? null : null} index={i} />)}</div>
           : <p className="empty">{k('empty')}</p>}
       </div>
     </>
