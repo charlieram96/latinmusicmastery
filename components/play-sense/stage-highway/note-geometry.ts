@@ -20,9 +20,9 @@ export function entranceGlow(): THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMate
     fragmentShader: `varying vec2 vUv; uniform float phase; uniform float motion;
       void main(){
         float edge=smoothstep(0.,.12,vUv.x)*smoothstep(0.,.12,1.-vUv.x);
-        float mist=pow(1.-vUv.y,3.)*smoothstep(0.,.06,vUv.y);
-        float rays=.7+.3*pow(.5+.5*sin(vUv.x*72.+phase*motion),6.);
-        gl_FragColor=vec4(vec3(.94,.8,.57),edge*mist*rays*.16);
+        float mist=pow(max(0.,1.-vUv.y),3.)*smoothstep(0.,.06,vUv.y);
+        float rays=.7+.3*pow(max(0.,.5+.5*sin(vUv.x*72.+phase*motion)),6.);
+        gl_FragColor=vec4(vec3(.94,.62,.4),edge*mist*rays*.07);
       }`,
   })
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(10.7, .7), material)
@@ -79,8 +79,8 @@ export function strikeAura(color: THREE.Color): THREE.Mesh<THREE.PlaneGeometry, 
     fragmentShader: `varying vec2 vUv; uniform vec3 tint; uniform float energy;
       void main(){
         float width=pow(max(0.,1.-abs(vUv.x-.5)*2.),2.);
-        float height=pow(1.-vUv.y,2.2)*smoothstep(0.,.06,vUv.y);
-        float rays=.55+.45*pow(.5+.5*cos(vUv.x*62.8),8.);
+        float height=pow(max(0.,1.-vUv.y),2.2)*smoothstep(0.,.06,vUv.y);
+        float rays=.55+.45*pow(max(0.,.5+.5*cos(vUv.x*62.8)),8.);
         gl_FragColor=vec4(tint*1.7,width*height*rays*energy*.75);
       }`,
   })

@@ -4,7 +4,6 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
@@ -14,9 +13,8 @@ import { APPROACH_SECONDS, FAR_Z, HIT_Z, RUNWAY_WIDTH, changedJudgments, createS
 import { STAGE_THEMES, type StageThemeId } from './themes'
 import { box, buildDrum, buildEnvironment, buildPad, disposeObject, glowTexture, labelSprite, lightMaterial, material } from './objects'
 import { block, contactShadow, cylinder, metal, rod, textured } from './craft'
-import { buildAfterhours, type AfterhoursSet } from './afterhours'
+import { buildMalecon, createComposer, laneLightTexture, NOTE_LAYOUT, noteCore, noteHead, notePool, tunnelTexture, DECK_TOP } from './malecon'
 import { colorNoteEmission, entranceGlow, noteChevronGeometry, noteGemGeometry, noteTrailTexture, strikeAura } from './note-geometry'
-import { animateStudioWindow } from './window-motion'
 import { observeFrameResize } from './frame-resize'
 
 interface Receptor { object: THREE.Object3D; glow: THREE.Sprite; energy: number; homeY: number; aura: ReturnType<typeof strikeAura> }
@@ -101,6 +99,7 @@ export class StageRenderer {
   private renderer: THREE.WebGLRenderer
   private scene = new THREE.Scene()
   private camera = new THREE.PerspectiveCamera(47, 1, 0.1, 160)
+  private clock = 0
   private composer: EffectComposer | null = null
   private bloom: UnrealBloomPass | null = null
   private viewport: ReturnType<typeof observeFrameResize>
@@ -124,15 +123,14 @@ export class StageRenderer {
   private dummy = new THREE.Object3D()
   private colors: THREE.Color[]
   private tint = new THREE.Color()
-  private afterhours: AfterhoursSet | null = null
+  private malecon: ReturnType<typeof buildMalecon> | null = null
+  private grade: ReturnType<typeof createComposer>['grade'] | null = null
+  private lastCombo = 0
   private stageEnergy = 0
   private boardFallback = new THREE.Group()
-  private authoredNotes = false
   private labels: { sprite: THREE.Sprite; aspect: number; maxWidth: number; pixels: number }[] = []
   private labelPosition = new THREE.Vector3()
   private sourceGlow: ReturnType<typeof entranceGlow> | null = null
-  private sourceLight: THREE.PointLight | null = null
-  private windowMotion: ReturnType<typeof animateStudioWindow> | null = null
   private receptors: Receptor[] = []
   private bursts: Burst[] = []
   private burstCursor = 0
@@ -161,7 +159,7 @@ export class StageRenderer {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, options.quality === 'low' ? 1 : 1.5))
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
-    this.renderer.toneMappingExposure = studio ? 1.02 : 1.25
+    this.renderer.toneMappingExposure = studio ? .9 : 1.25
     this.renderer.shadowMap.enabled = studio && options.quality !== 'low'
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
     // The set is static; bake its shadow once instead of re-rendering every bolt per frame.
@@ -179,65 +177,71 @@ export class StageRenderer {
     this.colors = this.lanes.map((lane, index) => new THREE.Color(theme.colors[exercise.instrument === 'piano' ? (lane.black ? 1 : 0) : index % theme.colors.length]))
     this.glowMap = glowTexture()
 
-    this.scene.add(new THREE.HemisphereLight(studio ? 0xd8c8a6 : 0xdceaff, studio ? 0x463322 : theme.background, studio ? .56 : 2.3))
-    const key = new THREE.DirectionalLight(0xffd29a, studio ? 1.85 : 4.5)
-    key.position.set(-10, 16, 5); this.scene.add(key)
     if (studio) {
-      key.castShadow = true
-      key.shadow.mapSize.set(2048, 2048)
-      Object.assign(key.shadow.camera, { left: -20, right: 20, top: 23, bottom: -20, near: 1, far: 70 })
-      key.shadow.camera.updateProjectionMatrix()
-      key.shadow.normalBias = 0.045; key.shadow.bias = -0.0002
-      key.target.position.set(0, -1, -6); this.scene.add(key.target)
-      const pmrem = new THREE.PMREMGenerator(this.renderer)
-      const room = new RoomEnvironment()
-      this.environmentMap = pmrem.fromScene(room, 0.04)
-      this.scene.environment = this.environmentMap.texture
-      this.scene.environmentIntensity = 0.35
-      room.dispose(); pmrem.dispose()
-      const warm = new THREE.PointLight(0xffb568, 90, 24, 2)
-      warm.position.set(-9, 5, -4); this.scene.add(warm)
-      const cool = new THREE.PointLight(0xead6ae, 50, 24, 2)
-      cool.position.set(9, 5, -5); this.scene.add(cool)
-    }
-    const rim = new THREE.DirectionalLight(theme.secondary, studio ? .45 : 3)
-    rim.position.set(5, 5, -12); this.scene.add(rim)
-    if (studio) {
-      this.afterhours = buildAfterhours(exercise.instrument)
-      this.scene.add(this.afterhours.group)
+      this.camera.near = .3; this.camera.far = 1600
+      this.malecon = buildMalecon(this.renderer, this.scene, { farZ: this.farZ, quality: options.quality, reducedMotion: options.reducedMotion })
+      this.environmentMap = this.malecon.environment
       this.sourceGlow = entranceGlow()
       this.sourceGlow.material.uniforms.motion.value = options.reducedMotion ? 0 : 1
+      this.sourceGlow.visible = true
       this.scene.add(this.sourceGlow)
-      this.sourceLight = new THREE.PointLight(0xffbe7a, 32, 12, 2)
-      this.sourceLight.position.set(0, 2, this.farZ + 1); this.scene.add(this.sourceLight)
-      for (const [x, y, z] of [[-8.8, 4.65, -12], [8.9, 4.8, -12.8]]) {
-        const pendant = new THREE.PointLight(0xffcd8b, 45, 14, 2)
-        pendant.position.set(x, y, z); this.scene.add(pendant)
-      }
-    } else this.scene.add(buildEnvironment(theme))
+    } else {
+      this.scene.add(new THREE.HemisphereLight(0xdceaff, theme.background, 2.3))
+      const key = new THREE.DirectionalLight(0xffd29a, 4.5)
+      key.position.set(-10, 16, 5); this.scene.add(key)
+      const rim = new THREE.DirectionalLight(theme.secondary, 3)
+      rim.position.set(5, 5, -12); this.scene.add(rim)
+      this.scene.add(buildEnvironment(theme))
+    }
 
-    // Raised runway with a bevelled chassis, inlaid guides and illuminated rails.
     const runwayLength = HIT_Z - this.farZ + 1
     const runwayCenter = (HIT_Z + this.farZ - 1) / 2
-    this.scene.add(this.boardFallback)
-    const deck = new THREE.Mesh(new RoundedBoxGeometry(10.6, 0.35, runwayLength, 2, 0.16), material(theme.deck, studio ? 0.2 : 0.38, 0.62))
-    deck.position.set(0, -0.35, runwayCenter); deck.receiveShadow = true; this.boardFallback.add(deck)
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(160, 180), material(theme.background, 0.15, 0.85))
-    floor.rotation.x = -Math.PI / 2; floor.position.set(0, studio ? -3.5 : -2.5, -30); floor.receiveShadow = true; this.scene.add(floor)
-    for (const side of [-1, 1]) {
-      box(this.boardFallback, 0.12, 0.16, runwayLength, material(theme.metal, 0.9, 0.2), side * 5.32, -0.13, runwayCenter)
-      box(this.boardFallback, 0.026, 0.035, runwayLength, lightMaterial(theme.accent, studio ? 1.2 : 2.1), side * 5.24, 0.015, runwayCenter)
-      box(this.boardFallback, 0.025, 0.018, runwayLength, lightMaterial(theme.secondary, 0.8), side * 5.47, -0.25, runwayCenter)
+    if (studio) {
+      // The pier deck belongs to the set; add brass lane inlays, lane light and the strike line.
+      const inlay = new THREE.MeshStandardMaterial({ color: 0xc8924c, metalness: 1, roughness: .3, emissive: 0x6b4420, emissiveIntensity: .35 })
+      if (exercise.instrument !== 'piano') for (let i = 1; i < this.lanes.length; i++) {
+        box(this.scene, .035, .01, runwayLength + .4, inlay, (this.lanes[i - 1].x + this.lanes[i].x) / 2, DECK_TOP + .004, runwayCenter)
+      }
+      // Readability tunnel: the far lane darkens so incoming notes never sit on the sun's glare.
+      const tunnel = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .3, runwayLength).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x0c0610, alphaMap: tunnelTexture(), transparent: true, opacity: .75, depthWrite: false }))
+      tunnel.position.set(0, DECK_TOP + .002, runwayCenter); tunnel.renderOrder = -1
+      this.scene.add(tunnel)
+      const laneLight = laneLightTexture()
+      this.lanes.forEach((lane, index) => {
+        if (exercise.instrument === 'piano' && lane.black) return
+        const strip = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: laneLight, color: this.colors[index], transparent: true, opacity: exercise.instrument === 'piano' ? .1 : .2, depthWrite: false, blending: THREE.AdditiveBlending }))
+        strip.scale.set(lane.width * (exercise.instrument === 'piano' ? 1 : 1.25), 1, 14)
+        strip.position.set(lane.x, DECK_TOP + .003, HIT_Z - 6.7)
+        this.scene.add(strip)
+      })
+      for (let i = 0; i < 18; i++) {
+        this.beatLines.push(box(this.scene, RUNWAY_WIDTH, .006, .035, new THREE.MeshBasicMaterial({ color: 0xffd9a8, transparent: true, opacity: .07, depthWrite: false, blending: THREE.AdditiveBlending }), 0, DECK_TOP + .005))
+      }
+      box(this.scene, RUNWAY_WIDTH + .5, .03, .06, new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2, 1.35) }), 0, DECK_TOP + .02, HIT_Z)
+      const halo = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .6, 1.1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: laneLightTexture(true), color: 0xffc98a, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending }))
+      halo.position.set(0, DECK_TOP + .008, HIT_Z)
+      this.scene.add(halo)
+    } else {
+      this.scene.add(this.boardFallback)
+      const deck = new THREE.Mesh(new RoundedBoxGeometry(10.6, 0.35, runwayLength, 2, 0.16), material(theme.deck, 0.38, 0.62))
+      deck.position.set(0, -0.35, runwayCenter); this.boardFallback.add(deck)
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(160, 180), material(theme.background, 0.15, 0.85))
+      floor.rotation.x = -Math.PI / 2; floor.position.set(0, -2.5, -30); this.scene.add(floor)
+      for (const side of [-1, 1]) {
+        box(this.boardFallback, 0.12, 0.16, runwayLength, material(theme.metal, 0.9, 0.2), side * 5.32, -0.13, runwayCenter)
+        box(this.boardFallback, 0.026, 0.035, runwayLength, lightMaterial(theme.accent, 2.1), side * 5.24, 0.015, runwayCenter)
+        box(this.boardFallback, 0.025, 0.018, runwayLength, lightMaterial(theme.secondary, 0.8), side * 5.47, -0.25, runwayCenter)
+      }
+      for (const lane of this.lanes) {
+        if (exercise.instrument === 'piano' && lane.black) continue
+        box(this.scene, 0.011, 0.006, runwayLength, new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: exercise.instrument === 'piano' ? 0.08 : 0.16 }), lane.x, -0.16, runwayCenter)
+      }
+      for (let i = 0; i < 18; i++) {
+        this.beatLines.push(box(this.scene, RUNWAY_WIDTH, 0.012, 0.025, new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: i % 4 === 0 ? 0.18 : 0.06 }), 0, -0.14))
+      }
+      box(this.scene, RUNWAY_WIDTH + 0.3, 0.035, 0.07, lightMaterial(theme.accent, 2), 0, 0.04, HIT_Z)
+      box(this.scene, RUNWAY_WIDTH + 0.5, 0.016, 0.23, new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: 0.12 }), 0, 0.025, HIT_Z)
     }
-    for (const lane of this.lanes) {
-      if (exercise.instrument === 'piano' && lane.black) continue
-      box(this.scene, 0.011, 0.006, runwayLength, new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: exercise.instrument === 'piano' ? 0.08 : 0.16 }), lane.x, -0.16, runwayCenter)
-    }
-    for (let i = 0; i < 18; i++) {
-      this.beatLines.push(box(this.scene, RUNWAY_WIDTH, 0.012, 0.025, new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: i % 4 === 0 ? 0.18 : 0.06 }), 0, -0.14))
-    }
-    box(this.scene, RUNWAY_WIDTH + 0.3, 0.035, 0.07, lightMaterial(theme.accent, 2), 0, 0.04, HIT_Z)
-    box(this.scene, RUNWAY_WIDTH + 0.5, 0.016, 0.23, new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: 0.12 }), 0, 0.025, HIT_Z)
 
     // A separate, slightly lower keyboard station clears the board's front apron.
     const pianoForward = 1.05, pianoDrop = .29
@@ -306,12 +310,20 @@ export class StageRenderer {
     }
     this.noteCapacity = capacity
     const piano = exercise.instrument === 'piano'
-    this.heads = new THREE.InstancedMesh(piano ? new RoundedBoxGeometry(1, .25, .64, 2, .055) : noteGemGeometry(.28), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: .72, roughness: .24 }), capacity)
-    const coreMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: .38, metalness: .28, roughness: .2 })
-    colorNoteEmission(coreMaterial)
-    this.cores = new THREE.InstancedMesh(piano ? new RoundedBoxGeometry(.81, .08, .46, 2, .025) : noteGemGeometry(.09, .075), coreMaterial, capacity)
-    this.trims = new THREE.InstancedMesh(piano ? new RoundedBoxGeometry(.6, .025, .045, 1, .01) : noteChevronGeometry(), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), capacity)
-    this.tails = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, map: noteTrailTexture(), transparent: true, opacity: .65, depthWrite: false, blending: THREE.AdditiveBlending }), capacity)
+    const trail = new THREE.MeshBasicMaterial({ color: 0xffffff, map: noteTrailTexture(), transparent: true, opacity: .65, depthWrite: false, blending: THREE.AdditiveBlending })
+    if (studio) {
+      const head = noteHead(), core = noteCore(), pool = notePool()
+      this.heads = new THREE.InstancedMesh(head.geometry, head.material, capacity)
+      this.cores = new THREE.InstancedMesh(core.geometry, core.material, capacity)
+      this.trims = new THREE.InstancedMesh(pool.geometry, pool.material, capacity)
+    } else {
+      this.heads = new THREE.InstancedMesh(piano ? new RoundedBoxGeometry(1, .25, .64, 2, .055) : noteGemGeometry(.28), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: .72, roughness: .24 }), capacity)
+      const coreMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: .38, metalness: .28, roughness: .2 })
+      colorNoteEmission(coreMaterial)
+      this.cores = new THREE.InstancedMesh(piano ? new RoundedBoxGeometry(.81, .08, .46, 2, .025) : noteGemGeometry(.09, .075), coreMaterial, capacity)
+      this.trims = new THREE.InstancedMesh(piano ? new RoundedBoxGeometry(.6, .025, .045, 1, .01) : noteChevronGeometry(), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), capacity)
+    }
+    this.tails = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), trail, capacity)
     for (const mesh of [this.heads, this.cores, this.trims, this.tails]) {
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
       mesh.frustumCulled = false; mesh.count = 0; this.scene.add(mesh)
@@ -335,7 +347,10 @@ export class StageRenderer {
     const geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(positions, 3))
     this.points = new THREE.Points(geometry, new THREE.PointsMaterial({ color: theme.accent, size: 0.035, transparent: true, opacity: 0.45, depthWrite: false }))
     this.scene.add(this.points)
-    if (options.quality !== 'low') {
+    if (options.quality !== 'low' && studio) {
+      const post = createComposer(this.renderer, this.scene, this.camera, theme.bloom)
+      this.composer = post.composer; this.bloom = post.bloom; this.grade = post.grade
+    } else if (options.quality !== 'low') {
       this.composer = new EffectComposer(this.renderer)
       this.composer.addPass(new RenderPass(this.scene, this.camera))
       this.bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), theme.bloom, 0.65, 0.9)
@@ -362,7 +377,6 @@ export class StageRenderer {
     this.frameId = requestAnimationFrame(this.render)
     if (studio && options.quality !== 'low') {
       void this.loadAuthoredInstruments()
-      void this.loadAuthoredPlayfield()
     }
   }
 
@@ -406,6 +420,10 @@ export class StageRenderer {
             for (const value of Object.values(mat)) if (value instanceof THREE.Texture) {
               value.anisotropy = Math.min(4, this.renderer.capabilities.getMaxAnisotropy())
             }
+            // Polished shells mirror the dusk sky instead of reading as flat grey.
+            if (this.malecon && mat instanceof THREE.MeshStandardMaterial && mat.name.startsWith('Brushed nickel')) {
+              mat.roughness = .14; mat.envMapIntensity = 1.35
+            }
           }
         })
         const previous = receptor.object
@@ -413,16 +431,6 @@ export class StageRenderer {
         receptor.object = replacement
         previous.removeFromParent(); disposeObject(previous)
       })
-      for (const slot of this.afterhours?.assetSlots ?? []) {
-        const master = gltf.scene.getObjectByName(slot.name)
-        if (!master) continue
-        const replacement = master.clone(true)
-        const bounds = new THREE.Box3().setFromObject(master, true)
-        replacement.scale.setScalar(slot.height ? slot.height / Math.max(.1, -bounds.min.y) : 1.58)
-        replacement.traverse(object => { if (object instanceof THREE.Mesh) { object.castShadow = true; object.receiveShadow = true } })
-        slot.holder.add(replacement)
-        slot.fallback.removeFromParent(); disposeObject(slot.fallback)
-      }
       this.renderer.shadowMap.needsUpdate = true
     } catch (error) {
       if (!this.destroyed) console.warn('PlaySense could not load the Blender collection; the procedural instruments remain available.', error)
@@ -431,77 +439,8 @@ export class StageRenderer {
     }
   }
 
-  /** Swap the complete Blender playfield atomically; the audio timeline never waits on assets. */
-  private async loadAuthoredPlayfield() {
-    const decoder = new DRACOLoader().setDecoderPath('/playsense/decoders/draco/').setWorkerLimit(1)
-    let detached: THREE.Group | null = null
-    try {
-      const response = await fetch('/playsense/models/afterhours-playfield.glb', { signal: this.assetsAbort.signal })
-      if (!response.ok) throw new Error(`Playfield download failed (${response.status})`)
-      const bytes = await response.arrayBuffer()
-      if (this.destroyed) return
-      const gltf = await new GLTFLoader().setDRACOLoader(decoder).parseAsync(bytes, '/playsense/models/')
-      detached = gltf.scene
-      if (this.destroyed) return
-      const parts = ['note_body', 'note_face', 'note_inlay'].map(name => {
-        const master = gltf.scene.getObjectByName(name)
-        const meshes: THREE.Mesh[] = []
-        master?.traverse(object => { if (object instanceof THREE.Mesh) meshes.push(object) })
-        if (meshes.length !== 1) throw new Error(`Invalid Blender note component: ${name}`)
-        return meshes[0]
-      })
-      const set = ['board', 'entrance', 'lounge'].map(name => {
-        const master = gltf.scene.getObjectByName(name)
-        if (!master) throw new Error(`Missing Blender playfield component: ${name}`)
-        return master
-      })
-      // Hidden masters and visible instances share one resource owner for safe teardown.
-      gltf.scene.visible = false; this.scene.add(gltf.scene); detached = null
-      gltf.scene.updateMatrixWorld(true)
-      gltf.scene.traverse(object => {
-        if (!(object instanceof THREE.Mesh)) return
-        const materials = Array.isArray(object.material) ? object.material : [object.material]
-        for (const mat of materials) for (const value of Object.values(mat)) if (value instanceof THREE.Texture) {
-          value.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy())
-        }
-      })
-      for (const master of set) {
-        const model = master.clone(true)
-        model.traverse(object => {
-          if (object instanceof THREE.Mesh) { object.castShadow = true; object.receiveShadow = true }
-        })
-        this.scene.add(model)
-        if (master.name === 'entrance' && !this.options.reducedMotion) this.windowMotion = animateStudioWindow(model)
-      }
-      const targets = [this.heads, this.cores, this.trims]
-      parts.forEach((part, index) => {
-        const target = targets[index]
-        // The Blender exporter bakes centered component pivots. Applying the source
-        // matrix also keeps this safe when a later author rotates a component object.
-        target.geometry.dispose()
-        for (const mat of Array.isArray(target.material) ? target.material : [target.material]) mat.dispose()
-        target.geometry = part.geometry.clone().applyMatrix4(part.matrixWorld)
-        target.material = part.material
-      })
-      for (const mat of Array.isArray(this.cores.material) ? this.cores.material : [this.cores.material]) {
-        if (mat instanceof THREE.MeshStandardMaterial) colorNoteEmission(mat)
-      }
-      this.authoredNotes = true
-      this.boardFallback.removeFromParent(); disposeObject(this.boardFallback)
-      if (this.sourceGlow) this.sourceGlow.visible = true
-      this.renderer.shadowMap.needsUpdate = true
-    } catch (error) {
-      if (!this.destroyed) console.warn('PlaySense could not load the Blender playfield; the procedural board and notes remain available.', error)
-    } finally {
-      if (detached) disposeObject(detached)
-      decoder.dispose()
-    }
-  }
-
   private resize(width: number, height: number) {
     if (this.destroyed) return
-    // Raise the room lettering above the compact exercise-title row on phone layouts.
-    if (this.afterhours) this.afterhours.sign.position.y = width < 520 ? 9 : 7.1
     // CSS keeps the last complete image filling the panel until this frame is drawn.
     this.renderer.setSize(width, height, false)
     this.composer?.setSize(width, height)
@@ -510,11 +449,18 @@ export class StageRenderer {
     const studio = this.options.theme === 'studio'
     const piano = this.exercise.instrument === 'piano'
     const distance = studio ? Math.max(16, (piano ? 14.6 : 13) / this.camera.aspect) : Math.max(18, (piano ? 15.6 : 14) / this.camera.aspect)
-    this.camera.fov = studio ? 50 : 47
+    this.camera.fov = studio ? 52 : 47
     if (!this.controls) {
-      this.camera.position.set(0, studio ? Math.max(8, distance * .45) : Math.max(10, distance * .45), distance)
-      this.camera.lookAt(0, studio ? .8 : 0, studio ? -1 : -4)
+      // The Malecón camera sits lower so the horizon, sun and archway stay in frame.
+      if (studio) {
+        this.camera.position.set(0, Math.max(5.8, distance * .36), distance)
+        this.camera.lookAt(0, 2.2, -8)
+      } else {
+        this.camera.position.set(0, Math.max(10, distance * .45), distance)
+        this.camera.lookAt(0, 0, -4)
+      }
     }
+    if (this.grade) this.grade.uniforms.psAspect.value = this.camera.aspect
     this.camera.updateProjectionMatrix()
     this.fitLabels()
   }
@@ -572,7 +518,6 @@ export class StageRenderer {
     const resized = this.viewport.flush()
     const resizing = resized || this.resizedLastFrame
     this.resizedLastFrame = resized
-    this.windowMotion?.update(dt)
     // Sustained GPU pressure drops costly bloom and pixel density, never input timing.
     // A layout drag is temporary work and must not trigger a permanent quality change.
     if (!resizing && rawDt > 0.035 && rawDt < 0.2) this.slowFrames++
@@ -586,6 +531,7 @@ export class StageRenderer {
       for (const burst of this.bursts) { burst.active = false; burst.mesh.visible = false }
       for (const receptor of this.receptors) receptor.energy = 0
       for (const spark of this.sparks) spark.life = 0
+      this.malecon?.fireworks.reset(); this.lastCombo = 0
     }
     if (frame.results !== this.lastResults) {
       for (const result of changedJudgments(frame.results, this.judgments)) this.impact(result.eventIndex, result.grade)
@@ -607,23 +553,39 @@ export class StageRenderer {
         const width = Math.min(lane.width * .82, 2.65)
         const piano = this.exercise.instrument === 'piano'
         const accent = note.accent ? 1.2 : 1
-        const reveal = this.authoredNotes && !this.options.reducedMotion ? Math.min(1, Math.max(0, (APPROACH_SECONDS - delta) / .2)) : 1
-        const entryScale = .72 + reveal * .28
+        const reveal = this.malecon && !this.options.reducedMotion ? Math.min(1, Math.max(0, (APPROACH_SECONDS - delta) / .35)) : 1
+        const entryScale = .6 + reveal * .4
         this.dummy.rotation.set(0, 0, 0)
-        this.dummy.position.set(lane.x, .055, z)
-        this.dummy.scale.set(width * entryScale, accent, entryScale)
-        this.dummy.updateMatrix(); this.heads.setMatrixAt(count, this.dummy.matrix)
-        this.heads.setColorAt(count, this.authoredNotes ? this.tint.set(0xffffff) : this.tint.copy(this.colors[note.lane]).multiplyScalar(.48))
-        this.dummy.position.y = .25 * accent
-        this.dummy.updateMatrix(); this.cores.setMatrixAt(count, this.dummy.matrix)
-        this.cores.setColorAt(count, this.colors[note.lane])
-        this.dummy.position.y = .33 * accent
-        this.dummy.position.z = z + (piano && !this.authoredNotes ? .17 : 0)
-        this.dummy.scale.set(width * entryScale, 1, (note.accent ? 1.35 : 1) * entryScale)
-        this.dummy.updateMatrix(); this.trims.setMatrixAt(count, this.dummy.matrix)
-        this.trims.setColorAt(count, this.tint.set(note.accent ? 0xffe8ab : 0xf3fffc))
+        if (this.malecon) {
+          // Notes rise out of the archway's light, then ride the lacquer on a pool of their own glow.
+          const rise = (1 - reveal) * .9
+          this.dummy.position.set(lane.x, NOTE_LAYOUT.head - rise, z)
+          this.dummy.scale.set(width * entryScale, accent, entryScale * (note.accent ? 1.15 : 1))
+          this.dummy.updateMatrix(); this.heads.setMatrixAt(count, this.dummy.matrix)
+          this.heads.setColorAt(count, this.tint.copy(this.colors[note.lane]).multiplyScalar(.12).addScalar(.05))
+          this.dummy.position.y = NOTE_LAYOUT.head - rise + (NOTE_LAYOUT.core - NOTE_LAYOUT.head) * accent
+          this.dummy.updateMatrix(); this.cores.setMatrixAt(count, this.dummy.matrix)
+          this.cores.setColorAt(count, this.tint.copy(this.colors[note.lane]).multiplyScalar(note.accent ? 1.35 : 1))
+          this.dummy.position.set(lane.x, NOTE_LAYOUT.pool, z)
+          this.dummy.scale.set(width * 1.9 * reveal, 1, 1.9 * reveal)
+          this.dummy.updateMatrix(); this.trims.setMatrixAt(count, this.dummy.matrix)
+          this.trims.setColorAt(count, this.colors[note.lane])
+        } else {
+          this.dummy.position.set(lane.x, .055, z)
+          this.dummy.scale.set(width * entryScale, accent, entryScale)
+          this.dummy.updateMatrix(); this.heads.setMatrixAt(count, this.dummy.matrix)
+          this.heads.setColorAt(count, this.tint.copy(this.colors[note.lane]).multiplyScalar(.48))
+          this.dummy.position.y = .25 * accent
+          this.dummy.updateMatrix(); this.cores.setMatrixAt(count, this.dummy.matrix)
+          this.cores.setColorAt(count, this.colors[note.lane])
+          this.dummy.position.y = .33 * accent
+          this.dummy.position.z = z + (piano ? .17 : 0)
+          this.dummy.scale.set(width * entryScale, 1, (note.accent ? 1.35 : 1) * entryScale)
+          this.dummy.updateMatrix(); this.trims.setMatrixAt(count, this.dummy.matrix)
+          this.trims.setColorAt(count, this.tint.set(note.accent ? 0xffe8ab : 0xf3fffc))
+        }
         const tailLength = Math.min(this.exercise.instrument === 'piano' ? note.duration * speed : 1.65, 18)
-        this.dummy.position.set(lane.x, -0.025, z - tailLength / 2)
+        this.dummy.position.set(lane.x, this.malecon ? DECK_TOP + .01 : -0.025, z - tailLength / 2)
         this.dummy.scale.set(width * .72, 1, Math.max(.15, tailLength))
         this.dummy.updateMatrix(); this.tails.setMatrixAt(tailCount, this.dummy.matrix)
         this.tails.setColorAt(tailCount++, this.colors[note.lane]); count++
@@ -635,7 +597,7 @@ export class StageRenderer {
     }
     this.tails.count = tailCount; this.tails.instanceMatrix.needsUpdate = true
     if (this.tails.instanceColor) this.tails.instanceColor.needsUpdate = true
-    // Also drives the afterhours ambience pulse below, so it stays uniform
+    // Also drives the stage ambience below, so it stays uniform
     // (bpm-based) even for a graded owner with a grid.
     const beatSec = 60 / this.exercise.bpm
     if (this.exercise.grid) {
@@ -648,7 +610,7 @@ export class StageRenderer {
         const delta = p.seconds - frame.elapsed
         mesh.position.z = HIT_Z - delta * speed
         mesh.visible = true
-        ;(mesh.material as THREE.MeshBasicMaterial).opacity = p.downbeat ? 0.18 : 0.06
+        ;(mesh.material as THREE.MeshBasicMaterial).opacity = this.malecon ? (p.downbeat ? .16 : .06) : p.downbeat ? 0.18 : 0.06
       }
     } else {
       const firstBeat = Math.floor(frame.elapsed / beatSec)
@@ -656,6 +618,7 @@ export class StageRenderer {
         const delta = (firstBeat + i) * beatSec - frame.elapsed
         this.beatLines[i].position.z = HIT_Z - delta * speed
         this.beatLines[i].visible = delta >= 0 && delta <= APPROACH_SECONDS
+        if (this.malecon) (this.beatLines[i].material as THREE.MeshBasicMaterial).opacity = (firstBeat + i) % 4 === 0 ? .16 : .06
       }
     }
     for (const receptor of this.receptors) {
@@ -692,17 +655,18 @@ export class StageRenderer {
     if (this.sparkMesh.instanceColor) this.sparkMesh.instanceColor.needsUpdate = true
     this.dummy.rotation.set(0, 0, 0)
     this.stageEnergy = Math.max(0, this.stageEnergy - dt * 1.8)
-    if (this.afterhours) {
+    if (this.malecon) {
       const beat = Math.max(0, frame.elapsed) / beatSec
-      const pulse = this.options.reducedMotion || !frame.playing || frame.elapsed < 0 ? 0 : Math.pow(1 - beat % 1, 3)
       if (this.sourceGlow) this.sourceGlow.material.uniforms.phase.value = beat * Math.PI
-      if (this.sourceLight) this.sourceLight.intensity = 32 + pulse * 6
-      this.afterhours.pulseLights.forEach((light, i) => { light.intensity = 30 + pulse * 10 + this.stageEnergy * (i ? 18 : 24) })
-      this.afterhours.meters.forEach((bar, i) => {
-        const wave = this.options.reducedMotion ? .35 : .18 + .55 * Math.pow(.5 + .5 * Math.sin(beat * Math.PI - i * .62), 2)
-        bar.scale.y = .18 + wave + this.stageEnergy * .4
-        bar.position.y = -1.4 + bar.scale.y / 2
-      })
+      // A long combo slowly warms the whole stage; milestones light up the bay.
+      const comboGlow = Math.min(1, frame.combo / 40)
+      if (frame.combo < this.lastCombo) this.lastCombo = 0
+      if (frame.playing && Math.floor(frame.combo / 16) > Math.floor(this.lastCombo / 16)) {
+        this.malecon.fireworks.launch(frame.combo >= 48 ? 3 : frame.combo >= 32 ? 2 : 1)
+      }
+      this.lastCombo = frame.combo
+      this.malecon.update({ elapsed: frame.elapsed, beatSeconds: beatSec, speed, hitZ: HIT_Z, playing: frame.playing, energy: Math.min(1, this.stageEnergy * .6 + comboGlow * .5), dt }, this.camera)
+      if (this.grade) this.grade.uniforms.psTime.value = now / 1000
     }
     if (!this.options.reducedMotion) this.points.position.y = Math.sin(now * 0.0001) * 0.25
     if (this.composer) this.composer.render()
@@ -711,7 +675,8 @@ export class StageRenderer {
 
   private disposeComposer() {
     this.composer?.passes.forEach(pass => pass.dispose())
-    this.composer?.dispose(); this.composer = null; this.bloom = null
+    this.composer?.renderTarget1.dispose(); this.composer?.renderTarget2.dispose()
+    this.composer?.dispose(); this.composer = null; this.bloom = null; this.grade = null
   }
 
   destroy() {

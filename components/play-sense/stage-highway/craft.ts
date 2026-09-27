@@ -27,9 +27,6 @@ export function rod(parent: THREE.Object3D, a: number[], b: number[], radius: nu
   object.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize())
   return object
 }
-export function cable(parent: THREE.Object3D, points: number[][], mat: THREE.Material, radius = 0.025) {
-  return mesh(parent, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p))), 48, radius, 6, false), mat)
-}
 
 const noise = (x: number, y: number) => {
   const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453
