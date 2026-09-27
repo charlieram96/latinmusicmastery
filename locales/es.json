@@ -204,12 +204,119 @@
         "_": "keys above this line"
       },
       "explore": {
+        "meta": {
+          "title": "Explorar cursos",
+          "description": "Recorre cada curso de música latina por instrumento, país y estilo, con los maestros que la tocan."
+        },
+        "crumb": "Explorar",
+        "title": "Explora",
+        "titleAccent": "el catálogo.",
+        "lede": "{courses} cursos en {instruments} instrumentos. Elige un instrumento y suma los estilos que quieras tocar.",
+        "searchLabel": "Buscar cursos",
+        "searchPlaceholder": "Busca un estilo o instrumento",
+        "instrumentsLabel": "Filtrar por instrumento",
+        "countriesLabel": "Filtrar por país",
+        "allInstruments": "Todos los instrumentos",
+        "allCountries": "Todos los países",
+        "soon": "pronto",
+        "empty": "Todavía no hay cursos que coincidan con esa búsqueda.",
+        "fundamentals": "Fundamentos",
+        "fundamentalsOf": "Fundamentos de {instrument}",
+        "start": "Inicio",
+        "courseName": "{instrument} de {style}",
+        "atlasEyebrow": "Explora por país",
+        "atlasTitle": "De dónde",
+        "atlasAccent": "viene la música.",
+        "atlasInProduction": "Los estilos de {countries} están en producción.",
+        "stylesLive": "{live} de {total} estilos disponibles",
+        "country": {
+          "meta": {
+            "title": "Cursos de {country}",
+            "description": "Cursos de música latina de {country}, con los maestros que la tocan."
+          },
+          "title": "Estilos de",
+          "lede": "{courses} cursos en {live} estilos disponibles. Elige un estilo para conocer su historia y sus maestros.",
+          "ledeNone": "Los cursos de {country} están en producción. Únete a la lista para saber cuándo abren.",
+          "styleCount": "{n} cursos",
+          "styleCountOne": "{n} curso",
+          "coursesEyebrow": "Todos los cursos",
+          "coursesTitle": "Elige un estilo,",
+          "coursesAccent": "elige tu lugar.",
+          "empty": "Los cursos de {country} están en producción."
+        },
         "_": "keys above this line"
       },
       "style": {
+        "meta": {
+          "title": "Cursos de {style} · {country}",
+          "description": "Aprende {style} de {country} en tu instrumento, con los maestros que lo tocan."
+        },
+        "claveSon": "Clave de son",
+        "claveRumba": "Clave de rumba",
+        "courseCount": "{n} cursos",
+        "courseCountOne": "{n} curso",
+        "storyEyebrow": "La historia",
+        "storyFallback": "Todavía estamos escribiendo la historia de {style} para esta página. Mientras tanto, los maestros la cuentan mejor en los cursos de abajo.",
+        "story": {
+          "son-cubano": {
+            "p1": "El **son** tomó forma en Oriente, el extremo este de Cuba, a finales del siglo XIX. Unió las formas de la canción española y la familia de la guitarra con los ritmos que trajeron los africanos esclavizados y sus descendientes, sobre todo los tambores de origen bantú de la región.",
+            "p2": "Para los años veinte ya había llegado a La Habana, donde grupos como el **Sexteto Habanero** y el **Septeto Nacional** de Ignacio Piñeiro lo convirtieron en el sonido de la ciudad: tres, guitarra, bongó, bajo, maracas, claves y voces, y más tarde una trompeta.",
+            "p3": "En los años cuarenta **Arsenio Rodríguez** amplió la agrupación hasta formar el conjunto, sumó la conga, el piano y más trompetas, y estiró el montuno hasta convertirlo en el vamp largo sobre el que luego se construyó la salsa."
+          }
+        },
+        "clave": {
+          "son32": "La clave de son, 3-2",
+          "rumba32": "La clave de rumba, 3-2",
+          "gridLabel": "Dos compases en corcheas: {rows}",
+          "clave": "Clave",
+          "bongo": "Bongó",
+          "bass": "Bajo",
+          "noteSon": "Tres golpes en el primer compás, dos en el segundo. El bajo nunca toca en el uno: anticipa el acorde siguiente en el «y» del 2 y en el 4.",
+          "noteRumba": "Como la clave de son, pero el tercer golpe se retrasa al «y» del 4.",
+          "hear": "Escúchala en la página de inicio"
+        },
+        "coursesTitle": "Toca {style} desde",
+        "coursesAccent": "cualquier puesto.",
+        "coursesLede": "Cada curso enseña la parte de un instrumento en {style}.",
+        "coursesEmpty": "Los cursos de {style} están en producción. Únete a la lista para saber cuándo abren.",
+        "maestrosEyebrow": "Maestros",
+        "maestrosTitle": "Quién toca {style}",
+        "maestrosAccent": "aquí.",
+        "finaleTitle": "Empieza con",
+        "finaleAccent": "la clave.",
+        "finaleLede": "Elige un instrumento, suma {style} como tu estilo y tócalo con la banda.",
         "_": "keys above this line"
       },
       "course": {
+        "meta": {
+          "title": "{title} · Vista previa del curso",
+          "fallbackTitle": "Vista previa del curso",
+          "fallbackDescription": "Mira un curso de música latina por dentro: su plan de estudios, su maestro y cómo lo practicas en PlaySense."
+        },
+        "sections": "{n} secciones",
+        "sectionsOne": "{n} sección",
+        "lessons": "{n} lecciones",
+        "lessonsOne": "{n} lección",
+        "notation": "Notación PlaySense",
+        "maestro": "Tu maestro",
+        "curriculum": "Plan de estudios",
+        "inProductionCount": "{n} secciones en producción",
+        "inProductionCountOne": "{n} sección en producción",
+        "inProduction": "En producción",
+        "inProductionBody": "Estamos grabando esta sección. Se abre para todos los del plan en cuanto esté lista.",
+        "freePreview": "Vista previa gratis",
+        "plan": "Plan",
+        "practice": "Practica cada lección en PlaySense",
+        "enroll": {
+          "label": "Incluido en el plan de {instrument}",
+          "perMonth": "/mes",
+          "style": "{style} como tu curso de estilo",
+          "playsense": "Notación y retroalimentación en PlaySense",
+          "cancel": "Cancela cuando quieras",
+          "cta": "Asegura el precio de fundador",
+          "compare": "Comparar planes",
+          "yearly": "O {price}/año, {pct}% menos que pagar mes a mes."
+        },
         "_": "keys above this line"
       },
       "instructors": {

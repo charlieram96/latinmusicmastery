@@ -1,301 +1,216 @@
 import type { Metadata } from 'next'
-import { notFound } from "next/navigation";
-import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
-import { getServerTranslator } from "@/lib/i18n/server";
-import { localizeRow, localizeSectionTree, localizeTeacher, pick, COURSE_FIELDS, STYLE_FIELDS, COUNTRY_FIELDS } from "@/lib/i18n/localize";
-import { instrumentLabel } from "@/lib/i18n/instruments";
+import Image from 'next/image'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { cache } from 'react'
+import { createClient } from '@/lib/supabase/server'
+import { getServerTranslator } from '@/lib/i18n/server'
+import { localizeRow, localizeSectionTree, localizeTeacher, pick, COURSE_FIELDS } from '@/lib/i18n/localize'
+import { instrumentLabel } from '@/lib/i18n/instruments'
+import { getPricing } from '@/lib/payments/pricing-source'
+import { formatCents } from '@/lib/payments/pricing-types'
+import { bioExcerpt } from '@/lib/marketing/bio-excerpt'
+import { getMarketingCatalog } from '@/lib/marketing/data'
+import { COUNTRY_META } from '@/lib/marketing/catalog'
+import { yearlySavingPercent } from '@/lib/marketing/pricing-calc'
+import { findTeacherByName } from '@/lib/marketing/style-teachers'
+import { splitNickname } from '@/lib/marketing/teacher-name'
+import { Accent } from '@/components/marketing/site/PageHead'
+import { Sleeve } from '@/components/marketing/site/Sleeve'
+import { StageClip } from '@/components/marketing/site/StageClip'
+import { Finale } from '@/components/marketing/site/Finale'
+import { Curriculum, type CurriculumSection } from '@/components/marketing/explore/Curriculum'
+import '../../styles/explore.css'
 
-export async function generateMetadata({ params }: { params: Promise<{ courseId: string }> }): Promise<Metadata> {
-  const { courseId } = await params
-  const { createClient: createServerClient } = await import('@/lib/supabase/server')
-  const supabase = await createServerClient()
-  const { t, locale } = await getServerTranslator()
-  const { data: course } = await supabase
+type Params = Promise<{ courseId: string }>
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** One published course with its style and country, or null (memoised per request for metadata + page). */
+const getCourse = cache(async (courseId: string) => {
+  if (!UUID.test(courseId)) return null
+  const supabase = await createClient()
+  const { data } = await supabase
     .from('courses')
-    .select('title, title_es, description, description_es')
+    .select('id, title, title_es, description, description_es, instrument, is_fundamentals, is_published, teacher_id, teacher_name, musical_styles(name, name_es, slug, countries(name, name_es, slug))')
     .eq('id', courseId)
-    .single()
+    .maybeSingle()
+  return data && data.is_published ? data : null
+})
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { courseId } = await params
+  const { t, locale } = await getServerTranslator()
+  const course = await getCourse(courseId)
   const title = course ? pick(locale, course.title, course.title_es) : null
   const description = course ? pick(locale, course.description, course.description_es) : null
   return {
-    title: title
-      ? t('marketing.pages.coursePreview.metadata.titleTemplate', { title })
-      : t('marketing.pages.coursePreview.metadata.fallbackTitle'),
-    description: description ?? t('marketing.pages.coursePreview.metadata.fallbackDescription'),
+    title: title ? t('marketing.site.course.meta.title', { title }) : t('marketing.site.course.meta.fallbackTitle'),
+    description: description || t('marketing.site.course.meta.fallbackDescription'),
   }
 }
-import { Lock, BookOpen, BarChart3, User, Music } from "lucide-react";
-import PageHero from "@/components/marketing/PageHero";
-import SectionWrapper from "@/components/marketing/SectionWrapper";
-import CTABanner from "@/components/marketing/CTABanner";
-import { tiptapToPlainText } from "@/lib/tiptap/plain-text";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 
-export default async function CoursePreviewPage({
-  params,
-}: {
-  params: Promise<{ courseId: string }>;
-}) {
-  const { courseId } = await params;
-  const supabase = await createClient();
+const Check = () => (
+  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+)
 
-  const { t, locale } = await getServerTranslator();
+export default async function CoursePreviewPage({ params }: { params: Params }) {
+  const { courseId } = await params
+  const raw = await getCourse(courseId)
+  if (!raw) notFound()
+  const { t, locale } = await getServerTranslator()
+  const k = (key: string, p?: Record<string, string | number>) => t(`marketing.site.course.${key}`, p)
+  const supabase = await createClient()
 
-  const { data: course } = await supabase
-    .from("courses")
-    .select(
-      "*, musical_styles(name, name_es, slug, countries(name, name_es, slug)), teachers(id, name, instrument, instrument_es, bio, bio_es, image_url)"
-    )
-    .eq("id", courseId)
-    .single();
+  const course = { ...raw }
+  localizeRow(course as Record<string, unknown>, locale, COURSE_FIELDS)
+  const styleRow = raw.musical_styles && !Array.isArray(raw.musical_styles) ? raw.musical_styles : null
+  const countryRow = styleRow?.countries && !Array.isArray(styleRow.countries) ? styleRow.countries : null
+  const styleName = styleRow ? pick(locale, styleRow.name, styleRow.name_es ?? '') || styleRow.name : null
+  const countryName = countryRow ? pick(locale, countryRow.name, countryRow.name_es ?? '') || countryRow.name : null
+  const inst = course.instrument ? instrumentLabel(course.instrument, locale) : null
 
-  if (!course) {
-    notFound();
+  const [{ data: sectionRows }, catalog, pricing] = await Promise.all([
+    supabase
+      .from('course_sections')
+      .select('id, title, title_es, description, description_es, order_index, classes(id, title, title_es, description, description_es, order_index, is_free)')
+      .eq('course_id', raw.id)
+      .order('order_index'),
+    getMarketingCatalog(locale),
+    getPricing(),
+  ])
+  localizeSectionTree(sectionRows as Record<string, unknown>[] | null, locale)
+  const sections: CurriculumSection[] = (sectionRows ?? []).map(s => ({
+    id: s.id,
+    title: s.title,
+    lessons: [...(s.classes ?? [])].sort((a, b) => a.order_index - b.order_index).map(c => ({ id: c.id, title: c.title, free: !!c.is_free })),
+  }))
+  const lessonCount = sections.reduce((n, s) => n + s.lessons.length, 0)
+  const pendingSections = sections.filter(s => s.lessons.length === 0).length
+
+  // Instructor: the linked teacher, else the free-text teacher_name matched to a teacher.
+  const teacherId = raw.teacher_id ?? findTeacherByName(catalog.teachers, raw.teacher_name)?.id ?? null
+  let teacher: { id: string; name: string; instrument: string | null; image_url: string | null; blurb: string } | null = null
+  if (teacherId) {
+    const { data: tr } = await supabase.from('teachers').select('id, name, instrument, instrument_es, bio, bio_es, image_url').eq('id', teacherId).maybeSingle()
+    if (tr) {
+      localizeTeacher(tr as Record<string, unknown>, locale)
+      teacher = { id: tr.id, name: tr.name, instrument: tr.instrument, image_url: tr.image_url, blurb: bioExcerpt(tr.bio) }
+    }
   }
+  const nick = teacher ? splitNickname(teacher.name) : null
 
-  // Localize course + joined style/country to the viewer's language.
-  localizeRow(course as Record<string, unknown>, locale, COURSE_FIELDS);
-  if (course.musical_styles && !Array.isArray(course.musical_styles)) {
-    localizeRow(course.musical_styles as Record<string, unknown>, locale, STYLE_FIELDS);
-    const c = (course.musical_styles as any).countries;
-    if (c && !Array.isArray(c)) localizeRow(c as Record<string, unknown>, locale, COUNTRY_FIELDS);
-  }
+  const titleNode = styleName && inst && !course.is_fundamentals
+    ? <>{styleName} <Accent>{inst.toLowerCase()}.</Accent></>
+    : course.title
+  const sleeveTitle = course.is_fundamentals && inst
+    ? <>{inst}<br />{t('marketing.site.explore.fundamentals')}</>
+    : styleName ? <>{styleName.split(/\s+/).map((w, i) => <span key={i}>{i > 0 && <br />}{w}</span>)}</> : course.title
+  const countryCode = countryRow ? COUNTRY_META[countryRow.slug]?.code : undefined
 
-  // Fetch course sections with classes for curriculum preview
-  const { data: sections } = await supabase
-    .from("course_sections")
-    .select("id, title, title_es, description, description_es, order_index, classes(id, title, title_es, order_index, is_free)")
-    .eq("course_id", courseId)
-    .order("order_index");
+  const prices = { base_monthly: pricing.base_monthly.amount_cents, base_annual: pricing.base_annual.amount_cents, addon_monthly: pricing.addon_monthly.amount_cents }
+  const savePct = yearlySavingPercent(prices)
 
-  localizeSectionTree(sections as Record<string, unknown>[] | null, locale);
-
-  // Build breadcrumbs
-  const breadcrumbs: { label: string; href?: string }[] = [
-    { label: t("marketing.common.home"), href: "/" },
-    { label: t("nav.explore"), href: "/explore" },
-  ];
-
-  const style =
-    course.musical_styles && !Array.isArray(course.musical_styles)
-      ? course.musical_styles
-      : null;
-  const country =
-    style && style.countries && !Array.isArray(style.countries)
-      ? style.countries
-      : null;
-
-  if (country) {
-    breadcrumbs.push({
-      label: country.name,
-      href: `/explore/${country.slug}`,
-    });
-  }
-  if (country && style) {
-    breadcrumbs.push({
-      label: style.name,
-      href: `/explore/${country.slug}/${style.slug}`,
-    });
-  }
-  breadcrumbs.push({ label: course.title });
-
-  // Get teacher info
-  const teacher =
-    course.teachers && !Array.isArray(course.teachers)
-      ? course.teachers
-      : null;
-  localizeTeacher(teacher as Record<string, unknown> | null, locale);
-
-  // Difficulty is a raw DB token (beginner/intermediate/advanced); show a
-  // translated label when we have one, else the raw value.
-  const difficultyKey = course.difficulty
-    ? `marketing.common.difficulty.${course.difficulty.toLowerCase()}`
-    : null;
-  const difficultyLabel =
-    difficultyKey && t(difficultyKey) !== difficultyKey
-      ? t(difficultyKey)
-      : course.difficulty;
-
-  // Count total classes
-  const totalClasses =
-    sections?.reduce(
-      (sum, sec) => sum + (sec.classes ? sec.classes.length : 0),
-      0
-    ) ?? 0;
+  const crumbs: { label: string; href?: string }[] = [
+    { label: t('marketing.site.common.home'), href: '/' },
+    { label: t('marketing.site.explore.crumb'), href: '/explore' },
+  ]
+  if (styleRow && countryRow) crumbs.push({ label: styleName!, href: `/explore/${countryRow.slug}/${styleRow.slug}` })
+  crumbs.push({ label: inst ?? course.title })
 
   return (
     <>
-      <PageHero
-        title={course.title}
-        subtitle={course.description ?? undefined}
-        breadcrumbs={breadcrumbs}
-      />
-
-      {/* Course metadata bar */}
-      <div className="border-b bg-card/50">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-6 px-6 py-4">
-          {course.instrument && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Music className="h-4 w-4 text-primary" />
-              <span>{instrumentLabel(course.instrument, locale)}</span>
+      <header className="phead">
+        <div className="lights" aria-hidden="true"><div className="beam b1" /><div className="beam b2" /></div>
+        <div className="wrap course-hero" style={{ paddingBlock: 'clamp(40px,6vw,90px) clamp(40px,5vw,72px)' }}>
+          <div>
+            <nav className="crumbs" aria-label="Breadcrumb">
+              {crumbs.map((c, i) => (
+                <span key={i} style={{ display: 'contents' }}>
+                  {i > 0 && <span aria-hidden="true">/</span>}
+                  {c.href ? <Link href={c.href}>{c.label}</Link> : <span aria-current="page">{c.label}</span>}
+                </span>
+              ))}
+            </nav>
+            <h1 className="ptitle">{titleNode}</h1>
+            {course.description && <p className="lede" style={{ marginTop: 22 }}>{course.description}</p>}
+            <div className="course-meta">
+              <span className="pill">{k(sections.length === 1 ? 'sectionsOne' : 'sections', { n: sections.length })}</span>
+              <span className="pill">{k(lessonCount === 1 ? 'lessonsOne' : 'lessons', { n: lessonCount })}</span>
+              <span className="pill">{k('notation')}</span>
             </div>
-          )}
-          {course.difficulty && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <BarChart3 className="h-4 w-4 text-primary" />
-              <span className="capitalize">{difficultyLabel}</span>
-            </div>
-          )}
-          {teacher && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <User className="h-4 w-4 text-primary" />
-              <span>{teacher.name}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <BookOpen className="h-4 w-4 text-primary" />
-            <span>
-              {t(
-                totalClasses === 1
-                  ? "marketing.common.lessonCountOne"
-                  : "marketing.common.lessonCount",
-                { count: totalClasses }
-              )}
-            </span>
+            {teacher && (
+              <Link className="inst-card" href={`/instructors/${teacher.id}`} style={{ marginTop: 28, maxWidth: 540 }}>
+                {teacher.image_url
+                  ? <span className="ic-img"><Image src={teacher.image_url} alt="" fill sizes="120px" /></span>
+                  : <span className="ph" aria-hidden="true" />}
+                <div>
+                  <span className="sp-label">{k('maestro')}</span>
+                  <b style={{ marginTop: 8 }}>
+                    {nick?.nickname ? <>{nick.before} “{nick.nickname}” {nick.after}</> : teacher.name}
+                  </b>
+                  {(teacher.blurb || teacher.instrument) && <p>{teacher.blurb || teacher.instrument}</p>}
+                </div>
+              </Link>
+            )}
+          </div>
+          <div className="course-sleeve">
+            <Sleeve
+              title={sleeveTitle}
+              topLeft={inst ?? undefined}
+              topRight={course.is_fundamentals ? t('marketing.site.explore.start') : countryCode}
+              seed={(styleRow?.name ?? 'Fundamentals') + (course.instrument ?? '')}
+            />
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Description section */}
-      {course.description && (
-        <div className="mx-auto max-w-7xl px-6 py-16">
-          <SectionWrapper>
-            <h2 className="mb-4 text-2xl font-bold tracking-tight">
-              {t("marketing.pages.coursePreview.about")}
-            </h2>
-            <p className="max-w-3xl text-muted-foreground leading-relaxed">
-              {course.description}
-            </p>
-          </SectionWrapper>
-        </div>
-      )}
-
-      {/* Curriculum Preview section */}
-      {sections && sections.length > 0 && (
-        <div className="mx-auto max-w-7xl px-6 pb-16">
-          <SectionWrapper>
-            <h2 className="mb-6 text-2xl font-bold tracking-tight">
-              {t("marketing.pages.coursePreview.curriculum")}
-            </h2>
-            <div className="rounded-2xl border bg-card">
-              <Accordion type="multiple" className="w-full">
-                {sections.map((section) => {
-                  const classes = section.classes
-                    ? [...section.classes].sort(
-                        (a, b) => a.order_index - b.order_index
-                      )
-                    : [];
-                  const previewClasses = classes.slice(0, 2);
-                  const lockedClasses = classes.slice(2);
-
-                  return (
-                    <AccordionItem key={section.id} value={section.id}>
-                      <AccordionTrigger className="px-6">
-                        <div className="flex flex-col items-start gap-1">
-                          <span className="text-base font-semibold">
-                            {section.title}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {t(
-                              classes.length === 1
-                                ? "marketing.common.lessonCountOne"
-                                : "marketing.common.lessonCount",
-                              { count: classes.length }
-                            )}
-                          </span>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-6">
-                        <ul className="space-y-2">
-                          {previewClasses.map((cls, idx) => (
-                            <li
-                              key={cls.id}
-                              className="flex items-center gap-3 rounded-lg bg-secondary/30 px-4 py-2.5 text-sm"
-                            >
-                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                                {idx + 1}
-                              </span>
-                              <span>{cls.title}</span>
-                            </li>
-                          ))}
-                          {lockedClasses.map((cls) => (
-                            <li
-                              key={cls.id}
-                              className="flex items-center gap-3 rounded-lg bg-secondary/10 px-4 py-2.5 text-sm text-muted-foreground/60"
-                            >
-                              <Lock className="h-4 w-4 shrink-0" />
-                              <span>{t("marketing.pages.coursePreview.signUpToAccess")}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            </div>
-          </SectionWrapper>
-        </div>
-      )}
-
-      {/* Instructor bio section */}
-      {teacher && (
-        <div className="mx-auto max-w-7xl px-6 pb-16">
-          <SectionWrapper>
-            <h2 className="mb-6 text-2xl font-bold tracking-tight">
-              {t("marketing.pages.coursePreview.yourInstructor")}
-            </h2>
-            <div className="flex flex-col items-start gap-6 rounded-2xl border bg-card p-6 sm:flex-row sm:items-center">
-              {teacher.image_url ? (
-                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full">
-                  <Image
-                    src={teacher.image_url}
-                    alt={teacher.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <User className="h-10 w-10 text-primary" />
-                </div>
-              )}
+      <section className="sec" style={{ paddingTop: 'clamp(48px,6vw,88px)' }}>
+        <div className="wrap course-body">
+          <div style={{ minWidth: 0 }}>
+            {sections.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold">{teacher.name}</h3>
-                {teacher.instrument && (
-                  <p className="text-sm text-primary">{teacher.instrument}</p>
-                )}
-                {(() => {
-                  const bioPreview = tiptapToPlainText(teacher.bio);
-                  return bioPreview ? (
-                    <p className="mt-2 text-sm text-muted-foreground line-clamp-4">
-                      {bioPreview}
-                    </p>
-                  ) : null;
-                })()}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+                  <h2 className="h2" style={{ fontSize: 'clamp(36px,4vw,56px)' }}>{k('curriculum')}</h2>
+                  <span className="eyebrow">
+                    {k(lessonCount === 1 ? 'lessonsOne' : 'lessons', { n: lessonCount })}
+                    {pendingSections > 0 && <> · {k(pendingSections === 1 ? 'inProductionCountOne' : 'inProductionCount', { n: pendingSections })}</>}
+                  </span>
+                </div>
+                <Curriculum
+                  sections={sections}
+                  labels={{
+                    lessons: k('lessons'),
+                    lessonsOne: k('lessonsOne'),
+                    inProduction: k('inProduction'),
+                    inProductionBody: k('inProductionBody'),
+                    freePreview: k('freePreview'),
+                    plan: k('plan'),
+                  }}
+                />
               </div>
+            )}
+            <div style={{ marginTop: sections.length ? 56 : 0 }}>
+              <p className="eyebrow" style={{ marginBottom: 16 }}>{k('practice')}</p>
+              <StageClip />
             </div>
-          </SectionWrapper>
+          </div>
+          <aside className="enroll">
+            <span className="sp-label">{k('enroll.label', { instrument: inst ?? course.title })}</span>
+            <div className="price tnum">{formatCents(prices.base_monthly)}<small>{k('enroll.perMonth')}</small></div>
+            <ul>
+              {styleName && !course.is_fundamentals && <li><Check />{k('enroll.style', { style: styleName })}</li>}
+              <li><Check />{k('enroll.playsense')}</li>
+              <li><Check />{k('enroll.cancel')}</li>
+            </ul>
+            <a className="btn btn-hot" href="#join">{k('enroll.cta')}</a>
+            <Link className="btn btn-ghost" href="/pricing">{k('enroll.compare')}</Link>
+            {savePct > 0 && <small style={{ color: 'var(--humo-2)', fontSize: 13 }}>{k('enroll.yearly', { price: formatCents(prices.base_annual), pct: savePct })}</small>}
+          </aside>
         </div>
-      )}
+      </section>
 
-      <CTABanner />
+      <Finale />
     </>
-  );
+  )
 }
