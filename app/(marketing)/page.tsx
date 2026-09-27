@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './styles/home.css'
 import { getServerTranslator } from '@/lib/i18n/server'
 import { instrumentLabel } from '@/lib/i18n/instruments'
+import { displayTeacherName } from '@/lib/marketing/teacher-name'
 import { getPricing, formatCents } from '@/lib/payments/pricing-source'
 import { getMarketingCatalog } from '@/lib/marketing/data'
 import { SEATS, defaultSeatKey } from '@/lib/marketing/stage-plot'
@@ -55,7 +56,7 @@ export default async function MarketingHomePage() {
   const defaultKey = defaultSeatKey(catalog.instruments)
 
   const patricio = catalog.teachers.find(tc => tc.name.includes('Patricio'))
-  const chip = patricio?.imageUrl ? { name: patricio.name, imageUrl: patricio.imageUrl } : null
+  const chip = patricio?.imageUrl ? { name: displayTeacherName(patricio.name), imageUrl: patricio.imageUrl } : null
 
   // Live countries first, then the prototype's order (CU, PR, DO, CO).
   const metaOrder = Object.keys(COUNTRY_META)

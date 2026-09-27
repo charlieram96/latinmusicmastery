@@ -109,7 +109,7 @@ export default async function TeacherProfilePage({ params }: Params) {
             <span aria-current="page">{shownName}</span>
           </nav>
           <h1 className="ptitle tprof-name">
-            {before}{nickname && <> <Accent>“{nickname}”</Accent></>}{after && <> {after}</>}
+            {before}{nickname && <> <span style={{ whiteSpace: 'nowrap' }}><Accent>“{nickname}”</Accent></span></>}{after && <> {after}</>}
           </h1>
           {teacher.instrument && <p className="tprof-inst">{teacher.instrument}</p>}
           {teacher.specialties.length > 0 && (
