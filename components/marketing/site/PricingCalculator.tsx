@@ -63,9 +63,12 @@ function useTween(target: number) {
   const [v, setV] = useState(target)
   const from = useRef(target)
   useEffect(() => {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { from.current = target; setV(target); return }
-    const start = performance.now(), a = from.current
     let raf = 0
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      raf = requestAnimationFrame(() => { from.current = target; setV(target) })
+      return () => cancelAnimationFrame(raf)
+    }
+    const start = performance.now(), a = from.current
     const step = (now: number) => {
       const k = Math.min(1, (now - start) / 520), e = 1 - Math.pow(1 - k, 4), x = a + (target - a) * e
       from.current = x; setV(x)

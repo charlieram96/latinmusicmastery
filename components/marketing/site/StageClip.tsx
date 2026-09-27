@@ -18,7 +18,6 @@ export function StageClip({ className = '' }: { className?: string }) {
   const ref = useRef<HTMLVideoElement>(null)
   const [time, setTime] = useState(0)
   const [dip, setDip] = useState(false)
-  const [pop, setPop] = useState(0)
   useInViewVideo(ref, 0.2)
 
   useEffect(() => {
@@ -43,7 +42,7 @@ export function StageClip({ className = '' }: { className?: string }) {
   const hits = Math.floor(time / (BEAT / 2))
   const measure = Math.min(TOTAL_MEASURES - 1, Math.floor(time / (BEAT * 4)) % TOTAL_MEASURES)
   const score = Math.min(100, Math.round((hits * 100) / 22))
-  useEffect(() => { if (hits > 0 && hits % 3 === 0) setPop(p => p + 1) }, [hits])
+  const pop = Math.floor(hits / 3) // the pop replays each time this key changes
 
   return (
     <div className={`stage ${className}`}>

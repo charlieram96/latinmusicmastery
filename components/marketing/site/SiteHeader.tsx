@@ -26,7 +26,10 @@ export function SiteHeader() {
   const { t, locale, setLocale, locales } = useTranslation()
   const path = usePathname() ?? '/'
   const [scrolled, setScrolled] = useState(false)
-  const [open, setOpen] = useState(false)
+  // The sheet remembers the path it was opened on, so navigating closes it without an effect.
+  const [openOn, setOpenOn] = useState<string | null>(null)
+  const open = openOn === path
+  const setOpen = (v: boolean | ((o: boolean) => boolean)) => setOpenOn(typeof v === 'function' ? (v(open) ? path : null) : v ? path : null)
 
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 24)
@@ -34,10 +37,9 @@ export function SiteHeader() {
     window.addEventListener('scroll', on, { passive: true })
     return () => window.removeEventListener('scroll', on)
   }, [])
-  useEffect(() => { setOpen(false) }, [path])
   useEffect(() => {
     if (!open) return
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenOn(null) }
     document.addEventListener('keydown', esc)
     return () => document.removeEventListener('keydown', esc)
   }, [open])
