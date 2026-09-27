@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Drum, Piano } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
@@ -15,7 +15,15 @@ import {
 import type { EventResult, Instrument } from '@/lib/play-sense/types'
 
 // The 3D stage (three.js) only loads on the client, and only once the visitor scrolls near it.
-const StageHighway = dynamic(() => import('@/components/play-sense/stage-highway/StageHighway').then(m => m.StageHighway), { ssr: false })
+// If the chunk itself fails to load, render a stand-in that reports an error so the page falls back to the clip.
+function ChunkFailed({ onStatus }: { onStatus?: (s: 'ready' | 'error') => void }) {
+  useEffect(() => { onStatus?.('error') }, [onStatus])
+  return null
+}
+const StageHighway = dynamic<import('@/components/play-sense/stage-highway/StageHighway').StageHighwayProps>(
+  () => import('@/components/play-sense/stage-highway/StageHighway').then(m => m.StageHighway).catch(() => ChunkFailed),
+  { ssr: false },
+)
 
 const INSTRUMENTS: Instrument[] = ['conga', 'timbale', 'piano']
 const MEASURES = 4
@@ -58,6 +66,9 @@ export function LiveStage() {
   const box = useRef<HTMLDivElement>(null)
   const session = useRef(createDemoSession())
   const inView = useRef(false)
+  const [paused, setPaused] = useState(false)
+  const pausedRef = useRef(false)
+  useEffect(() => { pausedRef.current = paused }, [paused])
 
   const exercise = useMemo(() => makeDemoExercise(instrument), [instrument])
   const expected = useMemo(() => generateExpectedTimestamps(exercise), [exercise])
@@ -88,7 +99,7 @@ export function LiveStage() {
     const tick = (now: number) => {
       const dt = frameDelta(now, last)
       last = now
-      if (inView.current && !document.hidden) {
+      if (inView.current && !pausedRef.current && !document.hidden) {
         const step = stepDemoSession(session.current, dt, { ...latest.current, demo: true })
         if (step.looped) { setResults([]); setTake(n => n + 1) }
         else if (step.added.length) setResults(session.current.results)
@@ -99,6 +110,8 @@ export function LiveStage() {
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [mode, near])
+
+  const onStatus = useCallback((s: 'ready' | 'error') => { if (s === 'ready') setReady(true); else setMode('clip') }, [])
 
   const pick = (next: Instrument) => {
     if (next === instrument) return
@@ -122,7 +135,7 @@ export function LiveStage() {
       <div ref={box} className={`stage live-stage${ready ? ' is-ready' : ''}`} role="img" aria-label={k('label')}>
         {mode === 'live' && near && (
           <StageHighway
-            exercise={exercise} attemptId={take} theme="studio" sessionState="playing"
+            exercise={exercise} attemptId={take} theme="studio" sessionState={paused ? 'paused' : 'playing'}
             getElapsedSeconds={() => session.current.elapsed}
             playheadProgress={Math.max(0, elapsed) / duration}
             currentScore={stats.score} currentCombo={combo} currentAccuracy={stats.accuracy}
@@ -130,7 +143,7 @@ export function LiveStage() {
             eventResultsLength={results.length} eventResults={results}
             fill showHud={false} hideCountdown showThemePicker={false}
             quality={lowQuality ? 'low' : 'standard'}
-            onStatus={s => { if (s === 'ready') setReady(true); else setMode('clip') }}
+            onStatus={onStatus}
           />
         )}
         <div className="live-poster" aria-hidden="true">{!ready && near && <span className="live-loading">{k('loading')}</span>}</div>
@@ -138,7 +151,7 @@ export function LiveStage() {
           <span className="sh-ic">
             {Icon ? <Icon strokeWidth={1.6} /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><ellipse cx="12" cy="6" rx="6" ry="2.2" /><path d="M6 6c0 5 1 9 2.5 14h7C17 15 18 11 18 6" /><path d="M7.5 11h9M8.5 16h7" /></svg>}
           </span>
-          <div><small>{c('demoPerformance').toUpperCase()}</small><b>{exercise.title}</b><span>{k('meta', { bpm: exercise.bpm })}</span></div>
+          <div><small>{c('demoPerformance')}</small><b>{exercise.title}</b><span>{k('meta', { bpm: exercise.bpm })}</span></div>
         </div>
         <div className="sh sh-tr" aria-hidden="true">
           <div className="sh-score">
@@ -146,9 +159,9 @@ export function LiveStage() {
             <div className="cb"><span>{c('combo')}</span><b>{combo}<small>{c('inARow')}</small></b></div>
             <div className="ac"><span>{c('accuracy')}</span><b>{results.length ? `${Math.round(stats.accuracy)}%` : '—'}</b></div>
           </div>
-          <div className="sh-band"><small>{c('withBand').toUpperCase()}</small><b>{k('band', { percussion: label(backingPercussion(instrument)) })}</b></div>
+          <div className="sh-band"><small>{c('withBand')}</small><b>{k('band', { percussion: label(backingPercussion(instrument)) })}</b></div>
         </div>
-        <div key={pop} className={`sh-pop${pop ? ' show' : ''}`} aria-hidden="true">{c('perfect').toUpperCase()}</div>
+        <div key={pop} className={`sh-pop${pop ? ' show' : ''}`} aria-hidden="true">{c('perfect')}</div>
         <div className="sh sh-bl" aria-hidden="true"><i />{c('simulated')}</div>
         <div className="sh sh-br" aria-hidden="true">
           <span className="meas">{Array.from({ length: MEASURES }, (_, i) => <i key={i} className={elapsed >= 0 && i < measure ? 'on' : ''} />)}</span>
@@ -159,6 +172,7 @@ export function LiveStage() {
         <div className="seg" role="group" aria-label={k('instrument')}>
           {INSTRUMENTS.map(i => <button key={i} type="button" aria-pressed={i === instrument} onClick={() => pick(i)}>{label(i)}</button>)}
         </div>
+        <div className="seg"><button type="button" aria-pressed={paused} onClick={() => setPaused(v => !v)}>{paused ? t('marketing.site.playsense.play') : t('marketing.site.playsense.pause')}</button></div>
       </div>
       {caption}
     </>

@@ -13,12 +13,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const FEATURE_ICONS = [
-  <path key="a" d="M3 12h3l3-7 4 14 3-7h5" />,
-  <><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /></>,
-  <><circle cx="7" cy="17" r="3" /><circle cx="17" cy="15" r="3" /><path d="M10 17V5l10-2v12" /></>,
-  <path key="d" d="M7 4v16M17 4v16M7 8h10M7 16h10" />,
-  <path key="e" d="M4 7h16M4 12h16M4 17h16" />,
-  <><path d="M6 3h9l4 4v14H6z" /><path d="M9 13h7M9 17h5" /></>,
+  <g key="feedback"><path d="M3 12h3l3-7 4 14 3-7h5" /></g>,
+  <g key="accuracy"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /></g>,
+  <g key="band"><circle cx="7" cy="17" r="3" /><circle cx="17" cy="15" r="3" /><path d="M10 17V5l10-2v12" /></g>,
+  <g key="practice"><path d="M7 4v16M17 4v16M7 8h10M7 16h10" /></g>,
+  <g key="notation"><path d="M4 7h16M4 12h16M4 17h16" /></g>,
+  <g key="export"><path d="M6 3h9l4 4v14H6z" /><path d="M9 13h7M9 17h5" /></g>,
 ]
 
 export default async function PlaySensePage() {

@@ -292,6 +292,8 @@
           "titleAccent": "is waiting.",
           "lede": "PlaySense is included in every plan."
         },
+        "pause": "Pause",
+        "play": "Play",
         "_": "keys above this line"
       },
       "pricing": {

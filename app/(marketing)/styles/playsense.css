@@ -28,11 +28,12 @@
 .mkt .judge.ok{background:rgba(47,209,181,.15);color:var(--ok)}
 .mkt .judge.late{background:rgba(255,201,77,.15);color:var(--late)}
 @media (max-width:640px){.mkt .app-bar .pill.tnum{display:none}}
-@media (prefers-reduced-motion:reduce){.mkt .judge{animation:none;opacity:0}}
+@media (prefers-reduced-motion:reduce){.mkt .judge{animation:none;opacity:0}.mkt .ws-pause{display:none}}
 
 /* ── live stage ── */
 .mkt .live-stage .ps-highway{background:#1b0f26}
 .mkt .live-poster{position:absolute;inset:0;z-index:2;background:#1b0f26 url("/marketing/stage-miami-poster.jpg") center/cover;transition:opacity .6s var(--ease-out) .3s;pointer-events:none;display:grid;place-items:end center}
 .mkt .live-stage.is-ready .live-poster{opacity:0}
 .mkt .live-loading{margin-bottom:14%;font:500 11px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.7);padding:8px 12px;border-radius:999px;background:rgba(20,12,24,.55);backdrop-filter:blur(8px)}
-.mkt .live-tools{display:flex;justify-content:center;margin-top:16px}
+.mkt .live-tools{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.mkt .live-stage .sh-tl small,.mkt .live-stage .sh-band small,.mkt .live-stage .sh-pop{text-transform:uppercase}

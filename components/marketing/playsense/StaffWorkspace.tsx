@@ -7,6 +7,7 @@ import { useInViewVideo } from '@/components/marketing/site/useInViewVideo'
 import {
   BPM, CHORDS, COUNTS, NOTE_STEPS, ONSETS, STEPS, judge, loopOf, playheadStep, stepX, type Anchor,
 } from '@/lib/marketing/staff-demo'
+import { frameDelta } from '@/lib/play-sense/demo-session'
 
 type Layout = 'side' | 'stack' | 'music'
 const LAYOUTS: Layout[] = ['side', 'stack', 'music']
@@ -42,9 +43,15 @@ export function StaffWorkspace() {
   const scrub = useRef<HTMLElement>(null)
   const time = useRef<HTMLSpanElement>(null)
   const video = useRef<HTMLVideoElement>(null)
-  const words = useRef({ perfect: '', late: '' })
+  const words = useRef({ perfect: '', late: '', label: '' })
+  const [paused, setPaused] = useState(false)
+  const pausedRef = useRef(false)
+  useEffect(() => { pausedRef.current = paused }, [paused])
   useInViewVideo(video, 0.15)
-  useEffect(() => { words.current = { perfect: k('ws.perfect'), late: k('ws.lateMs', { ms: '{ms}' }) } })
+  useEffect(() => {
+    words.current = { perfect: k('ws.perfect'), late: k('ws.lateMs', { ms: '{ms}' }), label: k('ws.staffLabel') }
+    host.current?.querySelector('svg')?.setAttribute('aria-label', words.current.label)
+  })
 
   useEffect(() => {
     const el = root.current, box = music.current, hostEl = host.current
@@ -82,7 +89,7 @@ export function StaffWorkspace() {
       const anchors: Anchor[] = all.map((n, i) => [NOTE_STEPS[i], (n.getAbsoluteX() + 6) * sc])
       anchors.push([STEPS, (s2.getX() + s2.getWidth() - 12) * sc])
       const svg = hostEl.querySelector('svg')
-      svg?.setAttribute('role', 'img'); svg?.setAttribute('aria-label', k('ws.staffLabel'))
+      svg?.setAttribute('role', 'img'); svg?.setAttribute('aria-label', words.current.label)
       built = {
         anchors,
         notes: [...hostEl.querySelectorAll('.vf-stavenote')],
@@ -94,34 +101,11 @@ export function StaffWorkspace() {
       if (helpers.current) helpers.current.innerHTML = COUNTS.map((c, s) => `<span style="left:${X(s) + 2}px">${sc < 1 && c === '&' ? '' : c}</span>`).join('')
     }
 
-    const t0 = performance.now() / 1000
-    let lastP = 0, loops = 0, jk = 0
-    const tick = (ms: number) => {
-      raf = requestAnimationFrame(tick)
-      if (!visible || !built || !el.offsetParent) return
-      const now = ms / 1000
-      const p = reduce ? 5.5 : playheadStep(now - t0, BPM)
-      const loop = reduce ? 0 : loopOf(now - t0, BPM)
-      if (loop !== loops) {
-        loops = loop
-        built.notes.forEach(n => n.classList.remove('played', 'lit-ok', 'lit-late'))
-        setRes(r => ({ ...r, loop: loop + 1 }))
-      }
-      for (const s of ONSETS) {
-        if (!(lastP < s && p >= s)) continue
-        const j = judge(jk++)
-        setRes(r => ({ ...r, ok: r.ok + (j.ok ? 1 : 0), late: r.late + (j.ok ? 0 : 1) }))
-        built.notes[NOTE_STEPS.indexOf(s)]?.classList.add(j.ok ? 'lit-ok' : 'lit-late')
-        if (judges.current) {
-          const tag = document.createElement('span')
-          tag.className = `judge ${j.ok ? 'ok' : 'late'}`
-          tag.textContent = j.ok ? (j.perfect ? words.current.perfect : `${j.offset > 0 ? '+' : ''}${j.offset}ms`) : words.current.late.replace('{ms}', String(j.offset))
-          tag.style.left = `${stepX(built.anchors, s) + 18}px`
-          judges.current.appendChild(tag)
-          window.setTimeout(() => tag.remove(), 1000)
-        }
-      }
-      lastP = p
+    // Local clock: advances only while on screen and not paused, so nothing piles up off-screen.
+    let clock = 0, lastMs = 0, lastRaw = 0, loops = 0, jk = 0
+    const stepSec = 60 / BPM / 2
+    const draw = (p: number) => {
+      if (!built) return
       if (ph.current) ph.current.style.transform = `translateX(${stepX(built.anchors, p) + 15}px)`
       built.notes.forEach((n, i) => { if (NOTE_STEPS[i] + 1.5 < p) n.classList.add('played') })
       const b = p < 8 ? built.bars[0] : built.bars[1]
@@ -132,8 +116,42 @@ export function StaffWorkspace() {
       scrub.current?.style.setProperty('--p', `${(38 + 14 * (p / STEPS)).toFixed(1)}%`)
       if (time.current) { const secs = Math.floor(370 * (0.38 + 0.14 * p / STEPS)); time.current.textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` }
     }
+    const fire = (s: number) => {
+      if (!built) return
+      const j = judge(jk++)
+      setRes(r => ({ ...r, ok: r.ok + (j.ok ? 1 : 0), late: r.late + (j.ok ? 0 : 1) }))
+      built.notes[NOTE_STEPS.indexOf(s)]?.classList.add(j.ok ? 'lit-ok' : 'lit-late')
+      if (!judges.current) return
+      const tag = document.createElement('span')
+      tag.className = `judge ${j.ok ? 'ok' : 'late'}`
+      tag.textContent = j.ok ? (j.perfect ? words.current.perfect : `${j.offset > 0 ? '+' : ''}${j.offset}ms`) : words.current.late.replace('{ms}', String(j.offset))
+      tag.style.left = `${stepX(built.anchors, s) + 18}px`
+      judges.current.appendChild(tag)
+      window.setTimeout(() => tag.remove(), 1000)
+    }
+    const tick = (ms: number) => {
+      raf = requestAnimationFrame(tick)
+      const dt = frameDelta(ms, lastMs)
+      lastMs = ms
+      if (!visible || !built || pausedRef.current || document.hidden) return
+      clock += dt
+      const raw = clock / stepSec
+      const loop = loopOf(clock, BPM), p = playheadStep(clock, BPM)
+      if (loop !== loops) {
+        loops = loop
+        built.notes.forEach(n => n.classList.remove('played', 'lit-ok', 'lit-late'))
+        setRes(r => ({ ...r, loop: loop + 1 }))
+      }
+      // Onsets crossed since the last frame, including across the loop seam.
+      const base = Math.floor(lastRaw / STEPS) * STEPS
+      for (const s of ONSETS) for (const at of [base + s, base + STEPS + s]) if (lastRaw < at && raw >= at) fire(s)
+      lastRaw = raw
+      draw(p)
+    }
+    // Reduced motion: one still frame, no loop.
+    const start = () => { if (reduce) draw(5.5); else raf = requestAnimationFrame(tick) }
 
-    const ro = new ResizeObserver(() => { if (Math.abs(hostEl.clientWidth - width) > 8) build() })
+    const ro = new ResizeObserver(() => { if (Math.abs(hostEl.clientWidth - width) > 8) { build(); if (reduce) draw(5.5) } })
     const io = new IntersectionObserver(es => { visible = es[es.length - 1].isIntersecting })
     ;(async () => {
       try {
@@ -142,14 +160,13 @@ export function StaffWorkspace() {
         if (disposed) return
         build()
         ro.observe(box); io.observe(el)
-        raf = requestAnimationFrame(tick)
+        start()
       } catch {
         if (!disposed) setFailed(true)
       }
     })()
     return () => { disposed = true; cancelAnimationFrame(raf); ro.disconnect(); io.disconnect() }
     // Built once; the words ref carries language changes into the judgments.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const choose = (next: Layout) => {
@@ -165,6 +182,7 @@ export function StaffWorkspace() {
         <div className="seg" role="group" aria-label={k('chart.layout')}>
           {LAYOUTS.map(l => <button key={l} type="button" aria-pressed={layout === l} onClick={() => choose(l)}>{k(`chart.${l}`)}</button>)}
         </div>
+        <div className="seg ws-pause"><button type="button" aria-pressed={paused} onClick={() => setPaused(v => !v)}>{paused ? k('play') : k('pause')}</button></div>
       </div>
       <div ref={root} className="ws" data-layout={layout}>
         <div className="app-bar">

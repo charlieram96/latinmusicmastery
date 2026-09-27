@@ -292,6 +292,8 @@
           "titleAccent": "te está esperando.",
           "lede": "PlaySense viene incluido en todos los planes."
         },
+        "pause": "Pausar",
+        "play": "Reproducir",
         "_": "keys above this line"
       },
       "pricing": {
