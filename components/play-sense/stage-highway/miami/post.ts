@@ -6,7 +6,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
 
-/** Display-referred finishing: lens vignette, plum-shadow / peach-highlight split tone and fine grain. */
+/** Display-referred finishing: lens vignette and a plum-shadow / peach-highlight split tone. No animated grain: it reads as flicker. */
 const GradeShader = {
   uniforms: { tDiffuse: { value: null }, psTime: { value: 0 }, psAspect: { value: 1 }, psGrain: { value: 1 } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
@@ -22,7 +22,6 @@ const GradeShader = {
       color = mix(vec3(luma), color, 1.06);
       float vignette = 1. - smoothstep(.32, 1.2, length(centered * vec2(psAspect, 1.) * .78));
       color *= mix(.72, 1., vignette);
-      color += (hash(vUv * 1024. + fract(psTime) * 91.) - .5) * .022 * psGrain;
       gl_FragColor = vec4(color, 1.);
     }`,
 }

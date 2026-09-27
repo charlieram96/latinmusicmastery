@@ -36,7 +36,7 @@ export function billboards(points: THREE.Vector3[], color: THREE.Color, size: nu
       void main() {
         ${reflection ? `
           float fall = (1. - vUv.y) * .5;
-          float shimmer = .55 + .45 * sin(vUv.y * 38. + psTime * (2. + vSeed * 2.) + vSeed * 20.);
+          float shimmer = .8 + .2 * sin(vUv.y * 16. + psTime * (.5 + vSeed * .4) + vSeed * 20.);
           float a = exp(-vUv.x * vUv.x * 9.) * (1. - fall) * shimmer * .38;` : `
           float r = length(vUv);
           float a = exp(-r * r * 7.) + exp(-r * 2.6) * .25;${mode === 'blink' ? ' a *= step(.55, fract(psTime * .55 + vSeed * 7.));' : ''}`}

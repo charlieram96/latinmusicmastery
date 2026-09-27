@@ -171,7 +171,7 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   const frame = new THREE.Mesh(new RoundedBoxGeometry(RUNWAY_WIDTH + 1.1, .7, length + .3, 2, .05), chassisWood)
   frame.position.set(0, DECK_TOP - .38, center); frame.receiveShadow = true; group.add(frame)
   const planks = photoTexture('/playsense/textures/dock.jpg', deckTexture(), [(RUNWAY_WIDTH + .9) / 7.4, length / 7.4], anisotropy)
-  const deckMaterial = new THREE.MeshPhysicalMaterial({ map: planks, bumpMap: planks, bumpScale: 1.4, color: 0x9a8a7c, roughness: .6, clearcoat: .3, clearcoatRoughness: .35, envMapIntensity: .65 })
+  const deckMaterial = new THREE.MeshPhysicalMaterial({ map: planks, bumpMap: planks, bumpScale: .6, color: 0x9a8a7c, roughness: .6, clearcoat: .3, clearcoatRoughness: .35, envMapIntensity: .65 })
   const surface = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .9, length).rotateX(-Math.PI / 2), deckMaterial)
   surface.position.set(0, DECK_TOP, center); surface.receiveShadow = true
   group.add(surface)
@@ -347,9 +347,9 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
     /** `travel`: how far the notes have moved (world units); the planks ride along with them. */
     update(pulse: number, energy: number, travel: number) {
       planks.offset.y = travel / 7.4
-      neonMaterial.color.copy(neonBase).multiplyScalar(.8 + pulse * .45 + energy * .6)
-      threshold.color.setRGB(2.2, 1.1, 1.8).multiplyScalar(.75 + pulse * .5 + energy * .4)
-      gateGlow.value = pulse * .6 + energy
+      neonMaterial.color.copy(neonBase).multiplyScalar(.9 + pulse * .08 + energy * .15)
+      threshold.color.setRGB(2.2, 1.1, 1.8).multiplyScalar(.85 + pulse * .12 + energy * .15)
+      gateGlow.value = pulse * .15 + energy * .5
     },
   }
 }

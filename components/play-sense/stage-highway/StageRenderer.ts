@@ -20,6 +20,11 @@ import { observeFrameResize } from './frame-resize'
 interface SkinRipple { hit: { value: number }; color: { value: THREE.Color }; power: { value: number } }
 interface Receptor { object: THREE.Object3D; glow: THREE.Sprite; energy: number; homeY: number; aura: ReturnType<typeof strikeAura>; skin?: SkinRipple }
 
+/** Layers laid on the deck win the depth test without z-fighting, on any GPU's depth precision. */
+function decal(material: THREE.Material) {
+  material.polygonOffset = true; material.polygonOffsetFactor = -2; material.polygonOffsetUnits = -4
+}
+
 /** Rings of light travel across a struck drum skin; the shader reads its own object-space radius. */
 function addSkinRipple(material: THREE.MeshStandardMaterial, clock: { value: number }, radius: number): SkinRipple {
   const ripple: SkinRipple = { hit: { value: -10 }, color: { value: new THREE.Color() }, power: { value: 0 } }
@@ -185,6 +190,7 @@ export class StageRenderer {
   private points: THREE.Points
   private slowFrames = 0
   private fastFrames = 0
+  private downgrades = 0
   private maxPixelRatio = 1
   private pixelRatio = 1
   private glowMap: THREE.CanvasTexture
@@ -227,7 +233,8 @@ export class StageRenderer {
     this.glowMap = glowTexture()
 
     if (studio) {
-      this.camera.near = .3; this.camera.far = 1600
+      // A near plane of 1 keeps depth precision for the thin layers laid on the deck.
+      this.camera.near = 1; this.camera.far = 1600
       this.miami = buildMiami(this.renderer, this.scene, { farZ: this.farZ, quality: options.quality, reducedMotion: options.reducedMotion })
       this.environmentMap = this.miami.environment
       this.fx = createHitFx()
@@ -258,6 +265,7 @@ export class StageRenderer {
       // Readability tunnel: the far lane darkens so incoming notes never sit on the sun's glare.
       const tunnel = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .3, runwayLength).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x0c0610, alphaMap: tunnelTexture(), transparent: true, opacity: .85, depthWrite: false }))
       tunnel.position.set(0, DECK_TOP + .002, runwayCenter); tunnel.renderOrder = -1
+      decal(tunnel.material)
       this.scene.add(tunnel)
       const laneLight = laneLightTexture()
       this.lanes.forEach((lane, index) => {
@@ -265,6 +273,7 @@ export class StageRenderer {
         const strip = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: laneLight, color: this.colors[index], transparent: true, opacity: exercise.instrument === 'piano' ? .1 : .2, depthWrite: false, blending: THREE.AdditiveBlending }))
         strip.scale.set(lane.width * (exercise.instrument === 'piano' ? 1 : 1.25), 1, 14)
         strip.position.set(lane.x, DECK_TOP + .003, HIT_Z - 6.7)
+        decal(strip.material)
         this.scene.add(strip)
       })
       for (let i = 0; i < 18; i++) {
@@ -273,6 +282,8 @@ export class StageRenderer {
       box(this.scene, RUNWAY_WIDTH + .5, .03, .06, new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2, 1.35) }), 0, DECK_TOP + .02, HIT_Z)
       const halo = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .6, 1.1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: laneLightTexture(true), color: 0xffc98a, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending }))
       halo.position.set(0, DECK_TOP + .008, HIT_Z)
+      decal(halo.material)
+      for (const line of this.beatLines) decal(line.material as THREE.Material)
       this.scene.add(halo)
     } else {
       this.scene.add(this.boardFallback)
@@ -599,9 +610,11 @@ export class StageRenderer {
     else { this.slowFrames = Math.max(0, this.slowFrames - 1); if (!resizing && rawDt < 0.0185) this.fastFrames++ }
     if (this.slowFrames > 75) {
       this.slowFrames = 0
+      this.downgrades++
       if (this.pixelRatio > .75) this.setPixelScale(this.pixelRatio - .15)
       else if (this.composer) this.disposeComposer()
-    } else if (this.fastFrames > 900 && this.pixelRatio < this.maxPixelRatio && this.composer) {
+    } else if (this.fastFrames > 1800 && this.downgrades < 2 && this.pixelRatio < this.maxPixelRatio && this.composer) {
+      // Recover once at most: a GPU that keeps dipping would otherwise oscillate and visibly pop.
       this.fastFrames = 0
       this.setPixelScale(Math.min(this.maxPixelRatio, this.pixelRatio + .1))
     }

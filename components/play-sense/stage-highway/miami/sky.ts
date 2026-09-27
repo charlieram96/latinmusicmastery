@@ -88,7 +88,9 @@ export function createSea(uniforms: SkyUniforms) {
           + swell(p, normalize(vec2(.9, .45)), .83, .022, 2.3)
           + swell(p, normalize(vec2(-.2, -1.)), 1.7, .011, 3.1);
         vec2 ripple = vec2(psNoise(p * 1.9 + psTime * .35 * psCloudMotion), psNoise(p.yx * 2.3 - psTime * .3 * psCloudMotion)) - .5;
-        slope += ripple * .07;
+        // Ripples finer than a pixel only alias into sparkle: fade them by the pixel footprint.
+        float footprint = length(fwidth(p));
+        slope += ripple * .07 * (1. - smoothstep(.15, .6, footprint));
         // Cat's paws: broad patches of ruffled water between glassy calm stretches.
         float gust = smoothstep(.3, .78, psNoise(p * .016 + vec2(psTime * .012, psTime * .004) * psCloudMotion));
         slope *= mix(.35, 1.1, gust);
@@ -101,8 +103,8 @@ export function createSea(uniforms: SkyUniforms) {
         float fresnel = .02 + .98 * pow(max(0., 1. - facing), 5.);
         vec3 deep = vec3(.003, .008, .024) + vec3(.012, .03, .05) * pow(max(dot(view, -psSunDir), 0.), 2.);
         vec3 color = mix(deep, psSky(reflected), fresnel);
-        float glint = pow(max(dot(reflected, psSunDir), 0.), 420.);
-        color += vec3(3., 1.3, .5) * glint * (.4 + .6 * psNoise(p * 6. + psTime * psCloudMotion));
+        float glint = pow(max(dot(reflected, psSunDir), 0.), 160.);
+        color += vec3(1.6, .7, .28) * glint * (.6 + .4 * psNoise(p * .9 + psTime * .3 * psCloudMotion)) / (1. + footprint * 3.);
         color *= mix(.7, 1., smoothstep(10., 70., dist));
         // Dissolve the far edge into the horizon haze.
         vec3 horizonDir = normalize(vec3(view.x, .002, view.z));

@@ -86,7 +86,7 @@ export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, op
   const fireworks = createFireworks()
   for (const mesh of fireworks.meshes) scene.add(mesh)
 
-  let clock = 0, pulse = 0
+  let clock = 0, pulse = 0, energy = 0
   return {
     environment,
     fireworks,
@@ -100,12 +100,15 @@ export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, op
       beat.psSpeed.value = frame.speed
       beat.psHitZ.value = frame.hitZ
       beat.psLive.value = motion && frame.playing ? 1 : 0
-      beat.psEnergy.value = frame.energy
+      beat.psEnergy.value = energy
       const phase = Math.max(0, frame.elapsed) / frame.beatSeconds
-      pulse = motion && frame.playing && frame.elapsed >= 0 ? Math.pow(1 - phase % 1, 3) : 0
-      set.update(pulse, frame.energy, frame.elapsed * frame.speed)
-      gateLight.intensity = 22 + pulse * 10 + frame.energy * 22
-      for (const light of lampLights) light.intensity = 16 + frame.energy * 6
+      // A soft swell on each beat rather than a hard attack, so large lit surfaces never strobe.
+      pulse = motion && frame.playing && frame.elapsed >= 0 ? .5 + .5 * Math.cos(phase % 1 * Math.PI * 2) : 0
+      // Hits raise the stage's glow quickly but smoothly and let it settle slowly.
+      energy += (frame.energy - energy) * Math.min(1, frame.dt * (frame.energy > energy ? 6 : 1.5))
+      set.update(pulse, energy, frame.elapsed * frame.speed)
+      gateLight.intensity = 22 + pulse * 3 + energy * 8
+      for (const light of lampLights) light.intensity = 16 + energy * 2
       skyline.update(frame.dt)
       palms.update(frame.dt)
       boats.update(frame.dt)

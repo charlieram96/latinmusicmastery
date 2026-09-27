@@ -50,7 +50,7 @@ function poolTexture() {
 export function notePool() {
   return {
     geometry: new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
-    material: new THREE.MeshBasicMaterial({ map: poolTexture(), transparent: true, opacity: .6, depthWrite: false, blending: THREE.AdditiveBlending }),
+    material: new THREE.MeshBasicMaterial({ map: poolTexture(), transparent: true, opacity: .6, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
   }
 }
 

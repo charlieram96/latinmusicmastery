@@ -36,7 +36,7 @@ function towerMaterial(uniforms: SkyUniforms, round: boolean, mirror = false) {
         vec4 world = modelMatrix * instanceMatrix * vec4(position, 1.);
         ${mirror ? `world.y = ${(2 * SEA_Y).toFixed(2)} - world.y;
         float below = ${SEA_Y.toFixed(2)} - world.y;
-        world.x += sin(world.y * .9 + psTime * 1.6) * .35 * min(below, 40.) / 40.;` : ''}
+        world.x += sin(world.y * .9 + psTime * .45) * .2 * min(below, 40.) / 40.;` : ''}
         vWorld = world.xyz; vLocal = position * size; vSize = size;
         vNormal = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * normal);
         vStyle = psStyle; vGlass = psGlass;
@@ -92,7 +92,7 @@ function towerMaterial(uniforms: SkyUniforms, round: boolean, mirror = false) {
         float low = 1. - smoothstep(0., 18., vWorld.y - ${WATERLINE.toFixed(2)});
         color = mix(color, haze, clamp(1. - exp(-dist * .00028) + low * .45, 0., .8));
         ${mirror ? `float depth = ${SEA_Y.toFixed(2)} - vWorld.y;
-        float fade = exp(-depth * .035) * (.75 + .25 * sin(vWorld.y * 3.1 + psTime * 2.3));
+        float fade = exp(-depth * .035) * (.9 + .1 * sin(vWorld.y * 3.1 + psTime * .6));
         gl_FragColor = vec4(color * .8, .5 * fade);` : 'gl_FragColor = vec4(color, 1.);'}
         #include <tonemapping_fragment>
         #include <colorspace_fragment>

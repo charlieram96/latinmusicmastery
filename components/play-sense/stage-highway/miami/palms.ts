@@ -211,8 +211,7 @@ export function createPalms(specs: PalmSpec[], motion: boolean) {
         float psGust = .6 + .4 * sin(psTime * .31 + position.x * .05);
         transformed.y += psSway * psGust * (sin(psPhase) * .32 + sin(psPhase * 2.7) * .06);
         transformed.x += psSway * psGust * sin(psPhase * .8 + 1.) * .24;
-        transformed.z += psSway * psGust * cos(psPhase * .7) * .18;
-        transformed += psSway * .03 * sin(psTime * 7. + position.yzx * 9.);`)
+        transformed.z += psSway * psGust * cos(psPhase * .7) * .18;`)
       .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\npsWorld = (modelMatrix * vec4(transformed, 1.)).xyz;')
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform vec3 psSun; varying vec3 psWorld;')
