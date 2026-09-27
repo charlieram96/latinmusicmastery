@@ -13,7 +13,7 @@ import { APPROACH_SECONDS, FAR_Z, HIT_Z, RUNWAY_WIDTH, changedJudgments, createS
 import { STAGE_THEMES, type StageThemeId } from './themes'
 import { box, buildDrum, buildEnvironment, buildPad, disposeObject, glowTexture, labelSprite, lightMaterial, material } from './objects'
 import { block, contactShadow, cylinder, metal, rod, textured } from './craft'
-import { buildMiami, createComposer, createHitFx, laneLightTexture, NOTE_LAYOUT, noteCore, noteHead, notePool, tunnelTexture, DECK_TOP } from './miami'
+import { buildMiami, createComposer, createHitFx, createShatter, laneLightTexture, NOTE_LAYOUT, noteCore, noteHead, notePool, tunnelTexture, DECK_TOP } from './miami'
 import { colorNoteEmission, entranceGlow, noteChevronGeometry, noteGemGeometry, noteTrailTexture, strikeAura } from './note-geometry'
 import { observeFrameResize } from './frame-resize'
 
@@ -168,7 +168,7 @@ export class StageRenderer {
   private grade: ReturnType<typeof createComposer>['grade'] | null = null
   private fx: ReturnType<typeof createHitFx> | null = null
   private skinClock = { value: 0 }
-  private absorbing = new Map<number, number>()
+  private shatter: ReturnType<typeof createShatter> | null = null
   private lastCombo = 0
   private stageEnergy = 0
   private boardFallback = new THREE.Group()
@@ -232,6 +232,8 @@ export class StageRenderer {
       this.environmentMap = this.miami.environment
       this.fx = createHitFx()
       for (const mesh of this.fx.meshes) this.scene.add(mesh)
+      this.shatter = createShatter(DECK_TOP + .06)
+      this.scene.add(this.shatter.mesh)
       this.sourceGlow = entranceGlow()
       this.sourceGlow.material.uniforms.motion.value = options.reducedMotion ? 0 : 1
       this.sourceGlow.visible = true
@@ -551,7 +553,7 @@ export class StageRenderer {
         receptor.skin.color.value.copy(grade === 'miss' ? this.tint.setRGB(.5, .18, .25) : this.colors[note.lane])
         receptor.skin.power.value = grade === 'perfect' ? 1.25 : grade === 'good' ? .9 : grade === 'ok' ? .6 : .35
       }
-      if (grade !== 'miss') this.absorbing.set(index, this.skinClock.value)
+      this.shatter?.burst(lane.x, NOTE_LAYOUT.head, HIT_Z, Math.min(lane.width * .82, 2.65), .58, this.colors[note.lane], grade)
       if (grade !== 'miss') this.stageEnergy = Math.min(1, this.stageEnergy + (grade === 'perfect' ? .65 : .3))
       // Burst from the struck surface itself so the drum head visibly rings.
       const surface = receptor.object.position
@@ -609,7 +611,7 @@ export class StageRenderer {
       for (const burst of this.bursts) { burst.active = false; burst.mesh.visible = false }
       for (const receptor of this.receptors) receptor.energy = 0
       for (const spark of this.sparks) spark.life = 0
-      this.miami?.fireworks.reset(); this.fx?.reset(); this.absorbing.clear(); this.lastCombo = 0
+      this.miami?.fireworks.reset(); this.fx?.reset(); this.shatter?.reset(); this.lastCombo = 0
     }
     if (frame.results !== this.lastResults) {
       for (const result of changedJudgments(frame.results, this.judgments)) this.impact(result.eventIndex, result.grade)
@@ -624,12 +626,9 @@ export class StageRenderer {
         if (delta > APPROACH_SECONDS) break
         // A note can pass the strike line while its timing window is still open.
         // Only the scorer's result can turn it into a miss.
-        // A struck note is drawn into the drum for a beat: it flattens, widens and fades.
-        const absorbedAt = this.absorbing.get(note.index)
-        const absorb = absorbedAt == null ? -1 : (this.skinClock.value - absorbedAt) / .15
-        if (this.judgments.has(note.index) && !(absorb >= 0 && absorb < 1)) continue
+        if (this.judgments.has(note.index)) continue
         const lane = this.lanes[note.lane]
-        const z = absorb >= 0 ? HIT_Z + absorb * .5 : HIT_Z - delta * speed
+        const z = HIT_Z - delta * speed
         if (z > HIT_Z + 1.25) continue
         const width = Math.min(lane.width * .82, 2.65)
         const piano = this.exercise.instrument === 'piano'
@@ -638,18 +637,17 @@ export class StageRenderer {
         const entryScale = .6 + reveal * .4
         this.dummy.rotation.set(0, 0, 0)
         if (this.miami) {
-          // Notes rise out of the archway's light, then ride the lacquer on a pool of their own glow.
+          // Notes rise out of the gate's light, then ride the deck on a pool of their own glow.
           const rise = (1 - reveal) * .9
-          const squash = absorb >= 0 ? 1 - absorb : 1, spread = absorb >= 0 ? 1 + absorb * .7 : 1
           this.dummy.position.set(lane.x, NOTE_LAYOUT.head - rise, z)
-          this.dummy.scale.set(width * entryScale * spread, accent * squash, entryScale * (note.accent ? 1.15 : 1) * squash)
+          this.dummy.scale.set(width * entryScale, accent, entryScale * (note.accent ? 1.15 : 1))
           this.dummy.updateMatrix(); this.heads.setMatrixAt(count, this.dummy.matrix)
           this.heads.setColorAt(count, this.tint.copy(this.colors[note.lane]).multiplyScalar(.12).addScalar(.05))
-          this.dummy.position.y = NOTE_LAYOUT.head - rise + (NOTE_LAYOUT.core - NOTE_LAYOUT.head) * accent * squash
+          this.dummy.position.y = NOTE_LAYOUT.head - rise + (NOTE_LAYOUT.core - NOTE_LAYOUT.head) * accent
           this.dummy.updateMatrix(); this.cores.setMatrixAt(count, this.dummy.matrix)
-          this.cores.setColorAt(count, this.tint.copy(this.colors[note.lane]).multiplyScalar((note.accent ? 1.35 : 1) * (absorb >= 0 ? 1 + absorb * 1.5 : 1)))
+          this.cores.setColorAt(count, this.tint.copy(this.colors[note.lane]).multiplyScalar(note.accent ? 1.35 : 1))
           this.dummy.position.set(lane.x, NOTE_LAYOUT.pool, z)
-          this.dummy.scale.set(width * 1.9 * reveal * spread, 1, 1.9 * reveal * squash)
+          this.dummy.scale.set(width * 1.9 * reveal, 1, 1.9 * reveal)
           this.dummy.updateMatrix(); this.trims.setMatrixAt(count, this.dummy.matrix)
           this.trims.setColorAt(count, this.colors[note.lane])
         } else {
@@ -666,13 +664,11 @@ export class StageRenderer {
           this.dummy.updateMatrix(); this.trims.setMatrixAt(count, this.dummy.matrix)
           this.trims.setColorAt(count, this.tint.set(note.accent ? 0xffe8ab : 0xf3fffc))
         }
-        if (absorb < 0) {
-          const tailLength = Math.min(this.exercise.instrument === 'piano' ? note.duration * speed : 1.65, 18)
-          this.dummy.position.set(lane.x, this.miami ? DECK_TOP + .01 : -0.025, z - tailLength / 2)
-          this.dummy.scale.set(width * .72, 1, Math.max(.15, tailLength))
-          this.dummy.updateMatrix(); this.tails.setMatrixAt(tailCount, this.dummy.matrix)
-          this.tails.setColorAt(tailCount++, this.colors[note.lane])
-        }
+        const tailLength = Math.min(this.exercise.instrument === 'piano' ? note.duration * speed : 1.65, 18)
+        this.dummy.position.set(lane.x, this.miami ? DECK_TOP + .01 : -0.025, z - tailLength / 2)
+        this.dummy.scale.set(width * .72, 1, Math.max(.15, tailLength))
+        this.dummy.updateMatrix(); this.tails.setMatrixAt(tailCount, this.dummy.matrix)
+        this.tails.setColorAt(tailCount++, this.colors[note.lane])
         count++
       }
     }
@@ -758,7 +754,7 @@ export class StageRenderer {
       if (this.grade) this.grade.uniforms.psTime.value = now / 1000
       this.fx?.update(dt)
       this.skinClock.value += dt
-      if (this.absorbing.size > 48) for (const [index, at] of this.absorbing) if (this.skinClock.value - at > .5) this.absorbing.delete(index)
+      this.shatter?.update(dt)
     }
     if (!this.options.reducedMotion) this.points.position.y = Math.sin(now * 0.0001) * 0.25
     if (this.composer) this.composer.render()

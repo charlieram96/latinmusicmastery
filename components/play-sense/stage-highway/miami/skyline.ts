@@ -1,8 +1,8 @@
 import * as THREE from 'three'
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { SKY } from './glsl'
 import { SEA_Y, type SkyUniforms } from './sky'
 import { billboards } from './glow'
+import { createBridge, createCruiseShip } from './landmarks'
 
 const rand = (seed: number) => { const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x) }
 const WATERLINE = SEA_Y + .4
@@ -181,31 +181,19 @@ export function createSkyline(uniforms: SkyUniforms, motion: boolean) {
   // Red aviation lights on the tallest roofs.
   group.add(billboards(tops, new THREE.Color(2.4, .25, .2), .9, 1, time, 'blink'))
 
-  // The causeway: a low bridge across the bay with its lamps, pillars and traffic.
-  const from = shore(-62, 260), to = shore(-18, 470)
-  const span = to.clone().sub(from), spanLength = span.length()
-  const heading = Math.atan2(-span.z, span.x)
-  const deckParts: THREE.BufferGeometry[] = [new THREE.BoxGeometry(spanLength, 1.2, 7).rotateY(heading).translate((from.x + to.x) / 2, WATERLINE + 3.2, (from.z + to.z) / 2)]
-  const lamps: THREE.Vector3[] = []
-  for (let i = 0; i <= 40; i++) {
-    const p = from.clone().lerp(to, i / 40)
-    deckParts.push(new THREE.BoxGeometry(1.6, 3.2, 1.6).translate(p.x, WATERLINE + 1.2, p.z))
-    if (i % 2 === 0) lamps.push(p.clone().setY(WATERLINE + 6))
-  }
-  const deck = mergeGeometries(deckParts.map(g => g.toNonIndexed()))
-  deckParts.forEach(g => g.dispose())
-  group.add(new THREE.Mesh(deck, new THREE.MeshBasicMaterial({ color: 0x160d1c, fog: false })))
-  const lampColor = new THREE.Color(1.9, 1.05, .5)
-  group.add(billboards(lamps, lampColor, .75, 1, time, 'glow'))
-  group.add(billboards(lamps.map(p => p.clone().setY(SEA_Y + .03)), lampColor, .5, 8, time, 'reflection'))
-  group.add(traffic(from, to, time))
+  // A cable-stayed bridge across the bay on the left, with traffic flowing over its arch.
+  const bridge = createBridge(uniforms, shore(-68, 230), shore(-24, 520), time)
+  group.add(bridge.group)
+  group.add(traffic(bridge.deckAt, time))
 
-  // The port: a cruise ship dressed in lights, bow toward downtown.
-  const ship = cruiseShip(uniforms)
-  ship.position.copy(shore(33, 420)); ship.rotation.y = -.35
-  group.add(ship)
-  group.add(billboards(Array.from({ length: 12 }, (_, i) => ship.position.clone().add(new THREE.Vector3(-26 + i * 4.6, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), -.35)).setY(SEA_Y + .03)),
-    new THREE.Color(1.4, 1.1, .8), .9, 6, time, 'reflection'))
+  // PortMiami: a big cruise ship berthed across the bay on the right, lit up for the night.
+  const ship = createCruiseShip(uniforms, time)
+  ship.group.position.copy(shore(28, 360)).setY(SEA_Y)
+  ship.group.rotation.y = Math.PI * .86
+  group.add(ship.group)
+  const shipAxis = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), ship.group.rotation.y)
+  group.add(billboards(Array.from({ length: 16 }, (_, i) => ship.group.position.clone().addScaledVector(shipAxis, (i / 15 - .5) * ship.length * .85).setY(SEA_Y + .03)),
+    new THREE.Color(1.3, 1, .75), 1.2, 7, time, 'reflection'))
 
   // Two yachts idling on the bay with their cabin lights on.
   const yachts = [yacht(), yacht()]
@@ -229,24 +217,31 @@ export function createSkyline(uniforms: SkyUniforms, motion: boolean) {
 }
 
 /** Head- and tail-lights streaming both ways along the causeway, animated on the GPU. */
-function traffic(from: THREE.Vector3, to: THREE.Vector3, time: { value: number }) {
-  const count = 70
+/** Head- and tail-lights streaming both ways over the bridge deck, animated on the GPU. */
+function traffic(deckAt: (t: number) => THREE.Vector3, time: { value: number }) {
+  const count = 90
+  // Bake the deck centreline so cars follow its arch; the shader samples it by segment.
+  const samples = 24
+  const path = Array.from({ length: samples + 1 }, (_, i) => deckAt(i / samples))
   const geometry = new THREE.InstancedBufferGeometry()
   geometry.setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0], 3))
   geometry.setIndex([0, 1, 2, 0, 2, 3])
-  geometry.setAttribute('psCar', new THREE.InstancedBufferAttribute(new Float32Array(Array.from({ length: count }, (_, i) => [rand(i + 900), i % 2, .012 + rand(i + 901) * .01]).flat()), 3))
+  geometry.setAttribute('psCar', new THREE.InstancedBufferAttribute(new Float32Array(Array.from({ length: count }, (_, i) => [rand(i + 900), i % 2, .01 + rand(i + 901) * .008]).flat()), 3))
   geometry.instanceCount = count
   const material = new THREE.ShaderMaterial({
-    uniforms: { psTime: time, psFrom: { value: from.clone().setY(from.y + 4.1) }, psTo: { value: to.clone().setY(to.y + 4.1) } },
+    uniforms: { psTime: time, psPath: { value: path } },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
     vertexShader: /* glsl */ `
-      attribute vec3 psCar; uniform float psTime; uniform vec3 psFrom; uniform vec3 psTo;
+      attribute vec3 psCar; uniform float psTime; uniform vec3 psPath[${samples + 1}];
       varying vec2 vUv; varying float vDir;
       void main() {
-        float t = fract(psCar.x + psTime * psCar.z * (psCar.y > .5 ? 1. : -1.));
-        vec3 lane = normalize(cross(psTo - psFrom, vec3(0., 1., 0.))) * (psCar.y > .5 ? 1.4 : -1.4);
-        vec4 center = viewMatrix * vec4(mix(psFrom, psTo, t) + lane, 1.);
-        center.xy += position.xy * .45 * (1. + -center.z * .003);
+        float t = fract(psCar.x + psTime * psCar.z * (psCar.y > .5 ? 1. : -1.)) * ${samples.toFixed(1)};
+        int i = int(min(floor(t), ${(samples - 1).toFixed(1)}));
+        vec3 a = psPath[0], b = psPath[1];
+        for (int k = 0; k < ${samples}; k++) if (k == i) { a = psPath[k]; b = psPath[k + 1]; }
+        vec3 lane = normalize(cross(b - a, vec3(0., 1., 0.))) * (psCar.y > .5 ? 2.2 : -2.2);
+        vec4 center = viewMatrix * vec4(mix(a, b, t - float(i)) + lane, 1.);
+        center.xy += position.xy * .5 * (1. + -center.z * .003);
         vUv = position.xy; vDir = psCar.y;
         gl_Position = projectionMatrix * center;
       }`,
@@ -260,26 +255,6 @@ function traffic(from: THREE.Vector3, to: THREE.Vector3, time: { value: number }
   const mesh = new THREE.Mesh(geometry, material)
   mesh.frustumCulled = false
   return mesh
-}
-
-function cruiseShip(uniforms: SkyUniforms) {
-  const ship = new THREE.Group()
-  const hull = new THREE.Mesh(new THREE.BoxGeometry(62, 6, 10).translate(0, 3, 0), new THREE.MeshBasicMaterial({ color: 0x241c2c, fog: false }))
-  ship.add(hull)
-  const decks = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0), towerMaterial(uniforms, false), 5)
-  const geometry = decks.geometry
-  geometry.setAttribute('psStyle', new THREE.InstancedBufferAttribute(new Float32Array(Array.from({ length: 5 }, (_, i) => [rand(i + 40), .75, i === 4 ? 2 : 0, 1]).flat()), 4))
-  geometry.setAttribute('psGlass', new THREE.InstancedBufferAttribute(new Float32Array(Array.from({ length: 5 }, () => [.55, .52, .56]).flat()), 3))
-  const dummy = new THREE.Object3D()
-  for (let i = 0; i < 5; i++) {
-    dummy.position.set(-4 + i * 2, 6 + i * 2.6, 0); dummy.scale.set(52 - i * 7, 2.6, 9 - i * .6)
-    dummy.updateMatrix(); decks.setMatrixAt(i, dummy.matrix)
-  }
-  decks.frustumCulled = false
-  ship.add(decks)
-  const funnel = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2, 5, 12).translate(8, 21.5, 0), new THREE.MeshBasicMaterial({ color: 0x3a1f2f, fog: false }))
-  ship.add(funnel)
-  return ship
 }
 
 function yacht() {

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { NOISE, SKY } from './glsl'
 
-export const SEA_Y = -5.2
+export const SEA_Y = -3.9
 /** The sun has just gone down behind the skyline, straight down the runway. */
 export const SUN_DIRECTION = new THREE.Vector3(.08, Math.sin(THREE.MathUtils.degToRad(-1.6)), -1).normalize()
 

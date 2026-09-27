@@ -1,13 +1,16 @@
 import * as THREE from 'three'
-import { bakeSkyEnvironment, createSea, createSkyDome, skyUniforms, SUN_DIRECTION } from './sky'
+import { bakeSkyEnvironment, createSea, createSkyDome, skyUniforms, SEA_Y, SUN_DIRECTION } from './sky'
 import { createSkyline } from './skyline'
 import { createPalms } from './palms'
 import { GATE_Z, createSet, DECK_TOP, TERRACE_Y, type BeatUniforms } from './set'
 import { createFireworks } from './fireworks'
+import { createBoats } from './boats'
+import { RUNWAY_WIDTH } from '../model'
 
 export { laneLightTexture, NOTE_LAYOUT, noteCore, noteHead, notePool, tunnelTexture } from './notes'
 export { createComposer } from './post'
 export { createHitFx } from './fx'
+export { createShatter } from './shatter'
 export { GATE_Z, DECK_TOP, TERRACE_Y }
 
 export interface StageAmbience { elapsed: number; beatSeconds: number; speed: number; hitZ: number; playing: boolean; energy: number; dt: number }
@@ -54,9 +57,17 @@ export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, op
     psElapsed: { value: 0 }, psBeat: { value: .6 }, psSpeed: { value: 8 }, psHitZ: { value: 3.6 },
     psLive: { value: 0 }, psEnergy: { value: 0 }, psClock: { value: 0 },
   }
-  const set = createSet(beat, options.farZ, options.quality)
+  // Boats tie up along the right side of the dock; the festoon lights keep the left.
+  const set = createSet(beat, options.farZ, options.quality, 1)
   scene.add(set.group)
-  const lampLights = set.lampGlobes.filter(p => Math.abs(p.x) < 10).map(p => {
+  const dockEdge = RUNWAY_WIDTH / 2 + .75
+  const boats = createBoats([
+    { kind: 'yacht', x: dockEdge + .45 + 3.9 / 2, z: -8.2, heading: -Math.PI / 2 },
+    { kind: 'speedboat', x: dockEdge + .4 + 2.5 / 2, z: -17.4, heading: Math.PI / 2 },
+    { kind: 'sloop', x: dockEdge + .4 + 2.9 / 2, z: -24.4, heading: -Math.PI / 2 },
+  ], SEA_Y, dockEdge, DECK_TOP, motion)
+  scene.add(boats.group)
+  const lampLights = set.lampGlobes.filter(p => Math.abs(p.x) < 12).map(p => {
     const light = new THREE.PointLight(0xffb36b, 16, 15, 1.6)
     light.position.copy(p).add(new THREE.Vector3(0, -.3, .4)); scene.add(light)
     return light
@@ -97,6 +108,7 @@ export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, op
       for (const light of lampLights) light.intensity = 16 + frame.energy * 6
       skyline.update(frame.dt)
       palms.update(frame.dt)
+      boats.update(frame.dt)
       if (motion) fireworks.update(frame.dt)
     },
   }

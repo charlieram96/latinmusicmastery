@@ -20,7 +20,7 @@ export function createFireworks() {
 
   const burst = (shell: Shell) => {
     const { x, y, z, size } = shell
-    fx.flare(1, x, y, z, shell.color, 26 * size, .55)
+    fx.flare(1, x, y, z, shell.color, 11 * size, .35)
     const count = shell.style === 'ring' ? 90 : 150
     const axis = new THREE.Vector3(random() - .5, 1, random() - .5).normalize()
     const basisA = new THREE.Vector3().crossVectors(axis, new THREE.Vector3(1, 0, 0)).normalize()

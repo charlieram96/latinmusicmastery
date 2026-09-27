@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { SUN_DIRECTION } from './sky'
+import { photoTexture } from './textures'
 
 export interface PalmSpec { x: number; z: number; ground: number; height: number; kind: 'royal' | 'coconut'; lean?: number; heading?: number; seed: number }
 
@@ -113,6 +114,30 @@ function trunk(curve: THREE.CatmullRomCurve3, radiusAt: (t: number) => number, c
   return g
 }
 
+/** A clump of broad tropical ground-cover leaves (think philodendron and bird-of-paradise). */
+function shrub(out: Buffers, x: number, ground: number, z: number, radius: number, seed: number) {
+  const tints = [new THREE.Color(0x1e3a1c), new THREE.Color(0x2a4a22), new THREE.Color(0x3a5a26)]
+  for (let i = 0; i < 34; i++) {
+    const a = rand(seed + i) * Math.PI * 2, reach = radius * (.35 + rand(seed + i * 3) * .75)
+    const base = new THREE.Vector3(x + Math.cos(a) * reach * .25, ground, z + Math.sin(a) * reach * .25)
+    const outward = new THREE.Vector3(Math.cos(a), 0, Math.sin(a))
+    const length = .45 + rand(seed + i * 7) * .55, width = .12 + rand(seed + i * 5) * .1
+    const lift = .35 + rand(seed + i * 11) * .5
+    const side = new THREE.Vector3(-outward.z, 0, outward.x)
+    const tint = tints[i % 3], start = out.position.length / 3
+    for (let k = 0; k <= 4; k++) {
+      const t = k / 4
+      const p = base.clone().addScaledVector(outward, reach * .6 * t + length * t).add(new THREE.Vector3(0, lift * Math.sin(t * Math.PI * .8) + .05, 0))
+      const w = width * Math.sin(Math.min(1, t * 1.15 + .08) * Math.PI) + .005
+      for (const s of [-1, 1]) {
+        const v = p.clone().addScaledVector(side, s * w).add(new THREE.Vector3(0, -Math.abs(s) * w * .25, 0))
+        out.position.push(v.x, v.y, v.z); out.color.push(tint.r, tint.g, tint.b); out.sway.push(t * .06)
+      }
+    }
+    for (let k = 0; k < 4; k++) { const q = start + k * 2; out.index.push(q, q + 2, q + 1, q + 1, q + 2, q + 3) }
+  }
+}
+
 /**
  * Royal and coconut palms: geometric leaflets (crisp under MSAA, no alpha
  * cut-outs), fronds swaying on the GPU, sunset translucency when backlit, and
@@ -120,7 +145,7 @@ function trunk(curve: THREE.CatmullRomCurve3, radiusAt: (t: number) => number, c
  */
 export function createPalms(specs: PalmSpec[], motion: boolean) {
   const time = { value: 0 }
-  const trunks: THREE.BufferGeometry[] = [], leaves: Buffers = buffers(), extras: THREE.BufferGeometry[] = []
+  const trunks: THREE.BufferGeometry[] = [], leaves: Buffers = buffers(), extras: THREE.BufferGeometry[] = [], beds: THREE.BufferGeometry[] = []
   const green = [new THREE.Color(0x213b1f), new THREE.Color(0x2b4823), new THREE.Color(0x344d25)]
   const aging = new THREE.Color(0x6d6a34)
   for (const spec of specs) {
@@ -150,12 +175,13 @@ export function createPalms(specs: PalmSpec[], motion: boolean) {
       const a = i * 1.1 + spec.seed
       extras.push(new THREE.SphereGeometry(.2 * scale, 10, 8).translate(crown.x + Math.cos(a) * .32 * scale, crown.y - .35 * scale - (i % 2) * .15, crown.z + Math.sin(a) * .32 * scale))
     }
-    // Round stucco planter with a lip.
-    extras.push(new THREE.CylinderGeometry(.95, 1.02, .55, 28).translate(spec.x, spec.ground + .275, spec.z))
-    extras.push(new THREE.TorusGeometry(.96, .06, 6, 28).rotateX(Math.PI / 2).translate(spec.x, spec.ground + .55, spec.z))
+    // A planting bed set into the pavers: a low coral-stone curb and a clump of ground cover.
+    for (const [dx, dz, w, d] of [[0, -1.05, 2.3, .2], [0, 1.05, 2.3, .2], [-1.05, 0, .2, 1.9], [1.05, 0, .2, 1.9]]) extras.push(new THREE.BoxGeometry(w, .22, d).translate(spec.x + dx, spec.ground + .11, spec.z + dz))
+    beds.push(new THREE.BoxGeometry(1.95, .04, 1.95).translate(spec.x, spec.ground + .12, spec.z))
+    shrub(leaves, spec.x, spec.ground + .12, spec.z, 1.1, spec.seed * 17)
   }
   const group = new THREE.Group()
-  const barkMap = ringTexture('#d8d2c6', '#6e675c')
+  const barkMap = photoTexture('/playsense/textures/bark.jpg', ringTexture('#d8d2c6', '#6e675c'), [1, 1], 4)
   const trunkMaterial = new THREE.MeshStandardMaterial({ map: barkMap, bumpMap: barkMap, bumpScale: .6, vertexColors: true, roughness: .8 })
   trunkMaterial.onBeforeCompile = shader => {
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying float psUp;').replace('#include <uv_vertex>', '#include <uv_vertex>\npsUp = uv.y;')
@@ -168,9 +194,11 @@ export function createPalms(specs: PalmSpec[], motion: boolean) {
   const trunkMesh = new THREE.Mesh(mergeGeometries(trunks), trunkMaterial)
   trunkMesh.castShadow = true
   group.add(trunkMesh)
-  const extrasMesh = new THREE.Mesh(mergeGeometries(extras.map(g => { g.deleteAttribute('uv'); return g.index ? g.toNonIndexed() : g })), new THREE.MeshStandardMaterial({ color: 0xbdb5ab, roughness: .6 }))
+  const extrasMesh = new THREE.Mesh(mergeGeometries(extras.map(g => { g.deleteAttribute('uv'); return g.index ? g.toNonIndexed() : g })), new THREE.MeshStandardMaterial({ color: 0xcdbb9c, roughness: .85 }))
   extrasMesh.castShadow = true
   group.add(extrasMesh)
+  group.add(new THREE.Mesh(mergeGeometries(beds), new THREE.MeshStandardMaterial({ color: 0x1d1511, roughness: 1 })))
+  beds.forEach(g => g.dispose())
 
   const leafMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide, roughness: .55, metalness: 0 })
   leafMaterial.onBeforeCompile = shader => {

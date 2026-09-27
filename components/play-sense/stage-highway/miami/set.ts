@@ -4,6 +4,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { HIT_Z, RUNWAY_WIDTH } from '../model'
 import { SEA_Y } from './sky'
 import { billboards } from './glow'
+import { photoTexture } from './textures'
 
 export const TERRACE_Y = -3.2
 export const DECK_TOP = -0.17
@@ -151,58 +152,78 @@ export function merge(parts: THREE.BufferGeometry[]) {
   return merged
 }
 
-export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standard' | 'low') {
+export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standard' | 'low', boatSide = 1) {
   const group = new THREE.Group()
   const anisotropy = quality === 'low' ? 1 : 8
-  const lacquer = new THREE.MeshPhysicalMaterial({ map: deckTexture(), color: 0xffffff, roughness: .38, clearcoat: 1, clearcoatRoughness: .13, envMapIntensity: .9 })
-  lacquer.map!.repeat.set(1, 1)
   const chassisWood = new THREE.MeshStandardMaterial({ color: 0x3a2417, roughness: .45, metalness: 0 })
-  const brass = new THREE.MeshStandardMaterial({ color: 0xd8a55a, metalness: 1, roughness: .26 })
   const darkIron = new THREE.MeshStandardMaterial({ color: 0x15171a, metalness: .6, roughness: .45 })
   const stone = new THREE.MeshStandardMaterial({ map: stoneTexture('#efe8dd'), roughness: .75, color: 0xd6cfc5 })
   const aqua = new THREE.MeshStandardMaterial({ color: 0x4fb8ad, roughness: .5 })
   const chrome = new THREE.MeshStandardMaterial({ color: 0xe6e8ea, metalness: 1, roughness: .12 })
+  const timber = new THREE.MeshStandardMaterial({ color: 0x5a4a3c, roughness: .85 })
+  const rubber = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: .6 })
+  const capWhite = new THREE.MeshStandardMaterial({ color: 0xece8e0, roughness: .45 })
+  const rope = new THREE.MeshStandardMaterial({ color: 0xc9b58e, roughness: .9 })
 
-  // Deck: lacquered playing surface on a chassis, brass inlays at every lane boundary.
+  // The dock: weathered teak planks laid across its width on a timber frame.
   const front = HIT_Z + 1.25, back = farZ - 1.3
   const length = front - back, center = (front + back) / 2
-  const chassis = new THREE.Mesh(new RoundedBoxGeometry(RUNWAY_WIDTH + 1.3, .95, length + .3, 3, .16), chassisWood)
-  chassis.position.set(0, DECK_TOP - .52, center); chassis.receiveShadow = true; group.add(chassis)
-  const surface = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .4, length).rotateX(-Math.PI / 2), lacquer)
+  const frame = new THREE.Mesh(new RoundedBoxGeometry(RUNWAY_WIDTH + 1.1, .7, length + .3, 2, .05), chassisWood)
+  frame.position.set(0, DECK_TOP - .38, center); frame.receiveShadow = true; group.add(frame)
+  const planks = photoTexture('/playsense/textures/dock.jpg', deckTexture(), [(RUNWAY_WIDTH + .9) / 7.4, length / 7.4], anisotropy)
+  const deckMaterial = new THREE.MeshPhysicalMaterial({ map: planks, bumpMap: planks, bumpScale: 1.4, color: 0x9a8a7c, roughness: .6, clearcoat: .3, clearcoatRoughness: .35, envMapIntensity: .65 })
+  const surface = new THREE.Mesh(new THREE.PlaneGeometry(RUNWAY_WIDTH + .9, length).rotateX(-Math.PI / 2), deckMaterial)
   surface.position.set(0, DECK_TOP, center); surface.receiveShadow = true
-  lacquer.map!.repeat.set(1, length / 14)
-  lacquer.map!.anisotropy = anisotropy
   group.add(surface)
+  const edgeParts: THREE.BufferGeometry[] = [], fenderParts: THREE.BufferGeometry[] = [], cleatParts: THREE.BufferGeometry[] = []
+  const edgeX = RUNWAY_WIDTH / 2 + .45
   for (const side of [-1, 1]) {
-    const rail = new THREE.Mesh(new RoundedBoxGeometry(.34, .3, length + .2, 2, .12), brass)
-    rail.position.set(side * (RUNWAY_WIDTH / 2 + .38), DECK_TOP + .07, center); rail.castShadow = true; group.add(rail)
-    const skirt = new THREE.Mesh(new THREE.BoxGeometry(.05, .06, length), brass)
-    skirt.position.set(side * (RUNWAY_WIDTH / 2 + .66), DECK_TOP - .7, center); group.add(skirt)
+    // Fascia boards and a continuous D-fender on the boat side.
+    edgeParts.push(new THREE.BoxGeometry(.12, .5, length + .2).translate(side * (edgeX + .06), DECK_TOP - .2, center))
+    edgeParts.push(new THREE.BoxGeometry(.22, .08, length + .2).translate(side * edgeX, DECK_TOP + .02, center))
+    if (side === boatSide) fenderParts.push(new THREE.CylinderGeometry(.09, .09, length, 10, 1).rotateX(Math.PI / 2).translate(side * (edgeX + .15), DECK_TOP - .12, center))
+    for (let z = front - 3; z > back + 1; z -= 4.4) {
+      cleatParts.push(new THREE.BoxGeometry(.1, .08, .42).translate(side * (edgeX - .08), DECK_TOP + .1, z))
+      cleatParts.push(new THREE.BoxGeometry(.08, .08, .08).translate(side * (edgeX - .08), DECK_TOP + .05, z))
+    }
   }
+  const edges = new THREE.Mesh(merge(edgeParts), timber); edges.receiveShadow = true; group.add(edges)
+  if (fenderParts.length) group.add(new THREE.Mesh(merge(fenderParts), rubber))
+  group.add(new THREE.Mesh(merge(cleatParts), chrome))
 
-  // Pier pilings and cross-bracing down into the water.
-  const pilings: THREE.BufferGeometry[] = []
-  for (let z = front - 2; z > back; z -= 5.2) {
-    for (const side of [-1, 1]) pilings.push(new THREE.CylinderGeometry(.34, .42, DECK_TOP - SEA_Y - .5, 14).translate(side * (RUNWAY_WIDTH / 2 - .2), (DECK_TOP + SEA_Y - .5) / 2 - .25, z))
-    pilings.push(new THREE.BoxGeometry(RUNWAY_WIDTH, .34, .34).translate(0, DECK_TOP - 1.4, z))
+  // Round timber pilings: under the deck, and standing proud of it along both edges with
+  // white caps and rope wraps, the unmistakable silhouette of a marina dock.
+  const pilings: THREE.BufferGeometry[] = [], caps: THREE.BufferGeometry[] = [], wraps: THREE.BufferGeometry[] = []
+  const pilingTop = DECK_TOP + 1.25
+  for (let z = front - 1.6; z > back; z -= 5.2) {
+    for (const side of [-1, 1]) {
+      const x = side * (edgeX + .38)
+      pilings.push(new THREE.CylinderGeometry(.2, .24, pilingTop - SEA_Y, 14).translate(x, (pilingTop + SEA_Y) / 2, z))
+      caps.push(new THREE.ConeGeometry(.24, .22, 14).translate(x, pilingTop + .11, z))
+      for (let k = 0; k < 3; k++) wraps.push(new THREE.TorusGeometry(.215, .025, 6, 16).rotateX(Math.PI / 2).translate(x, DECK_TOP + .55 + k * .07, z))
+      pilings.push(new THREE.CylinderGeometry(.26, .3, DECK_TOP - SEA_Y, 12).translate(side * (RUNWAY_WIDTH / 2 - .6), (DECK_TOP + SEA_Y) / 2 - .3, z))
+    }
+    pilings.push(new THREE.BoxGeometry(RUNWAY_WIDTH, .3, .3).translate(0, DECK_TOP - 1.3, z))
   }
-  const pier = new THREE.Mesh(merge(pilings), new THREE.MeshStandardMaterial({ color: 0x241712, roughness: .7 }))
-  group.add(pier)
+  const pier = new THREE.Mesh(merge(pilings), timber); pier.castShadow = true; group.add(pier)
+  group.add(new THREE.Mesh(merge(caps), capWhite))
+  group.add(new THREE.Mesh(merge(wraps), rope))
 
-  // Marquee bulbs ride both rails; each sits in a small brass cup.
+  // Bollard lights along both edges; their lamps chase the beat toward the player.
   const railBulbs: THREE.Vector3[] = []
-  for (let z = front - .35; z > back + .2; z -= .82) for (const side of [-1, 1]) railBulbs.push(new THREE.Vector3(side * (RUNWAY_WIDTH / 2 + .38), DECK_TOP + .31, z))
-  group.add(bulbs(railBulbs, uniforms, true, .085, new THREE.Color(1, .66, .34)))
-  const cups = new THREE.InstancedMesh(new THREE.CylinderGeometry(.1, .07, .1, 10), brass, railBulbs.length)
-  const dummy = new THREE.Object3D()
-  railBulbs.forEach((p, i) => { dummy.position.set(p.x, p.y - .1, p.z); dummy.updateMatrix(); cups.setMatrixAt(i, dummy.matrix) })
-  group.add(cups)
+  const bollards: THREE.BufferGeometry[] = []
+  for (let z = front - .5; z > back + .3; z -= 1.64) for (const side of [-1, 1]) {
+    const x = side * (edgeX - .02)
+    railBulbs.push(new THREE.Vector3(x, DECK_TOP + .44, z))
+    bollards.push(new THREE.CylinderGeometry(.075, .09, .36, 10).translate(x, DECK_TOP + .2, z))
+    bollards.push(new THREE.CylinderGeometry(.1, .1, .04, 10).translate(x, DECK_TOP + .52, z))
+  }
+  group.add(bulbs(railBulbs, uniforms, true, .07, new THREE.Color(1, .66, .34)))
+  group.add(new THREE.Mesh(merge(bollards), darkIron))
 
-  // The bayfront: polished terrazzo, a white stucco seawall with a chrome rail, streetlamps.
-  const tiles = terrazzoTexture()
-  tiles.repeat.set(20, 8)
-  tiles.anisotropy = anisotropy
-  const terrace = new THREE.Mesh(new THREE.PlaneGeometry(120, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: tiles, roughness: .2, color: 0x8b847c, envMapIntensity: .8 }))
+  // The bayfront promenade: coral-stone pavers, a white stucco seawall with a chrome rail, streetlamps.
+  const tiles = photoTexture('/playsense/textures/pavers.jpg', terrazzoTexture(), [120 / 5.2, 48 / 5.2], anisotropy)
+  const terrace = new THREE.Mesh(new THREE.PlaneGeometry(120, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: tiles, bumpMap: tiles, bumpScale: 1.2, roughness: .55, color: 0x8a8177, envMapIntensity: .55 }))
   terrace.position.set(0, TERRACE_Y, SEAWALL_Z + 24); terrace.receiveShadow = true; group.add(terrace)
   const wallParts: THREE.BufferGeometry[] = [], bandParts: THREE.BufferGeometry[] = [], railParts: THREE.BufferGeometry[] = []
   for (const side of [-1, 1]) {
@@ -221,7 +242,7 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
 
   const lampGlobes: THREE.Vector3[] = []
   const lampParts: THREE.BufferGeometry[] = []
-  for (const x of [-8.6, 8.6, -21, 21, -33, 33]) {
+  for (const x of [-10.4, 10.4, -22, 22, -33, 33]) {
     const y = TERRACE_Y + .95
     lampParts.push(new THREE.CylinderGeometry(.2, .28, .5, 10).translate(x, y + .25, SEAWALL_Z))
     lampParts.push(new THREE.CylinderGeometry(.06, .09, 5.4, 10).translate(x, y + 3.1, SEAWALL_Z))
@@ -233,13 +254,13 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   lampPosts.castShadow = true; group.add(lampPosts);
   group.add(bulbs(lampGlobes, uniforms, false, .34, new THREE.Color(.95, .62, .36)))
 
-  // Festoon strings sweep along both sides of the pier between slim brass masts.
+  // Festoon strings sweep along the open side of the dock between slim masts.
   const masts: THREE.BufferGeometry[] = []
   const festoon: THREE.Vector3[] = []
   const mastZ = [-3.4, -11, -18.6, farZ + 1.2]
   const mastX = RUNWAY_WIDTH / 2 + 1.35
   const top = 5.4
-  for (const side of [-1, 1]) {
+  for (const side of [-boatSide]) {
     for (const z of mastZ) {
       masts.push(new THREE.CylinderGeometry(.06, .09, top - SEA_Y, 10).translate(side * mastX, (top + SEA_Y) / 2 + .01, z))
       masts.push(new THREE.SphereGeometry(.13, 10, 8).translate(side * mastX, top + .05, z))
