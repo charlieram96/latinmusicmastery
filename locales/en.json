@@ -235,6 +235,7 @@
         "finaleTitle": "Ready to learn",
         "finaleAccent": "from the best?",
         "finaleLede": "Join the waitlist for early access and founding-member pricing.",
+        "filterResults": "{count} maestros shown",
         "_": "keys above this line"
       },
       "profile": {
@@ -252,6 +253,8 @@
         "sectionsOne": "1 section",
         "finaleTitle": "Study with",
         "finaleLede": "Join the waitlist for early access and founding-member pricing.",
+        "metaTitleNoInst": "{name} · Latin Music Mastery",
+        "metaDescriptionNoInst": "{name} teaches on Latin Music Mastery.",
         "_": "keys above this line"
       },
       "playsense": {

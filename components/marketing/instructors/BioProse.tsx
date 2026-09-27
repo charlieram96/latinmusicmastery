@@ -11,12 +11,19 @@ type Node = { type?: string; text?: string; attrs?: { level?: unknown }; content
 
 const SAFE_HREF = /^(https?:|mailto:)/i
 
-function hasText(n: Node): boolean {
+/** True when a TipTap node holds any visible text (an editor-cleared doc does not). */
+export function hasText(n: Node | unknown): boolean {
+  if (!n || typeof n !== 'object') return false
+  return nodeHasText(n as Node)
+}
+
+function nodeHasText(n: Node): boolean {
   if (typeof n.text === 'string') return n.text.trim().length > 0
-  return Array.isArray(n.content) && n.content.some(c => c && typeof c === 'object' && hasText(c as Node))
+  return Array.isArray(n.content) && n.content.some(c => c && typeof c === 'object' && nodeHasText(c as Node))
 }
 
 function renderText(n: Node): ReactNode {
+  if (typeof n.text !== 'string') return null
   let out: ReactNode = n.text
   for (const m of n.marks ?? []) {
     if (m.type === 'bold') out = <strong>{out}</strong>
@@ -91,6 +98,6 @@ export function reflowParagraphs(doc: unknown): unknown {
 }
 
 export function BioProse({ doc }: { doc: unknown }) {
-  if (!doc || typeof doc !== 'object' || !hasText(doc as Node)) return null
+  if (!hasText(doc)) return null
   return <>{renderNode(reflowParagraphs(doc))}</>
 }

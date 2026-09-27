@@ -235,6 +235,7 @@
         "finaleTitle": "¿Listo para aprender",
         "finaleAccent": "con los mejores?",
         "finaleLede": "Únete a la lista de espera para tener acceso anticipado y precio de miembro fundador.",
+        "filterResults": "{count} maestros en pantalla",
         "_": "keys above this line"
       },
       "profile": {
@@ -252,6 +253,8 @@
         "sectionsOne": "1 sección",
         "finaleTitle": "Estudia con",
         "finaleLede": "Únete a la lista de espera para tener acceso anticipado y precio de miembro fundador.",
+        "metaTitleNoInst": "{name} · Latin Music Mastery",
+        "metaDescriptionNoInst": "{name} enseña en Latin Music Mastery.",
         "_": "keys above this line"
       },
       "playsense": {

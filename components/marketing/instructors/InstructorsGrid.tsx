@@ -8,11 +8,13 @@ import { FAMILIES, familyCounts, teacherFamilies, type FamilyKey } from '@/lib/m
 type Filter = FamilyKey | 'all'
 
 /** Sticky family chips over the maestro grid. Filtering is client-side; families nobody plays are hidden. */
-export function InstructorsGrid({ teachers, labels, groupLabel, empty }: {
+export function InstructorsGrid({ teachers, labels, groupLabel, empty, resultsTemplate }: {
   teachers: CatalogTeacher[]
   labels: Record<Filter, string>
   groupLabel: string
   empty: string
+  /** e.g. `{count} maestros shown`, announced when the filter changes. */
+  resultsTemplate: string
 }) {
   const [cur, setCur] = useState<Filter>('all')
   const counts = useMemo(() => familyCounts(teachers), [teachers])
@@ -30,6 +32,7 @@ export function InstructorsGrid({ teachers, labels, groupLabel, empty }: {
           ))}
         </div>
       </div>
+      <p className="sr-only" aria-live="polite">{cur === 'all' ? '' : resultsTemplate.replace('{count}', String(shown.length))}</p>
       <div className="wrap">
         {shown.length > 0
           ? <div className="igrid">{shown.map(t => <MaestroCard key={t.id} teacher={t} href={`/instructors/${t.id}`} sizes="(max-width: 640px) 100vw, 320px" />)}</div>

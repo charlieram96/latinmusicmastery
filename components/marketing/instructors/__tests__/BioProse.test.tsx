@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { BioProse } from '../BioProse'
+import { BioProse, hasText } from '../BioProse'
 
 const html = (doc: unknown) => renderToStaticMarkup(<BioProse doc={doc} />)
 const text = (t: string, marks?: unknown[]) => ({ type: 'text', text: t, ...(marks ? { marks } : {}) })
@@ -57,5 +57,15 @@ describe('reflowParagraphs', () => {
   it('leaves short lines, finished sentences and headings alone', () => {
     const out = html({ type: 'doc', content: [para('PATRICIO DÍAZ NÁPOLES'), para(long + ' studies.'), para('Another one.'), { type: 'heading', attrs: { level: 2 }, content: [text('H')] }] })
     expect(out).toBe(`<p>PATRICIO DÍAZ NÁPOLES</p><p>${long} studies.</p><p>Another one.</p><h3>H</h3>`)
+  })
+})
+
+describe('hasText', () => {
+  it('is false for an editor-cleared doc and malformed input', () => {
+    expect(hasText({ type: 'doc', content: [{ type: 'paragraph' }] })).toBe(false)
+    expect(hasText(null)).toBe(false)
+  })
+  it('ignores non-string text instead of crashing', () => {
+    expect(html({ type: 'doc', content: [{ type: 'paragraph', content: [text('ok'), { type: 'text', text: { bad: 1 } }] }] })).toBe('<p>ok</p>')
   })
 })

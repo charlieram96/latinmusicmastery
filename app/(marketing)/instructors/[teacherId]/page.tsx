@@ -16,7 +16,7 @@ import { isUuid, mergeTeacherCourses } from '@/lib/marketing/teacher-courses'
 import { Accent } from '@/components/marketing/site/PageHead'
 import { Sleeve } from '@/components/marketing/site/Sleeve'
 import { Finale } from '@/components/marketing/site/Finale'
-import { BioProse } from '@/components/marketing/instructors/BioProse'
+import { BioProse, hasText } from '@/components/marketing/instructors/BioProse'
 
 type Params = { params: Promise<{ teacherId: string }> }
 
@@ -37,7 +37,8 @@ const loadTeacher = cache(async (id: string, locale: Locale) => {
     ...presentTeacher({ name: row.name, imageUrl: row.image_url, specialties: row.specialties ?? [] }),
     id: row.id,
     instrument,
-    bio: pick(locale, row.bio, row.bio_es) as unknown,
+    // An editor-cleared Spanish bio is still an object; only use it when it has text.
+    bio: (locale === 'es' && hasText(row.bio_es) ? row.bio_es : row.bio) as unknown,
   }
 })
 
@@ -73,8 +74,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   if (!teacher) return {}
   const vars = { name: displayName(teacher.name), instrument: teacher.instrument }
   return {
-    title: t('marketing.site.profile.metaTitle', vars),
-    description: t('marketing.site.profile.metaDescription', vars),
+    title: t(vars.instrument ? 'marketing.site.profile.metaTitle' : 'marketing.site.profile.metaTitleNoInst', vars),
+    description: t(vars.instrument ? 'marketing.site.profile.metaDescription' : 'marketing.site.profile.metaDescriptionNoInst', vars),
   }
 }
 
@@ -88,7 +89,7 @@ export default async function TeacherProfilePage({ params }: Params) {
 
   const { before, nickname, after } = splitNickname(teacher.name)
   const shownName = displayName(teacher.name)
-  const callName = nickname ?? before.split(/\s+/)[0]
+  const callName = nickname || before.split(/\s+/)[0] || shownName
   const lessons = (n: number) => (n === 1 ? k('lessonsOne') : k('lessons', { count: n }))
   const sections = (n: number) => (n === 1 ? k('sectionsOne') : k('sections', { count: n }))
 

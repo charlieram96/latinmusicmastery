@@ -31,6 +31,7 @@ export default async function InstructorsPage() {
         teachers={catalog.teachers.map(t => ({ ...presentTeacher(t), name: displayName(t.name) }))}
         groupLabel={k('filterLabel')}
         empty={k('empty')}
+        resultsTemplate={k('filterResults')}
         labels={{ all: k('famAll'), perc: k('famPerc'), keys: k('famKeys'), bass: k('famBass'), strings: k('famStrings'), horns: k('famHorns'), voice: k('famVoice') }}
       />
       <section className="sec">
