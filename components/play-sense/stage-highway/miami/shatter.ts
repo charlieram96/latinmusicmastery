@@ -51,7 +51,7 @@ export function createShatter(floorY: number, capacity = 640) {
         float g = ${GRAVITY.toFixed(1)};
         float drop = max(0., psOrigin.y - ${floorY.toFixed(3)});
         float t1 = (psVelocity.y + sqrt(psVelocity.y * psVelocity.y + 2. * g * drop)) / g;
-        float bounceUp = (g * t1 - psVelocity.y) * .3;
+        float bounceUp = (g * t1 - psVelocity.y) * .15;
         float t2 = 2. * bounceUp / g;
         vec3 psPos;
         float spinTime;
@@ -72,7 +72,7 @@ export function createShatter(floorY: number, capacity = 640) {
             spinTime = t1 + t2 * .6;
           }
         }
-        float psShrink = psAlive * (1. - smoothstep(.62, 1., psAge / max(psLife, .001)));
+        float psShrink = psAlive * (1. - smoothstep(.35, 1., psAge / max(psLife, .001)));
         vec3 psAxis = normalize(psSpin.xyz + 1e-4);
         float psAngle = psSpin.w * spinTime;
         vShardTint = psTint; vShardGlow = psGlow * (1. - smoothstep(.0, .75, psAge / max(psLife, .001)));
@@ -104,23 +104,23 @@ export function createShatter(floorY: number, capacity = 640) {
       const power = grade === 'perfect' ? 1 : grade === 'good' ? .75 : .5
       glass.copy(color).multiplyScalar(.45).addScalar(.08)
       light.copy(color).multiplyScalar(1.1)
-      const columns = 5, rows = 3
+      const columns = 4, rows = 2
       for (let row = 0; row < rows; row++) for (let column = 0; column < columns; column++) {
-        const fromLight = row === 1 && column > 0 && column < columns - 1
+        const fromLight = column > 0 && column < columns - 1 && row === 0
         const u = (column + .5) / columns - .5, v = (row + .5) / rows - .5
         const i = cursor++ % capacity
         const px = x + u * width + (random() - .5) * .08, pz = z + v * depth
-        const outward = (u * 2) * (2.2 + random() * 2.4) * power
+        const outward = (u * 2) * (.8 + random() * .9) * power
         arrays.psOrigin.set([px, y + (fromLight ? .08 : 0), pz], i * 3)
-        arrays.psVelocity.set([outward + (random() - .5) * .8, (2.2 + random() * 2.8) * (.55 + power * .5), v * 1.5 - 1.2 - random() * 2.4 * power], i * 3)
-        arrays.psSpin.set([random() - .5, random() - .5, random() - .5, (6 + random() * 12) * (random() < .5 ? -1 : 1)], i * 4)
+        arrays.psVelocity.set([outward + (random() - .5) * .3, (.9 + random() * 1.1) * (.6 + power * .4), v * .6 - .5 - random() * .8 * power], i * 3)
+        arrays.psSpin.set([random() - .5, random() - .5, random() - .5, (2.5 + random() * 4) * (random() < .5 ? -1 : 1)], i * 4)
         const size = width / columns
-        arrays.psScale.set([size * (.7 + random() * .6), .11 + random() * .06, depth / rows * (.8 + random() * .7)], i * 3)
+        arrays.psScale.set([size * (.6 + random() * .4), .09 + random() * .04, depth / rows * (.6 + random() * .4)], i * 3)
         arrays.psBirth[i] = time.value
-        arrays.psLife[i] = .85 + random() * .45
+        arrays.psLife[i] = .45 + random() * .2
         const tint = fromLight ? light : glass
         arrays.psTint.set([tint.r, tint.g, tint.b], i * 3)
-        arrays.psGlow[i] = fromLight ? .9 + power * .5 : .18
+        arrays.psGlow[i] = fromLight ? .45 + power * .25 : .06
       }
       flagAll()
     },

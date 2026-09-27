@@ -117,8 +117,8 @@ function bulbs(positions: THREE.Vector3[], uniforms: BeatUniforms, chase: boolea
           float nearest = min(phase, 1. - phase);
           float downbeat = step(mod(floor(beats + .5), 4.), .5);
           float wave = exp(-nearest * nearest * 90.) * (.55 + .45 * downbeat);
-          vGlow = .2 + psLive * wave * (1.9 + psEnergy * 1.4) + (1. - psLive) * .16 * (.5 + .5 * sin(psClock * 1.4 + seed * 6.28));` : `
-          vGlow = (.45 + .55 * step(.35, seed)) * (.75 + .25 * sin(psClock * (1.1 + seed) + seed * 40.)) + psEnergy * .3;`}
+          vGlow = .55 + psLive * wave * (.35 + psEnergy * .25);` : `
+          vGlow = (.6 + .4 * step(.35, seed)) * (.95 + .05 * sin(psClock * (.6 + seed * .4) + seed * 40.)) + psEnergy * .12;`}
         vNormal = normalize(normalMatrix * mat3(instanceMatrix) * normal);
         vec4 viewPos = viewMatrix * world;
         vView = -viewPos.xyz;
@@ -344,7 +344,9 @@ export function createSet(uniforms: BeatUniforms, farZ: number, quality: 'standa
   return {
     group,
     lampGlobes,
-    update(pulse: number, energy: number) {
+    /** `travel`: how far the notes have moved (world units); the planks ride along with them. */
+    update(pulse: number, energy: number, travel: number) {
+      planks.offset.y = travel / 7.4
       neonMaterial.color.copy(neonBase).multiplyScalar(.8 + pulse * .45 + energy * .6)
       threshold.color.setRGB(2.2, 1.1, 1.8).multiplyScalar(.75 + pulse * .5 + energy * .4)
       gateGlow.value = pulse * .6 + energy

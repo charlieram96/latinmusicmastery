@@ -103,7 +103,7 @@ export function buildMiami(renderer: THREE.WebGLRenderer, scene: THREE.Scene, op
       beat.psEnergy.value = frame.energy
       const phase = Math.max(0, frame.elapsed) / frame.beatSeconds
       pulse = motion && frame.playing && frame.elapsed >= 0 ? Math.pow(1 - phase % 1, 3) : 0
-      set.update(pulse, frame.energy)
+      set.update(pulse, frame.energy, frame.elapsed * frame.speed)
       gateLight.intensity = 22 + pulse * 10 + frame.energy * 22
       for (const light of lampLights) light.intensity = 16 + frame.energy * 6
       skyline.update(frame.dt)

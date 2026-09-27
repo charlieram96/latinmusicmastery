@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { SKY } from './glsl'
 import { SEA_Y, type SkyUniforms } from './sky'
 import { billboards } from './glow'
-import { createBridge, createCruiseShip } from './landmarks'
+import { createBridge } from './landmarks'
 
 const rand = (seed: number) => { const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x) }
 const WATERLINE = SEA_Y + .4
@@ -181,19 +181,10 @@ export function createSkyline(uniforms: SkyUniforms, motion: boolean) {
   // Red aviation lights on the tallest roofs.
   group.add(billboards(tops, new THREE.Color(2.4, .25, .2), .9, 1, time, 'blink'))
 
-  // A cable-stayed bridge across the bay on the left, with traffic flowing over its arch.
+  // A causeway bridge across the bay on the left, with traffic flowing over its arch.
   const bridge = createBridge(uniforms, shore(-68, 230), shore(-24, 520), time)
   group.add(bridge.group)
   group.add(traffic(bridge.deckAt, time))
-
-  // PortMiami: a big cruise ship berthed across the bay on the right, lit up for the night.
-  const ship = createCruiseShip(uniforms, time)
-  ship.group.position.copy(shore(28, 360)).setY(SEA_Y)
-  ship.group.rotation.y = Math.PI * .86
-  group.add(ship.group)
-  const shipAxis = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), ship.group.rotation.y)
-  group.add(billboards(Array.from({ length: 16 }, (_, i) => ship.group.position.clone().addScaledVector(shipAxis, (i / 15 - .5) * ship.length * .85).setY(SEA_Y + .03)),
-    new THREE.Color(1.3, 1, .75), 1.2, 7, time, 'reflection'))
 
   // Two yachts idling on the bay with their cabin lights on.
   const yachts = [yacht(), yacht()]
