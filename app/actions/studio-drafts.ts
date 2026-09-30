@@ -4,6 +4,7 @@
 // rows students read; publishStudioDraft (below) is the only path from a draft
 // to live.
 import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/supabase/require-admin';
 import { parseScoreDocument } from '@/components/playsense-studio/shared/score-model/serialization';
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
@@ -264,6 +265,7 @@ export async function publishStudioDraft(
   }
   const ins = await insertVersion(supabase, owner, 'published', content, admin.userId);
   if (ins.error) return { error: ins.error };
+  revalidatePath('/dashboard/course/[courseId]/class/[classId]', 'page');
   return { publishedAt: ins.data!.updatedAt };
 }
 

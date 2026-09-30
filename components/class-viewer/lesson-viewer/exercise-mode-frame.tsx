@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import Image from 'next/image'
-import { Eye, Maximize2, Minimize2, Music2 } from 'lucide-react'
+import { Eye, Maximize2, Minimize2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
 import { lessonExerciseHeight, lessonStageHeight } from '@/lib/playsense-studio/lesson-viewport'
@@ -18,11 +18,11 @@ export function ExerciseModeFrame({ title, hasScore, preview, onWatchDemo, child
   onWatchDemo?: () => void
   children: ReactNode
 }) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
+  const es = locale === 'es'
   // The lesson shell is already immersive: there the frame only fits the stage.
   const inLesson = !!useLessonFrame()
   const [immersive, setImmersive] = useState(!inLesson)
-  const [showScore, setShowScore] = useState(true)
   const frame = useRef<HTMLDivElement>(null)
   const modeButton = useRef<HTMLButtonElement>(null)
   const scrollPosition = useRef(0)
@@ -92,14 +92,13 @@ export function ExerciseModeFrame({ title, hasScore, preview, onWatchDemo, child
     setImmersive(value => !value)
   }
 
-  return <div ref={frame} className="ps-exercise-mode" data-exercise-immersive={immersive} data-score-visible={showScore} data-lesson-mode={inLesson || undefined}>
+  return <div ref={frame} className="ps-exercise-mode" data-exercise-immersive={immersive} data-lesson-mode={inLesson || undefined}>
     {!inLesson && <header className="ps-exercise-toolbar">
-      <div className="ps-exercise-identity"><Image src="/logo-solo-color.svg" alt="Latin Music Mastery" width={32} height={24} /><div><span>PlaySense <i>/</i> {preview ? 'Lesson preview' : 'Exercise'}</span><h2 title={title}>{title}</h2></div></div>
-      <div className="ps-exercise-view-controls" role="group" aria-label="Exercise view">
-        {hasScore && <Button type="button" variant="ghost" size="sm" onClick={() => setShowScore(value => !value)} aria-pressed={showScore} aria-label="Show musical score"><Music2 size={16} /><span>Score</span></Button>}
+      <div className="ps-exercise-identity"><Image src="/logo-solo-color.svg" alt="Latin Music Mastery" width={48} height={36} /><div><span>PlaySense <i>/</i> {preview ? (es ? 'Vista previa del ejercicio' : 'Exercise preview') : (es ? 'Ejercicio' : 'Exercise')}</span><h2 title={title}>{title}</h2></div></div>
+      <div className="ps-exercise-view-controls" role="group" aria-label={es ? 'Vista del ejercicio' : 'Exercise view'}>
         {onWatchDemo && <Button type="button" variant="ghost" size="sm" className="ps-exercise-watch" onClick={onWatchDemo} aria-label={t('dashboard.classViewer.exercise.watchTeacher')}><Eye size={16} /><span>{t('dashboard.classViewer.exercise.watchTeacher')}</span></Button>}
-        <Button ref={modeButton} type="button" variant="outline" size="sm" className="ps-exercise-mode-toggle" onClick={toggleMode} aria-label={immersive ? 'Exit exercise mode' : 'Enter exercise mode'} title={immersive ? 'Return to lesson view (Esc)' : 'Enter immersive exercise mode'}>
-          {immersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<span>{immersive ? 'Lesson view' : 'Exercise mode'}</span>{immersive && <kbd>esc</kbd>}
+        <Button ref={modeButton} type="button" variant="outline" size="sm" className="ps-exercise-mode-toggle" onClick={toggleMode} aria-label={immersive ? (es ? 'Salir del modo ejercicio' : 'Exit exercise mode') : (es ? 'Entrar al modo ejercicio' : 'Enter exercise mode')} title={immersive ? (es ? 'Volver a la lección (Esc)' : 'Return to lesson view (Esc)') : (es ? 'Abrir ejercicio inmersivo' : 'Enter immersive exercise mode')}>
+          {immersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<span>{immersive ? (es ? 'Ver lección' : 'Lesson view') : (es ? 'Modo ejercicio' : 'Exercise mode')}</span>{immersive && <kbd>esc</kbd>}
         </Button>
       </div>
     </header>}

@@ -1,4 +1,7 @@
 'use client';
+import { installSymbolEditing } from '@/lib/playsense-studio/notation/symbol-editing';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — integrated editor under the waveform.
 //
@@ -20,18 +23,27 @@
 // here — note edits don't change `structuralSignature`, so the markers above stay
 // put while you edit pitches/durations.
 
+import { indexForLine, percussionEntryAtLine } from '@/lib/playsense-studio/zoom-pointer';
+import type { ScoreHit } from '@/lib/playsense-studio/notation/score-selection';
+import { NoteheadUtilities } from './notehead-utilities';
+import { ScoreDesk } from './score-desk';
+import { staffGroupIndices } from '@/lib/playsense-studio/staff-groups';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import { getPercStrokes, isPercussion, resolvePercStroke } from '@/lib/playsense-studio/perc-strokes';
-import { pitchName } from '@/lib/playsense-studio/pitch';
+import { keyPitchAt, pitchName } from '@/lib/playsense-studio/pitch';
 import { measureLengthInQN } from '@/lib/playsense-studio/time-mapping';
 import { fillIssues, measureFill, type MeasureFill } from '@/lib/playsense-studio/measure-fill';
 import { eventDots, eventTuplet } from '@/components/playsense-studio/shared/score-model/accessors';
 import { writtenValue, type NoteValue } from '@/lib/playsense-studio/rhythm';
 import { cursorRange, type NoteCursor } from '@/lib/playsense-studio/note-cursor';
+import { PALETTE_COMMANDS, paletteActions } from '@/lib/playsense-studio/palette-actions';
+import { editorReducer, type EditorState } from '@/lib/playsense-studio/editor-state';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type {
+  Articulation,
+  Dynamic,
   Measure,
   MusicalEvent,
   ScoreDocument,
@@ -79,6 +91,8 @@ export interface IntegratedEditorMeasureTiming {
 }
 
 export interface IntegratedEditorProps {
+  exerciseTempo?: boolean;
+  pageWorkspace?: boolean;
   score: ScoreDocument;
   dispatch: Dispatch<EditorAction>;
   /** A refused structural edit, or another sync-panel notice (Auto-place /
@@ -97,6 +111,7 @@ export interface IntegratedEditorProps {
   /** Live playback position (video seconds) for the staff-lane playhead. */
   getCurrentSeconds?: () => number;
   recordingSource?: MidiRecordingSource;
+  noteTimeForQN?: (qn: number) => number;
   pixelsPerSecond: number;
   scrollLeftPx: number;
   viewportWidth: number;
@@ -106,6 +121,7 @@ export interface IntegratedEditorProps {
    *  editor stays the source of truth; pass a stable callback to keep the memo. */
   onSelectionChange?: (selection: { ref: SelectedEventRef; trackIndex: number } | null) => void;
   /** Horizontal wheel/trackpad pan over the staff (shared timeline scroll). */
+  onResizeMeasures?: (start:number,end:number,seconds:number,phase:'move'|'end')=>void;
   onScrollByPx?: (dx: number) => void;
   /** Loads (or clears, when already looping that range) an A/B loop over bars
    *  start..end. Omitted where there is no video to loop (songs, exercises). */
@@ -119,9 +135,10 @@ export interface IntegratedEditorProps {
   /** Quantize (Task 7 of Plan 4b): a live preview for bars [start, end] at a
    *  candidate strength (0–100), without writing anything. Omitted (no video
    *  to quantize against) hides the measure bar's Quantize button entirely. */
-  onQuantizePlan?: (start: number, end: number, strength: number) => { moved: number; largestMs: number };
+  onQuantizePlan?: (start: number, end: number, strength: number, stepQN?: number) => { moved: number; largestMs: number };
   /** Commits a Quantize plan at `strength` to the selected bars' flex. */
-  onQuantizeApply?: (start: number, end: number, strength: number) => void;
+  onQuantizeUndo?: () => void;
+  onQuantizeApply?: (start: number, end: number, strength: number, stepQN?: number) => void;
   /** Removes any flex whose points land inside bars [start, end]. */
   onResetFlex?: (start: number, end: number) => void;
   /** "flexed ±<m> ms" for bars [start, end], or null when none of them carry
@@ -144,6 +161,8 @@ function isRepeatEnd(measure: Measure): boolean {
 }
 
 export const IntegratedEditor = memo(function IntegratedEditor({
+  exerciseTempo = false,
+  pageWorkspace,
   score,
   dispatch,
   notice,
@@ -152,26 +171,33 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   measureTimings,
   getCurrentSeconds,
   recordingSource,
+  noteTimeForQN,
   pixelsPerSecond,
   scrollLeftPx,
   viewportWidth,
   onRequestZoom,
   onSelectionChange,
+  onResizeMeasures,
   onScrollByPx,
   onLoopMeasures,
   loopedRange = null,
   noteTiming,
   onQuantizePlan,
   onQuantizeApply,
+  onQuantizeUndo,
   onResetFlex,
   flexInfo,
   quantizeProblem,
   onZoomOpenChange,
   onMeasureRangeChange,
 }: IntegratedEditorProps) {
-  // Single-track studio: the score model still holds Track[], but the editor
-  // always authors track 0.
-  const activeTrackIndex = 0;
+  const st = useStudioText();
+  const [activeTrackIndex, setActiveTrackIndex] = useState(0);
+  const [selectedBars,setSelectedBars]=useState<ScoreHit[]>([]);
+  const [selectedHeads, setSelectedHeads] = useState<ScoreHit[]>([]);
+  useEffect(() => {setSelectedHeads([]);setSelectedBars([]);}, [score]);
+  const instrumentStaves = staffGroupIndices(score, 0);
+  const useDesk = pageWorkspace ?? (instrumentStaves.length > 1);
   const [editorTab, setEditorTab] = useState<EditorTab>('staff');
   const [selected, setSelected] = useState<SelectedEventRef | null>(null);
   // Contiguous measure selection: anchor = where it started, focus = the end
@@ -195,6 +221,9 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // The measure zoom (one bar drawn large over the strip), or null when closed.
   // `zoomOrigin` is the bar's rect in the strip for the enter/exit animation;
   // `zoomClosing` asks the zoom to play its exit and then call back to close.
+  const [editView, setEditView] = useState<'normal' | 'expanded'>('expanded');
+  useEffect(() => { try { const saved = localStorage.getItem('lmm-note-edit-view'); if(saved === 'normal' || saved === 'expanded') setEditView(saved); } catch {} }, []);
+  const changeEditView = (view: 'normal' | 'expanded') => { setEditView(view); setZoomClosing(false); setMorePop(null); try {localStorage.setItem('lmm-note-edit-view', view);} catch {} };
   const [zoom, setZoom] = useState<ZoomState | null>(null);
   const [zoomOrigin, setZoomOrigin] = useState<{ left: number; width: number } | null>(null);
   const [zoomClosing, setZoomClosing] = useState(false);
@@ -223,11 +252,13 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     closeMenus();
   }, [closeMenus]);
   const selectBars = useCallback((sel: MeasureSelection | null) => {
+    setSelectedBars([]);
     setSelected(null);
     setMeasureRange(sel);
     selectionChanged();
   }, [selectionChanged]);
   const selectMeasure = useCallback((index: number, extend = false) => {
+    setSelectedBars([]);
     setSelected(null);
     setMeasureRange((prev) => clickSelect(prev, index, extend));
     selectionChanged();
@@ -235,16 +266,15 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const selectMeasureRange = useCallback((anchor: number, focus: number) => {
     selectBars(dragSelect(anchor, focus));
   }, [selectBars]);
-  const onRepeatBandClick = useCallback((b: RepeatBand, anchor: PopoverAnchor) => {
+  const onRepeatBandClick = useCallback((b: RepeatBand, _anchor: PopoverAnchor) => {
     selectMeasureRange(b.firstIndex, b.lastIndex);
-    setRepeatPop({ anchor });
   }, [selectMeasureRange]);
   const onGapClick = useCallback((gap: number, anchor: PopoverAnchor) => {
     setGapPop({ gap, anchor });
   }, []);
   // The measure bar hides while a drag across bars is still choosing them.
   const [selDragging, setSelDragging] = useState(false);
-  // The footer's "?" menu. `shortcutsWasOpen` notes, at pointerdown, whether it
+  // The header's "?" menu. `shortcutsWasOpen` notes, at pointerdown, whether it
   // was open — the menu's own outside-press close runs first, so a second click
   // on "?" closes it instead of reopening it.
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -279,16 +309,24 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // The staff grows to fill the space below the editor bar — measure the
   // wrapper and feed its height to the strip (min keeps it usable).
   const staffWrapRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const root = staffWrapRef.current;
+    if (!root) return;
+    return installSymbolEditing(root, (target, offset, remove) => dispatch({type:'edit-symbol',target,offset,remove}));
+  }, [dispatch, editorTab, useDesk]);
+
   const [staffHeight, setStaffHeight] = useState(220);
   useEffect(() => {
     const el = staffWrapRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const update = () => setStaffHeight(Math.max(180, Math.round(el.clientHeight)));
+    const update = () => setStaffHeight(instrumentStaves.length > 1 && !useDesk
+      ? 220
+      : Math.max(180, Math.round(el.clientHeight)));
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [editorTab]);
+  }, [editorTab, useDesk, instrumentStaves.length]);
 
   const activeTrack = score.tracks[activeTrackIndex] ?? score.tracks[0];
   const percussion = activeTrack ? isPercussion(activeTrack.instrument) : false;
@@ -372,6 +410,24 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     }
     return out;
   }, [activeTrack, tracked, measureTimings, measureFills]);
+
+  // Every staff uses the same media-time coordinates as the waveform.
+  const timelineStaves = useMemo(() => instrumentStaves.map(trackIndex => {
+    if (trackIndex === activeTrackIndex) return { trackIndex, items: stripItems };
+    const track = score.tracks[trackIndex];
+    const extracted = extractTrackEvents(track, score.initialTimeSignature, score.initialKeyFifths);
+    const items: MeasureStripItem[] = extracted.slice(0, measureTimings.length).map((t, i) => ({
+      measureIndex: i, repeatPass: t.measure.repeat,
+      finalBarline: !isRepeatEnd(t.measure) && hasFinalBarline(track.measures, i),
+      ...measureTimings[i], events: t.events, voice2Events: t.voice2Events,
+      timeSignature: t.timeSignature, isFirst: i === 0, clef: t.clef,
+      keyFifths: t.keyFifths, previousKeyFifths: t.previousKeyFifths,
+      keyChanged: t.keyChanged, clefChanged: t.clefChanged,
+      fill: measureFill(t.measure.voices[0]?.events ?? [], t.measure.voices[1]?.events, t.timeSignature),
+      flag: measureTimings[i].flag ?? null,
+    }));
+    return { trackIndex, items };
+  }), [score, activeTrackIndex, stripItems, measureTimings, instrumentStaves.join(',')]);
 
   // The MIDI record target measure: the selected event's measure, else the last.
   const measureCount = activeTrack?.measures.length ?? 0;
@@ -551,7 +607,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // and the cursor sits on `eventIndex` (else its first event, else the end).
   const openMeasure = useCallback((index: number, eventIndex?: number) => {
     const origin = barRect(index);
-    if (!zoomWaveformTo(index)) return;
+    if (!measureTimings[index]) return;
     selectBars({ anchor: index, focus: index });
     setZoomOrigin(origin);
     setZoomClosing(false);
@@ -562,7 +618,22 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       dots: 0,
       pencil: false,
     });
-  }, [barRect, zoomWaveformTo, selectBars, zoomEvents]);
+  }, [barRect, measureTimings, selectBars, zoomEvents]);
+
+  const deleteSelectedHeads = useCallback(() => {
+    if (!selectedHeads.length) return;
+    dispatch({ type: 'delete-selected-pitches', refs: selectedHeads.map(h => ({ trackIndex: h.track, measureIndex: h.measure, voice: (h.voice ?? 0) as 0 | 1, eventIndex: h.event ?? 0, member: h.member ?? 0 })) });
+    setSelectedHeads([]);
+  }, [dispatch, selectedHeads]);
+  useEffect(() => {
+    if (!selectedHeads.length || zoom) return;
+    const handler = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); deleteSelectedHeads(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selectedHeads, zoom, deleteSelectedHeads]);
 
   // Move the open zoom to bar `index`: the timeline zooms to it, it's the
   // selected bar, and the zoom slides it in (MeasureZoom animates a changed
@@ -571,7 +642,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // forward or its end going back.
   const openBar = useCallback((index: number, dir: 1 | -1) => {
     if (index < 0 || index >= measureCount) return;
-    zoomWaveformTo(index);
+    if (editView === 'expanded') zoomWaveformTo(index);
     setMeasureRange({ anchor: index, focus: index });
     setZoom((z) => {
       if (!z) return z;
@@ -583,7 +654,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         cursor: { measureIndex: index, voice, index: dir === 1 && zoomEvents(index, voice).length ? 0 : 'end', anchor: null },
       };
     });
-  }, [measureCount, zoomWaveformTo, zoomEvents]);
+  }, [measureCount, zoomWaveformTo, zoomEvents, editView]);
 
   // ‹ › : the neighbouring bar.
   const navZoom = useCallback((dir: 1 | -1) => {
@@ -646,11 +717,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   const zoomEditing = useZoomEditing({
     score, dispatch, trackIndex: activeTrackIndex, zoom, setZoom,
     keyFifthsAt: zoomKeyFifthsAt, clefAt: zoomClefAt, barQNAt: zoomBarQNAt,
-    percussion, flash: showFlash, openBar, close: closeZoom,
+    percussion, flash: showFlash, openBar, close: editView === 'expanded' ? closeZoom : finishZoomClose,
   });
 
   // Tell the parent when the zoom opens or closes (and that it's closed on unmount).
-  const zoomOpen = zoom !== null;
+  const zoomOpen = zoom !== null && editView === 'expanded';
   useEffect(() => {
     if (!onZoomOpenChange) return;
     onZoomOpenChange(zoomOpen);
@@ -767,16 +838,19 @@ export const IntegratedEditor = memo(function IntegratedEditor({
   // Centred over the selected bars (clamped so the bar stays on screen), in
   // container space: the staff below the repeat lane starts at REP_H.
   const bounds = selectionBounds(measureRange);
+  const actionBounds = bounds ?? [0, 0];
   // Reported out to SyncPanel so it can tint the waveform over these bars.
   const boundsKey = bounds ? `${bounds[0]}:${bounds[1]}` : '';
   useEffect(() => { onMeasureRangeChange?.(bounds ? [bounds[0], bounds[1]] : null); }, [boundsKey]); // eslint-disable-line react-hooks/exhaustive-deps
   // The bar's rendered width (it varies with the label); 600 until measured.
   const [barWidth, setBarWidth] = useState(600);
+  const [barPosition, setBarPosition] = useState<{left:number;top:number} | null>(null);
   const measureBarRef = (el: HTMLDivElement | null) => {
     const w = el?.offsetWidth ?? 0;
     if (w > 0 && w !== barWidth) setBarWidth(w);
   };
   const barPos = bounds && !selected && !selDragging && !zoom ? (() => {
+    if (pageWorkspace !== false) return barPosition ?? {left:barWidth/2+12,top:56};
     const a = measureTimings[bounds[0]], b = measureTimings[bounds[1]];
     if (!a || !b) return null;
     const l = a.startVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
@@ -812,8 +886,50 @@ export const IntegratedEditor = memo(function IntegratedEditor({
     return seconds > 0 ? (measureLengthInQN(b.timeSignature) / seconds) * 60 : null;
   })();
 
+  const headTargets = zoom ? zoomEditing.selectedRefs() : [
+    ...selectedHeads.map(h=>({trackIndex:h.track,measureIndex:h.measure,voice:(h.voice??0) as 0|1,eventIndex:h.event??0,member:h.member})),
+    ...(selectedBars.length ? selectedBars.map(h=>({track:h.track,measure:h.measure})) : measureRange ? Array.from({length:Math.abs(measureRange.focus-measureRange.anchor)+1},(_,i)=>({track:activeTrackIndex,measure:Math.min(measureRange.focus,measureRange.anchor)+i})) : []).flatMap(b=>score.tracks[b.track]?.measures[b.measure]?.voices.flatMap((v,voice)=>v.events.flatMap((e,eventIndex)=>e.kind==='rest'?[]:[{trackIndex:b.track,measureIndex:b.measure,voice:voice as 0|1,eventIndex}])) ?? []),
+  ];
+  const utilities = <NoteheadUtilities enabled={headTargets.length>0} strokes={percStrokes} instrumentName={activeTrack?.instrument==='perc-timbal'?'Timbales':activeTrack?.displayName} onStroke={strokeId=>dispatch({type:'set-legend-stroke',refs:headTargets,strokeId})} onPick={notehead=>dispatch({type:'set-noteheads',refs:headTargets,notehead})}/>;
+  const viewControl = <div role="group" aria-label={st('Editor view')} data-score-preserve-selection className="flex items-center gap-1 rounded-lg border border-border bg-background p-1 text-xs">
+    {(['normal','expanded'] as const).map(view => <button key={view} type="button" aria-pressed={editView === view} onClick={() => changeEditView(view)} className={`rounded-md px-2.5 py-1.5 ${editView === view ? 'bg-primary/15 text-primary' : 'text-muted-foreground'}`}>{st(view === 'normal' ? 'Normal' : 'Expanded')}</button>)}
+  </div>;
+  const noteTools = <NoteToolbar
+                    ref={noteToolbarRef}
+                    info={zoomInfo}
+                    value={zoomValue}
+                    dots={zoomDots}
+                    isRest={zoomCurrentEvent?.kind === 'rest'}
+                    entryRest={!!zoom?.restEntry}
+                    tie={!!zoomCurrentEvent && zoomCurrentEvent.kind !== 'rest' && !!zoomCurrentEvent.tieToNext}
+                    tripletOn={!!zoomTupletHere && zoomTupletHere.n === 3 && zoomTupletHere.m === 2}
+                    hasSelection={zoomHasSelection}
+                    percussion={zoomToolbarPercussion}
+                    editing={zoomEditing}
+                    onMore={openMore}
+                  />;
+  const normalInput = (hit: ScoreHit, line: number): boolean => {
+    if (!zoom || editView !== 'normal') return false;
+    const track = score.tracks[hit.track];
+    if (!track?.measures[hit.measure]) return false;
+    const cursor: NoteCursor = {measureIndex:hit.measure, voice:(hit.voice ?? zoom.cursor.voice) as 0|1, index:hit.event ?? 'end', anchor:null};
+    setActiveTrackIndex(hit.track);
+    setZoom({...zoom, measureIndex:hit.measure, cursor});
+    if (hit.kind === 'note' || !zoom.pencil) return true;
+    const context = contextAt(score, track, hit.measure);
+    const pitch = keyPitchAt(indexForLine(line, (hit.track === activeTrackIndex ? tracked[hit.measure]?.clef : extractTrackEvents(track,score.initialTimeSignature,score.initialKeyFifths)[hit.measure]?.clef) ?? 'treble'), context.keyFifths);
+    const entry = percussionEntryAtLine(getPercStrokes(track.instrument) ?? [], line, track.measures.slice(0,hit.measure+1).flatMap(m=>m.voices.flatMap(v=>v.events.flatMap(e=>e.kind==='note'?[e]:e.kind==='chord'?e.notes:[]))));
+    const action: EditorAction = {type:'write-event', at:{trackIndex:hit.track,measureIndex:hit.measure,voice:cursor.voice,eventIndex:'end'}, kind:zoom.restEntry ? 'rest':'note', value:zoom.value, dots:zoom.dots,
+      ...(isPercussion(track.instrument) ? entry : {midi:pitch.midi,spelling:pitch.spelling})};
+    const probe: EditorState = {score,past:[],future:[],isDirty:false};
+    if (editorReducer(probe,action) === probe) {showFlash(`m.${hit.measure+1} is full — shorten a note or pick a smaller value`);return true;}
+    dispatch(action);
+    return true;
+  };
+
   // Same in both views (staff and piano-roll) — hoisted so it's written once.
   const stripCorner = (
+    <>
     <StripCorner
       tab={editorTab}
       onTab={(t) => { setEditorTab(t); if (t !== 'staff' && zoom) finishZoomClose(); }}
@@ -821,6 +937,21 @@ export const IntegratedEditor = memo(function IntegratedEditor({
       onAddEnd={() => insertMeasureAt(measureCount)}
       addEndProblem={gapProblems[measureCount] ?? null}
     />
+              <button
+                type="button"
+                className="st-help-btn"
+                aria-label={st("Keyboard shortcuts")}
+                title={st("Keyboard shortcuts")}
+                aria-expanded={shortcutsOpen}
+                onPointerDown={() => { shortcutsWasOpen.current = shortcutsOpen; }}
+                onClick={() => {
+                  setShortcutsOpen(!shortcutsWasOpen.current);
+                  shortcutsWasOpen.current = false;
+                }}
+              >
+                ?
+              </button>
+    </>
   );
 
   return (
@@ -831,15 +962,121 @@ export const IntegratedEditor = memo(function IntegratedEditor({
           track name/instrument moved to the Score panel, notice/flash to a toast). */}
       {editorTab === 'staff' && (
         <>
-          <div ref={staffWrapRef} className="relative min-h-0 flex-1" data-testid="staff-wrap">
-            <EditableMeasureStrip
-              measures={stripItems}
+          <div ref={staffWrapRef} className="relative min-h-0 flex-1" style={useDesk ? { minHeight: 420, scrollMarginTop: 80 } : undefined} data-testid="staff-wrap">
+            {pageWorkspace === false && !zoom && <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2" data-testid="sync-measure-controls">
+              <span className="text-xs font-medium">{st("Measures")}</span>
+              <button type="button" className="rounded border px-2 py-1 text-xs hover:bg-muted" disabled={!measureCount}
+                onClick={() => { const first = selectedHeads[0]?.measure ?? 0; setSelectedHeads([]); selectBars({anchor:first,focus:first}); }}>
+                {st("Select measures")}
+              </button>
+              {bounds && <>
+                <label className="text-xs">{st("From measure")} <select aria-label={st("From measure")} value={bounds[0]} className="rounded border bg-background p-1"
+                  onChange={e => { const n = Number(e.target.value); selectBars({anchor:n,focus:Math.max(n,bounds[1])}); }}>
+                  {Array.from({length:measureCount},(_,i)=><option key={i} value={i}>{i+1}</option>)}
+                </select></label>
+                <label className="text-xs">{st("To measure")} <select aria-label={st("To measure")} value={bounds[1]} className="rounded border bg-background p-1"
+                  onChange={e => { const n = Number(e.target.value); selectBars({anchor:Math.min(n,bounds[0]),focus:n}); }}>
+                  {Array.from({length:measureCount},(_,i)=><option key={i} value={i}>{i+1}</option>)}
+                </select></label>
+              </>}
+              {[
+                {label:"Add measure before",index:bounds?.[0] ?? 0},
+                {label:"Add measure after",index:bounds ? bounds[1]+1 : measureCount},
+              ].map(({label,index}) => <button key={label} type="button" className="rounded border px-2 py-1 text-xs hover:bg-muted disabled:opacity-40"
+                disabled={!!gapProblems[index]} title={st(gapProblems[index] ?? label)} onClick={() => insertMeasureAt(index,true)}>{st(label)}</button>)}
+            </div>}
+            {!zoom && (pageWorkspace === false || (barPos && bounds)) && (
+              <MeasureBar
+                ref={measureBarRef}
+                docked={pageWorkspace === false}
+                onMove={pageWorkspace === false ? undefined : setBarPosition}
+                selectionMissing={!bounds}
+                left={barPos?.left ?? 0}
+                top={barPos?.top ?? 0}
+                label={st(bounds ? rangeLabel : "Select measures")}
+                startSeconds={measureTimings[actionBounds[0]]?.startVideoTimeSeconds ?? 0}
+                bpm={barBpm}
+                flag={measureTimings.slice(actionBounds[0], actionBounds[1] + 1).find((t) => t.flag)?.flag ?? null}
+                flexInfo={flexInfo?.(actionBounds[0], actionBounds[1]) ?? null}
+                repeatCount={repeatGroupAtRange?.count ?? null}
+                looping={barLooping}
+                canLoop={!!onLoopMeasures}
+                problems={{ dup: dupProblem, paste: pasteProblem, clear: null, del: deleteProblem }}
+                onEdit={() => openMeasure(actionBounds[0])}
+                onLoop={() => onLoopMeasures?.(actionBounds[0], actionBounds[1])}
+                onRepeat={(anchor) => setRepeatPop({ anchor })}
+                onDup={duplicateRange}
+                onCopy={copyWithNotice}
+                onPaste={pasteAfterRange}
+                onBar={(anchor) => setBarPop({ anchor })}
+                onClear={clearRange}
+                onDelete={deleteRange}
+                onQuantize={onQuantizePlan ? (anchor) => setQuantizePop({ anchor }) : undefined}
+                quantizeProblem={quantizeProblem}
+              />
+            )}
+            <div className={useDesk ? "h-full min-h-96" : ""} style={{ visibility: zoom && editView === 'expanded' ? 'hidden' : undefined }}>
+              <ScoreDesk exerciseTempo={exerciseTempo} onTempoOverride={bpm=>dispatch({type:'set-playback-tempo',bpm})} onUseScoreTempo={()=>dispatch({type:'set-score-meta',initialTempo:score.initialTempo})} linear={!useDesk} onPan={onScrollByPx} hasMeasureSelection={selectedBars.length>0 || measureRange !== null} tools={<>{viewControl}{utilities}{stripCorner}</>} editingTools={zoom && editView === 'normal' ? <div data-score-preserve-selection className="flex flex-wrap items-center gap-2 border-b border-border bg-card p-2" data-testid="normal-note-editor">{noteTools}<button type="button" className="st-chip" onClick={()=>setZoom({...zoom,pencil:!zoom.pencil})} aria-pressed={zoom.pencil}>{st("Pencil")}</button><button type="button" className="st-chip" onClick={finishZoomClose}>{st("Done")}</button><span className="text-xs text-muted-foreground">{st("Measure")} {zoom.measureIndex+1}</span></div> : undefined} onNoteInput={normalInput} hasSelection={selectedHeads.length > 0} onDelete={deleteSelectedHeads}
+                onWrite={symbol => {
+                  const command = PALETTE_COMMANDS[symbol];
+                  if (command?.kind !== 'rhythm') return;
+                  const target = selectedHeads[0] ?? selectedBars[0];
+                  const measureIndex = target?.measure ?? measureRange?.focus;
+                  if (measureIndex === undefined) return;
+                  setActiveTrackIndex(target?.track ?? activeTrackIndex);
+                  setZoomOrigin(null); setZoomClosing(false);
+                  setZoom({ measureIndex, cursor: {measureIndex, voice: (target?.voice ?? 0) as 0 | 1, index: 'end', anchor: null}, value: command.value, dots: 0, pencil: true, restEntry: !!command.rest });
+                }}
+                onEdit={() => {
+                  const h = selectedHeads[0] ?? selectedBars[0];
+                  if (!h) { if (measureRange) openMeasure(measureRange.focus); return; }
+                  setActiveTrackIndex(h.track); setZoomOrigin(null); setZoomClosing(false);
+                  setZoom({ measureIndex: h.measure, cursor: { measureIndex: h.measure, voice: (h.voice ?? 0) as 0 | 1, index: h.event ?? 'end', anchor: null }, value: 'q', dots: 0, pencil: h.kind === 'measure' });
+                }}
+                onApply={symbol => {
+                  const refs = selectedHeads.map(h => ({trackIndex:h.track,measureIndex:h.measure,voice:(h.voice ?? 0) as 0 | 1,eventIndex:h.event ?? 0}));
+                  const bars = selectedBars.length ? selectedBars.map(h=>({trackIndex:h.track,measureIndex:h.measure})) : measureRange ? Array.from({length: Math.abs(measureRange.focus-measureRange.anchor)+1}, (_,i)=>({trackIndex:activeTrackIndex,measureIndex:Math.min(measureRange.focus,measureRange.anchor)+i})) : [];
+                  const plan = paletteActions(symbol,score,refs,bars);
+                  if (plan.error) return plan.error;
+                  const action: EditorAction = {type:'apply-palette-actions',actions:plan.actions};
+                  const probe: EditorState = {score,past:[],future:[],isDirty:false};
+                  if (editorReducer(probe,action) === probe) return 'No change applied. Check the selection, available beats, or whether this symbol is already set.';
+                  dispatch(action);
+                }} score={score} trackIndex={activeTrackIndex} currentMs={0} showCursor={false} autoFollow={false}
+                onSelectMeasure={() => {}}
+                onSelectionChange={hits => {
+                  setSelectedHeads(hits.filter(h => h.kind === 'note'));
+                  setSelected(null);
+                  const first = hits[0];
+                  if (first) setActiveTrackIndex(first.track);
+                  const bars = hits.filter(h => h.kind === 'measure');
+                  setSelectedBars(bars);
+                  setMeasureRange(bars.length && bars.every(h => h.track === bars[0].track) && new Set(bars.map(h=>h.measure)).size === Math.max(...bars.map(h=>h.measure))-Math.min(...bars.map(h=>h.measure))+1
+                    ? { anchor: Math.min(...bars.map(h => h.measure)), focus: Math.max(...bars.map(h => h.measure)) } : null);
+                }} >
+            <div className="flex flex-col" data-testid="linear-score">
+            {timelineStaves.map(({ trackIndex, items }) => <div key={trackIndex}
+              data-timeline-staff={trackIndex}
+              onPointerDownCapture={() => setActiveTrackIndex(trackIndex)}>
+            {timelineStaves.length > 1 && <div className="px-3 text-xs text-muted-foreground">{score.tracks[trackIndex].displayName} · {score.tracks[trackIndex].staffNumber ?? trackIndex + 1}</div>}
+            <EditableMeasureStrip onNoteInput={normalInput}
+              trackIndex={trackIndex}
+              onNoteSelection={hits => {
+                setSelectedHeads(hits.filter(h => h.kind === 'note'));
+                setSelected(null);
+                if (hits.length) setActiveTrackIndex(trackIndex);
+                const bars = hits.filter(h => h.kind === 'measure');
+                  setSelectedBars(bars);
+                setMeasureRange(bars.length && new Set(bars.map(h=>h.measure)).size === Math.max(...bars.map(h=>h.measure))-Math.min(...bars.map(h=>h.measure))+1 ? { anchor: Math.min(...bars.map(h => h.measure)), focus: Math.max(...bars.map(h => h.measure)) } : null);
+              }}
+              measures={items}
+              noteTimeForQN={noteTimeForQN}
               spans={score.spans}
               getCurrentSeconds={getCurrentSeconds}
               pixelsPerSecond={pixelsPerSecond}
               scrollLeftPx={scrollLeftPx}
-              selected={selected}
-              selectedMeasures={selected ? [selected.measureIndex, selected.measureIndex] : rangeStart !== null && rangeEnd !== null ? [rangeStart, rangeEnd] : null}
+              selected={trackIndex === activeTrackIndex ? selected : null}
+              selectedMeasures={trackIndex !== activeTrackIndex ? null : selected ? [selected.measureIndex, selected.measureIndex] : rangeStart !== null && rangeEnd !== null ? [rangeStart, rangeEnd] : null}
               onSelectMeasure={selectMeasure}
               onSelectMeasureRange={selectMeasureRange}
               onOpenMeasure={openMeasure}
@@ -856,63 +1093,24 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 onRequestZoom(nextPps, Math.max(0, anchorSeconds * nextPps - anchorPx));
               }}
               onScrollByPx={onScrollByPx}
+              onResizeMeasures={onResizeMeasures}
               height={staffHeight}
             />
-            {!zoom && <div className="st-strip-foot">
+            </div>)}
+            </div>
+              </ScoreDesk>
+            </div>
+
+            {!zoom && !useDesk && instrumentStaves.length === 1 && <div className="st-strip-foot">
               {issues.length > 0 && (
-                <button type="button" className={`st-issue-chip${anyOver ? ' is-bad' : ''}`} onClick={nextIssue} title="Jump to the next bar that doesn’t add up">
-                  {issues.length === 1 ? '1 bar doesn’t add up' : `${issues.length} bars don’t add up`} · {issues.slice(0, 3).map((i) => `m.${stripItems[i].measureNumber}`).join(', ')}{issues.length > 3 ? '…' : ''} <ChevronRight className="h-3.5 w-3.5" />
+                <button type="button" className={`st-issue-chip${anyOver ? ' is-bad' : ''}`} onClick={nextIssue} title={st("Jump to the next bar that doesn’t add up")}>
+                  {st(issues.length === 1 ? '1 bar doesn’t add up' : `${issues.length} bars don’t add up`)} · {issues.slice(0, 3).map((i) => `m.${stripItems[i].measureNumber}`).join(', ')}{st(issues.length > 3 ? '…' : '')} <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               )}
-              <span className="truncate">
-                {measureRange
-                  ? <><kbd>⏎</kbd> edit notes · <kbd>⌘D</kbd> duplicate · <kbd>⌫</kbd> delete · <kbd>esc</kbd> deselect</>
-                  : 'Drag across bars to select · double-click a bar to edit its notes · scroll to zoom'}
-              </span>
-              <button
-                type="button"
-                className="st-help-btn"
-                aria-label="Keyboard shortcuts"
-                title="Keyboard shortcuts"
-                aria-expanded={shortcutsOpen}
-                onPointerDown={() => { shortcutsWasOpen.current = shortcutsOpen; }}
-                onClick={() => {
-                  setShortcutsOpen(!shortcutsWasOpen.current);
-                  shortcutsWasOpen.current = false;
-                }}
-              >
-                ?
-              </button>
+
+
             </div>}
-            {stripCorner}
-            {barPos && bounds && (
-              <MeasureBar
-                ref={measureBarRef}
-                left={barPos.left}
-                top={barPos.top}
-                label={rangeLabel}
-                startSeconds={measureTimings[bounds[0]].startVideoTimeSeconds}
-                bpm={barBpm}
-                flag={measureTimings.slice(bounds[0], bounds[1] + 1).find((t) => t.flag)?.flag ?? null}
-                flexInfo={flexInfo?.(bounds[0], bounds[1]) ?? null}
-                repeatCount={repeatGroupAtRange?.count ?? null}
-                looping={barLooping}
-                canLoop={!!onLoopMeasures}
-                problems={{ dup: dupProblem, paste: pasteProblem, clear: null, del: deleteProblem }}
-                onEdit={() => openMeasure(bounds[0])}
-                onLoop={() => onLoopMeasures?.(bounds[0], bounds[1])}
-                onRepeat={(anchor) => setRepeatPop({ anchor })}
-                onDup={duplicateRange}
-                onCopy={copyWithNotice}
-                onPaste={pasteAfterRange}
-                onBar={(anchor) => setBarPop({ anchor })}
-                onClear={clearRange}
-                onDelete={deleteRange}
-                onQuantize={onQuantizePlan ? (anchor) => setQuantizePop({ anchor }) : undefined}
-                quantizeProblem={quantizeProblem}
-              />
-            )}
-            {zoom && stripItems[zoom.measureIndex] && (
+            {zoom && editView === 'expanded' && stripItems[zoom.measureIndex] && (
               <MeasureZoom
                 items={stripItems}
                 zoom={zoom}
@@ -934,19 +1132,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
                 keyFifths={zoomKeyFifthsAt(zoom.measureIndex)}
                 percStrokes={percStrokes}
                 toolbar={(
-                  <NoteToolbar
-                    ref={noteToolbarRef}
-                    info={zoomInfo}
-                    value={zoomValue}
-                    dots={zoomDots}
-                    isRest={zoomCurrentEvent?.kind === 'rest'}
-                    tie={!!zoomCurrentEvent && zoomCurrentEvent.kind !== 'rest' && !!zoomCurrentEvent.tieToNext}
-                    tripletOn={!!zoomTupletHere && zoomTupletHere.n === 3 && zoomTupletHere.m === 2}
-                    hasSelection={zoomHasSelection}
-                    percussion={zoomToolbarPercussion}
-                    editing={zoomEditing}
-                    onMore={openMore}
-                  />
+                  <div className="flex flex-wrap items-center gap-2">{viewControl}{utilities}{noteTools}</div>
                 )}
                 onToggleKeys={() => setZoom({ ...zoom, keysOpen: !zoom.keysOpen })}
                 onTogglePencil={() => setZoom({ ...zoom, pencil: !zoom.pencil })}
@@ -1053,10 +1239,11 @@ export const IntegratedEditor = memo(function IntegratedEditor({
             )}
             {quantizePop && !zoom && rangeStart !== null && rangeEnd !== null && onQuantizePlan && (
               <QuantizePopover
+                onUndo={onQuantizeUndo}
                 anchor={quantizePop.anchor}
-                plan={(strength) => onQuantizePlan(rangeStart, rangeEnd, strength)}
-                onApply={(strength) => {
-                  onQuantizeApply?.(rangeStart, rangeEnd, strength);
+                plan={(strength, stepQN) => onQuantizePlan(rangeStart, rangeEnd, strength, stepQN)}
+                onApply={(strength, stepQN) => {
+                  onQuantizeApply?.(rangeStart, rangeEnd, strength, stepQN);
                   setQuantizePop(null);
                 }}
                 onReset={() => onResetFlex?.(rangeStart, rangeEnd)}
@@ -1081,7 +1268,7 @@ export const IntegratedEditor = memo(function IntegratedEditor({
         <p role="status" className={`st-toast${notice ? ' is-bad' : ''}`}>
           {notice ?? info ?? flash}
           {!notice && info && noticeAction && (
-            <button type="button" onClick={noticeAction.onClick}>{noticeAction.label}</button>
+            <button type="button" onClick={noticeAction.onClick}>{st(noticeAction.label)}</button>
           )}
         </p>
       )}

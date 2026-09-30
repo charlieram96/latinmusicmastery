@@ -1,5 +1,6 @@
 'use server'
 
+import type { Database } from '@/types/database';
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { validateCourseKind } from '@/lib/courses/fundamentals'
@@ -70,7 +71,7 @@ export async function updateCourseSettings(courseId: string, patch: CourseSettin
 
   const { data, error } = await supabase
     .from('courses')
-    .update(updates)
+    .update(updates as Database['public']['Tables']['courses']['Update'])
     .eq('id', courseId)
     .select()
     .single()
@@ -412,7 +413,7 @@ export async function updateClassItem(itemId: string, updates: Record<string, un
 
   const { data, error } = await supabase
     .from('class_items')
-    .update(cleanUpdates)
+    .update(cleanUpdates as Database['public']['Tables']['class_items']['Update'])
     .eq('id', itemId)
     .select()
     .single()

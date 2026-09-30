@@ -8,11 +8,29 @@ import { parseScoreDocument, serializeScoreDocument } from '@/components/playsen
 import type { Instrument } from '@/components/playsense-studio/shared/score-model/types';
 import { editorReducer, type EditorState } from '../editor-state';
 import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise';
+import { applyMeasureEdit } from '../measure-edits';
 
 function note(staffLine: string, smufl: string, marcato = false, chord = false) {
   const [step, octave] = staffLine.split('/');
   return `<note>${chord ? '<chord/>' : ''}<unpitched><display-step>${step.toUpperCase()}</display-step><display-octave>${octave}</display-octave></unpitched><instrument id="drum"/><duration>1</duration><type>quarter</type><notehead smufl="${smufl}">other</notehead>${marcato ? '<notations><articulations><strong-accent type="up"/></articulations></notations>' : ''}</note>`;
 }
+
+it.each(['cross', 'timeSigPlusSmall'])('preserves %s heads and shell sounds when adding a second timbales score', (head) => {
+  const headXml = head === 'cross' ? '<notehead>cross</notehead>' : '<notehead smufl="timeSigPlusSmall">other</notehead>';
+  const first = parseMusicXmlString(xml('Timbales', note('a/4', 'noteheadPlusBlack')));
+  const second = parseMusicXmlString(xml('Timbales',
+    note('a/4', 'noteheadPlusBlack').replace('<notehead smufl="noteheadPlusBlack">other</notehead>', headXml)
+    + note('f/4', 'noteheadPlusBlack').replace('<notehead smufl="noteheadPlusBlack">other</notehead>', headXml)
+    + note('a/4', 'noteheadBlack')));
+  const result = applyMeasureEdit(first, { type: 'append-score', score: second });
+  expect(result.ok).toBe(true);
+  if (!result.ok) return;
+  const saved = parseScoreDocument(serializeScoreDocument(result.score));
+  const events = saved.tracks[0].measures[1].voices[0].events;
+  expect(events[0]).toMatchObject({ midi: 65, percussion: { notehead: 'plus', strokeId: 'cascara' } });
+  expect(events[1]).toMatchObject({ midi: 68, percussion: { notehead: 'plus', strokeId: 'cascara-low' } });
+  expect(events[2]).toMatchObject({ midi: 64, percussion: { notehead: 'normal', strokeId: 'high' } });
+});
 function xml(name: string, notes: string, midi = 64) {
   // Deliberately use the SAME playback sound for every stroke. Written notation
   // from the supplied Finale legends must still distinguish every one of them.
@@ -41,7 +59,9 @@ describe('Finale percussion legends', () => {
     for (const stroke of getPercStrokes(instrument)!) {
       const before = state(score);
       const inserted = editorReducer(before, { type: 'add-note', trackIndex: 0, measureIndex: 0, midi: stroke.midi, durationQN: 1 });
-      const expected = legends.find(r => r.instrument === instrument && r.strokeId === stroke.id)!;
+      const expected = stroke.id === 'elbow-strike'
+        ? { staffLine: 'c/4', notehead: 'normal' }
+        : legends.find(r => r.instrument === instrument && r.strokeId === stroke.id)!;
       expect(expected).toBeDefined();
       const d = extractTrackEvents(inserted.score.tracks[0], [4, 4])[0].events[0];
       expect(d.keys).toEqual([expected.staffLine]);

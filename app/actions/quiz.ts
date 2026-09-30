@@ -1,5 +1,6 @@
 'use server'
 
+import type { Database } from '@/types/database';
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { QuizQuestion } from '@/types/modules'
@@ -89,7 +90,7 @@ export async function updateQuizQuestion(questionId: string, input: QuestionInpu
 
   const { data, error } = await supabase
     .from('quiz_questions')
-    .update(updates)
+    .update(updates as Database['public']['Tables']['quiz_questions']['Update'])
     .eq('id', questionId)
     .select()
     .single()

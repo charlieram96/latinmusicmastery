@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 // PlaySense Studio — the app bar's Score ▾ menu (mockup #scoreMenu): add
 // measures from a file, replace the score, export. The items are dialog
 // triggers, so the panel stays mounted and only hides — unmounting it would
@@ -19,6 +21,7 @@ export function ScoreMenu({
   children: ReactNode;
   chipRef?: RefObject<HTMLButtonElement | null>;
 }) {
+  const st = useStudioText();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -51,12 +54,12 @@ export function ScoreMenu({
         ref={chipRef}
         type="button"
         className="st-chip"
-        aria-label="Score"
+        aria-label={st("Score")}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <FileUp className="h-4 w-4" />Score<ChevronDown className="h-3.5 w-3.5" />
+        <FileUp className="h-4 w-4" />{st("Score")}<ChevronDown className="h-3.5 w-3.5" />
       </button>
       <div ref={panelRef} role="menu" hidden={!open} className="st-mpop right-0 top-[calc(100%+6px)]">
         {children}

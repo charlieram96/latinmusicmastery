@@ -92,6 +92,19 @@ describe('BackingLanesPanel position_qn', () => {
     act(() => vi.advanceTimersByTime(700));
   }
 
+  it('offers link-all and individual links without changing clip placement', () => {
+    const onBackingFlexLinksChange = vi.fn();
+    const second = {...TRACK,id:'t2',label:'Conga'};
+    act(() => root.render(<BackingLanesPanel classItemId="ci" tracks={[TRACK,second]} timeMap={null}
+      view={{...VIEW,backingFlexLinks:['t1'],onBackingFlexLinksChange}} />));
+    const buttons = [...host.querySelectorAll('button')];
+    act(() => buttons.find(b=>b.textContent==='Link all')!.click());
+    expect(onBackingFlexLinksChange).toHaveBeenLastCalledWith(['t1','t2']);
+    act(() => buttons.find(b=>b.textContent==='Bass')!.click());
+    expect(onBackingFlexLinksChange).toHaveBeenLastCalledWith([]);
+    expect(placement).not.toHaveBeenCalled();
+  });
+
   it('uses mediaToQN for position_qn when given, with no time map id', () => {
     const mediaToQN = vi.fn((s: number) => (s - 2) * 2);
     act(() =>

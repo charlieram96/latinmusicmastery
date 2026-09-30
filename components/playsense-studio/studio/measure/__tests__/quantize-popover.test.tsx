@@ -57,7 +57,7 @@ describe('QuantizePopover', () => {
   it('previews from plan(strength) at the default strength', () => {
     const plan = vi.fn(() => ({ moved: 3, largestMs: 42 }));
     render({ plan });
-    expect(plan).toHaveBeenCalledWith(70);
+    expect(plan).toHaveBeenCalledWith(70, undefined);
     expect(host.textContent).toContain('3 notes will move, largest 42 ms');
   });
 
@@ -77,7 +77,15 @@ describe('QuantizePopover', () => {
     const cb = render();
     drag(slider(), 55);
     act(() => { byLabel('Apply').click(); });
-    expect(cb.onApply).toHaveBeenCalledWith(55);
+    expect(cb.onApply).toHaveBeenCalledWith(55, undefined);
+  });
+
+  it('passes the chosen triplet subdivision and strength to preview and Apply',()=>{
+    const cb=render();
+    act(()=>host.querySelector<HTMLButtonElement>('[aria-label="1/16 · 3"]')!.click());
+    drag(slider(),100);
+    act(()=>byLabel('Apply').click());
+    expect(cb.onApply).toHaveBeenCalledWith(100,4/16*2/3);
   });
 
   it('Reset flex calls onReset', () => {

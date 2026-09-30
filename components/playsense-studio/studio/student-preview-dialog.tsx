@@ -1,4 +1,8 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+import { LanguageScope } from '@/components/language-provider';
+import { CASCARA_COACHING_ID } from '@/lib/play-sense/cascara-coaching';
+
 
 // PlaySense Studio — the Student preview dialog (Studio rework P5, Task 7).
 //
@@ -55,7 +59,14 @@ export interface StudentPreviewDialogProps {
 /** A full-screen `role="dialog"` overlay that runs the student's own game
  *  component in preview mode. Closed by Esc or the close button — never by
  *  `window.alert`, which can't render this. */
-export function StudentPreviewDialog({
+export function StudentPreviewDialog(props: StudentPreviewDialogProps) {
+  // This requested Spanish coaching demo must also work in an English browser session.
+  return props.exercise.id === CASCARA_COACHING_ID
+    ? <LanguageScope locale="es"><StudentPreviewContent {...props} /></LanguageScope>
+    : <StudentPreviewContent {...props} />;
+}
+
+function StudentPreviewContent({
   exercise,
   score,
   exerciseVideo = null,
@@ -64,11 +75,14 @@ export function StudentPreviewDialog({
   mediaAudible = false,
   onClose,
 }: StudentPreviewDialogProps) {
+  const st = useStudioText();
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // A portaled settings panel owns Escape before the preview itself.
+        if (document.querySelector('[data-slot=popover-content][data-state=open]')) return;
         e.stopPropagation();
         onClose();
       }
@@ -82,14 +96,14 @@ export function StudentPreviewDialog({
       ref={ref}
       role="dialog"
       aria-modal="true"
-      aria-label="Student preview"
+      aria-label={st("Student preview")}
       className="fixed inset-0 z-[200] bg-background"
     >
       <button
         type="button"
         onClick={onClose}
-        aria-label="Close student preview"
-        title="Close preview (Esc)"
+        aria-label={st("Close student preview")}
+        title={st("Close preview (Esc)")}
         className="absolute right-3 top-3 z-10 rounded-md border border-border bg-card p-2 text-muted-foreground shadow-sm transition hover:bg-muted hover:text-foreground"
       >
         <X className="h-4 w-4" />

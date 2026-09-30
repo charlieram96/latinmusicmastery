@@ -50,7 +50,7 @@ export interface Tuplet { id: string; n: number; m: number }
 export interface GraceNote { midi: number; spelling?: Spelling; slash: boolean; percussion?: PercussionNotation }
 
 /** A line between two events, referenced by event id. */
-export interface Span { id: string; type: 'slur' | 'cresc' | 'dim'; from: string; to: string }
+export interface Span { id: string; type: 'slur' | 'cresc' | 'dim'; from: string; to: string; offset?: { x: number; y: number } }
 
 export interface ScoreDocument {
   schemaVersion: SchemaVersion;
@@ -72,9 +72,16 @@ export interface ScoreDocument {
    * ignores every tempoChange.
    */
   tempoMarksConfirmed?: boolean;
+  /** Admin playback BPM for this score only; absent means follow the uploaded score. */
+  playbackTempoOverride?: number;
+  /** Published with the score, so video graphics follow the draft/publish workflow. */
+  videoCoaching?: 'cascara-v1' | null;
 }
 
 export interface Track {
+  /** MusicXML staves belonging to the same instrument part. */
+  staffGroup?: string;
+  staffNumber?: number;
   index: number;
   instrument: Instrument;
   displayName: string;
@@ -143,6 +150,7 @@ export interface NoteBase {
   tuplet?: Tuplet;
   /** Supersedes `articulation`: read with eventArticulations(). */
   articulations?: Articulation[];
+  symbolOffsets?: Record<string, { x: number; y: number }>;
   ornament?: Ornament;
   dynamic?: Dynamic;
   text?: string;
@@ -169,6 +177,7 @@ export interface Note extends NoteBase {
   spellingHint?: string;
   spelling?: Spelling;
   percussion?: PercussionNotation;
+  notehead?: PercussionNotehead;
   /** Optional fret position (string is 1-based, low to high). For tab/fretboard tracks. */
   fingering?: { string: number; fret: number; finger?: number };
 }
@@ -185,6 +194,7 @@ export interface Chord extends NoteBase {
     spellingHint?: string;
     spelling?: Spelling;
     percussion?: PercussionNotation;
+  notehead?: PercussionNotehead;
     fingering?: { string: number; fret: number; finger?: number };
     tieToNext?: boolean;
   }>;

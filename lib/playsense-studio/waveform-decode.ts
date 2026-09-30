@@ -1,3 +1,4 @@
+import { localWaveformCache } from './waveform-local-cache';
 // PlaySense Studio — browser-side waveform decoding + peaks cache.
 //
 // BROWSER ONLY. Imports nothing from React; uses Web Audio + fetch. Must be
@@ -117,14 +118,17 @@ export async function loadOrComputePeaks(
 
   const peaks = await decodeVideoPeaks(videoUrl, opts);
 
+  const serialized = serializePeaks(peaks);
+  await localWaveformCache(path, serialized);
   try {
-    await supabase.storage
+    const { error } = await supabase.storage
       .from(WAVEFORM_BUCKET)
-      .upload(path, new Blob([serializePeaks(peaks)], { type: 'application/json' }), {
+      .upload(path, new Blob([serialized], { type: 'application/json' }), {
         upsert: true,
-        cacheControl: '31536000',
+        cacheControl: '0',
         contentType: 'application/json',
       });
+    if (error) console.warn('Waveform server cache unavailable; browser cache retained.', error.message);
   } catch {
     // Caching is best-effort; the peaks are still usable this session.
   }
@@ -198,14 +202,17 @@ export async function loadOrComputeLanePeaks(
     withHits: false,
   });
 
+  const serialized = serializePeaks(peaks);
+  await localWaveformCache(path, serialized);
   try {
-    await supabase.storage
+    const { error } = await supabase.storage
       .from(WAVEFORM_BUCKET)
-      .upload(path, new Blob([serializePeaks(peaks)], { type: 'application/json' }), {
+      .upload(path, new Blob([serialized], { type: 'application/json' }), {
         upsert: true,
-        cacheControl: '31536000',
+        cacheControl: '0',
         contentType: 'application/json',
       });
+    if (error) console.warn('Waveform server cache unavailable; browser cache retained.', error.message);
   } catch {
     // Caching is best-effort; the peaks are still usable this session.
   }
@@ -228,6 +235,8 @@ async function tryLoadCache(
   path: string,
   signal?: AbortSignal
 ): Promise<WaveformPeaks | null> {
+  const local = await localWaveformCache(path);
+  if (local) { try { return deserializePeaks(local); } catch { /* Try the server copy. */ } }
   try {
     const { data } = supabase.storage.from(WAVEFORM_BUCKET).getPublicUrl(path);
     // `no-store`, not `force-cache`: the first read for a brand-new video
@@ -237,7 +246,10 @@ async function tryLoadCache(
     // video loading from its cached peaks instead of re-analyzing.
     const res = await fetch(data.publicUrl, { signal, cache: 'no-store' });
     if (!res.ok) return null;
-    return deserializePeaks(await res.text());
+    const raw = await res.text();
+    const peaks = deserializePeaks(raw);
+    if (peaks) await localWaveformCache(path, raw);
+    return peaks;
   } catch {
     return null;
   }

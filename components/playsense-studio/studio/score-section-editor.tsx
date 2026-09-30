@@ -1,4 +1,7 @@
 'use client';
+import type {LessonMetronome} from '@/lib/playsense-studio/lesson-metronome';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — single-section editor.
 //
@@ -33,6 +36,7 @@ import { ExportDialog } from '@/components/playsense-studio/export/export-dialog
 import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 
 export interface ScoreSectionEditorProps {
+  lessonMetronome?:LessonMetronome;
   classItemId: string;
   sectionId: string;
   scoreDocumentId: string;
@@ -77,6 +81,7 @@ export function ScoreSectionEditor({
   sectionIndex,
   sectionCount,
   videoUrl,
+  lessonMetronome,
   videoDurationSeconds,
   trim,
   onTrimDrag,
@@ -92,6 +97,7 @@ export function ScoreSectionEditor({
   drawerEl,
   highwayOpen,
 }: ScoreSectionEditorProps) {
+  const st = useStudioText();
   const { state, dispatch, undo, redo, canUndo, canRedo, markClean, replaceScore } = useEditor(initialScore);
   const draft = useStudioDraft({
     owner: { kind: 'section', id: sectionId },
@@ -163,6 +169,7 @@ export function ScoreSectionEditor({
       )}
 
       <SyncPanel
+        lessonMetronome={lessonMetronome}
         key={draft.timingEpoch}
         classItemId={classItemId}
         sectionId={sectionId}
@@ -201,7 +208,7 @@ export function ScoreSectionEditor({
                 onImported={onChanged}
                 onCloseAutoFocus={returnFocusToScoreMenu}
                 trigger={
-                  <button type="button" className="st-mpop-item">Replace this section&apos;s score…</button>
+                  <button type="button" className="st-mpop-item">{st("Replace this section&apos;s score…")}</button>
                 }
               />
               <ExportDialog
@@ -212,7 +219,7 @@ export function ScoreSectionEditor({
                 classItemId={classItemId}
                 onCloseAutoFocus={returnFocusToScoreMenu}
                 trigger={
-                  <button type="button" className="st-mpop-item">Export PDF, MusicXML or MIDI…</button>
+                  <button type="button" className="st-mpop-item">{st("Export PDF, MusicXML or MIDI…")}</button>
                 }
               />
             </ScoreMenu>
@@ -222,8 +229,8 @@ export function ScoreSectionEditor({
               onClick={undo}
               disabled={!canUndo}
               className="st-iconbtn"
-              title="Undo (Cmd/Ctrl+Z)"
-              aria-label="Undo"
+              title={st("Undo (Cmd/Ctrl+Z)")}
+              aria-label={st("Undo")}
             >
               <Undo2 className="h-4 w-4" />
             </button>
@@ -231,8 +238,8 @@ export function ScoreSectionEditor({
               onClick={redo}
               disabled={!canRedo}
               className="st-iconbtn"
-              title="Redo (Cmd/Ctrl+Shift+Z)"
-              aria-label="Redo"
+              title={st("Redo (Cmd/Ctrl+Shift+Z)")}
+              aria-label={st("Redo")}
             >
               <Redo2 className="h-4 w-4" />
             </button>
@@ -252,7 +259,7 @@ export function ScoreSectionEditor({
             <HighwayPreview
               score={state.score}
               scoreDocumentId={scoreDocumentId}
-              title={state.score.title}
+              title={st(state.score.title)}
               trackIndex={0}
             />
           </div>,

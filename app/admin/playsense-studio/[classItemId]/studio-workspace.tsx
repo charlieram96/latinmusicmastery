@@ -1,4 +1,9 @@
 'use client';
+import { readFlex } from '@/lib/playsense-studio/flex';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageToggle } from '@/components/language-toggle';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — the unified workspace. One screen where an admin builds a
 // score and (when there's a video) syncs it to the audio. Used in TWO places off
@@ -34,10 +39,12 @@ import { buildWaypoints } from '@/lib/playsense-studio/sync-seed';
 import { useEditor } from '@/lib/playsense-studio/editor-state';
 import { useStudioDraft } from '@/components/playsense-studio/studio/drafts/use-studio-draft';
 import { StudioDraftsProvider } from '@/components/playsense-studio/studio/drafts/drafts-context';
+import { studentHrefFromAdmin } from '@/lib/playsense-studio/admin-nav';
 import { PublishControl } from '@/components/playsense-studio/studio/drafts/publish-control';
 import { HistoryPanel } from '@/components/playsense-studio/studio/drafts/history-panel';
 import { SaveStatus } from '@/components/playsense-studio/studio/drafts/save-status';
 import { ScoreMenu } from '@/components/playsense-studio/studio/score-menu';
+import { DeleteScoreDialog } from '@/components/playsense-studio/studio/delete-score-dialog';
 import { workspaceSeed } from '@/lib/playsense-studio/drafts/seed';
 import { EMPTY_TIMING, timingToTimeMap, type StudioPlay, type StudioTiming } from '@/lib/playsense-studio/drafts/timing';
 import { buildExerciseGrid, scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise';
@@ -143,6 +150,7 @@ function StudioWorkspaceBody({
   onDraftContent,
   copySources = [],
 }: StudioWorkspaceProps) {
+  const st = useStudioText();
   const draftOwner = draftOwnerOf(owner);
 
   // The exercise studio shows the highway inline (under the notation) and the
@@ -245,7 +253,8 @@ function StudioWorkspaceBody({
   );
   // One exercise definition of the draft score, shared by the graded onsets
   // and the Student preview.
-  const draftExercise = useMemo(() => scoreToExerciseDefinition(state.score), [state.score]);
+  const previewExerciseId = owner.kind === 'classItem' ? owner.classItemId : owner.songId;
+  const draftExercise = useMemo(() => scoreToExerciseDefinition(state.score, { id: previewExerciseId }), [state.score, previewExerciseId]);
   const gradedOnsets = useMemo(() => {
     if (!isExercise) return [];
     const out: number[] = [];
@@ -380,52 +389,52 @@ function StudioWorkspaceBody({
   }, [undo, redo, draft]);
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background text-foreground md:h-[100dvh]">
+    <div data-studio-commands className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-background text-foreground md:h-[100dvh]">
       {/* ---- App bar ---- */}
       <header className="st-appbar">
         <Link
           href={backHref}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+          aria-label={st(owner.kind === 'classItem' ? 'Admin' : 'Songs')}
+          className="lmm-studio-return inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition"
         >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="hidden sm:inline">{owner.kind === 'classItem' ? 'Admin' : 'Songs'}</span>
+          <ArrowLeft className="h-[18px] w-[18px]" />
+          <span className="hidden sm:inline">{st(owner.kind === 'classItem' ? 'Admin' : 'Songs')}</span>
         </Link>
         <span className="hidden text-muted-foreground/40 sm:inline">/</span>
         <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-semibold">{title}</span>
-          <span className="hidden shrink-0 rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-[10.5px] text-muted-foreground md:inline">
-            PlaySense Studio
-          </span>
+          <span className="truncate text-[15px] font-semibold tracking-tight">{title}</span>
+          <span className="lmm-studio-badge hidden shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide md:inline-flex">
+            <Activity size={12} aria-hidden="true"/>{st("PlaySense Studio")}</span>
         </div>
 
+        <LanguageToggle variant="icon" />
+        <ThemeToggle />
         {appBarExtra}
 
         {/* Exercise: switch the center stage between the graded score and syncing
             the optional play-along video to it. Only shown once a video exists. */}
         {isExercise && exerciseVideoUrl && (
-          <div className="st-seg" role="radiogroup" aria-label="Exercise stage">
+          <div className="st-seg" role="radiogroup" aria-label={st("Vista de la partitura")}>
             <button
               type="button"
               role="radio"
               aria-checked={exerciseStage === 'score'}
               className={exerciseStage === 'score' ? 'is-on' : ''}
               onClick={() => setExerciseStage('score')}
-              title="Edit the graded score students play on the highway"
+              title={st("Partitura en páginas con zoom y paletas de edición")}
             >
               <Music className="h-3.5 w-3.5" />
-              Score
-            </button>
+              {st("Partitura")}</button>
             <button
               type="button"
               role="radio"
               aria-checked={exerciseStage === 'syncVideo'}
               className={exerciseStage === 'syncVideo' ? 'is-on' : ''}
               onClick={() => setExerciseStage('syncVideo')}
-              title="Sync the play-along video to the score's beats"
+              title={st("Pentagramas horizontales alineados con el audio y el video")}
             >
               <Film className="h-3.5 w-3.5" />
-              Sync video
-            </button>
+              {st("Sincronizar video")}</button>
           </div>
         )}
 
@@ -441,19 +450,19 @@ function StudioWorkspaceBody({
               aria-haspopup="true"
               aria-expanded={copyMenuOpen}
               title={
-                copySources.length === 0
+                st(copySources.length === 0
                   ? 'No Watch sections to copy notes from yet'
-                  : "Replace the exercise notes with a Watch section's"
+                  : "Replace the exercise notes with a Watch section's")
               }
             >
               <Copy className="h-4 w-4" />
-              <span className="hidden lg:inline">Copy notes from a Watch section</span>
+              <span className="hidden lg:inline">{st("Copy notes from a Watch section")}</span>
             </button>
             {copyMenuOpen && copySources.length > 0 && (
               <>
                 <div className="st-pop-scrim" onClick={() => setCopyMenuOpen(false)} />
                 <div className="st-pop">
-                  <span className="st-pop-label">Copy notes from a Watch section</span>
+                  <span className="st-pop-label">{st("Copy notes from a Watch section")}</span>
                   {copySources.map((s) => (
                     <button
                       key={s.id}
@@ -475,16 +484,16 @@ function StudioWorkspaceBody({
 
         <div className="ml-auto flex items-center gap-2">
           {/* Exercise mode shows the highway inline under the notation instead. */}
-          {!isExercise && (
+          {!isExercise && owner.kind === 'song' && (
             <button
               type="button"
               onClick={() => setHighwayOpen((o) => !o)}
               className={`st-chip${highwayOpen ? ' is-on' : ''}`}
-              title="Toggle the student highway preview"
+              title={st("Toggle the student highway preview")}
               aria-pressed={highwayOpen}
             >
               <PanelBottom className="h-4 w-4" />
-              <span className="hidden sm:inline">Preview</span>
+              <span className="hidden sm:inline">{st("Preview")}</span>
             </button>
           )}
 
@@ -495,10 +504,10 @@ function StudioWorkspaceBody({
               type="button"
               onClick={() => setPreviewOpen(true)}
               className="st-chip"
-              title="Preview the exercise the way a student plays it"
+              title={st("Preview the exercise the way a student plays it")}
             >
               <Eye className="h-4 w-4" />
-              <span className="hidden sm:inline">Student preview</span>
+              <span className="hidden sm:inline">{st("Student preview")}</span>
             </button>
           )}
 
@@ -510,13 +519,19 @@ function StudioWorkspaceBody({
                 mode="replace"
                 onCloseAutoFocus={returnFocusToScoreMenu}
                 trigger={
-                  <button type="button" className="st-mpop-item">Replace this lesson&apos;s score…</button>
+                  <button type="button" className="st-mpop-item">{st("Replace score")}</button>
                 }
               />
+              <DeleteScoreDialog classItemId={owner.classItemId} beforeDelete={draft.flush} onCloseAutoFocus={returnFocusToScoreMenu} />
             </ScoreMenu>
           )}
 
-          <PublishControl />
+          {isExercise && previewExerciseId === 'f7fee0dd-66bb-4e08-9af0-e38febfa415b' && <label className="flex items-center gap-2 text-xs">
+            <input type="checkbox" className="accent-primary" checked={state.score.videoCoaching === 'cascara-v1'}
+              onChange={event => dispatch({ type: 'set-score-meta', videoCoaching: event.target.checked ? 'cascara-v1' : null })} />
+            {st('Publish video effects')}
+          </label>}
+          <PublishControl studentHref={studentHrefFromAdmin(backHref)} />
 
           <HistoryPanel owner={draftOwner} iconOnly />
 
@@ -526,8 +541,8 @@ function StudioWorkspaceBody({
             onClick={undo}
             disabled={!canUndo}
             className="st-iconbtn"
-            title="Undo (Cmd/Ctrl+Z)"
-            aria-label="Undo"
+            title={st("Undo (Cmd/Ctrl+Z)")}
+            aria-label={st("Undo")}
           >
             <Undo2 className="h-4 w-4" />
           </button>
@@ -535,8 +550,8 @@ function StudioWorkspaceBody({
             onClick={redo}
             disabled={!canRedo}
             className="st-iconbtn"
-            title="Redo (Cmd/Ctrl+Shift+Z)"
-            aria-label="Redo"
+            title={st("Redo (Cmd/Ctrl+Shift+Z)")}
+            aria-label={st("Redo")}
           >
             <Redo2 className="h-4 w-4" />
           </button>
@@ -568,7 +583,7 @@ function StudioWorkspaceBody({
           ]}
         />
 
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 md:p-4">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-3 md:p-4">
           {draft.error && (
             <p className="mb-3 shrink-0 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {draft.error}
@@ -587,7 +602,12 @@ function StudioWorkspaceBody({
               videoUrl={exerciseVideoUrl}
               score={state.score}
               dispatch={dispatch}
-              activeTimeMap={null}
+              activeTimeMap={draftTimeMap}
+              initialManualTiming={draft.timing.params.manualScoreSync === true}
+              initialFlex={readFlex(draft.timing.params)}
+              onFlexChange={flex => draft.setTiming({params:{...draft.timing.params,flex}})}
+              backingFlexLinks={Array.isArray(draft.timing.params.backingFlexLinks) ? draft.timing.params.backingFlexLinks.filter((id): id is string => typeof id === 'string') : []}
+              onBackingFlexLinksChange={backingFlexLinks => draft.setTiming({params:{...draft.timing.params,backingFlexLinks}})}
               videoDurationSeconds={null}
               trim={exerciseTrim}
               onTrimDrag={handleExerciseTrimDrag}
@@ -611,7 +631,7 @@ function StudioWorkspaceBody({
               monitorEl={monitorEl}
               scoreActionsEl={scoreActionsEl}
               scoreActionsCloseAutoFocus={returnFocusToScoreMenu}
-              onTimingChange={draft.setTiming}
+              onTimingChange={patch => draft.setTiming({...patch,params:{...draft.timing.params,...patch.params}})}
               onTimingSaved={() => setExerciseStage('syncVideo')}
               registerTimingFlush={draft.registerPreFlush}
             />
@@ -647,7 +667,7 @@ function StudioWorkspaceBody({
                   <HighwayPreview
                     score={state.score}
                     scoreDocumentId={scoreDocumentId}
-                    title={state.score.title}
+                    title={st(state.score.title)}
                     trackIndex={0}
                   />
                 </div>
@@ -661,20 +681,20 @@ function StudioWorkspaceBody({
             in the exercise score stage, whose SyncPanel has mode="exercise"
             and shows no monitor at all. */}
         {(showExerciseSync ? !!exerciseVideoUrl : mode === 'video' && !!videoUrl) && (
-          <FloatingVideo label={isExercise ? 'Play-along' : 'Reference'} onBodyEl={setMonitorEl} />
+          <FloatingVideo label={st(isExercise ? 'Play-along' : 'Reference')} onBodyEl={setMonitorEl} />
         )}
       </div>
 
       {/* ---- Bottom: transport dock + highway drawer ---- */}
       <div ref={setTransportEl} className="shrink-0" />
 
-      {!isExercise && highwayOpen && (
+      {!isExercise && owner.kind === 'song' && highwayOpen && (
         <div className="st-drawer" style={{ height: 380 }}>
           <div className="h-full overflow-y-auto px-4 py-3">
             <HighwayPreview
               score={state.score}
               scoreDocumentId={scoreDocumentId}
-              title={state.score.title}
+              title={st(state.score.title)}
               difficulty={owner.kind === 'song' ? owner.difficulty : undefined}
               trackIndex={owner.kind === 'song' ? owner.trackIndex : 0}
             />
@@ -704,6 +724,7 @@ function SongMetaControls({
 }: {
   owner: Extract<StudioOwner, { kind: 'song' }>;
 }) {
+  const st = useStudioText();
   const [difficulty, setDifficulty] = useState<SongDifficulty>(owner.difficulty);
   const [isPublished, setIsPublished] = useState(owner.isPublished);
   const [, startTransition] = useTransition();
@@ -723,17 +744,17 @@ function SongMetaControls({
 
   return (
     <div className="ml-2 hidden items-center gap-2 md:flex">
-      <label className="st-sec-label">Difficulty</label>
+      <label className="st-sec-label">{st("Difficulty")}</label>
       <div className="st-select-wrap relative inline-flex items-center">
         <select
           value={difficulty}
           onChange={(e) => onDifficulty(e.target.value as SongDifficulty)}
           className="rounded-md border border-border bg-card px-2 py-1 text-xs"
-          aria-label="Difficulty"
+          aria-label={st("Difficulty")}
         >
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
+          <option value="beginner">{st("Beginner")}</option>
+          <option value="intermediate">{st("Intermediate")}</option>
+          <option value="advanced">{st("Advanced")}</option>
         </select>
       </div>
       <button
@@ -743,9 +764,9 @@ function SongMetaControls({
             ? 'border-green-500/30 bg-green-500/10 text-green-600'
             : 'border-border hover:bg-muted'
         }`}
-        title={isPublished ? 'Visible — students can find this song' : "Hidden — students can't find this song"}
+        title={st(isPublished ? 'Visible — students can find this song' : "Hidden — students can't find this song")}
       >
-        {isPublished ? 'Visible' : 'Hidden'}
+        {st(isPublished ? 'Visible' : 'Hidden')}
       </button>
     </div>
   );

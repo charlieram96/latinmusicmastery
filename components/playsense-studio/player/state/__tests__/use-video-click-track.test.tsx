@@ -4,18 +4,20 @@
 // length and ends: a flex edit moves interior beats only, and the admin click
 // must reschedule when it does.
 
-import { act } from 'react';
+import { act, StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const setGrid = vi.fn();
 const start = vi.fn();
+const scheduledGrid = vi.fn();
 const reanchor = vi.fn();
 const teardown = vi.fn();
 let running = false;
 vi.mock('@/lib/playsense-studio/click-track', () => ({
   ClickTrack: class {
-    setGrid = setGrid;
+    grid: readonly number[] = [];
+    setGrid(grid: readonly number[]) { this.grid=grid; setGrid(grid); }
     setVolume() {}
     setOffsetSeconds() {}
     ensureContext() {
@@ -24,6 +26,7 @@ vi.mock('@/lib/playsense-studio/click-track', () => ({
     start(media: number, rate: number) {
       running = true;
       start(media, rate);
+      scheduledGrid(this.grid);
     }
     reanchor = reanchor;
     teardown() {
@@ -159,4 +162,15 @@ describe('useVideoClickTrack rate changes', () => {
     expect(reanchor).not.toHaveBeenCalled();
     expect(start).toHaveBeenCalledTimes(2);
   });
+});
+
+it('keeps the lesson metronome grid on the live engine after StrictMode remount',()=>{
+ globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+ scheduledGrid.mockClear();
+ const video=playingVideo();const root=createRoot(document.createElement('div'));
+ try {
+  act(()=>root.render(<StrictMode><PlayingHarness video={video}/></StrictMode>));
+  act(()=>video.dispatchEvent(new Event('play')));
+  expect(scheduledGrid).toHaveBeenLastCalledWith([0,1,2]);
+ } finally {act(()=>root.unmount());}
 });

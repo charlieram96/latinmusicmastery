@@ -14,6 +14,7 @@ const MAX_CACHED_BUFFERS = 8;
 
 /** Promise-valued so concurrent callers dedupe, like save-queue's chain. */
 const cache = new Map<string, Promise<AudioBuffer>>();
+const pendingSignals = new Map<string, AbortSignal>();
 /** Insertion order = LRU order; refreshed on every hit. */
 const order: string[] = [];
 /** Buffers with a live source must never be evicted. */
@@ -56,29 +57,37 @@ export function loadClipAudio(
   url: string,
   signal?: AbortSignal
 ): Promise<AudioBuffer> {
+  if (pendingSignals.get(url)?.aborted) { cache.delete(url); pendingSignals.delete(url); }
   const existing = cache.get(url);
   if (existing) {
     touch(url);
     return existing;
   }
 
-  const promise = (queue = queue.then(async () => {
+  const work = queue.catch(() => {}).then(async () => {
+    if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
     const res = await fetch(url, { signal });
     if (!res.ok) throw new Error(`Failed to fetch backing track (${res.status})`);
     // decodeAudioData detaches this buffer; never clone a multi-MB file.
     return ctx.decodeAudioData(await res.arrayBuffer());
-  })).then(
-    (buffer) => buffer as AudioBuffer,
+  });
+  // One failed/cancelled clip must not reject every subsequent queued decode.
+  queue = work.then(() => {}, () => {});
+  const promise = work.then(
+    (buffer) => { if (cache.get(url) === promise) pendingSignals.delete(url); return buffer as AudioBuffer; },
     (err) => {
       // A failed decode must not poison the cache or the queue.
-      cache.delete(url);
-      const at = order.indexOf(url);
-      if (at >= 0) order.splice(at, 1);
+      if (cache.get(url) === promise) {
+        cache.delete(url); pendingSignals.delete(url);
+        const at = order.indexOf(url);
+        if (at >= 0) order.splice(at, 1);
+      }
       throw err;
     }
   );
 
   cache.set(url, promise);
+  if (signal) pendingSignals.set(url, signal);
   touch(url);
   evict();
   return promise;
@@ -87,6 +96,7 @@ export function loadClipAudio(
 /** Test/teardown hook — the cache is module-level and otherwise process-wide. */
 export function clearClipAudioCache() {
   cache.clear();
+  pendingSignals.clear();
   order.length = 0;
   pinned.clear();
   queue = Promise.resolve();

@@ -19,6 +19,8 @@ const SMUFL_HEADS: Record<string, PercussionNotehead> = {
   noteheadBlack: 'normal', noteheadHalf: 'normal', noteheadWhole: 'normal',
   noteheadXBlack: 'x', noteheadXHalf: 'x', noteheadXWhole: 'x', noteheadXOrnate: 'ornate-x',
   noteheadPlusBlack: 'plus', noteheadPlusHalf: 'plus',
+  // Finale custom percussion maps can use this small + as a notehead.
+  timeSigPlusSmall: 'plus',
   noteheadCircledBlackLarge: 'circled', noteheadCircledBlack: 'circled',
   noteheadSlashVerticalEnds: 'slash', noteheadSlashHorizontalEnds: 'slash',
   noteheadSlashedBlack1: 'slashed', noteheadSlashedHalf1: 'slashed',
@@ -33,7 +35,8 @@ export function musicXmlNotehead(value?: string, smufl?: string | null): Percuss
   const names: Record<string, PercussionNotehead> = {
     normal: 'normal', x: 'x', cross: 'plus', 'circle dot': 'circled',
     slash: 'slash', 'slashed': 'slashed', diamond: 'diamond',
-    triangle: 'triangle-up', 'inverted triangle': 'triangle-down', square: 'square',
+    // Finale exports the LMM Jam Block square using the shape-note name "la".
+    triangle: 'triangle-up', 'inverted triangle': 'triangle-down', square: 'square', la: 'square',
   };
   return names[value ?? 'normal'] ?? 'normal';
 }

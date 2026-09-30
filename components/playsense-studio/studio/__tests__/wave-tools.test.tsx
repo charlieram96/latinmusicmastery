@@ -26,11 +26,11 @@ describe('WaveTools', () => {
     expect(onAutoPlace).toHaveBeenCalled();
   });
 
-  it('shows Auto-align and Student preview for a graded part, without Ripple or Flex', () => {
+  it('shows Auto-align and Student preview for a graded part, with marker controls and optional Flex', () => {
     act(() => root.render(<WaveTools graded onAutoAlign={() => {}} onStudentPreview={() => {}} dragAll onDragAll={() => {}} showNotes onShowNotes={() => {}} zoom={zoom} />));
     expect(byLabel('Auto-align')).not.toBeNull();
     expect(byLabel('Student preview')).not.toBeNull();
-    expect(byLabel('Ripple')).toBeNull();
+    expect(byLabel('Ripple')).not.toBeNull();
     expect(byLabel('Flex')).toBeNull();
   });
 

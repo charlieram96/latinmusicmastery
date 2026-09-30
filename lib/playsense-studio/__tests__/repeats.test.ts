@@ -6,7 +6,7 @@ import type { ScoreDocument } from '@/components/playsense-studio/shared/score-m
 
 function initial(): EditorState {
   const score: ScoreDocument = {
-    schemaVersion: 1, title: 'Repeat test', sourceFormat: 'native', initialTempo: 120,
+    schemaVersion: 1, title: 'Repeat test', composer: 'LMM', sourceFormat: 'native', initialTempo: 120,
     initialTimeSignature: [4, 4], initialKeyFifths: 0,
     tracks: [{ index: 0, instrument: 'staff', displayName: 'Test', tuning: null,
       stringMultiplicity: 1, channel: null, defaultView: 'staff',

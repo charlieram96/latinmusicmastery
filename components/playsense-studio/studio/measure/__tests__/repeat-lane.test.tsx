@@ -68,7 +68,29 @@ describe('RepeatPopover', () => {
     act(() => {
       buttons[2].dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
+    expect(onPick).not.toHaveBeenCalled();
+    expect(host.textContent).toContain('Measures 2–3: 4 total passes');
+    act(() => { (Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Apply') as HTMLButtonElement).click(); });
+    expect(onPick).toHaveBeenCalledOnce();
     expect(onPick).toHaveBeenCalledWith(4);
+  });
+
+  it('shows a blocking reason and never applies a blocked or cancelled selection', () => {
+    const onPick=vi.fn(), onClose=vi.fn();
+    act(()=>root.render(<RepeatPopover anchor={anchor} range={[0,1]} group={null}
+      problemFor={n=>n===4?'Choose a valid measure range.':null}
+      onPick={onPick} onRemove={noop} onSelectPassOne={noop} onClose={onClose} />));
+    const button=(text:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent===text)!;
+    act(()=>button('×4').click());
+    expect(host.querySelector('[role="alert"]')?.textContent).toBe('Choose a valid measure range.');
+    expect(button('Apply').disabled).toBe(true);
+    act(()=>button('Apply').click());
+    expect(onPick).not.toHaveBeenCalled();
+    act(()=>button('×3').click());
+    expect(button('Apply').disabled).toBe(false);
+    act(()=>button('Cancel').click());
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onPick).not.toHaveBeenCalled();
   });
 
   it('shows the group state, marks the active count and offers remove/select-pass-one', () => {

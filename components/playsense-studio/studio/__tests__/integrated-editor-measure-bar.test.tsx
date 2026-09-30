@@ -6,6 +6,7 @@ import type { ScoreDocument } from '@/components/playsense-studio/shared/score-m
 import { IntegratedEditor, type IntegratedEditorMeasureTiming } from '../integrated-editor';
 
 beforeAll(() => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   // VexFlow measures text through a canvas; jsdom has none.
   const ctx = { measureText: (s: string) => ({ width: String(s).length * 7, actualBoundingBoxAscent: 8, actualBoundingBoxDescent: 2, fontBoundingBoxAscent: 8, fontBoundingBoxDescent: 2 }), font: '' };
   HTMLCanvasElement.prototype.getContext = (() => ctx) as never;
@@ -71,14 +72,76 @@ const barButton = (name: string) => toolbar()!.querySelector<HTMLButtonElement>(
 const dispatched = (d: ReturnType<typeof vi.fn>, type: string) => d.mock.calls.map((c) => c[0]).filter((a) => a.type === type);
 
 describe('IntegratedEditor measure bar', () => {
-  it('floats over the selected bars with their number, start and tempo', () => {
+  it('keeps Sync measure commands docked even when the selected range is offscreen', () => {
+    const { dispatch } = render({ pageWorkspace: false, scrollLeftPx: 3000 });
+    const controls = host.querySelector('[data-testid="sync-measure-controls"]')!;
+    expect(toolbar()?.classList.contains('is-docked')).toBe(true);
+    expect(barButton('Delete').disabled).toBe(true);
+    expect(barButton('Copy').disabled).toBe(true);
+    const select = [...controls.querySelectorAll('button')].find(b => b.textContent === 'Select measures')!;
+    act(() => select.click());
+    expect(barButton('Copy').disabled).toBe(false);
+    expect(toolbar()?.classList.contains('is-docked')).toBe(true);
+    act(() => barButton('Copy').click());
+    expect(dispatched(dispatch, 'copy-measures')[0]).toMatchObject({ start: 0, count: 1 });
+    const end = controls.querySelector<HTMLSelectElement>('[aria-label="To measure"]')!;
+    act(() => { end.value = '1'; end.dispatchEvent(new Event('change', { bubbles: true })); });
+    act(() => barButton('Duplicate').click());
+    expect(dispatched(dispatch, 'duplicate-measures')[0]).toMatchObject({ start: 0, count: 2 });
+    act(() => barButton('Delete').click());
+    expect(dispatched(dispatch, 'delete-measures')[0]).toMatchObject({ start: 0, count: 2 });
+  });
+
+  it('applies four total passes to selected Sync measures 1–2 only after Apply', () => {
+    const { dispatch } = render({pageWorkspace:false});
+    key('ArrowRight');
+    key('ArrowRight',{shiftKey:true});
+    act(()=>barButton('Repeat').click());
+    const button=(label:string)=>Array.from(host.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')).find(b=>b.textContent===label)!;
+    act(()=>button('×4').dispatchEvent(new MouseEvent('pointerdown',{bubbles:true})));
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+    act(()=>button('×4').click());
+    expect(dispatched(dispatch,'repeat-measures')).toEqual([]);
+    act(()=>button('Apply').click());
+    expect(dispatched(dispatch,'repeat-measures')).toEqual([
+      expect.objectContaining({trackIndex:0,start:0,end:1,count:4})
+    ]);
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('adds a measure from the visible Sync controls without selecting notes', () => {
+    const { dispatch } = render({ pageWorkspace: false });
+    const controls = host.querySelector('[data-testid="sync-measure-controls"]')!;
+    const add = [...controls.querySelectorAll('button')].find(b => b.textContent === 'Add measure after')!;
+    act(() => add.click());
+    expect(dispatched(dispatch, 'insert-measure')[0]).toMatchObject({ index: 3, trackIndex: 0 });
+  });
+
+  it('exposes a resize grip on the selected Sync measure without clearing selection', () => {
+    const resize = vi.fn();
+    render({pageWorkspace:false,onResizeMeasures:resize});
+    key('ArrowRight');
+    const grip=host.querySelector<HTMLButtonElement>('[aria-label="Drag to resize selected measures"]')!;
+    expect(grip).not.toBeNull();
+    grip.hasPointerCapture=()=>true;
+    for(const type of ['pointerdown','pointermove','pointerup']) {
+      const event=new MouseEvent(type,{bubbles:true,clientX:300,button:0});
+      Object.defineProperty(event,'pointerId',{value:1});
+      act(()=>grip.dispatchEvent(event));
+    }
+    expect(resize).toHaveBeenCalledWith(0,0,3,'move');
+    expect(resize).toHaveBeenCalledWith(0,0,3,'end');
+    expect(barButton('Copy').disabled).toBe(false);
+  });
+
+  it('floats over the selected bars with their number and tempo', () => {
     render();
     expect(toolbar()).toBeNull();
     key('ArrowRight'); // nothing selected → bar 1
     key('ArrowRight', { shiftKey: true });
     const info = toolbar()!.querySelector('.st-fbar-info')!.textContent!;
     expect(info).toContain('m.1–2');
-    expect(info).toContain('0:00.0');
+    expect(info).not.toContain('0:00.0');
     expect(info).toContain('≈120.0');
     expect(info).not.toContain('BPM');
   });
@@ -93,6 +156,13 @@ describe('IntegratedEditor measure bar', () => {
     render({ score: repScore, measureTimings: timingsFor(4) });
     key('ArrowRight'); // selects bar 1 (index 0), inside the repeat group's first pass
     expect(barButton('Repeat').textContent).toContain('×2');
+    const band=host.querySelector<HTMLButtonElement>('.st-rband')!;
+    act(()=>band.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true})));
+    act(()=>band.click());
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(toolbar()).not.toBeNull();
+    act(()=>barButton('Repeat').click());
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
   });
 
   it('can’t loop without a video, and loops the selected bars with one', () => {
@@ -189,21 +259,21 @@ describe('IntegratedEditor measure bar', () => {
     }
   });
 
-  it('keeps the whole bar inside the strip, using its measured width', () => {
+  it('keeps the Score palette at the top when selection or scrolling changes', () => {
     const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
       return this.classList.contains('st-fbar') ? 400 : 0;
     });
     try {
       render();
-      key('ArrowRight'); // bar 1 spans x 0–200, centre 100 → clamped to 400/2 + 8
-      expect(toolbar()!.getAttribute('style')).toContain('left: 208px');
       key('ArrowRight');
-      key('ArrowRight'); // bar 3 spans 400–600, centre 500 → clamped to 800 − 208
-      expect(toolbar()!.getAttribute('style')).toContain('left: 500px');
-      render({ scrollLeftPx: 100 }); // centre 400 now fits
-      expect(toolbar()!.getAttribute('style')).toContain('left: 400px');
-      render({ viewportWidth: 300, scrollLeftPx: 300 }); // narrower than the bar: pinned left
-      expect(toolbar()!.getAttribute('style')).toContain('left: 208px');
+      expect(toolbar()!.getAttribute('style')).toContain('left: 212px');
+      key('ArrowRight');
+      key('ArrowRight');
+      expect(toolbar()!.getAttribute('style')).toContain('left: 212px');
+      render({ scrollLeftPx: 100 });
+      expect(toolbar()!.getAttribute('style')).toContain('left: 212px');
+      render({ viewportWidth: 300, scrollLeftPx: 300 });
+      expect(toolbar()!.getAttribute('style')).toContain('left: 212px');
     } finally {
       spy.mockRestore();
     }
@@ -212,7 +282,7 @@ describe('IntegratedEditor measure bar', () => {
   it('before measuring, assumes a 600 px bar', () => {
     render();
     key('ArrowRight');
-    expect(toolbar()!.getAttribute('style')).toContain('left: 308px');
+    expect(toolbar()!.getAttribute('style')).toContain('left: 312px');
   });
 
   it('⏎ does nothing on the Piano-roll tab — note entry lives in the zoom, which only the staff tab shows', () => {
@@ -336,7 +406,7 @@ describe('IntegratedEditor measure bar', () => {
     const { dispatch, onRequestZoom } = render({ score: makeScore(3, 1) });
     key('ArrowRight');
     key('Enter');
-    expect(onRequestZoom).toHaveBeenCalledTimes(1);
+    expect(onRequestZoom).not.toHaveBeenCalled();
     expect(dispatched(dispatch, 'add-note')).toEqual([]);
   });
 
@@ -374,19 +444,21 @@ describe('IntegratedEditor measure bar', () => {
     expect(toolbar()).toBeNull();
   });
 
-  it('floats the footer inside the staff wrapper, and changes the hint when bars are selected', () => {
+  it('keeps instructions out of the staff before and after selecting bars', () => {
     render();
     const wrap = host.querySelector('[data-testid="staff-wrap"]')!;
     const foot = host.querySelector('.st-strip-foot')!;
     expect(wrap.contains(foot)).toBe(true);
-    expect(foot.textContent).toContain('Drag across bars to select');
+    expect(foot.textContent).not.toContain('Drag across bars to select');
     key('ArrowRight');
-    expect(host.querySelector('.st-strip-foot')!.textContent).toContain('edit notes');
+    expect(host.querySelector('.st-strip-foot')!.textContent).not.toContain('edit notes');
   });
 
-  it('the footer “?” lists the strip shortcuts', () => {
+  it('the header “?” lists shortcuts without covering the staff', () => {
     render();
     const help = host.querySelector<HTMLButtonElement>('button[aria-label="Keyboard shortcuts"]')!;
+    expect(help.closest('.lmm-desk-tools')).not.toBeNull();
+    expect(host.querySelector('.st-strip-foot .st-help-btn')).toBeNull();
     act(() => { help.click(); });
     const dialog = host.querySelector('[role="dialog"][aria-label="Strip shortcuts"]')!;
     expect(dialog.textContent).toContain('Drag across bars');

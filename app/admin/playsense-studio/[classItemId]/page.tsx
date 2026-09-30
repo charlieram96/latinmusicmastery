@@ -80,6 +80,7 @@ export default async function PlaysenseStudioPage({ params }: PageProps) {
       <VideoSectionsWorkspace
         classItemId={classItemId}
         backHref={backHref}
+        studentHref={owningClass?.section?.course_id ? `/dashboard/course/${owningClass.section.course_id}/class/${owningClass.id}?itemId=${classItemId}` : undefined}
         title={classItem.title}
         videoUrl={classItem.video_url}
         videoDurationSeconds={classItem.video_duration_seconds}

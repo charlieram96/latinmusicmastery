@@ -7,8 +7,7 @@
 // What we extract:
 //   - score-partwise structure (the only layout we support; if we get
 //     score-timewise, we throw)
-//   - parts → tracks. Each part becomes one Track in our model. Only staff 1
-//     of each part is kept, with up to two voices per measure (<backup>
+//   - parts → tracks. Each part becomes one Track in our model. Each staff is retained as a grouped track, with up to two voices per staff and measure (<backup>
 //     starts the second voice; <forward> becomes a rest in its voice).
 //   - notes: pitch (step + octave + alter), rest, type (whole/half/etc.),
 //     dots (single and double), tuplets (bracketed or counted from
@@ -31,6 +30,7 @@ import JSZip from 'jszip';
 import type {
   Articulation,
   Chord,
+  Clef,
   Dynamic,
   GraceNote,
   Instrument,
@@ -173,18 +173,26 @@ export function parseMusicXmlString(
     const info =
       partInfo.get(id) ??
       { name: `Part ${idx + 1}`, instrument: 'staff' as const, instrumentGm: new Map<string, number>() };
-    const { measures, spans } = parsePartMeasures(part, initialTimeSignature, info.instrument, info.instrumentGm, ids);
-    allSpans.push(...spans);
-    tracks.push({
-      index: idx,
-      instrument: info.instrument,
-      displayName: info.name,
-      tuning: null,
-      stringMultiplicity: 1,
-      channel: null,
-      defaultView: 'staff',
-      measures,
+    const staffNumbers = new Set<number>([1]);
+    part.querySelectorAll('attributes > staves').forEach(el => {
+      for (let n = 1; n <= Number(el.textContent); n++) staffNumbers.add(n);
     });
+    part.querySelectorAll('note > staff').forEach(el => staffNumbers.add(Number(el.textContent)));
+    for (const staffNumber of [...staffNumbers].filter(n => Number.isInteger(n) && n > 0).sort((a,b) => a-b)) {
+      const { measures, spans } = parsePartMeasures(part, initialTimeSignature, info.instrument, info.instrumentGm, ids, String(staffNumber));
+      allSpans.push(...spans);
+      tracks.push({
+        index: tracks.length,
+        ...(staffNumbers.size > 1 ? { staffGroup: id, staffNumber } : {}),
+        instrument: info.instrument,
+        displayName: info.name,
+        tuning: null,
+        stringMultiplicity: 1,
+        channel: null,
+        defaultView: 'staff',
+        measures,
+      });
+    }
   });
 
   return {
@@ -194,6 +202,7 @@ export function parseMusicXmlString(
       titleFromXml ||
       movementTitle ||
       'Imported MusicXML',
+    composer: doc.querySelector('identification > creator[type="composer"]')?.textContent?.trim() || 'LMM',
     sourceFormat: 'musicxml',
     initialTempo,
     initialTimeSignature,
@@ -244,7 +253,8 @@ function parsePartMeasures(
   initialTimeSignature: [number, number],
   instrument: Instrument,
   instrumentGm: Map<string, number>,
-  ids: { token: string; next(): string }
+  ids: { token: string; next(): string },
+  targetStaff = '1'
 ): { measures: Measure[]; spans: Span[] } {
   const midiCtx: NoteMidiContext = { instrument, instrumentGm };
   let timeSignature: [number, number] = initialTimeSignature;
@@ -274,7 +284,7 @@ function parsePartMeasures(
     const keyFifths = readKeyFifths(m);
 
     // Events are bucketed by MusicXML <voice>, so <backup> needs no handling.
-    // Only staff 1 is kept (one instrument, one staff), and at most two voices.
+    // Keep this staff independently, with at most two voices.
     const byVoice = new Map<string, MusicalEvent[]>();
     const eventsFor = (id: string) => {
       let list = byVoice.get(id);
@@ -287,7 +297,7 @@ function parsePartMeasures(
     for (const el of Array.from(m.children) as Element[]) {
       if (el.tagName === 'direction') {
         const dirStaff = el.querySelector(':scope > staff')?.textContent?.trim();
-        if (dirStaff && dirStaff !== '1') continue;
+        if ((dirStaff ?? '1') !== targetStaff) continue;
         const voiceId = el.querySelector(':scope > voice')?.textContent?.trim() ?? '1';
         const p = pendingDir.get(voiceId) ?? {};
         const dyn = el.querySelector('direction-type > dynamics > *')?.tagName as Dynamic | undefined;
@@ -307,7 +317,7 @@ function parsePartMeasures(
       }
       if (el.tagName === 'forward') {
         const fwdStaff = el.querySelector(':scope > staff')?.textContent?.trim();
-        if (fwdStaff && fwdStaff !== '1') continue;
+        if ((fwdStaff ?? '1') !== targetStaff) continue;
         const voiceId = el.querySelector(':scope > voice')?.textContent?.trim() ?? lastVoice;
         const qn = Number(el.querySelector(':scope > duration')?.textContent ?? '0') / divisions;
         if (qn > 0) eventsFor(voiceId).push({ kind: 'rest', id: ids.next(), durationQN: qn } satisfies Rest);
@@ -316,7 +326,7 @@ function parsePartMeasures(
       if (el.tagName !== 'note') continue;
       const noteEl = el;
       const staff = noteEl.querySelector(':scope > staff')?.textContent?.trim();
-      if (staff && staff !== '1') continue;
+      if ((staff ?? '1') !== targetStaff) continue;
       const voiceId = noteEl.querySelector(':scope > voice')?.textContent?.trim() ?? '1';
       lastVoice = voiceId;
       if (noteEl.querySelector(':scope > grace')) {
@@ -442,6 +452,7 @@ function parsePartMeasures(
       : [{ number: 1, events: [] }];
     out.push({
       number: idx + 1,
+      clef: readStaffClef(m, targetStaff),
       timeSignature: m === measureEls[0] ? undefined : readTimeSignature(m) ?? undefined,
       tempoChange: tempoChange ?? undefined,
       keyFifths: keyFifths ?? undefined,
@@ -450,6 +461,17 @@ function parsePartMeasures(
   });
 
   return { measures: out, spans };
+}
+
+function readStaffClef(measure: Element, staff: string): Clef | undefined {
+  const clef = Array.from(measure.querySelectorAll(':scope > attributes > clef'))
+    .find(el => (el.getAttribute('number') ?? '1') === staff);
+  const sign = clef?.querySelector('sign')?.textContent;
+  const line = clef?.querySelector('line')?.textContent;
+  if (sign === 'G') return 'treble';
+  if (sign === 'F') return 'bass';
+  if (sign === 'C') return line === '4' ? 'tenor' : 'alto';
+  if (sign === 'percussion') return 'percussion';
 }
 
 function readTimeSignature(measure: Element | null): [number, number] | null {
@@ -581,6 +603,7 @@ function guessInstrument(
   if (perc?.isUnpitched) return inferPercInstrument(perc.gmNotes);
 
   if (Number.isFinite(program)) {
+    if (program >= 1 && program <= 8) return 'piano';
     if (program >= 24 && program <= 31) return 'guitar';
     if (program >= 32 && program <= 39) return 'bass';
   }

@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // EXERCISE Watch-part setup — shown when the lesson has no demo video yet.
 // Upload one here (same course-videos bucket the class-item editor uses), read
@@ -44,6 +46,7 @@ function readVideoDuration(file: File): Promise<number | null> {
 }
 
 export function WatchVideoSetup({ classItemId, classItemTitle, appBarExtra }: WatchVideoSetupProps) {
+  const st = useStudioText();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -98,23 +101,18 @@ export function WatchVideoSetup({ classItemId, classItemTitle, appBarExtra }: Wa
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Admin
-        </Link>
+          {st("Admin")}</Link>
         <span className="text-muted-foreground">/</span>
-        <h1 className="text-base font-semibold">PlaySense Studio — {classItemTitle}</h1>
+        <h1 className="text-base font-semibold">{st("PlaySense Studio — ")}{classItemTitle}</h1>
         {appBarExtra && <div className="ml-2">{appBarExtra}</div>}
       </header>
 
       <main className="mx-auto max-w-2xl px-6 py-10">
         <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
           <MonitorPlay className="h-5 w-5 text-muted-foreground" />
-          Add the demo video
-        </h2>
+          {st("Add the demo video")}</h2>
         <p className="mb-5 text-sm text-muted-foreground">
-          The Watch part is the instructor&apos;s demo. Upload the video here, then sync scored
-          sections to it — exactly like a video lesson. Students watch it before playing the
-          graded exercise.
-        </p>
+          {st("The Watch part is the instructor&apos;s demo. Upload the video here, then sync scored sections to it — exactly like a video lesson. Students watch it before playing the graded exercise.")}</p>
 
         <button
           type="button"
@@ -126,13 +124,13 @@ export function WatchVideoSetup({ classItemId, classItemTitle, appBarExtra }: Wa
             {uploading ? (
               <>
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                <span className="font-medium">Uploading video…</span>
+                <span className="font-medium">{st("Uploading video…")}</span>
               </>
             ) : (
               <>
                 <Upload className="h-6 w-6 text-muted-foreground" />
-                <span className="font-medium">Upload the demo video</span>
-                <span className="text-xs text-muted-foreground">MP4, WebM, or MOV (max 1GB)</span>
+                <span className="font-medium">{st("Upload the demo video")}</span>
+                <span className="text-xs text-muted-foreground">{st("MP4, WebM, or MOV (max 1GB)")}</span>
               </>
             )}
           </div>

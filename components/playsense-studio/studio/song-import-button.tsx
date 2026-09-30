@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -9,12 +11,13 @@ import { ScoreImportDialog } from './score-import-dialog';
 
 /** The same reviewed import flow as course scores, saved as an unpublished song. */
 export function SongImportButton() {
+  const st = useStudioText();
   const router = useRouter();
   const destinationRef = useRef<string | null>(null);
   return <ScoreImportDialog
     classItemId=""
     mode="fresh"
-    trigger={<Button variant="outline"><FileUp className="mr-2 h-4 w-4" />Import score</Button>}
+    trigger={<Button variant="outline"><FileUp className="mr-2 h-4 w-4" />{st("Import score")}</Button>}
     onConfirm={async scoreDocument => {
       const result = await createSongFromImport({ scoreDocument });
       if (result.error) return { error: result.error };

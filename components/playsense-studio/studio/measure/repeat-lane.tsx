@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // The repeat lane: a 20 px band row over the strip, one band per pass. Pass 1
 // says "Repeat ×N · K bars"; later passes are hatched "pass P of N". Clicking a
@@ -46,6 +48,7 @@ export function bandLabel(b: RepeatBand): string {
 }
 
 export function RepeatLane({ bands, onBandClick }: { bands: RepeatBand[]; onBandClick: (b: RepeatBand, anchor: PopoverAnchor) => void }) {
+  const st = useStudioText();
   return (
     <div className="st-replane" style={{ height: REP_H }}>
       {bands.map((b) => (
@@ -54,7 +57,7 @@ export function RepeatLane({ bands, onBandClick }: { bands: RepeatBand[]; onBand
           type="button"
           className={`st-rband${b.pass > 0 ? ' is-copy' : ''}`}
           style={{ left: b.left, width: Math.max(4, b.right - b.left) }}
-          title={b.pass === 0 ? `These ${b.length} bar${b.length === 1 ? '' : 's'} play ${b.count} times` : `Pass ${b.pass + 1} of ${b.count}`}
+          title={st(b.pass === 0 ? `These ${b.length} bar${b.length === 1 ? '' : 's'} play ${b.count} times` : `Pass ${b.pass + 1} of ${b.count}`)}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); onBandClick(b, { left: b.left + 8, top: REP_H + 4 }); }}
         >

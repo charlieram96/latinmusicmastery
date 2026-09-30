@@ -135,6 +135,15 @@ describe('paste-measures', () => {
 });
 
 describe('append-score', () => {
+  it('refuses to turn pitched harmony into the destination percussion notation', () => {
+    const target = three();
+    target.tracks[0].instrument = 'perc-timbal';
+    const harmony = three();
+    harmony.tracks[0].instrument = 'piano';
+    const before = JSON.stringify(target);
+    expect(applyMeasureEdit(target, { type: 'append-score', score: harmony })).toMatchObject({ ok: false, problem: expect.stringContaining('Replace score') });
+    expect(JSON.stringify(target)).toBe(before);
+  });
   const imported = (): ScoreDocument => ({
     ...score([bar(1, 80, { tempoChange: 140 }), bar(2, 81, { tempoChange: 150 }), bar(3, 82)]),
     initialTempo: 100, initialTimeSignature: [3, 4], initialKeyFifths: -1,

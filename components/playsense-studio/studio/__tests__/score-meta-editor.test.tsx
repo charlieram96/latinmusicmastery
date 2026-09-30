@@ -142,3 +142,35 @@ describe('track fields (moved from the editor row)', () => {
     expect(host.querySelector('select[aria-label="Instrument"]')).toBeNull()
   })
 })
+
+describe('compact meter and published author', () => {
+  it('starts compact and applies an irregular meter to the entire score', () => {
+    render(120)
+    const toggle = host.querySelector<HTMLButtonElement>('[aria-label="Time signature"]')!
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(host.textContent).not.toContain('7/8')
+    act(() => toggle.click())
+    const seven = Array.from(host.querySelectorAll('button')).find(b => b.textContent === '7/8')!
+    act(() => seven.click())
+    expect(dispatch).toHaveBeenCalledWith({type:'set-score-meta',initialTimeSignature:[7,8],applyTimeSignatureToAll:true})
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  })
+  it('validates custom meters before applying them', () => {
+    render(120)
+    act(() => host.querySelector<HTMLButtonElement>('[aria-label="Time signature"]')!.click())
+    const input = host.querySelector<HTMLInputElement>('[aria-label="Beats per measure"]')!
+    const apply = Array.from(host.querySelectorAll('button')).find(b => b.textContent === 'Apply')!
+    type(input, '0')
+    expect(apply.disabled).toBe(true)
+    type(input, '17')
+    act(() => apply.click())
+    expect(dispatch).toHaveBeenCalledWith({type:'set-score-meta',initialTimeSignature:[17,4],applyTimeSignatureToAll:true})
+  })
+  it('defaults the composer to LMM and allows an admin edit', () => {
+    render(120)
+    const input=host.querySelector<HTMLInputElement>('[aria-label="Composer"]')!
+    expect(input.value).toBe('LMM')
+    type(input,'New composer')
+    expect(dispatch).toHaveBeenCalledWith({type:'set-score-meta',composer:'New composer'})
+  })
+})

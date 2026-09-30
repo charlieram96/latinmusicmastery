@@ -10,6 +10,9 @@
 // Transport state (play/seek/rate/loop) is delegated to the shared
 // useVideoTransportClock so behavior matches the PlaySense Studio player.
 
+import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
+import {useVideoClickTrack} from '@/components/playsense-studio/player/state/use-video-click-track';
+import {lessonMetronomeGrid,type LessonMetronome} from '@/lib/playsense-studio/lesson-metronome';
 import {
   useCallback,
   useEffect,
@@ -40,6 +43,7 @@ import type { SubtitleLang, SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt'
 
 interface LessonVideoPlayerProps {
   src: string
+  metronome?: LessonMetronome
   poster?: string
   className?: string
   subtitles?: SubtitleTrackDef[]
@@ -69,6 +73,7 @@ function fmt(seconds: number): string {
 
 export function LessonVideoPlayer({
   src,
+  metronome,
   poster,
   className,
   subtitles,
@@ -80,6 +85,8 @@ export function LessonVideoPlayer({
   const containerRef = useRef<HTMLDivElement | null>(null)
   const { t } = useTranslation()
   const clock = useVideoTransportClock(videoRef)
+  const [clickOn,setClickOn]=useState(true)
+  useVideoClickTrack({videoRef,grid:lessonMetronomeGrid(metronome??{bpm:120,anchorSeconds:null},clock.durationSeconds),enabled:clickOn&&metronome?.anchorSeconds!=null,volume:.2})
   const tracks = subtitles ?? []
   const { activeLang, setActiveLang } = useSubtitleTracks(videoRef, tracks, defaultSubtitleLang)
 
@@ -269,6 +276,8 @@ export function LessonVideoPlayer({
   return (
     <div
       ref={containerRef}
+      data-lesson-video
+      data-fullscreen={isFullscreen}
       tabIndex={0}
       onKeyDown={onKeyDown}
       onPointerMove={bumpControls}
@@ -282,7 +291,8 @@ export function LessonVideoPlayer({
         className
       )}
     >
-      <video
+      {metronome?.anchorSeconds!=null&&<button type="button" aria-pressed={clickOn} onClick={()=>setClickOn(!clickOn)} className="absolute right-3 top-3 z-20 rounded-lg bg-black/70 px-3 py-2 text-sm text-white">♩ {metronome.bpm} BPM {clickOn?'✓':''}</button>}
+      <video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()}
         ref={videoRef}
         src={src}
         poster={poster}
@@ -295,7 +305,7 @@ export function LessonVideoPlayer({
         {tracks.map((t) => (
           <track key={t.src} kind="subtitles" src={t.src} srcLang={t.lang} label={t.label} />
         ))}
-      </video>
+      </video><VideoWatermark />
 
       {/* First-play overlay (also handles the mobile user-gesture requirement) */}
       {!hasPlayed && (
@@ -379,6 +389,10 @@ export function LessonVideoPlayer({
             label={clock.isPlaying ? t('dashboard.classViewer.video.pause') : t('dashboard.classViewer.video.play')}
           >
             {clock.isPlaying ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="h-5 w-5" fill="currentColor" />}
+          </ControlButton>
+
+          <ControlButton onClick={toggleFullscreen} label={isFullscreen ? t('dashboard.classViewer.video.exitFullscreen') : t('dashboard.classViewer.video.fullscreen')}>
+            {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
           </ControlButton>
 
           {/* Volume */}
@@ -506,9 +520,7 @@ export function LessonVideoPlayer({
             </div>
           )}
 
-          <ControlButton onClick={toggleFullscreen} label={isFullscreen ? t('dashboard.classViewer.video.exitFullscreen') : t('dashboard.classViewer.video.fullscreen')}>
-            {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-          </ControlButton>
+
         </div>
       </div>
     </div>

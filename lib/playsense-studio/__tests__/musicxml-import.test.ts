@@ -226,3 +226,12 @@ describe('MusicXML import — event id uniqueness across imports', () => {
     expect(ids1.some(id => ids2.includes(id))).toBe(false)
   })
 })
+
+describe('published score metadata', () => {
+  it('imports the composer and uses LMM when one was not provided', () => {
+    const xml=doc(`<measure number="1">${attrs(1)}</measure>`)
+    expect(parseMusicXmlString(xml).composer).toBe('LMM')
+    const withAuthor=xml.replace('<part-list>', '<identification><creator type="composer">Mauricio Upmann</creator></identification><part-list>')
+    expect(parseMusicXmlString(withAuthor).composer).toBe('Mauricio Upmann')
+  })
+})

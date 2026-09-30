@@ -1,3 +1,4 @@
+import type { SymbolTarget, SymbolOffset } from './notation/symbol-layout';
 // PlaySense Studio — editor state + reducer.
 //
 // useReducer-based store with a history stack for undo/redo. Each action
@@ -7,6 +8,7 @@
 
 import { useCallback, useReducer } from 'react';
 import { repeatGroups } from './repeats';
+import { getPercStrokes, strokeNotation } from './perc-strokes';
 import { insertMidiMeasures } from './midi-recording';
 import { applyMeasureEdit, contextAt, emptyMeasure, type MeasureClip } from './measure-edits';
 import { stripCopyTags } from './measure-clipboard';
@@ -20,6 +22,7 @@ import type {
   Note,
   Ornament,
   PercussionNotation,
+  PercussionNotehead,
   Rest,
   ScoreDocument,
   Spelling,
@@ -59,7 +62,7 @@ export interface MeasurePropsPatch {
   tempo?: number;
   repeatStart?: boolean;
   repeatEnd?: boolean;
-  endBarline?: 'double' | null; // 'final' stays with set-measure-final-bar
+  endBarline?: 'single' | 'final' | 'double' | null;
   volta?: '1.' | '2.' | null;
 }
 
@@ -69,13 +72,19 @@ export interface EventRef { trackIndex: number; measureIndex: number; voice: 0 |
 export interface EntryAt { trackIndex: number; measureIndex: number; voice: 0 | 1; eventIndex: number | 'end' }
 
 export type EditorAction =
+  | {type:'set-noteheads'; refs:(EventRef & {member?:number})[]; notehead:PercussionNotehead|null}
+  | {type:'set-legend-stroke'; refs:(EventRef & {member?:number})[]; strokeId:string}
+  | { type: 'apply-palette-actions'; actions: EditorAction[] }
   | {
       type: 'set-score-meta';
       title?: string;
       composer?: string;
+      videoCoaching?: 'cascara-v1' | null;
       initialTempo?: number;
       initialTimeSignature?: [number, number];
+      applyTimeSignatureToAll?: boolean;
     }
+  | { type: 'set-playback-tempo'; bpm: number | null }
   | { type: 'set-track-name'; trackIndex: number; name: string }
   | { type: 'set-track-instrument'; trackIndex: number; instrument: Track['instrument'] }
   | { type: 'add-track' }
@@ -125,6 +134,7 @@ export type EditorAction =
       articulation: 'staccato' | 'accent' | 'tenuto' | null;
     }
   | { type: 'convert-event-kind'; trackIndex: number; measureIndex: number; eventIndex: number; to: 'note' | 'rest'; midi?: number }
+  | { type: 'edit-symbol'; target: SymbolTarget; offset?: SymbolOffset; remove?: boolean }
   | { type: 'delete-event'; trackIndex: number; measureIndex: number; eventIndex: number }
   // Voice-aware note entry (the measure zoom). The actions above stay for the
   // piano roll and the older controls.
@@ -144,6 +154,7 @@ export type EditorAction =
   | { type: 'set-events-accidental'; refs: EventRef[]; alter: -2 | -1 | 0 | 1 | 2; keyFifths: number }
   | { type: 'set-event-pitches'; ref: EventRef; midis: number[] }
   | { type: 'delete-events'; refs: EventRef[] }
+  | { type: 'delete-selected-pitches'; refs: Array<EventRef & { member: number }> }
   // Marks, tuplets and spans (the measure zoom's toolbar and More ▾ tabs).
   | { type: 'toggle-events-articulation'; refs: EventRef[]; articulation: Articulation }
   | { type: 'set-events-ornament'; refs: EventRef[]; ornament: Ornament | null }
@@ -261,7 +272,7 @@ function resolveRefs(score: ScoreDocument, refs: EventRef[]): ResolvedRef[] {
   return out;
 }
 
-type PitchedNote = Pick<Note, 'midi' | 'spelling' | 'spellingHint' | 'percussion'>;
+type PitchedNote = Pick<Note, 'midi' | 'spelling' | 'spellingHint' | 'percussion' | 'notehead'>;
 
 /** The notes that carry a pitch: the note itself, a chord's notes, none for a rest. */
 function pitchedNotes(e: MusicalEvent): PitchedNote[] {
@@ -301,7 +312,7 @@ function tidyChordAt(events: MusicalEvent[], index: number): void {
   const { kind: _kind, notes: _notes, ...base } = e;
   const only = notes[0];
   events[index] = {
-    ...pick(only, ['tieToNext', 'spellingHint', 'spelling', 'percussion', 'fingering'] as const),
+    ...pick(only, ['tieToNext', 'spellingHint', 'spelling', 'percussion', 'notehead', 'fingering'] as const),
     ...base,
     kind: 'note',
     midi: only.midi,
@@ -348,7 +359,7 @@ function readingPosition(r: ResolvedRef): [number, number] {
 
 /** Only the pitch content of an event: a note's pitch, a chord's notes, or a bare rest. */
 function pitchContent(e: MusicalEvent): Note | Chord | Rest {
-  const notePitch = (x: PitchedNote) => ({ midi: x.midi, ...pick(x, ['spelling', 'spellingHint', 'percussion'] as const) });
+  const notePitch = (x: PitchedNote) => ({ midi: x.midi, ...pick(x, ['spelling', 'spellingHint', 'percussion', 'notehead'] as const) });
   if (e.kind === 'note') return { kind: 'note', durationQN: e.durationQN, ...notePitch(e) };
   if (e.kind === 'chord') return { kind: 'chord', durationQN: e.durationQN, notes: e.notes.map(notePitch) };
   return { kind: 'rest', durationQN: e.durationQN };
@@ -369,6 +380,7 @@ function overwriteNote(old: MusicalEvent, midi: number, spelling?: Spelling, per
     durationQN: old.durationQN,
     ...(spelling ? { spelling } : {}),
     ...(percussion ? { percussion } : {}),
+    ...(old.kind === 'note' && old.notehead ? {notehead:old.notehead} : {}),
   };
 }
 
@@ -416,6 +428,30 @@ function pushHistory(state: EditorState, nextScore: ScoreDocument): EditorState 
 
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   switch (action.type) {
+    case 'edit-symbol': {
+      if (!action.remove && (!action.offset || !Number.isFinite(action.offset.x) || !Number.isFinite(action.offset.y))) return state;
+      const next = clone(state.score);
+      const { target } = action;
+      if (target.spanId) {
+        const span = next.spans?.find(s => s.id === target.spanId);
+        if (!span) return state;
+        if (action.remove) next.spans = next.spans!.filter(s => s.id !== target.spanId);
+        else span.offset = action.offset;
+      } else {
+        const event = next.tracks.flatMap(t => t.measures.flatMap(m => m.voices.flatMap(v => v.events))).find(e => e.id === target.eventId);
+        if (!event) return state;
+        const key = target.symbol;
+        if (action.remove) {
+          if (key.startsWith('articulation:')) {
+            event.articulations = eventArticulations(event).filter(a => a !== key.slice(13));
+            delete event.articulation;
+          } else if (key === 'dynamic' || key === 'text' || key === 'ornament' || key === 'grace') delete event[key];
+          else return state;
+          if (event.symbolOffsets) delete event.symbolOffsets[key];
+        } else event.symbolOffsets = {...event.symbolOffsets, [key]: action.offset!};
+      }
+      return withHistory(state, next);
+    }
     case 'undo': {
       if (state.past.length === 0) return state;
       const prev = state.past[state.past.length - 1];
@@ -456,15 +492,54 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         return { score: next, past: [...state.past, state.score].slice(-HISTORY_LIMIT), future: [], isDirty: true };
       } catch { return state; }
     }
+    case 'apply-palette-actions': {
+      let next = state;
+      for (const child of action.actions) {
+        if (child.type === 'apply-palette-actions') return state;
+        const applied = editorReducer(next, child);
+        // A refused edit cancels the entire palette operation.
+        if (applied === next) return state;
+        next = applied;
+      }
+      return next === state ? state : { ...next, past: [...state.past, state.score].slice(-HISTORY_LIMIT), future: [] };
+    }
+    case 'set-playback-tempo': {
+      if(action.bpm!==null && (!Number.isFinite(action.bpm)||action.bpm<=0))return state;
+      const next=clone(state.score);
+      if(action.bpm===null)delete next.playbackTempoOverride;
+      else next.playbackTempoOverride=action.bpm;
+      if(next.playbackTempoOverride===state.score.playbackTempoOverride)return state;
+      return withHistory(state,next);
+    }
     case 'set-score-meta': {
       const next = clone(state.score);
       if (action.title !== undefined) next.title = action.title;
       if (action.composer !== undefined) next.composer = action.composer;
+      if (action.videoCoaching !== undefined) next.videoCoaching = action.videoCoaching;
       if (action.initialTempo !== undefined && Number.isFinite(action.initialTempo)) {
         next.initialTempo = Math.min(400, Math.max(20, Math.round(action.initialTempo)));
+        // The opening mark and the score header describe the same tempo.
+        // Preserve later musical tempo changes when editing the base tempo.
+        next.tracks.forEach(track => {
+          const first=track.measures[0];
+          if(first?.tempoChange !== undefined) {
+            const opening=first.tempoChange;
+            let openingSection=true;
+            track.measures.forEach(m=>{
+              if(m.tempoChange!==undefined&&m.tempoChange!==opening)openingSection=false;
+              if(openingSection&&m.tempoChange===opening)m.tempoChange=next.initialTempo;
+            });
+          }
+        });
       }
       if (action.initialTimeSignature !== undefined) {
+        const [n,d]=action.initialTimeSignature;
+        if(!Number.isInteger(n)||n<1||!Number.isInteger(d)||d<1)return state;
         next.initialTimeSignature = action.initialTimeSignature;
+        for(const track of next.tracks) {
+          if(action.applyTimeSignatureToAll)track.measures.forEach(m=>{delete m.timeSignature;});
+          else if(track.measures[0]?.timeSignature) track.measures[0].timeSignature=action.initialTimeSignature;
+        }
       }
       return withHistory(state, next);
     }
@@ -814,14 +889,38 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'delete-event': {
       const next = clone(state.score);
       const measure = next.tracks[action.trackIndex]?.measures[action.measureIndex];
-      if (!measure) return state;
-      measure.voices[0].events.splice(action.eventIndex, 1);
-      // Leave the measure empty (a blank staff) rather than backfilling a rest —
-      // the author adds the next note straight into the free space.
+      const event = measure?.voices[0]?.events[action.eventIndex];
+      if (!event || event.kind === 'rest') return state;
+      measure!.voices[0].events[action.eventIndex] = { ...overwriteRest(event), id: newEventId() };
       const result = withHistory(state, next);
       // After withHistory, so a note removed from every pass of a repeat is caught too.
       if (result.score.spans) result.score.spans = pruneSpans(result.score);
       return result;
+    }
+    case 'set-legend-stroke': {
+      const next=clone(state.score);
+      for(const ref of action.refs) {
+        const track=next.tracks[ref.trackIndex];
+        const stroke=track && getPercStrokes(track.instrument)?.find(s=>s.id===action.strokeId);
+        if(!stroke)continue;
+        const event=track.measures[ref.measureIndex]?.voices[ref.voice]?.events[ref.eventIndex];
+        const notes=event?.kind==='note'?[event]:event?.kind==='chord'?(ref.member===undefined?event.notes:[event.notes[ref.member]].filter(Boolean)):[];
+        for(const note of notes) {
+          note.midi=stroke.midi;
+          note.percussion=strokeNotation(stroke);
+          delete note.notehead;
+        }
+      }
+      return JSON.stringify(next)===JSON.stringify(state.score)?state:withHistory(state,next);
+    }
+    case 'set-noteheads': {
+      const next = clone(state.score);
+      for (const ref of action.refs) {
+        const event = next.tracks[ref.trackIndex]?.measures[ref.measureIndex]?.voices[ref.voice]?.events[ref.eventIndex];
+        const notes = event?.kind === 'note' ? [event] : event?.kind === 'chord' ? (ref.member === undefined ? event.notes : [event.notes[ref.member]].filter(Boolean)) : [];
+        for(const note of notes) { if(action.notehead === null) delete note.notehead; else note.notehead=action.notehead; }
+      }
+      return JSON.stringify(next) === JSON.stringify(state.score) ? state : withHistory(state,next);
     }
     case 'write-event': {
       const { at } = action;
@@ -872,8 +971,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const byMidi = (a: { midi: number }, b: { midi: number }) => a.midi - b.midi;
       if (r.event.kind === 'note') {
         if (r.event.midi === action.midi) return state;
-        const { kind: _kind, midi: _midi, spelling: _sp, spellingHint: _hint, percussion: _perc, fingering: _fing, ...base } = r.event;
-        const first = pick(r.event, ['spellingHint', 'spelling', 'percussion', 'fingering'] as const);
+        const { kind: _kind, midi: _midi, spelling: _sp, spellingHint: _hint, percussion: _perc, notehead: _head, fingering: _fing, ...base } = r.event;
+        const first = pick(r.event, ['spellingHint', 'spelling', 'percussion', 'notehead', 'fingering'] as const);
         const chord: Chord = { ...base, kind: 'chord', notes: [{ midi: r.event.midi, ...first }, added].sort(byMidi) };
         r.events[r.eventIndex] = chord;
       } else {
@@ -981,16 +1080,36 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       tidyChordAt(r.events, r.eventIndex);
       return withHistory(state, next);
     }
+    case 'delete-selected-pitches': {
+      const next = clone(state.score);
+      const resolved = resolveRefs(next, action.refs);
+      let changed = false;
+      for (const r of resolved) {
+        if (r.event.kind === 'rest') continue;
+        const members = new Set(action.refs.filter(ref => refKey(ref) === refKey(r)).map(ref => ref.member));
+        if (r.event.kind === 'chord') {
+          const remaining = r.event.notes.filter((_, i) => !members.has(i));
+          if (remaining.length === r.event.notes.length) continue;
+          if (remaining.length) { r.event.notes = remaining; tidyChordAt(r.events, r.eventIndex); }
+          else r.events[r.eventIndex] = { ...overwriteRest(r.event), id: newEventId() };
+        } else {
+          if (!members.has(0)) continue;
+          r.events[r.eventIndex] = { ...overwriteRest(r.event), id: newEventId() };
+        }
+        changed = true;
+      }
+      if (!changed) return state;
+      const result = withHistory(state, next);
+      result.score.spans = pruneSpans(result.score);
+      return result;
+    }
     case 'delete-events': {
       const next = clone(state.score);
-      const refs = resolveRefs(next, action.refs);
+      const refs = resolveRefs(next, action.refs).filter(r => r.event.kind !== 'rest');
       if (!refs.length) return state;
-      // Highest index first so earlier indices in the same voice stay valid.
-      for (const r of [...refs].sort((a, b) => b.eventIndex - a.eventIndex)) r.events.splice(r.eventIndex, 1);
-      for (const r of refs) {
-        const m = next.tracks[r.trackIndex].measures[r.measureIndex];
-        if (r.voice === 1 && m.voices[1]?.events.length === 0) m.voices.splice(1, 1);
-      }
+      // Preserve every rhythmic slot, including voice 2 and tuplet membership.
+      // A fresh event id removes spans that belonged to the deleted note.
+      for (const r of refs) r.events[r.eventIndex] = { ...overwriteRest(r.event), id: newEventId() };
       const result = withHistory(state, next);
       // After withHistory, so an event removed from every pass of a repeat is caught too.
       const spans = pruneSpans(result.score);

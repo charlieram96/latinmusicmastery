@@ -71,10 +71,10 @@ describe('editor-state capacity guard', () => {
     expect(events(s1)[0].dotted).toBe(true);
   });
 
-  it('does not backfill a rest when the last note is deleted', () => {
+  it('preserves the rhythmic slot when the last note is deleted', () => {
     const s0 = stateOf(makeScore([{ kind: 'note', midi: 60, durationQN: 1 }]));
     const s1 = editorReducer(s0, { type: 'delete-event', trackIndex: 0, measureIndex: 0, eventIndex: 0 });
-    expect(events(s1)).toEqual([]);
+    expect(events(s1)).toMatchObject([{ kind: 'rest', durationQN: 1 }]);
   });
 });
 
@@ -314,4 +314,95 @@ describe('event-id integrity (Task 13)', () => {
     expect([0, 1, 2].map((i) => ids(s2, i)[0])).toEqual(['a', 'a~1', 'a~2']);
     expect(s2.score.tracks[0].measures.every((m) => m.repeat?.id === 'r' && m.repeat.count === 3)).toBe(true);
   });
+});
+
+
+describe('delete selected chord pitches', () => {
+  it('removes only the chosen member, preserves rhythm, and supports undo', () => {
+    const score = makeScore([{ kind: 'chord', durationQN: 2, notes: [{midi:72}, {midi:60}, {midi:67}] }, {kind:'note',midi:64,durationQN:2}]);
+    const state: EditorState = {score,past:[],future:[],isDirty:false};
+    const next = editorReducer(state, {type:'delete-selected-pitches',refs:[{trackIndex:0,measureIndex:0,voice:0,eventIndex:0,member:1}]});
+    expect(next.score.tracks[0].measures[0].voices[0].events[0]).toMatchObject({kind:'chord',durationQN:2,notes:[{midi:67},{midi:72}]});
+    expect(editorReducer(next,{type:'undo'}).score).toEqual(score);
+  });
+  it('replaces a single note or all selected chord members with an equal-duration rest', () => {
+    const score=makeScore([{kind:'chord',durationQN:1,notes:[{midi:60},{midi:64}]},{kind:'note',midi:67,durationQN:3}]);
+    const next=editorReducer({score,past:[],future:[],isDirty:false},{type:'delete-selected-pitches',refs:[
+      {trackIndex:0,measureIndex:0,voice:0,eventIndex:0,member:0},
+      {trackIndex:0,measureIndex:0,voice:0,eventIndex:0,member:1},
+      {trackIndex:0,measureIndex:0,voice:0,eventIndex:1,member:0},
+    ]});
+    expect(next.score.tracks[0].measures[0].voices[0].events).toMatchObject([{kind:'rest',durationQN:1},{kind:'rest',durationQN:3}]);
+  });
+});
+
+
+describe('deletion preserves musical time', () => {
+  it.each([
+    { durationQN: 1 },
+    { durationQN: 1.5, dots: 1 as const },
+    { durationQN: 1.75, dots: 2 as const },
+    { durationQN: 1 / 3, tuplet: { id: 'trip', n: 3, m: 2 } },
+  ])('preserves rhythm %j, following notes, repeat deletion and undo', (rhythm) => {
+    const s0 = stateOf(makeScore([{kind:'note', midi:60, ...rhythm}, {kind:'note', midi:64, durationQN:1}]));
+    const action = {type:'delete-event' as const, trackIndex:0, measureIndex:0, eventIndex:0};
+    const s1 = editorReducer(s0, action);
+    expect(events(s1)[0]).toMatchObject({kind:'rest', ...rhythm});
+    expect(events(s1)[1]).toMatchObject({kind:'note', midi:64, durationQN:1});
+    expect(editorReducer(s1, action)).toBe(s1);
+    expect(editorReducer(s1, {type:'delete-events', refs:[{trackIndex:0, measureIndex:0, voice:0, eventIndex:0}]})).toBe(s1);
+    expect(editorReducer(s1, {type:'undo'}).score).toEqual(s0.score);
+  });
+});
+
+it('reconciles the opening tempo with the score without deleting later tempo changes, and supports undo', () => {
+  const score=scoreWithTempoMarks();
+  score.tracks[0].measures[0].tempoChange=100;
+  const before=JSON.stringify(score);
+  const s0=stateOf(score);
+  const s1=editorReducer(s0,{type:'set-score-meta',initialTempo:120});
+  expect(s1.score.initialTempo).toBe(120);
+  expect(s1.score.tracks[0].measures.map(m=>m.tempoChange)).toEqual([120,120,100]);
+  expect(JSON.stringify(score)).toBe(before);
+  expect(editorReducer(s1,{type:'undo'}).score).toEqual(score);
+});
+
+it('stores a separate admin playback override and resets to the uploaded score without changing its tempo',()=>{
+ const score=makeScore([]);score.initialTempo=90;
+ const initial=stateOf(score);
+ const overridden=editorReducer(initial,{type:'set-playback-tempo',bpm:110});
+ expect(overridden.score.initialTempo).toBe(90);
+ expect(overridden.score.playbackTempoOverride).toBe(110);
+ const reset=editorReducer(overridden,{type:'set-playback-tempo',bpm:null});
+ expect(reset.score.initialTempo).toBe(90);
+ expect(reset.score.playbackTempoOverride).toBeUndefined();
+});
+
+describe('whole-score meter changes', () => {
+  it('replaces all meter overrides, preserves notes and uses the new capacity', () => {
+    const score=makeScore([{kind:'note',midi:60,durationQN:1}]);
+    score.tracks[0].measures[0].timeSignature=[4,4];
+    score.tracks[0].measures.push({number:2,timeSignature:[3,4],voices:[{number:1,events:[]}]});
+    const initial=stateOf(score);
+    let next=editorReducer(initial,{type:'set-score-meta',initialTimeSignature:[7,8],applyTimeSignatureToAll:true});
+    expect(next.score.initialTimeSignature).toEqual([7,8]);
+    expect(next.score.tracks[0].measures.every(m=>m.timeSignature===undefined)).toBe(true);
+    expect(events(next)).toEqual(events(initial));
+    next=editorReducer(next,{type:'add-note',trackIndex:0,measureIndex:0,midi:62,durationQN:2});
+    next=editorReducer(next,{type:'add-note',trackIndex:0,measureIndex:0,midi:64,durationQN:0.5});
+    expect(events(next)).toHaveLength(3);
+    expect(editorReducer(next,{type:'add-note',trackIndex:0,measureIndex:0,midi:65,durationQN:0.5})).toBe(next);
+    expect(initial.score.tracks[0].measures[1].timeSignature).toEqual([3,4]);
+  });
+});
+
+it('stores video effects in the score draft, preserves them through serialization, and supports undo', async () => {
+  const { parseScoreDocument } = await import('@/components/playsense-studio/shared/score-model/serialization');
+  const original = stateOf(makeScore([]));
+  const enabled = editorReducer(original, { type: 'set-score-meta', videoCoaching: 'cascara-v1' });
+  expect(original.score.videoCoaching).toBeUndefined();
+  expect(parseScoreDocument(enabled.score).videoCoaching).toBe('cascara-v1');
+  const disabled = editorReducer(enabled, { type: 'set-score-meta', videoCoaching: null });
+  expect(parseScoreDocument(disabled.score).videoCoaching).toBeNull();
+  expect(editorReducer(disabled, { type: 'undo' }).score.videoCoaching).toBe('cascara-v1');
 });

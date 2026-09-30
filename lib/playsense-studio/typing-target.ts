@@ -9,6 +9,6 @@ export function isTypingTarget(target: EventTarget | null): boolean {
     target instanceof HTMLTextAreaElement ||
     target instanceof HTMLSelectElement ||
     (target instanceof HTMLElement &&
-      (target.isContentEditable || !!target.closest('[role="dialog"], [role="listbox"]')))
+      (target.isContentEditable || !!target.closest('[role="dialog"], [role="listbox"], [role="menu"], [role="menuitem"]')))
   );
 }

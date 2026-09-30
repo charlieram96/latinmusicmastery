@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslation } from '@/components/language-provider';
+import { studioText } from '@/lib/playsense-studio/i18n/text';
+
 // PlaySense Studio transport bar — play/pause, scrub, time, speed, A/B loop.
 //
 // Loop UI: a tiny "set A" / "set B" / clear-loop / loop-toggle cluster sits
@@ -7,7 +10,7 @@
 // span, with vertical markers at A and B. When loop is enabled but the user
 // scrubs outside the range, the wrap kicks in on the next RAF tick.
 
-import { Captions, Pause, Play, Repeat, RotateCcw, Volume2, VolumeX, X } from 'lucide-react';
+import { Pause, Play, Repeat, RotateCcw, Volume2, VolumeX, X } from 'lucide-react';
 import {
   useRef,
   useState,
@@ -39,6 +42,9 @@ interface TransportBarProps {
   layout?: 'stacked' | 'row';
   /** Extra controls rendered in the row layout, just before the volume block. */
   extra?: ReactNode;
+  metronomeControls?: ReactNode;
+  trailingControls?: ReactNode;
+  fullscreenControl?: ReactNode;
 
   // A/B loop — endpoints are set by dragging on the staff. The transport
   // exposes the toggle + clear so the user can disarm/clear without
@@ -82,6 +88,7 @@ interface TransportBarProps {
 }
 
 export function TransportBar({
+  fullscreenControl,
   currentSeconds,
   durationSeconds,
   isPlaying,
@@ -92,6 +99,8 @@ export function TransportBar({
   onRateChange,
   layout = 'stacked',
   extra,
+  metronomeControls,
+  trailingControls,
   loopA,
   loopB,
   loopEnabled,
@@ -114,6 +123,8 @@ export function TransportBar({
   activeSubtitleLang = 'off',
   onSubtitleLangChange,
 }: TransportBarProps) {
+  const { locale } = useTranslation();
+  const st = (text: string) => studioText(text, locale);
   const [captionsOpen, setCaptionsOpen] = useState(false);
   const safeDuration = Math.max(durationSeconds, 0.001);
   const loopAPct = loopA !== null ? (loopA / safeDuration) * 100 : null;
@@ -250,12 +261,12 @@ export function TransportBar({
       <button
         onClick={onToggle}
         className="st-play-btn"
-        aria-label={isPlaying ? 'Pause' : 'Play'}
+        aria-label={st(isPlaying ? 'Pause' : 'Play')}
       >
         {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
       </button>
 
-      <button onClick={onRestart} className="st-iconbtn" aria-label="Restart">
+      <button onClick={onRestart} className="st-iconbtn" aria-label={st('Restart')}>
         <RotateCcw className="h-4 w-4" />
       </button>
 
@@ -286,17 +297,17 @@ export function TransportBar({
             }
             title={
               loopA === null || loopB === null
-                ? loopHint
+                ? st(loopHint)
                 : loopEnabled
-                  ? 'Loop on'
-                  : 'Loop off'
+                  ? st('Loop on')
+                  : st('Loop off')
             }
             aria-pressed={loopEnabled}
           >
             <Repeat className="h-4 w-4" />
           </button>
           {(loopA !== null || loopB !== null) && (
-            <button onClick={onClearLoop} className="st-iconbtn" title="Clear loop" aria-label="Clear loop">
+            <button onClick={onClearLoop} className="st-iconbtn" title={st('Clear loop')} aria-label={st('Clear loop')}>
               <X className="h-4 w-4" />
             </button>
           )}
@@ -317,11 +328,12 @@ export function TransportBar({
                     }
                   : undefined
               }
-              title="Subtitles"
-              aria-label="Subtitles"
+              title={st('Subtitles')}
+              aria-label={st('Subtitles')}
+              aria-expanded={captionsOpen}
               aria-pressed={activeSubtitleLang !== 'off'}
             >
-              <Captions className="h-4 w-4" />
+              <span aria-hidden="true" className="inline-flex h-5 w-7 items-center justify-center rounded border border-primary/50 bg-primary/15 text-[11px] font-extrabold tracking-tight text-primary">CC</span>
             </button>
             {captionsOpen && (
               <div
@@ -329,7 +341,7 @@ export function TransportBar({
                 onMouseLeave={() => setCaptionsOpen(false)}
               >
                 {[
-                  { value: 'off' as ActiveSubtitleLang, label: 'Off' },
+                  { value: 'off' as ActiveSubtitleLang, label: st('Off') },
                   ...subtitleOptions.map((t) => ({
                     value: t.lang as ActiveSubtitleLang,
                     label: t.label,
@@ -356,10 +368,25 @@ export function TransportBar({
         )}
 
         {extra}
+        <ChronometerControl
+          extra={metronomeControls}
+          baseBpm={bpm}
+          beatsPerMeasure={beatsPerMeasure}
+          playbackRate={playbackRate}
+          isPlaying={isPlaying}
+          onRateChange={onRateChange}
+          clickOn={clickOn}
+          onClickOnChange={onClickOnChange ?? (() => {})}
+          clickAligned={clickAligned}
+          clickVolume={clickVolume}
+          onClickVolumeChange={onClickVolumeChange ?? (() => {})}
+        />
+        {layout === 'row' && onClickVolumeChange && <input type="range" min="0" max="1" step="0.05" value={clickVolume} onChange={e=>onClickVolumeChange(Number(e.target.value))} aria-label={st('Metronome volume')} className="w-16 shrink-0 accent-primary" />}
 
         {/* Reference-video audio. Only rendered where something owns it. */}
         {onVideoMutedChange && (
           <div className="ml-auto flex items-center gap-1.5">
+            {fullscreenControl}
             <button
               type="button"
               onClick={() => onVideoMutedChange(!videoMuted)}
@@ -376,28 +403,15 @@ export function TransportBar({
               step={0.05}
               value={videoMuted ? 0 : videoVolume}
               onChange={(e) => onVideoVolumeChange?.(Number(e.target.value))}
-              className="hidden h-1 w-20 cursor-pointer accent-primary sm:block"
-              aria-label="Reference video volume"
+              className="h-1 w-20 cursor-pointer accent-primary"
+              aria-label={st('Reference video volume')}
               title={`Reference video — ${Math.round((videoMuted ? 0 : videoVolume) * 100)}%`}
             />
           </div>
         )}
 
-        <span
-          className={`st-divline hidden sm:block${onVideoMutedChange ? '' : ' ml-auto'}`}
-        />
-        <ChronometerControl
-          baseBpm={bpm}
-          beatsPerMeasure={beatsPerMeasure}
-          playbackRate={playbackRate}
-          isPlaying={isPlaying}
-          onRateChange={onRateChange}
-          clickOn={clickOn}
-          onClickOnChange={onClickOnChange ?? (() => {})}
-          clickAligned={clickAligned}
-          clickVolume={clickVolume}
-          onClickVolumeChange={onClickVolumeChange ?? (() => {})}
-        />
+        {trailingControls && <div className="ml-auto shrink-0">{trailingControls}</div>}
+
     </>
   );
 

@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // A card shown only while the score carries tempo marks that disagree with
 // the lesson tempo — imported ones or ones set in the Bar menu — asking the
@@ -10,6 +12,7 @@ import type { ScoreDocument } from '@/components/playsense-studio/shared/score-m
 import { unconfirmedTempoMarks } from '@/lib/playsense-studio/tempo-marks';
 
 export function TempoMarksNotice({ score, dispatch }: { score: ScoreDocument; dispatch: Dispatch<EditorAction> }) {
+  const st = useStudioText();
   const marks = unconfirmedTempoMarks(score);
   if (marks.length === 0) return null;
 
@@ -20,8 +23,7 @@ export function TempoMarksNotice({ score, dispatch }: { score: ScoreDocument; di
   return (
     <div className="st-icard">
       <span className="st-sec-label" style={{ color: 'hsl(var(--gold-highlight))' }}>
-        Tempo marks
-      </span>
+        {st("Tempo marks")}</span>
       <p className="text-xs text-muted-foreground">{message}</p>
       <div className="flex gap-2">
         <button
@@ -29,15 +31,13 @@ export function TempoMarksNotice({ score, dispatch }: { score: ScoreDocument; di
           className="st-chip"
           onClick={() => dispatch({ type: 'set-tempo-marks-confirmed', confirmed: true })}
         >
-          Keep them
-        </button>
+          {st("Keep them")}</button>
         <button
           type="button"
           className="st-chip"
           onClick={() => dispatch({ type: 'clear-tempo-marks', trackIndex: 0 })}
         >
-          Clear them
-        </button>
+          {st("Clear them")}</button>
       </div>
     </div>
   );

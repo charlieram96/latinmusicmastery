@@ -16,8 +16,7 @@ interface DashboardLayoutClientProps {
  * fixed header on top, and a scrolling main region. `main` is the scroll
  * container on purpose: lesson pages rely on `sticky top-0` inside it.
  *
- * Lessons are the exception: they take the whole screen with their own rail,
- * top bar and scroll container, so the dashboard chrome steps aside there.
+ * Lessons keep the global navigation and provide their own top bar and scroll container.
  */
 export function DashboardLayoutClient({ children, sidebar, header, mobileNav }: DashboardLayoutClientProps) {
   const lessonMode = isLessonModePath(usePathname())
@@ -25,7 +24,9 @@ export function DashboardLayoutClient({ children, sidebar, header, mobileNav }: 
   if (lessonMode) {
     return (
       <div data-dashboard-shell data-lesson-mode className="h-dvh w-full overflow-hidden bg-background">
-        {children}
+        <div data-dashboard-navigation>{sidebar}</div>
+        <div data-dashboard-frame className="h-full min-w-0 md:ml-16">{children}</div>
+        <div data-dashboard-navigation>{mobileNav}</div>
       </div>
     )
   }

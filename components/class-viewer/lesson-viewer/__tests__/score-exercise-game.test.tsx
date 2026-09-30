@@ -95,9 +95,9 @@ describe('ScoreExerciseGame workspace media (W4)', () => {
     expect(host.querySelector('video')?.getAttribute('aria-label')).toBe('dashboard.classViewer.exercise.referenceVideo')
   })
 
-  it('is muted, with no pitch preservation forced, when mediaAudible is unset (an exercise\'s play-along video)', () => {
+  it('keeps the published exercise video muted when mediaAudible is unset', () => {
     session = { ...baseSession(), exercise, sessionState: 'playing' }
-    render()
+    render({ preview: false })
     const el = host.querySelector('video') as HTMLVideoElement
     expect(el.muted).toBe(true)
     expect((el as unknown as { preservesPitch?: boolean }).preservesPitch).toBeUndefined()
@@ -178,14 +178,67 @@ describe('ScoreExerciseGame translations (L10)', () => {
 })
 
 describe('ScoreExerciseGame score shape without a video', () => {
-  const score = { tracks: [] } as never
+  const score = { tracks: [], initialTempo: 90, initialTimeSignature: [4, 4] } as never
   const stored = (layout: string) => localStorage.setItem('lmm-workspace:play:stacked', JSON.stringify({ v: 1, layout }))
+
+  it('toggles independent screens without remounting media and keeps one visible', () => {
+    session = { ...baseSession(), exercise, sessionState: 'playing' }
+    render({ score })
+    const group = host.querySelector('[aria-label="Visible screens"]')!
+    const buttons = [...group.querySelectorAll('button')]
+    const button = (label: string) => buttons.find(el => el.textContent?.includes(label))!
+    const video = host.querySelector('video')
+    const workspace = host.querySelector('.ws')!
+    act(() => button('Score').click())
+    expect(workspace.getAttribute('data-score-visible')).toBe('false')
+    act(() => button('PlaySense').click())
+    expect(workspace.getAttribute('data-highway-visible')).toBe('false')
+    expect(button('Video').disabled).toBe(true)
+    expect(host.querySelector('video')).toBe(video)
+    act(() => button('Score').click())
+    act(() => button('Video').click())
+    expect(workspace.getAttribute('data-video-visible')).toBe('false')
+    expect(button('Score').disabled).toBe(true)
+    act(() => button('PlaySense').click())
+    act(() => button('Score').click())
+    expect(button('PlaySense').disabled).toBe(true)
+    expect(host.querySelector('video')).toBe(video)
+  })
+
+  it('replaces a saved floating video layout with bounded adjoining panels', () => {
+    stored('pip')
+    session = { ...baseSession(), exercise, sessionState: 'playing' }
+    render({ score })
+    const workspace = host.querySelector('.ws')!
+    expect(workspace.getAttribute('data-layout')).toBe('side')
+    expect(host.querySelector('[data-layout-option][aria-label="lessonWorkspace.pip"]')).toBeNull()
+    expect(workspace.getAttribute('data-three-panes')).toBe('true')
+    expect(workspace.querySelector('.ws-div2')?.getAttribute('aria-valuenow')).toBe('50')
+    const divider = workspace.querySelector('.ws-div')!
+    act(() => divider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })))
+    expect(Number(divider.getAttribute('aria-valuenow'))).toBe(48)
+    for (let i = 0; i < 30; i++) act(() => divider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })))
+    expect(Number(divider.getAttribute('aria-valuenow'))).toBe(78)
+  })
 
   it('with a video, the score follows the student’s workspace layout', () => {
     stored('stack')
     session = { ...baseSession(), exercise, sessionState: 'playing' }
     render({ score })
     expect(host.querySelector('[data-score]')?.getAttribute('data-position')).toBe('top')
+  })
+
+  it('puts the video and PlaySense divider vertically beneath a full-width score', () => {
+    stored('stack')
+    session = { ...baseSession(), exercise, sessionState: 'playing' }
+    render({ score })
+    const divider = host.querySelector('.ws-div2')!
+    expect(divider.getAttribute('aria-orientation')).toBe('vertical')
+    expect(divider.getAttribute('aria-valuenow')).toBe('50')
+    act(() => divider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })))
+    expect(divider.getAttribute('aria-valuenow')).toBe('52')
+    act(() => divider.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })))
+    expect(divider.getAttribute('aria-valuenow')).toBe('50')
   })
 
   it('without a video, the score keeps the music-only shape whatever layout is stored', () => {
@@ -485,13 +538,64 @@ describe('ScoreExerciseGame audible jam track on Safari/iOS (final fix 1)', () =
   })
 })
 
-describe('ScoreExerciseGame preview footer (final fix 6)', () => {
-  it('reads "Demo · jam track" for a jam, "Demo · muted video" otherwise', () => {
-    session = { ...baseSession(), exercise, sessionState: 'playing' }
-    render({ mediaAudible: true })
-    expect(host.textContent).toContain('Demo · jam track')
-    expect(host.textContent).not.toContain('muted video')
+describe('Student preview playback', () => {
+  const click = (el: Element) => act(() => { el.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+  it('keeps tempo controls on the shared exercise clock and shows BPM above the score', () => {
+    const selectExercise = vi.fn()
+    session = { ...baseSession(), exercise, selectExercise }
+    render({ score: { tracks: [], initialTempo: 90, initialTimeSignature: [4, 4] } as never })
+    expect(host.textContent).toContain('Exercise preview')
+    const trigger = host.querySelector('button[aria-label="Metronome"]')!
+    expect(trigger.textContent).toBe('')
+    click(host.querySelector('button[aria-label="Faster"]')!)
+    expect(sessionOptions.playbackRate).toBe(1.05)
+    expect(selectExercise.mock.lastCall?.[0].bpm).toBe(94.5)
+    expect(host.querySelector('[data-score-heading]')?.lastElementChild?.textContent).toContain('94.5 BPM')
+    expect(host.querySelector('input[aria-label="Metronome volume"]')).not.toBeNull()
+  })
+
+  it('uses output-only playback and exposes Play, Pause, Stop and metronome controls', () => {
+    const start=vi.fn(), pause=vi.fn(), resume=vi.fn(), stop=vi.fn(), clickTrack=vi.fn()
+    session = { ...baseSession(), exercise, startExercise:start, pauseExercise:pause, resumeExercise:resume, retry:stop, setAudioMetronome:clickTrack }
     render()
-    expect(host.textContent).toContain('Demo · muted video')
+    expect(sessionOptions.playbackOnly).toBe(true)
+    const button=(text:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.includes(text))!
+    click(button('▶ Play')); expect(start).toHaveBeenCalledOnce()
+    session={...session,sessionState:'playing'}; render()
+    click(button('Ⅱ Pause')); expect(pause).toHaveBeenCalledOnce()
+    session={...session,sessionState:'paused'}; render()
+    click(button('▶ Play')); expect(resume).toHaveBeenCalledOnce()
+    click(button('■ Stop')); expect(stop).toHaveBeenCalledOnce()
+    click(button('On')); expect(clickTrack).toHaveBeenCalledWith(false)
+    expect(actions.saveAttempt).not.toHaveBeenCalled()
+  })
+  it('mutes and enables all MP3 tracks together', () => {
+    render({backingTracks:['a','b'].map(id=>({id,label:id,audioUrl:`https://a.test/${id}.mp3`,timelineStartSeconds:0,trimInSeconds:0,trimOutSeconds:null,gain:1})) as never})
+    const button=(label:string)=>[...host.querySelectorAll('button')].find(b=>b.textContent===label)!
+    click(button('Mute all MP3s'))
+    expect((sessionOptions.backingMix as Record<string,{muted:boolean}>).a.muted).toBe(true)
+    expect((sessionOptions.backingMix as Record<string,{muted:boolean}>).b.muted).toBe(true)
+    click(button('Enable all MP3s'))
+    expect((sessionOptions.backingMix as Record<string,{muted:boolean}>).a.muted).toBe(false)
+    expect((sessionOptions.backingMix as Record<string,{muted:boolean}>).b.muted).toBe(false)
+  })
+  it('lets preview tracks be muted and unmuted in the live mix', () => {
+    session = { ...baseSession(), exercise, sessionState:'playing' }
+    const track = { id:'preview-bass',label:'Bass',audioUrl:'https://a.test/bass.mp3',timelineStartSeconds:0,trimInSeconds:0,trimOutSeconds:null,gain:1 }
+    render({backingTracks:[track] as never})
+    click(host.querySelector('[aria-label="dashboard.classViewer.exercise.muteTrack(Bass)"]')!)
+    expect((sessionOptions.backingMix as Record<string,{muted:boolean}>)['preview-bass'].muted).toBe(true)
+    click(host.querySelector('[aria-label="dashboard.classViewer.exercise.unmuteTrack(Bass)"]')!)
+    expect((sessionOptions.backingMix as Record<string,{muted:boolean}>)['preview-bass'].muted).toBe(false)
+  })
+  it('starts with audible instructor video and lets the viewer mute and unmute it', () => {
+    session = { ...baseSession(), exercise, sessionState:'selecting' }
+    render()
+    const video=host.querySelector('video')!
+    expect(video.muted).toBe(false)
+    const toggle=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Video audio')!
+    click(toggle); expect(video.muted).toBe(true)
+    click(toggle); expect(video.muted).toBe(false)
+    expect(host.textContent).toContain('Preview · results are not saved')
   })
 })

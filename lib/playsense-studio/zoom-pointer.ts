@@ -3,8 +3,9 @@
 // diatonic steps, and a percussion drag snapped to the nearest stroke line
 // (moved here unchanged from the measure strip's old pitch drag).
 
-import type { PercStroke } from './perc-strokes';
-import { stepPitch, type Pitch } from './pitch';
+import type { PercussionNotation } from '@/components/playsense-studio/shared/score-model/types';
+import {strokeNotation, type PercStroke} from './perc-strokes';
+import { fromStaffIndex, stepPitch, type Pitch } from './pitch';
 import type { NotationClef } from './score-to-vexflow';
 
 /** The staff index (octave*7 + step, C4 = 28) of each clef's top line. */
@@ -67,4 +68,29 @@ export function snapStroke(percStrokes: PercStroke[], originalMidi: number, delt
     }
   }
   return best.midi;
+}
+
+/** Pencil entry snaps to the instrument's actual staff positions, not MIDI pitch. */
+export function strokeAtLine(strokes: PercStroke[], line: number, context: {midi:number;percussion?:PercussionNotation}[] = []): PercStroke | undefined {
+  const target = indexForLine(line, 'percussion');
+  const distance = Math.min(...strokes.map(s=>Math.abs(keyToDiatonic(s.staffLine)-target)));
+  const candidates = strokes.filter(s=>Math.abs(keyToDiatonic(s.staffLine)-target)===distance);
+  for (const note of [...context].reverse()) {
+    const match = candidates.find(s=>note.percussion
+      ? s.staffLine===note.percussion.staffLine && (s.notehead??s.noteType??'normal')===note.percussion.notehead
+      : s.midi===note.midi);
+    if(match) return match;
+  }
+  return candidates.find(s=>s.defaultForEntry) ?? candidates[0];
+}
+
+/** The legend supplies defaults, never a constraint on the written staff position. */
+export function percussionEntryAtLine(strokes:PercStroke[],line:number,context:{midi:number;percussion?:PercussionNotation}[]=[]):{midi:number;percussion:PercussionNotation} {
+  const {step,octave}=fromStaffIndex(indexForLine(line,'percussion'));
+  const staffLine=`${step.toLowerCase()}/${octave}`;
+  const stroke=strokeAtLine(strokes,line,context);
+  if(stroke?.staffLine===staffLine) return {midi:stroke.midi,percussion:strokeNotation(stroke)};
+  const previous=[...context].reverse().find(n=>n.percussion?.staffLine===staffLine);
+  if(previous?.percussion)return {midi:previous.midi,percussion:{...previous.percussion}};
+  return {midi:stroke?.midi??60,percussion:{staffLine,notehead:'normal'}};
 }

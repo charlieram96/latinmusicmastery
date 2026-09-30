@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — the splitter between the waveform and the measure strip.
 // Drag to trade height between them; double-click resets.
@@ -14,6 +16,7 @@ export function clampWaveHeight(h: number): number {
 }
 
 export function StageSplitter({ height, onChange }: { height: number; onChange: (h: number) => void }) {
+  const st = useStudioText();
   const drag = useRef<{ y: number; h: number } | null>(null);
   return (
     <div
@@ -23,7 +26,7 @@ export function StageSplitter({ height, onChange }: { height: number; onChange: 
       aria-valuemin={WAVE_MIN}
       aria-valuemax={WAVE_MAX}
       aria-valuenow={height}
-      title="Drag to resize · double-click to reset"
+      title={st("Drag to resize · double-click to reset")}
       onPointerDown={(e) => {
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
         drag.current = { y: e.clientY, h: height };

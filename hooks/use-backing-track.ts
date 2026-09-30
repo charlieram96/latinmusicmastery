@@ -32,6 +32,7 @@ export interface PlacedBackingTrack {
 }
 
 interface UseBackingTrackOptions {
+  playbackRate?: number
   /** Placed tracks. Preferred over audioUrls. */
   tracks?: PlacedBackingTrack[]
   /** @deprecated Legacy URL list; treated as unplaced, untrimmed tracks at t0. */
@@ -69,6 +70,7 @@ export function useBackingTrack({
   mix,
   loopDurationSeconds,
   loopCount = 1,
+  playbackRate = 1,
 }: UseBackingTrackOptions): UseBackingTrackResult {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
@@ -197,16 +199,16 @@ export function useBackingTrack({
         // A clip placed before t0 (or scheduled in the past because we started
         // late) begins part-way in rather than being dropped.
         if (when < audioContext.currentTime) {
-          offset += audioContext.currentTime - when
+          offset += (audioContext.currentTime - when) * playbackRate
           when = audioContext.currentTime
         }
         if (offset >= out) continue
 
         const source = audioContext.createBufferSource()
         source.buffer = buffer
+        if (source.playbackRate) source.playbackRate.value = playbackRate
         source.connect(trackGain)
-        // Rate is always 1 in the student engine, so the duration argument is
-        // unambiguous here (unlike the studio mixer, which varies rate).
+        // Duration is measured in source-buffer seconds, even at another rate.
         source.start(when, offset, out - offset)
         source.onended = () => {
           sourceNodesRef.current = sourceNodesRef.current.filter((s) => s !== source)
@@ -215,7 +217,7 @@ export function useBackingTrack({
       }
     }
     sourceNodesRef.current = sources
-  }, [audioMode])
+  }, [audioMode, playbackRate])
 
   const stopPlayback = useCallback(() => {
     stopAllSources()

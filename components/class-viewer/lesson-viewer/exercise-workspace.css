@@ -1,6 +1,8 @@
 /* The exercise score and the stage inside the lesson workspace (SplitWorkspace).
    The workspace's music region already draws the card, so the score sheds its own. */
 .ws-staff > .ps-exercise-score,
+.ws-staff > .ps-exercise-score-panel > .ps-exercise-score,
+.ps-exercise-mode[data-exercise-immersive=true] .ws-staff > .ps-exercise-score-panel > .ps-exercise-score,
 .ps-exercise-mode[data-exercise-immersive=true] .ws-staff > .ps-exercise-score {
   display:flex; flex-direction:column; flex:1 1 auto; height:auto; min-height:0; margin:0;
   border:0; border-radius:0; background:transparent; box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none;
@@ -15,3 +17,8 @@
 
 /* The exercise's "Score" toggle hides the staff: the highway takes the music region. */
 .ps-exercise-mode[data-score-visible=false] .ws-music:has(> .ws-highway) > :is(.ws-staff, .ws-div2) { display:none; }
+
+/* The title is a sibling of the notation; give the notation the remaining height,
+   including when its size containment prevents intrinsic height measurement. */
+.ps-exercise-score-panel > .ps-exercise-score { display:flex; flex-direction:column; flex:1 1 0; min-height:0; }
+.ps-exercise-score-panel .ps-score-sheet { flex:1 1 0; min-height:0; overflow:hidden; }

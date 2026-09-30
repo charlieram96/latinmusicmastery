@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // In-studio rhythm-highway PREVIEW. Shows the author the exact falling-notes view
 // the student gets — the SAME <GlassHighway> component — derived from the score
@@ -7,7 +9,7 @@
 // prompt. The exercise re-derives from the live score while PAUSED so edits show;
 // it's frozen during playback so a stray edit can't re-init the running highway.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
 import { StageHighway as GlassHighway } from '@/components/play-sense/stage-highway/StageHighway';
 import { scoreToExerciseDefinition } from '@/lib/play-sense/score-to-exercise';
@@ -30,6 +32,13 @@ export function HighwayPreview({
   difficulty,
   trackIndex,
 }: HighwayPreviewProps) {
+  const st = useStudioText();
+  const [visible, setVisible] = useState(true);
+  const previewId = useId();
+  useEffect(() => {
+    try { setVisible(localStorage.getItem('lmm-highway-preview-visible') !== 'false'); } catch { /* Storage can be unavailable. */ }
+  }, []);
+
   // Live derivation — reflects note edits whenever we're not mid-playback.
   const liveExercise = useMemo(
     () =>
@@ -89,20 +98,26 @@ export function HighwayPreview({
     <div className="space-y-2">
       <div className="flex items-center gap-3">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Highway preview
-        </h2>
+          {st("Highway preview")}</h2>
         <span className="text-xs text-muted-foreground">
-          {exercise.bpm} BPM · {exercise.timeSignature[0]}/{exercise.timeSignature[1]} · fixed-tempo
-        </span>
+          {exercise.bpm} {st("BPM · ")}{exercise.timeSignature[0]}/{exercise.timeSignature[1]} {st("· fixed-tempo")}</span>
         <div className="ml-auto flex items-center gap-2">
-          {playing ? (
+          <button type="button" aria-expanded={visible} aria-controls={previewId}
+            className="rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-muted"
+            onClick={() => {
+              if (visible) stop();
+              setVisible(!visible);
+              try { localStorage.setItem('lmm-highway-preview-visible', String(!visible)); } catch { /* Optional preference. */ }
+            }}>
+            {st(visible ? 'Hide preview' : 'Show preview')}
+          </button>
+          {visible && (playing ? (
             <button
               onClick={stop}
               className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm transition hover:bg-muted"
             >
               <Pause className="h-4 w-4" />
-              Stop
-            </button>
+              {st("Stop")}</button>
           ) : (
             <button
               onClick={start}
@@ -110,14 +125,13 @@ export function HighwayPreview({
               className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-sm text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Play className="h-4 w-4" />
-              Preview
-            </button>
-          )}
+              {st("Preview")}</button>
+          ))}
           {progress > 0 && !playing && (
             <button
               onClick={stop}
               className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1.5 text-sm transition hover:bg-muted"
-              title="Reset to start"
+              title={st("Reset to start")}
             >
               <RotateCcw className="h-4 w-4" />
             </button>
@@ -125,7 +139,7 @@ export function HighwayPreview({
         </div>
       </div>
 
-      <div className="relative flex min-h-[360px] overflow-hidden rounded-xl border border-border bg-card">
+      {visible && <div id={previewId} className="relative flex min-h-[360px] overflow-hidden rounded-xl border border-border bg-card">
         {hasEvents ? (
           <GlassHighway
             exercise={exercise}
@@ -141,10 +155,9 @@ export function HighwayPreview({
           />
         ) : (
           <div className="flex flex-1 items-center justify-center p-6 text-center text-sm text-muted-foreground">
-            Add notes to the score above to preview them on the rhythm highway.
-          </div>
+            {st("Add notes to the score above to preview them on the rhythm highway.")}</div>
         )}
-      </div>
+      </div>}
     </div>
   );
 }

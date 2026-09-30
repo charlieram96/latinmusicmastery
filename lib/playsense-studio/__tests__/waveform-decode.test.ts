@@ -10,6 +10,7 @@ import {
 } from '../waveform-decode';
 import { serializePeaks, type WaveformPeaks } from '../waveform';
 
+vi.mock('../waveform-local-cache', () => ({localWaveformCache: vi.fn(async()=>null)}));
 afterEach(() => vi.unstubAllGlobals());
 
 it('passes video bytes directly to low-rate decoding and mixes stereo channels', async () => {
@@ -176,4 +177,19 @@ it('loadOrComputePeaks does not read the legacy v2 cache (it has no hits), so a 
   const peaks = await loadOrComputePeaks('ci', url, legacyOnly.supabase);
   expect(peaks.hits?.length).toBe(2);
   expect(legacyOnly.videoFetches()).toBe(1);
+});
+
+
+it('retains a browser copy when server storage rejects the upload and restores it without decoding',async()=>{
+ const {localWaveformCache}=await import('../waveform-local-cache');
+ const records=new Map<string,string>();
+ vi.mocked(localWaveformCache).mockImplementation(async(path,value)=>{if(value!==undefined)records.set(path,value);return records.get(path)??null;});
+ const warning=vi.spyOn(console,'warn').mockImplementation(()=>{});
+ try {
+  const server=storage({});server.upload.mockResolvedValue({data:null,error:{message:'Storage unavailable'}} as never);
+  const first=await loadOrComputePeaks('persistent-owner','https://x/new.mp4',server.supabase);
+  expect(records.size).toBe(1);expect(warning).toHaveBeenCalled();
+  const restored=await loadCachedPeaks('persistent-owner','https://x/new.mp4',server.supabase);
+  expect(restored).toEqual(first);expect(server.videoFetches()).toBe(1);
+ } finally {vi.mocked(localWaveformCache).mockImplementation(async()=>null);warning.mockRestore();}
 });

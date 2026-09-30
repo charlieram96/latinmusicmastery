@@ -126,7 +126,7 @@ export class ClickTrack {
   }
 
   /** Make `mediaSeconds` sound now. Call on play / playing / seeked / ratechange. */
-  start(mediaSeconds: number, rate: number) {
+  start(mediaSeconds: number, rate: number, scheduleAhead = false): number | undefined {
     const ctx = this.ensureContext();
     this.teardown();
     if (ctx.state !== 'running') return; // resume() first; nothing to hear yet
@@ -137,7 +137,9 @@ export class ClickTrack {
     this.bus.connect(ctx.destination);
 
     this.anchor = {
-      ctxStartSeconds: ctx.currentTime,
+      // A standalone score owns its clock: reserve enough lead to include
+      // beat zero. Media players keep their already-running external clock.
+      ctxStartSeconds: ctx.currentTime + (scheduleAhead ? this.minLead + TICK_MS / 1000 : 0),
       mediaStartSeconds: mediaSeconds,
       rate,
     };
@@ -145,6 +147,7 @@ export class ClickTrack {
 
     this.timer = setInterval(() => this.tick(), TICK_MS);
     this.tick();
+    return this.anchor.ctxStartSeconds;
   }
 
   /**

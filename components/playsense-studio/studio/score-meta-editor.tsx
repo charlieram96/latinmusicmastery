@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // Edit the document-level metadata: title, initial tempo and the time signature
 // that's active until a measure overrides it. Laid out as a vertical form for the
@@ -13,6 +15,7 @@ import { useRef, useState, type Dispatch, type KeyboardEvent } from 'react';
 import type { EditorAction } from '@/lib/playsense-studio/editor-state';
 import type { Instrument, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { INSTRUMENT_OPTIONS } from '@/lib/playsense-studio/instrument-options';
+import { TimeSignaturePicker } from './time-signature-picker';
 import { TempoMarksNotice } from './tempo-marks-notice';
 
 interface ScoreMetaEditorProps {
@@ -23,17 +26,8 @@ interface ScoreMetaEditorProps {
   trackIndex?: number;
 }
 
-const TIME_SIGNATURES: Array<[number, number]> = [
-  [4, 4],
-  [3, 4],
-  [6, 8],
-  [2, 4],
-  [2, 2],
-  [12, 8],
-];
-
 export function ScoreMetaEditor({ score, dispatch, trackIndex = 0 }: ScoreMetaEditorProps) {
-  const [num, den] = score.initialTimeSignature;
+  const st = useStudioText();
   const track = score.tracks[trackIndex];
 
   // The field holds a draft while it is being typed in, so clearing it to
@@ -79,8 +73,7 @@ export function ScoreMetaEditor({ score, dispatch, trackIndex = 0 }: ScoreMetaEd
     <div className="flex flex-col gap-4">
       <label className="flex flex-col gap-1.5">
         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-          Title
-        </span>
+          {st("Title")}</span>
         <input
           type="text"
           value={score.title}
@@ -89,36 +82,36 @@ export function ScoreMetaEditor({ score, dispatch, trackIndex = 0 }: ScoreMetaEd
         />
       </label>
 
+      <label className="flex flex-col gap-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{st('Composer')}</span><input aria-label={st('Composer')} value={score.composer ?? 'LMM'} onChange={e=>dispatch({type:'set-score-meta',composer:e.target.value})} className="st-input"/></label>
+
       {track && (
         <>
           <label className="flex flex-col gap-1.5">
             <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-              Track name
-            </span>
+              {st("Track name")}</span>
             <input
               type="text"
               value={track.displayName}
               onChange={(e) => dispatch({ type: 'set-track-name', trackIndex, name: e.target.value })}
               className="st-input"
-              aria-label="Track name"
+              aria-label={st("Track name")}
             />
           </label>
 
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-              Instrument
-            </span>
+              {st("Instrument")}</span>
             <div className="st-select">
               <select
                 value={track.instrument}
                 onChange={(e) =>
                   dispatch({ type: 'set-track-instrument', trackIndex, instrument: e.target.value as Instrument })
                 }
-                aria-label="Instrument"
+                aria-label={st("Instrument")}
               >
                 {INSTRUMENT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {st(opt.label)}
                   </option>
                 ))}
               </select>
@@ -132,10 +125,9 @@ export function ScoreMetaEditor({ score, dispatch, trackIndex = 0 }: ScoreMetaEd
 
       <div className="flex flex-col gap-1.5">
         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-          Tempo
-        </span>
+          {st("Tempo")}</span>
         <div className="st-stepper lg">
-          <button type="button" onClick={() => nudgeTempo(-1)} aria-label="Decrease tempo">
+          <button type="button" onClick={() => nudgeTempo(-1)} aria-label={st("Decrease tempo")}>
             <Minus className="h-4 w-4" />
           </button>
           <input
@@ -145,39 +137,22 @@ export function ScoreMetaEditor({ score, dispatch, trackIndex = 0 }: ScoreMetaEd
             onChange={(e) => setDraft(e.target.value)}
             onBlur={commitDraft}
             onKeyDown={onTempoKeyDown}
-            aria-label="Tempo (BPM)"
+            aria-label={st("Tempo (BPM)")}
           />
-          <span className="unit">BPM</span>
-          <button type="button" onClick={() => nudgeTempo(1)} aria-label="Increase tempo">
+          <span className="unit">{st("BPM")}</span>
+          <button type="button" onClick={() => nudgeTempo(1)} aria-label={st("Increase tempo")}>
             <Plus className="h-4 w-4" />
           </button>
         </div>
         <p className="text-[11px] leading-snug text-muted-foreground">
-          Sets how the score is spaced when you place it on the timeline.
-        </p>
+          {st("Sets how the score is spaced when you place it on the timeline.")}</p>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-          Time signature
-        </span>
-        <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Time signature">
-          {TIME_SIGNATURES.map(([n, d]) => {
-            const isOn = n === num && d === den;
-            return (
-              <button
-                key={`${n}/${d}`}
-                type="button"
-                onClick={() => dispatch({ type: 'set-score-meta', initialTimeSignature: [n, d] })}
-                className={`st-chip justify-center font-mono tabular-nums${isOn ? ' is-on' : ''}`}
-                role="radio"
-                aria-checked={isOn}
-              >
-                {n}/{d}
-              </button>
-            );
-          })}
-        </div>
+          {st("Time signature")}</span>
+        <TimeSignaturePicker value={score.initialTimeSignature} onChange={initialTimeSignature=>dispatch({type:'set-score-meta',initialTimeSignature,applyTimeSignatureToAll:true})}/>
+
       </div>
 
       <TempoMarksNotice score={score} dispatch={dispatch} />

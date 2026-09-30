@@ -23,6 +23,7 @@ function makeEditing(): ZoomEditing {
     enterLetter: vi.fn(),
     enterPitch: vi.fn(),
     enterRest: vi.fn(),
+    setEntryRest: vi.fn(),
     enterStroke: vi.fn(),
     setValue: vi.fn(),
     cycleDots: vi.fn(),
@@ -75,8 +76,8 @@ describe('NoteToolbar', () => {
     expect(bar.getAttribute('aria-label')).toBe('Note');
     expect(bar.querySelector('.st-fbar-info')!.textContent).toBe('E4');
     expect(buttons().map((b) => b.getAttribute('aria-label'))).toEqual([
-      'Whole', 'Half', 'Quarter', '8th', '16th',
-      'Dot', 'Rest', 'Tie',
+      'Notes', 'Rest', 'Whole', 'Half', 'Quarter', '8th', '16th', '32nd', '64th',
+      'Dot', 'Tie',
       'Flat', 'Natural', 'Sharp',
       'Triplet', 'More', 'Delete',
     ]);
@@ -84,12 +85,21 @@ describe('NoteToolbar', () => {
 
   it('marks the current value, dot, rest, tie and triplet pressed', () => {
     render({ value: 'q', dots: 1, isRest: true, tie: true, tripletOn: true });
-    expect(byLabel('Quarter').getAttribute('aria-pressed')).toBe('true');
-    expect(byLabel('Whole').getAttribute('aria-pressed')).toBe('false');
+    expect(byLabel('Quarter rest').getAttribute('aria-pressed')).toBe('true');
+    expect(byLabel('Whole rest').getAttribute('aria-pressed')).toBe('false');
     expect(byLabel('Dot').getAttribute('aria-pressed')).toBe('true');
     expect(byLabel('Rest').getAttribute('aria-pressed')).toBe('true');
     expect(byLabel('Tie').getAttribute('aria-pressed')).toBe('true');
     expect(byLabel('Triplet').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('switches entry modes without inserting a rest', () => {
+    const {editing}=render();
+    act(()=>byLabel('Rest').click());
+    expect(editing.setEntryRest).toHaveBeenCalledWith(true);
+    expect(editing.enterRest).not.toHaveBeenCalled();
+    act(()=>byLabel('Notes').click());
+    expect(editing.setEntryRest).toHaveBeenCalledWith(false);
   });
 
   it('calls accidental(1) when ♯ is clicked', () => {

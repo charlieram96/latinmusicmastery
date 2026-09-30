@@ -1,5 +1,7 @@
 "use client";
 
+import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
+import { VideoFullscreenButton } from '@/components/playsense-studio/shared/video-fullscreen-button';
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
@@ -28,6 +30,7 @@ export default function VideoHero({ instruments = [], styles = [] }: VideoHeroPr
 
   return (
     <section className="relative flex flex-1 items-center justify-center overflow-hidden">
+      <VideoWatermark /><VideoFullscreenButton />
       {/* Background video */}
       {!videoFailed ? (
         <video

@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // The Bar ▾ menu: meter, key, clef, barlines, endings and a tempo mark for one
 // bar. A tempo mark here writes Measure.tempoChange (spec §8); see
@@ -26,6 +28,7 @@ export function BarPopover({ anchor, measureIndex, measureNumber, percussion, cu
              repeatStart: boolean; repeatEnd: boolean; double: boolean; final: boolean; volta: '1.' | '2.' | null };
   onPatch: (p: MeasurePropsPatch) => void; onFinal: (final: boolean) => void; onClose: () => void;
 }) {
+  const st = useStudioText();
   // Controlled, and re-synced from `current.tempo` — the score's tempo can
   // change while the popover is open (the rail's stepper, undo/redo), and an
   // uncontrolled field would keep showing the stale value.
@@ -41,7 +44,7 @@ export function BarPopover({ anchor, measureIndex, measureNumber, percussion, cu
   };
 
   return (
-    <MeasurePopover anchor={anchor} title={`Bar m.${measureNumber}`} onClose={onClose}>
+    <MeasurePopover anchor={anchor} title={st(`Bar m.${measureNumber}`)} onClose={onClose}>
       <div className="st-mpop-row">
         {TIME_SIGNATURES.map(([n, d]) => (
           <button key={`${n}/${d}`} type="button" className="st-mpop-chip"
@@ -54,16 +57,16 @@ export function BarPopover({ anchor, measureIndex, measureNumber, percussion, cu
 
       {!percussion && (
         <div className="st-mpop-row">
-          <select aria-label="Key" className="st-input" value={current.keyFifths}
+          <select aria-label={st("Key")} className="st-input" value={current.keyFifths}
             onChange={(e) => onPatch({ keyFifths: Number(e.target.value) })}>
             {KEY_FIFTHS.map((f) => (
-              <option key={f} value={f}>{keySignatureName(f)} major</option>
+              <option key={f} value={f}>{keySignatureName(f)} {st("major")}</option>
             ))}
           </select>
-          <select aria-label="Clef" className="st-input" value={current.clef}
+          <select aria-label={st("Clef")} className="st-input" value={current.clef}
             onChange={(e) => onPatch({ clef: e.target.value as 'treble' | 'bass' | 'alto' | 'tenor' })}>
             {CLEFS.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
+              <option key={c.value} value={c.value}>{st(c.label)}</option>
             ))}
           </select>
         </div>
@@ -71,22 +74,22 @@ export function BarPopover({ anchor, measureIndex, measureNumber, percussion, cu
 
       <div className="st-mpop-row">
         <button type="button" className="st-mpop-chip" aria-pressed={current.repeatStart}
-          onClick={() => onPatch({ repeatStart: !current.repeatStart })}>Start repeat</button>
+          onClick={() => onPatch({ repeatStart: !current.repeatStart })}>{st("Start repeat")}</button>
         <button type="button" className="st-mpop-chip" aria-pressed={current.repeatEnd}
-          onClick={() => onPatch({ repeatEnd: !current.repeatEnd })}>End repeat</button>
+          onClick={() => onPatch({ repeatEnd: !current.repeatEnd })}>{st("End repeat")}</button>
         <button type="button" className="st-mpop-chip" aria-pressed={current.double}
-          onClick={() => onPatch({ endBarline: current.double ? null : 'double' })}>Double barline</button>
+          onClick={() => onPatch({ endBarline: current.double ? null : 'double' })}>{st("Double barline")}</button>
         <button type="button" className="st-mpop-chip" aria-pressed={current.final}
-          onClick={() => onFinal(!current.final)}>Final barline</button>
+          onClick={() => onFinal(!current.final)}>{st("Final barline")}</button>
         <button type="button" className="st-mpop-chip" aria-pressed={current.volta === '1.'}
-          onClick={() => toggleVolta('1.')}>1st ending</button>
+          onClick={() => toggleVolta('1.')}>{st("1st ending")}</button>
         <button type="button" className="st-mpop-chip" aria-pressed={current.volta === '2.'}
-          onClick={() => toggleVolta('2.')}>2nd ending</button>
+          onClick={() => toggleVolta('2.')}>{st("2nd ending")}</button>
       </div>
 
       <form className="st-mpop-row" onSubmit={onTempoSubmit}>
-        <input type="number" min={30} max={300} value={tempoText} onChange={(e) => setTempoText(e.target.value)} aria-label="Tempo" className="st-input w-16" />
-        <button type="submit" className="st-mpop-item">Set ♩ =</button>
+        <input type="number" min={30} max={300} value={tempoText} onChange={(e) => setTempoText(e.target.value)} aria-label={st("Tempo")} className="st-input w-16" />
+        <button type="submit" className="st-mpop-item">{st("Set ♩ =")}</button>
       </form>
     </MeasurePopover>
   );

@@ -89,3 +89,16 @@ describe('useMetronome with a grid', () => {
     act(() => { result.current.stopMetronome() })
   })
 })
+
+it('seeks directly into a grid without replaying earlier clicks or a count-in', () => {
+  vi.useFakeTimers()
+  const { result } = renderHook(() => useMetronome({ bpm:120, timeSignature:[4,4], grid:GRID, silent:false }))
+  const { ctx, clicks } = fakeAudioContext()
+  let origin = 0
+  act(() => { origin = result.current.startMetronome(ctx, 3) })
+  expect(origin).toBeCloseTo(-2.95)
+  act(() => { vi.advanceTimersByTime(25) })
+  expect(relativeTimes(clicks, origin)).toEqual([3])
+  expect(clicks[0].time).toBeCloseTo(.05)
+  act(() => result.current.stopMetronome())
+})

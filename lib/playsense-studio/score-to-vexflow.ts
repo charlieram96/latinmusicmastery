@@ -249,6 +249,7 @@ export interface VexEventDescriptor {
   tuplet: { id: string; n: number; m: number } | null;
   /** Every articulation glyph to attach (supersedes `articulation`). */
   articulations: Articulation[];
+  symbolOffsets?: Record<string, { x: number; y: number }>;
   ornament?: Ornament;
   dynamic?: Dynamic;
   text?: string;
@@ -427,6 +428,11 @@ export function extractTrackEvents(
           accidentals = [null];
         }
 
+        const headNotes = event.kind === 'note' ? [event] : event.kind === 'chord' ? event.notes : [];
+        if (headNotes.some(n=>n.notehead !== undefined)) {
+          percussionHeads = keys.map((key,j)=>({...percussionHeads?.[j],staffLine:key,notehead:headNotes[j]?.notehead ?? percussionHeads?.[j]?.notehead ?? 'normal'}));
+        }
+
         // Grace notes are spelled against the key only — no bar memory. A
         // percussion flam grace gets its stroke's own key and notehead, the
         // same way a main percussion note does, and no accidental.
@@ -462,6 +468,7 @@ export function extractTrackEvents(
           articulations: event.kind === 'rest' ? [] : eventArticulations(event),
           ornament: event.ornament,
           dynamic: event.dynamic,
+          symbolOffsets: event.symbolOffsets,
           text: event.text,
           grace,
           id: event.id,

@@ -70,7 +70,7 @@ export type RangeListener = (range: SelectedRange) => void;
  */
 export type StaffLayoutMode = 'scroll' | 'wrapped' | 'paged';
 
-/** Always-on reading helpers: note-name chips, beat counts and the next-note ring. */
+/** Always-on reading helpers: note-name chips, beat counts and the current-note ring. */
 export interface StaffHelpers {
   /** The spoken "and" between beats ("&", or "y" in Spanish). */
   and: string;
@@ -298,6 +298,7 @@ class StaffRendererImpl implements ScoreRenderer {
   private dragCurrentModelX: number | null = null;
   private dragCurrentModelY: number | null = null;
   private dragIsActive = false;
+  private dragSeeking = false;
   private boundPointerId: number | null = null;
 
   mount(
@@ -705,6 +706,8 @@ class StaffRendererImpl implements ScoreRenderer {
       } else if (hasFinalBarline(track.measures, p.blockIndex)) {
         // The section's last measure closes with a final bar, like the end of a piece.
         stave.setEndBarType(BarlineType.END);
+      } else if (block.measure.endBarline === 'double') {
+        stave.setEndBarType(BarlineType.DOUBLE);
       }
       applyStaveHeader(stave, staveHeader(block, { opening: p.showHeader, rowStart: p.firstInRow }));
       // Bolder staff lines, then back to default weight for notes/stems/beams.
@@ -1049,6 +1052,9 @@ class StaffRendererImpl implements ScoreRenderer {
         this.dragCurrentModelX = this.dragStartModelX;
         this.dragCurrentModelY = this.dragStartModelY;
         this.dragIsActive = false;
+        const cursor = this.cursorEl?.getBoundingClientRect();
+        this.dragSeeking = !this.container.hasAttribute('data-score-range-select') ||
+          !!(cursor && this.cursorEl?.style.opacity !== '0' && Math.abs(event.clientX - cursor.left) <= 10 && event.clientY >= cursor.top - 12 && event.clientY <= cursor.bottom + 12);
         this.boundPointerId = event.pointerId;
         try {
           target.setPointerCapture(event.pointerId);
@@ -1078,7 +1084,10 @@ class StaffRendererImpl implements ScoreRenderer {
         if (!this.dragIsActive && delta >= DRAG_THRESHOLD_PX) {
           this.dragIsActive = true;
         }
-        if (this.dragIsActive) this.updateDragOverlay();
+        if (this.dragIsActive && this.dragSeeking) {
+          const pos = this.xToTimePosition(x, y);
+          if (pos) for (const listener of this.seekListeners) listener({ qn: pos.qn, measure: pos.measure, beat: pos.beat });
+        } else if (this.dragIsActive) this.updateDragOverlay();
       };
       this.upHandler = (event: PointerEvent) => {
         if (
@@ -1092,7 +1101,10 @@ class StaffRendererImpl implements ScoreRenderer {
           /* noop */
         }
 
-        if (this.dragIsActive) {
+        if (this.dragIsActive && this.dragSeeking) {
+          const pos = this.xToTimePosition(this.dragCurrentModelX ?? this.dragStartModelX, this.dragCurrentModelY ?? this.staveTop);
+          if (pos) for (const listener of this.seekListeners) listener({ qn: pos.qn, measure: pos.measure, beat: pos.beat });
+        } else if (this.dragIsActive) {
           const startX = Math.min(
             this.dragStartModelX,
             this.dragCurrentModelX ?? this.dragStartModelX
@@ -1297,7 +1309,7 @@ class StaffRendererImpl implements ScoreRenderer {
       });
     });
 
-    // Attacks: note-name chips (pitched staves) and the next-note ring's targets.
+    // Attacks: note-name chips (pitched staves) and the current-note ring's targets.
     notes.forEach((note, i) => {
       const d = note.descriptor;
       if (!isAttack(notes[i - 1]?.descriptor, d)) return;
@@ -1331,7 +1343,7 @@ class StaffRendererImpl implements ScoreRenderer {
     this.nextRingEl = ring;
   }
 
-  /** Current count and chip, past chips, and the ring on the next attack of this row. */
+  /** Current count and chip, past chips, and the ring on the sounding attack of this row. */
   private updateHelpers(live: boolean): void {
     const ms = this.lastPlaybackMs;
     if (this.countMarks.length) {
@@ -1357,12 +1369,11 @@ class StaffRendererImpl implements ScoreRenderer {
     }
     const ring = this.nextRingEl;
     if (!ring) return;
-    const nextIdx = state.active >= 0 ? state.active + 1 : state.played;
-    const next = this.attacks[nextIdx];
+    const current = this.attacks[active];
     const row = this.layoutMode === 'paged' ? this.currentPage : this.msToCursorPos(ms).system;
-    if (!live || !next || next.system !== row) { ring.hidden = true; return; }
+    if (!live || !current || current.system !== row) { ring.hidden = true; return; }
     ring.hidden = false;
-    ring.style.transform = `translate(${next.x * this.scale}px, ${next.y * this.scale}px)`;
+    ring.style.transform = `translate(${current.x * this.scale}px, ${current.y * this.scale}px)`;
   }
 
   private updateGapCountdown(): void {
@@ -1609,7 +1620,7 @@ class StaffRendererImpl implements ScoreRenderer {
   }
 
   /**
-   * The playhead, bar band, next-note ring and loop markers live outside the rows, so they would
+   * The playhead, bar band, current-note ring and loop markers live outside the rows, so they would
    * jump to the new page before it slides in. They stay hidden for the first half of the turn and
    * fade in as the page settles; the implicit end keyframe keeps each one's own opacity (a hidden
    * cursor stays hidden).
@@ -2098,6 +2109,7 @@ function StaffRendererView({
     <div
       ref={containerRef}
       data-score-interactive={onSeek || onSelectRange ? true : undefined}
+      data-score-range-select={onSelectRange ? true : undefined}
       className={`playsense-studio-notation ps-score-engraving ${className ?? ''}`}
       style={layoutMode === 'wrapped' ? { height: '100%' } : undefined}
     />

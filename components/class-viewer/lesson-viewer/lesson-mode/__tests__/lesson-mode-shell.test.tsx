@@ -71,6 +71,23 @@ describe('LessonModeShell', () => {
     expect(host.querySelector('[data-streak]')?.textContent).toContain('1')
   })
 
+  it('shows one community thread below every lesson part, including exercises', () => {
+    for (const item_type of ['VIDEO', 'EXERCISE', 'JAM_SESSION', 'QUIZ']) {
+      const input = props(0)
+      act(() => root.render(<LessonModeShell {...input} parts={[{ id: 'a', title: 'Part', item_type }]} />))
+      const community = host.querySelector('[data-lesson-community]')!
+      expect(community.querySelector('[data-comments]')).not.toBeNull()
+      expect(host.querySelectorAll('[data-comments]')).toHaveLength(1)
+      expect(community.closest('[hidden]')).toBeNull()
+      expect(community.previousElementSibling).not.toBeNull()
+    }
+  })
+
+  it('omits community for locked lessons', () => {
+    act(() => root.render(<LessonModeShell {...props(0)} comments={null} progress={null} />))
+    expect(host.querySelector('[data-lesson-community]')).toBeNull()
+  })
+
   it('opens the drawer from the top bar', () => {
     act(() => root.render(<LessonModeShell {...props(0)} />))
     act(() => (host.querySelector('[data-open-drawer]') as HTMLButtonElement).click())

@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — the drum track's stroke picker in the note toolbar: one
 // chip naming the current stroke, opening a list. Replaces a button per
@@ -31,6 +33,7 @@ const VIEWPORT_MARGIN = 8;
 export function StrokeMenu({ strokes, current, onPick }: {
   strokes: { midi: number; label: string }[]; current: number | null; onPick: (midi: number) => void;
 }) {
+  const st = useStudioText();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ left: 0, top: 0, maxHeight: LIST_MAX_HEIGHT });
   const chipRef = useRef<HTMLButtonElement>(null);
@@ -94,18 +97,18 @@ export function StrokeMenu({ strokes, current, onPick }: {
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
-        title="Which stroke new notes use"
+        title={st("Which stroke new notes use")}
         onMouseDown={(e) => e.preventDefault()}
         onClick={toggle}
       >
-        {label}
+        {st(label)}
         <ChevronDown className="h-3.5 w-3.5" />
       </button>
       {open && typeof document !== 'undefined' && createPortal(
         <div
           ref={listRef}
           role="listbox"
-          aria-label="Strokes"
+          aria-label={st("Strokes")}
           className="st-stroke-list"
           style={{ left: pos.left, top: pos.top, maxHeight: pos.maxHeight }}
         >
@@ -119,7 +122,7 @@ export function StrokeMenu({ strokes, current, onPick }: {
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => { onPick(s.midi); setOpen(false); }}
             >
-              {s.label}
+              {st(s.label)}
             </button>
           ))}
         </div>,

@@ -1,5 +1,6 @@
 'use client'
 
+import { Pendulum } from '@/components/playsense-studio/player/transport/chronometer-control'
 import { useEffect, useRef } from 'react'
 import { motion, useSpring, useTransform, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -510,11 +511,7 @@ export function NowPlayingBar({
           {/* Audio click toggle — only in selecting state */}
           {sessionState === 'selecting' && (
             <div className="flex items-center gap-2 px-3 h-8">
-              {audioMetronome ? (
-                <Volume2 className="w-4 h-4 text-muted-foreground shrink-0" />
-              ) : (
-                <VolumeX className="w-4 h-4 text-muted-foreground shrink-0" />
-              )}
+              <Pendulum size="sm" swingStyle={{}} />
               <span className="text-xs text-muted-foreground">Audio Click</span>
               <div className="ml-auto">
                 <Switch

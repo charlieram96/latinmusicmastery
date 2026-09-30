@@ -6,7 +6,7 @@
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FlexMap } from '@/lib/playsense-studio/flex';
 import type { WaveformPeaks } from '@/lib/playsense-studio/waveform';
 import { WaveformCanvas } from '../waveform-canvas';
@@ -127,4 +127,31 @@ describe('WaveformCanvas peaks through the warp', () => {
     expect(x).toBeGreaterThanOrEqual(59.5);
     expect(x).toBeLessThanOrEqual(61.5);
   });
+});
+
+
+it('repaints the canvas palette when the theme changes without remounting', async () => {
+  const backgrounds: string[] = [];
+  const ctx = new Proxy({fillStyle: ''} as Record<string, unknown>, {
+    get: (target, key: string) => key === 'fillRect'
+      ? () => backgrounds.push(String(target.fillStyle))
+      : key === 'measureText' ? () => ({width: 0}) : target[key] ?? (() => {}),
+    set: (target, key: string, value) => {target[key] = value; return true;},
+  });
+  HTMLCanvasElement.prototype.getContext = (() => ctx) as never;
+  const style = vi.spyOn(window, 'getComputedStyle').mockImplementation(() => ({
+    getPropertyValue: (name: string) => name === '--card'
+      ? (container.classList.contains('dark') ? '24 10% 8%' : '0 0% 100%') : '',
+  }) as CSSStyleDeclaration);
+  try {
+    draw();
+    expect(backgrounds).toContain('hsl(0 0% 100%)');
+    backgrounds.length = 0;
+    await act(async () => {container.classList.add('dark');});
+    expect(backgrounds).toContain('hsl(24 10% 8%)');
+    expect(backgrounds).not.toContain('hsl(0 0% 100%)');
+    backgrounds.length = 0;
+    await act(async () => {container.classList.remove('dark');});
+    expect(backgrounds).toContain('hsl(0 0% 100%)');
+  } finally {style.mockRestore();}
 });

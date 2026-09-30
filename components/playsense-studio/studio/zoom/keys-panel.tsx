@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — the measure zoom's Keys panel (K): an on-screen 2-octave
 // keyboard, an octave shift, and the MIDI keyboard's status line (spec §6,
@@ -60,6 +62,7 @@ function octaveMidi(octave: number): number {
 const stopFocus = (e: ReactMouseEvent) => e.preventDefault();
 
 export function KeysPanel({ onPitch, percussion, status, octave, onOctave }: KeysPanelProps) {
+  const st = useStudioText();
   const base = octaveMidi(octave);
 
   const press = (midi: number) => (e: ReactMouseEvent) => {
@@ -70,7 +73,7 @@ export function KeysPanel({ onPitch, percussion, status, octave, onOctave }: Key
   return (
     <div className="st-keys-panel" data-testid="keys-panel">
       <div className="st-keys-status" role="status">
-        {status === 'ready' ? MSG_MIDI_READY : status === 'idle' ? MSG_MIDI_LOOKING : MSG_MIDI_FALLBACK}
+        {st(status === 'ready' ? MSG_MIDI_READY : status === 'idle' ? MSG_MIDI_LOOKING : MSG_MIDI_FALLBACK)}
         {percussion && <> · {MSG_GM_DRUMS}</>}
       </div>
       <div className="st-keys-octave">
@@ -80,17 +83,15 @@ export function KeysPanel({ onPitch, percussion, status, octave, onOctave }: Key
           onMouseDown={stopFocus}
           onClick={() => onOctave(-1)}
         >
-          ◀ Octave
-        </button>
-        <span data-testid="keys-range">C{octave}–B{octave + 1}</span>
+          {st("◀ Octave")}</button>
+        <span data-testid="keys-range">{st("C")}{octave}{st("–B")}{octave + 1}</span>
         <button
           type="button"
           disabled={octave >= MAX_OCTAVE}
           onMouseDown={stopFocus}
           onClick={() => onOctave(1)}
         >
-          Octave ▶
-        </button>
+          {st("Octave ▶")}</button>
       </div>
       <div className="st-keys-board" style={{ width: OCTAVES.length * WHITE_KEYS.length * WHITE_KEY_WIDTH }}>
         {OCTAVES.flatMap((oct) => WHITE_KEYS.map((k) => {
@@ -101,7 +102,7 @@ export function KeysPanel({ onPitch, percussion, status, octave, onOctave }: Key
               type="button"
               className="st-key-white"
               data-testid={`key-${midi}`}
-              title={`${k.name}${octave + oct}`}
+              title={st(`${k.name}${octave + oct}`)}
               onMouseDown={stopFocus}
               onClick={press(midi)}
             >
@@ -117,7 +118,7 @@ export function KeysPanel({ onPitch, percussion, status, octave, onOctave }: Key
               type="button"
               className="st-key-black"
               data-testid={`key-${midi}`}
-              title={`${k.name}${octave + oct}`}
+              title={st(`${k.name}${octave + oct}`)}
               style={{ left: (oct * WHITE_KEYS.length + k.offset) * WHITE_KEY_WIDTH, width: BLACK_KEY_WIDTH }}
               onMouseDown={stopFocus}
               onClick={press(midi)}

@@ -18,6 +18,7 @@
 //
 // No trim arithmetic lives here. Every drag routes through clip-model.ts.
 
+import type { FlexMap } from '@/lib/playsense-studio/flex';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   clipTimelineRange,
@@ -43,6 +44,7 @@ const CLIP_BODY_H = LANE_H - CLIP_PAD * 2;
 const SNAP_PX = 8;
 
 export interface LaneClip extends Clip {
+  warp?: FlexMap;
   trackId: string;
   label: string;
   sourceDurationSeconds: number | null;
@@ -187,8 +189,8 @@ export function BackingLanes(props: BackingLanesProps) {
       ctx.globalAlpha = 1;
 
       const range = clipTimelineRange(clip, boundsOf(clip));
-      const x0 = timeToX(range.startSeconds);
-      const x1 = timeToX(range.endSeconds);
+      const x0 = timeToX(clip.warp?.toTimeline(range.startSeconds) ?? range.startSeconds);
+      const x1 = timeToX(clip.warp?.toTimeline(range.endSeconds) ?? range.endSeconds);
       // A clip whose source length is still unknown has a zero-width range;
       // give it a placeholder body so it can still be seen and grabbed.
       const bodyX0 = x0;
@@ -219,7 +221,7 @@ export function BackingLanes(props: BackingLanesProps) {
           bodyTop,
           color,
           alpha: clip.enabled ? 0.85 : 0.35,
-          xToTime,
+          xToTime: x => clip.warp?.toMedia(xToTime(x)) ?? xToTime(x),
           timeToX,
           pixelsPerSecond: ppsRef.current,
         });
@@ -354,8 +356,8 @@ export function BackingLanes(props: BackingLanesProps) {
       const clip = clipsRef.current[index];
       if (!clip) return null;
       const range = clipTimelineRange(clip, boundsOf(clip));
-      const x0 = timeToX(range.startSeconds);
-      const x1 = range.endSeconds > range.startSeconds ? timeToX(range.endSeconds) : x0 + 120;
+      const x0 = timeToX(clip.warp?.toTimeline(range.startSeconds) ?? range.startSeconds);
+      const x1 = range.endSeconds > range.startSeconds ? timeToX(clip.warp?.toTimeline(range.endSeconds) ?? range.endSeconds) : x0 + 120;
       if (Math.abs(x - x0) <= HANDLE_HIT_PX) return { trackId: clip.trackId, part: 'in' };
       if (Math.abs(x - x1) <= HANDLE_HIT_PX) return { trackId: clip.trackId, part: 'out' };
       if (x >= x0 && x <= x1) return { trackId: clip.trackId, part: 'body' };
@@ -369,13 +371,14 @@ export function BackingLanes(props: BackingLanesProps) {
       const clip = clipsRef.current.find((c) => c.trackId === trackId);
       if (!clip) return;
       const bounds = boundsOf(clip);
-      const t = xToTime(localX(e));
+      const timeline = xToTime(localX(e));
+      const t = clip.warp?.toMedia(timeline) ?? timeline;
       if (mode === 'move') {
-        onClipChangeRef.current(clip.trackId, moveClip(clip, bounds, maybeSnap(t - grabOffsetSeconds, e.shiftKey)));
+        onClipChangeRef.current(clip.trackId, moveClip(clip, bounds, clip.warp?.toMedia(maybeSnap(clip.warp.toTimeline(t - grabOffsetSeconds), e.shiftKey)) ?? maybeSnap(t - grabOffsetSeconds, e.shiftKey)));
       } else if (mode === 'trim-in') {
-        onClipChangeRef.current(clip.trackId, trimClipIn(clip, bounds, maybeSnap(t, e.shiftKey)));
+        onClipChangeRef.current(clip.trackId, trimClipIn(clip, bounds, clip.warp?.toMedia(maybeSnap(timeline, e.shiftKey)) ?? maybeSnap(t, e.shiftKey)));
       } else if (mode === 'trim-out') {
-        onClipChangeRef.current(clip.trackId, trimClipOut(clip, bounds, maybeSnap(t, e.shiftKey)));
+        onClipChangeRef.current(clip.trackId, trimClipOut(clip, bounds, clip.warp?.toMedia(maybeSnap(timeline, e.shiftKey)) ?? maybeSnap(t, e.shiftKey)));
       }
     };
 
@@ -392,7 +395,7 @@ export function BackingLanes(props: BackingLanesProps) {
       mode = 'pending';
       downX = localX(e);
       // Grab the clip where it was actually clicked, so it doesn't teleport.
-      grabOffsetSeconds = xToTime(downX) - clip.timelineStartSeconds;
+      grabOffsetSeconds = (clip.warp?.toMedia(xToTime(downX)) ?? xToTime(downX)) - clip.timelineStartSeconds;
       onSelectRef.current(hit.trackId);
       e.preventDefault();
     };
@@ -432,7 +435,11 @@ export function BackingLanes(props: BackingLanesProps) {
         onZoomByRef.current?.(Math.exp(-e.deltaY * 0.003), localX(e));
         return;
       }
-      const dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      // Vertical gestures belong to the track stack's native scroll area.
+      // Only horizontal gestures (or Shift + wheel) pan the timeline.
+      e.stopPropagation();
+      const horizontal = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
+      const dx = horizontal ? (e.shiftKey ? e.deltaY || e.deltaX : e.deltaX) : 0;
       if (dx !== 0) {
         e.preventDefault();
         onScrollByPxRef.current(dx);
@@ -461,7 +468,7 @@ export function BackingLanes(props: BackingLanesProps) {
         return {
           clip,
           index,
-          left: Math.max(range.startSeconds * pixelsPerSecond - scrollLeftPx, 2),
+          left: Math.max((clip.warp?.toTimeline(range.startSeconds) ?? range.startSeconds) * pixelsPerSecond - scrollLeftPx, 2),
           top: index * LANE_H + CLIP_PAD,
         };
       }),
@@ -513,7 +520,7 @@ function drawClipPeaks(
 
   const mid = o.bodyTop + CLIP_BODY_H / 2;
   const halfH = (CLIP_BODY_H - 4) / 2;
-  const secPerColumn = 1 / o.pixelsPerSecond;
+
 
   ctx.strokeStyle = o.color;
   ctx.globalAlpha = o.alpha;
@@ -525,7 +532,7 @@ function drawClipPeaks(
     if (sourceT < 0 || sourceT >= peaks.durationSeconds) continue;
 
     const first = Math.floor(sourceT / secPerBucket);
-    const last = Math.min(peaks.bucketCount - 1, Math.floor((sourceT + secPerColumn) / secPerBucket));
+    const last = Math.min(peaks.bucketCount - 1, Math.floor((clip.trimInSeconds + o.xToTime(x + 1) - clip.timelineStartSeconds) / secPerBucket));
 
     let min = Infinity;
     let max = -Infinity;

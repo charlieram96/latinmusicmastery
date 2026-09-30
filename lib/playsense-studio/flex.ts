@@ -200,11 +200,12 @@ export function resetFlexRange(points: FlexPoint[], range: { start: number; end:
 
 export function quantizePlan(input: {
   points: FlexPoint[]; notesTimeline: number[]; hitsMedia: number[]; beatSeconds: number;
-  range: { start: number; end: number }; strength: number;
+  range: { start: number; end: number }; strength: number; toleranceSeconds?: number;
 }): { points: FlexPoint[]; moved: number; largestMs: number } {
   const { range, strength } = input;
   const current = new FlexMap(input.points);
-  const tol = input.beatSeconds / 3;
+  if (strength <= 0) return {points: input.points, moved: 0, largestMs: 0};
+  const tol = input.toleranceSeconds ?? input.beatSeconds / 3;
   const hits = input.hitsMedia.map((h) => ({ media: h, t: current.toTimeline(h) })).filter((h) => h.t > range.start && h.t < range.end);
   const used = new Set<number>();
   const candidates: { src: number; dst: number; diffMs: number }[] = [];
@@ -218,7 +219,7 @@ export function quantizePlan(input: {
     used.add(best);
     const h = hits[best];
     const dst = h.t + strength * (note - h.t);
-    candidates.push({ src: h.media, dst, diffMs: Math.round(Math.abs(note - h.t) * 1000) });
+    candidates.push({ src: h.media, dst, diffMs: Math.round(Math.abs(dst - h.t) * 1000) });
   }
 
   const kept = resetFlexRange(input.points, range);
@@ -253,4 +254,24 @@ export function quantizePlan(input: {
   const points = read.some((q) => !q.anchor) ? read : [];
   const largestMs = diffs.reduce((m, d) => Math.max(m, d), 0);
   return { points, moved: moves.length, largestMs };
+}
+
+/** Pin the nearest bar boundaries on each side without changing the current
+ * warp. Subsequent Single moves cannot alter audio outside that local span.
+ * A point on a shared barline necessarily borders two measures. */
+export function protectFlexMeasure(points: FlexPoint[], source: number, boundaries: number[]): FlexPoint[] {
+  const point=points.find(p=>Math.abs(p.src-source)<1e-9);
+  if(!point)return points;
+  const map=new FlexMap(points);
+  const sorted=[...boundaries].filter(Number.isFinite).sort((a,b)=>a-b);
+  const left=sorted.filter(t=>t<point.dst-EPS).at(-1);
+  const right=sorted.find(t=>t>point.dst+EPS);
+  const out=points.slice();
+  for(const dst of [left,right]) {
+    if(dst===undefined)continue;
+    const src=map.toMedia(dst);
+    if(out.some(p=>Math.abs(p.src-src)<EPS))continue;
+    out.push({src,dst,anchor:true});
+  }
+  return normalizeEdges(out.sort((a,b)=>a.src-b.src));
 }

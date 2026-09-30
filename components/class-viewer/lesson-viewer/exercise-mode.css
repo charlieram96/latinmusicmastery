@@ -28,11 +28,11 @@
 .ps-exercise-mode :is(.ps-lesson-results,.ps-lesson-calibration) { flex:1; min-height:0; overflow-y:auto; }
 .ps-exercise-toolbar { display:flex; align-items:center; justify-content:space-between; gap:24px; flex-shrink:0; min-height:66px; padding:10px 24px; background:hsl(var(--card)); border-bottom:1px solid hsl(var(--border)); }
 .ps-exercise-identity { display:flex; align-items:center; gap:14px; min-width:0; }
-.ps-exercise-identity>img { flex-shrink:0; width:32px; height:24px; object-fit:contain; }
+.ps-exercise-identity>img { flex-shrink:0; width:48px; height:36px; object-fit:contain; }
 .ps-exercise-identity>div { min-width:0; }
-.ps-exercise-identity span { display:block; color:var(--exercise-muted); font-size:9px; letter-spacing:.09em; }
+.ps-exercise-identity span { display:block; color:var(--exercise-muted); font-size:12px; letter-spacing:.04em; }
 .ps-exercise-identity i { font-style:normal; padding:0 6px; color:hsl(var(--muted-foreground) / .5); }
-.ps-exercise-identity h2 { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin:4px 0 0; font-size:13px; font-weight:650; line-height:1.3; }
+.ps-exercise-identity h2 { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin:4px 0 0; font-size:17px; font-weight:650; line-height:1.3; }
 .ps-exercise-view-controls { display:flex; align-items:center; gap:5px; flex-shrink:0; }
 .ps-exercise-view-controls button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:36px; padding:0 11px; color:var(--exercise-muted); font-size:12px; }
 .ps-exercise-view-controls button:hover { color:var(--exercise-cream); background:hsl(var(--accent)); }
@@ -72,9 +72,9 @@
 @media(max-width:700px) {
   .ps-exercise-toolbar { gap:10px; min-height:60px; padding:10px 14px; }
   .ps-exercise-identity { gap:9px; }
-  .ps-exercise-identity>img { width:26px; height:20px; }
-  .ps-exercise-identity h2 { font-size:11px; }
-  .ps-exercise-identity span { font-size:8px; }
+  .ps-exercise-identity>img { width:36px; height:28px; }
+  .ps-exercise-identity h2 { font-size:14px; }
+  .ps-exercise-identity span { font-size:11px; }
   .ps-exercise-view-controls { gap:0; }
   .ps-exercise-view-controls button { padding:0 9px; }
   .ps-exercise-view-controls button>span, .ps-exercise-view-controls kbd { display:none; }

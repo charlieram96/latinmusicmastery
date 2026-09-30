@@ -25,6 +25,10 @@
 // usable as soon as a score document is attached, with sync polish coming
 // from M7's authoring tools.
 
+import {lessonMetronomeGrid,type LessonMetronome} from '@/lib/playsense-studio/lesson-metronome';
+import {ScoreHeading} from '../shared/score-heading';
+import {scorePlaybackRate} from '@/lib/playsense-studio/playback-tempo';
+import { useTransportCountIn } from './state/use-transport-count-in';
 import {
   useCallback,
   useEffect,
@@ -36,11 +40,11 @@ import {
 import { Minus, Plus } from 'lucide-react';
 import { SplitWorkspace, WorkspaceLayoutSwitcher } from './split-workspace';
 import { useWorkspaceLayout } from './use-workspace-layout';
-import { WorkspaceToolsPortal } from './workspace-tools-slot';
 import { SectionChips } from './section-chips';
 import { WATCH_WORKSPACE } from '@/lib/playsense-studio/workspace-layout';
 import { DownloadMenu } from '@/components/playsense-studio/export/download-menu';
 import { TransportBar } from './transport/transport-bar';
+import { VideoFullscreenButton } from '@/components/playsense-studio/shared/video-fullscreen-button';
 import { VideoStage } from './video/video-stage';
 import {
   StaffRenderer,
@@ -121,6 +125,7 @@ export interface PlayerSection {
 }
 
 export interface PlaysenseStudioPlayerProps {
+  lessonMetronome?: LessonMetronome;
   classItemId: string;
   /** Class item title used to name exported sheet-music files; falls back to the score title. */
   classItemTitle?: string;
@@ -175,6 +180,7 @@ export interface PlayerOverlayContext {
 export function PlaysenseStudioPlayer({
   classItemId,
   classItemTitle,
+  lessonMetronome,
   videoUrl,
   posterUrl,
   score: singleScore,
@@ -191,6 +197,11 @@ export function PlaysenseStudioPlayer({
   trimOutSeconds,
 }: PlaysenseStudioPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [videoVolume, setVideoVolume] = useState(1);
+  const [videoMuted, setVideoMuted] = useState(false);
+  useEffect(() => {
+    if (videoRef.current) {videoRef.current.volume = videoVolume; videoRef.current.muted = videoMuted;}
+  });
   const clock = useVideoTransportClock(videoRef, { onEnded });
 
   const trimStart = Math.max(0, trimInSeconds ?? 0);
@@ -296,6 +307,13 @@ export function PlaysenseStudioPlayer({
       }
     : setUserSpeed;
 
+  // Each example owns its reference. Gaps return to natural video speed.
+  useEffect(()=>{
+    const rate=activeSection?scorePlaybackRate(activeSection.score):1;
+    setUserSpeed(rate);
+    if(flexMap.isIdentity)clock.setPlaybackRate(rate);
+  },[activeSection?.id,activeSection?.score.initialTempo,activeSection?.score.playbackTempoOverride,flexMap.isIdentity,clock.durationSeconds,clock.setPlaybackRate]);
+
   // --- Click track ---------------------------------------------------------
   // The beat grid comes from the ACTIVE sections, not the DISPLAYED one. That
   // distinction is load-bearing: displaySection deliberately persists through
@@ -318,7 +336,7 @@ export function PlaysenseStudioPlayer({
   const clickGrid = useMemo(
     () =>
       mergeBeatGrids(
-        normalizedSections.map((section) => {
+        [lessonMetronomeGrid(lessonMetronome??{bpm:120,anchorSeconds:null},clock.durationSeconds,normalizedSections.flatMap(s=>s.videoStartSeconds==null?[]:[s.videoStartSeconds])).filter(t=>!normalizedSections.some(s=>t>=(s.videoStartSeconds??0)&&t<(s.videoEndSeconds??clock.durationSeconds))), ...normalizedSections.map((section) => {
           const from = section.videoStartSeconds ?? 0;
           const to = section.videoEndSeconds ?? clock.durationSeconds;
           if (!(to > from)) return [];
@@ -327,7 +345,7 @@ export function PlaysenseStudioPlayer({
           // which began wherever the student pressed play -- but at least it is
           // STABLE across seeks, and the toggle stays audible on lessons whose
           // notation was never placed. clickAligned tells the student which it is.
-          const anchor = section.metronomeAnchorSeconds ?? from;
+          const anchor = section.metronomeAnchorSeconds ?? section.activeTimeMap?.waypoints.find(w=>w.musicalPositionQN===0)?.videoTimeSeconds ?? from;
           // Unrounded notated tempo, on the TIMELINE (spec §7): the notation
           // can't drift, so the grid is built at the constant notated tempo
           // and then warped through this section's own flex map into MEDIA
@@ -337,13 +355,14 @@ export function PlaysenseStudioPlayer({
           const beatTimesTimeline = beatGridFromAnchor(anchor, section.score.initialTempo, from, to);
           const sectionFlexMap = new FlexMap(section.activeTimeMap?.flex ?? []);
           return clickTimesInMedia(sectionFlexMap, beatTimesTimeline);
-        })
+        })]
       ),
-    [normalizedSections, clock.durationSeconds]
+    [normalizedSections, clock.durationSeconds,lessonMetronome]
   );
   // Disclosed in the chronometer: the section under the playhead has no anchor,
   // so there is nothing to align a click to here.
-  const clickAligned = activeSection?.metronomeAnchorSeconds != null;
+  const lessonClickActive = !activeSection && lessonMetronome?.anchorSeconds != null && clock.currentSeconds >= lessonMetronome.anchorSeconds;
+  const clickAligned = activeSection?.metronomeAnchorSeconds != null || lessonClickActive;
 
   // With flex anywhere in the lesson the rate driver changes playbackRate at
   // every flex boundary, so the click re-anchors on a ratechange instead of
@@ -571,6 +590,10 @@ export function PlaysenseStudioPlayer({
   const [zoom, setZoom] = useState(1);
 
   // ---- Shared building blocks (reused by both layouts) ----
+  const fullscreenSurface = useCallback(() => {
+    const video = videoRef.current;
+    return video?.closest<HTMLElement>('.ws-media, [data-video-fullscreen-frame]') ?? video?.parentElement ?? null;
+  }, []);
   const videoEl = (
     <VideoStage
       ref={videoRef}
@@ -605,15 +628,28 @@ export function PlaysenseStudioPlayer({
     end: marker.endSeconds ?? all[i + 1]?.startSeconds ?? clock.durationSeconds,
   })).filter((section) => section.end > section.start);
 
+  const countIn=useTransportCountIn();
+  const [countInBars,setCountInBars]=useState<0|1|2>(0);
+  useEffect(()=>{countIn.cancel();},[displaySection.id,displayedRate,countIn.cancel]);
+  const firstBeatTimeline=displaySection.activeTimeMap?.waypoints.find(w=>w.musicalPositionQN===0)?.videoTimeSeconds ?? displaySection.videoStartSeconds ?? trimStart;
+  const firstBeatMedia=flexMap.toMedia(firstBeatTimeline);
+  const toggleCountedPlayback=()=>{
+    if(countIn.remaining){countIn.cancel();return;}
+    if(clock.isPlaying||!countInBars){void clock.toggle();return;}
+    clampSeek(firstBeatMedia);
+    void countIn.start({bpm:score.initialTempo*displayedRate,denominator:score.initialTimeSignature[1],beats:score.initialTimeSignature[0],bars:countInBars,volume:clickVolume||.2},()=>{void videoRef.current?.play().catch(()=>{});});
+  };
+
   const transportEl = (
     <TransportBar
+      fullscreenControl={<VideoFullscreenButton inline getSurface={fullscreenSurface} />}
       currentSeconds={clock.currentSeconds}
       durationSeconds={clock.durationSeconds}
-      isPlaying={clock.isPlaying}
+      isPlaying={clock.isPlaying||countIn.remaining>0}
       playbackRate={displayedRate}
-      onToggle={clock.toggle}
-      onRestart={() => clock.seek(trimStart)}
-      onSeek={clampSeek}
+      onToggle={toggleCountedPlayback}
+      onRestart={()=>{countIn.cancel();clock.seek(trimStart);}}
+      onSeek={seconds=>{countIn.cancel();clampSeek(seconds);}}
       onRateChange={onDisplayedRateChange}
       loopA={clock.loopA}
       loopB={clock.loopB}
@@ -622,13 +658,18 @@ export function PlaysenseStudioPlayer({
         clock.loopEnabled ? clock.clearLoop() : clock.setLoopEnabled(true)
       }
       onClearLoop={clock.clearLoop}
-      bpm={score.initialTempo}
+      metronomeControls={<div className="mt-2 border-t border-border pt-2 text-xs"><label className="flex items-center justify-between">Pre-count<select aria-label="Pre-count" value={countInBars} onChange={e=>{countIn.cancel();setCountInBars(Number(e.target.value) as 0|1|2);}} className="rounded border border-border bg-background p-1"><option value="0">Off</option><option value="1">1 measure</option><option value="2">2 measures</option></select></label>{countIn.remaining>0&&<output className="block py-2 text-center text-2xl font-mono">{countIn.remaining}</output>}</div>}
+      bpm={lessonClickActive ? lessonMetronome!.bpm : score.initialTempo}
       beatsPerMeasure={score.initialTimeSignature[0]}
       clickOn={clickOn}
       onClickOnChange={setClickOn}
       clickAligned={clickAligned}
       clickVolume={clickVolume}
       onClickVolumeChange={handleClickVolumeChange}
+      videoVolume={videoVolume}
+      videoMuted={videoMuted}
+      onVideoMutedChange={setVideoMuted}
+      onVideoVolumeChange={value=>{setVideoVolume(value);setVideoMuted(false);}}
       sectionMarkers={sectionMarkers}
       subtitleOptions={subtitleTracks.length > 0 ? subtitleTracks : undefined}
       activeSubtitleLang={activeSubtitleLang}
@@ -664,6 +705,8 @@ export function PlaysenseStudioPlayer({
     layout === 'split' ? staffLayoutMode(notationLayout) : 'scroll';
 
   const staffEl = (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <ScoreHeading score={score} trackIndex={activeTrackIndex} fallbackTitle={classItemTitle}/>
     <StaffRenderer
       score={score}
       trackIndex={activeTrackIndex}
@@ -684,6 +727,7 @@ export function PlaysenseStudioPlayer({
       onSelectRange={handleSelectRange}
       onDurationKnown={setTrackDurationMs}
     />
+    </div>
   );
 
   // The horizontal scrub bar only makes sense for the scrolling line; in
@@ -760,10 +804,9 @@ export function PlaysenseStudioPlayer({
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-                    {/* In a lesson the switcher lives in the action bar. */}
-                    <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} /></WorkspaceToolsPortal>
+                    {/* Keep screen and notation layout together beside the score title. */}
+                    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="View and score layout"><WorkspaceLayoutSwitcher controller={workspace} /><StaffLayoutSwitch value={notationLayout} onChange={setNotationLayout} /></div>
                     {staffNeedsRefollow(staffLayout, isFollowing) && <StaffRefollowButton onFollow={handleFollow} />}
-                    <StaffLayoutSwitch value={notationLayout} onChange={setNotationLayout} />
                     {hasNotation && (
                       <DownloadMenu
                         score={score}
@@ -811,11 +854,13 @@ export function PlaysenseStudioPlayer({
 
   return (
     <div className="space-y-4">
-      <div className="relative">
-        {videoEl}
-        {overlayEl}
+      <div data-video-fullscreen-frame className="relative flex min-h-0 flex-col">
+        <div className="relative min-h-0 flex-1">
+          {videoEl}
+          {overlayEl}
+        </div>
+        {transportEl}
       </div>
-      {transportEl}
       {tracksEl}
       <div className="relative bg-card border border-border rounded-lg p-4 overflow-hidden space-y-3">
         {staffEl}

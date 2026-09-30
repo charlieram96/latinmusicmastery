@@ -2,7 +2,7 @@
 // components/playsense-studio/player/transport/__tests__/transport-bar-layout.test.tsx
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TransportBar } from '../transport-bar';
 
 declare global { var IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -33,4 +33,16 @@ describe('TransportBar layout', () => {
     expect(row.querySelector('[class*="touch-none"]')).not.toBeNull();
     expect(row.querySelector('[data-testid="hear"]')).not.toBeNull();
   });
+});
+
+it('derives BPM from speed and resets both controls to the score reference',()=>{
+ const rate=vi.fn();
+ act(()=>root.render(<TransportBar {...base} bpm={120} playbackRate={1.5} onRateChange={rate}/>));
+ act(()=>host.querySelector<HTMLButtonElement>('[aria-haspopup="dialog"]')!.click());
+ expect(host.querySelector<HTMLInputElement>('[aria-label="Tempo BPM"]')!.value).toBe('180');
+ const resets=[...host.querySelectorAll<HTMLButtonElement>('button')].filter(b=>b.textContent?.includes('Reset'));
+ expect(resets).toHaveLength(2);
+ for(const b of resets){act(()=>b.click());expect(rate).toHaveBeenLastCalledWith(1);}
+ act(()=>host.querySelector<HTMLButtonElement>('[aria-label="Increase tempo"]')!.click());
+ expect(rate).toHaveBeenLastCalledWith(181/120);
 });

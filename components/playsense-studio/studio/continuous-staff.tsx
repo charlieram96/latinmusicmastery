@@ -26,6 +26,7 @@ import { drawSpanSegments, spanSegments, type PlacedNote } from '@/lib/playsense
 import { renderWindow, type RenderWindow } from '@/lib/playsense-studio/render-window';
 import type { Span } from '@/components/playsense-studio/shared/score-model/types';
 import type { MeasureHit, MeasureStripItem } from './editable-measure-strip';
+import { syncBarBounds } from '@/lib/playsense-studio/notation/sync-bar-bounds';
 import { REP_H } from './measure/repeat-lane';
 
 /** Below this width a bar can't render notes legibly — the strip shows a placeholder instead. */
@@ -35,6 +36,7 @@ const BARE_WIDTH = 110;
 
 export interface ContinuousStaffProps {
   items: MeasureStripItem[];
+  noteTimeForQN?: (qn: number) => number;
   pixelsPerSecond: number;
   scrollLeftPx: number;
   viewportWidth: number;
@@ -49,10 +51,12 @@ interface DrawnBar {
   k: number;
   events: VexEventDescriptor[];
   notes: StaveNote[];
+  notes2: StaveNote[];
 }
 
 interface DrawInput {
   win: RenderWindow;
+  noteTimeForQN?: (qn: number) => number;
   pixelsPerSecond: number;
   items: MeasureStripItem[];
   spans: Span[] | undefined;
@@ -60,7 +64,7 @@ interface DrawInput {
 }
 
 /** Draws the window's bars into `el` as one SVG; returns a cleanup that empties it and clears the reported hits. */
-function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, staffHeight }: DrawInput, report: ContinuousStaffProps['onHitsReady']): () => void {
+function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, staffHeight, noteTimeForQN }: DrawInput, report: ContinuousStaffProps['onHitsReady']): () => void {
   el.innerHTML = '';
   const reported = new Set<number>();
 
@@ -70,21 +74,42 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
   const ctx = renderer.getContext();
 
   const drawn = new Map<number, DrawnBar>();
-  const placed: PlacedNote[] = [];
+  const placed: PlacedNote[][] = [[], []];
 
   items.forEach((item, k) => {
     const x0 = item.startVideoTimeSeconds * pixelsPerSecond - win.start;
     const x1 = item.endVideoTimeSeconds * pixelsPerSecond - win.start;
     if (x1 < 0 || x0 > width || x1 - x0 < MIN_RENDER_WIDTH) return;
     try {
-      const stave = new Stave(x0, 0, x1 - x0);
+      // Put the opening clef/key before musical time zero, rather than
+      // pushing every note to the right of its waveform reference.
+      const headerWidth = noteTimeForQN && item.isFirst ? 110 : 0;
+      const stave = new Stave(x0 - headerWidth, 0, x1 - x0 + headerWidth);
       // One continuous row: only the opening bar is a row start.
       applyStaveHeader(stave, staveHeader(item, { opening: item.isFirst, rowStart: false }));
+      if (noteTimeForQN) {
+        // Sync separators share the waveform's time axis. Never offset the
+        // separator independently of the header, selection, or audio markers.
+        if (!item.isFirst) stave.setBegBarType(BarlineType.NONE);
+        if (k < items.length - 1) stave.setEndBarType(BarlineType.NONE);
+      }
       if (item.finalBarline) stave.setEndBarType(BarlineType.END);
       // Center the staff vertically: the middle line (line 2 = B4) at the
       // box's vertical center, so stems have even headroom above and below.
       stave.setY(Math.round(staffHeight / 2 - stave.getYForLine(2)));
       stave.setContext(ctx).draw();
+      if (noteTimeForQN) {
+        const barX = syncBarBounds(x0,x1).left;
+        ctx.save();
+        // A fine gray separator stays readable behind a downbeat notehead.
+        ctx.setStrokeStyle('#94a3b8');
+        ctx.setLineWidth(0.75);
+        ctx.beginPath();
+        ctx.moveTo(barX, stave.getYForLine(0));
+        ctx.lineTo(barX, stave.getYForLine(4));
+        ctx.stroke();
+        ctx.restore();
+      }
 
       const bare = x1 - x0 < BARE_WIDTH;
       const strip = (ds: VexEventDescriptor[]): VexEventDescriptor[] =>
@@ -96,28 +121,56 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
       const built = buildMeasure([events, voice2], item.timeSignature, item.clef);
       if (!built) return;
       formatMeasure(built, Math.max(20, stave.getNoteEndX() - stave.getNoteStartX() - 8));
+      if (noteTimeForQN) {
+        // Only the downbeat needs engraving space after its separator. Keep
+        // later attacks at their time coordinates and leave the timing map intact.
+        const nextAttack = [...events, ...voice2]
+          .map(event => noteTimeForQN(event.qnStart) * pixelsPerSecond - win.start)
+          .filter(x => x > x0 + 0.5)
+          .reduce((nearest, x) => Math.min(nearest, x), x1);
+        const downbeatInset = Math.min(17, Math.max(0, nextAttack - x0) / 3);
+        const positioned = new Set<ReturnType<StaveNote['getTickContext']>>();
+        built.notes.forEach((notes, voice) => notes.forEach((note, index) => {
+          note.setStave(stave);
+          const event = (voice === 0 ? events : voice2)[index];
+          const tick = note.getTickContext();
+          if (!event || positioned.has(tick)) return;
+          const timeX = noteTimeForQN(event.qnStart) * pixelsPerSecond - win.start;
+          const target = timeX + (Math.abs(timeX - x0) < 0.5 ? downbeatInset : 0);
+          // Move the shared rhythmic context, preserving chord displacements,
+          // beams, articulations and the formatter's voice collision handling.
+          tick.setX(tick.getX() + target - note.getAbsoluteX() - note.getGlyphWidth() / 2);
+          positioned.add(tick);
+        }));
+      }
       drawMeasure(ctx, stave, built);
       const vexNotes = built.notes[0] ?? [];
       const vexNotes2 = built.notes[1] ?? [];
 
       // Held pitches inside the bar, matched even when the next chord changes shape.
-      events.forEach((d, i) => {
-        const after = events[i + 1];
+      [events,voice2].forEach((lane, v) => lane.forEach((d, i) => {
+        const laneNotes = v === 0 ? vexNotes : vexNotes2;
+        const after = lane[i + 1];
         if (!after) return;
         const indices = scoreTieIndices(d, after);
-        if (indices.firstIndexes.length) new StaveTie({ firstNote: vexNotes[i], lastNote: vexNotes[i + 1], ...indices }).setContext(ctx).draw();
-      });
+        if (indices.firstIndexes.length) new StaveTie({ firstNote: laneNotes[i], lastNote: laneNotes[i + 1], ...indices }).setContext(ctx).draw();
+      }));
 
       // Reading order for spans: voice 1, then voice 2, bar by bar.
-      vexNotes.forEach((note, i) => placed.push({ id: events[i].id, note, system: 0, hasDynamic: !!events[i].dynamic }));
-      vexNotes2.forEach((note, i) => placed.push({ id: voice2[i].id, note, system: 0, hasDynamic: !!voice2[i].dynamic }));
+      vexNotes.forEach((note, i) => placed[0].push({ id: events[i].id, note, system: 0, hasDynamic: !!events[i].dynamic }));
+      vexNotes2.forEach((note, i) => placed[1].push({ id: voice2[i].id, note, system: 0, hasDynamic: !!voice2[i].dynamic }));
 
-      const hits: MeasureHit[] = vexNotes.map((n, i) => {
-        const bb = n.getBoundingBox();
-        // Bar-local x; staff-local y (the strip's overlays add REP_H once).
-        return { eventIndex: i, x: bb.getX() - x0, y: bb.getY(), w: bb.getW(), h: bb.getH() };
-      });
-      drawn.set(k, { k, events, notes: vexNotes });
+      const hits: MeasureHit[] = [];
+      built.notes.forEach((notes, voice) => notes.forEach((note, eventIndex) => {
+        const used = new Set<number>();
+        note.noteHeads.forEach(head => {
+          const member = note.getKeyProps().findIndex((key, i) => key.line === head.getLine() && !used.has(i));
+          if (member < 0) return;
+          used.add(member);
+          hits.push({ eventIndex, voice, member, x: head.getAbsoluteX() - x0 - 3, y: head.getY() - 6, w: 18, h: 12 });
+        });
+      }));
+      drawn.set(k, { k, events, notes: vexNotes, notes2: vexNotes2 });
       reported.add(item.measureIndex);
       report(item.measureIndex, hits);
     } catch {
@@ -127,25 +180,25 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
 
   // Ties across barlines. Both ends drawn: one tie in this SVG. One end
   // off-window or too narrow: a partial tie to/from the barline.
-  for (let k = 0; k + 1 < items.length; k++) {
+  for (const voice of [0, 1]) for (let k = 0; k + 1 < items.length; k++) {
     const a = drawn.get(k);
     const b = drawn.get(k + 1);
     if (!a && !b) continue;
-    const last = items[k].events.at(-1);
-    const first = items[k + 1].events[0];
+    const last = (voice === 0 ? items[k].events : items[k].voice2Events ?? []).at(-1);
+    const first = (voice === 0 ? items[k + 1].events : items[k + 1].voice2Events ?? [])[0];
     if (!last || !first) continue;
     try {
       const indices = scoreTieIndices(last, first);
       if (a && b) {
-        const firstNote = a.notes.at(-1);
-        const lastNote = b.notes[0];
+        const firstNote = (voice === 0 ? a.notes : a.notes2).at(-1);
+        const lastNote = (voice === 0 ? b.notes : b.notes2)[0];
         if (indices.firstIndexes.length && firstNote && lastNote) new StaveTie({ firstNote, lastNote, ...indices }).setContext(ctx).draw();
       } else if (a) {
-        const firstNote = a.notes.at(-1);
+        const firstNote = (voice === 0 ? a.notes : a.notes2).at(-1);
         const { firstIndexes } = indices;
         if (firstIndexes.length && firstNote) new StaveTie({ firstNote, firstIndexes, lastIndexes: firstIndexes }).setContext(ctx).draw();
       } else if (b) {
-        const lastNote = b.notes[0];
+        const lastNote = (voice === 0 ? b.notes : b.notes2)[0];
         const { lastIndexes } = indices;
         if (lastIndexes.length && lastNote) new StaveTie({ lastNote, firstIndexes: lastIndexes, lastIndexes }).setContext(ctx).draw();
       }
@@ -154,7 +207,7 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
     }
   }
 
-  drawSpanSegments(ctx, spanSegments(spans, placed, { openEnds: true }));
+  placed.forEach(lane => drawSpanSegments(ctx, spanSegments(spans, lane, { openEnds: true })));
 
   const svg = el.querySelector('svg');
   if (svg) themeVexflowSvg(svg as SVGSVGElement);
@@ -165,7 +218,7 @@ function drawStaff(el: HTMLDivElement, { win, pixelsPerSecond, items, spans, sta
   };
 }
 
-export function ContinuousStaff({ items, pixelsPerSecond, scrollLeftPx, viewportWidth, height, spans, onHitsReady }: ContinuousStaffProps) {
+export function ContinuousStaff({ items, noteTimeForQN, pixelsPerSecond, scrollLeftPx, viewportWidth, height, spans, onHitsReady }: ContinuousStaffProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   // The window is derived state: renderWindow hands back the same object while
   // the view stays well inside it, so this only re-renders when it must move.
@@ -197,7 +250,7 @@ export function ContinuousStaff({ items, pixelsPerSecond, scrollLeftPx, viewport
   useEffect(() => {
     const el = hostRef.current;
     if (!el) return;
-    input.current = { win: { start: next.start, end: next.end }, pixelsPerSecond, items, spans, staffHeight };
+    input.current = { win: { start: next.start, end: next.end }, pixelsPerSecond, items, spans, staffHeight, noteTimeForQN };
     const run = () => {
       frame.current = 0;
       const now = input.current;
@@ -212,7 +265,7 @@ export function ContinuousStaff({ items, pixelsPerSecond, scrollLeftPx, viewport
     // The first drawing is immediate, so the staff never mounts blank.
     if (!clear.current) run();
     else if (!frame.current) frame.current = requestAnimationFrame(run);
-  }, [next.start, next.end, pixelsPerSecond, items, spans, staffHeight]);
+  }, [next.start, next.end, pixelsPerSecond, items, spans, staffHeight, noteTimeForQN]);
 
   useEffect(() => () => {
     cancelAnimationFrame(frame.current);

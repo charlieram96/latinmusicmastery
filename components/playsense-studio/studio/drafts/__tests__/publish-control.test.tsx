@@ -37,7 +37,7 @@ function mount(unpub: [boolean, boolean], extra?: React.ReactNode) {
       { owner: { kind: 'exercise', id: 'ci' }, label: 'Exercise', unpublished: unpub[1] },
     ]}>
       {extra}
-      <PublishControl />
+      <PublishControl studentHref="/dashboard/course/c/class/l?itemId=i" />
     </StudioDraftsProvider>
   ));
 }
@@ -92,4 +92,27 @@ describe('PublishControl', () => {
     await flush();
     expect(acts.getPublishPreview).toHaveBeenCalledWith([{ kind: 'section', id: 'a' }, { kind: 'exercise', id: 'ci' }]);
   });
+});
+
+it('keeps the published student link available after publication', async () => {
+  mount([true, false]);
+  act(() => btn('Publish').click());
+  await flush();
+  const publish = [...host.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(b => b.textContent === 'Publish')!;
+  await act(async () => publish.click());
+  await flush();
+  expect(host.textContent).toContain('Published. Students can see the saved version.');
+  expect(host.querySelector('a')?.getAttribute('href')).toBe('/dashboard/course/c/class/l?itemId=i');
+});
+it('recovers its controls after a rejected publication request', async () => {
+  acts.publishStudioDraft.mockRejectedValue(new Error('network'));
+  mount([true, false]);
+  act(() => btn('Publish').click());
+  await flush();
+  const publish = [...host.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(b => b.textContent === 'Publish')!;
+  await act(async () => publish.click());
+  await flush();
+  expect(host.textContent).toContain('Could not complete the operation');
+  expect(host.textContent).not.toContain('Published. Students');
+  expect(publish.disabled).toBe(false);
 });

@@ -38,8 +38,8 @@ const exercise: ExerciseDefinition = {
 }
 let session: ReturnType<typeof useExerciseSession>
 let root: Root
-function Harness() {
-  const value = useExerciseSession()
+function Harness({playbackOnly=false}:{playbackOnly?:boolean}) {
+  const value = useExerciseSession({playbackOnly})
   useLayoutEffect(() => { session = value }, [value])
   return null
 }
@@ -158,4 +158,34 @@ describe('exercise session lifecycle', () => {
     expect(session.sessionState).toBe('countdown')
     expect(mocks.metronome.startMetronome).toHaveBeenCalledTimes(3)
   })
+})
+
+it('plays the preview on an output context without opening mic, MIDI or BLE; closes it on exit', async () => {
+  const close=vi.fn(async()=>{})
+  vi.stubGlobal('AudioContext', class { currentTime=0; state='running'; resume=mocks.context.resume; close=close })
+  await act(async()=>root.render(<Harness playbackOnly />))
+  await act(async()=>session.selectExercise(exercise))
+  await act(async()=>session.startExercise())
+  expect(mocks.mic.startListening).not.toHaveBeenCalled()
+  expect(mocks.midi.startListening).not.toHaveBeenCalled()
+  expect(mocks.ble.startListening).not.toHaveBeenCalled()
+  expect(session.sessionState).toBe('countdown')
+  expect(mocks.backing.startPlayback).toHaveBeenCalledWith(expect.any(Object),2)
+  await act(async()=>session.retry())
+  expect(session.sessionState).toBe('selecting')
+  expect(mocks.backing.stopPlayback).toHaveBeenCalled()
+  await act(async()=>root.render(null))
+  expect(close).toHaveBeenCalledOnce()
+})
+
+it('keeps a note-selected starting point and starts the shared audio there', async () => {
+  await render()
+  await act(async () => { session.selectExercise(exercise); session.setAudioMode('midi') })
+  act(() => session.seekExercise(1))
+  expect(session.getElapsedSeconds()).toBe(1)
+  expect(session.playheadProgress).toBe(.5)
+  await act(async () => { await session.startExercise() })
+  expect(mocks.metronome.startMetronome).toHaveBeenLastCalledWith(mocks.context, 1)
+  expect(mocks.backing.startPlayback).toHaveBeenCalled()
+  expect(session.sessionState).toBe('playing')
 })

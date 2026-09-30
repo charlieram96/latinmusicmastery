@@ -10,6 +10,7 @@
 // We render a tap-to-play overlay before the first interaction; once the
 // user taps, we hand control back to the transport bar.
 
+import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import { Play } from 'lucide-react';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import type { SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt';
@@ -62,7 +63,7 @@ export const VideoStage = forwardRef<HTMLVideoElement, VideoStageProps>(
 
     return (
       <div className={`relative bg-black rounded-lg overflow-hidden ${className ?? ''}`}>
-        <video
+        <video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()}
           ref={setVideoRef}
           src={src}
           poster={poster}
@@ -74,7 +75,7 @@ export const VideoStage = forwardRef<HTMLVideoElement, VideoStageProps>(
           {tracks?.map((t) => (
             <track key={t.src} kind="subtitles" src={t.src} srcLang={t.lang} label={t.label} />
           ))}
-        </video>
+        </video><VideoWatermark />
         {!hasPlayed && (
           <button
             type="button"

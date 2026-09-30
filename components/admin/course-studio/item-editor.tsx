@@ -1,5 +1,7 @@
 'use client'
 
+import { localizedRichContent, withRichContentTranslation } from '@/lib/i18n/rich-content'
+import type { Locale } from '@/lib/i18n'
 import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -73,6 +75,7 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
   const [description, setDescription] = useState(item.description ?? '')
   const [titleEs, setTitleEs] = useState(item.title_es ?? '')
   const [descriptionEs, setDescriptionEs] = useState(item.description_es ?? '')
+  const [notesLocale, setNotesLocale] = useState<Locale>('en')
   const [soundslice, setSoundslice] = useState(item.soundslice_embed_url ?? '')
 
   const scoreDocumentId =
@@ -328,11 +331,16 @@ function ItemEditorBody({ item, onPatched }: ItemEditorProps) {
         <p className="text-xs leading-relaxed text-muted-foreground">
           Instructions and supporting material rendered below the player on the lesson page.
         </p>
+        <div className="flex gap-2" role="group" aria-label="Notes language">
+          {(['en', 'es'] as const).map(lang => <button key={lang} type="button" aria-pressed={notesLocale === lang} onClick={() => setNotesLocale(lang)} className={`rounded-md border px-3 py-1.5 text-sm ${notesLocale === lang ? 'border-primary bg-primary/15 text-primary' : 'border-border'}`}>{lang === 'es' ? 'Español' : 'English'}</button>)}
+        </div>
         <TiptapEditor
-          content={item.rich_content}
+          key={`${item.id}-${notesLocale}`}
+          content={localizedRichContent(item.rich_content, notesLocale)}
           onChange={(content) => {
-            onPatched({ rich_content: content })
-            queue({ rich_content: content })
+            const rich_content = withRichContentTranslation(item.rich_content, notesLocale, content)
+            onPatched({ rich_content })
+            queue({ rich_content })
           }}
         />
       </div>

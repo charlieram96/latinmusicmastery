@@ -73,11 +73,12 @@ describe('chords, rhythm, pitch and delete', () => {
     const s = editorReducer(st(doc([bar(1, [n(62)])])), { type: 'set-events-accidental', refs: [{ ...at(0, 0), eventIndex: 0 }], alter: -1, keyFifths: 0 });
     expect(ev(s)[0]).toMatchObject({ midi: 61, spelling: { step: 'D', alter: -1, showAccidental: 'always' } });
   });
-  it('deletes across voices, drops an emptied voice 2 and prunes slurs', () => {
+  it('replaces deleted notes across voices with rests and prunes slurs', () => {
     const s0 = st({ ...doc([bar(1, [n(60, 2, 'a'), n(62, 2, 'b')], [n(48, 4, 'c')])]), spans: [{ id: 's', type: 'slur', from: 'a', to: 'b' }] });
     const s1 = editorReducer(s0, { type: 'delete-events', refs: [{ ...at(0, 0), eventIndex: 1 }, { ...at(0, 0, 1), eventIndex: 0 }] });
-    expect(ev(s1).map((e) => e.id)).toEqual(['a']);
-    expect(s1.score.tracks[0].measures[0].voices).toHaveLength(1);
+    expect(ev(s1)).toMatchObject([{ id:'a', kind:'note', durationQN:2 }, {kind:'rest', durationQN:2}]);
+    expect(s1.score.tracks[0].measures[0].voices).toHaveLength(2);
+    expect(ev(s1, 0, 1)).toMatchObject([{kind:'rest',durationQN:4}]);
     expect(s1.score.spans).toEqual([]);
   });
 });
@@ -106,7 +107,7 @@ describe('note entry: further rules', () => {
     const s3 = editorReducer(s2, { type: 'delete-events', refs: [r0(0, 1)] });
     expect(ev(s1, 0, 1)[0]).toMatchObject({ midi: 49 });
     expect(ev(s2, 0, 1)[1]).toMatchObject({ durationQN: 1 });
-    expect(ev(s3, 0, 1)).toHaveLength(1);
+    expect(ev(s3, 0, 1)).toMatchObject([{kind:'rest',durationQN:2},{kind:'note',durationQN:1}]);
     for (const s of [s1, s2, s3]) expect(JSON.stringify(s.score.tracks[0].measures[0].voices[0])).toBe(v0);
   });
   it('changes the value of a whole tuplet group, and keeps a tuplet on a dots-only change', () => {
@@ -192,5 +193,22 @@ describe('note entry: fix round 1', () => {
   it('refuses to add a chord note to a percussion note', () => {
     const s0 = st(doc([bar(1, [{ kind: 'note', id: 'p', midi: 38, durationQN: 1, percussion: { staffLine: 'C5', notehead: 'normal' } }])]));
     expect(editorReducer(s0, { type: 'add-chord-note', ref: r0(0), midi: 42 })).toBe(s0);
+  });
+});
+
+describe('meter capacity across score changes', () => {
+  it.each([[3,4,3,'q'],[7,8,7,'8'],[4,4,4,'q']] as const)('%i/%i permits exactly %i units', (num,den,count,value)=>{
+    const score=doc([bar(1,[])]);score.initialTimeSignature=[num,den];
+    let state=st(score);
+    for(let i=0;i<count;i++) state=editorReducer(state,{type:'write-event',at:at(0,'end'),kind:i%2?'rest':'note',midi:60,value});
+    expect(ev(state)).toHaveLength(count);
+    expect(editorReducer(state,{type:'write-event',at:at(0,'end'),kind:'note',midi:60,value:'64'})).toBe(state);
+  });
+  it('uses a local 7/8 meter and accepts a dotted half plus an eighth',()=>{
+    const score=doc([bar(1,[]),{...bar(2,[]),timeSignature:[7,8]}]);
+    let state=editorReducer(st(score),{type:'write-event',at:at(1,'end'),kind:'note',midi:60,value:'h',dots:1});
+    state=editorReducer(state,{type:'write-event',at:at(1,'end'),kind:'rest',value:'8'});
+    expect(ev(state,1).reduce((sum,e)=>sum+e.durationQN,0)).toBe(3.5);
+    expect(editorReducer(state,{type:'write-event',at:at(1,'end'),kind:'rest',value:'64'})).toBe(state);
   });
 });

@@ -25,7 +25,10 @@ const percussionSchema = z.object({
   sourceMidi: z.number().int().min(0).max(127).optional(),
 });
 
+const symbolOffsetSchema = z.object({ x: z.number().finite(), y: z.number().finite() });
+
 const noteBaseShape = {
+  symbolOffsets: z.record(z.string(), symbolOffsetSchema).optional(),
   durationQN: z.number().positive(),
   dotted: z.boolean().optional(),
   triplet: z.boolean().optional(),
@@ -54,6 +57,7 @@ const noteSchema = z.object({
   spellingHint: z.string().optional(),
   spelling: spellingSchema.optional(),
   percussion: percussionSchema.optional(),
+  notehead: percussionSchema.shape.notehead.optional(),
   fingering: fingeringSchema.optional(),
   ...noteBaseShape,
 });
@@ -72,6 +76,7 @@ const chordSchema = z.object({
         spellingHint: z.string().optional(),
         spelling: spellingSchema.optional(),
         percussion: percussionSchema.optional(),
+  notehead: percussionSchema.shape.notehead.optional(),
         fingering: fingeringSchema.optional(),
         tieToNext: z.boolean().optional(),
       })
@@ -117,6 +122,8 @@ const measureSchema = z.object({
 });
 
 const trackSchema = z.object({
+  staffGroup: z.string().min(1).optional(),
+  staffNumber: z.number().int().min(1).optional(),
   index: z.number().int().min(0),
   instrument: z.enum([
     'guitar',
@@ -145,14 +152,16 @@ const trackSchema = z.object({
 const scoreDocumentSchema = z.object({
   schemaVersion: z.literal(1),
   title: z.string().min(1),
-  composer: z.string().optional(),
+  composer: z.string().default('LMM'),
   sourceFormat: z.enum(['musicxml', 'midi', 'pdf', 'image', 'native']),
   initialTempo: z.number().positive(),
   initialTimeSignature: timeSignatureSchema,
   initialKeyFifths: z.number().int().min(-7).max(7),
   tracks: z.array(trackSchema).min(1),
-  spans: z.array(z.object({ id: z.string().min(1), type: z.enum(['slur', 'cresc', 'dim']), from: z.string().min(1), to: z.string().min(1) })).optional(),
+  spans: z.array(z.object({ id: z.string().min(1), type: z.enum(['slur', 'cresc', 'dim']), from: z.string().min(1), to: z.string().min(1), offset: symbolOffsetSchema.optional() })).optional(),
   tempoMarksConfirmed: z.boolean().optional(),
+  playbackTempoOverride: z.number().positive().finite().optional(),
+  videoCoaching: z.literal('cascara-v1').nullable().optional(),
 });
 
 export const SCORE_DOCUMENT_SCHEMA = scoreDocumentSchema;

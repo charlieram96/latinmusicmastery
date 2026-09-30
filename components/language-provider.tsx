@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   DEFAULT_LOCALE,
@@ -40,7 +40,8 @@ function writeCookie(value: Locale) {
 
 export function LanguageProvider({ initialLocale, children }: LanguageProviderProps) {
   const router = useRouter()
-  const [locale, setLocaleState] = useState<Locale>(initialLocale ?? DEFAULT_LOCALE)
+  // Server refreshes can change the cookie locale without remounting this layout.
+  const locale = initialLocale ?? DEFAULT_LOCALE
 
   useEffect(() => {
     let cancelled = false
@@ -48,11 +49,10 @@ export function LanguageProvider({ initialLocale, children }: LanguageProviderPr
     const stored = typeof window !== 'undefined' ? window.localStorage.getItem(LANGUAGE_STORAGE_KEY) : null
     if (isLocale(stored)) {
       if (stored !== locale) {
-        setLocaleState(stored)
         writeCookie(stored)
         // SSR rendered with the previous cookie locale; refresh so server-rendered
         // DB content matches the restored preference.
-        router.refresh()
+        window.location.reload()
       }
       return () => {
         cancelled = true
@@ -64,17 +64,16 @@ export function LanguageProvider({ initialLocale, children }: LanguageProviderPr
       if (cancelled) return
       const pref = data.user?.user_metadata?.preferred_language
       if (isLocale(pref) && pref !== locale) {
-        setLocaleState(pref)
         writeCookie(pref)
         window.localStorage.setItem(LANGUAGE_STORAGE_KEY, pref)
-        router.refresh()
+        window.location.reload()
       }
     })
 
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [locale])
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -84,20 +83,17 @@ export function LanguageProvider({ initialLocale, children }: LanguageProviderPr
 
   const setLocale = useCallback((next: Locale) => {
     if (!isLocale(next)) return
-    setLocaleState(next)
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(LANGUAGE_STORAGE_KEY, next)
       writeCookie(next)
     }
-    // The cookie is written above, so re-rendering server components now picks
-    // up the new locale and re-localizes DB-backed content (course titles, etc).
+    // Refresh server content immediately; a slow profile write must not block
+    // the language switch. The server cookie remains the source of truth.
     router.refresh()
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        supabase.auth.updateUser({ data: { preferred_language: next } }).catch(() => {})
-      }
-    })
+    void supabase.auth.getUser().then(async ({ data }) => {
+      if (data.user) await supabase.auth.updateUser({ data: { preferred_language: next } })
+    }).catch(() => {})
   }, [router])
 
   const t = useCallback(
@@ -114,4 +110,11 @@ export function LanguageProvider({ initialLocale, children }: LanguageProviderPr
 
 export function useTranslation() {
   return useContext(LanguageContext)
+}
+
+/** A localized preview can choose its own language without changing account preferences. */
+export function LanguageScope({ locale, children }: { locale: Locale; children: React.ReactNode }) {
+  const parent = useTranslation()
+  const t = useCallback((key: string, params?: Record<string, string | number>) => getTranslation(locale, key, params), [locale])
+  return <LanguageContext.Provider value={{ ...parent, locale, t }}>{children}</LanguageContext.Provider>
 }

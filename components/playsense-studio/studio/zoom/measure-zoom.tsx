@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — the measure zoom: one bar drawn large over the strip,
 // with its neighbours as dimmed slivers either side, the bar's beats shaded
@@ -35,7 +37,7 @@ import { keyPitchAt, pitchName } from '@/lib/playsense-studio/pitch';
 import type { NoteValue } from '@/lib/playsense-studio/rhythm';
 import type { NotationClef } from '@/lib/playsense-studio/score-to-vexflow';
 import { measureLengthInQN } from '@/lib/playsense-studio/time-mapping';
-import { dragSteps, indexForLine, snapStroke, stepPitches, type SpelledPitch } from '@/lib/playsense-studio/zoom-pointer';
+import { dragSteps, indexForLine, percussionEntryAtLine, snapStroke, stepPitches, type SpelledPitch } from '@/lib/playsense-studio/zoom-pointer';
 import type { Span } from '@/components/playsense-studio/shared/score-model/types';
 import type { MeasureStripItem } from '../editable-measure-strip';
 import { formatBarTime } from '../measure/measure-bar';
@@ -44,7 +46,7 @@ import type { ZoomEditing } from './use-zoom-editing';
 import { ZoomStaff, type ZoomHit, type ZoomLayout } from './zoom-staff';
 
 export interface ZoomState {
-  measureIndex: number; cursor: NoteCursor; value: NoteValue; dots: 0 | 1 | 2; pencil: boolean;
+  measureIndex: number; cursor: NoteCursor; value: NoteValue; dots: 0 | 1 | 2; pencil: boolean; restEntry?: boolean;
   /** The Keys panel (K), and the on-screen keyboard's octave while it's open (Task 5). */
   keysOpen?: boolean; octave?: number;
 }
@@ -143,12 +145,13 @@ const keepFocus = (e: ReactMouseEvent) => e.preventDefault();
 
 /** The meta line's fill word: v6's capTxt. */
 function FillWord({ fill }: { fill: MeasureFill }) {
+  const st = useStudioText();
   const beats = (b: number) => `${beatsText(b)} beat${Math.abs(b - 1) < 1e-6 || b < 1 ? '' : 's'}`;
   switch (fill.kind) {
-    case 'empty': return <>empty</>;
-    case 'short': return <span className="st-zoom-fill is-short">{beats(fill.missingBeats)} missing</span>;
-    case 'over': return <span className="st-zoom-fill is-over">{beats(fill.overBeats)} too many</span>;
-    default: return <span className="st-zoom-fill is-ok">adds up</span>;
+    case 'empty': return <>{st("empty")}</>;
+    case 'short': return <span className="st-zoom-fill is-short">{beats(fill.missingBeats)} {st("missing")}</span>;
+    case 'over': return <span className="st-zoom-fill is-over">{beats(fill.overBeats)} {st("too many")}</span>;
+    default: return <span className="st-zoom-fill is-ok">{st("adds up")}</span>;
   }
 }
 
@@ -157,6 +160,7 @@ export function MeasureZoom({
   onVoice, onNav, onClose, onLayout, editing, dispatch, onCursor, clef, keyFifths, percStrokes,
   toolbar, onToggleKeys, onTogglePencil, meta,
 }: MeasureZoomProps) {
+  const st = useStudioText();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const centerRef = useRef<HTMLDivElement | null>(null);
   const headRef = useRef<HTMLDivElement | null>(null);
@@ -346,6 +350,12 @@ export function MeasureZoom({
     }
     if (zoom.pencil) {
       e.preventDefault();
+      if (zoom.restEntry) { editing.enterRest(true); return; }
+      if (percussion) {
+        const entry = percussionEntryAtLine(percStrokes ?? [], pencilLine(layout, p.y), items.filter(item=>item.measureIndex<=i).flatMap(item=>item.events.flatMap(e=>(e.midiPitches ?? (e.midi === null ? [] : [e.midi])).map((midi,j)=>({midi,percussion:e.percussion?.[j]})))));
+        editing.enterStroke(entry.midi, true, entry.percussion);
+        return;
+      }
       const pitch = keyPitchAt(indexForLine(pencilLine(layout, p.y), clef), keyFifths);
       editing.enterPitch(pitch.midi, pitch.spelling);
     }
@@ -404,12 +414,12 @@ export function MeasureZoom({
       data-side={side}
       style={{ gridColumn: side === 'prev' ? 1 : 3, gridRow: 2, overflow: 'hidden', cursor: neighbour ? 'pointer' : 'default' }}
       onClick={neighbour ? () => onNav(side === 'prev' ? -1 : 1) : undefined}
-      title={neighbour ? `m.${neighbour.measureNumber}` : undefined}
+      title={st(neighbour ? `m.${neighbour.measureNumber}` : undefined)}
     >
       {neighbour && (
         <>
           <ZoomStaff item={neighbour} width={sliverW} height={bodyH} scale={SLIVER_SCALE} spans={spans} onLayout={noop} />
-          <span className="st-zoom-sliver-label">m.{neighbour.measureNumber}</span>
+          <span className="st-zoom-sliver-label">{st("m.")}{neighbour.measureNumber}</span>
         </>
       )}
     </div>
@@ -426,13 +436,13 @@ export function MeasureZoom({
       style={{ transformOrigin: '0 50%' }}
     >
       <div className="st-zoom-head" ref={headRef}>
-        <button type="button" className="st-iconbtn" aria-label="Previous bar" title="Previous bar (⌘←)" disabled={!prev} onMouseDown={keepFocus} onClick={() => onNav(-1)}>
+        <button type="button" className="st-iconbtn" aria-label={st("Previous bar")} title={st("Previous bar (⌘←)")} disabled={!prev} onMouseDown={keepFocus} onClick={() => onNav(-1)}>
           <ChevronLeft className="h-4 w-4" />
         </button>
         <div className="st-zoom-title">
           <b>
-            Measure {item.measureNumber}
-            {meta?.repeatPass && <span className="st-zoom-pass"> · pass {meta.repeatPass.pass + 1} of {meta.repeatPass.count}</span>}
+            {st("Measure ")}{item.measureNumber}
+            {meta?.repeatPass && <span className="st-zoom-pass"> {st("· pass ")}{meta.repeatPass.pass + 1} {st("of ")}{meta.repeatPass.count}</span>}
           </b>
           <span>
             {item.timeSignature.join('/')} · <FillWord fill={fill} />
@@ -442,32 +452,32 @@ export function MeasureZoom({
           </span>
         </div>
         <div className="st-zoom-dock">{toolbar}</div>
+        {zoom.pencil && <span className="max-w-64 text-xs text-muted-foreground" role="status">{st(zoom.restEntry ? 'Click to append rests. Select Notes to return to notes.' : 'Click to append notes · 5 quarter · 4 eighth · 0 rest · ← → cursor')}</span>}
         {showVoices && (
-          <div className="st-seg" role="group" aria-label="Voice">
-            <button type="button" className={voice === 0 ? 'is-on' : ''} aria-pressed={voice === 0} onMouseDown={keepFocus} onClick={() => onVoice(0)}>V1</button>
-            <button type="button" className={voice === 1 ? 'is-on' : ''} aria-pressed={voice === 1} onMouseDown={keepFocus} onClick={() => onVoice(1)}>V2</button>
+          <div className="st-seg" role="group" aria-label={st("Voice")}>
+            <button type="button" className={voice === 0 ? 'is-on' : ''} aria-pressed={voice === 0} onMouseDown={keepFocus} onClick={() => onVoice(0)}>{st("V1")}</button>
+            <button type="button" className={voice === 1 ? 'is-on' : ''} aria-pressed={voice === 1} onMouseDown={keepFocus} onClick={() => onVoice(1)}>{st("V2")}</button>
           </div>
         )}
         {onToggleKeys && (
           <button
-            type="button" className={`st-iconbtn${zoom.keysOpen ? ' is-on amber' : ''}`} aria-label="Keys" aria-pressed={!!zoom.keysOpen}
-            title="Enter notes from a MIDI keyboard or the on-screen keys (K)" onMouseDown={keepFocus} onClick={onToggleKeys}
+            type="button" className={`st-iconbtn${zoom.keysOpen ? ' is-on amber' : ''}`} aria-label={st("Keys")} aria-pressed={!!zoom.keysOpen}
+            title={st("Enter notes from a MIDI keyboard or the on-screen keys (K)")} onMouseDown={keepFocus} onClick={onToggleKeys}
           >
             <Piano className="h-4 w-4" />
           </button>
         )}
         {onTogglePencil && (
           <button
-            type="button" className={`st-iconbtn${zoom.pencil ? ' is-on amber' : ''}`} aria-label="Pencil" aria-pressed={zoom.pencil}
-            title="Click the staff to add notes (N)" onMouseDown={keepFocus} onClick={onTogglePencil}
+            type="button" className={`st-iconbtn${zoom.pencil ? ' is-on amber' : ''}`} aria-label={st("Pencil")} aria-pressed={zoom.pencil}
+            title={st("Click the staff to add notes (N)")} onMouseDown={keepFocus} onClick={onTogglePencil}
           >
             <Pencil className="h-4 w-4" />
           </button>
         )}
-        <button type="button" className="st-chip" aria-label="Done" title="Back to all bars (Esc)" onMouseDown={keepFocus} onClick={exit}>
-          <Minimize2 className="h-4 w-4" />Done
-        </button>
-        <button type="button" className="st-iconbtn" aria-label="Next bar" title="Next bar (⌘→)" disabled={!next} onMouseDown={keepFocus} onClick={() => onNav(1)}>
+        <button type="button" className="st-chip" aria-label={st("Done")} title={st("Back to all bars (Esc)")} onMouseDown={keepFocus} onClick={exit}>
+          <Minimize2 className="h-4 w-4" />{st("Done")}</button>
+        <button type="button" className="st-iconbtn" aria-label={st("Next bar")} title={st("Next bar (⌘→)")} disabled={!next} onMouseDown={keepFocus} onClick={() => onNav(1)}>
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>

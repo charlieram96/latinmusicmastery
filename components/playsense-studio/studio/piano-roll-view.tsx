@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio piano-roll editor view. Pitches run vertically (top = high pitch),
 // time horizontally (16th-note cells). Each note in voice 1 of the active
@@ -69,6 +71,7 @@ export function PianoRollView({
   activeTrackIndex,
   dispatch,
 }: PianoRollViewProps) {
+  const st = useStudioText();
   const track = score.tracks[activeTrackIndex];
   const [duration, setDuration] = useState<number>(1);
   const [selected, setSelected] = useState<SelectedRef | null>(null);
@@ -122,7 +125,7 @@ export function PianoRollView({
     setSelected(null);
   }, [activeTrackIndex]);
 
-  if (!track) return <p className="text-sm text-muted-foreground">No track.</p>;
+  if (!track) return <p className="text-sm text-muted-foreground">{st("No track.")}</p>;
 
   const handleCellClick = (midi: number, measureIndex: number, qnInMeasure: number) => {
     // If we click on an existing note, select it instead of adding.
@@ -155,8 +158,7 @@ export function PianoRollView({
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs uppercase tracking-wider text-muted-foreground">
-          Duration
-        </span>
+          {st("Duration")}</span>
         {DURATION_OPTIONS.map((opt) => (
           <button
             key={opt.value}
@@ -167,7 +169,7 @@ export function PianoRollView({
                 : 'border-border hover:bg-muted'
             }`}
           >
-            {opt.label}
+            {st(opt.label)}
           </button>
         ))}
 
@@ -185,8 +187,7 @@ export function PianoRollView({
             className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40 ml-auto"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            Delete selected
-          </button>
+            {st("Delete selected")}</button>
         )}
       </div>
 
@@ -448,11 +449,9 @@ export function PianoRollView({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Click a cell to add a note at the selected duration. Click + drag a
-        note vertically to change its pitch. Press{' '}
-        <kbd className="px-1 py-0.5 rounded bg-muted text-foreground text-[11px]">Delete</kbd> to remove the selected note,{' '}
-        <kbd className="px-1 py-0.5 rounded bg-muted text-foreground text-[11px]">Esc</kbd> to clear the selection.
-      </p>
+        {st("Click a cell to add a note at the selected duration. Click + drag a note vertically to change its pitch. Press ")}{st(' ')}
+        <kbd className="px-1 py-0.5 rounded bg-muted text-foreground text-[11px]">{st("Delete")}</kbd> {st("to remove the selected note, ")}{st(' ')}
+        <kbd className="px-1 py-0.5 rounded bg-muted text-foreground text-[11px]">{st("Esc")}</kbd> {st("to clear the selection.")}</p>
 
       {/* Add measure */}
       <button
@@ -460,8 +459,7 @@ export function PianoRollView({
         className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-dashed border-border hover:bg-muted text-sm"
       >
         <Plus className="w-4 h-4" />
-        Add measure
-      </button>
+        {st("Add measure")}</button>
     </div>
   );
 }

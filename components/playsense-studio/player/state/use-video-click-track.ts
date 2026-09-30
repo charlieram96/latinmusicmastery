@@ -65,9 +65,17 @@ export function useVideoClickTrack(options: {
   const { videoRef, grid, enabled, volume = 0.2, offsetSeconds = 0, smoothRateChanges = false } = options;
 
   const trackRef = useRef<ClickTrack | null>(null);
-  if (trackRef.current === null && typeof window !== 'undefined') {
-    trackRef.current = new ClickTrack();
-  }
+  // Create and configure the same engine in every effect lifecycle, including
+  // React's development remount. Creating it during render left a fresh engine
+  // with no beat grid after StrictMode closed the original one.
+  useEffect(() => {
+    const track = new ClickTrack();
+    trackRef.current = track;
+    return () => {
+      track.close();
+      if (trackRef.current === track) trackRef.current = null;
+    };
+  }, []);
 
   // The element mounts late through a portal, so poll the ref each commit; the
   // updater bails when unchanged, so this costs nothing once bound.
@@ -193,12 +201,4 @@ export function useVideoClickTrack(options: {
     };
   }, [videoEl, enabled]);
 
-  // Close the context on unmount; a leaked one keeps the tab's audio alive.
-  useEffect(
-    () => () => {
-      trackRef.current?.close();
-      trackRef.current = null;
-    },
-    []
-  );
 }

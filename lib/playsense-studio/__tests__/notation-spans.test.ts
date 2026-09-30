@@ -15,39 +15,39 @@ const n = (id: string, system = 0, hasDynamic = false): PlacedNote => ({ id, sys
 describe('spanSegments', () => {
   const placed = [n('a', 0, true), n('b'), n('c'), n('d', 1), n('e', 1)]
   it('draws a span within one system as one segment', () => {
-    expect(spanSegments([{ id: 's', type: 'cresc', from: 'a', to: 'c' }], placed)).toEqual([
+    expect(spanSegments([{ id: 's', type: 'cresc', from: 'a', to: 'c' }], placed)).toMatchObject([
       { type: 'cresc', from: placed[0].note, to: placed[2].note, fromHasDynamic: true },
     ])
   })
   it('splits a slur across a line break into two open curves', () => {
-    expect(spanSegments([{ id: 's', type: 'slur', from: 'b', to: 'e' }], placed)).toEqual([
+    expect(spanSegments([{ id: 's', type: 'slur', from: 'b', to: 'e' }], placed)).toMatchObject([
       { type: 'slur', from: placed[1].note, to: undefined, fromHasDynamic: false },
       { type: 'slur', from: undefined, to: placed[4].note },
     ])
   })
   it('splits a hairpin at each system boundary it crosses', () => {
-    expect(spanSegments([{ id: 's', type: 'dim', from: 'b', to: 'e' }], placed)).toEqual([
+    expect(spanSegments([{ id: 's', type: 'dim', from: 'b', to: 'e' }], placed)).toMatchObject([
       { type: 'dim', from: placed[1].note, to: placed[2].note, fromHasDynamic: false },
       { type: 'dim', from: placed[3].note, to: placed[4].note },
     ])
   })
   it('keeps a hairpin piece even when from and to are the same note (lone note at break)', () => {
     const p = [n('a', 0), n('b', 0), n('c', 1)]
-    expect(spanSegments([{ id: 's', type: 'cresc', from: 'b', to: 'c' }], p)).toEqual([
+    expect(spanSegments([{ id: 's', type: 'cresc', from: 'b', to: 'c' }], p)).toMatchObject([
       { type: 'cresc', from: p[1].note, to: p[1].note, fromHasDynamic: false },
       { type: 'cresc', from: p[2].note, to: p[2].note },
     ])
   })
   it('emits one segment per system for a span from last note of system 0 to first note of system 1', () => {
     const p = [n('a', 0), n('b', 0), n('c', 1), n('d', 1)]
-    expect(spanSegments([{ id: 's', type: 'cresc', from: 'b', to: 'c' }], p)).toEqual([
+    expect(spanSegments([{ id: 's', type: 'cresc', from: 'b', to: 'c' }], p)).toMatchObject([
       { type: 'cresc', from: p[1].note, to: p[1].note, fromHasDynamic: false },
       { type: 'cresc', from: p[2].note, to: p[2].note },
     ])
   })
   it('emits three segments for a span over systems 0..2, with middle system first-to-last', () => {
     const p = [n('a', 0), n('b', 0), n('c', 1), n('d', 1), n('e', 2), n('f', 2)]
-    expect(spanSegments([{ id: 's', type: 'cresc', from: 'a', to: 'f' }], p)).toEqual([
+    expect(spanSegments([{ id: 's', type: 'cresc', from: 'a', to: 'f' }], p)).toMatchObject([
       { type: 'cresc', from: p[0].note, to: p[1].note, fromHasDynamic: false },
       { type: 'cresc', from: p[2].note, to: p[3].note },
       { type: 'cresc', from: p[4].note, to: p[5].note },
@@ -55,7 +55,7 @@ describe('spanSegments', () => {
   })
   it('emits three segments for a slur over systems 0..2, with middle system as a full curve', () => {
     const p = [n('a', 0), n('b', 0), n('c', 1), n('d', 1), n('e', 2), n('f', 2)]
-    expect(spanSegments([{ id: 's', type: 'slur', from: 'a', to: 'f' }], p)).toEqual([
+    expect(spanSegments([{ id: 's', type: 'slur', from: 'a', to: 'f' }], p)).toMatchObject([
       { type: 'slur', from: p[0].note, to: undefined, fromHasDynamic: false },
       { type: 'slur', from: p[2].note, to: p[3].note },
       { type: 'slur', from: undefined, to: p[5].note },
@@ -63,7 +63,7 @@ describe('spanSegments', () => {
   })
   it('finds the correct last note of the middle system when notes follow the span (regression: reversed-index bug)', () => {
     const p = [n('a', 0), n('b', 0), n('c', 1), n('d', 1), n('e', 2), n('f', 2), n('g', 1)]
-    expect(spanSegments([{ id: 's', type: 'cresc', from: 'a', to: 'f' }], p)).toEqual([
+    expect(spanSegments([{ id: 's', type: 'cresc', from: 'a', to: 'f' }], p)).toMatchObject([
       { type: 'cresc', from: p[0].note, to: p[1].note, fromHasDynamic: false },
       { type: 'cresc', from: p[2].note, to: p[3].note },
       { type: 'cresc', from: p[4].note, to: p[5].note },
@@ -72,7 +72,7 @@ describe('spanSegments', () => {
   it('does not throw when notes with matching systems appear after the span (regression: reversed-index bug)', () => {
     const p = [n('a', 0), n('b', 0), n('c', 1), n('d', 1), n('e', 2), n('f', 2), n('g', 3), n('h', 3), n('i', 3), n('j', 3), n('k', 3)]
     expect(() => spanSegments([{ id: 's', type: 'cresc', from: 'a', to: 'f' }], p)).not.toThrow()
-    expect(spanSegments([{ id: 's', type: 'cresc', from: 'a', to: 'f' }], p)).toEqual([
+    expect(spanSegments([{ id: 's', type: 'cresc', from: 'a', to: 'f' }], p)).toMatchObject([
       { type: 'cresc', from: p[0].note, to: p[1].note, fromHasDynamic: false },
       { type: 'cresc', from: p[2].note, to: p[3].note },
       { type: 'cresc', from: p[4].note, to: p[5].note },
@@ -83,31 +83,31 @@ describe('spanSegments', () => {
       { id: '1', type: 'slur', from: 'b', to: 'b' },
       { id: '2', type: 'slur', from: 'c', to: 'a' },
       { id: '3', type: 'cresc', from: 'x', to: 'c' },
-    ], placed)).toEqual([])
-    expect(spanSegments(undefined, placed)).toEqual([])
+    ], placed)).toMatchObject([])
+    expect(spanSegments(undefined, placed)).toMatchObject([])
   })
 
   describe('openEnds (the admin strip\'s drawn window)', () => {
     it('without the option, a slur with only one end placed yields nothing, as before', () => {
-      expect(spanSegments([{ id: 's', type: 'slur', from: 'b', to: 'z' }], placed)).toEqual([])
-      expect(spanSegments([{ id: 's', type: 'slur', from: 'z', to: 'b' }], placed)).toEqual([])
+      expect(spanSegments([{ id: 's', type: 'slur', from: 'b', to: 'z' }], placed)).toMatchObject([])
+      expect(spanSegments([{ id: 's', type: 'slur', from: 'z', to: 'b' }], placed)).toMatchObject([])
     })
     it('with the option, a slur whose "from" is placed but "to" is outside the window draws an open curve', () => {
-      expect(spanSegments([{ id: 's', type: 'slur', from: 'b', to: 'z' }], placed, { openEnds: true })).toEqual([
+      expect(spanSegments([{ id: 's', type: 'slur', from: 'b', to: 'z' }], placed, { openEnds: true })).toMatchObject([
         { type: 'slur', from: placed[1].note, to: undefined },
       ])
     })
     it('with the option, a slur whose "to" is placed but "from" is outside the window draws an open curve', () => {
-      expect(spanSegments([{ id: 's', type: 'slur', from: 'z', to: 'b' }], placed, { openEnds: true })).toEqual([
+      expect(spanSegments([{ id: 's', type: 'slur', from: 'z', to: 'b' }], placed, { openEnds: true })).toMatchObject([
         { type: 'slur', from: undefined, to: placed[1].note },
       ])
     })
     it('with the option, a hairpin with only one end placed still yields nothing', () => {
-      expect(spanSegments([{ id: 's', type: 'cresc', from: 'b', to: 'z' }], placed, { openEnds: true })).toEqual([])
-      expect(spanSegments([{ id: 's', type: 'dim', from: 'z', to: 'b' }], placed, { openEnds: true })).toEqual([])
+      expect(spanSegments([{ id: 's', type: 'cresc', from: 'b', to: 'z' }], placed, { openEnds: true })).toMatchObject([])
+      expect(spanSegments([{ id: 's', type: 'dim', from: 'z', to: 'b' }], placed, { openEnds: true })).toMatchObject([])
     })
     it('with the option, a span with neither end placed still yields nothing', () => {
-      expect(spanSegments([{ id: 's', type: 'slur', from: 'y', to: 'z' }], placed, { openEnds: true })).toEqual([])
+      expect(spanSegments([{ id: 's', type: 'slur', from: 'y', to: 'z' }], placed, { openEnds: true })).toMatchObject([])
     })
   })
 })

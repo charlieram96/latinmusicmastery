@@ -62,7 +62,7 @@ describe('flex edits', () => {
     const hits = [10.04, 10.52, 10.95, 11.6];
     const r = quantizePlan({ points: [], notesTimeline: notes, hitsMedia: hits, beatSeconds: 0.5, range: { start: 9.9, end: 11.9 }, strength: 0.7 });
     expect(r.moved).toBe(4);
-    expect(r.largestMs).toBe(100);
+    expect(r.largestMs).toBe(70);
     const m = new FlexMap(r.points);
     expect(m.toTimeline(10.04)).toBeCloseTo(10.04 + 0.7 * (10 - 10.04), 6);
     expect(r.points[0]).toEqual(p(9.9, 9.9, true));
@@ -141,4 +141,20 @@ describe('flex edits', () => {
     // identity outer points read back unchanged
     expect(readFlex({ flex: [p(9, 9, true), p(10, 10.08), p(11, 11, true)] })).toEqual([p(9, 9, true), p(10, 10.08), p(11, 11, true)]);
   });
+});
+
+
+it('zero strength preserves existing Flex exactly and reports no movement',()=>{
+ const points=[{src:0,dst:0,anchor:true},{src:1,dst:1.1,anchor:false},{src:2,dst:2,anchor:true}];
+ const result=quantizePlan({points,notesTimeline:[1],hitsMedia:[1],beatSeconds:.5,range:{start:0,end:2},strength:0});
+ expect(result).toEqual({points,moved:0,largestMs:0});
+});
+
+it('quantizes fine and triplet grids without matching an earlier grid cell',()=>{
+ for(const denominator of [4,8,16,32,64,96]) for(const triplet of [1,2/3]) {
+  const step=.5*4/denominator*triplet;
+  const hit=step*3+.002;
+  const result=quantizePlan({points:[],notesTimeline:Array.from({length:12},(_,i)=>i*step),hitsMedia:[hit],beatSeconds:.5,toleranceSeconds:step/2,range:{start:0,end:12*step},strength:1});
+  expect(new FlexMap(result.points).toTimeline(hit)).toBeCloseTo(step*3,6);
+ }
 });
