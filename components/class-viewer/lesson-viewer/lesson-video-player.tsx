@@ -40,6 +40,8 @@ import { useTranslation } from '@/components/language-provider'
 import { useVideoTransportClock } from '@/components/playsense-studio/player/state/use-video-transport-clock'
 import { useSubtitleTracks } from '@/components/playsense-studio/player/state/use-subtitle-tracks'
 import type { SubtitleLang, SubtitleTrackDef } from '@/lib/subtitles/srt-to-vtt'
+import { lessonAudioTracks } from '@/lib/audio/lesson-audio'
+import { useDubbedAudio } from './use-dubbed-audio'
 
 interface LessonVideoPlayerProps {
   src: string
@@ -83,7 +85,7 @@ export function LessonVideoPlayer({
 }: LessonVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const clock = useVideoTransportClock(videoRef)
   const [clickOn,setClickOn]=useState(true)
   useVideoClickTrack({videoRef,grid:lessonMetronomeGrid(metronome??{bpm:120,anchorSeconds:null},clock.durationSeconds),enabled:clickOn&&metronome?.anchorSeconds!=null,volume:.2})
@@ -93,6 +95,8 @@ export function LessonVideoPlayer({
   const [hasPlayed, setHasPlayed] = useState(false)
   const [volume, setVolume] = useState(1)
   const [muted, setMuted] = useState(false)
+  const audioTracks = lessonAudioTracks(src)
+  const dubbedAudio = useDubbedAudio(videoRef, audioTracks, volume, muted)
   const [buffered, setBuffered] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [controlsVisible, setControlsVisible] = useState(true)
@@ -165,8 +169,8 @@ export function LessonVideoPlayer({
     const video = videoRef.current
     if (!video) return
     video.volume = volume
-    video.muted = muted
-  }, [volume, muted])
+    video.muted = muted || dubbedAudio.language !== 'original'
+  }, [volume, muted, dubbedAudio.language])
 
   // --- auto-hide controls while playing ---
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -224,6 +228,7 @@ export function LessonVideoPlayer({
 
   // --- keyboard shortcuts ---
   const onKeyDown = (e: ReactKeyboardEvent) => {
+    if (e.target instanceof HTMLSelectElement) return
     switch (e.key) {
       case ' ':
       case 'k':
@@ -481,6 +486,18 @@ export function LessonVideoPlayer({
           </div>
 
           {/* Subtitles */}
+          {audioTracks.length > 0 && (
+            <label className="flex items-center gap-1 text-xs text-foreground">
+              <span>Audio</span>
+              <select aria-label={locale === 'es' ? 'Idioma del audio' : 'Audio language'}
+                className="max-w-36 rounded-md border border-primary/40 bg-sunken px-2 py-1 text-foreground"
+                value={dubbedAudio.language} onChange={e => dubbedAudio.setLanguage(e.target.value)}>
+                <option value="original">{locale === 'es' ? 'Español original' : 'Spanish original'}</option>
+                {audioTracks.map(track => <option key={track.lang} value={track.lang}>{track.label}</option>)}
+              </select>
+            </label>
+          )}
+          {dubbedAudio.error && <span role="status" className="text-xs text-foreground">{locale === 'es' ? 'Audio no disponible. Se restauró el original.' : 'Audio unavailable. Original restored.'}</span>}
           {tracks.length > 0 && (
             <div className="relative">
               <ControlButton
