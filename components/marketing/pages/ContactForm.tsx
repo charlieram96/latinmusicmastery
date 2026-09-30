@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '@/components/language-provider'
-import { CONTACT_TOPICS, topicSubject, validateContact, type ContactField, type ContactValues } from '@/lib/marketing/pages/contact'
+import { CONTACT_LIMITS, CONTACT_TOPICS, topicSubject, validateContact, type ContactField, type ContactValues } from '@/lib/marketing/pages/contact'
 
 export const SUPPORT_EMAIL = 'support@latinmusicmastery.com'
 
@@ -18,6 +18,8 @@ export function ContactForm() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
   const sentRef = useRef<HTMLDivElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+  // Honeypot: hidden from people, filled in by form-spamming bots.
+  const [company, setCompany] = useState('')
 
   useEffect(() => { if (status === 'sent') sentRef.current?.focus() }, [status])
 
@@ -45,6 +47,7 @@ export function ContactForm() {
           email: values.email.trim(),
           subject: topicSubject(values.topic),
           message: values.message.trim(),
+          company,
         }),
       })
       setStatus(res.ok ? 'sent' : 'failed')
@@ -60,17 +63,20 @@ export function ContactForm() {
   return (
     <form ref={formRef} className={`cform${status === 'sent' ? ' done' : ''}`} noValidate onSubmit={submit}>
       <div className="hide-done" style={{ display: 'grid', gap: 18 }}>
+        <div aria-hidden="true" style={{ position: 'absolute', left: -10000, width: 1, height: 1, overflow: 'hidden' }}>
+          <label>Company<input tabIndex={-1} autoComplete="off" value={company} onChange={e => setCompany(e.target.value)} /></label>
+        </div>
         <div className="row2">
           <div className="cf-field">
             <label htmlFor="cf-name">{t(`${C}.name`)}
-              <input id="cf-name" data-field="name" autoComplete="name" placeholder={t(`${C}.namePlaceholder`)} value={values.name}
+              <input id="cf-name" data-field="name" autoComplete="name" maxLength={CONTACT_LIMITS.name} placeholder={t(`${C}.namePlaceholder`)} value={values.name}
                 onChange={e => set('name', e.target.value)} aria-invalid={!!errors.name} aria-describedby={described('name')} />
             </label>
             {err('name')}
           </div>
           <div className="cf-field">
             <label htmlFor="cf-email">{t(`${C}.email`)}
-              <input id="cf-email" data-field="email" type="email" autoComplete="email" placeholder={t(`${C}.emailPlaceholder`)} value={values.email}
+              <input id="cf-email" data-field="email" type="email" autoComplete="email" maxLength={CONTACT_LIMITS.email} placeholder={t(`${C}.emailPlaceholder`)} value={values.email}
                 onChange={e => set('email', e.target.value)} aria-invalid={!!errors.email} aria-describedby={described('email')} />
             </label>
             {err('email')}
@@ -90,7 +96,7 @@ export function ContactForm() {
         </div>
         <div className="cf-field">
           <label htmlFor="cf-msg">{t(`${C}.message`)}
-            <textarea id="cf-msg" data-field="message" placeholder={t(`${C}.messagePlaceholder`)} value={values.message}
+            <textarea id="cf-msg" data-field="message" maxLength={CONTACT_LIMITS.message} placeholder={t(`${C}.messagePlaceholder`)} value={values.message}
               onChange={e => set('message', e.target.value)} aria-invalid={!!errors.message} aria-describedby={described('message')} />
           </label>
           {err('message')}

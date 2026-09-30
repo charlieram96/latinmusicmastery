@@ -22,6 +22,8 @@ export interface SendEmailInput {
   subject: string
   html: string
   text: string
+  /** Where replies go instead of the From address. */
+  replyTo?: string
 }
 
 export interface SendEmailResult {
@@ -59,6 +61,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
         subject: input.subject,
         html: input.html,
         text: input.text,
+        ...(input.replyTo ? { replyTo: input.replyTo } : {}),
         // Each personalization gets its own `to` so recipients never see each other.
         personalizations: batch.map((email) => ({ to: [{ email }] })),
       })
