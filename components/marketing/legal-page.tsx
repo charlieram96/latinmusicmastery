@@ -1,4 +1,7 @@
 import { ReactNode } from 'react'
+import { getServerTranslator } from '@/lib/i18n/server'
+import { PageHead, Accent } from '@/components/marketing/site/PageHead'
+import '@/app/(marketing)/styles/pages.css'
 
 interface LegalPageProps {
   title: string
@@ -8,50 +11,39 @@ interface LegalPageProps {
   children: ReactNode
 }
 
-/**
- * Shared shell + typography for the legal/policy pages (Terms, Privacy,
- * Accessibility). The marketing route group layout already provides the header
- * and footer, so this only renders the page body.
- *
- * The project has no @tailwindcss/typography plugin, so content styling is
- * applied via arbitrary child-element variants on the wrapper below.
- */
-export function LegalPage({ title, effectiveDate, lastUpdated, children }: LegalPageProps) {
-  return (
-    <article>
-      <section className="relative border-b border-border bg-gradient-to-b from-primary/5 via-background to-background py-16 md:py-20">
-        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
-          <h1 className="mb-4 text-3xl font-bold md:text-5xl">{title}</h1>
-          <div className="space-y-1 text-sm text-muted-foreground">
-            {effectiveDate && (
-              <p>
-                <span className="font-medium text-foreground">Effective Date:</span> {effectiveDate}
-              </p>
-            )}
-            <p>
-              <span className="font-medium text-foreground">Last Updated:</span> {lastUpdated}
-            </p>
-          </div>
-        </div>
-      </section>
+/** "May 21, 2026" → the reader's locale; anything unparseable is shown as written. */
+function localDate(value: string, locale: string): string {
+  const d = new Date(`${value} UTC`)
+  if (Number.isNaN(d.getTime())) return value
+  return new Intl.DateTimeFormat(locale === 'es' ? 'es-419' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }).format(d)
+}
 
-      <section className="py-12 md:py-16">
-        <div
-          className="
-            mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8
-            leading-relaxed text-muted-foreground
-            [&_h2]:mt-12 [&_h2]:mb-4 [&_h2]:scroll-mt-24 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-foreground
-            [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-foreground
-            [&_p]:mb-4
-            [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:opacity-80
-            [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-6
-            [&_ol]:mb-4 [&_ol]:list-decimal [&_ol]:space-y-1.5 [&_ol]:pl-6
-            [&_strong]:font-semibold [&_strong]:text-foreground
-          "
-        >
-          {children}
-        </div>
-      </section>
+/**
+ * Shared shell for the legal/policy pages (Terms, Privacy, Accessibility) in
+ * the Noche look: a PageHead, then the document in a ~68ch prose column.
+ * The documents themselves are English only; Spanish readers get a note.
+ */
+export async function LegalPage({ title, effectiveDate, lastUpdated, children }: LegalPageProps) {
+  const { t, locale } = await getServerTranslator()
+  const words = title.split(' ')
+  const head = words.length > 1 ? words.slice(0, -1).join(' ') : ''
+  const last = words[words.length - 1]
+
+  return (
+    <article className="legal-page">
+      <PageHead crumbsLabel={t('marketing.common.breadcrumb')}
+        crumbs={[{ label: t('marketing.site.common.home'), href: '/' }, { label: title }]}
+        title={<span className="legal-title" lang="en">{head && `${head} `}<Accent>{last}</Accent></span>}
+      >
+        <p className="post-meta">
+          {effectiveDate && <span>{t('marketing.site.legal.effective', { date: localDate(effectiveDate, locale) })}</span>}
+          <span>{t('marketing.site.legal.updated', { date: localDate(lastUpdated, locale) })}</span>
+        </p>
+        {locale === 'es' && <p className="legal-note" lang="es">{t('marketing.site.legal.englishOnly')}</p>}
+      </PageHead>
+      <div className="wrap">
+        <div className="legal-prose" lang="en">{children}</div>
+      </div>
     </article>
   )
 }

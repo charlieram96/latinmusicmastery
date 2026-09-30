@@ -1,252 +1,81 @@
 import type { Metadata } from 'next'
-import Image from "next/image";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getServerTranslator } from "@/lib/i18n/server";
-import { localizeRow, localizeRows } from "@/lib/i18n/localize";
-import { instrumentLabel } from "@/lib/i18n/instruments";
-import PageHero from "@/components/marketing/PageHero";
-import SectionWrapper from "@/components/marketing/SectionWrapper";
-import CourseCard from "@/components/marketing/CourseCard";
+import { redirect } from 'next/navigation'
+import { getServerTranslator } from '@/lib/i18n/server'
+import { getMarketingCatalog } from '@/lib/marketing/data'
+import { COUNTRY_META } from '@/lib/marketing/catalog'
+import { initialInstrument } from '@/lib/marketing/explore-filter'
+import { getEnglishStyleNames } from '@/lib/marketing/style-names'
+import { Accent } from '@/components/marketing/site/PageHead'
+import { StyleAtlas } from '@/components/marketing/site/StyleAtlas'
+import { Reveal } from '@/components/marketing/site/Reveal'
+import { Finale } from '@/components/marketing/site/Finale'
+import { ExploreBrowser } from '@/components/marketing/explore/ExploreBrowser'
+import '../styles/explore.css'
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getServerTranslator()
   return {
-    title: t('marketing.pages.explore.metadata.title'),
-    description: t('marketing.pages.explore.metadata.description'),
+    title: t('marketing.site.explore.meta.title'),
+    description: t('marketing.site.explore.meta.description'),
   }
 }
 
-const countryEmojis: Record<string, string> = {
-  brazil: "\u{1F1E7}\u{1F1F7}",
-  cuba: "\u{1F1E8}\u{1F1FA}",
-  argentina: "\u{1F1E6}\u{1F1F7}",
-  colombia: "\u{1F1E8}\u{1F1F4}",
-  mexico: "\u{1F1F2}\u{1F1FD}",
-  peru: "\u{1F1F5}\u{1F1EA}",
-  venezuela: "\u{1F1FB}\u{1F1EA}",
-  "dominican-republic": "\u{1F1E9}\u{1F1F4}",
-  "puerto-rico": "\u{1F1F5}\u{1F1F7}",
-};
+export default async function ExplorePage({ searchParams }: { searchParams: Promise<{ instrument?: string | string[]; style?: string | string[] }> }) {
+  const sp = await searchParams
+  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
+  const { t, locale } = await getServerTranslator()
+  const [catalog, englishStyles] = await Promise.all([getMarketingCatalog(locale), getEnglishStyleNames()])
 
-const countryGradients: Record<string, string> = {
-  brazil: "from-green-700 to-yellow-600",
-  cuba: "from-blue-800 to-red-700",
-  argentina: "from-sky-500 to-white/80",
-  colombia: "from-yellow-500 to-blue-700",
-  mexico: "from-green-700 to-red-700",
-  peru: "from-red-700 to-white/80",
-  venezuela: "from-yellow-500 to-blue-800",
-  "dominican-republic": "from-red-700 to-blue-800",
-  "puerto-rico": "from-red-600 to-blue-700",
-};
-
-type CourseRow = {
-  id: string;
-  title: string;
-  slug: string;
-  description: string | null;
-  instrument: string | null;
-  difficulty: string | null;
-  thumbnail_url: string | null;
-};
-
-const COURSE_FIELDS = "id, title, title_es, slug, description, description_es, instrument, difficulty, thumbnail_url";
-
-async function FilteredCourses({
-  title,
-  subtitle,
-  crumbLabel,
-  courses,
-}: {
-  title: string;
-  subtitle?: string;
-  crumbLabel: string;
-  courses: CourseRow[];
-}) {
-  const { t } = await getServerTranslator();
-  return (
-    <>
-      <PageHero
-        title={title}
-        subtitle={subtitle}
-        breadcrumbs={[
-          { label: t("marketing.common.home"), href: "/" },
-          { label: t("nav.explore"), href: "/explore" },
-          { label: crumbLabel },
-        ]}
-        showBackButton
-      />
-      <div className="mx-auto max-w-7xl px-6 py-16">
-        <SectionWrapper>
-          {courses.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {courses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  title={course.title}
-                  description={course.description}
-                  instrument={course.instrument ?? undefined}
-                  difficulty={course.difficulty ?? undefined}
-                  imageUrl={course.thumbnail_url}
-                  href={`/course-preview/${course.id}`}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-20 text-center">
-              <p className="text-lg font-medium text-muted-foreground">
-                {t("marketing.pages.explore.empty.title")}
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground/70">
-                {t("marketing.pages.explore.empty.body", { label: crumbLabel })}
-              </p>
-            </div>
-          )}
-        </SectionWrapper>
-      </div>
-    </>
-  );
-}
-
-interface ExplorePageProps {
-  searchParams: Promise<{ instrument?: string; style?: string }>;
-}
-
-export default async function ExplorePage({ searchParams }: ExplorePageProps) {
-  const { instrument: instrumentParam, style: styleSlug } = await searchParams;
-  const supabase = await createClient();
-  const { t, locale } = await getServerTranslator();
-
-  // ── Filtered view: courses for a single instrument ──────────────────────
-  // courses.instrument is free text (e.g. "Conga"), so we match it directly.
-  if (instrumentParam) {
-    const { data: courses } = await supabase
-      .from("courses")
-      .select(COURSE_FIELDS)
-      .eq("instrument", instrumentParam)
-      .order("title");
-
-    localizeRows(courses as Record<string, unknown>[] | null, locale, ['title', 'description']);
-
-    // Display-only: the raw value above stays the filter key.
-    const instrumentName = instrumentLabel(instrumentParam, locale);
-
-    return (
-      <FilteredCourses
-        title={t("marketing.pages.explore.instrumentTitle", { instrument: instrumentName })}
-        subtitle={t("marketing.pages.explore.instrumentSubtitle", { instrument: instrumentName })}
-        crumbLabel={instrumentName}
-        courses={(courses ?? []) as CourseRow[]}
-      />
-    );
-  }
-
-  // ── Filtered view: courses for a single style ───────────────────────────
+  // Old contract: /explore?style=<slug> now lives at the style page.
+  const styleSlug = one(sp.style)
   if (styleSlug) {
-    const { data: style } = await supabase
-      .from("musical_styles")
-      .select("id, name, name_es, slug, description, description_es")
-      .eq("slug", styleSlug)
-      .single();
-
-    if (!style) notFound();
-    localizeRow(style as Record<string, unknown>, locale, ['name', 'description']);
-
-    const { data: courses } = await supabase
-      .from("courses")
-      .select(COURSE_FIELDS)
-      .eq("musical_style_id", style.id)
-      .order("title");
-
-    localizeRows(courses as Record<string, unknown>[] | null, locale, ['title', 'description']);
-
-    return (
-      <FilteredCourses
-        title={style.name}
-        subtitle={style.description ?? t("marketing.pages.explore.styleSubtitle", { style: style.name })}
-        crumbLabel={style.name}
-        courses={(courses ?? []) as CourseRow[]}
-      />
-    );
+    const country = catalog.countries.find(c => c.styles.some(s => s.slug === styleSlug))
+    if (country) redirect(`/explore/${country.slug}/${styleSlug}`)
   }
 
-  // ── Default view: browse by country ─────────────────────────────────────
-  const { data: countries } = await supabase
-    .from("countries")
-    .select("id, name, name_es, slug, description, description_es, image_url, musical_styles(id, name, name_es, slug)")
-    .order("name");
-
-  for (const country of countries ?? []) {
-    localizeRow(country as Record<string, unknown>, locale, ['name', 'description']);
-    localizeRows((country as any).musical_styles as Record<string, unknown>[] | null, locale, ['name']);
-  }
+  const k = (key: string, p?: Record<string, string | number>) => t(`marketing.site.explore.${key}`, p)
+  // Group the grid by instrument (stage-plot order), fundamentals first.
+  const courses = catalog.instruments.flatMap(i => (i.fundamentals ? [i.fundamentals, ...i.courses] : i.courses))
+  // Countries in atlas order (Cuba, Puerto Rico, Dominican Republic, Colombia), unknown ones last.
+  const metaOrder = Object.keys(COUNTRY_META)
+  const rank = (slug: string) => { const i = metaOrder.indexOf(slug); return i < 0 ? metaOrder.length : i }
+  const countries = [...catalog.countries].sort((a, b) => rank(a.slug) - rank(b.slug))
+  const pending = countries.filter(c => c.styles.length > 0 && !c.styles.some(s => s.live)).map(c => c.name)
+  const pendingList = pending.length ? new Intl.ListFormat(locale, { type: 'conjunction' }).format(pending) : null
 
   return (
     <>
-      <PageHero
-        title={t("marketing.pages.explore.hero.title")}
-        subtitle={t("marketing.pages.explore.hero.subtitle")}
-        breadcrumbs={[{ label: t("marketing.common.home"), href: "/" }, { label: t("nav.explore") }]}
-        showBackButton
+      <ExploreBrowser
+        key={one(sp.instrument) ?? 'all'}
+        courses={courses}
+        englishStyles={englishStyles}
+        instruments={catalog.instruments.map(i => ({ key: i.key, count: i.total }))}
+        countries={countries.map(c => ({ slug: c.slug, name: c.name, live: c.styles.some(s => s.live) }))}
+        initialInstrument={initialInstrument(one(sp.instrument), catalog.instruments.map(i => i.key))}
+        crumbs={[{ label: t('marketing.site.common.home'), href: '/' }, { label: k('crumb') }]}
       />
 
-      <div className="mx-auto max-w-7xl px-6 py-16">
-        <SectionWrapper>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {countries?.map((country) => {
-              const emoji = countryEmojis[country.slug] ?? "";
-              const gradient =
-                countryGradients[country.slug] ?? "from-primary to-primary/60";
+      <section className="sec" style={{ paddingBlock: 'clamp(72px,8vw,120px)' }}>
+        <div className="wrap">
+          <Reveal className="sec-head">
+            <div>
+              <p className="eyebrow">{k('atlasEyebrow')}</p>
+              <h2 className="h2" style={{ marginTop: 18 }}>{k('atlasTitle')} <Accent>{k('atlasAccent')}</Accent></h2>
+            </div>
+            {pendingList && <p className="lede">{k('atlasInProduction', { countries: pendingList })}</p>}
+          </Reveal>
+          <StyleAtlas
+            countries={countries}
+            labels={{
+              live: t('marketing.site.common.live'),
+              soon: t('marketing.site.common.comingSoon'),
+              stylesLive: (live, total) => k('stylesLive', { live, total }),
+            }}
+          />
+        </div>
+      </section>
 
-              return (
-                <Link
-                  key={country.id}
-                  href={`/explore/${country.slug}`}
-                  className="group block"
-                >
-                  <div className="relative overflow-hidden rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
-                    <div
-                      className={`relative aspect-[4/3] ${country.image_url ? "" : `bg-gradient-to-br ${gradient}`}`}
-                    >
-                      {country.image_url && (
-                        <Image
-                          src={country.image_url}
-                          alt={country.name}
-                          fill
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 transition-opacity duration-300 group-hover:from-black/60 group-hover:via-black/20" />
-                      <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                        <span className="text-5xl">{emoji}</span>
-                        <h3 className="mt-3 text-2xl font-bold text-white">
-                          {country.name}
-                        </h3>
-                      </div>
-                    </div>
-                    {country.musical_styles &&
-                      country.musical_styles.length > 0 && (
-                        <div className="flex flex-wrap gap-2 bg-card p-4">
-                          {country.musical_styles.map((style: { id: string; name: string; slug: string }) => (
-                            <span
-                              key={style.id}
-                              className="rounded-full border bg-secondary/50 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
-                            >
-                              {style.name}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </SectionWrapper>
-      </div>
+      <Finale />
     </>
-  );
+  )
 }

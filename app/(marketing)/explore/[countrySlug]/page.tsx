@@ -1,171 +1,84 @@
 import type { Metadata } from 'next'
-import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getServerTranslator } from "@/lib/i18n/server";
-import { localizeRow, localizeRows, pick } from "@/lib/i18n/localize";
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { getServerTranslator } from '@/lib/i18n/server'
+import { getMarketingCatalog } from '@/lib/marketing/data'
+import { INSTRUMENT_ORDER } from '@/lib/marketing/catalog'
+import { sortCourses } from '@/lib/marketing/explore-filter'
+import { getEnglishStyleNames } from '@/lib/marketing/style-names'
+import { PageHead, Accent } from '@/components/marketing/site/PageHead'
+import { Reveal } from '@/components/marketing/site/Reveal'
+import { Finale } from '@/components/marketing/site/Finale'
+import { Poster } from '@/components/marketing/explore/Poster'
+import '../../styles/explore.css'
 
-export async function generateMetadata({ params }: { params: Promise<{ countrySlug: string }> }): Promise<Metadata> {
+type Params = Promise<{ countrySlug: string }>
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { countrySlug } = await params
   const { t, locale } = await getServerTranslator()
-  const supabase = await createClient()
-  const { data: country } = await supabase
-    .from('countries')
-    .select('name, name_es')
-    .eq('slug', countrySlug)
-    .maybeSingle()
-  const name = country
-    ? pick(locale, country.name, country.name_es ?? '')
-    : countrySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+  const country = (await getMarketingCatalog(locale)).countries.find(c => c.slug === countrySlug)
+  if (!country) return { title: t('marketing.site.explore.meta.title') }
   return {
-    title: t('marketing.pages.explore.country.metadata.title', { country: name }),
-    description: t('marketing.pages.explore.country.metadata.description', { country: name }),
+    title: t('marketing.site.explore.country.meta.title', { country: country.name }),
+    description: t('marketing.site.explore.country.meta.description', { country: country.name }),
   }
 }
-import PageHero from "@/components/marketing/PageHero";
-import SectionWrapper from "@/components/marketing/SectionWrapper";
-import CTABanner from "@/components/marketing/CTABanner";
-import CourseCard from "@/components/marketing/CourseCard";
-import Link from "next/link";
 
-export default async function CountryPage({
-  params,
-}: {
-  params: Promise<{ countrySlug: string }>;
-}) {
-  const { countrySlug } = await params;
-  const supabase = await createClient();
-  const { t, locale } = await getServerTranslator();
+export default async function CountryPage({ params }: { params: Params }) {
+  const { countrySlug } = await params
+  const { t, locale } = await getServerTranslator()
+  const [catalog, englishStyles] = await Promise.all([getMarketingCatalog(locale), getEnglishStyleNames()])
+  const country = catalog.countries.find(c => c.slug === countrySlug)
+  if (!country) notFound()
 
-  const { data: country } = await supabase
-    .from("countries")
-    .select(
-      "id, name, name_es, slug, description, description_es, image_url, musical_styles(id, name, name_es, slug, description, description_es)"
-    )
-    .eq("slug", countrySlug)
-    .single();
-
-  if (!country) {
-    notFound();
-  }
-
-  localizeRow(country as Record<string, unknown>, locale, ['name', 'description']);
-  localizeRows(country.musical_styles as Record<string, unknown>[] | null, locale, ['name', 'description']);
-
-  // Get style IDs for this country
-  const styleIds = (country.musical_styles ?? []).map((s) => s.id);
-
-  // Fetch courses via musical_style_id (courses don't have country_id directly)
-  const { data: courses } = styleIds.length > 0
-    ? await supabase
-        .from("courses")
-        .select(
-          "id, title, title_es, slug, description, description_es, instrument, difficulty, thumbnail_url, musical_style_id, musical_styles(name, name_es)"
-        )
-        .in("musical_style_id", styleIds)
-        .order("title")
-    : { data: [] as never[] };
-
-  for (const course of courses ?? []) {
-    localizeRow(course as Record<string, unknown>, locale, ['title', 'description']);
-    if ((course as any).musical_styles && !Array.isArray((course as any).musical_styles)) {
-      localizeRow((course as any).musical_styles as Record<string, unknown>, locale, ['name']);
-    }
-  }
-
-  // Count courses per style
-  const courseCountByStyle: Record<string, number> = {};
-  if (courses) {
-    for (const course of courses) {
-      const styleName =
-        course.musical_styles &&
-        !Array.isArray(course.musical_styles)
-          ? course.musical_styles.name
-          : null;
-      if (styleName) {
-        courseCountByStyle[styleName] =
-          (courseCountByStyle[styleName] || 0) + 1;
-      }
-    }
-  }
+  const k = (key: string, p?: Record<string, string | number>) => t(`marketing.site.explore.country.${key}`, p)
+  const courses = sortCourses(catalog.courses.filter(c => c.countrySlug === country.slug), country.styles.map(s => s.slug), INSTRUMENT_ORDER)
+  const live = country.styles.filter(s => s.live).length
 
   return (
     <>
-      <PageHero
-        title={country.name}
-        subtitle={country.description ?? undefined}
-        breadcrumbs={[
-          { label: t("marketing.common.home"), href: "/" },
-          { label: t("nav.explore"), href: "/explore" },
+      <PageHead crumbsLabel={t('marketing.common.breadcrumb')}
+        crumbs={[
+          { label: t('marketing.site.common.home'), href: '/' },
+          { label: t('marketing.site.explore.crumb'), href: '/explore' },
           { label: country.name },
         ]}
-        showBackButton
-        backgroundImage={country.image_url}
-      />
-
-      {/* Musical Styles Section */}
-      {country.musical_styles && country.musical_styles.length > 0 && (
-        <div className="mx-auto max-w-7xl px-6 py-16">
-          <SectionWrapper>
-            <h2 className="mb-8 text-2xl font-bold tracking-tight sm:text-3xl">
-              {t("marketing.pages.explore.country.musicalStyles")}
-            </h2>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {country.musical_styles.map((style) => (
-                <Link
-                  key={style.id}
-                  href={`/explore/${countrySlug}/${style.slug}`}
-                  className="group block"
-                >
-                  <div className="rounded-2xl border bg-card p-6 transition-all duration-300 group-hover:border-primary/30 group-hover:shadow-lg group-hover:-translate-y-1">
-                    <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
-                      {style.name}
-                    </h3>
-                    {style.description && (
-                      <p className="mt-2 text-sm text-muted-foreground line-clamp-3">
-                        {style.description}
-                      </p>
-                    )}
-                    <p className="mt-3 text-xs font-medium text-primary">
-                      {t(
-                        (courseCountByStyle[style.name] ?? 0) === 1
-                          ? "marketing.common.courseCountOne"
-                          : "marketing.common.courseCount",
-                        { count: courseCountByStyle[style.name] ?? 0 }
-                      )}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </SectionWrapper>
+        title={<>{k('title')} <Accent>{country.name}.</Accent></>}
+        lede={courses.length ? k('lede', { courses: courses.length, live }) : k('ledeNone', { country: country.name })}
+      >
+        <div className="ex-ctry" style={{ ['--cc' as string]: country.color }}>
+          <div className="ctry-code" aria-hidden="true">{country.code}</div>
+          {country.geo && <p className="ctry-geo">{country.geo}</p>}
         </div>
-      )}
+        {country.styles.length > 0 && (
+          <ul className="ex-styles" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {country.styles.map(s => (
+              <li key={s.slug}>
+                {s.live
+                  ? <Link className="ex-style" href={`/explore/${country.slug}/${s.slug}`}>{s.name} <small>{k(s.courseCount === 1 ? 'styleCountOne' : 'styleCount', { n: s.courseCount })}</small></Link>
+                  : <span className="ex-style soon">{s.name} <small>{t('marketing.site.common.comingSoon')}</small></span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </PageHead>
 
-      {/* All Courses Section */}
-      {courses && courses.length > 0 && (
-        <div className="mx-auto max-w-7xl px-6 pb-16">
-          <SectionWrapper>
-            <h2 className="mb-8 text-2xl font-bold tracking-tight sm:text-3xl">
-              {t("marketing.pages.explore.country.allCourses")}
-            </h2>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {courses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  title={course.title}
-                  description={course.description}
-                  instrument={course.instrument ?? undefined}
-                  difficulty={course.difficulty ?? undefined}
-                  imageUrl={course.thumbnail_url}
-                  href={`/course-preview/${course.id}`}
-                />
-              ))}
+      <section className="sec" style={{ paddingTop: 'clamp(48px,6vw,88px)' }}>
+        <div className="wrap">
+          <Reveal className="sec-head">
+            <div>
+              <p className="eyebrow">{k('coursesEyebrow')}</p>
+              <h2 className="h2" style={{ marginTop: 18 }}>{k('coursesTitle')} <Accent>{k('coursesAccent')}</Accent></h2>
             </div>
-          </SectionWrapper>
+          </Reveal>
+          {courses.length
+            ? <div className="posters" style={{ paddingTop: 0 }}>{courses.map((c, i) => <Poster key={c.id} course={c} t={t} locale={locale} englishStyle={c.styleSlug ? englishStyles[c.styleSlug] ?? null : null} index={i} />)}</div>
+            : <p className="empty">{k('empty', { country: country.name })}</p>}
         </div>
-      )}
+      </section>
 
-      <CTABanner />
+      <Finale />
     </>
-  );
+  )
 }

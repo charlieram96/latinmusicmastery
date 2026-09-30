@@ -1,0 +1,45 @@
+/* Explore, country, style and course preview pages. Extends marketing.css; every rule is scoped under .mkt. */
+
+.mkt .ex-search{max-width:420px;flex:none;width:100%}
+.mkt .fchip:disabled{opacity:.45;cursor:default}
+.mkt .fchip:disabled:hover{border-color:var(--line-2)}
+.mkt .fchip:focus-visible, .mkt .poster:focus-visible, .mkt .sec-item>button:focus-visible, .mkt .inst-card:focus-visible, .mkt .ex-style:focus-visible{outline:2px solid var(--ambar);outline-offset:3px}
+.mkt .poster:focus-visible{border-radius:14px}
+.mkt .pmeta b{min-width:0}
+
+/* Static clave card cells (spans, not buttons: nothing here is interactive) */
+.mkt .clave-card .cells .cell{aspect-ratio:1;border-radius:5px;background:rgba(246,235,221,.05);display:block}
+.mkt .clave-card .cells .cell:nth-child(4n+1){background:rgba(246,235,221,.085)}
+.mkt .clave-card .cells .cell:nth-child(8n+1){box-shadow:inset 1.5px 0 0 rgba(246,235,221,.25)}
+.mkt .clave-card .cells .cell.on{background:var(--c)}
+.mkt .clave-card .seq-lbl{cursor:default}
+.mkt .clave-card .btn{display:inline-flex}
+
+/* Style story prose */
+.mkt .style-intro.solo{grid-template-columns:minmax(0,1fr);max-width:72ch}
+
+/* Country hero: outlined code + style list */
+.mkt .ex-ctry{--cc:var(--ambar)}
+.mkt .ex-ctry .ctry-code{font-size:clamp(88px,10vw,150px);color:var(--cc);-webkit-text-stroke-color:transparent;opacity:.9}
+.mkt .ex-ctry .ctry-geo{margin-top:10px}
+.mkt .ex-styles{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.mkt .ex-style{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);font-size:14px;text-decoration:none;color:var(--hueso);transition:border-color .25s var(--ease-out)}
+.mkt a.ex-style:hover{border-color:var(--hueso)}
+.mkt .ex-style small{font:500 10.5px/1 var(--f-mono);color:var(--humo-2)}
+.mkt .ex-style.soon{color:var(--humo-2);border-style:dashed}
+
+/* Course preview */
+.mkt .inst-card .ph{width:120px;height:140px;border-radius:14px;background:var(--noche-3)}
+.mkt .inst-card .ic-img{position:relative;width:120px;height:140px;border-radius:14px;overflow:hidden}
+.mkt .inst-card .ic-img img{filter:grayscale(1) contrast(1.1);object-fit:cover}
+.mkt .inst-card p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.mkt .inst-card>div{min-width:0}
+.mkt .sec-list li .lock.free{color:var(--ok)}
+.mkt .enroll .btn{justify-content:center}
+.mkt .course-hero .ptitle{overflow-wrap:anywhere}
+
+@media (max-width:640px){
+  .mkt .inst-card .ic-img, .mkt .inst-card .ph{width:90px;height:110px}
+  .mkt .course-sleeve{max-width:100%}
+  .mkt .clave-card .cells .cell{border-radius:3px}
+}

@@ -131,521 +131,693 @@
     }
   },
   "marketing": {
-    "home": {
-      "waitlistTitle": "Ready to Start Your Musical Journey?",
-      "waitlistSubtitle": "Be the first to know when we launch. Join the waiting list for early access and founding member pricing.",
-      "waitlistImageAlt": "Latin music performance"
-    },
-    "pages": {
-      "pricing": {
-        "hero": {
-          "title": "Pricing",
-          "subtitle": "Start with one instrument — its fundamentals course plus a genre you choose. Add more styles whenever you're ready."
-        },
-        "breadcrumbs": {
-          "home": "Home",
-          "pricing": "Pricing"
-        },
-        "limitedTimeNotice": {
-          "eyebrow": "Limited-Time Pricing",
-          "title": "These prices won't last long",
-          "body": "The prices below are available for a limited time and will increase soon. Join the waitlist now to lock in your membership at these rates.",
-          "ctaLabel": "Join the Waitlist"
-        },
-        "plans": {
-          "perInstrument": {
-            "name": "Per Instrument",
-            "description": "Begin with a single instrument: its beginner fundamentals course plus one genre course of your choice.",
-            "features": [
-              "Beginner fundamentals course included",
-              "1 genre course of your choice",
-              "Interactive PlaySense Studio notation",
-              "PlaySense AI feedback",
-              "Progress tracking dashboard",
-              "New content added monthly",
-              "Cancel anytime"
-            ],
-            "ctaLabel": "Get Started"
-          },
-          "allAccess": {
-            "name": "All-Access",
-            "description": "Every instrument and every course in one membership.",
-            "features": [
-              "All 9 instruments included",
-              "Every fundamentals & genre course",
-              "Interactive PlaySense Studio notation",
-              "PlaySense AI feedback",
-              "Progress tracking dashboard",
-              "Cancel anytime"
-            ],
-            "ctaLabel": "Get All-Access"
-          }
-        },
-        "billing": {
-          "monthly": "Monthly",
-          "annual": "Annual",
-          "save": "Save 17%",
-          "perMonth": "/mo",
-          "perYear": "/yr",
-          "or": "or",
-          "annualNote": "Annual pricing applies to the instrument base. Extra genre courses stay $9.99/mo."
-        },
+    "site": {
+      "common": {
+        "joinWaitlist": "Join the waitlist",
+        "saveSeat": "Save my seat",
+        "emailLabel": "Email",
+        "emailPlaceholder": "you@email.com",
+        "invalidEmail": "Enter an email like name@example.com.",
+        "onList": "You're on the list. We'll email you before launch.",
+        "home": "Home",
+        "seePricing": "See pricing",
+        "menu": "Menu",
+        "close": "Close",
         "comingSoon": "Coming soon",
-        "addonNote": "+$9.99/mo per additional genre course",
-        "includesLabel": "What's included",
-        "howItWorks": {
-          "title": "How pricing works",
-          "step1Title": "Pick an instrument",
-          "step1Body": "$19.99/mo includes that instrument's beginner fundamentals course plus one genre course of your choice.",
-          "step2Title": "Add more genres",
-          "step2Body": "Want more styles on the same instrument? Add any genre course for $9.99/mo each.",
-          "step3Title": "Go annual, save 17%",
-          "step3Body": "Pay yearly for an instrument's base for $199.99/yr — a 17% saving. Add-ons stay monthly."
-        },
-        "comparison": {
-          "titlePrefix": "Compare",
-          "titleHighlight": "Plans",
-          "feature": "Feature",
-          "allSix": "All 9",
-          "rows": {
-            "instruments": "Number of instruments",
-            "videoLessons": "Video lessons",
-            "interactiveNotation": "Interactive notation",
-            "progressTracking": "Progress tracking",
-            "playSense": "PlaySense AI",
-            "downloadable": "Downloadable resources",
-            "monthlyContent": "New monthly content",
-            "prioritySupport": "Priority support"
-          }
-        },
-        "instruments": {
-          "timbal": "Timbal",
-          "conga": "Conga",
-          "violin": "Violin",
-          "bass": "Bass",
-          "piano": "Piano",
-          "vocals": "Vocals"
-        },
-        "instrumentGrid": {
-          "titlePrefix": "9",
-          "titleHighlight": "Instruments",
-          "titleSuffix": "Available",
-          "description": "From guitar and piano to cuatro and beyond, master the instruments that define Latin American music."
-        },
-        "faq": {
-          "titlePrefix": "Frequently Asked",
-          "titleHighlight": "Questions",
-          "difference": {
-            "question": "What's included for $19.99/month?",
-            "answer": "Subscribing to an instrument for $19.99/mo includes that instrument's beginner fundamentals course plus one genre course of your choice. You can add more genre courses on the same instrument for $9.99/mo each. All-Access — one membership for every instrument and course — is coming soon."
-          },
-          "switch": {
-            "question": "Can I add more courses or instruments?",
-            "answer": "Yes. Add another genre course on an instrument you already have for $9.99/mo, or start a new instrument for $19.99/mo (which again includes that instrument's fundamentals course plus one genre course of your choice). You can manage everything from your account."
-          },
-          "trial": {
-            "question": "Is there a free trial?",
-            "answer": "Yes! You get a 14-day free trial when you sign up. During the trial you'll have full access to the courses included in your plan. If you decide it's not for you, simply cancel before the trial ends and you won't be charged."
-          },
-          "upgrade": {
-            "question": "How does annual billing work?",
-            "answer": "You can pay for an instrument's base yearly and save 17% — $199.99/yr instead of $239.88. The annual discount applies to the instrument base; any additional genre courses stay $9.99/mo, and you can choose monthly or annual separately for each instrument."
-          },
-          "payment": {
-            "question": "What payment methods do you accept?",
-            "answer": "We accept all major credit cards (Visa, Mastercard, American Express, Discover), PayPal, and Apple Pay. All payments are processed securely through Stripe. You can update your payment method at any time from your account settings."
-          }
-        },
-        "cta": {
-          "title": "Ready to Start Your Musical Journey?",
-          "subtitle": "Join thousands of musicians mastering authentic Latin American music. Start your free trial today.",
-          "primaryLabel": "Get Started Free",
-          "secondaryLabel": "Explore Courses"
-        }
+        "live": "Live",
+        "courses": "courses",
+        "coursesOne": "course",
+        "previewArrow": "Preview →",
+        "included": "Included"
       },
-      "faq": {
+      "nav": {
+        "explore": "Explore",
+        "instructors": "Instructors",
+        "playsense": "PlaySense",
+        "pricing": "Pricing",
+        "about": "About",
+        "main": "Main",
+        "language": "Language"
+      },
+      "footer": {
+        "tagline": "Learn the rhythms, melodies and soul of Latin music from maestros across the Americas.",
+        "platform": "Platform",
+        "company": "Company",
+        "follow": "Follow",
+        "legal": "Legal",
+        "explore": "Explore",
+        "playsense": "PlaySense",
+        "pricing": "Pricing",
+        "instructors": "Instructors",
+        "about": "About",
+        "blog": "Blog",
+        "faq": "FAQ",
+        "contact": "Contact",
+        "privacy": "Privacy",
+        "terms": "Terms",
+        "accessibility": "Accessibility",
+        "rights": "© {year} Latin Music Mastery",
+        "madeIn": "Made in clave 3-2"
+      },
+      "finale": {
+        "knock": "Tu turno",
+        "title": "The band is ready.",
+        "titleAccent": "Your part is missing.",
+        "lede": "Join the waitlist for early access and founding-member pricing."
+      },
+      "stageClip": {
+        "label": "PlaySense stage: notes travel down a pier on Biscayne Bay toward three congas, with the Miami skyline at dusk",
+        "demoPerformance": "Demo performance",
+        "exercise": "Tumbao Esencial",
+        "exerciseMeta": "Latin foundations · 100 BPM · 4/4",
+        "score": "Score",
+        "combo": "Combo",
+        "inARow": "in a row",
+        "accuracy": "Accuracy",
+        "withBand": "With the band",
+        "band": "Bass · Keys · Timbales",
+        "simulated": "Demo · hits are simulated",
+        "measure": "Measure {n} of {total}",
+        "perfect": "Perfect"
+      },
+      "home": {
         "hero": {
-          "title": "Frequently Asked Questions",
-          "subtitle": "Find answers to common questions about Latin Music Mastery."
+          "open": "Waitlist open",
+          "maestros": "{n} maestros",
+          "instruments": "{n} instruments",
+          "h1Label": "Learn from the masters of Latin music",
+          "line1": "Learn from",
+          "line2": "the masters",
+          "line3": "of la música latina.",
+          "subA": "Son, mambo, timba, bolero, bomba, plena and more, taught by the musicians who play them every night.",
+          "subEm": "PlaySense listens while you practice",
+          "subB": "and tells you, note by note, whether you're in clave.",
+          "notePrefix": "Founding-member pricing from",
+          "notePer": "/mo",
+          "noteSuffix": "· one instrument + one style",
+          "keysLabel": "Piano keys showing a live band session. Click a key to play its note.",
+          "key": {
+            "c4": "Play Do, C4",
+            "cs4": "Play Do sharp, C sharp 4",
+            "d4": "Play Re, D4",
+            "ds4": "Play Re sharp, D sharp 4",
+            "e4": "Play Mi, E4"
+          },
+          "chipCaption": "Timbal · studied under Changuito"
         },
-        "breadcrumbs": {
-          "home": "Home",
-          "faq": "FAQ"
+        "marquee": {
+          "label": "Styles taught"
         },
-        "categories": {
-          "gettingStarted": {
-            "title": "Getting Started",
-            "q": {
-              "what": {
-                "question": "What is Latin Music Mastery?",
-                "answer": "Latin Music Mastery is a comprehensive online platform dedicated to teaching authentic Latin American music. We offer HD video lessons, interactive notation, AI-powered practice tools, and a supportive community -- all designed to help you master styles from salsa and bossa nova to cumbia, tango, and beyond."
-              },
-              "experience": {
-                "question": "Do I need any prior musical experience?",
-                "answer": "Not at all! We have courses designed for every skill level, from absolute beginners who have never touched an instrument to advanced musicians looking to expand their repertoire. Each course clearly indicates the recommended skill level, so you can find the perfect starting point."
-              },
-              "instruments": {
-                "question": "What instruments are covered?",
-                "answer": "We currently offer courses for Guitar, Piano, Bass, Drums/Percussion, Vocals, Trumpet, Saxophone, Violin, and Cuatro. We are continually expanding our instrument coverage based on student demand."
-              },
-              "lessons": {
-                "question": "How do the lessons work?",
-                "answer": "Each course includes HD video lessons with synchronized notation that follows along as you watch. You will learn techniques, theory, and repertoire through a structured curriculum. Our PlaySense AI tool can listen to your playing and provide real-time feedback, helping you practice more effectively between lessons."
-              }
+        "numbers": {
+          "courses": "Courses",
+          "maestros": "Maestros",
+          "instruments": "Instruments",
+          "styles": "Styles",
+          "countries": "Countries"
+        },
+        "stage": {
+          "eyebrow": "Pick your instrument",
+          "title": "Take your seat",
+          "accent": "in the orquesta.",
+          "lede": "This is the stage plot of a salsa orchestra. Every position is an instrument we teach. Pick a position to see its courses and who teaches it.",
+          "plotLabel": "Stage plot. Pick a position to see its courses.",
+          "riser": "RISER 8′×24′ · +16″",
+          "audience": "▼ AUDIENCE ▼",
+          "soonTag": "SOON",
+          "metaTitle": "Stage plot",
+          "metaLine": "Orquesta · {n} pos.",
+          "comingSoon": "coming soon",
+          "courses": "courses",
+          "courseOne": "course",
+          "coursesLabel": "Courses",
+          "inProduction": "Courses in production",
+          "fundamentals": "Fundamentals",
+          "taughtBy": "Taught by",
+          "tba": "Instructor to be announced.",
+          "notify": "Get notified",
+          "browse": "Browse {instrument} courses",
+          "fundamentalsIncluded": "Fundamentals included"
+        },
+        "atlas": {
+          "eyebrow": "Add a style",
+          "title": "Four countries.",
+          "accent": "Una clave.",
+          "lede": "Every style is taught per instrument, from the root up: where it comes from, how it sits in the band, and what each player does in it.",
+          "live": "Live",
+          "soon": "Coming soon",
+          "stylesLive": "{live}/{total} styles live"
+        },
+        "groove": {
+          "eyebrow": "The clave",
+          "title": "Everything starts",
+          "accent": "with the clave.",
+          "lede": "Five parts of a son montuno, each on its own lane. Press play, mute an instrument, or tap a cell to change the pattern. This is what playing inside the band feels like.",
+          "play": "Hear the groove",
+          "stop": "Stop",
+          "claveLabel": "Clave pattern",
+          "clave": {
+            "son32": "Son 3-2",
+            "son23": "2-3",
+            "rumba32": "Rumba"
+          },
+          "tempo": "Tempo",
+          "slower": "Slower",
+          "faster": "Faster",
+          "mute": "Mute {name}",
+          "cell": "{name}, step {n}",
+          "foot": "Tap a name to mute it. Clave, campana, conga, bass and piano, synthesized in your browser.",
+          "inst": {
+            "clave": {
+              "name": "Clave",
+              "part": "Son clave"
+            },
+            "campana": {
+              "name": "Campana",
+              "part": "Bongó bell"
+            },
+            "conga": {
+              "name": "Conga",
+              "part": "Tumbao"
+            },
+            "bajo": {
+              "name": "Bass",
+              "part": "Tumbao"
+            },
+            "piano": {
+              "name": "Piano",
+              "part": "Montuno"
             }
-          },
-          "billing": {
-            "title": "Subscription & Billing",
-            "q": {
-              "cost": {
-                "question": "How much does it cost?",
-                "answer": "We offer flexible pricing to fit your needs. The Per Instrument plan is $14.99/month and gives you full access to all courses for a single instrument. The All-Access plan is $69.99/month and unlocks every course, instrument, and feature on the platform -- perfect for multi-instrumentalists and curious learners."
-              },
-              "trial": {
-                "question": "Is there a free trial?",
-                "answer": "Yes! You get a 14-day free trial with full access to the platform. No credit card is required to start. Experience everything Latin Music Mastery has to offer before committing to a subscription."
-              },
-              "cancel": {
-                "question": "Can I cancel anytime?",
-                "answer": "Absolutely. There are no long-term contracts or cancellation fees. You can cancel your subscription at any time from your account settings, and you will continue to have access until the end of your current billing period."
-              },
-              "payment": {
-                "question": "What payment methods are accepted?",
-                "answer": "We accept all major credit cards (Visa, Mastercard, American Express, Discover) and PayPal. All payments are processed securely through Stripe."
-              }
-            }
-          },
-          "features": {
-            "title": "Features",
-            "q": {
-              "playsense": {
-                "question": "What is PlaySense?",
-                "answer": "PlaySense is our AI-powered practice tool that listens to your playing in real time through your device microphone. It provides instant feedback on pitch accuracy, rhythm, timing, and dynamics -- helping you identify areas for improvement and track your progress over time. Think of it as having a patient, always-available practice partner."
-              },
-              "download": {
-                "question": "Can I download lesson materials?",
-                "answer": "Yes! Sheet music, tablature, and backing tracks are all available for download with your subscription. You can practice offline and use the materials however you like for personal learning."
-              },
-              "mobile": {
-                "question": "Is there a mobile app?",
-                "answer": "Our platform is fully responsive and works great on mobile browsers, tablets, and desktops. A dedicated mobile app is on our roadmap for the future, but for now you can access all features through your mobile browser."
-              },
-              "certificate": {
-                "question": "Do I get a certificate?",
-                "answer": "We provide achievement badges and progress certificates as you complete courses and reach milestones. These are great for tracking your learning journey and sharing your accomplishments with others."
-              }
-            }
-          },
-          "support": {
-            "title": "Support",
-            "q": {
-              "contact": {
-                "question": "How do I contact support?",
-                "answer": "Visit our contact page at /contact or email us directly at support@latinmusicmastery.com. Our support team typically responds within 24 hours."
-              },
-              "requestContent": {
-                "question": "Can I request new content?",
-                "answer": "Absolutely! We love hearing from our community. You can submit content requests through our contact page or community forums. Many of our most popular courses have been created based on student suggestions."
-              }
-            }
           }
         },
-        "contactCta": {
-          "titlePrefix": "Still have",
-          "titleHighlight": "questions?",
-          "description": "Our team is here to help. Reach out and we will get back to you within 24 hours.",
-          "button": "Contact Us"
-        }
-      },
-      "about": {
-        "hero": {
-          "title": "About Latin Music Mastery",
-          "subtitle": "Our mission is to make authentic Latin American music education accessible to everyone."
+        "playsense": {
+          "title": "Step into the session.",
+          "accent": "Miami, at dusk.",
+          "lede": "The sun just set over Biscayne Bay and the band is ready. Notes travel down the pier to your instrument, and PlaySense listens to every hit you play.",
+          "f1Title": "Real-time feedback",
+          "f1Body": "Your microphone hears each hit and scores it: perfect, early or late.",
+          "f2Title": "Play with the band",
+          "f2Body": "Bass, keys and timbales play around you. Mute your part and fill the hole.",
+          "f3Title": "The chart when you want it",
+          "f3Body": "Switch to notation synced to the lesson video, bar by bar.",
+          "f4Title": "Loop and slow down",
+          "f4Body": "Repeat any measure at whatever tempo you need.",
+          "cta": "See how PlaySense works"
         },
-        "breadcrumbs": {
-          "home": "Home",
-          "about": "About"
+        "maestros": {
+          "eyebrow": "The maestros",
+          "title": "Learn it from the ones",
+          "accent": "who play it.",
+          "lede": "Percussionists, pianists, bassists, horns and voice. Each one teaches the instrument they make their living on.",
+          "prev": "Previous maestros",
+          "next": "Next maestros",
+          "railLabel": "Maestros"
         },
-        "mission": {
-          "titlePrefix": "Our",
-          "titleHighlight": "Mission",
-          "paragraph1": "Latin Music Mastery was born from a deep respect for the music, culture, and traditions of Latin America.",
-          "paragraph2": "For generations, Latin music has moved the world through its rhythm, soul, and unmistakable energy. From the syncopated language of Cuban son to the elegance of bossa nova, the fire of salsa, the sophistication of mambo, and the depth of countless regional styles, these traditions carry stories, identities, and musical wisdom that deserve to be preserved and shared.",
-          "paragraph3": "Our mission is to make authentic Latin music education accessible to students around the world. We bring together master musicians, thoughtfully structured lessons, and modern learning technology to create a platform that teaches more than notes and patterns. Every course is designed to help students understand the technique, history, feel, and cultural foundation behind the music.",
-          "paragraph4": "Whether you are just beginning your musical journey or looking to deepen your artistry, Latin Music Mastery gives you the tools, guidance, and inspiration to grow with confidence. This is more than learning an instrument. It is an invitation to connect with the roots, language, and soul of Latin music.",
-          "mediaPlaceholder": "Video / Image Coming Soon"
-        },
-        "journey": {
-          "titlePrefix": "Our",
-          "titleHighlight": "Journey",
-          "description": "Latin Music Mastery was created to fill a gap in music education: the need for a structured, authentic, and culturally grounded way to learn Latin music. What began as a vision to preserve and share the musical traditions of Latin America has grown into a platform built for students around the world. By bringing together master musicians, modern learning tools, and carefully designed courses, we are creating a space where technique, rhythm, history, and culture come together. Our journey is just beginning, but our mission is clear: to help students connect with Latin music at a deeper level and carry its legacy forward with knowledge, respect, and passion."
-        },
-        "milestones": {
-          "founded": {
-            "title": "Founded",
-            "description": "Founded with a vision to expand Latin music education and make it accessible to musicians everywhere. Latin Music Mastery began with a mission to preserve the richness of Latin musical traditions while creating a structured, modern learning experience for students around the world."
-          },
-          "launch": {
-            "title": "Platform Launch",
-            "description": "Launched the full platform — HD video lessons across multiple instruments and genres, interactive notation with PlaySense Studio, and guided practice — bringing structured Latin music education to students around the world."
-          },
-          "playsense": {
-            "title": "PlaySense AI",
-            "description": "Introduced PlaySense AI, an innovative real-time feedback tool designed to help students practice more effectively, improve their timing and accuracy, and receive guided support throughout their musical journey."
-          },
-          "community": {
-            "title": "Growing Community",
-            "description": "Started building a thriving global community of Latin music enthusiasts, connecting students, instructors, and musicians across borders through a shared passion for rhythm, culture, and authentic musical expression."
-          },
-          "expanding": {
-            "title": "Expanding Horizons",
-            "description": "Expanding to 15+ musical styles with an exclusive master class series featuring legendary artists."
-          }
-        },
-        "valuesSection": {
-          "titlePrefix": "Our",
-          "titleHighlight": "Values",
-          "description": "The principles that guide everything we do."
-        },
-        "values": {
-          "authenticity": {
-            "title": "Authenticity",
-            "description": "We teach music in its authentic cultural context, preserving the traditions and stories behind every rhythm and melody."
-          },
-          "excellence": {
-            "title": "Excellence",
-            "description": "World-class instruction from professional musicians who have dedicated their lives to mastering their craft."
-          },
-          "accessibility": {
-            "title": "Accessibility",
-            "description": "Quality music education available to everyone, regardless of location, background, or experience level."
-          },
-          "community": {
-            "title": "Community",
-            "description": "A supportive global community of musicians who learn, grow, and create together across borders."
-          }
-        },
-        "cta": {
-          "title": "Ready to Start Your Musical Journey?",
-          "subtitle": "Join thousands of musicians mastering authentic Latin American music. Start your free trial today.",
-          "primaryLabel": "Get Started Free",
-          "secondaryLabel": "Explore Courses"
-        }
-      },
-      "playsense": {
-        "hero": {
-          "title": "Practice with PlaySense",
-          "subtitle": "Your AI-powered practice partner — real-time feedback on every note, paired with synchronized notation that follows along as you play."
-        },
-        "breadcrumbs": {
-          "home": "Home",
-          "playsense": "PlaySense"
-        },
-        "intro": {
-          "titlePrefix": "Meet",
-          "titleHighlight": "PlaySense",
-          "paragraph1": "PlaySense is our AI-powered practice tool that listens to your playing in real time. It gives you instant, actionable feedback on pitch, rhythm, timing, and dynamics — like having a patient, always-available teacher between lessons.",
-          "paragraph2": "Paired with PlaySense Studio, the notation follows along as you watch each lesson, so you always know exactly where you are in the music. Slow down, loop tricky passages, and master every note at your own pace.",
-          "mediaPlaceholder": "Video / Image Coming Soon"
-        },
-        "features": {
-          "titlePrefix": "Why musicians love",
-          "titleHighlight": "PlaySense",
-          "description": "A practice tool built to make every session count.",
-          "realtime": {
-            "title": "Real-time feedback",
-            "description": "PlaySense listens through your microphone or PlaySense device and responds instantly as you play — no waiting, no guesswork."
-          },
-          "accuracy": {
-            "title": "Pitch & rhythm accuracy",
-            "description": "See exactly where your timing, pitch, and dynamics drift, so you can fix mistakes before they become habits."
-          },
-          "notation": {
-            "title": "Synchronized notation",
-            "description": "PlaySense Studio scrolls the sheet music and tablature in sync with each video lesson, keeping you locked to the beat."
-          },
-          "practice": {
-            "title": "Practice your way",
-            "description": "Slow passages down, loop difficult sections, and repeat until it feels effortless — all at your own pace."
-          },
-          "progress": {
-            "title": "Track your progress",
-            "description": "Watch your accuracy and consistency improve over time as PlaySense highlights what to work on next."
-          },
-          "guided": {
-            "title": "Guided support",
-            "description": "Built into every course, PlaySense turns solo practice into focused, structured improvement."
-          }
-        },
-        "howItWorks": {
-          "titlePrefix": "How it",
-          "titleHighlight": "works",
-          "description": "Get started in three simple steps.",
-          "step1": {
-            "title": "Open a lesson",
-            "description": "Pick any course and start a lesson with synchronized PlaySense Studio notation."
-          },
-          "step2": {
-            "title": "Play along",
-            "description": "Use your microphone or PlaySense device. PlaySense listens as you play and follows the score with you."
-          },
-          "step3": {
-            "title": "Improve faster",
-            "description": "Get instant feedback on timing, pitch, and dynamics, then loop and refine until you nail it."
-          }
-        },
-        "cta": {
-          "title": "Ready to hear the difference?",
-          "subtitle": "Start practicing with PlaySense today and turn every session into real progress.",
-          "primaryLabel": "Get Started Free",
-          "secondaryLabel": "Explore Courses"
-        }
-      },
-      "contact": {
-        "hero": {
-          "title": "Contact Us",
-          "subtitle": "We'd love to hear from you. Reach out with questions, feedback, or partnership inquiries."
-        },
-        "breadcrumbs": {
-          "home": "Home",
-          "contact": "Contact"
-        },
-        "getInTouch": {
-          "titlePrefix": "Get in",
-          "titleHighlight": "Touch",
-          "description": "Choose the best way to reach us. We are always happy to help."
-        },
-        "info": {
-          "email": {
-            "title": "Email"
-          },
-          "responseTime": {
-            "title": "Response Time",
-            "detail": "Within 24 hours"
-          }
-        },
-        "social": {
-          "title": "Social Media",
-          "description": "Follow us for tips, updates, and community highlights.",
-          "instagram": "Instagram",
-          "youtube": "YouTube"
-        },
-        "commonQuestions": {
-          "titlePrefix": "Common",
-          "titleHighlight": "Questions",
-          "description": "Quick answers to questions we hear most often.",
-          "viewAll": "View All FAQs"
-        },
-        "faq": {
-          "resetPassword": {
-            "question": "How do I reset my password?",
-            "answer": "Click the 'Forgot Password' link on the login page and follow the instructions sent to your email."
-          },
-          "switchPlan": {
-            "question": "Can I switch my subscription plan?",
-            "answer": "Yes! You can upgrade or downgrade your plan at any time from your account settings. Changes take effect at the start of your next billing cycle."
-          },
-          "cancel": {
-            "question": "How do I cancel my subscription?",
-            "answer": "Go to your account settings, select 'Subscription', and click 'Cancel Plan'. You will retain access until the end of your current billing period."
-          },
-          "paymentSecurity": {
-            "question": "Is my payment information secure?",
-            "answer": "Absolutely. All payments are processed through Stripe, a PCI-compliant payment processor. We never store your credit card information on our servers."
-          }
-        }
-      },
-      "instructors": {
-        "hero": {
-          "title": "Our Instructors",
-          "subtitle": "Learn from world-class musicians with decades of performance and teaching experience."
-        },
-        "breadcrumbs": {
-          "home": "Home",
-          "instructors": "Instructors"
-        },
-        "empty": "Our instructor roster is being updated. Check back soon!",
-        "philosophy": {
-          "titlePrefix": "Our Teaching",
-          "titleHighlight": "Philosophy",
-          "description": "At Latin Music Mastery, we believe that authentic instruction goes beyond technique. Our instructors bring decades of real-world performance experience and deep cultural context to every lesson. Through a progressive curriculum that honors the traditions of Latin American music while embracing modern pedagogy, students don't just learn notes — they understand the rhythms, history, and soul behind the music they play."
-        },
-        "cta": {
-          "title": "Ready to Learn from the Best?",
-          "subtitle": "Start your musical journey with world-class Latin music instructors. Free trial included.",
-          "primaryLabel": "Get Started Free",
-          "secondaryLabel": "View Pricing"
-        },
-        "metadata": {
-          "title": "Our Instructors - Latin Music Mastery",
-          "description": "Learn from world-class musicians with decades of performance and teaching experience in Latin American music."
-        }
-      },
-      "blog": {
-        "hero": {
-          "title": "Blog",
-          "subtitle": "Insights, tutorials, and stories from the world of Latin music."
-        },
-        "breadcrumbs": {
-          "home": "Home",
-          "blog": "Blog"
-        },
-        "categories": {
-          "all": "All",
-          "tutorials": "Tutorials",
-          "history": "History",
-          "education": "Education",
-          "news": "News",
-          "features": "Features"
-        },
-        "empty": {
-          "title": "No blog posts yet",
-          "description": "Check back soon for insights, tutorials, and stories from the world of Latin music."
+        "pricing": {
+          "eyebrow": "Pricing",
+          "title": "One instrument.",
+          "accent": "Everything it needs.",
+          "lede": "Each subscription includes your instrument's fundamentals course and one style course. Add more styles whenever you want.",
+          "includes": "Every plan includes",
+          "inc1": "Your instrument's fundamentals course",
+          "inc2": "One style course of your choice",
+          "inc3": "PlaySense notation and real-time feedback",
+          "inc4": "Streaks, weekly goal and practice calendar",
+          "inc5": "New content monthly · cancel anytime",
+          "allAccess": "All-access",
+          "allAccessBody": "Every instrument and every style."
         }
       },
       "explore": {
-        "metadata": {
-          "title": "Explore Courses - Latin Music Mastery",
-          "description": "Discover Latin American music courses organized by country, style, and instrument."
+        "meta": {
+          "title": "Explore courses",
+          "description": "Browse every Latin music course by instrument, country and style, taught by the maestros who play it."
         },
-        "hero": {
-          "title": "Explore Courses",
-          "subtitle": "Discover the rich world of Latin American music organized by country and musical tradition."
-        },
-        "instrumentTitle": "{instrument} Courses",
-        "instrumentSubtitle": "Browse courses for {instrument}.",
-        "styleSubtitle": "Explore {style} courses.",
-        "empty": {
-          "title": "No courses available yet",
-          "body": "We are adding more courses for {label}. Check back soon!"
-        },
+        "crumb": "Explore",
+        "title": "Explore",
+        "titleAccent": "the catalog.",
+        "lede": "{courses} courses across {instruments} instruments. Pick an instrument, then add the styles you want to play.",
+        "searchLabel": "Search courses",
+        "searchPlaceholder": "Search a style or instrument",
+        "instrumentsLabel": "Filter by instrument",
+        "countriesLabel": "Filter by country",
+        "allInstruments": "All instruments",
+        "allCountries": "All countries",
+        "soon": "soon",
+        "empty": "No courses match that search yet.",
+        "fundamentals": "Fundamentals",
+        "fundamentalsOf": "{instrument} Fundamentals",
+        "start": "Start",
+        "courseName": "{style} {instrument}",
+        "atlasEyebrow": "Browse by country",
+        "atlasTitle": "Where the",
+        "atlasAccent": "music comes from.",
+        "atlasInProduction": "Styles from {countries} are in production now.",
+        "stylesLive": "{live} of {total} styles live",
         "country": {
-          "metadata": {
-            "title": "{country} Music - Latin Music Mastery",
-            "description": "Explore musical styles and courses from {country}. Learn authentic rhythms and techniques."
+          "meta": {
+            "title": "{country} courses",
+            "description": "Latin music courses from {country}, taught by the maestros who play it."
           },
-          "musicalStyles": "Musical Styles",
-          "allCourses": "All Courses"
-        },
-        "style": {
-          "metadata": {
-            "title": "{style} - {country} - Latin Music Mastery",
-            "description": "Discover {style} courses from {country}. Learn authentic rhythms, techniques, and traditions."
-          },
-          "emptyBody": "We are working on adding courses for {style}. Check back soon!"
+          "title": "Styles of",
+          "lede": "{courses} courses across {live} live styles. Pick a style to see its story and its maestros.",
+          "ledeNone": "Courses from {country} are in production. Join the waitlist to hear when they open.",
+          "styleCount": "{n} courses",
+          "styleCountOne": "{n} course",
+          "coursesEyebrow": "All courses",
+          "coursesTitle": "Pick a style,",
+          "coursesAccent": "pick a seat.",
+          "empty": "Courses from {country} are in production."
         }
       },
-      "coursePreview": {
-        "metadata": {
-          "titleTemplate": "{title} - Latin Music Mastery",
-          "fallbackTitle": "Course Preview - Latin Music Mastery",
-          "fallbackDescription": "Preview this Latin music course and explore the curriculum, instructor, and lessons."
+      "style": {
+        "meta": {
+          "title": "{style} courses · {country}",
+          "description": "Learn {style} from {country} on your instrument, with the maestros who play it."
         },
-        "about": "About This Course",
-        "curriculum": "Curriculum Preview",
-        "yourInstructor": "Your Instructor",
-        "signUpToAccess": "Sign up to access"
+        "claveSon": "Clave de son",
+        "claveRumba": "Rumba clave",
+        "courseCount": "{n} courses",
+        "courseCountOne": "{n} course",
+        "storyEyebrow": "The story",
+        "storyFallback": "We're still writing the story of {style} for this page. Until then, the maestros tell it best in the courses below.",
+        "story": {
+          "son-cubano": {
+            "p1": "**Son** took shape in Oriente, the eastern end of Cuba, in the late 1800s. It joined Spanish song forms and the guitar family with rhythms carried by enslaved Africans and their descendants, above all the Bantu-derived drumming of the region.",
+            "p2": "By the 1920s it had reached Havana, where groups like the **Sexteto Habanero** and Ignacio Piñeiro's **Septeto Nacional** made it the sound of the city: tres, guitar, bongó, bass, maracas, claves and voices, later a trumpet.",
+            "p3": "In the 1940s **Arsenio Rodríguez** expanded the band into the conjunto, adding the conga, piano and more trumpets, and stretched the montuno into the long vamp that salsa was later built on."
+          }
+        },
+        "clave": {
+          "son32": "The son clave, 3-2",
+          "rumba32": "The rumba clave, 3-2",
+          "gridLabel": "Two bars of eighth notes: {rows}",
+          "clave": "Clave",
+          "bongo": "Bongó",
+          "bass": "Bass",
+          "noteSon": "Three strokes in the first bar, two in the second. The bass never plays on one: it anticipates the next chord on the & of 2 and on 4.",
+          "noteRumba": "Like the son clave, but the third stroke is pushed back to the & of 4.",
+          "hear": "Hear it on the home page"
+        },
+        "coursesTitle": "Play {style} on",
+        "coursesAccent": "any seat.",
+        "coursesLede": "Each course teaches one instrument's part in {style}.",
+        "coursesEmpty": "{style} courses are in production. Join the waitlist to hear when they open.",
+        "maestrosEyebrow": "Maestros",
+        "maestrosTitle": "Who plays {style}",
+        "maestrosAccent": "here.",
+        "finaleTitle": "Start with",
+        "finaleAccent": "the clave.",
+        "finaleLede": "Pick an instrument, add {style} as your style, and play it with the band."
       },
+      "course": {
+        "meta": {
+          "title": "{title} · Course preview",
+          "fallbackTitle": "Course preview",
+          "fallbackDescription": "Preview a Latin music course: its curriculum, its maestro and how you practice it in PlaySense."
+        },
+        "sections": "{n} sections",
+        "sectionsOne": "{n} section",
+        "lessons": "{n} lessons",
+        "lessonsOne": "{n} lesson",
+        "notation": "PlaySense notation",
+        "maestro": "Your maestro",
+        "curriculum": "Curriculum",
+        "inProductionCount": "{n} sections in production",
+        "inProductionCountOne": "{n} section in production",
+        "inProduction": "In production",
+        "inProductionBody": "This section is being recorded. It unlocks for everyone on the plan when it ships.",
+        "freePreview": "Free preview",
+        "plan": "Plan",
+        "practice": "Practice every lesson in PlaySense",
+        "enroll": {
+          "label": "Included with the {instrument} plan",
+          "perMonth": "/mo",
+          "style": "{style} as your style course",
+          "playsense": "PlaySense notation and feedback",
+          "cancel": "Cancel anytime",
+          "cta": "Lock in founding pricing",
+          "compare": "Compare plans",
+          "yearly": "Or {price}/yr, {pct}% less than monthly."
+        },
+        "planSr": "(included with the plan)"
+      },
+      "instructors": {
+        "metaTitle": "Instructors · Latin Music Mastery",
+        "metaDescription": "Study with working Latin musicians. Each maestro teaches the instrument they play on the bandstand.",
+        "crumb": "Instructors",
+        "title": "Los",
+        "titleAccent": "maestros.",
+        "lede": "{count} working musicians, each teaching the instrument they play for a living.",
+        "filterLabel": "Filter by instrument family",
+        "famAll": "Everyone",
+        "famPerc": "Percussion",
+        "famKeys": "Keys",
+        "famBass": "Bass",
+        "famStrings": "Strings",
+        "famHorns": "Horns",
+        "famVoice": "Voice",
+        "empty": "Our roster is being updated. Check back soon.",
+        "quote": "Students don't just learn notes. They learn the rhythms, the history and the soul behind the music they play.",
+        "quoteCite": "Our teaching philosophy",
+        "prose1": "Every maestro on the platform performs the music they teach. They bring decades of bandstand experience and the context that doesn't fit on a chart: where a pattern comes from, when to break it, and how it sits against the clave.",
+        "prose2": "Courses move from fundamentals to style, and every lesson comes with synced notation so you can practice what you just watched.",
+        "finaleTitle": "Ready to learn",
+        "finaleAccent": "from the best?",
+        "finaleLede": "Join the waitlist for early access and founding-member pricing.",
+        "filterResults": "{count} maestros shown"
+      },
+      "profile": {
+        "metaTitle": "{name}, {instrument} · Latin Music Mastery",
+        "metaDescription": "{name} teaches {instrument} on Latin Music Mastery.",
+        "portraitAlt": "Portrait of {name}",
+        "specialties": "Specialties",
+        "courses": "Courses",
+        "noCourses": "Courses with {name} are in production. Join the waitlist to hear first when they open.",
+        "basics": "Basics",
+        "start": "Start",
+        "lessons": "{count} lessons",
+        "lessonsOne": "1 lesson",
+        "sections": "{count} sections",
+        "sectionsOne": "1 section",
+        "finaleTitle": "Study with",
+        "finaleLede": "Join the waitlist for early access and founding-member pricing.",
+        "metaTitleNoInst": "{name} · Latin Music Mastery",
+        "metaDescriptionNoInst": "{name} teaches on Latin Music Mastery."
+      },
+      "playsense": {
+        "metaTitle": "PlaySense - Latin Music Mastery",
+        "metaDescription": "PlaySense puts you on a live stage on the Miami bayfront with the band behind you. It listens to every note, scores your timing and keeps the sheet music in sync with the lesson.",
+        "crumb": "PlaySense",
+        "title": "Play",
+        "titleAccent": "Sense.",
+        "lede": "The sun just set over Biscayne Bay. The band is ready. Find your place in the groove.",
+        "stage": {
+          "label": "Live PlaySense stage on the Miami bayfront at dusk: notes travel down the pier toward your instrument",
+          "instrument": "Instrument",
+          "conga": "Congas",
+          "timbale": "Timbales",
+          "piano": "Piano",
+          "caption": "Live PlaySense stage · {exercise} on {instrument}",
+          "hint": "Notes travel down the pier. Hit them as they reach your instrument.",
+          "meta": "Latin foundations · {bpm} BPM · 4/4",
+          "band": "Bass · Keys · {percussion}",
+          "getReady": "Get ready",
+          "loading": "Loading the stage"
+        },
+        "how": {
+          "eyebrow": "How it works",
+          "title": "Three steps,",
+          "titleAccent": "every session.",
+          "s1Title": "Open a lesson",
+          "s1Body": "Pick any course and start a lesson. The exercise is ready on the stage with the band behind you.",
+          "s2Title": "Play along",
+          "s2Body": "Use your microphone or a PlaySense device. Notes travel down the pier and PlaySense listens to every hit.",
+          "s3Title": "Improve faster",
+          "s3Body": "See which notes were early, late or missed, loop those measures, and play them again."
+        },
+        "chart": {
+          "eyebrow": "Prefer the chart?",
+          "title": "Notation,",
+          "titleAccent": "synced to the maestro.",
+          "lede": "Every lesson also has the sheet music under the video, bar by bar. Arrange it side by side, stacked, or music only.",
+          "layout": "Layout",
+          "side": "Side by side",
+          "stack": "Stacked",
+          "music": "Music only"
+        },
+        "ws": {
+          "course": "Son Cubano Bass",
+          "lesson": "The tumbao · demo",
+          "mic": "MIC",
+          "videoCaption": "Lesson video · demo",
+          "staffLabel": "Bass staff: a two-bar son tumbao in 4/4 over C, F, G and F, with a playhead that follows the music",
+          "onTime": "On time",
+          "late": "Late",
+          "loop": "Loop",
+          "simulated": "Demo: student input simulated",
+          "perfect": "Perfect",
+          "lateMs": "Late +{ms}ms",
+          "loadError": "The notation could not load."
+        },
+        "features": {
+          "f1Title": "Real-time feedback",
+          "f1Body": "Listens through your microphone or PlaySense device and responds as you play.",
+          "f2Title": "Pitch and rhythm accuracy",
+          "f2Body": "See where your timing and pitch drift, so you fix mistakes before they become habits.",
+          "f3Title": "Play with the band",
+          "f3Body": "A backing band plays around you. Mute your own part and fill the hole.",
+          "f4Title": "Practice your way",
+          "f4Body": "Slow passages down, loop difficult measures and repeat until it feels easy.",
+          "f5Title": "Synchronized notation",
+          "f5Body": "Sheet music and tablature follow each video lesson.",
+          "f6Title": "Take the chart home",
+          "f6Body": "Export any section as PDF, MusicXML or MIDI."
+        },
+        "finale": {
+          "title": "Your place in the band",
+          "titleAccent": "is waiting.",
+          "lede": "PlaySense is included in every plan."
+        },
+        "pause": "Pause",
+        "play": "Play"
+      },
+      "pricing": {
+        "calc": {
+          "instrument": "Instrument",
+          "available": "{n} style courses available",
+          "styles": "Style courses",
+          "stylesHint": "The first is included. Each extra: {addon}/mo.",
+          "fewer": "Fewer styles",
+          "more": "More styles",
+          "styleOne": "1 style",
+          "styleMany": "{n} styles",
+          "billing": "Billing",
+          "monthly": "Monthly",
+          "yearly": "Yearly −{pct}%",
+          "perMonth": "/mo",
+          "perYear": "/yr",
+          "base": "Base {price}",
+          "extras": "+ {n} × {price}",
+          "save": "Save {price} vs monthly",
+          "extrasYearly": "+ {price}/mo for extra styles",
+          "cta": "Lock in founding pricing"
+        },
+        "metaTitle": "Pricing - Latin Music Mastery",
+        "metaDescription": "Pay per instrument: the fundamentals course plus a style of your choice. Add more styles whenever you like, or save with yearly billing.",
+        "crumb": "Pricing",
+        "title": "Simple,",
+        "titleAccent": "per instrument.",
+        "lede": "Start with one instrument: its fundamentals course plus a style you choose. Add more styles whenever you are ready.",
+        "noticeTitle": "Founding-member pricing",
+        "noticeBody": "These rates are for a limited time. Join the waitlist to lock them in.",
+        "includes": {
+          "title": "Every plan includes",
+          "i1": "Your instrument's fundamentals course",
+          "i2": "One style course of your choice",
+          "i3": "PlaySense notation and real-time feedback",
+          "i4": "Streaks, weekly goal and practice calendar",
+          "i5": "New content monthly · cancel anytime"
+        },
+        "allAccess": {
+          "title": "All-access",
+          "body": "Every instrument and every style."
+        },
+        "how": {
+          "eyebrow": "How pricing works",
+          "title": "Build your",
+          "titleAccent": "own plan.",
+          "s1Title": "Pick an instrument",
+          "s1Body": "{base}/mo includes that instrument's fundamentals course plus one style course.",
+          "s2Title": "Add styles",
+          "s2Body": "Want more styles on the same instrument? Add any style course for {addon}/mo each.",
+          "s3Title": "Go yearly",
+          "s3Body": "Pay {annual}/yr for the instrument base and save {pct}%. Extra styles stay monthly."
+        },
+        "compare": {
+          "title": "Compare plans",
+          "feature": "Feature",
+          "perInstrument": "Per instrument",
+          "allAccess": "All-access",
+          "soon": "Soon",
+          "included": "Included",
+          "instruments": "Instruments",
+          "instrumentsOne": "1",
+          "instrumentsAll": "All {n}",
+          "fundamentals": "Fundamentals course",
+          "styles": "Style courses",
+          "stylesPer": "1 included, +{addon}/mo each",
+          "stylesAll": "Every style",
+          "playsense": "PlaySense notation and feedback",
+          "export": "Sheet music export",
+          "progress": "Progress, streaks and calendar",
+          "content": "New content monthly",
+          "price": "Price",
+          "pricePer": "{monthly}/mo or {annual}/yr",
+          "priceAll": "To be announced"
+        },
+        "faqPrompt": "Questions about billing?",
+        "faqLink": "Read the FAQ"
+      },
+      "about": {
+        "metaTitle": "About · Latin Music Mastery",
+        "metaDescription": "Why Latin Music Mastery exists: authentic Latin music taught by the musicians who play it, with structure and context.",
+        "crumb": "About",
+        "title": "Keep the music",
+        "titleAccent": "in good hands.",
+        "lede": "Latin Music Mastery was born from respect for the music, culture and traditions of Latin America.",
+        "eyebrow": "Our mission",
+        "manifesto": "Teach more than notes.",
+        "manifestoAccent": "Teach the feel, the history and the clave.",
+        "p1": "For generations, Latin music has moved the world with its rhythm and soul, from the syncopated language of Cuban son to the fire of salsa and the sophistication of mambo. These traditions carry stories and musical wisdom that deserve to be preserved and shared.",
+        "p2": "We bring together master musicians, structured lessons and modern practice tools so students anywhere can learn the technique, the history and the cultural foundation behind the music.",
+        "valuesLabel": "Our values",
+        "authenticTitle": "Authentic",
+        "authenticBody": "Every course is taught by a musician who plays that music on stage, in the style's own language.",
+        "structuredTitle": "Structured",
+        "structuredBody": "Fundamentals first, then styles, then playing inside the band. Each step builds on the one before.",
+        "rootedTitle": "Rooted",
+        "rootedBody": "Technique comes with context: where a pattern comes from, who made it famous, and how it sits against the clave.",
+        "numbersLabel": "Latin Music Mastery in numbers",
+        "numCourses": "Courses",
+        "numMaestros": "Maestros",
+        "numInstruments": "Instruments",
+        "numStyles": "Styles",
+        "numCountries": "Countries",
+        "finaleTitle": "Carry the legacy",
+        "finaleAccent": "forward.",
+        "finaleLede": "Join the waitlist and be part of the first class of students."
+      },
+      "faq": {
+        "metaTitle": "FAQ · Latin Music Mastery",
+        "metaDescription": "Answers about Latin Music Mastery courses, pricing, billing and PlaySense.",
+        "crumb": "FAQ",
+        "title": "Questions,",
+        "titleAccent": "answered.",
+        "lede": "Can't find what you need?",
+        "ledeLink": "Write to us.",
+        "navLabel": "FAQ categories",
+        "cats": {
+          "start": "Getting started",
+          "billing": "Subscription & billing",
+          "playsense": "PlaySense"
+        },
+        "start": {
+          "whatQ": "What is Latin Music Mastery?",
+          "whatA": "An online school for Latin music. You learn an instrument from musicians who play it professionally, with HD video lessons, notation synced to every video, and PlaySense feedback while you practice.",
+          "experienceQ": "Do I need any prior musical experience?",
+          "experienceA": "No. Every instrument starts with a fundamentals course that assumes you are new to it. Experienced players can move straight to the style courses.",
+          "instrumentsQ": "Which instruments are covered?",
+          "instrumentsA": "Courses are live for {list}. More instruments are on the way.",
+          "instrumentsNone": "The first courses are being prepared now. Join the waitlist and we'll tell you as each instrument opens.",
+          "lessonsQ": "How do the lessons work?",
+          "lessonsA": "Each lesson has a video from your maestro with the notation synced underneath. You can slow it down, loop a passage, and play along while PlaySense listens."
+        },
+        "billing": {
+          "costQ": "How much does it cost?",
+          "costA": "Each instrument is {base}/mo, or {annual}/yr. That includes the instrument's fundamentals course plus one style course. Extra style courses are {addon}/mo each.",
+          "foundingQ": "What does founding-member pricing mean?",
+          "foundingA": "People who join the waitlist before launch keep today's prices when they subscribe.",
+          "cancelQ": "Can I cancel anytime?",
+          "cancelA": "Yes. There are no contracts or cancellation fees. You keep access until the end of your billing period.",
+          "secureQ": "Is my payment information secure?",
+          "secureA": "Payments are processed by Stripe. Card details never touch our servers."
+        },
+        "playsense": {
+          "needsQ": "What does PlaySense need?",
+          "needsA": "A microphone on your computer, phone or tablet, or a PlaySense device. Headphones help so the backing track doesn't bleed into the mic.",
+          "downloadQ": "Can I download the sheet music?",
+          "downloadA": "Yes. Any section can be exported as PDF, MusicXML or MIDI.",
+          "percussionQ": "Does it work for percussion?",
+          "percussionA": "Yes. For percussion, PlaySense focuses on timing, so you see which strokes were early, late or missed."
+        }
+      },
+      "contact": {
+        "metaTitle": "Contact · Latin Music Mastery",
+        "metaDescription": "Questions, feedback or partnership ideas. Write to the Latin Music Mastery team.",
+        "crumb": "Contact",
+        "title": "Hablemos.",
+        "titleAccent": "Let's talk.",
+        "lede": "Questions, feedback or partnership ideas. We answer within 24 hours.",
+        "name": "Name",
+        "namePlaceholder": "Your name",
+        "email": "Email",
+        "emailPlaceholder": "you@email.com",
+        "topic": "Topic",
+        "topics": {
+          "general": "General question",
+          "support": "Technical support",
+          "billing": "Billing",
+          "partnership": "Partnership",
+          "feedback": "Feedback"
+        },
+        "message": "Message",
+        "messagePlaceholder": "How can we help?",
+        "send": "Send message",
+        "sending": "Sending…",
+        "errName": "Enter your name (at least 2 characters).",
+        "errEmail": "Enter an email like name@example.com.",
+        "errTopic": "Pick a topic.",
+        "errMessage": "Write at least 10 characters so we know how to help.",
+        "errSend": "We couldn't send your message. Try again, or email us at {email}.",
+        "sentTitle": "Message sent.",
+        "sentBody": "We'll reply to your email within 24 hours.",
+        "sendAnother": "Send another message",
+        "emailCard": "Email",
+        "copy": "Copy address",
+        "copied": "Copied",
+        "selected": "Selected. Press Ctrl+C or ⌘C to copy",
+        "responseCard": "Response time",
+        "responseValue": "Within 24 hours",
+        "responseBody": "We read every message.",
+        "followCard": "Follow along",
+        "followBody": "Tips, lessons and behind-the-scenes clips on Instagram, TikTok, YouTube and Facebook."
+      },
+      "blog": {
+        "metaTitle": "Blog · Latin Music Mastery",
+        "metaDescription": "Tutorials, history and stories from the world of Latin music.",
+        "crumb": "Blog",
+        "title": "Notes from",
+        "titleAccent": "the bandstand.",
+        "lede": "Tutorials, history and stories from the world of Latin music.",
+        "filterLabel": "Filter posts by category",
+        "all": "All",
+        "cats": {
+          "News": "News",
+          "Tutorials": "Tutorials",
+          "Features": "Features",
+          "History": "History",
+          "Education": "Education"
+        },
+        "minRead": "{n} min read",
+        "minShort": "{n} MIN",
+        "read": "Read article",
+        "noneInCategory": "No posts in this category yet.",
+        "emptyTitle": "No articles yet.",
+        "emptyBody": "The first posts are being written. Join the waitlist and we'll let you know when they're up.",
+        "by": "By {name}",
+        "tags": "Tags",
+        "related": "Keep reading",
+        "back": "All articles",
+        "newsTitle": "Stay in",
+        "newsAccent": "the loop.",
+        "newsBody": "New lessons, new maestros and stories from the bandstand, in your inbox.",
+        "newsLabel": "Email for the newsletter",
+        "newsCta": "Subscribe",
+        "newsInvalid": "Enter an email like name@example.com.",
+        "newsDone": "Thanks for subscribing. Watch your inbox.",
+        "finaleTitle": "Learn it",
+        "finaleAccent": "from the source.",
+        "postMetaTitle": "{title} · Latin Music Mastery",
+        "postMetaFallback": "Blog · Latin Music Mastery",
+        "postMetaDescription": "Read this article on the Latin Music Mastery blog."
+      },
+      "legal": {
+        "effective": "Effective {date}",
+        "updated": "Last updated {date}",
+        "englishOnly": "This document is available in English only."
+      }
+    },
+    "pages": {
       "courses": {
         "backToHome": "← Back to home",
         "by": "by {name}",
@@ -674,28 +846,6 @@
     }
   },
   "homepage": {
-    "videoHero": {
-      "badge": "The #1 Platform for Latin Music Education",
-      "titlePrefix": "Learning from the Masters of",
-      "titleHighlight": "Latin Music",
-      "subtitle": "Learn Son, Mambo, Bolero, Chacha, Salsa, Cumbia, Merengue, Timba and more from world-class instructors. Interactive lessons with real-time feedback for musicians of every level.",
-      "scroll": "Scroll"
-    },
-    "stats": {
-      "activeStudents": {
-        "label": "Active Students",
-        "staticText": "In Progress"
-      },
-      "videoLessons": {
-        "label": "Video Lessons"
-      },
-      "hoursOfContent": {
-        "label": "Hours of Content"
-      },
-      "expertInstructors": {
-        "label": "Expert Instructors"
-      }
-    },
     "waitlistForm": {
       "launchingSoon": "Launching Soon",
       "success": "You're on the list! We'll be in touch soon.",
@@ -718,287 +868,6 @@
         "skip": "Skip",
         "submit": "Submit",
         "noOptions": "No options available right now."
-      }
-    },
-    "featureShowcase": {
-      "heading": "Everything You Need to Excel",
-      "subheading": "A complete learning platform designed for musicians of all levels",
-      "screenshotPlaceholder": "Feature Screenshot",
-      "interactive": {
-        "title": "Interactive Video Lessons",
-        "description": "Learn with high-quality video tutorials featuring PlaySense Studio integration for synchronized sheet music and tablature. Slow down, loop, and master every note at your own pace."
-      },
-      "progress": {
-        "title": "Track Your Progress",
-        "description": "Stay motivated with detailed progress tracking. See your completed lessons, practice time, and skill improvements all in one place. Set goals and achieve them."
-      },
-      "experts": {
-        "title": "Learn From Experts",
-        "description": "Our instructors are professional musicians with decades of experience performing and teaching Latin music. Get authentic insights into technique, style, and cultural context."
-      },
-      "curriculum": {
-        "title": "Comprehensive Curriculum",
-        "description": "From beginner fundamentals to advanced techniques, explore courses covering multiple Latin American musical styles including salsa, bossa nova, tango, cumbia, and more."
-      }
-    },
-    "courseExplorer": {
-      "heading": "Explore Latin Music Styles",
-      "subheading": "From the Caribbean to South America, discover the rich diversity of Latin American musical traditions",
-      "musicalStylesLabel": "Musical Styles:",
-      "viewAllCourses": "View All Courses"
-    },
-    "animatedHero": {
-      "badge": "10,000+ students learning worldwide",
-      "titleLine1": "Master Latin Music",
-      "titleLine2": "From Anywhere",
-      "subtitleLine1": "Learn from expert instructors. Play authentic rhythms.",
-      "subtitleLine2": "Connect with the rich heritage of Latin American music.",
-      "ctaPrimary": "Start Learning Free",
-      "ctaSecondary": "Watch Demo",
-      "trust": {
-        "noCreditCard": "No credit card required",
-        "cancelAnytime": "Cancel anytime",
-        "moneyBackGuarantee": "14-day money-back guarantee"
-      }
-    },
-    "modernHero": {
-      "badge": "Learn authentic Latin rhythms from world-class instructors",
-      "titleLine1": "Master the rhythms of",
-      "titleLine2": "Latin America",
-      "subtitle": "Learn salsa, bossa nova, tango, and more from world-class instructors. Interactive lessons designed for musicians of all levels.",
-      "ctaPrimary": "Start Learning Free",
-      "ctaSecondary": "Watch Demo"
-    },
-    "socialProof": {
-      "trustedBy": "Trusted by musicians worldwide",
-      "activeStudents": "Active Students",
-      "videoLessons": "Video Lessons",
-      "musicStyles": "Music Styles",
-      "averageRating": "Average Rating"
-    },
-    "testimonials": {
-      "carousel": {
-        "heading": "Student Success Stories",
-        "subheading": "Join thousands of musicians who have transformed their skills",
-        "goToTestimonial": "Go to testimonial {index}",
-        "davidChen": {
-          "name": "David Chen",
-          "role": "Salsa Student",
-          "content": "The interactive lessons and expert instructors helped me master salsa rhythms in just 3 months. I can now play confidently with my local band!"
-        },
-        "sarahWilliams": {
-          "name": "Sarah Williams",
-          "role": "Bossa Nova Enthusiast",
-          "content": "As a jazz guitarist, learning bossa nova opened up a whole new world. The PlaySense Studio integration makes following along so easy."
-        },
-        "miguelSantos": {
-          "name": "Miguel Santos",
-          "role": "Professional Musician",
-          "content": "I wanted to connect with my Colombian roots through music. The cumbia course exceeded my expectations - authentic, detailed, and inspiring."
-        },
-        "emmaTaylor": {
-          "name": "Emma Taylor",
-          "role": "Music Teacher",
-          "content": "I use these courses to teach my students about Latin American music. The quality and cultural context are unmatched."
-        }
-      }
-    },
-    "finalCta": {
-      "headingLine1": "Ready to start your",
-      "headingLine2": "musical journey?",
-      "subheading": "Join thousands of musicians mastering authentic Latin American music. Start your free trial today.",
-      "cta": "Get Started Free"
-    },
-    "footer": {
-      "tagline": "Master authentic Latin American music with world-class instructors.",
-      "copyright": "© {year} Latin Music Mastery. All rights reserved.",
-      "headings": {
-        "courses": "Courses",
-        "company": "Company",
-        "resources": "Resources",
-        "legal": "Legal",
-        "product": "Product"
-      },
-      "courses": {
-        "browseAll": "Browse All Courses",
-        "salsa": "Salsa",
-        "bossaNova": "Bossa Nova",
-        "tango": "Tango"
-      },
-      "company": {
-        "about": "About Us",
-        "instructors": "Instructors",
-        "pricing": "Pricing",
-        "contact": "Contact"
-      },
-      "resources": {
-        "helpCenter": "Help Center",
-        "community": "Community",
-        "blog": "Blog",
-        "faqs": "FAQs"
-      },
-      "legal": {
-        "privacy": "Privacy Policy",
-        "terms": "Terms of Service",
-        "cookie": "Cookie Policy"
-      },
-      "product": {
-        "courses": "Courses",
-        "pricing": "Pricing",
-        "instructors": "Instructors"
-      },
-      "companyShort": {
-        "about": "About",
-        "blog": "Blog",
-        "contact": "Contact"
-      },
-      "legalShort": {
-        "privacy": "Privacy",
-        "terms": "Terms"
-      }
-    },
-    "homeSections": {
-      "features": {
-        "heading": "Everything you need to excel",
-        "subheading": "A complete learning platform built for serious musicians",
-        "headingPrefix": "Everything you need to",
-        "headingHighlight": "master Latin music",
-        "description": "A complete learning platform designed for musicians at every level.",
-        "learnMore": "Learn more",
-        "interactive": {
-          "title": "Interactive Lessons",
-          "description": "HD video with PlaySense Studio integration for synchronized notation. Slow down, loop, and master every note."
-        },
-        "progress": {
-          "title": "Progress Tracking",
-          "description": "Monitor your practice time, completed lessons, and skill improvements in one dashboard."
-        },
-        "experts": {
-          "title": "Expert Instructors",
-          "description": "Learn from professional musicians with decades of performance and teaching experience."
-        },
-        "downloads": {
-          "title": "Downloadable Resources",
-          "description": "Sheet music, tablature, and backing tracks available for offline practice."
-        },
-        "pace": {
-          "title": "Learn at Your Pace",
-          "description": "Access lessons anytime, anywhere. No deadlines, no pressure."
-        },
-        "monthly": {
-          "title": "New Content Monthly",
-          "description": "Fresh lessons and courses added regularly to expand your repertoire."
-        },
-        "interactiveRealtime": {
-          "title": "Interactive Lessons with Real-Time Feedback",
-          "description": "HD video lessons with synchronized notation powered by PlaySense Studio. Slow down, loop sections, and get instant feedback on your playing with PlaySense AI."
-        },
-        "trackProgress": {
-          "title": "Track Your Progress Like a Pro",
-          "description": "Comprehensive dashboard tracking practice time, completed lessons, streaks, and skill progression. Set goals and watch yourself improve."
-        },
-        "worldClass": {
-          "title": "Learn from World-Class Musicians",
-          "description": "Our instructors are professional performers and educators with decades of experience in authentic Latin American music traditions."
-        }
-      },
-      "testimonials": {
-        "heading": "Loved by musicians",
-        "subheading": "See what our students are saying about their learning experience",
-        "headingPrefix": "Loved by",
-        "headingHighlight": "musicians worldwide",
-        "description": "See what our students have to say about their learning experience.",
-        "items": {
-          "carlosRodriguez": {
-            "name": "Carlos Rodriguez",
-            "role": "Guitarist, 3 years learning",
-            "content": "The PlaySense Studio integration is incredible. Being able to slow down passages and loop difficult sections has transformed my practice sessions."
-          },
-          "sarahChen": {
-            "name": "Sarah Chen",
-            "role": "Pianist, 1 year learning",
-            "content": "I never thought I could learn bossa nova rhythms online, but the instructors make it feel like private lessons. The progress tracking keeps me motivated."
-          },
-          "marcusJohnson": {
-            "name": "Marcus Johnson",
-            "role": "Drummer, 2 years learning",
-            "content": "Finally, a platform that teaches authentic Latin rhythms with proper technique. The quality of instruction is on par with conservatory-level teaching."
-          },
-          "anaMartinez": {
-            "name": "Ana Martinez",
-            "role": "Multi-instrumentalist",
-            "content": "The variety of styles covered is amazing. From Cuban son to Argentine tango, I have been able to expand my musical vocabulary tremendously."
-          },
-          "davidKim": {
-            "name": "David Kim",
-            "role": "Bass player, 6 months learning",
-            "content": "The downloadable resources are fantastic. Having sheet music and backing tracks for offline practice has made a huge difference in my learning."
-          },
-          "elenaVolkov": {
-            "name": "Elena Volkov",
-            "role": "Jazz musician",
-            "content": "As a jazz musician wanting to incorporate Latin elements, this platform has been invaluable. The instructors explain the cultural context beautifully."
-          }
-        }
-      },
-      "pricingPreview": {
-        "headingPrefix": "Simple,",
-        "headingHighlight": "flexible pricing",
-        "description": "Start with one instrument — its fundamentals course plus a genre you choose — and add more anytime.",
-        "limitedTimeNotice": {
-          "eyebrow": "Limited-Time Pricing",
-          "title": "These prices won't last long",
-          "body": "The prices below are available for a limited time and will increase soon. Join the waitlist now to lock in your membership at these rates.",
-          "ctaLabel": "Join the Waitlist"
-        },
-        "instrumentsAvailable": "{count} Instruments Available",
-        "perInstrument": "Per Instrument",
-        "allAccess": "All-Access",
-        "perMonth": "/month",
-        "perYear": "/yr",
-        "annualSave": "Save 17%",
-        "or": "or",
-        "comingSoon": "Coming soon",
-        "addonNote": "+$9.99/mo per additional genre course",
-        "chooseInstrument": "Get Started",
-        "getAllAccess": "Get All-Access",
-        "moneyBack": "14-day money-back guarantee",
-        "instrumentFeatures": {
-          "allCourses": "Fundamentals + 1 genre course of your choice",
-          "soundslice": "Interactive PlaySense Studio notation",
-          "progress": "Progress tracking dashboard",
-          "monthly": "New content added monthly",
-          "cancelAnytime": "Cancel anytime"
-        },
-        "allAccessFeatures": {
-          "allInstruments": "All 9 instruments included",
-          "everyCourse": "Every fundamentals & genre course",
-          "soundslice": "Interactive PlaySense Studio notation",
-          "progress": "Progress tracking dashboard",
-          "monthly": "New content added monthly",
-          "cancelAnytime": "Cancel anytime"
-        }
-      },
-      "courseShowcase": {
-        "heading": "Explore musical traditions",
-        "subheading": "From the Caribbean to South America, master the authentic rhythms and techniques that define Latin American music.",
-        "titlePrefix": "Explore",
-        "titleHighlight": "musical traditions",
-        "description": "Dive into the rich musical heritage of Latin America. Each country offers unique styles, rhythms, and techniques to master."
-      },
-      "instructors": {
-        "heading": "Learn from the best",
-        "subheading": "World-class musicians with decades of performance and teaching experience",
-        "gridHeading": "Learn From the Best",
-        "gridSubheading": "Our instructors are world-class musicians with decades of performance and teaching experience",
-        "sectionHeadingPrefix": "Learn from",
-        "sectionHeadingHighlight": "the best",
-        "sectionDescription": "Professional performers and educators with decades of experience in authentic Latin American music.",
-        "viewAll": "View all instructors"
-      },
-      "socialSection": {
-        "heading": "Join Our Community",
-        "description": "Follow us for daily tips, behind-the-scenes content, and inspiration from the Latin music world."
       }
     }
   },
