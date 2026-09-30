@@ -53,6 +53,7 @@ const bars = (n: number) => `${n} ${n === 1 ? 'bar' : 'bars'}`;
 /** Human lines for the Publish popover, in a fixed order. */
 export function summarizeChanges(live: StudioContent, draft: StudioContent): string[] {
   const lines: string[] = [];
+  if (live.score.videoCoaching !== draft.score.videoCoaching) lines.push('Video effects changed');
   if (live.score.title !== draft.score.title) lines.push('Title changed');
   const a = live.score.tracks[0]?.measures ?? [];
   const b = draft.score.tracks[0]?.measures ?? [];

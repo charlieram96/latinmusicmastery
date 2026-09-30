@@ -8,13 +8,14 @@ import { StaffRenderer } from '@/components/playsense-studio/player/notation/ren
 import { StaffLayoutSwitch, staffLayoutMode, useStaffLayoutPreference } from '@/components/playsense-studio/player/notation/staff-layout-switch'
 import { useTranslation } from '@/components/language-provider'
 import { repeatProjection } from '@/lib/playsense-studio/repeats'
-import { trackDurationMs, walkMeasures } from '@/lib/playsense-studio/time-mapping'
+import { trackDurationMs, walkMeasures, qnToTrackMs } from '@/lib/playsense-studio/time-mapping'
 import { exerciseReadingScore, exerciseReadingTime } from '@/lib/playsense-studio/exercise-reading-score'
 import type { StaffLayoutChoice } from '@/lib/playsense-studio/notation/staff-n1'
 import { useExerciseWorkspace } from './exercise-workspace'
 import './exercise-score.css'
 
 interface ExerciseScoreProps {
+  onSeek?: (seconds: number) => void
   score: ScoreDocument
   currentMs: number
   getCurrentMs?: () => number
@@ -28,7 +29,7 @@ interface ExerciseScoreProps {
   onStaffLayoutChange?: (next: StaffLayoutChoice) => void
 }
 
-export function ExerciseScore({ score, currentMs, getCurrentMs, playing, pass, getPass, passCount, onDurationKnown, staffLayout, onStaffLayoutChange }: ExerciseScoreProps) {
+export function ExerciseScore({ onSeek, score, currentMs, getCurrentMs, playing, pass, getPass, passCount, onDurationKnown, staffLayout, onStaffLayoutChange }: ExerciseScoreProps) {
   const { t } = useTranslation()
   const [ownLayout, setOwnLayout] = useStaffLayoutPreference()
   const layout = staffLayout ?? ownLayout
@@ -80,7 +81,8 @@ export function ExerciseScore({ score, currentMs, getCurrentMs, playing, pass, g
       </div>
     </header>
     <div className="ps-score-sheet"><StaffRenderer score={readingScore} trackIndex={0} currentMs={readingMs} getCurrentMs={playing ? readClock : undefined}
-      showCursor={playing} compact layoutMode={staffLayoutMode(layout)} autoFollow={autoFollow} zoom={zoom * .9}
+      onSeek={onSeek && readingScore.tracks[0] ? target => onSeek(qnToTrackMs(readingScore.tracks[0], readingScore, target.qn) / 1000) : undefined}
+      showCursor={playing || !!onSeek} compact layoutMode={staffLayoutMode(layout)} autoFollow={autoFollow} zoom={zoom * .9}
       onDurationKnown={duration => onDurationKnown(duration / Math.max(1, passCount))}/></div>
     {stacked && vertical && <footer className="ps-score-reading-footer"><i data-active={autoFollow}/><span>{autoFollow ? t('staff.following') : t('staff.browsing')}</span><small>{t('staff.scrollHint')}</small></footer>}
   </section>

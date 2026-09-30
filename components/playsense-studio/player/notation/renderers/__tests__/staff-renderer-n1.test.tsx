@@ -93,9 +93,23 @@ describe('helpers', () => {
     draw({})
     expect(host.querySelectorAll('.ps-staff-count')).toHaveLength(32)
   })
-  it('rings the next attack while playing', () => {
-    draw({ currentMs: 600 })
-    expect(host.querySelector('.ps-staff-next')?.hasAttribute('hidden')).toBe(false)
+  it('rings the sounding note instead of anticipating the following attack', () => {
+    for (const currentMs of [0, 250, 499, 500, 600, 1500, 100]) {
+      draw({ currentMs })
+      const ring = host.querySelector<HTMLElement>('.ps-staff-next')!
+      const chip = host.querySelector<HTMLElement>('.ps-staff-name[data-active="true"]')!
+      expect(ring.hidden).toBe(false)
+      expect(parseFloat(ring.style.transform.slice('translate('.length))).toBeCloseTo(parseFloat(chip.style.left))
+    }
+  })
+  it('hides the ring during rests and when the cursor is hidden', () => {
+    const score = scale({}, () => [{kind:'note',midi:60,durationQN:1},{kind:'rest',durationQN:1},{kind:'note',midi:62,durationQN:2}])
+    draw({score,currentMs:600})
+    expect(host.querySelector<HTMLElement>('.ps-staff-next')!.hidden).toBe(true)
+    draw({score,currentMs:1000})
+    expect(host.querySelector<HTMLElement>('.ps-staff-next')!.hidden).toBe(false)
+    draw({score,currentMs:1000,showCursor:false})
+    expect(host.querySelector<HTMLElement>('.ps-staff-next')!.hidden).toBe(true)
   })
   it('percussion shows no note names', async () => {
     const { CONGA_TUMBAO_FIXTURE } = await import('@/lib/playsense-studio/score-fixtures')

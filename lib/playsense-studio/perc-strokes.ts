@@ -2,12 +2,16 @@
 // Conga/timbal positions and symbols follow the user-supplied Finale legends:
 // Leyenda Congas.musx and Leyenda de Timbal.musx (Mauricio Upmann).
 // Finale's percussion layout harmLev is diatonic from C4: 9 = E5, 5 = A4.
+// Timbal reference verified against Leyenda de Timbal_LMM.mxl (16 named
+// strokes). The original lives in __tests__/fixtures/timbal-lmm-legend.mxl;
+// timbal-legend.test.ts checks import, persistence and appending against it.
 
 import type { Instrument, PercussionNotation, PercussionNotehead } from '@/components/playsense-studio/shared/score-model/types';
 
 export interface PercStroke {
   /** Stable id (used for palette keys). */
   id: string;
+  defaultForEntry?: boolean;
   /** Human label shown in the stroke palette. */
   label: string;
   /** MIDI number stored on the note. Unique within the instrument. */
@@ -48,14 +52,15 @@ const PERC_STROKES: Partial<Record<Instrument, PercStroke[]>> = {
     { id: 'high-mute', label: 'High · muffled', midi: 66, staffLine: 'a/4', notehead: 'slash', group: 'Drums' },
     { id: 'low-mute', label: 'Low · muffled', midi: 67, staffLine: 'f/4', notehead: 'slash', group: 'Drums' },
     { id: 'low-cross-stick', label: 'Low cross-stick', midi: 69, staffLine: 'f/4', notehead: 'slashed', group: 'Drums' },
-    { id: 'cascara', label: 'Cáscara · high', midi: 65, staffLine: 'a/4', notehead: 'plus', group: 'Shells & block' },
-    { id: 'cascara-low', label: 'Cáscara · low', midi: 68, staffLine: 'f/4', notehead: 'plus', group: 'Shells & block' },
+    { id: 'cascara', defaultForEntry: true, label: 'Cáscara · high', midi: 65, staffLine: 'a/4', notehead: 'plus', group: 'Shells & block' },
+    { id: 'cascara-low', defaultForEntry: true, label: 'Cáscara · low', midi: 68, staffLine: 'f/4', notehead: 'plus', group: 'Shells & block' },
     { id: 'jam-block', label: 'Jam block', midi: 72, staffLine: 'f/5', notehead: 'square', group: 'Shells & block' },
     { id: 'timbal-bell', label: 'Timbal bell', midi: 71, staffLine: 'g/4', notehead: 'diamond', group: 'Bells & cymbal', description: 'Contracampana' },
     { id: 'bongo-bell-mouth', label: 'Bongo bell · mouth', midi: 73, staffLine: 'f/5', notehead: 'triangle-down', group: 'Bells & cymbal' },
     { id: 'bongo-bell-body', label: 'Bongo bell · body', midi: 74, staffLine: 'f/5', notehead: 'triangle-up', group: 'Bells & cymbal' },
     { id: 'chacha-bell-mouth', label: 'Cha-cha · mouth', midi: 75, staffLine: 'a/5', notehead: 'triangle-down', group: 'Bells & cymbal' },
     { id: 'chacha-bell-body', label: 'Cha-cha · body', midi: 76, staffLine: 'a/5', notehead: 'triangle-up', group: 'Bells & cymbal' },
+    { id: 'elbow-strike', label: 'Elbow strike', midi: 77, staffLine: 'c/4', group: 'Drums', description: 'Golpe de Codo' },
     { id: 'cymbal', label: 'Cymbal', midi: 70, staffLine: 'a/5', notehead: 'x', group: 'Bells & cymbal', description: 'Platillo' },
   ],
   'perc-clave': [

@@ -179,3 +179,17 @@ describe('staveHeader key changes', () => {
     expect(staveHeader(bar, { opening: false, rowStart: true })).toEqual({ clef: 'treble', key: { spec: 'C', cancel: 'D' } })
   })
 })
+
+it('engraves editable symbols in their own translated SVG groups', async () => {
+  const {Renderer,Stave}=await import('vexflow');
+  const {drawMeasure}=await import('../notation/build-measure');
+  const host=document.createElement('div');document.body.append(host);
+  const renderer=new Renderer(host,Renderer.Backends.SVG);renderer.resize(500,240);
+  const ctx=renderer.getContext();const stave=new Stave(10,30,450).setContext(ctx);stave.draw();
+  const d={...blocks()[0].events[0],id:'symbol-note',dynamic:'mf' as const,symbolOffsets:{dynamic:{x:14,y:-9}}};
+  const built=buildMeasure([[d],[]],[4,4],'treble')!;
+  formatMeasure(built,350);drawMeasure(ctx,stave,built);
+  const group=[...host.querySelectorAll('[data-notation-symbol]')].find(g=>JSON.parse(g.getAttribute('data-notation-symbol')!).symbol==='dynamic');
+  expect(group?.getAttribute('transform')).toBe('translate(14 -9)');
+  expect(group?.querySelector('text,path')).not.toBeNull();host.remove();
+});

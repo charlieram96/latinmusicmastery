@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — stateful owner of the backing-track lanes.
 //
@@ -13,7 +15,10 @@
 //   enabled -- an ephemeral audition mute, so you can listen past a track
 // Muting to hear what is underneath must never destroy the level you set.
 
-import { Loader2, Volume2, VolumeX } from 'lucide-react';
+import { AlertCircle, Loader2, Volume2, VolumeX, Link2, Unlink } from 'lucide-react';
+import { FlexMap } from '@/lib/playsense-studio/flex';
+import { useFlexBackingAudio } from '@/lib/playsense-studio/use-flex-backing-audio';
+const IDENTITY_FLEX = new FlexMap([]);
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BackingLanes,
@@ -64,6 +69,10 @@ export function BackingLanesPanel({
   mediaToQN,
   view,
 }: BackingLanesPanelProps) {
+  const st = useStudioText();
+  const warp = view.flexMap ?? IDENTITY_FLEX;
+  const warped = !warp.isIdentity;
+  const linked = useMemo(() => new Set(view.backingFlexLinks ?? []), [view.backingFlexLinks]);
   // Clip state, seeded from the server rows and owned here from then on.
   const [clips, setClips] = useState<Record<string, Clip>>(() => seedClips(tracks));
   const [durations, setDurations] = useState<Record<string, number>>({});
@@ -247,14 +256,7 @@ export function BackingLanesPanel({
     []
   );
 
-  const toggleEnabled = useCallback((trackId: string) => {
-    setEnabled((prev) => {
-      const next = new Set(prev);
-      if (next.has(trackId)) next.delete(trackId);
-      else next.add(trackId);
-      return next;
-    });
-  }, []);
+
 
   // ---- Lane models --------------------------------------------------------
   const laneClips: LaneClip[] = useMemo(
@@ -266,6 +268,7 @@ export function BackingLanesPanel({
         return {
           ...clip,
           trackId: track.id,
+          warp: linked.has(track.id) ? warp : undefined,
           label: track.label,
           sourceDurationSeconds,
           peaks: entry.peaks,
@@ -275,7 +278,7 @@ export function BackingLanesPanel({
           enabled: enabled.has(track.id),
         };
       }),
-    [tracks, clips, peaks, enabled, durationOf]
+    [tracks, clips, peaks, enabled, durationOf, linked, warp]
   );
 
   // ---- Studio monitoring --------------------------------------------------
@@ -298,12 +301,25 @@ export function BackingLanesPanel({
 
   const mixer = useBackingMixer({
     videoRef: view.videoRef,
-    clips: mixerClips,
+    clips: warped ? [] : mixerClips,
     enabled,
     levels,
     usable: view.usableRegion,
     suspended: draggingTrackId != null,
   });
+
+  const flexAudio = useFlexBackingAudio({active:warped,usable:view.usableRegion,videoRef:view.videoRef,map:warp,clips:mixerClips,linked,enabled,levels,suspended:draggingTrackId != null});
+  const playback = warped ? flexAudio : mixer;
+
+  const toggleEnabled = useCallback((trackId: string) => {
+    if (!enabled.has(trackId)) playback.unlock();
+    setEnabled((prev) => {
+      const next = new Set(prev);
+      if (next.has(trackId)) next.delete(trackId);
+      else next.add(trackId);
+      return next;
+    });
+  }, [enabled, playback]);
 
   // Dragging re-cues a clip from a new offset on every pointermove, which
   // sounds like a machine gun. Stop the dragged clip on grab, re-cue on release.
@@ -319,10 +335,26 @@ export function BackingLanesPanel({
   if (tracks.length === 0) return null;
 
   return (
+    <div>
+    <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-1 text-xs">
+      <button type="button" className="inline-flex items-center gap-1 rounded border px-2 py-1 hover:bg-muted" onClick={()=>setEnabled(new Set())}><VolumeX className="h-3.5 w-3.5"/>{st('Mute all MP3s')}</button>
+      <button type="button" className="inline-flex items-center gap-1 rounded border px-2 py-1 hover:bg-muted" onClick={()=>{playback.unlock();setEnabled(new Set(tracks.map(t=>t.id)));}}><Volume2 className="h-3.5 w-3.5"/>{st('Enable all MP3s')}</button>
+    </div>
+    {view.onBackingFlexLinksChange && <div className="flex flex-wrap items-center gap-2 border-b bg-card px-3 py-1 text-xs">
+      <span>{st("Link MP3s to video Flex")}</span>
+      <button type="button" className="rounded border px-2 py-1 hover:bg-muted" onClick={() => view.onBackingFlexLinksChange?.(tracks.map(t => t.id))}>{st("Link all")}</button>
+      <button type="button" className="rounded border px-2 py-1 hover:bg-muted" onClick={() => view.onBackingFlexLinksChange?.([])}>{st("Unlink all")}</button>
+      {tracks.map(t => <button key={t.id} type="button" aria-pressed={linked.has(t.id)}
+        className="inline-flex items-center gap-1 rounded border px-2 py-1 hover:bg-muted aria-pressed:text-primary"
+        title={st(linked.has(t.id) ? "Follows video Flex" : "Independent timing")}
+        onClick={() => {const next = new Set(linked); if(next.has(t.id))next.delete(t.id);else next.add(t.id);view.onBackingFlexLinksChange?.([...next]);}}>
+        {linked.has(t.id) ? <Link2 className="h-3 w-3" /> : <Unlink className="h-3 w-3" />}{t.label}
+      </button>)}
+    </div>}
     <div
       className="st-backing-stack"
       style={{ maxHeight: MAX_VISIBLE_LANES * LANE_H }}
-      aria-label="Backing tracks on the timeline"
+      aria-label={st("Backing tracks on the timeline")}
     >
       <BackingLanes
         clips={laneClips}
@@ -349,9 +381,11 @@ export function BackingLanesPanel({
               className={`st-backing-toggle${clip.enabled ? ' is-on' : ''}`}
               onClick={() => toggleEnabled(clip.trackId)}
               aria-pressed={clip.enabled}
-              title={`${clip.enabled ? 'Mute' : 'Audition'} ${clip.label}`}
+              title={playback.failedIds?.has(clip.trackId) ? `${clip.label}: ${st('Audio could not load. Mute and unmute to retry.')}` : st(`${clip.enabled ? 'Mute' : 'Audition'} ${clip.label}`)}
             >
-              {clip.loading ? (
+              {playback.failedIds?.has(clip.trackId) ? (
+                <AlertCircle className="h-3 w-3 text-destructive" />
+              ) : (clip.enabled && !warped && !mixer.readyIds?.has(clip.trackId)) ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
               ) : clip.enabled ? (
                 <Volume2 className="h-3 w-3" />
@@ -367,12 +401,13 @@ export function BackingLanesPanel({
               value={levels[clip.trackId] ?? 1}
               onChange={(e) => handleLevelChange(clip.trackId, Number(e.target.value))}
               className="st-backing-fader"
-              aria-label={`${clip.label} level`}
-              title={`${clip.label} — ${Math.round((levels[clip.trackId] ?? 1) * 100)}%`}
+              aria-label={st(`${clip.label} level`)}
+              title={st(`${clip.label} — ${Math.round((levels[clip.trackId] ?? 1) * 100)}%`)}
             />
           </div>
         ))}
       </div>
+    </div>
     </div>
   );
 }

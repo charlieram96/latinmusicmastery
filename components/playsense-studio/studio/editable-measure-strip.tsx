@@ -1,4 +1,9 @@
 'use client';
+import { syncBarBounds } from '@/lib/playsense-studio/notation/sync-bar-bounds';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
+
+import { installScoreSelection, type ScoreHit } from '@/lib/playsense-studio/notation/score-selection';
 
 // PlaySense Studio — editable notation strip beneath the waveform.
 //
@@ -79,6 +84,8 @@ export interface SelectedEventRef {
 /** A voice-1 note's box: x bar-local (0 at the bar's start), y staff-local
  *  (0 at the top of the staff, which sits at container y = REP_H). */
 export interface MeasureHit {
+  voice?: number;
+  member?: number;
   eventIndex: number;
   x: number;
   y: number;
@@ -87,12 +94,16 @@ export interface MeasureHit {
 }
 
 export interface EditableMeasureStripProps {
+  trackIndex?: number;
+  onNoteSelection?: (hits: ScoreHit[]) => void;
+  onNoteInput?: (hit: ScoreHit, line: number) => boolean;
   measures: MeasureStripItem[];
   /** Slurs and hairpins (ScoreDocument.spans), drawn across barlines on the
    *  continuous staff. */
   spans?: Span[];
   /** Live playback position (video seconds) for the playhead; omit to hide it. */
   getCurrentSeconds?: () => number;
+  noteTimeForQN?: (qn: number) => number;
   pixelsPerSecond: number;
   scrollLeftPx: number;
   selected: SelectedEventRef | null;
@@ -106,6 +117,7 @@ export interface EditableMeasureStripProps {
   onOpenMeasure: (index: number) => void;
   /** A drag across bars started (true, once the pointer passes the drag
    *  threshold) or ended (false). A plain click never reports. */
+  onResizeMeasures?: (start:number,end:number,seconds:number,phase:'move'|'end')=>void;
   onSelectionDragChange?: (dragging: boolean) => void;
   /** Open the "+" menu (empty / copy of the bar before / paste) at this barline
    *  gap (0 = before the first bar, n = after the last). */
@@ -149,9 +161,12 @@ const AUTO_SCROLL_EDGE_PX = 30;
 const AUTO_SCROLL_STEP_PX = 12;
 
 export function EditableMeasureStrip({
+  trackIndex = 0,
+  onNoteSelection, onNoteInput,
   measures,
   spans: scoreSpans,
   getCurrentSeconds,
+  noteTimeForQN,
   pixelsPerSecond,
   scrollLeftPx,
   selected,
@@ -163,12 +178,14 @@ export function EditableMeasureStrip({
   onRepeatBandClick,
   onSelectMeasureRange,
   onOpenMeasure,
+  onResizeMeasures,
   onSelectionDragChange,
   onOpenNote,
   onScrollByPx,
   onWheelZoom,
   height = DEFAULT_HEIGHT,
 }: EditableMeasureStripProps) {
+  const st = useStudioText();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const selDrag = useRef<SelectionDrag | null>(null);
@@ -238,7 +255,7 @@ export function EditableMeasureStrip({
     return () => cancelAnimationFrame(raf);
   }, [getCurrentSeconds, pixelsPerSecond, scrollLeftPx]);
 
-  // Horizontal gestures pan; vertical gestures zoom around the pointer.
+  // Horizontal gestures pan; pinch zooms; vertical gestures scroll the staves.
   // Use a non-passive listener so the page does not scroll while zooming.
   useEffect(() => {
     const el = containerRef.current;
@@ -248,6 +265,7 @@ export function EditableMeasureStrip({
       // shift+wheel to deltaX; Firefox keeps deltaY with shiftKey set).
       const horizontal = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
       if (!horizontal) {
+        if (!e.ctrlKey) return;
         if (!onWheelZoom || e.deltaY === 0) return;
         e.preventDefault();
         const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? el.clientHeight : 1);
@@ -385,6 +403,31 @@ export function EditableMeasureStrip({
     setBboxVersion((v) => v + 1);
   }, []);
 
+  const selectionSurface = useRef<HTMLDivElement | null>(null);
+  const selectionIds = useRef(new Set<string>());
+  const noteInput = useRef(onNoteInput);
+  noteInput.current = onNoteInput;
+  const noteSelectionCallback = useRef(onNoteSelection);
+  noteSelectionCallback.current = onNoteSelection;
+  useEffect(() => {
+    const surface = selectionSurface.current;
+    if (!surface || !onNoteSelection) return;
+    surface.replaceChildren();
+    const hits: ScoreHit[] = [];
+    measures.forEach(item => {
+      const x = item.startVideoTimeSeconds * pixelsPerSecond - scrollLeftPx;
+      const width = (item.endVideoTimeSeconds - item.startVideoTimeSeconds) * pixelsPerSecond;
+      const engraved=syncBarBounds(x,x+width);
+      hits.push({ id: `m:${trackIndex}:${item.measureIndex}`, kind: 'measure', track: trackIndex, measure: item.measureIndex, x, y: REP_H, width, height: height - REP_H, highlightRegions: [{y: REP_H, height: HANDLE_BAND_PX}, {x:engraved.left,width:engraved.right-engraved.left,y: REP_H + Math.round((height - REP_H) / 2) - 20, height: 40}] });
+      (hitsByMeasure.current.get(item.measureIndex) ?? []).forEach(h => hits.push({
+        id: `n:${trackIndex}:${item.measureIndex}:${h.voice ?? 0}:${h.eventIndex}:${h.member ?? 0}`,
+        kind: 'note', track: trackIndex, measure: item.measureIndex, voice: h.voice ?? 0,
+        event: h.eventIndex, member: h.member ?? 0, x: x + h.x, y: REP_H + h.y, width: h.w, height: h.h,
+      }));
+    });
+    return installScoreSelection(surface, hits, selectionIds.current, hits => noteSelectionCallback.current?.(hits), {measureHeaderHeight: HANDLE_BAND_PX, onInput: (hit,line) => noteInput.current?.(hit,line) ?? false});
+  }, [bboxVersion, measures, pixelsPerSecond, scrollLeftPx, height, trackIndex, noteTimeForQN, !!onNoteSelection]);
+
   const barWidth = (item: MeasureStripItem) => videoTimeToX(item.endVideoTimeSeconds) - videoTimeToX(item.startVideoTimeSeconds);
 
   // Closest note to a local x, within tolerance (~40px or 1/n of the measure).
@@ -454,17 +497,34 @@ export function EditableMeasureStrip({
   return (
     <div
       ref={containerRef}
-      className="playsense-studio-notation relative w-full select-none overflow-hidden rounded-md border border-border bg-card"
-      style={{ height }}
+      className="playsense-studio-notation st-sync-selection relative w-full select-none overflow-hidden rounded-md border border-border bg-card"
+      style={{ height, '--selection-staff-top': `${Math.round((height - REP_H) / 2) - 20}px` } as import('react').CSSProperties}
       onPointerMove={handleContainerPointerMove}
       onPointerUp={endSelectionDrag}
       onPointerCancel={endSelectionDrag}
       onLostPointerCapture={endSelectionDrag}
       onDoubleClick={handleContainerDoubleClick}
     >
+      {selectedMeasures && onResizeMeasures && (() => {
+        const [start,end]=selectedMeasures;
+        const item=measures.find(m=>m.measureIndex===end);
+        if(!item)return null;
+        const x=videoTimeToX(item.endVideoTimeSeconds);
+        return <button type="button" aria-label={st("Drag to resize selected measures")}
+          title={st("Drag to resize selected measures")}
+          className="absolute z-30 w-3 cursor-ew-resize rounded bg-primary/80 hover:bg-primary"
+          style={{left:x-6,top:REP_H,height:28,touchAction:'none'}}
+          onDoubleClick={e=>e.stopPropagation()}
+          onPointerDown={e=>{e.preventDefault();e.stopPropagation();e.currentTarget.setPointerCapture(e.pointerId);}}
+          onPointerMove={e=>{if(!e.currentTarget.hasPointerCapture(e.pointerId))return;e.stopPropagation();const rect=e.currentTarget.parentElement!.getBoundingClientRect();onResizeMeasures(start,end,(e.clientX-rect.left+scrollLeftPx)/pixelsPerSecond,'move');}}
+          onPointerUp={e=>{if(!e.currentTarget.hasPointerCapture(e.pointerId))return;e.stopPropagation();const rect=e.currentTarget.parentElement!.getBoundingClientRect();onResizeMeasures(start,end,(e.clientX-rect.left+scrollLeftPx)/pixelsPerSecond,'end');e.currentTarget.releasePointerCapture(e.pointerId);}}
+          onPointerCancel={e=>{e.stopPropagation();onResizeMeasures(start,end,item.endVideoTimeSeconds,'end');}}
+        />;
+      })()}
       {/* The notation: one continuous staff under the measure overlays. */}
       <ContinuousStaff
         items={measures}
+        noteTimeForQN={noteTimeForQN}
         pixelsPerSecond={pixelsPerSecond}
         scrollLeftPx={scrollLeftPx}
         viewportWidth={viewportWidth}
@@ -477,6 +537,7 @@ export function EditableMeasureStrip({
         const startX = videoTimeToX(item.startVideoTimeSeconds);
         const endXVal = videoTimeToX(item.endVideoTimeSeconds);
         const width = endXVal - startX;
+        const engraved=syncBarBounds(startX,endXVal);
         if (endXVal < -20 || startX > viewportWidth + 20) return null;
 
         if (width < MIN_RENDER_WIDTH) {
@@ -490,7 +551,7 @@ export function EditableMeasureStrip({
               onDoubleClick={() => onOpenMeasure(item.measureIndex)}
               className={`st-mbox is-narrow absolute flex items-center justify-center rounded border border-dashed border-border bg-muted/40 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground${inRange(item.measureIndex) ? ' is-sel' : ''}`}
               style={{ left: startX, top: REP_H, width: Math.max(8, width), height: height - REP_H }}
-              title={`Measure ${item.measureNumber} — double-click to open`}
+              title={st(`Measure ${item.measureNumber} — double-click to open`)}
             >
               {item.measureNumber}
             </button>
@@ -504,7 +565,7 @@ export function EditableMeasureStrip({
             key={item.measureIndex}
             data-measure-index={item.measureIndex}
             className={`st-mbox absolute${inRange(item.measureIndex) ? ' is-sel' : ''}${isFocus(item.measureIndex) ? ' st-measure-focus' : ''}${newBars?.has(item.measureIndex) ? ' is-new' : ''}${item.fill.kind === 'over' ? ' is-over' : ''}`}
-            style={{ left: startX, top: REP_H, width, height: height - REP_H, cursor, touchAction: 'none' }}
+            style={{ left: startX, top: REP_H, width, height: height - REP_H, cursor, touchAction: 'none', '--selection-left': `${engraved.left-startX}px`, '--selection-width': `${engraved.right-engraved.left}px` } as import('react').CSSProperties}
             onPointerDown={(e) => handlePointerDown(e, item)}
             onPointerMove={(e) => handlePointerMove(e, item)}
             onPointerLeave={() => {
@@ -516,28 +577,23 @@ export function EditableMeasureStrip({
                 No repeat-pass text: the repeat lane already says it. */}
             <div className="st-hb" style={{ height: HANDLE_BAND_PX }}>
               <span className="tabular-nums leading-none">{item.measureNumber}</span>
-              {item.flag && <span className="st-flagdot" title={`Timing: ${item.flag}`} />}
+              {item.flag && <span className="st-flagdot" title={st(`Timing: ${item.flag}`)} />}
               {width >= 60 && (
-                <span className={`st-cap is-${item.fill.kind} ml-auto shrink-0 tabular-nums leading-none`} title={fillTitle(item.measureNumber, item.fill)}>
-                  {item.fill.kind === 'empty' ? `0/${beatsText(item.fill.totalBeats)}` : `${beatsText(item.fill.usedBeats)}/${beatsText(item.fill.totalBeats)}`}
+                <span className={`st-cap is-${item.fill.kind} relative z-20 ml-1 shrink-0 tabular-nums leading-none`}
+                  data-testid="measure-beat-indicator"
+                  tabIndex={item.fill.kind === 'short' || item.fill.kind === 'over' ? 0 : undefined}
+                  onPointerDown={e => e.stopPropagation()}
+                  aria-label={`${st('Measure')} ${item.measureNumber}: ${item.fill.kind === 'short' ? `${st('Missing beats')}: ${beatsText(item.fill.missingBeats)}` : item.fill.kind === 'over' ? `${st('Extra beats')}: ${beatsText(item.fill.overBeats)}` : st(fillTitle(item.measureNumber, item.fill))}`}
+                  title={item.fill.kind === 'short' ? `${st('Missing beats')}: ${beatsText(item.fill.missingBeats)}` : item.fill.kind === 'over' ? `${st('Extra beats')}: ${beatsText(item.fill.overBeats)}` : st(fillTitle(item.measureNumber, item.fill))}>
+                  {item.fill.kind === 'short' ? `−${beatsText(item.fill.missingBeats)}` : item.fill.kind === 'over' ? `+${beatsText(item.fill.overBeats)}` : st(item.fill.kind === 'empty' ? `0/${beatsText(item.fill.totalBeats)}` : `${beatsText(item.fill.usedBeats)}/${beatsText(item.fill.totalBeats)}`)}
                 </span>
               )}
             </div>
-            {item.fill.kind === 'short' && (() => {
-              const hits = hitsByMeasure.current.get(item.measureIndex);
-              const last = hits?.at(-1);
-              const gapLeft = last ? Math.min(width - 8, last.x + last.w + 4) : width * (item.fill.usedBeats / item.fill.totalBeats);
-              return (
-                <div className="st-gapfill" style={{ left: gapLeft, width: width - gapLeft, top: HANDLE_BAND_PX + 6, bottom: 6 }}>
-                  {width - gapLeft > 60 && (
-                    <span>{`−${beatsText(item.fill.missingBeats)} beat${item.fill.missingBeats === 1 ? '' : 's'} missing`}</span>
-                  )}
-                </div>
-              );
-            })()}
           </div>
         );
       })}
+
+      {onNoteSelection && <div ref={selectionSurface} className="absolute inset-0 z-10" onDoubleClick={e => e.stopPropagation()} />}
 
       {/* Repeat lane — one band per pass, reserved at the strip's top edge. */}
       <RepeatLane bands={bands} onBandClick={onRepeatBandClick ?? (() => {})} />
@@ -564,8 +620,8 @@ export function EditableMeasureStrip({
               type="button"
               className="st-gap-add"
               style={{ left: x, top: REP_H + 5 }}
-              aria-label={label}
-              title={problem ?? label}
+              aria-label={st(label)}
+              title={st(problem ?? label)}
               disabled={!!problem}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); onGapClick(gap, { left: x - 10, top: REP_H + 26 }); }}

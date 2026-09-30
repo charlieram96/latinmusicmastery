@@ -6,6 +6,8 @@
 // inserts via server action. Load flow: click a clip to apply its loop range
 // (and rate) to the active clock. Delete flow: trash button per row.
 
+import { useTranslation } from '@/components/language-provider';
+import { studioText } from '@/lib/playsense-studio/i18n/text';
 import { Bookmark, Plus, Repeat, Trash2 } from 'lucide-react';
 import { useEffect, useState, useTransition } from 'react';
 import {
@@ -31,6 +33,8 @@ export function ClipsPanel({
   playbackRate,
   onLoadClip,
 }: ClipsPanelProps) {
+  const { locale } = useTranslation();
+  const st = (text: string) => studioText(text, locale);
   const [clips, setClips] = useState<PlaysenseStudioClip[]>([]);
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +108,7 @@ export function ClipsPanel({
     <section className="space-y-3">
       <div className="flex items-center gap-2">
         <Bookmark className="w-4 h-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Saved clips</h3>
+        <h3 className="text-sm font-medium">{st('Saved clips')}</h3>
       </div>
 
       {/* Save form */}
@@ -115,12 +119,12 @@ export function ClipsPanel({
           onChange={(e) => setName(e.target.value)}
           placeholder={
             loopA === null || loopB === null
-              ? 'Set A/B on the transport bar first'
-              : 'Name this clip'
+              ? st('Set A/B on the transport bar first')
+              : st('Name this clip')
           }
           disabled={loopA === null || loopB === null}
-          className="flex-1 min-w-[180px] px-3 py-1.5 text-sm rounded-md border border-border bg-background disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Clip name"
+          className="flex-1 min-w-[180px] px-3 py-1.5 text-sm rounded-md border border-foreground/25 bg-background placeholder:text-muted-foreground disabled:cursor-not-allowed focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/40"
+          aria-label={st('Clip name')}
         />
         <span className="text-xs font-mono text-muted-foreground tabular-nums">
           {loopA !== null && loopB !== null
@@ -133,7 +137,7 @@ export function ClipsPanel({
           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           <Plus className="w-4 h-4" />
-          Save clip
+          {st('Save clip')}
         </button>
       </div>
 
@@ -141,10 +145,10 @@ export function ClipsPanel({
 
       {/* Clip list */}
       {isLoading ? (
-        <p className="text-xs text-muted-foreground">Loading clips…</p>
+        <p className="text-xs text-muted-foreground">{st('Loading clips…')}</p>
       ) : clips.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          No clips yet. Set A and B on the transport, name it, and save.
+          {st('No clips yet. Set A and B on the transport, name it, and save.')}
         </p>
       ) : (
         <ul className="space-y-1.5">
@@ -167,8 +171,8 @@ export function ClipsPanel({
               <button
                 onClick={() => handleDelete(clip.id)}
                 className="p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition"
-                aria-label="Delete clip"
-                title="Delete clip"
+                aria-label={st('Delete clip')}
+                title={st('Delete clip')}
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>

@@ -43,7 +43,7 @@ describe('MeasureBar', () => {
     expect(bar.getAttribute('aria-label')).toBe('Selected bars');
     const info = bar.querySelector('.st-fbar-info')!.textContent!;
     expect(info).toContain('m.2–3');
-    expect(info).toContain('0:12.3');
+    expect(info).not.toContain('0:12.3');
     expect(info).toContain('≈96.4');
     expect(buttons().map((b) => b.getAttribute('aria-label'))).toEqual([
       'Edit', 'Loop', 'Quantize', 'Repeat', 'Duplicate', 'Copy', 'Paste', 'Bar properties', 'Clear', 'Delete',
@@ -104,13 +104,10 @@ describe('MeasureBar', () => {
     expect(host.querySelector('.st-fbar-info .st-status-pip')).toBeNull();
   });
 
-  it('shows the flexed info in the bar info', () => {
+  it('keeps the technical flex summary out of the action bar', () => {
     render({ flexInfo: 'flexed ±35 ms' });
-    const info = host.querySelector('.st-fbar-info')!;
-    expect(info.textContent).toContain('flexed ±35 ms');
-    const flexEl = info.querySelector('.st-fbar-flex')!;
-    expect(flexEl).not.toBeNull();
-    expect(flexEl.textContent).toBe('flexed ±35 ms');
+    expect(host.querySelector('.st-fbar-info')!.textContent).not.toContain('flexed');
+    expect(host.querySelector('.st-fbar-flex')).toBeNull();
   });
 
   it('leaves the flexed info out when there is none', () => {

@@ -13,6 +13,7 @@ import type {
   Chord,
 } from '@/components/playsense-studio/shared/score-model/types'
 import { beatLengthInQN, measureLengthInQN } from '@/lib/playsense-studio/time-mapping'
+import {playbackTrack} from '@/lib/playsense-studio/playback-tempo'
 import { resolvePercStroke, percussionNotation, isPercussion } from '@/lib/playsense-studio/perc-strokes'
 import { midiToKeyString } from '@/lib/playsense-studio/score-to-vexflow'
 import { eventArticulations } from '@/components/playsense-studio/shared/score-model/accessors'
@@ -133,7 +134,7 @@ export function buildExerciseGrid(score: ScoreDocument, track: Track): ExerciseG
   const measureStartSec = [0], measureStartQN = [0], secPerQN: number[] = [], beatQN: number[] = []
   let ts = score.initialTimeSignature
   let spq = 60 / score.initialTempo
-  for (const m of track.measures) {
+  for (const m of playbackTrack(track,score).measures) {
     if (m.timeSignature) ts = m.timeSignature
     if (score.tempoMarksConfirmed && m.tempoChange !== undefined) spq = 60 / m.tempoChange
     const bar = measureLengthInQN(ts)

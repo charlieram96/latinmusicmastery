@@ -22,6 +22,7 @@ vi.mock('@/components/playsense-studio/studio/score-section-editor', () => ({
 }));
 
 vi.mock('@/app/actions/playsense-studio', () => ({
+  getLessonMetronome: vi.fn().mockResolvedValue({ data: null }),
   getStudioScoreSectionsForClassItem: vi.fn(),
   createBlankSection: vi.fn(),
   createSectionFromImport: vi.fn(),

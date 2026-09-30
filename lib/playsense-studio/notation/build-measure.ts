@@ -1,3 +1,4 @@
+import { symbolGroup } from './symbol-layout'
 // The one place descriptors become VexFlow objects. The student renderer and
 // the Studio strip both build notes, tuplets and beams here, so they can't drift.
 import {
@@ -65,6 +66,11 @@ export function beamGroups(ds: VexEventDescriptor[], ts: [number, number]): numb
 }
 
 export function descriptorToStaveNote(d: VexEventDescriptor, opts: { clef: NotationClef; stem?: 'up' | 'down' | 'auto' }): StaveNote {
+  const mark = <T extends Modifier>(modifier: T, symbol: string): T => {
+    const draw = modifier.draw.bind(modifier);
+    modifier.draw = () => { symbolGroup(modifier.checkContext(), {eventId:d.id, symbol}, d.symbolOffsets?.[symbol], draw); };
+    return modifier;
+  }
   const stem = opts.stem ?? 'auto'
   const note = createStaveNote({
     keys: d.keys,
@@ -87,29 +93,29 @@ export function descriptorToStaveNote(d: VexEventDescriptor, opts: { clef: Notat
       if (a === 'marcato' && percMarcato) return
       const art = new Articulation(ARTIC[a])
       art.setPosition(a === 'fermata' ? Modifier.Position.ABOVE : up ? Modifier.Position.BELOW : Modifier.Position.ABOVE)
-      note.addModifier(art, 0)
+      note.addModifier(mark(art, `articulation:${a}`), 0)
     })
-    if (d.ornament) note.addModifier(new Ornament(ORN[d.ornament]), 0)
+    if (d.ornament) note.addModifier(mark(new Ornament(ORN[d.ornament]), 'ornament'), 0)
     if (d.grace?.length) {
       const graces = d.grace.map(g => {
         const gn = createGraceNote({ keys: g.keys, duration: '8', slash: g.slash, clef: opts.clef }, g.percussion ? [g.percussion] : undefined)
         g.accidentals.forEach((acc, i) => { if (acc) gn.addModifier(new Accidental(acc), i) })
         return gn
       })
-      note.addModifier(new GraceNoteGroup(graces, true), 0)
+      note.addModifier(mark(new GraceNoteGroup(graces, true), 'grace'), 0)
     }
   }
   if (d.dynamic) {
     const a = new Annotation(DYN[d.dynamic])
     a.setFont('Bravura', 30)
     a.setVerticalJustification(Annotation.VerticalJustify.BOTTOM)
-    note.addModifier(a, 0)
+    note.addModifier(mark(a, 'dynamic'), 0)
   }
   if (d.text) {
     const a = new Annotation(d.text)
     a.setFont('Georgia, serif', 12, 'normal', 'italic')
     a.setVerticalJustification(Annotation.VerticalJustify.TOP)
-    note.addModifier(a, 0)
+    note.addModifier(mark(a, 'text'), 0)
   }
   return note
 }
@@ -167,7 +173,11 @@ export function buildMeasure(voiceDescriptors: VexEventDescriptor[][], ts: [numb
       out.tuplets.push(new Tuplet(group, { numNotes: t.n, notesOccupied: t.m, bracketed: !beamed, ratioed: false }))
       start = end + 1
     }
-    beamGroups(ds, ts).forEach(ix => out.beams.push(new Beam(ix.map(i => notes[i]))))
+    // A single-voice chord group can contain notes whose automatic stems point
+    // in opposite directions. Choose one direction for the entire beam, or
+    // its bar is drawn on one side while some chord stems stay on the other.
+    // Polyphonic voices already have explicit opposing stem directions.
+    beamGroups(ds, ts).forEach(ix => out.beams.push(new Beam(ix.map(i => notes[i]), !two)))
     const voice = new Voice({ numBeats: ts[0], beatValue: ts[1] })
     voice.setStrict(false)
     voice.addTickables(notes)

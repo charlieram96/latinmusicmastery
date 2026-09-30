@@ -5,6 +5,7 @@ import type { ExerciseGrid } from '@/lib/play-sense/types'
 import { gridBeats, gridCountIn, gridLoopSeconds } from '@/lib/play-sense/grid'
 
 interface UseMetronomeOptions {
+  volume?: number
   bpm: number
   timeSignature: [number, number]
   countInBeats?: number
@@ -20,7 +21,7 @@ interface UseMetronomeOptions {
 }
 
 interface UseMetronomeResult {
-  startMetronome: (audioContext: AudioContext) => number // returns startTime (after count-in)
+  startMetronome: (audioContext: AudioContext, offsetSeconds?: number) => number // returns startTime (after count-in)
   stopMetronome: () => void
   isPlaying: boolean
   currentBeat: number // 1-indexed beat in measure
@@ -35,6 +36,8 @@ interface UseMetronomeResult {
  */
 export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   const { bpm, timeSignature, countInBeats = 4, silent: silentProp = true, grid, countInBars = 1 } = options
+  const volumeRef = useRef(options.volume ?? 1)
+  volumeRef.current = options.volume ?? 1
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentBeat, setCurrentBeat] = useState(0)
@@ -47,20 +50,24 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   const countInStartRef = useRef(0)
   const beatCounterRef = useRef(0) // total beats elapsed (for visual tracking)
 
+  const clickNodes = useRef(new Set<OscillatorNode>())
+
   const scheduleClick = useCallback(
     (audioContext: AudioContext, time: number, isDownbeat: boolean, force = false) => {
       // Skip audio output when silent. The count-in forces its clicks: it plays
       // before the student starts, so it can't mask their onsets, and without it
       // they have nothing but a visual countdown to come in on.
-      if (silentRef.current && !force) return
+      if ((silentRef.current && !force) || volumeRef.current <= 0) return
 
       const osc = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
 
+      clickNodes.current.add(osc)
+      osc.onended = () => clickNodes.current.delete(osc)
       osc.type = 'sine'
       osc.frequency.value = isDownbeat ? 4400 : 3300
 
-      const peakGain = isDownbeat ? 0.6 : 0.4
+      const peakGain = Math.max(0.0001, (isDownbeat ? 0.6 : 0.4) * volumeRef.current)
       const duration = isDownbeat ? 0.03 : 0.02
       const holdTime = duration * 0.7
       const rampTime = duration * 0.3
@@ -90,7 +97,7 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   }, [])
 
   const startMetronome = useCallback(
-    (audioContext: AudioContext): number => {
+    (audioContext: AudioContext, offsetSeconds?: number): number => {
       // Clear any existing scheduling interval to prevent leaks
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
@@ -123,9 +130,9 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
           return posInMeasure
         })
 
-        const countInOffsets = gridCountIn(grid, countInBars, beatsPerMeasure)
+        const countInOffsets = offsetSeconds == null ? gridCountIn(grid, countInBars, beatsPerMeasure) : []
         const countInSeconds = countInOffsets.length > 0 ? -countInOffsets[0] : 0
-        const exerciseStart = countInStart + countInSeconds
+        const exerciseStart = countInStart + countInSeconds - (offsetSeconds ?? 0)
 
         // Count-in clicks: bar 1's meter and beat length, always audible.
         countInOffsets.forEach((offset, i) => {
@@ -135,7 +142,14 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
 
         // Exercise clicks: every beat of the grid, looping every `loopLen` seconds.
         scheduledBeatsRef.current = 0
-        nextBeatTimeRef.current = beats.length > 0 ? exerciseStart + beats[0].seconds : exerciseStart
+        if (offsetSeconds != null && loopLen > 0 && beats.length) {
+          const loop = Math.floor(offsetSeconds / loopLen)
+          const local = offsetSeconds - loop * loopLen
+          const index = beats.findIndex(beat => beat.seconds >= local - 1e-6)
+          scheduledBeatsRef.current = loop * beats.length + (index < 0 ? beats.length : index)
+        }
+        const firstIndex = scheduledBeatsRef.current
+        nextBeatTimeRef.current = beats.length > 0 ? exerciseStart + Math.floor(firstIndex / beats.length) * loopLen + beats[firstIndex % beats.length].seconds : exerciseStart
 
         intervalRef.current = setInterval(() => {
           if (!audioCtxRef.current || beats.length === 0) return
@@ -187,18 +201,18 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
 
       // Uniform path (no grid): unchanged.
       const beatDuration = 60 / bpm
-      const exerciseStart = countInStart + countInBeats * beatDuration
+      const exerciseStart = countInStart + (offsetSeconds == null ? countInBeats * beatDuration : -offsetSeconds)
 
       // Schedule count-in clicks
-      for (let i = 0; i < countInBeats; i++) {
+      for (let i = 0; i < (offsetSeconds == null ? countInBeats : 0); i++) {
         const time = countInStart + i * beatDuration
         const isDownbeat = i % beatsPerMeasure === 0
         scheduleClick(audioContext, time, isDownbeat, true)
       }
 
       // Start scheduling exercise metronome
-      scheduledBeatsRef.current = 0
-      nextBeatTimeRef.current = exerciseStart
+      scheduledBeatsRef.current = offsetSeconds == null ? 0 : Math.ceil(offsetSeconds / beatDuration - 1e-6)
+      nextBeatTimeRef.current = exerciseStart + scheduledBeatsRef.current * beatDuration
 
       intervalRef.current = setInterval(() => {
         if (!audioCtxRef.current) return
@@ -238,6 +252,8 @@ export function useMetronome(options: UseMetronomeOptions): UseMetronomeResult {
   )
 
   const stopMetronome = useCallback(() => {
+    for (const node of clickNodes.current) { try { node.stop() } catch { /* Already stopped. */ } }
+    clickNodes.current.clear()
     setIsPlaying(false)
     setCurrentBeat(0)
     setIsDownbeat(false)

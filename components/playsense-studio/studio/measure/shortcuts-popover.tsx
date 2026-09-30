@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // The strip's keyboard and mouse shortcuts, opened from the footer's "?". Note
 // entry itself lives in the measure zoom, so its keys get their own group
@@ -15,7 +17,7 @@ const SHORTCUTS: Array<[string, string]> = [
   ['⌘C ⌘V ⌘D', 'copy, paste after, duplicate'],
   ['⌫', 'delete bars'],
   ['Esc', 'deselect'],
-  ['Scroll', 'zoom · ⇧-scroll pans'],
+  ['Scroll', 'Pinch to zoom · horizontal scroll to pan'],
 ];
 
 const ZOOM_SHORTCUTS: Array<[string, string]> = [
@@ -35,12 +37,13 @@ const ZOOM_SHORTCUTS: Array<[string, string]> = [
 ];
 
 function ShortcutList({ items }: { items: Array<[string, string]> }) {
+  const st = useStudioText();
   return (
     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
       {items.map(([k, v]) => (
         <div key={k} className="contents">
-          <dt className="font-mono text-foreground">{k}</dt>
-          <dd className="text-muted-foreground">{v}</dd>
+          <dt className="font-mono text-foreground">{st(k)}</dt>
+          <dd className="text-muted-foreground">{st(v)}</dd>
         </div>
       ))}
     </dl>
@@ -48,12 +51,12 @@ function ShortcutList({ items }: { items: Array<[string, string]> }) {
 }
 
 export function ShortcutsPopover({ anchor, onClose }: { anchor: PopoverAnchor; onClose: () => void }) {
+  const st = useStudioText();
   return (
-    <MeasurePopover anchor={anchor} title="Strip shortcuts" onClose={onClose}>
+    <MeasurePopover anchor={anchor} title={st("Strip shortcuts")} onClose={onClose}>
       <ShortcutList items={SHORTCUTS} />
       <p className="mb-1.5 mt-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-        In the zoom
-      </p>
+        {st("In the zoom")}</p>
       <ShortcutList items={ZOOM_SHORTCUTS} />
     </MeasurePopover>
   );

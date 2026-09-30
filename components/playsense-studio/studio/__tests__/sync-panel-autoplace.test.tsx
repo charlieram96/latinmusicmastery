@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 type EditorProps = { notice?: string | null; info?: string | null; noticeAction?: { label: string; onClick: () => void } | null };
 const stub = vi.hoisted(() => ({
-  canvas: null as null | { handles: Array<{ videoTimeSeconds: number; isDownbeat: boolean }> },
+  canvas: null as null | { selection?: {a:number;b:number}|null; handles: Array<{ videoTimeSeconds: number; isDownbeat: boolean }> },
   hits: [] as number[],
   editor: null as null | EditorProps,
 }));
@@ -195,4 +195,46 @@ describe('SyncPanel Auto-place toast', () => {
     expect(stub.editor?.info).toBeFalsy();
     expect(stub.editor?.noticeAction).toBeFalsy();
   });
+});
+
+
+it('contains horizontal trackpad gestures even when a child stops propagation', async () => {
+  await renderPanel();
+  const area = host.querySelector<HTMLElement>('.st-stage-track')!;
+  const empty = document.createElement('div');area.appendChild(empty);
+  const childHandler = vi.fn((event: Event) => event.stopPropagation());
+  empty.addEventListener('wheel',childHandler);
+  for (const deltaX of [-100,100]) {
+    const event = new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaX});
+    empty.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+  }
+  expect(childHandler).toHaveBeenCalledTimes(2);
+  for (const options of [{deltaY:100},{deltaY:100,ctrlKey:true}]) {
+    const event=new WheelEvent('wheel',{bubbles:true,cancelable:true,...options});
+    empty.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+  }
+});
+
+
+it('selects an interval directly on the waveform for audio quantization',async()=>{
+ await renderPanel();
+ const button=[...host.querySelectorAll('button')].find(b=>b.textContent==='Select audio range')!;
+ act(()=>button.click());
+ const area=host.querySelector<HTMLElement>('div[aria-label="Select audio range"]')!;
+ area.setPointerCapture=vi.fn();
+ const pointer=(type:string,x:number)=>{
+  const event=new MouseEvent(type,{bubbles:true,button:0,clientX:x});
+  Object.defineProperty(event,'pointerId',{value:1});act(()=>area.dispatchEvent(event));
+ };
+ pointer('pointerdown',100);pointer('pointermove',200);pointer('pointerup',200);
+ const forward={...stub.canvas!.selection!};
+ expect(forward.a).toBeLessThan(forward.b);
+ pointer('pointerdown',200);pointer('pointermove',100);
+ expect(stub.canvas!.selection).toEqual(forward);
+ pointer('pointerup',100);
+ expect(stub.canvas!.selection).toEqual(forward);
+ expect([...host.querySelectorAll('button')].some(b=>b.textContent==='Quantize audio')).toBe(true);
+ expect(host.textContent).not.toMatch(/\d+\.\d{3} s – \d+\.\d{3} s/);
 });

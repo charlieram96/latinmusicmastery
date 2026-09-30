@@ -206,8 +206,26 @@ export function useVideoTransportClock(
   const play = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    return video.play();
-  }, [videoRef]);
+    const a = loopARef.current;
+    const b = loopBRef.current;
+    if (loopEnabledRef.current && a !== null && b !== null && b > a &&
+        (video.currentTime < a || video.currentTime >= b || video.ended)) {
+      video.currentTime = a;
+      currentRef.current = a;
+      setCurrentSeconds(a);
+      reanchor(video);
+    } else if (video.ended || (Number.isFinite(video.duration) && video.currentTime >= video.duration)) {
+      video.currentTime = 0;
+      reanchor(video);
+    }
+    return video.play().catch((error: unknown) => {
+      // Pausing, replacing the source, or leaving the player can cancel a
+      // pending play request. Respect that cancellation; never restart it.
+      // Other failures remain available to callers (e.g. autoplay refusal).
+      if (error && typeof error === 'object' && 'name' in error && error.name === 'AbortError') return;
+      throw error;
+    });
+  }, [videoRef, reanchor]);
 
   const pause = useCallback(() => {
     videoRef.current?.pause();
@@ -216,8 +234,8 @@ export function useVideoTransportClock(
   const toggle = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    return video.paused ? video.play() : video.pause();
-  }, [videoRef]);
+    return video.paused || video.ended ? play() : video.pause();
+  }, [videoRef, play]);
 
   const seek = useCallback(
     (seconds: number) => {

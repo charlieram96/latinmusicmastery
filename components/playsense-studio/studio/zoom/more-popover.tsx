@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — the note toolbar's More ▾ popover (spec §6, v6's
 // openMore): everything else that can be set on a note, split into tabs so
@@ -86,11 +88,12 @@ export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timin
   /** The zoom cursor's voice. Timing is voice 1's only (voice 2 isn't graded or synced). */
   voice?: 0 | 1;
 }) {
+  const st = useStudioText();
   const hint = tab === 'timing'
     ? (timing && voice === 0 ? 'Nudge moves only this note against the recording.' : undefined)
     : HINT[tab];
   return (
-    <MeasurePopover anchor={anchor} title="More" hint={hint} onClose={onClose}>
+    <MeasurePopover anchor={anchor} title={st("More")} hint={hint} onClose={onClose}>
       <div className="st-mpop-row" data-testid="more-tabs" data-watch-like={String(watchLike)}>
         {TABS.map((t) => (
           <button
@@ -101,7 +104,7 @@ export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timin
             onMouseDown={preventFocus}
             onClick={() => onTab(t.id)}
           >
-            {t.label}
+            {st(t.label)}
           </button>
         ))}
       </div>
@@ -116,13 +119,14 @@ export function MorePopover({ anchor, tab, onTab, onClose, event, editing, timin
 }
 
 function DurationsTab({ editing }: { editing: ZoomEditing }) {
+  const st = useStudioText();
   return (
     <div className="st-mpop-row">
-      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.setValue('32')}>32nd</button>
-      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.setValue('64')}>64th</button>
-      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.cycleDots(2)}>Double dot</button>
-      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.accidental(-2)}>Double flat</button>
-      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.accidental(2)}>Double sharp</button>
+      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.setValue('32')}>{st("32nd")}</button>
+      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.setValue('64')}>{st("64th")}</button>
+      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.cycleDots(2)}>{st("Double dot")}</button>
+      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.accidental(-2)}>{st("Double flat")}</button>
+      <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.accidental(2)}>{st("Double sharp")}</button>
     </div>
   );
 }
@@ -148,6 +152,7 @@ function TupletsTab({ editing, event }: { editing: ZoomEditing; event: MusicalEv
 }
 
 function MarksTab({ editing, event }: { editing: ZoomEditing; event: MusicalEvent | null }) {
+  const st = useStudioText();
   const articulations = event ? eventArticulations(event) : [];
   const ornament = event?.ornament ?? null;
   return (
@@ -162,7 +167,7 @@ function MarksTab({ editing, event }: { editing: ZoomEditing; event: MusicalEven
             onMouseDown={preventFocus}
             onClick={() => editing.articulation(a.id)}
           >
-            {a.label}
+            {st(a.label)}
           </button>
         ))}
       </div>
@@ -176,17 +181,18 @@ function MarksTab({ editing, event }: { editing: ZoomEditing; event: MusicalEven
             onMouseDown={preventFocus}
             onClick={() => editing.ornament(o.id)}
           >
-            {o.label}
+            {st(o.label)}
           </button>
         ))}
-        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.grace(true)}>Acciaccatura</button>
-        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.grace(false)}>Appoggiatura</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.grace(true)}>{st("Acciaccatura")}</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.grace(false)}>{st("Appoggiatura")}</button>
       </div>
     </>
   );
 }
 
 function DynamicsTab({ editing, event }: { editing: ZoomEditing; event: MusicalEvent | null }) {
+  const st = useStudioText();
   const current = event?.dynamic ?? null;
   return (
     <>
@@ -205,15 +211,16 @@ function DynamicsTab({ editing, event }: { editing: ZoomEditing; event: MusicalE
         ))}
       </div>
       <div className="st-mpop-row">
-        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.slur('cresc')}>Crescendo</button>
-        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.slur('dim')}>Diminuendo</button>
-        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.slur('slur')}>Slur (S)</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.slur('cresc')}>{st("Crescendo")}</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.slur('dim')}>{st("Diminuendo")}</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => editing.slur('slur')}>{st("Slur (S)")}</button>
       </div>
     </>
   );
 }
 
 function TextTab({ editing, event, eventKey }: { editing: ZoomEditing; event: MusicalEvent | null; eventKey: string | null }) {
+  const st = useStudioText();
   // Re-seeds the field from the event's text without an effect (React's
   // "adjust state during render" pattern). Fix round 1: keyed on the note's
   // identity (eventKey), not its text — two different notes can share the
@@ -234,13 +241,13 @@ function TextTab({ editing, event, eventKey }: { editing: ZoomEditing; event: Mu
     <>
       <form className="st-mpop-row" onSubmit={onSubmit}>
         <input
-          aria-label="Text"
-          placeholder="dolce, pizz., swing…"
+          aria-label={st("Text")}
+          placeholder={st("dolce, pizz., swing…")}
           className="st-input"
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />
-        <button type="submit" className="st-mpop-chip">Set</button>
+        <button type="submit" className="st-mpop-chip">{st("Set")}</button>
       </form>
       <div className="st-mpop-row">
         {TEXT_CHIPS.map((c) => (
@@ -252,22 +259,23 @@ function TextTab({ editing, event, eventKey }: { editing: ZoomEditing; event: Mu
 }
 
 function TimingTab({ timing, voice }: { timing?: NoteTimingProps; voice: 0 | 1 }) {
+  const st = useStudioText();
   if (voice === 1) {
-    return <p className="text-xs text-muted-foreground">Timing applies to voice 1 notes.</p>;
+    return <p className="text-xs text-muted-foreground">{st("Timing applies to voice 1 notes.")}</p>;
   }
   if (!timing) {
-    return <p className="text-xs text-muted-foreground">Timing is set on the waveform for synced lessons.</p>;
+    return <p className="text-xs text-muted-foreground">{st("Timing is set on the waveform for synced lessons.")}</p>;
   }
   return (
     <>
-      <p className="st-mpop-row">Plays at {formatTime(timing.actualSeconds)}</p>
+      <p className="st-mpop-row">{st("Plays at ")}{formatTime(timing.actualSeconds)}</p>
       <div className="st-mpop-row">
-        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => timing.onNudge(-5)}>−5 ms</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => timing.onNudge(-5)}>{st("−5 ms")}</button>
         <span className="font-mono tabular-nums">{formatOffset(timing.offsetMs)}</span>
-        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => timing.onNudge(5)}>+5 ms</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={() => timing.onNudge(5)}>{st("+5 ms")}</button>
       </div>
       <div className="st-mpop-row">
-        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={timing.onReset}>Reset</button>
+        <button type="button" className="st-mpop-chip" onMouseDown={preventFocus} onClick={timing.onReset}>{st("Reset")}</button>
       </div>
       {timing.onFlex && (
         <div className="st-mpop-row">
@@ -277,10 +285,9 @@ function TimingTab({ timing, voice }: { timing?: NoteTimingProps; voice: 0 | 1 }
             onMouseDown={preventFocus}
             onClick={timing.onFlex}
             disabled={!!timing.flexProblem}
-            title={timing.flexProblem ?? undefined}
+            title={st(timing.flexProblem ?? undefined)}
           >
-            Flex the recording onto this note
-          </button>
+            {st("Flex the recording onto this note")}</button>
         </div>
       )}
     </>

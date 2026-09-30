@@ -152,3 +152,13 @@ describe('StudentPreviewDialog', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 });
+
+it('opens the requested cáscara demo in Spanish even with the default English context', () => {
+  const host = document.createElement('div');
+  const root = createRoot(host);
+  try {
+    act(() => root.render(<StudentPreviewDialog exercise={{ ...EXERCISE, id: 'f7fee0dd-66bb-4e08-9af0-e38febfa415b' }} score={SCORE} onClose={vi.fn()} />));
+    expect(host.querySelector('[role="dialog"]')?.getAttribute('aria-label')).toBe('Vista del estudiante');
+    expect(host.querySelector('button')?.getAttribute('aria-label')).toBe('Cerrar vista del estudiante');
+  } finally { act(() => root.unmount()); }
+});

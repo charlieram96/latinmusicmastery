@@ -88,13 +88,13 @@ export function AdminSidebarClient() {
         // this aside's stacking context, so the aside itself has to sit on top.
         'relative hidden md:block h-screen sticky top-0 flex-shrink-0',
         overlay ? 'z-50' : 'z-30',
-        collapsed ? 'w-16' : 'w-[216px]'
+        collapsed ? 'w-16' : 'w-[240px]'
       )}
     >
       <div
         className={cn(
-          'flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-200',
-          expanded ? 'w-[216px]' : 'w-16',
+          'lmm-admin-navigation flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-200',
+          expanded ? 'w-[240px]' : 'w-16',
           overlay && 'absolute top-0 left-0 z-40 shadow-xl'
         )}
       >
@@ -105,15 +105,15 @@ export function AdminSidebarClient() {
             expanded ? 'gap-2.5 px-4' : 'justify-center px-0'
           )}
         >
-          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-sidebar-primary/10">
-            <LayoutDashboard className="h-3.5 w-3.5 text-sidebar-primary" />
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-sidebar-primary/10">
+            <LayoutDashboard className="h-5 w-5 text-sidebar-primary" />
           </span>
           {expanded && (
             <div className="flex min-w-0 flex-col">
-              <span className="truncate font-heading text-[13px] font-bold leading-4 tracking-wide text-sidebar-foreground">
+              <span className="truncate font-heading text-[14px] font-bold leading-4 tracking-wide text-sidebar-foreground">
                 Admin Panel
               </span>
-              <span className="text-[10px] leading-3 text-sidebar-foreground/40">
+              <span className="text-[11px] leading-4 text-sidebar-foreground/65">
                 Latin Music Mastery
               </span>
             </div>
@@ -126,7 +126,7 @@ export function AdminSidebarClient() {
             <div key={group.label ?? 'top'} className={cn(gi > 0 && 'mt-4')}>
               {group.label &&
                 (expanded ? (
-                  <p className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/35">
+                  <p className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/65">
                     {group.label}
                   </p>
                 ) : (
@@ -143,15 +143,17 @@ export function AdminSidebarClient() {
                   const linkContent = (
                     <Link
                       href={item.href}
+                      aria-label={item.label}
+                      aria-current={isActive ? "page" : undefined}
                       className={cn(
-                        'group relative flex items-center rounded-lg text-[13px] font-medium transition-colors',
-                        expanded ? 'gap-2.5 px-2.5 py-1.5' : 'justify-center py-2',
+                        'group relative flex items-center rounded-lg text-[14px] font-medium transition-colors',
+                        expanded ? 'gap-3 px-2.5 py-2.5' : 'justify-center py-2',
                         isActive
                           ? 'bg-sidebar-primary/10 text-sidebar-primary'
-                          : 'text-sidebar-foreground/55 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                          : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                       )}
                     >
-                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      <Icon className="h-[18px] w-[18px] flex-shrink-0" />
                       {expanded && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
                       {expanded && isActive && (
                         <span className="h-1 w-1 flex-shrink-0 rounded-full bg-sidebar-primary" />
@@ -184,9 +186,11 @@ export function AdminSidebarClient() {
               <TooltipTrigger asChild>
                 <Link
                   href="/dashboard"
-                  className="flex items-center justify-center rounded-lg p-2 text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  aria-label="Back to Dashboard"
+                  title="Back to Dashboard"
+                  className="lmm-nav-return flex items-center justify-center rounded-lg p-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 >
-                  <ArrowLeft className="h-4 w-4" />
+                  <ArrowLeft className="h-5 w-5" />
                 </Link>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={8}>
@@ -196,9 +200,11 @@ export function AdminSidebarClient() {
           ) : (
             <Link
               href="/dashboard"
-              className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  aria-label="Back to Dashboard"
+                  title="Back to Dashboard"
+              className="lmm-nav-return flex items-center gap-2 rounded-lg px-2.5 py-2.5 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
+              <ArrowLeft className="h-5 w-5" />
               Back to Dashboard
             </Link>
           )}

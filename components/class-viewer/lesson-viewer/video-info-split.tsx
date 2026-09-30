@@ -8,6 +8,7 @@
 // (sensibly sized, not stretched edge-to-edge of the page) and an "About this
 // lesson" panel fills the music region. Only side and stack make sense here.
 
+import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import { Clock } from 'lucide-react'
 import { SplitWorkspace, WorkspaceLayoutSwitcher } from '@/components/playsense-studio/player/split-workspace'
 import { useWorkspaceLayout } from '@/components/playsense-studio/player/use-workspace-layout'
@@ -55,14 +56,14 @@ export function VideoInfoSplit({
     <SplitWorkspace
       controller={workspace}
       media={
-        <div className="flex flex-1 items-center justify-center overflow-hidden p-3">
-          <video
+        <div className="relative flex flex-1 items-center justify-center overflow-hidden p-3">
+          <video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()}
             src={videoUrl}
             controls
             playsInline
             preload="metadata"
             className="max-h-full max-w-full rounded-lg bg-black object-contain"
-          />
+          /><VideoWatermark nativeControls />
         </div>
       }
       music={

@@ -1,4 +1,13 @@
 'use client';
+import {lessonMetronomeGrid,type LessonMetronome} from '@/lib/playsense-studio/lesson-metronome';
+import {CompactSection} from './shell/compact-section';
+import {Music2,FileMusic} from 'lucide-react';
+import {protectFlexMeasure} from '@/lib/playsense-studio/flex';
+import {scorePlaybackRate} from '@/lib/playsense-studio/playback-tempo';
+import { resizeMarkerRange } from '@/lib/playsense-studio/resize-marker-range';
+import { useSpacePlayback } from './use-space-playback';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — sync panel (top half of the unified studio).
 //
@@ -29,11 +38,13 @@ import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { trimRange, type MediaTrim } from '@/lib/playsense-studio/clip-model';
 import { secondsToQn } from '@/lib/playsense-studio/metronome-anchor';
-import { beatGridFromAnchor } from '@/lib/playsense-studio/beat-grid';
+import { beatGridFromAnchor,mergeBeatGrids } from '@/lib/playsense-studio/beat-grid';
 import {
+  DEFAULT_CLICK_VOLUME,
   readStoredClickVolume,
   writeStoredClickVolume,
 } from '@/lib/playsense-studio/click-track';
+import { useTransportCountIn } from '../player/state/use-transport-count-in';
 import { useVideoClickTrack } from '@/components/playsense-studio/player/state/use-video-click-track';
 import { useScoreSynth } from '@/components/playsense-studio/player/state/use-score-synth';
 import { scoreSynthNotes, toMediaNotes } from '@/lib/playsense-studio/score-synth';
@@ -102,12 +113,13 @@ import {
 } from '@/components/playsense-studio/studio/integrated-editor';
 import type { SelectedEventRef } from '@/components/playsense-studio/studio/editable-measure-strip';
 import { PlaceScoreControl } from '@/components/playsense-studio/sync/place-score-control';
+import { QuantizePopover } from './measure/quantize-popover';
 import { WaveTools } from '@/components/playsense-studio/studio/wave-tools';
 import { SyncActions } from '@/components/playsense-studio/studio/sync-actions';
 import { SectionsLane, type LaneSection } from '@/components/playsense-studio/sync/sections-lane';
 import { resolvePercStroke, isPercussion } from '@/lib/playsense-studio/perc-strokes';
 import { collectOnsets, onsetForSelection } from '@/lib/playsense-studio/note-onsets';
-import { isStructuralAction } from '@/lib/playsense-studio/measure-edits';
+import { isStructuralAction, structuralEditProblem } from '@/lib/playsense-studio/measure-edits';
 import { stripCopyTags, writeMeasureClipboard } from '@/lib/playsense-studio/measure-clipboard';
 import { clipFromMeasures, prepareStructuralEdit } from '@/components/playsense-studio/sync/structural-timing';
 import { ScoreImportDialog, type ScoreImportDialogProps } from '@/components/playsense-studio/studio/score-import-dialog';
@@ -129,6 +141,7 @@ export interface StudioNoteSelection {
 }
 
 export interface SyncPanelProps {
+  lessonMetronome?:LessonMetronome;
   classItemId: string;
   /** The section being synced, when this panel edits one section's video timing —
    *  scopes the click anchor to it. */
@@ -138,11 +151,16 @@ export interface SyncPanelProps {
   publishTarget?: 'classItem' | 'section' | 'exercise';
   /** 'video' = sync the score to the audio; 'exercise' = no sync, demo + highway;
    *  'graded' = a graded part's play-along media (EXERCISE, JAM_SESSION): the
-   *  bar lines are the score's tempo grid from bar 1 and can't be dragged — the
-   *  admin places bar 1 only (Studio rework P5). */
+   *  bar lines start on the score tempo grid; manual sync preserves their QN
+   *  positions while editing the corresponding recording times. */
   mode: 'video' | 'exercise' | 'graded';
   /** Graded mode: bar 1 + count-in + pre-roll (the draft's `timing.play`). */
   play?: StudioPlay;
+  initialFlex?: FlexPoint[];
+  initialManualTiming?: boolean;
+  onFlexChange?: (points: FlexPoint[]) => void;
+  backingFlexLinks?: string[];
+  onBackingFlexLinksChange?: (ids: string[]) => void;
   /** Graded mode: hands a play-settings edit to the host's draft. */
   onPlayChange?: (patch: Partial<StudioPlay>) => void;
   /** Graded mode: the graded onsets of one loop, in seconds from bar 1,
@@ -208,6 +226,9 @@ export interface TimelineView {
   /** The reference media element, so lanes can slave audio to the same clock.
    *  A ref rather than the element: it mounts late, through a portal. */
   videoRef: RefObject<HTMLVideoElement | null>;
+  flexMap?: FlexMap;
+  backingFlexLinks?: string[];
+  onBackingFlexLinksChange?: (ids: string[]) => void;
   /** Usable region of the main track, in timeline seconds. */
   usableRegion: { startSeconds: number; endSeconds: number };
   pixelsPerSecond: number;
@@ -257,7 +278,6 @@ const TIMING_DEBOUNCE_MS = 1500;
 /** Stable empty array so `peaks?.hits ?? EMPTY_HITS` never churns deps with a
  *  fresh `[]` every render when there are no detected hits yet. */
 const EMPTY_HITS: number[] = [];
-const IDENTITY_FLEX = new FlexMap([]);
 /** The flex a wholesale bar move leaves behind: one stable object, so the
  *  Auto-place undo can tell a later flex edit from its own clear. */
 const NO_FLEX: FlexPoint[] = [];
@@ -292,6 +312,7 @@ function findBeatTime(state: MarkerState, ref: MarkerRef): number | null {
 }
 
 export function SyncPanel({
+  lessonMetronome,
   classItemId,
   sectionId,
   publishTarget,
@@ -315,10 +336,12 @@ export function SyncPanel({
   trim,
   onTrimDrag,
   play,
+  initialFlex, initialManualTiming = false, onFlexChange, backingFlexLinks = [], onBackingFlexLinksChange,
   onPlayChange,
   gradedOnsets = EMPTY_ONSETS,
   onStudentPreview,
 }: SyncPanelProps) {
+  const st = useStudioText();
   const track = score.tracks[0];
   const graded = mode === 'graded';
 
@@ -352,9 +375,24 @@ export function SyncPanel({
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const clock = useVideoTransportClock(videoRef);
+
   // When there's no waveform (video-less songs) the canvas can't report the
   // viewport width, so we measure the editor area directly to drive layout/zoom.
   const editorAreaRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const area = editorAreaRef.current;
+    if (!area) return;
+    // Claim horizontal gestures before nested canvases stop propagation.
+    // This also covers lane headers and empty space at either timeline edge.
+    const containHorizontalGesture = (event: WheelEvent) => {
+      if (event.ctrlKey || event.metaKey) return;
+      if (event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+        event.preventDefault();
+      }
+    };
+    area.addEventListener('wheel', containHorizontalGesture, { capture: true, passive: false });
+    return () => area.removeEventListener('wheel', containHorizontalGesture, true);
+  }, []);
 
   // --- Marker state ---
   // `activeTimeMap` is the host's SEED — the draft's timing when there is one,
@@ -363,35 +401,26 @@ export function SyncPanel({
   // Import-at-playhead and by dragging — the video has no single tempo, so
   // there's no auto-fit across the audio.
   const [markerState, setMarkers] = useState<MarkerState>(() => {
-    // Graded mode never reads a seeded map: legacy exercise drafts can still
-    // carry the old drag waypoints, and bar 1 replaces them.
-    if (!graded && activeTimeMap && activeTimeMap.waypoints.length >= 2) {
+    // Old exercise maps remain ignored until explicitly saved as manual sync.
+    if ((!graded || initialManualTiming) && activeTimeMap && activeTimeMap.waypoints.length >= 2) {
       return seedMarkerState(track, score, activeTimeMap.waypoints, activeTimeMap.nudges ?? []);
     }
+    if (graded && track) return seedMarkerState(track, score, gridWaypoints(buildExerciseGrid(score, track), track, play?.bar1Seconds ?? trim?.trimInSeconds ?? 0));
     return seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, 0));
   });
   const [dirty, setDirty] = useState(false);
 
-  // --- Graded mode: bar 1 on the tempo grid ---
-  // The bar lines are derived, never edited: bar i sits at bar 1 +
-  // grid.measureStartSec[i] — the same clock the student game runs. A drag of
-  // the Exercise block (or the waveform) previews in `dragBar1` and reaches
-  // the draft once, on release. Without a placement, bar 1 is the trim-in.
+  // Graded scores begin on a tempo grid; manual marker edits own timing after that.
   const gradedGrid = useMemo<ExerciseGrid | null>(
     () => (graded && track ? buildExerciseGrid(score, track) : null),
     [graded, score, track]
   );
   const [dragBar1, setDragBar1] = useState<number | null>(null);
-  const committedBar1 = play?.bar1Seconds ?? trim?.trimInSeconds ?? 0;
+  const committedBar1 = markerState.measures[0]?.beats[0]?.videoTimeSeconds ?? play?.bar1Seconds ?? trim?.trimInSeconds ?? 0;
   const bar1 = dragBar1 ?? committedBar1;
-  const gradedMarkers = useMemo(
-    () => (gradedGrid && track ? seedMarkerState(track, score, gridWaypoints(gradedGrid, track, bar1)) : null),
-    [gradedGrid, track, score, bar1]
-  );
-  // Everything below reads `markers`; in graded mode the edits that write
-  // `markerState` (reconcile, structural edits, recordings) are simply never
-  // shown — and never handed to the draft (timingAutosave is off).
-  const markers = gradedMarkers ?? markerState;
+  const markers = graded && dragBar1 !== null && markerState.measures[0]
+    ? shiftMarkersFrom(markerState, {measureNumber:markerState.measures[0].measureNumber,beatInMeasure:1}, dragBar1-committedBar1)
+    : markerState;
 
   // --- Flex Time (spec §7) ---
   // The warp between MEDIA time (the video element: clock, trim, detected hits,
@@ -400,10 +429,17 @@ export function SyncPanel({
   // draft with them (saveTiming). With no points every conversion below is an
   // exact pass-through, so unflexed sections behave exactly as before.
   // Edited on the waveform in Flex mode (Task 6) and by Quantize (Task 7).
-  const [flex, setFlex] = useState<FlexPoint[]>(() => (graded ? NO_FLEX : activeTimeMap?.flex ?? []));
+  const [flex, setFlex] = useState<FlexPoint[]>(() => (initialFlex ?? (graded ? NO_FLEX : activeTimeMap?.flex ?? [])));
   // Flex mode (the context-bar chip, or F while the measure zoom is closed —
   // the zoom uses F as a note letter, so IntegratedEditor reports its state).
   const [flexMode, setFlexMode] = useState(false);
+  const [flexDeleteMode, setFlexDeleteMode] = useState(false);
+  const [flexAddMode, setFlexAddMode] = useState(false);
+  useEffect(() => {
+    setFlexMode(false);
+    setFlexAddMode(false);
+    setFlexDeleteMode(false);
+  }, [showSync]);
   const [zoomOpen, setZoomOpen] = useState(false);
   const flexMap = useMemo(() => new FlexMap(flex), [flex]);
   // Any flex change marks the timing dirty — the same path as a marker change —
@@ -413,26 +449,37 @@ export function SyncPanel({
   useEffect(() => {
     if (flexSeenRef.current === flex) return;
     flexSeenRef.current = flex;
-    setDirty(true);
-  }, [flex]);
+    onFlexChange?.(flex);
+    if (!graded) setDirty(true);
+  }, [flex, graded, onFlexChange]);
 
   // Admin audio through the warp — the student player's wiring (Task 4): with
   // flex the transport shows/sets `userSpeed` and useFlexPlayback multiplies it
   // by the current segment's rate; with none the hook is disabled and the
   // clock's own rate wiring drives the element exactly as before, while keeping
   // `userSpeed` in step so a speed chosen before flexing isn't lost.
-  const [userSpeed, setUserSpeed] = useState(1);
+  const [userSpeed, setUserSpeed] = useState(()=>scorePlaybackRate(score));
   useFlexPlayback(videoRef, flexMap, userSpeed, !flexMap.isIdentity);
   const displayedRate = flexMap.isIdentity ? clock.playbackRate : userSpeed;
   // Unflexed, the Studio sets the element's rate itself, keeping pitch (a
   // slowed loop stays in key); flexed, useFlexPlayback does both.
-  const onDisplayedRateChange = flexMap.isIdentity
+  const applyDisplayedRate = flexMap.isIdentity
     ? (rate: number) => {
         const video = videoRef.current;
         if (video) applyStudioRate(video, rate);
         setUserSpeed(rate);
       }
     : setUserSpeed;
+  const onDisplayedRateChange=(rate:number)=>{
+    if(!Number.isFinite(rate)||rate<=0)return;
+    const next=Math.max(.1,Math.min(2,rate));
+    applyDisplayedRate(next);
+    dispatch({type:'set-playback-tempo',bpm:Math.abs(next-1)<.00001?null:score.initialTempo*next});
+  };
+  useEffect(()=>{
+    const rate=scorePlaybackRate(score);setUserSpeed(rate);
+    if(flexMap.isIdentity&&videoRef.current)applyStudioRate(videoRef.current,rate);
+  },[score.playbackTempoOverride,score.initialTempo,sectionId,flexMap.isIdentity,clock.durationSeconds]);
   // Faint note-onset ticks over the waveform — default on (they're low-opacity).
   const [showNotes, setShowNotes] = useState(true);
 
@@ -451,23 +498,6 @@ export function SyncPanel({
     const id = setTimeout(() => setEditNotice(null), 4500);
     return () => clearTimeout(id);
   }, [editNotice]);
-  // "Flex was cleared because the bars moved" is informational, not a refused
-  // edit — it shares editNotice's 4500 ms lifetime but never turns the toast
-  // red. Auto-place folds it into its own "Bars auto-placed." toast instead
-  // (see placedToast below); every other bar move shows it on its own.
-  const [flexClearedInfo, setFlexClearedInfo] = useState<string | null>(null);
-  useEffect(() => {
-    if (!flexClearedInfo) return;
-    const id = setTimeout(() => setFlexClearedInfo(null), 4500);
-    return () => clearTimeout(id);
-  }, [flexClearedInfo]);
-  // Wholesale marker moves (a section drag, Auto-place, a placement) leave the
-  // flex points behind on the old bars, so they clear it. Callers only call
-  // this when there is flex to clear.
-  const clearFlexForBarMove = useCallback(() => {
-    setFlex(NO_FLEX);
-    setFlexClearedInfo('Flex was cleared because the bars moved');
-  }, []);
   useEffect(() => {
     if (previousScore.current === score) return;
     recordingMarkerHistory.current.set(previousScore.current, markersRef.current);
@@ -644,9 +674,8 @@ export function SyncPanel({
   studioDispatchRef.current = studioDispatch;
   // Every video sync target hands its timing to the host's draft (onTimingChange);
   // nothing reaches the live map until Publish.
-  // Graded parts never publish a time map: bar 1 reaches the draft through
-  // onPlayChange instead.
-  const timingAutosave = showSync && !graded;
+  // Manual graded timing also lives in the draft; this does not publish it.
+  const timingAutosave = showSync;
   // Editing a failed snapshot allows autosave to try again.
   useEffect(() => { setError(null); }, [markers, score]);
 
@@ -658,9 +687,9 @@ export function SyncPanel({
     1
   );
 
-  const maxScroll = Math.max(0, timelineDuration * pps - viewportWidth);
+  const maxScroll = Math.max(0, timelineDuration * pps + 40 - viewportWidth);
   const clampScroll = useCallback(
-    (v: number) => Math.max(0, Math.min(v, Math.max(0, timelineDuration * pps - viewportWidth))),
+    (v: number) => Math.max(0, Math.min(v, Math.max(0, timelineDuration * pps + 40 - viewportWidth))),
     [timelineDuration, pps, viewportWidth]
   );
 
@@ -668,6 +697,11 @@ export function SyncPanel({
   // audio"). Cached in storage for next time. The grid + markers are fully
   // usable before analysis, so we don't pay the fetch/decode cost on entry.
   const analyzeCancelRef = useRef(false);
+  const waveformModule = useRef<Promise<typeof import('@/lib/playsense-studio/waveform-decode')> | null>(null);
+  const loadWaveformTools = useCallback(() => {
+    if (!waveformModule.current) waveformModule.current = import('@/lib/playsense-studio/waveform-decode');
+    return waveformModule.current;
+  }, []);
   // `force` skips the cache read (see loadOrComputePeaks).
   const runAnalysis = useCallback((opts?: { force?: boolean }) => {
     if (!videoUrl) return;
@@ -676,7 +710,7 @@ export function SyncPanel({
     setProgress(0);
     (async () => {
       try {
-        const { loadOrComputePeaks } = await import('@/lib/playsense-studio/waveform-decode');
+        const { loadOrComputePeaks } = await loadWaveformTools();
         const supabase = createClient();
         const result = await loadOrComputePeaks(classItemId, videoUrl, supabase, {
           force: opts?.force,
@@ -690,15 +724,12 @@ export function SyncPanel({
         if (!analyzeCancelRef.current) setDecodeState('error');
       }
     })();
-  }, [classItemId, videoUrl]);
+  }, [classItemId, videoUrl, loadWaveformTools]);
 
-  // The user's Analyze / Re-analyze. Peaks from before hits existed (the legacy
-  // v2 cache) would just be read back from the cache, so decode afresh; that
-  // writes the v3 cache, with hits. Never automatic on open: the entry effect
-  // below only decodes on a full cache miss.
+  // Explicit re-analysis bypasses both caches; marker and play timing stay intact.
   const reanalyze = useCallback(() => {
-    runAnalysis({ force: peaks !== null && peaks.hits === undefined });
-  }, [runAnalysis, peaks]);
+    runAnalysis({ force: true });
+  }, [runAnalysis]);
 
   // Cancel any in-flight decode on unmount.
   useEffect(() => () => { analyzeCancelRef.current = true; }, []);
@@ -707,14 +738,12 @@ export function SyncPanel({
   // decode). On a cache MISS, kick off the decode automatically so the first
   // visit doesn't require a click — the UI shows an "analyzing" overlay while it
   // runs, and the result is cached for next time.
-  const triedCacheRef = useRef(false);
   useEffect(() => {
-    if (triedCacheRef.current || !showSync) return;
-    triedCacheRef.current = true;
+    if (!showSync || !videoUrl) return;
     let cancelled = false;
     (async () => {
       try {
-        const { loadCachedPeaks } = await import('@/lib/playsense-studio/waveform-decode');
+        const { loadCachedPeaks } = await loadWaveformTools();
         const supabase = createClient();
         const cached = await loadCachedPeaks(classItemId, videoUrl, supabase);
         if (cancelled) return;
@@ -729,7 +758,7 @@ export function SyncPanel({
       }
     })();
     return () => { cancelled = true; };
-  }, [classItemId, showSync, runAnalysis]);
+  }, [classItemId, videoUrl, showSync, runAnalysis, loadWaveformTools]);
 
   // The range "fit" should show: the section being synced, or the whole
   // timeline when there's no section (songs/exercises without a sync target).
@@ -750,7 +779,11 @@ export function SyncPanel({
     if (didFitRef.current) return;
     if (viewportWidth > 0 && timelineDuration > 0) {
       didFitRef.current = true;
-      const [a, b] = fitTarget();
+      const [a, fullEnd] = fitTarget();
+      // Start with a readable four-bar window. Fitting an entire long score
+      // squeezed every note together; the shared zoom still scales audio and staves.
+      const fifthBar = showSync ? markers.measures[4]?.beats[0]?.videoTimeSeconds : undefined;
+      const b = fifthBar !== undefined && fifthBar > a ? Math.min(fullEnd, fifthBar) : fullEnd;
       const v = fitRangeView(a, b, viewportWidth, viewBounds);
       if (v) { setPps(v.pps); setScrollLeft(v.scrollLeft); }
     }
@@ -852,7 +885,7 @@ export function SyncPanel({
   // Tweens to the result over 300 ms (skipped under reduced motion) and keeps
   // the pre-placement markers around for a one-step undo. Timing still reaches
   // the draft only through the existing setMarkers + setDirty(true) path below.
-  // The undo snapshot holds the flex too: a successful placement clears it.
+  // Keep both marker and Flex snapshots so Undo restores a coherent view.
   const [autoPlaceUndo, setAutoPlaceUndo] = useState<{ markers: MarkerState; flex: FlexPoint[] } | null>(null);
   const placedRef = useRef<MarkerState | null>(null);
   const placedFlexRef = useRef<FlexPoint[] | null>(null);
@@ -862,10 +895,6 @@ export function SyncPanel({
   // clearing (the common case — Important 1). Retires with `autoPlaceUndo`
   // (below), on its own 6 s timer, or explicitly on Undo.
   const [placedToast, setPlacedToast] = useState(false);
-  // Whether THIS placement cleared flex — folds "Flex was cleared…" into the
-  // placed toast's own text instead of racing it as a second, separate
-  // message (Important 3).
-  const [autoPlaceFlexCleared, setAutoPlaceFlexCleared] = useState(false);
   useEffect(() => {
     if (!placedToast) return;
     const id = setTimeout(() => setPlacedToast(false), 6000);
@@ -930,18 +959,14 @@ export function SyncPanel({
     // trimRange is MEDIA; the window is compared with markers and hits in
     // TIMELINE time, so convert its edges (a pass-through when unflexed).
     //
-    // A successful placement moves the bars wholesale, so it clears the flex
-    // (whose points were tuned to the old bars). The bars are therefore placed
-    // against the result's timeline, which is MEDIA once the flex is gone: the
-    // raw hits and the raw trim window.
-    const clearsFlex = flex.length > 0;
-    const placeMap = clearsFlex ? IDENTITY_FLEX : flexMap;
+    // Align to the currently audible waveform; preserve its authored Flex.
+    const placeMap = flexMap;
     const win = windowWithinCorridor(
       { start: placeMap.toTimeline(trimBounds.startSeconds), end: placeMap.toTimeline(trimBounds.endSeconds) },
       markerSpan(markersRef.current),
       siblingRanges
     );
-    const res = autoPlaceBars(markersRef.current, clearsFlex ? hits : hitsTimeline, win);
+    const res = autoPlaceBars(markersRef.current, hitsTimeline, win);
     if (!res) {
       setAutoPlaceNotice('Not enough clear hits to place the bars.');
       return;
@@ -949,15 +974,13 @@ export function SyncPanel({
     const from = markersRef.current;
     setAutoPlaceUndo({ markers: from, flex });
     setPlacedToast(true);
-    setAutoPlaceFlexCleared(clearsFlex);
     placedRef.current = res.state;
-    placedFlexRef.current = clearsFlex ? NO_FLEX : flex;
-    if (clearsFlex) clearFlexForBarMove();
+    placedFlexRef.current = flex;
 
     // Ends by writing res.state and setDirty(true) (onDone); reduced motion
     // jumps straight there.
     startTween(from, res.state);
-  }, [hits, hitsTimeline, flex, flexMap, clearFlexForBarMove, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock, siblingRanges, startTween, tweenRunning]);
+  }, [hits, hitsTimeline, flex, flexMap, effectiveTrim.trimInSeconds, effectiveTrim.trimOutSeconds, videoDurationSeconds, clock, siblingRanges, startTween, tweenRunning]);
 
   const undoAutoPlace = useCallback(() => {
     if (!autoPlaceUndo) return;
@@ -1011,6 +1034,7 @@ export function SyncPanel({
   // Note onsets (video seconds, all tracks) at their EFFECTIVE time — the
   // anchor grid plus any per-note nudge — for the waveform ticks.
   const ticks = useMemo(() => noteTicks(markers), [markers]);
+  const scoreNoteTime = useCallback((qn: number) => noteTime(markers, qn), [markers]);
 
   // The selected note's onset (null for rests). Mirrored into a ref so the
   // canvas drag callback keeps a stable identity.
@@ -1060,7 +1084,7 @@ export function SyncPanel({
 
   // `[` / `]` nudge the selected note by 5 ms (Shift: 20 ms). Unused by the
   // notation editor's own key map.
-  const nudgeKeysActive = showSync && !graded && selectedOnset !== null;
+  const nudgeKeysActive = showSync && selectedOnset !== null;
   useEffect(() => {
     if (!nudgeKeysActive) return;
     const onKey = (e: KeyboardEvent) => {
@@ -1077,12 +1101,14 @@ export function SyncPanel({
   // F toggles Flex mode — never while the measure zoom is open (F is a note
   // letter there), never while typing, and never with a modifier.
   useEffect(() => {
-    if (!showSync || graded || zoomOpen) return;
+    if (!showSync || zoomOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
       if (e.key !== 'f' && e.key !== 'F') return;
       e.preventDefault();
       setFlexMode((v) => !v);
+      setFlexDeleteMode(false);
+      setFlexAddMode(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -1092,27 +1118,67 @@ export function SyncPanel({
   // Points live strictly inside the section's bar span (first downbeat … tail),
   // whose edges are identity, so the same span serves both domains. Hits come
   // in as indices into `hitsTimeline`, which maps `hits` (MEDIA) one to one.
-  const flexSpan = useMemo(
-    () => ({ start: markers.measures[0]?.beats[0]?.videoTimeSeconds ?? 0, end: markers.tailVideoTimeSeconds }),
-    [markers.measures, markers.tailVideoTimeSeconds]
-  );
+  // Audio anchors belong to the usable recording, not to the score's moving
+  // rectangle. A transient before/after the score can still be corrected.
+  const flexSpan = useMemo(() => {
+    const mediaEnd = trim?.trimOutSeconds ?? (peaks?.durationSeconds || videoDurationSeconds || clock.durationSeconds || flexMap.toMedia(markers.tailVideoTimeSeconds));
+    return {start:flexMap.toTimeline(trim?.trimInSeconds ?? 0),end:flexMap.toTimeline(mediaEnd)};
+  }, [trim?.trimInSeconds,trim?.trimOutSeconds,peaks?.durationSeconds,videoDurationSeconds,clock.durationSeconds,flexMap,markers.tailVideoTimeSeconds]);
   const noteTimes = useMemo(() => ticks.map((t) => t.videoTimeSeconds), [ticks]);
   const handleFlexAdd = useCallback(
     (hitIndex: number) => {
       const h = hits[hitIndex];
       if (h === undefined) return;
-      setFlex((f) => addFlexAtHit(f, h, hits, flexSpan));
+      setFlex((f) => { const map = new FlexMap(f); return addFlexAtHit(f, h, hits, {start:map.toMedia(flexSpan.start),end:map.toMedia(flexSpan.end)}); });
     },
     [hits, flexSpan]
   );
+  const handleFlexAddAt = useCallback((seconds:number) => {
+    setFlex(f => {
+      const map = new FlexMap(f);
+      return addFlexAtHit(f,map.toMedia(seconds),[],{start:map.toMedia(flexSpan.start),end:map.toMedia(flexSpan.end)});
+    });
+  }, [flexSpan]);
+  const addTransientAnchors = useCallback(() => {
+    setFlexMode(true);
+    setFlexDeleteMode(false);
+    setFlexAddMode(false);
+    setFlex(f => {
+      const map = new FlexMap(f);
+      const span = {start:map.toMedia(flexSpan.start),end:map.toMedia(flexSpan.end)};
+      return hits.reduce((points,hit)=>addFlexAtHit(points,hit,hits,span),f);
+    });
+  }, [hits,flexSpan]);
   const handleFlexDrag = useCallback(
-    (index: number, dstTimeline: number, mods: { snap: boolean }) => {
+    (index: number, dstTimeline: number, mods: { snap: boolean; start?: boolean }) => {
       const dst = mods.snap ? snapToNearest(dstTimeline, noteTimes, SNAP_PX / ppsRef.current) : dstTimeline;
-      setFlex((f) => moveFlexPoint(f, index, dst, flexSpan));
+      setFlex((f) => {
+        const original=f[index];
+        if(!original)return f;
+        const points=dragAll || mods.start===false ? f : protectFlexMeasure(f,original.src,[...markers.measures.map(m=>m.beats[0].videoTimeSeconds),markers.tailVideoTimeSeconds]);
+        const localIndex=points.findIndex(p=>p.src===original.src);
+        const point = points[localIndex], before = points[localIndex - 1], after = points[localIndex + 1];
+        // Keep both adjoining stretches within the browser's playback range.
+        // Otherwise the waveform would promise timing that the audio cannot play.
+        const lo = Math.max(before ? before.dst + (point.src-before.src)*userSpeed/4 : -Infinity,
+          after ? after.dst - (after.src-point.src)*userSpeed/.25 : -Infinity);
+        const hi = Math.min(before ? before.dst + (point.src-before.src)*userSpeed/.25 : Infinity,
+          after ? after.dst - (after.src-point.src)*userSpeed/4 : Infinity);
+        return lo > hi ? f : moveFlexPoint(points, localIndex, Math.max(lo,Math.min(hi,dst)), flexSpan);
+      });
     },
-    [noteTimes, flexSpan]
+    [noteTimes, flexSpan, userSpeed, dragAll, markers]
   );
-  const handleFlexRemove = useCallback((index: number) => setFlex((f) => removeFlexPoint(f, index)), []);
+  const handleFlexRemove = useCallback((index: number, timelineSeconds?: number) => {
+    const next = removeFlexPoint(flex, index);
+    setFlex(next);
+    // Deleting changes the timeline-to-media mapping. Keep the clicked
+    // playback position using the remaining anchors, not the previous warp.
+    if (timelineSeconds !== undefined) {
+      clock.seek(seekMediaFor(new FlexMap(next), timelineSeconds, trimmed ? effectiveTrim : null,
+        videoDurationSeconds ?? clock.durationSeconds ?? null));
+    }
+  }, [flex, clock, trimmed, effectiveTrim, videoDurationSeconds]);
 
   // "Flex the recording onto this note" (Task 7): the Timing tab's action for
   // the selected note. Finds the closest hit — compared in TIMELINE time,
@@ -1146,7 +1212,7 @@ export function SyncPanel({
   // shared by the inspector's NoteDetails and the zoom's More ▾ → Timing tab.
   const noteTiming: NoteTimingProps | undefined = useMemo(
     () =>
-      showSync && !graded && selectedOnset
+      showSync && selectedOnset
         ? {
             offsetMs: selectedNoteDelta * 1000,
             gridSeconds: gridTime(markers, selectedOnset.qn),
@@ -1190,30 +1256,52 @@ export function SyncPanel({
     },
     [markers, rangeForBounds]
   );
+  const [audioSelect, setAudioSelect] = useState(false);
+  const [audioRange, setAudioRange] = useState<{a:number;b:number}|null>(null);
+  const audioDrag = useRef<number|null>(null);
+  const [audioQuantizeOpen, setAudioQuantizeOpen] = useState(false);
+  const [quantizeUndo, setQuantizeUndo] = useState<{points:FlexPoint[];links:string[]} | null>(null);
   const quantizePlanFor = useCallback(
-    (start: number, end: number, strength: number) =>
+    (start: number, end: number, strength: number, stepQN?: number, audioBounds?: {start:number;end:number}) =>
       quantizePlan({
         points: flex,
-        notesTimeline: noteTimes,
+        notesTimeline: stepQN == null ? noteTimes : measureTimings.slice(start, end+1).flatMap((bar, offset) => {
+          const i=start+offset;
+          const lengthQN=(markers.measures[i+1]?.downbeatQN ?? markers.tailQN)-markers.measures[i].downbeatQN;
+          return Array.from({length:Math.ceil(lengthQN/stepQN)},(_,beat)=>bar.startVideoTimeSeconds + beat*stepQN/lengthQN*(bar.endVideoTimeSeconds-bar.startVideoTimeSeconds));
+        }),
         hitsMedia: hits,
         beatSeconds: beatSecondsForBounds(start, end),
-        range: rangeForBounds(start, end),
+        toleranceSeconds: stepQN == null ? undefined : beatSecondsForBounds(start, end) * stepQN / 2,
+
+        range: audioBounds ?? rangeForBounds(start, end),
         strength: strength / 100,
       }),
-    [flex, noteTimes, hits, beatSecondsForBounds, rangeForBounds]
+    [flex, noteTimes, hits, beatSecondsForBounds, rangeForBounds, measureTimings, markers]
   );
+  const planAudioSelection = (strength:number,stepQN?:number) => {
+    const range=audioRange ? {start:Math.min(audioRange.a,audioRange.b),end:Math.max(audioRange.a,audioRange.b)} : null;
+    const indices=measureTimings.flatMap((bar,i)=>range && bar.endVideoTimeSeconds>range.start && bar.startVideoTimeSeconds<range.end ? [i]:[]);
+    if(!range || !indices.length)return {points:flex,moved:0,largestMs:0};
+    return quantizePlanFor(indices[0],indices.at(-1)!,strength,stepQN,range);
+  };
   const onQuantizePlan = useCallback(
-    (start: number, end: number, strength: number) => {
-      const { moved, largestMs } = quantizePlanFor(start, end, strength);
+    (start: number, end: number, strength: number, stepQN?: number) => {
+      const { moved, largestMs } = quantizePlanFor(start, end, strength, stepQN);
       return { moved, largestMs };
     },
     [quantizePlanFor]
   );
   const onQuantizeApply = useCallback(
-    (start: number, end: number, strength: number) => {
-      setFlex(quantizePlanFor(start, end, strength).points);
+    (start: number, end: number, strength: number, stepQN?: number) => {
+      if (strength <= 0) return;
+      const plan = quantizePlanFor(start, end, strength, stepQN);
+      if (!plan.moved) return;
+      setQuantizeUndo({points:flex,links:[...backingFlexLinks]});
+      onBackingFlexLinksChange?.([]);
+      setFlex(plan.points);
     },
-    [quantizePlanFor]
+    [quantizePlanFor, flex, backingFlexLinks, onBackingFlexLinksChange]
   );
   const onResetFlexRange = useCallback(
     (start: number, end: number) => {
@@ -1267,6 +1355,14 @@ export function SyncPanel({
     setDirty(true);
   }, []);
 
+  const resizeBase = useRef<MarkerState | null>(null);
+  const handleResizeMeasures = useCallback((start:number,end:number,seconds:number,phase:'move'|'end') => {
+    const base = resizeBase.current ?? markersRef.current;
+    resizeBase.current = base;
+    setMarkers(resizeMarkerRange(base,start,end,seconds,Math.min(videoDurationSeconds ?? Infinity,corridorRef.current.hi-EPS)));
+    if (phase === 'end') {resizeBase.current=null;setDirty(true);}
+  }, [videoDurationSeconds]);
+
   const handleTailDrag = useCallback((videoTimeSeconds: number) => {
     setMarkers((s) => setTailTime(s, Math.min(videoTimeSeconds, corridorRef.current.hi - EPS)));
     setDirty(true);
@@ -1288,9 +1384,8 @@ export function SyncPanel({
       // Snap first (the section's first attacked note onto a hit), then run
       // the existing corridor/duration clamp on the snapped delta.
       let d = delta;
-      // A moved section drops its flex on release (below), so with flex the
-      // snap targets are the raw MEDIA hits — the timeline they'll have then.
-      const snapHits = flex.length > 0 ? hits : hitsRef.current;
+      // Snap to the audible, warped waveform without resetting its anchors.
+      const snapHits = hitsRef.current;
       if (mods?.snap !== false && snapHits.length) {
         const idx = base.measures.findIndex((m) => m.onsetQNs.length > 0);
         const firstNote = idx >= 0 ? firstAttackTime(base, idx) : base.measures[0].beats[0].videoTimeSeconds;
@@ -1301,12 +1396,11 @@ export function SyncPanel({
       setMarkers(shiftMarkersFrom(base, { measureNumber: first.measureNumber, beatInMeasure: 1 }, shift));
     }
     if (phase === 'end') {
-      const moved = Math.abs(sectionDragBase.current.shift) > 1e-9;
       sectionDragBase.current = null;
       setDirty(true);
-      if (moved && flex.length > 0) clearFlexForBarMove();
+      // Moving the score changes its map, never the authored audio anchors.
     }
-  }, [videoDurationSeconds, siblingRanges, flex.length, hits, clearFlexForBarMove]);
+  }, [videoDurationSeconds, siblingRanges, flex.length, hits]);
 
   // --- Graded: bar 1 ---
   // Dragging the Exercise block or the waveform shifts bar 1 by the drag's
@@ -1321,7 +1415,7 @@ export function SyncPanel({
       let d = delta;
       const first = gradedOnsets[0];
       if (mods?.snap !== false && first !== undefined && hitsRef.current.length) {
-        d = snapSectionShift(base + first, delta, hitsRef.current, SNAP_PX / ppsRef.current);
+        d = snapSectionShift(base + first, delta, hitsTimeline, SNAP_PX / ppsRef.current);
       }
       const next = Math.max(0, base + d);
       if (phase === 'move') {
@@ -1330,9 +1424,13 @@ export function SyncPanel({
       }
       bar1DragBase.current = null;
       setDragBar1(null);
-      if (Math.abs(next - base) > 1e-9) onPlayChange?.({ bar1Seconds: next });
+      if (Math.abs(next - base) > 1e-9) {
+        setMarkers(s => s.measures[0] ? shiftMarkersFrom(s,{measureNumber:s.measures[0].measureNumber,beatInMeasure:1},next-base) : s);
+        setDirty(true);
+        onPlayChange?.({ bar1Seconds: next });
+      }
     },
-    [committedBar1, gradedOnsets, onPlayChange]
+    [committedBar1, gradedOnsets, hitsTimeline, onPlayChange]
   );
 
   // Auto-align: the bar 1 that lands the most graded onsets on hits.
@@ -1342,18 +1440,21 @@ export function SyncPanel({
     const id = setTimeout(() => setAlignNotice(null), 6000);
     return () => clearTimeout(id);
   }, [alignNotice]);
+  const alignOnsets = useMemo(() => noteTimes.map(t=>t-committedBar1), [noteTimes,committedBar1]);
   const runAutoAlign = useCallback(() => {
-    const next = autoAlign(gradedOnsets, hits, committedBar1);
+    const next = autoAlign(alignOnsets, hitsTimeline, committedBar1);
     if (next === null) {
       setAlignNotice('Not enough clear hits to align the exercise.');
       return;
     }
     setAlignNotice(null);
+    setMarkers(s => s.measures[0] ? shiftMarkersFrom(s,{measureNumber:s.measures[0].measureNumber,beatInMeasure:1},next-committedBar1) : s);
+    setDirty(true);
     onPlayChange?.({ bar1Seconds: next });
-  }, [gradedOnsets, hits, committedBar1, onPlayChange]);
+  }, [alignOnsets, hitsTimeline, committedBar1, onPlayChange]);
   const onHit = useMemo(
-    () => (graded ? onHitCount(gradedOnsets, hits, bar1) : null),
-    [graded, gradedOnsets, hits, bar1]
+    () => (graded ? onHitCount(alignOnsets, hitsTimeline, bar1) : null),
+    [graded, alignOnsets, hitsTimeline, bar1]
   );
 
   const handleSelect = useCallback((target: DragTarget) => {
@@ -1376,7 +1477,10 @@ export function SyncPanel({
     if (ghostConflict) return;
     // Graded: placing is just putting bar 1 at the playhead (no flex here).
     if (graded) {
-      onPlayChange?.({ bar1Seconds: Math.max(0, getMediaSeconds()) });
+      const next = Math.max(0, getTimelineSeconds());
+      setMarkers(s => s.measures[0] ? shiftMarkersFrom(s,{measureNumber:s.measures[0].measureNumber,beatInMeasure:1},next-s.measures[0].beats[0].videoTimeSeconds) : s);
+      setDirty(true);
+      onPlayChange?.({ bar1Seconds: next });
       setPlaceArmed(false);
       return;
     }
@@ -1386,16 +1490,13 @@ export function SyncPanel({
     ) {
       return;
     }
-    // Placing clears any flex, so the playhead's timeline second afterwards is
-    // its MEDIA second.
-    const clearsFlex = flex.length > 0;
-    const at = clearsFlex ? getMediaSeconds() : getTimelineSeconds();
+    // Place the score on the audible timeline without resetting audio edits.
+    const at = getTimelineSeconds();
     setMarkers(seedMarkerState(track, score, buildWaypoints(score, score.initialTempo, at)));
-    if (clearsFlex) clearFlexForBarMove();
     setDirty(true);
     setSelected(null);
     setPlaceArmed(false);
-  }, [track, score, dirty, ghostConflict, getTimelineSeconds, getMediaSeconds, flex.length, clearFlexForBarMove, graded, onPlayChange]);
+  }, [track, score, dirty, ghostConflict, getTimelineSeconds, getMediaSeconds, flex.length, graded, onPlayChange]);
 
   // Per-beat handles follow the selection: selecting a measure (or one of its
   // beats) reveals that measure's beat markers; everything else stays collapsed.
@@ -1497,7 +1598,7 @@ export function SyncPanel({
   };
 
   const timelineView: TimelineView = {
-    videoRef,
+    videoRef, flexMap, backingFlexLinks, onBackingFlexLinksChange,
     usableRegion: trimWindow,
     pixelsPerSecond: pps,
     scrollLeftPx: scrollLeft,
@@ -1560,7 +1661,7 @@ export function SyncPanel({
     // the markers being handed off so a later rebase keeps its second.
     const anchorPatch = anchorRefreshRef.current ? anchorTimingPatch() : null;
     anchorRefreshRef.current = false;
-    onTimingChange({ ...patch, ...(anchorPatch ?? {}) });
+    onTimingChange({ ...patch, params:{...patch.params, manualScoreSync:true}, ...(anchorPatch ?? {}) });
     if (opts?.silent) return;
     if (markersRef.current === snapshot) {
       setDirty(false);
@@ -1696,6 +1797,14 @@ export function SyncPanel({
   /** What the click actually uses — the stored anchor, else the score's start. */
   const anchorSeconds = metronomeAnchor ?? seededAnchorSeconds;
 
+  const previousFirstBeat = useRef(seededAnchorSeconds);
+  useEffect(()=>{
+    const previous=previousFirstBeat.current;previousFirstBeat.current=seededAnchorSeconds;
+    if(anchorRef.current!=null && Math.abs(anchorRef.current-previous)<.001 && previous!==seededAnchorSeconds){
+      anchorRef.current=seededAnchorSeconds;setMetronomeAnchor(seededAnchorSeconds);scheduleAnchorSave();
+    }
+  },[seededAnchorSeconds,scheduleAnchorSave]);
+
   // --- Studio click --------------------------------------------------------
   // The transport has always rendered a "Click track" button here, but nothing
   // was ever wired to it — the engine only existed in the student player. So an
@@ -1704,15 +1813,15 @@ export function SyncPanel({
   //
   // The grid is built from the LIVE markers rather than the seeded map, so
   // dragging a marker or the anchor is audible immediately.
-  const [clickOn, setClickOn] = useState(false);
-  const [clickVolume, setClickVolume] = useState(readStoredClickVolume);
+  const [clickOn, setClickOn] = useState(true);
+  const [clickVolume, setClickVolume] = useState(() => readStoredClickVolume() || DEFAULT_CLICK_VOLUME);
 
   // The reference video's own audio. It used to play at full system volume with
   // no way to touch it, while the student's copy of the same video is hard-muted
   // — so the admin was balancing backing tracks and a click against an
   // uncontrollable voice. Per-viewer, since it is a monitoring preference.
-  const [videoMuted, setVideoMuted] = useState(() => readStoredFlag(VIDEO_MUTED_KEY, false));
-  const [videoVolume, setVideoVolume] = useState(() => readStoredLevel(VIDEO_VOLUME_KEY, 1));
+  const [videoMuted, setVideoMuted] = useState(false);
+  const [videoVolume, setVideoVolume] = useState(() => readStoredLevel(VIDEO_VOLUME_KEY, 1) || 1);
   const handleVideoMutedChange = useCallback((muted: boolean) => {
     setVideoMuted(muted);
     writeStoredValue(VIDEO_MUTED_KEY, muted ? '1' : '0');
@@ -1727,11 +1836,20 @@ export function SyncPanel({
 
   // Hear: the recording, the written score, or both. Score mutes the element
   // without touching the admin's own mute, so going back restores it.
-  const [hear, setHear] = useState<Hear>(readHear);
+  const [hear, setHear] = useState<Hear>(() => readHear() === 'recording' ? 'recording' : 'both');
   const handleHearChange = useCallback((next: Hear) => {
     setHear(next);
     writeHear(next);
   }, []);
+
+  const monitorMuted = hearMute(hear, videoMuted) || videoVolume === 0;
+  const handleMonitorMutedChange = useCallback((muted: boolean) => {
+    handleVideoMutedChange(muted);
+    if (!muted) {
+      if (hear === 'score') handleHearChange('both');
+      if (videoVolume === 0) handleVideoVolumeChange(1);
+    }
+  }, [hear, videoVolume, handleVideoMutedChange, handleHearChange, handleVideoVolumeChange]);
 
   // The element is portalled, so set the property rather than relying on a prop
   // surviving the move. A new element mounts when the monitor moves between
@@ -1748,21 +1866,17 @@ export function SyncPanel({
     writeStoredClickVolume(v);
   }, []);
 
+  const handleClickOnChange = useCallback((on: boolean) => {
+    if (on && clickVolume === 0) handleClickVolumeChange(DEFAULT_CLICK_VOLUME);
+    setClickOn(on);
+  }, [clickVolume, handleClickVolumeChange]);
+
   const liveSpan = markerSpan(markers);
-  const clickGrid = useMemo(
-    () =>
-      // Graded: every beat of one pass of the tempo grid, from bar 1 — what the
-      // student's metronome plays.
-      gradedGrid
-        ? gridBeats(gradedGrid).map((b) => bar1 + b.seconds)
-        : beatGridFromAnchor(
-            anchorSeconds,
-            score.initialTempo,
-            liveSpan.startSeconds,
-            liveSpan.endSeconds
-          ),
-    [gradedGrid, bar1, anchorSeconds, score.initialTempo, liveSpan.startSeconds, liveSpan.endSeconds]
-  );
+  // Score beats and metronome share the edited map, including individual beats.
+  const clickGrid = useMemo(() => graded
+    ? markers.measures.flatMap(m => m.beats.map(b => b.videoTimeSeconds))
+    : beatGridFromAnchor(anchorSeconds,score.initialTempo,liveSpan.startSeconds,liveSpan.endSeconds),
+    [graded,markers,anchorSeconds,score.initialTempo,liveSpan.startSeconds,liveSpan.endSeconds]);
 
   // The grid is TIMELINE (the notated tempo); the click is scheduled against
   // the video, so map it to MEDIA — it then follows the stretched recording,
@@ -1772,9 +1886,33 @@ export function SyncPanel({
     [flexMap, clickGrid]
   );
 
+  const countIn = useTransportCountIn();
+  const [previewCountInBars, setPreviewCountInBars] = useState<0 | 1 | 2>(0);
+  useEffect(() => { countIn.cancel(); }, [displayedRate, sectionId, score, showSync, countIn.cancel]);
+  const toggleWithCountIn = () => {
+    if(countIn.remaining) {countIn.cancel();return;}
+    const video=videoRef.current;
+    const atEnd=video && (video.ended || video.currentTime >= trimWindow.endSeconds - .001);
+    if(atEnd && !clock.isPlaying) clock.seek(trimWindow.startSeconds);
+    if(clock.isPlaying || !previewCountInBars) {void clock.toggle();return;}
+    // Start the rehearsal at bar 1; preserve its saved media position.
+    seekClamped(seededAnchorSeconds);
+    void countIn.start({bpm:score.initialTempo*displayedRate,denominator:score.initialTimeSignature[1],beats:score.initialTimeSignature[0],bars:previewCountInBars,volume:clickVolume||DEFAULT_CLICK_VOLUME},()=>{void videoRef.current?.play().catch(()=>{});});
+  };
+  useSpacePlayback(showSync && !!videoUrl, toggleWithCountIn);
+  const anchorAtFirstBeat = () => {
+    countIn.cancel();
+    if(anchorOwner) {
+      anchorRef.current=seededAnchorSeconds;
+      setMetronomeAnchor(seededAnchorSeconds);
+      onTimingChange({anchor:{seconds:seededAnchorSeconds,qn:0}});
+    }
+    seekClamped(seededAnchorSeconds);
+  };
+
   useVideoClickTrack({
     videoRef,
-    grid: showSync ? clickGridMedia : [],
+    grid: showSync ? mergeBeatGrids([lessonMetronomeGrid(lessonMetronome??{bpm:120,anchorSeconds:null},clock.durationSeconds,[flexMap.toMedia(liveSpan.startSeconds),...(sectionsContext?.sections.filter(s=>s.sectionId!==sectionId).flatMap(s=>s.startSeconds==null?[]:[s.startSeconds])??[])]),clickGridMedia]) : [],
     enabled: clickOn && showSync,
     volume: clickVolume,
     // Flexed: the rate driver changes the rate at each flex boundary, so the
@@ -1819,7 +1957,7 @@ export function SyncPanel({
     Math.abs(mapImpliedBpm - score.initialTempo) / score.initialTempo > 0.03;
 
   if (!track) {
-    return <p className="text-sm text-muted-foreground">This score has no tracks to edit.</p>;
+    return <p className="text-sm text-muted-foreground">{st("This score has no tracks to edit.")}</p>;
   }
 
   // While the first-time decode runs, lock the panel behind a loader so it's
@@ -1840,24 +1978,75 @@ export function SyncPanel({
   // wins, so a failed Auto-place/Auto-align never shows this alongside a
   // stale Undo (Important 3).
   const stageInfo = placedToast && autoPlaceUndo
-    ? (autoPlaceFlexCleared ? 'Bars auto-placed. Flex was cleared because the bars moved.' : 'Bars auto-placed.')
-    : flexClearedInfo;
+    ? 'Bars auto-placed.'
+    : null;
   const stageNoticeAction = placedToast && autoPlaceUndo ? { label: 'Undo', onClick: undoAutoPlace } : undefined;
 
   return (
     <>
       {/* ============ CENTER: context bar + unified stage ============ */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3" style={(!showSync || score.tracks[0]?.staffGroup) ? { minHeight: showSync ? 700 : 520, flexShrink: 0 } : undefined}>
         {/* The unified stage — waveform lane + notation lane share one grid */}
         <div className="relative flex min-h-0 flex-1 flex-col">
           <div className={`st-stage flex-1${analyzing ? ' pointer-events-none select-none opacity-50' : ''}`} aria-busy={analyzing}>
             {/* Timeline track — measured for the no-waveform width fallback */}
             <div className="st-stage-track" ref={editorAreaRef}>
+              {showSync && <CompactSection name="Video audio" storageId="video-audio" icon={AudioLines}>
+              {/* Dedicated controls row: never covers waveform anchors. */}
+              {showSync && (
+                  <WaveTools
+                    graded={graded}
+                    onAutoPlace={runAutoPlace}
+                    autoPlaceDisabled={!hits.length || tweenActive}
+                    autoPlaceTitle={
+                      hits.length
+                        ? 'Fit the bars to the recording — place the first bar near its note first'
+                        : 'Re-analyze audio to find the hits'
+                    }
+                    onAutoAlign={runAutoAlign}
+                    autoAlignDisabled={!hits.length}
+                    autoAlignTitle={
+                      hits.length
+                        ? 'Move bar 1 so the most notes land on a hit'
+                        : 'Re-analyze audio to find the hits'
+                    }
+                    onStudentPreview={onStudentPreview}
+                    dragAll={dragAll}
+                    onDragAll={setDragAll}
+                    flexMode={flexMode}
+                    onFlex={() => {setFlexMode((v) => !v);setFlexDeleteMode(false);setFlexAddMode(false);}}
+                    flexAddMode={flexAddMode}
+                    flexDeleteMode={flexDeleteMode}
+                    onAddPoints={() => {setFlexMode(true);setFlexDeleteMode(false);setFlexAddMode(v=>!v);}}
+                    onDeletePoints={() => {setFlexMode(true);setFlexAddMode(false);setFlexDeleteMode(v=>!v);}}
+                    onResetFlex={() => {setFlex(NO_FLEX);setFlexDeleteMode(false);setFlexAddMode(false);}}
+                    hasFlexPoints={flex.length > 0}
+                    onAddAnchors={addTransientAnchors}
+                    addAnchorsDisabled={!hits.length}
+                    showNotes={showNotes}
+                    onShowNotes={() => setShowNotes((v) => !v)}
+                    zoom={{
+                      pps,
+                      onZoomTo: zoomTo,
+                      onZoomBy: (f) => zoomBy(f, anchorPxFor(timelineNow, pps, scrollLeft, viewportWidth)),
+                      onFit: fitZoom,
+                    }}
+                  />
+              )}
               {showSync && (
                 <div className="st-wave-lane relative flex-shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-2 text-xs">
+                    <button type="button" aria-pressed={audioSelect} onClick={()=>setAudioSelect(!audioSelect)} className="rounded border px-2 py-1 aria-pressed:bg-primary/20">{st('Select audio range')}</button>
+                    <button type="button" onClick={()=>{setAudioRange({a:liveSpan.startSeconds,b:liveSpan.endSeconds});setAudioSelect(false);}} className="rounded border px-2 py-1">{st('Select all audio')}</button>
+                    {audioRange && <>
+                      <button type="button" disabled={!hits.length || Math.abs(audioRange.b-audioRange.a)<.001} onClick={()=>setAudioQuantizeOpen(true)} className="rounded border px-2 py-1 disabled:opacity-40">{st('Quantize audio')}</button>
+                      <button type="button" onClick={()=>{setAudioRange(null);setAudioSelect(false);setAudioQuantizeOpen(false);}} className="rounded border px-2 py-1">{st('Clear selection')}</button>
+                    </>}
+                  </div>
+                  <div className="relative">
                   <WaveformCanvas
                     loop={waveLoop}
-                    selection={waveSelection}
+                    selection={audioRange ?? waveSelection}
                     bare
                     height={waveH}
                     peaks={peaks}
@@ -1865,9 +2054,9 @@ export function SyncPanel({
                     handles={handles}
                     noteTicks={ticks}
                     showNotes={showNotes}
-                    selectedNote={graded ? null : selectedNoteHandle}
-                    onNoteDrag={graded ? undefined : handleNoteDrag}
-                    markersLocked={graded}
+                    selectedNote={selectedNoteHandle}
+                    onNoteDrag={handleNoteDrag}
+                    markersLocked={false}
                     onBackgroundDrag={graded ? onBar1Drag : undefined}
                     tailVideoTimeSeconds={markers.tailVideoTimeSeconds}
                     pixelsPerSecond={pps}
@@ -1881,11 +2070,14 @@ export function SyncPanel({
                     mediaDurationSeconds={videoDurationSeconds ?? clock.durationSeconds}
                     onTrimDrag={onTrimDrag ? handleTrimDrag : undefined}
                     warp={flexMap}
-                    flexMode={flexMode && !graded}
+                    flexMode={flexMode}
+                    flexAddMode={flexAddMode}
+                    flexDeleteMode={flexDeleteMode}
                     flexPoints={flex}
                     hitsTimeline={hitsTimeline}
                     noteTimes={noteTimes}
                     onFlexAdd={handleFlexAdd}
+                    onFlexAddAt={handleFlexAddAt}
                     onFlexDrag={handleFlexDrag}
                     onFlexRemove={handleFlexRemove}
                     metronomeAnchorSeconds={anchorOwner ? anchorSeconds : undefined}
@@ -1899,25 +2091,34 @@ export function SyncPanel({
                     onZoomBy={zoomBy}
                   />
 
+                  {audioSelect && <div className="absolute inset-0 z-20 touch-none cursor-crosshair" aria-label={st('Select audio range')}
+                    onPointerDown={e=>{if(e.button!==0)return;e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);const t=Math.max(0,Math.min(timelineDuration,(e.clientX-e.currentTarget.getBoundingClientRect().left+scrollLeft)/pps));audioDrag.current=t;setAudioRange({a:t,b:t});}}
+                    onPointerMove={e=>{if(audioDrag.current===null)return;const t=Math.max(0,Math.min(timelineDuration,(e.clientX-e.currentTarget.getBoundingClientRect().left+scrollLeft)/pps));setAudioRange({a:Math.min(audioDrag.current,t),b:Math.max(audioDrag.current,t)});}}
+                    onPointerUp={()=>{audioDrag.current=null;}} onPointerCancel={()=>{audioDrag.current=null;}} />}
+                  </div>
+                  {audioQuantizeOpen && audioRange && <QuantizePopover anchor={{left:12,top:42}} plan={planAudioSelection} onClose={()=>setAudioQuantizeOpen(false)}
+                    onApply={(strength,step)=>{const plan=planAudioSelection(strength,step);if(strength>0 && plan.moved){setQuantizeUndo({points:flex,links:[...backingFlexLinks]});onBackingFlexLinksChange?.([]);setFlex(plan.points);}setAudioQuantizeOpen(false);}}
+                    onReset={()=>{setFlex(f=>resetFlexRange(f,{start:Math.min(audioRange.a,audioRange.b),end:Math.max(audioRange.a,audioRange.b)}));}}
+                    onUndo={quantizeUndo===null?undefined:()=>{setFlex(quantizeUndo.points);onBackingFlexLinksChange?.(quantizeUndo.links);setQuantizeUndo(null);}} />}
                   {/* No-waveform / error state, shown right over the lane so it's
                       visible even when the left-rail inspector is hidden. */}
                   {decodeState !== 'loading' && (!peaks || decodeState === 'error') && (
                     <div className="st-wave-empty" style={{ height: waveH }}>
                       <p className="st-wave-empty-text">
-                        {decodeState === 'error'
+                        {st(decodeState === 'error'
                           ? "Couldn't read this video's audio."
-                          : 'No waveform yet.'}
+                          : 'No waveform yet.')}
                       </p>
                       <button type="button" onClick={reanalyze} className="st-btn-primary">
                         <AudioLines className="h-4 w-4" />
-                        {decodeState === 'error' ? 'Retry analysis' : 'Analyze audio'}
+                        {st(decodeState === 'error' ? 'Retry analysis' : 'Analyze audio')}
                       </button>
                     </div>
                   )}
 
                   {graded && (
                     <SectionsLane
-                      sections={GRADED_LANE}
+                      sections={GRADED_LANE.map(section => ({...section, label: st('Exercise')}))}
                       activeSectionId={GRADED_LANE[0].sectionId}
                       activeRange={markerSpan(markers)}
                       ghostRange={ghostRange}
@@ -1943,7 +2144,7 @@ export function SyncPanel({
                   )}
 
                   {/* Backing-track lanes share the waveform's x-space. */}
-                  {renderBackingLanes?.(timelineView)}
+
 
                   {/* Ghost of the armed placement, across the waveform + lane. */}
                   {ghostRange && (
@@ -1956,53 +2157,32 @@ export function SyncPanel({
                     />
                   )}
 
-                  {/* The waveform's floating tool cluster — everything that acts
-                      on THIS lane (its number chips use dragAll). */}
-                  <WaveTools
-                    graded={graded}
-                    onAutoPlace={runAutoPlace}
-                    autoPlaceDisabled={!hits.length || tweenActive}
-                    autoPlaceTitle={
-                      hits.length
-                        ? 'Fit the bars to the recording — place the first bar near its note first'
-                        : 'Re-analyze audio to find the hits'
-                    }
-                    onAutoAlign={runAutoAlign}
-                    autoAlignDisabled={!hits.length}
-                    autoAlignTitle={
-                      hits.length
-                        ? 'Move bar 1 so the most notes land on a hit'
-                        : 'Re-analyze audio to find the hits'
-                    }
-                    onStudentPreview={onStudentPreview}
-                    dragAll={dragAll}
-                    onDragAll={setDragAll}
-                    flexMode={flexMode}
-                    onFlex={() => setFlexMode((v) => !v)}
-                    showNotes={showNotes}
-                    onShowNotes={() => setShowNotes((v) => !v)}
-                    zoom={{
-                      pps,
-                      onZoomTo: zoomTo,
-                      onZoomBy: (f) => zoomBy(f, anchorPxFor(timelineNow, pps, scrollLeft, viewportWidth)),
-                      onFit: fitZoom,
-                    }}
-                  />
+
                 </div>
               )}
+
+              </CompactSection>}
+              {showSync && renderBackingLanes && <CompactSection name="MP3 backing tracks" storageId="mp3-tracks" icon={Music2}>
+                {renderBackingLanes(timelineView)}
+              </CompactSection>}
 
               {showSync && <StageSplitter height={waveH} onChange={changeWaveH} />}
 
               {/* No horizontal padding here — the staff strip must share x=0
                   with the waveform canvas above so the measure grid stays aligned. */}
+              <CompactSection name="Score" storageId="score" icon={FileMusic} grow>
               <div className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3${showSync ? ' border-t border-border' : ''}`}>
                 <IntegratedEditor
+                  exerciseTempo={mode==='exercise'||graded}
+                  pageWorkspace={!showSync}
                   score={score}
                   dispatch={studioDispatch}
                   notice={editNotice ?? autoPlaceNotice ?? alignNotice}
                   info={stageInfo}
                   noticeAction={stageNoticeAction}
                   measureTimings={measureTimings}
+                  noteTimeForQN={showSync ? scoreNoteTime : undefined}
+                  onResizeMeasures={showSync ? handleResizeMeasures : undefined}
                   getCurrentSeconds={getTimelineSeconds}
                   recordingSource={recordingSource}
                   pixelsPerSecond={pps}
@@ -2018,25 +2198,28 @@ export function SyncPanel({
                   onLoopMeasures={showSync ? loopMeasures : undefined}
                   loopedRange={showSync ? loopedRange : null}
                   noteTiming={noteTiming}
-                  onQuantizePlan={showSync && !graded ? onQuantizePlan : undefined}
-                  onQuantizeApply={showSync && !graded ? onQuantizeApply : undefined}
-                  onResetFlex={showSync && !graded ? onResetFlexRange : undefined}
-                  flexInfo={showSync && !graded ? flexInfoForBounds : undefined}
+                  onQuantizePlan={showSync ? onQuantizePlan : undefined}
+                  onQuantizeApply={showSync ? onQuantizeApply : undefined}
+                  onQuantizeUndo={quantizeUndo === null ? undefined : ()=>{setFlex(quantizeUndo.points);onBackingFlexLinksChange?.(quantizeUndo.links);setQuantizeUndo(null);}}
+                  onResetFlex={showSync ? onResetFlexRange : undefined}
+                  flexInfo={showSync ? flexInfoForBounds : undefined}
                   quantizeProblem={hits.length ? null : 'Needs the audio analysed first'}
                   onZoomOpenChange={setZoomOpen}
                   onMeasureRangeChange={setBarRange}
                 />
               </div>
 
+              </CompactSection>
+
               {/* Stage bottom bar — the timeline scrollbar (zoom floats on the
                   waveform; without one, songs/exercises keep it down here). */}
-              <div className="st-stage-bottombar">
+              {showSync && <div className="st-stage-bottombar">
                 <div className="min-w-0 flex-1">
                   <ScrollBar
                     scrollLeft={scrollLeft}
                     maxScroll={maxScroll}
                     viewportWidth={viewportWidth}
-                    contentWidth={timelineDuration * pps}
+                    contentWidth={timelineDuration * pps + 40}
                     onScroll={(v) => setScrollLeft(clampScroll(v))}
                   />
                 </div>
@@ -2048,7 +2231,7 @@ export function SyncPanel({
                     onFit={fitZoom}
                   />
                 )}
-              </div>
+              </div>}
             </div>
           </div>
 
@@ -2056,12 +2239,10 @@ export function SyncPanel({
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 rounded-[14px] bg-background/75 backdrop-blur-sm">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm font-medium">
-                {progress >= 1 ? 'Processing audio…' : `Downloading audio…${progress > 0 ? ` ${Math.round(progress * 100)}%` : ''}`}
+                {st(progress >= 1 ? 'Processing audio…' : `Downloading audio…${progress > 0 ? ` ${Math.round(progress * 100)}%` : ''}`)}
               </p>
               <p className="max-w-xs text-center text-xs text-muted-foreground">
-                Decoding this video’s audio so the waveform lines up with the score. This happens once —
-                the result is cached for next time.
-              </p>
+                {st("Decoding this video’s audio so the waveform lines up with the score. This happens once — the result is cached for next time.")}</p>
             </div>
           )}
         </div>
@@ -2072,7 +2253,7 @@ export function SyncPanel({
       {showSync &&
         monitorEl &&
         createPortal(
-          <ReferenceMonitor videoRef={videoRef} videoUrl={videoUrl} bare />,
+          <ReferenceMonitor videoRef={videoRef} videoUrl={videoUrl} videoMuted={monitorMuted} onVideoMutedChange={handleMonitorMutedChange} bare />,
           monitorEl,
         )}
 
@@ -2083,16 +2264,17 @@ export function SyncPanel({
             classItemId={classItemId}
             mode="append"
             onConfirm={async (imported) => {
+              const problem = structuralEditProblem(scoreRef.current, { type: 'append-score', score: imported });
+              if (problem) return { error: problem };
               studioDispatch({ type: 'append-score', score: imported });
               return {};
             }}
             onImported={() => {}}
             onCloseAutoFocus={scoreActionsCloseAutoFocus}
             trigger={
-              <button type="button" className="st-mpop-item has-icon" title="Add measures from another file after the last measure">
+              <button type="button" className="st-mpop-item has-icon" title={st("Add measures from another file after the last measure")}>
                 <FilePlus2 className="h-4 w-4" />
-                Add measures from a file
-              </button>
+                {st("Add score")}</button>
             }
           />,
           scoreActionsEl,
@@ -2133,10 +2315,10 @@ export function SyncPanel({
             )}
 
             {showSync ? (
-              !monitorEl && <ReferenceMonitor videoRef={videoRef} videoUrl={videoUrl} />
+              !monitorEl && <ReferenceMonitor videoRef={videoRef} videoUrl={videoUrl} videoMuted={monitorMuted} onVideoMutedChange={handleMonitorMutedChange} />
             ) : (
               // Keep the video element mounted for the clock even off the sync path.
-              <video ref={videoRef} src={videoUrl ?? undefined} preload="metadata" className="hidden" />
+              <video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()} ref={videoRef} src={videoUrl ?? undefined} preload="metadata" className="hidden" />
             )}
 
             {/* (Exercise mode: the demo video lives in the Watch part; the play-part
@@ -2144,7 +2326,7 @@ export function SyncPanel({
 
             {/* Selected note */}
             <div className="st-icard">
-              <span className="st-sec-label">Selected note</span>
+              <span className="st-sec-label">{st("Selected note")}</span>
               {selEvent && selection ? (
                 <NoteDetails
                   event={selEvent}
@@ -2167,8 +2349,7 @@ export function SyncPanel({
                 />
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Click a note on the staff to inspect it.
-                </p>
+                  {st("Click a note on the staff to inspect it.")}</p>
               )}
             </div>
 
@@ -2176,40 +2357,32 @@ export function SyncPanel({
             {showSync && (
               <div className="st-icard">
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="st-status-pip" /> {markers.measures.length} measure
-                  {markers.measures.length === 1 ? '' : 's'} on the grid
-                </div>
+                  <span className="st-status-pip" /> {markers.measures.length} {st("measure ")}{st(markers.measures.length === 1 ? '' : 's')} {st("on the grid")}</div>
                 {flags.size > 0 && (
                   <p className="text-xs text-destructive">
-                    {flags.size === 1 ? '1 bar looks off' : `${flags.size} bars look off`}
+                    {st(flags.size === 1 ? '1 bar looks off' : `${flags.size} bars look off`)}
                   </p>
                 )}
                 {graded ? (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="st-status-pip" /> Bar 1 at{' '}
-                    <b className="font-mono tabular-nums text-foreground">{bar1.toFixed(2)}s</b> ·{' '}
-                    {score.initialTempo} BPM
-                  </div>
+                    <span className="st-status-pip" /> {st("Bar 1 at ")}{st(' ')}
+                    <b className="font-mono tabular-nums text-foreground">{bar1.toFixed(2)}{st("s")}</b> ·{st(' ')}
+                    {score.initialTempo} {st("BPM")}</div>
                 ) : (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="st-status-pip warn" /> Anchor at{' '}
-                  <b className="font-mono tabular-nums text-foreground">{anchorSeconds.toFixed(1)}s</b> ·{' '}
-                  {score.initialTempo} BPM
-                </div>
+                  <span className="st-status-pip warn" /> {st("Anchor at ")}{st(' ')}
+                  <b className="font-mono tabular-nums text-foreground">{anchorSeconds.toFixed(1)}{st("s")}</b> ·{st(' ')}
+                  {score.initialTempo} {st("BPM")}</div>
                 )}
                 {anchorOwner && metronomeAnchor == null && (
                   <p className="text-[11px] leading-snug text-muted-foreground">
-                    No click anchor yet — it will default to the score&rsquo;s start.
-                  </p>
+                    {st("No click anchor yet — it will default to the score&rsquo;s start.")}</p>
                 )}
                 {anchorOwner && tempoDisagrees && mapImpliedBpm != null && (
                   <p className="text-[11px] leading-snug text-muted-foreground">
-                    The click runs at the score&rsquo;s{' '}
-                    <b className="text-foreground">{score.initialTempo} BPM</b>, but this sync
-                    plays at{' '}
-                    <b className="text-foreground">~{Math.round(mapImpliedBpm)} BPM</b>. Set the
-                    score&rsquo;s tempo to match if you want the click to sit on the recording.
-                  </p>
+                    {st("The click runs at the score&rsquo;s ")}{st(' ')}
+                    <b className="text-foreground">{score.initialTempo} {st("BPM")}</b>{st(", but this sync plays at ")}{st(' ')}
+                    <b className="text-foreground">~{Math.round(mapImpliedBpm)} {st("BPM")}</b>{st(". Set the score&rsquo;s tempo to match if you want the click to sit on the recording.")}</p>
                 )}
                 {/* Only shown while there's something to say — once the timing
                     is handed off to the draft, the host's app-bar autosave
@@ -2217,9 +2390,9 @@ export function SyncPanel({
                 {timingAutosave && (error || dirty) && (
                   <div className="flex items-center gap-2 text-xs">
                     {error ? (
-                      <><span className="st-status-pip warn" /> <span>Timing not saved</span></>
+                      <><span className="st-status-pip warn" /> <span>{st("Timing not saved")}</span></>
                     ) : (
-                      <><span className="st-status-pip warn" /> <span className="text-muted-foreground">Saving to draft…</span></>
+                      <><span className="st-status-pip warn" /> <span className="text-muted-foreground">{st("Saving to draft…")}</span></>
                     )}
                   </div>
                 )}
@@ -2230,8 +2403,7 @@ export function SyncPanel({
                 )}
                 {decodeState === 'error' && (
                   <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-600">
-                    Couldn’t read this video’s audio. You can still sync against the measure grid.
-                  </p>
+                    {st("Couldn’t read this video’s audio. You can still sync against the measure grid.")}</p>
                 )}
               </div>
             )}
@@ -2246,25 +2418,32 @@ export function SyncPanel({
           <div className="st-transport">
             <TransportBar
               layout="row"
-              extra={<>{(loopEnabled || Math.abs(displayedRate - 1) > 1e-3) && <LoopSpeedControl rate={displayedRate} onRate={onDisplayedRateChange} />}{showSync && <HearControl hear={hear} onHear={handleHearChange} />}</>}
+              extra={<>{countIn.remaining>0&&<output className="rounded bg-primary/15 px-3 py-1 font-mono text-lg text-primary">{countIn.remaining}</output>}{(loopEnabled || Math.abs(displayedRate - 1) > 1e-3) && <LoopSpeedControl rate={displayedRate} onRate={onDisplayedRateChange} />}</>}
+              trailingControls={<HearControl hear={hear} onHear={handleHearChange} />}
               loopHint="Loop the selected bars with L, or drag on the staff"
               currentSeconds={timelineNow}
               durationSeconds={clock.durationSeconds}
-              isPlaying={clock.isPlaying}
+              isPlaying={clock.isPlaying || countIn.remaining > 0}
               playbackRate={displayedRate}
-              onToggle={clock.toggle}
-              onRestart={() => clock.seek(trimWindow.startSeconds)}
-              onSeek={seekClamped}
+              onToggle={toggleWithCountIn}
+              onRestart={() => {countIn.cancel();clock.seek(trimWindow.startSeconds);}}
+              onSeek={seconds=>{countIn.cancel();seekClamped(seconds);}}
               onRateChange={onDisplayedRateChange}
               loopA={loopA}
               loopB={loopB}
               loopEnabled={clock.loopEnabled}
               onToggleLoop={() => clock.setLoopEnabled(!clock.loopEnabled)}
               onClearLoop={clock.clearLoop}
+              metronomeControls={<div className="mt-2 space-y-2 border-t border-border pt-2 text-xs">
+                <button type="button" onClick={anchorAtFirstBeat} className="w-full rounded border border-border px-2 py-1.5 text-left hover:bg-muted">{st('Place anchor · first beat')}</button>
+                <p className="text-[10px] text-muted-foreground">{st('First measure')} · {seededAnchorSeconds.toFixed(3)} s{score.playbackTempoOverride!=null&&<> · {st('Admin tempo override')}: {score.playbackTempoOverride.toFixed(1)} BPM</>}</p>
+                <label className="flex items-center justify-between">{st('Pre-count')}<select aria-label={st('Pre-count')} value={previewCountInBars} onChange={e=>{countIn.cancel();const n=Number(e.target.value) as 0|1|2;setPreviewCountInBars(n);if(n&&graded)onPlayChange?.({countInBars:n});}} className="rounded border border-border bg-background px-2 py-1"><option value={0}>{st('Off')}</option><option value={1}>1 {st('Measure')}</option><option value={2}>2 {st('Measures')}</option></select></label>
+                {countIn.error&&<p role="alert" className="text-destructive">{st(countIn.error)}</p>}
+              </div>}
               bpm={score.initialTempo}
               beatsPerMeasure={score.initialTimeSignature[0]}
               clickOn={clickOn}
-              onClickOnChange={setClickOn}
+              onClickOnChange={handleClickOnChange}
               clickAligned={graded || metronomeAnchor != null}
               clickVolume={clickVolume}
               onClickVolumeChange={handleClickVolumeChange}

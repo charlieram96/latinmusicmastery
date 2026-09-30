@@ -1,5 +1,6 @@
 'use server'
 
+import type { Database } from '@/types/database';
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -568,7 +569,7 @@ export async function updateUserProfile(userId: string, formData: FormData) {
 
   const { error } = await supabase
     .from('profiles')
-    .update(data)
+    .update(data as Database['public']['Tables']['profiles']['Update'])
     .eq('id', userId)
 
   if (error) throw new Error(error.message)

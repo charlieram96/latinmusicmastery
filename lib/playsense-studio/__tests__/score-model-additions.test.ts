@@ -23,7 +23,7 @@ describe('score model additions', () => {
       { kind: 'chord', id: 'c', durationQN: 1.05, notes: [{ midi: 64, spelling: { step: 'E', alter: 0 } }, { midi: 67 }] },
     ], { spans: [{ id: 's1', type: 'slur', from: 'a', to: 'b' }, { id: 's2', type: 'cresc', from: 'a', to: 'c' }] })
     input.tracks[0].measures[0] = { ...input.tracks[0].measures[0], clef: 'alto', repeatStart: true, repeatEnd: true, volta: '1.', endBarline: 'double' }
-    expect(parseScoreDocument(JSON.parse(JSON.stringify(input)))).toEqual(input)
+    expect(parseScoreDocument(JSON.parse(JSON.stringify(input)))).toEqual({ ...input, composer: 'LMM' })
   })
 
   it('rejects malformed new fields instead of passing them to the renderer', () => {

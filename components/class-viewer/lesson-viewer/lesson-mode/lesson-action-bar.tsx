@@ -57,7 +57,7 @@ export function LessonActionBar({ progress, claimed, tone, onActionHost, onTools
       {summary.error && progress.activeItemId && <Button type="button" variant="ghost" size="sm" onClick={() => live?.retry(progress.activeItemId!)}>
         <RotateCcw className="h-3.5 w-3.5" />{t('dashboard.classViewer.footer.retrySaving')}
       </Button>}
-      <Button asChild variant={summary.done ? 'chunky' : 'chunky-ghost'} className="lx-primary">
+      <Button asChild variant="chunky" className="lx-primary">
         <Link href={summary.nextHref} data-lesson-next data-ready={summary.done} onClick={onPrimary}>
           {primaryLabel ?? nextText}<ArrowRight aria-hidden className="h-4 w-4" />
         </Link>

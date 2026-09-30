@@ -111,6 +111,7 @@ interface UseExerciseSessionResult {
   stopExercise: () => void
   /** Freeze the attempt in place: the shared AudioContext is suspended, so the
    *  clock, click, backing tracks and input all stop together. */
+  seekExercise: (seconds: number) => void
   pauseExercise: () => void
   resumeExercise: () => void
   /** Discard the attempt (no grading) and run a fresh count-in with the same setup. */
@@ -121,6 +122,8 @@ interface UseExerciseSessionResult {
 }
 
 export interface UseExerciseSessionOptions {
+  metronomeVolume?: number
+  playbackRate?: number
   /**
    * Explicit backing-track URLs (course exercises: the student's selected
    * instrument tracks). When provided — even as an empty array — this wins over
@@ -144,9 +147,14 @@ export interface UseExerciseSessionOptions {
    * Ignored without a grid, where the count-in is always one bar, as before.
    */
   countInBars?: 1 | 2
+  /** Playback-only preview: use an output clock without opening an input device. */
+  playbackOnly?: boolean
 }
 
 export function useExerciseSession(options: UseExerciseSessionOptions = {}): UseExerciseSessionResult {
+  const previewContext = useRef<AudioContext | null>(null)
+  const [previewError, setPreviewError] = useState<string | null>(null)
+  useEffect(() => () => { void previewContext.current?.close().catch(() => {}) }, [])
   const [sessionState, setSessionState] = useState<SessionState>('idle')
   const [audioMode, setAudioModeState] = useState<AudioMode | null>(null)
   const [exercise, setExercise] = useState<ExerciseDefinition | null>(null)
@@ -164,6 +172,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const [detectedMidiNote, setDetectedMidiNote] = useState<number | null>(null)
   const lastDetectedMidiRef = useRef<number | null>(null)
 
+  const seekPositionRef = useRef<number | null>(null)
   const expectedEventsRef = useRef<ExpectedEvent[]>([])
   const matchedIndicesRef = useRef<Set<number>>(new Set())
   const extraHitsRef = useRef(0)
@@ -220,6 +229,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const countInBeats = exercise?.timeSignature?.[0] || 4
   const countInBars = options.countInBars ?? 1
   const metronome = useMetronome({
+    volume: options.metronomeVolume,
     bpm: exercise?.bpm || 100,
     timeSignature: exercise?.timeSignature || [4, 4],
     countInBeats,
@@ -240,6 +250,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const backingTrackUrls =
     options.backingTrackUrls ?? (exercise?.audioUrl ? [exercise.audioUrl] : [])
   const backingTrack = useBackingTrack({
+    playbackRate: options.playbackRate,
     tracks: options.backingTracks,
     audioUrls: options.backingTracks ? undefined : backingTrackUrls,
     mix: options.backingMix,
@@ -287,7 +298,21 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   const [isMicTesting, setIsMicTesting] = useState(false)
 
   const testMic = useCallback(async () => {
-    const audioCtx = await startListening()
+    let audioCtx: AudioContext | null = null
+    try {
+      if (options.playbackOnly) {
+        previewContext.current ??= new AudioContext()
+        audioCtx = previewContext.current
+        await audioCtx.resume()
+        setPreviewError(null)
+      } else {
+        audioCtx = await startListening()
+      }
+    } catch (error) {
+      startingRef.current = false
+      setPreviewError(error instanceof Error ? error.message : 'Audio playback could not start.')
+      return
+    }
     if (audioCtx) {
       audioCtxRef.current = audioCtx
       setIsMicTesting(true)
@@ -680,6 +705,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
 
   const selectExercise = useCallback((ex: ExerciseDefinition) => {
     cancelSession()
+    seekPositionRef.current = null
     setExercise(ex)
     setSessionState('selecting')
     setEventResults([])
@@ -709,7 +735,21 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
         subscribeToHits: bleOnsets.subscribeToHits,
       })
     } else {
-      const audioCtx = await startListening()
+      let audioCtx: AudioContext | null = null
+    try {
+      if (options.playbackOnly) {
+        previewContext.current ??= new AudioContext()
+        audioCtx = previewContext.current
+        await audioCtx.resume()
+        setPreviewError(null)
+      } else {
+        audioCtx = await startListening()
+      }
+    } catch (error) {
+      startingRef.current = false
+      setPreviewError(error instanceof Error ? error.message : 'Audio playback could not start.')
+      return
+    }
       if (audioCtx) {
         audioCtxRef.current = audioCtx
         calibration.startCalibration(audioCtx, {
@@ -752,7 +792,21 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
 
     // The input source owns its AudioContext; always activate that source.
     // A calibration-only context must never bypass microphone/BLE/MIDI startup.
-    const audioCtx = await startListening()
+    let audioCtx: AudioContext | null = null
+    try {
+      if (options.playbackOnly) {
+        previewContext.current ??= new AudioContext()
+        audioCtx = previewContext.current
+        await audioCtx.resume()
+        setPreviewError(null)
+      } else {
+        audioCtx = await startListening()
+      }
+    } catch (error) {
+      startingRef.current = false
+      setPreviewError(error instanceof Error ? error.message : 'Audio playback could not start.')
+      return
+    }
     if (generation !== sessionGenerationRef.current) return
     startingRef.current = false
     if (!audioCtx) return
@@ -776,12 +830,22 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     const totalCountInBeats = grid ? countInBars * beatsPerMeasure : beatsPerMeasure
     const countInBeatSec = grid ? grid.beatQN[0] * grid.secPerQN[0] : 60 / exercise.bpm
     const countInDuration = getSessionCountInSeconds(exercise, countInBars)
-    const exerciseStartTime = metronome.startMetronome(audioCtx)
+    const offset = seekPositionRef.current
+    const exerciseStartTime = metronome.startMetronome(audioCtx, offset ?? undefined)
     exerciseStartTimeRef.current = exerciseStartTime
 
     // Start backing track in sync with exercise start (after count-in)
     if (backingTrack.isLoaded) {
       backingTrack.startPlayback(audioCtx, exerciseStartTime)
+    }
+
+    if (offset !== null) {
+      expectedEventsRef.current.filter(event => event.timestamp < offset).forEach(event => matchedIndicesRef.current.add(event.eventIndex))
+      setPlayheadProgress(offset / exerciseDurationRef.current)
+      sessionStateRef.current = 'playing'
+      setSessionState('playing')
+      rafRef.current = requestAnimationFrame(updatePlayhead)
+      return
     }
 
     // Track countdown beats — store interval in ref for cleanup. Counts DOWN:
@@ -807,7 +871,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
         rafRef.current = requestAnimationFrame(updatePlayhead)
       }
     }, 25)
-  }, [exercise, startListening, clearOnsets, metronome, updatePlayhead, backingTrack, countInBars])
+  }, [exercise, startListening, clearOnsets, metronome, updatePlayhead, backingTrack, countInBars, options.playbackOnly])
 
   const stopExercise = useCallback(() => {
     finishExercise()
@@ -827,6 +891,35 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     }
     void audioCtxRef.current?.suspend().catch(() => {})
   }, [])
+
+  const seekExercise = useCallback((seconds: number) => {
+    if (!exercise || !Number.isFinite(seconds)) return
+    const offset = Math.max(0, Math.min(seconds, getExerciseDuration(exercise) - .001))
+    seekPositionRef.current = offset
+    const ctx = audioCtxRef.current
+    const running = sessionStateRef.current === 'playing' || sessionStateRef.current === 'countdown'
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
+    countdownIntervalRef.current = null
+    metronome.stopMetronome()
+    backingTrack.stopPlayback()
+    clearOnsets()
+    setEventResults([])
+    eventResultsRef.current = []
+    matchedIndicesRef.current = new Set(expectedEventsRef.current.filter(event => event.timestamp < offset).map(event => event.eventIndex))
+    missDetectedIndicesRef.current = new Set()
+    lastMissCheckIndexRef.current = 0
+    setPlayheadProgress(offset / getExerciseDuration(exercise))
+    if (ctx && (running || sessionStateRef.current === 'paused')) {
+      exerciseStartTimeRef.current = metronome.startMetronome(ctx, offset)
+      if (backingTrack.isLoaded) backingTrack.startPlayback(ctx, exerciseStartTimeRef.current)
+      if (running) {
+        sessionStateRef.current = 'playing'
+        setSessionState('playing')
+        if (rafRef.current) cancelAnimationFrame(rafRef.current)
+        rafRef.current = requestAnimationFrame(updatePlayhead)
+      }
+    }
+  }, [exercise, metronome, backingTrack, clearOnsets, updatePlayhead])
 
   const resumeExercise = useCallback(() => {
     if (sessionStateRef.current !== 'paused') return
@@ -854,11 +947,13 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     backingTrack.stopPlayback()
     if (state === 'paused') await audioCtxRef.current?.resume().catch(() => {})
     sessionStateRef.current = 'selecting'
+    seekPositionRef.current = null
     setPlayheadProgress(0)
     await startExercise()
   }, [metronome, backingTrack, startExercise])
 
   const retry = useCallback(() => {
+    seekPositionRef.current = null
     cancelSession()
     sessionStateRef.current = 'selecting'
     setSessionState('selecting')
@@ -892,7 +987,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
   useEffect(() => () => { cancelSessionRef.current() }, [])
 
   const getElapsedSeconds = useCallback(() => {
-    return audioCtxRef.current ? audioCtxRef.current.currentTime - exerciseStartTimeRef.current : 0
+    return (sessionStateRef.current === 'selecting' || !audioCtxRef.current) ? seekPositionRef.current ?? 0 : audioCtxRef.current.currentTime - exerciseStartTimeRef.current
   }, [])
 
   return {
@@ -906,7 +1001,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     clearAudioMode,
     isListening,
     hasPermission,
-    audioError,
+    audioError: previewError ?? backingTrack.error ?? audioError,
     inputLevel,
     noisyRoomMode,
     calibrationData: calibration.calibrationData,
@@ -935,6 +1030,7 @@ export function useExerciseSession(options: UseExerciseSessionOptions = {}): Use
     startCalibration: startCalibrationFlow,
     startExercise,
     stopExercise,
+    seekExercise,
     pauseExercise,
     resumeExercise,
     restartExercise,

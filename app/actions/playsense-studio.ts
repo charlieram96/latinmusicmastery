@@ -9,6 +9,7 @@
 //   M7: publishTimeMap (writes score_time_maps + score_time_waypoints)
 //   M8: saveScoreDocument / saveScoreRevision
 
+import type { Database } from '@/types/database';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/lib/supabase/require-admin';
@@ -1355,7 +1356,7 @@ export async function updateSongMeta(input: {
 
   const { error } = await supabase
     .from('play_sense_songs')
-    .update(patch)
+    .update(patch as Database['public']['Tables']['play_sense_songs']['Update'])
     .eq('id', input.songId);
   if (error) return { error: error.message };
 
@@ -2036,4 +2037,24 @@ export async function setClassItemMetronomeAnchor(input: {
   if (error) return { error: error.message };
 
   return { data: { anchorSeconds: input.anchorSeconds, anchorQn } };
+}
+
+/** Lesson-wide click before the first placed score; independent of section timing. */
+export async function getLessonMetronome(classItemId: string) {
+  const supabase=await createClient();
+  const admin=await requireAdmin(supabase);
+  if('error' in admin)return {error:admin.error};
+  const {data,error}=await supabase.from('class_items').select('bpm,metronome_anchor_seconds').eq('id',classItemId).single();
+  return error?{error:error.message}:{data:{bpm:data.bpm??120,anchorSeconds:data.metronome_anchor_seconds}};
+}
+export async function saveLessonMetronome(input:{classItemId:string;bpm:number;anchorSeconds:number}) {
+  const supabase=await createClient();
+  const admin=await requireAdmin(supabase);
+  if('error' in admin)return {error:admin.error};
+  if(!Number.isFinite(input.bpm)||input.bpm<20||input.bpm>400||!Number.isFinite(input.anchorSeconds)||input.anchorSeconds<0)return {error:'Invalid metronome settings'};
+  const {data:item,error:readError}=await supabase.from('class_items').select('video_duration_seconds').eq('id',input.classItemId).single();
+  if(readError||!item)return {error:readError?.message??'Lesson not found'};
+  if(item.video_duration_seconds!=null&&input.anchorSeconds>=item.video_duration_seconds)return {error:'Choose a point inside the video'};
+  const {error}=await supabase.from('class_items').update({bpm:input.bpm,metronome_anchor_seconds:input.anchorSeconds,metronome_anchor_qn:0,metronome_anchor_time_map_id:null}).eq('id',input.classItemId);
+  return error?{error:error.message}:{data:{bpm:input.bpm,anchorSeconds:input.anchorSeconds}};
 }

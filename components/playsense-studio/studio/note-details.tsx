@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — selected-note details for the sync panel's left-rail inspector.
 
@@ -49,6 +51,7 @@ export function NoteDetails({
   timing?: NoteTimingProps;
   onDelete: () => void;
 }) {
+  const st = useStudioText();
   const durLabel = formatDurationQN(event.durationQN) + (event.dotted ? '.' : '') + (event.triplet ? ' ³' : '');
   let primary: string;
   if (event.kind === 'rest') {
@@ -64,29 +67,29 @@ export function NoteDetails({
     <>
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-foreground">{primary}</span>
-        <span className="font-mono text-xs tabular-nums text-muted-foreground">m.{measureIndex + 1}</span>
+        <span className="font-mono text-xs tabular-nums text-muted-foreground">{st("m.")}{measureIndex + 1}</span>
       </div>
       <div className="st-prop">
-        <span className="k">Kind</span>
+        <span className="k">{st("Kind")}</span>
         <span className="v capitalize">{event.kind}</span>
       </div>
       <div className="st-prop">
-        <span className="k">Duration</span>
+        <span className="k">{st("Duration")}</span>
         <span className="v">{durLabel}</span>
       </div>
       {timing && event.kind !== 'rest' && (
         <>
           <div className="st-prop">
-            <span className="k">Timing</span>
+            <span className="k">{st("Timing")}</span>
             <span
               className="v inline-flex items-center gap-1"
-              title={`Grid ${formatTime(timing.gridSeconds)} → plays ${formatTime(timing.actualSeconds)}. Keys: [ and ] (Shift: 20 ms)`}
+              title={st(`Grid ${formatTime(timing.gridSeconds)} → plays ${formatTime(timing.actualSeconds)}. Keys: [ and ] (Shift: 20 ms)`)}
             >
               <button
                 type="button"
                 className="st-iconbtn"
-                aria-label="Earlier by 5 ms (Shift: 20 ms)"
-                title="Earlier · 5 ms (Shift: 20 ms) · key ["
+                aria-label={st("Earlier by 5 ms (Shift: 20 ms)")}
+                title={st("Earlier · 5 ms (Shift: 20 ms) · key [")}
                 onClick={(e) => timing.onNudge(e.shiftKey ? -20 : -5)}
               >
                 −
@@ -97,8 +100,8 @@ export function NoteDetails({
               <button
                 type="button"
                 className="st-iconbtn"
-                aria-label="Later by 5 ms (Shift: 20 ms)"
-                title="Later · 5 ms (Shift: 20 ms) · key ]"
+                aria-label={st("Later by 5 ms (Shift: 20 ms)")}
+                title={st("Later · 5 ms (Shift: 20 ms) · key ]")}
                 onClick={(e) => timing.onNudge(e.shiftKey ? 20 : 5)}
               >
                 +
@@ -106,18 +109,16 @@ export function NoteDetails({
             </span>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            <button type="button" className="st-chip" onClick={timing.onSnap} title="Move this note to the playhead">
-              Snap to playhead
-            </button>
+            <button type="button" className="st-chip" onClick={timing.onSnap} title={st("Move this note to the playhead")}>
+              {st("Snap to playhead")}</button>
             <button
               type="button"
               className="st-chip"
               onClick={timing.onReset}
               disabled={timing.offsetMs === 0}
-              title="Back to the grid"
+              title={st("Back to the grid")}
             >
-              Reset
-            </button>
+              {st("Reset")}</button>
           </div>
         </>
       )}
@@ -126,8 +127,7 @@ export function NoteDetails({
         className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs transition hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
       >
         <Trash2 className="h-3.5 w-3.5" />
-        Delete note
-      </button>
+        {st("Delete note")}</button>
     </>
   );
 }

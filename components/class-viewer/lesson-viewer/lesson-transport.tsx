@@ -5,6 +5,7 @@
 // Finish take ends the attempt and grades it. Before a take, Start playing is
 // the bar's main action.
 
+import { Pendulum } from '@/components/playsense-studio/player/transport/chronometer-control'
 import type { ReactNode } from 'react'
 import { Eye, Gauge, Pause, Play, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -50,7 +51,7 @@ export function LessonTransport({ state, bpm, countdownBeat, click, mix, onStart
         </button>}
         <button type="button" aria-pressed={click} aria-label={t(click ? `${BASE}.clickOn` : `${BASE}.clickOff`)} onClick={onClickToggle}
           className={cn(pill, 'transition-colors duration-tap ease-smooth hover:bg-muted', click && 'border-primary/50 bg-primary/[0.12] text-primary')}>
-          <span aria-hidden className={cn('h-2 w-2 rounded-full', click ? 'bg-primary' : 'bg-muted-foreground/40')} />{t(`${BASE}.click`)}
+          <Pendulum size="sm" swingStyle={{}} />{t(`${BASE}.click`)}
         </button>
         {mix}
         {onWatchDemo && !running && <button type="button" className={iconBtn} aria-label={t(`${BASE}.watchDemo`)} title={t(`${BASE}.watchDemo`)} onClick={onWatchDemo}>

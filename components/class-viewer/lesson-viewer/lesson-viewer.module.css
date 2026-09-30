@@ -12,7 +12,7 @@
 
 /* Sidebar width is driven by a CSS variable so the footer can mirror it. */
 .app {
-  --lesson-side-w: 360px;
+  --lesson-side-w: 320px;
 }
 .app[data-railed='true'] {
   --lesson-side-w: 72px;
@@ -21,6 +21,8 @@
 .side {
   top: 0;
   width: var(--lesson-side-w);
+  min-width: 0;
+  max-width: 100%;
   transition: width 240ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 

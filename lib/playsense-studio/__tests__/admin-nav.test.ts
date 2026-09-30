@@ -26,3 +26,10 @@ describe('adminStudioBackHref', () => {
     expect(adminStudioBackHref({ courseId: null, classId: 'cls-9', itemId: 'it-4' })).toBe('/admin/courses')
   })
 })
+
+it('links to the exact published student item without preview flags', async () => {
+  const { studentHrefFromAdmin } = await import('../admin-nav')
+  expect(studentHrefFromAdmin('/admin/courses/course?class=lesson&item=exercise')).toBe('/dashboard/course/course/class/lesson?itemId=exercise')
+  expect(studentHrefFromAdmin('/admin/courses')).toBeUndefined()
+  expect(studentHrefFromAdmin(undefined)).toBeUndefined()
+})

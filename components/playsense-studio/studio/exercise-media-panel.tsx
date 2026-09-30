@@ -1,4 +1,7 @@
 'use client';
+import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // EXERCISE play-part media panel (studio left rail).
 //
@@ -48,6 +51,7 @@ export function ExerciseMediaPanel({
   onVideoChange,
   jam = false,
 }: ExerciseMediaPanelProps) {
+  const st = useStudioText();
   const [videoUrl, setVideoUrl] = useState(initialMedia.videoUrl);
   const [startSeconds, setStartSeconds] = useState(initialMedia.videoStartSeconds);
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
@@ -190,14 +194,13 @@ export function ExerciseMediaPanel({
       {/* ---- Exercise video (a jam session's own audio_url instead — Studio
             rework P5, Task 8) ---- */}
       <div className="st-icard">
-        <span className="st-sec-label">{jam ? 'Jam track' : 'Exercise video'}</span>
+        <span className="st-sec-label">{st(jam ? 'Jam track' : 'Exercise video')}</span>
         {jam ? (
           <p className="text-[11px] leading-snug text-muted-foreground">
-            Jam track: set in the course editor
-          </p>
+            {st("Jam track: set in the course editor")}</p>
         ) : videoUrl ? (
           <>
-            <video
+            <div className="relative">            <video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()}
               ref={previewRef}
               src={videoUrl}
               controls
@@ -206,15 +209,14 @@ export function ExerciseMediaPanel({
               muted
               className="w-full rounded-md bg-black"
               onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration || null)}
-            />
+            /><VideoWatermark nativeControls /></div>
             {/* The crop-start slider used to live here. It is superseded by the
                 trim handles on the waveform in "Sync video", which set the same
                 in-point and can also set an out-point — one windowing mechanism
                 instead of two. */}
             <p className="text-[11px] leading-snug text-muted-foreground">
-              Trim the usable part of this video, and line backing tracks up
-              against it, in{' '}
-              <span className="font-medium text-foreground">&ldquo;Sync video&rdquo;</span>.
+              {st("Trim the usable part of this video, and line backing tracks up against it, in ")}{st(' ')}
+              <span className="font-medium text-foreground">{st("&ldquo;Sync video&rdquo;")}</span>.
             </p>
             <button
               type="button"
@@ -222,8 +224,7 @@ export function ExerciseMediaPanel({
               className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs transition hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
             >
               <X className="h-3.5 w-3.5" />
-              Remove video
-            </button>
+              {st("Remove video")}</button>
           </>
         ) : (
           <>
@@ -238,12 +239,10 @@ export function ExerciseMediaPanel({
               ) : (
                 <VideoIcon className="h-4 w-4" />
               )}
-              {videoUploading ? 'Uploading…' : 'Upload video (optional)'}
+              {st(videoUploading ? 'Uploading…' : 'Upload video (optional)')}
             </button>
             <p className="text-[11px] leading-snug text-muted-foreground">
-              Plays muted beside the highway while the student is graded. You&apos;ll crop it to
-              the score&apos;s length after uploading.
-            </p>
+              {st("Plays muted beside the highway while the student is graded. You&apos;ll crop it to the score&apos;s length after uploading.")}</p>
           </>
         )}
         {!jam && (
@@ -259,13 +258,10 @@ export function ExerciseMediaPanel({
 
       {/* ---- Backing tracks ---- */}
       <div className="st-icard">
-        <span className="st-sec-label">Backing tracks</span>
+        <span className="st-sec-label">{st("Backing tracks")}</span>
         {tracks.length === 0 && (
           <p className="text-[11px] leading-snug text-muted-foreground">
-            Optional instrument mixes the student can choose to play along with. Position and
-            trim each one on the timeline in &ldquo;Sync video&rdquo; — they no longer need to be
-            the same length or pre-synced.
-          </p>
+            {st("Optional instrument mixes the student can choose to play along with. Position and trim each one on the timeline in &ldquo;Sync video&rdquo; — they no longer need to be the same length or pre-synced.")}</p>
         )}
         {tracks.map((t) => (
           <div key={t.id} className="space-y-1.5 rounded-md border border-border p-2">
@@ -276,14 +272,14 @@ export function ExerciseMediaPanel({
                 onChange={(e) => renameTrack(t.id, e.target.value)}
                 onBlur={(e) => persistTrackLabel(t.id, e.target.value)}
                 className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-xs transition focus:border-border focus:bg-card focus:outline-none"
-                aria-label="Backing track label"
+                aria-label={st("Backing track label")}
               />
               <button
                 type="button"
                 onClick={() => void removeTrack(t.id)}
                 className="rounded p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
-                title="Delete this backing track"
-                aria-label="Delete backing track"
+                title={st("Delete this backing track")}
+                aria-label={st("Delete backing track")}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -298,7 +294,7 @@ export function ExerciseMediaPanel({
           className="inline-flex items-center justify-center gap-1.5 rounded-md border border-dashed border-border px-2.5 py-1.5 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
         >
           {audioUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-          {audioUploading ? 'Uploading…' : 'Add backing track'}
+          {st(audioUploading ? 'Uploading…' : 'Add backing track')}
         </button>
         <input
           ref={audioInputRef}

@@ -25,7 +25,7 @@ const MUTED = rgb(0.42, 0.4, 0.38);
 // ENGRAVE_WIDTH_PX with the page-plan's fixed margins/gaps, leave under 57pt
 // of combined header+footer budget on a Letter page. These heights are sized
 // to the header's actual drawn content below, with a couple points to spare.
-const HEADER_HEIGHT = { withBranding: 42, plain: 28 };
+const HEADER_HEIGHT = { withBranding: 46, plain: 36 };
 const FOOTER_HEIGHT = 10;
 const SITE_LINE = 'Latin Music Mastery · latinmusicmastery.com';
 /** SMuFL metNoteQuarterUp — the quarter note used in the tempo mark. */
@@ -40,16 +40,6 @@ function drawCentered(page: PDFPage, text: string, y: number, font: PDFFont, siz
   const safe = winAnsiSafe(text);
   const w = font.widthOfTextAtSize(safe, size);
   page.drawText(safe, { x: (page.getWidth() - w) / 2, y, size, font, color });
-}
-
-/** Width of "♩ = <bpm>" at a given size: the Bravura quarter-note glyph's
- * advance (or a plain "q" fallback) plus the bold " = <bpm>" text. Shared by
- * the measuring and drawing passes so the tempo mark can be right-aligned. */
-function tempoMarkWidth(bpm: number, bravura: PdfFonts['bravura'], bold: PDFFont, size: number): number {
-  const glyphScale = size / bravura.unitsPerEm;
-  const outline = bravura.outline(TEMPO_NOTE_CODEPOINT);
-  const noteWidth = outline ? outline.advance * glyphScale + 3 : bold.widthOfTextAtSize('q', size) + 3;
-  return noteWidth + bold.widthOfTextAtSize(winAnsiSafe(` = ${bpm}`), size);
 }
 
 /** Draws "♩ = <bpm>" at (x, y): the Bravura quarter-note outline followed by
@@ -72,8 +62,8 @@ function drawTempoMark(page: PDFPage, x: number, y: number, bpm: number, bravura
 }
 
 /** Compact 2-3 line header: an optional small section-context line, the
- * title, and a shared row with the composer on the left and the tempo mark +
- * time signature grouped on the right. Kept short so it plus the footer never
+ * title, and a shared row with the composer on the right and the tempo mark +
+ * time signature grouped on the left. Kept short so it plus the footer never
  * exceeds the page's spare vertical budget (see HEADER_HEIGHT above). */
 function drawHeader(
   page: PDFPage,
@@ -88,20 +78,20 @@ function drawHeader(
   let y = top - 8;
   if (o.includeBranding) {
     drawCentered(page, `${c.classItemTitle} · Section ${c.sectionIndex + 1} of ${c.sectionCount}`, y, regular, 7, MUTED);
-    y -= 14;
+    y -= 10;
   }
   if (!o.includeHeader) return;
   drawCentered(page, score.title || 'Untitled section', y, bold, 14);
-  y -= 16;
+  y -= 12;
 
-  if (score.composer) {
-    page.drawText(winAnsiSafe(score.composer), { x: PAGE_MARGIN, y, size: 8, font: regular, color: INK });
-  }
+  const composer=winAnsiSafe(score.composer?.trim() || 'LMM');
+  page.drawText(composer, {x:page.getWidth()-PAGE_MARGIN-regular.widthOfTextAtSize(composer,8),y,size:8,font:regular,color:INK});
+  const instrument = winAnsiSafe(score.tracks[0]?.displayName ?? '');
+  page.drawText(instrument, { x: PAGE_MARGIN, y, size: 9, font: regular, color: INK });
+  y -= 10;
   const ts = winAnsiSafe(`${score.initialTimeSignature[0]}/${score.initialTimeSignature[1]}`);
   const tsSize = 9;
-  const tsWidth = regular.widthOfTextAtSize(ts, tsSize);
-  const groupWidth = tempoMarkWidth(Math.round(score.initialTempo), bravura, bold, tsSize) + 8 + tsWidth;
-  const groupX = page.getWidth() - PAGE_MARGIN - groupWidth;
+  const groupX = PAGE_MARGIN;
   const tempoWidth = drawTempoMark(page, groupX, y, Math.round(score.initialTempo), bravura, bold, tsSize);
   page.drawText(ts, { x: groupX + tempoWidth + 8, y, size: tsSize, font: regular, color: MUTED });
 }

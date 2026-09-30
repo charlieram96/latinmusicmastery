@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 // PlaySense Studio — the app bar's quiet save status: a small, glow-free pip
 // (mockup: 6px, no box-shadow — `.st-status-pip`'s own glow is for the sync
 // status card, not this chrome-level readout) plus Saved / Saving… / Save
@@ -16,6 +18,7 @@ export function SaveStatus({
   pending: boolean;
   flush: () => void | Promise<unknown>;
 }) {
+  const st = useStudioText();
   return (
     <span role="status" className="flex items-center gap-1.5 text-xs text-muted-foreground">
       <span
@@ -24,15 +27,14 @@ export function SaveStatus({
       />
       {saveState === 'error' ? (
         <>
-          Save failed ·{' '}
+          {st("Save failed · ")}{st(' ')}
           <button type="button" className="underline" onClick={() => void flush()}>
-            Retry
-          </button>
+            {st("Retry")}</button>
         </>
       ) : pending || saveState === 'saving' ? (
-        'Saving…'
+        st('Saving…')
       ) : (
-        'Saved'
+        st('Saved')
       )}
     </span>
   );

@@ -1,5 +1,11 @@
 'use client'
 
+import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
+import { CascaraVideoCoaching } from './cascara-video-coaching';
+import { CASCARA_COACHING_ID } from '@/lib/play-sense/cascara-coaching';
+import { VideoFullscreenButton } from '@/components/playsense-studio/shared/video-fullscreen-button';
+import { Pendulum } from '@/components/playsense-studio/player/transport/chronometer-control'
+import {ScoreHeading} from '@/components/playsense-studio/shared/score-heading'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { ExerciseDefinition } from '@/lib/play-sense/types'
@@ -10,7 +16,7 @@ import { timelineToEngineSeconds } from '@/lib/play-sense/backing-track-timing'
 import { expectedMediaTime, followRate, type PlayMedia } from '@/lib/play-sense/play-follow'
 import type { PlaysenseStudioPlayerTimeMap } from '@/components/playsense-studio/player/playsense-studio-player'
 import { useExerciseSession } from '@/hooks/use-exercise-session'
-import { useStageDemoSession } from '@/hooks/use-stage-demo-session'
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text'
 import { StageHighway as GlassHighway } from '@/components/play-sense/stage-highway/StageHighway'
 import { ExerciseScore } from './exercise-score'
 import { exerciseScoreTime } from '@/lib/playsense-studio/notation-playback'
@@ -58,6 +64,9 @@ function setPreservesPitch(el: PitchPreservingMedia): void {
   if ('mozPreservesPitch' in el) el.mozPreservesPitch = true
 }
 
+const STUDENT_WORKSPACE = { ...PLAY_WORKSPACE, layout: 'side' as const }
+const STUDENT_LAYOUTS = ['side', 'stack'] as const
+
 const MEDIA_CLASS = 'h-full w-full bg-black object-contain'
 
 // The play-along element is created once and kept (see ensureMediaEl): this
@@ -87,7 +96,7 @@ interface ScoreExerciseGameProps {
   exercise: ExerciseDefinition
   /** The lesson's score — rendered as staff notation alongside the highway while playing. */
   score?: ScoreDocument
-  /** Local visual showcase: simulated hits, no input connection or saved attempt. */
+  /** Audible playback preview, without input connection or saved attempts. */
   preview?: boolean
   /** When set (video lessons), the results screen offers "Watch demo again" which
    *  flips the parent back to the instructional video. */
@@ -136,16 +145,32 @@ export function ScoreExerciseGame(props: ScoreExerciseGameProps) {
 }
 
 function ScoreExerciseSession({
-  exercise,
+  exercise: authoredExercise,
   score,
   onWatchDemo,
   backingTracks,
   exerciseVideo,
   play,
   preview = false,
-  mediaAudible = false,
+  mediaAudible: authoredMediaAudible = false,
 }: ScoreExerciseGameProps) {
   const { t } = useTranslation()
+  const st = useStudioText()
+  const [previewVideoAudible, setPreviewVideoAudible] = useState(preview || authoredMediaAudible)
+  const [videoVolume, setVideoVolume] = useState(1)
+  const [tempoRate, setTempoRate] = useState(1)
+  const [clickVolume, setClickVolume] = useState(1)
+  const exercise = useMemo(() => tempoRate === 1 ? authoredExercise : ({ ...authoredExercise,
+    bpm: authoredExercise.bpm * tempoRate,
+    grid: authoredExercise.grid ? { ...authoredExercise.grid,
+      measureStartSec: authoredExercise.grid.measureStartSec.map(value => value / tempoRate),
+      secPerQN: authoredExercise.grid.secPerQN.map(value => value / tempoRate),
+    } : undefined,
+  }), [authoredExercise, tempoRate])
+
+  const videoVolumeRef = useRef(videoVolume)
+  videoVolumeRef.current = videoVolume
+  const mediaAudible = previewVideoAudible
   const completePerformance = useLessonActivity('performance')
   const playsense = usePlaysense()
   const frame = useLessonFrame()
@@ -153,8 +178,9 @@ function ScoreExerciseSession({
   // Play opens with the staff and highway filling the stage and the teacher
   // video floating bottom right (24 % wide); the student can re-lay it out.
   // Remembered per staff layout, like watch (lmm-workspace:play:stacked / :horizontal).
+  const [visibleScreens, setVisibleScreens] = useState({ video: true, score: true, highway: true })
   const [staffLayout, setStaffLayout] = useStaffLayoutPreference()
-  const workspace = useWorkspaceLayout(`play:${staffLayout}`, PLAY_WORKSPACE)
+  const workspace = useWorkspaceLayout(`play:${staffLayout}`, STUDENT_WORKSPACE, { layouts: STUDENT_LAYOUTS })
   // Without a teacher video there is nothing to lay out: the music fills the
   // workspace (staff over highway), and the score's shape must not follow a
   // stored layout the student can neither see nor change here.
@@ -179,6 +205,14 @@ function ScoreExerciseSession({
       return next
     })
   }
+  const setAllTracksMuted = (muted: boolean) => {
+    setMix(prev => {
+      const next = {...prev};
+      for (const track of backingTracks ?? []) next[track.id] = {...DEFAULT_MIX_ENTRY, ...prev[track.id], muted};
+      writeStoredBackingMix(next);
+      return next;
+    });
+  };
   const entryFor = (id: string) => mix[id] ?? DEFAULT_MIX_ENTRY
   const tracksOn = (backingTracks ?? []).filter((track) => !entryFor(track.id).muted).length
 
@@ -189,18 +223,25 @@ function ScoreExerciseSession({
   // and Part done screens, where Start/Retry are clicked, show no media: the
   // element they prime has to be the one that plays afterwards.
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  useEffect(() => () => { videoRef.current?.pause() }, [])
   const videoUrl = exerciseVideo?.url ?? null
   const videoLabel = t('dashboard.classViewer.exercise.referenceVideo')
   const ensureMediaEl = useCallback((): HTMLVideoElement | null => {
     if (!videoUrl) return null
     const el = videoRef.current ?? document.createElement('video')
+    el.setAttribute('controlsList', 'nodownload noremoteplayback')
+    el.disablePictureInPicture = true
+    el.disableRemotePlayback = true
+    el.oncontextmenu = event => event.preventDefault()
     videoRef.current = el
     applyMediaProps(el, videoUrl, mediaAudible, videoLabel)
+    el.volume = videoVolumeRef.current
     return el
   }, [videoUrl, mediaAudible, videoLabel])
   useEffect(() => {
     if (videoRef.current) ensureMediaEl()
   }, [ensureMediaEl])
+  useEffect(() => { if(videoRef.current) videoRef.current.volume = videoVolume }, [videoVolume])
   const mountMedia = useCallback((slot: HTMLDivElement | null) => {
     const el = slot ? ensureMediaEl() : null
     if (!slot || !el) return
@@ -241,9 +282,9 @@ function ScoreExerciseSession({
         id: track.id,
         audioUrl: track.audioUrl,
         startSeconds: bar1 !== null
-          ? track.timelineStartSeconds - bar1
+          ? (track.timelineStartSeconds - bar1) / tempoRate
           : timelineToEngineSeconds(
-              track.timelineStartSeconds,
+              track.timelineStartSeconds / tempoRate,
               null,
               { bpm: exercise.bpm, timeSignature: exercise.timeSignature, grid: exercise.grid },
               0
@@ -252,15 +293,14 @@ function ScoreExerciseSession({
         trimOutSeconds: track.trimOutSeconds,
         gain: track.gain,
       })),
-    [backingTracks, bar1, exercise.bpm, exercise.timeSignature, exercise.grid]
+    [backingTracks, bar1, exercise.bpm, exercise.timeSignature, exercise.grid, tempoRate]
   )
 
   // An explicit (possibly empty) selection only when backing tracks are
   // authored; otherwise the legacy path (exercise.audioUrl) stays in charge.
-  const liveSession = useExerciseSession(backingTracks ? { backingTracks: placedTracks, backingMix: mix, countInBars } : { countInBars })
-  const demoExercises = useMemo(() => [exercise], [exercise])
-  const demoSession = useStageDemoSession(demoExercises, preview)
-  const session = preview ? { ...liveSession, ...demoSession.overrides } : liveSession
+  const session = useExerciseSession(backingTracks
+    ? { backingTracks: placedTracks, backingMix: mix, countInBars, playbackOnly: preview, metronomeVolume: clickVolume, playbackRate: tempoRate }
+    : { countInBars, playbackOnly: preview, metronomeVolume: clickVolume, playbackRate: tempoRate })
   const stableExercise = useMemo(() => exercise, [exercise])
 
   // Where the video shows bar 1 and how it behaves around the count-in.
@@ -268,10 +308,10 @@ function ScoreExerciseSession({
     bar1,
     trimIn: exerciseVideo.startSeconds,
     trimOut: exerciseVideo.trimOutSeconds ?? null,
-    countInSeconds: getSessionCountInSeconds(exercise, countInBars),
+    countInSeconds: getSessionCountInSeconds(authoredExercise, countInBars),
     preroll: play?.preroll ?? true,
-    loopSeconds,
-  } : null, [exerciseVideo, bar1, play, exercise, countInBars, loopSeconds])
+    loopSeconds: getLoopDuration(authoredExercise),
+  } : null, [exerciseVideo, bar1, play, authoredExercise, countInBars])
 
   // Each frame, ask where the video should be at the engine time and trim its
   // rate toward it (±3 %); hard-seek only on a large drift or a loop wrap.
@@ -284,20 +324,20 @@ function ScoreExerciseSession({
       if (!v.paused) v.pause()
       // Before a take, rest on the frame the take will start from.
       if (state === 'selecting') {
-        const first = expectedMediaTime(playMedia, -playMedia.countInSeconds).media
+        const first = expectedMediaTime(playMedia, getElapsedSeconds() > 0 ? getElapsedSeconds() * tempoRate : -playMedia.countInSeconds).media
         if (Math.abs(v.currentTime - first) > 0.05) v.currentTime = first
       }
       return
     }
     // The game has no student speed control today: the engine always runs at the score's tempo.
-    const userSpeed = 1
+    const userSpeed = tempoRate
     let raf = 0
     let lastPass: number | null = null
     // An audible track's element starts late (play() latency); the rate trim
     // would take seconds to close that, so it hard-seeks once it is running.
     let startSeek = mediaAudible
     const tick = () => {
-      const e = getElapsedSeconds()
+      const e = getElapsedSeconds() * tempoRate
       const { media, playing } = expectedMediaTime(playMedia, e)
       const pass = e >= 0 && playMedia.loopSeconds > 0 ? Math.floor(e / playMedia.loopSeconds) : null
       const wrapped = pass !== null && lastPass !== null && pass !== lastPass
@@ -340,7 +380,7 @@ function ScoreExerciseSession({
     // No pause here: the next state's run decides (a count-in running into
     // bar 1 must not blip the pre-roll).
     return () => cancelAnimationFrame(raf)
-  }, [session.sessionState, getElapsedSeconds, playMedia, mediaAudible])
+  }, [session.sessionState, getElapsedSeconds, playMedia, mediaAudible, tempoRate])
 
   // ExerciseScore reports the active track's single-pass duration. Its side
   // layout combines this local clock with the pass index to read continuously
@@ -364,7 +404,7 @@ function ScoreExerciseSession({
 
   useEffect(() => {
     if (preview) return
-    if (session.sessionState === 'results' && session.attemptStats && session.exercise) {
+    if (!preview && session.sessionState === 'results' && session.attemptStats && session.exercise) {
       saveAttempt({
         exerciseId: session.exercise.id,
         score: session.attemptStats.score,
@@ -437,12 +477,12 @@ function ScoreExerciseSession({
     session.sessionState === 'selecting' ||
     session.sessionState === 'countdown' ||
     session.sessionState === 'playing' ||
-    session.sessionState === 'paused'
+    session.sessionState === 'paused' || (preview && session.sessionState === 'results')
 
   const showCanvas = !!session.exercise && isActive
 
   const showAudioModePrompt =
-    session.sessionState === 'selecting' && session.audioMode === null
+    !preview && session.sessionState === 'selecting' && session.audioMode === null
 
   // ── Ready check: input, mic and timing on one screen before the first take ──
   const [readyConfirmed, setReadyConfirmed] = useState(false)
@@ -492,7 +532,7 @@ function ScoreExerciseSession({
   }
 
   const showPlaysenseTest =
-    session.sessionState === 'selecting' &&
+    !preview && session.sessionState === 'selecting' &&
     session.audioMode === 'playsense' &&
     !!session.exercise
 
@@ -558,7 +598,7 @@ function ScoreExerciseSession({
   }
 
   // Part done — the take's accuracy and a bar-by-bar strip
-  if (session.sessionState === 'results' && session.attemptStats && session.exercise) {
+  if (!preview && session.sessionState === 'results' && session.attemptStats && session.exercise) {
     const reached = stoppedAt != null && stoppedAt < 1 ? stoppedAt : null
     // The ring shows what was played; the saved attempt keeps the engine's numbers.
     const shown = reached == null ? session.attemptStats
@@ -592,7 +632,7 @@ function ScoreExerciseSession({
                     <ChevronDown className="h-3.5 w-3.5 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="w-72 p-0">
+                <PopoverContent align="end" className={preview ? "z-[220] w-72 p-0" : "w-72 p-0"}>
                   <div className="flex items-baseline justify-between border-b border-border px-3 py-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {t('dashboard.classViewer.exercise.playAlongWith')}
@@ -600,6 +640,10 @@ function ScoreExerciseSession({
                     <span className="text-[11px] tabular-nums text-muted-foreground">
                       {t('dashboard.classViewer.exercise.tracksOn', { on: tracksOn, total: backingTracks.length })}
                     </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 border-b border-border px-3 py-2 text-xs">
+                    <button type="button" onClick={()=>setAllTracksMuted(true)} className="rounded border px-2 py-1 hover:bg-muted">{st('Mute all MP3s')}</button>
+                    <button type="button" onClick={()=>setAllTracksMuted(false)} className="rounded border px-2 py-1 hover:bg-muted">{st('Enable all MP3s')}</button>
                   </div>
                   <ul className="flex max-h-[280px] flex-col overflow-y-auto py-1">
                     {backingTracks.map((track) => {
@@ -641,19 +685,24 @@ function ScoreExerciseSession({
                       )
                     })}
                   </ul>
-                  <p className="border-t border-border px-3 py-2 text-[11px] leading-snug text-muted-foreground">
-                    {t('dashboard.classViewer.exercise.tracksHint')}
-                  </p>
+
                 </PopoverContent>
               </Popover>
   ) : null
 
   const hasStaff = showCanvas && !!score
   const scoreEl = hasStaff && score ? (
+    <div className="ps-exercise-score-panel flex min-h-0 min-w-0 flex-1 flex-col"><ScoreHeading score={score} bpm={exercise.bpm}/>
     <ExerciseScore score={score} currentMs={staffMs} getCurrentMs={getStaffMs}
       playing={session.sessionState === 'playing' || session.sessionState === 'paused'} pass={Math.floor(session.playheadProgress * loopCount) + 1}
       getPass={() => Math.floor(Math.max(0, session.getElapsedSeconds()) / exerciseDurationSec * loopCount) + 1}
-      passCount={loopCount} onDurationKnown={setStaffDurationMs} staffLayout={staffLayout} onStaffLayoutChange={setStaffLayout}/>
+      passCount={loopCount} onSeek={seconds => {
+        const duration = (staffDurationMs ?? 0) / 1000 * loopCount
+        const target = duration > 0 ? seconds / duration * exerciseDurationSec : seconds / tempoRate
+        session.seekExercise(target)
+        const video = videoRef.current
+        if (video && playMedia) video.currentTime = expectedMediaTime(playMedia, target * tempoRate).media
+      }} onDurationKnown={setStaffDurationMs} staffLayout={staffLayout} onStaffLayoutChange={setStaffLayout}/></div>
   ) : null
 
   const stageEl = (
@@ -661,7 +710,6 @@ function ScoreExerciseSession({
       {showCanvas && session.exercise ? (
         <>
           <GlassHighway
-            attemptId={preview ? demoSession.attempt : undefined}
             exercise={session.exercise}
             sessionState={session.sessionState}
             playheadProgress={session.playheadProgress}
@@ -746,34 +794,48 @@ function ScoreExerciseSession({
 
   return (
     <div className="ps-lesson-game rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-      {isActive && inLesson && exerciseVideo && <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} /></WorkspaceToolsPortal>}
+      {isActive && inLesson && exerciseVideo && <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} hideMusicOption /></WorkspaceToolsPortal>}
       {isActive && !inLesson && (
         <div className="ps-lesson-game-heading flex items-center justify-between gap-3 border-b border-border bg-primary/5 px-4 py-2.5" data-has-tools={!!backingTracks?.length || !!exerciseVideo}>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">{preview ? 'Lesson preview' : t('dashboard.classViewer.exercise.yourTurn')}</p>
+            <p className="text-sm font-semibold text-foreground">{preview ? 'Exercise preview' : t('dashboard.classViewer.exercise.yourTurn')}</p>
             <p className="truncate text-xs text-muted-foreground">
-              {preview ? 'Instructor video, notation, and PlaySense · simulated performance' : t('dashboard.classViewer.exercise.yourTurnHint')}
+              {preview ? st('Audio, video and score · results are not saved') : t('dashboard.classViewer.exercise.yourTurnHint')}
             </p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            {exerciseVideo && <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} /></WorkspaceToolsPortal>}
+            {exerciseVideo && <WorkspaceToolsPortal><WorkspaceLayoutSwitcher controller={workspace} hideMusicOption /></WorkspaceToolsPortal>}
             {mixer}
           </div>
         </div>
       )}
+
+      {isActive && <div role="group" aria-label="Visible screens" className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2">
+        {([{ key: 'video', label: 'Video', available: !!exerciseVideo }, { key: 'score', label: 'Score', available: hasStaff }, { key: 'highway', label: 'PlaySense', available: true }] as const).filter(item => item.available).map(item => {
+          const active = visibleScreens[item.key]
+          const count = Number(!!exerciseVideo && visibleScreens.video) + Number(hasStaff && visibleScreens.score) + Number(visibleScreens.highway)
+          return <Button key={item.key} size="sm" variant="outline" aria-pressed={active} disabled={active && count === 1} className="aria-pressed:bg-primary/15 aria-pressed:border-primary/40" onClick={() => {
+            if (item.key === 'video' && !active && workspace.layout === 'music') workspace.setLayout('side')
+            setVisibleScreens(current => ({ ...current, [item.key]: !active }))
+          }}>{active ? '✓ ' : ''}{st(item.label)}</Button>
+        })}
+      </div>}
 
       {/* The lesson workspace: staff over the highway, the demo video
           floating in a corner (or beside them — the student's choice). */}
       <ExerciseScoreWorkspaceBridge controller={scoreWorkspace}>
       <SplitWorkspace
         controller={workspace}
+        visiblePanes={{ video: visibleScreens.video, score: hasStaff ? visibleScreens.score : visibleScreens.highway, highway: hasStaff && visibleScreens.highway }}
         frame="fill"
         // Only once the session is live: a paused video beside "Preparing…" reads as broken.
         media={exerciseVideo && showCanvas && (
           // The kept <video> (see ensureMediaEl): muted unless mediaAudible —
           // a jam's own track — and following the engine clock.
-          <div ref={mountMedia} className="h-full min-h-0 w-full" data-exercise-media="" />
+          <div ref={mountMedia} className="relative h-full min-h-0 w-full" data-exercise-media=""><VideoWatermark /><VideoFullscreenButton />
+            {(score?.videoCoaching === 'cascara-v1' || (preview && authoredExercise.id === CASCARA_COACHING_ID && score?.videoCoaching !== null)) && bar1 !== null && <CascaraVideoCoaching exercise={authoredExercise} state={session.sessionState} getElapsedSeconds={getElapsedSeconds} tempoRate={tempoRate} bar1={bar1} pausedSeconds={session.sessionState === 'paused' ? session.playheadProgress * exerciseDurationSec * tempoRate : 0} />}
+          </div>
         )}
         music={hasStaff ? scoreEl : stageEl}
         highway={hasStaff ? stageEl : undefined}
@@ -790,9 +852,42 @@ function ScoreExerciseSession({
         </div>
       )}
 
-      {preview && isActive && <div className="ps-lesson-preview-controls flex items-center justify-between gap-3 border-t border-border px-4 py-3">
-        <span className="text-xs text-muted-foreground">{mediaAudible ? 'Demo · jam track · results are not saved' : 'Demo · muted video · results are not saved'}</span>
-        <div className="flex gap-2"><Button size="sm" variant="outline" onClick={start}>Replay preview</Button><Button size="sm" onClick={demoSession.review}>View results</Button></div>
+      {exerciseVideo && isActive && <div className="flex shrink-0 items-center gap-2 border-t border-border bg-card px-4 py-2">
+        <Button size="sm" variant="outline" aria-pressed={previewVideoAudible} onClick={() => setPreviewVideoAudible(v => !v)}>{previewVideoAudible ? <Volume2 className="h-4 w-4"/> : <VolumeX className="h-4 w-4"/>}{st('Video audio')}</Button>
+        <input type="range" min="0" max="1" step="0.01" value={videoVolume} aria-label={st('Video volume')} className="w-28 accent-primary" onChange={e=>{setVideoVolume(Number(e.target.value));setPreviewVideoAudible(true);}}/>
+        <output className="w-10 text-xs tabular-nums">{Math.round(videoVolume*100)}%</output>
+      </div>}
+
+      {isActive && <input type="range" aria-label="Playback position" min={0} max={Math.max(.001, exerciseDurationSec)} step={.01}
+        value={Math.max(0, Math.min(exerciseDurationSec, session.playheadProgress * exerciseDurationSec))}
+        className="mx-4 my-2 h-2 shrink-0 accent-primary" onChange={event => {
+          const seconds = Number(event.target.value)
+          session.seekExercise(seconds)
+          const video = videoRef.current
+          if (video && playMedia) video.currentTime = expectedMediaTime(playMedia, seconds * tempoRate).media
+        }} />}
+
+      {preview && isActive && <div role="toolbar" aria-label={st('Preview playback')} className="ps-lesson-preview-controls flex shrink-0 flex-wrap items-center gap-2 border-t border-border bg-card px-4 py-3">
+        <Button size="sm" disabled={session.backingTrackLoading || session.sessionState === 'playing' || session.sessionState === 'countdown'} onClick={() => { if (session.sessionState === 'paused') { primeMedia(); session.resumeExercise() } else start() }}>▶ {st('Play')}</Button>
+        <Button size="sm" variant="outline" disabled={session.sessionState !== 'playing'} onClick={session.pauseExercise}>Ⅱ {st('Pause')}</Button>
+        <Button size="sm" variant="outline" onClick={session.retry}>■ {st('Stop')}</Button>
+        <Popover>
+          <PopoverTrigger asChild><Button size="sm" variant="outline" aria-label={st('Metronome')} title={st('Metronome')} className="text-primary"><Pendulum size="sm" swingStyle={{}} /></Button></PopoverTrigger>
+          <PopoverContent className="z-[220] w-56 space-y-3 p-3" align="start" side="top" sideOffset={8} aria-label={st('Metronome')}>
+            <div className="flex items-center justify-between text-xs font-semibold">{st('Metronome')}<Button size="sm" variant="outline" aria-pressed={session.audioMetronome} onClick={() => session.setAudioMetronome(!session.audioMetronome)} className="text-primary">{session.audioMetronome ? 'On' : 'Off'}</Button></div>
+            <label className="flex items-center justify-between text-xs">{st('Volume')}<output>{Math.round(clickVolume * 100)}%</output></label>
+            <input className="w-full accent-primary" aria-label="Metronome volume" type="range" min="0" max="1" step="0.01" value={clickVolume} onChange={e => setClickVolume(Number(e.target.value))}/>
+            <label className="block text-xs">{st('Tempo BPM')}</label>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" aria-label="Slower" className="text-primary" disabled={session.sessionState === 'playing' || session.sessionState === 'countdown'} onClick={() => setTempoRate(value => Math.max(.5, value - .05))}>−</Button>
+              <output className="flex-1 text-center text-sm tabular-nums">{Math.round(exercise.bpm)} BPM</output>
+              <Button size="sm" variant="outline" aria-label="Faster" className="text-primary" disabled={session.sessionState === 'playing' || session.sessionState === 'countdown'} onClick={() => setTempoRate(value => Math.min(1.5, value + .05))}>+</Button>
+            </div>
+            <Button size="sm" variant="ghost" className="w-full text-primary" disabled={session.sessionState === 'playing' || session.sessionState === 'countdown'} onClick={() => setTempoRate(1)}>{st('Reset original tempo')}</Button>
+          </PopoverContent>
+        </Popover>
+        {inLesson && mixer}
+        <span className="text-xs text-muted-foreground" role="status">{session.backingTrackLoading ? st('Loading audio…') : st('Preview · results are not saved')}</span>
       </div>}
 
       {!preview && inLesson && session.exercise && isActive && !showAudioModePrompt && !showPlaysenseTest && (

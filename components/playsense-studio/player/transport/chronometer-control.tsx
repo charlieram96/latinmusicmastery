@@ -19,8 +19,9 @@
 // CSS pendulum, and it is exactly why the scheduler must never see it: a
 // rounded tempo is cumulative phase error for a phase-locked click.
 
+import {useStudioText} from '../../studio/use-studio-text';
 import { Bell, BellOff, Minus, Plus } from 'lucide-react';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 
 const MIN_RATE = 0.1;
 const MAX_RATE = 2;
@@ -30,6 +31,7 @@ const clampRate = (r: number) => Math.min(MAX_RATE, Math.max(MIN_RATE, r));
 interface ChronometerControlProps {
   /** The score's notated tempo — the BPM shown at 1× playback. */
   baseBpm: number;
+  extra?: ReactNode;
   beatsPerMeasure: number;
   playbackRate: number;
   isPlaying: boolean;
@@ -46,6 +48,7 @@ interface ChronometerControlProps {
 
 export function ChronometerControl({
   baseBpm,
+  extra,
   beatsPerMeasure,
   playbackRate,
   isPlaying,
@@ -56,6 +59,7 @@ export function ChronometerControl({
   clickVolume,
   onClickVolumeChange,
 }: ChronometerControlProps) {
+  const st=useStudioText();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -182,6 +186,15 @@ export function ChronometerControl({
             </div>
           </div>
 
+          <label className="mt-2 flex items-center justify-between gap-2 text-xs">{st('Tempo BPM')}
+            <input aria-label="Tempo BPM" type="number" min={baseBpm*MIN_RATE} max={baseBpm*MAX_RATE} step="0.1" value={Number((baseBpm*playbackRate).toFixed(1))} onChange={e=>{const value=Number(e.target.value);if(value>0)setBpm(value);}} className="w-20 rounded border border-border bg-background px-2 py-1 font-mono"/>
+          </label>
+          <div className="mt-2 grid gap-1 border-t border-border pt-2 text-[11px]">
+            <span className="text-muted-foreground">{baseBpm} BPM = 1×</span>
+            <button type="button" onClick={()=>onRateChange(1)} className="rounded px-2 py-1 text-left hover:bg-muted">{st('Reset original tempo')} · {baseBpm} BPM</button>
+            <button type="button" onClick={()=>onRateChange(1)} className="rounded px-2 py-1 text-left hover:bg-muted">{st('Reset video speed')} · 1×</button>
+          </div>
+          {extra}
           {/* Click track toggle */}
           <button
             type="button"
@@ -227,14 +240,14 @@ export function ChronometerControl({
 
 // A little metronome glyph: a triangular body with a pivoting arm + weight.
 // The arm's swing is CSS-driven (see .st-chrono-arm) at the tempo passed in.
-function Pendulum({
+export function Pendulum({
   size,
   swingStyle,
 }: {
   size: 'sm' | 'lg';
   swingStyle: CSSProperties;
 }) {
-  const dim = size === 'sm' ? 18 : 44;
+  const dim = size === 'sm' ? 22 : 44;
   return (
     <span
       className="st-chrono"

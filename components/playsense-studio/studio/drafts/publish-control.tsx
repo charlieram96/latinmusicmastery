@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // App-bar Publish control: the "N unpublished changes" count, a pulsing
 // Publish button with a count badge, and a popover listing every unpublished
@@ -12,10 +14,14 @@ import { getPublishPreview } from '@/app/actions/studio-drafts';
 import { ownerKey } from '@/lib/playsense-studio/drafts/types';
 import { useStudioDrafts } from './drafts-context';
 
-export function PublishControl() {
+export function PublishControl({ studentHref }: { studentHref?: string } = {}) {
+  const st = useStudioText();
   const { statuses, publish, discard, flush } = useStudioDrafts();
   const parts = Object.values(statuses).filter((s) => s.unpublished);
   const n = parts.length;
+  const [published, setPublished] = useState(false);
+  const [local, setLocal] = useState(false);
+  useEffect(() => { setLocal(['localhost', '127.0.0.1'].includes(window.location.hostname)); }, []);
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState<Record<string, string[]>>({});
   const [busy, setBusy] = useState<string | null>(null);
@@ -46,9 +52,12 @@ export function PublishControl() {
 
   useEffect(() => { if (n === 0) setOpen(false); }, [n]);
 
-  const run = async (key: string, fn: () => Promise<{ error?: string }>) => {
+  const run = async (key: string, fn: () => Promise<{ error?: string }>, publishing = false) => {
     setBusy(key);
-    const res = await fn();
+    setPublished(false);
+    let res: { error?: string };
+    try { res = await fn(); } catch { res = { error: st('Could not complete the operation. Try again.') }; }
+    if (!res.error && publishing) setPublished(true);
     setBusy(null);
     setErrors((e) => {
       const next = { ...e };
@@ -60,7 +69,7 @@ export function PublishControl() {
 
   const publishAll = async () => {
     for (const p of parts) {
-      const ok = await run(ownerKey(p.owner), () => publish(p.owner));
+      const ok = await run(ownerKey(p.owner), () => publish(p.owner), true);
       if (!ok) break;
     }
   };
@@ -69,7 +78,7 @@ export function PublishControl() {
     <div ref={boxRef} className="relative flex items-center gap-2">
       {n > 0 && (
         <span className="hidden text-xs text-muted-foreground md:inline">
-          {n === 1 ? '1 unpublished change' : `${n} unpublished changes`}
+          {st(n === 1 ? '1 unpublished change' : `${n} unpublished changes`)}
         </span>
       )}
       <button
@@ -81,19 +90,23 @@ export function PublishControl() {
         aria-expanded={open}
       >
         <Upload className="h-4 w-4" />
-        Publish
-        {n > 0 && <span className="st-publish-count">{n}</span>}
+        {st("Publish ")}{n > 0 && <span className="st-publish-count">{n}</span>}
       </button>
+      {published && <span role="status" className="text-xs text-primary">{st(n > 0 ? 'Part published. Other changes are still drafts.' : 'Published. Students can see the saved version.')}</span>}
+      {studentHref && <a href={studentHref} target="_blank" rel="noopener noreferrer" className="st-chip text-primary" title={st('Opens the published lesson in student view')}>{st('Student view')}</a>}
+      {local && studentHref && <a href={`https://latinmusicmastery.com${studentHref}`} target="_blank" rel="noopener noreferrer" className="st-chip text-primary">{st('Open official website')}</a>}
+      {Object.entries(errors).filter(([key]) => !parts.some(part => ownerKey(part.owner) === key)).map(([key, error]) => <span key={key} role="alert" className="text-xs text-destructive">{error}</span>)}
       {open && (
-        <div role="dialog" aria-label="Publish to students" className="st-publish-pop">
-          <p className="st-sec-label">Publish to students</p>
+        <div role="dialog" aria-label={st("Publish to students")} className="st-publish-pop">
+          <p className="st-sec-label">{st("Publish to students")}</p>
+          <p className="mb-2 text-xs text-muted-foreground">{st(local ? 'You are editing locally. Publish saves lesson content to the connected database; new app features still need a website deployment.' : 'Publish saves this lesson for students. Your admin tools remain private.')}</p>
           <ul className="flex flex-col gap-2">
             {parts.map((p) => {
               const key = ownerKey(p.owner);
               return (
                 <li key={key} className="rounded-lg border border-border p-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.label}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{st(p.label)}</span>
                     {busy === key && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
                     <button
                       type="button"
@@ -104,16 +117,14 @@ export function PublishControl() {
                         void run(key, () => discard(p.owner));
                       }}
                     >
-                      Discard this draft
-                    </button>
+                      {st("Discard this draft")}</button>
                     <button
                       type="button"
                       className="st-chip is-on"
                       disabled={busy != null}
-                      onClick={() => void run(key, () => publish(p.owner))}
+                      onClick={() => void run(key, () => publish(p.owner), true)}
                     >
-                      Publish
-                    </button>
+                      {st("Publish")}</button>
                   </div>
                   {/* getPublishPreview (summarizeChanges) already returns
                       "No changes from the live version" as its own fallback
@@ -121,7 +132,7 @@ export function PublishControl() {
                       which still counts as unpublished until published or
                       discarded. */}
                   <ul className="mt-1.5 text-xs text-muted-foreground">
-                    {(preview[key] ?? []).map((line) => <li key={line}>{line}</li>)}
+                    {(preview[key] ?? []).map((line) => <li key={line}>{st(line)}</li>)}
                   </ul>
                   {errors[key] && <p className="mt-1.5 text-xs text-destructive">{errors[key]}</p>}
                 </li>
@@ -135,8 +146,7 @@ export function PublishControl() {
               disabled={busy != null}
               onClick={() => void publishAll()}
             >
-              Publish all
-            </button>
+              {st("Publish all")}</button>
           )}
         </div>
       )}

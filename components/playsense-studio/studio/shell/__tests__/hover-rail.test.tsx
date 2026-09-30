@@ -82,3 +82,19 @@ describe('HoverRail', () => {
     expect(rail().classList.contains('is-open')).toBe(true);
   });
 });
+
+it('closes after editing BPM even when an outside click does not move focus', () => {
+  enter();
+  act(()=>host.querySelector('input')!.focus());
+  act(()=>document.body.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true})));
+  expect(rail().classList.contains('is-open')).toBe(false);
+  expect(document.activeElement).not.toBe(host.querySelector('input'));
+});
+it('offers a close button and Escape while editing', () => {
+  enter();
+  act(()=>host.querySelector<HTMLButtonElement>('[aria-label="Close panel"]')!.click());
+  expect(rail().classList.contains('is-open')).toBe(false);
+  enter();
+  act(()=>{ const input=host.querySelector('input')!; input.focus(); input.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})); });
+  expect(rail().classList.contains('is-open')).toBe(false);
+});

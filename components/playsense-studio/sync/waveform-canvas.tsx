@@ -94,6 +94,8 @@ export interface WaveformCanvasProps {
   /** Flex editing (Task 6). On: hits draw as grips (click one to add a point),
    *  points drag and double-click to remove. Off: only the stretch tints draw. */
   flexMode?: boolean;
+  flexDeleteMode?: boolean;
+  flexAddMode?: boolean;
   /** The section's flex points (src MEDIA, dst TIMELINE). */
   flexPoints?: FlexPoint[];
   /** Detected hits in TIMELINE time, for the grips. */
@@ -101,15 +103,14 @@ export interface WaveformCanvasProps {
   /** Written note onsets (TIMELINE) — the snap targets, marked in Flex mode. */
   noteTimes?: readonly number[];
   onFlexAdd?: (hitIndex: number) => void;
-  onFlexDrag?: (index: number, dstTimeline: number, mods: { snap: boolean }) => void;
-  onFlexRemove?: (index: number) => void;
+  onFlexAddAt?: (timelineSeconds: number) => void;
+  onFlexDrag?: (index: number, dstTimeline: number, mods: { snap: boolean; start?: boolean }) => void;
+  onFlexRemove?: (index: number, timelineSeconds?: number) => void;
   /** The bar markers and tail still draw but can't be grabbed (a graded part's
    *  bar lines come from the tempo grid). A press on one scrubs/drags as empty
    *  space instead. */
   markersLocked?: boolean;
-  /** When given, dragging empty waveform reports a shift (delta seconds from
-   *  the press; `mods.snap` false while ⌘ is held) instead of scrubbing. A
-   *  plain click still seeks. */
+  /** @deprecated Ignored: empty space only seeks. Use a section handle to shift timing. */
   onBackgroundDrag?: (deltaSeconds: number, phase: 'move' | 'end', mods: { snap: boolean }) => void;
   /** The running A/B loop in TIMELINE seconds, drawn as a gold bracket. */
   loop?: { a: number; b: number } | null;
@@ -214,14 +215,16 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     onAnchorDrag,
     warp,
     flexMode = false,
+    flexDeleteMode = false,
+    flexAddMode = false,
     flexPoints = EMPTY_POINTS,
     hitsTimeline = EMPTY_TIMES,
     noteTimes = EMPTY_TIMES,
     onFlexAdd,
+    onFlexAddAt,
     onFlexDrag,
     onFlexRemove,
     markersLocked = false,
-    onBackgroundDrag,
     loop = null,
     selection = null,
   } = props;
@@ -266,12 +269,10 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   const onNoteDragRef = useRef(onNoteDrag);
   const onDragEndRef = useRef(onDragEnd);
   const onScrollByPxRef = useRef(onScrollByPx);
-  // Graded mode (locked markers, background shift): mirrored in an effect, like flex below.
+  // Graded marker lock, mirrored like the Flex settings below.
   const markersLockedRef = useRef(markersLocked);
-  const onBackgroundDragRef = useRef(onBackgroundDrag);
   useEffect(() => {
     markersLockedRef.current = markersLocked;
-    onBackgroundDragRef.current = onBackgroundDrag;
   });
   onSeekRef.current = onSeek;
   onSelectRef.current = onSelect;
@@ -285,24 +286,30 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
   // same reasons as above. `flexDragRef` is the point being dragged (for the
   // overlay's label) — written only by the pointer handlers.
   const flexModeRef = useRef(flexMode);
+  const flexDeleteModeRef = useRef(flexDeleteMode);
+  const flexAddModeRef = useRef(flexAddMode);
   const flexPointsRef = useRef(flexPoints);
   const loopRef = useRef(loop);
   const selectionRef = useRef(selection);
   const hitsTimelineRef = useRef(hitsTimeline);
   const noteTimesRef = useRef(noteTimes);
   const onFlexAddRef = useRef(onFlexAdd);
+  const onFlexAddAtRef = useRef(onFlexAddAt);
   const onFlexDragRef = useRef(onFlexDrag);
   const onFlexRemoveRef = useRef(onFlexRemove);
   // Mirrored in an effect (not during render). It is declared before the
   // draw effects below, so they always read this commit's values.
   useEffect(() => {
     flexModeRef.current = flexMode;
+    flexDeleteModeRef.current = flexDeleteMode;
+    flexAddModeRef.current = flexAddMode;
     flexPointsRef.current = flexPoints;
     loopRef.current = loop;
     selectionRef.current = selection;
     hitsTimelineRef.current = hitsTimeline;
     noteTimesRef.current = noteTimes;
     onFlexAddRef.current = onFlexAdd;
+    onFlexAddAtRef.current = onFlexAddAt;
     onFlexDragRef.current = onFlexDrag;
     onFlexRemoveRef.current = onFlexRemove;
   });
@@ -644,6 +651,12 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         ctx.moveTo(x, waveTop);
         ctx.lineTo(x, h);
         ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(x, waveTop + 9, p.anchor ? 4 : 6, 0, Math.PI * 2);
+        ctx.fillStyle = p.anchor ? theme.bg : FLEX_AMBER;
+        ctx.fill();
+        ctx.stroke();
       }
       ctx.setLineDash([]);
       ctx.globalAlpha = 1;
@@ -751,7 +764,16 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       ro = new ResizeObserver(applySize);
       ro.observe(container);
     }
-    return () => ro?.disconnect();
+    // Canvas pixels do not inherit CSS when the theme changes. Refresh the
+    // cached palette and repaint when a theme provider changes an ancestor.
+    const themeObserver = new MutationObserver(() => {
+      themeRef.current = readTheme(container);
+      drawWave();
+    });
+    for (let ancestor: HTMLElement | null = container; ancestor; ancestor = ancestor.parentElement) {
+      themeObserver.observe(ancestor, { attributes: true, attributeFilter: ['class', 'style', 'data-theme'] });
+    }
+    return () => { ro?.disconnect(); themeObserver.disconnect(); };
   }, [height, drawWave, onViewportWidth]);
 
   // Redraw the wave layer whenever inputs change.
@@ -835,7 +857,6 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       | 'dragging-marker'
       | 'pending-scrub'
       | 'scrubbing'
-      | 'shifting'
       | 'pending-trim'
       | 'dragging-trim'
       | 'pending-anchor'
@@ -850,6 +871,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
     // Flex: the hit or point under the press, and the last plain click on a
     // point (for the double-click remove; a drag never counts as a click).
     let flexIndex = -1;
+    let flexSource: number | null = null;
     let lastFlexClick: { index: number; at: number } | null = null;
 
     const localX = (e: { clientX: number }) => {
@@ -952,15 +974,23 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
           const second = !!lastFlexClick && lastFlexClick.index === pi && now - lastFlexClick.at <= DOUBLE_CLICK_MS;
           lastFlexClick = null;
           flexIndex = pi;
+          flexSource=flexPointsRef.current[pi]?.src ?? null;
           // The second press only arms the removal: it happens on release if
           // the pointer stayed put, and becomes a plain drag if it moved.
-          mode = second ? 'pending-flex-remove' : 'pending-flex';
+          mode = second || flexDeleteModeRef.current ? 'pending-flex-remove' : 'pending-flex';
           return;
         }
-        if (y < LABEL_BAND + GRIP_HIT_H) {
+        if (flexDeleteModeRef.current) { mode = 'pending-scrub'; return; }
+        if (aboveAnchorBand && flexAddModeRef.current) {
           const gi = onFlexAddRef.current ? gripHitTest(x) : -1;
           if (gi >= 0) {
             flexIndex = gi;
+            flexSource=flexPointsRef.current[gi]?.src ?? null;
+            mode = 'pending-flex-add';
+            return;
+          }
+          if (onFlexAddAtRef.current) {
+            flexIndex = -1;
             mode = 'pending-flex-add';
             return;
           }
@@ -1001,16 +1031,25 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       const moved = Math.abs(x - startX) >= DRAG_THRESHOLD_PX;
 
       if (mode === 'pending-marker' && moved) mode = 'dragging-marker';
-      if (mode === 'pending-scrub' && moved) mode = onBackgroundDragRef.current ? 'shifting' : 'scrubbing';
+      // Empty space only seeks. Moving a section must use its explicit handle.
+      if (mode === 'pending-scrub' && moved) mode = 'scrubbing';
       if (mode === 'pending-trim' && moved) mode = 'dragging-trim';
       if (mode === 'pending-anchor' && moved) mode = 'dragging-anchor';
+      if (mode === 'pending-flex-remove' && flexDeleteModeRef.current && moved) { mode = 'idle'; return; }
+      let startingFlex=false;
       if ((mode === 'pending-flex' || mode === 'pending-flex-remove') && moved) {
+        startingFlex=true;
         mode = 'dragging-flex';
         flexDragRef.current = flexIndex;
       }
 
       if (mode === 'dragging-flex') {
-        onFlexDragRef.current?.(flexIndex, xToVideoTime(x), { snap: !e.metaKey });
+        // Local protection can insert anchors during the gesture; follow the
+        // source identity rather than the point's old array index.
+        if(flexSource!==null)flexIndex=flexPointsRef.current.findIndex(p=>p.src===flexSource);
+        if(flexIndex<0)return;
+        flexDragRef.current=flexIndex;
+        onFlexDragRef.current?.(flexIndex, xToVideoTime(x), { snap: !e.metaKey, start: startingFlex });
       } else if (mode === 'dragging-anchor') {
         onAnchorDragRef.current?.(xToVideoTime(x));
       } else if (mode === 'dragging-trim' && target?.kind === 'trim') {
@@ -1026,8 +1065,7 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
         }
       } else if (mode === 'scrubbing') {
         onSeekRef.current(xToVideoTime(x));
-      } else if (mode === 'shifting') {
-        onBackgroundDragRef.current?.((x - startX) / ppsRef.current, 'move', { snap: !e.metaKey });
+
       }
     };
 
@@ -1035,19 +1073,22 @@ export function WaveformCanvas(props: WaveformCanvasProps) {
       if (pointerId !== e.pointerId) return;
       try { overlay.releasePointerCapture(e.pointerId); } catch { /* noop */ }
       lastFlexClick = null;
-      if (mode === 'pending-flex-add' && Math.abs(localX(e) - startX) < DRAG_THRESHOLD_PX) {
-        onFlexAddRef.current?.(flexIndex);
+      // A simple click always places the playhead, including when Flex or a
+      // marker also handles that click. Only drags leave the playback position unchanged.
+      const click = Math.abs(localX(e) - startX) < DRAG_THRESHOLD_PX;
+      if (click && ['pending-scrub', 'pending-flex-add', 'pending-flex', 'pending-flex-remove', 'pending-marker', 'pending-trim', 'pending-anchor'].includes(mode)) {
+        onSeekRef.current(xToVideoTime(localX(e)));
+      }
+      if (mode === 'pending-flex-add' && click) {
+        if (flexIndex >= 0) onFlexAddRef.current?.(flexIndex);
+        else onFlexAddAtRef.current?.(xToVideoTime(startX));
       } else if (mode === 'pending-flex-remove') {
-        if (Math.abs(localX(e) - startX) < DRAG_THRESHOLD_PX) onFlexRemoveRef.current?.(flexIndex);
+        if (Math.abs(localX(e) - startX) < DRAG_THRESHOLD_PX) onFlexRemoveRef.current?.(flexIndex, xToVideoTime(localX(e)));
       } else if (mode === 'pending-flex') {
         lastFlexClick = { index: flexIndex, at: performance.now() };
       } else if (mode === 'dragging-flex') {
         flexDragRef.current = null;
-      } else if (mode === 'pending-scrub') {
-        // A click on empty space = seek there.
-        onSeekRef.current(xToVideoTime(localX(e)));
-      } else if (mode === 'shifting') {
-        onBackgroundDragRef.current?.((localX(e) - startX) / ppsRef.current, 'end', { snap: !e.metaKey });
+
       } else if (
         mode === 'dragging-marker' ||
         mode === 'dragging-trim' ||

@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — two-part EXERCISE authoring.
 //
@@ -99,6 +101,7 @@ export function ExerciseStudio({
   fetchExerciseMedia,
   fetchExerciseDraft,
 }: ExerciseStudioProps) {
+  const st = useStudioText();
   // Default to the graded score — it's the item's reason to exist, and the
   // setup/replace flows (which remount this component) land there too.
   const [part, setPart] = useState<Part>('exercise');
@@ -197,7 +200,7 @@ export function ExerciseStudio({
         key={`watch-${switchCount}`}
         classItemId={classItemId}
         backHref={backHref}
-        title={title}
+        title={st(title)}
         videoUrl={videoUrl}
         videoDurationSeconds={videoDurationSeconds}
         initialTrim={initialTrim}
@@ -221,7 +224,7 @@ export function ExerciseStudio({
         owner={{ kind: 'classItem', classItemId }}
         backHref={backHref}
         mode="exercise"
-        title={title}
+        title={st(title)}
         videoUrl={videoUrl}
         scoreDocumentId={exercisePayload.scoreDocumentId}
         initialScore={exercisePayload.initialScore}
@@ -280,12 +283,13 @@ function PartToggle({
   isSwitching: boolean;
   error: string | null;
 }) {
+  const st = useStudioText();
   const { statuses } = useStudioDrafts();
   const watchUnpublished = Object.values(statuses).some((s) => s.owner.kind === 'section' && s.unpublished);
   const exerciseUnpublished = !!statuses[`exercise:${classItemId}`]?.unpublished;
   return (
     <div className="flex items-center gap-2">
-      <div className="st-seg" role="radiogroup" aria-label="Exercise part">
+      <div className="st-seg" role="radiogroup" aria-label={st("Exercise part")}>
         <button
           type="button"
           className={part === 'watch' ? 'is-on' : ''}
@@ -293,14 +297,13 @@ function PartToggle({
           aria-checked={part === 'watch'}
           onClick={() => switchPart('watch')}
           title={
-            videoUrl
+            st(videoUrl
               ? 'Watch part — sync scored sections to the demo video'
-              : 'Watch part — upload the demo video, then sync scored sections to it'
+              : 'Watch part — upload the demo video, then sync scored sections to it')
           }
         >
           <MonitorPlay className="h-3.5 w-3.5" />
-          Watch
-          {watchUnpublished && <UnpublishedDot />}
+          {st("Watch")}{watchUnpublished && <UnpublishedDot />}
         </button>
         <button
           type="button"
@@ -308,11 +311,10 @@ function PartToggle({
           role="radio"
           aria-checked={part === 'exercise'}
           onClick={() => switchPart('exercise')}
-          title="Exercise part — the graded score students play on the rhythm highway"
+          title={st("Exercise part — the graded score students play on the rhythm highway")}
         >
           <Target className="h-3.5 w-3.5" />
-          Exercise
-          {exerciseUnpublished && <UnpublishedDot />}
+          {st("Exercise")}{exerciseUnpublished && <UnpublishedDot />}
         </button>
       </div>
       {isSwitching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}

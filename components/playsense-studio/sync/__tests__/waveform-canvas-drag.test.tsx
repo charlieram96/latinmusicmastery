@@ -297,7 +297,7 @@ describe('WaveformCanvas locked markers + background drag (graded mode)', () => 
     container.remove();
   });
 
-  it('a press on a locked marker drags the background shift instead, and ⌘ turns the snap off', () => {
+  it('empty-space and locked-marker drags only seek, even when a legacy shift callback is supplied', () => {
     const shifts: Array<[number, string, boolean]> = [];
     const markerCalls: number[] = [];
     const seeks: number[] = [];
@@ -341,12 +341,8 @@ describe('WaveformCanvas locked markers + background drag (graded mode)', () => 
       overlay.dispatchEvent(pointer('pointerup', 100, 100, { metaKey: true }));
     });
     expect(markerCalls).toEqual([]);
-    expect(seeks).toEqual([]);
-    expect(shifts).toEqual([
-      [3, 'move', true],
-      [5, 'move', false],
-      [5, 'end', false],
-    ]);
+    expect(seeks).toEqual([8,10]);
+    expect(shifts).toEqual([]);
 
     // A plain click still seeks.
     act(() => {
@@ -355,6 +351,6 @@ describe('WaveformCanvas locked markers + background drag (graded mode)', () => 
     act(() => {
       overlay.dispatchEvent(pointer('pointerup', 200, 100));
     });
-    expect(seeks).toEqual([20]);
+    expect(seeks).toEqual([8,10,20]);
   });
 });

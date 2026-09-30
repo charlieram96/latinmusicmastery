@@ -305,7 +305,7 @@ describe('IntegratedEditor measure zoom', () => {
     expect(zoomEl()).not.toBeNull();
     expect(zoomEl()!.querySelector('.st-zoom-title b')!.textContent).toBe('Measure 1');
     // The waveform still zooms so the bar fills 56% of the viewport.
-    expect(onRequestZoom).toHaveBeenCalledWith(Math.min(600, (800 * 0.56) / 2), expect.any(Number));
+    expect(onRequestZoom).not.toHaveBeenCalled();
     // The measure bar and the strip footer hide while the zoom is open.
     expect(barInfo()).toBeNull();
     expect(host.querySelector('.st-strip-foot')).toBeNull();
@@ -441,7 +441,7 @@ const ZOOM_H_AT_1_5 = 46 + 26 + 118 * 1.5 + 18;
 
 interface PointerLatest { score: ScoreDocument; zoom: ZoomState; layout: ZoomLayout | null }
 
-function mountEditing(score: ScoreDocument, opts: { measureIndex?: number; index?: number | 'end'; pencil?: boolean } = {}) {
+function mountEditing(score: ScoreDocument, opts: { measureIndex?: number; index?: number | 'end'; pencil?: boolean; restEntry?: boolean } = {}) {
   const m = opts.measureIndex ?? 0;
   const dispatchSpy = vi.fn<(a: EditorAction) => void>();
   const onCursor = vi.fn<(c: NoteCursor) => void>();
@@ -452,7 +452,7 @@ function mountEditing(score: ScoreDocument, opts: { measureIndex?: number; index
     const [state, rawDispatch] = useReducer(editorReducer, score, (s): EditorState => ({ score: s, past: [], future: [], isDirty: false }));
     const dispatch: Dispatch<EditorAction> = (a) => { dispatchSpy(a); rawDispatch(a); };
     const [zoom, setZoom] = useState<ZoomState | null>({
-      measureIndex: m, cursor: { measureIndex: m, voice: 0, index: opts.index ?? 0, anchor: null }, value: 'q', dots: 0, pencil: !!opts.pencil,
+      measureIndex: m, cursor: { measureIndex: m, voice: 0, index: opts.index ?? 0, anchor: null }, value: 'q', dots: 0, pencil: !!opts.pencil, restEntry: opts.restEntry,
     });
     const editing = useZoomEditing({
       score: state.score, dispatch, trackIndex: 0, zoom, setZoom,
@@ -575,6 +575,28 @@ describe('MeasureZoom pointer editing', () => {
     expect(dispatchSpy.mock.calls[0][0]).toMatchObject({
       type: 'write-event', at: { eventIndex: 'end' }, kind: 'note', midi: 67, value: 'q',
     });
+  });
+
+  it('writes a percussion quarter then three quarter rests in an empty 4/4 bar', () => {
+    const { latest, dispatchSpy } = mountEditing(pitchedDoc([[]], 'perc-timbal'), { pencil: true, index: 'end' });
+    const l = latest.layout!;
+    firePointer('pointerdown', l.noteEndX - 10, l.yForLine(2.5)); // A4: high timbal
+    expect(dispatchSpy.mock.calls[0][0]).toMatchObject({kind: 'note', midi: 65, value: 'q', percussion: {staffLine: 'a/4',notehead:'plus'}});
+    for (let i = 0; i < 3; i++) act(() => window.dispatchEvent(new KeyboardEvent('keydown', {key:'0', bubbles:true})));
+    expect(latest.score.tracks[0].measures[0].voices[0].events.map(e=>[e.kind,e.durationQN])).toEqual([['note',1],['rest',1],['rest',1],['rest',1]]);
+    const full = latest.score;
+    act(() => window.dispatchEvent(new KeyboardEvent('keydown', {key:'0', bubbles:true})));
+    expect(latest.score).toBe(full);
+  });
+
+  it('a rest palette pencil click appends the selected rest', () => {
+    const { latest, dispatchSpy } = mountEditing(pitchedDoc([[]]), {pencil:true, restEntry:true, index:'end'});
+    const l = latest.layout!;
+    firePointer('pointerdown', l.noteEndX - 10, l.yForLine(2));
+    expect(dispatchSpy.mock.calls[0][0]).toMatchObject({kind:'rest', value:'q', at:{eventIndex:'end'}});
+    act(() => window.dispatchEvent(new KeyboardEvent('keydown', {key:'4', bubbles:true})));
+    expect(latest.zoom.restEntry).toBe(true);
+    expect(latest.zoom.value).toBe('8');
   });
 
   it('pencil: a click on a full bar is refused with the bar-full flash', () => {

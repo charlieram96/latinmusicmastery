@@ -21,6 +21,7 @@ import { LessonRail, LessonRailList } from './lesson-rail'
 import { LessonTopBar, type TopBarPart } from './lesson-top-bar'
 import { LessonDrawer, type LessonMeta } from './lesson-drawer'
 import { LessonDone, type NextLessonCard } from './lesson-done'
+import { LessonSidebar, type LessonSidebarSection } from '../lesson-sidebar'
 import './lesson-mode.css'
 
 export interface LessonModeShellProps {
@@ -28,6 +29,8 @@ export interface LessonModeShellProps {
   module: { id: string; title: string; index: number }
   lesson: { id: string; title: string }
   rail: RailLesson[]
+  sections?: LessonSidebarSection[]
+  hasAccess?: boolean
   parts: TopBarPart[]
   activeIndex: number
   /** Null for a paywalled lesson: no parts to complete. */
@@ -53,13 +56,15 @@ export function LessonModeShell(props: LessonModeShellProps) {
 }
 
 function LessonModeFrame({ course, module, lesson, rail, parts, activeIndex, progress, practice, about, comments, commentCount,
-  teacherName, nextLesson, body }: LessonModeShellProps) {
-  const { t } = useTranslation()
+  teacherName, nextLesson, body, sections, hasAccess = false }: LessonModeShellProps) {
+  const { t, locale } = useTranslation()
   const router = useRouter()
   const live = useLessonProgress()
   const claims = useActionClaims()
   const [actionHost, setActionHost] = useState<HTMLElement | null>(null)
   const [toolsHost, setToolsHost] = useState<HTMLElement | null>(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const discussionRef = useRef<HTMLElement>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [celebrating, setCelebrating] = useState(false)
 
@@ -107,16 +112,28 @@ function LessonModeFrame({ course, module, lesson, rail, parts, activeIndex, pro
 
   return <LessonFrameProvider value={frame}>
     <WorkspaceToolsSlotProvider host={toolsHost}>
-      <div data-lesson-shell data-lesson-mode className="lx">
-        <LessonRail courseHref={courseHref} courseTitle={course.title} moduleTitle={module.title} moduleIndex={module.index}
-          lessons={rail} currentDone={!!summary?.lessonDone} />
+      <div data-lesson-shell data-lesson-mode className="lx" data-course-navigation={!!sections} data-navigation-collapsed={sidebarCollapsed}>
+        {sections ? <LessonSidebar courseId={course.id} currentClassId={lesson.id} sections={sections.map(section => ({ ...section,
+          completedItems: section.completedItems + (section.classes.some(item => item.id === lesson.id) ? added : 0),
+          classes: section.classes.map(item => item.id === lesson.id ? { ...item, completedItems: Math.min(item.totalItems, item.completedItems + added) } : item),
+        }))} courseTitle={course.title} teacherName={teacherName} hasAccess={hasAccess}
+          collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(value => !value)} />
+          : <LessonRail courseHref={courseHref} courseTitle={course.title} moduleTitle={module.title} moduleIndex={module.index}
+          lessons={rail} currentDone={!!summary?.lessonDone} />}
         <div className="lx-main">
           <LessonTopBar courseTitle={course.title} courseHref={courseHref} moduleTitle={module.title}
             moduleHref={moduleOverviewHref(course.id, module.id)} title={lesson.title} parts={parts} activeIndex={activeIndex}
             completedItemIds={completedItemIds} activeStatus={progress?.activeItemId ? live?.items[progress.activeItemId]?.status : undefined}
             courseId={course.id} classId={lesson.id} streak={stats?.streak.after ?? 0} onOpenDrawer={() => setDrawerOpen(true)} />
           <main data-dashboard-main data-lesson-stage className="lx-stage">
-            <div className="lx-fill" hidden={celebrating} inert={celebrating}>{body}</div>
+            <div className="lx-fill" hidden={celebrating} inert={celebrating}>
+              {body}
+              {comments != null && <section key={lesson.id} ref={discussionRef} data-lesson-community tabIndex={-1}
+                aria-label={t('dashboard.classViewer.lessonMode.drawer.comments')}
+                className="mx-auto mt-8 w-full max-w-[78ch] border-t border-border pt-6 pb-4 outline-none">
+                {comments}
+              </section>}
+            </div>
             {celebrating && stats && <LessonDone stats={stats} lessonTitle={lesson.title} partCount={progress?.totalItems ?? 0}
               nextLesson={nextLesson} courseHref={courseHref} />}
           </main>
@@ -124,7 +141,16 @@ function LessonModeFrame({ course, module, lesson, rail, parts, activeIndex, pro
             onToolsHost={setToolsHost} onPrimary={onPrimary} primaryLabel={celebrate ? t('dashboard.classViewer.lessonMode.finishLesson') : null} />
         </div>
         <LessonDrawer open={drawerOpen} onOpenChange={setDrawerOpen} title={lesson.title} description={about.description}
-          meta={about.meta} comments={comments} commentCount={commentCount}
+          meta={about.meta} comments={comments == null ? null : <button type="button"
+            className="rounded-lg border border-primary/40 bg-primary/15 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/25"
+            onClick={() => {
+              setDrawerOpen(false)
+              setCelebrating(false)
+              requestAnimationFrame(() => {
+                discussionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                discussionRef.current?.focus({ preventScroll: true })
+              })
+            }}>{locale === 'es' ? 'Ver conversación debajo de la lección' : 'View discussion below the lesson'}</button>} commentCount={commentCount}
           lessons={<LessonRailList lessons={rail} open />} />
       </div>
     </WorkspaceToolsSlotProvider>

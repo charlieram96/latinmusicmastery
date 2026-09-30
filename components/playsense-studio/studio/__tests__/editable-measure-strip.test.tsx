@@ -7,7 +7,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import type { Track } from '@/components/playsense-studio/shared/score-model/types';
 import { extractTrackEvents } from '@/lib/playsense-studio/score-to-vexflow';
 import { measureFill } from '@/lib/playsense-studio/measure-fill';
-import { EditableMeasureStrip, type MeasureStripItem } from '../editable-measure-strip';
+import { EditableMeasureStrip, type MeasureStripItem, type EditableMeasureStripProps } from '../editable-measure-strip';
 
 beforeAll(() => {
   // VexFlow measures text through a canvas; jsdom has none.
@@ -46,7 +46,7 @@ const noop = () => {};
 function renderStrip(
   track: Track,
   keyFifths = 0,
-  opts: { selectedMeasures?: [number, number] | null; flags?: Record<number, string>; pixelsPerSecond?: number } = {},
+  opts: { onNoteSelection?: EditableMeasureStripProps['onNoteSelection']; selectedMeasures?: [number, number] | null; flags?: Record<number, string>; pixelsPerSecond?: number } = {},
 ) {
   const items: MeasureStripItem[] = extractTrackEvents(track, [4, 4], keyFifths).map((b, i) => ({
     measureIndex: i,
@@ -68,6 +68,7 @@ function renderStrip(
   act(() => {
     root.render(
       <EditableMeasureStrip
+        onNoteSelection={opts.onNoteSelection}
         measures={items} pixelsPerSecond={opts.pixelsPerSecond ?? 100} scrollLeftPx={0} selected={null}
         selectedMeasures={opts.selectedMeasures ?? null}
         onOpenNote={noop} onSelectMeasureRange={noop} onOpenMeasure={noop} onRequestZoomTo={noop}
@@ -84,6 +85,28 @@ const base = (measures: Track['measures']): Track => ({
 });
 
 describe('EditableMeasureStrip', () => {
+  it('selects a voice-two note, highlights it and clears it on an outside click', () => {
+    const selected = vi.fn();
+    renderStrip(base([{ number: 1, voices: [{ number: 1, events: [] }, { number: 2, events: [{ kind: 'note', midi: 60, durationQN: 4 }] }] }]), 0, { onNoteSelection: selected });
+    const note = host.querySelector<HTMLButtonElement>('[aria-label="Select staff 1, measure 1, voice 2, note 1, pitch 1"]')!;
+    expect(note).not.toBeNull();
+    act(() => note.click());
+    expect(note.getAttribute('aria-pressed')).toBe('true');
+    expect(selected.mock.lastCall?.[0][0]).toMatchObject({voice: 1, event: 0, member: 0});
+    act(() => document.body.dispatchEvent(new Event('pointerdown', { bubbles: true })));
+    expect(note.getAttribute('aria-pressed')).toBe('false');
+    expect(selected).toHaveBeenLastCalledWith([]);
+  });
+
+  it('shows missing beats as a compact header indicator without covering the staff', () => {
+    renderStrip(base([{number: 1, voices: [{number: 1, events: [{kind: 'note', midi: 60, durationQN: 2}]}]}]));
+    expect(host.querySelector('.st-gapfill')).toBeNull();
+    const indicator = host.querySelector('[data-testid="measure-beat-indicator"]')!;
+    expect(indicator.textContent).toBe('−2');
+    expect(indicator.getAttribute('title')).toBe('Missing beats: 2');
+    expect(indicator.closest('.st-hb')).not.toBeNull();
+  });
+
   it('draws a measure whose only notes are in voice 2', () => {
     const svgs = renderStrip(base([
       { number: 1, voices: [{ number: 1, events: [] }, { number: 2, events: [{ kind: 'note', midi: 60, durationQN: 4 }] }] },

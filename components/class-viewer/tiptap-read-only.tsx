@@ -1,6 +1,7 @@
 'use client'
 
 import { useEditor, EditorContent } from '@tiptap/react'
+import { useEffect } from 'react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Youtube from '@tiptap/extension-youtube'
@@ -12,6 +13,7 @@ interface TiptapReadOnlyProps {
 
 export function TiptapReadOnly({ content }: TiptapReadOnlyProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Image.configure({
@@ -39,6 +41,10 @@ export function TiptapReadOnly({ content }: TiptapReadOnlyProps) {
       },
     },
   })
+
+  useEffect(() => {
+    if (editor) editor.commands.setContent(content ?? '', false)
+  }, [editor, content])
 
   if (!editor || !content) {
     return null

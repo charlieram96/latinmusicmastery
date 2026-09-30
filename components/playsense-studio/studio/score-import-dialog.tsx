@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — shared PDF/MusicXML/MIDI importer with instrument selection.
 //
@@ -6,17 +8,15 @@
 // the in-workshop "Replace score" button (mode="replace"). The flow is:
 //   choose file → recognize PDFs on the server (Claude reads the pages) / parse notation client-side →
 //   review PDF recognition → if the file has multiple instrument parts,
-//   pick exactly ONE → attach (single-track) to the class item.
+//   pick one instrument → retain all its staves.
 //
-// "One instrument per sync": we filter the parsed ScoreDocument down to the
-// chosen track before sending, so the rest of the Studio (which keys off
-// score.tracks[0]) sees a single-instrument score. Replace mode warns that it
-// clears the existing score + sync.
+// A selected instrument may contain several staves, kept together.
 
+import { selectInstrument, staffGroupIndices } from '@/lib/playsense-studio/staff-groups';
 import { FileMusic, Loader2, ScanLine, Upload } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState, useTransition, type ComponentProps, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ComponentProps, type ReactNode } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -29,11 +29,15 @@ import { attachScoreFromImport } from '@/app/actions/playsense-studio';
 import { parseMidi } from '@/lib/playsense-studio/parsers/midi';
 import { parseMusicXmlBuffer } from '@/lib/playsense-studio/parsers/musicxml';
 import { parseScoreDocument } from '@/components/playsense-studio/shared/score-model/serialization';
-import type { ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
+import { applyInstrumentLegend, IMPORT_INSTRUMENTS } from '@/lib/playsense-studio/instrument-legend';
+import type { Instrument, ScoreDocument } from '@/components/playsense-studio/shared/score-model/types';
 import { MAX_PDF_BYTES, MAX_PDF_PAGES, parsePdfPages } from '@/lib/playsense-studio/pdf/policy.mjs';
 
 const PdfImportPreview = dynamic(() => import('./pdf-import-preview').then(module => module.PdfImportPreview), {
   ssr: false, loading: () => <div className="grid h-64 place-items-center text-sm text-muted-foreground">Preparing preview…</div>,
+});
+const ScoreImportPreview = dynamic(() => import('./score-import-preview').then(module => module.ScoreImportPreview), {
+  ssr: false, loading: () => <div className="grid h-72 place-items-center text-sm text-muted-foreground">Preparing score preview…</div>,
 });
 
 export interface ScoreImportDialogProps {
@@ -61,6 +65,7 @@ type Step = 'choose' | 'pdf' | 'review';
 const ACCEPT = '.pdf,.mid,.midi,.musicxml,.xml,.mxl';
 
 export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImported, onCloseAutoFocus }: ScoreImportDialogProps) {
+  const st = useStudioText();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>('choose');
@@ -70,6 +75,8 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
   const [parsed, setParsed] = useState<ScoreDocument | null>(null);
   const [filename, setFilename] = useState<string>('');
   const [selectedTrack, setSelectedTrack] = useState(0);
+  const [instrumentOverride,setInstrumentOverride] = useState<Instrument|''>('');
+  const importScore = useMemo(()=>parsed && instrumentOverride ? applyInstrumentLegend(parsed,selectedTrack,instrumentOverride) : parsed,[parsed,selectedTrack,instrumentOverride]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState(0);
   const [pages, setPages] = useState('1');
@@ -93,6 +100,7 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
     setParsed(null);
     setFilename('');
     setSelectedTrack(0);
+    setInstrumentOverride('');
     setPdfFile(null);
     setPageCount(0);
     setPages('1');
@@ -210,9 +218,7 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
 
   const confirmImport = () => {
     if (!parsed || busy || (pdfFile && !reviewed)) return;
-    const chosen = parsed.tracks[selectedTrack] ?? parsed.tracks[0];
-    // Keep only the chosen instrument; reset its index so it's the sole track 0.
-    const single: ScoreDocument = { ...parsed, tracks: [{ ...chosen, index: 0 }] };
+    const single = selectInstrument(importScore ?? parsed, selectedTrack);
     setError(null);
     startTransition(async () => {
       try {
@@ -235,7 +241,7 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
     });
   };
 
-  const multiTrack = (parsed?.tracks.length ?? 0) > 1;
+  const multiTrack = parsed ? parsed.tracks.some((_, i) => !staffGroupIndices(parsed, 0).includes(i)) : false;
 
   return (
     <Dialog
@@ -247,19 +253,19 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className={`${pdfFile ? 'sm:max-w-2xl' : 'sm:max-w-md'} max-h-[90dvh] grid-cols-[minmax(0,1fr)] overflow-x-hidden overflow-y-auto [&>*]:min-w-0`} showCloseButton={!isPending} onCloseAutoFocus={onCloseAutoFocus}>
+      <DialogContent className={`${pdfFile || step === 'review' ? 'sm:max-w-2xl' : 'sm:max-w-md'} max-h-[90dvh] grid-cols-[minmax(0,1fr)] overflow-x-hidden overflow-y-auto [&>*]:min-w-0`} showCloseButton={!isPending} onCloseAutoFocus={onCloseAutoFocus}>
         <DialogHeader>
           <DialogTitle>
-            {mode === 'replace' ? 'Replace score' : mode === 'section' ? 'Import as new section' : mode === 'append' ? 'Add score' : 'Import a score'}
+            {st(mode === 'replace' ? 'Replace score' : mode === 'section' ? 'Import as new section' : mode === 'append' ? 'Add score' : 'Import a score')}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'replace'
+            {st(mode === 'replace'
               ? 'Import a PDF, MusicXML, or MIDI file. Review it before replacing the current score and its sync.'
               : mode === 'section'
                 ? 'Import a PDF, MusicXML, or MIDI file as a new scored section.'
                 : mode === 'append'
                   ? 'Import a PDF, MusicXML, or MIDI file. Its measures are added after the current score’s last measure; the existing score and sync stay as they are.'
-                  : 'Bring your sheet music into Studio as editable notation.'}
+                  : 'Bring your sheet music into Studio as editable notation.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -278,7 +284,7 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
             <input
               type="file"
               accept={ACCEPT}
-              aria-label="Choose score file"
+              aria-label={st("Choose score file")}
               className="sr-only"
               disabled={busy}
               onChange={(e) => {
@@ -292,35 +298,33 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
               ) : (
                 <Upload className="h-6 w-6 text-muted-foreground" />
               )}
-              <span className="font-medium">{busy ? 'Reading file…' : 'Drop a score file or click to browse'}</span>
-              <span className="text-xs text-muted-foreground">PDF · MusicXML · MIDI</span>
-              <span className="mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">Printed PDF scores are recognized first, then opened for review.</span>
+              <span className="font-medium">{st(busy ? 'Reading file…' : 'Drop a score file or click to browse')}</span>
+              <span className="text-xs text-muted-foreground">{st("PDF · MusicXML · MIDI")}</span>
+              <span className="mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">{st("Printed PDF scores are recognized first, then opened for review.")}</span>
             </div>
           </label>
         )}
 
         {step === 'pdf' && pdfFile && <div className="space-y-4">
-          <div className="flex items-center gap-3 text-sm"><FileMusic className="h-5 w-5 shrink-0 text-primary" /><span className="min-w-0 flex-1 truncate font-medium">{filename}</span><span className="shrink-0 text-xs text-muted-foreground">{pageCount} {pageCount === 1 ? 'page' : 'pages'}</span></div>
+          <div className="flex items-center gap-3 text-sm"><FileMusic className="h-5 w-5 shrink-0 text-primary" /><span className="min-w-0 flex-1 truncate font-medium">{filename}</span><span className="shrink-0 text-xs text-muted-foreground">{pageCount} {st(pageCount === 1 ? 'page' : 'pages')}</span></div>
           <PdfImportPreview file={pdfFile} trackIndex={0} />
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-1.5 text-sm font-medium">Pages to recognize
-              <input value={pages} disabled={busy} onChange={event => setPages(event.target.value)} placeholder="1–3, 5" className="block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
-              <span className="block text-xs font-normal text-muted-foreground">Up to {MAX_PDF_PAGES} pages · 4 MB per import</span>
+            <label className="space-y-1.5 text-sm font-medium">{st("Pages to recognize")}<input value={pages} disabled={busy} onChange={event => setPages(event.target.value)} placeholder={st("1–3, 5")} className="block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+              <span className="block text-xs font-normal text-muted-foreground">{st("Up to ")}{MAX_PDF_PAGES} {st("pages · 4 MB per import")}</span>
             </label>
-            <label className="space-y-1.5 text-sm font-medium">Notation type
-              <select value={percussion ? 'percussion' : 'standard'} disabled={busy} onChange={event => setPercussion(event.target.value === 'percussion')} className="block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                <option value="standard">Standard notation</option><option value="percussion">Includes percussion</option>
-              </select><span className="block text-xs font-normal text-muted-foreground">Percussion supports one- and five-line staves.</span>
+            <label className="space-y-1.5 text-sm font-medium">{st("Notation type")}<select value={percussion ? 'percussion' : 'standard'} disabled={busy} onChange={event => setPercussion(event.target.value === 'percussion')} className="block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                <option value="standard">{st("Standard notation")}</option><option value="percussion">{st("Includes percussion")}</option>
+              </select><span className="block text-xs font-normal text-muted-foreground">{st("Percussion supports one- and five-line staves.")}</span>
             </label>
           </div>
-          <p className="text-xs leading-relaxed text-muted-foreground">Use a clean export or a clear scan of printed sheet music. Handwriting is not supported. You’ll review the detected notes before saving.</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">{st("Use a clean export or a clear scan of printed sheet music. Handwriting is not supported. You’ll review the detected notes before saving.")}</p>
           {isParsing ? <div className="rounded-xl border border-primary/20 bg-primary/5 p-4" role="status" aria-live="polite">
-            <div className="flex items-center gap-2 text-sm font-medium"><Loader2 className="h-4 w-4 animate-spin text-primary" />Recognizing your score…</div>
-            <p className="mt-1 text-xs text-muted-foreground">Finding staves, rhythms, and notes. This can take a few minutes.</p>
-            <button type="button" onClick={cancelRecognition} className="mt-3 text-xs font-medium underline underline-offset-4">Cancel recognition</button>
+            <div className="flex items-center gap-2 text-sm font-medium"><Loader2 className="h-4 w-4 animate-spin text-primary" />{st("Recognizing your score…")}</div>
+            <p className="mt-1 text-xs text-muted-foreground">{st("Finding staves, rhythms, and notes. This can take a few minutes.")}</p>
+            <button type="button" onClick={cancelRecognition} className="mt-3 text-xs font-medium underline underline-offset-4">{st("Cancel recognition")}</button>
           </div> : <div className="flex justify-end gap-2">
-            <button type="button" onClick={reset} className="rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted">Choose another file</button>
-            <button type="button" onClick={() => void recognizePdf()} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"><ScanLine className="h-4 w-4" />Recognize score</button>
+            <button type="button" onClick={reset} className="rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted">{st("Choose another file")}</button>
+            <button type="button" onClick={() => void recognizePdf()} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"><ScanLine className="h-4 w-4" />{st("Recognize score")}</button>
           </div>}
         </div>}
 
@@ -331,33 +335,30 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
               <span className="truncate font-medium">{filename}</span>
             </div>
 
-            {pieces.length > 1 && <label className="block space-y-1.5 text-sm font-medium">Choose a detected piece
-              <select value={selectedPiece} disabled={busy} onChange={event => {
+            {pieces.length > 1 && <label className="block space-y-1.5 text-sm font-medium">{st("Choose a detected piece")}<select value={selectedPiece} disabled={busy} onChange={event => {
                 const index = Number(event.target.value);
-                setSelectedPiece(index); setParsed(pieces[index]); setSelectedTrack(richestTrackIndex(pieces[index])); setReviewed(false);
+                setInstrumentOverride(''); setSelectedPiece(index); setParsed(pieces[index]); setSelectedTrack(richestTrackIndex(pieces[index])); setReviewed(false);
               }} className="block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                {pieces.map((piece, index) => <option key={index} value={index}>Piece {index + 1} · {piece.tracks[0]?.measures.length ?? 0} measures · {piece.tracks.length} parts</option>)}
-              </select><span className="block text-xs font-normal text-muted-foreground">This PDF contains {pieces.length} separate pieces. Import one at a time.</span>
+                {pieces.map((piece, index) => <option key={index} value={index}>{st("Piece ")}{index + 1} · {piece.tracks[0]?.measures.length ?? 0} {st("measures · ")}{piece.tracks.length} {st("parts")}</option>)}
+              </select><span className="block text-xs font-normal text-muted-foreground">{st("This PDF contains ")}{pieces.length} {st("separate pieces. Import one at a time.")}</span>
             </label>}
 
             {multiTrack ? (
               <div className="space-y-1.5">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Choose one instrument
-                </p>
+                  {st("Choose one instrument")}</p>
                 <p className="text-xs text-muted-foreground">
-                  Each sync covers one instrument. Pick the part you want to teach — import other
-                  instruments into their own lessons.
-                </p>
+                  {st("Each sync covers one instrument. Pick the part you want to teach — import other instruments into their own lessons.")}</p>
                 <div className="max-h-56 space-y-1 overflow-y-auto">
                   {parsed.tracks.map((t, i) => {
+                    if (staffGroupIndices(parsed, i)[0] !== i) return null;
                     const noteCount = countTrackNotes(t);
                     return (
                       <button
                         key={i}
                         type="button"
                         disabled={busy}
-                        onClick={() => { setSelectedTrack(i); setReviewed(false); }}
+                        onClick={() => { setSelectedTrack(i); setInstrumentOverride(''); setReviewed(false); }}
                         className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition ${
                           i === selectedTrack
                             ? 'border-primary bg-primary/10'
@@ -368,7 +369,7 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
                         <span className="ml-2 flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                           <span>{t.instrument}</span>
                           <span className={noteCount === 0 ? 'text-amber-600' : undefined}>
-                            {noteCount === 0 ? 'no notes' : `${noteCount} notes`}
+                            {st(noteCount === 0 ? 'no notes' : `${noteCount} notes`)}
                           </span>
                         </span>
                       </button>
@@ -378,24 +379,33 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Instrument: <span className="font-medium text-foreground">{parsed.tracks[0].displayName}</span>{' '}
-                <span className="text-xs">({countTrackNotes(parsed.tracks[0])} notes)</span>
+                {st("Instrument:")}<span className="font-medium text-foreground">{parsed.tracks[0].displayName}</span>{st(' ')}
+                <span className="text-xs">({staffGroupIndices(parsed, 0).reduce((n, i) => n + countTrackNotes(parsed.tracks[i]), 0)} {st("notes)")}</span>
               </p>
             )}
 
+            <label className="block space-y-2 rounded-xl border border-border bg-primary/5 p-3 text-sm">
+              <span className="font-medium">{st('Instrument and notation legend')}</span>
+              <select aria-label={st('Instrument and notation legend')} disabled={busy} value={instrumentOverride} onChange={e=>{setInstrumentOverride(e.target.value as Instrument|'');setReviewed(false);}} className="block w-full rounded-lg border border-border bg-background px-3 py-2">
+                <option value="">{st('Use detected instrument')} · {parsed.tracks[selectedTrack]?.instrument}</option>
+                {IMPORT_INSTRUMENTS.map(([id,label])=><option key={id} value={id}>{st(label)}</option>)}
+              </select>
+              <span className="block text-xs text-muted-foreground">{st('Loads the instrument legend for new notes. Explicit imported noteheads are preserved.')}</span>
+            </label>
+
+            {!pdfFile && <ScoreImportPreview score={importScore ?? parsed} trackIndex={selectedTrack} />}
             {pdfFile && <>
-              <PdfImportPreview file={pdfFile} score={parsed} trackIndex={selectedTrack} />
+              <PdfImportPreview file={pdfFile} score={importScore ?? parsed} trackIndex={selectedTrack} />
               <label className="flex cursor-pointer items-start gap-2.5 rounded-lg bg-primary/5 p-3 text-xs leading-relaxed">
                 <input type="checkbox" checked={reviewed} disabled={busy} onChange={event => setReviewed(event.target.checked)} className="mt-0.5 accent-primary" />
-                <span>I’ve reviewed the recognized notation. I’ll check pitches, rhythms, repeats, and percussion mapping in the editor before publishing.</span>
+                <span>{st("I’ve reviewed the recognized notation. I’ll check pitches, rhythms, repeats, and percussion mapping in the editor before publishing.")}</span>
               </label>
-              {countTrackNotes(parsed.tracks[selectedTrack]) === 0 && <p className="text-xs text-destructive">No playable notes were found in this part. Choose another part or a clearer PDF.</p>}
+              {countTrackNotes(parsed.tracks[selectedTrack]) === 0 && <p className="text-xs text-destructive">{st("No playable notes were found in this part. Choose another part or a clearer PDF.")}</p>}
             </>}
 
             {mode === 'replace' && (
               <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-600">
-                This replaces the lesson’s current score and clears its published sync.
-              </p>
+                {st("This replaces the lesson’s current score and clears its published sync.")}</p>
             )}
 
             <div className="flex justify-end gap-2 pt-1">
@@ -405,8 +415,7 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
                 disabled={busy}
                 className="rounded-md border border-border px-3 py-1.5 text-sm transition hover:bg-muted disabled:opacity-50"
               >
-                Choose a different file
-              </button>
+                {st("Choose a different file")}</button>
               <button
                 type="button"
                 onClick={confirmImport}
@@ -414,7 +423,7 @@ export function ScoreImportDialog({ classItemId, mode, trigger, onConfirm, onImp
                 className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-1.5 text-sm text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
               >
                 {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {mode === 'replace' ? 'Replace score' : mode === 'section' ? 'Add section' : mode === 'append' ? 'Add measures' : 'Import'}
+                {st(mode === 'replace' ? 'Replace score' : mode === 'section' ? 'Add section' : mode === 'append' ? 'Add score' : 'Import')}
               </button>
             </div>
           </div>
@@ -436,7 +445,8 @@ function countTrackNotes(track: ScoreDocument['tracks'][number]): number {
   for (const measure of track.measures) {
     for (const voice of measure.voices) {
       for (const event of voice.events) {
-        if (event.kind === 'note' || event.kind === 'chord') n++;
+        if (event.kind === 'note') n++;
+        else if (event.kind === 'chord') n += event.notes.length;
       }
     }
   }

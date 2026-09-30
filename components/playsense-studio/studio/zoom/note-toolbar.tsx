@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — the note toolbar, docked in the measure zoom's header
 // (spec §6; v6's renderNoteBar): info chip, durations, dot/rest/tie,
@@ -14,6 +16,7 @@ import type { Ref } from 'react';
 import { Trash2 } from 'lucide-react';
 import { KEY_VALUE, VALUE_NAME, VALUE_QN, type NoteValue } from '@/lib/playsense-studio/rhythm';
 import type { ZoomEditing } from './use-zoom-editing';
+import { PaletteGlyph } from '../palette-glyph';
 import { NoteIcon, RestIcon } from './note-glyphs';
 import { StrokeMenu } from './stroke-menu';
 
@@ -30,6 +33,7 @@ export interface NoteToolbarProps {
   value: NoteValue;
   dots: 0 | 1 | 2;
   isRest: boolean;
+  entryRest?: boolean;
   tie: boolean;
   tripletOn: boolean;
   hasSelection: boolean;
@@ -40,7 +44,7 @@ export interface NoteToolbarProps {
   onMore: () => void;
 }
 
-const TOOLBAR_DURATIONS: NoteValue[] = ['w', 'h', 'q', '8', '16'];
+const TOOLBAR_DURATIONS: NoteValue[] = ['w', 'h', 'q', '8', '16', '32', '64'];
 
 // KEY_VALUE maps the digit typed to the value it enters ('5' -> quarter); the
 // toolbar's titles want the reverse, one key per value.
@@ -55,36 +59,43 @@ const ACCIDENTALS: Array<{ alter: -1 | 0 | 1; label: string; title: string }> = 
 ];
 
 export function NoteToolbar({
-  ref, info, value, dots, isRest, tie, tripletOn, hasSelection, percussion, editing, onMore,
+  ref, info, value, dots, isRest, entryRest = isRest, tie, tripletOn, hasSelection, percussion, editing, onMore,
 }: NoteToolbarProps) {
+  const st = useStudioText();
   return (
     <div
       ref={ref}
       className="st-fbar is-docked"
       role="toolbar"
-      aria-label="Note"
+      aria-label={st("Note")}
       data-testid="note-toolbar"
     >
-      <span className="st-fbar-info">{info}</span>
+      <span className="st-fbar-info">{st(info)}</span>
+
+      <div role="group" aria-label={st("Note or rest input")} className="flex items-center gap-1 border-r border-border pr-2">
+        <button type="button" aria-label={st("Notes")} title={st("Show note durations")} aria-pressed={!entryRest} onMouseDown={e=>e.preventDefault()} onClick={()=>editing.setEntryRest?.(false)}><NoteIcon durationQN={1}/>{st("Notes")}</button>
+        <button type="button" aria-label={st("Rest")} title={st("Show rest durations")} aria-pressed={entryRest} onMouseDown={e=>e.preventDefault()} onClick={()=>editing.setEntryRest?.(true)}><RestIcon/>{st("Rests")}</button>
+      </div>
 
       {TOOLBAR_DURATIONS.map((v) => (
         <button
           key={v}
           type="button"
-          aria-label={VALUE_NAME[v]}
-          title={`${VALUE_NAME[v]} (${VALUE_KEY[v]})`}
+          aria-label={st(entryRest ? `${VALUE_NAME[v]} rest` : VALUE_NAME[v])}
+          title={`${st(entryRest ? `${VALUE_NAME[v]} rest` : VALUE_NAME[v])} (${VALUE_KEY[v]})`}
+          data-entry-kind={entryRest ? "rest" : "note"}
           aria-pressed={value === v}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => editing.setValue(v)}
         >
-          <NoteIcon durationQN={VALUE_QN[v]} />
+          <>{entryRest ? <PaletteGlyph glyph={String.fromCodePoint(0xE4E3 + TOOLBAR_DURATIONS.indexOf(v))}/> : <NoteIcon durationQN={VALUE_QN[v]} />}</>
         </button>
       ))}
 
       <button
         type="button"
-        aria-label="Dot"
-        title="Dot (.)"
+        aria-label={st("Dot")}
+        title={st("Dot (.)")}
         aria-pressed={dots > 0}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => editing.cycleDots()}
@@ -92,21 +103,12 @@ export function NoteToolbar({
         •
       </button>
 
-      <button
-        type="button"
-        aria-label="Rest"
-        title="Rest (R)"
-        aria-pressed={isRest}
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => editing.enterRest()}
-      >
-        <RestIcon /> Rest
-      </button>
+
 
       <button
         type="button"
-        aria-label="Tie"
-        title="Tie (+)"
+        aria-label={st("Tie")}
+        title={st("Tie (+)")}
         aria-pressed={tie}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => editing.toggleTie()}
@@ -128,12 +130,12 @@ export function NoteToolbar({
             <button
               key={a.alter}
               type="button"
-              aria-label={a.title}
-              title={a.title}
+              aria-label={st(a.title)}
+              title={st(a.title)}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editing.accidental(a.alter)}
             >
-              {a.label}
+              {st(a.label)}
             </button>
           ))}
 
@@ -141,8 +143,8 @@ export function NoteToolbar({
 
       <button
         type="button"
-        aria-label="Triplet"
-        title="Triplet (T)"
+        aria-label={st("Triplet")}
+        title={st("Triplet (T)")}
         aria-pressed={tripletOn}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => editing.tuplet(3, 2)}
@@ -152,19 +154,18 @@ export function NoteToolbar({
 
       <button
         type="button"
-        aria-label="More"
-        title="Everything else"
+        aria-label={st("More")}
+        title={st("Everything else")}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => onMore()}
       >
-        More ▾
-      </button>
+        {st("More ▾")}</button>
 
       {hasSelection && (
         <button
           type="button"
-          aria-label="Delete"
-          title="Delete (⌫)"
+          aria-label={st("Delete")}
+          title={st("Delete (⌫)")}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => editing.remove(true)}
         >

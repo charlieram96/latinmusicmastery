@@ -1,3 +1,4 @@
+import { mixHeadroom } from './mix-headroom';
 // PlaySense Studio — backing-track mixer slaved to the reference <video>.
 //
 // BROWSER ONLY. A plain class with no React, shaped like metronome.ts.
@@ -68,7 +69,7 @@ export class BackingMixer {
         (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new Ctor({ latencyHint: 'interactive' });
       this.master = this.ctx.createGain();
-      this.master.gain.value = 1;
+      this.master.gain.value = this.headroom();
       this.master.connect(this.ctx.destination);
     }
     return this.ctx;
@@ -87,6 +88,7 @@ export class BackingMixer {
     this.clips = clips;
     for (const clip of clips) pinClipAudio(clip.url);
 
+    this.applyGains();
     // Drop gain nodes for clips that went away.
     for (const [id, gain] of this.gains) {
       if (!clips.some((c) => c.id === id)) {
@@ -95,6 +97,10 @@ export class BackingMixer {
         this.gains.delete(id);
       }
     }
+  }
+
+  private headroom() {
+    return mixHeadroom(this.clips.map(clip => clip.id), this.enabled, this.levels);
   }
 
   setEnabled(ids: ReadonlySet<string>) {
@@ -120,6 +126,7 @@ export class BackingMixer {
   private applyGains() {
     const ctx = this.ctx;
     if (!ctx) return;
+    this.master?.gain.setTargetAtTime(this.headroom(), ctx.currentTime, GAIN_RAMP_SECONDS);
     // Gain only — never reschedule. The source keeps running, so re-enabling
     // snaps back in perfect phase instead of re-cueing from a new offset.
     for (const clip of this.clips) {

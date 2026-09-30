@@ -35,6 +35,7 @@ function pointer(type: string, x: number, y: number, mods: { metaKey?: boolean }
 }
 
 interface Calls {
+  seek: number[];
   add: number[];
   drag: Array<[number, number, { snap: boolean }]>;
   remove: number[];
@@ -44,10 +45,18 @@ interface Calls {
 
 function Harness({
   flexMode,
+  manual,
+  deleting,
+  adding = false,
+  insertAnchor = false,
   calls,
   points = [],
 }: {
   flexMode: boolean;
+  manual?: (seconds:number)=>void;
+  deleting?: boolean;
+  adding?: boolean;
+  insertAnchor?: boolean;
   calls: Calls;
   points?: FlexPoint[];
 }) {
@@ -67,7 +76,7 @@ function Harness({
       dragAll={false}
       selected={null}
       getCurrentSeconds={() => 0}
-      onSeek={() => {}}
+      onSeek={t=>calls.seek.push(t)}
       onSelect={(t) => calls.select.push(t.kind)}
       onMarkerDrag={(_ref, t, mode) => calls.marker.push([t, mode])}
       onTailDrag={() => {}}
@@ -75,13 +84,19 @@ function Harness({
       onScrollByPx={() => {}}
       onViewportWidth={() => {}}
       flexMode={flexMode}
+      flexDeleteMode={deleting}
+      flexAddMode={adding}
       flexPoints={flex}
       hitsTimeline={[5, 20, 35]}
       noteTimes={[5, 21, 36]}
       onFlexAdd={(i) => calls.add.push(i)}
+      onFlexAddAt={manual}
       onFlexDrag={(i, t, mods) => {
         calls.drag.push([i, t, mods]);
-        setFlex((f) => f.map((q, j) => (j === i ? { ...q, dst: t } : q)));
+        setFlex((f) => {
+          const moved=f.map((q,j)=>j===i?{...q,dst:t}:q);
+          return insertAnchor && mods.start ? [...moved,{src:24,dst:25,anchor:true}].sort((a,b)=>a.src-b.src) : moved;
+        });
       }}
       onFlexRemove={(i) => calls.remove.push(i)}
     />
@@ -114,7 +129,7 @@ describe('WaveformCanvas Flex editing', () => {
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
-    calls = { add: [], drag: [], remove: [], marker: [], select: [] };
+    calls = { seek: [], add: [], drag: [], remove: [], marker: [], select: [] };
   });
 
   afterEach(() => {
@@ -130,7 +145,7 @@ describe('WaveformCanvas Flex editing', () => {
     });
 
   it('clicking a hit grip in Flex mode adds a point at that hit', () => {
-    act(() => root.render(<Harness flexMode calls={calls} />));
+    act(() => root.render(<Harness flexMode adding calls={calls} />));
     fire('pointerdown', 51, GRIP_Y);
     fire('pointerup', 51, GRIP_Y);
     expect(calls.add).toEqual([0]);
@@ -143,6 +158,64 @@ describe('WaveformCanvas Flex editing', () => {
     expect(calls.add).toEqual([0, 2]);
   });
 
+  it('adds points from the waveform body and permits an undetected peak', () => {
+    const added:number[]=[];
+    act(()=>root.render(<Harness flexMode adding calls={calls} manual={t=>added.push(t)} />));
+    fire('pointerdown',200,BODY_Y); fire('pointerup',200,BODY_Y);
+    expect(calls.add).toEqual([1]);
+    fire('pointerdown',270,BODY_Y); fire('pointerup',270,BODY_Y);
+    expect(added).toEqual([27]);
+    expect(calls.marker).toEqual([]);
+  });
+
+  it('delete mode removes points and seeks on both points and empty space', () => {
+    const added:number[]=[];
+    act(()=>root.render(<Harness flexMode deleting calls={calls} points={POINTS} manual={t=>added.push(t)} />));
+    const x=POINTS[1].dst*PPS;
+    fire('pointerdown',x,BODY_Y);fire('pointerup',x,BODY_Y);
+    expect(calls.remove).toEqual([1]);
+    fire('pointerdown',270,BODY_Y);fire('pointerup',270,BODY_Y);
+    expect(added).toEqual([]);expect(calls.marker).toEqual([]);
+    expect(calls.seek).toEqual([30,27]);
+  });
+
+  it('normal Flex clicks seek without adding anchors, until Add points is enabled', () => {
+    const added:number[]=[];
+    act(()=>root.render(<Harness flexMode calls={calls} manual={t=>added.push(t)} />));
+    fire('pointerdown',200,BODY_Y);fire('pointerup',200,BODY_Y);
+    fire('pointerdown',270,BODY_Y);fire('pointerup',270,BODY_Y);
+    expect(calls.seek).toEqual([20,27]);
+    expect(calls.add).toEqual([]);expect(added).toEqual([]);
+    act(()=>root.render(<Harness flexMode adding calls={calls} manual={t=>added.push(t)} />));
+    fire('pointerdown',270,BODY_Y);fire('pointerup',270,BODY_Y);
+    expect(added).toEqual([27]);
+    act(()=>root.render(<Harness flexMode calls={calls} manual={t=>added.push(t)} />));
+    fire('pointerdown',280,BODY_Y);fire('pointerup',280,BODY_Y);
+    expect(added).toEqual([27]);
+    expect(calls.seek.at(-1)).toBe(28);
+  });
+
+  it('a simple waveform click seeks with Flex enabled, including new and existing points', () => {
+    act(()=>root.render(<Harness flexMode calls={calls} points={POINTS} manual={()=>{}} />));
+    fire('pointerdown',270,BODY_Y);fire('pointerup',270,BODY_Y);
+    expect(calls.seek).toEqual([27]);
+    const x=POINTS[1].dst*PPS;
+    fire('pointerdown',x,BODY_Y);fire('pointerup',x,BODY_Y);
+    expect(calls.seek.at(-1)).toBe(POINTS[1].dst);
+  });
+
+  it('a click on a bar marker also sets the playhead, while a Flex drag does not', () => {
+    act(()=>root.render(<Harness flexMode={false} calls={calls} points={POINTS} />));
+    fire('pointerdown',50,10);fire('pointerup',50,10);
+    expect(calls.seek).toEqual([5]);
+    calls.seek=[];
+    act(()=>root.render(<Harness flexMode calls={calls} points={POINTS} />));
+    const x=POINTS[1].dst*PPS;
+    fire('pointerdown',x,BODY_Y);fire('pointermove',x+20,BODY_Y);fire('pointerup',x+20,BODY_Y);
+    expect(calls.drag.length).toBeGreaterThan(0);
+    expect(calls.seek).toEqual([]);
+  });
+
   it('dragging a flex point reports its timeline time, and ⌘ as no-snap', () => {
     act(() => root.render(<Harness flexMode calls={calls} points={POINTS} />));
     // Point 1 sits at dst 30 s → x 300.
@@ -151,16 +224,25 @@ describe('WaveformCanvas Flex editing', () => {
     fire('pointermove', 320, BODY_Y);
     fire('pointerup', 320, BODY_Y);
     expect(calls.drag).toEqual([
-      [1, 31, { snap: true }],
-      [1, 32, { snap: true }],
+      [1, 31, { snap: true, start: true }],
+      [1, 32, { snap: true, start: false }],
     ]);
 
     calls.drag.length = 0;
     fire('pointerdown', 320, BODY_Y);
     fire('pointermove', 330, BODY_Y, { metaKey: true });
     fire('pointerup', 330, BODY_Y);
-    expect(calls.drag).toEqual([[1, 33, { snap: false }]]);
+    expect(calls.drag).toEqual([[1, 33, { snap: false, start: true }]]);
     expect(calls.marker).toEqual([]);
+  });
+
+  it('keeps dragging the same source when protection inserts a preceding anchor',()=>{
+    act(()=>root.render(<Harness flexMode insertAnchor calls={calls} points={POINTS}/>));
+    fire('pointerdown',300,BODY_Y);
+    fire('pointermove',310,BODY_Y);
+    fire('pointermove',320,BODY_Y);
+    fire('pointerup',320,BODY_Y);
+    expect(calls.drag).toEqual([[1,31,{snap:true,start:true}],[2,32,{snap:true,start:false}]]);
   });
 
   it('double-clicking a flex point removes it', () => {
@@ -192,7 +274,7 @@ describe('WaveformCanvas Flex editing', () => {
     fire('pointermove', 310, BODY_Y);
     fire('pointerup', 310, BODY_Y);
     expect(calls.remove).toEqual([]);
-    expect(calls.drag).toEqual([[1, 31, { snap: true }]]);
+    expect(calls.drag).toEqual([[1, 31, { snap: true, start: true }]]);
   });
 
   it('a flex point is not grabbed in the bottom anchor band', () => {
@@ -305,7 +387,7 @@ describe('WaveformCanvas stretch tints', () => {
   const FASTER = 'hsl(28 95% 55% / .14)';
 
   it('tints slower segments blue and faster ones orange, even with Flex mode off', () => {
-    const calls: Calls = { add: [], drag: [], remove: [], marker: [], select: [] };
+    const calls: Calls = { seek: [], add: [], drag: [], remove: [], marker: [], select: [] };
     act(() => root.render(<Harness flexMode={false} calls={calls} points={POINTS} />));
     const tints = fills.filter(([s]) => s === SLOWER || s === FASTER);
     // 20→30 timeline covers 20→28 media: slower. 30→35 covers 28→35: faster.
@@ -314,7 +396,7 @@ describe('WaveformCanvas stretch tints', () => {
   });
 
   it('draws no tint without points', () => {
-    const calls: Calls = { add: [], drag: [], remove: [], marker: [], select: [] };
+    const calls: Calls = { seek: [], add: [], drag: [], remove: [], marker: [], select: [] };
     act(() => root.render(<Harness flexMode calls={calls} />));
     expect(fills.filter(([s]) => s === SLOWER || s === FASTER)).toEqual([]);
   });

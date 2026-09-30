@@ -53,9 +53,10 @@ export interface ZoomEditing {
   enterLetter(letter: string, chord: boolean): void;
   /** The pencil's click: append this pitch at the end of the cursor's bar and voice (the letter path's fit check and flash). */
   enterPitch(midi: number, spelling: Pitch['spelling']): void;
-  enterRest(): void;
+  enterRest(append?: boolean): void;
+  setEntryRest?(rest: boolean): void;
   /** Percussion entry: the stroke's midi. */
-  enterStroke(midi: number): void;
+  enterStroke(midi: number, append?: boolean, notation?: PercussionNotation): void;
   setValue(value: NoteValue): void;
   cycleDots(to?: 0 | 1 | 2): void;
   tuplet(n: number, m: number): void;
@@ -392,15 +393,20 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
         enter(o, { kind: 'note', midi, spelling }, true);
       },
 
-      enterRest() {
-        enter(get(), { kind: 'rest' });
+      setEntryRest(rest) {
+        const o = get();
+        if (o.zoom) o.setZoom({...o.zoom, restEntry:rest, pencil:true});
       },
 
-      enterStroke(midi) {
+      enterRest(append = false) {
+        enter(get(), { kind: 'rest' }, append);
+      },
+
+      enterStroke(midi, append = false, notation) {
         const o = get();
         const instrument = trackOf(o)?.instrument;
         const stroke = instrument ? getPercStrokes(instrument)?.find((s) => s.midi === midi) : undefined;
-        enter(o, { kind: 'note', midi, ...(stroke ? { percussion: strokeNotation(stroke) } : {}) });
+        enter(o, { kind: 'note', midi, ...(notation ? {percussion:notation} : stroke ? { percussion: strokeNotation(stroke) } : {}) }, append);
       },
 
       setValue(value) {
@@ -584,17 +590,14 @@ export function useZoomEditing(opts: ZoomEditingOptions): ZoomEditing {
           // ⌫ at the end takes the last event; Delete there has nothing ahead of it.
           if (!back || !events.length) return;
           o.dispatch({ type: 'delete-events', refs: [refAt(o, c, events.length - 1)] });
-          setCursor(o, { ...c, index: 'end', anchor: null });
+          setCursor(o, { ...c, index: events.length - 1, anchor: null });
           return;
         }
         const refs = selectedRefsOf(o);
         if (!refs.length) return;
         o.dispatch({ type: 'delete-events', refs });
-        const gone = new Set(refs.map((r) => r.eventIndex));
-        const left = events.filter((_, i) => !gone.has(i));
-        // The cursor stays where the range started: on what followed it, or the end.
-        const next = clampCursor({ ...c, index: Math.min(...gone), anchor: null }, contextWith(ctx, c.measureIndex, c.voice, left));
-        setCursor(o, next);
+        // Keep the cursor on the replacement rest so typing overwrites that slot.
+        setCursor(o, { ...c, index: Math.min(...refs.map(r => r.eventIndex)), anchor: null });
       },
 
       walk(dir, extend) {

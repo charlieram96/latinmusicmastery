@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import { Badge } from '@/components/ui/badge'
 import { Video, Music } from 'lucide-react'
-import { TiptapReadOnly } from '@/components/class-viewer/tiptap-read-only'
+import { LessonWrittenContent } from './lesson-written-content'
 import { PlaysenseStudioPlayer } from '@/components/playsense-studio/player/playsense-studio-player'
 import {
   getExerciseMedia,
@@ -47,6 +48,7 @@ interface ClassItemRendererProps {
     correct_answer: string | null
     explanation: string | null
     audio_url: string | null
+    metronome_anchor_seconds?: number | null
     bpm: number | null
     key_signature: string | null
     rich_content: Record<string, unknown> | null
@@ -190,6 +192,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
             readOnly={process.env.NODE_ENV === 'development' && previewLesson}
             classItemId={item.id}
             classItemTitle={item.title}
+            lessonMetronome={{bpm:item.bpm??120,anchorSeconds:item.metronome_anchor_seconds??null}}
             videoUrl={item.video_url}
             score={firstSection.score}
             tracks={firstSection.tracks}
@@ -208,6 +211,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
             readOnly={process.env.NODE_ENV === 'development' && previewLesson}
             classItemId={item.id}
             classItemTitle={item.title}
+            lessonMetronome={{bpm:item.bpm??120,anchorSeconds:item.metronome_anchor_seconds??null}}
             videoUrl={item.video_url}
             score={firstUnplacedSection.scoreDocument.parsedScore}
             tracks={firstUnplacedSection.tracks}
@@ -222,6 +226,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
           // No notation → polished full-width player. Description + notes render
           // below the workspace (page body + rich-content card), not on the side.
           <LessonVideoPlayer
+            metronome={{bpm:item.bpm??120,anchorSeconds:item.metronome_anchor_seconds??null}}
             src={item.video_url}
             subtitles={subtitleTracks}
             defaultSubtitleLang={locale}
@@ -232,7 +237,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
           <Card className="overflow-hidden rounded-2xl border-border shadow-warm">
             <CardContent className="p-0">
               {item.soundslice_embed_url ? (
-                <div className="aspect-video overflow-hidden bg-black">
+                <div className="relative aspect-video overflow-hidden bg-black">
                   <LessonMediaEmbed
                     src={item.soundslice_embed_url}
                     className="w-full h-full"
@@ -267,8 +272,8 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
           ) : item.video_url ? (
             <Card className="overflow-hidden rounded-2xl border-border shadow-warm">
               <CardContent className="p-0">
-                <div className="aspect-video overflow-hidden bg-black">
-                  <video
+                <div className="relative aspect-video overflow-hidden bg-black">
+                  <video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()}
                     src={item.video_url}
                     controls
                     crossOrigin={subtitleTracks.length > 0 ? 'anonymous' : undefined}
@@ -284,7 +289,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
                         default={t.lang === locale}
                       />
                     ))}
-                  </video>
+                  </video><VideoWatermark nativeControls />
                 </div>
               </CardContent>
             </Card>
@@ -294,8 +299,7 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
       )}
 
       {/* EXERCISE — score-driven (video + staff + rhythm highway), with optional
-          comprehension questions. Falls back to a plain question card for legacy
-          exercises that have no score attached. */}
+          comprehension questions. Keep the video available even without a score. */}
       {item.item_type === 'EXERCISE' && (
         <>
           {playsenseStudioData ? (
@@ -323,6 +327,22 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
               exerciseVideo={exerciseVideo}
               play={exerciseMedia?.play ?? null}
               teacherName={teacherName}
+            />
+          ) : item.video_url ? (
+            <LessonVideoPlayer
+            metronome={{bpm:item.bpm??120,anchorSeconds:item.metronome_anchor_seconds??null}}
+              src={item.video_url}
+              subtitles={subtitleTracks}
+              defaultSubtitleLang={locale}
+              trimInSeconds={item.video_trim_in_seconds ?? 0}
+              trimOutSeconds={item.video_trim_out_seconds ?? null}
+            />
+          ) : exerciseVideo ? (
+            <LessonVideoPlayer
+            metronome={{bpm:item.bpm??120,anchorSeconds:item.metronome_anchor_seconds??null}}
+              src={exerciseVideo.url}
+              trimInSeconds={exerciseVideo.startSeconds ?? 0}
+              trimOutSeconds={exerciseVideo.trimOutSeconds ?? null}
             />
           ) : null}
 
@@ -392,19 +412,12 @@ export async function ClassItemRenderer({ item, playerLayout = 'stack', nextHref
                 </Badge>
               )}
             </div>
-            {item.description && (
-              <p className="text-muted-foreground whitespace-pre-wrap">{item.description}</p>
-            )}
           </CardContent>
         </Card>
       )}
 
-      {/* Rich Content (below any type) — plain prose, no card/background. */}
-      {item.rich_content && (
-        <div className="text-[15.5px] leading-[1.7] text-foreground/90">
-          <TiptapReadOnly content={item.rich_content} />
-        </div>
-      )}
+      <LessonWrittenContent description={item.description} richContent={item.rich_content} locale={locale}/>
+
     </LessonActivityBoundary>
   )
 }

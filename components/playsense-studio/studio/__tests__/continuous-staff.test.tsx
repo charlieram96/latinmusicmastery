@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import React, { act } from 'react';
+import { StaveNote } from 'vexflow';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Span, Track } from '@/components/playsense-studio/shared/score-model/types';
@@ -179,5 +180,40 @@ describe('ContinuousStaff', () => {
       expect(frames.size).toBe(0);
       root = createRoot(host);
     });
+  });
+});
+
+describe('Sync rhythmic alignment', () => {
+  it('keeps bar timing and later attacks exact while giving downbeats reading space after the separator', async () => {
+    const centers:number[]=[];
+    const original=StaveNote.prototype.draw;
+    const spy=vi.spyOn(StaveNote.prototype,'draw').mockImplementation(function(this:StaveNote) {
+      centers.push(this.getNoteHeadBeginX()+this.getGlyphWidth()/2);
+      return original.call(this);
+    });
+    const show=(map:(qn:number)=>number, bars=items, pps=150) => (
+      <ContinuousStaff items={bars} pixelsPerSecond={pps} scrollLeftPx={0}
+        viewportWidth={800} height={220} noteTimeForQN={map} onHitsReady={()=>{}} />
+    );
+    try {
+      act(()=>root.render(show(qn=>qn/2)));
+      // Render window starts at -800, hence local SVG coordinates include 800.
+      expect(centers).toHaveLength(4);
+      centers.forEach((x,i)=>expect(x-800).toBeCloseTo([17,150,317,450][i],5));
+      centers.length=0;
+      const stretched=items.map((item,i)=>({...item,
+        startVideoTimeSeconds:i===0?0:3,endVideoTimeSeconds:i===0?3:5}));
+      // First bar stretches from 2s to 3s; second keeps its duration.
+      act(()=>root.render(show(qn=>qn<=4?qn*0.75:3+(qn-4)/2,stretched)));
+      await act(async()=>{ await new Promise(r=>setTimeout(r,40)); });
+      expect(centers).toHaveLength(4);
+      centers.forEach((x,i)=>expect(x-800).toBeCloseTo([17,225,467,600][i],5));
+      centers.length=0;
+      // A beat adjustment without changing bar boundaries must also redraw.
+      act(()=>root.render(show(qn=>({0:0,2:1.6,4:3,6:4.2}[qn]??0),stretched,200)));
+      await act(async()=>{ await new Promise(r=>setTimeout(r,40)); });
+      expect(centers).toHaveLength(4);
+      centers.forEach((x,i)=>expect(x-800).toBeCloseTo([17,320,617,840][i],5));
+    } finally { spy.mockRestore(); }
   });
 });

@@ -1,7 +1,7 @@
 'use client'
 
 // Redesigned, collapsible course sidebar for the lesson viewer.
-// Expanded: 340px module accordion with chip-labelled lesson rows.
+// Expanded: 320px module accordion with chip-labelled lesson rows.
 // Collapsed: 72px rail with the teacher avatar, an expand button, and
 // numbered lesson dots so navigation still works.
 
@@ -169,7 +169,7 @@ export function LessonSidebar({
         'hidden lg:flex flex-shrink-0 flex-col border-r border-border bg-sunken sticky top-0 h-[calc(100vh-3.5rem)] overflow-hidden'
       )}
     >
-      <div className="flex h-full w-[360px] flex-col">
+      <div className="flex h-full min-h-0 w-full min-w-0 flex-col">
         {/* Course identity */}
         <div className="flex flex-shrink-0 items-center gap-3 p-3.5">
           {courseImageUrl ? (
@@ -194,14 +194,14 @@ export function LessonSidebar({
           <button
             onClick={onToggle}
             aria-label={t('dashboard.classViewer.sidebar.collapseMenu')}
-            className="grid h-[30px] w-[30px] place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-lg text-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <ChevronsLeft className="h-4 w-4" />
           </button>
         </div>
 
         {/* Scroll area */}
-        <div className={cn(styles.scrollHide, 'flex-1 overflow-y-auto pt-1')}>
+        <div className={cn(styles.scrollHide, 'min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden pt-1')}>
           {numbered.map((section, i) => (
             <SidebarModule
               key={section.id}
@@ -279,18 +279,18 @@ function SidebarModule({
   return (
     <div
       className={cn(
-        'mx-2 mb-1 mt-5 rounded-2xl border border-transparent transition-colors',
+        'mx-2 mb-1 mt-5 rounded-xl border border-transparent transition-colors',
         containsActive || isCurrent ? 'bg-foreground/[0.02]' : 'border-foreground/[0.05]'
       )}
     >
       {/* Header: the title block links to the module overview page; the
           chevron is a sibling control that only toggles the lesson list.
           They are never nested so each stays a valid, focusable target. */}
-      <div className="flex items-start rounded-2xl transition-colors hover:bg-muted/30">
+      <div className="flex items-start rounded-xl transition-colors hover:bg-muted/30">
         <Link
           href={moduleOverviewHref(courseId, section.id)}
           aria-current={isCurrent ? 'page' : undefined}
-          className="group/link min-w-0 flex-1 rounded-2xl px-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="group/link min-w-0 flex-1 rounded-xl px-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-terracotta">
             {t('dashboard.classViewer.sidebar.module', { n: moduleIndex + 1 })}
@@ -329,7 +329,7 @@ function SidebarModule({
           aria-expanded={open}
           aria-controls={regionId}
           aria-label={t('dashboard.classViewer.sidebar.toggleLessons', { title: section.title })}
-          className="mr-2 mt-2.5 grid h-[30px] w-[30px] flex-shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="mr-2 mt-2.5 grid h-[30px] w-[30px] flex-shrink-0 place-items-center rounded-lg text-foreground transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <ChevronDown
             className={cn(
@@ -396,7 +396,7 @@ function LessonRow({
       <Link
         href={`/dashboard/course/${courseId}/class/${cls.id}`}
         className={cn(
-          'flex min-w-0 flex-1 items-center gap-3 rounded-xl pr-2 transition-colors duration-150',
+          'flex min-w-0 flex-1 items-center gap-2 rounded-lg pr-2 transition-colors duration-150',
           state === 'active'
             ? 'bg-primary/[0.1]'
             : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
@@ -407,7 +407,7 @@ function LessonRow({
         {/* Number box — flush to the button, sharing its corner radius. */}
         <span
           className={cn(
-            'grid h-12 w-14 flex-shrink-0 place-items-center rounded-xl font-heading text-[15px] font-bold tabular-nums transition-colors',
+            'grid min-h-12 w-10 self-stretch flex-shrink-0 place-items-center rounded-lg font-heading text-[15px] font-bold tabular-nums transition-colors',
             state === 'active'
               ? 'bg-primary/15 text-primary'
               : 'bg-foreground/[0.06] text-foreground group-hover:bg-foreground/[0.09]',
@@ -423,8 +423,9 @@ function LessonRow({
         </span>
 
         <span
+          title={cls.title}
           className={cn(
-            'min-w-0 flex-1 truncate text-[14px] leading-tight tracking-[-0.005em]',
+            'min-w-0 flex-1 line-clamp-2 break-words py-2 text-[14px] leading-snug tracking-[-0.005em]',
             state === 'active'
               ? 'font-semibold text-foreground'
               : 'font-medium text-foreground/90'

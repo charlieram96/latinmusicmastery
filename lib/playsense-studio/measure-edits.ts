@@ -157,6 +157,7 @@ export function structuralEditProblem(score: ScoreDocument, action: StructuralAc
   const trackIndex = action.type === 'append-score' ? 0 : action.trackIndex;
   const track = score.tracks[trackIndex];
   if (!track) return INVALID;
+  if (track.staffGroup && action.type !== 'append-score') return 'Bar structure edits for grouped staves are not supported yet. You can edit notes in either staff.';
   const n = track.measures.length;
   switch (action.type) {
     case 'add-measure':
@@ -187,8 +188,12 @@ export function structuralEditProblem(score: ScoreDocument, action: StructuralAc
       return null;
     }
     case 'append-score': {
+      if (action.score.tracks.length > 1 || score.tracks.some(t => t.staffGroup)) return 'Use Replace score to import all staves together. Adding measures to a multi-staff score is not supported yet.';
       const imported = action.score.tracks[0];
       if (!imported || !imported.measures.length) return 'That file has no measures to add.';
+      if (imported.instrument !== track.instrument) {
+        return 'This score uses a different instrument. Use Replace score to preserve its instrument and notation, or import it into a separate lesson.';
+      }
       if (n + imported.measures.length > MAX_MEASURES) return `Scores are limited to ${MAX_MEASURES} measures.`;
       return null;
     }

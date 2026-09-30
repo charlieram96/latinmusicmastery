@@ -10,7 +10,7 @@
 // assigning video.currentTime) arrives here as an ordinary seek, for free.
 //
 // The one rule that matters:
-//   seeking / waiting / stalled  -> TEAR DOWN, schedule nothing
+//   seeking / waiting            -> TEAR DOWN, schedule nothing
 //   seeked  / playing            -> SCHEDULE, tear nothing down
 // Mixing those up is the classic "audio never comes back after a seek" bug.
 
@@ -49,9 +49,7 @@ export function useBackingMixer(options: {
   const { videoRef, clips, enabled, levels, usable, suspended = false } = options;
 
   const mixerRef = useRef<BackingMixer | null>(null);
-  if (mixerRef.current === null && typeof window !== 'undefined') {
-    mixerRef.current = new BackingMixer();
-  }
+
 
   // Read by the ratechange listener, which only takes pitch preservation off
   // when there is backing to keep in key with the video.
@@ -61,7 +59,21 @@ export function useBackingMixer(options: {
   }, [clips.length]);
 
   const [readyIds, setReadyIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [failedIds, setFailedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [retry, setRetry] = useState(0);
   const buffersRef = useRef(new Map<string, AudioBuffer>());
+
+  // Create before all dependent effects, including React's setup/cleanup replay.
+  useEffect(() => {
+    const mixer = new BackingMixer();
+    mixerRef.current = mixer;
+    return () => {
+      mixer.close();
+      if (mixerRef.current === mixer) mixerRef.current = null;
+      buffersRef.current.clear();
+    };
+  }, []);
+
 
   // The element mounts late (it is portalled), so poll the ref each commit the
   // way useVideoTransportClock does; the updater bails when unchanged.
@@ -71,20 +83,21 @@ export function useBackingMixer(options: {
   });
 
   // ---- Decode ------------------------------------------------------------
-  const urlsKey = clips.map((c) => c.url).join(' ');
+  const urlsKey = clips.map((c) => `${c.id}:${c.url}`).join(' ');
   useEffect(() => {
     const mixer = mixerRef.current;
     if (!mixer || clips.length === 0) return;
     let cancelled = false;
+    setReadyIds(new Set());
+    setFailedIds(new Set());
     const controller = new AbortController();
 
     void (async () => {
       const ctx = mixer.ensureContext();
       for (const clip of clips) {
         if (cancelled) return;
-        if (buffersRef.current.has(clip.url)) continue;
         try {
-          const buffer = await loadClipAudio(ctx, clip.url, controller.signal);
+          const buffer = buffersRef.current.get(clip.url) ?? await loadClipAudio(ctx, clip.url, controller.signal);
           if (cancelled) return;
           buffersRef.current.set(clip.url, buffer);
           setReadyIds((prev) => {
@@ -93,8 +106,7 @@ export function useBackingMixer(options: {
             return next;
           });
         } catch {
-          // A track that cannot be decoded simply never sounds; its lane still
-          // draws and stays draggable.
+          if (!cancelled) setFailedIds(prev => new Set([...prev, clip.id]));
         }
       }
     })();
@@ -104,11 +116,11 @@ export function useBackingMixer(options: {
       controller.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlsKey]);
+  }, [urlsKey, retry]);
 
   // ---- Keep the mixer's view of the clips current ------------------------
   const clipsKey = clips
-    .map((c) => `${c.id}:${c.timelineStartSeconds}:${c.trimInSeconds}:${c.trimOutSeconds}`)
+    .map((c) => `${c.id}:${c.url}:${c.timelineStartSeconds}:${c.trimInSeconds}:${c.trimOutSeconds}`)
     .join(',');
   useEffect(() => {
     const mixer = mixerRef.current;
@@ -168,6 +180,7 @@ export function useBackingMixer(options: {
     const samples: number[] = [];
 
     const restart = () => {
+      if (video.paused || video.ended || video.seeking) return;
       mixer.start(video.currentTime, video.playbackRate);
       samples.length = 0;
       lastResyncAt = Date.now();
@@ -177,13 +190,13 @@ export function useBackingMixer(options: {
       const ctx = mixer.ensureContext();
       // This handler runs off a real user gesture (the transport button), the
       // only reliable place to lift the autoplay suspension.
-      if (ctx.state !== 'running') void ctx.resume().then(restart).catch(() => {});
-      else restart();
+      if (ctx.state !== 'running') void ctx.resume().then(() => { if (!mixer.isRunning) restart(); }).catch(() => {});
+      else if (!mixer.isRunning) restart();
     };
     const onPause = () => mixer.teardown();
     const onTeardown = () => mixer.teardown();
     const onResume = () => {
-      if (!video.paused) restart();
+      if (!video.paused && !mixer.isRunning) restart();
     };
     const onRateChange = () => {
       // AudioBufferSourceNode.playbackRate resamples (pitch moves) while the
@@ -203,8 +216,11 @@ export function useBackingMixer(options: {
     video.addEventListener('ended', onTeardown);
     video.addEventListener('seeking', onTeardown);
     video.addEventListener('waiting', onTeardown);
-    video.addEventListener('stalled', onTeardown);
+    // A stalled download is not a stalled playback clock. `waiting` handles
+    // actual buffer exhaustion; stopping here creates an artificial dropout.
     video.addEventListener('ratechange', onRateChange);
+    // The portalled video may already be playing when this effect attaches.
+    if (!video.paused && !video.ended) onPlay();
 
     // Drift: the dominant cause of audible desync is the element rebuffering
     // while the context keeps running, which the waiting/playing pair already
@@ -238,7 +254,7 @@ export function useBackingMixer(options: {
       video.removeEventListener('ended', onTeardown);
       video.removeEventListener('seeking', onTeardown);
       video.removeEventListener('waiting', onTeardown);
-      video.removeEventListener('stalled', onTeardown);
+
       video.removeEventListener('ratechange', onRateChange);
       mixer.teardown();
       try {
@@ -249,19 +265,20 @@ export function useBackingMixer(options: {
     };
   }, [videoEl]);
 
-  // Close the context on unmount - a leaked one keeps the tab's audio alive.
-  useEffect(
-    () => () => {
-      mixerRef.current?.close();
-      mixerRef.current = null;
-      buffersRef.current.clear();
-    },
-    []
-  );
-
   return {
     /** Clips whose audio is decoded and can actually sound. */
     readyIds,
+    failedIds,
+    /** Call from an actual click: unmuting must also unlock browser audio. */
+    unlock: () => {
+      if (failedIds.size) setRetry(n => n + 1);
+      const mixer=mixerRef.current;
+      if (!mixer) return;
+      const ctx=mixer.ensureContext();
+      const resume=()=>{const video=videoRef.current;if(video && !video.paused && !video.ended && !mixer.isRunning)mixer.start(video.currentTime,video.playbackRate);};
+      if(ctx.state !== 'running') void ctx.resume().then(resume).catch(()=>{});
+      else resume();
+    },
     /** Stop one clip while its handle is dragged; re-cue on release. */
     stopClip: (id: string) => mixerRef.current?.stopClip(id),
     rescheduleClip: (id: string) => mixerRef.current?.rescheduleClip(id),

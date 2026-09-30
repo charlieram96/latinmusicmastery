@@ -1,3 +1,4 @@
+import { toSidebarSections } from '@/lib/courses/structure'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getServerTranslator } from '@/lib/i18n/server'
@@ -20,6 +21,7 @@ interface PageProps {
     classId: string
   }>
   searchParams: Promise<{
+    itemId?: string
     item?: string
     preview?: string
   }>
@@ -34,7 +36,7 @@ function formatDuration(seconds: number | null): string | null {
 
 export default async function ClassViewerPage({ params, searchParams }: PageProps) {
   const { courseId, classId } = await params
-  const { item: itemParam, preview } = await searchParams
+  const { item: itemParam, itemId, preview } = await searchParams
   const supabase = await createClient()
 
   // Get user
@@ -101,7 +103,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
 
   // Active item index
   const activeIndex = Math.min(
-    Math.max(0, parseInt(itemParam || '0', 10) || 0),
+    Math.max(0, itemId ? items.findIndex((item: { id: string }) => item.id === itemId) : parseInt(itemParam || '0', 10) || 0),
     Math.max(0, items.length - 1)
   )
   const activeItem = items[activeIndex] || null
@@ -155,10 +157,9 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     : ['beginner', 'intermediate', 'advanced'].includes(difficulty)
       ? t(`dashboard.pages.course.difficulty.${difficulty}`)
       : difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
-  // Prefer the lesson's own description; fall back to the section's.
+  // Lesson text stays attached to its lesson; module text belongs to the module overview.
   const lessonDescription =
     (classData.description as string | null) ||
-    (section.description as string | null) ||
     null
 
   const shared: Omit<LessonModeShellProps, 'parts' | 'activeIndex' | 'progress' | 'body' | 'comments' | 'commentCount' | 'about'> = {
@@ -166,6 +167,8 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
     module: { id: section.id, title: moduleTitle, index: Math.max(0, moduleIndex) },
     lesson: { id: classId, title: classData.title },
     rail,
+    sections: toSidebarSections(structureSections),
+    hasAccess: isStudent,
     practice,
     teacherName,
     nextLesson: nextNode && nextNode.kind === 'lesson'
@@ -230,6 +233,7 @@ export default async function ClassViewerPage({ params, searchParams }: PageProp
   const body = activeItem ? (
     <div data-lesson-item>
       <ClassItemRenderer item={activeItem} userId={user.id} playerLayout="split" teacherName={teacherName} previewExercise={process.env.NODE_ENV === 'development' && preview === 'exercise'} previewLesson={process.env.NODE_ENV === 'development' && preview === 'lesson'} nextHref={activeIndex < items.length - 1 ? `/dashboard/course/${courseId}/class/${classId}?item=${activeIndex + 1}` : nextClassId ? `/dashboard/course/${courseId}/class/${nextClassId}` : null} />
+      {activeIndex===0 && lessonDescription && lessonDescription!==activeItem.description && <section data-lesson-summary className="mx-auto mb-6 w-full max-w-[78ch] rounded-xl border border-border bg-card px-5 py-4"><h2 className="mb-2 font-heading text-base font-semibold">{t('dashboard.pages.modules.aboutLesson')}</h2><p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{lessonDescription}</p></section>}
     </div>
   ) : (
     <ClassViewerEmpty />

@@ -1,4 +1,9 @@
 'use client';
+import {getLessonMetronome} from '@/app/actions/playsense-studio';
+import type {LessonMetronome} from '@/lib/playsense-studio/lesson-metronome';
+import {LessonMetronomeEditor} from '@/components/playsense-studio/studio/lesson-metronome-editor';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 
 // PlaySense Studio — multiple scored sections for one VIDEO lesson.
 //
@@ -10,7 +15,7 @@
 // at the bottom. ScoreSectionEditor (keyed, one at a time) owns the score state
 // and portals its chrome into these shell slots.
 
-import { Activity, ArrowLeft, FileUp, Loader2, Music, PanelBottom, Plus, Rows3, Trash2 } from 'lucide-react';
+import { Activity, ArrowLeft, FileUp, Loader2, Music, Eye, Plus, Rows3, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import {
@@ -37,6 +42,7 @@ export interface VideoSectionsWorkspaceProps {
   classItemId: string;
   /** Where the app-bar back link lands (the owning course's overview). */
   backHref?: string;
+  studentHref?: string;
   title: string;
   videoUrl: string | null;
   videoDurationSeconds: number | null;
@@ -72,6 +78,7 @@ export function VideoSectionsWorkspace(props: VideoSectionsWorkspaceProps) {
 function VideoSectionsBody({
   classItemId,
   backHref = '/admin/courses',
+  studentHref,
   title,
   videoUrl,
   videoDurationSeconds,
@@ -79,8 +86,11 @@ function VideoSectionsBody({
   initialSections,
   appBarExtra,
 }: VideoSectionsWorkspaceProps) {
+  const st = useStudioText();
   const { statuses, register } = useStudioDrafts();
   const [sections, setSections] = useState(initialSections);
+  const [lessonMetronome,setLessonMetronome]=useState<LessonMetronome>();
+  useEffect(()=>{let alive=true;void getLessonMetronome(classItemId).then(r=>{if(alive&&r.data)setLessonMetronome(r.data);});return()=>{alive=false;};},[classItemId]);
   const [selectedId, setSelectedId] = useState<string | null>(initialSections[0]?.sectionId ?? null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -134,8 +144,6 @@ function VideoSectionsBody({
   const [inspectorEl, setInspectorEl] = useState<HTMLElement | null>(null);
   const [transportEl, setTransportEl] = useState<HTMLElement | null>(null);
   const [monitorEl, setMonitorEl] = useState<HTMLElement | null>(null);
-  const [drawerEl, setDrawerEl] = useState<HTMLElement | null>(null);
-  const [highwayOpen, setHighwayOpen] = useState(false);
   // "New section" popover (Build measures / Import score at playhead).
   const [newSecOpen, setNewSecOpen] = useState(false);
 
@@ -222,31 +230,20 @@ function VideoSectionsBody({
           className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span className="hidden sm:inline">Admin</span>
+          <span className="hidden sm:inline">{st("Admin")}</span>
         </Link>
         <span className="hidden text-muted-foreground/40 sm:inline">/</span>
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate text-sm font-semibold">{title}</span>
           <span className="hidden shrink-0 rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-[10.5px] text-muted-foreground md:inline">
-            PlaySense Studio
-          </span>
+            {st("PlaySense Studio")}</span>
         </div>
 
         {appBarExtra}
 
         <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setHighwayOpen((o) => !o)}
-            disabled={!selected}
-            className={cn('st-chip', highwayOpen && 'is-on')}
-            title="Toggle the student highway preview"
-            aria-pressed={highwayOpen}
-          >
-            <PanelBottom className="h-4 w-4" />
-            <span className="hidden sm:inline">Preview</span>
-          </button>
-          <PublishControl />
+          {studentHref && <Link href={studentHref} target="_blank" rel="noopener noreferrer" className="st-chip text-primary" title={st('Opens the published lesson in student view')}><Eye className="h-4 w-4" />{st('Student view')}</Link>}
+          <PublishControl studentHref={studentHref} />
 
           {/* The active section editor portals its Save/undo/redo/replace here. */}
           <div ref={setAppBarEl} className="flex items-center gap-2" />
@@ -273,13 +270,12 @@ function VideoSectionsBody({
                       aria-expanded={newSecOpen}
                     >
                       {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                      New section
-                    </button>
+                      {st("New section")}</button>
                     {newSecOpen && (
                       <>
                         <div className="st-pop-scrim" onClick={() => setNewSecOpen(false)} />
                         <div className="st-pop">
-                          <span className="st-pop-label">Create a section by…</span>
+                          <span className="st-pop-label">{st("Create a section by…")}</span>
                           <button
                             type="button"
                             className="st-pop-item"
@@ -292,8 +288,8 @@ function VideoSectionsBody({
                               <Rows3 className="h-[17px] w-[17px]" />
                             </span>
                             <span className="tx">
-                              <span className="t">Build measures</span>
-                              <span className="d">Start empty and add bars by hand</span>
+                              <span className="t">{st("Build measures")}</span>
+                              <span className="d">{st("Start empty and add bars by hand")}</span>
                             </span>
                           </button>
                           <ScoreImportDialog
@@ -320,8 +316,8 @@ function VideoSectionsBody({
                                   <FileUp className="h-[17px] w-[17px]" />
                                 </span>
                                 <span className="tx">
-                                  <span className="t">Import a score</span>
-                                  <span className="d">Drop a MusicXML / MIDI file, then place it on the timeline</span>
+                                  <span className="t">{st("Import a score")}</span>
+                                  <span className="d">{st("Drop a MusicXML / MIDI file, then place it on the timeline")}</span>
                                 </span>
                               </button>
                             }
@@ -339,8 +335,7 @@ function VideoSectionsBody({
 
                   {sections.length === 0 ? (
                     <p className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
-                      No scored sections yet. Add a blank section or import a score.
-                    </p>
+                      {st("No scored sections yet. Add a blank section or import a score.")}</p>
                   ) : (
                     <ul className="flex flex-col gap-1">
                       {sections.map((s, i) => {
@@ -380,11 +375,10 @@ function VideoSectionsBody({
                                     {unpublished && <UnpublishedDot />}
                                   </span>
                                   <span className="block truncate font-mono text-[10px] text-muted-foreground">
-                                    {instrument} ·{' '}
+                                    {instrument} ·{st(' ')}
                                     {s.videoStartSeconds == null ? (
                                       <span className="rounded bg-muted px-1 py-px text-[9px] font-semibold uppercase tracking-wide">
-                                        Not placed
-                                      </span>
+                                        {st("Not placed")}</span>
                                     ) : (
                                       <>{fmt(s.videoStartSeconds)}–{fmt(s.videoEndSeconds)}</>
                                     )}
@@ -394,8 +388,8 @@ function VideoSectionsBody({
                               <button
                                 onClick={() => remove(s.sectionId)}
                                 className="rounded-md p-1.5 text-muted-foreground opacity-0 transition hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-                                aria-label="Delete section"
-                                title="Delete section"
+                                aria-label={st("Delete section")}
+                                title={st("Delete section")}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -416,9 +410,11 @@ function VideoSectionsBody({
         />
 
         {/* Center: the active section editor (or an empty state). */}
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 md:p-4">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto p-3 md:p-4">
+          <button type="button" className="st-chip m-2 self-start" onClick={()=>setSelectedId(null)}>{st("Video metronome")}</button>
           {selected && seed ? (
             <ScoreSectionEditor
+              lessonMetronome={lessonMetronome}
               key={`${selected.sectionId}:${selected.scoreDocument.id}`}
               classItemId={classItemId}
               sectionId={selected.sectionId}
@@ -448,37 +444,23 @@ function VideoSectionsBody({
               inspectorEl={inspectorEl}
               transportEl={transportEl}
               monitorEl={monitorEl}
-              drawerEl={drawerEl}
-              highwayOpen={highwayOpen}
+              drawerEl={null}
+              highwayOpen={false}
             />
           ) : (
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4">
-              {/* No scored sections yet — still let the author watch the demo. */}
-              <video
-                src={videoUrl ?? undefined}
-                controls
-                playsInline
-                preload="metadata"
-                className="max-h-[60vh] w-full max-w-3xl rounded-lg bg-black"
-              />
-              <p className="max-w-sm text-center text-sm text-muted-foreground">
-                This is the demo video. Add a blank section or import a score from the left, then
-                scrub the video and use “Place score at playhead” to drop notation where the
-                instructor plays.
-              </p>
-            </div>
+            <LessonMetronomeEditor onSaved={setLessonMetronome} classItemId={classItemId} videoUrl={videoUrl} durationSeconds={videoDurationSeconds} scoreStarts={sections.flatMap(s=>s.videoStartSeconds==null?[]:[s.videoStartSeconds])}/>
+
           )}
         </main>
 
         {/* Only when a section is selected does SyncPanel actually portal a
             monitor into monitorEl — the no-sections empty state shows its own
             full-size inline video instead. */}
-        {selected && videoUrl && <FloatingVideo label="Reference" onBodyEl={setMonitorEl} />}
+        {selected && videoUrl && <FloatingVideo label={st("Reference")} onBodyEl={setMonitorEl} />}
       </div>
 
       {/* ---- Bottom: transport dock + highway drawer ---- */}
       <div ref={setTransportEl} className="shrink-0" />
-      {highwayOpen && <div ref={setDrawerEl} className="st-drawer" style={{ height: 380 }} />}
     </div>
   );
 }

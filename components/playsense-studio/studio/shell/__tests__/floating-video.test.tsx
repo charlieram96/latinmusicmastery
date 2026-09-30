@@ -74,6 +74,14 @@ describe('FloatingVideo', () => {
     expect(pip().style.right).toBe('66px');
     expect(pip().style.top).toBe(`${600 - 170 - 50}px`);
   });
+  it('resizes with the corner handle and remembers its width without unmounting the video', () => {
+    const body=host.querySelector('.st-pip-body');
+    const handle=host.querySelector('[aria-label="Resize video"]')!;
+    ptr(handle,'pointerdown',400,400);ptr(handle,'pointermove',480,420);ptr(handle,'pointerup',480,420);
+    expect(pip().style.width).toBe('316px');
+    expect(JSON.parse(localStorage.getItem('playsense-studio:pip')!).width).toBe(316);
+    expect(host.querySelector('.st-pip-body')).toBe(body);
+  });
   it('shrinks to a pill and keeps the video mounted', () => {
     act(() => { (host.querySelector('button[title="Shrink to a pill"]') as HTMLButtonElement).click(); });
     expect(pip().classList.contains('is-min')).toBe(true);

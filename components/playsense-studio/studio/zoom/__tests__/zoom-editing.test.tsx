@@ -240,17 +240,17 @@ describe('useZoomEditing keys', () => {
     expect(flash).toHaveBeenCalledWith('Select a note to tie from.');
   });
 
-  it('Backspace at the end deletes the last note', () => {
+  it('Backspace at the end replaces the last note with a rest for overwriting', () => {
     const { latest } = mount(doc([n(60), n(62)]));
     key('Backspace');
-    expect(midis(latest.score)).toEqual([60]);
-    expect(latest.zoom?.cursor).toEqual({ measureIndex: 0, voice: 0, index: 'end', anchor: null });
+    expect(midis(latest.score)).toEqual([60, 'rest']);
+    expect(latest.zoom?.cursor).toEqual({ measureIndex: 0, voice: 0, index: 1, anchor: null });
   });
 
   it('Delete removes the note under the cursor and keeps the cursor there', () => {
     const { latest } = mount(doc([n(60), n(62), n(64)]), { cursor: { index: 1 } });
     key('Delete');
-    expect(midis(latest.score)).toEqual([60, 64]);
+    expect(midis(latest.score)).toEqual([60, 'rest', 64]);
     expect(latest.zoom?.cursor.index).toBe(1);
   });
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -98,7 +99,7 @@ export function VideoUpload({
             src={previewUrl}
             controls
             className="w-full h-full object-contain"
-          />
+          /><VideoWatermark nativeControls />
           <Button
             type="button"
             variant="destructive"

@@ -41,10 +41,10 @@
 .ws[data-anim] :is(.ws-staff, .ws-highway) { transition:flex-basis 360ms var(--ease-out); }
 
 /* side: media | music */
-.ws[data-layout=side] { grid-template-columns:minmax(0, calc(var(--ws-lead) * 1%)) 16px minmax(0, 1fr); grid-template-rows:minmax(0, 1fr); grid-template-areas:"a d b"; }
+.ws[data-layout=side] { grid-template-columns:minmax(0, calc((100% - 16px) * var(--ws-lead) / 100)) 16px minmax(0, 1fr); grid-template-rows:minmax(0, 1fr); grid-template-areas:"a d b"; }
 .ws[data-layout=side] .ws-div { cursor:col-resize; }
 /* stack: media over music */
-.ws[data-layout=stack] { grid-template-rows:minmax(0, calc(var(--ws-lead) * 1%)) 16px minmax(0, 1fr); grid-template-columns:minmax(0, 1fr); grid-template-areas:"a" "d" "b"; }
+.ws[data-layout=stack] { grid-template-rows:minmax(0, calc((100% - 16px) * var(--ws-lead) / 100)) 16px minmax(0, 1fr); grid-template-columns:minmax(0, 1fr); grid-template-areas:"a" "d" "b"; }
 .ws[data-layout=stack] .ws-div { cursor:row-resize; }
 .ws-media { grid-area:a; }
 .ws-music { grid-area:b; }
@@ -91,3 +91,33 @@
 @media (prefers-reduced-motion:reduce) {
   .ws[data-anim], .ws[data-anim] :is(.ws-staff, .ws-highway), .ws-grip, .ws-pct, .ws-pip-resize::after, .ws[data-layout=pip] .ws-media { transition:none; }
 }
+
+/* Pane visibility keeps players mounted so hiding a screen never restarts audio. */
+.ws[data-video-visible=false] { grid-template: minmax(0, 1fr) / minmax(0, 1fr); grid-template-areas: "b"; }
+.ws[data-video-visible=false] > .ws-media,
+.ws[data-video-visible=false] > .ws-div { display:none; }
+.ws[data-video-visible=false] > .ws-music { grid-area:b; }
+.ws[data-score-visible=false] > .ws-music > .ws-staff,
+.ws[data-highway-visible=false] > .ws-music > .ws-highway,
+.ws:is([data-score-visible=false], [data-highway-visible=false]) > .ws-music > .ws-div2 { display:none; }
+.ws:is([data-score-visible=false], [data-highway-visible=false]) > .ws-music > :is(.ws-staff,.ws-highway) { flex:1 1 100%; }
+.ws[data-score-visible=false][data-highway-visible=false] { grid-template:minmax(0,1fr) / minmax(0,1fr); grid-template-areas:"a"; }
+.ws[data-score-visible=false][data-highway-visible=false] > :is(.ws-music,.ws-div) { display:none; }
+.ws[data-score-visible=false][data-highway-visible=false] > .ws-media { display:flex; grid-area:a; position:relative; inset:auto; width:100%; height:100%; aspect-ratio:auto; }
+
+/* Each student surface owns its content and leaves the shared resize gutter clear. */
+.ws[data-score-visible] > .ws-music > :is(.ws-staff, .ws-highway) { overflow:hidden; min-width:0; isolation:isolate; }
+
+/* Three student screens: Score is independent; video and PlaySense share a pair. */
+.ws[data-three-panes=true] > .ws-music { display:contents; }
+.ws[data-three-panes=true] > .ws-music > :is(.ws-staff,.ws-highway) { border:1px solid hsl(var(--border)); border-radius:12px; overflow:hidden; }
+.ws[data-three-panes=true] .ws-staff { grid-area:s; background:hsl(var(--card)); }
+.ws[data-three-panes=true] .ws-highway { grid-area:h; }
+.ws[data-three-panes=true] .ws-media { grid-area:v; }
+.ws[data-three-panes=true] .ws-div2 { grid-area:e; height:auto; }
+.ws[data-three-panes=true][data-layout=side] { grid-template-columns:minmax(0,calc((100% - 16px) * var(--ws-lead) / 100)) 16px minmax(0,1fr); grid-template-rows:minmax(0,calc((100% - 12px) * var(--ws-staff) / 100)) 12px minmax(0,1fr); grid-template-areas:"s d v" "s d e" "s d h"; }
+.ws[data-three-panes=true][data-layout=side][data-swap=true] { grid-template-areas:"v d s" "e d s" "h d s"; }
+.ws[data-three-panes=true][data-layout=stack] { grid-template-columns:minmax(0,calc((100% - 12px) * var(--ws-staff) / 100)) 12px minmax(0,1fr); grid-template-rows:minmax(0,calc((100% - 16px) * var(--ws-lead) / 100)) 16px minmax(0,1fr); grid-template-areas:"s s s" "d d d" "v e h"; }
+.ws[data-three-panes=true][data-layout=stack][data-swap=true] { grid-template-areas:"v e h" "d d d" "s s s"; }
+.ws[data-three-panes=true][data-layout=stack] .ws-div2 { cursor:col-resize; border-block:0; border-inline:1px solid hsl(var(--border)); }
+.ws[data-three-panes=true][data-layout=stack] .ws-div2 .ws-grip { width:4px; height:44px; }

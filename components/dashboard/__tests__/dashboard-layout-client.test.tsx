@@ -32,13 +32,13 @@ it('renders the rail, header and scrolling main on dashboard pages', () => {
   expect(host.querySelector('[data-lesson-mode]')).toBeNull()
 })
 
-it('renders a lesson full-bleed, without the rail, header or tab bar', () => {
+it('keeps dashboard navigation beside the lesson without a duplicate header', () => {
   pathname = '/dashboard/course/c1/class/k1'
   render()
   expect(host.querySelector('[data-lesson-mode] [data-page]')).not.toBeNull()
-  expect(host.querySelector('[data-rail]')).toBeNull()
+  expect(host.querySelector('[data-rail]')).not.toBeNull()
   expect(host.querySelector('[data-top]')).toBeNull()
-  expect(host.querySelector('[data-tabs]')).toBeNull()
+  expect(host.querySelector('[data-tabs]')).not.toBeNull()
   // The lesson provides its own scroll container.
   expect(host.querySelector('[data-dashboard-main]')).toBeNull()
 })

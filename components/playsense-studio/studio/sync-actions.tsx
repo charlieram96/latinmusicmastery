@@ -1,4 +1,6 @@
 'use client';
+import { useStudioText } from '@/components/playsense-studio/studio/use-studio-text';
+
 // PlaySense Studio — the left rail's Sync status actions (Studio layout pass,
 // Task 4). Everything that USED to live in the waveform's context bar and
 // isn't specific to the waveform lane itself: placement, the click anchor,
@@ -24,6 +26,7 @@ export interface SyncActionsProps {
 }
 
 export function SyncActions(p: SyncActionsProps) {
+  const st = useStudioText();
   return (
     <div className="flex flex-col gap-2.5">
       {p.placeControl}
@@ -35,24 +38,22 @@ export function SyncActions(p: SyncActionsProps) {
           type="button"
           onClick={p.anchor.onSet}
           className="st-chip block"
-          title="Mark this moment as a beat, so the student's click locks to the recording"
+          title={st("Mark this moment as a beat, so the student's click locks to the recording")}
         >
           <AudioLines className="h-4 w-4" />
-          Anchor at playhead
-        </button>
+          {st("Anchor at playhead")}</button>
       )}
 
       {p.autoPlaceUndo && (
-        <button type="button" onClick={p.autoPlaceUndo} className="st-chip block" title="Put the bars back where they were">
+        <button type="button" onClick={p.autoPlaceUndo} className="st-chip block" title={st("Put the bars back where they were")}>
           <Undo2 className="h-4 w-4" />
-          Undo auto-place
-        </button>
+          {st("Undo auto-place")}</button>
       )}
 
       {p.graded && (
         <>
-          <span className="st-sec-label">Count-in</span>
-          <div className="st-seg" role="radiogroup" aria-label="Count-in">
+          <span className="st-sec-label">{st("Count-in")}</span>
+          <div className="st-seg" role="radiogroup" aria-label={st("Count-in")}>
             {([1, 2] as const).map((n) => (
               <button
                 key={n}
@@ -62,7 +63,7 @@ export function SyncActions(p: SyncActionsProps) {
                 className={p.graded!.countInBars === n ? 'is-on' : ''}
                 onClick={() => p.graded!.onCountIn(n)}
               >
-                {n === 1 ? '1 bar' : '2 bars'}
+                {st(n === 1 ? '1 bar' : '2 bars')}
               </button>
             ))}
           </div>
@@ -71,23 +72,21 @@ export function SyncActions(p: SyncActionsProps) {
             onClick={p.graded.onPreroll}
             className={`st-chip block${p.graded.preroll ? ' is-on' : ''}`}
             aria-pressed={p.graded.preroll}
-            title="Play the video through the count-in, instead of waiting at bar 1"
+            title={st("Play the video through the count-in, instead of waiting at bar 1")}
           >
-            Pre-roll video
-          </button>
+            {st("Pre-roll video")}</button>
           {p.graded.onHit && (
             <span className="text-xs tabular-nums text-muted-foreground" role="status">
-              {p.graded.onHit.k}/{p.graded.onHit.n} notes on a hit
-            </span>
+              {p.graded.onHit.k}/{p.graded.onHit.n} {st("notes on a hit")}</span>
           )}
         </>
       )}
 
       {p.reanalyze.state === 'loading' ? (
         <span className="text-xs text-muted-foreground">
-          {p.reanalyze.progress >= 1
+          {st(p.reanalyze.progress >= 1
             ? 'Processing audio…'
-            : `Downloading audio… ${p.reanalyze.progress > 0 ? `${Math.round(p.reanalyze.progress * 100)}%` : ''}`}
+            : `Downloading audio… ${p.reanalyze.progress > 0 ? `${Math.round(p.reanalyze.progress * 100)}%` : ''}`)}
         </span>
       ) : (
         <button
@@ -95,21 +94,21 @@ export function SyncActions(p: SyncActionsProps) {
           onClick={p.reanalyze.onClick}
           className="st-chip block"
           title={
-            p.reanalyze.state === 'idle'
+            st(p.reanalyze.state === 'idle'
               ? 'Analyze audio — decode this video so the waveform appears'
               : p.reanalyze.state === 'error'
                 ? 'Retry audio analysis'
-                : 'Re-analyze audio'
+                : 'Re-analyze audio')
           }
         >
           <AudioLines className="h-4 w-4" />
-          {p.reanalyze.state === 'idle' ? 'Analyze audio' : p.reanalyze.state === 'error' ? 'Retry analysis' : 'Re-analyze'}
+          {st(p.reanalyze.state === 'idle' ? 'Analyze audio' : p.reanalyze.state === 'error' ? 'Retry analysis' : 'Re-analyze')}
         </button>
       )}
 
       {p.notices.map((notice, i) => (
         <span key={i} className="text-xs text-muted-foreground" role="status">
-          {notice}
+          {st(notice)}
         </span>
       ))}
     </div>
