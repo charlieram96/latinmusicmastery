@@ -13,6 +13,7 @@ import { getExerciseDuration, generateExpectedTimestamps } from '@/lib/play-sens
 import { gradeSingleOnset, computeStats } from '@/lib/play-sense/scoring'
 import type { EventResult, Instrument } from '@/lib/play-sense/types'
 import { makeDemoExercise } from '@/lib/play-sense/demo-exercises'
+import { DEMO_LEAD_IN, comboOf, createDemoSession, frameDelta, resetDemoSession, stepDemoSession } from '@/lib/play-sense/demo-session'
 import { PerformanceHud } from '@/components/play-sense/performance-hud'
 import { PerformanceResultsDialog } from '@/components/play-sense/performance-results'
 import './preview.css'
@@ -28,7 +29,7 @@ export default function PlaySensePreview() {
   const [running, setRunning] = useState(true)
   const [demo, setDemo] = useState(true)
   const [sound, setSound] = useState(false)
-  const [elapsed, setElapsed] = useState(-3.5)
+  const [elapsed, setElapsed] = useState(DEMO_LEAD_IN)
   const [results, setResults] = useState<EventResult[]>([])
   const [take, setTake] = useState(0)
   const [help, setHelp] = useState(false)
@@ -36,10 +37,8 @@ export default function PlaySensePreview() {
   const resumeAfterReview = useRef(true)
   const [explore, setExplore] = useState(false)
   const [activeLane, setActiveLane] = useState<number | null>(null)
-  const elapsedRef = useRef(-3.5)
+  const session = useRef(createDemoSession())
   const lastFrame = useRef(0)
-  const matched = useRef(new Set<number>())
-  const allResults = useRef<EventResult[]>([])
   const audio = useRef<AudioContext | null>(null)
   const stage = useRef<HTMLDivElement>(null)
   const soundRef = useRef(sound)
@@ -54,8 +53,8 @@ export default function PlaySensePreview() {
   useEffect(() => { latest.current = { running, demo, model, expected, exercise, duration } }, [running, demo, model, expected, exercise, duration])
   useEffect(() => { soundRef.current = sound }, [sound])
   const reset = useCallback(() => {
-    elapsedRef.current = -3.5; matched.current = new Set(); allResults.current = []
-    setElapsed(-3.5); setResults([]); setTake(t => t + 1)
+    resetDemoSession(session.current)
+    setElapsed(DEMO_LEAD_IN); setResults([]); setTake(t => t + 1)
   }, [])
   const tone = useCallback((lane: number) => {
     const context = audio.current
@@ -76,33 +75,17 @@ export default function PlaySensePreview() {
   useEffect(() => {
     let raf = 0, lastUI = 0
     const tick = (now: number) => {
-      const dt = lastFrame.current ? Math.min((now - lastFrame.current) / 1000, 0.1) : 0
+      const dt = frameDelta(now, lastFrame.current)
       lastFrame.current = now
       const state = latest.current
       if (state.running && !document.hidden) {
-        elapsedRef.current += dt
-        const time = elapsedRef.current
-        const newResults: EventResult[] = []
-        for (const event of state.expected) {
-          if (matched.current.has(event.eventIndex)) continue
-          if (event.timestamp > time) break
-          if (!state.demo && time - event.timestamp < 0.15) continue
-          matched.current.add(event.eventIndex)
-          newResults.push({ eventIndex: event.eventIndex, grade: state.demo ? 'perfect' : 'miss', offsetMs: state.demo ? 0 : null, timing: state.demo ? 'on_time' : null, onsetEnergy: state.demo ? 1 : null })
-          if (state.demo) tone(state.model.notes.find(n => n.index === event.eventIndex)?.lane ?? 0)
-        }
-        if (newResults.length) {
-          allResults.current = [...allResults.current, ...newResults]
-          setResults(allResults.current)
-        }
-        if (time >= state.duration + 0.35) {
-          if (state.demo) {
-            elapsedRef.current = -3.5; matched.current.clear(); allResults.current = []
-            setResults([]); setTake(value => value + 1)
-          } else setRunning(false)
-        }
+        const step = stepDemoSession(session.current, dt, state)
+        if (state.demo) for (const result of step.added) tone(state.model.notes.find(n => n.index === result.eventIndex)?.lane ?? 0)
+        if (step.looped) { setResults([]); setTake(value => value + 1) }
+        else if (step.added.length) setResults(session.current.results)
+        if (step.ended) setRunning(false)
       }
-      if (now - lastUI >= 50) { setElapsed(elapsedRef.current); lastUI = now }
+      if (now - lastUI >= 50) { setElapsed(session.current.elapsed); lastUI = now }
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -112,16 +95,17 @@ export default function PlaySensePreview() {
 
   const strike = useCallback((lane: number) => {
     const state = latest.current
-    if (state.demo || !state.running || elapsedRef.current < 0) return
+    const live = session.current
+    if (state.demo || !state.running || live.elapsed < 0) return
     const target = state.model.lanes[lane]
     const note = target.midi ?? Number(target.id)
-    const result = gradeSingleOnset(elapsedRef.current, 1, state.expected, matched.current, state.exercise.difficulty, 0, 0,
+    const result = gradeSingleOnset(live.elapsed, 1, state.expected, live.matched, state.exercise.difficulty, 0, 0,
       state.exercise.instrument === 'piano' ? 'pitched' : 'percussion', state.exercise.instrument === 'piano' ? note : undefined,
       undefined, state.exercise.instrument === 'piano' ? undefined : target.id, 'midi')
     tone(lane); setActiveLane(lane)
     if (laneTimer.current) clearTimeout(laneTimer.current)
     laneTimer.current = setTimeout(() => setActiveLane(null), 130)
-    if (result) { allResults.current = [...allResults.current, result]; setResults(allResults.current) }
+    if (result) { live.results = [...live.results, result]; setResults(live.results) }
   }, [tone])
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -141,7 +125,7 @@ export default function PlaySensePreview() {
     await audio.current.resume(); setSound(v => !v)
   }
   const current = STAGE_THEMES[theme], ThemeIcon = THEME_COPY[theme].icon
-  const combo = (() => { let count = 0; for (let i = results.length-1; i >= 0 && results[i].grade !== 'miss'; i--) count++; return count })()
+  const combo = comboOf(results)
   const seconds = (n: number) => `${Math.floor(Math.max(0,n) / 60)}:${String(Math.floor(Math.max(0,n) % 60)).padStart(2, '0')}`
   const last = results[results.length - 1]
   return <main className="ps-preview" data-theme={theme}>
@@ -154,7 +138,7 @@ export default function PlaySensePreview() {
       <div className="ps-direction-intro"><span className="ps-overline">STEP INTO THE SESSION</span><h1>Your place in the band.</h1></div>
     </div>
     <section className={`ps-preview-stage ${explore ? 'ps-exploring' : ''}`} ref={stage} aria-label={`${current.name} playable stage`}>
-      <StageHighway exercise={exercise} attemptId={take} theme={theme} sessionState="playing" getElapsedSeconds={() => elapsedRef.current}
+      <StageHighway exercise={exercise} attemptId={take} theme={theme} sessionState="playing" getElapsedSeconds={() => session.current.elapsed}
         playheadProgress={Math.max(0,elapsed) / duration} currentScore={stats.score} currentCombo={combo} currentAccuracy={stats.accuracy}
         metronomeBeat={Math.floor(Math.max(0,elapsed) * exercise.bpm / 60) % 4 + 1} eventResultsLength={results.length} eventResults={results} fill showHud={false} hideCountdown explore={explore}/>
       <div className="ps-preview-vignette"/>

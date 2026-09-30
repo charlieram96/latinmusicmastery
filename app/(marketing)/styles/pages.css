@@ -1,0 +1,69 @@
+/* Content pages (About, FAQ, Contact, Blog, Legal): additions to marketing.css. Everything is scoped under .mkt. */
+
+/* ── contact ── */
+.mkt .cf-field{display:grid;min-width:0}
+.mkt .cf-err{margin-top:8px;min-height:0;font-size:13.5px}
+.mkt .cform [aria-invalid="true"]{border-color:#FF8A8A}
+.mkt .cf-fail{padding:14px 16px;border-radius:14px;border:1px solid rgba(255,138,138,.4);background:rgba(255,50,77,.08);color:#FFC2C2;font-size:14.5px;line-height:1.5}
+.mkt .sent:focus{outline:0}
+.mkt .sent:focus-visible{outline:2px solid var(--ambar);outline-offset:3px}
+.mkt .cf-mail{color:inherit;text-decoration:none;font-size:clamp(17px,4.6vw,24px)}
+.mkt .cf-mail:hover{color:var(--ambar)}
+.mkt .cf-social{list-style:none;padding:0;margin:14px 0 0;display:flex;flex-wrap:wrap;gap:8px}
+.mkt .cf-social a{display:inline-flex;align-items:center;padding:8px 14px;border:1px solid var(--line-2);border-radius:999px;font-size:14px;color:var(--hueso);text-decoration:none;transition:border-color .25s var(--ease-out)}
+.mkt .cf-social a:hover{border-color:var(--hueso)}
+
+/* ── blog list ── */
+.mkt a.post{color:inherit;text-decoration:none;border-radius:14px}
+.mkt a.post h3{transition:color .25s var(--ease-out)}
+.mkt a.post:hover h3{color:var(--ambar)}
+.mkt a.post:focus-visible{outline:2px solid var(--ambar);outline-offset:6px}
+.mkt a.post .sleeve, .mkt a.post .pcover{transition:transform .6s var(--ease-out)}
+.mkt a.post:hover .sleeve, .mkt a.post:hover .pcover{transform:translateY(-4px)}
+.mkt .pcover{position:relative;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:var(--noche-3)}
+.mkt .blog-cover-link{display:block;color:inherit;text-decoration:none;min-width:0}
+.mkt .blog-feature .pcover{aspect-ratio:16/10}
+.mkt .blog-empty{padding-block:clamp(56px,7vw,110px) 0;max-width:60ch}
+.mkt .blog-empty h2{font:800 clamp(36px,4vw,60px)/.92 var(--f-display);text-transform:uppercase}
+.mkt .blog-empty p{color:var(--humo);margin-top:14px;font-size:17px}
+
+/* ── newsletter ── */
+.mkt .news{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(20px,4vw,56px);align-items:center;border:1px solid var(--line);border-radius:28px;padding:clamp(22px,4vw,48px);background:var(--noche-2)}
+.mkt .news-title{font:800 clamp(34px,4vw,56px)/.92 var(--f-display);text-transform:uppercase}
+.mkt .news-title .serif{text-transform:none;font-size:.95em}
+.mkt .news-body{color:var(--humo);margin-top:12px;max-width:44ch}
+.mkt .news .signup .field{min-width:0}
+@media (max-width:900px){.mkt .news{grid-template-columns:1fr}}
+
+/* ── blog post ── */
+.mkt .post-title{display:block;font-size:clamp(40px,5.4vw,88px);line-height:.9;overflow-wrap:anywhere}
+.mkt .post-meta{display:flex;flex-wrap:wrap;gap:6px 10px;font:500 12px/1.4 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--humo)}
+.mkt .post-meta span{overflow-wrap:anywhere;min-width:0}
+.mkt .post-meta span:not(:last-child)::after{content:"·";margin-left:10px;color:var(--humo-2)}
+.mkt .post-meta span:first-child{color:var(--ambar)}
+.mkt .post-article{padding-block:clamp(40px,5vw,72px) clamp(56px,6vw,96px);display:grid;justify-items:start}
+.mkt .post-hero-cover{width:100%;max-width:1000px;aspect-ratio:16/9;margin-bottom:clamp(32px,4vw,56px)}
+.mkt .post-prose, .mkt .legal-prose{max-width:68ch;color:var(--humo);font-size:18px;line-height:1.7;min-width:0}
+.mkt .post-prose p+p, .mkt .post-prose p+ol, .mkt .post-prose ol+p{margin-top:18px}
+.mkt .post-prose h2, .mkt .legal-prose h2{font:800 clamp(28px,3vw,40px)/1 var(--f-display);text-transform:uppercase;color:var(--hueso);margin:48px 0 16px;scroll-margin-top:100px}
+.mkt .post-prose h2:first-child, .mkt .legal-prose h2:first-child{margin-top:0}
+.mkt .post-prose strong, .mkt .legal-prose strong{color:var(--hueso);font-weight:600}
+.mkt .post-prose ol, .mkt .legal-prose ol{list-style:decimal;padding-left:1.4em;display:grid;gap:8px}
+.mkt .post-prose ol li::marker, .mkt .legal-prose li::marker{color:var(--ambar)}
+.mkt .post-tags{list-style:none;padding:0;margin:40px 0 0;display:flex;flex-wrap:wrap;gap:8px}
+.mkt .post-tags li{font:500 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:8px 10px;border:1px solid var(--line-2);border-radius:999px;color:var(--humo)}
+.mkt .post-back{margin-top:40px}
+.mkt .post-related{padding-bottom:clamp(72px,8vw,120px);border-top:1px solid var(--line);padding-top:clamp(40px,5vw,72px)}
+.mkt .post-related-title{font:800 clamp(34px,4vw,56px)/.92 var(--f-display);text-transform:uppercase}
+.mkt .post-related .bgrid{padding-top:32px}
+
+/* ── legal ── */
+.mkt .legal-title{display:block;font-size:clamp(44px,7vw,120px);line-height:.88;overflow-wrap:anywhere}
+.mkt .legal-note{font-size:14.5px;color:var(--humo-2)}
+.mkt .legal-prose{padding-block:clamp(40px,5vw,72px) clamp(72px,8vw,120px);font-size:17px}
+.mkt .legal-prose h3{font:600 20px/1.3 var(--f-body);color:var(--hueso);margin:32px 0 12px}
+.mkt .legal-prose p{margin-bottom:16px}
+.mkt .legal-prose ul{list-style:disc;padding-left:1.4em;margin-bottom:16px;display:grid;gap:6px}
+.mkt .legal-prose ol{margin-bottom:16px}
+.mkt .legal-prose a{color:var(--ambar);text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+.mkt .legal-prose a:hover{color:var(--hueso)}
