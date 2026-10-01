@@ -217,7 +217,7 @@
 .lx-transport { flex:1; min-width:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .lx-transport-extra { display:contents; }
 @media (max-width:767px) {
-  .lx-transport { flex:0 0 auto; }
+  .lx-transport { flex:1 1 100%; }
   .lx-transport-extra { display:none; }
   .lx-action [data-finish-take] { flex:1 1 auto; }
 }

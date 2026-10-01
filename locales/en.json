@@ -2392,6 +2392,8 @@
           "measuringTitle": "Measuring your timing…"
         },
         "transport": {
+          "play": "Play",
+          "stop": "Stop",
           "label": "Playback",
           "pause": "Pause",
           "resume": "Resume",
