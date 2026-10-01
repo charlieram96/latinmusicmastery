@@ -9,7 +9,7 @@ vi.mock('@/components/language-provider', () => ({
 
 import { LessonTransport, type LessonTransportProps } from '../lesson-transport'
 
-const handlers = () => ({ onStart: vi.fn(), onPause: vi.fn(), onResume: vi.fn(), onRestart: vi.fn(), onFinish: vi.fn(), onClickToggle: vi.fn(), onWatchDemo: vi.fn() })
+const handlers = () => ({ onStart: vi.fn(), onStop: vi.fn(), onPause: vi.fn(), onResume: vi.fn(), onRestart: vi.fn(), onFinish: vi.fn(), onClickToggle: vi.fn(), onWatchDemo: vi.fn() })
 let root: Root
 let host: HTMLDivElement
 beforeEach(() => {
@@ -39,7 +39,7 @@ describe('LessonTransport', () => {
   it('while paused: resume', () => {
     const h = handlers()
     render({ ...h, state: 'paused' })
-    act(() => byLabel('dashboard.classViewer.lessonMode.transport.resume').click())
+    act(() => byLabel('dashboard.classViewer.lessonMode.transport.play').click())
     expect(h.onResume).toHaveBeenCalledOnce()
   })
 
@@ -62,4 +62,25 @@ describe('LessonTransport', () => {
     expect(h.onClickToggle).toHaveBeenCalledOnce()
     expect(byLabel('dashboard.classViewer.lessonMode.transport.clickOn').getAttribute('aria-pressed')).toBe('true')
   })
+  it('keeps Play and the main Start action connected, and Stop separate from Finish', () => {
+    const h = handlers()
+    render({ ...h, state: 'selecting' })
+    act(() => byLabel('dashboard.classViewer.lessonMode.transport.play').click())
+    expect(h.onStart).toHaveBeenCalledOnce()
+    expect(byLabel('dashboard.classViewer.lessonMode.transport.pause').disabled).toBe(true)
+    render({ ...h, state: 'playing' })
+    expect(byLabel('dashboard.classViewer.lessonMode.transport.play').disabled).toBe(true)
+    act(() => byLabel('dashboard.classViewer.lessonMode.transport.stop').click())
+    expect(h.onStop).toHaveBeenCalledOnce()
+    expect(h.onFinish).not.toHaveBeenCalled()
+  })
+
+  it('allows stopping a count-in while preventing duplicate starts', () => {
+    const h = handlers()
+    render({ ...h, state: 'countdown' })
+    expect(byLabel('dashboard.classViewer.lessonMode.transport.play').disabled).toBe(true)
+    act(() => byLabel('dashboard.classViewer.lessonMode.transport.stop').click())
+    expect(h.onStop).toHaveBeenCalledOnce()
+  })
+
 })

@@ -2392,6 +2392,8 @@
           "measuringTitle": "Midiendo tu tiempo…"
         },
         "transport": {
+          "play": "Reproducir",
+          "stop": "Stop",
           "label": "Reproducción",
           "pause": "Pausa",
           "resume": "Continuar",

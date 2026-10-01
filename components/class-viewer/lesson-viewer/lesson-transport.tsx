@@ -1,13 +1,10 @@
 'use client'
 
-// The play transport in the lesson action bar: pause / resume, the tempo, and
-// (wider screens) start over, the click, the backing-track mix and the demo;
-// Finish take ends the attempt and grades it. Before a take, Start playing is
-// the bar's main action.
+// Playback controls and the main take action share the same exercise session.
 
 import { Pendulum } from '@/components/playsense-studio/player/transport/chronometer-control'
 import type { ReactNode } from 'react'
-import { Eye, Gauge, Pause, Play, RotateCcw } from 'lucide-react'
+import { Eye, Gauge, Pause, Play, RotateCcw, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
 import { cn } from '@/lib/utils'
@@ -23,6 +20,8 @@ export interface LessonTransportProps {
   onPause: () => void
   onResume: () => void
   onRestart: () => void
+  onStop: () => void
+  loading?: boolean
   onFinish: () => void
   onClickToggle: () => void
   onWatchDemo?: () => void
@@ -30,7 +29,7 @@ export interface LessonTransportProps {
 
 const BASE = 'dashboard.classViewer.lessonMode.transport'
 
-export function LessonTransport({ state, bpm, countdownBeat, click, mix, onStart, onPause, onResume, onRestart, onFinish, onClickToggle, onWatchDemo }: LessonTransportProps) {
+export function LessonTransport({ state, bpm, countdownBeat, click, mix, onStart, onPause, onResume, onRestart, onStop, loading = false, onFinish, onClickToggle, onWatchDemo }: LessonTransportProps) {
   const { t } = useTranslation()
   const running = state === 'playing' || state === 'countdown'
   const inTake = state !== 'selecting'
@@ -38,17 +37,26 @@ export function LessonTransport({ state, bpm, countdownBeat, click, mix, onStart
   const pill = 'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-[13px] font-semibold tabular-nums'
   return <>
     <div role="group" aria-label={t(`${BASE}.label`)} className="lx-transport">
-      {inTake && <button type="button" className={iconBtn} disabled={state === 'countdown'}
-        aria-label={t(running ? `${BASE}.pause` : `${BASE}.resume`)} onClick={running ? onPause : onResume}>
-        {running ? <Pause className="h-4 w-4" fill="currentColor" /> : <Play className="ml-0.5 h-4 w-4" fill="currentColor" />}
-      </button>}
+      <Button size="sm" type="button" disabled={loading || running}
+        aria-label={t(`${BASE}.play`)} onClick={state === 'paused' ? onResume : onStart}>
+        <Play aria-hidden className="h-4 w-4" fill="currentColor" />{t(`${BASE}.play`)}
+      </Button>
+      <Button size="sm" type="button" variant="outline" disabled={state !== 'playing'}
+        aria-label={t(`${BASE}.pause`)} onClick={onPause}>
+        <Pause aria-hidden className="h-4 w-4" fill="currentColor" />{t(`${BASE}.pause`)}
+      </Button>
+      <Button size="sm" type="button" variant="outline" disabled={!inTake}
+        aria-label={t(`${BASE}.stop`)} onClick={onStop}>
+        <Square aria-hidden className="h-3 w-3" fill="currentColor" />{t(`${BASE}.stop`)}
+      </Button>
+      <Button size="sm" type="button" variant="outline" disabled={loading || !inTake}
+        aria-label={t(`${BASE}.restart`)} onClick={onRestart}>
+        <RotateCcw aria-hidden className="h-4 w-4" />{t(`${BASE}.restart`)}
+      </Button>
       <span className={pill}><Gauge aria-hidden className="h-3.5 w-3.5 text-muted-foreground" />
         {state === 'countdown' && countdownBeat > 0 ? t(`${BASE}.countIn`, { beat: countdownBeat }) : t(`${BASE}.bpm`, { bpm: Math.round(bpm) })}
       </span>
       <span data-transport-extra className="lx-transport-extra">
-        {inTake && <button type="button" className={iconBtn} aria-label={t(`${BASE}.restart`)} title={t(`${BASE}.restart`)} onClick={onRestart}>
-          <RotateCcw className="h-4 w-4" />
-        </button>}
         <button type="button" aria-pressed={click} aria-label={t(click ? `${BASE}.clickOn` : `${BASE}.clickOff`)} onClick={onClickToggle}
           className={cn(pill, 'transition-colors duration-tap ease-smooth hover:bg-muted', click && 'border-primary/50 bg-primary/[0.12] text-primary')}>
           <Pendulum size="sm" swingStyle={{}} />{t(`${BASE}.click`)}
@@ -61,6 +69,6 @@ export function LessonTransport({ state, bpm, countdownBeat, click, mix, onStart
     </div>
     {inTake
       ? <Button type="button" variant="chunky-ghost" data-finish-take="" onClick={onFinish} disabled={state === 'countdown'}>{t(`${BASE}.finish`)}</Button>
-      : <Button type="button" variant="chunky-success" data-primary="" data-transport-start="" onClick={onStart}>{t(`${BASE}.start`)}</Button>}
+      : <Button type="button" variant="chunky-success" data-primary="" data-transport-start="" disabled={loading} onClick={onStart}>{t(`${BASE}.start`)}</Button>}
   </>
 }

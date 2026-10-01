@@ -902,6 +902,8 @@ function ScoreExerciseSession({
             onPause={session.pauseExercise}
             onResume={() => { primeMedia(); session.resumeExercise() }}
             onRestart={() => { primeMedia(); void session.restartExercise() }}
+            onStop={session.retry}
+            loading={session.backingTrackLoading}
             onFinish={finishTake}
             onClickToggle={() => session.setAudioMetronome(!session.audioMetronome)}
             onWatchDemo={onWatchDemo}
