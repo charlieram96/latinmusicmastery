@@ -1,5 +1,11 @@
 'use client'
 
+import { adminLabel } from '@/lib/i18n/admin-labels'
+import { AdminText } from '@/components/admin/admin-text'
+
+
+import { useTranslation } from '@/components/language-provider'
+
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
+import { COURSE_INSTRUMENTS, getCourseInstrumentLabel, sortCourseInstruments } from '@/lib/instruments'
 import { updateCourseSettings, type CourseSettingsPatch } from '@/app/actions/course-builder'
 import { CourseThumbnailUpload } from '../course-thumbnail-upload'
 import { useAutosave } from './use-autosave'
@@ -21,6 +27,7 @@ import type { CourseStudioCourse, MusicalStyleOption, TeacherOption } from './ty
 
 interface CourseSettingsEditorProps {
   settings: CourseStudioCourse
+  courseInstruments?: readonly string[]
   musicalStyles: MusicalStyleOption[]
   teachers: TeacherOption[]
   onPatched: (patch: Partial<CourseStudioCourse>) => void
@@ -36,10 +43,12 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export function CourseSettingsEditor({
   settings,
+  courseInstruments = COURSE_INSTRUMENTS,
   musicalStyles,
   teachers,
   onPatched,
 }: CourseSettingsEditorProps) {
+  const { locale } = useTranslation()
   const { track } = useSaveStatus()
   const { queue, saveNow } = useAutosave<CourseSettingsPatch>({
     save: (patch) => track(updateCourseSettings(settings.id, patch)),
@@ -75,10 +84,10 @@ export function CourseSettingsEditor({
     <div className="space-y-6 px-5 py-5">
       {/* Identity */}
       <div className="space-y-4">
-        <SectionLabel>Identity</SectionLabel>
+        <SectionLabel><AdminText text={"Identity"} /></SectionLabel>
 
         <div className="grid gap-1.5">
-          <Label className="text-xs">Thumbnail</Label>
+          <Label className="text-xs"><AdminText text={"Thumbnail"} /></Label>
           <CourseThumbnailUpload
             compact
             courseId={settings.id}
@@ -91,9 +100,7 @@ export function CourseSettingsEditor({
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="course-title" className="text-xs">
-            Title
-          </Label>
+          <Label htmlFor="course-title" className="text-xs"> <AdminText text={"Title (English)"} /> </Label>
           <Input
             id="course-title"
             value={settings.title}
@@ -106,9 +113,7 @@ export function CourseSettingsEditor({
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="course-title-es" className="text-xs text-muted-foreground">
-            Title (Español)
-          </Label>
+          <Label htmlFor="course-title-es" className="text-xs text-muted-foreground"> <AdminText text={"Title (Español)"} /> </Label>
           <Input
             id="course-title-es"
             value={settings.title_es ?? ''}
@@ -134,15 +139,11 @@ export function CourseSettingsEditor({
             placeholder="course-slug"
             className="font-mono text-[13px]"
           />
-          <p className="text-[11px] text-muted-foreground">
-            Used in the course URL — keep it short and unique.
-          </p>
+          <p className="text-[11px] text-muted-foreground"> <AdminText text={"Used in the course URL — keep it short and unique."} /> </p>
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="course-description" className="text-xs">
-            Description
-          </Label>
+          <Label htmlFor="course-description" className="text-xs"> <AdminText text={"Description"} /> </Label>
           <Textarea
             id="course-description"
             value={settings.description ?? ''}
@@ -156,9 +157,7 @@ export function CourseSettingsEditor({
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="course-description-es" className="text-xs text-muted-foreground">
-            Description (Español)
-          </Label>
+          <Label htmlFor="course-description-es" className="text-xs text-muted-foreground"> <AdminText text={"Description (Español)"} /> </Label>
           <Textarea
             id="course-description-es"
             value={settings.description_es ?? ''}
@@ -174,16 +173,12 @@ export function CourseSettingsEditor({
 
       {/* Catalog */}
       <div className="space-y-4 border-t border-border pt-5">
-        <SectionLabel>Catalog</SectionLabel>
+        <SectionLabel><AdminText text={"Catalog"} /></SectionLabel>
 
         <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-border bg-warm-surface/60 px-3.5 py-3">
           <span className="space-y-0.5">
-            <span className="block text-[13px] font-medium text-foreground">
-              Fundamentals course
-            </span>
-            <span className="block text-xs leading-relaxed text-muted-foreground">
-              The instrument&rsquo;s genreless beginner course.
-            </span>
+            <span className="block text-[13px] font-medium text-foreground"> <AdminText text={"Fundamentals course"} /> </span>
+            <span className="block text-xs leading-relaxed text-muted-foreground"> <AdminText text={"The instrument&rsquo;s genreless beginner course."} /> </span>
           </span>
           <Switch checked={settings.is_fundamentals} onCheckedChange={handleToggleFundamentals} />
         </label>
@@ -196,7 +191,7 @@ export function CourseSettingsEditor({
 
         {!settings.is_fundamentals && (
           <div className="grid gap-1.5">
-            <Label className="text-xs">Musical style</Label>
+            <Label className="text-xs"><AdminText text={"Musical style"} /></Label>
             <Select
               value={settings.musical_style_id ?? undefined}
               onValueChange={(value) => {
@@ -206,7 +201,7 @@ export function CourseSettingsEditor({
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a genre" />
+                <SelectValue placeholder={adminLabel("Select a genre", locale)} />
               </SelectTrigger>
               <SelectContent>
                 {musicalStyles.map((style) => (
@@ -220,11 +215,11 @@ export function CourseSettingsEditor({
         )}
 
         <div className="grid gap-1.5">
-          <Label className="text-xs">Instrument</Label>
+          <Label className="text-xs">{locale === 'es' ? 'Instrumento / clasificación del curso' : 'Course instrument / classification'}</Label>
           <Select
-            value={settings.instrument || 'auto'}
+            value={settings.instrument || 'unselected'}
             onValueChange={(value) => {
-              const instrument = value === 'auto' ? null : value
+              const instrument = value === 'unselected' ? null : value
               setKindHint(null)
               onPatched({ instrument })
               saveNow({
@@ -238,21 +233,19 @@ export function CourseSettingsEditor({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="auto">Auto (from teacher)</SelectItem>
-              {SUBSCRIBABLE_INSTRUMENTS.map((inst) => (
+              <SelectItem value="unselected" disabled>{locale === 'es' ? 'Selecciona la clasificación del curso' : 'Select the course classification'}</SelectItem>
+              {sortCourseInstruments(courseInstruments, locale).map((inst) => (
                 <SelectItem key={inst} value={inst}>
-                  {inst}
+                  {getCourseInstrumentLabel(inst, locale)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <p className="text-[11px] text-muted-foreground">
-            Auto-set when a teacher is assigned, but can be overridden.
-          </p>
+          <p className="text-[11px] text-muted-foreground"> {locale === 'es' ? 'Esta clasificación pertenece al curso y no cambia al elegir profesor.' : 'This classification belongs to the course and does not change when choosing a teacher.'} </p>
         </div>
 
         <div className="grid gap-1.5">
-          <Label className="text-xs">Teacher</Label>
+          <Label className="text-xs"><AdminText text={"Teacher"} /></Label>
           <Select
             value={settings.teacher_id ?? 'unassigned'}
             onValueChange={(value) => {
@@ -265,7 +258,7 @@ export function CourseSettingsEditor({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="unassigned">Unassigned</SelectItem>
+              <SelectItem value="unassigned"><AdminText text={"Unassigned"} /></SelectItem>
               {teachers.map((teacher) => (
                 <SelectItem key={teacher.id} value={teacher.id}>
                   {teacher.name} — {teacher.instrument}
@@ -276,7 +269,7 @@ export function CourseSettingsEditor({
         </div>
 
         <div className="grid gap-1.5">
-          <Label className="text-xs">Difficulty</Label>
+          <Label className="text-xs"><AdminText text={"Difficulty"} /></Label>
           <Select
             value={settings.difficulty ?? 'all'}
             onValueChange={(value) => {
@@ -289,20 +282,18 @@ export function CourseSettingsEditor({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All levels</SelectItem>
-              <SelectItem value="beginner">Beginner</SelectItem>
-              <SelectItem value="intermediate">Intermediate</SelectItem>
-              <SelectItem value="advanced">Advanced</SelectItem>
+              <SelectItem value="all"><AdminText text={"All levels"} /></SelectItem>
+              <SelectItem value="beginner"><AdminText text={"Beginner"} /></SelectItem>
+              <SelectItem value="intermediate"><AdminText text={"Intermediate"} /></SelectItem>
+              <SelectItem value="advanced"><AdminText text={"Advanced"} /></SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-border bg-warm-surface/60 px-3.5 py-3">
           <span className="space-y-0.5">
-            <span className="block text-[13px] font-medium text-foreground">Master class</span>
-            <span className="block text-xs leading-relaxed text-muted-foreground">
-              Feature this course as a master class.
-            </span>
+            <span className="block text-[13px] font-medium text-foreground"><AdminText text={"Master class"} /></span>
+            <span className="block text-xs leading-relaxed text-muted-foreground"> <AdminText text={"Feature this course as a master class."} /> </span>
           </span>
           <Switch
             checked={settings.is_master_class}

@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "2.0",
+  "id": "repertorio-13-02",
+  "title": {
+    "es": "Compases 3-4"
+  },
+  "meter": "2/4",
+  "keyFifths": 2,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "repertorio-13-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A4",
+      "dur": 16,
+      "dynamic": "p"
+    },
+    {
+      "id": "repertorio-13-02.n2",
+      "onsetBeats": "1/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-13-02.n3",
+      "onsetBeats": "1/2",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F#4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-13-02.n4",
+      "onsetBeats": "3/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-13-02.n5",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F#4",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-13-02.n6",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4,
+      "dynamic": "mf"
+    },
+    {
+      "id": "repertorio-13-02.n7",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "rest": true,
+      "dur": 4
+    }
+  ],
+  "notation": {
+    "title": "Compases 3-4",
+    "meter": "2/4",
+    "key": 2,
+    "bars": [
+      [
+        {
+          "pitch": "A4",
+          "dur": 16,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "F#4",
+          "dur": 16
+        },
+        {
+          "pitch": "E4",
+          "dur": 16
+        },
+        {
+          "pitch": "F#4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 4,
+          "dynamic": "mf"
+        },
+        {
+          "rest": true,
+          "dur": 4
+        }
+      ]
+    ],
+    "beams": [
+      [
+        0,
+        1,
+        2,
+        3
+      ]
+    ],
+    "hairpin": "cresc",
+    "hairpinFrom": 0,
+    "hairpinTo": 5
+  }
+}

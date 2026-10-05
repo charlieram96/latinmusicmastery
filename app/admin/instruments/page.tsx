@@ -1,3 +1,7 @@
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeRow, INSTRUMENT_FIELDS, STYLE_FIELDS, COUNTRY_FIELDS } from '@/lib/i18n/localize'
+import { instrumentLabel } from '@/lib/i18n/instruments'
+import { AdminText } from '@/components/admin/admin-text'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -5,21 +9,28 @@ import { Plus, Guitar, Globe, Music, Pencil, Trash2 } from 'lucide-react'
 import { getInstruments, deleteInstrument } from '@/app/actions/admin'
 
 export default async function InstrumentsPage() {
+  const locale = await getServerLocale()
   const instruments = await getInstruments()
+  for (const instrument of instruments) {
+    localizeRow(instrument, locale, INSTRUMENT_FIELDS)
+    instrument.name = instrumentLabel(instrument.name, locale)
+    localizeRow(instrument.country, locale, COUNTRY_FIELDS)
+    for (const relation of instrument.instrument_styles ?? []) {
+      localizeRow(relation.style, locale, STYLE_FIELDS)
+    }
+  }
 
   return (
     <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-1">Instruments</h1>
-          <p className="text-muted-foreground">Link instruments to musical styles and countries</p>
+          <h1 className="text-4xl font-bold tracking-tight mb-1"><AdminText text={"Instruments"} /></h1>
+          <p className="text-muted-foreground"><AdminText text={"Link instruments to musical styles and countries"} /></p>
         </div>
         <Button asChild>
           <Link href="/admin/instruments/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Instrument
-          </Link>
+            <Plus className="w-4 h-4 mr-2" /> <AdminText text={"Add Instrument"} /> </Link>
         </Button>
       </div>
 
@@ -29,7 +40,7 @@ export default async function InstrumentsPage() {
           <Guitar className="w-4 h-4 text-amber-500" />
         </div>
         <div className="text-3xl font-bold">{instruments.length}</div>
-        <div className="text-sm text-muted-foreground">Instruments</div>
+        <div className="text-sm text-muted-foreground"><AdminText text={"Instruments"} /></div>
       </div>
 
       {instruments.length > 0 ? (
@@ -85,9 +96,7 @@ export default async function InstrumentsPage() {
                   <div className="flex items-center gap-2">
                     <Button asChild variant="outline" size="sm" className="flex-1">
                       <Link href={`/admin/instruments/${instrument.id}`}>
-                        <Pencil className="w-3.5 h-3.5 mr-1" />
-                        Edit
-                      </Link>
+                        <Pencil className="w-3.5 h-3.5 mr-1" /> <AdminText text={"Edit"} /> </Link>
                     </Button>
                     <form action={async () => {
                       'use server'
@@ -106,9 +115,9 @@ export default async function InstrumentsPage() {
       ) : (
         <div className="rounded-xl border bg-card p-12 text-center">
           <Guitar className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-muted-foreground text-sm mb-4">No instruments yet. Add instruments to link them to styles and countries.</p>
+          <p className="text-muted-foreground text-sm mb-4"><AdminText text={"No instruments yet. Add instruments to link them to styles and countries."} /></p>
           <Button asChild>
-            <Link href="/admin/instruments/new">Add Instrument</Link>
+            <Link href="/admin/instruments/new"><AdminText text={"Add Instrument"} /></Link>
           </Button>
         </div>
       )}

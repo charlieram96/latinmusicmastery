@@ -64,10 +64,11 @@
 .lx-part:hover { color:hsl(var(--foreground)); background:hsl(var(--muted) / .6); }
 .lx-part:focus-visible, .lx-icon-btn:focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:2px; }
 .lx-part-track { position:absolute; left:12px; right:12px; bottom:4px; height:3px; border-radius:2px; background:hsl(var(--muted)); overflow:hidden; }
-.lx-part-track i { position:absolute; inset:0 auto 0 0; border-radius:2px; background:hsl(var(--primary)); transition:width 600ms var(--ease-out); }
-.lx-part-on { background:hsl(var(--primary) / .12); color:hsl(var(--foreground)); }
+.lx-part-track i { position:absolute; inset:0 auto 0 0; border-radius:2px; background:hsl(var(--muted-foreground) / .3); transition:width 600ms var(--ease-out); }
+.lx-part-on { background:hsl(var(--primary) / .12); color:hsl(var(--primary)); }
+.lx-part-on .lx-part-track i { width:100% !important; background:hsl(var(--primary)); }
 .lx-part-on:hover { background:hsl(var(--primary) / .16); }
-.lx-part[data-part-state=done] { color:hsl(var(--primary)); }
+.lx-part[data-part-state=done]:not(.lx-part-on) { color:hsl(var(--muted-foreground)); }
 .lx-right { display:flex; align-items:center; justify-content:flex-end; gap:6px; }
 .lx-icon-btn { display:grid; place-items:center; width:36px; height:36px; border-radius:10px; color:hsl(var(--muted-foreground));
   transition:background-color var(--dur-tap) var(--ease-out), color var(--dur-tap) var(--ease-out); }
@@ -190,6 +191,7 @@
 .lx-meter[data-live=false] i { background:hsl(var(--primary) / .3); }
 .lx-clicks { display:flex; gap:14px; }
 .lx-clicks i { width:22px; height:22px; border-radius:50%; background:hsl(var(--primary) / .25); }
+.lx-clicks[data-clock=audio] i[data-active=true] { background:hsl(var(--primary)); box-shadow:0 0 16px hsl(var(--primary) / .55); }
 .lx-clicks[data-live=true] i { animation:lx-click 1.6s var(--ease-out) infinite; }
 @keyframes lx-click { 0%, 20% { background:hsl(var(--primary)); transform:scale(1.25); } 40%, 100% { background:hsl(var(--primary) / .25); transform:none; } }
 .lx-calib { height:8px; border-radius:4px; background:hsl(var(--muted)); overflow:hidden; }
@@ -297,3 +299,21 @@
 .lx[data-course-navigation=true][data-navigation-collapsed=true] { --lesson-side-w:72px; }
 .lx[data-course-navigation=true] > aside { height:100%; min-height:0; }
 @media (max-width:1023px) { .lx[data-course-navigation=true] { grid-template-columns:minmax(0,1fr); } }
+
+/* Four acoustic setup cards; the fourth slides into view as the guide advances. */
+.lx-rgrid-acoustic { display:grid; grid-auto-flow:column; grid-template-columns:none; grid-auto-columns:calc((100% - 32px) / 3); gap:16px; overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:10px; }
+.lx-rgrid-acoustic > section { min-width:0; grid-row:1; scroll-snap-align:end; }
+.lx-guide-slot { min-width:0; align-self:start; }
+.lx-setup-guide { --guide-color:var(--primary); position:relative; width:100%; border:1px solid hsl(var(--guide-color) / .55); border-radius:12px; padding:12px; background:hsl(var(--card)); box-shadow:0 5px 16px #0002; }
+.lx-setup-guide::before { content:''; position:absolute; top:-6px; left:calc(50% - 5px); width:10px; height:10px; background:hsl(var(--card)); border-top:1px solid hsl(var(--guide-color) / .55); border-left:1px solid hsl(var(--guide-color) / .55); transform:rotate(45deg); }
+.lx-setup-guide[data-status=done] { --guide-color:142 65% 45%; }
+.lx-setup-guide[data-status=error] { --guide-color:0 75% 58%; }
+.lx-guide-heading { display:flex; align-items:center; gap:8px; }
+.lx-guide-number { flex-shrink:0; font-size:11px; font-weight:700; border-radius:20px; padding:3px 7px; color:hsl(var(--guide-color)); background:hsl(var(--guide-color) / .12); }
+.lx-guide-heading > button { width:24px; height:24px; flex-shrink:0; }
+.lx-guide-content { display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin-top:8px; font-size:12px; line-height:1.5; }
+.lx-guide-content button { min-height:28px; height:auto; padding:5px 10px; font-size:12px; }
+.lx-guide-content > progress { width:100%; }
+.lx-guide-confirmed { display:flex; align-items:center; justify-content:center; gap:6px; padding:8px; border-radius:10px; border:1px solid hsl(142 65% 45% / .3); background:hsl(142 65% 45% / .07); color:hsl(142 65% 45%); font-size:12px; }
+.lx-guide-reopen { width:100%; font-size:12px; }
+@media(max-width:900px) { .lx-rgrid-acoustic { grid-auto-columns:min(85vw,360px); } }

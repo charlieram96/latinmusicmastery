@@ -1,5 +1,11 @@
 'use client'
 
+import { adminLabel } from '@/lib/i18n/admin-labels'
+import { AdminText } from '@/components/admin/admin-text'
+
+
+import { useTranslation } from '@/components/language-provider'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,7 +24,7 @@ import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { CourseThumbnailUpload } from './course-thumbnail-upload'
 import { createClient } from '@/lib/supabase/client'
-import { SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
+import { COURSE_INSTRUMENTS, getCourseInstrumentLabel, sortCourseInstruments } from '@/lib/instruments'
 
 interface MusicalStyle {
   id: string
@@ -51,12 +57,15 @@ interface CourseEditFormProps {
 }
 
 export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFormProps) {
+  const { locale } = useTranslation()
   const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [thumbnailUrl, setThumbnailUrl] = useState(course.thumbnail_url || '')
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setError(null)
     setSaving(true)
 
     const formData = new FormData(e.currentTarget)
@@ -66,6 +75,11 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
     const musicalStyleId = formData.get('musical_style_id') as string
     const teacherId = formData.get('teacher_id') as string
     const instrumentValue = formData.get('instrument') as string
+    if (!instrumentValue || instrumentValue === 'unselected') {
+      setSaving(false)
+      setError(locale === 'es' ? 'Selecciona la clasificación del curso.' : 'Select the course classification.')
+      return
+    }
     const isPublished = formData.get('is_published') === 'on'
 
     try {
@@ -93,7 +107,7 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
           musical_style_id: musicalStyleId,
           teacher_id: teacherId === 'unassigned' ? null : teacherId,
           teacher_name: teacherName,
-          instrument: instrumentValue === 'auto' ? null : (instrumentValue || null),
+          instrument: instrumentValue === 'unselected' ? null : (instrumentValue || null),
           is_published: isPublished,
           thumbnail_url: thumbnailUrl || null,
           updated_at: new Date().toISOString(),
@@ -116,11 +130,12 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
 
   return (
     <form onSubmit={handleSubmit}>
+      {error && <p role="alert" className="text-destructive">{error}</p>}
       <div className="space-y-6">
         {/* Thumbnail Card - At the top for visual prominence */}
         <Card>
           <CardHeader>
-            <CardTitle>Course Thumbnail</CardTitle>
+            <CardTitle><AdminText text={"Course Thumbnail"} /></CardTitle>
           </CardHeader>
           <CardContent>
             <CourseThumbnailUpload
@@ -134,11 +149,11 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
         {/* Basic Info Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
+            <CardTitle><AdminText text={"Basic Information"} /></CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">Course Title</Label>
+              <Label htmlFor="title"><AdminText text={"Course Title"} /></Label>
               <Input
                 id="title"
                 name="title"
@@ -158,7 +173,7 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description"><AdminText text={"Description"} /></Label>
               <Textarea
                 id="description"
                 name="description"
@@ -168,7 +183,7 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="musical_style_id">Musical Style</Label>
+              <Label htmlFor="musical_style_id"><AdminText text={"Musical Style"} /></Label>
               <Select name="musical_style_id" defaultValue={course.musical_style_id}>
                 <SelectTrigger>
                   <SelectValue />
@@ -184,23 +199,21 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="instrument">Instrument</Label>
-              <Select name="instrument" defaultValue={course.instrument || 'auto'}>
+              <Label htmlFor="instrument">{locale === 'es' ? 'Instrumento / clasificación del curso' : 'Course instrument / classification'}</Label>
+              <Select name="instrument" defaultValue={course.instrument || 'unselected'}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="auto">Auto (from teacher)</SelectItem>
-                  {SUBSCRIBABLE_INSTRUMENTS.map((inst) => (
+                  <SelectItem value="unselected" disabled>{locale === 'es' ? 'Selecciona la clasificación del curso' : 'Select the course classification'}</SelectItem>
+                  {sortCourseInstruments(COURSE_INSTRUMENTS, locale).map((inst) => (
                     <SelectItem key={inst} value={inst}>
-                      {inst}
+                      {getCourseInstrumentLabel(inst, locale)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Auto-set when teacher is assigned, but can be overridden
-              </p>
+              <p className="text-xs text-muted-foreground"> {locale === 'es' ? 'La clasificación del curso es independiente del profesor.' : 'The course classification is independent of its teacher.'} </p>
             </div>
           </CardContent>
         </Card>
@@ -208,17 +221,17 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
         {/* Teacher Assignment Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Teacher Assignment</CardTitle>
+            <CardTitle><AdminText text={"Teacher Assignment"} /></CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-2">
-              <Label htmlFor="teacher_id">Assign Teacher</Label>
+              <Label htmlFor="teacher_id"><AdminText text={"Assign Teacher"} /></Label>
               <Select name="teacher_id" defaultValue={course.teacher_id || 'unassigned'}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  <SelectItem value="unassigned"><AdminText text={"Unassigned"} /></SelectItem>
                   {teachers?.map((teacher) => (
                     <SelectItem key={teacher.id} value={teacher.id}>
                       {teacher.name} - {teacher.instrument}
@@ -226,9 +239,7 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Select a teacher to assign to this course
-              </p>
+              <p className="text-xs text-muted-foreground"> <AdminText text={"Select a teacher to assign to this course"} /> </p>
             </div>
           </CardContent>
         </Card>
@@ -236,7 +247,7 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
         {/* Publishing Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Publishing</CardTitle>
+            <CardTitle><AdminText text={"Publishing"} /></CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-3">
@@ -247,9 +258,7 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
                 defaultChecked={course.is_published ?? false}
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
-              <Label htmlFor="is_published" className="font-normal">
-                Publish this course (make it visible to students)
-              </Label>
+              <Label htmlFor="is_published" className="font-normal"> <AdminText text={"Publish this course (make it visible to students)"} /> </Label>
             </div>
           </CardContent>
         </Card>
@@ -259,15 +268,13 @@ export function CourseEditForm({ course, musicalStyles, teachers }: CourseEditFo
           <Button type="submit" className="flex-1" disabled={saving}>
             {saving ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
-              </>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> <AdminText text={"Saving..."} /> </>
             ) : (
               'Save Changes'
             )}
           </Button>
           <Button type="button" variant="outline" asChild>
-            <Link href="/admin/courses">Cancel</Link>
+            <Link href="/admin/courses"><AdminText text={"Cancel"} /></Link>
           </Button>
         </div>
       </div>

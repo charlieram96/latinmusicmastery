@@ -1,3 +1,4 @@
+import { AdminText } from '@/components/admin/admin-text'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,16 +22,12 @@ export default async function ExercisesPage() {
     <div className="container mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Exercises</h1>
-          <p className="text-muted-foreground">
-            Manage quizzes and exercises
-          </p>
+          <h1 className="text-3xl font-bold mb-2"><AdminText text={"Exercises"} /></h1>
+          <p className="text-muted-foreground"> <AdminText text={"Manage quizzes and exercises"} /> </p>
         </div>
         <Button asChild>
           <Link href="/admin/exercises/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Exercise
-          </Link>
+            <Plus className="w-4 h-4 mr-2" /> <AdminText text={"Add Exercise"} /> </Link>
         </Button>
       </div>
 
@@ -50,11 +47,10 @@ export default async function ExercisesPage() {
                     {exercise.lesson.title} • {exercise.lesson.course.title}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {exercise.attempts?.length || 0} attempts
-                  </p>
+                    {exercise.attempts?.length || 0} <AdminText text={"attempts"} /> </p>
                 </div>
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/exercises/${exercise.id}`}>Edit</Link>
+                  <Link href={`/admin/exercises/${exercise.id}`}><AdminText text={"Edit"} /></Link>
                 </Button>
               </CardContent>
             </Card>
@@ -63,14 +59,12 @@ export default async function ExercisesPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>No Exercises</CardTitle>
+            <CardTitle><AdminText text={"No Exercises"} /></CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground mb-4">
-              Create exercises to test your students' knowledge.
-            </p>
+            <p className="text-muted-foreground mb-4"> <AdminText text={"Create exercises to test your students' knowledge."} /> </p>
             <Button asChild>
-              <Link href="/admin/exercises/new">Add Exercise</Link>
+              <Link href="/admin/exercises/new"><AdminText text={"Add Exercise"} /></Link>
             </Button>
           </CardContent>
         </Card>

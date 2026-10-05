@@ -1,0 +1,364 @@
+{
+  "duration": 189,
+  "scenes": [
+    {
+      "key": "intro",
+      "dur": 6,
+      "title": "Explorando tu curso",
+      "caption": "Ya tienes acceso. Ahora descubre cómo encontrar tu clase y preparar tu espacio de estudio.",
+      "target": null,
+      "rect": null,
+      "zoom": 1
+    },
+    {
+      "key": "courses",
+      "dur": 9,
+      "title": "01 · Tus cursos, en un solo lugar",
+      "caption": "En Mis cursos (My Courses) encuentras los cursos de tu cuenta, el maestro y tu avance.",
+      "target": [
+        0.09,
+        0.24
+      ],
+      "rect": [
+        0.005,
+        0.2,
+        0.985,
+        0.23
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "courses",
+      "dur": 7,
+      "title": "Todos · En progreso · Completados",
+      "caption": "Estos filtros organizan tu lista. Haz clic en In Progress para ver los cursos que has comenzado.",
+      "target": [
+        0.09,
+        0.167
+      ],
+      "rect": [
+        0.008,
+        0.14,
+        0.165,
+        0.055
+      ],
+      "zoom": 1.1
+    },
+    {
+      "key": "progress",
+      "dur": 7,
+      "title": "Continúa lo que empezaste",
+      "caption": "En progreso muestra el curso que estás estudiando. Tu porcentaje te ayuda a ubicar tu avance.",
+      "target": [
+        0.91,
+        0.25
+      ],
+      "rect": [
+        0.83,
+        0.22,
+        0.15,
+        0.07
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "progress",
+      "dur": 6,
+      "title": "Consulta tus cursos terminados",
+      "caption": "Haz clic en Completed para consultar los cursos que ya has completado.",
+      "target": [
+        0.13,
+        0.17
+      ],
+      "rect": [
+        0.11,
+        0.14,
+        0.07,
+        0.055
+      ],
+      "zoom": 1.08
+    },
+    {
+      "key": "completed",
+      "dur": 7,
+      "title": "Completados",
+      "caption": "Si todavía no terminaste ninguno, verás este mensaje. Puedes volver a Todos con Show all courses.",
+      "target": [
+        0.49,
+        0.475
+      ],
+      "rect": [
+        0.4,
+        0.45,
+        0.17,
+        0.06
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "courses",
+      "dur": 9,
+      "title": "02 · Entra a Son Cubano Timbal",
+      "caption": "Haz clic en el nombre o la imagen de Son Cubano Timbal, con Patricio «el Chino» Díaz.",
+      "target": [
+        0.12,
+        0.237
+      ],
+      "rect": [
+        0.01,
+        0.22,
+        0.27,
+        0.083
+      ],
+      "zoom": 1.12
+    },
+    {
+      "key": "overview",
+      "dur": 9,
+      "title": "Conoce la página de tu curso",
+      "caption": "Arriba identificas el ritmo, el instrumento y el maestro. Continue lesson permite retomar una lección.",
+      "target": [
+        0.75,
+        0.11
+      ],
+      "rect": [
+        0.68,
+        0.07,
+        0.12,
+        0.07
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "overview",
+      "dur": 9,
+      "title": "Tu ruta de aprendizaje",
+      "caption": "La ruta visual ordena las clases. Un módulo agrupa clases; cada clase puede incluir diferentes actividades.",
+      "target": [
+        0.33,
+        0.34
+      ],
+      "rect": [
+        0.01,
+        0.17,
+        0.79,
+        0.28
+      ],
+      "zoom": 1.03
+    },
+    {
+      "key": "scroll",
+      "dur": 10,
+      "title": "03 · Desplázate hacia los módulos",
+      "caption": "Baja por la página para leer cada módulo. Buscamos Fundamentos del Timbal en el Son.",
+      "target": [
+        0.29,
+        0.48
+      ],
+      "rect": [
+        0.005,
+        0.44,
+        0.79,
+        0.22
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "scroll",
+      "dur": 8,
+      "title": "Despliega las clases disponibles",
+      "caption": "Show all 3 lessons muestra las tres clases de este módulo. Dentro del aula también puedes navegar por ellas.",
+      "target": [
+        0.069,
+        0.636
+      ],
+      "rect": [
+        0.026,
+        0.61,
+        0.088,
+        0.046
+      ],
+      "zoom": 1.08
+    },
+    {
+      "key": "closed",
+      "dur": 8,
+      "title": "04 · Abre el menú del módulo",
+      "caption": "En el menú lateral, haz clic en la flecha de Fundamentos del Timbal en el Son para desplegar sus clases.",
+      "target": [
+        0.88,
+        0.32
+      ],
+      "rect": [
+        0.01,
+        0.265,
+        0.96,
+        0.23
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "open",
+      "dur": 9,
+      "title": "Elige la clase que vas a estudiar",
+      "caption": "El módulo abierto muestra Introducción, Ritmo Básico y Variaciones de Cáscara. Selecciona Ritmo Básico.",
+      "target": [
+        0.54,
+        0.525
+      ],
+      "rect": [
+        0.035,
+        0.493,
+        0.91,
+        0.081
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "lesson",
+      "dur": 9,
+      "title": "05 · Ya estás dentro de la clase",
+      "caption": "Aquí se reúnen la lección y sus actividades. Las pestañas superiores permiten pasar de una parte a otra.",
+      "target": [
+        0.52,
+        0.035
+      ],
+      "rect": [
+        0.42,
+        0.005,
+        0.35,
+        0.06
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "lesson",
+      "dur": 8,
+      "title": "Recoge el menú cuando lo necesites",
+      "caption": "La flecha del módulo permite ocultar su lista. Para volver a verla, abre el mismo módulo otra vez.",
+      "target": [
+        0.14,
+        0.24
+      ],
+      "rect": [
+        0.005,
+        0.21,
+        0.145,
+        0.38
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "closed",
+      "dur": 6,
+      "title": "Más espacio, menos distracciones",
+      "caption": "Los módulos recogidos dejan visible la estructura del curso y sus indicadores de avance.",
+      "target": [
+        0.88,
+        0.32
+      ],
+      "rect": [
+        0.01,
+        0.265,
+        0.96,
+        0.23
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "lesson",
+      "dur": 10,
+      "title": "06 · Localiza tus herramientas",
+      "caption": "Debajo del video encuentras reproducción, reinicio, subtítulos, metrónomo y volumen. La línea de tiempo permite desplazarte.",
+      "target": [
+        0.33,
+        0.932
+      ],
+      "rect": [
+        0.185,
+        0.86,
+        0.49,
+        0.1
+      ],
+      "zoom": 1.02
+    },
+    {
+      "key": "lesson",
+      "dur": 9,
+      "title": "Video y partitura, juntos",
+      "caption": "La partitura acompaña la clase. Los controles de disposición te permiten organizar cómo ves el material.",
+      "target": [
+        0.83,
+        0.167
+      ],
+      "rect": [
+        0.8,
+        0.145,
+        0.18,
+        0.055
+      ],
+      "zoom": 1.02
+    },
+    {
+      "key": "lesson",
+      "dur": 7,
+      "title": "De la explicación a la práctica",
+      "caption": "Haz clic en Exercise 1 para pasar al primer ejercicio de la clase.",
+      "target": [
+        0.5,
+        0.035
+      ],
+      "rect": [
+        0.47,
+        0.005,
+        0.055,
+        0.055
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "exercise",
+      "dur": 10,
+      "title": "07 · Prepara tu ejercicio",
+      "caption": "En el ejercicio puedes elegir Video, Partitura y PlaySense. Activa las vistas que te ayuden a estudiar.",
+      "target": null,
+      "rect": null,
+      "zoom": 1
+    },
+    {
+      "key": "mixer",
+      "dur": 10,
+      "title": "Elige qué instrumentos escuchar",
+      "caption": "Tocar junto con abre la mezcla: ajusta los volúmenes y silencia las pistas para practicar tu parte.",
+      "target": null,
+      "rect": null,
+      "zoom": 1
+    },
+    {
+      "key": "tuner",
+      "dur": 9,
+      "title": "Herramientas para tu estudio",
+      "caption": "El afinador está disponible en el menú de herramientas. Lo veremos en detalle en otro capítulo.",
+      "target": [
+        0.41,
+        0.72
+      ],
+      "rect": [
+        0.34,
+        0.695,
+        0.14,
+        0.05
+      ],
+      "zoom": 1
+    },
+    {
+      "key": "outro",
+      "dur": 7,
+      "title": "Tu curso, paso a paso",
+      "caption": "Ya sabes encontrar tu curso, abrir sus módulos y elegir una clase. Próximo capítulo: practicar con el reproductor.",
+      "target": null,
+      "rect": null,
+      "zoom": 1
+    }
+  ]
+}

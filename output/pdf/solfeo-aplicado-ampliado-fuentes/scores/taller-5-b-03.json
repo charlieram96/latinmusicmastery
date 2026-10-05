@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "2.0",
+  "id": "taller-5-b-03",
+  "title": {
+    "es": "B · Preparación de 4 posiciones y salto directo"
+  },
+  "meter": "4/4",
+  "keyFifths": 1,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "taller-5-b-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 2
+    },
+    {
+      "id": "taller-5-b-03.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 2
+    },
+    {
+      "id": "taller-5-b-03.n3",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 2
+    },
+    {
+      "id": "taller-5-b-03.n4",
+      "onsetBeats": "6",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "taller-5-b-03.n5",
+      "onsetBeats": "8",
+      "durationBeats": "2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 2
+    },
+    {
+      "id": "taller-5-b-03.n6",
+      "onsetBeats": "10",
+      "durationBeats": "2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "taller-5-b-03.n7",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 4,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "B · Preparación de 4 posiciones y salto directo",
+    "key": 1,
+    "bars": [
+      [
+        {
+          "pitch": "G3",
+          "dur": 2
+        },
+        {
+          "pitch": "A3",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "B3",
+          "dur": 2
+        },
+        {
+          "pitch": "C4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "G3",
+          "dur": 2
+        },
+        {
+          "pitch": "C4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "G3",
+          "dur": 1
+        }
+      ]
+    ],
+    "meter": "4/4",
+    "barStyles": {
+      "3": "final"
+    }
+  }
+}

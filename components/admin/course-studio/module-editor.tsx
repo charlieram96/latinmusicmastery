@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -50,12 +53,10 @@ export function ModuleEditor({ section, onPatched, onDelete }: ModuleEditorProps
   return (
     <div className="space-y-6 px-5 py-5">
       <div className="space-y-4">
-        <SectionLabel>Module</SectionLabel>
+        <SectionLabel><AdminText text={"Module"} /></SectionLabel>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="module-title" className="text-xs">
-            Title
-          </Label>
+          <Label htmlFor="module-title" className="text-xs"> <AdminText text={"Title"} /> </Label>
           <Input
             id="module-title"
             value={title}
@@ -69,9 +70,7 @@ export function ModuleEditor({ section, onPatched, onDelete }: ModuleEditorProps
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="module-title-es" className="text-xs text-muted-foreground">
-            Title (Español)
-          </Label>
+          <Label htmlFor="module-title-es" className="text-xs text-muted-foreground"> <AdminText text={"Title (Español)"} /> </Label>
           <Input
             id="module-title-es"
             value={titleEs}
@@ -85,9 +84,7 @@ export function ModuleEditor({ section, onPatched, onDelete }: ModuleEditorProps
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="module-description" className="text-xs">
-            Description
-          </Label>
+          <Label htmlFor="module-description" className="text-xs"> <AdminText text={"Description"} /> </Label>
           <Textarea
             id="module-description"
             value={description}
@@ -102,9 +99,7 @@ export function ModuleEditor({ section, onPatched, onDelete }: ModuleEditorProps
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="module-description-es" className="text-xs text-muted-foreground">
-            Description (Español)
-          </Label>
+          <Label htmlFor="module-description-es" className="text-xs text-muted-foreground"> <AdminText text={"Description (Español)"} /> </Label>
           <Textarea
             id="module-description-es"
             value={descriptionEs}
@@ -125,12 +120,8 @@ export function ModuleEditor({ section, onPatched, onDelete }: ModuleEditorProps
           onClick={onDelete}
           className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium text-destructive transition-colors hover:bg-destructive/10"
         >
-          <Trash2 className="h-3.5 w-3.5" />
-          Delete module
-        </button>
-        <p className="mt-1 px-2.5 text-[11px] leading-relaxed text-muted-foreground">
-          Removes this module and all of its classes. This cannot be undone.
-        </p>
+          <Trash2 className="h-3.5 w-3.5" /> <AdminText text={"Delete module"} /> </button>
+        <p className="mt-1 px-2.5 text-[11px] leading-relaxed text-muted-foreground"> <AdminText text={"Removes this module and all of its classes. This cannot be undone."} /> </p>
       </div>
     </div>
   )

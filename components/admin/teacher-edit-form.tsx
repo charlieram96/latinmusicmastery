@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -119,11 +122,9 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
           href="/admin/teachers"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Teachers
-        </Link>
+          <ArrowLeft className="w-4 h-4 mr-2" /> <AdminText text={"Back to Teachers"} /> </Link>
         <h1 className="text-3xl font-bold">
-          {isNew ? 'Add Teacher' : 'Edit Teacher'}
+          {isNew ? <AdminText text={"Add Teacher"} /> : 'Edit Teacher'}
         </h1>
         <p className="text-muted-foreground mt-2">
           {isNew ? 'Create a new instructor profile' : 'Update teacher profile information'}
@@ -136,7 +137,7 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
           {/* Profile Image Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Profile Image</CardTitle>
+              <CardTitle><AdminText text={"Profile Image"} /></CardTitle>
             </CardHeader>
             <CardContent>
               <TeacherImageUpload
@@ -151,11 +152,11 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
           {/* Basic Info Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle><AdminText text={"Basic Information"} /></CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name"><AdminText text={"Name"} /></Label>
                 <Input
                   id="name"
                   name="name"
@@ -166,7 +167,7 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="instrument">Instrument</Label>
+                <Label htmlFor="instrument"><AdminText text={"Instrument"} /></Label>
                 <Input
                   id="instrument"
                   name="instrument"
@@ -176,7 +177,7 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="instrument_es" className="text-muted-foreground">Instrument (Español)</Label>
+                <Label htmlFor="instrument_es" className="text-muted-foreground"><AdminText text={"Instrument (Español)"} /></Label>
                 <Input
                   id="instrument_es"
                   name="instrument_es"
@@ -186,7 +187,7 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email"><AdminText text={"Email"} /></Label>
                 <Input
                   id="email"
                   name="email"
@@ -197,18 +198,16 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="bio">Bio</Label>
+                <Label htmlFor="bio"><AdminText text={"Bio"} /></Label>
                 <TiptapEditor
                   content={bioDoc}
                   onChange={(next) => setBioDoc(next)}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Supports rich formatting — headings, lists, links, images, and video.
-                </p>
+                <p className="text-xs text-muted-foreground"> <AdminText text={"Supports rich formatting — headings, lists, links, images, and video."} /> </p>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="bio_es" className="text-muted-foreground">Bio (Español)</Label>
+                <Label htmlFor="bio_es" className="text-muted-foreground"><AdminText text={"Bio (Español)"} /></Label>
                 <TiptapEditor
                   content={bioEsDoc}
                   onChange={(next) => setBioEsDoc(next)}
@@ -219,16 +218,14 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="specialties">Specialties</Label>
+                <Label htmlFor="specialties"><AdminText text={"Specialties"} /></Label>
                 <Input
                   id="specialties"
                   name="specialties"
                   defaultValue={teacher?.specialties?.join(', ') || ''}
                   placeholder="Salsa, Timba, Son Cubano"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Comma-separated list of specialties
-                </p>
+                <p className="text-xs text-muted-foreground"> <AdminText text={"Comma-separated list of specialties"} /> </p>
               </div>
             </CardContent>
           </Card>
@@ -244,15 +241,13 @@ export function TeacherEditForm({ teacher }: TeacherEditFormProps) {
             <Button type="submit" className="flex-1" disabled={saving}>
               {saving ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> <AdminText text={"Saving..."} /> </>
               ) : (
                 isNew ? 'Create Teacher' : 'Save Changes'
               )}
             </Button>
             <Button type="button" variant="outline" asChild>
-              <Link href="/admin/teachers">Cancel</Link>
+              <Link href="/admin/teachers"><AdminText text={"Cancel"} /></Link>
             </Button>
           </div>
         </div>

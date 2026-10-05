@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "2.0",
+  "id": "partes-02",
+  "title": {
+    "es": "Dirección de las plicas en una sola voz"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "partes-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4
+    },
+    {
+      "id": "partes-02.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4
+    },
+    {
+      "id": "partes-02.n3",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 4
+    },
+    {
+      "id": "partes-02.n4",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D5",
+      "dur": 4
+    },
+    {
+      "id": "partes-02.n5",
+      "onsetBeats": "4",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F5",
+      "dur": 4
+    }
+  ],
+  "notation": {
+    "title": "Dirección de las plicas en una sola voz",
+    "events": [
+      {
+        "pitch": "E4",
+        "dur": 4
+      },
+      {
+        "pitch": "G4",
+        "dur": 4
+      },
+      {
+        "pitch": "B4",
+        "dur": 4
+      },
+      {
+        "pitch": "D5",
+        "dur": 4
+      },
+      {
+        "pitch": "F5",
+        "dur": 4
+      }
+    ]
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "id": "taller-02",
+  "title": {
+    "es": "Material de alturas para crear dos frases"
+  },
+  "schemaVersion": "1.0",
+  "timeUnit": "quarter-note",
+  "meter": null,
+  "clef": "G",
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "taller-02.N001",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "C4"
+    },
+    {
+      "id": "taller-02.N002",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "D4"
+    },
+    {
+      "id": "taller-02.N003",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "E4"
+    },
+    {
+      "id": "taller-02.N004",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "G4"
+    },
+    {
+      "id": "taller-02.N005",
+      "onsetBeats": "4",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "E4"
+    },
+    {
+      "id": "taller-02.N006",
+      "onsetBeats": "5",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "F4"
+    },
+    {
+      "id": "taller-02.N007",
+      "onsetBeats": "6",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "D4"
+    },
+    {
+      "id": "taller-02.N008",
+      "onsetBeats": "7",
+      "durationBeats": "1",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "C4"
+    }
+  ]
+}

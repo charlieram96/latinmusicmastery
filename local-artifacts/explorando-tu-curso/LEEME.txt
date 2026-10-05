@@ -1,0 +1,20 @@
+LMM — Conoce tu plataforma
+Capítulo 01: Explorando tu curso
+
+Prueba LOCAL de 3:09, 1920×1080, 24 fps.
+Abrir index.html para el banco de tutoriales con acceso por sección.
+Video: Explorando-tu-curso.mp4
+
+Fuentes: capturas proporcionadas por Rafael en esta conversación y capturas
+locales previas de Ejercicio / Tocar junto con. Se excluyeron barras de navegador
+y el acceso administrativo de las tomas. La interfaz de las referencias está en
+inglés; los letreros y las explicaciones se redactaron en español.
+
+Es una demostración editada con capturas, cursor animado, clics, desplazamientos
+entre estados y acercamientos, no una grabación continua de navegación.
+Incluye música suave y explicaciones escritas; no contiene locución.
+
+Todo se procesó en este equipo. Sin uploads, push, deploy, modificaciones de
+la aplicación ni escrituras en bases de datos. No publicar sin instrucción nueva.
+
+render.py permite regenerar el MP4. storyboard.json contiene textos y duraciones.

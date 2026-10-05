@@ -1,6 +1,11 @@
 'use client'
+import { useTranslation } from '@/components/language-provider'
+import { pick } from '@/lib/i18n/localize'
 
-import { useCallback, useState } from 'react'
+import { AdminText } from '@/components/admin/admin-text'
+
+
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Layers, ListMusic, Settings2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import type { ClassItem, ClassItemType } from '@/types/modules'
@@ -43,6 +48,7 @@ import { resolveInitialSelection, type InitialSelectionRequest } from './initial
 
 interface CourseStudioProps {
   course: CourseStudioCourse
+  courseInstruments?: readonly string[]
   musicalStyles: MusicalStyleOption[]
   teachers: TeacherOption[]
   initialSections: SectionWithClasses[]
@@ -62,24 +68,48 @@ const DRAWER_WIDTHS = { narrow: 420, wide: 660 } as const
 
 function StudioWorkspace({
   course,
+  courseInstruments,
   musicalStyles,
   teachers,
   initialSections,
   initialSelection,
 }: CourseStudioProps) {
+  const { locale } = useTranslation()
   const { track } = useSaveStatus()
 
   const [sections, setSections] = useState<SectionWithClasses[]>(initialSections)
   const [settings, setSettings] = useState<CourseStudioCourse>(course)
 
   // Land on the requested lesson/item when the URL names one (e.g. returning
-  // from PlaySense Studio); otherwise the first class, then module, then settings.
+  // from PlaySense Studio); otherwise restore the last edited class or show settings.
   const [centerSelection, setCenterSelection] = useState<CenterSelection>(
     () => resolveInitialSelection(initialSections, initialSelection).center
   )
   const [drawerSelection, setDrawerSelection] = useState<DrawerSelection>(
     () => resolveInitialSelection(initialSections, initialSelection).drawer
   )
+  const [selectionRestored, setSelectionRestored] = useState(false)
+  const restoredCourse = useRef<string | null>(null)
+  useEffect(() => {
+    if (restoredCourse.current === course.id) return
+    restoredCourse.current = course.id
+    if (!initialSelection?.classId) {
+      try {
+        const saved = localStorage.getItem(`lmm.courseStudio.lastClass.${course.id}`)
+        if (saved) {
+          const restored = resolveInitialSelection(initialSections, { classId: saved })
+          setCenterSelection(restored.center)
+          setDrawerSelection(restored.drawer)
+        }
+      } catch { /* Storage may be disabled; keep the collapsed course view. */ }
+    }
+    setSelectionRestored(true)
+  }, [course.id, initialSections, initialSelection?.classId])
+  useEffect(() => {
+    if (!selectionRestored || centerSelection?.type !== 'class') return
+    try { localStorage.setItem(`lmm.courseStudio.lastClass.${course.id}`, centerSelection.id) } catch { /* Optional resume preference. */ }
+  }, [selectionRestored, centerSelection, course.id])
+
   const [outlineSheetOpen, setOutlineSheetOpen] = useState(false)
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
 
@@ -410,6 +440,7 @@ function StudioWorkspace({
       <CourseSettingsEditor
         key={course.id}
         settings={settings}
+        courseInstruments={courseInstruments}
         musicalStyles={musicalStyles}
         teachers={teachers}
         onPatched={handleSettingsPatched}
@@ -487,9 +518,7 @@ function StudioWorkspace({
       ),
     }
     drawerBody = (
-      <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
-        Select a module, class, or item to edit.
-      </div>
+      <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground"> <AdminText text={"Select a module, class, or item to edit."} /> </div>
     )
   }
 
@@ -500,13 +529,13 @@ function StudioWorkspace({
       data-mobile-drawer={mobileDrawerOpen ? 'open' : undefined}
     >
       <StudioAppBar
-        title={settings.title}
+        title={pick(locale, settings.title, settings.title_es ?? '')}
         isPublished={settings.is_published}
         courseSelected={drawerSelection.type === 'course'}
         onTogglePublish={handleTogglePublish}
         onSelectCourse={handleSelectCourse}
         onOpenOutline={() => setOutlineSheetOpen(true)}
-        onOpenDrawer={() => setMobileDrawerOpen(true)}
+        onOpenDrawer={() => { if (drawerSelection.type === 'none') setDrawerSelection({ type: 'course' }); setMobileDrawerOpen(true) }}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -563,20 +592,20 @@ function StudioWorkspace({
           />
         )}
 
-        {/* Always-open inspector drawer */}
-        <StudioDrawer
+        {/* Only show an inspector after a selection or an explicit settings action. */}
+        {drawerSelection.type !== 'none' && <StudioDrawer
           widthPx={DRAWER_WIDTHS[drawerSize]}
           header={drawerHeader}
           onMobileClose={() => setMobileDrawerOpen(false)}
         >
           {drawerBody}
-        </StudioDrawer>
+        </StudioDrawer>}
       </div>
 
       {/* Outline as a sheet below lg */}
       <Sheet open={outlineSheetOpen} onOpenChange={setOutlineSheetOpen}>
         <SheetContent side="left" className="w-[320px] overflow-y-auto bg-warm-surface p-0">
-          <SheetTitle className="sr-only">Course outline</SheetTitle>
+          <SheetTitle className="sr-only"><AdminText text={"Course outline"} /></SheetTitle>
           {outline}
         </SheetContent>
       </Sheet>

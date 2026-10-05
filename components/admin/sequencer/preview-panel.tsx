@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { GlassHighway } from '@/components/play-sense/glass-highway'
@@ -18,9 +21,7 @@ export function PreviewPanel({ exercise, playback }: PreviewPanelProps) {
 
   if (!exercise || exercise.events.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[400px] text-sm text-muted-foreground">
-        Add notes in the sequencer to see the preview
-      </div>
+      <div className="flex items-center justify-center h-full min-h-[400px] text-sm text-muted-foreground"> <AdminText text={"Add notes in the sequencer to see the preview"} /> </div>
     )
   }
 
@@ -34,22 +35,17 @@ export function PreviewPanel({ exercise, playback }: PreviewPanelProps) {
               mode === 'static' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'
             }`}
             onClick={() => setMode('static')}
-          >
-            Static
-          </button>
+          > <AdminText text={"Static"} /> </button>
           <button
             className={`px-3 py-1 text-xs rounded-md transition-colors ${
               mode === 'animated' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'
             }`}
             onClick={() => setMode('animated')}
-          >
-            Animated
-          </button>
+          > <AdminText text={"Animated"} /> </button>
         </div>
 
         <span className="text-xs text-muted-foreground ml-auto">
-          {exercise.bpm} BPM &middot; {exercise.events.length} notes
-        </span>
+          {exercise.bpm} BPM &middot; {exercise.events.length} <AdminText text={"notes"} /> </span>
       </div>
 
       {/* Canvas preview — the same PixiJS highway used in PlaySense */}
@@ -79,7 +75,7 @@ export function PreviewPanel({ exercise, playback }: PreviewPanelProps) {
       {mode === 'animated' && (
         <div className="flex items-center gap-2 mt-3">
           <Button
-            variant={playback.isPlaying ? 'destructive' : 'default'}
+            aria-label={playback.isPlaying ? 'Stop' : 'Play'} title={playback.isPlaying ? 'Stop' : 'Play'} variant={playback.isPlaying ? 'destructive' : 'default'}
             size="sm"
             className="h-8"
             onClick={() => {
@@ -91,9 +87,9 @@ export function PreviewPanel({ exercise, playback }: PreviewPanelProps) {
             }}
           >
             {playback.isPlaying ? (
-              <><Square className="w-3 h-3 mr-1" /> Stop</>
+              <Square aria-hidden className="w-4 h-4" />
             ) : (
-              <><Play className="w-3 h-3 mr-1" /> Play</>
+              <Play aria-hidden className="w-4 h-4" />
             )}
           </Button>
 

@@ -32,7 +32,7 @@ interface LessonSidebarProps {
   courseId: string
   /** Null on pages that aren't a lesson (e.g. the module overview). */
   currentClassId: string | null
-  /** Module whose overview page is open; it renders highlighted + expanded. */
+  /** Module whose overview page is open; it renders highlighted. Only an active lesson expands its module. */
   currentSectionId?: string | null
   sections: LessonSidebarSection[]
   courseTitle: string
@@ -268,7 +268,7 @@ function SidebarModule({
   const containsActive = section.classes.some((c) => c.id === currentClassId)
   const isCurrent = section.id === currentSectionId
   // Route changes remount this subtree, so a mount-time default is enough.
-  const [open, setOpen] = useState(containsActive || isCurrent)
+  const [open, setOpen] = useState(containsActive)
 
   const pct =
     section.totalItems > 0

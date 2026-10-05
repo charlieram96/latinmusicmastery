@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "2.0",
+  "id": "orden-bemoles-01",
+  "title": {
+    "es": "1 bemol · Fa mayor"
+  },
+  "meter": null,
+  "keyFifths": -1,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "orden-bemoles-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "key": -1,
+    "events": [
+      {
+        "pitch": "F4",
+        "dur": 1
+      }
+    ]
+  }
+}

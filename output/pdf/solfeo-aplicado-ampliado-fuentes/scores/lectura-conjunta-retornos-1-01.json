@@ -1,0 +1,147 @@
+{
+  "schemaVersion": "2.0",
+  "id": "lectura-conjunta-retornos-1-01",
+  "title": {
+    "es": "Lectura conjunta y signos de retorno · 1/3"
+  },
+  "meter": "2/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "lectura-conjunta-retornos-1-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4,
+      "dynamic": "p"
+    },
+    {
+      "id": "lectura-conjunta-retornos-1-01.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "lectura-conjunta-retornos-1-01.n3",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "lectura-conjunta-retornos-1-01.lower0-0",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 2,
+      "pitch": "C3",
+      "dur": 2,
+      "dynamic": "p"
+    },
+    {
+      "id": "lectura-conjunta-retornos-1-01.n4",
+      "onsetBeats": "2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "lectura-conjunta-retornos-1-01.n5",
+      "onsetBeats": "5/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "lectura-conjunta-retornos-1-01.n6",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "lectura-conjunta-retornos-1-01.lower1-0",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 2,
+      "pitch": "G2",
+      "dur": 2
+    }
+  ],
+  "notation": {
+    "title": "Compases 1-2",
+    "clef": "G",
+    "meter": "2/4",
+    "bars": [
+      [
+        {
+          "pitch": "C4",
+          "dur": 4,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        }
+      ]
+    ],
+    "alignBeats": true,
+    "beams": [
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        4
+      ]
+    ],
+    "nav": [
+      {
+        "bar": 0,
+        "where": "start",
+        "symbol": "segno"
+      }
+    ],
+    "staffClefs": [
+      "G",
+      "F"
+    ]
+  }
+}

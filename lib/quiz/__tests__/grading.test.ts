@@ -182,3 +182,20 @@ describe('hasAnswer', () => {
     expect(hasAnswer(question, {})).toBe(false)
   })
 })
+
+
+describe('small bell placement tolerance', () => {
+  it.each(['Hand Bell', 'Bell Cha', 'Campana de bongó', 'Campana cha'])('requires %s near its target center', label => {
+    const bell = piece({ label, area: { x: 20, y: 30, width: 20, height: 20 } })
+    expect(isPieceCorrect(bell, { x: 30, y: 40 })).toBe(true)
+    expect(isPieceCorrect(bell, { x: 31.5, y: 38.5 })).toBe(true)
+    expect(isPieceCorrect(bell, { x: 32, y: 40 })).toBe(false)
+    expect(isPieceCorrect(bell, { x: 30, y: 43 })).toBe(false)
+    expect(gradeQuestionScore(q({ question_type: 'piece_placement', options: { pieces: [bell] } }), { p1: { x: 32, y: 40 } })).toBe(0)
+  })
+  it('preserves a stricter authored bell tolerance', () => {
+    const bell = piece({ label: 'Hand Bell', tolerance: 0.5 })
+    expect(isPieceCorrect(bell, { x: 30.6, y: 30 })).toBe(false)
+    expect(isPieceCorrect(bell, { x: 30.5, y: 30 })).toBe(true)
+  })
+})

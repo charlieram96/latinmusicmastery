@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "2.0",
+  "id": "silencio-compas-03",
+  "title": {
+    "es": "4/4: 4 tiempos de negra en silencio"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "silencio-compas-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "rest": true,
+      "dur": 1,
+      "measureRest": true,
+      "value": "4"
+    }
+  ],
+  "notation": {
+    "title": "4/4: 4 tiempos de negra en silencio",
+    "meter": "4/4",
+    "bars": [
+      [
+        {
+          "rest": true,
+          "dur": 1,
+          "measureRest": true,
+          "value": "4"
+        }
+      ]
+    ]
+  }
+}

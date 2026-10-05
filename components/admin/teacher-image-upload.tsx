@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -127,14 +130,10 @@ export function TeacherImageUpload({
             >
               {uploading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Uploading...
-                </>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> <AdminText text={"Uploading..."} /> </>
               ) : (
                 <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Image
-                </>
+                  <Upload className="w-4 h-4 mr-2" /> <AdminText text={"Upload Image"} /> </>
               )}
             </Button>
 
@@ -146,9 +145,7 @@ export function TeacherImageUpload({
                 onClick={handleRemoveImage}
                 disabled={uploading}
               >
-                <X className="w-4 h-4 mr-2" />
-                Remove
-              </Button>
+                <X className="w-4 h-4 mr-2" /> <AdminText text={"Remove"} /> </Button>
             )}
           </div>
 

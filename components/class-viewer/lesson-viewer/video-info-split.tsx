@@ -8,6 +8,7 @@
 // (sensibly sized, not stretched edge-to-edge of the page) and an "About this
 // lesson" panel fills the music region. Only side and stack make sense here.
 
+import { stripLanguageLabels } from '@/lib/i18n/content-labels'
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import { Clock } from 'lucide-react'
 import { SplitWorkspace, WorkspaceLayoutSwitcher } from '@/components/playsense-studio/player/split-workspace'
@@ -99,7 +100,7 @@ export function VideoInfoSplit({
 
           {description && (
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
-              {description}
+              {stripLanguageLabels(description)}
             </p>
           )}
 

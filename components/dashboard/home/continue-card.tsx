@@ -1,8 +1,8 @@
 'use client'
 
-import Link from 'next/link'
+import Link, { useLinkStatus } from 'next/link'
 import Image from 'next/image'
-import { ChevronRight, Compass, Play } from 'lucide-react'
+import { ChevronRight, Compass, Play, Loader2 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/components/language-provider'
@@ -12,6 +12,15 @@ import { cn } from '@/lib/utils'
 import type { ContinueCard as ContinueCardData } from '@/types/dashboard'
 
 const BASE = 'dashboard.pages.home.continue'
+
+function ResumeLabel({ label }: { label: string }) {
+  const { pending } = useLinkStatus()
+  const { locale } = useTranslation()
+  return <span className="inline-flex items-center gap-2" role="status" aria-live="polite" aria-busy={pending}>
+    {pending ? <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> : <Play aria-hidden className="h-4 w-4 fill-current" />}
+    {pending ? (locale === 'es' ? 'Abriendo lección…' : 'Opening lesson…') : label}
+  </span>
+}
 
 function Sep() {
   return <span aria-hidden className="h-3.5 w-px bg-white/30" />
@@ -136,8 +145,7 @@ export function ContinueCard({ card }: { card: ContinueCardData | null }) {
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <Button asChild variant="chunky">
             <Link href={card.resumeHref}>
-              <Play className="h-4 w-4 fill-current" />
-              {isFresh ? t(`${BASE}.start`) : t(`${BASE}.resume`)}
+              <ResumeLabel label={isFresh ? t(`${BASE}.start`) : t(`${BASE}.resume`)} />
             </Link>
           </Button>
           <Button asChild variant="ondark" size="lg">

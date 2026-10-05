@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "2.0",
+  "id": "alteraciones-entonadas-1-03",
+  "title": {
+    "es": "Mi bemol · ida y regreso"
+  },
+  "meter": "3/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "alteraciones-entonadas-1-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4
+    },
+    {
+      "id": "alteraciones-entonadas-1-03.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Eb4",
+      "dur": 4
+    },
+    {
+      "id": "alteraciones-entonadas-1-03.n3",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "alteraciones-entonadas-1-03.n4",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "alteraciones-entonadas-1-03.n5",
+      "onsetBeats": "4",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "Eb4",
+      "dur": 4
+    },
+    {
+      "id": "alteraciones-entonadas-1-03.n6",
+      "onsetBeats": "5",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4
+    }
+  ],
+  "notation": {
+    "title": "Mi bemol · ida y regreso",
+    "meter": "3/4",
+    "bars": [
+      [
+        {
+          "pitch": "E4",
+          "dur": 4
+        },
+        {
+          "pitch": "Eb4",
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "D4",
+          "dur": 4
+        },
+        {
+          "pitch": "Eb4",
+          "dur": 4
+        },
+        {
+          "pitch": "E4",
+          "dur": 4
+        }
+      ]
+    ]
+  }
+}

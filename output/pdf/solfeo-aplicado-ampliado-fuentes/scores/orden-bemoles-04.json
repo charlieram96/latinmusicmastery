@@ -1,0 +1,232 @@
+{
+  "schemaVersion": "2.0",
+  "id": "orden-bemoles-04",
+  "title": {
+    "es": "4 bemoles · La bemol mayor · ascenso y descenso"
+  },
+  "meter": null,
+  "keyFifths": -4,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "orden-bemoles-04.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Ab3",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Bb3",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n4",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Db4",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n5",
+      "onsetBeats": "16",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Eb4",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n6",
+      "onsetBeats": "20",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n7",
+      "onsetBeats": "24",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n8",
+      "onsetBeats": "28",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Ab4",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n9",
+      "onsetBeats": "32",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n10",
+      "onsetBeats": "36",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n11",
+      "onsetBeats": "40",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Eb4",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n12",
+      "onsetBeats": "44",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Db4",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n13",
+      "onsetBeats": "48",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n14",
+      "onsetBeats": "52",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Bb3",
+      "dur": 1
+    },
+    {
+      "id": "orden-bemoles-04.n15",
+      "onsetBeats": "56",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Ab3",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "4 bemoles · La bemol mayor · ascenso y descenso",
+    "events": [
+      {
+        "pitch": "Ab3",
+        "dur": 1
+      },
+      {
+        "pitch": "Bb3",
+        "dur": 1
+      },
+      {
+        "pitch": "C4",
+        "dur": 1
+      },
+      {
+        "pitch": "Db4",
+        "dur": 1
+      },
+      {
+        "pitch": "Eb4",
+        "dur": 1
+      },
+      {
+        "pitch": "F4",
+        "dur": 1
+      },
+      {
+        "pitch": "G4",
+        "dur": 1
+      },
+      {
+        "pitch": "Ab4",
+        "dur": 1
+      },
+      {
+        "pitch": "G4",
+        "dur": 1
+      },
+      {
+        "pitch": "F4",
+        "dur": 1
+      },
+      {
+        "pitch": "Eb4",
+        "dur": 1
+      },
+      {
+        "pitch": "Db4",
+        "dur": 1
+      },
+      {
+        "pitch": "C4",
+        "dur": 1
+      },
+      {
+        "pitch": "Bb3",
+        "dur": 1
+      },
+      {
+        "pitch": "Ab3",
+        "dur": 1
+      }
+    ],
+    "key": -4,
+    "intervals": [
+      "T",
+      "T",
+      "S",
+      "T",
+      "T",
+      "T",
+      "S",
+      "S",
+      "T",
+      "T",
+      "T",
+      "S",
+      "T",
+      "T"
+    ]
+  }
+}

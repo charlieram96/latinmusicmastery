@@ -1,4 +1,6 @@
 'use client';
+import { SOBAO_EFFECTS_ITEM_ID, SOBAO_EFFECTS_TITLE } from '@/lib/playsense-studio/video-preview-cues';
+import { EffectsPlayer, VideoEffectsPreview } from './video-effects-preview';
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {getLessonMetronome,saveLessonMetronome} from '@/app/actions/playsense-studio';
@@ -7,8 +9,11 @@ import {lessonMetronomeGrid,type LessonMetronome} from '@/lib/playsense-studio/l
 import type {WaveformPeaks} from '@/lib/playsense-studio/waveform';
 import {useVideoClickTrack} from '../player/state/use-video-click-track';
 import {WaveformCanvas} from '../sync/waveform-canvas';
+import {useTranslation} from '@/components/language-provider';
 import {useStudioText} from './use-studio-text';
-export function LessonMetronomeEditor({classItemId,videoUrl,durationSeconds,scoreStarts=[],onSaved}:{classItemId:string;videoUrl:string|null;durationSeconds:number|null;scoreStarts?:number[];onSaved?:(settings:LessonMetronome)=>void}) {
+export function LessonMetronomeEditor({classItemId,videoUrl,durationSeconds,title,scoreStarts=[],onSaved}:{classItemId:string;videoUrl:string|null;durationSeconds:number|null;title?:string;scoreStarts?:number[];onSaved?:(settings:LessonMetronome)=>void}) {
+ const {locale}=useTranslation();
+ const hasEffects=classItemId===SOBAO_EFFECTS_ITEM_ID;
  const st=useStudioText();const videoRef=useRef<HTMLVideoElement>(null);const area=useRef<HTMLDivElement>(null);
  const [settings,setSettings]=useState<LessonMetronome>({bpm:120,anchorSeconds:null});
  const [bpm,setBpm]=useState('120');const [candidate,setCandidate]=useState<number|null>(null);const [placing,setPlacing]=useState(false);
@@ -24,7 +29,8 @@ export function LessonMetronomeEditor({classItemId,videoUrl,durationSeconds,scor
  const choose=(seconds:number)=>{const at=Math.max(0,Math.min(duration,seconds));if(videoRef.current)videoRef.current.currentTime=at;if(placing)setCandidate(at);};
  const confirm=async()=>{const anchor=candidate??settings.anchorSeconds;const tempo=Number(bpm);if(anchor===null||!Number.isFinite(tempo)||tempo<20||tempo>400)return;setSaving(true);setError('');const result=await saveLessonMetronome({classItemId,bpm:tempo,anchorSeconds:anchor});setSaving(false);if(result.error){setError(result.error);return;}setSettings({bpm:tempo,anchorSeconds:anchor});onSaved?.({bpm:tempo,anchorSeconds:anchor});setCandidate(null);setPlacing(false);};
  return <section className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-5">
-  <div className="relative">  <video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()} ref={videoRef} src={videoUrl??undefined} controls playsInline preload="metadata" onLoadedMetadata={()=>setDuration(videoRef.current?.duration||durationSeconds||0)} className="mx-auto max-h-[45vh] w-full rounded-xl bg-black"/><VideoWatermark nativeControls /></div>
+  {videoUrl && !hasEffects && <div className="flex justify-end"><VideoEffectsPreview title={classItemId === SOBAO_EFFECTS_ITEM_ID ? SOBAO_EFFECTS_TITLE : title ?? st('Exercise')} videoUrl={videoUrl} showSobao={classItemId === SOBAO_EFFECTS_ITEM_ID} onOpen={()=>videoRef.current?.pause()} /></div>}
+  {videoUrl && hasEffects ? <EffectsPlayer key={videoUrl} videoUrl={videoUrl} es={locale==='es'} showSobao title={SOBAO_EFFECTS_TITLE} videoRef={videoRef} onDuration={setDuration} preview={false} bpm={settings.bpm} anchorSeconds={settings.anchorSeconds ?? 0} /> : <div className="relative">  <video controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback onContextMenu={event => event.preventDefault()} ref={videoRef} src={videoUrl??undefined} controls playsInline preload="metadata" onLoadedMetadata={()=>setDuration(videoRef.current?.duration||durationSeconds||0)} className="mx-auto max-h-[45vh] w-full rounded-xl bg-black"/><VideoWatermark nativeControls /></div>}
   <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3">
    <button type="button" className="st-chip" aria-pressed={enabled} onClick={()=>setEnabled(!enabled)}>{st('Metronome')} {enabled?'✓':''}</button>
    <label className="flex items-center gap-2">BPM<input aria-label="Metronome BPM" type="number" min={20} max={400} value={bpm} onChange={e=>setBpm(e.target.value)} className="st-input w-20"/></label>

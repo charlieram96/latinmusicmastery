@@ -1,3 +1,6 @@
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeTeachers } from '@/lib/i18n/localize'
+import { AdminText } from '@/components/admin/admin-text'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
@@ -18,12 +21,15 @@ function getInitials(name: string): string {
 }
 
 export default async function TeachersPage() {
+  const locale = await getServerLocale()
   const supabase = await createClient()
 
   const { data: teachers } = await supabase
     .from('teachers')
     .select('*')
     .order('name')
+
+  localizeTeachers(teachers, locale)
 
   // Get course count for each teacher
   const teachersWithCourses = await Promise.all(
@@ -44,14 +50,12 @@ export default async function TeachersPage() {
     <div className="p-6 lg:p-8">
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-1">Teachers</h1>
-          <p className="text-muted-foreground">Manage all instructors</p>
+          <h1 className="text-4xl font-bold tracking-tight mb-1"><AdminText text={"Teachers"} /></h1>
+          <p className="text-muted-foreground"><AdminText text={"Manage all instructors"} /></p>
         </div>
         <Button asChild>
           <Link href="/admin/teachers/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Teacher
-          </Link>
+            <Plus className="w-4 h-4 mr-2" /> <AdminText text={"Add Teacher"} /> </Link>
         </Button>
       </div>
 
@@ -118,11 +122,11 @@ export default async function TeachersPage() {
                 <div className="flex items-center justify-between pt-3 border-t">
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <BookOpen className="w-3.5 h-3.5" />
-                    <span>{teacher.courseCount} {teacher.courseCount === 1 ? 'course' : 'courses'}</span>
+                    <span>{teacher.courseCount} {teacher.courseCount === 1 ? <AdminText text={"course"} /> : 'courses'}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button asChild variant="ghost" size="sm" className="h-8">
-                      <Link href={`/admin/teachers/${teacher.id}`}>Edit</Link>
+                      <Link href={`/admin/teachers/${teacher.id}`}><AdminText text={"Edit"} /></Link>
                     </Button>
                     <DeleteTeacherButton
                       teacherId={teacher.id}
@@ -138,14 +142,12 @@ export default async function TeachersPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>No Teachers</CardTitle>
+            <CardTitle><AdminText text={"No Teachers"} /></CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground mb-4">
-              Add your first teacher to start assigning them to courses.
-            </p>
+            <p className="text-muted-foreground mb-4"> <AdminText text={"Add your first teacher to start assigning them to courses."} /> </p>
             <Button asChild>
-              <Link href="/admin/teachers/new">Add Teacher</Link>
+              <Link href="/admin/teachers/new"><AdminText text={"Add Teacher"} /></Link>
             </Button>
           </CardContent>
         </Card>

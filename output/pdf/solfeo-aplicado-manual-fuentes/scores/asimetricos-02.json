@@ -1,0 +1,142 @@
+{
+  "schemaVersion": "2.0",
+  "id": "asimetricos-02",
+  "title": {
+    "es": "7/4 agrupado 2 + 2 + 3"
+  },
+  "meter": "7/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "asimetricos-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": "accent",
+      "label": "1"
+    },
+    {
+      "id": "asimetricos-02.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": null,
+      "label": "2"
+    },
+    {
+      "id": "asimetricos-02.n3",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": "accent",
+      "label": "3"
+    },
+    {
+      "id": "asimetricos-02.n4",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": null,
+      "label": "4"
+    },
+    {
+      "id": "asimetricos-02.n5",
+      "onsetBeats": "4",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": "accent",
+      "label": "5"
+    },
+    {
+      "id": "asimetricos-02.n6",
+      "onsetBeats": "5",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": null,
+      "label": "6"
+    },
+    {
+      "id": "asimetricos-02.n7",
+      "onsetBeats": "6",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "mark": null,
+      "label": "7"
+    }
+  ],
+  "notation": {
+    "title": "7/4 agrupado 2 + 2 + 3",
+    "meter": "7/4",
+    "bars": [
+      [
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": "accent",
+          "label": "1"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": null,
+          "label": "2"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": "accent",
+          "label": "3"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": null,
+          "label": "4"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": "accent",
+          "label": "5"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": null,
+          "label": "6"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "mark": null,
+          "label": "7"
+        }
+      ]
+    ]
+  }
+}

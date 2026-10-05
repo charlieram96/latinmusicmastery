@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "2.0",
+  "id": "do-primera-03",
+  "title": {
+    "es": "Lectura breve: mismas alturas, otra posición escrita"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "S",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "do-primera-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "do-primera-03.n2",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4
+    },
+    {
+      "id": "do-primera-03.n3",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4
+    },
+    {
+      "id": "do-primera-03.n4",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 2
+    },
+    {
+      "id": "do-primera-03.n5",
+      "onsetBeats": "6",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "do-primera-03.n6",
+      "onsetBeats": "7",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4
+    }
+  ],
+  "notation": {
+    "title": "Lectura breve: mismas alturas, otra posición escrita",
+    "clef": "S",
+    "meter": "4/4",
+    "bars": [
+      [
+        {
+          "pitch": "C4",
+          "dur": 2
+        },
+        {
+          "pitch": "E4",
+          "dur": 4
+        },
+        {
+          "pitch": "G4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "F4",
+          "dur": 2
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        },
+        {
+          "pitch": "C4",
+          "dur": 4
+        }
+      ]
+    ]
+  }
+}

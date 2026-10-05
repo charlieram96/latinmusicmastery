@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "2.0",
+  "id": "intervalos-simultaneos-0-01",
+  "title": {
+    "es": "Intervalos armónicos"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "intervalos-simultaneos-0-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 1
+    },
+    {
+      "id": "intervalos-simultaneos-0-01.lower0-0",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 2,
+      "pitch": "C4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Tercera mayor",
+    "clef": "G",
+    "meter": "4/4",
+    "bars": [
+      [
+        {
+          "pitch": "E4",
+          "dur": 1
+        }
+      ]
+    ],
+    "alignBeats": true,
+    "staffClefs": [
+      "G",
+      "F"
+    ]
+  }
+}

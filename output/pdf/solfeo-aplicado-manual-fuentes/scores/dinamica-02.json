@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "2.0",
+  "id": "dinamica-02",
+  "title": {
+    "es": "Crescendo · aumento gradual de intensidad"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "dinamica-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4
+    },
+    {
+      "id": "dinamica-02.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "dinamica-02.n3",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 4
+    },
+    {
+      "id": "dinamica-02.n4",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 4
+    },
+    {
+      "id": "dinamica-02.n5",
+      "onsetBeats": "4",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4
+    }
+  ],
+  "notation": {
+    "title": "Crescendo · aumento gradual de intensidad",
+    "events": [
+      {
+        "pitch": "C4",
+        "dur": 4
+      },
+      {
+        "pitch": "D4",
+        "dur": 4
+      },
+      {
+        "pitch": "E4",
+        "dur": 4
+      },
+      {
+        "pitch": "F4",
+        "dur": 4
+      },
+      {
+        "pitch": "G4",
+        "dur": 4
+      }
+    ],
+    "hairpin": "cresc"
+  }
+}

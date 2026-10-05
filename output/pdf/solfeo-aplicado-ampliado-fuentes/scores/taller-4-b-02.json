@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "2.0",
+  "id": "taller-4-b-02",
+  "title": {
+    "es": "B · Preparación de la tercera y salto directo"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "taller-4-b-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "taller-4-b-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 2
+    },
+    {
+      "id": "taller-4-b-02.n3",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2
+    },
+    {
+      "id": "taller-4-b-02.n4",
+      "onsetBeats": "6",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "taller-4-b-02.n5",
+      "onsetBeats": "8",
+      "durationBeats": "2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2
+    },
+    {
+      "id": "taller-4-b-02.n6",
+      "onsetBeats": "10",
+      "durationBeats": "2",
+      "measure": 3,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    }
+  ],
+  "notation": {
+    "title": "B · Preparación de la tercera y salto directo",
+    "meter": "4/4",
+    "key": 0,
+    "bars": [
+      [
+        {
+          "pitch": "C4",
+          "dur": 2
+        },
+        {
+          "pitch": "D4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 2
+        },
+        {
+          "pitch": "C4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 2
+        },
+        {
+          "pitch": "C4",
+          "dur": 2
+        }
+      ]
+    ],
+    "barStyles": {
+      "2": "final"
+    }
+  }
+}

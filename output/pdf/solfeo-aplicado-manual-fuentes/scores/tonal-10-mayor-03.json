@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.0",
+  "id": "tonal-10-mayor-03",
+  "title": {
+    "es": "Arpegio de séptima de dominante · V7"
+  },
+  "meter": null,
+  "keyFifths": -5,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "tonal-10-mayor-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Ab4",
+      "dur": 2
+    },
+    {
+      "id": "tonal-10-mayor-03.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 2
+    },
+    {
+      "id": "tonal-10-mayor-03.n3",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Eb5",
+      "dur": 2
+    },
+    {
+      "id": "tonal-10-mayor-03.n4",
+      "onsetBeats": "6",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Gb5",
+      "dur": 2
+    }
+  ],
+  "notation": {
+    "title": "Arpegio de séptima de dominante · V7",
+    "events": [
+      {
+        "pitch": "Ab4",
+        "dur": 2
+      },
+      {
+        "pitch": "C5",
+        "dur": 2
+      },
+      {
+        "pitch": "Eb5",
+        "dur": 2
+      },
+      {
+        "pitch": "Gb5",
+        "dur": 2
+      }
+    ],
+    "key": -5
+  }
+}

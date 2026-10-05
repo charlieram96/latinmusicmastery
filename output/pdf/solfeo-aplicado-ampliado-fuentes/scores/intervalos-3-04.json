@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "2.0",
+  "id": "intervalos-3-04",
+  "title": {
+    "es": "Preparación, intervalo ascendente y regreso"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "intervalos-3-04.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    },
+    {
+      "id": "intervalos-3-04.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 1
+    },
+    {
+      "id": "intervalos-3-04.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 1
+    },
+    {
+      "id": "intervalos-3-04.n4",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    },
+    {
+      "id": "intervalos-3-04.n5",
+      "onsetBeats": "16",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 1
+    },
+    {
+      "id": "intervalos-3-04.n6",
+      "onsetBeats": "20",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Preparación, intervalo ascendente y regreso",
+    "events": [
+      {
+        "pitch": "C4",
+        "dur": 1
+      },
+      {
+        "pitch": "E4",
+        "dur": 1
+      },
+      {
+        "pitch": "G4",
+        "dur": 1
+      },
+      {
+        "pitch": "C4",
+        "dur": 1
+      },
+      {
+        "pitch": "G4",
+        "dur": 1
+      },
+      {
+        "pitch": "C4",
+        "dur": 1
+      }
+    ]
+  }
+}

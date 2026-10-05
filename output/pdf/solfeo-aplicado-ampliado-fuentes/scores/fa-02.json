@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.0",
+  "id": "fa-02",
+  "title": {
+    "es": "Espacios: La-Do-Mi-Sol"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "F",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "fa-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A2",
+      "dur": 1
+    },
+    {
+      "id": "fa-02.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C3",
+      "dur": 1
+    },
+    {
+      "id": "fa-02.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E3",
+      "dur": 1
+    },
+    {
+      "id": "fa-02.n4",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Espacios: La-Do-Mi-Sol",
+    "events": [
+      {
+        "pitch": "A2",
+        "dur": 1
+      },
+      {
+        "pitch": "C3",
+        "dur": 1
+      },
+      {
+        "pitch": "E3",
+        "dur": 1
+      },
+      {
+        "pitch": "G3",
+        "dur": 1
+      }
+    ],
+    "clef": "F"
+  }
+}

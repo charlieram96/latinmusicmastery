@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -115,7 +118,7 @@ export function PlaySenseAudioUpload({
               <Music2 className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="font-medium">Click to upload backing track</p>
+              <p className="font-medium"><AdminText text={"Click to upload backing track"} /></p>
               <p className="text-sm text-muted-foreground">
                 MP3, WAV, OGG, or WebM (max 100MB)
               </p>
@@ -137,7 +140,7 @@ export function PlaySenseAudioUpload({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm">Uploading audio...</span>
+            <span className="text-sm"><AdminText text={"Uploading audio..."} /></span>
           </div>
           <Progress value={progress} />
         </div>
@@ -150,9 +153,7 @@ export function PlaySenseAudioUpload({
           onClick={() => fileInputRef.current?.click()}
           className="w-full"
         >
-          <Upload className="w-4 h-4 mr-2" />
-          Select Audio File
-        </Button>
+          <Upload className="w-4 h-4 mr-2" /> <AdminText text={"Select Audio File"} /> </Button>
       )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}

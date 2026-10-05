@@ -1,0 +1,226 @@
+{
+  "schemaVersion": "2.0",
+  "id": "repertorio-18-2-03",
+  "title": {
+    "es": "Compases 13-14"
+  },
+  "meter": "2/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "repertorio-18-2-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n2",
+      "onsetBeats": "1/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n3",
+      "onsetBeats": "1/2",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n4",
+      "onsetBeats": "3/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n5",
+      "onsetBeats": "1",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n6",
+      "onsetBeats": "5/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n7",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n8",
+      "onsetBeats": "7/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n9",
+      "onsetBeats": "2",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n10",
+      "onsetBeats": "9/4",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n11",
+      "onsetBeats": "5/2",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n12",
+      "onsetBeats": "11/4",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 16
+    },
+    {
+      "id": "repertorio-18-2-03.n13",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    }
+  ],
+  "notation": {
+    "title": "Compases 13-14",
+    "meter": "2/4",
+    "key": 0,
+    "bars": [
+      [
+        {
+          "pitch": "F4",
+          "dur": 16
+        },
+        {
+          "pitch": "E4",
+          "dur": 16
+        },
+        {
+          "pitch": "D4",
+          "dur": 16
+        },
+        {
+          "pitch": "E4",
+          "dur": 16
+        },
+        {
+          "pitch": "F4",
+          "dur": 16
+        },
+        {
+          "pitch": "E4",
+          "dur": 16
+        },
+        {
+          "pitch": "D4",
+          "dur": 16
+        },
+        {
+          "pitch": "C4",
+          "dur": 16
+        }
+      ],
+      [
+        {
+          "pitch": "D4",
+          "dur": 16
+        },
+        {
+          "pitch": "E4",
+          "dur": 16
+        },
+        {
+          "pitch": "D4",
+          "dur": 16
+        },
+        {
+          "pitch": "C4",
+          "dur": 16
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        }
+      ]
+    ],
+    "beams": [
+      [
+        0,
+        1,
+        2,
+        3
+      ],
+      [
+        4,
+        5,
+        6,
+        7
+      ],
+      [
+        8,
+        9,
+        10,
+        11
+      ]
+    ],
+    "slurs": [
+      [
+        0,
+        12
+      ]
+    ],
+    "spans": [
+      {
+        "text": "rit."
+      }
+    ]
+  }
+}

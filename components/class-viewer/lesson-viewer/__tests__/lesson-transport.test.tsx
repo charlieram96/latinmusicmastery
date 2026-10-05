@@ -84,3 +84,16 @@ describe('LessonTransport', () => {
   })
 
 })
+
+it('toggles the metronome directly even when settings are available', () => {
+  const h=handlers()
+  render({...h,metronomeSettings:<span>Tempo controls</span>})
+  act(() => byLabel('Metronome').click())
+  expect(h.onClickToggle).toHaveBeenCalledOnce()
+  expect(byLabel('Metronome').getAttribute('aria-pressed')).toBe('true')
+  expect(byLabel('Metronome settings')).not.toBeNull()
+  render({...h,click:false,metronomeSettings:<span>Tempo controls</span>})
+  act(() => byLabel('Metronome').click())
+  expect(h.onClickToggle).toHaveBeenCalledTimes(2)
+  expect(byLabel('Metronome').getAttribute('aria-pressed')).toBe('false')
+})

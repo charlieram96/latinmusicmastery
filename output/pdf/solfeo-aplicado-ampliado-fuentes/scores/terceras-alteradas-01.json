@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "2.0",
+  "id": "terceras-alteradas-01",
+  "title": {
+    "es": "Disminuida: Do-Mi doble bemol · dos semitonos"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "terceras-alteradas-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "terceras-alteradas-01.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Ebb4",
+      "dur": 2
+    },
+    {
+      "id": "terceras-alteradas-01.n3",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "Ebb4",
+      "dur": 2
+    },
+    {
+      "id": "terceras-alteradas-01.n4",
+      "onsetBeats": "6",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    }
+  ],
+  "notation": {
+    "title": "Disminuida: Do-Mi doble bemol · dos semitonos",
+    "meter": "4/4",
+    "bars": [
+      [
+        {
+          "pitch": "C4",
+          "dur": 2
+        },
+        {
+          "pitch": "Ebb4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "Ebb4",
+          "dur": 2
+        },
+        {
+          "pitch": "C4",
+          "dur": 2
+        }
+      ]
+    ]
+  }
+}

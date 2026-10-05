@@ -1,3 +1,4 @@
+import { AdminText } from '@/components/admin/admin-text'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
@@ -50,18 +51,16 @@ export default async function InstrumentFormPage({ params }: PageProps) {
           href="/admin/instruments"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Back to Instruments
-        </Link>
+          <ArrowLeft className="w-4 h-4 mr-1" /> <AdminText text={"Back to Instruments"} /> </Link>
         <h1 className="text-4xl font-bold tracking-tight">
-          {isNew ? 'Add Instrument' : 'Edit Instrument'}
+          {isNew ? <AdminText text={"Add Instrument"} /> : 'Edit Instrument'}
         </h1>
       </div>
 
       <div className="rounded-xl border bg-card p-6">
         <form action={action} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name"><AdminText text={"Name *"} /></Label>
             <Input
               id="name"
               name="name"
@@ -72,7 +71,7 @@ export default async function InstrumentFormPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name_es" className="text-muted-foreground">Name (Español)</Label>
+            <Label htmlFor="name_es" className="text-muted-foreground"><AdminText text={"Name (Español)"} /></Label>
             <Input
               id="name_es"
               name="name_es"
@@ -94,7 +93,7 @@ export default async function InstrumentFormPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description"><AdminText text={"Description"} /></Label>
             <Textarea
               id="description"
               name="description"
@@ -105,7 +104,7 @@ export default async function InstrumentFormPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description_es" className="text-muted-foreground">Description (Español)</Label>
+            <Label htmlFor="description_es" className="text-muted-foreground"><AdminText text={"Description (Español)"} /></Label>
             <Textarea
               id="description_es"
               name="description_es"
@@ -116,7 +115,7 @@ export default async function InstrumentFormPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>Image</Label>
+            <Label><AdminText text={"Image"} /></Label>
             <InstrumentImageUpload
               instrumentId={isNew ? 'new' : id}
               currentImageUrl={instrument?.image_url ?? null}
@@ -124,14 +123,14 @@ export default async function InstrumentFormPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="country_id">Country</Label>
+            <Label htmlFor="country_id"><AdminText text={"Country"} /></Label>
             <select
               id="country_id"
               name="country_id"
               defaultValue={instrument?.country_id || ''}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
-              <option value="">— No country —</option>
+              <option value=""><AdminText text={"— No country —"} /></option>
               {countries?.map((c: any) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -139,8 +138,8 @@ export default async function InstrumentFormPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>Linked Musical Styles</Label>
-            <p className="text-xs text-muted-foreground">Select all musical styles this instrument is associated with</p>
+            <Label><AdminText text={"Linked Musical Styles"} /></Label>
+            <p className="text-xs text-muted-foreground"><AdminText text={"Select all musical styles this instrument is associated with"} /></p>
             <div className="rounded-lg border p-3 space-y-2 max-h-48 overflow-y-auto">
               {styles?.map((style: any) => (
                 <label key={style.id} className="flex items-center gap-2 cursor-pointer text-sm">
@@ -176,7 +175,7 @@ export default async function InstrumentFormPage({ params }: PageProps) {
               {isNew ? 'Create Instrument' : 'Update Instrument'}
             </Button>
             <Button type="button" variant="outline" asChild>
-              <Link href="/admin/instruments">Cancel</Link>
+              <Link href="/admin/instruments"><AdminText text={"Cancel"} /></Link>
             </Button>
           </div>
         </form>

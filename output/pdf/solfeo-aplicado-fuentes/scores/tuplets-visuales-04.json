@@ -1,0 +1,98 @@
+{
+  "id": "tuplets-visuales-04",
+  "title": {
+    "es": "Grupo 7:4"
+  },
+  "schemaVersion": "1.0",
+  "timeUnit": "quarter-note",
+  "meter": null,
+  "clef": "P",
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "tuplets-visuales-04.N001",
+      "onsetBeats": "0",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "kind": "unpitched",
+      "staffPosition": "B4",
+      "tuplet": {
+        "actual": 7,
+        "normal": 4
+      }
+    },
+    {
+      "id": "tuplets-visuales-04.N002",
+      "onsetBeats": "2/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "kind": "unpitched",
+      "staffPosition": "B4",
+      "tuplet": {
+        "actual": 7,
+        "normal": 4
+      }
+    },
+    {
+      "id": "tuplets-visuales-04.N003",
+      "onsetBeats": "4/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "kind": "unpitched",
+      "staffPosition": "B4",
+      "tuplet": {
+        "actual": 7,
+        "normal": 4
+      }
+    },
+    {
+      "id": "tuplets-visuales-04.N004",
+      "onsetBeats": "6/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "kind": "unpitched",
+      "staffPosition": "B4",
+      "tuplet": {
+        "actual": 7,
+        "normal": 4
+      }
+    },
+    {
+      "id": "tuplets-visuales-04.N005",
+      "onsetBeats": "8/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "kind": "unpitched",
+      "staffPosition": "B4",
+      "tuplet": {
+        "actual": 7,
+        "normal": 4
+      }
+    },
+    {
+      "id": "tuplets-visuales-04.N006",
+      "onsetBeats": "10/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "kind": "unpitched",
+      "staffPosition": "B4",
+      "tuplet": {
+        "actual": 7,
+        "normal": 4
+      }
+    },
+    {
+      "id": "tuplets-visuales-04.N007",
+      "onsetBeats": "12/7",
+      "durationBeats": "2/7",
+      "measure": 1,
+      "kind": "unpitched",
+      "staffPosition": "B4",
+      "tuplet": {
+        "actual": 7,
+        "normal": 4
+      }
+    }
+  ]
+}

@@ -187,6 +187,8 @@ describe('CourseDetailView (C3)', () => {
       render({ sections: secs, nextClassId: 'b', totalItems: 4, completedItems: 2 })
       const path = host.querySelector('section[aria-labelledby="your-path"]') as HTMLElement
       expect(path.querySelector('[aria-current="step"]')?.getAttribute('href')).toBe('/dashboard/course/son/class/b')
+      expect(moduleSection('s1').querySelectorAll('li')).toHaveLength(0)
+      act(() => (moduleSection('s1').querySelector('button[aria-expanded]') as HTMLButtonElement).click())
       const currentRow = [...moduleSection('s1').querySelectorAll('li a')].find((a) => a.className.includes('border-primary'))
       expect(currentRow?.getAttribute('href')).toBe('/dashboard/course/son/class/b')
     })
@@ -197,6 +199,8 @@ describe('CourseDetailView (C3)', () => {
       const nodes = [...host.querySelectorAll('section[aria-labelledby="your-path"] [data-path-scroller] [data-path-node] a')].map((a) => a.getAttribute('href'))
       expect(nodes[0]).toBe('/dashboard/course/son/class/a')
       expect(nodes[1]).toBe('/dashboard/subscribe?instrument=Timbal&course=cid')
+      expect(moduleSection('s1').querySelectorAll('li')).toHaveLength(0)
+      act(() => (moduleSection('s1').querySelector('button[aria-expanded]') as HTMLButtonElement).click())
       const rows = [...moduleSection('s1').querySelectorAll('li a')].map((a) => a.getAttribute('href'))
       expect(rows).toEqual(nodes.slice(0, 2))
     })

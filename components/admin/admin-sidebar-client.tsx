@@ -1,14 +1,20 @@
 'use client'
 
+import { useTranslation } from '@/components/language-provider'
+import { adminLabel } from '@/lib/i18n/admin-labels'
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState } from 'react'
-import Link from 'next/link'
+import Link, { useLinkStatus } from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Home, Globe, Music, BookOpen, Users, GraduationCap, BarChart3,
   MessageSquare, DollarSign, Drum, LayoutDashboard, Guitar, ArrowLeft, Mail, Tag,
-  type LucideIcon,
+  Loader2, type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { LanguageToggle } from '@/components/language-toggle'
 import {
   Tooltip,
   TooltipContent,
@@ -61,7 +67,15 @@ const navGroups: NavGroup[] = [
   },
 ]
 
+function NavigationPending() {
+  const { pending } = useLinkStatus()
+  return <span role={pending ? 'status' : undefined} className="absolute right-2 top-1/2 -translate-y-1/2">
+    {pending && <><Loader2 aria-hidden className="h-4 w-4 animate-spin text-primary" /><span className="sr-only"><AdminText text={"Loading…"} /></span></>}
+  </span>
+}
+
 export function AdminSidebarClient() {
+  const { locale } = useTranslation()
   const pathname = usePathname()
   // Immersive editors (PlaySense Studio, Course Studio) collapse the dashboard
   // to an icon rail so the workspace gets the full width. Everywhere else the
@@ -71,13 +85,14 @@ export function AdminSidebarClient() {
     /^\/admin\/courses\/(?!new$)[^/]+/.test(pathname)
 
   const [hovering, setHovering] = useState(false)
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
 
   const collapsed = onImmersiveRoute
   // Show full labels when not collapsed, or while hovering the collapsed rail.
-  const expanded = !collapsed || hovering
+  const expanded = !collapsed || hovering || languageMenuOpen
   // When the collapsed rail is hovered, float the full panel OVER the content so
   // the page never shifts; the in-flow <aside> keeps the rail's 64px footprint.
-  const overlay = collapsed && hovering
+  const overlay = collapsed && expanded
 
   return (
     <aside
@@ -110,9 +125,7 @@ export function AdminSidebarClient() {
           </span>
           {expanded && (
             <div className="flex min-w-0 flex-col">
-              <span className="truncate font-heading text-[14px] font-bold leading-4 tracking-wide text-sidebar-foreground">
-                Admin Panel
-              </span>
+              <span className="truncate font-heading text-[14px] font-bold leading-4 tracking-wide text-sidebar-foreground"> <AdminText text={"Admin Panel"} /> </span>
               <span className="text-[11px] leading-4 text-sidebar-foreground/65">
                 Latin Music Mastery
               </span>
@@ -127,7 +140,7 @@ export function AdminSidebarClient() {
               {group.label &&
                 (expanded ? (
                   <p className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/65">
-                    {group.label}
+                    {<AdminText text={group.label} />}
                   </p>
                 ) : (
                   <div className="mx-auto mb-2 h-px w-6 bg-sidebar-border" />
@@ -143,7 +156,7 @@ export function AdminSidebarClient() {
                   const linkContent = (
                     <Link
                       href={item.href}
-                      aria-label={item.label}
+                      aria-label={adminLabel(item.label, locale)}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
                         'group relative flex items-center rounded-lg text-[14px] font-medium transition-colors',
@@ -153,8 +166,9 @@ export function AdminSidebarClient() {
                           : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                       )}
                     >
+                      <NavigationPending />
                       <Icon className="h-[18px] w-[18px] flex-shrink-0" />
-                      {expanded && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+                      {expanded && <span className="min-w-0 flex-1 truncate">{<AdminText text={item.label} />}</span>}
                       {expanded && isActive && (
                         <span className="h-1 w-1 flex-shrink-0 rounded-full bg-sidebar-primary" />
                       )}
@@ -166,7 +180,7 @@ export function AdminSidebarClient() {
                       <Tooltip key={item.href}>
                         <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
                         <TooltipContent side="right" sideOffset={8}>
-                          {item.label}
+                          {<AdminText text={item.label} />}
                         </TooltipContent>
                       </Tooltip>
                     )
@@ -181,32 +195,29 @@ export function AdminSidebarClient() {
 
         {/* Footer */}
         <div className="flex-shrink-0 border-t border-sidebar-border p-2">
+          <LanguageToggle variant="icon" onOpenChange={setLanguageMenuOpen} className="mb-2" />
           {!expanded ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
                   href="/dashboard"
-                  aria-label="Back to Dashboard"
-                  title="Back to Dashboard"
+                  aria-label={adminLabel("Back to Dashboard", locale)}
+                  title={adminLabel("Back to Dashboard", locale)}
                   className="lmm-nav-return flex items-center justify-center rounded-lg p-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
-                Back to Dashboard
-              </TooltipContent>
+              <TooltipContent side="right" sideOffset={8}> <AdminText text={"Back to Dashboard"} /> </TooltipContent>
             </Tooltip>
           ) : (
             <Link
               href="/dashboard"
-                  aria-label="Back to Dashboard"
-                  title="Back to Dashboard"
+                  aria-label={adminLabel("Back to Dashboard", locale)}
+                  title={adminLabel("Back to Dashboard", locale)}
               className="lmm-nav-return flex items-center gap-2 rounded-lg px-2.5 py-2.5 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
-              <ArrowLeft className="h-5 w-5" />
-              Back to Dashboard
-            </Link>
+              <ArrowLeft className="h-5 w-5" /> <AdminText text={"Back to Dashboard"} /> </Link>
           )}
         </div>
       </div>

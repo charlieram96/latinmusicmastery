@@ -1,11 +1,14 @@
 'use client'
 
+import { useTranslation } from '@/components/language-provider'
+import { adminLabel } from '@/lib/i18n/admin-labels'
 import { Input } from '@/components/ui/input'
 import { Search, X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTransition, useState } from 'react'
 
 export function AdminSearch({ placeholder = 'Search...' }: { placeholder?: string }) {
+  const { locale } = useTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
@@ -28,7 +31,7 @@ export function AdminSearch({ placeholder = 'Search...' }: { placeholder?: strin
     <div className="relative w-full max-w-sm">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
-        placeholder={placeholder}
+        placeholder={adminLabel(placeholder, locale)}
         value={value}
         onChange={(e) => handleSearch(e.target.value)}
         className="pl-9 pr-8"

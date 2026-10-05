@@ -1,10 +1,18 @@
+import { getCourseInstrumentOptions } from '@/lib/courses/instrument-options'
+import { localizeCourse } from '@/lib/i18n/localize'
+import { courseInstrumentClassifications, matchesCourseInstrument } from '@/lib/courses/instrument-classification'
+import { instrumentLabel } from '@/lib/i18n/instruments'
+import { adminLabel } from '@/lib/i18n/admin-labels'
+import { AdminText } from '@/components/admin/admin-text'
+import { getServerLocale } from '@/lib/i18n/server'
+import { EditCourseLink } from '@/components/admin/course-studio/edit-course-link'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Plus, BookOpen, User, Music, Globe, Disc3, Pencil } from 'lucide-react'
-import { getInstrumentColor, SUBSCRIBABLE_INSTRUMENTS } from '@/lib/instruments'
+import { Plus, BookOpen, User, Music, Globe, Disc3 } from 'lucide-react'
+import { getInstrumentColor, COURSE_INSTRUMENTS, getCourseInstrumentLabel, sortCourseInstruments } from '@/lib/instruments'
 import { AdminSearch } from '@/components/admin/admin-search'
 import { DeleteCourseButton } from '@/components/admin/delete-course-button'
 
@@ -19,42 +27,43 @@ interface PageProps {
 
 export default async function CoursesPage({ searchParams }: PageProps) {
   const params = await searchParams
+  const [locale, courseInstruments] = await Promise.all([getServerLocale(), getCourseInstrumentOptions()])
   const supabase = await createClient()
 
   // Build query
   let query = supabase
     .from('courses')
     .select(`
-      *,
-      musical_style:musical_styles(name, country:countries(name)),
-      teacher:teachers(id, name, instrument),
-      course_sections(id, classes(id, items:class_items(id)))
+      id, title, title_es, description, description_es, thumbnail_url, is_published, difficulty, instrument,
+      musical_style:musical_styles(name, name_es, country:countries(name, name_es)),
+      teacher:teachers(name),
+      course_sections(classes(id))
     `)
     .order('created_at', { ascending: false })
-
-  if (params.instrument) {
-    query = query.eq('instrument', params.instrument)
-  }
 
   if (params.style) {
     query = query.eq('musical_style_id', params.style)
   }
 
-  if (params.q) {
-    query = query.ilike('title', `%${params.q}%`)
-  }
 
-  const { data: courses } = await query
-
-  // Get counts per instrument for tab badges
-  const { data: instrumentCounts } = await supabase
-    .from('courses')
-    .select('instrument')
+  // These reads are independent. The listing needs class counts, not lesson items.
+  const [{ data: courseRows, error: coursesError }, { data: instrumentCounts, error: countsError }] = await Promise.all([
+    query,
+    supabase.from('courses').select('instrument'),
+  ])
+  if (coursesError) throw coursesError
+  if (countsError) throw countsError
+  for (const course of courseRows ?? []) localizeCourse(course, locale)
+  const search = params.q?.trim().toLocaleLowerCase(locale)
+  const courses = courseRows?.filter((course) =>
+    (!params.instrument || matchesCourseInstrument(course.instrument, params.instrument, courseInstruments)) &&
+    (!search || course.title.toLocaleLowerCase(locale).includes(search))
+  )
 
   const countMap = new Map<string, number>()
   instrumentCounts?.forEach((c: any) => {
-    if (c.instrument) {
-      countMap.set(c.instrument, (countMap.get(c.instrument) || 0) + 1)
+    for (const instrument of courseInstrumentClassifications(c.instrument, courseInstruments)) {
+      countMap.set(instrument, (countMap.get(instrument) || 0) + 1)
     }
   })
   const totalCount = instrumentCounts?.length || 0
@@ -79,14 +88,12 @@ export default async function CoursesPage({ searchParams }: PageProps) {
     <div className="p-6 lg:p-8">
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-1">Courses</h1>
-          <p className="text-muted-foreground">Manage all courses</p>
+          <h1 className="text-4xl font-bold tracking-tight mb-1"><AdminText text={"Courses"} /></h1>
+          <p className="text-muted-foreground"><AdminText text={"Manage all courses"} /></p>
         </div>
         <Button asChild>
           <Link href="/admin/courses/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Course
-          </Link>
+            <Plus className="w-4 h-4 mr-2" /> <AdminText text={"Add Course"} /> </Link>
         </Button>
       </div>
 
@@ -103,15 +110,13 @@ export default async function CoursesPage({ searchParams }: PageProps) {
               ? 'bg-primary text-primary-foreground'
               : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
           }`}
-        >
-          All
-          <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+        > <AdminText text={"All"} /> <span className={`text-xs px-1.5 py-0.5 rounded-full ${
             !params.instrument ? 'bg-primary-foreground/20' : 'bg-background/50'
           }`}>
             {totalCount}
           </span>
         </Link>
-        {SUBSCRIBABLE_INSTRUMENTS.map((inst) => {
+        {sortCourseInstruments(courseInstruments, locale).map((inst) => {
           const count = countMap.get(inst) || 0
           const isActive = params.instrument === inst
           return (
@@ -124,7 +129,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
                   : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
               }`}
             >
-              {inst}
+              {getCourseInstrumentLabel(inst, locale)}
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                 isActive ? 'bg-primary-foreground/20' : 'bg-background/50'
               }`}>
@@ -144,6 +149,8 @@ export default async function CoursesPage({ searchParams }: PageProps) {
                   <img
                     src={course.thumbnail_url}
                     alt={course.title}
+                    loading="lazy"
+                    decoding="async"
                     className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
@@ -154,13 +161,9 @@ export default async function CoursesPage({ searchParams }: PageProps) {
                 {/* Status Badge */}
                 <div className="absolute top-3 left-3">
                   {course.is_published ? (
-                    <Badge className="bg-green-500/90 hover:bg-green-500/90 text-white border-0">
-                      Published
-                    </Badge>
+                    <Badge className="bg-green-500/90 hover:bg-green-500/90 text-white border-0"> <AdminText text={"Published"} /> </Badge>
                   ) : (
-                    <Badge className="bg-gray-500/90 hover:bg-gray-500/90 text-white border-0">
-                      Draft
-                    </Badge>
+                    <Badge className="bg-gray-500/90 hover:bg-gray-500/90 text-white border-0"> <AdminText text={"Draft"} /> </Badge>
                   )}
                 </div>
                 {course.difficulty && (
@@ -168,7 +171,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
                     variant="outline"
                     className={`absolute top-3 right-3 capitalize bg-background/90 backdrop-blur-sm ${getDifficultyColor(course.difficulty)}`}
                   >
-                    {course.difficulty}
+                    {adminLabel(course.difficulty.charAt(0).toUpperCase() + course.difficulty.slice(1), locale)}
                   </Badge>
                 )}
               </div>
@@ -184,7 +187,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
                   {course.instrument && !params.instrument && (
                     <Badge variant="outline" className={`text-xs ${getInstrumentColor(course.instrument)}`}>
                       <Disc3 className="h-3 w-3 mr-1" />
-                      {course.instrument}
+                      {instrumentLabel(course.instrument, locale)}
                     </Badge>
                   )}
                   {course.musical_style?.country?.name && (
@@ -208,22 +211,17 @@ export default async function CoursesPage({ searchParams }: PageProps) {
                 <div className="flex items-center justify-between text-sm text-muted-foreground mt-auto pt-3 border-t">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    <span className="truncate max-w-[100px]">{course.teacher?.name || 'Unassigned'}</span>
+                    <span className="truncate max-w-[100px]">{course.teacher?.name || adminLabel('Unassigned', locale)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <BookOpen className="h-4 w-4" />
-                    <span>{course.course_sections?.reduce((acc: number, s: any) => acc + (s.classes?.length || 0), 0) || 0} classes</span>
+                    <span>{course.course_sections?.reduce((acc: number, s: any) => acc + (s.classes?.length || 0), 0) || 0} <AdminText text={"classes"} /></span>
                   </div>
                 </div>
               </CardContent>
 
               <div className="px-4 pb-4 flex gap-2">
-                <Button asChild className="flex-1 gap-2" variant="outline">
-                  <Link href={`/admin/courses/${course.id}`}>
-                    <Pencil className="h-4 w-4" />
-                    Edit Course
-                  </Link>
-                </Button>
+                <EditCourseLink courseId={course.id} />
                 <DeleteCourseButton courseId={course.id} courseTitle={course.title} />
               </div>
             </Card>
@@ -232,16 +230,16 @@ export default async function CoursesPage({ searchParams }: PageProps) {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>No Courses</CardTitle>
+            <CardTitle><AdminText text={"No Courses"} /></CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
               {params.instrument
-                ? `No courses found for ${params.instrument}.`
-                : 'Create your first course to start building content.'}
+                ? (locale === 'es' ? `No hay cursos de ${instrumentLabel(params.instrument, locale)}.` : `No courses found for ${params.instrument}.`)
+                : (locale === 'es' ? 'Crea tu primer curso para comenzar a añadir contenido.' : 'Create your first course to start building content.')}
             </p>
             <Button asChild>
-              <Link href="/admin/courses/new">Add Course</Link>
+              <Link href="/admin/courses/new"><AdminText text={"Add Course"} /></Link>
             </Button>
           </CardContent>
         </Card>

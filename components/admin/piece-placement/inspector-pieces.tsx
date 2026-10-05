@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { ChevronRight, Trash2, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
@@ -128,12 +131,11 @@ export function InspectorPieces({
           }}
         />
         {importing ? (
-          <span className="font-semibold">Importing {importing.done} of {importing.total}…</span>
+          <span className="font-semibold"><AdminText text={"Importing"} /> {importing.done} <AdminText text={"of"} /> {importing.total}…</span>
         ) : (
           <>
             <button type="button" disabled={busy} onClick={() => inputRef.current?.click()} className="inline-flex items-center justify-center gap-1.5 font-semibold text-foreground hover:text-primary disabled:opacity-40">
-              <Upload className="h-3.5 w-3.5" /> Drop PNGs here or click to choose
-            </button>
+              <Upload className="h-3.5 w-3.5" /> <AdminText text={"Drop PNGs here or click to choose"} /> </button>
             <span className="leading-snug text-muted-foreground">Several at once is fine. Files with the base image’s pixel size are trimmed and placed automatically; others land centred at 20% width.</span>
           </>
         )}
@@ -142,7 +144,7 @@ export function InspectorPieces({
 
       <label className="grid gap-1 text-xs text-muted-foreground">
         <span className="flex justify-between">
-          <span>Tolerance for the whole question · the halo around each piece</span>
+          <span><AdminText text={"Tolerance for the whole question · the halo around each piece"} /></span>
           <b className="font-mono font-medium text-foreground">{tolerance}%</b>
         </span>
         <input type="range" min={1} max={12} step={0.5} value={tolerance} onChange={(e) => onTolerance(Number(e.target.value), false)} onPointerUp={() => onTolerance(tolerance, true)} onKeyUp={() => onTolerance(tolerance, true)} className="w-full accent-primary" aria-label="Tolerance for the whole question" />
@@ -222,8 +224,7 @@ export function InspectorPieces({
             {on && (
               <details className="grid gap-2">
                 <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[11.5px] font-bold text-muted-foreground [&::-webkit-details-marker]:hidden">
-                  <ChevronRight className="h-3 w-3 transition-transform [details[open]>summary>&]:rotate-90" /> Precise values
-                </summary>
+                  <ChevronRight className="h-3 w-3 transition-transform [details[open]>summary>&]:rotate-90" /> <AdminText text={"Precise values"} /> </summary>
                 <div className="grid grid-cols-3 gap-1.5">
                   <Field label="X" value={c.x} onChange={(v) => onCentre(p.id, { x: v, y: c.y })} onCommit={() => onCommit('position')} />
                   <Field label="Y" value={c.y} onChange={(v) => onCentre(p.id, { x: c.x, y: v })} onCommit={() => onCommit('position')} />
@@ -234,9 +235,9 @@ export function InspectorPieces({
           </div>
         )
       })}
-      {pieces.length === 0 && <p className="text-center text-xs text-muted-foreground">No pieces yet. Drop the exported part images above.</p>}
+      {pieces.length === 0 && <p className="text-center text-xs text-muted-foreground"><AdminText text={"No pieces yet. Drop the exported part images above."} /></p>}
       <div className="grid gap-1.5 rounded-xl border border-gold/30 bg-gold/8 px-3.5 py-3 text-xs leading-snug">
-        <b className="text-gold">How it works</b>
+        <b className="text-gold"><AdminText text={"How it works"} /></b>
         Every piece sits on the canvas where it belongs, at the size the student sees. Drag it to move, pull the gold dot to resize, use the arrows to nudge. The dashed halo is how far off a student can be and still pass.
       </div>
     </div>

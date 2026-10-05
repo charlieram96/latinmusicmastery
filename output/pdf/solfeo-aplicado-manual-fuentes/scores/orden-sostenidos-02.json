@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "2.0",
+  "id": "orden-sostenidos-02",
+  "title": {
+    "es": "2 sostenidos · Re mayor"
+  },
+  "meter": null,
+  "keyFifths": 2,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "orden-sostenidos-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "key": 2,
+    "events": [
+      {
+        "pitch": "D4",
+        "dur": 1
+      }
+    ]
+  }
+}

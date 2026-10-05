@@ -1,0 +1,1835 @@
+{
+  "doc": {
+    "success": true,
+    "error": null,
+    "data": {
+      "id": "ca632347-16d0-4226-8b92-c1842f50f8b7",
+      "title": "Ritmo Basico de la Cascara en el Son",
+      "composer": "LMM",
+      "source_format": "musicxml",
+      "source_storage_path": null,
+      "parsed_score": {
+        "spans": [],
+        "title": "Ritmo Basico de la Cascara en el Son",
+        "tracks": [
+          {
+            "index": 0,
+            "tuning": null,
+            "channel": null,
+            "measures": [
+              {
+                "clef": "percussion",
+                "number": 1,
+                "repeat": {
+                  "id": "d551236f-97a5-4543-9f6e-6e9054c543ef",
+                  "pass": 0,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 0
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "xa4aac9a3-1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-4",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-5",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "keyFifths": 0,
+                "tempoChange": 100,
+                "timeSignature": [
+                  4,
+                  4
+                ]
+              },
+              {
+                "number": 2,
+                "repeat": {
+                  "id": "d551236f-97a5-4543-9f6e-6e9054c543ef",
+                  "pass": 0,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 1
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "xa4aac9a3-6",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-7",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-8",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        },
+                        "symbolOffsets": {}
+                      },
+                      {
+                        "id": "xa4aac9a3-9",
+                        "kind": "rest",
+                        "dotted": false,
+                        "durationQN": 0.5
+                      },
+                      {
+                        "id": "xa4aac9a3-10",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-11",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "endBarline": "double"
+              },
+              {
+                "clef": "percussion",
+                "number": 3,
+                "repeat": {
+                  "id": "d551236f-97a5-4543-9f6e-6e9054c543ef",
+                  "pass": 1,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 0
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "xa4aac9a3-1~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-2~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-3~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-4~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-5~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "keyFifths": 0,
+                "tempoChange": 100,
+                "timeSignature": [
+                  4,
+                  4
+                ]
+              },
+              {
+                "number": 4,
+                "repeat": {
+                  "id": "d551236f-97a5-4543-9f6e-6e9054c543ef",
+                  "pass": 1,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 1
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "xa4aac9a3-6~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-7~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-8~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        },
+                        "symbolOffsets": {}
+                      },
+                      {
+                        "id": "xa4aac9a3-9~1",
+                        "kind": "rest",
+                        "dotted": false,
+                        "durationQN": 0.5
+                      },
+                      {
+                        "id": "xa4aac9a3-10~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-11~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "endBarline": "double"
+              },
+              {
+                "clef": "percussion",
+                "number": 5,
+                "repeat": {
+                  "id": "d551236f-97a5-4543-9f6e-6e9054c543ef",
+                  "pass": 2,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 0
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "xa4aac9a3-1~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-2~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-3~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-4~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-5~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "keyFifths": 0,
+                "tempoChange": 100,
+                "timeSignature": [
+                  4,
+                  4
+                ]
+              },
+              {
+                "number": 6,
+                "repeat": {
+                  "id": "d551236f-97a5-4543-9f6e-6e9054c543ef",
+                  "pass": 2,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 1
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "xa4aac9a3-6~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-7~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-8~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        },
+                        "symbolOffsets": {}
+                      },
+                      {
+                        "id": "xa4aac9a3-9~2",
+                        "kind": "rest",
+                        "dotted": false,
+                        "durationQN": 0.5
+                      },
+                      {
+                        "id": "xa4aac9a3-10~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-11~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "endBarline": "double"
+              },
+              {
+                "clef": "percussion",
+                "number": 7,
+                "repeat": {
+                  "id": "d551236f-97a5-4543-9f6e-6e9054c543ef",
+                  "pass": 3,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 0
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "xa4aac9a3-1~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-2~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-3~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-4~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-5~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "keyFifths": 0,
+                "tempoChange": 100,
+                "timeSignature": [
+                  4,
+                  4
+                ]
+              },
+              {
+                "number": 8,
+                "repeat": {
+                  "id": "d551236f-97a5-4543-9f6e-6e9054c543ef",
+                  "pass": 3,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 1
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "xa4aac9a3-6~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-7~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-8~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        },
+                        "symbolOffsets": {}
+                      },
+                      {
+                        "id": "xa4aac9a3-9~3",
+                        "kind": "rest",
+                        "dotted": false,
+                        "durationQN": 0.5
+                      },
+                      {
+                        "id": "xa4aac9a3-10~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "xa4aac9a3-11~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "endBarline": "double"
+              },
+              {
+                "clef": "percussion",
+                "number": 9,
+                "repeat": {
+                  "id": "6c57d5d7-f764-40e5-87fe-5c16cb9a7a9e",
+                  "pass": 0,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 0
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "e21ac2684",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ec7cd212d",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ec16527e9",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e6d7616b4",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e1dba8db7",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "keyFifths": 0,
+                "tempoChange": 100,
+                "timeSignature": [
+                  4,
+                  4
+                ]
+              },
+              {
+                "number": 10,
+                "repeat": {
+                  "id": "6c57d5d7-f764-40e5-87fe-5c16cb9a7a9e",
+                  "pass": 0,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 1
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "ea45b9a46",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e60b5e89d",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ef5962f4f",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e42993d5d",
+                        "kind": "rest",
+                        "dotted": false,
+                        "durationQN": 0.5
+                      },
+                      {
+                        "id": "e8441b032",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "eff984cdb",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ]
+              },
+              {
+                "clef": "percussion",
+                "number": 11,
+                "repeat": {
+                  "id": "6c57d5d7-f764-40e5-87fe-5c16cb9a7a9e",
+                  "pass": 1,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 0
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "e21ac2684~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ec7cd212d~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ec16527e9~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e6d7616b4~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e1dba8db7~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "keyFifths": 0,
+                "tempoChange": 100,
+                "timeSignature": [
+                  4,
+                  4
+                ]
+              },
+              {
+                "number": 12,
+                "repeat": {
+                  "id": "6c57d5d7-f764-40e5-87fe-5c16cb9a7a9e",
+                  "pass": 1,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 1
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "ea45b9a46~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e60b5e89d~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ef5962f4f~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e42993d5d~1",
+                        "kind": "rest",
+                        "dotted": false,
+                        "durationQN": 0.5
+                      },
+                      {
+                        "id": "e8441b032~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "eff984cdb~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ]
+              },
+              {
+                "clef": "percussion",
+                "number": 13,
+                "repeat": {
+                  "id": "6c57d5d7-f764-40e5-87fe-5c16cb9a7a9e",
+                  "pass": 2,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 0
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "e21ac2684~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ec7cd212d~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ec16527e9~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e6d7616b4~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e1dba8db7~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "keyFifths": 0,
+                "tempoChange": 100,
+                "timeSignature": [
+                  4,
+                  4
+                ]
+              },
+              {
+                "number": 14,
+                "repeat": {
+                  "id": "6c57d5d7-f764-40e5-87fe-5c16cb9a7a9e",
+                  "pass": 2,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 1
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "ea45b9a46~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e60b5e89d~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ef5962f4f~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e42993d5d~2",
+                        "kind": "rest",
+                        "dotted": false,
+                        "durationQN": 0.5
+                      },
+                      {
+                        "id": "e8441b032~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "eff984cdb~2",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ]
+              },
+              {
+                "clef": "percussion",
+                "number": 15,
+                "repeat": {
+                  "id": "6c57d5d7-f764-40e5-87fe-5c16cb9a7a9e",
+                  "pass": 3,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 0
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "e21ac2684~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ec7cd212d~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ec16527e9~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e6d7616b4~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e1dba8db7~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "keyFifths": 0,
+                "tempoChange": 100,
+                "timeSignature": [
+                  4,
+                  4
+                ]
+              },
+              {
+                "number": 16,
+                "repeat": {
+                  "id": "6c57d5d7-f764-40e5-87fe-5c16cb9a7a9e",
+                  "pass": 3,
+                  "count": 4,
+                  "length": 2,
+                  "offset": 1
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "ea45b9a46~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e60b5e89d~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ef5962f4f~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e42993d5d~3",
+                        "kind": "rest",
+                        "dotted": false,
+                        "durationQN": 0.5
+                      },
+                      {
+                        "id": "e8441b032~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "eff984cdb~3",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ]
+              },
+              {
+                "clef": "percussion",
+                "number": 17,
+                "repeat": {
+                  "id": "7254499a-e739-4ae2-95fa-0d050c5c1522",
+                  "pass": 0,
+                  "count": 2,
+                  "length": 2,
+                  "offset": 0
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "eff8b5ea6",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "efa3c2019",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ea98680a6",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ef414357a",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ee8fa7841",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "keyFifths": 0,
+                "tempoChange": 100,
+                "timeSignature": [
+                  4,
+                  4
+                ]
+              },
+              {
+                "number": 18,
+                "repeat": {
+                  "id": "7254499a-e739-4ae2-95fa-0d050c5c1522",
+                  "pass": 0,
+                  "count": 2,
+                  "length": 2,
+                  "offset": 1
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "ef57f2418",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e3ede68d8",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e6f99b014",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e18e2319f",
+                        "kind": "rest",
+                        "dotted": false,
+                        "durationQN": 0.5
+                      },
+                      {
+                        "id": "ebd732265",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "efd5b0636",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ]
+              },
+              {
+                "clef": "percussion",
+                "number": 19,
+                "repeat": {
+                  "id": "7254499a-e739-4ae2-95fa-0d050c5c1522",
+                  "pass": 1,
+                  "count": 2,
+                  "length": 2,
+                  "offset": 0
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "eff8b5ea6~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "efa3c2019~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ea98680a6~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ef414357a~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "ee8fa7841~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ],
+                "keyFifths": 0,
+                "tempoChange": 100,
+                "timeSignature": [
+                  4,
+                  4
+                ]
+              },
+              {
+                "number": 20,
+                "repeat": {
+                  "id": "7254499a-e739-4ae2-95fa-0d050c5c1522",
+                  "pass": 1,
+                  "count": 2,
+                  "length": 2,
+                  "offset": 1
+                },
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "ef57f2418~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e3ede68d8~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e6f99b014~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e18e2319f~1",
+                        "kind": "rest",
+                        "dotted": false,
+                        "durationQN": 0.5
+                      },
+                      {
+                        "id": "ebd732265~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "efd5b0636~1",
+                        "kind": "note",
+                        "midi": 65,
+                        "dotted": false,
+                        "durationQN": 0.5,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      }
+                    ],
+                    "number": 1
+                  }
+                ]
+              },
+              {
+                "number": 21,
+                "voices": [
+                  {
+                    "events": [
+                      {
+                        "id": "e51284b17",
+                        "kind": "note",
+                        "midi": 65,
+                        "durationQN": 1,
+                        "percussion": {
+                          "notehead": "plus",
+                          "strokeId": "cascara",
+                          "staffLine": "a/4"
+                        }
+                      },
+                      {
+                        "id": "e80982cee",
+                        "kind": "rest",
+                        "durationQN": 1
+                      },
+                      {
+                        "id": "e5bbf9ae1",
+                        "kind": "rest",
+                        "durationQN": 1
+                      },
+                      {
+                        "id": "ea5fa93c6",
+                        "kind": "rest",
+                        "durationQN": 1
+                      }
+                    ],
+                    "number": 1
+                  }
+                ]
+              }
+            ],
+            "instrument": "perc-timbal",
+            "defaultView": "staff",
+            "displayName": "Cáscara timbal",
+            "stringMultiplicity": 1
+          }
+        ],
+        "composer": "LMM",
+        "initialTempo": 120,
+        "sourceFormat": "musicxml",
+        "schemaVersion": 1,
+        "videoCoaching": "cascara-v1",
+        "initialKeyFifths": 0,
+        "tempoMarksConfirmed": true,
+        "initialTimeSignature": [
+          4,
+          4
+        ]
+      },
+      "schema_version": 1,
+      "created_by": "299cbf38-fe3e-4e31-b8ac-e53bf848cf5e",
+      "created_at": "2026-09-29T04:13:25.017869+00:00",
+      "updated_at": "2026-10-01T04:21:43.345982+00:00"
+    },
+    "count": null,
+    "status": 200,
+    "statusText": "OK"
+  },
+  "item": {
+    "success": true,
+    "error": null,
+    "data": {
+      "id": "f7fee0dd-66bb-4e08-9af0-e38febfa415b",
+      "class_id": "d6c3b163-7107-4ed8-8072-7ceee93d32e5",
+      "item_type": "EXERCISE",
+      "title": "Cáscara – Right Hand",
+      "description": "In this exercise, students learn the right-hand cáscara pattern in Son, focusing on the basic pattern, accents, and the correct placement of the strokes to achieve the traditional phrasing of the genre. ",
+      "order_index": 1,
+      "rich_content": null,
+      "video_url": "https://uaupfsnfgenyqmlfljpi.supabase.co/storage/v1/object/public/course-videos/f7fee0dd-66bb-4e08-9af0-e38febfa415b-1789594058741.m4v",
+      "video_duration_seconds": null,
+      "soundslice_embed_url": null,
+      "question": null,
+      "question_type": null,
+      "options": null,
+      "correct_answer": null,
+      "explanation": null,
+      "audio_url": null,
+      "bpm": null,
+      "key_signature": null,
+      "created_at": "2026-09-11T23:19:12.240715+00:00",
+      "updated_at": "2026-10-01T04:21:43.227267+00:00",
+      "score_document_id": "ca632347-16d0-4226-8b92-c1842f50f8b7",
+      "active_time_map_id": null,
+      "exercise_video_url": "https://uaupfsnfgenyqmlfljpi.supabase.co/storage/v1/object/public/course-videos/f7fee0dd-66bb-4e08-9af0-e38febfa415b-exercise-1789589044136.m4v",
+      "exercise_video_start_seconds": 0,
+      "title_es": "Cascara Mano derecha ",
+      "description_es": "En este ejercicio se enseña la mano derecha de la cáscara en el Son, enfocándose en el patrón básico, los acentos y la correcta distribución de los golpes para lograr el fraseo tradicional del género.",
+      "exercise_time_map_id": "a0acf81a-9541-4673-811f-8f32d6bd8c6c",
+      "quiz_settings": {},
+      "subtitles": [],
+      "video_trim_in_seconds": 0,
+      "video_trim_out_seconds": null,
+      "exercise_video_trim_in_seconds": 0,
+      "exercise_video_trim_out_seconds": null,
+      "metronome_anchor_seconds": 5.34851582600154,
+      "metronome_anchor_qn": 0.0168372748438187,
+      "metronome_anchor_time_map_id": "a0acf81a-9541-4673-811f-8f32d6bd8c6c",
+      "play_bar1_seconds": 7.3466,
+      "play_count_in_bars": 1,
+      "play_preroll": true
+    },
+    "count": null,
+    "status": 200,
+    "statusText": "OK"
+  },
+  "sections": {
+    "success": true,
+    "error": null,
+    "data": [
+      {
+        "id": "9ca559d8-16e4-4bc9-a326-8c5777fb97a5",
+        "class_item_id": "f7fee0dd-66bb-4e08-9af0-e38febfa415b",
+        "score_document_id": "152baacb-18e5-41e4-8beb-15ae8d054d64",
+        "active_time_map_id": "72e94e23-ab84-4e26-9394-103384bfce9a",
+        "section_index": 0,
+        "label": "Ritmo Basico de la Cascara en el Son",
+        "video_start_seconds": 0.35489980994488,
+        "video_end_seconds": 18.8690589372175,
+        "created_at": "2026-09-16T18:54:13.57359+00:00",
+        "updated_at": "2026-09-19T03:05:37.695+00:00",
+        "draft_time_map_id": null,
+        "metronome_anchor_seconds": 2.37623468324338,
+        "metronome_anchor_qn": 4.01847603320488,
+        "metronome_anchor_time_map_id": "72e94e23-ab84-4e26-9394-103384bfce9a"
+      }
+    ],
+    "count": null,
+    "status": 200,
+    "statusText": "OK"
+  }
+}

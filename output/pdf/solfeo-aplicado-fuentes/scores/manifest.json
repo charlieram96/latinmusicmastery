@@ -1,0 +1,290 @@
+[
+  {
+    "id": "pentagrama-01",
+    "title": "Líneas y espacios sucesivos",
+    "source": "content.es.json",
+    "musicxml": "pentagrama-01.musicxml",
+    "mxl": "pentagrama-01.mxl",
+    "json": "pentagrama-01.json"
+  },
+  {
+    "id": "claves-01",
+    "title": "Clave de sol · Do4 a Do5",
+    "source": "content.es.json",
+    "musicxml": "claves-01.musicxml",
+    "mxl": "claves-01.mxl",
+    "json": "claves-01.json"
+  },
+  {
+    "id": "claves-02",
+    "title": "Clave de fa en cuarta · Do3 a Do4",
+    "source": "content.es.json",
+    "musicxml": "claves-02.musicxml",
+    "mxl": "claves-02.mxl",
+    "json": "claves-02.json"
+  },
+  {
+    "id": "claves-03",
+    "title": "Clave de do en tercera · Do4 a Do5",
+    "source": "content.es.json",
+    "musicxml": "claves-03.musicxml",
+    "mxl": "claves-03.mxl",
+    "json": "claves-03.json"
+  },
+  {
+    "id": "compas-simple-01",
+    "title": "Qué nos dice un 4/4",
+    "source": "content.es.json",
+    "musicxml": "compas-simple-01.musicxml",
+    "mxl": "compas-simple-01.mxl",
+    "json": "compas-simple-01.json"
+  },
+  {
+    "id": "mayor-01",
+    "title": "Escala ascendente en redondas",
+    "source": "content.es.json",
+    "musicxml": "mayor-01.musicxml",
+    "mxl": "mayor-01.mxl",
+    "json": "mayor-01.json"
+  },
+  {
+    "id": "intervalos-practica-01",
+    "title": "Segundas",
+    "source": "content.es.json",
+    "musicxml": "intervalos-practica-01.musicxml",
+    "mxl": "intervalos-practica-01.mxl",
+    "json": "intervalos-practica-01.json"
+  },
+  {
+    "id": "intervalos-practica-02",
+    "title": "Terceras",
+    "source": "content.es.json",
+    "musicxml": "intervalos-practica-02.musicxml",
+    "mxl": "intervalos-practica-02.mxl",
+    "json": "intervalos-practica-02.json"
+  },
+  {
+    "id": "intervalos-practica-03",
+    "title": "Cuartas y quintas",
+    "source": "content.es.json",
+    "musicxml": "intervalos-practica-03.musicxml",
+    "mxl": "intervalos-practica-03.mxl",
+    "json": "intervalos-practica-03.json"
+  },
+  {
+    "id": "intervalos-practica-04",
+    "title": "El tritono, dos escrituras",
+    "source": "content.es.json",
+    "musicxml": "intervalos-practica-04.musicxml",
+    "mxl": "intervalos-practica-04.mxl",
+    "json": "intervalos-practica-04.json"
+  },
+  {
+    "id": "intervalos-amplios-01",
+    "title": "Sextas",
+    "source": "content.es.json",
+    "musicxml": "intervalos-amplios-01.musicxml",
+    "mxl": "intervalos-amplios-01.mxl",
+    "json": "intervalos-amplios-01.json"
+  },
+  {
+    "id": "intervalos-amplios-02",
+    "title": "Séptimas",
+    "source": "content.es.json",
+    "musicxml": "intervalos-amplios-02.musicxml",
+    "mxl": "intervalos-amplios-02.mxl",
+    "json": "intervalos-amplios-02.json"
+  },
+  {
+    "id": "intervalos-amplios-03",
+    "title": "Octava",
+    "source": "content.es.json",
+    "musicxml": "intervalos-amplios-03.musicxml",
+    "mxl": "intervalos-amplios-03.mxl",
+    "json": "intervalos-amplios-03.json"
+  },
+  {
+    "id": "intervalos-amplios-04",
+    "title": "Quinta aumentada",
+    "source": "content.es.json",
+    "musicxml": "intervalos-amplios-04.musicxml",
+    "mxl": "intervalos-amplios-04.mxl",
+    "json": "intervalos-amplios-04.json"
+  },
+  {
+    "id": "tuplets-visuales-01",
+    "title": "Grupo 3:2",
+    "source": "content.es.json",
+    "musicxml": "tuplets-visuales-01.musicxml",
+    "mxl": "tuplets-visuales-01.mxl",
+    "json": "tuplets-visuales-01.json"
+  },
+  {
+    "id": "tuplets-visuales-02",
+    "title": "Grupo 2:3",
+    "source": "content.es.json",
+    "musicxml": "tuplets-visuales-02.musicxml",
+    "mxl": "tuplets-visuales-02.mxl",
+    "json": "tuplets-visuales-02.json"
+  },
+  {
+    "id": "tuplets-visuales-03",
+    "title": "Grupo 5:4",
+    "source": "content.es.json",
+    "musicxml": "tuplets-visuales-03.musicxml",
+    "mxl": "tuplets-visuales-03.mxl",
+    "json": "tuplets-visuales-03.json"
+  },
+  {
+    "id": "tuplets-visuales-04",
+    "title": "Grupo 7:4",
+    "source": "content.es.json",
+    "musicxml": "tuplets-visuales-04.musicxml",
+    "mxl": "tuplets-visuales-04.mxl",
+    "json": "tuplets-visuales-04.json"
+  },
+  {
+    "id": "menores-01",
+    "title": "La menor natural",
+    "source": "content.es.json",
+    "musicxml": "menores-01.musicxml",
+    "mxl": "menores-01.mxl",
+    "json": "menores-01.json"
+  },
+  {
+    "id": "menores-02",
+    "title": "La menor armónica · VII elevado",
+    "source": "content.es.json",
+    "musicxml": "menores-02.musicxml",
+    "mxl": "menores-02.mxl",
+    "json": "menores-02.json"
+  },
+  {
+    "id": "menores-03",
+    "title": "La menor melódica clásica · ascendente",
+    "source": "content.es.json",
+    "musicxml": "menores-03.musicxml",
+    "mxl": "menores-03.mxl",
+    "json": "menores-03.json"
+  },
+  {
+    "id": "arpegios-01",
+    "title": "Do mayor · I: Do-Mi-Sol",
+    "source": "content.es.json",
+    "musicxml": "arpegios-01.musicxml",
+    "mxl": "arpegios-01.mxl",
+    "json": "arpegios-01.json"
+  },
+  {
+    "id": "arpegios-02",
+    "title": "La menor · i: La-Do-Mi",
+    "source": "content.es.json",
+    "musicxml": "arpegios-02.musicxml",
+    "mxl": "arpegios-02.mxl",
+    "json": "arpegios-02.json"
+  },
+  {
+    "id": "cromatica-01",
+    "title": "Ascenso cromático · primera parte",
+    "source": "content.es.json",
+    "musicxml": "cromatica-01.musicxml",
+    "mxl": "cromatica-01.mxl",
+    "json": "cromatica-01.json"
+  },
+  {
+    "id": "cromatica-02",
+    "title": "Ascenso cromático · continuación",
+    "source": "content.es.json",
+    "musicxml": "cromatica-02.musicxml",
+    "mxl": "cromatica-02.mxl",
+    "json": "cromatica-02.json"
+  },
+  {
+    "id": "taller-01",
+    "title": "Un ejercicio, varias lecturas",
+    "source": "content.es.json",
+    "musicxml": "taller-01.musicxml",
+    "mxl": "taller-01.mxl",
+    "json": "taller-01.json"
+  },
+  {
+    "id": "taller-02",
+    "title": "Material de alturas para crear dos frases",
+    "source": "content.es.json",
+    "musicxml": "taller-02.musicxml",
+    "mxl": "taller-02.mxl",
+    "json": "taller-02.json"
+  },
+  {
+    "id": "aplicada-01",
+    "title": "Trompeta en Si bemol · notas escritas",
+    "source": "content.es.json",
+    "musicxml": "aplicada-01.musicxml",
+    "mxl": "aplicada-01.mxl",
+    "json": "aplicada-01.json"
+  },
+  {
+    "id": "aplicada-02",
+    "title": "Sonido real equivalente · un tono más grave",
+    "source": "content.es.json",
+    "musicxml": "aplicada-02.musicxml",
+    "mxl": "aplicada-02.mxl",
+    "json": "aplicada-02.json"
+  },
+  {
+    "id": "cuerdas-01",
+    "title": "Violín · lectura en Sol",
+    "source": "content.es.json",
+    "musicxml": "cuerdas-01.musicxml",
+    "mxl": "cuerdas-01.mxl",
+    "json": "cuerdas-01.json"
+  },
+  {
+    "id": "cuerdas-02",
+    "title": "Viola · lectura en Do en tercera",
+    "source": "content.es.json",
+    "musicxml": "cuerdas-02.musicxml",
+    "mxl": "cuerdas-02.mxl",
+    "json": "cuerdas-02.json"
+  },
+  {
+    "id": "maderas-01",
+    "title": "Corno inglés · escrito",
+    "source": "content.es.json",
+    "musicxml": "maderas-01.musicxml",
+    "mxl": "maderas-01.mxl",
+    "json": "maderas-01.json"
+  },
+  {
+    "id": "maderas-02",
+    "title": "Sonido real · quinta justa inferior",
+    "source": "content.es.json",
+    "musicxml": "maderas-02.musicxml",
+    "mxl": "maderas-02.mxl",
+    "json": "maderas-02.json"
+  },
+  {
+    "id": "saxofones-01",
+    "title": "Saxofón alto · escrito",
+    "source": "content.es.json",
+    "musicxml": "saxofones-01.musicxml",
+    "mxl": "saxofones-01.mxl",
+    "json": "saxofones-01.json"
+  },
+  {
+    "id": "saxofones-02",
+    "title": "Saxofón alto · sonido real",
+    "source": "content.es.json",
+    "musicxml": "saxofones-02.musicxml",
+    "mxl": "saxofones-02.mxl",
+    "json": "saxofones-02.json"
+  },
+  {
+    "id": "LMM-practice-001",
+    "title": "Primera lectura en Do · LMM",
+    "source": "content.es.json",
+    "musicxml": "LMM-practice-001.musicxml",
+    "mxl": "LMM-practice-001.mxl",
+    "json": "LMM-practice-001.json"
+  }
+]

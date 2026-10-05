@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { Eye, Grid3X3, Magnet, Pencil, Redo2, Target, Undo2, ZoomIn } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -72,8 +75,8 @@ function PreviewPane({ background, pieces }: { background: Background; pieces: P
       <PiecePlacementInput background={background} pieces={pieces} placement={placement} isGraded={graded} onChange={setPlacement} maxHeight="min(62vh, 640px)" />
       {graded && <FeedbackBanner score={score} />}
       <div className="flex justify-between">
-        <Button variant="ghost" onClick={() => { setPlacement({}); setGraded(false) }}>Reset</Button>
-        <Button disabled={Object.keys(placement).length === 0 || graded} onClick={() => setGraded(true)}>Check placement</Button>
+        <Button variant="ghost" onClick={() => { setPlacement({}); setGraded(false) }}><AdminText text={"Reset"} /></Button>
+        <Button disabled={Object.keys(placement).length === 0 || graded} onClick={() => setGraded(true)}><AdminText text={"Check placement"} /></Button>
       </div>
     </div>
   )
@@ -315,31 +318,31 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
         }}
         className="flex h-[92vh] w-[96vw] max-w-[1280px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1280px]"
       >
-        <DialogTitle className="sr-only">Drag-and-drop builder</DialogTitle>
+        <DialogTitle className="sr-only"><AdminText text={"Drag-and-drop builder"} /></DialogTitle>
         <div className="flex flex-wrap items-center gap-2.5 border-b border-border bg-sunken px-3.5 py-2.5">
           <div className="mr-auto min-w-0">
-            <div className="font-heading text-[13px] font-bold">Drag into place</div>
+            <div className="font-heading text-[13px] font-bold"><AdminText text={"Drag into place"} /></div>
             {question && <div className="max-w-[46ch] truncate text-xs text-muted-foreground">{question}</div>}
           </div>
           <div className="inline-flex gap-0.5 rounded-[9px] border border-border p-0.5">
-            <Toggle on={!preview} onClick={() => setPreview(false)} icon={Pencil}>Design</Toggle>
-            <Toggle on={preview} onClick={() => setPreview(true)} icon={Eye}>Preview as student</Toggle>
+            <Toggle on={!preview} onClick={() => setPreview(false)} icon={Pencil}><AdminText text={"Design"} /></Toggle>
+            <Toggle on={preview} onClick={() => setPreview(true)} icon={Eye}><AdminText text={"Preview as student"} /></Toggle>
           </div>
           {!preview && (
             <>
               <div className="inline-flex gap-0.5 rounded-[9px] border border-border p-0.5">
-                <Toggle onClick={undo} icon={Undo2} disabled={!history.canUndo} title="Undo (⌘Z)">Undo</Toggle>
-                <Toggle onClick={redo} icon={Redo2} disabled={!history.canRedo} title="Redo (⇧⌘Z)">Redo</Toggle>
+                <Toggle onClick={undo} icon={Undo2} disabled={!history.canUndo} title="Undo (⌘Z)"><AdminText text={"Undo"} /></Toggle>
+                <Toggle onClick={redo} icon={Redo2} disabled={!history.canRedo} title="Redo (⇧⌘Z)"><AdminText text={"Redo"} /></Toggle>
               </div>
               <div className="inline-flex gap-0.5 rounded-[9px] border border-border p-0.5">
-                <Toggle on={showHalos} onClick={() => setShowHalos(!showHalos)} icon={Target} title="Show every piece's tolerance">Tolerance</Toggle>
-                <Toggle on={showGrid} onClick={() => setShowGrid(!showGrid)} icon={Grid3X3}>Grid</Toggle>
-                <Toggle on={snap} onClick={() => setSnap(!snap)} icon={Magnet}>Snap</Toggle>
+                <Toggle on={showHalos} onClick={() => setShowHalos(!showHalos)} icon={Target} title="Show every piece's tolerance"><AdminText text={"Tolerance"} /></Toggle>
+                <Toggle on={showGrid} onClick={() => setShowGrid(!showGrid)} icon={Grid3X3}><AdminText text={"Grid"} /></Toggle>
+                <Toggle on={snap} onClick={() => setSnap(!snap)} icon={Magnet}><AdminText text={"Snap"} /></Toggle>
                 <Toggle on={zoom === 2} onClick={() => setZoom(zoom === 2 ? 1 : 2)} icon={ZoomIn}>2×</Toggle>
               </div>
             </>
           )}
-          <Button size="sm" onClick={done}>Done</Button>
+          <Button size="sm" onClick={done}><AdminText text={"Done"} /></Button>
         </div>
 
         {preview ? (
@@ -378,7 +381,7 @@ export function PiecePlacementBuilderDialog({ open, onOpenChange, questionId, qu
             <div className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden border-t border-border bg-card md:border-l md:border-t-0">
               <div className="grid grid-cols-2 border-b border-border">
                 <button type="button" aria-pressed={tab === 'pieces'} onClick={() => setTab('pieces')} className={cn('-mb-px border-b-2 p-3 text-xs font-bold', tab === 'pieces' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground')}>Pieces · {pieces.length}</button>
-                <button type="button" aria-pressed={tab === 'background'} onClick={() => setTab('background')} className={cn('-mb-px border-b-2 p-3 text-xs font-bold', tab === 'background' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground')}>Background</button>
+                <button type="button" aria-pressed={tab === 'background'} onClick={() => setTab('background')} className={cn('-mb-px border-b-2 p-3 text-xs font-bold', tab === 'background' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground')}><AdminText text={"Background"} /></button>
               </div>
               <div className="min-h-0 overflow-auto">
                 {tab === 'background' ? (

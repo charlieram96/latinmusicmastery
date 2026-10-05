@@ -1,0 +1,148 @@
+{
+  "schemaVersion": "2.0",
+  "id": "dinamica-01",
+  "title": {
+    "es": "Gradación de intensidad"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "dinamica-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dynamic": "ppp"
+    },
+    {
+      "id": "dinamica-01.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dynamic": "pp"
+    },
+    {
+      "id": "dinamica-01.n3",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dynamic": "p"
+    },
+    {
+      "id": "dinamica-01.n4",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dynamic": "mp"
+    },
+    {
+      "id": "dinamica-01.n5",
+      "onsetBeats": "4",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dynamic": "mf"
+    },
+    {
+      "id": "dinamica-01.n6",
+      "onsetBeats": "5",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dynamic": "f"
+    },
+    {
+      "id": "dinamica-01.n7",
+      "onsetBeats": "6",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dynamic": "ff"
+    },
+    {
+      "id": "dinamica-01.n8",
+      "onsetBeats": "7",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4,
+      "dynamic": "fff"
+    }
+  ],
+  "notation": {
+    "title": "Gradación de intensidad",
+    "bars": [
+      [
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dynamic": "ppp"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dynamic": "pp"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dynamic": "p"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dynamic": "mp"
+        }
+      ],
+      [
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dynamic": "mf"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dynamic": "f"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dynamic": "ff"
+        },
+        {
+          "pitch": "G4",
+          "dur": 4,
+          "dynamic": "fff"
+        }
+      ]
+    ],
+    "meter": "4/4",
+    "barStyles": {
+      "1": "final"
+    }
+  }
+}

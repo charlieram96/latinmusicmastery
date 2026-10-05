@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "2.0",
+  "id": "examen-m01-01",
+  "title": {
+    "es": "Modelo A · Todas las figuras están sobre Sol4"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "examen-m01-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 1
+    },
+    {
+      "id": "examen-m01-01.n2",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 2
+    },
+    {
+      "id": "examen-m01-01.n3",
+      "onsetBeats": "6",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 4
+    },
+    {
+      "id": "examen-m01-01.n4",
+      "onsetBeats": "7",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    }
+  ],
+  "notation": {
+    "title": "Modelo A · Todas las figuras están sobre Sol4",
+    "events": [
+      {
+        "pitch": "G4",
+        "dur": 1
+      },
+      {
+        "pitch": "G4",
+        "dur": 2
+      },
+      {
+        "pitch": "G4",
+        "dur": 4
+      },
+      {
+        "pitch": "G4",
+        "dur": 8
+      }
+    ]
+  }
+}

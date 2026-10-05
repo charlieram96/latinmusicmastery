@@ -1,0 +1,134 @@
+{
+  "schemaVersion": "2.0",
+  "id": "tonal-6-mayor-01",
+  "title": {
+    "es": "Escala mayor · corchete T / arco S"
+  },
+  "meter": null,
+  "keyFifths": -3,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "tonal-6-mayor-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Eb4",
+      "dur": 1
+    },
+    {
+      "id": "tonal-6-mayor-01.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 1
+    },
+    {
+      "id": "tonal-6-mayor-01.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 1
+    },
+    {
+      "id": "tonal-6-mayor-01.n4",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Ab4",
+      "dur": 1
+    },
+    {
+      "id": "tonal-6-mayor-01.n5",
+      "onsetBeats": "16",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Bb4",
+      "dur": 1
+    },
+    {
+      "id": "tonal-6-mayor-01.n6",
+      "onsetBeats": "20",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 1
+    },
+    {
+      "id": "tonal-6-mayor-01.n7",
+      "onsetBeats": "24",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D5",
+      "dur": 1
+    },
+    {
+      "id": "tonal-6-mayor-01.n8",
+      "onsetBeats": "28",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Eb5",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Escala mayor · corchete T / arco S",
+    "events": [
+      {
+        "pitch": "Eb4",
+        "dur": 1
+      },
+      {
+        "pitch": "F4",
+        "dur": 1
+      },
+      {
+        "pitch": "G4",
+        "dur": 1
+      },
+      {
+        "pitch": "Ab4",
+        "dur": 1
+      },
+      {
+        "pitch": "Bb4",
+        "dur": 1
+      },
+      {
+        "pitch": "C5",
+        "dur": 1
+      },
+      {
+        "pitch": "D5",
+        "dur": 1
+      },
+      {
+        "pitch": "Eb5",
+        "dur": 1
+      }
+    ],
+    "key": -3,
+    "intervals": [
+      "T",
+      "T",
+      "S",
+      "T",
+      "T",
+      "T",
+      "S"
+    ]
+  }
+}

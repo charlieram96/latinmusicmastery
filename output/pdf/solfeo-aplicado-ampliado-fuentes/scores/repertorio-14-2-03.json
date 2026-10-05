@@ -1,0 +1,172 @@
+{
+  "schemaVersion": "2.0",
+  "id": "repertorio-14-2-03",
+  "title": {
+    "es": "Compases 13-14"
+  },
+  "meter": "4/4",
+  "keyFifths": -2,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "repertorio-14-2-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Eb4",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-14-2-03.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 8
+    },
+    {
+      "id": "repertorio-14-2-03.n3",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 8
+    },
+    {
+      "id": "repertorio-14-2-03.n4",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Bb3",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-14-2-03.n5",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-14-2-03.n6",
+      "onsetBeats": "4",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-14-2-03.n7",
+      "onsetBeats": "5",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "Eb4",
+      "dur": 8
+    },
+    {
+      "id": "repertorio-14-2-03.n8",
+      "onsetBeats": "11/2",
+      "durationBeats": "1/2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 8
+    },
+    {
+      "id": "repertorio-14-2-03.n9",
+      "onsetBeats": "6",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "Eb4",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-14-2-03.n10",
+      "onsetBeats": "7",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    }
+  ],
+  "notation": {
+    "title": "Compases 13-14",
+    "meter": "4/4",
+    "key": -2,
+    "bars": [
+      [
+        {
+          "pitch": "Eb4",
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 8
+        },
+        {
+          "pitch": "Bb3",
+          "dur": 4
+        },
+        {
+          "pitch": "C4",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "D4",
+          "dur": 4
+        },
+        {
+          "pitch": "Eb4",
+          "dur": 8
+        },
+        {
+          "pitch": "F4",
+          "dur": 8
+        },
+        {
+          "pitch": "Eb4",
+          "dur": 4
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        }
+      ]
+    ],
+    "beams": [
+      [
+        1,
+        2
+      ],
+      [
+        6,
+        7
+      ]
+    ],
+    "slurs": [
+      [
+        0,
+        9
+      ]
+    ]
+  }
+}

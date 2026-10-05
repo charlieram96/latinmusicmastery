@@ -44,6 +44,7 @@ const actions = vi.hoisted(() => ({
 vi.mock('@/app/actions/play-sense', () => actions)
 
 import { ScoreExerciseGame } from '../score-exercise-game'
+import { LessonFrameProvider } from '../lesson-mode/lesson-frame'
 import { timelineToEngineSeconds } from '@/lib/play-sense/backing-track-timing'
 
 const exercise = {
@@ -117,6 +118,20 @@ const stats = (accuracy: number) => ({ score: accuracy, accuracy, perfectCount: 
 const hit = (eventIndex: number, grade: 'perfect' | 'miss') => ({ eventIndex, grade, offsetMs: grade === 'miss' ? null : 0, timing: grade === 'miss' ? null : 'on_time', onsetEnergy: null })
 
 describe('ScoreExerciseGame Part done', () => {
+  it('preserves the evaluation across a progress refresh but selects a changed score', () => {
+    const selectExercise = vi.fn()
+    session = { ...baseSession(), exercise, sessionState: 'playing', selectExercise }
+    render({ preview: false })
+    expect(selectExercise).toHaveBeenCalledTimes(1)
+    session = { ...session, sessionState: 'results', playheadProgress: 1, attemptStats: stats(50), eventResults: [hit(0, 'perfect'), hit(1, 'miss')] }
+    render({ preview: false, exercise: JSON.parse(JSON.stringify(exercise)) })
+    expect(selectExercise).toHaveBeenCalledTimes(1)
+    expect(host.querySelector('[data-accuracy-ring]')).not.toBeNull()
+    render({ preview: false, exercise: { ...exercise, bpm: 100 } })
+    expect(selectExercise).toHaveBeenCalledTimes(2)
+    expect(selectExercise).toHaveBeenLastCalledWith(expect.objectContaining({ bpm: 100 }))
+  })
+
   it('a take stopped with Finish take shows unreached bars as not played and the accuracy of what was played (L2)', () => {
     session = { ...baseSession(), exercise, sessionState: 'playing', playheadProgress: 0.5 }
     render({ preview: false })
@@ -455,6 +470,9 @@ describe('ScoreExerciseGame play settings (Studio rework P5)', () => {
 })
 
 describe('ScoreExerciseGame audible jam track on Safari/iOS (final fix 1)', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+  const finishReady = () => { for (let i=0;i<3;i++) act(() => vi.advanceTimersByTime(1000)) }
   let calls: string[]
   let played: HTMLMediaElement[]
   beforeEach(() => {
@@ -474,6 +492,9 @@ describe('ScoreExerciseGame audible jam track on Safari/iOS (final fix 1)', () =
     // No stage yet, so no media in the page.
     expect(host.querySelector('video')).toBeNull()
     click(host.querySelector('[data-ready-start]'))
+    expect(calls).toEqual(['play', 'pause'])
+    expect(host.textContent).toContain('Ready')
+    finishReady()
     expect(calls.slice(0, 3)).toEqual(['play', 'pause', 'start'])
     session = { ...session, sessionState: 'countdown' }
     render({ preview: false, mediaAudible: true })
@@ -488,6 +509,8 @@ describe('ScoreExerciseGame audible jam track on Safari/iOS (final fix 1)', () =
     session = { ...baseSession(), exercise, sessionState: 'results', attemptStats: stats(50), eventResults: [hit(0, 'perfect'), hit(1, 'miss')], startExercise, retry }
     render({ preview: false, mediaAudible: true })
     click(host.querySelector('[data-part-again]'))
+    expect(calls).toEqual(['retry', 'play', 'pause'])
+    finishReady()
     expect(calls).toEqual(['retry', 'play', 'pause', 'start'])
   })
 
@@ -496,7 +519,20 @@ describe('ScoreExerciseGame audible jam track on Safari/iOS (final fix 1)', () =
     session = { ...baseSession(), exercise, sessionState: 'paused', startExercise }
     render({ preview: false, mediaAudible: true })
     act(() => { (nowPlaying as unknown as { onStart: () => void }).onStart() })
+    finishReady()
     expect(calls).toEqual(['play', 'pause', 'start'])
+  })
+
+  it('cancels Ready without starting the take later', () => {
+    const startExercise = vi.fn()
+    session = { ...baseSession(), exercise, sessionState: 'selecting', startExercise }
+    render({ preview: false })
+    click(host.querySelector('[data-ready-start]'))
+    const cancel = [...host.querySelectorAll('button')].find(button => button.textContent === 'Cancel')!
+    click(cancel)
+    finishReady()
+    expect(startExercise).not.toHaveBeenCalled()
+    expect(host.textContent).not.toContain('Get ready; the count-in comes next.')
   })
 
   it('does not prime a muted exercise video', () => {
@@ -504,6 +540,8 @@ describe('ScoreExerciseGame audible jam track on Safari/iOS (final fix 1)', () =
     session = { ...baseSession(), exercise, sessionState: 'selecting', startExercise }
     render({ preview: false })
     click(host.querySelector('[data-ready-start]'))
+    expect(calls).toEqual([])
+    finishReady()
     expect(calls).toEqual(['start'])
   })
 
@@ -538,6 +576,83 @@ describe('ScoreExerciseGame audible jam track on Safari/iOS (final fix 1)', () =
   })
 })
 
+function setTempo(value: number) {
+  const input = host.querySelector('input[aria-label="Tempo BPM"]') as HTMLInputElement
+  act(() => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, String(value))
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+}
+
+it('repeats the microphone check without accepting the previous loud sound', () => {
+  const testMic = vi.fn()
+  session = { ...baseSession(), exercise, isListening: true, inputLevel: .2, testMic }
+  render({ preview: false })
+  const state = () => host.querySelector('[data-ready-panel="input"]')?.getAttribute('data-check')
+  expect(state()).toBe('done')
+  act(() => (host.querySelector('button[aria-label="Repeat microphone test"]') as HTMLButtonElement).click())
+  expect(state()).toBe('running')
+  expect(testMic).toHaveBeenCalledTimes(1)
+  session = { ...session, inputLevel: .15 }
+  render({ preview: false })
+  expect(state()).toBe('running')
+  session = { ...session, inputLevel: .01 }
+  render({ preview: false })
+  session = { ...session, inputLevel: .2 }
+  render({ preview: false })
+  expect(state()).toBe('done')
+})
+
+describe('Exercise Space playback', () => {
+  it.each([false, true])('pauses and resumes once from a focused control (preview=%s)', (preview) => {
+    const pauseExercise = vi.fn(), resumeExercise = vi.fn()
+    session = { ...baseSession(), exercise, sessionState: 'playing', pauseExercise, resumeExercise }
+    render({ preview })
+    const press = (repeat = false) => act(() => {
+      host.querySelector('button')!.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true, cancelable: true, repeat }))
+      host.querySelector('button')!.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', code: 'Space', bubbles: true, cancelable: true }))
+    })
+    press()
+    expect(pauseExercise).toHaveBeenCalledTimes(1)
+    press(true)
+    expect(pauseExercise).toHaveBeenCalledTimes(1)
+    session = { ...session, sessionState: 'paused' }
+    render({ preview })
+    press()
+    expect(resumeExercise).toHaveBeenCalledTimes(1)
+    const field = document.createElement('textarea')
+    host.append(field)
+    act(() => field.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true, cancelable: true })))
+    expect(resumeExercise).toHaveBeenCalledTimes(1)
+  })
+  it('starts a ready preview with Space', () => {
+    const startExercise = vi.fn()
+    session = { ...baseSession(), exercise, startExercise }
+    render({ preview: true })
+    act(() => host.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true, cancelable: true })))
+    expect(startExercise).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('Student lesson tempo', () => {
+  it('offers tempo and metronome settings in the graded lesson and scales the shared clock', () => {
+    const selectExercise = vi.fn()
+    session = { ...baseSession(), exercise, sessionState: 'paused', selectExercise }
+    act(() => root.render(<LessonFrameProvider value={{ actionHost: null, topClaim: null, claim: () => {}, advance: () => {}, teacherName: null, noClaim: true }}>
+      <ScoreExerciseGame exercise={exercise} preview={false} />
+    </LessonFrameProvider>))
+    expect(host.querySelector('button[aria-label="Adjust tempo BPM"]')).toBeNull()
+    expect(host.querySelector('button[aria-label="Metronome settings"]')).not.toBeNull()
+    setTempo(.95)
+    expect(sessionOptions.playbackRate).toBe(.95)
+    expect(selectExercise.mock.lastCall?.[0].bpm).toBe(85.5)
+    setTempo(1)
+    expect(sessionOptions.playbackRate).toBe(1)
+    expect(selectExercise.mock.lastCall?.[0].bpm).toBe(90)
+  })
+})
+
 describe('Student preview playback', () => {
   const click = (el: Element) => act(() => { el.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
   it('keeps tempo controls on the shared exercise clock and shows BPM above the score', () => {
@@ -545,9 +660,9 @@ describe('Student preview playback', () => {
     session = { ...baseSession(), exercise, selectExercise }
     render({ score: { tracks: [], initialTempo: 90, initialTimeSignature: [4, 4] } as never })
     expect(host.textContent).toContain('Exercise preview')
-    const trigger = host.querySelector('button[aria-label="Metronome"]')!
+    const trigger = host.querySelector('button[aria-label="Metronome settings"]')!
     expect(trigger.textContent).toBe('')
-    click(host.querySelector('button[aria-label="Faster"]')!)
+    setTempo(1.05)
     expect(sessionOptions.playbackRate).toBe(1.05)
     expect(selectExercise.mock.lastCall?.[0].bpm).toBe(94.5)
     expect(host.querySelector('[data-score-heading]')?.lastElementChild?.textContent).toContain('94.5 BPM')
@@ -559,14 +674,14 @@ describe('Student preview playback', () => {
     session = { ...baseSession(), exercise, startExercise:start, pauseExercise:pause, resumeExercise:resume, retry:stop, setAudioMetronome:clickTrack }
     render()
     expect(sessionOptions.playbackOnly).toBe(true)
-    const button=(text:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.includes(text))!
-    click(button('▶ Play')); expect(start).toHaveBeenCalledOnce()
+    const button=(text:string)=>(Array.from(host.querySelectorAll('button')).find(b=>b.getAttribute('aria-label')===text) ?? Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.includes(text)))!
+    click(button('Play')); expect(start).toHaveBeenCalledOnce()
     session={...session,sessionState:'playing'}; render()
-    click(button('Ⅱ Pause')); expect(pause).toHaveBeenCalledOnce()
+    click(button('Pause')); expect(pause).toHaveBeenCalledOnce()
     session={...session,sessionState:'paused'}; render()
-    click(button('▶ Play')); expect(resume).toHaveBeenCalledOnce()
-    click(button('■ Stop')); expect(stop).toHaveBeenCalledOnce()
-    click(button('On')); expect(clickTrack).toHaveBeenCalledWith(false)
+    click(button('Play')); expect(resume).toHaveBeenCalledOnce()
+    click(button('Stop')); expect(stop).toHaveBeenCalledOnce()
+    click(button('Enable metronome')); expect(clickTrack).toHaveBeenCalledWith(false)
     expect(actions.saveAttempt).not.toHaveBeenCalled()
   })
   it('mutes and enables all MP3 tracks together', () => {
@@ -593,9 +708,26 @@ describe('Student preview playback', () => {
     render()
     const video=host.querySelector('video')!
     expect(video.muted).toBe(false)
-    const toggle=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Video audio')!
+    const toggle=Array.from(host.querySelectorAll('button')).find(b=>b.getAttribute('aria-label')==='Video audio')!
     click(toggle); expect(video.muted).toBe(true)
     click(toggle); expect(video.muted).toBe(false)
     expect(host.textContent).toContain('Preview · results are not saved')
   })
+})
+
+it('the MP3 master scales every track while preserving individual levels and mute states', () => {
+  localStorage.setItem('playsense.backingMix',JSON.stringify({a:{level:.8,muted:false},b:{level:.4,muted:true}}))
+  render({backingTracks:['a','b'].map(id=>({id,label:id,audioUrl:`https://a.test/${id}.mp3`,timelineStartSeconds:0,trimInSeconds:0,trimOutSeconds:null,gain:1})) as never})
+  const input=host.querySelector('input[aria-label="MP3 master volume"]') as HTMLInputElement
+  const change=(value:number)=>act(()=>{
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,String(value))
+    input.dispatchEvent(new Event('input',{bubbles:true}))
+  })
+  change(.5)
+  expect(sessionOptions.backingMix).toMatchObject({a:{level:.4,muted:false},b:{level:.2,muted:true}})
+  change(0)
+  expect(sessionOptions.backingMix).toMatchObject({a:{level:0},b:{level:0}})
+  change(1)
+  expect(sessionOptions.backingMix).toMatchObject({a:{level:.8,muted:false},b:{level:.4,muted:true}})
+  expect(JSON.parse(localStorage.getItem('playsense.backingMix')!).a.level).toBe(.8)
 })

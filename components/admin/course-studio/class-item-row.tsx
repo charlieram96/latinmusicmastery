@@ -1,4 +1,8 @@
 'use client'
+import { useTranslation } from '@/components/language-provider'
+import { pick } from '@/lib/i18n/localize'
+import { AdminText } from '@/components/admin/admin-text'
+
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -21,6 +25,7 @@ function formatDuration(seconds: number) {
 }
 
 export function ClassItemRow({ item, active, onSelect, onDelete }: ClassItemRowProps) {
+  const { locale } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   })
@@ -80,10 +85,10 @@ export function ClassItemRow({ item, active, onSelect, onDelete }: ClassItemRowP
 
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13.5px] font-medium text-foreground">
-            {item.title}
+            {pick(locale, item.title, item.title_es ?? '')}
           </span>
           <span className="block truncate text-xs text-muted-foreground">
-            {meta.label}
+            {<AdminText text={meta.label} />}
             {detail && ` · ${detail}`}
             {!detail && item.description && ` · ${item.description}`}
           </span>

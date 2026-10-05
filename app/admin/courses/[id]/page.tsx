@@ -1,3 +1,6 @@
+import { getCourseInstrumentOptions } from '@/lib/courses/instrument-options'
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeRow } from '@/lib/i18n/localize'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { CourseStudio } from '@/components/admin/course-studio/course-studio'
@@ -22,48 +25,29 @@ function firstParam(value: string | string[] | undefined): string | null {
 export default async function CourseEditPage({ params, searchParams }: CourseEditPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams])
   const initialSelection = { classId: firstParam(query.class), itemId: firstParam(query.item) }
+  const [locale, courseInstruments] = await Promise.all([getServerLocale(), getCourseInstrumentOptions()])
   const supabase = await createClient()
 
-  // Fetch course details
-  const { data: course } = await supabase
-    .from('courses')
-    .select(`
-      *,
-      musical_style:musical_styles(
-        id,
-        name,
-        country:countries(name)
-      ),
-      teacher:teachers(
-        id,
-        name,
-        instrument
-      )
-    `)
-    .eq('id', id)
-    .single()
+  // Independent reads run together so entering any course takes one batch.
+  const [{ data: course, error: courseError }, { data: musicalStyles }, { data: teachers }, structure] = await Promise.all([
+    supabase.from('courses').select('id, title, title_es, slug, description, description_es, musical_style_id, teacher_id, is_published, thumbnail_url, instrument, is_fundamentals, difficulty, is_master_class').eq('id', id).single(),
+    supabase.from('musical_styles').select('id, name, name_es, country:countries(name, name_es)').order('name'),
+    supabase.from('teachers').select('id, name, instrument').order('name'),
+    getCourseStructure(id),
+  ])
+  if (courseError && courseError.code !== 'PGRST116') throw new Error(courseError.message)
+  if (!course) notFound()
+  if (structure.error) throw new Error(structure.error)
+  const sections = structure.data
 
-  if (!course) {
-    notFound()
+  for (const style of musicalStyles ?? []) {
+    localizeRow(style, locale, ['name'])
+    localizeRow(style.country, locale, ['name'])
   }
-
-  // Fetch all musical styles for the dropdown
-  const { data: musicalStyles } = await supabase
-    .from('musical_styles')
-    .select('id, name, country:countries(name)')
-    .order('name')
-
-  // Fetch all teachers for the dropdown
-  const { data: teachers } = await supabase
-    .from('teachers')
-    .select('id, name, instrument')
-    .order('name')
-
-  // Fetch course structure (sections -> classes -> items)
-  const { data: sections } = await getCourseStructure(id)
 
   return (
     <CourseStudio
+      courseInstruments={courseInstruments}
       course={{
         id: course.id,
         title: course.title,

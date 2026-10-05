@@ -1,3 +1,4 @@
+import { instrumentLabel } from '@/lib/i18n/instruments'
 export const SUBSCRIBABLE_INSTRUMENTS = [
   'Bass',
   'Conga',
@@ -11,6 +12,12 @@ export const SUBSCRIBABLE_INSTRUMENTS = [
 ] as const
 
 export type SubscribableInstrument = (typeof SUBSCRIBABLE_INSTRUMENTS)[number]
+
+/** Course catalog choices; educational formats are not subscription products. */
+export const COURSE_INSTRUMENTS = [...SUBSCRIBABLE_INSTRUMENTS, 'Saxophone', 'Trumpet', 'Voice', 'Theoretical', 'Demonstrative', 'Practical'] as const
+export function getCourseInstrumentLabel(value: string, locale: string): string {
+  return instrumentLabel(value, locale === 'es' ? 'es' : 'en')
+}
 
 export const INSTRUMENT_CONFIG: Record<
   string,
@@ -67,4 +74,10 @@ export function getInstrumentSlug(instrument: string): string {
 
 export function getInstrumentFromSlug(slug: string): string | undefined {
   return Object.entries(INSTRUMENT_CONFIG).find(([, config]) => config.slug === slug)?.[0]
+}
+
+/** Sort display choices by the selected language, preserving their stored keys. */
+export function sortCourseInstruments(values: readonly string[], locale: string): string[] {
+  const collator = new Intl.Collator(locale === 'es' ? 'es' : 'en', { sensitivity: 'base' })
+  return [...values].sort((a, b) => collator.compare(getCourseInstrumentLabel(a, locale), getCourseInstrumentLabel(b, locale)))
 }

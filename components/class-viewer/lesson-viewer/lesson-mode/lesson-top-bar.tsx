@@ -4,8 +4,8 @@
 // (icon, label, 3px progress underline), streak / About & comments / Close on
 // the right. Replaces LessonHeader + LessonPartsNav in lesson mode.
 
-import Link from 'next/link'
-import { BookOpen, Check, ChevronRight, ListChecks, MessageSquareText, Music2, Video, X } from 'lucide-react'
+import Link, { useLinkStatus } from 'next/link'
+import { Loader2, BookOpen, Check, ChevronRight, ListChecks, MessageSquareText, Music2, Video, X } from 'lucide-react'
 import { useTranslation } from '@/components/language-provider'
 import { HeaderStreakClient } from '@/components/dashboard/header-streak'
 import { cn } from '@/lib/utils'
@@ -15,6 +15,12 @@ import { partKind, partLabels, partProgress, type PartKind } from '@/lib/courses
 export interface TopBarPart { id: string; title: string; item_type: string }
 
 const ICON: Record<PartKind, typeof Video> = { video: Video, play: Music2, quiz: ListChecks, other: BookOpen }
+
+function PartNavigationStatus() {
+  const { pending } = useLinkStatus()
+  const { locale } = useTranslation()
+  return pending ? <span role="status" aria-label={locale === 'es' ? 'Abriendo actividad' : 'Opening activity'}><Loader2 aria-hidden className="h-4 w-4 animate-spin text-primary" /></span> : null
+}
 
 export function LessonTopBar({ courseTitle, courseHref, moduleTitle, moduleHref, title, parts, activeIndex, completedItemIds,
   activeStatus, courseId, classId, streak, onOpenDrawer }: {
@@ -55,6 +61,7 @@ export function LessonTopBar({ courseTitle, courseHref, moduleTitle, moduleHref,
           href={`/dashboard/course/${courseId}/class/${classId}?item=${i}`}
           className={cn('lx-part', i === activeIndex && 'lx-part-on')}>
           <Icon aria-hidden className="h-4 w-4 shrink-0" strokeWidth={done ? 3 : 2} />
+          <PartNavigationStatus />
           <span className="lx-part-label">{labels[i]}</span>
           {done && <span className="sr-only">{t('dashboard.classViewer.lessonMode.partDone')}</span>}
           <span data-part-progress aria-hidden className="lx-part-track"><i style={{ width: `${pct}%` }} /></span>

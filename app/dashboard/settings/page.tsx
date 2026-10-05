@@ -16,5 +16,5 @@ export default async function SettingsPage() {
     .eq('id', user.id)
     .single()
 
-  return <SettingsView fullName={profile?.full_name || ''} email={user.email || ''} />
+  return <SettingsView userId={user.id} fullName={profile?.full_name || ''} email={user.email || ''} />
 }

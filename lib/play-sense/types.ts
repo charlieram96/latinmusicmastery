@@ -99,6 +99,12 @@ export interface EventResult {
 }
 
 export interface AttemptStats {
+  micLatencyMs?: number
+  /** Temporary manual timing experiment, not validated hardware calibration. */
+  manualMicTimingTest?: boolean
+  presetMicTiming?: boolean
+  assessment?: ReturnType<typeof import('./rhythm-grade').rhythmGrade>
+  rhythm?: ReturnType<typeof import('./rhythm-evaluation').evaluateRhythm>
   score: number
   accuracy: number
   perfectCount: number
@@ -132,6 +138,9 @@ export interface CalibrationData {
 }
 
 export interface OnsetEvent {
+  /** Completed raw attack-window levels, used for acoustic dynamics calibration. */
+  peak?: number
+  rms?: number
   timestamp: number
   energy: number
   /** Detected frequency in Hz at onset (pitched instruments) */

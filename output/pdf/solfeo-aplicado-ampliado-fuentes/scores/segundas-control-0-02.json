@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "2.0",
+  "id": "segundas-control-0-02",
+  "title": {
+    "es": "Segundas mayores: dos semitonos · ejemplo 2"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "segundas-control-0-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 2
+    },
+    {
+      "id": "segundas-control-0-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 2
+    },
+    {
+      "id": "segundas-control-0-02.n3",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 2
+    },
+    {
+      "id": "segundas-control-0-02.n4",
+      "onsetBeats": "6",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 2
+    }
+  ],
+  "notation": {
+    "title": "Segundas mayores: dos semitonos · ejemplo 2",
+    "meter": "4/4",
+    "bars": [
+      [
+        {
+          "pitch": "F4",
+          "dur": 2
+        },
+        {
+          "pitch": "G4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "G4",
+          "dur": 2
+        },
+        {
+          "pitch": "F4",
+          "dur": 2
+        }
+      ]
+    ]
+  }
+}

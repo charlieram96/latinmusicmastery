@@ -142,9 +142,9 @@ function MidiRecorderPanel({ score, trackIndex, targetMeasure, dispatch, getCurr
         ? recorder.meter.pitches.map(midi => `${['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'][midi % 12]}${Math.floor(midi / 12) - 1}`).join(' · ')
         : busy ? 'Play after the count-in. Press Stop when you finish.' : 'Note lengths follow your performance. Up to 3 minutes per take.')}</div>
       <div className="mt-4 flex gap-2">
-        {busy ? <button type="button" onClick={() => recorder.stop()} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"><Square className="h-3.5 w-3.5 fill-current" />{st("Stop recording")}</button>
+        {busy ? <button type="button" title={st("Stop recording")} aria-label={st("Stop recording")} onClick={() => recorder.stop()} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"><Square className="h-3.5 w-3.5 fill-current" /></button>
           : !recorder.take && <button type="button" disabled={!recorder.selectedInput || scoreChanged || !plan || !!placement.error || !Number.isInteger(startMeasure) || startMeasure < 1 || startMeasure > originalTrack.measures.length + 1}
-            onClick={startRecording} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40"><Circle className="h-3.5 w-3.5 fill-current" />{st("Start recording")}</button>}
+            title={st("Start recording")} aria-label={st("Start recording")} onClick={startRecording} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40"><Circle className="h-3.5 w-3.5 fill-current" /></button>}
         {recorder.take && !busy && <button type="button" onClick={() => { recorder.discard(); setLocalError(null); }} className="rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted">{st("Discard & record again")}</button>}
       </div>
     </div>

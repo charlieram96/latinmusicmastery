@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { Check, CloudUpload, Save, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -42,9 +45,7 @@ export function ItemSaveBar() {
         disabled={!dirty && state !== 'error'}
         className="h-8"
       >
-        <Save className="mr-1.5 h-3.5 w-3.5" />
-        Save
-      </Button>
+        <Save className="mr-1.5 h-3.5 w-3.5" /> <AdminText text={"Save"} /> </Button>
     </div>
   )
 }

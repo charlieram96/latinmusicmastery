@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "2.0",
+  "id": "repertorio-08-2-04",
+  "title": {
+    "es": "Compases 15-16"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "repertorio-08-2-04.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 8
+    },
+    {
+      "id": "repertorio-08-2-04.n2",
+      "onsetBeats": "1/2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-08-2-04.n3",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 8
+    },
+    {
+      "id": "repertorio-08-2-04.n4",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    },
+    {
+      "id": "repertorio-08-2-04.n5",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Compases 15-16",
+    "meter": "4/4",
+    "key": 0,
+    "bars": [
+      [
+        {
+          "pitch": "B4",
+          "dur": 8
+        },
+        {
+          "pitch": "D4",
+          "dur": 4
+        },
+        {
+          "pitch": "B4",
+          "dur": 8
+        },
+        {
+          "pitch": "C4",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 1
+        }
+      ]
+    ],
+    "barStyles": {
+      "1": "final"
+    }
+  }
+}

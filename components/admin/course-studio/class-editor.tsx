@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { useState } from 'react'
 import { Lock, Trash2, Unlock } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -57,12 +60,10 @@ export function ClassEditor({ cls, onPatched, onDelete }: ClassEditorProps) {
   return (
     <div className="space-y-6 px-5 py-5">
       <div className="space-y-4">
-        <SectionLabel>Class</SectionLabel>
+        <SectionLabel><AdminText text={"Class"} /></SectionLabel>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="class-title" className="text-xs">
-            Title
-          </Label>
+          <Label htmlFor="class-title" className="text-xs"> <AdminText text={"Title"} /> </Label>
           <Input
             id="class-title"
             value={title}
@@ -76,9 +77,7 @@ export function ClassEditor({ cls, onPatched, onDelete }: ClassEditorProps) {
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="class-title-es" className="text-xs text-muted-foreground">
-            Title (Español)
-          </Label>
+          <Label htmlFor="class-title-es" className="text-xs text-muted-foreground"> <AdminText text={"Title (Español)"} /> </Label>
           <Input
             id="class-title-es"
             value={titleEs}
@@ -92,9 +91,7 @@ export function ClassEditor({ cls, onPatched, onDelete }: ClassEditorProps) {
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="class-description" className="text-xs">
-            Description
-          </Label>
+          <Label htmlFor="class-description" className="text-xs"> <AdminText text={"Description"} /> </Label>
           <Textarea
             id="class-description"
             value={description}
@@ -109,9 +106,7 @@ export function ClassEditor({ cls, onPatched, onDelete }: ClassEditorProps) {
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="class-description-es" className="text-xs text-muted-foreground">
-            Description (Español)
-          </Label>
+          <Label htmlFor="class-description-es" className="text-xs text-muted-foreground"> <AdminText text={"Description (Español)"} /> </Label>
           <Textarea
             id="class-description-es"
             value={descriptionEs}
@@ -128,7 +123,7 @@ export function ClassEditor({ cls, onPatched, onDelete }: ClassEditorProps) {
 
       {/* Access */}
       <div className="space-y-4 border-t border-border pt-5">
-        <SectionLabel>Access</SectionLabel>
+        <SectionLabel><AdminText text={"Access"} /></SectionLabel>
         <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-border bg-warm-surface/60 px-3.5 py-3">
           <span className="space-y-0.5">
             <span className="flex items-center gap-1.5 text-[13px] font-medium text-foreground">
@@ -136,12 +131,8 @@ export function ClassEditor({ cls, onPatched, onDelete }: ClassEditorProps) {
                 <Unlock className="h-3.5 w-3.5 text-gold" />
               ) : (
                 <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-              )}
-              Free preview
-            </span>
-            <span className="block text-xs leading-relaxed text-muted-foreground">
-              Visible to everyone without enrolling.
-            </span>
+              )} <AdminText text={"Free preview"} /> </span>
+            <span className="block text-xs leading-relaxed text-muted-foreground"> <AdminText text={"Visible to everyone without enrolling."} /> </span>
           </span>
           <Switch checked={!!cls.is_free} onCheckedChange={toggleFree} />
         </label>
@@ -153,12 +144,8 @@ export function ClassEditor({ cls, onPatched, onDelete }: ClassEditorProps) {
           onClick={onDelete}
           className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium text-destructive transition-colors hover:bg-destructive/10"
         >
-          <Trash2 className="h-3.5 w-3.5" />
-          Delete class
-        </button>
-        <p className="mt-1 px-2.5 text-[11px] leading-relaxed text-muted-foreground">
-          Removes this class and all of its items. This cannot be undone.
-        </p>
+          <Trash2 className="h-3.5 w-3.5" /> <AdminText text={"Delete class"} /> </button>
+        <p className="mt-1 px-2.5 text-[11px] leading-relaxed text-muted-foreground"> <AdminText text={"Removes this class and all of its items. This cannot be undone."} /> </p>
       </div>
     </div>
   )

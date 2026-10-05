@@ -1,0 +1,155 @@
+{
+  "schemaVersion": "2.0",
+  "id": "irregulares-1-01",
+  "title": {
+    "es": "Quintillo: 5 corcheas en el tiempo de 4"
+  },
+  "meter": "2/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "irregulares-1-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2/5",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        5,
+        4
+      ]
+    },
+    {
+      "id": "irregulares-1-01.n2",
+      "onsetBeats": "2/5",
+      "durationBeats": "2/5",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        5,
+        4
+      ]
+    },
+    {
+      "id": "irregulares-1-01.n3",
+      "onsetBeats": "4/5",
+      "durationBeats": "2/5",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        5,
+        4
+      ]
+    },
+    {
+      "id": "irregulares-1-01.n4",
+      "onsetBeats": "6/5",
+      "durationBeats": "2/5",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        5,
+        4
+      ]
+    },
+    {
+      "id": "irregulares-1-01.n5",
+      "onsetBeats": "8/5",
+      "durationBeats": "2/5",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8,
+      "tuplet": [
+        5,
+        4
+      ]
+    }
+  ],
+  "notation": {
+    "title": "Quintillo: 5 corcheas en el tiempo de 4",
+    "beams": [
+      [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    ],
+    "tupletGroups": [
+      {
+        "indices": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "ratio": [
+          5,
+          4
+        ]
+      }
+    ],
+    "bars": [
+      [
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            5,
+            4
+          ]
+        },
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            5,
+            4
+          ]
+        },
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            5,
+            4
+          ]
+        },
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            5,
+            4
+          ]
+        },
+        {
+          "pitch": "G4",
+          "dur": 8,
+          "tuplet": [
+            5,
+            4
+          ]
+        }
+      ]
+    ],
+    "meter": "2/4",
+    "barStyles": {
+      "0": "final"
+    }
+  }
+}

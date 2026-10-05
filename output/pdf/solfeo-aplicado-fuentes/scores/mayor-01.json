@@ -1,0 +1,78 @@
+{
+  "id": "mayor-01",
+  "title": {
+    "es": "Escala ascendente en redondas"
+  },
+  "schemaVersion": "1.0",
+  "timeUnit": "quarter-note",
+  "meter": null,
+  "clef": "G",
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "mayor-01.N001",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "C4"
+    },
+    {
+      "id": "mayor-01.N002",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "D4"
+    },
+    {
+      "id": "mayor-01.N003",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "E4"
+    },
+    {
+      "id": "mayor-01.N004",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "F4"
+    },
+    {
+      "id": "mayor-01.N005",
+      "onsetBeats": "16",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "G4"
+    },
+    {
+      "id": "mayor-01.N006",
+      "onsetBeats": "20",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "A4"
+    },
+    {
+      "id": "mayor-01.N007",
+      "onsetBeats": "24",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "B4"
+    },
+    {
+      "id": "mayor-01.N008",
+      "onsetBeats": "28",
+      "durationBeats": "4",
+      "measure": 1,
+      "kind": "note",
+      "pitch": "C5"
+    }
+  ]
+}

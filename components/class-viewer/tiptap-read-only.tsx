@@ -1,7 +1,8 @@
 'use client'
 
 import { useEditor, EditorContent } from '@tiptap/react'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
+import { stripRichLanguageLabels } from '@/lib/i18n/content-labels'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Youtube from '@tiptap/extension-youtube'
@@ -12,6 +13,7 @@ interface TiptapReadOnlyProps {
 }
 
 export function TiptapReadOnly({ content }: TiptapReadOnlyProps) {
+  const displayContent = useMemo(() => content ? stripRichLanguageLabels(content) : null, [content])
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -33,7 +35,7 @@ export function TiptapReadOnly({ content }: TiptapReadOnlyProps) {
         },
       }),
     ],
-    content: content ?? undefined,
+    content: displayContent ?? undefined,
     editable: false,
     editorProps: {
       attributes: {
@@ -43,8 +45,8 @@ export function TiptapReadOnly({ content }: TiptapReadOnlyProps) {
   })
 
   useEffect(() => {
-    if (editor) editor.commands.setContent(content ?? '', false)
-  }, [editor, content])
+    if (editor) editor.commands.setContent(displayContent ?? '', false)
+  }, [editor, displayContent])
 
   if (!editor || !content) {
     return null

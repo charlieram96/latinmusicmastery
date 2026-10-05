@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "2.0",
+  "id": "repertorio-11-2-03",
+  "title": {
+    "es": "Compases 13-14"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "repertorio-11-2-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 2
+    },
+    {
+      "id": "repertorio-11-2-03.n2",
+      "onsetBeats": "2",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-11-2-03.n3",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-11-2-03.n4",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 2
+    },
+    {
+      "id": "repertorio-11-2-03.n5",
+      "onsetBeats": "6",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 4
+    },
+    {
+      "id": "repertorio-11-2-03.n6",
+      "onsetBeats": "7",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "G#4",
+      "dur": 4
+    }
+  ],
+  "notation": {
+    "title": "Compases 13-14",
+    "meter": "4/4",
+    "key": 0,
+    "bars": [
+      [
+        {
+          "pitch": "D4",
+          "dur": 2
+        },
+        {
+          "pitch": "C4",
+          "dur": 4
+        },
+        {
+          "pitch": "B3",
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "B3",
+          "dur": 2
+        },
+        {
+          "pitch": "A3",
+          "dur": 4
+        },
+        {
+          "pitch": "G#4",
+          "dur": 4
+        }
+      ]
+    ],
+    "slurs": [
+      [
+        0,
+        5
+      ]
+    ]
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "2.0",
+  "id": "examen-m03-02",
+  "title": {
+    "es": "B · Do-Sol / Do-La bemol / Do-Si / Do-Do"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "examen-m03-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    },
+    {
+      "id": "examen-m03-02.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 1
+    },
+    {
+      "id": "examen-m03-02.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    },
+    {
+      "id": "examen-m03-02.n4",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "Ab4",
+      "dur": 1
+    },
+    {
+      "id": "examen-m03-02.n5",
+      "onsetBeats": "16",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    },
+    {
+      "id": "examen-m03-02.n6",
+      "onsetBeats": "20",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B4",
+      "dur": 1
+    },
+    {
+      "id": "examen-m03-02.n7",
+      "onsetBeats": "24",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    },
+    {
+      "id": "examen-m03-02.n8",
+      "onsetBeats": "28",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "B · Do-Sol / Do-La bemol / Do-Si / Do-Do",
+    "events": [
+      {
+        "pitch": "C4",
+        "dur": 1
+      },
+      {
+        "pitch": "G4",
+        "dur": 1
+      },
+      {
+        "pitch": "C4",
+        "dur": 1
+      },
+      {
+        "pitch": "Ab4",
+        "dur": 1
+      },
+      {
+        "pitch": "C4",
+        "dur": 1
+      },
+      {
+        "pitch": "B4",
+        "dur": 1
+      },
+      {
+        "pitch": "C4",
+        "dur": 1
+      },
+      {
+        "pitch": "C5",
+        "dur": 1
+      }
+    ]
+  }
+}

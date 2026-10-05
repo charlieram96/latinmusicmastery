@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "2.0",
+  "id": "dictado-modelo-1-02",
+  "title": {
+    "es": "Dictado 1 · compases 3-4"
+  },
+  "meter": "2/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "dictado-modelo-1-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 4
+    },
+    {
+      "id": "dictado-modelo-1-02.n2",
+      "onsetBeats": "1",
+      "durationBeats": "1",
+      "measure": 1,
+      "staff": 1,
+      "rest": true,
+      "dur": 4
+    },
+    {
+      "id": "dictado-modelo-1-02.n3",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 2
+    }
+  ],
+  "notation": {
+    "title": "Dictado 1 · compases 3-4",
+    "meter": "2/4",
+    "bars": [
+      [
+        {
+          "pitch": "D4",
+          "dur": 4
+        },
+        {
+          "rest": true,
+          "dur": 4
+        }
+      ],
+      [
+        {
+          "pitch": "C4",
+          "dur": 2
+        }
+      ]
+    ]
+  }
+}

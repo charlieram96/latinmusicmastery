@@ -1,5 +1,6 @@
 'use client'
 
+import { AudioCalibration } from '@/components/settings/audio-calibration'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -20,11 +21,12 @@ import { useTranslation } from '@/components/language-provider'
 import { LOCALES, LOCALE_LABELS, type Locale } from '@/lib/i18n'
 
 interface SettingsViewProps {
+  userId: string
   fullName: string
   email: string
 }
 
-export function SettingsView({ fullName, email }: SettingsViewProps) {
+export function SettingsView({ fullName, email, userId }: SettingsViewProps) {
   const { t, locale, setLocale } = useTranslation()
 
   return (
@@ -33,6 +35,8 @@ export function SettingsView({ fullName, email }: SettingsViewProps) {
         title={t('dashboard.pages.settings.title')}
         description={t('dashboard.pages.settings.subtitle')}
       />
+
+      <AudioCalibration userId={userId} />
 
       {/* Profile Settings */}
       <Card className="mb-6">

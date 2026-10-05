@@ -1,5 +1,7 @@
 'use server'
 
+import { getCourseInstrumentOptions } from '@/lib/courses/instrument-options'
+import { selectedCourseInstrument } from '@/lib/courses/instrument-classification'
 import type { Database } from '@/types/database';
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -165,7 +167,8 @@ export async function createCourse(formData: FormData) {
   const supabase = await createClient()
 
   const isFundamentals = formData.get('is_fundamentals') === 'true'
-  const instrument = (formData.get('instrument') as string) || null
+  const instrument = selectedCourseInstrument(formData.get('instrument') as string, await getCourseInstrumentOptions())
+  if (!instrument) throw new Error('Select the course instrument or classification.')
   const musicalStyleId = isFundamentals ? null : ((formData.get('musical_style_id') as string) || null)
 
   const kind = validateCourseKind({ isFundamentals, musicalStyleId, instrument })
@@ -203,7 +206,8 @@ export async function updateCourse(id: string, formData: FormData) {
   const supabase = await createClient()
 
   const isFundamentals = formData.get('is_fundamentals') === 'true'
-  const instrument = (formData.get('instrument') as string) || null
+  const instrument = selectedCourseInstrument(formData.get('instrument') as string, await getCourseInstrumentOptions())
+  if (!instrument) throw new Error('Select the course instrument or classification.')
   const musicalStyleId = isFundamentals ? null : ((formData.get('musical_style_id') as string) || null)
 
   const kind = validateCourseKind({ isFundamentals, musicalStyleId, instrument })
@@ -965,9 +969,9 @@ export async function getInstruments() {
     .from('instruments')
     .select(`
       *,
-      country:countries(id, name),
+      country:countries(id, name, name_es),
       instrument_styles(
-        style:musical_styles(id, name)
+        style:musical_styles(id, name, name_es)
       )
     `)
     .order('name')

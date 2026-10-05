@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "2.0",
+  "id": "fa-mapa-ampliado-01",
+  "title": {
+    "es": "Líneas adicionales inferiores: Mi-Do-La"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "F",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "fa-mapa-ampliado-01.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E2",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-01.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C2",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-01.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A1",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Líneas adicionales inferiores: Mi-Do-La",
+    "events": [
+      {
+        "pitch": "E2",
+        "dur": 1
+      },
+      {
+        "pitch": "C2",
+        "dur": 1
+      },
+      {
+        "pitch": "A1",
+        "dur": 1
+      }
+    ],
+    "clef": "F"
+  }
+}

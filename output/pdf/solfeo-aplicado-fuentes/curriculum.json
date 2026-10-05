@@ -1,0 +1,457 @@
+{
+  "version": "0.1",
+  "modules": [
+    {
+      "id": "M01",
+      "title": "Del sonido al signo",
+      "objective": "Comprender para qué sirve la escritura musical y encontrar el pulso.",
+      "lessons": [
+        {
+          "id": "M01.L01",
+          "title": "Por qué escribimos la música"
+        },
+        {
+          "id": "M01.L02",
+          "title": "De ut a do: el nombre de las notas"
+        },
+        {
+          "id": "M01.L03",
+          "title": "Altura, duración, intensidad y timbre"
+        },
+        {
+          "id": "M01.L04",
+          "title": "Pulso, tempo y escucha activa"
+        },
+        {
+          "id": "M01.L05",
+          "title": "Primer mapa de una partitura"
+        }
+      ]
+    },
+    {
+      "id": "M02",
+      "title": "El pentagrama y las alturas",
+      "objective": "Ubicar sonidos mediante referencias, no solo por memoria.",
+      "lessons": [
+        {
+          "id": "M02.L01",
+          "title": "Cinco líneas, cuatro espacios"
+        },
+        {
+          "id": "M02.L02",
+          "title": "Las notas en clave de sol"
+        },
+        {
+          "id": "M02.L03",
+          "title": "Líneas adicionales y registro"
+        },
+        {
+          "id": "M02.L04",
+          "title": "Clave de fa y do central"
+        },
+        {
+          "id": "M02.L05",
+          "title": "El teclado como mapa de alturas"
+        }
+      ]
+    },
+    {
+      "id": "M03",
+      "title": "Figuras, silencios y proporciones",
+      "objective": "Relacionar la forma escrita con la duración relativa.",
+      "lessons": [
+        {
+          "id": "M03.L01",
+          "title": "Cabeza, plica, corchete y barra"
+        },
+        {
+          "id": "M03.L02",
+          "title": "Redonda, blanca y negra"
+        },
+        {
+          "id": "M03.L03",
+          "title": "Corcheas y semicorcheas"
+        },
+        {
+          "id": "M03.L04",
+          "title": "Fusa, semifusa y figuras menores"
+        },
+        {
+          "id": "M03.L05",
+          "title": "Silencios y árbol de subdivisión"
+        }
+      ]
+    },
+    {
+      "id": "M04",
+      "title": "El compás organiza el pulso",
+      "objective": "Leer compases simples y completar su capacidad.",
+      "lessons": [
+        {
+          "id": "M04.L01",
+          "title": "Numerador y denominador"
+        },
+        {
+          "id": "M04.L02",
+          "title": "Unidad de compás, tiempo y subdivisión"
+        },
+        {
+          "id": "M04.L03",
+          "title": "Dos tiempos: 2/4"
+        },
+        {
+          "id": "M04.L04",
+          "title": "Tres tiempos: 3/4"
+        },
+        {
+          "id": "M04.L05",
+          "title": "Cuatro tiempos: 4/4 y lectura continua"
+        }
+      ]
+    },
+    {
+      "id": "M05",
+      "title": "Duraciones que se conectan",
+      "objective": "Sostener el pulso cuando las notas cruzan sus divisiones.",
+      "lessons": [
+        {
+          "id": "M05.L01",
+          "title": "Puntillo y doble puntillo"
+        },
+        {
+          "id": "M05.L02",
+          "title": "Ligadura de prolongación"
+        },
+        {
+          "id": "M05.L03",
+          "title": "Contratiempo y síncopa"
+        },
+        {
+          "id": "M05.L04",
+          "title": "Anacrusa y cierre de frase"
+        },
+        {
+          "id": "M05.L05",
+          "title": "Lectura rítmica combinada"
+        }
+      ]
+    },
+    {
+      "id": "M06",
+      "title": "El sonido se mueve",
+      "objective": "Escuchar y leer las relaciones dentro de do mayor.",
+      "lessons": [
+        {
+          "id": "M06.L01",
+          "title": "Tono y semitono"
+        },
+        {
+          "id": "M06.L02",
+          "title": "La escalera de do mayor"
+        },
+        {
+          "id": "M06.L03",
+          "title": "Grados conjuntos y dirección"
+        },
+        {
+          "id": "M06.L04",
+          "title": "Grados de la escala y reposo"
+        },
+        {
+          "id": "M06.L05",
+          "title": "Escuchar interiormente antes de tocar"
+        }
+      ]
+    },
+    {
+      "id": "M07",
+      "title": "Intervalos paso a paso",
+      "objective": "Distinguir distancia, dirección y calidad.",
+      "lessons": [
+        {
+          "id": "M07.L01",
+          "title": "Unísono y segundas"
+        },
+        {
+          "id": "M07.L02",
+          "title": "Terceras y cuartas"
+        },
+        {
+          "id": "M07.L03",
+          "title": "Quintas y sextas"
+        },
+        {
+          "id": "M07.L04",
+          "title": "Séptimas y octavas"
+        },
+        {
+          "id": "M07.L05",
+          "title": "Intervalos melódicos, armónicos e inversión"
+        }
+      ]
+    },
+    {
+      "id": "M08",
+      "title": "La música también se expresa",
+      "objective": "Interpretar y clasificar indicaciones de una partitura.",
+      "lessons": [
+        {
+          "id": "M08.L01",
+          "title": "Dinámica y reguladores"
+        },
+        {
+          "id": "M08.L02",
+          "title": "Agógica y cambios de tempo"
+        },
+        {
+          "id": "M08.L03",
+          "title": "Articulación, acentos y fraseo"
+        },
+        {
+          "id": "M08.L04",
+          "title": "Calderón, respiración y continuidad"
+        },
+        {
+          "id": "M08.L05",
+          "title": "Adornos y lectura expresiva"
+        }
+      ]
+    },
+    {
+      "id": "M09",
+      "title": "Leer el recorrido completo",
+      "objective": "Seguir la forma sin perder la posición.",
+      "lessons": [
+        {
+          "id": "M09.L01",
+          "title": "Líneas divisorias, doble barra y final"
+        },
+        {
+          "id": "M09.L02",
+          "title": "Barras de repetición"
+        },
+        {
+          "id": "M09.L03",
+          "title": "Primera y segunda casilla"
+        },
+        {
+          "id": "M09.L04",
+          "title": "Da capo, dal segno, fine y coda"
+        },
+        {
+          "id": "M09.L05",
+          "title": "Plan de lectura y repeticiones combinadas"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "title": "Compases y agrupaciones nuevas",
+      "objective": "Diferenciar cantidad de figuras y agrupación de pulsos.",
+      "lessons": [
+        {
+          "id": "M10.L01",
+          "title": "6/8: dos pulsos ternarios"
+        },
+        {
+          "id": "M10.L02",
+          "title": "9/8 y 12/8"
+        },
+        {
+          "id": "M10.L03",
+          "title": "Tresillos y dosillos"
+        },
+        {
+          "id": "M10.L04",
+          "title": "Cuatrosillos, cinquillos y otros grupos"
+        },
+        {
+          "id": "M10.L05",
+          "title": "5/4, 7/4 y agrupaciones asimétricas"
+        }
+      ]
+    },
+    {
+      "id": "M11",
+      "title": "Armaduras y tonalidades mayores",
+      "objective": "Reconocer y construir las tonalidades desde un modelo.",
+      "lessons": [
+        {
+          "id": "M11.L01",
+          "title": "Sostenido, bemol y becuadro"
+        },
+        {
+          "id": "M11.L02",
+          "title": "Orden de sostenidos y bemoles"
+        },
+        {
+          "id": "M11.L03",
+          "title": "Armaduras y centro tonal"
+        },
+        {
+          "id": "M11.L04",
+          "title": "Escalas mayores con sostenidos"
+        },
+        {
+          "id": "M11.L05",
+          "title": "Escalas mayores con bemoles"
+        }
+      ]
+    },
+    {
+      "id": "M12",
+      "title": "El mundo de las tonalidades menores",
+      "objective": "Relacionar cada mayor con su relativa y comparar las tres formas.",
+      "lessons": [
+        {
+          "id": "M12.L01",
+          "title": "Mayor y relativa menor"
+        },
+        {
+          "id": "M12.L02",
+          "title": "La escala menor natural"
+        },
+        {
+          "id": "M12.L03",
+          "title": "La escala menor armónica"
+        },
+        {
+          "id": "M12.L04",
+          "title": "La escala menor melódica"
+        },
+        {
+          "id": "M12.L05",
+          "title": "Leer en todas las relativas menores"
+        }
+      ]
+    },
+    {
+      "id": "M13",
+      "title": "De la escala al acorde",
+      "objective": "Reconocer las notas estructurales de una melodía.",
+      "lessons": [
+        {
+          "id": "M13.L01",
+          "title": "Tríadas y arpegios mayores"
+        },
+        {
+          "id": "M13.L02",
+          "title": "Tríadas y arpegios menores"
+        },
+        {
+          "id": "M13.L03",
+          "title": "El quinto grado y su séptima"
+        },
+        {
+          "id": "M13.L04",
+          "title": "Inversiones y enlaces sencillos"
+        },
+        {
+          "id": "M13.L05",
+          "title": "Escalas y arpegios en todas las tonalidades"
+        }
+      ]
+    },
+    {
+      "id": "M14",
+      "title": "Cromatismo y lectura integrada",
+      "objective": "Leer alteraciones y varias referencias sin perder el sentido tonal.",
+      "lessons": [
+        {
+          "id": "M14.L01",
+          "title": "La escala cromática"
+        },
+        {
+          "id": "M14.L02",
+          "title": "Enarmonía y escritura contextual"
+        },
+        {
+          "id": "M14.L03",
+          "title": "Clave de do: tercera y cuarta línea"
+        },
+        {
+          "id": "M14.L04",
+          "title": "Pentagrama doble y lectura coordinada"
+        },
+        {
+          "id": "M14.L05",
+          "title": "Laboratorio de ritmo, altura y expresión"
+        }
+      ]
+    },
+    {
+      "id": "M15",
+      "title": "Preparación para tocar en conjunto",
+      "objective": "Aplicar y comprobar el lenguaje antes de especializarlo.",
+      "lessons": [
+        {
+          "id": "M15.L01",
+          "title": "Lectura a primera vista por fragmentos"
+        },
+        {
+          "id": "M15.L02",
+          "title": "Dictado y escritura de respuestas"
+        },
+        {
+          "id": "M15.L03",
+          "title": "Dos voces: escuchar mientras se lee"
+        },
+        {
+          "id": "M15.L04",
+          "title": "Crear una frase y sus variaciones"
+        },
+        {
+          "id": "M15.L05",
+          "title": "Evaluación integradora y plan de repaso"
+        }
+      ]
+    },
+    {
+      "id": "M16",
+      "title": "Solfeo aplicado a los instrumentos",
+      "objective": "Relacionar la lectura con el sonido real y la técnica de cada familia.",
+      "lessons": [
+        {
+          "id": "M16.L01",
+          "title": "Sonido escrito, sonido real y transposición"
+        },
+        {
+          "id": "M16.L02",
+          "title": "Violín, viola, violonchelo y contrabajo"
+        },
+        {
+          "id": "M16.L03",
+          "title": "Flautas, oboe, corno inglés y fagotes"
+        },
+        {
+          "id": "M16.L04",
+          "title": "Clarinetes y sus variantes"
+        },
+        {
+          "id": "M16.L05",
+          "title": "Trompetas, trompa, trombones y tuba"
+        },
+        {
+          "id": "M16.L06",
+          "title": "La familia del saxofón"
+        },
+        {
+          "id": "M16.L07",
+          "title": "Piano, arpa y pedales"
+        },
+        {
+          "id": "M16.L08",
+          "title": "Percusión de altura determinada"
+        },
+        {
+          "id": "M16.L09",
+          "title": "Congas, bongós y timbal: leyenda LMM"
+        },
+        {
+          "id": "M16.L10",
+          "title": "Batería, accesorios y lectura de conjunto"
+        }
+      ]
+    }
+  ]
+}

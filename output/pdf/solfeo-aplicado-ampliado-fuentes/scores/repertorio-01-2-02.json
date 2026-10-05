@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "2.0",
+  "id": "repertorio-01-2-02",
+  "title": {
+    "es": "Compases 11-12"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "repertorio-01-2-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 1
+    },
+    {
+      "id": "repertorio-01-2-02.n2",
+      "onsetBeats": "4",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 2
+    },
+    {
+      "id": "repertorio-01-2-02.n3",
+      "onsetBeats": "6",
+      "durationBeats": "2",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "D4",
+      "dur": 2
+    }
+  ],
+  "notation": {
+    "title": "Compases 11-12",
+    "meter": "4/4",
+    "key": 0,
+    "bars": [
+      [
+        {
+          "pitch": "F4",
+          "dur": 1
+        }
+      ],
+      [
+        {
+          "pitch": "E4",
+          "dur": 2
+        },
+        {
+          "pitch": "D4",
+          "dur": 2
+        }
+      ]
+    ]
+  }
+}

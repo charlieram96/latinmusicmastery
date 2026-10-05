@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -39,7 +42,7 @@ export function SequencerToolbar({
     <div className="flex items-center gap-2 flex-wrap">
       {/* Subdivision */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-muted-foreground">Grid</span>
+        <span className="text-xs text-muted-foreground"><AdminText text={"Grid"} /></span>
         <Select
           value={String(subdivision)}
           onValueChange={(v) => onSubdivisionChange(Number(v))}
@@ -94,15 +97,15 @@ export function SequencerToolbar({
 
       {/* Play/Stop */}
       <Button
-        variant={isPlaying ? 'destructive' : 'default'}
+        aria-label={isPlaying ? 'Stop' : 'Play'} title={isPlaying ? 'Stop' : 'Play'} variant={isPlaying ? 'destructive' : 'default'}
         size="sm"
         className="h-7 px-3 text-xs"
         onClick={onPlayStop}
       >
         {isPlaying ? (
-          <><Square className="w-3 h-3 mr-1" /> Stop</>
+          <Square aria-hidden className="w-4 h-4" />
         ) : (
-          <><Play className="w-3 h-3 mr-1" /> Preview</>
+          <Play aria-hidden className="w-4 h-4" />
         )}
       </Button>
     </div>

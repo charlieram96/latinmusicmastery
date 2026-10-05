@@ -1,3 +1,6 @@
+import { getServerLocale } from '@/lib/i18n/server'
+import { localizeRows, COUNTRY_FIELDS } from '@/lib/i18n/localize'
+import { AdminText } from '@/components/admin/admin-text'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
@@ -6,6 +9,7 @@ import { Plus, Globe, Music, Pencil } from 'lucide-react'
 import { DeleteCountryButton } from '@/components/admin/delete-country-button'
 
 export default async function CountriesPage() {
+  const locale = await getServerLocale()
   const supabase = await createClient()
 
   const { data: countries } = await supabase
@@ -16,19 +20,19 @@ export default async function CountriesPage() {
     `)
     .order('name')
 
+  localizeRows(countries, locale, COUNTRY_FIELDS)
+
   return (
     <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-1">Countries</h1>
-          <p className="text-muted-foreground">Manage Latin American countries</p>
+          <h1 className="text-4xl font-bold tracking-tight mb-1"><AdminText text={"Countries"} /></h1>
+          <p className="text-muted-foreground"><AdminText text={"Manage Latin American countries"} /></p>
         </div>
         <Button asChild>
           <Link href="/admin/countries/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Country
-          </Link>
+            <Plus className="w-4 h-4 mr-2" /> <AdminText text={"Add Country"} /> </Link>
         </Button>
       </div>
 
@@ -38,7 +42,7 @@ export default async function CountriesPage() {
           <Globe className="w-4 h-4 text-blue-500" />
         </div>
         <div className="text-3xl font-bold">{countries?.length || 0}</div>
-        <div className="text-sm text-muted-foreground">Countries</div>
+        <div className="text-sm text-muted-foreground"><AdminText text={"Countries"} /></div>
       </div>
 
       {countries && countries.length > 0 ? (
@@ -67,8 +71,7 @@ export default async function CountriesPage() {
                   <h3 className="font-bold text-base">{country.name}</h3>
                   <Badge variant="outline" className="text-xs ml-2 flex-shrink-0">
                     <Music className="w-2.5 h-2.5 mr-1" />
-                    {country.musical_styles?.length || 0} styles
-                  </Badge>
+                    {country.musical_styles?.length || 0} <AdminText text={"styles"} /> </Badge>
                 </div>
                 {country.description && (
                   <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{country.description}</p>
@@ -77,9 +80,7 @@ export default async function CountriesPage() {
                 <div className="flex items-center gap-2">
                   <Button asChild variant="outline" size="sm" className="flex-1">
                     <Link href={`/admin/countries/${country.id}`}>
-                      <Pencil className="w-3.5 h-3.5 mr-1" />
-                      Edit
-                    </Link>
+                      <Pencil className="w-3.5 h-3.5 mr-1" /> <AdminText text={"Edit"} /> </Link>
                   </Button>
                   <DeleteCountryButton countryId={country.id} countryName={country.name} />
                 </div>
@@ -90,9 +91,9 @@ export default async function CountriesPage() {
       ) : (
         <div className="rounded-xl border bg-card p-12 text-center">
           <Globe className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-muted-foreground text-sm mb-4">No countries yet. Start by adding your first country.</p>
+          <p className="text-muted-foreground text-sm mb-4"><AdminText text={"No countries yet. Start by adding your first country."} /></p>
           <Button asChild>
-            <Link href="/admin/countries/new">Add Country</Link>
+            <Link href="/admin/countries/new"><AdminText text={"Add Country"} /></Link>
           </Button>
         </div>
       )}

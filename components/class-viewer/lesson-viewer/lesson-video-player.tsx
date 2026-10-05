@@ -10,6 +10,7 @@
 // Transport state (play/seek/rate/loop) is delegated to the shared
 // useVideoTransportClock so behavior matches the PlaySense Studio player.
 
+import { useSpacePlayback } from '@/hooks/use-space-playback'
 import { VideoWatermark } from '@/components/playsense-studio/shared/video-watermark';
 import {useVideoClickTrack} from '@/components/playsense-studio/player/state/use-video-click-track';
 import {lessonMetronomeGrid,type LessonMetronome} from '@/lib/playsense-studio/lesson-metronome';
@@ -226,11 +227,12 @@ export function LessonVideoPlayer({
     setScrubbing(false)
   }
 
+  useSpacePlayback(true, () => { hasPlayed ? clock.toggle() : firstPlay() })
+
   // --- keyboard shortcuts ---
   const onKeyDown = (e: ReactKeyboardEvent) => {
     if (e.target instanceof HTMLSelectElement) return
     switch (e.key) {
-      case ' ':
       case 'k':
         e.preventDefault()
         hasPlayed ? clock.toggle() : firstPlay()
@@ -310,7 +312,7 @@ export function LessonVideoPlayer({
         {tracks.map((t) => (
           <track key={t.src} kind="subtitles" src={t.src} srcLang={t.lang} label={t.label} />
         ))}
-      </video><VideoWatermark />
+      </video><VideoWatermark controlsClearance={80} sizeScale={0.85} />
 
       {/* First-play overlay (also handles the mobile user-gesture requirement) */}
       {!hasPlayed && (
@@ -330,7 +332,8 @@ export function LessonVideoPlayer({
       <div
         className={cn(
           'absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-3 pb-2.5 pt-10 transition-opacity duration-300 md:px-4',
-          controlsVisible || !hasPlayed ? 'opacity-100' : 'pointer-events-none opacity-0'
+          controlsVisible || !hasPlayed ? 'opacity-100' : 'pointer-events-none opacity-0',
+          (captionsOpen || speedOpen) && 'z-30'
         )}
       >
         {/* Scrubber */}
@@ -485,53 +488,65 @@ export function LessonVideoPlayer({
             )}
           </div>
 
-          {/* Subtitles */}
-          {audioTracks.length > 0 && (
-            <label className="flex items-center gap-1 text-xs text-foreground">
-              <span>Audio</span>
-              <select aria-label={locale === 'es' ? 'Idioma del audio' : 'Audio language'}
-                className="max-w-36 rounded-md border border-primary/40 bg-sunken px-2 py-1 text-foreground"
-                value={dubbedAudio.language} onChange={e => dubbedAudio.setLanguage(e.target.value)}>
-                <option value="original">{locale === 'es' ? 'Español original' : 'Spanish original'}</option>
-                {audioTracks.map(track => <option key={track.lang} value={track.lang}>{track.label}</option>)}
-              </select>
-            </label>
-          )}
-          {dubbedAudio.error && <span role="status" className="text-xs text-foreground">{locale === 'es' ? 'Audio no disponible. Se restauró el original.' : 'Audio unavailable. Original restored.'}</span>}
-          {tracks.length > 0 && (
+          {/* Subtitle and audio language settings share one menu. */}
+          {dubbedAudio.error && <span role="status" className="text-xs text-white">{locale === 'es' ? 'Audio no disponible. Se restauró el original.' : 'Audio unavailable. Original restored.'}</span>}
+          {(tracks.length > 0 || audioTracks.length > 0) && (
             <div className="relative">
               <ControlButton
                 onClick={() => setCaptionsOpen((o) => !o)}
-                label={t('dashboard.classViewer.video.subtitles')}
-                active={activeLang !== 'off'}
+                label={locale === 'es' ? 'Subtítulos y audio' : 'Subtitles and audio'}
+                active={activeLang !== 'off' || dubbedAudio.language !== 'original'}
               >
                 <Captions className="h-5 w-5" />
               </ControlButton>
               {captionsOpen && (
                 <div
-                  className="absolute bottom-full right-0 mb-2 max-h-64 min-w-[110px] overflow-y-auto rounded-lg border border-border bg-sunken/95 p-1 shadow-warm backdrop-blur-md"
+                  className="absolute bottom-full right-0 mb-2 max-h-[min(60vh,320px)] w-48 overflow-y-auto rounded-xl border border-white/20 bg-[#171412] p-2 text-white shadow-xl"
                   onMouseLeave={() => setCaptionsOpen(false)}
                 >
-                  {[
-                    { value: 'off' as const, label: t('dashboard.classViewer.video.subtitlesOff') },
-                    ...tracks.map((t) => ({ value: t.lang, label: t.label })),
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => {
-                        setActiveLang(opt.value)
-                        setCaptionsOpen(false)
-                      }}
-                      className={cn(
-                        'flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-xs font-medium transition-colors hover:bg-muted',
-                        activeLang === opt.value ? 'text-primary' : 'text-foreground'
-                      )}
-                    >
-                      {opt.label}
-                      {activeLang === opt.value && <span className="text-primary">•</span>}
-                    </button>
-                  ))}
+                  <section aria-label={locale === 'es' ? 'Subtítulos' : 'Subtitles'}>
+                    <h3 className="px-2.5 pb-2 pt-1 text-base font-bold text-white">{locale === 'es' ? 'Subtítulos' : 'Subtitles'}</h3>
+                    {[
+                      { value: 'off' as const, label: t('dashboard.classViewer.video.subtitlesOff') },
+                      ...tracks.map((track) => ({ value: track.lang, label: track.label })),
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        aria-pressed={activeLang === opt.value}
+                        onClick={() => setActiveLang(opt.value)}
+                        className={cn(
+                          'flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-sm transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                          activeLang === opt.value ? 'font-semibold text-primary' : 'text-white/90'
+                        )}
+                      >
+                        {opt.label}
+                        {activeLang === opt.value && <span aria-hidden="true">✓</span>}
+                      </button>
+                    ))}
+                  </section>
+                  <hr className="my-2 border-white/20" />
+                  <section aria-label="Audio">
+                    <h3 className="px-2.5 pb-2 pt-1 text-base font-bold text-white">Audio</h3>
+                    {[
+                      { value: 'original', label: locale === 'es' ? 'Español (original)' : 'Spanish (original)' },
+                      ...audioTracks.map((track) => ({ value: track.lang, label: track.label })),
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        aria-pressed={dubbedAudio.language === opt.value}
+                        onClick={() => dubbedAudio.setLanguage(opt.value)}
+                        className={cn(
+                          'flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-sm transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                          dubbedAudio.language === opt.value ? 'font-semibold text-primary' : 'text-white/90'
+                        )}
+                      >
+                        {opt.label}
+                        {dubbedAudio.language === opt.value && <span aria-hidden="true">✓</span>}
+                      </button>
+                    ))}
+                  </section>
                 </div>
               )}
             </div>

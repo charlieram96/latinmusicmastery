@@ -28,7 +28,7 @@ export function ClaveCard({ clave, hits, t }: { clave: ClaveKey; hits: number[];
       </div>
       <div className="counts" style={{ marginTop: 8 }} aria-hidden="true">
         <span />
-        <div>{STEPS.map(s => (s % 2 ? <span key={s}>&amp;</span> : <b key={s}>{(s % 8) / 2 + 1}</b>))}</div>
+        <div>{STEPS.map(s => (s % 2 ? <span key={s} /> : <b key={s}>{(s % 8) / 2 + 1}</b>))}</div>
       </div>
       <p style={{ color: 'var(--humo)', fontSize: 14.5, marginTop: 16 }}>{k(clave === 'son32' ? 'noteSon' : 'noteRumba')}</p>
       <Link className="btn btn-ghost btn-sm" href="/#groove" style={{ marginTop: 16 }}>{k('hear')}</Link>

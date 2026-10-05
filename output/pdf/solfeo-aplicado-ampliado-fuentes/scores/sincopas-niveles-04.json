@@ -1,0 +1,142 @@
+{
+  "schemaVersion": "2.0",
+  "id": "sincopas-niveles-04",
+  "title": {
+    "es": "Contratiempo con silencios breves"
+  },
+  "meter": "2/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "sincopas-niveles-04.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "rest": true,
+      "dur": 8
+    },
+    {
+      "id": "sincopas-niveles-04.n2",
+      "onsetBeats": "1/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 8
+    },
+    {
+      "id": "sincopas-niveles-04.n3",
+      "onsetBeats": "1",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "rest": true,
+      "dur": 8
+    },
+    {
+      "id": "sincopas-niveles-04.n4",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 8
+    },
+    {
+      "id": "sincopas-niveles-04.n5",
+      "onsetBeats": "2",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "rest": true,
+      "dur": 16
+    },
+    {
+      "id": "sincopas-niveles-04.n6",
+      "onsetBeats": "9/4",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 16
+    },
+    {
+      "id": "sincopas-niveles-04.n7",
+      "onsetBeats": "5/2",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "rest": true,
+      "dur": 16
+    },
+    {
+      "id": "sincopas-niveles-04.n8",
+      "onsetBeats": "11/4",
+      "durationBeats": "1/4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E4",
+      "dur": 16
+    },
+    {
+      "id": "sincopas-niveles-04.n9",
+      "onsetBeats": "3",
+      "durationBeats": "1",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 4
+    }
+  ],
+  "notation": {
+    "title": "Contratiempo con silencios breves",
+    "meter": "2/4",
+    "bars": [
+      [
+        {
+          "rest": true,
+          "dur": 8
+        },
+        {
+          "pitch": "E4",
+          "dur": 8
+        },
+        {
+          "rest": true,
+          "dur": 8
+        },
+        {
+          "pitch": "G4",
+          "dur": 8
+        }
+      ],
+      [
+        {
+          "rest": true,
+          "dur": 16
+        },
+        {
+          "pitch": "F4",
+          "dur": 16
+        },
+        {
+          "rest": true,
+          "dur": 16
+        },
+        {
+          "pitch": "E4",
+          "dur": 16
+        },
+        {
+          "pitch": "C4",
+          "dur": 4
+        }
+      ]
+    ]
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "schemaVersion": "2.0",
+  "id": "unidades-cuadro-08",
+  "title": {
+    "es": "3/4 · nivel 4"
+  },
+  "meter": "3/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "unidades-cuadro-08.n1",
+      "onsetBeats": "0",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "unidades-cuadro-08.n2",
+      "onsetBeats": "1/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "unidades-cuadro-08.n3",
+      "onsetBeats": "1/2",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "unidades-cuadro-08.n4",
+      "onsetBeats": "3/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "unidades-cuadro-08.n5",
+      "onsetBeats": "1",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "unidades-cuadro-08.n6",
+      "onsetBeats": "5/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "unidades-cuadro-08.n7",
+      "onsetBeats": "3/2",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "unidades-cuadro-08.n8",
+      "onsetBeats": "7/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "unidades-cuadro-08.n9",
+      "onsetBeats": "2",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "unidades-cuadro-08.n10",
+      "onsetBeats": "9/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "unidades-cuadro-08.n11",
+      "onsetBeats": "5/2",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    },
+    {
+      "id": "unidades-cuadro-08.n12",
+      "onsetBeats": "11/4",
+      "durationBeats": "1/4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 16
+    }
+  ],
+  "notation": {
+    "meter": "3/4",
+    "bars": [
+      [
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        },
+        {
+          "pitch": "G4",
+          "dur": 16
+        }
+      ]
+    ]
+  }
+}

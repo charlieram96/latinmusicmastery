@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "2.0",
+  "id": "octavas-02",
+  "title": {
+    "es": "Escrito Do5-Re5-Mi5; suena Do4-Re4-Mi4"
+  },
+  "meter": "4/4",
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "octavas-02.n1",
+      "onsetBeats": "0",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 2
+    },
+    {
+      "id": "octavas-02.n2",
+      "onsetBeats": "2",
+      "durationBeats": "2",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D5",
+      "dur": 2
+    },
+    {
+      "id": "octavas-02.n3",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 2,
+      "staff": 1,
+      "pitch": "E5",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Escrito Do5-Re5-Mi5; suena Do4-Re4-Mi4",
+    "spans": [
+      {
+        "text": "8va bassa",
+        "hook": true,
+        "below": true
+      }
+    ],
+    "bars": [
+      [
+        {
+          "pitch": "C5",
+          "dur": 2
+        },
+        {
+          "pitch": "D5",
+          "dur": 2
+        }
+      ],
+      [
+        {
+          "pitch": "E5",
+          "dur": 1
+        }
+      ]
+    ],
+    "meter": "4/4",
+    "barStyles": {
+      "1": "final"
+    }
+  }
+}

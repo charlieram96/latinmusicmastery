@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -116,9 +119,7 @@ export function QuizBuilder({
         return <PiecePlacementSummary questionId={questionId} question={question} options={options} optionsEs={optionsEs} imageUrl={imageUrl} onChange={onChange} />
       case 'audio':
         return (
-          <div className="text-sm text-muted-foreground">
-            Audio response questions allow students to record audio answers.
-          </div>
+          <div className="text-sm text-muted-foreground"> <AdminText text={"Audio response questions allow students to record audio answers."} /> </div>
         )
       default:
         return null
@@ -128,7 +129,7 @@ export function QuizBuilder({
   return (
     <div className="space-y-4">
       <div className="grid gap-2">
-        <Label htmlFor="question">Question</Label>
+        <Label htmlFor="question"><AdminText text={"Question"} /></Label>
         <Textarea
           id="question"
           value={question}
@@ -139,7 +140,7 @@ export function QuizBuilder({
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="question-es" className="text-muted-foreground">Question (Español)</Label>
+        <Label htmlFor="question-es" className="text-muted-foreground"><AdminText text={"Question (Español)"} /></Label>
         <Textarea
           id="question-es"
           value={questionEs}
@@ -152,7 +153,7 @@ export function QuizBuilder({
       {renderOptionsBuilder()}
 
       <div className="grid gap-2">
-        <Label htmlFor="explanation">Explanation (shown after answer)</Label>
+        <Label htmlFor="explanation"><AdminText text={"Explanation (shown after answer)"} /></Label>
         <Textarea
           id="explanation"
           value={explanation}
@@ -163,7 +164,7 @@ export function QuizBuilder({
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="explanation-es" className="text-muted-foreground">Explanation (Español)</Label>
+        <Label htmlFor="explanation-es" className="text-muted-foreground"><AdminText text={"Explanation (Español)"} /></Label>
         <Textarea
           id="explanation-es"
           value={explanationEs}
@@ -220,7 +221,7 @@ function MultipleChoiceBuilder({
 
   return (
     <div className="space-y-3">
-      <Label>Answer Choices (select the correct one)</Label>
+      <Label><AdminText text={"Answer Choices (select the correct one)"} /></Label>
       {choices.map((choice: any, index: number) => (
         <div key={choice.id} className="space-y-1.5">
           <div className="flex gap-2 items-center">
@@ -255,8 +256,7 @@ function MultipleChoiceBuilder({
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" onClick={addChoice}>
-        <Plus className="w-4 h-4 mr-2" /> Add Choice
-      </Button>
+        <Plus className="w-4 h-4 mr-2" /> <AdminText text={"Add Choice"} /> </Button>
     </div>
   )
 }
@@ -305,10 +305,10 @@ function MatchingPairsBuilder({
 
   return (
     <div className="space-y-3">
-      <Label>Matching Pairs</Label>
+      <Label><AdminText text={"Matching Pairs"} /></Label>
       <div className="grid grid-cols-2 gap-2 text-sm font-medium text-muted-foreground mb-2">
-        <span>Left Column</span>
-        <span>Right Column (Correct Match)</span>
+        <span><AdminText text={"Left Column"} /></span>
+        <span><AdminText text={"Right Column (Correct Match)"} /></span>
       </div>
       {pairs.map((pair: any) => (
         <div key={pair.id} className="space-y-1.5">
@@ -356,8 +356,7 @@ function MatchingPairsBuilder({
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" onClick={addPair}>
-        <Plus className="w-4 h-4 mr-2" /> Add Pair
-      </Button>
+        <Plus className="w-4 h-4 mr-2" /> <AdminText text={"Add Pair"} /> </Button>
     </div>
   )
 }
@@ -415,21 +414,20 @@ function FillInBlankBuilder({
   return (
     <div className="space-y-3">
       <div className="grid gap-2">
-        <Label>Text with Blanks</Label>
+        <Label><AdminText text={"Text with Blanks"} /></Label>
         <Textarea
           value={text}
           onChange={(e) => updateText(e.target.value)}
           rows={3}
           placeholder="Use {{blank1}} for blanks. Example: The capital of France is {{capital}}."
         />
-        <p className="text-xs text-muted-foreground">
-          Use {"{{blank_name}}"} to create blanks. Example: The {"{{instrument}}"} is
+        <p className="text-xs text-muted-foreground"> <AdminText text={"Use"} /> {"{{blank_name}}"} to create blanks. Example: The {"{{instrument}}"} is
           a percussion instrument.
         </p>
       </div>
 
       <div className="grid gap-2">
-        <Label className="text-muted-foreground">Text with Blanks (Español)</Label>
+        <Label className="text-muted-foreground"><AdminText text={"Text with Blanks (Español)"} /></Label>
         <Textarea
           value={textEs}
           onChange={(e) => updateTextEs(e.target.value)}
@@ -441,7 +439,7 @@ function FillInBlankBuilder({
 
       {blanks.length > 0 && (
         <div className="space-y-2">
-          <Label>Correct Answers for Blanks</Label>
+          <Label><AdminText text={"Correct Answers for Blanks"} /></Label>
           {blanks.map((blank: any) => (
             <div key={blank.id} className="space-y-1.5">
               <div className="flex gap-2 items-center">
@@ -547,11 +545,8 @@ function OrderingSequenceBuilder({
 
   return (
     <div className="space-y-3">
-      <Label>Items in Correct Order (drag to reorder)</Label>
-      <p className="text-xs text-muted-foreground">
-        Add items in the correct order. Students will see them shuffled and need
-        to put them back in order.
-      </p>
+      <Label><AdminText text={"Items in Correct Order (drag to reorder)"} /></Label>
+      <p className="text-xs text-muted-foreground"> <AdminText text={"Add items in the correct order. Students will see them shuffled and need to put them back in order."} /> </p>
       {items.map((item: any, index: number) => (
         <div key={item.id} className="space-y-1.5">
           <div className="flex gap-2 items-center">
@@ -604,8 +599,7 @@ function OrderingSequenceBuilder({
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" onClick={addItem}>
-        <Plus className="w-4 h-4 mr-2" /> Add Item
-      </Button>
+        <Plus className="w-4 h-4 mr-2" /> <AdminText text={"Add Item"} /> </Button>
     </div>
   )
 }
@@ -620,7 +614,7 @@ function TrueFalseBuilder({
 }) {
   return (
     <div className="space-y-3">
-      <Label>Correct Answer</Label>
+      <Label><AdminText text={"Correct Answer"} /></Label>
       <RadioGroup
         value={correctAnswer}
         onValueChange={(value) => onChange({ correct_answer: value })}
@@ -628,15 +622,11 @@ function TrueFalseBuilder({
       >
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="true" id="true" />
-          <Label htmlFor="true" className="font-normal">
-            True
-          </Label>
+          <Label htmlFor="true" className="font-normal"> <AdminText text={"True"} /> </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="false" id="false" />
-          <Label htmlFor="false" className="font-normal">
-            False
-          </Label>
+          <Label htmlFor="false" className="font-normal"> <AdminText text={"False"} /> </Label>
         </div>
       </RadioGroup>
     </div>
@@ -653,16 +643,14 @@ function TextAnswerBuilder({
 }) {
   return (
     <div className="grid gap-2">
-      <Label htmlFor="correct_answer">Correct Answer</Label>
+      <Label htmlFor="correct_answer"><AdminText text={"Correct Answer"} /></Label>
       <Input
         id="correct_answer"
         value={correctAnswer}
         onChange={(e) => onChange({ correct_answer: e.target.value })}
         placeholder="Enter the correct answer"
       />
-      <p className="text-xs text-muted-foreground">
-        Student answers will be compared to this text (case-insensitive).
-      </p>
+      <p className="text-xs text-muted-foreground"> <AdminText text={"Student answers will be compared to this text (case-insensitive)."} /> </p>
     </div>
   )
 }
@@ -707,7 +695,7 @@ function AudioChoiceBuilder({
   return (
     <div className="space-y-4">
       <div className="grid gap-2">
-        <Label>Prompt clip (students listen to this)</Label>
+        <Label><AdminText text={"Prompt clip (students listen to this)"} /></Label>
         <QuizMediaUpload
           kind="audio"
           slug={`${questionId}-prompt`}
@@ -725,17 +713,17 @@ function AudioChoiceBuilder({
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="text" id={`${questionId}-mode-text`} />
-            <Label htmlFor={`${questionId}-mode-text`} className="font-normal">Text</Label>
+            <Label htmlFor={`${questionId}-mode-text`} className="font-normal"><AdminText text={"Text"} /></Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="audio" id={`${questionId}-mode-audio`} />
-            <Label htmlFor={`${questionId}-mode-audio`} className="font-normal">Audio clips</Label>
+            <Label htmlFor={`${questionId}-mode-audio`} className="font-normal"><AdminText text={"Audio clips"} /></Label>
           </div>
         </RadioGroup>
       </div>
 
       <div className="space-y-3">
-        <Label>Choices (select the correct one)</Label>
+        <Label><AdminText text={"Choices (select the correct one)"} /></Label>
         {choices.map((choice: any, index: number) => (
           <div key={choice.id} className="flex items-start gap-2">
             <input
@@ -774,8 +762,7 @@ function AudioChoiceBuilder({
           </div>
         ))}
         <Button type="button" variant="outline" size="sm" onClick={addChoice}>
-          <Plus className="mr-2 h-4 w-4" /> Add Choice
-        </Button>
+          <Plus className="mr-2 h-4 w-4" /> <AdminText text={"Add Choice"} /> </Button>
       </div>
     </div>
   )

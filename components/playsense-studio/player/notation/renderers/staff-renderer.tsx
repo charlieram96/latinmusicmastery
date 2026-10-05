@@ -1277,13 +1277,13 @@ class StaffRendererImpl implements ScoreRenderer {
     qnToMs: (qn: number) => number,
   ): void {
     const s = this.scale;
-    // Counts: "1 & 2 &" under every bar, placed on the same path as the playhead.
+    // Beat numbers under every bar, placed on the same path as the playhead.
     const barsWithNotes = new Set(this.hits.map(hit => hit.bar));
     this.measureGeoms.forEach((g, index) => {
       const block = blocks[index];
       const barStartQn = block.cumulativeQN;
       const barQn = block.timeSignature[0] * 4 / block.timeSignature[1];
-      const marks = barCounts(block.cumulativeQN, block.timeSignature, helpers.and);
+      const marks = barCounts(block.cumulativeQN, block.timeSignature, helpers.and).filter(mark => mark.beat);
       const barEndQn = block.cumulativeQN + block.timeSignature[0] * 4 / block.timeSignature[1];
       marks.forEach((mark, k) => {
         const ms = qnToMs(mark.qn);

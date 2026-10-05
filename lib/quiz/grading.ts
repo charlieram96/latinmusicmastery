@@ -1,4 +1,5 @@
 import type { QuizQuestion } from '@/types/modules'
+import { timbalSoundKind } from './timbal-sounds'
 
 export type Choice = { id: string; text: string }
 export type Pair = { id: string; left: string; right: string }
@@ -33,6 +34,16 @@ export function shuffleStable<T>(arr: T[], seed: string): T[] {
 export function isPieceCorrect(piece: PlacementPiece, placement: PiecePlacement | undefined): boolean {
   if (!placement) return false
   const { area } = piece
+  const kind = timbalSoundKind(piece.label ?? '')
+  if (kind === 'hand-bell' || kind === 'cha') {
+    // Small neighboring bells need a center tolerance, not the padded
+    // sprite rectangle: otherwise visibly displaced/swapped bells pass.
+    const tolerance = Math.min(1.5, Math.max(0, piece.tolerance ?? 1.5))
+    const dx = Math.abs(placement.x - (area.x + area.width / 2))
+    const dy = Math.abs(placement.y - (area.y + area.height / 2))
+    return dx <= Math.min(tolerance, area.width / 2) + 1e-9 &&
+      dy <= Math.min(tolerance, area.height / 2) + 1e-9
+  }
   return (
     placement.x >= area.x &&
     placement.x <= area.x + area.width &&

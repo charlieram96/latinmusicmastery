@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "2.0",
+  "id": "escala-03",
+  "title": {
+    "es": "Grados de referencia: I-IV-V-I"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "G",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "escala-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    },
+    {
+      "id": "escala-03.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F4",
+      "dur": 1
+    },
+    {
+      "id": "escala-03.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G4",
+      "dur": 1
+    },
+    {
+      "id": "escala-03.n4",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C5",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Grados de referencia: I-IV-V-I",
+    "events": [
+      {
+        "pitch": "C4",
+        "dur": 1
+      },
+      {
+        "pitch": "F4",
+        "dur": 1
+      },
+      {
+        "pitch": "G4",
+        "dur": 1
+      },
+      {
+        "pitch": "C5",
+        "dur": 1
+      }
+    ]
+  }
+}

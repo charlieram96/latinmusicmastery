@@ -82,16 +82,16 @@ describe('helpers', () => {
   it('uses solfege when asked', () => {
     draw({ helpers: { and: 'y', noteNames: 'solfege' } })
     expect(host.querySelector('.ps-staff-name')?.textContent).toBe('Do')
-    expect([...host.querySelectorAll('.ps-staff-count')].slice(0, 2).map(c => c.textContent)).toEqual(['1', 'y'])
+    expect([...host.querySelectorAll('.ps-staff-count')].slice(0, 2).map(c => c.textContent)).toEqual(['1', '2'])
   })
   it('no chip under a tied continuation', () => {
     const tied = scale({}, () => [{ kind: 'note', midi: 60, durationQN: 2, tieToNext: true }, { kind: 'note', midi: 60, durationQN: 2 }])
     draw({ score: tied })
     expect(host.querySelectorAll('.ps-staff-name')).toHaveLength(4)
   })
-  it('counts eighths under every bar', () => {
+  it('shows only beat numbers under every bar', () => {
     draw({})
-    expect(host.querySelectorAll('.ps-staff-count')).toHaveLength(32)
+    expect(host.querySelectorAll('.ps-staff-count')).toHaveLength(16)
   })
   it('rings the sounding note instead of anticipating the following attack', () => {
     for (const currentMs of [0, 250, 499, 500, 600, 1500, 100]) {
@@ -167,9 +167,9 @@ describe('review fixes', () => {
     const blank = scale({}, bar => bar === 2 ? [] : [60, 62, 64, 65].map(midi => ({ kind: 'note', midi, durationQN: 1 })))
     draw({ score: blank, layoutMode: 'scroll' })
     const lefts = [...host.querySelectorAll('.ps-staff-count')].map(el => parseFloat((el as HTMLElement).style.left))
-    // One line: eight counts per bar, in bar order.
-    expect(lefts).toHaveLength(32)
-    const bar = (k: number) => lefts.slice(k * 8, k * 8 + 8)
+    // One line: four counts per bar, in bar order.
+    expect(lefts).toHaveLength(16)
+    const bar = (k: number) => lefts.slice(k * 4, k * 4 + 4)
     expect(Math.min(...bar(1))).toBeGreaterThan(Math.max(...bar(0)))
     expect(Math.max(...bar(1))).toBeLessThan(Math.min(...bar(2)))
     // Spread across the bar rather than bunched in the previous bar's tail.

@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -52,7 +55,7 @@ export function NotePropertyPopover({
 
         {/* Hand toggle */}
         <div className="flex items-center gap-2">
-          <Label className="text-xs w-14">Hand</Label>
+          <Label className="text-xs w-14"><AdminText text={"Hand"} /></Label>
           <div className="flex gap-1">
             <Button
               variant={event.hand === 'R' ? 'default' : 'outline'}
@@ -75,7 +78,7 @@ export function NotePropertyPopover({
 
         {/* Accent */}
         <div className="flex items-center gap-2">
-          <Label className="text-xs w-14">Accent</Label>
+          <Label className="text-xs w-14"><AdminText text={"Accent"} /></Label>
           <Switch
             checked={event.accent}
             onCheckedChange={(checked) => onUpdate({ accent: checked })}
@@ -84,7 +87,7 @@ export function NotePropertyPopover({
 
         {/* Duration */}
         <div className="flex items-center gap-2">
-          <Label className="text-xs w-14">Duration</Label>
+          <Label className="text-xs w-14"><AdminText text={"Duration"} /></Label>
           <Select
             value={String(event.duration)}
             onValueChange={(v) => onUpdate({ duration: Number(v) })}
@@ -97,7 +100,7 @@ export function NotePropertyPopover({
               <SelectItem value="0.5">1/8</SelectItem>
               <SelectItem value="1">1/4</SelectItem>
               <SelectItem value="2">1/2</SelectItem>
-              <SelectItem value="4">Whole</SelectItem>
+              <SelectItem value="4"><AdminText text={"Whole"} /></SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -114,9 +117,7 @@ export function NotePropertyPopover({
         </div>
 
         <Button variant="destructive" size="sm" className="w-full h-7 text-xs" onClick={onDelete}>
-          <Trash2 className="w-3 h-3 mr-1" />
-          Delete
-        </Button>
+          <Trash2 className="w-3 h-3 mr-1" /> <AdminText text={"Delete"} /> </Button>
       </PopoverContent>
     </Popover>
   )

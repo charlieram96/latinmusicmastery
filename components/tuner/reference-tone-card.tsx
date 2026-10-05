@@ -73,14 +73,13 @@ export function ReferenceToneCard({ a4, onA4Change, names, refPc, refOct, onRefC
       <button
         type="button"
         onClick={onToggle}
-        aria-pressed={playing}
+        aria-label={t(playing ? 'dashboard.pages.tuner.reference.stop' : 'dashboard.pages.tuner.reference.play', { note: refName })} title={t(playing ? 'dashboard.pages.tuner.reference.stop' : 'dashboard.pages.tuner.reference.play', { note: refName })} aria-pressed={playing}
         className={cn(
           'flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-gold font-heading text-[12px] font-bold uppercase tracking-[0.12em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
           playing ? 'bg-gold text-[#1C1405]' : 'text-gold hover:bg-gold/10'
         )}
       >
         {playing ? <Square className="h-3.5 w-3.5" fill="currentColor" /> : <Play className="h-3.5 w-3.5" fill="currentColor" />}
-        {t(playing ? 'dashboard.pages.tuner.reference.stop' : 'dashboard.pages.tuner.reference.play', { note: refName })}
       </button>
 
       <div className="mt-3 grid grid-cols-12 gap-[3px]" role="group" aria-label={t('dashboard.pages.tuner.reference.note')}>

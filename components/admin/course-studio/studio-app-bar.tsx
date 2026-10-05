@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import Link from 'next/link'
 import { ArrowLeft, ListTree, Settings2, SlidersHorizontal } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
@@ -56,9 +59,7 @@ export function StudioAppBar({
         )}
       >
         <div className="flex min-w-0 flex-col">
-          <span className="text-[10px] font-semibold uppercase leading-3 tracking-[0.16em] text-gold">
-            Course Studio
-          </span>
+          <span className="text-[10px] font-semibold uppercase leading-3 tracking-[0.16em] text-gold"> <AdminText text={"Course Studio"} /> </span>
           <h1 className="truncate font-heading text-[15px] font-semibold leading-5 text-foreground">
             {title || 'Untitled course'}
           </h1>
@@ -87,7 +88,7 @@ export function StudioAppBar({
             isPublished ? 'bg-primary' : 'bg-muted-foreground/50'
           )}
         />
-        {isPublished ? 'Published' : 'Draft'}
+        {isPublished ? <AdminText text={"Published"} /> : <AdminText text={"Draft"} />}
       </span>
 
       <div className="ml-auto flex flex-shrink-0 items-center gap-3">
@@ -105,7 +106,7 @@ export function StudioAppBar({
           )}
         >
           <Settings2 className="h-4 w-4" />
-          <span className="hidden sm:inline">Settings</span>
+          <span className="hidden sm:inline"><AdminText text={"Settings"} /></span>
         </button>
 
         <button
@@ -120,9 +121,7 @@ export function StudioAppBar({
         <div className="h-6 w-px bg-border" />
 
         <label className="flex cursor-pointer items-center gap-2">
-          <span className="hidden text-xs font-medium text-muted-foreground md:inline">
-            Publish
-          </span>
+          <span className="hidden text-xs font-medium text-muted-foreground md:inline"> <AdminText text={"Publish"} /> </span>
           <Switch checked={isPublished} onCheckedChange={onTogglePublish} />
         </label>
       </div>

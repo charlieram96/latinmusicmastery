@@ -1,0 +1,216 @@
+{
+  "schemaVersion": "2.0",
+  "id": "fa-mapa-ampliado-03",
+  "title": {
+    "es": "Recorrido ascendente · Do2 a Do4"
+  },
+  "meter": null,
+  "keyFifths": 0,
+  "clef": "F",
+  "quarterNoteDivisions": 20160,
+  "tempo": null,
+  "videoSync": null,
+  "events": [
+    {
+      "id": "fa-mapa-ampliado-03.n1",
+      "onsetBeats": "0",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C2",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n2",
+      "onsetBeats": "4",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D2",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n3",
+      "onsetBeats": "8",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E2",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n4",
+      "onsetBeats": "12",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F2",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n5",
+      "onsetBeats": "16",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G2",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n6",
+      "onsetBeats": "20",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A2",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n7",
+      "onsetBeats": "24",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B2",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n8",
+      "onsetBeats": "28",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C3",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n9",
+      "onsetBeats": "32",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "D3",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n10",
+      "onsetBeats": "36",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "E3",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n11",
+      "onsetBeats": "40",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "F3",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n12",
+      "onsetBeats": "44",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "G3",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n13",
+      "onsetBeats": "48",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "A3",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n14",
+      "onsetBeats": "52",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "B3",
+      "dur": 1
+    },
+    {
+      "id": "fa-mapa-ampliado-03.n15",
+      "onsetBeats": "56",
+      "durationBeats": "4",
+      "measure": 1,
+      "staff": 1,
+      "pitch": "C4",
+      "dur": 1
+    }
+  ],
+  "notation": {
+    "title": "Recorrido ascendente · Do2 a Do4",
+    "events": [
+      {
+        "pitch": "C2",
+        "dur": 1
+      },
+      {
+        "pitch": "D2",
+        "dur": 1
+      },
+      {
+        "pitch": "E2",
+        "dur": 1
+      },
+      {
+        "pitch": "F2",
+        "dur": 1
+      },
+      {
+        "pitch": "G2",
+        "dur": 1
+      },
+      {
+        "pitch": "A2",
+        "dur": 1
+      },
+      {
+        "pitch": "B2",
+        "dur": 1
+      },
+      {
+        "pitch": "C3",
+        "dur": 1
+      },
+      {
+        "pitch": "D3",
+        "dur": 1
+      },
+      {
+        "pitch": "E3",
+        "dur": 1
+      },
+      {
+        "pitch": "F3",
+        "dur": 1
+      },
+      {
+        "pitch": "G3",
+        "dur": 1
+      },
+      {
+        "pitch": "A3",
+        "dur": 1
+      },
+      {
+        "pitch": "B3",
+        "dur": 1
+      },
+      {
+        "pitch": "C4",
+        "dur": 1
+      }
+    ],
+    "clef": "F"
+  }
+}

@@ -1,5 +1,8 @@
 'use client'
 
+import { AdminText } from '@/components/admin/admin-text'
+
+
 import { AudioUpload } from './audio-upload'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -62,9 +65,7 @@ export function JamSessionEditor({
     <div className="space-y-6">
       <div className="grid gap-2">
         <Label className="flex items-center gap-2">
-          <Music className="w-4 h-4" />
-          Backing Track Audio
-        </Label>
+          <Music className="w-4 h-4" /> <AdminText text={"Backing Track Audio"} /> </Label>
         <AudioUpload
           itemId={itemId}
           currentAudioUrl={audioUrl}
@@ -96,9 +97,7 @@ export function JamSessionEditor({
 
         <div className="grid gap-2">
           <Label className="flex items-center gap-2">
-            <Music className="w-4 h-4" />
-            Key Signature
-          </Label>
+            <Music className="w-4 h-4" /> <AdminText text={"Key Signature"} /> </Label>
           <Select
             value={keySignature ?? ''}
             onValueChange={(value) =>
